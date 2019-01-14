@@ -72,7 +72,7 @@ func Parse(s string) (*Attributes, error) {
 // This function isn't a part of standard. Quoted wildcards (*?) become unquoted ones (i.e. act as wildcards,
 // not a literal '*' and '?')
 // If wildcards are used, it is a responsibility of the user to make sure they comply with the standard, i.e.
-// only appear at the beggining or at the end of the string and, in case of asterisk, only once in each case.
+// only appear at the beginning or at the end of the string and, in case of asterisk, only once in each case.
 // Uppercase letters are valid avstring characters, but they are rarely (if ever) used in WFNs. It is recommended
 // to strings.ToLower() the string before passing it to this function.
 func WFNize(s string) (string, error) {
