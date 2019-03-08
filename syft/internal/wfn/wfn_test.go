@@ -18,17 +18,25 @@ import "testing"
 
 func TestWFNize(t *testing.T) {
 	cases := []struct {
-		in       string
-		expected string
+		in        string
+		expected  string
+		expectErr bool
 	}{
-		{"Zonealarm Wireless Security", "Zonealarm_Wireless_Security"},
-		{"1.8.14.6001", `1\.8\.14\.6001`},
-		{"xorg-server", `xorg\-server`},
+		{"Zonealarm Wireless Security", "Zonealarm_Wireless_Security", false},
+		{"1.8.14.6001", `1\.8\.14\.6001`, false},
+		{"xorg-server", `xorg\-server`, false},
+		{`1.8.\*`, `1\.8\.*`, false},
+		{"1.*.14", `1\.\*\.14`, false},
+		{`1.\*.14`, "", true},
 	}
 	for _, c := range cases {
 		res, err := WFNize(c.in)
 		if err != nil {
-			t.Errorf("WFNize(%q) returned error: %v", c.in, err)
+			if !c.expectErr {
+				t.Errorf("WFNize(%q) returned error: %v", c.in, err)
+			}
+		} else if c.expectErr {
+			t.Errorf("WFNize(%q) was expected to fail, but succedeed", c.in)
 		} else if res != c.expected {
 			t.Errorf("WFNize(%q) returned %q, %q was expected", c.in, res, c.expected)
 		}

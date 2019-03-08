@@ -136,8 +136,8 @@ func addSlashesAt(s string, at int) (string, int, error) {
 		}
 		switch c {
 		case '\\':
-			b = append(b, c, s[i+1])
 			i++
+			b = append(b, c, s[i])
 			embedded = true
 		case '*':
 			// An unquoted asterisk must appear at the beginning or end of the string

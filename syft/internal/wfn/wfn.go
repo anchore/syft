@@ -81,13 +81,20 @@ func WFNize(s string) (string, error) {
 	in := strings.Replace(s, " ", "_", -1)
 	buf := make([]byte, 0, len(in))
 	// remove illegal characters
-	for _, c := range in {
+	for n, c := range in {
 		c := byte(c)
 		if c >= 'A' && c <= 'Z' ||
 			c >= 'a' && c <= 'z' ||
 			c >= '0' && c <= '9' ||
 			c == '_' ||
 			strings.IndexByte(allowedPunct, c) != -1 {
+			buf = append(buf, c)
+		}
+		// handle wildcard characters
+		if c == '*' || c == '?' {
+			if n == 0 || in[n-1] != '\\' {
+				buf = append(buf, '\\')
+			}
 			buf = append(buf, c)
 		}
 	}
