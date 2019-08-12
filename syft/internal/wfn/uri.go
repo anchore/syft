@@ -37,10 +37,18 @@ func (a Attributes) BindToURI() string {
 			continue
 		}
 		edParts := make([]string, 5)
+		allNAs := true
 		for i, v2 := range []string{a.Edition, a.SWEdition, a.TargetSW, a.TargetHW, a.Other} {
 			edParts[i] = bindValueURI(v2)
+			if edParts[i] != "-" {
+				allNAs = false
+			}
 		}
-		parts = append(parts, pack(edParts))
+		if allNAs {
+			parts = append(parts, "-")
+		} else {
+			parts = append(parts, pack(edParts))
+		}
 	}
 	// empty elements at the end of the URI should be omitted
 	for i := len(parts) - 1; i >= 0; i-- {
@@ -125,6 +133,12 @@ func pack(ss []string) string {
 // - unquoted special characters are mapped to their special forms.
 func bindValueURI(s string) string {
 	var out []byte
+	switch s {
+	case NA:
+		return "-"
+	case Any:
+		return ""
+	}
 	for i := 0; i < len(s); i++ {
 		b := byte(s[i])
 		if b >= '0' && b <= '9' || b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' || b == '_' {

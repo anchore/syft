@@ -33,21 +33,6 @@ const (
 	NA  = "-"
 )
 
-// Attributes defines the WFN Data Model Attributes.
-type Attributes struct {
-	Part      string
-	Vendor    string
-	Product   string
-	Version   string
-	Update    string
-	Edition   string
-	SWEdition string
-	TargetSW  string
-	TargetHW  string
-	Other     string
-	Language  string
-}
-
 const (
 	uriPrefix = "cpe:/"
 	fsbPrefix = "cpe:2.3:"
@@ -66,6 +51,47 @@ func Parse(s string) (*Attributes, error) {
 		}
 	}
 	return nil, fmt.Errorf("wfn: unsupported format %q", s)
+}
+
+// Attributes defines the WFN Data Model Attributes.
+type Attributes struct {
+	Part      string
+	Vendor    string
+	Product   string
+	Version   string
+	Update    string
+	Edition   string
+	SWEdition string
+	TargetSW  string
+	TargetHW  string
+	Other     string
+	Language  string
+}
+
+// NewAttributesWithNA allocates Attributes object with all fields initialized to NA logical value
+func NewAttributesWithNA() *Attributes {
+	return newAttributes(NA)
+}
+
+// NewAttributesWithAny allocates Attributes object with all fields initialized to Any logical value
+func NewAttributesWithAny() *Attributes {
+	return newAttributes(Any)
+}
+
+func newAttributes(defaultValue string) *Attributes {
+	return &Attributes{
+		Part:      defaultValue,
+		Vendor:    defaultValue,
+		Product:   defaultValue,
+		Version:   defaultValue,
+		Update:    defaultValue,
+		Edition:   defaultValue,
+		SWEdition: defaultValue,
+		TargetSW:  defaultValue,
+		TargetHW:  defaultValue,
+		Other:     defaultValue,
+		Language:  defaultValue,
+	}
 }
 
 // WFNize transforms a string into CPE23-NAME compliant avstring value.
