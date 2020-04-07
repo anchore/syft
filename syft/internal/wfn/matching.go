@@ -28,19 +28,20 @@ const (
 
 // HasWildcard returns true if attribute has a wildcard symbol in it
 func HasWildcard(s string) bool {
-	escaped := false
-	for _, r := range s {
-		if r == rune('\\') {
-			escaped = !escaped
+	for n, r := range s {
+		if r != '*' && r != '?' {
 			continue
 		}
-		if !escaped {
-			if r == rune('*') || r == rune('?') {
-				return true
+		quoted := false
+		for i := n - 1; i >= 0; i-- {
+			if s[i] != '\\' {
+				break
 			}
-			continue
+			quoted = !quoted
 		}
-		escaped = false
+		if !quoted {
+			return true
+		}
 	}
 	return false
 }

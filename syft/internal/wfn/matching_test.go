@@ -31,6 +31,7 @@ func TestHasWildcard(t *testing.T) {
 		{`\\\\*foo`, true},
 		{`bar\\\?`, false},
 		{`foo\bar*`, true},
+		{`b\?r?`, true},
 	}
 	for _, c := range cases {
 		t.Run(c.Src, func(t *testing.T) {
@@ -163,13 +164,22 @@ func BenchmarkIsDisjoint(b *testing.B) {
 }
 
 func BenchmarkHasWildcard(b *testing.B) {
-	src := `cpe:2.3:a:microsoft:*internet_ex??????:8.*:sp?:*:*:*:*:*:*`
-	srcAttr, err := UnbindFmtString(src)
-	if err != nil {
-		b.Fatalf("failed to unbind WFN from FSB %q: %v", src, err)
+	tests := map[string]string{
+		"has":         `cpe:2.3:a:microsoft:*internet_ex??????:8.*:sp?:*:*:*:*:*:*`,
+		"has not":     `cpe:2.3:a:microsoft:internet_explorer:8.0:sp2:*:*:*:*:*:*`,
+		"has escaped": `cpe:2.3:a:vendor\?:product\?:8.0:sp2:*:*:*:*:*:*`,
 	}
-	for i := 0; i < b.N; i++ {
-		HasWildcard(srcAttr.Vendor)
-		HasWildcard(srcAttr.Product)
+	for tag, test := range tests {
+		b.Run(tag, func(b *testing.B) {
+			srcAttr, err := UnbindFmtString(test)
+			if err != nil {
+				b.Fatalf("failed to unbind WFN from FSB %q: %v", test, err)
+			}
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				HasWildcard(srcAttr.Vendor)
+				HasWildcard(srcAttr.Product)
+			}
+		})
 	}
 }
