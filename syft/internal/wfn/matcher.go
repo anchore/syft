@@ -84,11 +84,9 @@ func (mm *multiMatcher) Match(attrs []*Attributes, requireVersion bool) []*Attri
 		}
 	}
 
-	matches := make([]*Attributes, len(matched))
-	i := 0
+	matches := make([]*Attributes, 0, len(matched))
 	for m := range matched {
-		matches[i] = m
-		i++
+		matches = append(matches, m)
 	}
 	return matches
 }
