@@ -2,21 +2,22 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 const ApplicationName = "imgbom"
 
 var rootOptions struct {
-	cfgFile   string
+	cfgFile string
 }
 
 var rootCmd = &cobra.Command{
 	Use:   ApplicationName,
 	Short: "A container image BOM tool",
 	Long:  `todo.`,
-	Run:    doRunCmd,
+	Run:   doRunCmd,
 }
 
 func Execute() {

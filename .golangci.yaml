@@ -9,41 +9,41 @@ linters:
     - dogsled
     - dupl
     - errcheck
-#    - funlen
-    - gochecknoinits
-#    - gocognit
+    - funlen
+    - gocognit
     - goconst
-#    - gocritic
+    - gocritic
     - gocyclo
     - gofmt
     - goimports
-#    - golint
+    - golint
     - gomnd
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
-#    - interfacer
-#    - lll
+    - interfacer
+    - lll
     - misspell
     - nakedret
     - nolintlint
     - rowserrcheck
-#    - scopelint
+    - scopelint
     - staticcheck
     - structcheck
-#    - stylecheck
+    - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
     - varcheck
-#    - whitespace
+    - whitespace
     - prealloc
     - asciicheck
 
 # do not enable...
+#    - gochecknoinits
 #    - gochecknoglobals
 #    - godot
 #    - godox
