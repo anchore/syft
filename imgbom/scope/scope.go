@@ -10,6 +10,7 @@ import (
 type Scope struct {
 	Option Option
 	Trees  []*tree.FileTree
+	Image  *image.Image
 }
 
 func NewScope(img *image.Image, option Option) (Scope, error) {
@@ -40,5 +41,6 @@ func NewScope(img *image.Image, option Option) (Scope, error) {
 	return Scope{
 		Option: option,
 		Trees:  trees,
+		Image:  img,
 	}, nil
 }

@@ -21,6 +21,8 @@ bootstrap:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b .tmp/ v1.26.0
 	# install go-acc
 	GOPATH=$(shell realpath ${TEMPDIR}) GO111MODULE=off go get github.com/ory/go-acc
+	# cleanup
+	rm -rf $(TEMPDIR)/src
 
 lint:
 	@printf '$(TITLE)Running linters$(RESET)\n'
