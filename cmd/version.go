@@ -1,9 +1,9 @@
 package cmd
 
 import (
-"fmt"
+	"fmt"
 
-"github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 type Version struct {
