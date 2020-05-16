@@ -1,13 +1,14 @@
 package dpkg
 
 import (
+	"bufio"
 	"os"
 	"testing"
 
 	"github.com/go-test/deep"
 )
 
-func compareEntries(t *testing.T, left, right DpkgEntry) {
+func compareEntries(t *testing.T, left, right Entry) {
 	t.Helper()
 	if diff := deep.Equal(left, right); diff != nil {
 		t.Error(diff)
@@ -17,11 +18,11 @@ func compareEntries(t *testing.T, left, right DpkgEntry) {
 func TestSinglePackage(t *testing.T) {
 	tests := []struct {
 		name     string
-		expected DpkgEntry
+		expected Entry
 	}{
 		{
 			name: "Test Single Package",
-			expected: DpkgEntry{
+			expected: Entry{
 				Package:        "apt",
 				Status:         "install ok installed",
 				Priority:       "required",
@@ -49,8 +50,16 @@ func TestSinglePackage(t *testing.T) {
 			if err != nil {
 				t.Fatal("Unable to read test_fixtures/single: ", err)
 			}
+			defer func() {
+				err := file.Close()
+				if err != nil {
+					panic(err)
+				}
+			}()
 
-			entry, err := Read(file)
+			reader := bufio.NewReader(file)
+
+			entry, err := parseEntry(reader)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}
@@ -61,14 +70,14 @@ func TestSinglePackage(t *testing.T) {
 	}
 }
 
-func TestMultiplePackage(t *testing.T) {
+func TestMultiplePackages(t *testing.T) {
 	tests := []struct {
 		name     string
-		expected []DpkgEntry
+		expected []Entry
 	}{
 		{
 			name: "Test Multiple Package",
-			expected: []DpkgEntry{
+			expected: []Entry{
 				{
 					Package:       "tzdata",
 					Status:        "install ok installed",
@@ -110,9 +119,14 @@ func TestMultiplePackage(t *testing.T) {
 			if err != nil {
 				t.Fatal("Unable to read: ", err)
 			}
-			defer file.Close()
+			defer func() {
+				err := file.Close()
+				if err != nil {
+					panic(err)
+				}
+			}()
 
-			entries, err := ReadAllDpkgEntries(file)
+			entries, err := ParseEntries(file)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}

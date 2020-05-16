@@ -10,7 +10,7 @@ import (
 )
 
 // TODO: consider keeping the remaining values as an embedded map
-type DpkgEntry struct {
+type Entry struct {
 	Package        string `mapstructure:"Package"`
 	Architecture   string `mapstructure:"Architecture"`
 	DependsPkgs    string `mapstructure:"Depends"`
@@ -60,29 +60,49 @@ type DpkgEntry struct {
 //                  Triggers-Awaited (internal)
 //                  Triggers-Pending (internal)
 //                  Version
-//
 
-var EndOfPackages = fmt.Errorf("no more packages to read")
+var endOfPackages = fmt.Errorf("no more packages to read")
 
-func Read(reader io.Reader) (entry DpkgEntry, err error) {
-	buff := bufio.NewReader(reader)
+func ParseEntries(reader io.Reader) ([]Entry, error) {
+	buffedReader := bufio.NewReader(reader)
+	var entries = make([]Entry, 0)
+
+	for {
+		entry, err := parseEntry(buffedReader)
+		if err != nil {
+			if err == endOfPackages {
+				break
+			}
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+
+func parseEntry(reader *bufio.Reader) (entry Entry, err error) {
 	dpkgFields := make(map[string]string)
 	var key string
 
 	for {
-		line, ioerr := buff.ReadString('\n')
-		fmt.Printf("line:'%+v' err:'%+v'\n", line, ioerr)
-		if ioerr != nil {
-			if ioerr == io.EOF {
-				return DpkgEntry{}, EndOfPackages
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				return Entry{}, endOfPackages
 			}
-			return DpkgEntry{}, ioerr
+			return Entry{}, err
 		}
 
 		line = strings.TrimRight(line, "\n")
 
-		// stop if there is no contents in line
+		// empty line indicates end of entry
 		if len(line) == 0 {
+			// if the entry has not started, keep parsing lines
+			if len(dpkgFields) == 0{
+				continue
+			}
 			break
 		}
 
@@ -90,12 +110,12 @@ func Read(reader io.Reader) (entry DpkgEntry, err error) {
 		case strings.HasPrefix(line, " "):
 			// a field-body continuation
 			if len(key) == 0 {
-				return DpkgEntry{}, fmt.Errorf("no match for continuation: line: '%s'", line)
+				return Entry{}, fmt.Errorf("no match for continuation: line: '%s'", line)
 			}
 
 			val, ok := dpkgFields[key]
 			if !ok {
-				return DpkgEntry{}, fmt.Errorf("no previous key exists, expecting: %s", key)
+				return Entry{}, fmt.Errorf("no previous key exists, expecting: %s", key)
 			}
 			// concatenate onto previous value
 			val = fmt.Sprintf("%s\n %s", val, strings.TrimSpace(line))
@@ -107,42 +127,21 @@ func Read(reader io.Reader) (entry DpkgEntry, err error) {
 				val := strings.TrimSpace(line[i+1:])
 
 				if _, ok := dpkgFields[key]; ok {
-					return DpkgEntry{}, fmt.Errorf("duplicate key discovered: %s", key)
+					return Entry{}, fmt.Errorf("duplicate key discovered: %s", key)
 				}
 
 				dpkgFields[key] = val
 			} else {
-				return DpkgEntry{}, fmt.Errorf("cannot parse field from line: '%s'", line)
+				return Entry{}, fmt.Errorf("cannot parse field from line: '%s'", line)
 			}
 		}
 	}
-
-	fmt.Println("OUTOFLOOP")
-
-	// map -> struct
+	
 	err = mapstructure.Decode(dpkgFields, &entry)
 	if err != nil {
-		return DpkgEntry{}, err
+		return Entry{}, err
 	}
 
 	return entry, nil
 }
 
-func ReadAllDpkgEntries(reader io.Reader) ([]DpkgEntry, error) {
-	var entries = make([]DpkgEntry, 0)
-
-	for {
-		// Read() until error
-		entry, err := Read(reader)
-		fmt.Printf("entry:'%+v'\n\terr:%+v\n", entry, err)
-		if err != nil {
-			if err == EndOfPackages {
-				break
-			}
-			return nil, err
-		}
-		entries = append(entries, entry)
-	}
-
-	return entries, nil
-}
