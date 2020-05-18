@@ -1,18 +1,22 @@
 package pkg
 
+// TODO: add reader methods (by type, id, fuzzy search, etc)
+
 type Catalog struct {
 	// TODO: catalog by package ID for potential indexing
-	catalog map[Type][]Package
+	Packages map[Type][]Package
 }
 
-type CatalogWriter interface {
-	Add(Package) error
+func NewCatalog() Catalog {
+	return Catalog{
+		Packages: make(map[Type][]Package),
+	}
 }
 
 func (c *Catalog) Add(p Package) {
-	_, ok := c.catalog[p.Type]
+	_, ok := c.Packages[p.Type]
 	if !ok {
-		c.catalog[p.Type] = make([]Package, 0)
+		c.Packages[p.Type] = make([]Package, 0)
 	}
-	c.catalog[p.Type] = append(c.catalog[p.Type], p)
+	c.Packages[p.Type] = append(c.Packages[p.Type], p)
 }

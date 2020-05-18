@@ -1,7 +1,7 @@
 package pkg
 
 const (
-	UnknownPkg uint = iota
+	UnknownPkg Type = iota
 	ApkPkg
 	DebPkg
 	JavaPkg
