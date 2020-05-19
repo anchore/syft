@@ -5,10 +5,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/go-test/deep"
 )
 
-func compareEntries(t *testing.T, left, right Entry) {
+func compareEntries(t *testing.T, left, right pkg.DpkgMetadata) {
 	t.Helper()
 	if diff := deep.Equal(left, right); diff != nil {
 		t.Error(diff)
@@ -18,11 +19,11 @@ func compareEntries(t *testing.T, left, right Entry) {
 func TestSinglePackage(t *testing.T) {
 	tests := []struct {
 		name     string
-		expected Entry
+		expected pkg.DpkgMetadata
 	}{
 		{
 			name: "Test Single Package",
-			expected: Entry{
+			expected: pkg.DpkgMetadata{
 				Package:        "apt",
 				Status:         "install ok installed",
 				Priority:       "required",
@@ -73,11 +74,11 @@ func TestSinglePackage(t *testing.T) {
 func TestMultiplePackages(t *testing.T) {
 	tests := []struct {
 		name     string
-		expected []Entry
+		expected []pkg.DpkgMetadata
 	}{
 		{
 			name: "Test Multiple Package",
-			expected: []Entry{
+			expected: []pkg.DpkgMetadata{
 				{
 					Package:       "tzdata",
 					Status:        "install ok installed",
