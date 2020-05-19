@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"github.com/anchore/imgbom/imgbom/analyzer/dummy"
+	"github.com/anchore/imgbom/imgbom/analyzer/dpkg"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/stereoscope/pkg/file"
@@ -14,7 +14,7 @@ func init() {
 	controllerInstance = controller{
 		analyzers: make([]Analyzer, 0),
 	}
-	controllerInstance.add(dummy.NewAnalyzer())
+	controllerInstance.add(dpkg.NewAnalyzer())
 }
 
 func Analyze(s scope.Scope) (pkg.Catalog, error) {
