@@ -14,4 +14,21 @@ const (
 
 type Type uint
 
-// TODO: stringer...
+var typeStr = []string{
+	"UnknownPackage",
+	"apk",
+	"deb",
+	"java",
+	"node",
+	"pacman",
+	"python",
+	"rpm",
+	"ruby",
+}
+
+func (t Type) String() string {
+	if int(t) >= len(typeStr) {
+		return typeStr[0]
+	}
+	return typeStr[t]
+}

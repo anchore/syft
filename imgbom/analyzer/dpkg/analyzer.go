@@ -54,7 +54,6 @@ func (a *Analyzer) Analyze(contents map[file.Reference]string) ([]pkg.Package, e
 				Metadata: entry,
 			})
 		}
-
 	}
 	return packages, nil
 }

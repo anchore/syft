@@ -4,6 +4,7 @@ import "github.com/anchore/stereoscope/pkg/file"
 
 // TODO: add package ID (random/incremental)
 
+// TODO: add field to trace which analyzer detected this
 type Package struct {
 	Name     string
 	Version  string
