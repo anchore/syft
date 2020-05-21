@@ -7,6 +7,10 @@ RESET := $(shell tput sgr0)
 TITLE := $(BOLD)$(PURPLE)
 SUCCESS := $(BOLD)$(GREEN)
 
+ifndef TEMPDIR
+$(error TEMPDIR is not set)
+endif
+
 .PHONY: all boostrap lint lint-fix unit coverage integration build-release
 
 all: lint unit integration
@@ -26,10 +30,12 @@ bootstrap:
 
 lint:
 	@printf '$(TITLE)Running linters$(RESET)\n'
+	test -z "$(shell gofmt -l -s .)"
 	$(LINTCMD)
 
 lint-fix:
 	@printf '$(TITLE)Running lint fixers$(RESET)\n'
+	gofmt -w -s .
 	$(LINTCMD) --fix
 
 unit:

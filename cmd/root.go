@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/imgbom/imgbom/presenter"
-
-	"github.com/anchore/imgbom/internal"
-
 	"github.com/anchore/imgbom/imgbom"
+	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/imgbom/scope"
+	"github.com/anchore/imgbom/internal"
 	"github.com/anchore/stereoscope"
-
 	"github.com/spf13/cobra"
 )
 
