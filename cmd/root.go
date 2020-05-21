@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -31,8 +30,9 @@ Supports the following image sources:
 func init() {
 	setCliOptions()
 
-	cobra.OnInitialize(loadAppConfig)
-	cobra.OnInitialize(setupLoggingFromAppConfig)
+	cobra.OnInitialize(initAppConfig)
+	cobra.OnInitialize(initLogging)
+	cobra.OnInitialize(logAppConfig)
 }
 
 func Execute() {
@@ -43,15 +43,8 @@ func Execute() {
 }
 
 func doRunCmd(cmd *cobra.Command, args []string) {
-	appCfgStr, err := json.MarshalIndent(&appConfig, "  ", "  ")
-	if err != nil {
-		log.Debugf("could not display application config: %+v", err)
-	} else {
-		log.Debugf("application config:\n%+v", string(appCfgStr))
-	}
-
 	userImageStr := args[0]
-	log.Infof("fetching image %s...", userImageStr)
+	log.Infof("Fetching image '%s'", userImageStr)
 	img, err := stereoscope.GetImage(userImageStr)
 	if err != nil {
 		log.Errorf("could not fetch image '%s': %w", userImageStr, err)
@@ -59,14 +52,14 @@ func doRunCmd(cmd *cobra.Command, args []string) {
 	}
 	defer stereoscope.Cleanup()
 
-	log.Info("cataloging image...")
+	log.Info("Cataloging image")
 	catalog, err := imgbom.CatalogImage(img, appConfig.ScopeOpt)
 	if err != nil {
 		log.Errorf("could not catalog image: %w", err)
 		os.Exit(1)
 	}
 
-	log.Info("done!")
+	log.Info("Complete!")
 	err = presenter.GetPresenter(appConfig.PresenterOpt).Present(os.Stdout, img, catalog)
 	if err != nil {
 		log.Errorf("could not format catalog results: %w", err)

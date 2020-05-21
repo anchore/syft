@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/anchore/imgbom/imgbom/pkg"
+	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/tree"
 )
@@ -14,6 +15,10 @@ type Analyzer struct {
 
 func NewAnalyzer() *Analyzer {
 	return &Analyzer{}
+}
+
+func (a *Analyzer) Name() string {
+	return "dpkg-analyzer"
 }
 
 func (a *Analyzer) SelectFiles(trees []*tree.FileTree) []file.Reference {
@@ -36,14 +41,26 @@ func (a *Analyzer) Analyze(contents map[file.Reference]string) ([]pkg.Package, e
 	for _, reference := range a.selectedFiles {
 		content, ok := contents[reference]
 		if !ok {
-			// TODO: this needs handling
-			panic(reference)
+			// TODO: test case
+			log.WithFields(map[string]interface{}{
+				"path":     reference.Path,
+				"id":       reference.ID(),
+				"analyzer": a.Name(),
+			}).Errorf("analyzer file content missing")
+
+			continue
 		}
 
 		entries, err := ParseEntries(strings.NewReader(content))
 		if err != nil {
-			// TODO: punt for now, we need to handle this
-			panic(err)
+			// TODO: test case
+			log.WithFields(map[string]interface{}{
+				"path":     reference.Path,
+				"id":       reference.ID(),
+				"analyzer": a.Name(),
+			}).Errorf("analyzer failed to parse entries: %w", err)
+
+			continue
 		}
 		for _, entry := range entries {
 			packages = append(packages, pkg.Package{
@@ -55,5 +72,6 @@ func (a *Analyzer) Analyze(contents map[file.Reference]string) ([]pkg.Package, e
 			})
 		}
 	}
+
 	return packages, nil
 }

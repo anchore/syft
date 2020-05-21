@@ -54,7 +54,7 @@ func TestSinglePackage(t *testing.T) {
 			defer func() {
 				err := file.Close()
 				if err != nil {
-					panic(err)
+					t.Fatal("closing file failed:", err)
 				}
 			}()
 
@@ -123,7 +123,7 @@ func TestMultiplePackages(t *testing.T) {
 			defer func() {
 				err := file.Close()
 				if err != nil {
-					panic(err)
+					t.Fatal("closing file failed:", err)
 				}
 			}()
 

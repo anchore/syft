@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/anchore/imgbom/imgbom/pkg"
+	"github.com/anchore/imgbom/internal/log"
 	stereoscopeImg "github.com/anchore/stereoscope/pkg/image"
 )
 
@@ -88,8 +89,13 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 		for idx, src := range p.Source {
 			fileMetadata, err := img.FileCatalog.Get(src)
 			if err != nil {
-				// TODO: replace
-				panic(err)
+				// TODO: test case
+				log.WithFields(map[string]interface{}{
+					"path":      src.Path,
+					"id":        src.ID(),
+					"presenter": "json",
+				}).Errorf("could not get metadata from catalog")
+
 			}
 
 			srcObj := source{
@@ -105,8 +111,9 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 
 	bytes, err := json.Marshal(&doc)
 	if err != nil {
-		// TODO: replace
-		panic(err)
+		log.WithFields(map[string]interface{}{
+			"presenter": "json",
+		}).Errorf("failed to marshal json: %w", err)
 	}
 
 	_, err = output.Write(bytes)
