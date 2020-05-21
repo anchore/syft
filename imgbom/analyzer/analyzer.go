@@ -7,6 +7,7 @@ import (
 )
 
 type Analyzer interface {
+	// TODO: add ID / Name for analyze for uniquely identifying this analyzer type
 	SelectFiles([]*tree.FileTree) []file.Reference
 	// NOTE: one of the errors which is returned is "IterationNeeded", which indicates to the driver to
 	// continue with another Select/Analyze pass

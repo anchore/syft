@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/imgbom/internal"
-
 	"github.com/anchore/imgbom/imgbom"
+	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/imgbom/scope"
+	"github.com/anchore/imgbom/internal"
 	"github.com/anchore/stereoscope"
-
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +17,7 @@ const ApplicationName = "imgbom"
 var rootOptions struct {
 	cfgFile string
 	scope   string
+	output  string
 }
 
 var rootCmd = &cobra.Command{
@@ -50,6 +50,10 @@ func init() {
 	// scan options
 	rootCmd.Flags().StringVarP(&rootOptions.scope, "scope", "s", scope.AllLayersScope.String(),
 		fmt.Sprintf("selection of layers to analyze, options=%v", scope.Options))
+
+	// output & formatting options
+	rootCmd.Flags().StringVarP(&rootOptions.output, "output", "o", presenter.JSONOption.String(),
+		fmt.Sprintf("report output formatter, options=%v", presenter.Options))
 }
 
 func loadApplicationConfig() {
@@ -57,10 +61,10 @@ func loadApplicationConfig() {
 }
 
 func doRunCmd(cmd *cobra.Command, args []string) {
-	img, err := stereoscope.GetImage(args[0])
-	if err != nil {
+	var pres = presenter.GetPresenter(rootOptions.output)
+	if pres == nil {
 		// TODO: replace with log and exit
-		panic(err)
+		panic("could not determine presenter")
 	}
 
 	scopeOption := scope.ParseOption(rootOptions.scope)
@@ -69,12 +73,22 @@ func doRunCmd(cmd *cobra.Command, args []string) {
 		panic(scopeOption)
 	}
 
+	img, err := stereoscope.GetImage(args[0])
+	if err != nil {
+		// TODO: replace with log and exit
+		panic(err)
+	}
+	defer stereoscope.Cleanup()
+
 	catalog, err := imgbom.CatalogImage(img, scopeOption)
 	if err != nil {
 		// TODO: replace with log and exit
 		panic(err)
 	}
 
-	// TODO: remove this with presenter implementation
-	fmt.Printf("%+v\n", catalog)
+	err = pres.Present(os.Stdout, img, catalog)
+	if err != nil {
+		// TODO: replace with log and exit
+		panic(err)
+	}
 }

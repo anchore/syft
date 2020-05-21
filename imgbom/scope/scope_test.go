@@ -1,19 +1,20 @@
 package scope
 
 import (
+	"testing"
+
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/tree"
-	"testing"
 )
 
 func testScopeImage(t *testing.T) *image.Image {
 	t.Helper()
 
-	one := image.NewLayer(0, nil)
+	one := image.NewLayer(nil)
 	one.Tree = tree.NewFileTree()
 	one.Tree.AddPath("/tree/first/path.txt")
 
-	two := image.NewLayer(1, nil)
+	two := image.NewLayer(nil)
 	two.Tree = tree.NewFileTree()
 	two.Tree.AddPath("/tree/second/path.txt")
 
