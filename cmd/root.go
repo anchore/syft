@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/internal"
-	"github.com/anchore/imgbom/internal/logger"
+	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +37,7 @@ func init() {
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		logger.Errorf("could not start application: %w", err)
+		log.Errorf("could not start application: %w", err)
 		os.Exit(1)
 	}
 }
@@ -45,31 +45,31 @@ func Execute() {
 func doRunCmd(cmd *cobra.Command, args []string) {
 	appCfgStr, err := json.MarshalIndent(&appConfig, "  ", "  ")
 	if err != nil {
-		logger.Debugf("could not display application config: %+v", err)
+		log.Debugf("could not display application config: %+v", err)
 	} else {
-		logger.Debugf("application config:\n%+v", string(appCfgStr))
+		log.Debugf("application config:\n%+v", string(appCfgStr))
 	}
 
 	userImageStr := args[0]
-	logger.Infof("fetching image %s...", userImageStr)
+	log.Infof("fetching image %s...", userImageStr)
 	img, err := stereoscope.GetImage(userImageStr)
 	if err != nil {
-		logger.Errorf("could not fetch image '%s': %w", userImageStr, err)
+		log.Errorf("could not fetch image '%s': %w", userImageStr, err)
 		os.Exit(1)
 	}
 	defer stereoscope.Cleanup()
 
-	logger.Info("cataloging image...")
+	log.Info("cataloging image...")
 	catalog, err := imgbom.CatalogImage(img, appConfig.ScopeOpt)
 	if err != nil {
-		logger.Errorf("could not catalog image: %w", err)
+		log.Errorf("could not catalog image: %w", err)
 		os.Exit(1)
 	}
 
-	logger.Info("done!")
+	log.Info("done!")
 	err = presenter.GetPresenter(appConfig.PresenterOpt).Present(os.Stdout, img, catalog)
 	if err != nil {
-		logger.Errorf("could not format catalog results: %w", err)
+		log.Errorf("could not format catalog results: %w", err)
 		os.Exit(1)
 	}
 }
