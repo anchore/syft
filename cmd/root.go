@@ -1,27 +1,20 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/imgbom/presenter"
-	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal"
+	"github.com/anchore/imgbom/internal/logger"
 	"github.com/anchore/stereoscope"
 	"github.com/spf13/cobra"
 )
 
-const ApplicationName = "imgbom"
-
-var rootOptions struct {
-	cfgFile string
-	scope   string
-	output  string
-}
-
 var rootCmd = &cobra.Command{
-	Use:   fmt.Sprintf("%s [IMAGE]", ApplicationName),
+	Use:   fmt.Sprintf("%s [IMAGE]", internal.ApplicationName),
 	Short: "A container image BOM tool", // TODO: add copy
 	Long: internal.Tprintf(`\
 Supports the following image sources:
@@ -29,66 +22,54 @@ Supports the following image sources:
     {{.appName}} docker://yourrepo/yourimage:tag    explicitly use the docker daemon
     {{.appName}} tar://path/to/yourimage.tar        use a tarball from disk
 `, map[string]interface{}{
-		"appName": ApplicationName,
+		"appName": internal.ApplicationName,
 	}),
 	Args: cobra.MaximumNArgs(1),
 	Run:  doRunCmd,
 }
 
+func init() {
+	setCliOptions()
+
+	cobra.OnInitialize(loadAppConfig)
+	cobra.OnInitialize(setupLoggingFromAppConfig)
+}
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		logger.Errorf("could not start application: %w", err)
 		os.Exit(1)
 	}
 }
 
-func init() {
-	cobra.OnInitialize(loadApplicationConfig)
-	// TODO: add config support
-	//rootCmd.PersistentFlags().StringVarP(&rootOptions.cfgFile, "config", "c", "", "config file")
-
-	// scan options
-	rootCmd.Flags().StringVarP(&rootOptions.scope, "scope", "s", scope.AllLayersScope.String(),
-		fmt.Sprintf("selection of layers to analyze, options=%v", scope.Options))
-
-	// output & formatting options
-	rootCmd.Flags().StringVarP(&rootOptions.output, "output", "o", presenter.JSONOption.String(),
-		fmt.Sprintf("report output formatter, options=%v", presenter.Options))
-}
-
-func loadApplicationConfig() {
-	// TODO: add config support
-}
-
 func doRunCmd(cmd *cobra.Command, args []string) {
-	var pres = presenter.GetPresenter(rootOptions.output)
-	if pres == nil {
-		// TODO: replace with log and exit
-		panic("could not determine presenter")
-	}
-
-	scopeOption := scope.ParseOption(rootOptions.scope)
-	if scopeOption == scope.UnknownScope {
-		// TODO: replace with log and exit
-		panic(scopeOption)
-	}
-
-	img, err := stereoscope.GetImage(args[0])
+	appCfgStr, err := json.MarshalIndent(&appConfig, "  ", "  ")
 	if err != nil {
-		// TODO: replace with log and exit
-		panic(err)
+		logger.Debugf("could not display application config: %+v", err)
+	} else {
+		logger.Debugf("application config:\n%+v", string(appCfgStr))
+	}
+
+	userImageStr := args[0]
+	logger.Infof("fetching image %s...", userImageStr)
+	img, err := stereoscope.GetImage(userImageStr)
+	if err != nil {
+		logger.Errorf("could not fetch image '%s': %w", userImageStr, err)
+		os.Exit(1)
 	}
 	defer stereoscope.Cleanup()
 
-	catalog, err := imgbom.CatalogImage(img, scopeOption)
+	logger.Info("cataloging image...")
+	catalog, err := imgbom.CatalogImage(img, appConfig.ScopeOpt)
 	if err != nil {
-		// TODO: replace with log and exit
-		panic(err)
+		logger.Errorf("could not catalog image: %w", err)
+		os.Exit(1)
 	}
 
-	err = pres.Present(os.Stdout, img, catalog)
+	logger.Info("done!")
+	err = presenter.GetPresenter(appConfig.PresenterOpt).Present(os.Stdout, img, catalog)
 	if err != nil {
-		// TODO: replace with log and exit
-		panic(err)
+		logger.Errorf("could not format catalog results: %w", err)
+		os.Exit(1)
 	}
 }
