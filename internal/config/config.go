@@ -85,7 +85,9 @@ func (cfg *Application) Build() error {
 	cfg.ScopeOpt = scopeOption
 
 	if cfg.Quiet {
-		// quiet option trumps all other logging options
+		// TODO: this is bad: quiet option trumps all other logging options
+		// we should be able to quiet the consol logging and leave file logging alone...
+		// ... this will be an enhancement for later
 		cfg.Log.LevelOpt = zapcore.PanicLevel
 	} else {
 		if cfg.Log.Level != "" {

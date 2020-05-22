@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/imgbom/scope"
@@ -21,6 +22,7 @@ func setCliOptions() {
 		fmt.Sprintf("selection of layers to analyze, options=%v", scope.Options))
 	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
+		os.Exit(1)
 	}
 
 	// output & formatting options
@@ -31,15 +33,17 @@ func setCliOptions() {
 	)
 	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
+		os.Exit(1)
 	}
 
 	flag = "quiet"
 	rootCmd.Flags().BoolP(
 		flag, "q", false,
-		"suppress all auxiliary output",
+		"suppress all logging output",
 	)
 	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
+		os.Exit(1)
 	}
 
 	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
