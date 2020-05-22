@@ -4,14 +4,25 @@ import (
 	"os"
 
 	"github.com/anchore/imgbom/imgbom/logger"
+	"github.com/anchore/imgbom/internal/format"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
+var levelToColor = map[zapcore.Level]format.Color{
+	zapcore.DebugLevel:  format.Magenta,
+	zapcore.InfoLevel:   format.Blue,
+	zapcore.WarnLevel:   format.Yellow,
+	zapcore.ErrorLevel:  format.Red,
+	zapcore.DPanicLevel: format.Red,
+	zapcore.PanicLevel:  format.Red,
+	zapcore.FatalLevel:  format.Red,
+}
+
 type LogConfig struct {
 	EnableConsole bool
 	EnableFile    bool
-	FormatAsJSON  bool
+	Structured    bool
 	Level         zapcore.Level
 	FileLocation  string
 }
@@ -20,6 +31,12 @@ type ZapLogger struct {
 	sugaredLogger *zap.SugaredLogger
 }
 
+// TODO: Consider a human readable text encoder for better field handeling:
+// - https://github.com/uber-go/zap/issues/570
+// - https://github.com/uber-go/zap/pull/123
+// - TextEncoder w/ old interface: https://github.com/uber-go/zap/blob/6c2107996402d47d559199b78e1c44747fe732f9/text_encoder.go
+// - New interface example: https://github.com/uber-go/zap/blob/c2633d6de2d6e1170ad8f150660e3cf5310067c8/zapcore/json_encoder.go
+// - Register the encoder: https://github.com/uber-go/zap/blob/v1.15.0/encoder.go
 func NewZapLogger(config LogConfig) *ZapLogger {
 	cores := []zapcore.Core{}
 
@@ -31,8 +48,8 @@ func NewZapLogger(config LogConfig) *ZapLogger {
 	}
 
 	if config.EnableFile {
-		writer := zapcore.AddSync(getLogWriter(config.FileLocation))
-		core := zapcore.NewCore(getFileEncoder(config), writer, config.Level)
+		writer := zapcore.AddSync(logFileWriter(config.FileLocation))
+		core := zapcore.NewCore(fileEncoder(config), writer, config.Level)
 		cores = append(cores, core)
 	}
 
@@ -50,27 +67,53 @@ func NewZapLogger(config LogConfig) *ZapLogger {
 	}
 }
 
+func (l *ZapLogger) GetNamedLogger(name string) *ZapLogger {
+	return &ZapLogger{
+		sugaredLogger: l.sugaredLogger.Named(name),
+	}
+}
+
 func getConsoleEncoder(config LogConfig) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
-	if config.FormatAsJSON {
+	if config.Structured {
+		encoderConfig.EncodeName = zapcore.FullNameEncoder
+		encoderConfig.EncodeCaller = zapcore.FullCallerEncoder
 		return zapcore.NewJSONEncoder(encoderConfig)
 	}
 	encoderConfig.EncodeTime = nil
 	encoderConfig.EncodeCaller = nil
-	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	encoderConfig.EncodeLevel = consoleLevelEncoder
+	encoderConfig.EncodeName = nameEncoder
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
-func getFileEncoder(config LogConfig) zapcore.Encoder {
+func nameEncoder(loggerName string, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString("[" + loggerName + "]")
+}
+
+func consoleLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	if level != zapcore.InfoLevel {
+		color, ok := levelToColor[level]
+		if !ok {
+			enc.AppendString("[" + level.CapitalString() + "]")
+		} else {
+			enc.AppendString("[" + color.Format(level.CapitalString()) + "]")
+		}
+	}
+}
+
+func fileEncoder(config LogConfig) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	if config.FormatAsJSON {
+	encoderConfig.EncodeName = zapcore.FullNameEncoder
+	encoderConfig.EncodeCaller = zapcore.FullCallerEncoder
+	if config.Structured {
 		return zapcore.NewJSONEncoder(encoderConfig)
 	}
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
-func getLogWriter(location string) zapcore.WriteSyncer {
+func logFileWriter(location string) zapcore.WriteSyncer {
 	file, _ := os.Create(location)
 	return zapcore.AddSync(file)
 }

@@ -95,7 +95,6 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 					"id":        src.ID(),
 					"presenter": "json",
 				}).Errorf("could not get metadata from catalog")
-
 			}
 
 			srcObj := source{

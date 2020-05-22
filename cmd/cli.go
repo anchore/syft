@@ -42,5 +42,5 @@ func setCliOptions() {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
 	}
 
-	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v, -vv, -vvv ...)")
+	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
 }

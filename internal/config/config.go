@@ -20,9 +20,9 @@ type CliOnlyOptions struct {
 }
 
 type Application struct {
-	configPath   string
+	ConfigPath   string
 	PresenterOpt presenter.Option
-	Presenter    string `mapstructure:"output"`
+	Output       string `mapstructure:"output"`
 	ScopeOpt     scope.Option
 	Scope        string  `mapstructure:"scope"`
 	Quiet        bool    `mapstructure:"quiet"`
@@ -31,7 +31,7 @@ type Application struct {
 }
 
 type Logging struct {
-	FormatAsJSON bool `mapstructure:"structured"`
+	Structured   bool `mapstructure:"structured"`
 	LevelOpt     zapcore.Level
 	Level        string `mapstructure:"level"`
 	FileLocation string `mapstructure:"file"`
@@ -59,7 +59,7 @@ func LoadConfigFromFile(v *viper.Viper, cliOpts *CliOnlyOptions) (*Application, 
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse config: %w", err)
 	}
-	config.configPath = v.ConfigFileUsed()
+	config.ConfigPath = v.ConfigFileUsed()
 
 	err = config.Build()
 	if err != nil {
@@ -71,9 +71,9 @@ func LoadConfigFromFile(v *viper.Viper, cliOpts *CliOnlyOptions) (*Application, 
 
 func (cfg *Application) Build() error {
 	// set the presenter
-	presenterOption := presenter.ParseOption(cfg.Presenter)
+	presenterOption := presenter.ParseOption(cfg.Output)
 	if presenterOption == presenter.UnknownPresenter {
-		return fmt.Errorf("bad --output value '%s'", cfg.Presenter)
+		return fmt.Errorf("bad --output value '%s'", cfg.Output)
 	}
 	cfg.PresenterOpt = presenterOption
 
@@ -100,10 +100,10 @@ func (cfg *Application) Build() error {
 			}
 		} else {
 			// set the log level implicitly
-			switch cfg.CliOptions.Verbosity {
-			case 1:
+			switch v := cfg.CliOptions.Verbosity; {
+			case v == 1:
 				cfg.Log.LevelOpt = zapcore.InfoLevel
-			case 2:
+			case v >= 2:
 				cfg.Log.LevelOpt = zapcore.DebugLevel
 			default:
 				cfg.Log.LevelOpt = zapcore.ErrorLevel
@@ -133,14 +133,21 @@ func readConfig(v *viper.Viper, configPath string) error {
 
 	// start searching for valid configs in order...
 
-	// 1. look for .<appname>/config.yaml (in the current directory)
+	// 1. look for .<appname>.yaml (in the current directory)
+	v.AddConfigPath(".")
+	v.SetConfigName(internal.ApplicationName)
+	if err := v.ReadInConfig(); err == nil {
+		return nil
+	}
+
+	// 2. look for .<appname>/config.yaml (in the current directory)
 	v.AddConfigPath("." + internal.ApplicationName)
 	v.SetConfigName("config")
 	if err := v.ReadInConfig(); err == nil {
 		return nil
 	}
 
-	// 2. look for ~/.<appname>.yaml
+	// 3. look for ~/.<appname>.yaml
 	home, err := homedir.Dir()
 	if err == nil {
 		v.AddConfigPath(home)
@@ -150,7 +157,7 @@ func readConfig(v *viper.Viper, configPath string) error {
 		}
 	}
 
-	// 3. look for <appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
+	// 4. look for <appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
 	v.AddConfigPath(path.Join(xdg.ConfigHome, internal.ApplicationName))
 	for _, dir := range xdg.ConfigDirs {
 		v.AddConfigPath(path.Join(dir, internal.ApplicationName))
