@@ -23,7 +23,3 @@ func Debugf(format string, args ...interface{}) {
 func Debug(args ...interface{}) {
 	Log.Debug(args...)
 }
-
-func WithFields(fields map[string]interface{}) logger.Logger {
-	return Log.WithFields(fields)
-}

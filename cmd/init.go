@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/imgbom/internal/format"
 	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/imgbom/internal/logger"
+	"github.com/anchore/stereoscope"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
@@ -33,7 +34,9 @@ func initLogging() {
 		FileLocation:  appConfig.Log.FileLocation,
 	}
 
-	imgbom.SetLogger(logger.NewZapLogger(config))
+	appLogger := logger.NewZapLogger(config)
+	imgbom.SetLogger(appLogger)
+	stereoscope.SetLogger(appLogger)
 }
 
 func logAppConfig() {

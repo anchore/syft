@@ -8,9 +8,3 @@ import (
 func SetLogger(logger logger.Logger) {
 	log.Log = logger
 }
-
-func SetLoggerWithTags(logger logger.Logger, tags map[string]interface{}) {
-	log.Log = logger.WithFields(map[string]interface{}{
-		"source": LibraryName,
-	})
-}

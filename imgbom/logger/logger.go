@@ -6,5 +6,4 @@ type Logger interface {
 	Info(args ...interface{})
 	Debugf(format string, args ...interface{})
 	Debug(args ...interface{})
-	WithFields(map[string]interface{}) Logger
 }

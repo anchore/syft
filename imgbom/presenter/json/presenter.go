@@ -90,11 +90,7 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 			fileMetadata, err := img.FileCatalog.Get(src)
 			if err != nil {
 				// TODO: test case
-				log.WithFields(map[string]interface{}{
-					"path":      src.Path,
-					"id":        src.ID(),
-					"presenter": "json",
-				}).Errorf("could not get metadata from catalog")
+				log.Errorf("could not get metadata from catalog (presenter=json): %+v", src)
 			}
 
 			srcObj := source{
@@ -110,9 +106,7 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 
 	bytes, err := json.Marshal(&doc)
 	if err != nil {
-		log.WithFields(map[string]interface{}{
-			"presenter": "json",
-		}).Errorf("failed to marshal json: %w", err)
+		log.Errorf("failed to marshal json (presenter=json): %w", err)
 	}
 
 	_, err = output.Write(bytes)

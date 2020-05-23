@@ -42,11 +42,7 @@ func (a *Analyzer) Analyze(contents map[file.Reference]string) ([]pkg.Package, e
 		content, ok := contents[reference]
 		if !ok {
 			// TODO: test case
-			log.WithFields(map[string]interface{}{
-				"path":     reference.Path,
-				"id":       reference.ID(),
-				"analyzer": a.Name(),
-			}).Errorf("analyzer file content missing")
+			log.Errorf("analyzer '%s' file content missing: %+v", a.Name(), reference)
 
 			continue
 		}
@@ -54,11 +50,7 @@ func (a *Analyzer) Analyze(contents map[file.Reference]string) ([]pkg.Package, e
 		entries, err := ParseEntries(strings.NewReader(content))
 		if err != nil {
 			// TODO: test case
-			log.WithFields(map[string]interface{}{
-				"path":     reference.Path,
-				"id":       reference.ID(),
-				"analyzer": a.Name(),
-			}).Errorf("analyzer failed to parse entries: %w", err)
+			log.Errorf("analyzer failed to parse entries (reference=%+v): %w", reference, err)
 
 			continue
 		}

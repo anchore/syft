@@ -3,7 +3,6 @@ package logger
 import (
 	"os"
 
-	"github.com/anchore/imgbom/imgbom/logger"
 	"github.com/anchore/imgbom/internal/format"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -28,6 +27,7 @@ type LogConfig struct {
 }
 
 type ZapLogger struct {
+	config        LogConfig
 	sugaredLogger *zap.SugaredLogger
 }
 
@@ -38,18 +38,21 @@ type ZapLogger struct {
 // - New interface example: https://github.com/uber-go/zap/blob/c2633d6de2d6e1170ad8f150660e3cf5310067c8/zapcore/json_encoder.go
 // - Register the encoder: https://github.com/uber-go/zap/blob/v1.15.0/encoder.go
 func NewZapLogger(config LogConfig) *ZapLogger {
+	appLogger := ZapLogger{
+		config: config,
+	}
 	cores := []zapcore.Core{}
 
 	if config.EnableConsole {
 		// note: the report should go to stdout, all logs should go to stderr
 		writer := zapcore.Lock(os.Stderr)
-		core := zapcore.NewCore(getConsoleEncoder(config), writer, config.Level)
+		core := zapcore.NewCore(appLogger.getConsoleEncoder(config), writer, config.Level)
 		cores = append(cores, core)
 	}
 
 	if config.EnableFile {
-		writer := zapcore.AddSync(logFileWriter(config.FileLocation))
-		core := zapcore.NewCore(fileEncoder(config), writer, config.Level)
+		writer := zapcore.AddSync(appLogger.logFileWriter(config.FileLocation))
+		core := zapcore.NewCore(appLogger.fileEncoder(config), writer, config.Level)
 		cores = append(cores, core)
 	}
 
@@ -57,14 +60,13 @@ func NewZapLogger(config LogConfig) *ZapLogger {
 
 	// AddCallerSkip skips 2 number of callers, this is important else the file that gets
 	// logged will always be the wrapped file (In our case logger.go)
-	logger := zap.New(combinedCore,
+	appLogger.sugaredLogger = zap.New(
+		combinedCore,
 		zap.AddCallerSkip(2),
 		zap.AddCaller(),
 	).Sugar()
 
-	return &ZapLogger{
-		sugaredLogger: logger,
-	}
+	return &appLogger
 }
 
 func (l *ZapLogger) GetNamedLogger(name string) *ZapLogger {
@@ -73,7 +75,7 @@ func (l *ZapLogger) GetNamedLogger(name string) *ZapLogger {
 	}
 }
 
-func getConsoleEncoder(config LogConfig) zapcore.Encoder {
+func (l *ZapLogger) getConsoleEncoder(config LogConfig) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	if config.Structured {
 		encoderConfig.EncodeName = zapcore.FullNameEncoder
@@ -82,17 +84,17 @@ func getConsoleEncoder(config LogConfig) zapcore.Encoder {
 	}
 	encoderConfig.EncodeTime = nil
 	encoderConfig.EncodeCaller = nil
-	encoderConfig.EncodeLevel = consoleLevelEncoder
-	encoderConfig.EncodeName = nameEncoder
+	encoderConfig.EncodeLevel = l.consoleLevelEncoder
+	encoderConfig.EncodeName = l.nameEncoder
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
-func nameEncoder(loggerName string, enc zapcore.PrimitiveArrayEncoder) {
+func (l *ZapLogger) nameEncoder(loggerName string, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString("[" + loggerName + "]")
 }
 
-func consoleLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
-	if level != zapcore.InfoLevel {
+func (l *ZapLogger) consoleLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	if level != zapcore.InfoLevel || l.config.Level == zapcore.DebugLevel {
 		color, ok := levelToColor[level]
 		if !ok {
 			enc.AppendString("[" + level.CapitalString() + "]")
@@ -102,7 +104,7 @@ func consoleLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder)
 	}
 }
 
-func fileEncoder(config LogConfig) zapcore.Encoder {
+func (l *ZapLogger) fileEncoder(config LogConfig) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.EncodeName = zapcore.FullNameEncoder
@@ -113,7 +115,7 @@ func fileEncoder(config LogConfig) zapcore.Encoder {
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
-func logFileWriter(location string) zapcore.WriteSyncer {
+func (l *ZapLogger) logFileWriter(location string) zapcore.WriteSyncer {
 	file, _ := os.Create(location)
 	return zapcore.AddSync(file)
 }
@@ -136,14 +138,4 @@ func (l *ZapLogger) Info(args ...interface{}) {
 
 func (l *ZapLogger) Errorf(format string, args ...interface{}) {
 	l.sugaredLogger.Errorf(format, args...)
-}
-
-func (l *ZapLogger) WithFields(fields map[string]interface{}) logger.Logger {
-	var f = make([]interface{}, 0)
-	for k, v := range fields {
-		f = append(f, k)
-		f = append(f, v)
-	}
-	newLogger := l.sugaredLogger.With(f...)
-	return &ZapLogger{newLogger}
 }
