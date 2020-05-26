@@ -7,14 +7,15 @@ import (
 	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/internal/config"
 	"github.com/anchore/imgbom/internal/format"
-	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/imgbom/internal/logger"
 	"github.com/anchore/stereoscope"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 )
 
 var appConfig *config.Application
+var log *zap.SugaredLogger
 
 func initAppConfig() {
 	cfg, err := config.LoadConfigFromFile(viper.GetViper(), &cliOpts)
@@ -34,9 +35,10 @@ func initLogging() {
 		FileLocation:  appConfig.Log.FileLocation,
 	}
 
-	appLogger := logger.NewZapLogger(config)
-	imgbom.SetLogger(appLogger)
-	stereoscope.SetLogger(appLogger)
+	logWrapper := logger.NewZapLogger(config)
+	log = logWrapper.Logger
+	imgbom.SetLogger(logWrapper)
+	stereoscope.SetLogger(logWrapper)
 }
 
 func logAppConfig() {

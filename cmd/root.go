@@ -7,7 +7,6 @@ import (
 	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/internal"
-	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +23,7 @@ Supports the following image sources:
 		"appName": internal.ApplicationName,
 	}),
 	Args: cobra.MaximumNArgs(1),
-	Run:  doRunCmd,
+	Run:  runCmdWrapper,
 }
 
 func init() {
@@ -42,13 +41,17 @@ func Execute() {
 	}
 }
 
-func doRunCmd(cmd *cobra.Command, args []string) {
+func runCmdWrapper(cmd *cobra.Command, args []string) {
+	os.Exit(doRunCmd(cmd, args))
+}
+
+func doRunCmd(cmd *cobra.Command, args []string) int {
 	userImageStr := args[0]
 	log.Infof("Fetching image '%s'", userImageStr)
 	img, err := stereoscope.GetImage(userImageStr)
 	if err != nil {
 		log.Errorf("could not fetch image '%s': %w", userImageStr, err)
-		os.Exit(1)
+		return 1
 	}
 	defer stereoscope.Cleanup()
 
@@ -56,13 +59,14 @@ func doRunCmd(cmd *cobra.Command, args []string) {
 	catalog, err := imgbom.CatalogImage(img, appConfig.ScopeOpt)
 	if err != nil {
 		log.Errorf("could not catalog image: %w", err)
-		os.Exit(1)
+		return 1
 	}
 
 	log.Info("Complete!")
 	err = presenter.GetPresenter(appConfig.PresenterOpt).Present(os.Stdout, img, catalog)
 	if err != nil {
 		log.Errorf("could not format catalog results: %w", err)
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }

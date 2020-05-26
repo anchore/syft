@@ -27,8 +27,8 @@ type LogConfig struct {
 }
 
 type ZapLogger struct {
-	config        LogConfig
-	sugaredLogger *zap.SugaredLogger
+	Config LogConfig
+	Logger *zap.SugaredLogger
 }
 
 // TODO: Consider a human readable text encoder for better field handeling:
@@ -39,7 +39,7 @@ type ZapLogger struct {
 // - Register the encoder: https://github.com/uber-go/zap/blob/v1.15.0/encoder.go
 func NewZapLogger(config LogConfig) *ZapLogger {
 	appLogger := ZapLogger{
-		config: config,
+		Config: config,
 	}
 	cores := []zapcore.Core{}
 
@@ -60,7 +60,7 @@ func NewZapLogger(config LogConfig) *ZapLogger {
 
 	// AddCallerSkip skips 2 number of callers, this is important else the file that gets
 	// logged will always be the wrapped file (In our case logger.go)
-	appLogger.sugaredLogger = zap.New(
+	appLogger.Logger = zap.New(
 		combinedCore,
 		zap.AddCallerSkip(2),
 		zap.AddCaller(),
@@ -71,7 +71,7 @@ func NewZapLogger(config LogConfig) *ZapLogger {
 
 func (l *ZapLogger) GetNamedLogger(name string) *ZapLogger {
 	return &ZapLogger{
-		sugaredLogger: l.sugaredLogger.Named(name),
+		Logger: l.Logger.Named(name),
 	}
 }
 
@@ -94,7 +94,7 @@ func (l *ZapLogger) nameEncoder(loggerName string, enc zapcore.PrimitiveArrayEnc
 }
 
 func (l *ZapLogger) consoleLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
-	if level != zapcore.InfoLevel || l.config.Level == zapcore.DebugLevel {
+	if level != zapcore.InfoLevel || l.Config.Level == zapcore.DebugLevel {
 		color, ok := levelToColor[level]
 		if !ok {
 			enc.AppendString("[" + level.CapitalString() + "]")
@@ -121,21 +121,21 @@ func (l *ZapLogger) logFileWriter(location string) zapcore.WriteSyncer {
 }
 
 func (l *ZapLogger) Debugf(format string, args ...interface{}) {
-	l.sugaredLogger.Debugf(format, args...)
+	l.Logger.Debugf(format, args...)
 }
 
 func (l *ZapLogger) Infof(format string, args ...interface{}) {
-	l.sugaredLogger.Infof(format, args...)
+	l.Logger.Infof(format, args...)
 }
 
 func (l *ZapLogger) Debug(args ...interface{}) {
-	l.sugaredLogger.Debug(args...)
+	l.Logger.Debug(args...)
 }
 
 func (l *ZapLogger) Info(args ...interface{}) {
-	l.sugaredLogger.Info(args...)
+	l.Logger.Info(args...)
 }
 
 func (l *ZapLogger) Errorf(format string, args ...interface{}) {
-	l.sugaredLogger.Errorf(format, args...)
+	l.Logger.Errorf(format, args...)
 }
