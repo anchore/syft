@@ -2,7 +2,6 @@ package presenter
 
 import (
 	"io"
-	"strings"
 
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/presenter/json"
@@ -13,9 +12,9 @@ type Presenter interface {
 	Present(io.Writer, *image.Image, pkg.Catalog) error
 }
 
-func GetPresenter(userStr string) Presenter {
-	switch strings.ToLower(userStr) {
-	case JSONOption.String():
+func GetPresenter(option Option) Presenter {
+	switch option {
+	case JSONPresenter:
 		return json.NewPresenter()
 	default:
 		return nil

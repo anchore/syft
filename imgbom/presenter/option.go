@@ -1,23 +1,34 @@
 package presenter
 
+import "strings"
+
 const (
-	UnknownPresenterOption Option = iota
-	JSONOption
+	UnknownPresenter Option = iota
+	JSONPresenter
 )
 
 var optionStr = []string{
-	"UnknownPresenterOption",
+	"UnknownPresenter",
 	"json",
 }
 
 var Options = []Option{
-	JSONOption,
+	JSONPresenter,
 }
 
-type Option int
+type Option uint
+
+func ParseOption(userStr string) Option {
+	switch strings.ToLower(userStr) {
+	case strings.ToLower(JSONPresenter.String()):
+		return JSONPresenter
+	default:
+		return UnknownPresenter
+	}
+}
 
 func (o Option) String() string {
-	if int(o) >= len(optionStr) || int(o) < 0 {
+	if int(o) >= len(optionStr) {
 		return optionStr[0]
 	}
 

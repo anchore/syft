@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/anchore/imgbom/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -29,5 +30,5 @@ func SetVersion(v *Version) {
 }
 
 func printVersion(cmd *cobra.Command, args []string) {
-	fmt.Printf("%s %s\n", ApplicationName, version.Version)
+	fmt.Printf("%s %s\n", internal.ApplicationName, version.Version)
 }

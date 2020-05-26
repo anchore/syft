@@ -8,7 +8,7 @@ const (
 	AllLayersScope
 )
 
-type Option int
+type Option uint
 
 var optionStr = []string{
 	"UnknownScope",
@@ -32,7 +32,7 @@ func ParseOption(userStr string) Option {
 }
 
 func (o Option) String() string {
-	if int(o) >= len(optionStr) || int(o) < 0 {
+	if int(o) >= len(optionStr) {
 		return optionStr[0]
 	}
 
