@@ -1,11 +1,16 @@
 package pkg
 
-import "github.com/anchore/stereoscope/pkg/file"
+import (
+	"fmt"
 
-// TODO: add package ID (random/incremental)
+	"github.com/anchore/stereoscope/pkg/file"
+)
+
+type ID int64
 
 // TODO: add field to trace which analyzer detected this
 type Package struct {
+	id       ID
 	Name     string
 	Version  string
 	Source   []file.Reference
@@ -14,4 +19,10 @@ type Package struct {
 	Metadata interface{}
 }
 
-// TODO: stringer...
+func (p Package) ID() ID {
+	return p.id
+}
+
+func (p Package) String() string {
+	return fmt.Sprintf("Pkg(type=%s, name=%s, version=%s)", p.Type, p.Name, p.Version)
+}

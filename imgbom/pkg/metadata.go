@@ -17,4 +17,5 @@ type DpkgMetadata struct {
 	SuggestsPkgs   string `mapstructure:"Suggests"`
 	Version        string `mapstructure:"Version"`
 	ConfigFiles    string `mapstructure:"Conffiles"`
+	Description    string `mapstructure:"Description"`
 }

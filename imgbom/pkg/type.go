@@ -5,7 +5,7 @@ const (
 	ApkPkg
 	DebPkg
 	JavaPkg
-	NodePkg
+	JavaScriptPkg
 	PacmanPkg
 	PythonPkg
 	RpmPkg
