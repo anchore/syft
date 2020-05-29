@@ -5,7 +5,7 @@ const (
 	ApkPkg
 	DebPkg
 	JavaPkg
-	NodePkg
+	JavaScriptPkg
 	PacmanPkg
 	PythonPkg
 	RpmPkg
@@ -19,7 +19,7 @@ var typeStr = []string{
 	"apk",
 	"deb",
 	"java",
-	"node",
+	"javascript",
 	"pacman",
 	"python",
 	"rpm",

@@ -18,7 +18,7 @@ func init() {
 	controllerInstance.add(dpkg.NewAnalyzer())
 }
 
-func Analyze(s scope.Scope) (pkg.Catalog, error) {
+func Analyze(s scope.Scope) (*pkg.Catalog, error) {
 	return controllerInstance.analyze(s)
 }
 
@@ -31,7 +31,7 @@ func (c *controller) add(a Analyzer) {
 	c.analyzers = append(c.analyzers, a)
 }
 
-func (c *controller) analyze(s scope.Scope) (pkg.Catalog, error) {
+func (c *controller) analyze(s scope.Scope) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
 	fileSelection := make([]file.Reference, 0)
 
@@ -44,7 +44,7 @@ func (c *controller) analyze(s scope.Scope) (pkg.Catalog, error) {
 	// fetch contents for requested selection by analyzers
 	contents, err := s.Image.MultipleFileContentsByRef(fileSelection...)
 	if err != nil {
-		return pkg.Catalog{}, err
+		return nil, err
 	}
 
 	// perform analysis, accumulating errors for each failed analysis
@@ -65,7 +65,7 @@ func (c *controller) analyze(s scope.Scope) (pkg.Catalog, error) {
 	}
 
 	if errs != nil {
-		return pkg.Catalog{}, errs
+		return nil, errs
 	}
 
 	return catalog, nil
