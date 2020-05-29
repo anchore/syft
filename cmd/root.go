@@ -3,9 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/anchore/imgbom/imgbom"
-	"github.com/anchore/imgbom/imgbom/presenter"
+	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/internal"
 	"github.com/anchore/stereoscope"
 	"github.com/spf13/cobra"
@@ -63,11 +64,36 @@ func doRunCmd(cmd *cobra.Command, args []string) int {
 	}
 
 	log.Info("Complete!")
-	err = presenter.GetPresenter(appConfig.PresenterOpt).Present(os.Stdout, img, catalog)
-	if err != nil {
-		log.Errorf("could not format catalog results: %w", err)
-		return 1
+	// err = presenter.GetPresenter(appConfig.PresenterOpt).Present(os.Stdout, img, catalog)
+	// if err != nil {
+	// 	log.Errorf("could not format catalog results: %w", err)
+	// 	return 1
+	// }
+	result := catalog.SearchName("libselinux")
+	fmt.Println(result)
+	if result != nil {
+		for _, hit := range result.Hits {
+			pkgId, err := strconv.Atoi(hit.ID)
+			if err != nil {
+				// TODO: just no...
+				panic(err)
+			}
+			fmt.Println(pkgId, catalog.Package(pkg.ID(pkgId)), hit.Score)
+		}
 	}
+	fmt.Println("------------------------------------------")
 
+	result = catalog.SearchMetadata("libselinux")
+	fmt.Println(result)
+	if result != nil {
+		for _, hit := range result.Hits {
+			pkgId, err := strconv.Atoi(hit.ID)
+			if err != nil {
+				// TODO: just no...
+				panic(err)
+			}
+			fmt.Println(pkgId, catalog.Package(pkg.ID(pkgId)), hit.Score)
+		}
+	}
 	return 0
 }

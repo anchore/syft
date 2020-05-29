@@ -1,10 +1,13 @@
 package pkg
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/mapping"
 )
 
 // TODO: add reader methods (by type, id, fuzzy search, etc)
@@ -12,17 +15,34 @@ import (
 var nextPackageID int64
 
 type Catalog struct {
-	byID   map[ID]*Package
-	byType map[Type][]*Package
-	byFile map[file.Reference][]*Package
-	lock   sync.RWMutex
+	byID                map[ID]*Package
+	byType              map[Type][]*Package
+	byFile              map[file.Reference][]*Package
+	searchSpace         mapping.IndexMapping
+	nameSearchIndex     bleve.Index
+	metadataSearchIndex bleve.Index
+	lock                sync.RWMutex
 }
 
 func NewCatalog() Catalog {
+	searchMap := bleve.NewIndexMapping()
+	nameIndex, err := bleve.NewMemOnly(searchMap)
+	if err != nil {
+		// TODO: log
+		panic(err)
+	}
+	metadataIndex, err := bleve.NewMemOnly(searchMap)
+	if err != nil {
+		// TODO: log
+		panic(err)
+	}
 	return Catalog{
-		byID:   make(map[ID]*Package),
-		byType: make(map[Type][]*Package),
-		byFile: make(map[file.Reference][]*Package),
+		byID:                make(map[ID]*Package),
+		byType:              make(map[Type][]*Package),
+		byFile:              make(map[file.Reference][]*Package),
+		searchSpace:         searchMap,
+		nameSearchIndex:     nameIndex,
+		metadataSearchIndex: metadataIndex,
 	}
 }
 
@@ -63,6 +83,38 @@ func (c *Catalog) Add(p Package) {
 		}
 		c.byFile[s] = append(c.byFile[s], &p)
 	}
+
+	// index the package findings
+	err := c.nameSearchIndex.Index(fmt.Sprintf("%d", p.id), p.Name)
+	if err != nil {
+		// TODO: just no...
+		panic(err)
+	}
+	err = c.metadataSearchIndex.Index(fmt.Sprintf("%d", p.id), p.Metadata)
+	if err != nil {
+		// TODO: just no...
+		panic(err)
+	}
+}
+
+func (c *Catalog) SearchMetadata(query string) *bleve.SearchResult {
+	request := bleve.NewSearchRequest(bleve.NewMatchQuery(query))
+	result, err := c.metadataSearchIndex.Search(request)
+	if err != nil {
+		// TODO: just no...
+		panic(err)
+	}
+	return result
+}
+
+func (c *Catalog) SearchName(query string) *bleve.SearchResult {
+	request := bleve.NewSearchRequest(bleve.NewMatchQuery(query))
+	result, err := c.nameSearchIndex.Search(request)
+	if err != nil {
+		// TODO: just no...
+		panic(err)
+	}
+	return result
 }
 
 func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
