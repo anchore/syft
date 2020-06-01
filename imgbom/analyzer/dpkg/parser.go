@@ -10,7 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-var endOfPackages = fmt.Errorf("no more packages to read")
+var errEndOfPackages = fmt.Errorf("no more packages to read")
 
 func ParseEntries(reader io.Reader) ([]pkg.DpkgMetadata, error) {
 	buffedReader := bufio.NewReader(reader)
@@ -19,7 +19,7 @@ func ParseEntries(reader io.Reader) ([]pkg.DpkgMetadata, error) {
 	for {
 		entry, err := parseEntry(buffedReader)
 		if err != nil {
-			if err == endOfPackages {
+			if err == errEndOfPackages {
 				break
 			}
 			return nil, err
@@ -38,7 +38,7 @@ func parseEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				return pkg.DpkgMetadata{}, endOfPackages
+				return pkg.DpkgMetadata{}, errEndOfPackages
 			}
 			return pkg.DpkgMetadata{}, err
 		}

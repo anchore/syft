@@ -16,7 +16,7 @@ var Options = []Option{
 	JSONPresenter,
 }
 
-type Option uint
+type Option int
 
 func ParseOption(userStr string) Option {
 	switch strings.ToLower(userStr) {
@@ -28,7 +28,7 @@ func ParseOption(userStr string) Option {
 }
 
 func (o Option) String() string {
-	if int(o) >= len(optionStr) {
+	if int(o) >= len(optionStr) || o < 0 {
 		return optionStr[0]
 	}
 

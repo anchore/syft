@@ -8,10 +8,10 @@ import (
 )
 
 // TODO: add os detection results as return value
-func CatalogImage(img *image.Image, o scope.Option) (pkg.Catalog, error) {
+func CatalogImage(img *image.Image, o scope.Option) (*pkg.Catalog, error) {
 	s, err := scope.NewScope(img, o)
 	if err != nil {
-		return pkg.Catalog{}, err
+		return nil, err
 	}
 
 	// TODO: add OS detection here...

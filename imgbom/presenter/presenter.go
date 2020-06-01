@@ -9,7 +9,7 @@ import (
 )
 
 type Presenter interface {
-	Present(io.Writer, *image.Image, pkg.Catalog) error
+	Present(io.Writer, *image.Image, *pkg.Catalog) error
 }
 
 func GetPresenter(option Option) Presenter {

@@ -49,7 +49,7 @@ type artifact struct {
 	Metadata interface{} `json:"metadata"`
 }
 
-func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, catalog pkg.Catalog) error {
+func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, catalog *pkg.Catalog) error {
 	tags := make([]string, len(img.Metadata.Tags))
 	for idx, tag := range img.Metadata.Tags {
 		tags[idx] = tag.String()

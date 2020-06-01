@@ -68,5 +68,6 @@ func doRunCmd(cmd *cobra.Command, args []string) int {
 		log.Errorf("could not format catalog results: %w", err)
 		return 1
 	}
+
 	return 0
 }
