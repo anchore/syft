@@ -13,6 +13,7 @@ type Package struct {
 	id       ID
 	Name     string
 	Version  string
+	FoundBy  string
 	Source   []file.Reference
 	Licenses []string
 	Type     Type

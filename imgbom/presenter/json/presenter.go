@@ -35,7 +35,7 @@ type layer struct {
 }
 
 type source struct {
-	Source  string   `json:"source"`
+	FoundBy string   `json:"foundBy"`
 	Layer   int      `json:"layer"`
 	Effects []string `json:"effects"`
 }
@@ -81,7 +81,6 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 			Name:     p.Name,
 			Version:  p.Version,
 			Type:     p.Type.String(),
-			Analyzer: "TODO", // TODO
 			Sources:  make([]source, len(p.Source)),
 			Metadata: p.Metadata,
 		}
@@ -94,7 +93,7 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 			}
 
 			srcObj := source{
-				Source:  "",
+				FoundBy: p.FoundBy,
 				Layer:   int(fileMetadata.Source.Metadata.Index),
 				Effects: []string{}, // TODO
 			}

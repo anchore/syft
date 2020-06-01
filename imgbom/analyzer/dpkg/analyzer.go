@@ -59,6 +59,7 @@ func (a *Analyzer) Analyze(contents map[file.Reference]string) ([]pkg.Package, e
 				Name:     entry.Package,
 				Version:  entry.Version,
 				Type:     pkg.DebPkg,
+				FoundBy:  a.Name(),
 				Source:   []file.Reference{reference},
 				Metadata: entry,
 			})

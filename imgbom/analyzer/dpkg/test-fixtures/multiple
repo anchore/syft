@@ -1,6 +1,7 @@
 Package: tzdata
 Status: install ok installed
 Priority: required
+Source: tzdata-dev
 Section: localization
 Installed-Size: 3036
 Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
