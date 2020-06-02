@@ -9,12 +9,12 @@ import (
 
 type Scope struct {
 	Option Option
-	Trees  []*tree.FileTree
+	Trees  []tree.FileTreeReader
 	Image  *image.Image
 }
 
 func NewScope(img *image.Image, option Option) (Scope, error) {
-	var trees = make([]*tree.FileTree, 0)
+	var trees = make([]tree.FileTreeReader, 0)
 
 	if img == nil {
 		return Scope{}, fmt.Errorf("no image given")

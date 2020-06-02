@@ -81,7 +81,11 @@ func TestScope(t *testing.T) {
 			t.Fatalf("mismatched tree lengths: %d!=%d", len(actual.Trees), len(c.expectedTrees))
 		}
 
-		for idx, at := range actual.Trees {
+		for idx, atr := range actual.Trees {
+			at, ok := atr.(*tree.FileTree)
+			if !ok {
+				t.Fatalf("could not extract tree from reader")
+			}
 			if !at.Equal(c.expectedTrees[idx]) {
 				t.Error("mismatched tree @ idx", idx)
 			}
