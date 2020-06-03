@@ -45,7 +45,7 @@ func runCmdWrapper(cmd *cobra.Command, args []string) {
 	os.Exit(doRunCmd(cmd, args))
 }
 
-func doRunCmd(cmd *cobra.Command, args []string) int {
+func doRunCmd(_ *cobra.Command, args []string) int {
 	userImageStr := args[0]
 	log.Infof("Fetching image '%s'", userImageStr)
 	img, err := stereoscope.GetImage(userImageStr)

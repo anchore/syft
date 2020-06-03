@@ -7,8 +7,9 @@ import (
 )
 
 type Distro struct {
-	Type    Type
-	Version *hashiVer.Version
+	Type       Type
+	Version    *hashiVer.Version
+	RawVersion string
 }
 
 func NewDistro(t Type, ver string) (Distro, error) {
@@ -17,13 +18,18 @@ func NewDistro(t Type, ver string) (Distro, error) {
 		return Distro{}, fmt.Errorf("could not create distro version: %w", err)
 	}
 	return Distro{
-		Type:    t,
-		Version: verObj,
+		Type:       t,
+		Version:    verObj,
+		RawVersion: ver,
 	}, nil
 }
 
-func (d Distro) MajorVersion() int {
-	return d.Version.Segments()[0]
+func (d Distro) MajorVersion() string {
+	return fmt.Sprintf("%d", d.Version.Segments()[0])
+}
+
+func (d Distro) FullVersion() string {
+	return d.RawVersion
 }
 
 func (d Distro) String() string {
