@@ -90,17 +90,17 @@ func TestMultiplePackages(t *testing.T) {
 				}
 			}()
 
-			entries, err := ParseDpkgStatusEntries(file)
+			pkgs, err := ParseDpkgStatus(file)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}
 
-			if len(entries) != 2 {
-				t.Fatalf("unexpected number of entries: %d", len(entries))
+			if len(pkgs) != 2 {
+				t.Fatalf("unexpected number of entries: %d", len(pkgs))
 			}
 
-			for idx, entry := range entries {
-				compareEntries(t, entry, test.expected[idx])
+			for idx, entry := range pkgs {
+				compareEntries(t, entry.Metadata.(pkg.DpkgMetadata), test.expected[idx])
 			}
 
 		})

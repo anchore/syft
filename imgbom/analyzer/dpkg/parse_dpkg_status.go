@@ -12,9 +12,9 @@ import (
 
 var errEndOfPackages = fmt.Errorf("no more packages to read")
 
-func ParseDpkgStatusEntries(reader io.Reader) ([]pkg.DpkgMetadata, error) {
+func ParseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
-	var entries = make([]pkg.DpkgMetadata, 0)
+	var packages = make([]pkg.Package, 0)
 
 	for {
 		entry, err := parseDpkgStatusEntry(buffedReader)
@@ -24,10 +24,15 @@ func ParseDpkgStatusEntries(reader io.Reader) ([]pkg.DpkgMetadata, error) {
 			}
 			return nil, err
 		}
-		entries = append(entries, entry)
+		packages = append(packages, pkg.Package{
+			Name:     entry.Package,
+			Version:  entry.Version,
+			Type:     pkg.DebPkg,
+			Metadata: entry,
+		})
 	}
 
-	return entries, nil
+	return packages, nil
 }
 
 func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
