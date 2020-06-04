@@ -3,13 +3,10 @@ package pkg
 const (
 	UnknownPkg Type = iota
 	ApkPkg
+	BundlerPkg
 	DebPkg
-	JavaPkg
-	JavaScriptPkg
 	PacmanPkg
-	PythonPkg
 	RpmPkg
-	RubyPkg
 )
 
 type Type uint
@@ -17,13 +14,18 @@ type Type uint
 var typeStr = []string{
 	"UnknownPackage",
 	"apk",
+	"bundler",
 	"deb",
-	"java",
-	"javascript",
 	"pacman",
-	"python",
 	"rpm",
-	"ruby",
+}
+
+var AllPkgs = []Type{
+	ApkPkg,
+	BundlerPkg,
+	DebPkg,
+	PacmanPkg,
+	RpmPkg,
 }
 
 func (t Type) String() string {

@@ -26,6 +26,10 @@ func NewCatalog() *Catalog {
 	}
 }
 
+func (c *Catalog) PackageCount() int {
+	return len(c.byID)
+}
+
 func (c *Catalog) Package(id ID) *Package {
 	return c.byID[id]
 }

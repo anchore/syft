@@ -16,6 +16,7 @@ type Package struct {
 	FoundBy  string
 	Source   []file.Reference
 	Licenses []string
+	Language Language // TODO: should this support multiple languages as a slice?
 	Type     Type
 	Metadata interface{}
 }

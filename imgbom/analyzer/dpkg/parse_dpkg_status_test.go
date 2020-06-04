@@ -46,7 +46,7 @@ func TestSinglePackage(t *testing.T) {
 
 			reader := bufio.NewReader(file)
 
-			entry, err := parseEntry(reader)
+			entry, err := parseDpkgStatusEntry(reader)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}
@@ -90,7 +90,7 @@ func TestMultiplePackages(t *testing.T) {
 				}
 			}()
 
-			entries, err := ParseEntries(file)
+			entries, err := ParseDpkgStatusEntries(file)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}

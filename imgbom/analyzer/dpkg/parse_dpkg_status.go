@@ -12,12 +12,12 @@ import (
 
 var errEndOfPackages = fmt.Errorf("no more packages to read")
 
-func ParseEntries(reader io.Reader) ([]pkg.DpkgMetadata, error) {
+func ParseDpkgStatusEntries(reader io.Reader) ([]pkg.DpkgMetadata, error) {
 	buffedReader := bufio.NewReader(reader)
 	var entries = make([]pkg.DpkgMetadata, 0)
 
 	for {
-		entry, err := parseEntry(buffedReader)
+		entry, err := parseDpkgStatusEntry(buffedReader)
 		if err != nil {
 			if err == errEndOfPackages {
 				break
@@ -30,7 +30,7 @@ func ParseEntries(reader io.Reader) ([]pkg.DpkgMetadata, error) {
 	return entries, nil
 }
 
-func parseEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
+func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
 	dpkgFields := make(map[string]string)
 	var key string
 
