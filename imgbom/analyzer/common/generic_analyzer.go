@@ -9,6 +9,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/tree"
 )
 
+// TODO: put under test...
+
 type GenericAnalyzer struct {
 	globParserDispatch map[string]ParserFn
 	pathParserDispatch map[string]ParserFn

@@ -90,7 +90,7 @@ func TestMultiplePackages(t *testing.T) {
 				}
 			}()
 
-			pkgs, err := ParseDpkgStatus(file)
+			pkgs, err := parseDpkgStatus(file)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}
