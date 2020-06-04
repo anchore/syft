@@ -21,7 +21,7 @@ func (a *Analyzer) Name() string {
 	return "dpkg-analyzer"
 }
 
-func (a *Analyzer) SelectFiles(trees []*tree.FileTree) []file.Reference {
+func (a *Analyzer) SelectFiles(trees []tree.FileTreeReader) []file.Reference {
 	files := make([]file.Reference, 0)
 	for _, tree := range trees {
 		// TODO: extract into function/slice/etc
