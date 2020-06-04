@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"github.com/anchore/imgbom/imgbom/analyzer/bundler"
 	"github.com/anchore/imgbom/imgbom/analyzer/dpkg"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
@@ -12,10 +13,7 @@ import (
 var controllerInstance controller
 
 func init() {
-	controllerInstance = controller{
-		analyzers: make([]Analyzer, 0),
-	}
-	controllerInstance.add(dpkg.NewAnalyzer())
+	controllerInstance = newController()
 }
 
 func Analyze(s scope.Scope) (*pkg.Catalog, error) {
@@ -24,6 +22,15 @@ func Analyze(s scope.Scope) (*pkg.Catalog, error) {
 
 type controller struct {
 	analyzers []Analyzer
+}
+
+func newController() controller {
+	ctrlr := controller{
+		analyzers: make([]Analyzer, 0),
+	}
+	ctrlr.add(dpkg.NewAnalyzer())
+	ctrlr.add(bundler.NewAnalyzer())
+	return ctrlr
 }
 
 func (c *controller) add(a Analyzer) {

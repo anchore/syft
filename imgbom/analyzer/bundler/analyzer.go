@@ -1,4 +1,4 @@
-package dpkg
+package bundler
 
 import (
 	"io"
@@ -11,10 +11,10 @@ import (
 )
 
 var parserDispatch = map[string]parserFn{
-	"/var/lib/dpkg/status": ParseDpkgStatusEntries,
+	"*/Gemfile.lock": ParseGemfileLockEntries,
 }
 
-type parserFn func(io.Reader) ([]pkg.DpkgMetadata, error)
+type parserFn func(io.Reader) ([]pkg.Package, error)
 
 type Analyzer struct {
 	selectedFiles []file.Reference
@@ -29,12 +29,14 @@ func NewAnalyzer() *Analyzer {
 }
 
 func (a *Analyzer) Name() string {
-	return "dpkg-analyzer"
+	return "bundler-analyzer"
 }
 
-func (a *Analyzer) register(f file.Reference, parser parserFn) {
-	a.selectedFiles = append(a.selectedFiles, f)
-	a.parsers[f] = parser
+func (a *Analyzer) register(files []file.Reference, parser parserFn) {
+	a.selectedFiles = append(a.selectedFiles, files...)
+	for _, f := range files {
+		a.parsers[f] = parser
+	}
 }
 
 func (a *Analyzer) clear() {
@@ -44,10 +46,13 @@ func (a *Analyzer) clear() {
 
 func (a *Analyzer) SelectFiles(trees []tree.FileTreeReader) []file.Reference {
 	for _, tree := range trees {
-		for exactPath, parser := range parserDispatch {
-			match := tree.File(file.Path(exactPath))
-			if match != nil {
-				a.register(*match, parser)
+		for globPattern, parser := range parserDispatch {
+			fileMatches, err := tree.FilesByGlob(globPattern)
+			if err != nil {
+				log.Errorf("'%s' failed to find files by glob: %s", a.Name(), globPattern)
+			}
+			if fileMatches != nil {
+				a.register(fileMatches, parser)
 			}
 		}
 	}
@@ -60,28 +65,24 @@ func (a *Analyzer) Analyze(contents map[file.Reference]string) ([]pkg.Package, e
 
 	packages := make([]pkg.Package, 0)
 
-	for _, reference := range a.selectedFiles {
+	for reference, parser := range a.parsers {
 		content, ok := contents[reference]
 		if !ok {
 			log.Errorf("analyzer '%s' file content missing: %+v", a.Name(), reference)
 			continue
 		}
 
-		entries, err := ParseDpkgStatusEntries(strings.NewReader(content))
+		entries, err := parser(strings.NewReader(content))
 		if err != nil {
 			log.Errorf("analyzer failed to parse entries (reference=%+v): %w", reference, err)
 			continue
 		}
 
 		for _, entry := range entries {
-			packages = append(packages, pkg.Package{
-				Name:     entry.Package,
-				Version:  entry.Version,
-				Type:     pkg.DebPkg,
-				FoundBy:  a.Name(),
-				Source:   []file.Reference{reference},
-				Metadata: entry,
-			})
+			entry.FoundBy = a.Name()
+			entry.Source = []file.Reference{reference}
+
+			packages = append(packages, entry)
 		}
 	}
 
