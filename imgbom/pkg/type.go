@@ -5,8 +5,10 @@ const (
 	ApkPkg
 	BundlerPkg
 	DebPkg
+	EggPkg
 	PacmanPkg
 	RpmPkg
+	WheelPkg
 )
 
 type Type uint
@@ -14,18 +16,22 @@ type Type uint
 var typeStr = []string{
 	"UnknownPackage",
 	"apk",
-	"bundler",
+	"bundle",
 	"deb",
+	"egg",
 	"pacman",
 	"rpm",
+	"wheel",
 }
 
 var AllPkgs = []Type{
 	ApkPkg,
 	BundlerPkg,
 	DebPkg,
+	EggPkg,
 	PacmanPkg,
 	RpmPkg,
+	WheelPkg,
 }
 
 func (t Type) String() string {

@@ -1,4 +1,4 @@
-package bundler
+package python
 
 import (
 	"github.com/anchore/imgbom/imgbom/analyzer/common"
@@ -13,7 +13,8 @@ type Analyzer struct {
 
 func NewAnalyzer() *Analyzer {
 	globParserDispatch := map[string]common.ParserFn{
-		"*/Gemfile.lock": parseGemfileLockEntries,
+		"*egg-info/PKG-INFO":  parseEggMetadata,
+		"*dist-info/METADATA": parseWheelMetadata,
 	}
 
 	return &Analyzer{
@@ -22,7 +23,7 @@ func NewAnalyzer() *Analyzer {
 }
 
 func (a *Analyzer) Name() string {
-	return "bundler-analyzer"
+	return "python-analyzer"
 }
 
 func (a *Analyzer) SelectFiles(trees []tree.FileTreeReader) []file.Reference {

@@ -11,7 +11,7 @@ import (
 
 var sectionsOfInterest = internal.NewStringSetFromSlice([]string{"GEM"})
 
-func ParseGemfileLockEntries(reader io.Reader) ([]pkg.Package, error) {
+func parseGemfileLockEntries(reader io.Reader) ([]pkg.Package, error) {
 	pkgs := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(reader)
 

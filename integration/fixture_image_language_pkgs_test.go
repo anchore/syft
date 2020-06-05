@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/imgbom/imgbom/scope"
 )
 
-func TestBundlerImage(t *testing.T) {
+func TestLanguageImage(t *testing.T) {
 	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-language-pkgs")
 	defer cleanup()
 
@@ -26,6 +26,22 @@ func TestBundlerImage(t *testing.T) {
 		pkgLanguage pkg.Language
 		pkgInfo     map[string]string
 	}{
+		{
+			name:        "find python wheel packages",
+			pkgType:     pkg.WheelPkg,
+			pkgLanguage: pkg.Python,
+			pkgInfo: map[string]string{
+				"Pygments": "2.6.1",
+			},
+		},
+		{
+			name:        "find python egg packages",
+			pkgType:     pkg.EggPkg,
+			pkgLanguage: pkg.Python,
+			pkgInfo: map[string]string{
+				"requests": "2.22.0",
+			},
+		},
 		{
 			name:        "find bundler packages",
 			pkgType:     pkg.BundlerPkg,
@@ -88,12 +104,7 @@ func TestBundlerImage(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			if catalog.PackageCount() != len(c.pkgInfo) {
-				for a := range catalog.Enumerate(c.pkgType) {
-					t.Log("   ", a)
-				}
-				t.Fatalf("unexpected package count: %d!=%d", catalog.PackageCount(), len(c.pkgInfo))
-			}
+			pkgCount := 0
 
 			for a := range catalog.Enumerate(c.pkgType) {
 
@@ -113,6 +124,14 @@ func TestBundlerImage(t *testing.T) {
 				if a.Type != c.pkgType {
 					t.Errorf("bad package type (pkg=%+v): %+v", a.Name, a.Type)
 				}
+				pkgCount++
+			}
+
+			if pkgCount != len(c.pkgInfo) {
+				for a := range catalog.Enumerate(c.pkgType) {
+					t.Log("   ", a)
+				}
+				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
 			}
 
 		})

@@ -13,7 +13,7 @@ type Analyzer struct {
 
 func NewAnalyzer() *Analyzer {
 	pathParserDispatch := map[string]common.ParserFn{
-		"/var/lib/dpkg/status": ParseDpkgStatus,
+		"/var/lib/dpkg/status": parseDpkgStatus,
 	}
 
 	return &Analyzer{

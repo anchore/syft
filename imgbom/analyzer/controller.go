@@ -3,6 +3,7 @@ package analyzer
 import (
 	"github.com/anchore/imgbom/imgbom/analyzer/bundler"
 	"github.com/anchore/imgbom/imgbom/analyzer/dpkg"
+	"github.com/anchore/imgbom/imgbom/analyzer/python"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal/log"
@@ -30,6 +31,7 @@ func newController() controller {
 	}
 	ctrlr.add(dpkg.NewAnalyzer())
 	ctrlr.add(bundler.NewAnalyzer())
+	ctrlr.add(python.NewAnalyzer())
 	return ctrlr
 }
 
