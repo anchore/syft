@@ -33,5 +33,10 @@ func (d Distro) FullVersion() string {
 }
 
 func (d Distro) String() string {
-	return fmt.Sprintf("%s %s", d.Type, d.Version)
+	return fmt.Sprintf("%s %s", d.Type, d.RawVersion)
+}
+
+// Name provides a string repr of the distro
+func (d Distro) Name() string {
+	return fmt.Sprintf("%s", d.Type)
 }

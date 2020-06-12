@@ -56,11 +56,11 @@ func doRunCmd(_ *cobra.Command, args []string) int {
 	defer stereoscope.Cleanup()
 
 	log.Info("Identifying Distro")
-	distro, err := imgbom.IdentifyDistro(img)
-	if err != nil {
-		log.Errorf("error identifying Distro: %w", err)
+	distro := imgbom.IdentifyDistro(img)
+	if distro == nil {
+		log.Errorf("error identifying distro")
 	} else {
-		log.Info("  Distro: %s", distro)
+		log.Infof("  Distro: %s", distro)
 	}
 
 	log.Info("Cataloging image")

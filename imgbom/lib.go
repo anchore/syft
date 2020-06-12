@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-func IdentifyDistro(img *image.Image) (distro.Distro, error) {
+func IdentifyDistro(img *image.Image) *distro.Distro {
 	return distro.Identify(img)
 }
 
