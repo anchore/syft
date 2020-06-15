@@ -38,5 +38,5 @@ func (d Distro) String() string {
 
 // Name provides a string repr of the distro
 func (d Distro) Name() string {
-	return fmt.Sprintf("%s", d.Type)
+	return d.Type.String()
 }
