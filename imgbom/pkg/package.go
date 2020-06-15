@@ -8,7 +8,7 @@ import (
 
 type ID int64
 
-// TODO: add field to trace which analyzer detected this
+// TODO: add field to trace which cataloger detected this
 type Package struct {
 	id       ID
 	Name     string

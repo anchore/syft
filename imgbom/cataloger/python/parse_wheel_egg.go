@@ -69,7 +69,6 @@ func parseWheelOrEggMetadata(reader io.Reader) ([]pkg.Package, error) {
 				return nil, fmt.Errorf("cannot parse field from line: '%s'", line)
 			}
 		}
-
 	}
 
 	if err := scanner.Err(); err != nil {

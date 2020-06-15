@@ -1,7 +1,7 @@
 package imgbom
 
 import (
-	"github.com/anchore/imgbom/imgbom/analyzer"
+	"github.com/anchore/imgbom/imgbom/cataloger"
 	"github.com/anchore/imgbom/imgbom/distro"
 	"github.com/anchore/imgbom/imgbom/logger"
 	"github.com/anchore/imgbom/imgbom/pkg"
@@ -20,7 +20,7 @@ func CatalogImage(img *image.Image, o scope.Option) (*pkg.Catalog, error) {
 		return nil, err
 	}
 
-	return analyzer.Analyze(s)
+	return cataloger.Catalog(s)
 }
 
 func SetLogger(logger logger.Logger) {

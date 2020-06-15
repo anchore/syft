@@ -41,12 +41,12 @@ type source struct {
 }
 
 type artifact struct {
-	Name     string      `json:"name"`
-	Version  string      `json:"version"`
-	Type     string      `json:"type"`
-	Analyzer string      `json:"analyzer"`
-	Sources  []source    `json:"sources"`
-	Metadata interface{} `json:"metadata"`
+	Name      string      `json:"name"`
+	Version   string      `json:"version"`
+	Type      string      `json:"type"`
+	Cataloger string      `json:"cataloger"`
+	Sources   []source    `json:"sources"`
+	Metadata  interface{} `json:"metadata"`
 }
 
 func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, catalog *pkg.Catalog) error {
