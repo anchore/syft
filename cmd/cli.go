@@ -19,7 +19,7 @@ func setCliOptions() {
 	flag := "scope"
 	rootCmd.Flags().StringP(
 		"scope", "s", scope.AllLayersScope.String(),
-		fmt.Sprintf("selection of layers to analyze, options=%v", scope.Options))
+		fmt.Sprintf("selection of layers to catalog, options=%v", scope.Options))
 	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
 		os.Exit(1)

@@ -25,7 +25,6 @@ func Identify(img *image.Image) *Distro {
 	}
 
 	for path, fn := range identityFiles {
-
 		contents, err := img.FileContentsFromSquash(path)
 
 		if err != nil {
@@ -44,7 +43,6 @@ func Identify(img *image.Image) *Distro {
 		}
 
 		return distro
-
 	}
 	// TODO: is it useful to know partially detected distros? where the ID is known but not the version (and viceversa?)
 	return nil
@@ -72,7 +70,6 @@ func assembleDistro(name, version string) *Distro {
 func parseOsRelease(contents string) *Distro {
 	id, vers := "", ""
 	for _, line := range strings.Split(contents, "\n") {
-
 		parts := strings.Split(line, "=")
 		prefix := parts[0]
 		value := strings.ReplaceAll(parts[len(parts)-1], `"`, "")

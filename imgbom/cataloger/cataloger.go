@@ -1,4 +1,4 @@
-package analyzer
+package cataloger
 
 import (
 	"github.com/anchore/imgbom/imgbom/pkg"
@@ -6,11 +6,11 @@ import (
 	"github.com/anchore/stereoscope/pkg/tree"
 )
 
-type Analyzer interface {
+type Cataloger interface {
 	Name() string
-	// TODO: add ID / Name for analyze for uniquely identifying this analyzer type
+	// TODO: add ID / Name for catalog for uniquely identifying this cataloger type
 	SelectFiles([]tree.FileTreeReader) []file.Reference
 	// NOTE: one of the errors which is returned is "IterationNeeded", which indicates to the driver to
-	// continue with another Select/Analyze pass
-	Analyze(map[file.Reference]string) ([]pkg.Package, error)
+	// continue with another Select/Catalog pass
+	Catalog(map[file.Reference]string) ([]pkg.Package, error)
 }
