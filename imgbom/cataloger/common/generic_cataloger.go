@@ -4,12 +4,10 @@ import (
 	"strings"
 
 	"github.com/anchore/imgbom/imgbom/pkg"
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/stereoscope/pkg/tree"
 )
-
-// TODO: put under test...
 
 // GenericCataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
@@ -45,25 +43,26 @@ func (a *GenericCataloger) clear() {
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (a *GenericCataloger) SelectFiles(trees []tree.FileTreeReader) []file.Reference {
-	for _, t := range trees {
-		// select by exact path
-		for path, parser := range a.pathParsers {
-			f := t.File(file.Path(path))
-			if f != nil {
-				a.register([]file.Reference{*f}, parser)
-			}
+func (a *GenericCataloger) SelectFiles(resolver scope.FileResolver) []file.Reference {
+	// select by exact path
+	for path, parser := range a.pathParsers {
+		files, err := resolver.FilesByPath(file.Path(path))
+		if err != nil {
+			log.Errorf("cataloger failed to select files by path: %w", err)
 		}
+		if files != nil {
+			a.register(files, parser)
+		}
+	}
 
-		// select by pattern
-		for globPattern, parser := range a.globParsers {
-			fileMatches, err := t.FilesByGlob(globPattern)
-			if err != nil {
-				log.Errorf("failed to find files by glob: %s", globPattern)
-			}
-			if fileMatches != nil {
-				a.register(fileMatches, parser)
-			}
+	// select by glob pattern
+	for globPattern, parser := range a.globParsers {
+		fileMatches, err := resolver.FilesByGlob(globPattern)
+		if err != nil {
+			log.Errorf("failed to find files by glob: %s", globPattern)
+		}
+		if fileMatches != nil {
+			a.register(fileMatches, parser)
 		}
 	}
 

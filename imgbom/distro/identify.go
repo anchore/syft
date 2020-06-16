@@ -20,15 +20,14 @@ func Identify(img *image.Image) *Distro {
 		"/etc/os-release": parseOsRelease,
 		// Debian and Debian-based distros have the same contents linked from this path
 		"/usr/lib/os-release": parseOsRelease,
-		// TODO: change this to /bin/busybox when stereoscope deals with hardlinks
-		"/bin/[": parseBusyBox,
+		"/bin/busybox":        parseBusyBox,
 	}
 
 	for path, fn := range identityFiles {
 		contents, err := img.FileContentsFromSquash(path)
 
 		if err != nil {
-			log.Errorf("unable to get contents from %s: %s", path, err)
+			log.Debugf("unable to get contents from %s: %s", path, err)
 			continue
 		}
 

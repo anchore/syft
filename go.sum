@@ -111,6 +111,10 @@ github.com/anchore/stereoscope v0.0.0-20200602123205-6c2ce3c0b2d5 h1:eViCIr4O1e4
 github.com/anchore/stereoscope v0.0.0-20200602123205-6c2ce3c0b2d5/go.mod h1:OeCrFeSu8+p02qC7u9/u8wBOh50VQa8eHJjXVuANvLo=
 github.com/anchore/stereoscope v0.0.0-20200604133300-7e63b350b6d6 h1:Fu779yw004jyFH1UkQD8lTf0GmGRfrOQIK5QiqmIwU8=
 github.com/anchore/stereoscope v0.0.0-20200604133300-7e63b350b6d6/go.mod h1:eQ2/Al6XDA7RFk3FVfpjyGRErITRjNciUPIWixHc7kQ=
+github.com/anchore/stereoscope v0.0.0-20200612195212-342a44f79c65 h1:wghtT1rUItLg/gx/LhMx6fYKJwnUGpfXvcA8WGWM/co=
+github.com/anchore/stereoscope v0.0.0-20200612195212-342a44f79c65/go.mod h1:eQ2/Al6XDA7RFk3FVfpjyGRErITRjNciUPIWixHc7kQ=
+github.com/anchore/stereoscope v0.0.0-20200616152009-189722bdb61b h1:LmFKsQi4oj2VJjch7JhQNzJg1A56FjwHqWZz1ZZKgIw=
+github.com/anchore/stereoscope v0.0.0-20200616152009-189722bdb61b/go.mod h1:eQ2/Al6XDA7RFk3FVfpjyGRErITRjNciUPIWixHc7kQ=
 github.com/apex/log v1.1.4/go.mod h1:AlpoD9aScyQfJDVHmLMEcx4oU6LqzkWp4Mg9GdAcEvQ=
 github.com/apex/log v1.3.0/go.mod h1:jd8Vpsr46WAe3EZSQ/IUMs2qQD/GOycT5rPWCO1yGcs=
 github.com/apex/logs v0.0.4/go.mod h1:XzxuLZ5myVHDy9SAmYpamKKRNApGj54PfYLcFrXqDwo=
@@ -154,6 +158,7 @@ github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGX
 github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:zn76sxSg3SzpJ0PPJaLDCu+Bu0Lg3sKTORVIj19EIF8=
 github.com/containerd/cgroups v0.0.0-20190919134610-bf292b21730f/go.mod h1:OApqhQ4XNSNC13gXIwDjhOQxjWa/NxkwZXJ1EvqT0ko=
 github.com/containerd/console v0.0.0-20180822173158-c12b1e7919c1/go.mod h1:Tj/on1eG8kiEhd0+fhSDzsPAFESxzBBvdyEgyryXffw=
+github.com/containerd/containerd v1.3.0 h1:xjvXQWABwS2uiv3TWgQt5Uth60Gu86LTGZXMJkjc7rY=
 github.com/containerd/containerd v1.3.0/go.mod h1:bC6axHOhabU15QhwfG7w5PipXdVtMXFTttgp+kVtyUA=
 github.com/containerd/containerd v1.3.2/go.mod h1:bC6axHOhabU15QhwfG7w5PipXdVtMXFTttgp+kVtyUA=
 github.com/containerd/containerd v1.3.4 h1:3o0smo5SKY7H6AJCmJhsnCjR2/V2T8VmiHt7seN2/kI=
@@ -331,6 +336,8 @@ github.com/google/go-containerregistry v0.0.0-20200430153450-5cbd060f5c92/go.mod
 github.com/google/go-containerregistry v0.0.0-20200601195303-96cf69f03a3c/go.mod h1:npTSyywOeILcgWqd+rvtzGWflIPPcBQhYoOONaY4ltM=
 github.com/google/go-containerregistry v0.1.0 h1:hL5mVw7cTX3SBr64Arpv+cJH93L+Z9Q6WjckImYLB3g=
 github.com/google/go-containerregistry v0.1.0/go.mod h1:npTSyywOeILcgWqd+rvtzGWflIPPcBQhYoOONaY4ltM=
+github.com/google/go-containerregistry v0.1.1 h1:AG8FSAfXglim2l5qSrqp5VK2Xl03PiBf25NiTGGamws=
+github.com/google/go-containerregistry v0.1.1/go.mod h1:npTSyywOeILcgWqd+rvtzGWflIPPcBQhYoOONaY4ltM=
 github.com/google/go-github/v28 v28.1.1/go.mod h1:bsqJWQX05omyWVmc00nEUql9mhQyv38lDZ8kPZcQVoM=
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/go-replayers/grpcreplay v0.1.0/go.mod h1:8Ig2Idjpr6gifRd6pNVggX6TC1Zw6Jx74AKp7QNH2QE=
@@ -863,6 +870,8 @@ golang.org/x/sys v0.0.0-20200519105757-fe76b779f299/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200523222454-059865788121/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 h1:OjiUf46hAmXblsZdnoSXsEUSKU8r1UEzcL5RVZ4gO9Y=
 golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200610111108-226ff32320da h1:bGb80FudwxpeucJUjPYJXuJ8Hk91vNtfvrymzwiei38=
+golang.org/x/sys v0.0.0-20200610111108-226ff32320da/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.0.0-20160726164857-2910a502d2bf/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
@@ -1006,6 +1015,8 @@ google.golang.org/genproto v0.0.0-20200603110839-e855014d5736 h1:+IE3xTD+6Eb7QWG
 google.golang.org/genproto v0.0.0-20200603110839-e855014d5736/go.mod h1:jDfRM7FcilCzHH/e9qn6dsT145K34l5v+OpcnNgKAAA=
 google.golang.org/genproto v0.0.0-20200604104852-0b0486081ffb h1:ek2py5bOqzR7MR/6obzk0rXUgYCLmjyLnaO9ssT+l6w=
 google.golang.org/genproto v0.0.0-20200604104852-0b0486081ffb/go.mod h1:jDfRM7FcilCzHH/e9qn6dsT145K34l5v+OpcnNgKAAA=
+google.golang.org/genproto v0.0.0-20200615140333-fd031eab31e7 h1:1N7l1PuXZwEK7OhHdmKQROOM75PnUjABGwvVRbLBgFk=
+google.golang.org/genproto v0.0.0-20200615140333-fd031eab31e7/go.mod h1:jDfRM7FcilCzHH/e9qn6dsT145K34l5v+OpcnNgKAAA=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
 google.golang.org/grpc v1.21.0/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=
