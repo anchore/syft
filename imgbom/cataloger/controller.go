@@ -17,6 +17,14 @@ func init() {
 	controllerInstance = newController()
 }
 
+func Catalogers() []string {
+	c := make([]string, len(controllerInstance.catalogers))
+	for idx, catalog := range controllerInstance.catalogers {
+		c[idx] = catalog.Name()
+	}
+	return c
+}
+
 func Catalog(s scope.Scope) (*pkg.Catalog, error) {
 	return controllerInstance.catalog(s)
 }
@@ -46,7 +54,7 @@ func (c *controller) catalog(s scope.Scope) (*pkg.Catalog, error) {
 
 	// ask catalogers for files to extract from the image tar
 	for _, a := range c.catalogers {
-		fileSelection = append(fileSelection, a.SelectFiles(s.Trees)...)
+		fileSelection = append(fileSelection, a.SelectFiles(&s)...)
 		log.Debugf("cataloger '%s' selected '%d' files", a.Name(), len(fileSelection))
 	}
 

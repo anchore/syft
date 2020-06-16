@@ -53,7 +53,7 @@ func TestJsonPresenter(t *testing.T) {
 		Name:    "package-1",
 		Version: "1.0.1",
 		Source: []file.Reference{
-			*img.SquashedTree.File("/somefile-1.txt"),
+			*img.SquashedTree().File("/somefile-1.txt"),
 		},
 		Type: pkg.DebPkg,
 	})
@@ -61,7 +61,7 @@ func TestJsonPresenter(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Source: []file.Reference{
-			*img.SquashedTree.File("/somefile-2.txt"),
+			*img.SquashedTree().File("/somefile-2.txt"),
 		},
 		Type: pkg.DebPkg,
 	})

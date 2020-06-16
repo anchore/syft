@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/imgbom/imgbom"
+	"github.com/anchore/imgbom/imgbom/cataloger"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
 )
@@ -135,6 +136,11 @@ func TestLanguageImage(t *testing.T) {
 			}
 
 		})
+	}
+
+	// ensure that integration test cases stay in sync with the available catalogers
+	if len(cataloger.Catalogers()) < len(cases) {
+		t.Fatalf("probably missed a cataloger during testing, double check that all catalogers are included in testing")
 	}
 
 }

@@ -3,44 +3,37 @@ package scope
 import (
 	"fmt"
 
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/stereoscope/pkg/tree"
 )
 
 type Scope struct {
-	Option Option
-	Trees  []tree.FileTreeReader
-	Image  *image.Image
+	Option   Option
+	resolver FileResolver
+	Image    *image.Image
 }
 
 func NewScope(img *image.Image, option Option) (Scope, error) {
-	var trees = make([]tree.FileTreeReader, 0)
-
 	if img == nil {
 		return Scope{}, fmt.Errorf("no image given")
 	}
 
-	switch option {
-	case SquashedScope:
-		if img.SquashedTree == nil {
-			return Scope{}, fmt.Errorf("the image does not have have a squashed tree")
-		}
-		trees = append(trees, img.SquashedTree)
-
-	case AllLayersScope:
-		if len(img.Layers) == 0 {
-			return Scope{}, fmt.Errorf("the image does not contain any layers")
-		}
-		for _, layer := range img.Layers {
-			trees = append(trees, layer.Tree)
-		}
-	default:
-		return Scope{}, fmt.Errorf("bad option provided: %+v", option)
+	resolver, err := getFileResolver(img, option)
+	if err != nil {
+		return Scope{}, fmt.Errorf("could not determine file resolver: %w", err)
 	}
 
 	return Scope{
-		Option: option,
-		Trees:  trees,
-		Image:  img,
+		Option:   option,
+		resolver: resolver,
+		Image:    img,
 	}, nil
+}
+
+func (s Scope) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
+	return s.resolver.FilesByPath(paths...)
+}
+
+func (s Scope) FilesByGlob(patterns ...string) ([]file.Reference, error) {
+	return s.resolver.FilesByGlob(patterns...)
 }

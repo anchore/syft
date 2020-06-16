@@ -3,8 +3,8 @@ package python
 import (
 	"github.com/anchore/imgbom/imgbom/cataloger/common"
 	"github.com/anchore/imgbom/imgbom/pkg"
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/stereoscope/pkg/tree"
 )
 
 type Cataloger struct {
@@ -26,8 +26,8 @@ func (a *Cataloger) Name() string {
 	return "python-cataloger"
 }
 
-func (a *Cataloger) SelectFiles(trees []tree.FileTreeReader) []file.Reference {
-	return a.cataloger.SelectFiles(trees)
+func (a *Cataloger) SelectFiles(resolver scope.FileResolver) []file.Reference {
+	return a.cataloger.SelectFiles(resolver)
 }
 
 func (a *Cataloger) Catalog(contents map[file.Reference]string) ([]pkg.Package, error) {
