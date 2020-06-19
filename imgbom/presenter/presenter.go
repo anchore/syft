@@ -5,6 +5,7 @@ import (
 
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/presenter/json"
+	"github.com/anchore/imgbom/imgbom/presenter/text"
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
@@ -16,6 +17,8 @@ func GetPresenter(option Option) Presenter {
 	switch option {
 	case JSONPresenter:
 		return json.NewPresenter()
+	case TextPresenter:
+		return text.NewPresenter()
 	default:
 		return nil
 	}
