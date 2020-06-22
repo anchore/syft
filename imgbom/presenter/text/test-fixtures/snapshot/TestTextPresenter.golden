@@ -1,0 +1,22 @@
+[Image]
+ Layer:		 0
+ Digest:	 sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53
+ Size:		 22
+ MediaType:	 application/vnd.docker.image.rootfs.diff.tar.gzip
+
+ Layer:		 1
+ Digest:	 sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53
+ Size:		 16
+ MediaType:	 application/vnd.docker.image.rootfs.diff.tar.gzip
+
+[package-1]
+ Version:	 1.0.1
+ Type:		 deb
+ Found by:	 dpkg
+
+[package-2]
+ Version:	 2.0.1
+ Type:		 deb
+ Metadata:	{Name:package-2 Version:1.0.2}
+ Found by:	 dpkg
+
