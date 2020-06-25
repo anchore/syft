@@ -19,7 +19,6 @@ type PackageInfo struct {
 }
 
 func TestTextPresenter(t *testing.T) {
-	pres := NewPresenter()
 	var buffer bytes.Buffer
 
 	catalog := pkg.NewCatalog()
@@ -53,8 +52,9 @@ func TestTextPresenter(t *testing.T) {
 		l.Metadata.Digest = "sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53"
 	}
 
+	pres := NewPresenter(img, catalog)
 	// run presenter
-	err := pres.Present(&buffer, img, catalog)
+	err := pres.Present(&buffer)
 	if err != nil {
 		t.Fatal(err)
 	}

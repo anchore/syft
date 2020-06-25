@@ -9,10 +9,16 @@ import (
 	stereoscopeImg "github.com/anchore/stereoscope/pkg/image"
 )
 
-type Presenter struct{}
+type Presenter struct {
+	img     *stereoscopeImg.Image
+	catalog *pkg.Catalog
+}
 
-func NewPresenter() *Presenter {
-	return &Presenter{}
+func NewPresenter(img *stereoscopeImg.Image, catalog *pkg.Catalog) *Presenter {
+	return &Presenter{
+		img:     img,
+		catalog: catalog,
+	}
 }
 
 type document struct {
@@ -49,25 +55,25 @@ type artifact struct {
 	Metadata  interface{} `json:"metadata"`
 }
 
-func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, catalog *pkg.Catalog) error {
-	tags := make([]string, len(img.Metadata.Tags))
-	for idx, tag := range img.Metadata.Tags {
+func (pres *Presenter) Present(output io.Writer) error {
+	tags := make([]string, len(pres.img.Metadata.Tags))
+	for idx, tag := range pres.img.Metadata.Tags {
 		tags[idx] = tag.String()
 	}
 
 	doc := document{
 		Image: image{
-			Digest:    img.Metadata.Digest,
-			Size:      img.Metadata.Size,
-			MediaType: string(img.Metadata.MediaType),
+			Digest:    pres.img.Metadata.Digest,
+			Size:      pres.img.Metadata.Size,
+			MediaType: string(pres.img.Metadata.MediaType),
 			Tags:      tags,
-			Layers:    make([]layer, len(img.Layers)),
+			Layers:    make([]layer, len(pres.img.Layers)),
 		},
 		Artifacts: make([]artifact, 0),
 	}
 
 	// populate image...
-	for idx, l := range img.Layers {
+	for idx, l := range pres.img.Layers {
 		doc.Image.Layers[idx] = layer{
 			MediaType: string(l.Metadata.MediaType),
 			Digest:    l.Metadata.Digest,
@@ -76,7 +82,7 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 	}
 
 	// populate artifacts...
-	for p := range catalog.Enumerate() {
+	for p := range pres.catalog.Enumerate() {
 		art := artifact{
 			Name:     p.Name,
 			Version:  p.Version,
@@ -86,7 +92,7 @@ func (pres *Presenter) Present(output io.Writer, img *stereoscopeImg.Image, cata
 		}
 
 		for idx, src := range p.Source {
-			fileMetadata, err := img.FileCatalog.Get(src)
+			fileMetadata, err := pres.img.FileCatalog.Get(src)
 			if err != nil {
 				// TODO: test case
 				log.Errorf("could not get metadata from catalog (presenter=json): %+v", src)

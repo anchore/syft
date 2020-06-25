@@ -5,10 +5,15 @@ import (
 	"os"
 
 	"github.com/anchore/imgbom/imgbom"
+	"github.com/anchore/imgbom/imgbom/event"
 	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/internal"
+	"github.com/anchore/imgbom/internal/bus"
+	"github.com/anchore/imgbom/internal/log"
+	"github.com/anchore/imgbom/internal/ui"
 	"github.com/anchore/stereoscope"
 	"github.com/spf13/cobra"
+	"github.com/wagoodman/go-partybus"
 )
 
 var rootCmd = &cobra.Command{
@@ -23,59 +28,62 @@ Supports the following image sources:
 		"appName": internal.ApplicationName,
 	}),
 	Args: cobra.MaximumNArgs(1),
-	Run:  runCmdWrapper,
+	Run: func(cmd *cobra.Command, args []string) {
+		os.Exit(doRunCmd(cmd, args))
+	},
 }
 
 func init() {
 	setCliOptions()
 
-	cobra.OnInitialize(initAppConfig)
-	cobra.OnInitialize(initLogging)
-	cobra.OnInitialize(logAppConfig)
+	cobra.OnInitialize(
+		initAppConfig,
+		initLogging,
+		logAppConfig,
+		initEventBus,
+	)
 }
 
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		log.Errorf("could not start application: %w", err)
-		os.Exit(1)
-	}
-}
+func startWorker(userImage string) <-chan error {
+	errs := make(chan error)
+	go func() {
+		defer close(errs)
 
-func runCmdWrapper(cmd *cobra.Command, args []string) {
-	os.Exit(doRunCmd(cmd, args))
+		log.Infof("Fetching image '%s'", userImage)
+		img, err := stereoscope.GetImage(userImage)
+		if err != nil {
+			errs <- fmt.Errorf("could not fetch image '%s': %w", userImage, err)
+			return
+		}
+		defer stereoscope.Cleanup()
+
+		log.Info("Identifying Distro")
+		distro := imgbom.IdentifyDistro(img)
+		if distro == nil {
+			log.Errorf("error identifying distro")
+		} else {
+			log.Infof("  Distro: %s", distro)
+		}
+
+		log.Info("Cataloging image")
+		catalog, err := imgbom.CatalogImage(img, appConfig.ScopeOpt)
+		if err != nil {
+			errs <- fmt.Errorf("could not catalog image: %w", err)
+		}
+
+		log.Info("Complete!")
+		bus.Publish(partybus.Event{
+			Type:  event.CatalogerFinished,
+			Value: presenter.GetPresenter(appConfig.PresenterOpt, img, catalog),
+		})
+	}()
+	return errs
 }
 
 func doRunCmd(_ *cobra.Command, args []string) int {
-	userImageStr := args[0]
-	log.Infof("Fetching image '%s'", userImageStr)
-	img, err := stereoscope.GetImage(userImageStr)
-	if err != nil {
-		log.Errorf("could not fetch image '%s': %w", userImageStr, err)
-		return 1
-	}
-	defer stereoscope.Cleanup()
+	errs := startWorker(args[0])
 
-	log.Info("Identifying Distro")
-	distro := imgbom.IdentifyDistro(img)
-	if distro == nil {
-		log.Errorf("error identifying distro")
-	} else {
-		log.Infof("  Distro: %s", distro)
-	}
+	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)
 
-	log.Info("Cataloging image")
-	catalog, err := imgbom.CatalogImage(img, appConfig.ScopeOpt)
-	if err != nil {
-		log.Errorf("could not catalog image: %w", err)
-		return 1
-	}
-
-	log.Info("Complete!")
-	err = presenter.GetPresenter(appConfig.PresenterOpt).Present(os.Stdout, img, catalog)
-	if err != nil {
-		log.Errorf("could not format catalog results: %w", err)
-		return 1
-	}
-
-	return 0
+	return ux(errs, eventSubscription)
 }

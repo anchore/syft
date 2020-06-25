@@ -7,15 +7,17 @@ import (
 	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/internal/config"
 	"github.com/anchore/imgbom/internal/format"
+	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/imgbom/internal/logger"
 	"github.com/anchore/stereoscope"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
+	"github.com/wagoodman/go-partybus"
 	"gopkg.in/yaml.v2"
 )
 
 var appConfig *config.Application
-var log *zap.SugaredLogger
+var eventBus *partybus.Bus
+var eventSubscription *partybus.Subscription
 
 func initAppConfig() {
 	cfg, err := config.LoadConfigFromFile(viper.GetViper(), &cliOpts)
@@ -36,7 +38,6 @@ func initLogging() {
 	}
 
 	logWrapper := logger.NewZapLogger(config)
-	log = logWrapper.Logger
 	imgbom.SetLogger(logWrapper)
 	stereoscope.SetLogger(logWrapper)
 }
@@ -49,4 +50,12 @@ func logAppConfig() {
 	} else {
 		log.Debugf("Application config:\n%+v", format.Magenta.Format(string(appCfgStr)))
 	}
+}
+
+func initEventBus() {
+	eventBus = partybus.NewBus()
+	eventSubscription = eventBus.Subscribe()
+
+	stereoscope.SetBus(eventBus)
+	imgbom.SetBus(eventBus)
 }

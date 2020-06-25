@@ -6,8 +6,10 @@ import (
 	"github.com/anchore/imgbom/imgbom/logger"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
+	"github.com/anchore/imgbom/internal/bus"
 	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/wagoodman/go-partybus"
 )
 
 func IdentifyDistro(img *image.Image) *distro.Distro {
@@ -25,4 +27,8 @@ func CatalogImage(img *image.Image, o scope.Option) (*pkg.Catalog, error) {
 
 func SetLogger(logger logger.Logger) {
 	log.Log = logger
+}
+
+func SetBus(b *partybus.Bus) {
+	bus.SetPublisher(b)
 }
