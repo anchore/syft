@@ -36,7 +36,6 @@ var update = flag.Bool("update", false, "update the *.golden files for json pres
 // }
 
 func TestJsonPresenter(t *testing.T) {
-	pres := NewPresenter()
 	var buffer bytes.Buffer
 
 	testImage := "image-simple"
@@ -66,8 +65,10 @@ func TestJsonPresenter(t *testing.T) {
 		Type: pkg.DebPkg,
 	})
 
+	pres := NewPresenter(img, catalog)
+
 	// run presenter
-	err := pres.Present(&buffer, img, catalog)
+	err := pres.Present(&buffer)
 	if err != nil {
 		t.Fatal(err)
 	}

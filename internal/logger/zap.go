@@ -79,7 +79,7 @@ func (l *ZapLogger) getConsoleEncoder(config LogConfig) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	if config.Structured {
 		encoderConfig.EncodeName = zapcore.FullNameEncoder
-		encoderConfig.EncodeCaller = zapcore.FullCallerEncoder
+		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
 		return zapcore.NewJSONEncoder(encoderConfig)
 	}
 	encoderConfig.EncodeTime = nil

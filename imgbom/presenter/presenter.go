@@ -10,15 +10,16 @@ import (
 )
 
 type Presenter interface {
-	Present(io.Writer, *image.Image, *pkg.Catalog) error
+	Present(io.Writer) error
 }
 
-func GetPresenter(option Option) Presenter {
+func GetPresenter(option Option, img *image.Image, catalog *pkg.Catalog) Presenter {
 	switch option {
 	case JSONPresenter:
-		return json.NewPresenter()
+		return json.NewPresenter(img, catalog)
 	case TextPresenter:
-		return text.NewPresenter()
+		return text.NewPresenter(img, catalog)
+
 	default:
 		return nil
 	}
