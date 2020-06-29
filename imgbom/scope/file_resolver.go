@@ -8,6 +8,15 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
+type FileContentResolver interface {
+	ContentResolver
+	FileResolver
+}
+
+type ContentResolver interface {
+	MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error)
+}
+
 type FileResolver interface {
 	FilesByPath(paths ...file.Path) ([]file.Reference, error)
 	FilesByGlob(patterns ...string) ([]file.Reference, error)
