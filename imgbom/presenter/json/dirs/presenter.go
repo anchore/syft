@@ -10,25 +10,23 @@ import (
 
 type Presenter struct {
 	catalog *pkg.Catalog
+	path    string
 }
 
-func NewPresenter(catalog *pkg.Catalog) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, path string) *Presenter {
 	return &Presenter{
 		catalog: catalog,
+		path:    path,
 	}
 }
 
 type document struct {
 	Artifacts []artifact `json:"artifacts"`
-}
-
-type dir struct {
-	Path string `json:"path"`
+	Source    string
 }
 
 type source struct {
 	FoundBy string   `json:"foundBy"`
-	Layer   int      `json:"layer"`
 	Effects []string `json:"effects"`
 }
 
@@ -44,9 +42,11 @@ type artifact struct {
 func (pres *Presenter) Present(output io.Writer) error {
 	doc := document{
 		Artifacts: make([]artifact, 0),
+		Source:    pres.path,
 	}
 
 	// populate artifacts...
+	// TODO: move this into a common package so that other text presenters can reuse
 	for p := range pres.catalog.Enumerate() {
 		art := artifact{
 			Name:     p.Name,
@@ -56,17 +56,9 @@ func (pres *Presenter) Present(output io.Writer) error {
 			Metadata: p.Metadata,
 		}
 
-		// FIXME: there is no image in a dir-based scan
 		for idx := range p.Source {
-			// fileMetadata, err := pres.img.FileCatalog.Get(src)
-			// if err != nil {
-			// 	// TODO: test case
-			// 	log.Errorf("could not get metadata from catalog (presenter=json): %+v", src)
-			// }
-
 			srcObj := source{
-				FoundBy: "FoundBy",
-				Layer:   0,
+				FoundBy: p.FoundBy,
 				Effects: []string{}, // TODO
 			}
 			art.Sources[idx] = srcObj
