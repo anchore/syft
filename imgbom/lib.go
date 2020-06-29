@@ -16,12 +16,19 @@ func IdentifyDistro(img *image.Image) *distro.Distro {
 	return distro.Identify(img)
 }
 
-func CatalogImage(img *image.Image, o scope.Option) (*pkg.Catalog, error) {
-	s, err := scope.NewScope(img, o)
+func CatalogDir(d string, o scope.Option) (*pkg.Catalog, error) {
+	s, err := scope.NewDirScope(d, o)
 	if err != nil {
 		return nil, err
 	}
+	return cataloger.Catalog(s)
+}
 
+func CatalogImg(img *image.Image, o scope.Option) (*pkg.Catalog, error) {
+	s, err := scope.NewImageScope(img, o)
+	if err != nil {
+		return nil, err
+	}
 	return cataloger.Catalog(s)
 }
 
