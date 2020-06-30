@@ -23,8 +23,8 @@ var rootCmd = &cobra.Command{
 Supports the following image sources:
     {{.appName}} yourrepo/yourimage:tag             defaults to using images from a docker daemon
     {{.appName}} docker://yourrepo/yourimage:tag    explicitly use the docker daemon
-	{{.appName}} tar://path/to/yourimage.tar        use a tarball from disk
-	{{.appName}} dir://path/to/yourproject          read directly from a path in disk
+    {{.appName}} tar://path/to/yourimage.tar        use a tarball from disk
+    {{.appName}} dir://path/to/yourproject          read directly from a path in disk
 `, map[string]interface{}{
 		"appName": internal.ApplicationName,
 	}),
@@ -51,26 +51,49 @@ func startWorker(userInput string) <-chan error {
 		defer close(errs)
 		protocol := imgbom.NewProtocol(userInput)
 		fmt.Printf("protocol: %+v", protocol)
-		catalog, err := imgbom.Catalog(protocol, appConfig.ScopeOpt)
-		if err != nil {
-			errs <- fmt.Errorf("could not catalog image: %w", err)
-		}
 
 		switch protocol.Type {
 		case imgbom.DirProtocol:
+
 			log.Info("Cataloging directory")
+			catalog, err := imgbom.CatalogDir(protocol.Value, appConfig.ScopeOpt)
+			if err != nil {
+				errs <- fmt.Errorf("could not produce catalog: %w", err)
+			}
+
 			bus.Publish(partybus.Event{
 				Type:  event.CatalogerFinished,
-				Value: presenter.GetDirPresenter(appConfig.PresenterOpt, catalog),
+				Value: presenter.GetDirPresenter(appConfig.PresenterOpt, protocol.Value, catalog),
 			})
 		default:
-			log.Info("Cataloging image")
 			log.Infof("Fetching image '%s'", userInput)
 			img, err := stereoscope.GetImage(userInput)
-			if err != nil {
+
+			if err != nil || img == nil {
 				errs <- fmt.Errorf("could not fetch image '%s': %w", userInput, err)
+
+				// TODO: this needs to be handled better
+				bus.Publish(partybus.Event{
+					Type:  event.CatalogerFinished,
+					Value: nil,
+				})
+				return
 			}
 			defer stereoscope.Cleanup()
+
+			log.Info("Identifying Distro")
+			distro := imgbom.IdentifyDistro(img)
+			if distro == nil {
+				log.Errorf("error identifying distro")
+			} else {
+				log.Infof("  Distro: %s", distro)
+			}
+
+			log.Info("Cataloging Image")
+			catalog, err := imgbom.CatalogImg(img, appConfig.ScopeOpt)
+			if err != nil {
+				errs <- fmt.Errorf("could not produce catalog: %w", err)
+			}
 
 			bus.Publish(partybus.Event{
 				Type:  event.CatalogerFinished,
@@ -87,5 +110,4 @@ func doRunCmd(_ *cobra.Command, args []string) int {
 	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)
 
 	return ux(errs, eventSubscription)
-
 }
