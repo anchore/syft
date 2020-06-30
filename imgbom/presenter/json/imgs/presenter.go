@@ -93,14 +93,18 @@ func (pres *Presenter) Present(output io.Writer) error {
 
 		for idx, src := range p.Source {
 			fileMetadata, err := pres.img.FileCatalog.Get(src)
+			var layer int
 			if err != nil {
 				// TODO: test case
-				log.Errorf("could not get metadata from catalog (presenter=json): %+v", src)
+				log.Errorf("could not get metadata from catalog (presenter=json): %+v - error: %w", src, err)
+				layer = 0
+			} else {
+				layer = int(fileMetadata.Source.Metadata.Index)
 			}
 
 			srcObj := source{
 				FoundBy: p.FoundBy,
-				Layer:   int(fileMetadata.Source.Metadata.Index),
+				Layer:   layer,
 				Effects: []string{}, // TODO
 			}
 			art.Sources[idx] = srcObj
