@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/imgbom/cataloger"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
@@ -16,7 +15,8 @@ func TestLanguageImage(t *testing.T) {
 	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-language-pkgs")
 	defer cleanup()
 
-	catalog, err := imgbom.CatalogImage(img, scope.AllLayersScope)
+	s, err := scope.NewImageScope(img, scope.AllLayersScope)
+	catalog, err := cataloger.Catalog(s)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
