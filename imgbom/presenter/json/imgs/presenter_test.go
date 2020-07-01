@@ -1,4 +1,4 @@
-package json
+package imgs
 
 import (
 	"bytes"
