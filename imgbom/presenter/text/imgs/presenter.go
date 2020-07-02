@@ -1,4 +1,4 @@
-package text
+package imgs
 
 import (
 	"fmt"
@@ -9,13 +9,11 @@ import (
 	stereoscopeImg "github.com/anchore/stereoscope/pkg/image"
 )
 
-// Presenter holds the Present method to produce output
 type Presenter struct {
 	img     *stereoscopeImg.Image
 	catalog *pkg.Catalog
 }
 
-// NewPresenter is a constructor for a Presenter
 func NewPresenter(img *stereoscopeImg.Image, catalog *pkg.Catalog) *Presenter {
 	return &Presenter{
 		img:     img,
@@ -46,6 +44,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 	}
 
 	// populate artifacts...
+	// TODO: move this into a common package so that other text presenters can reuse
 	for p := range pres.catalog.Enumerate() {
 		fmt.Fprintln(w, fmt.Sprintf("[%s]", p.Name))
 		fmt.Fprintln(w, " Version:\t", p.Version)

@@ -24,7 +24,7 @@ func Identify(img *image.Image) *Distro {
 	}
 
 	for path, fn := range identityFiles {
-		contents, err := img.FileContentsFromSquash(path)
+		contents, err := img.FileContentsFromSquash(path) // TODO: this call replaced with "MultipleFileContents"
 
 		if err != nil {
 			log.Debugf("unable to get contents from %s: %s", path, err)

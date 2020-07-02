@@ -1,4 +1,4 @@
-package text
+package imgs
 
 import (
 	"bytes"
@@ -13,17 +13,39 @@ import (
 
 var update = flag.Bool("update", false, "update the *.golden files for json presenters")
 
-type PackageInfo struct {
-	Name    string
-	Version string
-}
+// TODO: add a JSON schema and write a test that validates output against the schema
+// func validateAgainstV1Schema(t *testing.T, json string) {
+// 	fullSchemaPath, err := filepath.Abs("v1-schema.json")
+// 	if err != nil {
+// 		t.Fatal("could not get path to schema:", err)
+// 	}
+// 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
+// 	documentLoader := gojsonschema.NewStringLoader(json)
 
-func TestTextPresenter(t *testing.T) {
+// 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+// 	if err != nil {
+// 		t.Fatal("unable to validate json schema:", err.Error())
+// 	}
+
+// 	if !result.Valid() {
+// 		t.Errorf("failed json schema validation:")
+// 		for _, desc := range result.Errors() {
+// 			t.Errorf("  - %s\n", desc)
+// 		}
+// 	}
+// }
+
+func TestJsonPresenter(t *testing.T) {
 	var buffer bytes.Buffer
 
+	testImage := "image-simple"
+
+	if *update {
+		testutils.UpdateGoldenFixtureImage(t, testImage)
+	}
+
 	catalog := pkg.NewCatalog()
-	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-simple")
-	defer cleanup()
+	img := testutils.GetGoldenFixtureImage(t, testImage)
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
@@ -32,8 +54,7 @@ func TestTextPresenter(t *testing.T) {
 		Source: []file.Reference{
 			*img.SquashedTree().File("/somefile-1.txt"),
 		},
-		FoundBy: "dpkg",
-		Type:    pkg.DebPkg,
+		Type: pkg.DebPkg,
 	})
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
@@ -41,24 +62,18 @@ func TestTextPresenter(t *testing.T) {
 		Source: []file.Reference{
 			*img.SquashedTree().File("/somefile-2.txt"),
 		},
-		FoundBy:  "dpkg",
-		Metadata: PackageInfo{Name: "package-2", Version: "1.0.2"},
-		Type:     pkg.DebPkg,
+		Type: pkg.DebPkg,
 	})
 
-	// stub out all the digests so that they don't affect tests comparisons
-	// TODO: update with go-testutils feature when issue #1 is resolved
-	for _, l := range img.Layers {
-		l.Metadata.Digest = "sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53"
-	}
-
 	pres := NewPresenter(img, catalog)
+
 	// run presenter
 	err := pres.Present(&buffer)
 	if err != nil {
 		t.Fatal(err)
 	}
 	actual := buffer.Bytes()
+
 	if *update {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
@@ -71,4 +86,6 @@ func TestTextPresenter(t *testing.T) {
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 
+	// TODO: add me back in when there is a JSON schema
+	// validateAgainstV1Schema(t, string(actual))
 }

@@ -29,7 +29,7 @@ func Catalogers() []string {
 	return c
 }
 
-func Catalog(s scope.Scope) (*pkg.Catalog, error) {
+func Catalog(s scope.FileContentResolver) (*pkg.Catalog, error) {
 	return controllerInstance.catalog(s)
 }
 
@@ -71,7 +71,7 @@ func (c *controller) trackCataloger() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-func (c *controller) catalog(s scope.Scope) (*pkg.Catalog, error) {
+func (c *controller) catalog(s scope.FileContentResolver) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
 	fileSelection := make([]file.Reference, 0)
 
@@ -79,13 +79,13 @@ func (c *controller) catalog(s scope.Scope) (*pkg.Catalog, error) {
 
 	// ask catalogers for files to extract from the image tar
 	for _, a := range c.catalogers {
-		fileSelection = append(fileSelection, a.SelectFiles(&s)...)
+		fileSelection = append(fileSelection, a.SelectFiles(s)...)
 		log.Debugf("cataloger '%s' selected '%d' files", a.Name(), len(fileSelection))
 		filesProcessed.N += int64(len(fileSelection))
 	}
 
 	// fetch contents for requested selection by catalogers
-	contents, err := s.Image.MultipleFileContentsByRef(fileSelection...)
+	contents, err := s.MultipleFileContentsByRef(fileSelection...)
 	if err != nil {
 		return nil, err
 	}

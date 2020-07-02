@@ -1,7 +1,8 @@
-package json
+package imgs
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/anchore/imgbom/imgbom/pkg"
@@ -82,6 +83,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 	}
 
 	// populate artifacts...
+	// TODO: move this into a common package so that other text presenters can reuse
 	for p := range pres.catalog.Enumerate() {
 		art := artifact{
 			Name:     p.Name,
@@ -93,14 +95,17 @@ func (pres *Presenter) Present(output io.Writer) error {
 
 		for idx, src := range p.Source {
 			fileMetadata, err := pres.img.FileCatalog.Get(src)
+			var layer int
 			if err != nil {
 				// TODO: test case
-				log.Errorf("could not get metadata from catalog (presenter=json): %+v", src)
+				return fmt.Errorf("could not get metadata from catalog (presenter=json src=%v): %w", src, err)
 			}
+
+			layer = int(fileMetadata.Source.Metadata.Index)
 
 			srcObj := source{
 				FoundBy: p.FoundBy,
-				Layer:   int(fileMetadata.Source.Metadata.Index),
+				Layer:   layer,
 				Effects: []string{}, // TODO
 			}
 			art.Sources[idx] = srcObj
