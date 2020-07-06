@@ -2,11 +2,11 @@ package pkg
 
 const (
 	UnknownPkg Type = iota
-	ApkPkg
+	//ApkPkg
 	BundlerPkg
 	DebPkg
 	EggPkg
-	PacmanPkg
+	//PacmanPkg
 	RpmPkg
 	WheelPkg
 )
@@ -15,21 +15,21 @@ type Type uint
 
 var typeStr = []string{
 	"UnknownPackage",
-	"apk",
+	//"apk",
 	"bundle",
 	"deb",
 	"egg",
-	"pacman",
+	//"pacman",
 	"rpm",
 	"wheel",
 }
 
 var AllPkgs = []Type{
-	ApkPkg,
+	//ApkPkg,
 	BundlerPkg,
 	DebPkg,
 	EggPkg,
-	PacmanPkg,
+	//PacmanPkg,
 	RpmPkg,
 	WheelPkg,
 }

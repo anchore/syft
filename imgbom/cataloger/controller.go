@@ -4,6 +4,7 @@ import (
 	"github.com/anchore/imgbom/imgbom/cataloger/bundler"
 	"github.com/anchore/imgbom/imgbom/cataloger/dpkg"
 	"github.com/anchore/imgbom/imgbom/cataloger/python"
+	"github.com/anchore/imgbom/imgbom/cataloger/rpmdb"
 	"github.com/anchore/imgbom/imgbom/event"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
@@ -44,6 +45,7 @@ func newController() controller {
 	ctrlr.add(dpkg.NewCataloger())
 	ctrlr.add(bundler.NewCataloger())
 	ctrlr.add(python.NewCataloger())
+	ctrlr.add(rpmdb.NewCataloger())
 	return ctrlr
 }
 
