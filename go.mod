@@ -3,11 +3,9 @@ module github.com/anchore/imgbom
 go 1.14
 
 require (
-	github.com/Microsoft/hcsshim v0.8.9 // indirect
 	github.com/adrg/xdg v0.2.1
 	github.com/anchore/go-testutils v0.0.0-20200520222037-edc2bf1864fe
 	github.com/anchore/stereoscope v0.0.0-20200624175800-ef5dbfb7cae4
-	github.com/containerd/continuity v0.0.0-20200413184840-d3ef23f19fbb // indirect
 	github.com/go-test/deep v1.0.6
 	github.com/google/go-containerregistry v0.1.1 // indirect
 	github.com/gookit/color v1.2.5
@@ -16,7 +14,6 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
-	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/sergi/go-diff v1.1.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0

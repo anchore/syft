@@ -121,7 +121,7 @@ func readConfig(v *viper.Viper, configPath string) error {
 	v.SetEnvPrefix(internal.ApplicationName)
 	// allow for nested options to be specified via environment variables
 	// e.g. pod.context = APPNAME_POD_CONTEXT
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	// use explicitly the given user config
 	if configPath != "" {
