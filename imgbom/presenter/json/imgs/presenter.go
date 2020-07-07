@@ -56,6 +56,7 @@ type artifact struct {
 	Metadata  interface{} `json:"metadata"`
 }
 
+// nolint:funlen
 func (pres *Presenter) Present(output io.Writer) error {
 	tags := make([]string, len(pres.img.Metadata.Tags))
 	for idx, tag := range pres.img.Metadata.Tags {

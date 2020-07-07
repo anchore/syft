@@ -74,24 +74,37 @@ jobs:
               chmod 755 ${HOME}/.local/bin/docker
 
       - run:
-          name: run unit tests
-          command: make unit
-
-      - run:
-          name: build hash key for tar cache
-          command: find integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee integration/test-fixtures/tar-cache.key
+          name: build cache key for java test-fixture blobs
+          command: |
+            cd imgbom/cataloger/java/test-fixtures &&\
+            make packages.fingerprint
 
       - restore_cache:
           keys:
-            - integration-test-tar-cache-{{ checksum "integration/test-fixtures/tar-cache.key" }}
+            - unit-test-java-cache-{{ checksum "imgbom/cataloger/java/test-fixtures/packages.fingerprint" }}
+
       - run:
-          name: run integration tests
-          command: |
-            docker version
-            make integration
+          name: run unit tests
+          command: make unit
 
       - save_cache:
-          key: integration-test-tar-cache-{{ checksum "integration/test-fixtures/tar-cache.key" }}
+          key: unit-test-java-cache-{{ checksum "imgbom/cataloger/java/test-fixtures/packages.fingerprint" }}
+          paths:
+            - "imgbom/cataloger/java/test-fixtures/packages"
+
+      - run:
+          name: build hash key for integration test-fixtures blobs
+          command: make integration-fingerprint
+
+      - restore_cache:
+          keys:
+            - integration-test-tar-cache-{{ checksum "integration/test-fixtures/tar-cache.fingerprint" }}
+      - run:
+          name: run integration tests
+          command: make integration
+
+      - save_cache:
+          key: integration-test-tar-cache-{{ checksum "integration/test-fixtures/tar-cache.fingerprint" }}
           paths:
             - "integration/test-fixtures/tar-cache"
 

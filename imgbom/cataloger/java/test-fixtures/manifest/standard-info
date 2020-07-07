@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Name: the-best-name
+Specification-Title: the-spec-title
+Specification-Vendor: the-spec-vendor
+Specification-Version: the-spec-version
+Implementation-Title: the-impl-title
+Implementation-Vendor: the-impl-vendor
+Implementation-Version: the-impl-version
+

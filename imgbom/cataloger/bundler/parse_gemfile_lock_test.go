@@ -67,7 +67,7 @@ func TestParseGemfileLockEntries(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseGemfileLockEntries(fixture)
+	actual, err := parseGemfileLockEntries(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse gemfile lock: %+v", err)
 	}

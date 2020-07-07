@@ -26,7 +26,7 @@ func TestParseRpmDB(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseRpmDB(fixture)
+	actual, err := parseRpmDB(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse rpmdb: %+v", err)
 	}

@@ -9,8 +9,10 @@ import (
 type ID int64
 
 // TODO: add field to trace which cataloger detected this
+
+// Package represents an application or library that has been bundled into a distributable format
 type Package struct {
-	id       ID
+	id       ID // this is set when a package is added to the catalog
 	Name     string
 	Version  string
 	FoundBy  string

@@ -12,7 +12,7 @@ import (
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 )
 
-func parseRpmDB(reader io.Reader) ([]pkg.Package, error) {
+func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)

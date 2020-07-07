@@ -12,7 +12,7 @@ RESET := $(shell tput -T linux sgr0)
 TITLE := $(BOLD)$(PURPLE)
 SUCCESS := $(BOLD)$(GREEN)
 # the quality gate lower threshold for unit test total % coverage (by function statements)
-COVERAGE_THRESHOLD := 65
+COVERAGE_THRESHOLD := 70
 
 ifndef TEMPDIR
     $(error TEMPDIR is not set)
@@ -70,6 +70,9 @@ unit: ## Run unit tests (with coverage)
 integration: ## Run integration tests
 	$(call title,Running integration tests)
 	go test -tags=integration ./integration
+
+integration/test-fixtures/tar-cache.key, integration-fingerprint:
+	find integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee integration/test-fixtures/tar-cache.fingerprint
 
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/tar-cache/*.tar" -delete

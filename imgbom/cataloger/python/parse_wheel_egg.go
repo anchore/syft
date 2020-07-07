@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/imgbom/imgbom/pkg"
 )
 
-func parseWheelMetadata(reader io.Reader) ([]pkg.Package, error) {
+func parseWheelMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages, err := parseWheelOrEggMetadata(reader)
 	for idx := range packages {
 		packages[idx].Type = pkg.WheelPkg
@@ -17,7 +17,7 @@ func parseWheelMetadata(reader io.Reader) ([]pkg.Package, error) {
 	return packages, err
 }
 
-func parseEggMetadata(reader io.Reader) ([]pkg.Package, error) {
+func parseEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages, err := parseWheelOrEggMetadata(reader)
 	for idx := range packages {
 		packages[idx].Type = pkg.EggPkg

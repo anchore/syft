@@ -57,7 +57,7 @@ func TestParseEggMetadata(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseEggMetadata(fixture)
+	actual, err := parseEggMetadata(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse egg-info: %+v", err)
 	}
@@ -81,7 +81,7 @@ func TestParseWheelMetadata(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseWheelMetadata(fixture)
+	actual, err := parseWheelMetadata(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse dist-info: %+v", err)
 	}
