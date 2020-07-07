@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/imgbom/event"
 	"github.com/anchore/imgbom/imgbom/presenter"
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal"
 	"github.com/anchore/imgbom/internal/bus"
 	"github.com/anchore/imgbom/internal/log"
@@ -52,19 +53,17 @@ func startWorker(userInput string) <-chan error {
 		protocol := imgbom.NewProtocol(userInput)
 		log.Debugf("protocol: %+v", protocol)
 
+		var s scope.Scope
+		var err error
+
 		switch protocol.Type {
 		case imgbom.DirProtocol:
-
-			log.Info("Cataloging directory")
-			catalog, err := imgbom.CatalogDir(protocol.Value, appConfig.ScopeOpt)
+			// populate the scope object for dir
+			s, err = imgbom.GetScopeFromDir(protocol.Value, appConfig.ScopeOpt)
 			if err != nil {
-				errs <- fmt.Errorf("could not produce catalog: %w", err)
+				errs <- fmt.Errorf("could not populate scope from path (%s): %w", protocol.Value, err)
 			}
 
-			bus.Publish(partybus.Event{
-				Type:  event.CatalogerFinished,
-				Value: presenter.GetDirPresenter(appConfig.PresenterOpt, protocol.Value, catalog),
-			})
 		default:
 			log.Infof("Fetching image '%s'", userInput)
 			img, err := stereoscope.GetImage(userInput)
@@ -81,25 +80,25 @@ func startWorker(userInput string) <-chan error {
 			}
 			defer stereoscope.Cleanup()
 
-			log.Info("Identifying Distro")
-			distro := imgbom.IdentifyDistro(img)
-			if distro == nil {
-				log.Errorf("error identifying distro")
-			} else {
-				log.Infof("  Distro: %s", distro)
-			}
-
-			log.Info("Cataloging Image")
-			catalog, err := imgbom.CatalogImg(img, appConfig.ScopeOpt)
+			// populate the scope object for image
+			s, err = imgbom.GetScopeFromImage(img, appConfig.ScopeOpt)
 			if err != nil {
-				errs <- fmt.Errorf("could not produce catalog: %w", err)
+				errs <- fmt.Errorf("could not populate scope with image: %w", err)
 			}
-
-			bus.Publish(partybus.Event{
-				Type:  event.CatalogerFinished,
-				Value: presenter.GetImgPresenter(appConfig.PresenterOpt, img, catalog),
-			})
 		}
+
+		log.Info("Identifying Distro")
+		distro := imgbom.IdentifyDistro(s)
+		if distro == nil {
+			log.Errorf("error identifying distro")
+		} else {
+			log.Infof("  Distro: %s", distro)
+		}
+
+		bus.Publish(partybus.Event{
+			Type:  event.CatalogerFinished,
+			Value: presenter.GetPresenter(appConfig.PresenterOpt, s),
+		})
 	}()
 	return errs
 }
