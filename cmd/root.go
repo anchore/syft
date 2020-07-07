@@ -50,7 +50,7 @@ func startWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 		protocol := imgbom.NewProtocol(userInput)
-		fmt.Printf("protocol: %+v", protocol)
+		log.Debugf("protocol: %+v", protocol)
 
 		switch protocol.Type {
 		case imgbom.DirProtocol:
