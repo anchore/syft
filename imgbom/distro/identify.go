@@ -4,18 +4,16 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/stereoscope/pkg/image"
 )
 
 // returns a distro or nil
 type parseFunc func(string) *Distro
 
 // Identify parses distro-specific files to determine distro metadata like version and release
-func Identify(img *image.Image) *Distro {
-	// TODO: implement me based off of https://github.com/anchore/anchore-engine/blob/78b23d7e8f007005c070673405b5e23730a660e0/anchore_engine/analyzers/utils.py#L131
-
+func Identify(s scope.Scope) *Distro {
 	identityFiles := map[file.Path]parseFunc{
 		"/etc/os-release": parseOsRelease,
 		// Debian and Debian-based distros have the same contents linked from this path
@@ -24,18 +22,37 @@ func Identify(img *image.Image) *Distro {
 	}
 
 	for path, fn := range identityFiles {
-		contents, err := img.FileContentsFromSquash(path) // TODO: this call replaced with "MultipleFileContents"
+		// this is always a slice with a single ref, the API is odd because it was meant for images
+		refs, err := s.FilesByPath(path)
+		if err != nil {
+			log.Errorf("unable to get path refs from %s: %s", path, err)
+			return nil
+		}
+
+		if len(refs) == 0 {
+			continue
+		}
+		ref := refs[0]
+
+		contents, err := s.MultipleFileContentsByRef(ref)
+		log.Infof("contents are: %+v", contents)
+		content, ok := contents[ref]
+		// XXX is it possible to get a ref and no contents at all?
+		if !ok {
+			continue
+		}
 
 		if err != nil {
 			log.Debugf("unable to get contents from %s: %s", path, err)
 			continue
 		}
 
-		if contents == "" {
+		if content == "" {
 			log.Debugf("no contents in file, skipping: %s", path)
 			continue
 		}
-		distro := fn(contents)
+
+		distro := fn(content)
 
 		if distro == nil {
 			continue
