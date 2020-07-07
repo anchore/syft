@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"github.com/anchore/imgbom/internal"
 	"testing"
 
 	"github.com/anchore/go-testutils"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestLanguageImage(t *testing.T) {
-	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-language-pkgs")
+	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-pkg-coverage")
 	defer cleanup()
 
 	s, err := scope.NewImageScope(img, scope.AllLayersScope)
@@ -27,6 +28,20 @@ func TestLanguageImage(t *testing.T) {
 		pkgLanguage pkg.Language
 		pkgInfo     map[string]string
 	}{
+		{
+			name:    "find rpmdb packages",
+			pkgType: pkg.RpmPkg,
+			pkgInfo: map[string]string{
+				"dive": "0.9.2",
+			},
+		},
+		{
+			name:    "find dpkg packages",
+			pkgType: pkg.DebPkg,
+			pkgInfo: map[string]string{
+				"apt": "1.8.2",
+			},
+		},
 		{
 			name:        "find python wheel packages",
 			pkgType:     pkg.WheelPkg,
@@ -102,12 +117,27 @@ func TestLanguageImage(t *testing.T) {
 			},
 		},
 	}
+
+	observedLanguages := internal.NewStringSet()
+	definedLanguages := internal.NewStringSet()
+	for _, l := range pkg.AllLanguages {
+		definedLanguages.Add(l.String())
+	}
+
+	observedPkgs := internal.NewStringSet()
+	definedPkgs := internal.NewStringSet()
+	for _, p := range pkg.AllPkgs {
+		definedPkgs.Add(p.String())
+	}
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-
 			pkgCount := 0
 
 			for a := range catalog.Enumerate(c.pkgType) {
+
+				observedLanguages.Add(a.Language.String())
+				observedPkgs.Add(a.Type.String())
 
 				expectedVersion, ok := c.pkgInfo[a.Name]
 				if !ok {
@@ -138,9 +168,17 @@ func TestLanguageImage(t *testing.T) {
 		})
 	}
 
+	observedLanguages.Remove(pkg.UnknownLanguage.String())
+	definedLanguages.Remove(pkg.UnknownLanguage.String())
+	observedPkgs.Remove(pkg.UnknownPkg.String())
+	definedPkgs.Remove(pkg.UnknownPkg.String())
+
 	// ensure that integration test cases stay in sync with the available catalogers
-	if len(cataloger.Catalogers()) < len(cases) {
-		t.Fatalf("probably missed a cataloger during testing, double check that all catalogers are included in testing")
+	if len(observedLanguages) < len(definedLanguages) {
+		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", len(definedLanguages), len(observedLanguages))
 	}
 
+	if len(observedPkgs) < len(definedPkgs) {
+		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", len(definedPkgs), len(observedPkgs))
+	}
 }
