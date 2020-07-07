@@ -12,23 +12,19 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-func IdentifyDistro(img *image.Image) *distro.Distro {
-	return distro.Identify(img)
+func IdentifyDistro(s scope.Scope) *distro.Distro {
+	return distro.Identify(s)
 }
 
-func CatalogDir(d string, o scope.Option) (*pkg.Catalog, error) {
-	s, err := scope.NewDirScope(d, o)
-	if err != nil {
-		return nil, err
-	}
-	return cataloger.Catalog(s)
+func GetScopeFromDir(d string, o scope.Option) (scope.Scope, error) {
+	return scope.NewScopeFromDir(d, o)
 }
 
-func CatalogImg(img *image.Image, o scope.Option) (*pkg.Catalog, error) {
-	s, err := scope.NewImageScope(img, o)
-	if err != nil {
-		return nil, err
-	}
+func GetScopeFromImage(img *image.Image, o scope.Option) (scope.Scope, error) {
+	return scope.NewScopeFromImage(img, o)
+}
+
+func Catalog(s scope.Scope) (*pkg.Catalog, error) {
 	return cataloger.Catalog(s)
 }
 
