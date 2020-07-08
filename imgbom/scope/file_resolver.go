@@ -8,9 +8,9 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-type FileContentResolver interface {
-	ContentResolver
-	FileResolver
+type Resolver interface {
+	ContentResolver // knows how to get content from file.References
+	FileResolver    // knows how to get file.References from string paths and globs
 }
 
 type ContentResolver interface {
@@ -22,7 +22,7 @@ type FileResolver interface {
 	FilesByGlob(patterns ...string) ([]file.Reference, error)
 }
 
-func getFileResolver(img *image.Image, option Option) (FileResolver, error) {
+func getImageResolver(img *image.Image, option Option) (Resolver, error) {
 	switch option {
 	case SquashedScope:
 		return resolvers.NewImageSquashResolver(img)
