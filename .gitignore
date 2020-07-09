@@ -1,6 +1,11 @@
 .vscode/
-
 *.tar
+*.jar
+*.war
+*.ear
+*.jpi
+*.hpi
+*.zip
 .idea/
 *.log
 .images

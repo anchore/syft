@@ -2,7 +2,7 @@ package pkg
 
 const (
 	UnknownLanguage Language = iota
-	//Java
+	Java
 	//JavaScript
 	Python
 	Ruby
@@ -12,14 +12,14 @@ type Language uint
 
 var languageStr = []string{
 	"UnknownLanguage",
-	//"java",
+	"java",
 	//"javascript",
 	"python",
 	"ruby",
 }
 
 var AllLanguages = []Language{
-	//Java,
+	Java,
 	//JavaScript,
 	Python,
 	Ruby,

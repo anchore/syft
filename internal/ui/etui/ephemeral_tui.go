@@ -31,6 +31,7 @@ func setupScreen(output *os.File) *frame.Frame {
 	return fr
 }
 
+// nolint:funlen,gocognit
 func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscription) int {
 	output := os.Stderr
 

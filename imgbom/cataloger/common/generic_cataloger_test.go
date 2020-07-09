@@ -39,7 +39,7 @@ func (r *testResolver) FilesByGlob(patterns ...string) ([]file.Reference, error)
 	return []file.Reference{ref}, nil
 }
 
-func parser(reader io.Reader) ([]pkg.Package, error) {
+func parser(_ string, reader io.Reader) ([]pkg.Package, error) {
 	contents, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic(err)

@@ -3,6 +3,7 @@ package cataloger
 import (
 	"github.com/anchore/imgbom/imgbom/cataloger/bundler"
 	"github.com/anchore/imgbom/imgbom/cataloger/dpkg"
+	"github.com/anchore/imgbom/imgbom/cataloger/java"
 	"github.com/anchore/imgbom/imgbom/cataloger/python"
 	"github.com/anchore/imgbom/imgbom/cataloger/rpmdb"
 	"github.com/anchore/imgbom/imgbom/event"
@@ -46,6 +47,7 @@ func newController() controller {
 	ctrlr.add(bundler.NewCataloger())
 	ctrlr.add(python.NewCataloger())
 	ctrlr.add(rpmdb.NewCataloger())
+	ctrlr.add(java.NewCataloger())
 	return ctrlr
 }
 

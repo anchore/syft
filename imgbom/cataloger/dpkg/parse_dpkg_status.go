@@ -12,7 +12,7 @@ import (
 
 var errEndOfPackages = fmt.Errorf("no more packages to read")
 
-func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
+func parseDpkgStatus(_ string, reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
 	var packages = make([]pkg.Package, 0)
 

@@ -6,5 +6,5 @@ import (
 	"github.com/anchore/imgbom/imgbom/pkg"
 )
 
-// ParserFn standardizes a function signature for parser functions that accept file contents and return any discovered packages from that file
-type ParserFn func(io.Reader) ([]pkg.Package, error)
+// ParserFn standardizes a function signature for parser functions that accept the virtual file path (not usable for file reads) and contents and return any discovered packages from that file
+type ParserFn func(string, io.Reader) ([]pkg.Package, error)
