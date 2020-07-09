@@ -9,14 +9,16 @@ import (
 )
 
 type Resolver interface {
-	ContentResolver // knows how to get content from file.References
-	FileResolver    // knows how to get file.References from string paths and globs
+	ContentResolver
+	FileResolver
 }
 
+// ContentResolver knows how to get content from file.References
 type ContentResolver interface {
 	MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error)
 }
 
+//  FileResolver knows how to get file.References from string paths and globs
 type FileResolver interface {
 	FilesByPath(paths ...file.Path) ([]file.Reference, error)
 	FilesByGlob(patterns ...string) ([]file.Reference, error)
