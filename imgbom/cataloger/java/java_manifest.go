@@ -50,7 +50,7 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("unable read java manifest: %w", err)
+		return nil, fmt.Errorf("unable to read java manifest: %w", err)
 	}
 
 	if err := mapstructure.Decode(manifestMap, &manifest); err != nil {
