@@ -54,7 +54,7 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 	}
 
 	if err := mapstructure.Decode(manifestMap, &manifest); err != nil {
-		return nil, fmt.Errorf("unable parse java manifest: %w", err)
+		return nil, fmt.Errorf("unable to parse java manifest: %w", err)
 	}
 
 	return &manifest, nil
@@ -73,7 +73,7 @@ func newPackageFromJavaManifest(virtualPath, archivePath string, fileManifest fi
 	// fetch the manifest file
 	contents, err := file.ExtractFilesFromZip(archivePath, manifestMatches...)
 	if err != nil {
-		return nil, fmt.Errorf("unable to extract java manifests: %w", err)
+		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", virtualPath, err)
 	}
 
 	// parse the manifest file into a rich object

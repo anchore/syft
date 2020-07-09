@@ -83,7 +83,6 @@ func ExtractFilesFromZip(archivePath string, paths ...string) (map[string]string
 	return results, nil
 }
 
-// nolint:funlen
 func UnzipToDir(archivePath, targetDir string) error {
 	zipReader, err := zip.OpenReader(archivePath)
 	if err != nil {
@@ -106,46 +105,54 @@ func UnzipToDir(archivePath, targetDir string) error {
 			return fmt.Errorf("potential zip slip attack: %q", expandedFilePath)
 		}
 
-		zippedFile, err := file.Open()
+		err = extractSingleFile(file, expandedFilePath, archivePath)
 		if err != nil {
-			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
+			return err
 		}
+	}
+	return nil
+}
 
-		if file.FileInfo().IsDir() {
-			err = os.MkdirAll(expandedFilePath, file.Mode())
-			if err != nil {
-				return fmt.Errorf("unable to create dir=%q from zip=%q: %w", expandedFilePath, archivePath, err)
-			}
-		} else {
-			// Open an output file for writing
-			outputFile, err := os.OpenFile(
-				expandedFilePath,
-				os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-				file.Mode(),
-			)
-			if err != nil {
-				return fmt.Errorf("unable to create dest file=%q from zip=%q: %w", expandedFilePath, archivePath, err)
-			}
+func extractSingleFile(file *zip.File, expandedFilePath, archivePath string) error {
+	zippedFile, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
+	}
 
-			// limit the zip reader on each file read to prevent decompression bomb attacks
-			numBytes, err := io.Copy(outputFile, io.LimitReader(zippedFile, readLimit))
-			if numBytes >= readLimit || errors.Is(err, io.EOF) {
-				return fmt.Errorf("zip read limit hit (potential decompression bomb attack)")
-			}
-			if err != nil {
-				return fmt.Errorf("unable to copy source=%q to dest=%q for zip=%q: %w", file.Name, outputFile.Name(), archivePath, err)
-			}
-
-			err = outputFile.Close()
-			if err != nil {
-				return fmt.Errorf("unable to close dest file=%q from zip=%q: %w", outputFile.Name(), archivePath, err)
-			}
-		}
-
-		err = zippedFile.Close()
+	if file.FileInfo().IsDir() {
+		err = os.MkdirAll(expandedFilePath, file.Mode())
 		if err != nil {
-			return fmt.Errorf("unable to close source file=%q from zip=%q: %w", file.Name, archivePath, err)
+			return fmt.Errorf("unable to create dir=%q from zip=%q: %w", expandedFilePath, archivePath, err)
 		}
+	} else {
+		// Open an output file for writing
+		outputFile, err := os.OpenFile(
+			expandedFilePath,
+			os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
+			file.Mode(),
+		)
+		if err != nil {
+			return fmt.Errorf("unable to create dest file=%q from zip=%q: %w", expandedFilePath, archivePath, err)
+		}
+
+		// limit the zip reader on each file read to prevent decompression bomb attacks
+		numBytes, err := io.Copy(outputFile, io.LimitReader(zippedFile, readLimit))
+		if numBytes >= readLimit || errors.Is(err, io.EOF) {
+			return fmt.Errorf("zip read limit hit (potential decompression bomb attack)")
+		}
+		if err != nil {
+			return fmt.Errorf("unable to copy source=%q to dest=%q for zip=%q: %w", file.Name, outputFile.Name(), archivePath, err)
+		}
+
+		err = outputFile.Close()
+		if err != nil {
+			return fmt.Errorf("unable to close dest file=%q from zip=%q: %w", outputFile.Name(), archivePath, err)
+		}
+	}
+
+	err = zippedFile.Close()
+	if err != nil {
+		return fmt.Errorf("unable to close source file=%q from zip=%q: %w", file.Name, archivePath, err)
 	}
 	return nil
 }

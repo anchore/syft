@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/imgbom/internal/log"
+
 	"github.com/anchore/imgbom/imgbom/pkg"
 )
 
@@ -15,25 +17,16 @@ import (
 var versionPattern = regexp.MustCompile(`(?P<name>.+)-(?P<version>(\d+\.)?(\d+\.)?(\*|\d+)(-[a-zA-Z0-9\-\.]+)*)`)
 
 type archiveFilename struct {
-	raw string
+	raw    string
+	fields []map[string]string
 }
 
 func newJavaArchiveFilename(raw string) archiveFilename {
-	return archiveFilename{
-		raw: raw,
-	}
-}
-
-func (a archiveFilename) normalize() string {
 	// trim the file extension and remove any path prefixes
-	return strings.TrimSuffix(filepath.Base(a.raw), "."+a.extension())
-}
-
-func (a archiveFilename) fields() []map[string]string {
-	name := a.normalize()
+	name := strings.TrimSuffix(filepath.Base(raw), filepath.Ext(raw))
 
 	matches := versionPattern.FindAllStringSubmatch(name, -1)
-	items := make([]map[string]string, 0)
+	fields := make([]map[string]string, 0)
 	for _, match := range matches {
 		item := make(map[string]string)
 		for i, name := range versionPattern.SubexpNames() {
@@ -41,9 +34,13 @@ func (a archiveFilename) fields() []map[string]string {
 				item[name] = match[i]
 			}
 		}
-		items = append(items, item)
+		fields = append(fields, item)
 	}
-	return items
+
+	return archiveFilename{
+		raw:    raw,
+		fields: fields,
+	}
 }
 
 func (a archiveFilename) extension() string {
@@ -62,23 +59,21 @@ func (a archiveFilename) pkgType() pkg.Type {
 }
 
 func (a archiveFilename) version() string {
-	fields := a.fields()
-
-	// there should be only one version, if there is more or less then something is wrong
-	if len(fields) != 1 {
+	if len(a.fields) > 1 {
+		log.Errorf("discovered multiple name-version pairings from %q: %+v", a.raw, a.fields)
+		return ""
+	} else if len(a.fields) < 1 {
 		return ""
 	}
 
-	return fields[0]["version"]
+	return a.fields[0]["version"]
 }
 
 func (a archiveFilename) name() string {
-	fields := a.fields()
-
 	// there should be only one name, if there is more or less then something is wrong
-	if len(fields) != 1 {
+	if len(a.fields) != 1 {
 		return ""
 	}
 
-	return fields[0]["name"]
+	return a.fields[0]["name"]
 }
