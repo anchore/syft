@@ -35,7 +35,7 @@ func parsePomProperties(path string, reader io.Reader) (*pkg.PomProperties, erro
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("unable read pom.properties: %w", err)
+		return nil, fmt.Errorf("unable to read pom.properties: %w", err)
 	}
 
 	if err := mapstructure.Decode(propMap, &props); err != nil {
