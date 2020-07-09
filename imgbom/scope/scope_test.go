@@ -17,21 +17,18 @@ func TestDirectoryScope(t *testing.T) {
 		{
 			desc:       "no paths exist",
 			input:      "foobar/",
-			expString:  "dir://foobar/",
 			inputPaths: []file.Path{file.Path("/opt/"), file.Path("/other")},
 			expRefs:    0,
 		},
 		{
 			desc:       "path detected",
 			input:      "test-fixtures",
-			expString:  "dir://test-fixtures",
 			inputPaths: []file.Path{file.Path("path-detected")},
 			expRefs:    1,
 		},
 		{
 			desc:       "no files-by-path detected",
 			input:      "test-fixtures",
-			expString:  "dir://test-fixtures",
 			inputPaths: []file.Path{file.Path("no-path-detected")},
 			expRefs:    0,
 		},
@@ -39,11 +36,12 @@ func TestDirectoryScope(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			p, err := NewDirScope(test.input, AllLayersScope)
+
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %w", err)
 			}
-			if p.String() != test.expString {
-				t.Errorf("mismatched stringer: '%s' != '%s'", p.String(), test.expString)
+			if p.dirSrc.Path != test.input {
+				t.Errorf("mismatched stringer: '%s' != '%s'", p.dirSrc.Path, test.input)
 			}
 
 			refs, err := p.FilesByPath(test.inputPaths...)
