@@ -17,26 +17,6 @@ func uniquePkgKey(p *pkg.Package) string {
 	return fmt.Sprintf("%s|%s", p.Name, p.Version)
 }
 
-func parseJar(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
-	return parseJavaArchive(virtualPath, reader)
-}
-
-func parseWar(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
-	return parseJavaArchive(virtualPath, reader)
-}
-
-func parseEar(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
-	return parseJavaArchive(virtualPath, reader)
-}
-
-func parseJpi(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
-	return parseJavaArchive(virtualPath, reader)
-}
-
-func parseHpi(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
-	return parseJavaArchive(virtualPath, reader)
-}
-
 func parseJavaArchive(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
 	var pkgs = make([]pkg.Package, 0)
 	discoveredPkgs := internal.NewStringSet()

@@ -9,11 +9,8 @@ const (
 	//PacmanPkg
 	RpmPkg
 	WheelPkg
-	JarPkg
-	WarPkg
-	EarPkg
-	JpiPkg
-	HpiPkg
+	JavaPkg
+	JenkinsPluginPkg
 )
 
 type Type uint
@@ -27,11 +24,8 @@ var typeStr = []string{
 	//"pacman",
 	"rpm",
 	"wheel",
-	"jar",
-	"war",
-	"ear",
-	"jpi",
-	"hpi",
+	"java-archive",
+	"jenkins-plugin",
 }
 
 var AllPkgs = []Type{
@@ -42,11 +36,8 @@ var AllPkgs = []Type{
 	//PacmanPkg,
 	RpmPkg,
 	WheelPkg,
-	JarPkg,
-	WarPkg,
-	EarPkg,
-	JpiPkg,
-	HpiPkg,
+	JavaPkg,
+	JenkinsPluginPkg,
 }
 
 func (t Type) String() string {

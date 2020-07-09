@@ -76,21 +76,21 @@ jobs:
       - run:
           name: build cache key for java test-fixture blobs
           command: |
-            cd imgbom/cataloger/java/test-fixtures &&\
+            cd imgbom/cataloger/java/test-fixtures/java-builds &&\
             make packages.fingerprint
 
       - restore_cache:
           keys:
-            - unit-test-java-cache-{{ checksum "imgbom/cataloger/java/test-fixtures/packages.fingerprint" }}
+            - unit-test-java-cache-{{ checksum "imgbom/cataloger/java/test-fixtures/java-builds/packages.fingerprint" }}
 
       - run:
           name: run unit tests
           command: make unit
 
       - save_cache:
-          key: unit-test-java-cache-{{ checksum "imgbom/cataloger/java/test-fixtures/packages.fingerprint" }}
+          key: unit-test-java-cache-{{ checksum "imgbom/cataloger/java/test-fixtures/java-builds/packages.fingerprint" }}
           paths:
-            - "imgbom/cataloger/java/test-fixtures/packages"
+            - "imgbom/cataloger/java/test-fixtures/java-builds/packages"
 
       - run:
           name: build hash key for integration test-fixtures blobs

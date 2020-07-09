@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Plugin-ScmUrl: https://github.com/jenkinsci/plugin-pom/example-jenkins
+ -plugin
+

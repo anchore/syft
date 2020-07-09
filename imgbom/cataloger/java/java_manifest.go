@@ -18,6 +18,7 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
 	manifestMap := make(map[string]string)
 	scanner := bufio.NewScanner(reader)
+	var lastKey string
 	for scanner.Scan() {
 		line := scanner.Text()
 
@@ -26,14 +27,26 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 			continue
 		}
 
-		idx := strings.Index(line, ":")
-		if idx == -1 {
-			return nil, fmt.Errorf("unable to split java manifest key-value pairs: %q", line)
-		}
+		if line[0] == ' ' {
+			// this is a continuation
+			if lastKey == "" {
+				return nil, fmt.Errorf("found continuation with no previous key (%s)", line)
+			}
+			manifestMap[lastKey] += strings.TrimSpace(line)
+		} else {
+			// this is a new key-value pair
+			idx := strings.Index(line, ":")
+			if idx == -1 {
+				return nil, fmt.Errorf("unable to split java manifest key-value pairs: %q", line)
+			}
 
-		key := strings.TrimSpace(line[0:idx])
-		value := strings.TrimSpace(line[idx+1:])
-		manifestMap[key] = value
+			key := strings.TrimSpace(line[0:idx])
+			value := strings.TrimSpace(line[idx+1:])
+			manifestMap[key] = value
+
+			// keep track of key for future continuations
+			lastKey = key
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -78,6 +91,10 @@ func newPackageFromJavaManifest(virtualPath, archivePath string, fileManifest fi
 		name = manifest.Name
 	case filenameObj.name() != "":
 		name = filenameObj.name()
+	case manifest.Extra["Short-Name"] != "":
+		name = manifest.Extra["Short-Name"]
+	case manifest.Extra["Extension-Name"] != "":
+		name = manifest.Extra["Extension-Name"]
 	}
 
 	var version string
@@ -88,6 +105,8 @@ func newPackageFromJavaManifest(virtualPath, archivePath string, fileManifest fi
 		version = filenameObj.version()
 	case manifest.SpecVersion != "":
 		version = manifest.SpecVersion
+	case manifest.Extra["Plugin-Version"] != "":
+		name = manifest.Extra["Plugin-Version"]
 	}
 
 	return &pkg.Package{

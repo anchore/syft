@@ -84,6 +84,7 @@ func (a *GenericCataloger) Catalog(contents map[file.Reference]string, upstreamM
 
 		entries, err := parser(string(reference.Path), strings.NewReader(content))
 		if err != nil {
+			// TODO: should we fail? or only log?
 			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %w", upstreamMatcher, reference, err)
 			continue
 		}

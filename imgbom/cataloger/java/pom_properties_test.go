@@ -18,7 +18,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 			expected: pkg.PomProperties{
 				Path:       "test-fixtures/pom/small.pom.properties",
 				GroupID:    "org.anchore",
-				ArtifactID: "example-app-maven",
+				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
 			},
 		},
@@ -27,7 +27,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 			expected: pkg.PomProperties{
 				Path:       "test-fixtures/pom/extra.pom.properties",
 				GroupID:    "org.anchore",
-				ArtifactID: "example-app-maven",
+				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
 				Name:       "something-here",
 				Extra: map[string]string{

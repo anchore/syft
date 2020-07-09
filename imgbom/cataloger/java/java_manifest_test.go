@@ -45,6 +45,15 @@ func TestParseJavaManifest(t *testing.T) {
 				},
 			},
 		},
+		{
+			fixture: "test-fixtures/manifest/continuation",
+			expected: pkg.JavaManifest{
+				ManifestVersion: "1.0",
+				Extra: map[string]string{
+					"Plugin-ScmUrl": "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

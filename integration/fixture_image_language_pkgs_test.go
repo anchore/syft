@@ -43,6 +43,22 @@ func TestLanguageImage(t *testing.T) {
 			},
 		},
 		{
+			name:        "find java packages",
+			pkgType:     pkg.JavaPkg,
+			pkgLanguage: pkg.Java,
+			pkgInfo: map[string]string{
+				"example-java-app-maven": "0.1.0",
+			},
+		},
+		{
+			name:        "find jenkins plugins",
+			pkgType:     pkg.JenkinsPluginPkg,
+			pkgLanguage: pkg.Java,
+			pkgInfo: map[string]string{
+				"example-jenkins-plugin": "1.0-SNAPSHOT",
+			},
+		},
+		{
 			name:        "find python wheel packages",
 			pkgType:     pkg.WheelPkg,
 			pkgLanguage: pkg.Python,

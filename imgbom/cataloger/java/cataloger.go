@@ -13,11 +13,11 @@ type Cataloger struct {
 
 func NewCataloger() *Cataloger {
 	globParsers := map[string]common.ParserFn{
-		"*.jar": parseJar,
-		"*.war": parseWar,
-		"*.ear": parseEar,
-		"*.jpi": parseJpi,
-		"*.hpi": parseHpi,
+		"*.jar": parseJavaArchive,
+		"*.war": parseJavaArchive,
+		"*.ear": parseJavaArchive,
+		"*.jpi": parseJavaArchive,
+		"*.hpi": parseJavaArchive,
 	}
 
 	return &Cataloger{
