@@ -74,7 +74,14 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, er
 func (s DirectoryResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
 	refContents := make(map[file.Reference]string)
 	for _, fileRef := range f {
-		contents, err := fileContents(fileRef.Path)
+		resolvedPath := path.Join(s.Path, string(fileRef.Path))
+		_, err := os.Stat(resolvedPath)
+		if os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			log.Errorf("path (%s) is not valid: %v", resolvedPath, err)
+		}
+		contents, err := fileContents(file.Path(resolvedPath))
 		if err != nil {
 			return refContents, fmt.Errorf("could not read contents of file: %s", fileRef.Path)
 		}
