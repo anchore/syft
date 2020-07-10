@@ -66,6 +66,42 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 	return &manifest, nil
 }
 
+func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
+	var name string
+	switch {
+	case filenameObj.name() != "":
+		name = filenameObj.name()
+	case manifest.Name != "":
+		// Manifest original spec...
+		name = manifest.Name
+	case manifest.Extra["Bundle-Name"] != "":
+		// BND tooling...
+		name = manifest.Extra["Bundle-Name"]
+	case manifest.Extra["Short-Name"] != "":
+		// Jenkins...
+		name = manifest.Extra["Short-Name"]
+	case manifest.Extra["Extension-Name"] != "":
+		// Jenkins...
+		name = manifest.Extra["Extension-Name"]
+	}
+	return name
+}
+
+func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
+	var version string
+	switch {
+	case manifest.ImplVersion != "":
+		version = manifest.ImplVersion
+	case filenameObj.version() != "":
+		version = filenameObj.version()
+	case manifest.SpecVersion != "":
+		version = manifest.SpecVersion
+	case manifest.Extra["Plugin-Version"] != "":
+		version = manifest.Extra["Plugin-Version"]
+	}
+	return version
+}
+
 func newPackageFromJavaManifest(virtualPath, archivePath string, fileManifest file.ZipManifest) (*pkg.Package, error) {
 	// search and parse java manifest files
 	manifestMatches := fileManifest.GlobMatch(manifestPath)
@@ -91,39 +127,9 @@ func newPackageFromJavaManifest(virtualPath, archivePath string, fileManifest fi
 
 	filenameObj := newJavaArchiveFilename(virtualPath)
 
-	var name string
-	switch {
-	case filenameObj.name() != "":
-		name = filenameObj.name()
-	case manifest.Name != "":
-		// Manifest original spec...
-		name = manifest.Name
-	case manifest.Extra["Bundle-Name"] != "":
-		// BND tooling...
-		name = manifest.Extra["Bundle-Name"]
-	case manifest.Extra["Short-Name"] != "":
-		// Jenkins...
-		name = manifest.Extra["Short-Name"]
-	case manifest.Extra["Extension-Name"] != "":
-		// Jenkins...
-		name = manifest.Extra["Extension-Name"]
-	}
-
-	var version string
-	switch {
-	case manifest.ImplVersion != "":
-		version = manifest.ImplVersion
-	case filenameObj.version() != "":
-		version = filenameObj.version()
-	case manifest.SpecVersion != "":
-		version = manifest.SpecVersion
-	case manifest.Extra["Plugin-Version"] != "":
-		name = manifest.Extra["Plugin-Version"]
-	}
-
 	return &pkg.Package{
-		Name:     name,
-		Version:  version,
+		Name:     selectName(manifest, filenameObj),
+		Version:  selectVersion(manifest, filenameObj),
 		Language: pkg.Java,
 		Metadata: pkg.JavaMetadata{
 			Manifest: manifest,
