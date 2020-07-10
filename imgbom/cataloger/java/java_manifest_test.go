@@ -54,6 +54,13 @@ func TestParseJavaManifest(t *testing.T) {
 				},
 			},
 		},
+		{
+			fixture: "test-fixtures/manifest/version-with-date",
+			expected: pkg.JavaManifest{
+				ManifestVersion: "1.0",
+				ImplVersion: "1.3", // ensure the date is stripped off during processing
+			},
+		},
 	}
 
 	for _, test := range tests {

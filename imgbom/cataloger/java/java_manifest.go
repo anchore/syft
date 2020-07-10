@@ -57,6 +57,12 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 		return nil, fmt.Errorf("unable to parse java manifest: %w", err)
 	}
 
+	// clean select fields
+	if strings.Trim(manifest.ImplVersion, " ") != "" {
+		// transform versions with dates attached to just versions (e.g. "1.3 2244 October 5 2008" --> "1.3")
+		manifest.ImplVersion = strings.Split(manifest.ImplVersion, " ")[0]
+	}
+
 	return &manifest, nil
 }
 
@@ -87,13 +93,19 @@ func newPackageFromJavaManifest(virtualPath, archivePath string, fileManifest fi
 
 	var name string
 	switch {
-	case manifest.Name != "":
-		name = manifest.Name
 	case filenameObj.name() != "":
 		name = filenameObj.name()
+	case manifest.Name != "":
+		// Manifest original spec...
+		name = manifest.Name
+	case manifest.Extra["Bundle-Name"] != "":
+		// BND tooling...
+		name = manifest.Extra["Bundle-Name"]
 	case manifest.Extra["Short-Name"] != "":
+		// Jenkins...
 		name = manifest.Extra["Short-Name"]
 	case manifest.Extra["Extension-Name"] != "":
+		// Jenkins...
 		name = manifest.Extra["Extension-Name"]
 	}
 
