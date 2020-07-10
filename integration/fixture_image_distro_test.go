@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/imgbom/imgbom"
 	"github.com/anchore/imgbom/imgbom/distro"
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/go-test/deep"
 )
 
@@ -15,7 +16,12 @@ func TestDistroImage(t *testing.T) {
 	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-distro-id")
 	defer cleanup()
 
-	actual := imgbom.IdentifyDistro(img)
+	s, err := imgbom.GetScopeFromImage(img, scope.AllLayersScope)
+	if err != nil {
+		t.Fatalf("could not populate scope with image: %+v", err)
+	}
+
+	actual := imgbom.IdentifyDistro(s)
 	if actual == nil {
 		t.Fatalf("could not find distro")
 	}
