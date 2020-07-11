@@ -188,22 +188,6 @@ func TestParseJar(t *testing.T) {
 				},
 			},
 		},
-		{
-			fixture: "test-fixtures/java-builds/packages/spring-boot-0.0.1-SNAPSHOT.jar",
-			expected: map[string]pkg.Package{
-				"example-sb-app": {
-					Name:     "example-sb-app",
-					Version:  "0.0.1",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaMetadata{
-						Manifest: &pkg.JavaManifest{
-							ManifestVersion: "1.0",
-						},
-					},
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {
@@ -216,7 +200,13 @@ func TestParseJar(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseJavaArchive(fixture.Name(), fixture)
+			parser, cleanupFn, err := newJavaArchiveParser(fixture.Name(), fixture, false)
+			defer cleanupFn()
+			if err != nil {
+				t.Fatalf("should not have filed... %+v", err)
+			}
+
+			actual, err := parser.parse()
 			if err != nil {
 				t.Fatalf("failed to parse java archive: %+v", err)
 			}

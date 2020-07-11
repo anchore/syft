@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/imgbom/internal/file"
 )
 
-var allArchiveFormatGlobs = []string{
+var archiveFormatGlobs = []string{
 	"*.jar",
 	"*.war",
 	"*.ear",
@@ -25,10 +25,11 @@ type archiveParser struct {
 	archivePath    string
 	contentPath    string
 	fileInfo       archiveFilename
+	detectNested   bool
 }
 
 func parseJavaArchive(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
-	parser, cleanupFn, err := newJavaArchiveParser(virtualPath, reader)
+	parser, cleanupFn, err := newJavaArchiveParser(virtualPath, reader, true)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -44,7 +45,7 @@ func uniquePkgKey(p *pkg.Package) string {
 	return fmt.Sprintf("%s|%s", p.Name, p.Version)
 }
 
-func newJavaArchiveParser(virtualPath string, reader io.Reader) (*archiveParser, func(), error) {
+func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested bool) (*archiveParser, func(), error) {
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
@@ -62,6 +63,7 @@ func newJavaArchiveParser(virtualPath string, reader io.Reader) (*archiveParser,
 		archivePath:    archivePath,
 		contentPath:    contentPath,
 		fileInfo:       newJavaArchiveFilename(virtualPath),
+		detectNested:   detectNested,
 	}, cleanupFn, nil
 }
 
@@ -191,8 +193,12 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, error) {
 	var pkgs = make([]pkg.Package, 0)
 
+	if !j.detectNested {
+		return pkgs, nil
+	}
+
 	// search and parse pom.properties files & fetch the contents
-	readers, err := file.ExtractFromZipToUniqueTempFile(j.archivePath, j.contentPath, j.fileManifest.GlobMatch(allArchiveFormatGlobs...)...)
+	readers, err := file.ExtractFromZipToUniqueTempFile(j.archivePath, j.contentPath, j.fileManifest.GlobMatch(archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}

@@ -13,7 +13,7 @@ type Cataloger struct {
 
 func NewCataloger() *Cataloger {
 	globParsers := make(map[string]common.ParserFn)
-	for _, pattern := range allArchiveFormatGlobs {
+	for _, pattern := range archiveFormatGlobs {
 		globParsers[pattern] = parseJavaArchive
 	}
 
