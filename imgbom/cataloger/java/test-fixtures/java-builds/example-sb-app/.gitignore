@@ -1,0 +1,6 @@
+# maven build creates this when in a container volume
+/?/
+/.gradle/
+/build/
+target/
+dependency-reduced-pom.xml

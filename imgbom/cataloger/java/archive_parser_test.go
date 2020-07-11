@@ -2,9 +2,7 @@ package java
 
 import (
 	"bufio"
-	"github.com/anchore/imgbom/imgbom/pkg"
-	"github.com/go-test/deep"
-	"github.com/gookit/color"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -12,6 +10,12 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/anchore/imgbom/internal"
+
+	"github.com/anchore/imgbom/imgbom/pkg"
+	"github.com/go-test/deep"
+	"github.com/gookit/color"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {
@@ -184,6 +188,22 @@ func TestParseJar(t *testing.T) {
 				},
 			},
 		},
+		{
+			fixture: "test-fixtures/java-builds/packages/spring-boot-0.0.1-SNAPSHOT.jar",
+			expected: map[string]pkg.Package{
+				"example-sb-app": {
+					Name:     "example-sb-app",
+					Version:  "0.0.1",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
+					Metadata: pkg.JavaMetadata{
+						Manifest: &pkg.JavaManifest{
+							ManifestVersion: "1.0",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -205,7 +225,7 @@ func TestParseJar(t *testing.T) {
 				for _, a := range actual {
 					t.Log("   ", a)
 				}
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), 1)
+				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(test.expected))
 			}
 
 			var parent *pkg.Package
@@ -249,6 +269,266 @@ func TestParseJar(t *testing.T) {
 						t.Errorf("diff: %+v", d)
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestParseNestedJar(t *testing.T) {
+	tests := []struct {
+		fixture      string
+		expected     []pkg.Package
+		ignoreExtras []string
+	}{
+		{
+			fixture: "test-fixtures/java-builds/packages/spring-boot-0.0.1-SNAPSHOT.jar",
+			expected: []pkg.Package{
+				{
+					Name:    "spring-boot",
+					Version: "0.0.1-SNAPSHOT",
+				},
+				{
+					Name:    "spring-boot-starter",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "jul-to-slf4j",
+					Version: "1.7.29",
+				},
+				{
+					Name:    "tomcat-embed-websocket",
+					Version: "9.0.29",
+				},
+				{
+					Name:    "spring-boot-starter-validation",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "hibernate-validator",
+					Version: "6.0.18.Final",
+				},
+				{
+					Name:    "jboss-logging",
+					Version: "3.4.1.Final",
+				},
+				{
+					Name:    "spring-expression",
+					Version: "5.2.2.RELEASE",
+				},
+				{
+					Name:    "jakarta.validation-api",
+					Version: "2.0.1",
+				},
+				{
+					Name:    "spring-web",
+					Version: "5.2.2.RELEASE",
+				},
+				{
+					Name:    "spring-boot-starter-actuator",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "log4j-api",
+					Version: "2.12.1",
+				},
+				{
+					Name:    "snakeyaml",
+					Version: "1.25",
+				},
+				{
+					Name:    "jackson-core",
+					Version: "2.10.1",
+				},
+				{
+					Name:    "jackson-datatype-jsr310",
+					Version: "2.10.1",
+				},
+				{
+					Name:    "spring-aop",
+					Version: "5.2.2.RELEASE",
+				},
+				{
+					Name:    "spring-boot-actuator-autoconfigure",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "spring-jcl",
+					Version: "5.2.2.RELEASE",
+				},
+				{
+					Name:    "spring-boot",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "spring-boot-starter-logging",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "jakarta.annotation-api",
+					Version: "1.3.5",
+				},
+				{
+					Name:    "spring-webmvc",
+					Version: "5.2.2.RELEASE",
+				},
+				{
+					Name:    "HdrHistogram",
+					Version: "2.1.11",
+				},
+				{
+					Name:    "spring-boot-starter-web",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "logback-classic",
+					Version: "1.2.3",
+				},
+				{
+					Name:    "log4j-to-slf4j",
+					Version: "2.12.1",
+				},
+				{
+					Name:    "spring-boot-starter-json",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "jackson-databind",
+					Version: "2.10.1",
+				},
+				{
+					Name:    "jackson-module-parameter-names",
+					Version: "2.10.1",
+				},
+				{
+					Name:    "LatencyUtils",
+					Version: "2.0.3",
+				},
+				{
+					Name:    "spring-boot-autoconfigure",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "jackson-datatype-jdk8",
+					Version: "2.10.1",
+				},
+				{
+					Name:    "tomcat-embed-core",
+					Version: "9.0.29",
+				},
+				{
+					Name:    "tomcat-embed-el",
+					Version: "9.0.29",
+				},
+				{
+					Name:    "spring-beans",
+					Version: "5.2.2.RELEASE",
+				},
+				{
+					Name:    "spring-boot-actuator",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "slf4j-api",
+					Version: "1.7.29",
+				},
+				{
+					Name:    "spring-core",
+					Version: "5.2.2.RELEASE",
+				},
+				{
+					Name:    "logback-core",
+					Version: "1.2.3",
+				},
+				{
+					Name:    "micrometer-core",
+					Version: "1.3.1",
+				},
+				{
+					Name:    "pcollections",
+					Version: "3.1.0",
+				},
+				{
+					Name:    "jackson-annotations",
+					Version: "2.10.1",
+				},
+				{
+					Name:    "spring-boot-starter-tomcat",
+					Version: "2.2.2.RELEASE",
+				},
+				{
+					Name:    "classmate",
+					Version: "1.5.1",
+				},
+				{
+					Name:    "spring-context",
+					Version: "5.2.2.RELEASE",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.fixture, func(t *testing.T) {
+
+			generateJavaBuildFixture(t, test.fixture)
+
+			fixture, err := os.Open(test.fixture)
+			if err != nil {
+				t.Fatalf("failed to open fixture: %+v", err)
+			}
+
+			actual, err := parseJavaArchive(fixture.Name(), fixture)
+			if err != nil {
+				t.Fatalf("failed to parse java archive: %+v", err)
+			}
+
+			nameVersionPairSet := internal.NewStringSet()
+
+			makeKey := func(p *pkg.Package) string {
+				if p == nil {
+					t.Fatal("cannot make key for nil pkg")
+				}
+				return fmt.Sprintf("%s|%s", p.Name, p.Version)
+			}
+
+			for _, e := range test.expected {
+				nameVersionPairSet.Add(makeKey(&e))
+			}
+
+			if len(actual) != len(nameVersionPairSet) {
+				for _, a := range actual {
+					t.Log("   ", a)
+				}
+				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(nameVersionPairSet))
+			}
+
+			for _, a := range actual {
+				actualKey := makeKey(&a)
+
+				if !nameVersionPairSet.Contains(actualKey) {
+					t.Errorf("unexpected pkg: %q", actualKey)
+				}
+
+				metadata := a.Metadata.(pkg.JavaMetadata)
+				if actualKey == "spring-boot|0.0.1-SNAPSHOT" {
+					if metadata.Parent != nil {
+						t.Errorf("expected no parent for root pkg, got %q", makeKey(metadata.Parent))
+					}
+				} else {
+					if metadata.Parent == nil {
+						t.Errorf("unassigned error for pkg=%q", actualKey)
+					} else if makeKey(metadata.Parent) != "spring-boot|0.0.1-SNAPSHOT" {
+						// NB: this is a hard-coded condition to simplify the test harness
+						if a.Name == "pcollections" {
+							if metadata.Parent.Name != "micrometer-core" {
+								t.Errorf("nested 'pcollections' pkg has wrong parent: %q", metadata.Parent.Name)
+							}
+						} else {
+							t.Errorf("bad parent for pkg=%q parent=%q", actualKey, makeKey(metadata.Parent))
+						}
+					}
+				}
+
 			}
 		})
 	}

@@ -3,7 +3,6 @@ package file
 import (
 	"crypto/sha256"
 	"encoding/json"
-	"github.com/go-test/deep"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/go-test/deep"
 )
 
 func generateFixture(t *testing.T, archivePath string) {
@@ -188,7 +189,7 @@ func TestExtractFilesFromZipFile(t *testing.T) {
 		bFilePath: "B file...",
 	}
 
-	actual, err := ExtractFilesFromZip(archivePath, aFilePath, bFilePath)
+	actual, err := ContentsFromZip(archivePath, aFilePath, bFilePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}
@@ -236,7 +237,7 @@ func TestZipFileManifest(t *testing.T) {
 		filepath.Join("zip-source", "b-file.txt"),
 	}
 
-	actual, err := ZipFileManifest(archivePath)
+	actual, err := NewZipFileManifest(archivePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}
