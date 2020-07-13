@@ -1,4 +1,4 @@
-package imgs
+package json
 
 import (
 	"bytes"
@@ -7,35 +7,58 @@ import (
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/imgbom/imgbom/pkg"
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 var update = flag.Bool("update", false, "update the *.golden files for json presenters")
 
-// TODO: add a JSON schema and write a test that validates output against the schema
-// func validateAgainstV1Schema(t *testing.T, json string) {
-// 	fullSchemaPath, err := filepath.Abs("v1-schema.json")
-// 	if err != nil {
-// 		t.Fatal("could not get path to schema:", err)
-// 	}
-// 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
-// 	documentLoader := gojsonschema.NewStringLoader(json)
+func TestJsonDirsPresenter(t *testing.T) {
+	var buffer bytes.Buffer
 
-// 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
-// 	if err != nil {
-// 		t.Fatal("unable to validate json schema:", err.Error())
-// 	}
+	catalog := pkg.NewCatalog()
 
-// 	if !result.Valid() {
-// 		t.Errorf("failed json schema validation:")
-// 		for _, desc := range result.Errors() {
-// 			t.Errorf("  - %s\n", desc)
-// 		}
-// 	}
-// }
+	// populate catalog with test data
+	catalog.Add(pkg.Package{
+		Name:    "package-1",
+		Version: "1.0.1",
+		Type:    pkg.DebPkg,
+	})
+	catalog.Add(pkg.Package{
+		Name:    "package-2",
+		Version: "2.0.1",
+		Type:    pkg.DebPkg,
+	})
 
-func TestJsonPresenter(t *testing.T) {
+	s, err := scope.NewScopeFromDir("/some/path", scope.AllLayersScope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pres := NewPresenter(catalog, s)
+
+	// run presenter
+	err = pres.Present(&buffer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual := buffer.Bytes()
+
+	if *update {
+		testutils.UpdateGoldenFileContents(t, actual)
+	}
+
+	var expected = testutils.GetGoldenFileContents(t)
+
+	if !bytes.Equal(expected, actual) {
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(string(actual), string(expected), true)
+		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
+	}
+
+}
+
+func TestJsonImgsPresenter(t *testing.T) {
 	var buffer bytes.Buffer
 
 	testImage := "image-simple"
@@ -65,10 +88,11 @@ func TestJsonPresenter(t *testing.T) {
 		Type: pkg.DebPkg,
 	})
 
-	pres := NewPresenter(img, catalog)
+	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+	pres := NewPresenter(catalog, s)
 
 	// run presenter
-	err := pres.Present(&buffer)
+	err = pres.Present(&buffer)
 	if err != nil {
 		t.Fatal(err)
 	}

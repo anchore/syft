@@ -1,0 +1,1 @@
+{"artifacts":[{"name":"package-1","version":"1.0.1","type":"deb","cataloger":"","sources":[],"metadata":null},{"name":"package-2","version":"2.0.1","type":"deb","cataloger":"","sources":[],"metadata":null}],"image":{"layers":null,"size":0,"digest":"","mediaType":"","tags":null},"Source":"/some/path"}
