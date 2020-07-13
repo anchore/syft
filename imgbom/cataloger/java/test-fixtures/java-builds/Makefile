@@ -18,7 +18,8 @@ $(PKGSDIR)/example-java-app-maven-0.1.0.jar:
 	./build-example-java-app-maven.sh $(PKGSDIR)
 
 clean-maven:
-	rm -rf	example-java-app/target \
+	rm -rf	example-java-app/\? \
+			example-java-app/target \
 			example-java-app/dependency-reduced-pom.xml
 
 # Gradle...
@@ -41,5 +42,5 @@ clean-jenkins:
 # we need a way to determine if CI should bust the test cache based on the source material
 $(PKGSDIR).fingerprint: clean-examples
 	mkdir -p $(PKGSDIR)
-	find example-* -type f -exec sha256sum {} \; > $(PKGSDIR).fingerprint
+	find example-* -type f -exec sha256sum {} \; | sort | tee $(PKGSDIR).fingerprint
 	sha256sum $(PKGSDIR).fingerprint

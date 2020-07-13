@@ -74,6 +74,10 @@ integration: ## Run integration tests
 integration/test-fixtures/tar-cache.key, integration-fingerprint:
 	find integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee integration/test-fixtures/tar-cache.fingerprint
 
+java-packages-fingerprint:
+	@cd imgbom/cataloger/java/test-fixtures/java-builds && \
+	make packages.fingerprint
+
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/tar-cache/*.tar" -delete
 
