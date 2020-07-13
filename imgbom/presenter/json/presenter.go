@@ -22,19 +22,6 @@ func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
 	}
 }
 
-// Source returns a DirSrc or ImgSrc
-func (pres *Presenter) Source() interface{} {
-	srcObj := pres.scope.Source()
-	switch src := srcObj.(type) {
-	case scope.ImageSource:
-		return pres.scope.ImgSrc
-	case scope.DirSource:
-		return pres.scope.DirSrc
-	default:
-		return fmt.Errorf("unsupported source: %T", src)
-	}
-}
-
 type document struct {
 	Artifacts []artifact `json:"artifacts"`
 	Image     image      `json:"image"`
@@ -74,24 +61,25 @@ func (pres *Presenter) Present(output io.Writer) error {
 		Artifacts: make([]artifact, 0),
 	}
 
-	src := pres.Source()
-	imgSrc, ok := src.(scope.ImageSource)
-
-	// populate artifacts...
-	if ok {
-		tags := make([]string, len(imgSrc.Img.Metadata.Tags))
-		for idx, tag := range imgSrc.Img.Metadata.Tags {
+	srcObj := pres.scope.Source()
+	switch src := srcObj.(type) {
+	case scope.ImageSource:
+		// populate artifacts...
+		tags := make([]string, len(src.Img.Metadata.Tags))
+		for idx, tag := range src.Img.Metadata.Tags {
 			tags[idx] = tag.String()
 		}
 		doc.Image = image{
-			Digest:    imgSrc.Img.Metadata.Digest,
-			Size:      imgSrc.Img.Metadata.Size,
-			MediaType: string(imgSrc.Img.Metadata.MediaType),
+			Digest:    src.Img.Metadata.Digest,
+			Size:      src.Img.Metadata.Size,
+			MediaType: string(src.Img.Metadata.MediaType),
 			Tags:      tags,
-			Layers:    make([]layer, len(imgSrc.Img.Layers)),
+			Layers:    make([]layer, len(src.Img.Layers)),
 		}
-	} else {
+	case scope.DirSource:
 		doc.Source = pres.scope.DirSrc.Path
+	default:
+		return fmt.Errorf("unsupported source: %T", src)
 	}
 
 	for p := range pres.catalog.Enumerate() {
