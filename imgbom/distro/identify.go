@@ -22,7 +22,6 @@ func Identify(s scope.Scope) *Distro {
 	}
 
 	for path, fn := range identityFiles {
-		// this is always a slice with a single ref, the API is odd because it was meant for images
 		refs, err := s.FilesByPath(path)
 		if err != nil {
 			log.Errorf("unable to get path refs from %s: %s", path, err)
@@ -32,33 +31,34 @@ func Identify(s scope.Scope) *Distro {
 		if len(refs) == 0 {
 			continue
 		}
-		ref := refs[0]
 
-		contents, err := s.MultipleFileContentsByRef(ref)
-		log.Infof("contents are: %+v", contents)
-		content, ok := contents[ref]
-		// XXX is it possible to get a ref and no contents at all?
-		if !ok {
-			continue
+		for _, ref := range refs {
+			contents, err := s.MultipleFileContentsByRef(ref)
+			content, ok := contents[ref]
+
+			if !ok {
+				log.Infof("no content present for ref: %s", ref)
+				continue
+			}
+
+			if err != nil {
+				log.Debugf("unable to get contents from %s: %s", path, err)
+				continue
+			}
+
+			if content == "" {
+				log.Debugf("no contents in file, skipping: %s", path)
+				continue
+			}
+
+			distro := fn(content)
+
+			if distro == nil {
+				continue
+			}
+
+			return distro
 		}
-
-		if err != nil {
-			log.Debugf("unable to get contents from %s: %s", path, err)
-			continue
-		}
-
-		if content == "" {
-			log.Debugf("no contents in file, skipping: %s", path)
-			continue
-		}
-
-		distro := fn(content)
-
-		if distro == nil {
-			continue
-		}
-
-		return distro
 	}
 	// TODO: is it useful to know partially detected distros? where the ID is known but not the version (and viceversa?)
 	return nil
