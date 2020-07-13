@@ -22,10 +22,13 @@ define title
     @printf '$(TITLE)$(1)$(RESET)\n'
 endef
 
-.PHONY: all bootstrap lint lint-fix unit coverage integration check-pipeline clear-cache help test
+.PHONY: all bootstrap lint lint-fix unit coverage integration check-pipeline clear-cache help test compare
 
 all: lint test ## Run all checks (linting, unit tests, and integration tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
+
+compare:
+	@cd comparison && make
 
 test: unit integration ## Run all tests (currently unit & integration)
 
