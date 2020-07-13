@@ -56,7 +56,7 @@ class InlineScan:
         packages = set()
         metadata = collections.defaultdict(dict)
         for entry in self._enumerate_section(report="content-os", section="content"):
-            package = Package(name=entry["package"], type=entry["type"].lower(),)
+            package = Package(name=entry["package"], type=entry["type"].lower())
             packages.add(package)
             metadata[package.type][package] = Metadata(version=entry["version"])
 
