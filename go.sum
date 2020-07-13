@@ -126,9 +126,13 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/anchore/go-testutils v0.0.0-20200520222037-edc2bf1864fe h1:YMXe4RA3qy4Ri5fmGQii/Gn+Pxv3oBfiS/LqzeOVuwo=
 github.com/anchore/go-testutils v0.0.0-20200520222037-edc2bf1864fe/go.mod h1:D3rc2L/q4Hcp9eeX6AIJH4Q+kPjOtJCFhG9za90j+nU=
+github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db h1:LWKezJnFTFxNkZ4MzajVf+YWvJS0+7hwFr59u6SS7cw=
+github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db/go.mod h1:D3rc2L/q4Hcp9eeX6AIJH4Q+kPjOtJCFhG9za90j+nU=
 github.com/anchore/stereoscope v0.0.0-20200520221116-025e07f1c93e/go.mod h1:bkyLl5VITnrmgErv4S1vDfVz/TGAZ5il6161IQo7w2g=
 github.com/anchore/stereoscope v0.0.0-20200624175800-ef5dbfb7cae4 h1:bPd6YFo9VDyoTLVcawFNbW9Z8dQA3M/pCgdD22dR0VQ=
 github.com/anchore/stereoscope v0.0.0-20200624175800-ef5dbfb7cae4/go.mod h1:f4LZpPnN/5RpQnzcznDsYNeYavFCAW8CpbHN01G3Lh8=
+github.com/anchore/stereoscope v0.0.0-20200706164556-7cf39d7f4639 h1:J1oytkj+aBuACNF2whtEiVxRXIZ8zwT+EiPTqm/FvwA=
+github.com/anchore/stereoscope v0.0.0-20200706164556-7cf39d7f4639/go.mod h1:WntReQTI/I27FOQ87UgLVVzWgku6+ZsqfOTLxpIZFCs=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/apex/log v1.1.4/go.mod h1:AlpoD9aScyQfJDVHmLMEcx4oU6LqzkWp4Mg9GdAcEvQ=
 github.com/apex/log v1.3.0 h1:1fyfbPvUwD10nMoh3hY6MXzvZShJQn9/ck7ATgAt5pA=

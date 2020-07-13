@@ -4,8 +4,8 @@ go 1.14
 
 require (
 	github.com/adrg/xdg v0.2.1
-	github.com/anchore/go-testutils v0.0.0-20200520222037-edc2bf1864fe
-	github.com/anchore/stereoscope v0.0.0-20200624175800-ef5dbfb7cae4
+	github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db
+	github.com/anchore/stereoscope v0.0.0-20200706164556-7cf39d7f4639
 	github.com/go-test/deep v1.0.6
 	github.com/google/go-containerregistry v0.1.1 // indirect
 	github.com/gookit/color v1.2.5
