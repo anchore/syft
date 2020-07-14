@@ -17,7 +17,8 @@ func TestLanguageImage(t *testing.T) {
 	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-pkg-coverage")
 	defer cleanup()
 
-	s, err := scope.NewImageScope(img, scope.AllLayersScope)
+	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+
 	catalog, err := cataloger.Catalog(s)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
