@@ -4,14 +4,22 @@ ifndef PKGSDIR
     $(error PKGSDIR is not set)
 endif
 
-all: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi
+all: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar
 
 clean: clean-examples
 	rm -f $(PKGSDIR)/*
 
-clean-examples: clean-gradle clean-maven clean-jenkins
+clean-examples: clean-gradle clean-maven clean-jenkins clean-nestedjar
 
-.PHONY: maven gradle clean clean-gradle clean-maven clean-jenkins clean-examples
+.PHONY: maven gradle clean clean-gradle clean-maven clean-jenkins clean-examples clean-nestedjar
+
+# Nested jar...
+
+$(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar:
+	./build-example-sb-app-nestedjar.sh $(PKGSDIR)
+
+clean-nestedjar:
+	rm -rf	example-sb-app/target
 
 # Maven...
 $(PKGSDIR)/example-java-app-maven-0.1.0.jar:

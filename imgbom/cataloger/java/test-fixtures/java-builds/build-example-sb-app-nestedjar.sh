@@ -4,7 +4,7 @@ set -uxe
 # note: this can be easily done in a 1-liner, however circle CI does NOT allow volume mounts from the host in docker executors (since they are on remote hosts, where the host files are inaccessible)
 
 PKGSDIR=$1
-CTRID=$(docker create -u "$(id -u):$(id -g)" -e MAVEN_CONFIG=/tmp/.m2 -v /example-java-app -w /example-java-app maven:3.6.3-openjdk-14 mvn -Duser.home=/tmp -DskipTests package)
+CTRID=$(docker create -u "$(id -u):$(id -g)" -e MAVEN_CONFIG=/tmp/.m2 -v /example-sb-app -w /example-sb-app maven:3.6.3-openjdk-14 mvn -Duser.home=/tmp -DskipTests package spring-boot:repackage)
 
 function cleanup() {
   docker rm "${CTRID}"
@@ -13,7 +13,7 @@ function cleanup() {
 trap cleanup EXIT
 set +e
 
-docker cp "$(pwd)/example-java-app" "${CTRID}:/"
+docker cp "$(pwd)/example-sb-app" "${CTRID}:/"
 docker start -a "${CTRID}"
 mkdir -p "$PKGSDIR"
-docker cp "${CTRID}:/example-java-app/target/example-java-app-maven-0.1.0.jar" "$PKGSDIR"
+docker cp "${CTRID}:/example-sb-app/target/spring-boot-0.0.1-SNAPSHOT.jar" "$PKGSDIR"

@@ -6,8 +6,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anchore/imgbom/internal/file"
-
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/mitchellh/mapstructure"
 )
@@ -100,39 +98,4 @@ func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) stri
 		version = manifest.Extra["Plugin-Version"]
 	}
 	return version
-}
-
-func newPackageFromJavaManifest(virtualPath, archivePath string, fileManifest file.ZipManifest) (*pkg.Package, error) {
-	// search and parse java manifest files
-	manifestMatches := fileManifest.GlobMatch(manifestPath)
-	if len(manifestMatches) > 1 {
-		return nil, fmt.Errorf("found multiple manifests in the jar: %+v", manifestMatches)
-	} else if len(manifestMatches) == 0 {
-		// we did not find any manifests, but that may not be a problem (there may be other information to generate packages for)
-		return nil, nil
-	}
-
-	// fetch the manifest file
-	contents, err := file.ExtractFilesFromZip(archivePath, manifestMatches...)
-	if err != nil {
-		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", virtualPath, err)
-	}
-
-	// parse the manifest file into a rich object
-	manifestContents := contents[manifestMatches[0]]
-	manifest, err := parseJavaManifest(strings.NewReader(manifestContents))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse java manifest (%s): %w", virtualPath, err)
-	}
-
-	filenameObj := newJavaArchiveFilename(virtualPath)
-
-	return &pkg.Package{
-		Name:     selectName(manifest, filenameObj),
-		Version:  selectVersion(manifest, filenameObj),
-		Language: pkg.Java,
-		Metadata: pkg.JavaMetadata{
-			Manifest: manifest,
-		},
-	}, nil
 }

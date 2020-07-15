@@ -3,8 +3,9 @@
 package integration
 
 import (
-	"github.com/anchore/imgbom/internal"
 	"testing"
+
+	"github.com/anchore/imgbom/internal"
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/imgbom/imgbom/cataloger"
@@ -48,6 +49,7 @@ func TestLanguageImage(t *testing.T) {
 			pkgLanguage: pkg.Java,
 			pkgInfo: map[string]string{
 				"example-java-app-maven": "0.1.0",
+				"example-jenkins-plugin": "1.0-SNAPSHOT", // the jeninks HPI file has a nested JAR of the same name
 			},
 		},
 		{
