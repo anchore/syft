@@ -2,6 +2,7 @@ TEMPDIR = ./.tmp
 RESULTSDIR = $(TEMPDIR)/results
 COVER_REPORT = $(RESULTSDIR)/cover.report
 COVER_TOTAL = $(RESULTSDIR)/cover.total
+LICENSES_REPORT = $(RESULTSDIR)/licenses.json
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --config .golangci.yaml
 BOLD := $(shell tput -T linux bold)
 PURPLE := $(shell tput -T linux setaf 5)
@@ -22,10 +23,13 @@ define title
     @printf '$(TITLE)$(1)$(RESET)\n'
 endef
 
-.PHONY: all bootstrap lint lint-fix unit coverage integration check-pipeline clear-cache help test
+.PHONY: all bootstrap lint lint-fix unit coverage integration check-pipeline clear-cache help test compare
 
 all: lint test ## Run all checks (linting, unit tests, and integration tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
+
+compare:
+	@cd comparison && make
 
 test: unit integration ## Run all tests (currently unit & integration)
 
@@ -48,6 +52,8 @@ bootstrap: ## Download and install all project dependencies (+ prep tooling in t
 	go get ./...
 	# install golangci-lint
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b .tmp/ v1.26.0
+	# install bouncer
+	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b .tmp/ v0.1.0
 
 lint: ## Run gofmt + golangci lint checks
 	$(call title,Running linters)
@@ -74,6 +80,10 @@ integration: ## Run integration tests
 integration/test-fixtures/tar-cache.key, integration-fingerprint:
 	find integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee integration/test-fixtures/tar-cache.fingerprint
 
+java-packages-fingerprint:
+	@cd imgbom/cataloger/java/test-fixtures/java-builds && \
+	make packages.fingerprint
+
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/tar-cache/*.tar" -delete
 
@@ -93,3 +103,8 @@ build-release: ## Build final release binary
 				   -X main.commit="$(git describe --dirty --always)" \
 				   -X main.buildTime="$(date --rfc-3339=seconds --utc)"
 				   -o dist/imgbom
+
+# todo: this should by later used by goreleaser
+check-licenses:
+	$(TEMPDIR)/bouncer list -o json | tee $(LICENSES_REPORT)
+	$(TEMPDIR)/bouncer check
