@@ -85,8 +85,11 @@ func TestParseJar(t *testing.T) {
 		ignoreExtras []string
 	}{
 		{
-			fixture:      "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
-			ignoreExtras: []string{"Plugin-Version"}, // has dynamic date
+			fixture: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
+			ignoreExtras: []string{
+				"Plugin-Version", // has dynamic date
+				"Build-Jdk",      // can't guarantee the JDK used at build time
+			},
 			expected: map[string]pkg.Package{
 				"example-jenkins-plugin": {
 					Name:     "example-jenkins-plugin",
@@ -100,12 +103,12 @@ func TestParseJar(t *testing.T) {
 							ImplTitle:       "example-jenkins-plugin",
 							ImplVersion:     "1.0-SNAPSHOT",
 							Extra: map[string]string{
-								"Archiver-Version":     "Plexus Archiver",
-								"Plugin-License-Url":   "https://opensource.org/licenses/MIT",
-								"Plugin-License-Name":  "MIT License",
-								"Created-By":           "Apache Maven",
-								"Built-By":             "?",
-								"Build-Jdk":            "14.0.1",
+								"Archiver-Version":    "Plexus Archiver",
+								"Plugin-License-Url":  "https://opensource.org/licenses/MIT",
+								"Plugin-License-Name": "MIT License",
+								"Created-By":          "Apache Maven",
+								"Built-By":            "?",
+								//"Build-Jdk":            "14.0.1",
 								"Jenkins-Version":      "2.164.3",
 								"Minimum-Java-Version": "1.8",
 								"Plugin-Developers":    "",
@@ -147,6 +150,9 @@ func TestParseJar(t *testing.T) {
 		},
 		{
 			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+			ignoreExtras: []string{
+				"Build-Jdk", // can't guarantee the JDK used at build time
+			},
 			expected: map[string]pkg.Package{
 				"example-java-app-maven": {
 					Name:     "example-java-app-maven",
@@ -160,8 +166,8 @@ func TestParseJar(t *testing.T) {
 								"Archiver-Version": "Plexus Archiver",
 								"Created-By":       "Apache Maven 3.6.3",
 								"Built-By":         "?",
-								"Build-Jdk":        "14.0.1",
-								"Main-Class":       "hello.HelloWorld",
+								//"Build-Jdk":        "14.0.1",
+								"Main-Class": "hello.HelloWorld",
 							},
 						},
 						PomProperties: &pkg.PomProperties{
@@ -246,7 +252,11 @@ func TestParseJar(t *testing.T) {
 
 				// ignore select fields
 				for _, field := range test.ignoreExtras {
-					delete(metadata.Manifest.Extra, field)
+					if metadata.Manifest != nil && metadata.Manifest.Extra != nil {
+						if _, ok := metadata.Manifest.Extra[field]; ok {
+							delete(metadata.Manifest.Extra, field)
+						}
+					}
 				}
 
 				// write censored data back
