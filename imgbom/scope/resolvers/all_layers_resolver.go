@@ -104,3 +104,7 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, e
 
 	return uniqueFiles, nil
 }
+
+func (r *AllLayersResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
+	return r.img.MultipleFileContentsByRef(f...)
+}

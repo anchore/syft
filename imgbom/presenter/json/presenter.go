@@ -1,28 +1,45 @@
-package dirs
+package json
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/anchore/imgbom/imgbom/pkg"
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal/log"
 )
 
 type Presenter struct {
 	catalog *pkg.Catalog
-	path    string
+	scope   scope.Scope
 }
 
-func NewPresenter(catalog *pkg.Catalog, path string) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
 	return &Presenter{
 		catalog: catalog,
-		path:    path,
+		scope:   s,
 	}
 }
 
 type document struct {
 	Artifacts []artifact `json:"artifacts"`
+	Image     image      `json:"image"`
 	Source    string
+}
+
+type image struct {
+	Layers    []layer  `json:"layers"`
+	Size      int64    `json:"size"`
+	Digest    string   `json:"digest"`
+	MediaType string   `json:"mediaType"`
+	Tags      []string `json:"tags"`
+}
+
+type layer struct {
+	MediaType string `json:"mediaType"`
+	Digest    string `json:"digest"`
+	Size      int64  `json:"size"`
 }
 
 type source struct {
@@ -42,11 +59,29 @@ type artifact struct {
 func (pres *Presenter) Present(output io.Writer) error {
 	doc := document{
 		Artifacts: make([]artifact, 0),
-		Source:    pres.path,
 	}
 
-	// populate artifacts...
-	// TODO: move this into a common package so that other text presenters can reuse
+	srcObj := pres.scope.Source()
+	switch src := srcObj.(type) {
+	case scope.ImageSource:
+		// populate artifacts...
+		tags := make([]string, len(src.Img.Metadata.Tags))
+		for idx, tag := range src.Img.Metadata.Tags {
+			tags[idx] = tag.String()
+		}
+		doc.Image = image{
+			Digest:    src.Img.Metadata.Digest,
+			Size:      src.Img.Metadata.Size,
+			MediaType: string(src.Img.Metadata.MediaType),
+			Tags:      tags,
+			Layers:    make([]layer, len(src.Img.Layers)),
+		}
+	case scope.DirSource:
+		doc.Source = pres.scope.DirSrc.Path
+	default:
+		return fmt.Errorf("unsupported source: %T", src)
+	}
+
 	for p := range pres.catalog.Enumerate() {
 		art := artifact{
 			Name:     p.Name,

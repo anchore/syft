@@ -31,7 +31,7 @@ func Catalogers() []string {
 	return c
 }
 
-func Catalog(s scope.FileContentResolver) (*pkg.Catalog, error) {
+func Catalog(s scope.Resolver) (*pkg.Catalog, error) {
 	return controllerInstance.catalog(s)
 }
 
@@ -75,7 +75,7 @@ func (c *controller) trackCataloger() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-func (c *controller) catalog(s scope.FileContentResolver) (*pkg.Catalog, error) {
+func (c *controller) catalog(s scope.Resolver) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
 	fileSelection := make([]file.Reference, 0)
 

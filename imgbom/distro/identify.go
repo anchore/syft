@@ -4,18 +4,16 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/stereoscope/pkg/image"
 )
 
 // returns a distro or nil
 type parseFunc func(string) *Distro
 
 // Identify parses distro-specific files to determine distro metadata like version and release
-func Identify(img *image.Image) *Distro {
-	// TODO: implement me based off of https://github.com/anchore/anchore-engine/blob/78b23d7e8f007005c070673405b5e23730a660e0/anchore_engine/analyzers/utils.py#L131
-
+func Identify(s scope.Scope) *Distro {
 	identityFiles := map[file.Path]parseFunc{
 		"/etc/os-release": parseOsRelease,
 		// Debian and Debian-based distros have the same contents linked from this path
@@ -24,24 +22,43 @@ func Identify(img *image.Image) *Distro {
 	}
 
 	for path, fn := range identityFiles {
-		contents, err := img.FileContentsFromSquash(path) // TODO: this call replaced with "MultipleFileContents"
-
+		refs, err := s.FilesByPath(path)
 		if err != nil {
-			log.Debugf("unable to get contents from %s: %s", path, err)
+			log.Errorf("unable to get path refs from %s: %s", path, err)
+			return nil
+		}
+
+		if len(refs) == 0 {
 			continue
 		}
 
-		if contents == "" {
-			log.Debugf("no contents in file, skipping: %s", path)
-			continue
-		}
-		distro := fn(contents)
+		for _, ref := range refs {
+			contents, err := s.MultipleFileContentsByRef(ref)
+			content, ok := contents[ref]
 
-		if distro == nil {
-			continue
-		}
+			if !ok {
+				log.Infof("no content present for ref: %s", ref)
+				continue
+			}
 
-		return distro
+			if err != nil {
+				log.Debugf("unable to get contents from %s: %s", path, err)
+				continue
+			}
+
+			if content == "" {
+				log.Debugf("no contents in file, skipping: %s", path)
+				continue
+			}
+
+			distro := fn(content)
+
+			if distro == nil {
+				continue
+			}
+
+			return distro
+		}
 	}
 	// TODO: is it useful to know partially detected distros? where the ID is known but not the version (and viceversa?)
 	return nil

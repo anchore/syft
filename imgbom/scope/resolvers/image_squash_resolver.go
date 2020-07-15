@@ -68,3 +68,7 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference,
 
 	return uniqueFiles, nil
 }
+
+func (r *ImageSquashResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
+	return r.img.MultipleFileContentsByRef(f...)
+}

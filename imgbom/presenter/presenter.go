@@ -4,34 +4,22 @@ import (
 	"io"
 
 	"github.com/anchore/imgbom/imgbom/pkg"
-	json_dirs "github.com/anchore/imgbom/imgbom/presenter/json/dirs"
-	json_imgs "github.com/anchore/imgbom/imgbom/presenter/json/imgs"
-	text_dirs "github.com/anchore/imgbom/imgbom/presenter/text/dirs"
-	text_imgs "github.com/anchore/imgbom/imgbom/presenter/text/imgs"
-	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/imgbom/imgbom/presenter/json"
+	"github.com/anchore/imgbom/imgbom/presenter/text"
+	"github.com/anchore/imgbom/imgbom/scope"
 )
 
 type Presenter interface {
 	Present(io.Writer) error
 }
 
-func GetImgPresenter(option Option, img *image.Image, catalog *pkg.Catalog) Presenter {
+// GetPresenter returns a presenter for images or directories
+func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog) Presenter {
 	switch option {
 	case JSONPresenter:
-		return json_imgs.NewPresenter(img, catalog)
+		return json.NewPresenter(catalog, s)
 	case TextPresenter:
-		return text_imgs.NewPresenter(img, catalog)
-	default:
-		return nil
-	}
-}
-
-func GetDirPresenter(option Option, path string, catalog *pkg.Catalog) Presenter {
-	switch option {
-	case JSONPresenter:
-		return json_dirs.NewPresenter(catalog, path)
-	case TextPresenter:
-		return text_dirs.NewPresenter(catalog, path)
+		return text.NewPresenter(catalog, s)
 	default:
 		return nil
 	}
