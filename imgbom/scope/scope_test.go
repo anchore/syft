@@ -92,7 +92,7 @@ func TestDirectoryScope(t *testing.T) {
 	}
 }
 
-func TestMultipleFileContentsByRef(t *testing.T) {
+func TestMultipleFileContentsByRefContents(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		input    string
@@ -103,12 +103,6 @@ func TestMultipleFileContentsByRef(t *testing.T) {
 			input:    "test-fixtures/path-detected",
 			desc:     "empty file",
 			path:     "empty",
-			expected: "",
-		},
-		{
-			input:    "test-fixtures/path-detected",
-			desc:     "path does not exist",
-			path:     "foo",
 			expected: "",
 		},
 		{
@@ -124,12 +118,53 @@ func TestMultipleFileContentsByRef(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %w", err)
 			}
-			ref := file.NewFileReference(file.Path(test.path))
+			refs, err := p.FilesByPath(file.Path(test.path))
+			if err != nil {
+				t.Errorf("could not get file references from path: %s, %v", test.path, err)
+			}
+
+			if len(refs) != 1 {
+				t.Errorf("expected a single ref to be generated but got: %d", len(refs))
+			}
+			ref := refs[0]
+
 			contents, err := p.MultipleFileContentsByRef(ref)
 			content := contents[ref]
 
 			if content != test.expected {
 				t.Errorf("unexpected contents from file: '%s' != '%s'", content, test.expected)
+			}
+
+		})
+	}
+}
+
+func TestMultipleFileContentsByRefNoContents(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    string
+		path     string
+		expected string
+	}{
+		{
+			input: "test-fixtures/path-detected",
+			desc:  "path does not exist",
+			path:  "foo",
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p, err := NewScopeFromDir(test.input, AllLayersScope)
+			if err != nil {
+				t.Errorf("could not create NewDirScope: %w", err)
+			}
+			refs, err := p.FilesByPath(file.Path(test.path))
+			if err != nil {
+				t.Errorf("could not get file references from path: %s, %v", test.path, err)
+			}
+
+			if len(refs) != 0 {
+				t.Errorf("didnt' expect a ref, but got: %d", len(refs))
 			}
 
 		})
