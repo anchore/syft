@@ -113,7 +113,13 @@ func TestDirectoryResolver_MultipleFileContentsByRef(t *testing.T) {
 			resolver := DirectoryResolver{"test-fixtures"}
 
 			for _, p := range c.input {
-				refs = append(refs, file.NewFileReference(p))
+				newRefs, err := resolver.FilesByPath(p)
+				if err != nil {
+					t.Errorf("could not generate refs: %+v", err)
+				}
+				for _, ref := range newRefs {
+					refs = append(refs, ref)
+				}
 			}
 
 			contents, err := resolver.MultipleFileContentsByRef(refs...)
