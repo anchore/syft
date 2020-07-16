@@ -34,6 +34,11 @@ func TestParseOsRelease(t *testing.T) {
 			name:       "redhat",
 			RawVersion: "8.1",
 		},
+		{
+			fixture:    "test-fixtures/unprintable",
+			name:       "debian",
+			RawVersion: "8",
+		},
 	}
 
 	for _, test := range tests {
