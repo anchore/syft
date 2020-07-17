@@ -92,9 +92,9 @@ func parseOsRelease(contents string) *Distro {
 
 		switch prefix {
 		case "ID":
-			id = value
+			id = strings.TrimSpace(value)
 		case "VERSION_ID":
-			vers = value
+			vers = strings.TrimSpace(value)
 		}
 	}
 
