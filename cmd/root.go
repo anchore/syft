@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/internal"
 	"github.com/anchore/imgbom/internal/bus"
-	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/imgbom/internal/ui"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
@@ -33,46 +32,20 @@ Supports the following image sources:
 	},
 }
 
-func init() {
-	setCliOptions()
-
-	cobra.OnInitialize(
-		initAppConfig,
-		initLogging,
-		logAppConfig,
-		initEventBus,
-	)
-}
-
 func startWorker(userInput string) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		s, cleanup, err := imgbom.NewScope(userInput, appConfig.ScopeOpt)
-		defer cleanup()
-
+		catalog, scope, _, err := imgbom.Catalog(userInput, appConfig.ScopeOpt)
 		if err != nil {
-			log.Errorf("could not produce catalog: %w", err)
-		}
-		log.Info("Identifying Distro")
-		distro := imgbom.IdentifyDistro(s)
-
-		if distro == nil {
-			log.Errorf("error identifying distro")
-		} else {
-			log.Infof("  Distro: %s", distro)
-		}
-		log.Info("Creating the Catalog")
-		catalog, err := imgbom.Catalog(s)
-
-		if err != nil {
-			log.Errorf("could not produce catalog: %w", err)
+			errs <- fmt.Errorf("failed to catalog input: %+v", err)
+			return
 		}
 
 		bus.Publish(partybus.Event{
 			Type:  event.CatalogerFinished,
-			Value: presenter.GetPresenter(appConfig.PresenterOpt, s, catalog),
+			Value: presenter.GetPresenter(appConfig.PresenterOpt, *scope, catalog),
 		})
 	}()
 	return errs

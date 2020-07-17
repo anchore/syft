@@ -24,12 +24,12 @@ func TestIdentifyDistro(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/empty",
 			name:    "No OS files",
-			Type:    UnknownDistro,
+			Type:    UnknownDistroType,
 		},
 		{
 			fixture: "test-fixtures/os/unmatchable",
 			name:    "Unmatchable distro",
-			Type:    UnknownDistro,
+			Type:    UnknownDistroType,
 		},
 	}
 

@@ -1,4 +1,4 @@
-package imgbom
+package scope
 
 import "strings"
 
@@ -7,52 +7,53 @@ import "strings"
 // and return an Option type.
 
 const (
-	UnknownProtocol ProtocolType = iota
-	ImageProtocol
-	DirProtocol
+	// nolint:varcheck,deadcode
+	unknownProtocol protocolType = iota
+	imageProtocol
+	directoryProtocol
 )
 
-var optionStr = []string{
+var protocolStr = []string{
 	"UnknownProtocol",
-	"image",
-	"dir",
+	"Image",
+	"Directory",
 }
 
-type ProtocolType int
+type protocolType int
 
-type Protocol struct {
-	Type  ProtocolType
+type protocol struct {
+	Type  protocolType
 	Value string
 }
 
-func NewProtocol(userStr string) Protocol {
+func newProtocol(userStr string) protocol {
 	candidates := strings.Split(userStr, "://")
 
 	switch len(candidates) {
 	case 2:
 		if strings.HasPrefix(userStr, "dir://") {
-			return Protocol{
-				Type:  DirProtocol,
+			return protocol{
+				Type:  directoryProtocol,
 				Value: strings.TrimPrefix(userStr, "dir://"),
 			}
 		}
 		// default to an Image for anything else since stereoscope can handle this
-		return Protocol{
-			Type:  ImageProtocol,
+		return protocol{
+			Type:  imageProtocol,
 			Value: userStr,
 		}
 	default:
-		return Protocol{
-			Type:  ImageProtocol,
+		return protocol{
+			Type:  imageProtocol,
 			Value: userStr,
 		}
 	}
 }
 
-func (o ProtocolType) String() string {
-	if int(o) >= len(optionStr) || o < 0 {
-		return optionStr[0]
+func (o protocolType) String() string {
+	if int(o) >= len(protocolStr) || o < 0 {
+		return protocolStr[0]
 	}
 
-	return optionStr[o]
+	return protocolStr[o]
 }

@@ -12,10 +12,10 @@ type Distro struct {
 	RawVersion string
 }
 
-// NewUnknownDistro creates a standardized UnkownDistro with a "0.0.0" version
+// NewUnknownDistro creates a standardized Distro object for unidentifiable distros
 func NewUnknownDistro() Distro {
 	return Distro{
-		Type: UnknownDistro,
+		Type: UnknownDistroType,
 	}
 }
 

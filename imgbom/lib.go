@@ -10,60 +10,33 @@ import (
 	"github.com/anchore/imgbom/imgbom/scope"
 	"github.com/anchore/imgbom/internal/bus"
 	"github.com/anchore/imgbom/internal/log"
-	"github.com/anchore/stereoscope"
-	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/wagoodman/go-partybus"
 )
 
-func IdentifyDistro(s scope.Scope) *distro.Distro {
+func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scope, *distro.Distro, error) {
+	s, cleanup, err := scope.NewScope(userInput, scoptOpt)
+	defer cleanup()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create scope: %w", err)
+	}
+
+	d := IdentifyDistro(s)
+
+	catalog, err := CatalogFromScope(s)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to produce catalog: %w", err)
+	}
+
+	return catalog, &s, &d, nil
+}
+
+func IdentifyDistro(s scope.Scope) distro.Distro {
+	log.Info("Identifying Distro")
 	return distro.Identify(s)
 }
 
-// NewScope produces a Scope based on userInput like dir:// or image:tag
-func NewScope(userInput string, o scope.Option) (scope.Scope, func(), error) {
-	protocol := NewProtocol(userInput)
-	log.Debugf("protocol: %+v", protocol)
-
-	switch protocol.Type {
-	case DirProtocol:
-		// populate the scope object for dir
-		s, err := GetScopeFromDir(protocol.Value, o)
-		if err != nil {
-			return scope.Scope{}, func() {}, fmt.Errorf("could not populate scope from path (%s): %w", protocol.Value, err)
-		}
-		return s, func() {}, nil
-
-	case ImageProtocol:
-		log.Infof("Fetching image '%s'", userInput)
-		img, err := stereoscope.GetImage(userInput)
-		cleanup := func() {
-			stereoscope.Cleanup()
-		}
-
-		if err != nil || img == nil {
-			return scope.Scope{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", userInput, err)
-		}
-
-		s, err := GetScopeFromImage(img, o)
-		if err != nil {
-			return scope.Scope{}, cleanup, fmt.Errorf("could not populate scope with image: %w", err)
-		}
-		return s, cleanup, nil
-
-	default:
-		return scope.Scope{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
-	}
-}
-
-func GetScopeFromDir(d string, o scope.Option) (scope.Scope, error) {
-	return scope.NewScopeFromDir(d, o)
-}
-
-func GetScopeFromImage(img *image.Image, o scope.Option) (scope.Scope, error) {
-	return scope.NewScopeFromImage(img, o)
-}
-
-func Catalog(s scope.Scope) (*pkg.Catalog, error) {
+func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
+	log.Info("Building the Catalog")
 	return cataloger.Catalog(s)
 }
 

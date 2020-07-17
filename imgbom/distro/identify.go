@@ -13,7 +13,9 @@ import (
 type parseFunc func(string) *Distro
 
 // Identify parses distro-specific files to determine distro metadata like version and release
-func Identify(s scope.Scope) *Distro {
+func Identify(s scope.Scope) Distro {
+	distro := NewUnknownDistro()
+
 	identityFiles := map[file.Path]parseFunc{
 		"/etc/os-release": parseOsRelease,
 		// Debian and Debian-based distros have the same contents linked from this path
@@ -25,7 +27,7 @@ func Identify(s scope.Scope) *Distro {
 		refs, err := s.FilesByPath(path)
 		if err != nil {
 			log.Errorf("unable to get path refs from %s: %s", path, err)
-			return nil
+			break
 		}
 
 		if len(refs) == 0 {
@@ -51,21 +53,17 @@ func Identify(s scope.Scope) *Distro {
 				continue
 			}
 
-			distro := fn(content)
-
-			if distro == nil {
-				continue
+			if candidateDistro := fn(content); candidateDistro != nil {
+				distro = *candidateDistro
+				break
 			}
-
-			return distro
 		}
 	}
-	// TODO: is it useful to know partially detected distros? where the ID is known but not the version (and viceversa?)
-	distro := NewUnknownDistro()
-	return &distro
+
+	return distro
 }
 
-func assembleDistro(name, version string) *Distro {
+func assemble(name, version string) *Distro {
 	distroType, ok := Mappings[name]
 
 	// Both distro and version must be present
@@ -99,7 +97,7 @@ func parseOsRelease(contents string) *Distro {
 		}
 	}
 
-	return assembleDistro(id, vers)
+	return assemble(id, vers)
 }
 
 var busyboxVersionMatcher = regexp.MustCompile(`BusyBox v[\d\.]+`)
@@ -109,7 +107,7 @@ func parseBusyBox(contents string) *Distro {
 	for _, match := range matches {
 		parts := strings.Split(match, " ")
 		version := strings.ReplaceAll(parts[1], "v", "")
-		distro := assembleDistro("busybox", version)
+		distro := assemble("busybox", version)
 		if distro != nil {
 			return distro
 		}

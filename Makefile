@@ -75,7 +75,7 @@ unit: ## Run unit tests (with coverage)
 
 integration: ## Run integration tests
 	$(call title,Running integration tests)
-	go test -tags=integration ./integration
+	go test -v -tags=integration ./integration
 
 integration/test-fixtures/tar-cache.key, integration-fingerprint:
 	find integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee integration/test-fixtures/tar-cache.fingerprint

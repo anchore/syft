@@ -3,7 +3,10 @@ package scope
 import (
 	"fmt"
 
+	"github.com/anchore/stereoscope"
+
 	"github.com/anchore/imgbom/imgbom/scope/resolvers"
+	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 )
@@ -21,6 +24,41 @@ type Scope struct {
 	resolver Resolver
 	ImgSrc   ImageSource
 	DirSrc   DirSource
+}
+
+// NewScope produces a Scope based on userInput like dir:// or image:tag
+func NewScope(userInput string, o Option) (Scope, func(), error) {
+	protocol := newProtocol(userInput)
+
+	switch protocol.Type {
+	case directoryProtocol:
+		// populate the scope object for dir
+		s, err := NewScopeFromDir(protocol.Value, o)
+		if err != nil {
+			return Scope{}, func() {}, fmt.Errorf("could not populate scope from path (%s): %w", protocol.Value, err)
+		}
+		return s, func() {}, nil
+
+	case imageProtocol:
+		log.Infof("Fetching image '%s'", userInput)
+		img, err := stereoscope.GetImage(userInput)
+		cleanup := func() {
+			stereoscope.Cleanup()
+		}
+
+		if err != nil || img == nil {
+			return Scope{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", userInput, err)
+		}
+
+		s, err := NewScopeFromImage(img, o)
+		if err != nil {
+			return Scope{}, cleanup, fmt.Errorf("could not populate scope with image: %w", err)
+		}
+		return s, cleanup, nil
+
+	default:
+		return Scope{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
+	}
 }
 
 func NewScopeFromDir(path string, option Option) (Scope, error) {

@@ -1,7 +1,7 @@
 package distro
 
 const (
-	UnknownDistro Type = iota
+	UnknownDistroType Type = iota
 	Debian
 	Ubuntu
 	RedHat
@@ -22,7 +22,7 @@ const (
 type Type int
 
 var distroStr = []string{
-	"UnknownDistro",
+	"UnknownDistroType",
 	"debian",
 	"ubuntu",
 	"redhat",
