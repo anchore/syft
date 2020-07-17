@@ -5,7 +5,49 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/anchore/imgbom/imgbom/scope"
 )
+
+func TestIdentifyDistro(t *testing.T) {
+	tests := []struct {
+		fixture    string
+		name       string
+		RawVersion string
+		Type       Type
+	}{
+		{
+			fixture: "test-fixtures/os/ubuntu-20.04",
+			name:    "ubuntu",
+			Type:    Ubuntu,
+		},
+		{
+			fixture: "test-fixtures/os/empty",
+			name:    "No OS files",
+			Type:    UnknownDistro,
+		},
+		{
+			fixture: "test-fixtures/os/unmatchable",
+			name:    "Unmatchable distro",
+			Type:    UnknownDistro,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, err := scope.NewScopeFromDir(test.fixture, scope.AllLayersScope)
+			if err != nil {
+				t.Fatalf("unable to produce a new scope for testing: %s", test.fixture)
+			}
+			distro := Identify(s)
+			if distro.Type != test.Type {
+				t.Errorf("expected distro doesn't match: %v != %v", distro.Type, test.Type)
+			}
+		})
+
+	}
+
+}
 
 func TestParseOsRelease(t *testing.T) {
 

@@ -12,6 +12,13 @@ type Distro struct {
 	RawVersion string
 }
 
+// NewUnknownDistro creates a standardized UnkownDistro with a "0.0.0" version
+func NewUnknownDistro() Distro {
+	return Distro{
+		Type: UnknownDistro,
+	}
+}
+
 func NewDistro(t Type, ver string) (Distro, error) {
 	verObj, err := hashiVer.NewVersion(ver)
 	if err != nil {

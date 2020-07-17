@@ -61,7 +61,8 @@ func Identify(s scope.Scope) *Distro {
 		}
 	}
 	// TODO: is it useful to know partially detected distros? where the ID is known but not the version (and viceversa?)
-	return nil
+	distro := NewUnknownDistro()
+	return &distro
 }
 
 func assembleDistro(name, version string) *Distro {
