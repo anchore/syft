@@ -1,4 +1,4 @@
-package imgbom
+package scope
 
 import "testing"
 
@@ -6,31 +6,31 @@ func TestNewProtocol(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		input    string
-		expType  ProtocolType
+		expType  protocolType
 		expValue string
 	}{
 		{
 			desc:     "directory protocol",
 			input:    "dir:///opt/",
-			expType:  DirProtocol,
+			expType:  directoryProtocol,
 			expValue: "/opt/",
 		},
 		{
 			desc:     "unknown protocol",
 			input:    "s4:///opt/",
-			expType:  ImageProtocol,
+			expType:  imageProtocol,
 			expValue: "s4:///opt/",
 		},
 		{
 			desc:     "docker protocol",
 			input:    "docker://ubuntu:20.04",
-			expType:  ImageProtocol,
+			expType:  imageProtocol,
 			expValue: "docker://ubuntu:20.04",
 		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			p := NewProtocol(test.input)
+			p := newProtocol(test.input)
 			if p.Type != test.expType {
 				t.Errorf("mismatched type in protocol: '%v' != '%v'", p.Type, test.expType)
 			}

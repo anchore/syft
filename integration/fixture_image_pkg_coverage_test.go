@@ -5,21 +5,22 @@ package integration
 import (
 	"testing"
 
+	"github.com/anchore/imgbom/imgbom"
+
 	"github.com/anchore/imgbom/internal"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/imgbom/imgbom/cataloger"
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/imgbom/scope"
 )
 
-func TestLanguageImage(t *testing.T) {
-	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-pkg-coverage")
+func TestPkgCoverageImage(t *testing.T) {
+	fixtureImageName := "image-pkg-coverage"
+	_, cleanup := testutils.GetFixtureImage(t, "docker-archive", fixtureImageName)
+	tarPath := testutils.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
-
-	catalog, err := cataloger.Catalog(s)
+	catalog, _, _, err := imgbom.Catalog("docker-archive://"+tarPath, scope.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
