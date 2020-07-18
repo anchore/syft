@@ -18,7 +18,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   fmt.Sprintf("%s [SOURCE]", internal.ApplicationName),
-	Short: "A tool that generates a Software Build Of Materials (SBOM)",
+	Short: "A tool for generating a Software Bill Of Materials (SBOM) from container images and filesystems",
 	Long: internal.Tprintf(`\
 Supports the following image sources:
     {{.appName}} yourrepo/yourimage:tag             defaults to using images from a docker daemon

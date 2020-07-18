@@ -19,13 +19,26 @@ ifndef TEMPDIR
     $(error TEMPDIR is not set)
 endif
 
+ifndef RESULTSDIR
+    $(error RESULTSDIR is not set)
+endif
+
 define title
     @printf '$(TITLE)$(1)$(RESET)\n'
 endef
 
-.PHONY: all bootstrap lint lint-fix unit coverage integration check-pipeline clear-cache help test compare
+## Build variables
+DISTDIR=./dist
+VERSIONPATH=$(DISTDIR)/VERSION
+GITTREESTATE=$(if $(shell git status --porcelain),dirty,clean)
 
-all: lint test ## Run all checks (linting, unit tests, and integration tests)
+ifeq "$(strip $(VERSION))" ""
+ override VERSION = $(shell git describe --always --tags --dirty)
+endif
+
+.PHONY: all bootstrap lint lint-fix unit coverage integration check-pipeline clear-cache help test compare release clean
+
+all: lint check-licenses test ## Run all checks (linting, license check, unit tests, and integration tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 compare:
@@ -49,11 +62,13 @@ bootstrap: ## Download and install all project dependencies (+ prep tooling in t
 	mkdir -p $(TEMPDIR)
 	mkdir -p $(RESULTSDIR)
 	# install project dependencies
-	go get ./...
+	go mod download
 	# install golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b .tmp/ v1.26.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
 	# install bouncer
-	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b .tmp/ v0.1.0
+	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.1.0
+	# install goreleaser
+	curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
 
 lint: ## Run gofmt + golangci lint checks
 	$(call title,Running linters)
@@ -96,15 +111,21 @@ check-pipeline: ## Run local CircleCI pipeline locally (sanity check)
 	circleci local execute -c .tmp/circleci.yml --job "Unit & Integration Tests (go-latest)"
 	@printf '$(SUCCESS)Pipeline checks pass!$(RESET)\n'
 
-# todo: replace this with goreleaser
-build-release: ## Build final release binary
-	@mkdir -p dist
-	go build -s -w -X main.version="$(git describe --tags --dirty --always)" \
-				   -X main.commit="$(git describe --dirty --always)" \
-				   -X main.buildTime="$(date --rfc-3339=seconds --utc)"
-				   -o dist/imgbom
 
-# todo: this should by later used by goreleaser
+build: ## Build snapshot release binaries and packages
+	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
+	$(TEMPDIR)/goreleaser build --rm-dist --snapshot
+	echo "$(VERSION)" > $(VERSIONPATH)
+
+# TODO: this is not releasing yet
+release: ## Build and publish final binaries and packages
+	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
+	$(TEMPDIR)/goreleaser --skip-publish --rm-dist --snapshot
+	echo "$(VERSION)" > $(VERSIONPATH)
+
 check-licenses:
 	$(TEMPDIR)/bouncer list -o json | tee $(LICENSES_REPORT)
 	$(TEMPDIR)/bouncer check
+
+clean:
+	rm -rf dist/ $(RESULTSDIR)/*
