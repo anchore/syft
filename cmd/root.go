@@ -9,7 +9,9 @@ import (
 	"github.com/anchore/imgbom/imgbom/presenter"
 	"github.com/anchore/imgbom/internal"
 	"github.com/anchore/imgbom/internal/bus"
+	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/imgbom/internal/ui"
+	"github.com/anchore/imgbom/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
 )
@@ -28,7 +30,11 @@ Supports the following image sources:
 	}),
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		os.Exit(doRunCmd(cmd, args))
+		err := doRunCmd(cmd, args)
+		if err != nil {
+			log.Errorf(err.Error())
+			os.Exit(1)
+		}
 	},
 }
 
@@ -36,6 +42,21 @@ func startWorker(userInput string) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
+
+		if appConfig.CheckForAppUpdate {
+			isAvailable, newVersion, err := version.IsUpdateAvailable()
+			if err != nil {
+				log.Errorf(err.Error())
+			}
+			if isAvailable {
+				log.Infof("New application version available: %s (must be installed manually)", newVersion)
+
+				bus.Publish(partybus.Event{
+					Type:  event.AppUpdateAvailable,
+					Value: newVersion,
+				})
+			}
+		}
 
 		catalog, scope, _, err := imgbom.Catalog(userInput, appConfig.ScopeOpt)
 		if err != nil {
@@ -51,7 +72,7 @@ func startWorker(userInput string) <-chan error {
 	return errs
 }
 
-func doRunCmd(_ *cobra.Command, args []string) int {
+func doRunCmd(_ *cobra.Command, args []string) error {
 	errs := startWorker(args[0])
 
 	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)

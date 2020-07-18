@@ -32,7 +32,7 @@ func setupScreen(output *os.File) *frame.Frame {
 }
 
 // nolint:funlen,gocognit
-func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscription) int {
+func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscription) error {
 	output := os.Stderr
 
 	// hide cursor
@@ -42,8 +42,14 @@ func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscr
 
 	fr := setupScreen(output)
 	if fr == nil {
-		return 1
+		return fmt.Errorf("unable to setup screen")
 	}
+	var isClosed bool
+	defer func() {
+		if !isClosed {
+			frame.Close()
+		}
+	}()
 
 	var err error
 	var wg = &sync.WaitGroup{}
@@ -53,12 +59,21 @@ func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscr
 eventLoop:
 	for {
 		select {
+		case err := <-workerErrs:
+			if err != nil {
+				return err
+			}
 		case e, ok := <-events:
 			if !ok {
-				// is this unexpected? if so should we indicate this?
 				break eventLoop
 			}
 			switch e.Type {
+			case imgbomEvent.AppUpdateAvailable:
+				err = appUpdateAvailableHandler(ctx, fr, e, wg)
+				if err != nil {
+					log.Errorf("unable to app update available event: %+v", err)
+				}
+
 			case stereoscopeEvent.ReadImage:
 				err = imageReadHandler(ctx, fr, e, wg)
 				if err != nil {
@@ -81,6 +96,7 @@ eventLoop:
 				// finish before discontinuing dynamic content and showing the final report
 				wg.Wait()
 				frame.Close()
+				isClosed = true
 				fmt.Println()
 
 				err := common.CatalogerFinishedHandler(e)
@@ -99,5 +115,5 @@ eventLoop:
 		}
 	}
 
-	return 0
+	return nil
 }

@@ -7,17 +7,14 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-func LoggerUI(workerErrs <-chan error, subscription *partybus.Subscription) int {
-	var returnCode int
-
+func LoggerUI(workerErrs <-chan error, subscription *partybus.Subscription) error {
 	events := subscription.Events()
 eventLoop:
 	for {
 		select {
 		case err := <-workerErrs:
 			if err != nil {
-				log.Errorf(err.Error())
-				returnCode = 1
+				return err
 			}
 		case e, ok := <-events:
 			if !ok {
@@ -38,5 +35,5 @@ eventLoop:
 		}
 	}
 
-	return returnCode
+	return nil
 }
