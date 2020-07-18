@@ -28,7 +28,7 @@ Supports the following image sources:
 `, map[string]interface{}{
 		"appName": internal.ApplicationName,
 	}),
-	Args: cobra.MaximumNArgs(1),
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := doRunCmd(cmd, args)
 		if err != nil {
@@ -49,7 +49,7 @@ func startWorker(userInput string) <-chan error {
 				log.Errorf(err.Error())
 			}
 			if isAvailable {
-				log.Infof("New application version available: %s (must be installed manually)", newVersion)
+				log.Infof("New version of %s is available: %s", internal.ApplicationName, newVersion)
 
 				bus.Publish(partybus.Event{
 					Type:  event.AppUpdateAvailable,
@@ -73,9 +73,8 @@ func startWorker(userInput string) <-chan error {
 }
 
 func doRunCmd(_ *cobra.Command, args []string) error {
-	errs := startWorker(args[0])
-
+	userInput := args[0]
+	errs := startWorker(userInput)
 	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)
-
 	return ux(errs, eventSubscription)
 }

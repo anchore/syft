@@ -1,8 +1,6 @@
 package imgbom
 
 import (
-	"fmt"
-
 	"github.com/anchore/imgbom/imgbom/cataloger"
 	"github.com/anchore/imgbom/imgbom/distro"
 	"github.com/anchore/imgbom/imgbom/logger"
@@ -17,14 +15,14 @@ func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scop
 	s, cleanup, err := scope.NewScope(userInput, scoptOpt)
 	defer cleanup()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to create scope: %w", err)
+		return nil, nil, nil, err
 	}
 
 	d := IdentifyDistro(s)
 
 	catalog, err := CatalogFromScope(s)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to produce catalog: %w", err)
+		return nil, nil, nil, err
 	}
 
 	return catalog, &s, &d, nil

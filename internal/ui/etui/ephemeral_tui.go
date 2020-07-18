@@ -71,25 +71,25 @@ eventLoop:
 			case imgbomEvent.AppUpdateAvailable:
 				err = appUpdateAvailableHandler(ctx, fr, e, wg)
 				if err != nil {
-					log.Errorf("unable to app update available event: %+v", err)
+					log.Errorf("unable to show AppUpdateAvailable event: %+v", err)
 				}
 
 			case stereoscopeEvent.ReadImage:
 				err = imageReadHandler(ctx, fr, e, wg)
 				if err != nil {
-					log.Errorf("unable to show read image event: %+v", err)
+					log.Errorf("unable to show ReadImage event: %+v", err)
 				}
 
 			case stereoscopeEvent.FetchImage:
 				err = imageFetchHandler(ctx, fr, e, wg)
 				if err != nil {
-					log.Errorf("unable to show fetch image event: %+v", err)
+					log.Errorf("unable to show FetchImage event: %+v", err)
 				}
 
 			case imgbomEvent.CatalogerStarted:
 				err = catalogerStartedHandler(ctx, fr, e, wg)
 				if err != nil {
-					log.Errorf("unable to show catalog image start event: %+v", err)
+					log.Errorf("unable to show CatalogerStarted event: %+v", err)
 				}
 			case imgbomEvent.CatalogerFinished:
 				// we may have other background processes still displaying progress, wait for them to
@@ -101,7 +101,7 @@ eventLoop:
 
 				err := common.CatalogerFinishedHandler(e)
 				if err != nil {
-					log.Errorf("unable to show catalog image finished event: %+v", err)
+					log.Errorf("unable to show CatalogerFinished event: %+v", err)
 				}
 
 				// this is the last expected event

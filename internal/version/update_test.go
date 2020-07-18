@@ -81,6 +81,15 @@ func TestIsUpdateAvailable(t *testing.T) {
 			newVersion:    "",
 			err:           false,
 		},
+		{
+			name:          "BadUpdateValidVersion",
+			buildVersion:  "1.0.0",
+			latestVersion: "2.0.0",
+			code:          404,
+			isAvailable:   false,
+			newVersion:    "",
+			err:           true,
+		},
 	}
 
 	for _, test := range tests {
