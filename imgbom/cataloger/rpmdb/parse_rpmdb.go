@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/imgbom/imgbom/pkg"
 	"github.com/anchore/imgbom/internal"
 	"github.com/anchore/imgbom/internal/log"
-	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
+	rpmdb "github.com/wagoodman/go-rpmdb/pkg"
 )
 
 func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
@@ -30,8 +30,7 @@ func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 		return nil, fmt.Errorf("failed to copy rpmdb contents to temp file: %w", err)
 	}
 
-	db := rpmdb.DB{}
-	err = db.Open(f.Name())
+	db, err := rpmdb.Open(f.Name())
 	if err != nil {
 		return nil, err
 	}

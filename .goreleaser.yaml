@@ -22,7 +22,7 @@ builds:
     ldflags: |
       -w
       -s
-      "-extldflags '-static'"
+      -extldflags '-static'
       -X github.com/anchore/imgbom/internal/version.version={{.Version}}
       -X github.com/anchore/imgbom/internal/version.gitCommit={{.Commit}}
       -X github.com/anchore/imgbom/internal/version.buildDate={{.Date}}
