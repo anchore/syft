@@ -12,12 +12,12 @@ type Cataloger struct {
 }
 
 func NewCataloger() *Cataloger {
-	pathParsers := map[string]common.ParserFn{
-		"/var/lib/dpkg/status": parseDpkgStatus,
+	globParsers := map[string]common.ParserFn{
+		"**/var/lib/dpkg/status": parseDpkgStatus,
 	}
 
 	return &Cataloger{
-		cataloger: common.NewGenericCataloger(pathParsers, nil),
+		cataloger: common.NewGenericCataloger(nil, globParsers),
 	}
 }
 
