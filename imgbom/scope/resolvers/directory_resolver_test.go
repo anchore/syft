@@ -138,12 +138,29 @@ func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 	t.Run("finds multiple matching files", func(t *testing.T) {
 		resolver := DirectoryResolver{"test-fixtures"}
 		refs, err := resolver.FilesByGlob("image-symlinks/file*")
+
 		if err != nil {
 			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
 		}
 
 		if len(refs) != 2 {
 			t.Errorf("unexpected number of refs: %d != 2", len(refs))
+		}
+
+	})
+}
+
+func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
+	t.Run("finds multiple matching files", func(t *testing.T) {
+		resolver := DirectoryResolver{"test-fixtures"}
+		refs, err := resolver.FilesByGlob("**/*.txt")
+
+		if err != nil {
+			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
+		}
+
+		if len(refs) != 4 {
+			t.Errorf("unexpected number of refs: %d != 4", len(refs))
 		}
 
 	})

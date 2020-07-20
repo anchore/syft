@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 
 	"github.com/anchore/imgbom/internal/log"
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/bmatcuk/doublestar"
 )
 
 type DirectoryResolver struct {
@@ -51,7 +51,7 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, er
 
 	for _, pattern := range patterns {
 		pathPattern := path.Join(s.Path, pattern)
-		matches, err := filepath.Glob(pathPattern)
+		matches, err := doublestar.Glob(pathPattern)
 		if err != nil {
 			return result, err
 		}
