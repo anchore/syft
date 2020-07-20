@@ -42,7 +42,8 @@ func setNonCliDefaultValues(v *viper.Viper) {
 	v.SetDefault("log.level", "")
 	v.SetDefault("log.file", "")
 	v.SetDefault("log.structured", false)
-	v.SetDefault("check-for-app-update", true)
+	// TODO: change this to true before release
+	v.SetDefault("check-for-app-update", false)
 }
 
 func LoadConfigFromFile(v *viper.Viper, cliOpts *CliOnlyOptions) (*Application, error) {

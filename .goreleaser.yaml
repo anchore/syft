@@ -1,11 +1,3 @@
-before:
-  hooks:
-    - make clean
-    - make lint
-    - make check-licenses
-    - make unit
-    - make integration
-
 builds:
   - binary: imgbom
     env:

@@ -1,9 +1,11 @@
+BIN = imgbom
 TEMPDIR = ./.tmp
 RESULTSDIR = $(TEMPDIR)/results
 COVER_REPORT = $(RESULTSDIR)/cover.report
 COVER_TOTAL = $(RESULTSDIR)/cover.total
-LICENSES_REPORT = $(RESULTSDIR)/licenses.json
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --config .golangci.yaml
+ACC_TEST_IMAGE = centos:8.2.2004
+ACC_DIR = ./test/acceptance
 BOLD := $(shell tput -T linux bold)
 PURPLE := $(shell tput -T linux setaf 5)
 GREEN := $(shell tput -T linux setaf 2)
@@ -15,47 +17,60 @@ SUCCESS := $(BOLD)$(GREEN)
 # the quality gate lower threshold for unit test total % coverage (by function statements)
 COVERAGE_THRESHOLD := 72
 
-ifndef TEMPDIR
-    $(error TEMPDIR is not set)
-endif
-
-ifndef RESULTSDIR
-    $(error RESULTSDIR is not set)
-endif
-
-define title
-    @printf '$(TITLE)$(1)$(RESET)\n'
-endef
-
 ## Build variables
 DISTDIR=./dist
-VERSIONPATH=$(DISTDIR)/VERSION
+SNAPSHOTDIR=./snapshot
 GITTREESTATE=$(if $(shell git status --porcelain),dirty,clean)
 
 ifeq "$(strip $(VERSION))" ""
  override VERSION = $(shell git describe --always --tags --dirty)
 endif
 
-.PHONY: all bootstrap lint lint-fix unit coverage integration check-pipeline clear-cache help test compare release clean
+## Variable assertions
 
-all: lint check-licenses test ## Run all checks (linting, license check, unit tests, and integration tests)
+ifndef TEMPDIR
+	$(error TEMPDIR is not set)
+endif
+
+ifndef RESULTSDIR
+	$(error RESULTSDIR is not set)
+endif
+
+ifndef ACC_DIR
+	$(error ACC_DIR is not set)
+endif
+
+define title
+    @printf '$(TITLE)$(1)$(RESET)\n'
+endef
+
+## Tasks
+
+.PHONY: all
+all: lint check-licenses test acceptance ## Run all checks (linting, license check, unit tests, and integration tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
+.PHONY: compare
 compare:
 	@cd comparison && make
 
+.PHONY: test
 test: unit integration ## Run all tests (currently unit & integration)
 
+.PHONY: help
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BOLD)$(CYAN)%-25s$(RESET)%s\n", $$1, $$2}'
 
+.PHONY: ci-bootstrap
 ci-bootstrap: ci-lib-dependencies bootstrap
 	sudo apt install -y bc
 
+.PHONY: ci-lib-dependencies
 ci-lib-dependencies:
 	# libdb5.3-dev and libssl-dev are required for Berkeley DB C bindings for RPM DB support
 	sudo apt install -y libdb5.3-dev libssl-dev
 
+.PHONY: boostrap
 bootstrap: ## Download and install all project dependencies (+ prep tooling in the ./tmp dir)
 	$(call title,Downloading dependencies)
 	# prep temp dirs
@@ -70,17 +85,24 @@ bootstrap: ## Download and install all project dependencies (+ prep tooling in t
 	# install goreleaser
 	curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
 
+.PHONY: lint
 lint: ## Run gofmt + golangci lint checks
 	$(call title,Running linters)
 	@printf "files with gofmt issues: [$(shell gofmt -l -s .)]\n"
 	@test -z "$(shell gofmt -l -s .)"
 	$(LINTCMD)
 
+.PHONY: lint-fix
 lint-fix: ## Auto-format all source code + run golangci lint fixers
 	$(call title,Running lint fixers)
 	gofmt -w -s .
 	$(LINTCMD) --fix
 
+.PHONY: check-licenses
+check-licenses:
+	$(TEMPDIR)/bouncer check
+
+.PHONY: unit
 unit: ## Run unit tests (with coverage)
 	$(call title,Running unit tests)
 	go test --race -coverprofile $(COVER_REPORT) ./...
@@ -88,44 +110,104 @@ unit: ## Run unit tests (with coverage)
 	@echo "Coverage: $$(cat $(COVER_TOTAL))"
 	@if [ $$(echo "$$(cat $(COVER_TOTAL)) >= $(COVERAGE_THRESHOLD)" | bc -l) -ne 1 ]; then echo "$(RED)$(BOLD)Failed coverage quality gate (> $(COVERAGE_THRESHOLD)%)$(RESET)" && false; fi
 
+.PHONY: integration
 integration: ## Run integration tests
 	$(call title,Running integration tests)
-	go test -v -tags=integration ./integration
+	go test -v -tags=integration ./test/integration
 
-integration/test-fixtures/tar-cache.key, integration-fingerprint:
-	find integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee integration/test-fixtures/tar-cache.fingerprint
+test/integration/test-fixtures/tar-cache.key, integration-fingerprint:
+	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/tar-cache.fingerprint
 
+.PHONY: java-packages-fingerprint
 java-packages-fingerprint:
 	@cd imgbom/cataloger/java/test-fixtures/java-builds && \
 	make packages.fingerprint
 
+.PHONY: clear-test-cache
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/tar-cache/*.tar" -delete
 
+.PHONY: check-pipeline
 check-pipeline: ## Run local CircleCI pipeline locally (sanity check)
 	$(call title,Check pipeline)
 	# note: this is meant for local development & testing of the pipeline, NOT to be run in CI
 	mkdir -p $(TEMPDIR)
 	circleci config process .circleci/config.yml > .tmp/circleci.yml
 	circleci local execute -c .tmp/circleci.yml --job "Static Analysis"
-	circleci local execute -c .tmp/circleci.yml --job "Unit & Integration Tests (go-latest)"
+	circleci local execute -c .tmp/circleci.yml --job "Tests (go-latest)"
 	@printf '$(SUCCESS)Pipeline checks pass!$(RESET)\n'
 
+.PHONY: build
+build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
 
-build: ## Build snapshot release binaries and packages
+$(SNAPSHOTDIR): clean-shapshot ## Build snapshot release binaries and packages
+	$(call title,Building snapshot artifacts)
+	# create a config with the dist dir overridden
+	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	# build release snapshots
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	$(TEMPDIR)/goreleaser build --rm-dist --snapshot
-	echo "$(VERSION)" > $(VERSIONPATH)
+	$(TEMPDIR)/goreleaser release --skip-publish --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
+
+# TODO: add tests for mac
+.PHONY: acceptance
+acceptance: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages
+
+.PHONY: acceptance-test-deb-package-install
+acceptance-test-deb-package-install: $(SNAPSHOTDIR)
+	$(call title,Running acceptance test: DEB install)
+	docker pull $(ACC_TEST_IMAGE)
+	@docker run --rm \
+		-v //var/run/docker.sock://var/run/docker.sock \
+		-v /${PWD}://src \
+		-w //src \
+		ubuntu:latest \
+			/bin/bash $(ACC_DIR)/deb.sh $(SNAPSHOTDIR) $(RESULTSDIR) $(ACC_TEST_IMAGE)
+
+	$(ACC_DIR)/compare.sh \
+		$(RESULTSDIR)/acceptance-deb-$(ACC_TEST_IMAGE).json \
+		$(ACC_DIR)/test-fixtures/acceptance-$(ACC_TEST_IMAGE).json
+
+.PHONY: acceptance-test-rpm-package-install
+acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
+	$(call title,Running acceptance test: RPM install)
+	docker pull $(ACC_TEST_IMAGE)
+	@docker run --rm \
+		-v //var/run/docker.sock://var/run/docker.sock \
+		-v /${PWD}://src \
+		-w //src \
+		fedora:latest \
+			/bin/bash $(ACC_DIR)/rpm.sh $(SNAPSHOTDIR) $(RESULTSDIR) $(ACC_TEST_IMAGE)
+
+	$(ACC_DIR)/compare.sh \
+		$(RESULTSDIR)/acceptance-rpm-$(ACC_TEST_IMAGE).json \
+		$(ACC_DIR)/test-fixtures/acceptance-$(ACC_TEST_IMAGE).json
 
 # TODO: this is not releasing yet
-release: ## Build and publish final binaries and packages
+.PHONY: release
+release: clean-dist ## Build and publish final binaries and packages
+	$(call title,Publishing release artifacts)
+	# create a config with the dist dir overridden
+	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	# release
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	$(TEMPDIR)/goreleaser --skip-publish --rm-dist --snapshot
-	echo "$(VERSION)" > $(VERSIONPATH)
+	$(TEMPDIR)/goreleaser --skip-publish --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
 
-check-licenses:
-	$(TEMPDIR)/bouncer list -o json | tee $(LICENSES_REPORT)
-	$(TEMPDIR)/bouncer check
+	# create a version file for version-update checks
+	echo "$(VERSION)" > $(DISTDIR)/VERSION
+	# TODO: add upload to bucket
 
-clean:
-	rm -rf dist/ $(RESULTSDIR)/*
+.PHONY: clean
+clean: clean-dist clean-shapshot  ## Remove previous builds and result reports
+	rm -rf $(RESULTSDIR)/*
+
+.PHONY: clean-shapshot
+clean-shapshot:
+	rm -rf $(SNAPSHOTDIR) $(TEMPDIR)/goreleaser.yaml
+
+.PHONY: clean-dist
+clean-dist:
+	rm -rf $(DISTDIR) $(TEMPDIR)/goreleaser.yaml

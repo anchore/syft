@@ -102,15 +102,16 @@ jobs:
 
       - restore_cache:
           keys:
-            - integration-test-tar-cache-{{ checksum "integration/test-fixtures/tar-cache.fingerprint" }}
+            - integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
       - run:
           name: run integration tests
           command: make integration
 
       - save_cache:
-          key: integration-test-tar-cache-{{ checksum "integration/test-fixtures/tar-cache.fingerprint" }}
+          key: integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
           paths:
-            - "integration/test-fixtures/tar-cache"
+            - "test/integration/test-fixtures/tar-cache"
+
 
 workflows:
   "Static Analysis & All Tests":
@@ -119,8 +120,8 @@ workflows:
           name: "Static Analysis"
           version: "1.14"
       - run-tests:
-          name: "Unit & Integration Tests (go-1.13)"
+          name: "Tests (go-1.13)"
           version: "1.13"
       - run-tests:
-          name: "Unit & Integration Tests (go-latest)"
+          name: "Tests (go-latest)"
           version: "latest"

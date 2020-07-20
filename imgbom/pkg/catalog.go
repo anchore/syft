@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/anchore/imgbom/internal/log"
@@ -93,4 +94,20 @@ func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
 		}
 	}()
 	return channel
+}
+
+func (c *Catalog) Sorted(types ...Type) []*Package {
+	pkgs := make([]*Package, 0)
+	for p := range c.Enumerate(types...) {
+		pkgs = append(pkgs, p)
+	}
+
+	sort.SliceStable(pkgs, func(i, j int) bool {
+		if pkgs[i].Name == pkgs[j].Name {
+			return pkgs[i].Version < pkgs[j].Version
+		}
+		return pkgs[i].Name < pkgs[j].Name
+	})
+
+	return pkgs
 }
