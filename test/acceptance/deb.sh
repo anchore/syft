@@ -32,13 +32,15 @@ docker run --rm \
     -v ${WORK_DIR}:${WORK_DIR} \
     -w /src \
     ubuntu:latest \
-        /bin/bash -c "\
+        /bin/bash -x -c "\
             apt install ${DISTDIR}/imgbom_*_linux_amd64.deb -y && \
             imgbom version -v && \
-            imgbom ${TEST_IMAGE} -o json | tee ${REPORT} \
+            imgbom ${TEST_IMAGE} -vv -o json > ${REPORT} && \
+            cat ${REPORT} \
         "
 
 # compare the results to a known good output
-${ACC_DIR}/compare.sh \
-    ${REPORT} \
-    ${GOLDEN_REPORT}
+${ACC_DIR}/compare.py \
+    ${GOLDEN_REPORT} \
+    ${REPORT}
+

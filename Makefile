@@ -55,15 +55,15 @@ endef
 ## Tasks
 
 .PHONY: all
-all: lint check-licenses test acceptance ## Run all checks (linting, license check, unit tests, and integration tests)
+all: clean lint check-licenses test ## Run all linux-based checks (linting, license check, unit, integration, and linux acceptance tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 .PHONY: compare
 compare:
-	@cd test/comparison && make
+	@cd test/inline-compare && make
 
 .PHONY: test
-test: unit integration ## Run all tests (currently unit & integration)
+test: unit integration acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests )
 
 .PHONY: help
 help:
@@ -74,19 +74,17 @@ ci-bootstrap: bootstrap
 	sudo apt install -y bc
 
 .PHONY: boostrap
-bootstrap: ## Download and install all project dependencies (+ prep tooling in the ./tmp dir)
+bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
 	$(call title,Boostrapping dependencies)
 	@pwd
 	# prep temp dirs
 	mkdir -p $(TEMPDIR)
 	mkdir -p $(RESULTSDIR)
-	# install project dependencies
+	# install go dependencies
 	go mod download
-	# install golangci-lint
+	# install utilities
 	[ -f "$(TEMPDIR)/golangci" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
-	# install bouncer
 	[ -f "$(TEMPDIR)/bouncer" ] || curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.1.0
-	# install goreleaser
 	[ -f "$(TEMPDIR)/goreleaser" ] || curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
 
 .PHONY: lint
