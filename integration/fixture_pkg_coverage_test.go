@@ -68,6 +68,14 @@ var cases = []struct {
 		},
 	},
 	{
+		name:        "find python packages",
+		pkgType:     pkg.PythonRequirementsPkg,
+		pkgLanguage: pkg.Python,
+		pkgInfo: map[string]string{
+			"flask": "4.0.0",
+		},
+	},
+	{
 		name:        "find bundler packages",
 		pkgType:     pkg.BundlerPkg,
 		pkgLanguage: pkg.Ruby,
