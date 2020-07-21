@@ -9,11 +9,11 @@ import (
 
 func assertPkgsEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg.Package) {
 	t.Helper()
-	if len(actual) != 1 {
+	if len(actual) != len(expected) {
 		for _, a := range actual {
 			t.Log("   ", a)
 		}
-		t.Fatalf("unexpected package count: %d!=%d", len(actual), 1)
+		t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expected))
 	}
 
 	for _, a := range actual {
@@ -34,10 +34,13 @@ func assertPkgsEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg
 			t.Errorf("bad package type: %+v", a.Type)
 		}
 
-		if len(a.Licenses) < 1 {
+		if len(a.Licenses) < len(expectedPkg.Licenses) {
 			t.Errorf("bad package licenses count: '%+v'", a.Licenses)
-		} else if a.Licenses[0] != expectedPkg.Licenses[0] {
-			t.Errorf("bad package licenses: '%+v'", a.Licenses)
+		}
+		if len(a.Licenses) > 0 {
+			if a.Licenses[0] != expectedPkg.Licenses[0] {
+				t.Errorf("bad package licenses: '%+v'", a.Licenses)
+			}
 		}
 
 	}
