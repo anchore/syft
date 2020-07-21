@@ -13,7 +13,7 @@ type Cataloger struct {
 
 func NewCataloger() *Cataloger {
 	globParsers := map[string]common.ParserFn{
-		"*/Gemfile.lock": parseGemfileLockEntries,
+		"**/Gemfile.lock": parseGemfileLockEntries,
 	}
 
 	return &Cataloger{
