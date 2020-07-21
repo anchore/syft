@@ -40,6 +40,14 @@ ifndef ACC_DIR
 	$(error ACC_DIR is not set)
 endif
 
+ifndef DISTDIR
+	$(error DISTDIR is not set)
+endif
+
+ifndef SNAPSHOTDIR
+	$(error SNAPSHOTDIR is not set)
+endif
+
 define title
     @printf '$(TITLE)$(1)$(RESET)\n'
 endef

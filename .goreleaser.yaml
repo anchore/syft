@@ -20,19 +20,6 @@ builds:
       -X github.com/anchore/imgbom/internal/version.buildDate={{.Date}}
       -X github.com/anchore/imgbom/internal/version.gitTreeState={{.Env.BUILD_GIT_TREE_STATE}}
 
-#brews:
-#  - tap:
-#      owner: anchore
-#      name: homebrew-imgbom
-#    homepage: *website
-#    description: *description
-
-archives:
-  - format: tar.gz
-    format_overrides:
-      - goos: windows
-        format: zip
-
 nfpms:
   - license: "Apache 2.0"
     maintainer: "Anchore, Inc"
@@ -41,3 +28,17 @@ nfpms:
     formats:
       - rpm
       - deb
+
+brews:
+  - tap:
+      owner: anchore
+      name: homebrew-imgbom
+    homepage: *website
+    description: *description
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+
