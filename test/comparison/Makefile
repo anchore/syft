@@ -24,4 +24,4 @@ $(IMGBOM_REPORT):
 	echo "Creating $(IMGBOM_REPORT)..."
 	mkdir -p $(IMGBOM_DIR)
 	docker pull $(IMAGE)
-	go run ../main.go centos:latest -o json > $(IMGBOM_REPORT)
+	go run ../../main.go $(IMAGE) -o json > $(IMGBOM_REPORT)

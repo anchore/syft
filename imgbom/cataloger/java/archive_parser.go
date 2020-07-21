@@ -11,11 +11,11 @@ import (
 )
 
 var archiveFormatGlobs = []string{
-	"*.jar",
-	"*.war",
-	"*.ear",
-	"*.jpi",
-	"*.hpi",
+	"**/*.jar",
+	"**/*.war",
+	"**/*.ear",
+	"**/*.jpi",
+	"**/*.hpi",
 }
 
 type archiveParser struct {

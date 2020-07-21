@@ -13,8 +13,9 @@ type Cataloger struct {
 
 func NewCataloger() *Cataloger {
 	globParsers := map[string]common.ParserFn{
-		"*egg-info/PKG-INFO":  parseEggMetadata,
-		"*dist-info/METADATA": parseWheelMetadata,
+		"**/egg-info/PKG-INFO":  parseEggMetadata,
+		"**/dist-info/METADATA": parseWheelMetadata,
+		"**/requirements.txt":   parseRequirementsTxt,
 	}
 
 	return &Cataloger{
