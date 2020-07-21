@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/adrg/xdg v0.2.1
 	github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db
+	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/stereoscope v0.0.0-20200706164556-7cf39d7f4639
 	github.com/bmatcuk/doublestar v1.3.1
 	github.com/go-test/deep v1.0.6

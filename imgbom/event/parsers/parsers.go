@@ -59,3 +59,16 @@ func ParseCatalogerFinished(e partybus.Event) (presenter.Presenter, error) {
 
 	return pres, nil
 }
+
+func ParseAppUpdateAvailable(e partybus.Event) (string, error) {
+	if err := checkEventType(e.Type, event.AppUpdateAvailable); err != nil {
+		return "", err
+	}
+
+	newVersion, ok := e.Value.(string)
+	if !ok {
+		return "", newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return newVersion, nil
+}

@@ -20,14 +20,15 @@ type CliOnlyOptions struct {
 }
 
 type Application struct {
-	ConfigPath   string
-	PresenterOpt presenter.Option
-	Output       string `mapstructure:"output"`
-	ScopeOpt     scope.Option
-	Scope        string  `mapstructure:"scope"`
-	Quiet        bool    `mapstructure:"quiet"`
-	Log          Logging `mapstructure:"log"`
-	CliOptions   CliOnlyOptions
+	ConfigPath        string
+	PresenterOpt      presenter.Option
+	Output            string `mapstructure:"output"`
+	ScopeOpt          scope.Option
+	Scope             string  `mapstructure:"scope"`
+	Quiet             bool    `mapstructure:"quiet"`
+	Log               Logging `mapstructure:"log"`
+	CliOptions        CliOnlyOptions
+	CheckForAppUpdate bool `mapstructure:"check-for-app-update"`
 }
 
 type Logging struct {
@@ -41,6 +42,7 @@ func setNonCliDefaultValues(v *viper.Viper) {
 	v.SetDefault("log.level", "")
 	v.SetDefault("log.file", "")
 	v.SetDefault("log.structured", false)
+	v.SetDefault("check-for-app-update", true)
 }
 
 func LoadConfigFromFile(v *viper.Viper, cliOpts *CliOnlyOptions) (*Application, error) {

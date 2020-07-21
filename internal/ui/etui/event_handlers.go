@@ -143,3 +143,20 @@ func catalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybu
 
 	return nil
 }
+
+func appUpdateAvailableHandler(_ context.Context, fr *frame.Frame, event partybus.Event, _ *sync.WaitGroup) error {
+	newVersion, err := imgbomEventParsers.ParseAppUpdateAvailable(event)
+	if err != nil {
+		return fmt.Errorf("bad AppUpdateAvailable event: %w", err)
+	}
+
+	line, err := fr.Prepend()
+	if err != nil {
+		return err
+	}
+
+	message := color.Magenta.Sprintf("New Update Available: %s", newVersion)
+	_, _ = io.WriteString(line, message)
+
+	return nil
+}
