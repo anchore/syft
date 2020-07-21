@@ -60,7 +60,7 @@ all: lint check-licenses test acceptance ## Run all checks (linting, license che
 
 .PHONY: compare
 compare:
-	@cd comparison && make
+	@cd test/comparison && make
 
 .PHONY: test
 test: unit integration ## Run all tests (currently unit & integration)
