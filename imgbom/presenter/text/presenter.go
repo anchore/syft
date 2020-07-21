@@ -52,9 +52,6 @@ func (pres *Presenter) Present(output io.Writer) error {
 		fmt.Fprintln(w, fmt.Sprintf("[%s]", p.Name))
 		fmt.Fprintln(w, " Version:\t", p.Version)
 		fmt.Fprintln(w, " Type:\t", p.Type.String())
-		if p.Metadata != nil {
-			fmt.Fprintf(w, " Metadata:\t%+v\n", p.Metadata)
-		}
 		fmt.Fprintln(w, " Found by:\t", p.FoundBy)
 		fmt.Fprintln(w)
 		w.Flush()
