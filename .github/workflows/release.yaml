@@ -1,0 +1,34 @@
+#name: 'acceptance-test'
+#on:
+#  push:
+#  pull_request:
+#    types: [ opened, reopened ]
+#jobs:
+#  acceptance-test:
+#    strategy:
+#      matrix:
+#        go-version: [1.14.x]
+#        platform: [ubuntu-latest]
+#    runs-on: ${{ matrix.platform }}
+#    steps:
+#
+#      - uses: actions/setup-go@v2
+#        with:
+#          go-version: ${{ matrix.go-version }}
+#
+#      - uses: actions/checkout@v2
+#
+#      - name: Cache go dependencies
+#        id: acceptance-dependencies-cache
+#        uses: actions/cache@v2
+#        with:
+#          path: ~/go/pkg/mod
+#          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('Makefile') }}-${{ hashFiles('**/go.sum') }}
+#          restore-keys: ${{ runner.os }}-go-${{ matrix.go-version }}-
+#
+#      - name: Bootstrap dependencies
+#        if: steps.acceptance-dependencies-cache.outputs.cache-hit != 'true'
+#        run: make ci-bootstrap
+#
+#      - name: Run Acceptance Tests
+#        run: make acceptance-linux

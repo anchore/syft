@@ -5,7 +5,7 @@ DISTDIR=$1
 ACC_DIR=$2
 TEST_IMAGE=$3
 
-TEST_TYPE=rpm
+TEST_TYPE=mac
 WORK_DIR=`mktemp -d -t "imgbom-acceptance-test-${TEST_TYPE}-XXXXXX"`
 REPORT=${WORK_DIR}/acceptance-${TEST_TYPE}-${TEST_IMAGE}.json
 GOLDEN_REPORT=${ACC_DIR}/test-fixtures/acceptance-${TEST_IMAGE}.json
@@ -22,21 +22,17 @@ function cleanup {
 
 trap cleanup EXIT
 
-# fetch test image
-docker pull ${TEST_IMAGE}
+# install dependencies
+jq --version || brew install jq
+skopeo --version || brew install skopeo
 
-# install and run imgbom
-docker run --rm \
-    -v /var/run/docker.sock://var/run/docker.sock \
-    -v /${PWD}:/src \
-    -v ${WORK_DIR}:${WORK_DIR} \
-    -w /src \
-    centos:latest \
-        /bin/bash -c "\
-            rpm -ivh ${DISTDIR}/imgbom_*_linux_amd64.rpm && \
-            imgbom version -v && \
-            imgbom ${TEST_IMAGE} -o json | tee ${REPORT} \
-        "
+# fetch test image
+skopeo --override-os linux copy docker://docker.io/${TEST_IMAGE} dir:/tmp/test-img
+
+# run imgbom
+chmod 755 ${DISTDIR}/imgbom_darwin_amd64/imgbom
+${DISTDIR}/imgbom_darwin_amd64/imgbom version -v
+${DISTDIR}/imgbom_darwin_amd64/imgbom dir:///tmp/test-img -o json | tee ${REPORT}
 
 # compare the results to a known good output
 ${ACC_DIR}/compare.sh \

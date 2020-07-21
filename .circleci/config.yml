@@ -120,8 +120,8 @@ workflows:
           name: "Static Analysis"
           version: "1.14"
       - run-tests:
-          name: "Tests (go-1.13)"
+          name: "Unit & Integration Tests (go-1.13)"
           version: "1.13"
       - run-tests:
-          name: "Tests (go-latest)"
+          name: "Unit & Integration Tests (go-latest)"
           version: "latest"

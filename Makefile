@@ -70,28 +70,24 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BOLD)$(CYAN)%-25s$(RESET)%s\n", $$1, $$2}'
 
 .PHONY: ci-bootstrap
-ci-bootstrap: ci-lib-dependencies bootstrap
+ci-bootstrap: bootstrap
 	sudo apt install -y bc
-
-.PHONY: ci-lib-dependencies
-ci-lib-dependencies:
-	# libdb5.3-dev and libssl-dev are required for Berkeley DB C bindings for RPM DB support
-	sudo apt install -y libdb5.3-dev libssl-dev
 
 .PHONY: boostrap
 bootstrap: ## Download and install all project dependencies (+ prep tooling in the ./tmp dir)
-	$(call title,Downloading dependencies)
+	$(call title,Boostrapping dependencies)
+	@pwd
 	# prep temp dirs
 	mkdir -p $(TEMPDIR)
 	mkdir -p $(RESULTSDIR)
 	# install project dependencies
 	go mod download
 	# install golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
+	[ -f "$(TEMPDIR)/golangci" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
 	# install bouncer
-	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.1.0
+	[ -f "$(TEMPDIR)/bouncer" ] || curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.1.0
 	# install goreleaser
-	curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
+	[ -f "$(TEMPDIR)/goreleaser" ] || curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
 
 .PHONY: lint
 lint: ## Run gofmt + golangci lint checks
@@ -142,13 +138,13 @@ check-pipeline: ## Run local CircleCI pipeline locally (sanity check)
 	mkdir -p $(TEMPDIR)
 	circleci config process .circleci/config.yml > .tmp/circleci.yml
 	circleci local execute -c .tmp/circleci.yml --job "Static Analysis"
-	circleci local execute -c .tmp/circleci.yml --job "Tests (go-latest)"
+	circleci local execute -c .tmp/circleci.yml --job "Unit & Integration Tests (go-latest)"
 	@printf '$(SUCCESS)Pipeline checks pass!$(RESET)\n'
 
 .PHONY: build
 build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
 
-$(SNAPSHOTDIR): clean-shapshot ## Build snapshot release binaries and packages
+$(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)
 	# create a config with the dist dir overridden
 	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
@@ -158,39 +154,32 @@ $(SNAPSHOTDIR): clean-shapshot ## Build snapshot release binaries and packages
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
 	$(TEMPDIR)/goreleaser release --skip-publish --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
 
-# TODO: add tests for mac
-.PHONY: acceptance
-acceptance: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages
+.PHONY: acceptance-mac
+acceptance-mac: $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binaries and packages (Mac)
+	$(call title,Running acceptance test: Run on Mac)
+	$(ACC_DIR)/mac.sh \
+			$(SNAPSHOTDIR) \
+			$(ACC_DIR)\
+			$(ACC_TEST_IMAGE)
+
+.PHONY: acceptance-linux
+acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages (Linux)
 
 .PHONY: acceptance-test-deb-package-install
 acceptance-test-deb-package-install: $(SNAPSHOTDIR)
 	$(call title,Running acceptance test: DEB install)
-	docker pull $(ACC_TEST_IMAGE)
-	@docker run --rm \
-		-v //var/run/docker.sock://var/run/docker.sock \
-		-v /${PWD}://src \
-		-w //src \
-		ubuntu:latest \
-			/bin/bash $(ACC_DIR)/deb.sh $(SNAPSHOTDIR) $(RESULTSDIR) $(ACC_TEST_IMAGE)
-
-	$(ACC_DIR)/compare.sh \
-		$(RESULTSDIR)/acceptance-deb-$(ACC_TEST_IMAGE).json \
-		$(ACC_DIR)/test-fixtures/acceptance-$(ACC_TEST_IMAGE).json
+	$(ACC_DIR)/deb.sh \
+			$(SNAPSHOTDIR) \
+			$(ACC_DIR)\
+			$(ACC_TEST_IMAGE)
 
 .PHONY: acceptance-test-rpm-package-install
 acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 	$(call title,Running acceptance test: RPM install)
-	docker pull $(ACC_TEST_IMAGE)
-	@docker run --rm \
-		-v //var/run/docker.sock://var/run/docker.sock \
-		-v /${PWD}://src \
-		-w //src \
-		fedora:latest \
-			/bin/bash $(ACC_DIR)/rpm.sh $(SNAPSHOTDIR) $(RESULTSDIR) $(ACC_TEST_IMAGE)
-
-	$(ACC_DIR)/compare.sh \
-		$(RESULTSDIR)/acceptance-rpm-$(ACC_TEST_IMAGE).json \
-		$(ACC_DIR)/test-fixtures/acceptance-$(ACC_TEST_IMAGE).json
+	$(ACC_DIR)/rpm.sh \
+			$(SNAPSHOTDIR) \
+			$(ACC_DIR)\
+			$(ACC_TEST_IMAGE)
 
 # TODO: this is not releasing yet
 .PHONY: release
