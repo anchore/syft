@@ -113,6 +113,7 @@ jobs:
             - "test/integration/test-fixtures/tar-cache"
 
 workflows:
+  # Note: changing this workflow name requires making the same update in the .github/workflows/release.yaml pipeline
   "Static Analysis + Unit + Integration":
     jobs:
       - run-static-analysis:

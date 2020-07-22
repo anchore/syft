@@ -1,17 +1,24 @@
 name: 'Acceptance'
 on:
-  push:
+  # act on a newly opened pull request (supports forks)
   pull_request:
-    types: [ opened, reopened ]
+  push:
+    # act on a push to any branch
+    branches:
+      - '**'
+    # ... do not act on release tags
+    tags-ignore:
+      - v*
+env:
+  GO_VERSION: "1.14.x"
 jobs:
   Build-Snapshot-Artifacts:
-    strategy:
-      matrix:
-        go-version: [1.14.x]
-        platform: [ubuntu-latest]
-    runs-on: ${{ matrix.platform }}
+    # prevent duplicate runs for on PRs that are opened simultaneous to a push
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'anchore/imgbom'
+    runs-on: ubuntu-latest
     steps:
 
+      # TODO: remove me after release
       - name: Configure git for private modules
         env:
           TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
@@ -19,7 +26,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: ${{ env.GO_VERSION }}
 
       - uses: actions/checkout@v2
 
@@ -30,10 +37,10 @@ jobs:
           path: |
             ~/go/pkg/mod
             ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('Makefile') }}-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('Makefile') }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('Makefile') }}-
-            ${{ runner.os }}-go-${{ matrix.go-version }}-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('Makefile') }}-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: Bootstrap dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -47,7 +54,10 @@ jobs:
           name: artifacts
           path: snapshot
 
+  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
+    # prevent duplicate runs for on PRs that are opened simultaneous to a push
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'anchore/imgbom'
     needs: [ Build-Snapshot-Artifacts ]
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +72,10 @@ jobs:
       - name: Run Acceptance Tests (Linux)
         run: make acceptance-linux
 
+  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Mac:
+    # prevent duplicate runs for on PRs that are opened simultaneous to a push
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'anchore/imgbom'
     needs: [ Build-Snapshot-Artifacts ]
     runs-on: macos-latest
     steps:
