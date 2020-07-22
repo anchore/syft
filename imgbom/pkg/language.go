@@ -6,6 +6,7 @@ const (
 	//JavaScript
 	Python
 	Ruby
+	Go
 )
 
 type Language uint
@@ -16,6 +17,7 @@ var languageStr = []string{
 	//"javascript",
 	"python",
 	"ruby",
+	"go",
 }
 
 var AllLanguages = []Language{
@@ -23,6 +25,7 @@ var AllLanguages = []Language{
 	//JavaScript,
 	Python,
 	Ruby,
+	Go,
 }
 
 func (t Language) String() string {

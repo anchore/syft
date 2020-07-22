@@ -133,6 +133,14 @@ var cases = []struct {
 			"unicorn":              "4.8.3",
 		},
 	},
+	{
+		name:        "find golang modules",
+		pkgType:     pkg.GoModulePkg,
+		pkgLanguage: pkg.Go,
+		pkgInfo: map[string]string{
+			"github.com/bmatcuk/doublestar": "v1.3.1",
+		},
+	},
 }
 
 func TestPkgCoverageImage(t *testing.T) {
