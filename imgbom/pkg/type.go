@@ -9,6 +9,7 @@ const (
 	//PacmanPkg
 	RpmPkg
 	WheelPkg
+	NpmPkg
 	PythonRequirementsPkg
 	JavaPkg
 	JenkinsPluginPkg
@@ -26,6 +27,7 @@ var typeStr = []string{
 	//"pacman",
 	"rpm",
 	"wheel",
+	"npm",
 	"python-requirements",
 	"java-archive",
 	"jenkins-plugin",
@@ -40,6 +42,7 @@ var AllPkgs = []Type{
 	//PacmanPkg,
 	RpmPkg,
 	WheelPkg,
+	NpmPkg,
 	PythonRequirementsPkg,
 	JavaPkg,
 	JenkinsPluginPkg,
