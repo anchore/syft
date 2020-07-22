@@ -33,7 +33,7 @@ docker run --rm \
     -w /src \
     ubuntu:latest \
         /bin/bash -x -c "\
-            apt install ${DISTDIR}/imgbom_*_linux_amd64.deb -y && \
+            DEBIAN_FRONTEND=noninteractive apt install ${DISTDIR}/imgbom_*_linux_amd64.deb -y && \
             imgbom version -v && \
             imgbom ${TEST_IMAGE} -vv -o json > ${REPORT} && \
             cat ${REPORT} \
@@ -43,4 +43,3 @@ docker run --rm \
 ${ACC_DIR}/compare.py \
     ${GOLDEN_REPORT} \
     ${REPORT}
-
