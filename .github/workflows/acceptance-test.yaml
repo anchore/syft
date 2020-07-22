@@ -1,11 +1,9 @@
 name: 'Acceptance'
 on:
-  # act on a newly opened pull request (supports forks)
-  pull_request:
   push:
-    # act on a push to any branch
+    # ... only act on pushes to master
     branches:
-      - '**'
+      - master
     # ... do not act on release tags
     tags-ignore:
       - v*
@@ -13,8 +11,6 @@ env:
   GO_VERSION: "1.14.x"
 jobs:
   Build-Snapshot-Artifacts:
-    # prevent duplicate runs for on PRs that are opened simultaneous to a push
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'anchore/imgbom'
     runs-on: ubuntu-latest
     steps:
 
@@ -56,8 +52,6 @@ jobs:
 
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
-    # prevent duplicate runs for on PRs that are opened simultaneous to a push
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'anchore/imgbom'
     needs: [ Build-Snapshot-Artifacts ]
     runs-on: ubuntu-latest
     steps:
@@ -74,8 +68,6 @@ jobs:
 
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Mac:
-    # prevent duplicate runs for on PRs that are opened simultaneous to a push
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'anchore/imgbom'
     needs: [ Build-Snapshot-Artifacts ]
     runs-on: macos-latest
     steps:
