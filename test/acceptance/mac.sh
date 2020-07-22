@@ -24,8 +24,8 @@ function cleanup {
 trap cleanup EXIT
 
 # install dependencies
-jq --version || brew install jq
-skopeo --version || brew install skopeo
+jq --version || brew install jq@1.6
+skopeo --version || brew install skopeo@1.1.0
 
 # fetch test image
 skopeo --override-os linux copy docker://docker.io/${TEST_IMAGE} docker-archive:${TEST_IMAGE_TAR}
