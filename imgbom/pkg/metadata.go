@@ -41,3 +41,21 @@ type JavaMetadata struct {
 	PomProperties *PomProperties `mapstructure:"PomProperties"`
 	Parent        *Package
 }
+
+// source: https://wiki.alpinelinux.org/wiki/Apk_spec
+type ApkMetadata struct {
+	Package          string `mapstructure:"P"`
+	OriginPackage    string `mapstructure:"o"`
+	Maintainer       string `mapstructure:"m"`
+	Version          string `mapstructure:"V"`
+	License          string `mapstructure:"L"`
+	Architecture     string `mapstructure:"A"`
+	URL              string `mapstructure:"U"`
+	Description      string `mapstructure:"T"`
+	Size             int    `mapstructure:"S"`
+	InstalledSize    int    `mapstructure:"I"`
+	PullDependencies string `mapstructure:"D"`
+	PullChecksum     string `mapstructure:"C"`
+	GitCommitOfAport string `mapstructure:"c"`
+	Files            []string
+}

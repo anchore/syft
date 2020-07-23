@@ -1,0 +1,34 @@
+C:Q1bTtF5526tETKfL+lnigzIDvm+2o=
+P:musl-utils
+V:1.1.24-r2
+A:x86_64
+S:37944
+I:151552
+T:the musl c library (libc) implementation
+U:https://musl.libc.org/
+L:MIT BSD GPL2+
+o:musl
+m:Timo Teräs <timo.teras@iki.fi>
+t:1584790550
+c:4024cc3b29ad4c65544ad068b8f59172b5494306
+D:scanelf so:libc.musl-x86_64.so.1
+p:cmd:getconf cmd:getent cmd:iconv cmd:ldconfig cmd:ldd
+r:libiconv
+F:sbin
+R:ldconfig
+a:0:0:755
+Z:Q1Kja2+POZKxEkUOZqwSjC6kmaED4=
+F:usr
+F:usr/bin
+R:iconv
+a:0:0:755
+Z:Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=
+R:ldd
+a:0:0:755
+Z:Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=
+R:getconf
+a:0:0:755
+Z:Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=
+R:getent
+a:0:0:755
+Z:Q1eR2Dz/WylabgbWMTkd2+hGmEya4=

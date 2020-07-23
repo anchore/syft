@@ -142,6 +142,15 @@ var cases = []struct {
 		},
 	},
 	{
+
+		name:    "find apkdb packages",
+		pkgType: pkg.ApkPkg,
+		pkgInfo: map[string]string{
+			"musl-utils": "1.1.24-r2",
+			"libc-utils": "0.7.2-r0",
+		},
+	},
+	{
 		name:        "find golang modules",
 		pkgType:     pkg.GoModulePkg,
 		pkgLanguage: pkg.Go,
