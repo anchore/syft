@@ -7,8 +7,9 @@ TEST_IMAGE=$3
 
 TEST_TYPE=deb
 WORK_DIR=`mktemp -d -t "imgbom-acceptance-test-${TEST_TYPE}-XXXXXX"`
-REPORT=${WORK_DIR}/acceptance-${TEST_TYPE}-${TEST_IMAGE}.json
-GOLDEN_REPORT=${ACC_DIR}/test-fixtures/acceptance-${TEST_IMAGE}.json
+NORMAL_TEST_IMAGE=$(echo ${TEST_IMAGE} | tr ':' '-' )
+REPORT=${WORK_DIR}/acceptance-${TEST_TYPE}-${NORMAL_TEST_IMAGE}.json
+GOLDEN_REPORT=${ACC_DIR}/test-fixtures/acceptance-${NORMAL_TEST_IMAGE}.json
 
 # check if tmp dir was created
 if [[ ! "${WORK_DIR}" || ! -d "${WORK_DIR}" ]]; then
