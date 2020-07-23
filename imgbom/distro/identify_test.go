@@ -6,45 +6,103 @@ import (
 	"os"
 	"testing"
 
+	"github.com/anchore/imgbom/internal"
+
 	"github.com/anchore/imgbom/imgbom/scope"
 )
 
 func TestIdentifyDistro(t *testing.T) {
 	tests := []struct {
-		fixture    string
-		name       string
-		RawVersion string
-		Type       Type
+		fixture string
+		Type    Type
+		Version string
 	}{
 		{
-			fixture: "test-fixtures/os/ubuntu-20.04",
-			name:    "ubuntu",
+			fixture: "test-fixtures/os/alpine",
+			Type:    Alpine,
+			Version: "3.11.6",
+		},
+		{
+			fixture: "test-fixtures/os/amazon",
+			Type:    AmazonLinux,
+			Version: "2.0.0",
+		},
+		{
+			fixture: "test-fixtures/os/busybox",
+			Type:    Busybox,
+			Version: "1.31.1",
+		},
+		{
+			fixture: "test-fixtures/os/centos",
+			Type:    CentOS,
+			Version: "8.0.0",
+		},
+		{
+			fixture: "test-fixtures/os/debian",
+			Type:    Debian,
+			Version: "8.0.0",
+		},
+		{
+			fixture: "test-fixtures/os/fedora",
+			Type:    Fedora,
+			Version: "31.0.0",
+		},
+		{
+			fixture: "test-fixtures/os/redhat",
+			Type:    RedHat,
+			Version: "7.3.0",
+		},
+		{
+			fixture: "test-fixtures/os/ubuntu",
 			Type:    Ubuntu,
+			Version: "20.4.0",
 		},
 		{
 			fixture: "test-fixtures/os/empty",
-			name:    "No OS files",
 			Type:    UnknownDistroType,
 		},
 		{
 			fixture: "test-fixtures/os/unmatchable",
-			name:    "Unmatchable distro",
 			Type:    UnknownDistroType,
 		},
 	}
 
+	observedDistros := internal.NewStringSet()
+	definedDistros := internal.NewStringSet()
+	for _, d := range All {
+		definedDistros.Add(d.String())
+	}
+
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.fixture, func(t *testing.T) {
 			s, err := scope.NewScopeFromDir(test.fixture, scope.AllLayersScope)
 			if err != nil {
 				t.Fatalf("unable to produce a new scope for testing: %s", test.fixture)
 			}
-			distro := Identify(s)
-			if distro.Type != test.Type {
-				t.Errorf("expected distro doesn't match: %v != %v", distro.Type, test.Type)
+
+			d := Identify(s)
+			observedDistros.Add(d.String())
+
+			if d.Type != test.Type {
+				t.Errorf("expected distro doesn't match: %v != %v", d.Type, test.Type)
+			}
+
+			if d.Type == UnknownDistroType && d.Version != nil {
+				t.Fatalf("version should be nil for unknown distros")
+			} else if d.Type == UnknownDistroType && d.Version == nil {
+				// don't check versions for unknown distro types
+				return
+			}
+
+			if d.Version.String() != test.Version {
+				t.Errorf("expected distro version doesn't match: %v != %v", d.Version.String(), test.Version)
 			}
 		})
+	}
 
+	// ensure that test cases stay in sync with the distros that can be identified
+	if len(observedDistros) < len(definedDistros) {
+		t.Errorf("distro coverage incomplete (distro=%d, coverage=%d)", len(definedDistros), len(observedDistros))
 	}
 
 }
@@ -86,11 +144,10 @@ func TestParseOsRelease(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("%s:%s", test.name, test.RawVersion)
 		fixture, err := os.Open(test.fixture)
-		defer fixture.Close()
-
 		if err != nil {
-			t.Fatalf("failed to open fixture: %+v", err)
+			t.Fatalf("could not open test fixture=%s: %+v", test.fixture, err)
 		}
+		defer fixture.Close()
 
 		b, err := ioutil.ReadAll(fixture)
 		if err != nil {
@@ -131,11 +188,10 @@ func TestParseOsReleaseFailures(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("%s:%s", test.name, test.fixture)
 		fixture, err := os.Open(test.fixture)
-		defer fixture.Close()
-
 		if err != nil {
-			t.Fatalf("failed to open fixture: %+v", err)
+			t.Fatalf("could not open test fixture=%s: %+v", test.fixture, err)
 		}
+		defer fixture.Close()
 
 		b, err := ioutil.ReadAll(fixture)
 		if err != nil {

@@ -12,21 +12,38 @@ import (
 // returns a distro or nil
 type parseFunc func(string) *Distro
 
+type parseEntry struct {
+	path file.Path
+	fn   parseFunc
+}
+
 // Identify parses distro-specific files to determine distro metadata like version and release
 func Identify(s scope.Scope) Distro {
 	distro := NewUnknownDistro()
 
-	identityFiles := map[file.Path]parseFunc{
-		"/etc/os-release": parseOsRelease,
-		// Debian and Debian-based distros have the same contents linked from this path
-		"/usr/lib/os-release": parseOsRelease,
-		"/bin/busybox":        parseBusyBox,
+	identityFiles := []parseEntry{
+		{
+			// most distros provide a link at this location
+			path: "/etc/os-release",
+			fn:   parseOsRelease,
+		},
+		{
+			// standard location for rhel & debian distros
+			path: "/usr/lib/os-release",
+			fn:   parseOsRelease,
+		},
+		{
+			// check for busybox (important to check this last since other distros contain the busybox binary)
+			path: "/bin/busybox",
+			fn:   parseBusyBox,
+		},
 	}
 
-	for path, fn := range identityFiles {
-		refs, err := s.FilesByPath(path)
+identifyLoop:
+	for _, entry := range identityFiles {
+		refs, err := s.FilesByPath(entry.path)
 		if err != nil {
-			log.Errorf("unable to get path refs from %s: %s", path, err)
+			log.Errorf("unable to get path refs from %s: %s", entry.path, err)
 			break
 		}
 
@@ -44,18 +61,18 @@ func Identify(s scope.Scope) Distro {
 			}
 
 			if err != nil {
-				log.Debugf("unable to get contents from %s: %s", path, err)
+				log.Debugf("unable to get contents from %s: %s", entry.path, err)
 				continue
 			}
 
 			if content == "" {
-				log.Debugf("no contents in file, skipping: %s", path)
+				log.Debugf("no contents in file, skipping: %s", entry.path)
 				continue
 			}
 
-			if candidateDistro := fn(content); candidateDistro != nil {
+			if candidateDistro := entry.fn(content); candidateDistro != nil {
 				distro = *candidateDistro
-				break
+				break identifyLoop
 			}
 		}
 	}
@@ -64,7 +81,7 @@ func Identify(s scope.Scope) Distro {
 }
 
 func assemble(name, version string) *Distro {
-	distroType, ok := Mappings[name]
+	distroType, ok := IDMapping[name]
 
 	// Both distro and version must be present
 	if len(name) == 0 || len(version) == 0 {

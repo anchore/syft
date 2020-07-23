@@ -6,17 +6,12 @@ const (
 	Ubuntu
 	RedHat
 	CentOS
-	// Fedora
-	// Alpine
+	Fedora
+	Alpine
 	Busybox
-	// AmazonLinux
-	// OracleLinux
-	// ArchLinux
-)
-
-const (
-	// UnknownVersion is a default of 0.0.0 when it can't be parsed
-	UnknownVersion string = "0.0.0"
+	AmazonLinux
+	OracleLinux
+	//ArchLinux
 )
 
 type Type int
@@ -27,12 +22,12 @@ var distroStr = []string{
 	"ubuntu",
 	"redhat",
 	"centos",
-	// "fedora",
-	// "alpine",
+	"fedora",
+	"alpine",
 	"busybox",
-	// "amazn",
-	// "oraclelinux",
-	// "archlinux",
+	"amazn",
+	"oraclelinux",
+	//"archlinux",
 }
 
 var All = []Type{
@@ -40,12 +35,12 @@ var All = []Type{
 	Ubuntu,
 	RedHat,
 	CentOS,
-	// Fedora,
-	// Alpine,
+	Fedora,
+	Alpine,
 	Busybox,
-	// AmazonLinux,
-	// OracleLinux,
-	// ArchLinux,
+	AmazonLinux,
+	OracleLinux,
+	//ArchLinux,
 }
 
 func (t Type) String() string {
@@ -56,16 +51,16 @@ func (t Type) String() string {
 	return distroStr[t]
 }
 
-// Mappings connects a distro ID like "ubuntu" to a Distro type
-var Mappings = map[string]Type{
-	"debian": Debian,
-	"ubuntu": Ubuntu,
-	"rhel":   RedHat,
-	"centos": CentOS,
-	// "fedora": Fedora,
-	// "alpine": Alpine,
+// IDMapping connects a distro ID like "ubuntu" to a Distro type
+var IDMapping = map[string]Type{
+	"debian":  Debian,
+	"ubuntu":  Ubuntu,
+	"rhel":    RedHat,
+	"centos":  CentOS,
+	"fedora":  Fedora,
+	"alpine":  Alpine,
 	"busybox": Busybox,
-	// "amazn": AmazonLinux,
-	// "oraclelinux": OracleLinux,
-	// "archlinux": ArchLinux,
+	"amzn":    AmazonLinux,
+	"ol":      OracleLinux,
+	//"arch":    ArchLinux,
 }
