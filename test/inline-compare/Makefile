@@ -5,10 +5,18 @@ IMGBOM_REPORT = $(IMGBOM_DIR)/$(IMAGE_CLEAN).json
 INLINE_DIR = inline-reports
 INLINE_REPORT = $(INLINE_DIR)/$(IMAGE_CLEAN)-content-os.json
 
-.PHONY: bootstrap
+ifndef IMGBOM_DIR
+	$(error IMGBOM_DIR is not set)
+endif
 
+ifndef INLINE_DIR
+	$(error INLINE_DIR is not set)
+endif
+
+.PHONY: all
 all: compare
 
+.PHONY: compare
 compare: $(INLINE_REPORT) $(IMGBOM_REPORT)
 	docker build -t compare-imgbom:latest .
 	docker run compare-imgbom:latest $(IMAGE)
@@ -24,4 +32,8 @@ $(IMGBOM_REPORT):
 	echo "Creating $(IMGBOM_REPORT)..."
 	mkdir -p $(IMGBOM_DIR)
 	docker pull $(IMAGE)
-	go run ../main.go centos:latest -o json > $(IMGBOM_REPORT)
+	go run ../../main.go $(IMAGE) -o json > $(IMGBOM_REPORT)
+
+.PHONY: clean
+clean:
+	rm -f $(INLINE_DIR)/*  $(IMGBOM_DIR)/*

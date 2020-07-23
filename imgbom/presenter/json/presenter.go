@@ -53,7 +53,7 @@ type artifact struct {
 	Type      string      `json:"type"`
 	Cataloger string      `json:"cataloger"`
 	Sources   []source    `json:"sources"`
-	Metadata  interface{} `json:"metadata"`
+	Metadata  interface{} `json:"metadata,omitempty"`
 }
 
 func (pres *Presenter) Present(output io.Writer) error {
@@ -82,7 +82,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 		return fmt.Errorf("unsupported source: %T", src)
 	}
 
-	for p := range pres.catalog.Enumerate() {
+	for _, p := range pres.catalog.Sorted() {
 		art := artifact{
 			Name:     p.Name,
 			Version:  p.Version,

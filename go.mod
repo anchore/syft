@@ -14,7 +14,6 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
-	github.com/knqyf263/go-rpmdb v0.0.0-20190501070121-10a1c42a10dc
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/rogpeppe/go-internal v1.5.2
@@ -23,6 +22,7 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/wagoodman/go-partybus v0.0.0-20200526224238-eb215533f07d
 	github.com/wagoodman/go-progress v0.0.0-20200621153512-2778c704bf22
+	github.com/wagoodman/go-rpmdb v0.0.0-20200719223757-ce54a4b0607b
 	github.com/wagoodman/jotframe v0.0.0-20200622123948-2995cbd43525
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9

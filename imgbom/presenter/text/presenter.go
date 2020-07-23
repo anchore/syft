@@ -48,7 +48,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 	}
 
 	// populate artifacts...
-	for p := range pres.catalog.Enumerate() {
+	for _, p := range pres.catalog.Sorted() {
 		fmt.Fprintln(w, fmt.Sprintf("[%s]", p.Name))
 		fmt.Fprintln(w, " Version:\t", p.Version)
 		fmt.Fprintln(w, " Type:\t", p.Type.String())
