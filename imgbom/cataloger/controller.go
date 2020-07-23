@@ -3,6 +3,7 @@ package cataloger
 import (
 	"github.com/anchore/imgbom/imgbom/cataloger/bundler"
 	"github.com/anchore/imgbom/imgbom/cataloger/dpkg"
+	golang "github.com/anchore/imgbom/imgbom/cataloger/golang"
 	"github.com/anchore/imgbom/imgbom/cataloger/java"
 	"github.com/anchore/imgbom/imgbom/cataloger/python"
 	"github.com/anchore/imgbom/imgbom/cataloger/rpmdb"
@@ -48,6 +49,7 @@ func newController() controller {
 	ctrlr.add(python.NewCataloger())
 	ctrlr.add(rpmdb.NewCataloger())
 	ctrlr.add(java.NewCataloger())
+	ctrlr.add(golang.NewCataloger())
 	return ctrlr
 }
 

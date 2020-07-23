@@ -12,6 +12,7 @@ const (
 	PythonRequirementsPkg
 	JavaPkg
 	JenkinsPluginPkg
+	GoModulePkg
 )
 
 type Type uint
@@ -28,6 +29,7 @@ var typeStr = []string{
 	"python-requirements",
 	"java-archive",
 	"jenkins-plugin",
+	"go-module",
 }
 
 var AllPkgs = []Type{
@@ -41,6 +43,7 @@ var AllPkgs = []Type{
 	PythonRequirementsPkg,
 	JavaPkg,
 	JenkinsPluginPkg,
+	GoModulePkg,
 }
 
 func (t Type) String() string {
