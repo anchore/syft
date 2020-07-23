@@ -60,6 +60,14 @@ var cases = []struct {
 		},
 	},
 	{
+		name:        "find javascript npm packages",
+		pkgType:     pkg.NpmPkg,
+		pkgLanguage: pkg.JavaScript,
+		pkgInfo: map[string]string{
+			"get-stdin": "8.0.0",
+		},
+	},
+	{
 		name:        "find python egg packages",
 		pkgType:     pkg.EggPkg,
 		pkgLanguage: pkg.Python,
@@ -181,7 +189,7 @@ func TestPkgCoverageImage(t *testing.T) {
 				}
 
 				if expectedVersion != a.Version {
-					t.Errorf("unexpected package version (pkg=%s): %s", a.Name, a.Version)
+					t.Errorf("unexpected package version (pkg=%s): %s, expected: %s", a.Name, a.Version, expectedVersion)
 				}
 
 				if a.Language != c.pkgLanguage {

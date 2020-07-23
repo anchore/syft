@@ -5,6 +5,7 @@ import (
 	"github.com/anchore/imgbom/imgbom/cataloger/dpkg"
 	golang "github.com/anchore/imgbom/imgbom/cataloger/golang"
 	"github.com/anchore/imgbom/imgbom/cataloger/java"
+	"github.com/anchore/imgbom/imgbom/cataloger/npm"
 	"github.com/anchore/imgbom/imgbom/cataloger/python"
 	"github.com/anchore/imgbom/imgbom/cataloger/rpmdb"
 	"github.com/anchore/imgbom/imgbom/event"
@@ -50,6 +51,7 @@ func newController() controller {
 	ctrlr.add(rpmdb.NewCataloger())
 	ctrlr.add(java.NewCataloger())
 	ctrlr.add(golang.NewCataloger())
+	ctrlr.add(npm.NewCataloger())
 	return ctrlr
 }
 
