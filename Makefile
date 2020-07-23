@@ -90,9 +90,16 @@ bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./
 .PHONY: lint
 lint: ## Run gofmt + golangci lint checks
 	$(call title,Running linters)
+	# ensure there are no go fmt differences
 	@printf "files with gofmt issues: [$(shell gofmt -l -s .)]\n"
 	@test -z "$(shell gofmt -l -s .)"
+
+	# run all golangci-lint rules
 	$(LINTCMD)
+
+	# go tooling does not play well with certain filename characters, ensure the common cases don't result in future "go get" failures
+	$(eval MALFORMED_FILENAMES := $(shell find . | grep -e ':'))
+	@bash -c "[[ '$(MALFORMED_FILENAMES)' == '' ]] || (printf '\nfound unsupported filename characters:\n$(MALFORMED_FILENAMES)\n\n' && false)"
 
 .PHONY: lint-fix
 lint-fix: ## Auto-format all source code + run golangci lint fixers
