@@ -29,8 +29,13 @@ func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scop
 }
 
 func IdentifyDistro(s scope.Scope) distro.Distro {
-	log.Info("Identifying Distro")
-	return distro.Identify(s)
+	d := distro.Identify(s)
+	if d.Type != distro.UnknownDistroType {
+		log.Infof("Identified Distro: %s", d.String())
+	} else {
+		log.Info("Could not identify distro")
+	}
+	return d
 }
 
 func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
