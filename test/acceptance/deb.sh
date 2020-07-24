@@ -4,6 +4,7 @@ set -eux
 DISTDIR=$1
 ACC_DIR=$2
 TEST_IMAGE=$3
+RESULTSDIR=$4
 
 TEST_TYPE=deb
 WORK_DIR=`mktemp -d -t "syft-acceptance-test-${TEST_TYPE}-XXXXXX"`
@@ -40,7 +41,10 @@ docker run --rm \
             cat ${REPORT} \
         "
 
+# keep the generated report around
+cp ${REPORT} ${RESULTSDIR}
+
 # compare the results to a known good output
 ${ACC_DIR}/compare.py \
     ${GOLDEN_REPORT} \
-    ${REPORT}
+    ${REPORT} | tee ${RESULTSDIR}/acceptance-${TEST_TYPE}.txt
