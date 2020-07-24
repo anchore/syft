@@ -28,7 +28,7 @@ class syft:
 
             packages.add(package)
             metadata[package.type][package] = Metadata(
-                metadata=repr(entry["metadata"]), sources=repr(entry["sources"])
+                metadata=repr(entry.get("metadata", "")), sources=repr(entry["sources"])
             )
         return packages, metadata
 
