@@ -164,8 +164,9 @@ acceptance-mac: $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binarie
 	$(call title,Running acceptance test: Run on Mac)
 	$(ACC_DIR)/mac.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR)\
-			$(ACC_TEST_IMAGE)
+			$(ACC_DIR) \
+			$(ACC_TEST_IMAGE) \
+			$(RESULTSDIR)
 
 .PHONY: acceptance-linux
 acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages (Linux)
@@ -175,16 +176,18 @@ acceptance-test-deb-package-install: $(SNAPSHOTDIR)
 	$(call title,Running acceptance test: DEB install)
 	$(ACC_DIR)/deb.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR)\
-			$(ACC_TEST_IMAGE)
+			$(ACC_DIR) \
+			$(ACC_TEST_IMAGE) \
+			$(RESULTSDIR)
 
 .PHONY: acceptance-test-rpm-package-install
 acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 	$(call title,Running acceptance test: RPM install)
 	$(ACC_DIR)/rpm.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR)\
-			$(ACC_TEST_IMAGE)
+			$(ACC_DIR) \
+			$(ACC_TEST_IMAGE) \
+			$(RESULTSDIR)
 
 # TODO: this is not releasing yet
 .PHONY: release
@@ -203,11 +206,11 @@ release: clean-dist ## Build and publish final binaries and packages
 	# TODO: add upload to bucket
 
 .PHONY: clean
-clean: clean-dist clean-shapshot  ## Remove previous builds and result reports
+clean: clean-dist clean-snapshot  ## Remove previous builds and result reports
 	rm -rf $(RESULTSDIR)/*
 
-.PHONY: clean-shapshot
-clean-shapshot:
+.PHONY: clean-snapshot
+clean-snapshot:
 	rm -rf $(SNAPSHOTDIR) $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: clean-dist

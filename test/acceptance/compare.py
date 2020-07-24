@@ -28,7 +28,8 @@ class syft:
 
             packages.add(package)
             metadata[package.type][package] = Metadata(
-                metadata=repr(entry["metadata"]), sources=repr(entry["sources"])
+                # note: the metadata entry is optional
+                metadata=repr(entry.get("metadata")), sources=repr(entry["sources"])
             )
         return packages, metadata
 
@@ -50,7 +51,7 @@ def main(baseline_report, new_report):
     ) * 100.0
 
     extra_packages = report2_packages - report1_packages
-    missing_pacakges = report1_packages - report2_packages
+    missing_packages = report1_packages - report2_packages
 
     report1_metadata_set = set()
     for package in report1_packages:
@@ -75,9 +76,9 @@ def main(baseline_report, new_report):
             print("    " + repr(package))
         print()
 
-    if len(missing_pacakges) > 0:
+    if len(missing_packages) > 0:
         print("Missing packages:")
-        for package in sorted(list(missing_pacakges)):
+        for package in sorted(list(missing_packages)):
             print("    " + repr(package))
         print()
 
