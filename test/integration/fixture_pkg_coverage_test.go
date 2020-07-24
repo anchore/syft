@@ -57,6 +57,7 @@ var cases = []struct {
 		pkgLanguage: pkg.Python,
 		pkgInfo: map[string]string{
 			"Pygments": "2.6.1",
+			"requests": "2.10.0",
 		},
 	},
 	{
@@ -73,6 +74,7 @@ var cases = []struct {
 		pkgLanguage: pkg.Python,
 		pkgInfo: map[string]string{
 			"requests": "2.22.0",
+			"otherpkg": "2.19.0",
 		},
 	},
 	{

@@ -12,10 +12,13 @@ type Cataloger struct {
 }
 
 func NewCataloger() *Cataloger {
+	// we want to match on partial dir names
+	// 	/home/user/requests-2.10.0.dist-info/METADATA
+	//	/home/user/requests-2.10.0/dist-info/METADATA
 	globParsers := map[string]common.ParserFn{
-		"**/egg-info/PKG-INFO":  parseEggMetadata,
-		"**/dist-info/METADATA": parseWheelMetadata,
-		"**/requirements.txt":   parseRequirementsTxt,
+		"**/*egg-info/PKG-INFO":  parseEggMetadata,
+		"**/*dist-info/METADATA": parseWheelMetadata,
+		"**/requirements.txt":    parseRequirementsTxt,
 	}
 
 	return &Cataloger{
