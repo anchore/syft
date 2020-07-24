@@ -1,6 +1,6 @@
 package log
 
-import "github.com/anchore/imgbom/imgbom/logger"
+import "github.com/anchore/syft/syft/logger"
 
 var Log logger.Logger = &nopLogger{}
 

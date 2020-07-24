@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/anchore/imgbom/internal/ui/etui"
+	"github.com/anchore/syft/internal/ui/etui"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

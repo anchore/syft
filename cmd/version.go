@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/anchore/imgbom/internal"
-	"github.com/anchore/imgbom/internal/version"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/version"
 	"github.com/spf13/cobra"
 )
 

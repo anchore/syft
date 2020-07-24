@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anchore/imgbom/internal/log"
+	"github.com/anchore/syft/internal/log"
 )
 
 const (

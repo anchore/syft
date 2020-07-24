@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	imgbomEventParsers "github.com/anchore/imgbom/imgbom/event/parsers"
+	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/wagoodman/go-partybus"
 )
 
 func CatalogerFinishedHandler(event partybus.Event) error {
 	// show the report to stdout
-	pres, err := imgbomEventParsers.ParseCatalogerFinished(event)
+	pres, err := syftEventParsers.ParseCatalogerFinished(event)
 	if err != nil {
 		return fmt.Errorf("bad CatalogerFinished event: %w", err)
 	}

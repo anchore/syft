@@ -5,11 +5,11 @@ package integration
 import (
 	"testing"
 
-	"github.com/anchore/imgbom/imgbom"
+	"github.com/anchore/syft/syft"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/imgbom/imgbom/distro"
-	"github.com/anchore/imgbom/imgbom/scope"
+	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/scope"
 	"github.com/go-test/deep"
 )
 
@@ -19,7 +19,7 @@ func TestDistroImage(t *testing.T) {
 	tarPath := testutils.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	_, _, actualDistro, err := imgbom.Catalog("docker-archive://"+tarPath, scope.AllLayersScope)
+	_, _, actualDistro, err := syft.Catalog("docker-archive://"+tarPath, scope.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}

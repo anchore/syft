@@ -6,7 +6,7 @@ ACC_DIR=$2
 TEST_IMAGE=$3
 
 TEST_TYPE=rpm
-WORK_DIR=`mktemp -d -t "imgbom-acceptance-test-${TEST_TYPE}-XXXXXX"`
+WORK_DIR=`mktemp -d -t "syft-acceptance-test-${TEST_TYPE}-XXXXXX"`
 NORMAL_TEST_IMAGE=$(echo ${TEST_IMAGE} | tr ':' '-' )
 REPORT=${WORK_DIR}/acceptance-${TEST_TYPE}-${NORMAL_TEST_IMAGE}.json
 GOLDEN_REPORT=${ACC_DIR}/test-fixtures/acceptance-${NORMAL_TEST_IMAGE}.json
@@ -26,7 +26,7 @@ trap cleanup EXIT
 # fetch test image
 docker pull ${TEST_IMAGE}
 
-# install and run imgbom
+# install and run syft
 docker run --rm \
     -v /var/run/docker.sock://var/run/docker.sock \
     -v /${PWD}:/src \
@@ -34,9 +34,9 @@ docker run --rm \
     -w /src \
     centos:latest \
         /bin/bash -x -c "\
-            rpm -ivh ${DISTDIR}/imgbom_*_linux_amd64.rpm && \
-            imgbom version -v && \
-            imgbom ${TEST_IMAGE} -vv -o json > ${REPORT} && \
+            rpm -ivh ${DISTDIR}/syft_*_linux_amd64.rpm && \
+            syft version -v && \
+            syft ${TEST_IMAGE} -vv -o json > ${REPORT} && \
             cat ${REPORT} \
         "
 

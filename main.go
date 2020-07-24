@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/anchore/imgbom/cmd"
+	"github.com/anchore/syft/cmd"
 )
 
 func main() {

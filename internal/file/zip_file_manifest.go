@@ -6,9 +6,9 @@ import (
 	"os"
 	"sort"
 
-	"github.com/anchore/imgbom/internal"
+	"github.com/anchore/syft/internal"
 
-	"github.com/anchore/imgbom/internal/log"
+	"github.com/anchore/syft/internal/log"
 )
 
 type ZipFileManifest map[string]os.FileInfo

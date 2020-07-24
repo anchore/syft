@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
-	"github.com/anchore/imgbom/imgbom/presenter"
-	"github.com/anchore/imgbom/imgbom/scope"
-	"github.com/anchore/imgbom/internal"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/presenter"
+	"github.com/anchore/syft/syft/scope"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"go.uber.org/zap/zapcore"

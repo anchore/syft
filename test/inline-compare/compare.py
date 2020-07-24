@@ -63,7 +63,7 @@ class InlineScan:
         return packages, metadata
 
 
-class ImgBom:
+class syft:
 
     report_tmpl = "{image}.json"
 
@@ -100,50 +100,50 @@ def main(image):
     inline = InlineScan(image=image, report_dir="inline-reports")
     inline_packages, inline_metadata = inline.packages()
 
-    imgbom = ImgBom(image=image, report_dir="imgbom-reports")
-    imgbom_packages, imgbom_metadata = imgbom.packages()
+    syft = syft(image=image, report_dir="syft-reports")
+    syft_packages, syft_metadata = syft.packages()
 
-    if len(imgbom_packages) == 0 and len(inline_packages) == 0:
+    if len(syft_packages) == 0 and len(inline_packages) == 0:
         print("nobody found any packages")
         return 0
 
-    same_packages = imgbom_packages & inline_packages
+    same_packages = syft_packages & inline_packages
     percent_overlap_packages = (
         float(len(same_packages)) / float(len(inline_packages))
     ) * 100.0
 
-    bonus_packages = imgbom_packages - inline_packages
-    missing_pacakges = inline_packages - imgbom_packages
+    bonus_packages = syft_packages - inline_packages
+    missing_pacakges = inline_packages - syft_packages
 
     inline_metadata_set = set()
     for package in inline_packages:
         metadata = inline_metadata[package.type][package]
         inline_metadata_set.add((package, metadata))
 
-    imgbom_metadata_set = set()
-    for package in imgbom_packages:
-        metadata = imgbom_metadata[package.type][package]
-        imgbom_metadata_set.add((package, metadata))
+    syft_metadata_set = set()
+    for package in syft_packages:
+        metadata = syft_metadata[package.type][package]
+        syft_metadata_set.add((package, metadata))
 
-    same_metadata = imgbom_metadata_set & inline_metadata_set
+    same_metadata = syft_metadata_set & inline_metadata_set
     percent_overlap_metadata = (
         float(len(same_metadata)) / float(len(inline_metadata_set))
     ) * 100.0
 
     if len(bonus_packages) > 0:
-        print("Imgbom Bonus packages:")
+        print("syft Bonus packages:")
         for package in sorted(list(bonus_packages)):
             print("    " + repr(package))
         print()
 
     if len(missing_pacakges) > 0:
-        print("Imgbom Missing packages:")
+        print("syft Missing packages:")
         for package in sorted(list(missing_pacakges)):
             print("    " + repr(package))
         print()
 
     print("Inline Packages: %d" % len(inline_packages))
-    print("Imgbom Packages: %d" % len(imgbom_packages))
+    print("syft Packages: %d" % len(syft_packages))
     print()
     print(
         "Baseline Packages Matched: %2.3f %% (%d/%d packages)"

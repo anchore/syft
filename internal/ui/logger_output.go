@@ -1,9 +1,9 @@
 package ui
 
 import (
-	imgbomEvent "github.com/anchore/imgbom/imgbom/event"
-	"github.com/anchore/imgbom/internal/log"
-	"github.com/anchore/imgbom/internal/ui/common"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/ui/common"
+	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 )
 
@@ -23,7 +23,7 @@ eventLoop:
 			}
 
 			// ignore all events except for the final event
-			if e.Type == imgbomEvent.CatalogerFinished {
+			if e.Type == syftEvent.CatalogerFinished {
 				err := common.CatalogerFinishedHandler(e)
 				if err != nil {
 					log.Errorf("unable to show catalog image finished event: %+v", err)

@@ -1,4 +1,4 @@
-module github.com/anchore/imgbom
+module github.com/anchore/syft
 
 go 1.14
 

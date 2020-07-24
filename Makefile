@@ -1,4 +1,4 @@
-BIN = imgbom
+BIN = syft
 TEMPDIR = ./.tmp
 RESULTSDIR = $(TEMPDIR)/results
 COVER_REPORT = $(RESULTSDIR)/cover.report
@@ -129,7 +129,7 @@ test/integration/test-fixtures/tar-cache.key, integration-fingerprint:
 
 .PHONY: java-packages-fingerprint
 java-packages-fingerprint:
-	@cd imgbom/cataloger/java/test-fixtures/java-builds && \
+	@cd syft/cataloger/java/test-fixtures/java-builds && \
 	make packages.fingerprint
 
 .PHONY: clear-test-cache

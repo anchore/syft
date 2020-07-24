@@ -15,7 +15,7 @@ var latestAppVersionURL = struct {
 }{
 	// TODO: set me to release host/path before release
 	host: "https://anchore.io",
-	path: "/imgbom/releases/latest/VERSION",
+	path: "/syft/releases/latest/VERSION",
 }
 
 func IsUpdateAvailable() (bool, string, error) {

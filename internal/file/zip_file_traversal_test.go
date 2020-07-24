@@ -67,7 +67,7 @@ func equal(r1, r2 io.Reader) (bool, error) {
 }
 
 func TestUnzipToDir(t *testing.T) {
-	archivePrefix, err := ioutil.TempFile("", "imgbom-ziputil-archive-TEST-")
+	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
 	if err != nil {
 		t.Fatalf("unable to create tempfile: %+v", err)
 	}
@@ -79,7 +79,7 @@ func TestUnzipToDir(t *testing.T) {
 
 	generateFixture(t, archivePrefix.Name())
 
-	contentsDir, err := ioutil.TempDir("", "imgbom-ziputil-contents-TEST-")
+	contentsDir, err := ioutil.TempDir("", "syft-ziputil-contents-TEST-")
 	if err != nil {
 		t.Fatalf("unable to create tempdir: %+v", err)
 	}
@@ -162,7 +162,7 @@ func TestUnzipToDir(t *testing.T) {
 }
 
 func TestExtractFilesFromZipFile(t *testing.T) {
-	archivePrefix, err := ioutil.TempFile("", "imgbom-ziputil-archive-TEST-")
+	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
 	if err != nil {
 		t.Fatalf("unable to create tempfile: %+v", err)
 	}
@@ -211,7 +211,7 @@ func TestExtractFilesFromZipFile(t *testing.T) {
 }
 
 func TestZipFileManifest(t *testing.T) {
-	archivePrefix, err := ioutil.TempFile("", "imgbom-ziputil-archive-TEST-")
+	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
 	if err != nil {
 		t.Fatalf("unable to create tempfile: %+v", err)
 	}

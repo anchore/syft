@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	imgbomEventParsers "github.com/anchore/imgbom/imgbom/event/parsers"
 	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
+	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/gookit/color"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -111,7 +111,7 @@ func imageReadHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 }
 
 func catalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	monitor, err := imgbomEventParsers.ParseCatalogerStarted(event)
+	monitor, err := syftEventParsers.ParseCatalogerStarted(event)
 	if err != nil {
 		return fmt.Errorf("bad CatalogerStarted event: %w", err)
 	}
@@ -145,7 +145,7 @@ func catalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybu
 }
 
 func appUpdateAvailableHandler(_ context.Context, fr *frame.Frame, event partybus.Event, _ *sync.WaitGroup) error {
-	newVersion, err := imgbomEventParsers.ParseAppUpdateAvailable(event)
+	newVersion, err := syftEventParsers.ParseAppUpdateAvailable(event)
 	if err != nil {
 		return fmt.Errorf("bad AppUpdateAvailable event: %w", err)
 	}

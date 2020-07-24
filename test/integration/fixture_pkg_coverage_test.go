@@ -5,13 +5,13 @@ package integration
 import (
 	"testing"
 
-	"github.com/anchore/imgbom/imgbom"
+	"github.com/anchore/syft/syft"
 
-	"github.com/anchore/imgbom/internal"
+	"github.com/anchore/syft/internal"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/imgbom/imgbom/pkg"
-	"github.com/anchore/imgbom/imgbom/scope"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/scope"
 )
 
 var cases = []struct {
@@ -166,7 +166,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	tarPath := testutils.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	catalog, _, _, err := imgbom.Catalog("docker-archive://"+tarPath, scope.AllLayersScope)
+	catalog, _, _, err := syft.Catalog("docker-archive://"+tarPath, scope.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -237,7 +237,7 @@ func TestPkgCoverageImage(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
-	catalog, _, _, err := imgbom.Catalog("dir://test-fixtures/image-pkg-coverage", scope.AllLayersScope)
+	catalog, _, _, err := syft.Catalog("dir://test-fixtures/image-pkg-coverage", scope.AllLayersScope)
 
 	if err != nil {
 		t.Errorf("unable to create scope from dir: %+v", err)

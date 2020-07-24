@@ -6,10 +6,10 @@ import (
 	"os"
 	"sync"
 
-	imgbomEvent "github.com/anchore/imgbom/imgbom/event"
-	"github.com/anchore/imgbom/internal/log"
-	"github.com/anchore/imgbom/internal/ui/common"
 	stereoscopeEvent "github.com/anchore/stereoscope/pkg/event"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/ui/common"
+	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/jotframe/pkg/frame"
 )
@@ -68,7 +68,7 @@ eventLoop:
 				break eventLoop
 			}
 			switch e.Type {
-			case imgbomEvent.AppUpdateAvailable:
+			case syftEvent.AppUpdateAvailable:
 				err = appUpdateAvailableHandler(ctx, fr, e, wg)
 				if err != nil {
 					log.Errorf("unable to show AppUpdateAvailable event: %+v", err)
@@ -86,12 +86,12 @@ eventLoop:
 					log.Errorf("unable to show FetchImage event: %+v", err)
 				}
 
-			case imgbomEvent.CatalogerStarted:
+			case syftEvent.CatalogerStarted:
 				err = catalogerStartedHandler(ctx, fr, e, wg)
 				if err != nil {
 					log.Errorf("unable to show CatalogerStarted event: %+v", err)
 				}
-			case imgbomEvent.CatalogerFinished:
+			case syftEvent.CatalogerFinished:
 				// we may have other background processes still displaying progress, wait for them to
 				// finish before discontinuing dynamic content and showing the final report
 				wg.Wait()

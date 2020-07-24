@@ -1,4 +1,4 @@
 package internal
 
 // note: must be a single word, all lowercase
-const ApplicationName = "imgbom"
+const ApplicationName = "syft"

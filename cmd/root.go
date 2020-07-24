@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/imgbom/imgbom"
-	"github.com/anchore/imgbom/imgbom/event"
-	"github.com/anchore/imgbom/imgbom/presenter"
-	"github.com/anchore/imgbom/internal"
-	"github.com/anchore/imgbom/internal/bus"
-	"github.com/anchore/imgbom/internal/log"
-	"github.com/anchore/imgbom/internal/ui"
-	"github.com/anchore/imgbom/internal/version"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/ui"
+	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/presenter"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
 )
@@ -58,7 +58,7 @@ func startWorker(userInput string) <-chan error {
 			}
 		}
 
-		catalog, scope, _, err := imgbom.Catalog(userInput, appConfig.ScopeOpt)
+		catalog, scope, _, err := syft.Catalog(userInput, appConfig.ScopeOpt)
 		if err != nil {
 			errs <- fmt.Errorf("failed to catalog input: %+v", err)
 			return

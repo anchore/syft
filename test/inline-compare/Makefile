@@ -1,12 +1,12 @@
 IMAGE = "centos:8"
 IMAGE_CLEAN = $(shell echo $(IMAGE) | tr ":" "_")
-IMGBOM_DIR = imgbom-reports
-IMGBOM_REPORT = $(IMGBOM_DIR)/$(IMAGE_CLEAN).json
+syft_DIR = syft-reports
+syft_REPORT = $(syft_DIR)/$(IMAGE_CLEAN).json
 INLINE_DIR = inline-reports
 INLINE_REPORT = $(INLINE_DIR)/$(IMAGE_CLEAN)-content-os.json
 
-ifndef IMGBOM_DIR
-	$(error IMGBOM_DIR is not set)
+ifndef syft_DIR
+	$(error syft_DIR is not set)
 endif
 
 ifndef INLINE_DIR
@@ -17,9 +17,9 @@ endif
 all: compare
 
 .PHONY: compare
-compare: $(INLINE_REPORT) $(IMGBOM_REPORT)
-	docker build -t compare-imgbom:latest .
-	docker run compare-imgbom:latest $(IMAGE)
+compare: $(INLINE_REPORT) $(syft_REPORT)
+	docker build -t compare-syft:latest .
+	docker run compare-syft:latest $(IMAGE)
 
 $(INLINE_REPORT):
 	echo "Creating $(INLINE_REPORT)..."
@@ -28,12 +28,12 @@ $(INLINE_REPORT):
 	mv anchore-reports/* $(INLINE_DIR)/
 	rmdir anchore-reports
 
-$(IMGBOM_REPORT):
-	echo "Creating $(IMGBOM_REPORT)..."
-	mkdir -p $(IMGBOM_DIR)
+$(syft_REPORT):
+	echo "Creating $(syft_REPORT)..."
+	mkdir -p $(syft_DIR)
 	docker pull $(IMAGE)
-	go run ../../main.go $(IMAGE) -o json > $(IMGBOM_REPORT)
+	go run ../../main.go $(IMAGE) -o json > $(syft_REPORT)
 
 .PHONY: clean
 clean:
-	rm -f $(INLINE_DIR)/*  $(IMGBOM_DIR)/*
+	rm -f $(INLINE_DIR)/*  $(syft_DIR)/*

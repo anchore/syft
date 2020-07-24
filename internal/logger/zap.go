@@ -3,7 +3,7 @@ package logger
 import (
 	"os"
 
-	"github.com/anchore/imgbom/internal/format"
+	"github.com/anchore/syft/internal/format"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

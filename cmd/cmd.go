@@ -6,15 +6,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/anchore/imgbom/imgbom/presenter"
-	"github.com/anchore/imgbom/imgbom/scope"
+	"github.com/anchore/syft/syft/presenter"
+	"github.com/anchore/syft/syft/scope"
 
-	"github.com/anchore/imgbom/imgbom"
-	"github.com/anchore/imgbom/internal/config"
-	"github.com/anchore/imgbom/internal/format"
-	"github.com/anchore/imgbom/internal/log"
-	"github.com/anchore/imgbom/internal/logger"
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/format"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/logger"
+	"github.com/anchore/syft/syft"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
 	"gopkg.in/yaml.v2"
@@ -99,7 +99,7 @@ func initLogging() {
 	}
 
 	logWrapper := logger.NewZapLogger(config)
-	imgbom.SetLogger(logWrapper)
+	syft.SetLogger(logWrapper)
 	stereoscope.SetLogger(logWrapper)
 }
 
@@ -118,5 +118,5 @@ func initEventBus() {
 	eventSubscription = eventBus.Subscribe()
 
 	stereoscope.SetBus(eventBus)
-	imgbom.SetBus(eventBus)
+	syft.SetBus(eventBus)
 }
