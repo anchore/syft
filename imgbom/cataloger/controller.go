@@ -1,6 +1,7 @@
 package cataloger
 
 import (
+	"github.com/anchore/imgbom/imgbom/cataloger/apkdb"
 	"github.com/anchore/imgbom/imgbom/cataloger/bundler"
 	"github.com/anchore/imgbom/imgbom/cataloger/dpkg"
 	golang "github.com/anchore/imgbom/imgbom/cataloger/golang"
@@ -50,6 +51,7 @@ func newController() controller {
 	ctrlr.add(python.NewCataloger())
 	ctrlr.add(rpmdb.NewCataloger())
 	ctrlr.add(java.NewCataloger())
+	ctrlr.add(apkdb.NewCataloger())
 	ctrlr.add(golang.NewCataloger())
 	ctrlr.add(npm.NewCataloger())
 	return ctrlr
