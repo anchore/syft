@@ -2,6 +2,7 @@ package scope
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/anchore/stereoscope"
 
@@ -32,7 +33,11 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 
 	switch protocol.Type {
 	case directoryProtocol:
-		// populate the scope object for dir
+		err := isValidPath(protocol.Value)
+		if err != nil {
+			return Scope{}, func() {}, fmt.Errorf("unable to process path, must exist and be a directory: %w", err)
+		}
+
 		s, err := NewScopeFromDir(protocol.Value, o)
 		if err != nil {
 			return Scope{}, func() {}, fmt.Errorf("could not populate scope from path (%s): %w", protocol.Value, err)
@@ -114,4 +119,19 @@ func (s Scope) Source() interface{} {
 	}
 
 	return nil
+}
+
+// isValidPath ensures that the user-provided input will correspond to a path
+// that exists and is a directory
+func isValidPath(userInput string) error {
+	fileMeta, err := os.Stat(userInput)
+	if err != nil {
+		return err
+	}
+
+	if fileMeta.IsDir() {
+		return nil
+	}
+
+	return fmt.Errorf("path is not a directory: %s", userInput)
 }

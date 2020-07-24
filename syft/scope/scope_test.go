@@ -213,3 +213,40 @@ func TestFilesByGlob(t *testing.T) {
 		})
 	}
 }
+
+func TestIsValidPath(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		input   string
+		isError bool
+	}{
+		{
+			desc:    "path is valid",
+			input:   "test-fixtures",
+			isError: false,
+		},
+		{
+			desc:    "file is invalid",
+			input:   "test-fixtures/.vimrc",
+			isError: true,
+		},
+		{
+			desc:    "path does not exist",
+			input:   "foo/bar/baz",
+			isError: true,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			err := isValidPath(test.input)
+			if err != nil && !test.isError {
+				t.Errorf("did not expect and error, got: %w", err)
+			}
+
+			if err == nil && test.isError {
+				t.Errorf("expected an error but didn't get one")
+			}
+
+		})
+	}
+}
