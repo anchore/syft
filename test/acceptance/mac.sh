@@ -39,6 +39,7 @@ ${DISTDIR}/syft_darwin_amd64/syft docker-archive://${TEST_IMAGE_TAR} -vv -o json
 cat ${REPORT}
 
 # keep the generated report around
+mkdir -p ${RESULTSDIR}
 cp ${REPORT} ${RESULTSDIR}
 
 # compare the results to a known good output

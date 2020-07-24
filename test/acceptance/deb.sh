@@ -42,6 +42,7 @@ docker run --rm \
         "
 
 # keep the generated report around
+mkdir -p ${RESULTSDIR}
 cp ${REPORT} ${RESULTSDIR}
 
 # compare the results to a known good output
