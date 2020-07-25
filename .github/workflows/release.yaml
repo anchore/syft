@@ -91,10 +91,26 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: make ci-bootstrap
 
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v2
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
+          PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
+
+      - name: GPG signing info
+        run: |
+          echo "fingerprint: ${{ steps.import_gpg.outputs.fingerprint }}"
+          echo "keyid:       ${{ steps.import_gpg.outputs.keyid }}"
+          echo "name:        ${{ steps.import_gpg.outputs.name }}"
+          echo "email:       ${{ steps.import_gpg.outputs.email }}"
+
       - name: Build & publish release artifacts
         run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
+          PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
 
       - uses: actions/upload-artifact@v2
         with:

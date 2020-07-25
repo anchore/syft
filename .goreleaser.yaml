@@ -4,6 +4,10 @@ release:
   # If set to true, will mark the release as not ready for production.
   prerelease: auto
 
+signs:
+  - artifacts: checksum
+    args: ["--output", "${signature}", "--detach-sign", "${artifact}"]
+
 builds:
   - binary: syft
     env:

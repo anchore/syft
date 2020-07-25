@@ -159,6 +159,9 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
 	$(TEMPDIR)/goreleaser release --skip-publish --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
 
+	# verify checksum signatures
+	gpg --verify $(SNAPSHOTDIR)/*checksums.txt.sig $(SNAPSHOTDIR)/*checksums.txt
+
 .PHONY: acceptance-mac
 acceptance-mac: $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binaries and packages (Mac)
 	$(call title,Running acceptance test: Run on Mac)
@@ -200,6 +203,9 @@ release: clean-dist ## Build and publish final binaries and packages
 	# release
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
 	$(TEMPDIR)/goreleaser --rm-dist --config $(TEMPDIR)/goreleaser.yaml
+
+	# verify checksum signatures
+	gpg --verify $(DISTDIR)/*checksums.txt.sig $(DISTDIR)/*checksums.txt
 
 	# create a version file for version-update checks
 	echo "$(VERSION)" > $(DISTDIR)/VERSION
