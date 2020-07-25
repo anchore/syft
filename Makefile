@@ -55,7 +55,7 @@ endef
 ## Tasks
 
 .PHONY: all
-all: clean lint check-licenses test ## Run all linux-based checks (linting, license check, unit, integration, and linux acceptance tests)
+all: clean static-analysis test ## Run all linux-based checks (linting, license check, unit, integration, and linux acceptance tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 .PHONY: compare
@@ -63,7 +63,7 @@ compare:
 	@cd test/inline-compare && make
 
 .PHONY: test
-test: unit integration acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests )
+test: unit integration acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests)
 
 .PHONY: help
 help:
@@ -86,6 +86,9 @@ bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./
 	[ -f "$(TEMPDIR)/golangci" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
 	[ -f "$(TEMPDIR)/bouncer" ] || curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.1.0
 	[ -f "$(TEMPDIR)/goreleaser" ] || curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
+
+.PHONY: static-analysis
+static-analysis: lint check-licenses
 
 .PHONY: lint
 lint: ## Run gofmt + golangci lint checks
