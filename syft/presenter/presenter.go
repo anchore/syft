@@ -5,6 +5,7 @@ import (
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/presenter/json"
+	"github.com/anchore/syft/syft/presenter/table"
 	"github.com/anchore/syft/syft/presenter/text"
 	"github.com/anchore/syft/syft/scope"
 )
@@ -20,6 +21,8 @@ func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog) Presenter 
 		return json.NewPresenter(catalog, s)
 	case TextPresenter:
 		return text.NewPresenter(catalog, s)
+	case TablePresenter:
+		return table.NewPresenter(catalog, s)
 	default:
 		return nil
 	}
