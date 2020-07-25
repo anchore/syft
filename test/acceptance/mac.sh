@@ -4,6 +4,7 @@ set -eux
 DISTDIR=$1
 ACC_DIR=$2
 TEST_IMAGE=$3
+RESULTSDIR=$4
 
 TEST_IMAGE_TAR=/tmp/image.tar
 TEST_TYPE=mac
@@ -37,7 +38,11 @@ ${DISTDIR}/syft_darwin_amd64/syft version -v
 ${DISTDIR}/syft_darwin_amd64/syft docker-archive://${TEST_IMAGE_TAR} -vv -o json > ${REPORT}
 cat ${REPORT}
 
+# keep the generated report around
+mkdir -p ${RESULTSDIR}
+cp ${REPORT} ${RESULTSDIR}
+
 # compare the results to a known good output
 ${ACC_DIR}/compare.py \
     ${GOLDEN_REPORT} \
-    ${REPORT}
+    ${REPORT} | tee ${RESULTSDIR}/acceptance-${TEST_TYPE}.txt
