@@ -199,7 +199,7 @@ release: clean-dist ## Build and publish final binaries and packages
 
 	# release
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	$(TEMPDIR)/goreleaser --skip-publish --rm-dist --config $(TEMPDIR)/goreleaser.yaml
+	$(TEMPDIR)/goreleaser --rm-dist --config $(TEMPDIR)/goreleaser.yaml
 
 	# create a version file for version-update checks
 	echo "$(VERSION)" > $(DISTDIR)/VERSION
