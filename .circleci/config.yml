@@ -85,14 +85,14 @@ jobs:
 
       - restore_cache:
           keys:
-            - unit-test-java-cache-{{ checksum "syft/cataloger/java/test-fixtures/java-builds/packages.fingerprint" }}
+            - syft-unit-test-java-cache-{{ checksum "syft/cataloger/java/test-fixtures/java-builds/packages.fingerprint" }}
 
       - run:
           name: run unit tests
           command: make unit
 
       - save_cache:
-          key: unit-test-java-cache-{{ checksum "syft/cataloger/java/test-fixtures/java-builds/packages.fingerprint" }}
+          key: syft-unit-test-java-cache-{{ checksum "syft/cataloger/java/test-fixtures/java-builds/packages.fingerprint" }}
           paths:
             - "syft/cataloger/java/test-fixtures/java-builds/packages"
 
@@ -102,13 +102,13 @@ jobs:
 
       - restore_cache:
           keys:
-            - integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
+            - syft-integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
       - run:
           name: run integration tests
           command: make integration
 
       - save_cache:
-          key: integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
+          key: syft-integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
           paths:
             - "test/integration/test-fixtures/tar-cache"
 
