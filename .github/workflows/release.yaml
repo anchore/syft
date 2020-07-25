@@ -59,7 +59,7 @@ jobs:
           false
 
   release:
-#    needs: [ wait-for-checks ]
+    needs: [ wait-for-checks ]
     runs-on: ubuntu-latest
     steps:
 
@@ -91,7 +91,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: make ci-bootstrap
 
-      - name: Build snapshot artifacts
+      - name: Build & publish release artifacts
         run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
