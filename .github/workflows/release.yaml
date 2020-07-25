@@ -82,9 +82,9 @@ jobs:
           path: |
             ~/go/pkg/mod
             ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('Makefile') }}-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-${{ hashFiles('Makefile') }}
           restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('Makefile') }}-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: Bootstrap dependencies
