@@ -65,7 +65,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: artifacts
-          path: snapshot
+          path: snapshot/**/*
 
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
