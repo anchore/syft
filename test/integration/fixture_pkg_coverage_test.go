@@ -69,6 +69,14 @@ var cases = []struct {
 		},
 	},
 	{
+		name:        "find javascript yarn packages",
+		pkgType:     pkg.YarnPkg,
+		pkgLanguage: pkg.JavaScript,
+		pkgInfo: map[string]string{
+			"@babel/code-frame": "7.10.4",
+		},
+	},
+	{
 		name:        "find python egg packages",
 		pkgType:     pkg.EggPkg,
 		pkgLanguage: pkg.Python,
