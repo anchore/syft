@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/cataloger/dpkg"
 	golang "github.com/anchore/syft/syft/cataloger/golang"
 	"github.com/anchore/syft/syft/cataloger/java"
-	"github.com/anchore/syft/syft/cataloger/npm"
+	"github.com/anchore/syft/syft/cataloger/javascript"
 	"github.com/anchore/syft/syft/cataloger/python"
 	"github.com/anchore/syft/syft/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/event"
@@ -53,7 +53,7 @@ func newController() controller {
 	ctrlr.add(java.NewCataloger())
 	ctrlr.add(apkdb.NewCataloger())
 	ctrlr.add(golang.NewCataloger())
-	ctrlr.add(npm.NewCataloger())
+	ctrlr.add(javascript.NewCataloger())
 	return ctrlr
 }
 
