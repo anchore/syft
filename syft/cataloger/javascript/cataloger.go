@@ -1,4 +1,4 @@
-package npm
+package javascript
 
 import (
 	"github.com/anchore/stereoscope/pkg/file"
@@ -14,6 +14,7 @@ type Cataloger struct {
 func NewCataloger() *Cataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/package-lock.json": parsePackageLock,
+		"**/yarn.lock":         parseYarnLock,
 	}
 
 	return &Cataloger{

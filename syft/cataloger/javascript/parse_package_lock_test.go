@@ -1,4 +1,4 @@
-package npm
+package javascript
 
 import (
 	"os"
