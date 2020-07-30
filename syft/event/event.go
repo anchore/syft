@@ -3,7 +3,7 @@ package event
 import "github.com/wagoodman/go-partybus"
 
 const (
-	AppUpdateAvailable partybus.EventType = "app-update-available"
-	CatalogerStarted   partybus.EventType = "cataloger-started-event"
-	CatalogerFinished  partybus.EventType = "cataloger-finished-event"
+	AppUpdateAvailable partybus.EventType = "syft-app-update-available"
+	CatalogerStarted   partybus.EventType = "syft-cataloger-started-event"
+	CatalogerFinished  partybus.EventType = "syft-cataloger-finished-event"
 )

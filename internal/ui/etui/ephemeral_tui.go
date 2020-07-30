@@ -6,9 +6,10 @@ import (
 	"os"
 	"sync"
 
-	stereoscopeEvent "github.com/anchore/stereoscope/pkg/event"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui/common"
+	"github.com/anchore/syft/ui"
+
+	"github.com/anchore/syft/internal/log"
 	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/jotframe/pkg/frame"
@@ -47,6 +48,7 @@ func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscr
 	var isClosed bool
 	defer func() {
 		if !isClosed {
+			fr.Close()
 			frame.Close()
 		}
 	}()
@@ -55,6 +57,7 @@ func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscr
 	var wg = &sync.WaitGroup{}
 	events := subscription.Events()
 	ctx := context.Background()
+	syftUIHandler := ui.NewHandler()
 
 eventLoop:
 	for {
@@ -67,41 +70,27 @@ eventLoop:
 			if !ok {
 				break eventLoop
 			}
-			switch e.Type {
-			case syftEvent.AppUpdateAvailable:
-				err = appUpdateAvailableHandler(ctx, fr, e, wg)
-				if err != nil {
-					log.Errorf("unable to show AppUpdateAvailable event: %+v", err)
+			switch {
+			case syftUIHandler.RespondsTo(e):
+				if err = syftUIHandler.Handle(ctx, fr, e, wg); err != nil {
+					log.Errorf("unable to show %s event: %+v", e.Type, err)
 				}
 
-			case stereoscopeEvent.ReadImage:
-				err = imageReadHandler(ctx, fr, e, wg)
-				if err != nil {
-					log.Errorf("unable to show ReadImage event: %+v", err)
+			case e.Type == syftEvent.AppUpdateAvailable:
+				if err = appUpdateAvailableHandler(ctx, fr, e, wg); err != nil {
+					log.Errorf("unable to show %s event: %+v", e.Type, err)
 				}
 
-			case stereoscopeEvent.FetchImage:
-				err = imageFetchHandler(ctx, fr, e, wg)
-				if err != nil {
-					log.Errorf("unable to show FetchImage event: %+v", err)
-				}
-
-			case syftEvent.CatalogerStarted:
-				err = catalogerStartedHandler(ctx, fr, e, wg)
-				if err != nil {
-					log.Errorf("unable to show CatalogerStarted event: %+v", err)
-				}
-			case syftEvent.CatalogerFinished:
+			case e.Type == syftEvent.CatalogerFinished:
 				// we may have other background processes still displaying progress, wait for them to
 				// finish before discontinuing dynamic content and showing the final report
 				wg.Wait()
+				fr.Close()
 				frame.Close()
 				isClosed = true
-				fmt.Println()
 
-				err := common.CatalogerFinishedHandler(e)
-				if err != nil {
-					log.Errorf("unable to show CatalogerFinished event: %+v", err)
+				if err := common.CatalogerFinishedHandler(e); err != nil {
+					log.Errorf("unable to show %s event: %+v", e.Type, err)
 				}
 
 				// this is the last expected event
