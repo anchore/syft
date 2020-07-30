@@ -1,4 +1,4 @@
-package etui
+package common
 
 import (
 	"strings"

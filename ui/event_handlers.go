@@ -1,4 +1,4 @@
-package etui
+package ui
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
+	"github.com/anchore/syft/internal/ui/common"
 	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/gookit/color"
 	"github.com/wagoodman/go-partybus"
@@ -17,26 +18,26 @@ import (
 )
 
 const maxBarWidth = 50
-const statusSet = SpinnerDotSet // SpinnerCircleOutlineSet
-const completedStatus = "✔"     //"●"
+const statusSet = common.SpinnerDotSet // SpinnerCircleOutlineSet
+const completedStatus = "✔"            // "●"
 const tileFormat = color.Bold
 const statusTitleTemplate = " %s %-28s "
 
 var auxInfoFormat = color.HEX("#777777")
 
-func startProcess() (format.Simple, *Spinner) {
+func startProcess() (format.Simple, *common.Spinner) {
 	width, _ := frame.GetTerminalSize()
 	barWidth := int(0.25 * float64(width))
 	if barWidth > maxBarWidth {
 		barWidth = maxBarWidth
 	}
 	formatter := format.NewSimpleWithTheme(barWidth, format.HeavyNoBarTheme, format.ColorCompleted, format.ColorTodo)
-	spinner := NewSpinner(statusSet)
+	spinner := common.NewSpinner(statusSet)
 
 	return formatter, &spinner
 }
 
-func imageFetchHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseFetchImage(event)
 	if err != nil {
 		return fmt.Errorf("bad FetchImage event: %w", err)
@@ -73,7 +74,7 @@ func imageFetchHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 	return err
 }
 
-func imageReadHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseReadImage(event)
 	if err != nil {
 		return fmt.Errorf("bad ReadImage event: %w", err)
@@ -110,7 +111,7 @@ func imageReadHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 	return nil
 }
 
-func catalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+func CatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	monitor, err := syftEventParsers.ParseCatalogerStarted(event)
 	if err != nil {
 		return fmt.Errorf("bad CatalogerStarted event: %w", err)
@@ -140,23 +141,6 @@ func catalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybu
 		auxInfo := auxInfoFormat.Sprintf("[%d packages]", monitor.PackagesDiscovered.Current())
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
-
-	return nil
-}
-
-func appUpdateAvailableHandler(_ context.Context, fr *frame.Frame, event partybus.Event, _ *sync.WaitGroup) error {
-	newVersion, err := syftEventParsers.ParseAppUpdateAvailable(event)
-	if err != nil {
-		return fmt.Errorf("bad AppUpdateAvailable event: %w", err)
-	}
-
-	line, err := fr.Prepend()
-	if err != nil {
-		return err
-	}
-
-	message := color.Magenta.Sprintf("New Update Available: %s", newVersion)
-	_, _ = io.WriteString(line, message)
 
 	return nil
 }

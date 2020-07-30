@@ -829,6 +829,8 @@ github.com/wagoodman/go-rpmdb v0.0.0-20200719223757-ce54a4b0607b h1:elYGLFZPymeT
 github.com/wagoodman/go-rpmdb v0.0.0-20200719223757-ce54a4b0607b/go.mod h1:MjoIZzKmbYfcpbC6ARWMcHijAjtLBViDaHcayXKWQWI=
 github.com/wagoodman/jotframe v0.0.0-20200622123948-2995cbd43525 h1:fGlwSBQrl9/axciK2+gJ9q86SeQYJpbPx4vOrExvZXY=
 github.com/wagoodman/jotframe v0.0.0-20200622123948-2995cbd43525/go.mod h1:DzXZ1wfRedNhC3KQTick8Gf3CEPMFHsP5k4R/ldjKtw=
+github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163 h1:qoZwR+bHbFFNirY4Yt7lqbOXnFAMnlFfR89w0TXwjrc=
+github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163/go.mod h1:DzXZ1wfRedNhC3KQTick8Gf3CEPMFHsP5k4R/ldjKtw=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/go-gitlab v0.32.0 h1:tBm+OXv1t+KBsqlXkSDFz+YUjRM0GFsjpOWYOod3Ebs=
 github.com/xanzy/go-gitlab v0.32.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=

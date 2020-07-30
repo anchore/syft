@@ -55,6 +55,8 @@ func startWorker(userInput string) <-chan error {
 					Type:  event.AppUpdateAvailable,
 					Value: newVersion,
 				})
+			} else {
+				log.Debugf("No new %s update available", internal.ApplicationName)
 			}
 		}
 
