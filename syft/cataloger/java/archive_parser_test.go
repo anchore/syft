@@ -78,6 +78,51 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	}
 }
 
+func TestSelectName(t *testing.T) {
+	tests := []struct {
+		desc     string
+		manifest pkg.JavaManifest
+		archive  archiveFilename
+		expected string
+	}{
+		{
+			desc:    "name from Implementation-Title",
+			archive: archiveFilename{},
+			manifest: pkg.JavaManifest{
+				Name:      "",
+				SpecTitle: "",
+				ImplTitle: "maven-wrapper",
+			},
+			expected: "maven-wrapper",
+		},
+		{
+			desc: "Implementation-Title does not override",
+			manifest: pkg.JavaManifest{
+				Name:      "Foo",
+				SpecTitle: "",
+				ImplTitle: "maven-wrapper",
+			},
+			archive: archiveFilename{
+				fields: []map[string]string{
+					{"name": "omg"},
+				},
+			},
+			expected: "omg",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			result := selectName(&test.manifest, test.archive)
+
+			if result != test.expected {
+				t.Errorf("mismatch in names: '%s' != '%s'", result, test.expected)
+			}
+		})
+	}
+
+}
+
 func TestParseJar(t *testing.T) {
 	tests := []struct {
 		fixture      string
