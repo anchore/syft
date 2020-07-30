@@ -82,6 +82,12 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 		// Jenkins...
 		name = manifest.Extra["Extension-Name"]
 	}
+
+	// in situations where we hit this point and no name was
+	// determined, look at the Implementation-Title
+	if name == "" && manifest.ImplTitle != "" {
+		name = manifest.ImplTitle
+	}
 	return name
 }
 
