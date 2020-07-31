@@ -47,24 +47,29 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 	if err != nil {
 		return err
 	}
-
 	wg.Add(1)
+
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, 150*time.Millisecond)
+	title := tileFormat.Sprint("Fetching image...")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
+		}
+	}
 
 	go func() {
 		defer wg.Done()
-		formatter, spinner := startProcess()
-		stream := progress.Stream(ctx, prog, 150*time.Millisecond)
-		title := tileFormat.Sprint("Fetching image...")
 
+		formatFn(progress.Progress{})
 		for p := range stream {
-			progStr, err := formatter.Format(p)
-			spin := color.Magenta.Sprint(spinner.Next())
-			if err != nil {
-				_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
-			} else {
-				auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
-				_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
-			}
+			formatFn(p)
 		}
 
 		spin := color.Green.Sprint(completedStatus)
@@ -87,20 +92,26 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 
 	wg.Add(1)
 
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, 150*time.Millisecond)
+	title := tileFormat.Sprint("Reading image...")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, progStr))
+		}
+	}
+
 	go func() {
 		defer wg.Done()
-		formatter, spinner := startProcess()
-		stream := progress.Stream(ctx, prog, 150*time.Millisecond)
-		title := tileFormat.Sprint("Reading image...")
 
+		formatFn(progress.Progress{})
 		for p := range stream {
-			progStr, err := formatter.Format(p)
-			spin := color.Magenta.Sprint(spinner.Next())
-			if err != nil {
-				_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
-			} else {
-				_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, progStr))
-			}
+			formatFn(p)
 		}
 
 		spin := color.Green.Sprint(completedStatus)
@@ -124,16 +135,22 @@ func CatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybu
 
 	wg.Add(1)
 
+	_, spinner := startProcess()
+	stream := progress.StreamMonitors(ctx, []progress.Monitorable{monitor.FilesProcessed, monitor.PackagesDiscovered}, 50*time.Millisecond)
+	title := tileFormat.Sprint("Cataloging image...")
+
+	formatFn := func(p int64) {
+		spin := color.Magenta.Sprint(spinner.Next())
+		auxInfo := auxInfoFormat.Sprintf("[packages %d]", p)
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
+	}
+
 	go func() {
 		defer wg.Done()
-		_, spinner := startProcess()
-		stream := progress.StreamMonitors(ctx, []progress.Monitorable{monitor.FilesProcessed, monitor.PackagesDiscovered}, 50*time.Millisecond)
-		title := tileFormat.Sprint("Cataloging image...")
 
+		formatFn(0)
 		for p := range stream {
-			spin := color.Magenta.Sprint(spinner.Next())
-			auxInfo := auxInfoFormat.Sprintf("[packages %d]", p[1])
-			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
+			formatFn(p[1])
 		}
 
 		spin := color.Green.Sprint(completedStatus)
