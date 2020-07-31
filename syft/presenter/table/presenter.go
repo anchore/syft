@@ -1,6 +1,7 @@
 package table
 
 import (
+	"fmt"
 	"io"
 	"sort"
 
@@ -35,6 +36,11 @@ func (pres *Presenter) Present(output io.Writer) error {
 		rows = append(rows, row)
 	}
 
+	if len(rows) == 0 {
+		fmt.Fprintln(output, "No packages discovered")
+		return nil
+	}
+
 	// sort by name, version, then type
 	sort.SliceStable(rows, func(i, j int) bool {
 		for col := 0; col < len(columns); col++ {
@@ -57,7 +63,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 	table.SetCenterSeparator("")
 	table.SetColumnSeparator("")
 	table.SetRowSeparator("")
-	table.SetTablePadding("\t")
+	table.SetTablePadding("  ")
 	table.SetNoWhiteSpace(true)
 
 	table.AppendBulk(rows)
