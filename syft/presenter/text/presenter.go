@@ -48,6 +48,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 	}
 
 	// populate artifacts...
+	rows := 0
 	for _, p := range pres.catalog.Sorted() {
 		fmt.Fprintln(w, fmt.Sprintf("[%s]", p.Name))
 		fmt.Fprintln(w, " Version:\t", p.Version)
@@ -55,6 +56,12 @@ func (pres *Presenter) Present(output io.Writer) error {
 		fmt.Fprintln(w, " Found by:\t", p.FoundBy)
 		fmt.Fprintln(w)
 		w.Flush()
+		rows++
+	}
+
+	if rows == 0 {
+		fmt.Fprintln(output, "No packages discovered")
+		return nil
 	}
 
 	return nil
