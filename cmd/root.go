@@ -49,14 +49,14 @@ func startWorker(userInput string) <-chan error {
 				log.Errorf(err.Error())
 			}
 			if isAvailable {
-				log.Infof("New version of %s is available: %s", internal.ApplicationName, newVersion)
+				log.Infof("new version of %s is available: %s", internal.ApplicationName, newVersion)
 
 				bus.Publish(partybus.Event{
 					Type:  event.AppUpdateAvailable,
 					Value: newVersion,
 				})
 			} else {
-				log.Debugf("No new %s update available", internal.ApplicationName)
+				log.Debugf("no new %s update available", internal.ApplicationName)
 			}
 		}
 

@@ -12,6 +12,7 @@ import (
 )
 
 func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scope, *distro.Distro, error) {
+	log.Info("cataloging image")
 	s, cleanup, err := scope.NewScope(userInput, scoptOpt)
 	defer cleanup()
 	if err != nil {
@@ -31,15 +32,15 @@ func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scop
 func IdentifyDistro(s scope.Scope) distro.Distro {
 	d := distro.Identify(s)
 	if d.Type != distro.UnknownDistroType {
-		log.Infof("Identified Distro: %s", d.String())
+		log.Infof("identified distro: %s", d.String())
 	} else {
-		log.Info("Could not identify distro")
+		log.Info("could not identify distro")
 	}
 	return d
 }
 
 func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
-	log.Info("Building the Catalog")
+	log.Info("building the catalog")
 	return cataloger.Catalog(s)
 }
 

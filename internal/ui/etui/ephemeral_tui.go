@@ -1,10 +1,13 @@
 package etui
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"sync"
+
+	"github.com/anchore/syft/internal/logger"
 
 	"github.com/anchore/syft/internal/ui/common"
 	"github.com/anchore/syft/ui"
@@ -36,6 +39,13 @@ func setupScreen(output *os.File) *frame.Frame {
 func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscription) error {
 	output := os.Stderr
 
+	// prep the logger to not clobber the screen from now on (logrus only)
+	logBuffer := bytes.NewBufferString("")
+	logWrapper, ok := log.Log.(*logger.LogrusLogger)
+	if ok {
+		logWrapper.Logger.SetOutput(logBuffer)
+	}
+
 	// hide cursor
 	_, _ = fmt.Fprint(output, "\x1b[?25l")
 	// show cursor
@@ -50,6 +60,8 @@ func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscr
 		if !isClosed {
 			fr.Close()
 			frame.Close()
+			// flush any errors to the screen before the report
+			fmt.Fprint(output, logBuffer.String())
 		}
 	}()
 
@@ -86,8 +98,12 @@ eventLoop:
 				// finish before discontinuing dynamic content and showing the final report
 				wg.Wait()
 				fr.Close()
+				// TODO: there is a race condition within frame.Close() that sometimes leads to an extra blank line being output
 				frame.Close()
 				isClosed = true
+
+				// flush any errors to the screen before the report
+				fmt.Fprint(output, logBuffer.String())
 
 				if err := common.CatalogerFinishedHandler(e); err != nil {
 					log.Errorf("unable to show %s event: %+v", e.Type, err)
