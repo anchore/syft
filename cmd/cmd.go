@@ -90,7 +90,7 @@ func initAppConfig() {
 }
 
 func initLogging() {
-	cfg := logger.LogConfig{
+	cfg := logger.LogrusConfig{
 		EnableConsole: (appConfig.Log.FileLocation == "" || appConfig.CliOptions.Verbosity > 0) && !appConfig.Quiet,
 		EnableFile:    appConfig.Log.FileLocation != "",
 		Level:         appConfig.Log.LevelOpt,
@@ -98,9 +98,11 @@ func initLogging() {
 		FileLocation:  appConfig.Log.FileLocation,
 	}
 
-	logWrapper := logger.NewZapLogger(cfg)
+	logWrapper := logger.NewLogrusLogger(cfg)
 	syft.SetLogger(logWrapper)
-	stereoscope.SetLogger(logWrapper)
+	stereoscope.SetLogger(&logger.LogrusNestedLogger{
+		Logger: logWrapper.Logger.WithField("from-lib", "steroscope"),
+	})
 }
 
 func logAppConfig() {
