@@ -6,11 +6,13 @@ require (
 	github.com/adrg/xdg v0.2.1
 	github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/stereoscope v0.0.0-20200706164556-7cf39d7f4639
+	github.com/anchore/stereoscope v0.0.0-20200803190343-146f38f8cc19
 	github.com/bmatcuk/doublestar v1.3.1
+	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
+	github.com/dustin/go-humanize v1.0.0
 	github.com/go-test/deep v1.0.6
 	github.com/google/go-containerregistry v0.1.1 // indirect
-	github.com/gookit/color v1.2.5
+	github.com/gookit/color v1.2.7
 	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
@@ -27,7 +29,6 @@ require (
 	github.com/wagoodman/go-rpmdb v0.0.0-20200719223757-ce54a4b0607b
 	github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
-	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
 	golang.org/x/sys v0.0.0-20200610111108-226ff32320da // indirect
 	google.golang.org/genproto v0.0.0-20200615140333-fd031eab31e7 // indirect
