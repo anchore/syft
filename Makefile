@@ -140,6 +140,19 @@ fixtures:
 	$(call title,Generating test fixtures)
 	cd syft/cataloger/java/test-fixtures/java-builds && make
 
+.PHONY: generate-json-schema
+generate-json-schema: clean-json-schema-examples integration ## Generate a new json schema for the json presenter, derived from integration test cases
+	docker run \
+		-i \
+		--rm \
+		-v $(shell pwd)/json-schema:/work \
+		-w /work \
+		python:3.8 \
+			bash -x -c "\
+				pip install -r requirements.txt && \
+				python generate.py \
+			"
+
 .PHONY: clear-test-cache
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/tar-cache/*.tar" -delete
@@ -215,7 +228,7 @@ release: clean-dist ## Build and publish final binaries and packages
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
 
 .PHONY: clean
-clean: clean-dist clean-snapshot  ## Remove previous builds and result reports
+clean: clean-dist clean-snapshot clean-json-schema-examples ## Remove previous builds and result reports
 	rm -rf $(RESULTSDIR)/*
 
 .PHONY: clean-snapshot
@@ -225,3 +238,7 @@ clean-snapshot:
 .PHONY: clean-dist
 clean-dist:
 	rm -rf $(DISTDIR) $(TEMPDIR)/goreleaser.yaml
+
+.PHONY: clean-json-schema-examples
+clean-json-schema-examples:
+	rm json-schema/examples/*
