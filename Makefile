@@ -73,9 +73,9 @@ help:
 ci-bootstrap: bootstrap
 	sudo apt install -y bc
 
-.PHONY: boostrap
+.PHONY: bootstrap
 bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
-	$(call title,Boostrapping dependencies)
+	$(call title,Bootstrapping dependencies)
 	@pwd
 	# prep temp dirs
 	mkdir -p $(TEMPDIR)
