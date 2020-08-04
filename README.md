@@ -17,7 +17,7 @@ syft <image>
 ```
 
 The above output includes only software that is visible in the container (i.e. the squashed representation of the image).
-To include software from all image layers in the SBOM, irregardless of its presence in the final image, provide `--scope all-layers`:
+To include software from all image layers in the SBOM, regardless of its presence in the final image, provide `--scope all-layers`:
 
 ```bash
 syft <image> --scope all-layers
