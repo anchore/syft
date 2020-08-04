@@ -66,7 +66,7 @@ Configuration search paths:
 - `~/.syft.yaml`
 - `<XDG_CONFIG_HOME>/syft/config.yaml`
 
-Configuration options (example values are the default value):
+Configuration options (example values are the default):
 
 ```yaml
 # same as -o ; the output format of the SBOM report (options: table, text, json)
