@@ -34,7 +34,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
 	for _, p := range pkg.AllPkgs {
-		definedPkgs.Add(p.String())
+		definedPkgs.Add(string(p))
 	}
 
 	for _, c := range cases {
@@ -44,7 +44,7 @@ func TestPkgCoverageImage(t *testing.T) {
 			for a := range catalog.Enumerate(c.pkgType) {
 
 				observedLanguages.Add(a.Language.String())
-				observedPkgs.Add(a.Type.String())
+				observedPkgs.Add(string(a.Type))
 
 				expectedVersion, ok := c.pkgInfo[a.Name]
 				if !ok {
@@ -77,8 +77,8 @@ func TestPkgCoverageImage(t *testing.T) {
 
 	observedLanguages.Remove(pkg.UnknownLanguage.String())
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
-	observedPkgs.Remove(pkg.UnknownPkg.String())
-	definedPkgs.Remove(pkg.UnknownPkg.String())
+	observedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// ensure that integration test cases stay in sync with the available catalogers
 	if len(observedLanguages) < len(definedLanguages) {
@@ -106,7 +106,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
 	for _, p := range pkg.AllPkgs {
-		definedPkgs.Add(p.String())
+		definedPkgs.Add(string(p))
 	}
 
 	for _, c := range cases {
@@ -116,7 +116,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 			for a := range catalog.Enumerate(c.pkgType) {
 
 				observedLanguages.Add(a.Language.String())
-				observedPkgs.Add(a.Type.String())
+				observedPkgs.Add(string(a.Type))
 
 				expectedVersion, ok := c.pkgInfo[a.Name]
 				if !ok {
@@ -149,8 +149,8 @@ func TestPkgCoverageDirectory(t *testing.T) {
 
 	observedLanguages.Remove(pkg.UnknownLanguage.String())
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
-	observedPkgs.Remove(pkg.UnknownPkg.String())
-	definedPkgs.Remove(pkg.UnknownPkg.String())
+	observedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// ensure that integration test cases stay in sync with the available catalogers
 	if len(observedLanguages) < len(definedLanguages) {

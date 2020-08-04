@@ -1,0 +1,64 @@
+[[package]]
+category = "dev"
+description = "Sphinx \"added-value\" extension"
+name = "added-value"
+optional = false
+python-versions = "*"
+version = "0.14.2"
+
+[package.dependencies]
+docutils = "*"
+natsort = "*"
+six = "*"
+sphinx = "*"
+
+[package.extras]
+deploy = ["bumpversion", "twine", "wheel"]
+docs = ["sphinx", "sphinx-rtd-theme"]
+test = ["pytest", "pytest-cov", "coveralls", "beautifulsoup4", "hypothesis"]
+
+[[package]]
+category = "dev"
+description = "A configurable sidebar-enabled Sphinx theme"
+name = "alabaster"
+optional = false
+python-versions = "*"
+version = "0.7.12"
+
+[[package]]
+category = "dev"
+description = "Disable App Nap on OS X 10.9"
+marker = "python_version >= \"3.4\" and sys_platform == \"darwin\" or sys_platform == \"darwin\""
+name = "appnope"
+optional = false
+python-versions = "*"
+version = "0.1.0"
+
+[[package]]
+category = "dev"
+description = "Draws ASCII trees."
+name = "asciitree"
+optional = false
+python-versions = "*"
+version = "0.3.3"
+
+[metadata]
+content-hash = "6e35f765c2f01c635c2fb0d54a9d7dd68742350f04449ee24efad03e3c9eb0bb"
+python-versions = "^3.6"
+
+[metadata.files]
+added-value = [
+    {file = "added-value-0.14.2.tar.gz", hash = "sha256:8c886aee74635cec15beb64c28a90ae664526f331c1a4941e4d6ab98af232028"},
+    {file = "added_value-0.14.2-py2.py3-none-any.whl", hash = "sha256:b25fcb86f9bfad9a40adf4d344322690e312741556c7b75681bc948380a251e6"},
+]
+alabaster = [
+    {file = "alabaster-0.7.12-py2.py3-none-any.whl", hash = "sha256:446438bdcca0e05bd45ea2de1668c1d9b032e1a9154c2c259092d77031ddd359"},
+    {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
+]
+appnope = [
+    {file = "appnope-0.1.0-py2.py3-none-any.whl", hash = "sha256:5b26757dc6f79a3b7dc9fab95359328d5747fcb2409d331ea66d0272b90ab2a0"},
+    {file = "appnope-0.1.0.tar.gz", hash = "sha256:8b995ffe925347a2138d7ac0fe77155e4311a0ea6d6da4f5128fe4b3cbe5ed71"},
+]
+asciitree = [
+    {file = "asciitree-0.3.3.tar.gz", hash = "sha256:4aa4b9b649f85e3fcb343363d97564aa1fb62e249677f2e18a96765145cc0f6e"},
+]

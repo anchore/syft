@@ -347,7 +347,7 @@
                                                 "type": "null"
                                             },
                                             "type": {
-                                                "type": "integer"
+                                                "type": "string"
                                             },
                                             "version": {
                                                 "type": "string"

@@ -31,7 +31,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 		row := []string{
 			p.Name,
 			p.Version,
-			p.Type.String(),
+			string(p.Type),
 		}
 		rows = append(rows, row)
 	}

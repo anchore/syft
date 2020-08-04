@@ -52,7 +52,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 	for _, p := range pres.catalog.Sorted() {
 		fmt.Fprintln(w, fmt.Sprintf("[%s]", p.Name))
 		fmt.Fprintln(w, " Version:\t", p.Version)
-		fmt.Fprintln(w, " Type:\t", p.Type.String())
+		fmt.Fprintln(w, " Type:\t", string(p.Type))
 		fmt.Fprintln(w, " Found by:\t", p.FoundBy)
 		fmt.Fprintln(w)
 		w.Flush()

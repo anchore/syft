@@ -19,6 +19,7 @@ func NewCataloger() *Cataloger {
 		"**/*egg-info/PKG-INFO":  parseEggMetadata,
 		"**/*dist-info/METADATA": parseWheelMetadata,
 		"**/requirements.txt":    parseRequirementsTxt,
+		"**/poetry.lock":         parsePoetryLock,
 	}
 
 	return &Cataloger{

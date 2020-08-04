@@ -133,6 +133,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Name:     selectName(manifest, j.fileInfo),
 		Version:  selectVersion(manifest, j.fileInfo),
 		Language: pkg.Java,
+		Type:     pkg.JavaPkg,
 		Metadata: pkg.JavaMetadata{
 			Manifest: manifest,
 		},
@@ -165,6 +166,7 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 					Name:     propsObj.ArtifactID,
 					Version:  propsObj.Version,
 					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: propsObj,
 						Parent:        parentPkg,

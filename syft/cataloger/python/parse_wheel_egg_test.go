@@ -45,6 +45,7 @@ func assertPkgsEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg
 
 	}
 }
+
 func TestParseEggMetadata(t *testing.T) {
 	expected := map[string]pkg.Package{
 		"requests": {
@@ -66,7 +67,6 @@ func TestParseEggMetadata(t *testing.T) {
 	}
 
 	assertPkgsEqual(t, actual, expected)
-
 }
 
 func TestParseWheelMetadata(t *testing.T) {
@@ -90,5 +90,4 @@ func TestParseWheelMetadata(t *testing.T) {
 	}
 
 	assertPkgsEqual(t, actual, expected)
-
 }

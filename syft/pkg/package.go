@@ -15,7 +15,7 @@ type Package struct {
 	id       ID               // this is set when a package is added to the catalog
 	Name     string           `json:"manifest"`
 	Version  string           `json:"version"`
-	FoundBy  string           `json:"found-by"`
+	FoundBy  string           `json:"found-by"` // FoundBy is the cataloger that discovered this package
 	Source   []file.Reference `json:"sources"`
 	Licenses []string         `json:"licenses"` // TODO: should we move this into metadata?
 	Language Language         `json:"language"` // TODO: should this support multiple languages as a slice?

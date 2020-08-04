@@ -94,7 +94,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 		art := artifact{
 			Name:     p.Name,
 			Version:  p.Version,
-			Type:     p.Type.String(),
+			Type:     string(p.Type),
 			Sources:  make([]source, len(p.Source)),
 			Metadata: p.Metadata,
 		}
