@@ -227,7 +227,7 @@ func TestParseJar(t *testing.T) {
 					Name:     "joda-time",
 					Version:  "2.9.2",
 					Language: pkg.Java,
-					Type:     pkg.UnknownPkg,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",

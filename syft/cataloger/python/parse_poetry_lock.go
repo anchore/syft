@@ -2,9 +2,10 @@ package python
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/pelletier/go-toml"
-	"io"
 )
 
 func parsePoetryLock(_ string, reader io.Reader) ([]pkg.Package, error) {
