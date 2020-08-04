@@ -5,8 +5,8 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 *TODO: add example gif here*
 
 **Features**
-- Catalog container images and filesystems to discover installed and otherwise referenced packages and libraries.
-- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, Javascript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
+- Catalog container images and filesystems to discover packages and libraries.
+- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
 - Detect OS distribution (support alpine, busybox, centos/redhat, debian/ubuntu flavored distributions)
 
 ## Getting started
@@ -51,7 +51,7 @@ curl -sSfL https://raw.githubusercontent.com/anchore/syft/master/install.sh | sh
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/master/install.sh | sh -s <RELEASE_VERSION> -b <SOME_BIN_PATH>
 ```
 
-**MacOS**
+**macOS**
 ```bash
 brew tap anchore/syft
 brew install syft
