@@ -7,7 +7,7 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 **Features**
 - Catalog container images and filesystems to discover packages and libraries.
 - Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
-- Detect OS distribution (support alpine, busybox, centos/redhat, debian/ubuntu flavored distributions)
+- OS distribution detection (supports alpine, busybox, centos/redhat, debian/ubuntu flavored distributions)
 
 ## Getting started
 
