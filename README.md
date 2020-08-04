@@ -12,19 +12,19 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 ## Getting started
 
 To generate an SBOM for an image:
-```bash
+```
 syft <image>
 ```
 
 The above output includes only software that is visible in the container (i.e., the squashed representation of the image).
 To include software from all image layers in the SBOM, regardless of its presence in the final image, provide `--scope all-layers`:
 
-```bash
+```
 syft <image> --scope all-layers
 ```
 
 Syft can generate a SBOM from a variety of sources:
-```bash
+```
 # catalog a docker image tar (from the result of "docker image save ... -o image.tar" command)
 syft docker-archive://path/to/image.tar
 
@@ -33,7 +33,7 @@ syft dir://path/to/dir
 ```
 
 By default Syft shows a summary table, however, more detailed `text` and `json` formats are also available.
-```bash
+```
 syft <image> -o json
 syft <image> -o text
 ```
