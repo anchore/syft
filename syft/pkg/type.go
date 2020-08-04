@@ -11,6 +11,7 @@ const (
 	// PacmanPkg Type = "pacman"
 	RpmPkg Type = "rpm"
 	WheelPkg Type = "wheel"
+	PoetryPkg Type = "poetry"
 	NpmPkg Type = "npm"
 	YarnPkg Type = "yarn"
 	PythonRequirementsPkg Type = "python-requirements"
