@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/mitchellh/mapstructure"
 )
 
 func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {

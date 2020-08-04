@@ -1,3 +1,93 @@
 # syft
 
-A CLI tool and go library for generating a Software Bill of Materials from container images and filesystems.
+A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems.
+
+*TODO: add example gif here*
+
+**Features**
+- Catalog container images and filesystems to discover installed and otherwise referenced packages and libraries.
+- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, Javascript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
+- Detect OS distribution (support alpine, busybox, centos/redhat, debian/ubuntu flavored distributions)
+
+## Getting started
+
+To generate an SBOM for an image:
+```bash
+syft <image>
+```
+
+The above output includes only software that is visible in the container (i.e. the squashed representation of the image).
+To include software from all image layers in the SBOM, irregardless of its presence in the final image, provide `--scope all-layers`:
+
+```bash
+syft <image> --scope all-layers
+```
+
+Syft can generate a SBOM from a variety of sources:
+```bash
+# catalog a docker image tar (from the result of "docker image save ... -o image.tar" command)
+syft docker-archive://path/to/image.tar
+
+# catalog a directory
+syft dir://path/to/dir
+```
+
+By default Syft shows a summary table, however, more detailed `text` and `json` formats are also available.
+```bash
+syft <image> -o json
+syft <image> -o text
+```
+
+## Installation
+
+*TODO: these installation methods don't work until we release*
+
+**Recommended**
+```bash
+# install the latest version to /usr/local/bin
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/master/install.sh | sh -s -- -b /usr/local/bin
+
+# install a specific version into a specific dir
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/master/install.sh | sh -s <RELEASE_VERSION> -b <SOME_BIN_PATH>
+```
+
+**MacOS**
+```bash
+brew tap anchore/syft
+brew install syft
+```
+
+## Configuration
+
+Configuration search paths:
+
+- `.syft.yaml`
+- `.syft/config.yaml`
+- `~/.syft.yaml`
+- `<XDG_CONFIG_HOME>/syft/config.yaml`
+
+Configuration options:
+
+```yaml
+# same as -o ; the output format of the SBOM report (options: table, text, json)
+output: "table"
+
+# same as -s ; the search space to look for packages (options: all-layers, squashed)
+scope: "squashed"
+
+# smae as -q ; suppress all output (except for the SBOM report)
+quiet: false
+
+log:
+  # use structured logging
+  structured: false
+
+  # the log level; note: detailed logging suppress the ETUI
+  level: "error"
+
+  # location to write the log file (default is to not have a log file)
+  file: ""
+
+# enable/disable checking for application updates on startup
+check-for-app-update: true
+```
