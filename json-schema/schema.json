@@ -1,0 +1,523 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "properties": {
+        "artifacts": {
+            "items": {
+                "properties": {
+                    "metadata": {
+                        "properties": {
+                            "architecture": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "epoch": {
+                                "type": "integer"
+                            },
+                            "files": {
+                                "items": {
+                                    "properties": {
+                                        "checksum": {
+                                            "type": "string"
+                                        },
+                                        "owner-gid": {
+                                            "type": "string"
+                                        },
+                                        "owner-uid": {
+                                            "type": "string"
+                                        },
+                                        "path": {
+                                            "type": "string"
+                                        },
+                                        "permissions": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "checksum",
+                                        "owner-gid",
+                                        "owner-uid",
+                                        "path",
+                                        "permissions"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "git-commit-of-apk-port": {
+                                "type": "string"
+                            },
+                            "installed-size": {
+                                "type": "integer"
+                            },
+                            "license": {
+                                "type": "string"
+                            },
+                            "maintainer": {
+                                "type": "string"
+                            },
+                            "manifest": {
+                                "anyOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "properties": {
+                                            "extra-fields": {
+                                                "properties": {
+                                                    "Archiver-Version": {
+                                                        "type": "string"
+                                                    },
+                                                    "Build-Jdk": {
+                                                        "type": "string"
+                                                    },
+                                                    "Built-By": {
+                                                        "type": "string"
+                                                    },
+                                                    "Created-By": {
+                                                        "type": "string"
+                                                    },
+                                                    "Extension-Name": {
+                                                        "type": "string"
+                                                    },
+                                                    "Group-Id": {
+                                                        "type": "string"
+                                                    },
+                                                    "Hudson-Version": {
+                                                        "type": "string"
+                                                    },
+                                                    "Jenkins-Version": {
+                                                        "type": "string"
+                                                    },
+                                                    "Long-Name": {
+                                                        "type": "string"
+                                                    },
+                                                    "Main-Class": {
+                                                        "type": "string"
+                                                    },
+                                                    "Minimum-Java-Version": {
+                                                        "type": "string"
+                                                    },
+                                                    "Plugin-Dependencies": {
+                                                        "type": "string"
+                                                    },
+                                                    "Plugin-Developers": {
+                                                        "type": "string"
+                                                    },
+                                                    "Plugin-License-Name": {
+                                                        "type": "string"
+                                                    },
+                                                    "Plugin-License-Url": {
+                                                        "type": "string"
+                                                    },
+                                                    "Plugin-ScmUrl": {
+                                                        "type": "string"
+                                                    },
+                                                    "Plugin-Version": {
+                                                        "type": "string"
+                                                    },
+                                                    "Short-Name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "Archiver-Version",
+                                                    "Build-Jdk",
+                                                    "Built-By",
+                                                    "Created-By"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "implementation-title": {
+                                                "type": "string"
+                                            },
+                                            "implementation-vendor": {
+                                                "type": "string"
+                                            },
+                                            "implementation-version": {
+                                                "type": "string"
+                                            },
+                                            "manifest-version": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "specification-title": {
+                                                "type": "string"
+                                            },
+                                            "specification-vendor": {
+                                                "type": "string"
+                                            },
+                                            "specification-version": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "extra-fields",
+                                            "implementation-title",
+                                            "implementation-vendor",
+                                            "implementation-version",
+                                            "manifest-version",
+                                            "name",
+                                            "specification-title",
+                                            "specification-vendor",
+                                            "specification-version"
+                                        ],
+                                        "type": "object"
+                                    }
+                                ]
+                            },
+                            "origin-package": {
+                                "type": "string"
+                            },
+                            "package": {
+                                "type": "string"
+                            },
+                            "parent-package": {
+                                "anyOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "properties": {
+                                            "found-by": {
+                                                "type": "string"
+                                            },
+                                            "language": {
+                                                "type": "integer"
+                                            },
+                                            "licenses": {
+                                                "type": "null"
+                                            },
+                                            "manifest": {
+                                                "type": "string"
+                                            },
+                                            "metadata": {
+                                                "properties": {
+                                                    "manifest": {
+                                                        "properties": {
+                                                            "extra-fields": {
+                                                                "properties": {
+                                                                    "Archiver-Version": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Build-Jdk": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Built-By": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Created-By": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Extension-Name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Group-Id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Hudson-Version": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Jenkins-Version": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Long-Name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Main-Class": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Minimum-Java-Version": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Plugin-Dependencies": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Plugin-Developers": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Plugin-License-Name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Plugin-License-Url": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Plugin-ScmUrl": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Plugin-Version": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "Short-Name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "Archiver-Version",
+                                                                    "Build-Jdk",
+                                                                    "Built-By",
+                                                                    "Created-By"
+                                                                ],
+                                                                "type": "object"
+                                                            },
+                                                            "implementation-title": {
+                                                                "type": "string"
+                                                            },
+                                                            "implementation-vendor": {
+                                                                "type": "string"
+                                                            },
+                                                            "implementation-version": {
+                                                                "type": "string"
+                                                            },
+                                                            "manifest-version": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "specification-title": {
+                                                                "type": "string"
+                                                            },
+                                                            "specification-vendor": {
+                                                                "type": "string"
+                                                            },
+                                                            "specification-version": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "extra-fields",
+                                                            "implementation-title",
+                                                            "implementation-vendor",
+                                                            "implementation-version",
+                                                            "manifest-version",
+                                                            "name",
+                                                            "specification-title",
+                                                            "specification-vendor",
+                                                            "specification-version"
+                                                        ],
+                                                        "type": "object"
+                                                    },
+                                                    "parent-package": {
+                                                        "type": "null"
+                                                    },
+                                                    "pom-properties": {
+                                                        "properties": {
+                                                            "Path": {
+                                                                "type": "string"
+                                                            },
+                                                            "artifact-id": {
+                                                                "type": "string"
+                                                            },
+                                                            "extra-fields": {
+                                                                "type": "null"
+                                                            },
+                                                            "group-id": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "version": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "Path",
+                                                            "artifact-id",
+                                                            "extra-fields",
+                                                            "group-id",
+                                                            "name",
+                                                            "version"
+                                                        ],
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "manifest",
+                                                    "parent-package",
+                                                    "pom-properties"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "sources": {
+                                                "type": "null"
+                                            },
+                                            "type": {
+                                                "type": "integer"
+                                            },
+                                            "version": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "found-by",
+                                            "language",
+                                            "licenses",
+                                            "manifest",
+                                            "metadata",
+                                            "sources",
+                                            "type",
+                                            "version"
+                                        ],
+                                        "type": "object"
+                                    }
+                                ]
+                            },
+                            "pom-properties": {
+                                "properties": {
+                                    "Path": {
+                                        "type": "string"
+                                    },
+                                    "artifact-id": {
+                                        "type": "string"
+                                    },
+                                    "extra-fields": {
+                                        "type": "null"
+                                    },
+                                    "group-id": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "version": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "Path",
+                                    "artifact-id",
+                                    "extra-fields",
+                                    "group-id",
+                                    "name",
+                                    "version"
+                                ],
+                                "type": "object"
+                            },
+                            "pull-checksum": {
+                                "type": "string"
+                            },
+                            "pull-dependencies": {
+                                "type": "string"
+                            },
+                            "release": {
+                                "type": "string"
+                            },
+                            "size": {
+                                "type": "integer"
+                            },
+                            "source": {
+                                "type": "string"
+                            },
+                            "url": {
+                                "type": "string"
+                            },
+                            "version": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "sources": {
+                        "items": {
+                            "properties": {
+                                "found-by": {
+                                    "type": "string"
+                                },
+                                "locations": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "required": [
+                                "found-by",
+                                "locations"
+                            ],
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "sources",
+                    "type",
+                    "version"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "directory": {
+            "type": "string"
+        },
+        "image": {
+            "properties": {
+                "digest": {
+                    "type": "string"
+                },
+                "layers": {
+                    "items": {
+                        "properties": {
+                            "digest": {
+                                "type": "string"
+                            },
+                            "media-type": {
+                                "type": "string"
+                            },
+                            "size": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "digest",
+                            "media-type",
+                            "size"
+                        ],
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "media-type": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": [
+                "digest",
+                "layers",
+                "media-type",
+                "size",
+                "tags"
+            ],
+            "type": "object"
+        }
+    },
+    "required": [
+        "artifacts"
+    ],
+    "type": "object"
+}

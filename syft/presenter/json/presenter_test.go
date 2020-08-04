@@ -109,7 +109,4 @@ func TestJsonImgsPresenter(t *testing.T) {
 		diffs := dmp.DiffMain(string(actual), string(expected), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
-
-	// TODO: add me back in when there is a JSON schema
-	// validateAgainstV1Schema(t, string(actual))
 }

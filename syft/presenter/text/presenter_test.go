@@ -12,7 +12,7 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-var update = flag.Bool("update", false, "update the *.golden files for json presenters")
+var update = flag.Bool("update", false, "update the *.golden files for text presenters")
 
 func TestTextDirPresenter(t *testing.T) {
 	var buffer bytes.Buffer

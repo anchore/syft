@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"path"
 	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
 )
@@ -52,10 +54,14 @@ func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	return packages, nil
 }
 
+// nolint:funlen
 func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 	var entry pkg.ApkMetadata
 	pkgFields := make(map[string]interface{})
-	files := make([]string, 0)
+	files := make([]pkg.ApkFileRecord, 0)
+
+	var fileRecord *pkg.ApkFileRecord
+	lastFile := "/"
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
@@ -70,9 +76,33 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 
 		switch key {
 		case "F":
-			// extract all file entries, don't store in map
-			files = append(files, value)
+			lastFile = "/" + value
 			continue
+		case "R":
+			newFileRecord := pkg.ApkFileRecord{
+				Path: path.Join(lastFile, value),
+			}
+			files = append(files, newFileRecord)
+			fileRecord = &files[len(files)-1]
+		case "a":
+			ownershipFields := strings.Split(value, ":")
+			if len(ownershipFields) != 3 {
+				log.Errorf("unexpected APK ownership field: %q", value)
+				continue
+			}
+			if fileRecord == nil {
+				log.Errorf("ownership field with no parent record: %q", value)
+				continue
+			}
+			fileRecord.OwnerUID = ownershipFields[0]
+			fileRecord.OwnerGUI = ownershipFields[1]
+			fileRecord.Permissions = ownershipFields[2]
+		case "Z":
+			if fileRecord == nil {
+				log.Errorf("checksum field with no parent record: %q", value)
+				continue
+			}
+			fileRecord.Checksum = value
 		case "I", "S":
 			// coerce to integer
 			iVal, err := strconv.Atoi(value)

@@ -29,6 +29,7 @@ require (
 	github.com/wagoodman/go-rpmdb v0.0.0-20200719223757-ce54a4b0607b
 	github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
+	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
 	golang.org/x/sys v0.0.0-20200610111108-226ff32320da // indirect
 	google.golang.org/genproto v0.0.0-20200615140333-fd031eab31e7 // indirect
