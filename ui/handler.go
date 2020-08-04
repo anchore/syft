@@ -19,7 +19,7 @@ func NewHandler() *Handler {
 
 func (r *Handler) RespondsTo(event partybus.Event) bool {
 	switch event.Type {
-	case stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.CatalogerStarted:
+	case stereoscopeEvent.PullDockerImage, stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.CatalogerStarted:
 		return true
 	default:
 		return false
@@ -28,6 +28,9 @@ func (r *Handler) RespondsTo(event partybus.Event) bool {
 
 func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	switch event.Type {
+	case stereoscopeEvent.PullDockerImage:
+		return PullDockerImageHandler(ctx, fr, event, wg)
+
 	case stereoscopeEvent.ReadImage:
 		return ReadImageHandler(ctx, fr, event, wg)
 

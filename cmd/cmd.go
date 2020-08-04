@@ -49,7 +49,7 @@ func setGlobalCliOptions() {
 	// scan options
 	flag := "scope"
 	rootCmd.Flags().StringP(
-		"scope", "s", scope.AllLayersScope.String(),
+		"scope", "s", scope.SquashedScope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", scope.Options))
 	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)

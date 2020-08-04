@@ -61,7 +61,16 @@ func OutputToEphemeralTUI(workerErrs <-chan error, subscription *partybus.Subscr
 			fr.Close()
 			frame.Close()
 			// flush any errors to the screen before the report
-			fmt.Fprint(output, logBuffer.String())
+			logWrapper, ok := log.Log.(*logger.LogrusLogger)
+			if ok {
+				fmt.Fprint(logWrapper.Output, logBuffer.String())
+			} else {
+				fmt.Fprint(output, logBuffer.String())
+			}
+		}
+		logWrapper, ok := log.Log.(*logger.LogrusLogger)
+		if ok {
+			logWrapper.Logger.SetOutput(output)
 		}
 	}()
 
@@ -103,7 +112,12 @@ eventLoop:
 				isClosed = true
 
 				// flush any errors to the screen before the report
-				fmt.Fprint(output, logBuffer.String())
+				logWrapper, ok := log.Log.(*logger.LogrusLogger)
+				if ok {
+					fmt.Fprint(logWrapper.Output, logBuffer.String())
+				} else {
+					fmt.Fprint(output, logBuffer.String())
+				}
 
 				if err := common.CatalogerFinishedHandler(e); err != nil {
 					log.Errorf("unable to show %s event: %+v", e.Type, err)

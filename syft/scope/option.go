@@ -25,7 +25,7 @@ func ParseOption(userStr string) Option {
 	switch strings.ToLower(userStr) {
 	case strings.ToLower(SquashedScope.String()):
 		return SquashedScope
-	case strings.ToLower(AllLayersScope.String()):
+	case "all-layers", strings.ToLower(AllLayersScope.String()):
 		return AllLayersScope
 	}
 	return UnknownScope
