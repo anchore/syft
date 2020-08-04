@@ -75,7 +75,7 @@ output: "table"
 # same as -s ; the search space to look for packages (options: all-layers, squashed)
 scope: "squashed"
 
-# smae as -q ; suppress all output (except for the SBOM report)
+# same as -q ; suppress all output (except for the SBOM report)
 quiet: false
 
 log:
