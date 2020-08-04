@@ -2,7 +2,7 @@
 
 A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems.
 
-*TODO: add example gif here*
+[//]: # (TODO: add example gif here)
 
 **Features**
 - Catalog container images and filesystems to discover packages and libraries.
