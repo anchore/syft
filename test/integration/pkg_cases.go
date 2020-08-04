@@ -31,6 +31,7 @@ var cases = []struct {
 		pkgInfo: map[string]string{
 			"example-java-app-maven": "0.1.0",
 			"example-jenkins-plugin": "1.0-SNAPSHOT", // the jenkins HPI file has a nested JAR of the same name
+			"joda-time":              "2.9.2",
 		},
 	},
 	{
