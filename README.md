@@ -85,7 +85,7 @@ log:
   # the log level; note: detailed logging suppress the ETUI
   level: "error"
 
-  # location to write the log file (default is to not have a log file)
+  # location to write the log file (default is not to have a log file)
   file: ""
 
 # enable/disable checking for application updates on startup
