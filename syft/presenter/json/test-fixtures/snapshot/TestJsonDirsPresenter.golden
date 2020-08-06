@@ -4,13 +4,23 @@
    "name": "package-1",
    "version": "1.0.1",
    "type": "deb",
-   "sources": []
+   "found-by": [
+    "the-cataloger-1"
+   ],
+   "locations": [
+    "/some/path/pkg1"
+   ]
   },
   {
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
-   "sources": []
+   "found-by": [
+    "the-cataloger-2"
+   ],
+   "locations": [
+    "/some/path/pkg1"
+   ]
   }
  ],
  "directory": "/some/path"

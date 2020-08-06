@@ -4,12 +4,13 @@
    "name": "package-1",
    "version": "1.0.1",
    "type": "deb",
-   "sources": [
+   "found-by": [
+    "the-cataloger-1"
+   ],
+   "locations": [
     {
-     "found-by": "",
-     "locations": [
-      "/somefile-1.txt"
-     ]
+     "path": "/somefile-1.txt",
+     "layer-index": 0
     }
    ]
   },
@@ -17,12 +18,13 @@
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
-   "sources": [
+   "found-by": [
+    "the-cataloger-2"
+   ],
+   "locations": [
     {
-     "found-by": "",
-     "locations": [
-      "/somefile-2.txt"
-     ]
+     "path": "/somefile-2.txt",
+     "layer-index": 1
     }
    ]
   }

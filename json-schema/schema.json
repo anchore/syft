@@ -4,6 +4,37 @@
         "artifacts": {
             "items": {
                 "properties": {
+                    "found-by": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "locations": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "properties": {
+                                        "layer-index": {
+                                            "type": "integer"
+                                        },
+                                        "path": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "layer-index",
+                                        "path"
+                                    ],
+                                    "type": "object"
+                                }
+                            ]
+                        },
+                        "type": "array"
+                    },
                     "metadata": {
                         "properties": {
                             "architecture": {
@@ -425,27 +456,6 @@
                     "name": {
                         "type": "string"
                     },
-                    "sources": {
-                        "items": {
-                            "properties": {
-                                "found-by": {
-                                    "type": "string"
-                                },
-                                "locations": {
-                                    "items": {
-                                        "type": "string"
-                                    },
-                                    "type": "array"
-                                }
-                            },
-                            "required": [
-                                "found-by",
-                                "locations"
-                            ],
-                            "type": "object"
-                        },
-                        "type": "array"
-                    },
                     "type": {
                         "type": "string"
                     },
@@ -454,8 +464,9 @@
                     }
                 },
                 "required": [
+                    "found-by",
+                    "locations",
                     "name",
-                    "sources",
                     "type",
                     "version"
                 ],

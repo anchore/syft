@@ -21,42 +21,44 @@ func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
 	}
 }
 
-type document struct {
-	Artifacts []artifact `json:"artifacts"`
-	Image     *image     `json:"image,omitempty"`
+type Document struct {
+	Artifacts []Artifact `json:"artifacts"`
+	Image     *Image     `json:"image,omitempty"`
 	Directory *string    `json:"directory,omitempty"`
 }
 
-type image struct {
-	Layers    []layer  `json:"layers"`
+type Image struct {
+	Layers    []Layer  `json:"layers"`
 	Size      int64    `json:"size"`
 	Digest    string   `json:"digest"`
 	MediaType string   `json:"media-type"`
 	Tags      []string `json:"tags"`
 }
 
-type layer struct {
+type Layer struct {
 	MediaType string `json:"media-type"`
 	Digest    string `json:"digest"`
 	Size      int64  `json:"size"`
 }
 
-type source struct {
-	FoundBy   string   `json:"found-by"`
-	Locations []string `json:"locations"`
+type ImageLocation struct {
+	Path       string `json:"path"`
+	LayerIndex uint   `json:"layer-index"`
 }
 
-type artifact struct {
-	Name     string      `json:"name"`
-	Version  string      `json:"version"`
-	Type     string      `json:"type"`
-	Sources  []source    `json:"sources"`
-	Metadata interface{} `json:"metadata,omitempty"`
+type Artifact struct {
+	Name      string      `json:"name"`
+	Version   string      `json:"version"`
+	Type      string      `json:"type"`
+	FoundBy   []string    `json:"found-by"`
+	Locations interface{} `json:"locations,omitempty"` // this can be a []string for simple dir sources or []ImageLocation for image sources
+	Metadata  interface{} `json:"metadata,omitempty"`
 }
 
+// nolint:funlen
 func (pres *Presenter) Present(output io.Writer) error {
-	doc := document{
-		Artifacts: make([]artifact, 0),
+	doc := Document{
+		Artifacts: make([]Artifact, 0),
 	}
 
 	srcObj := pres.scope.Source()
@@ -67,17 +69,17 @@ func (pres *Presenter) Present(output io.Writer) error {
 		for idx, tag := range src.Img.Metadata.Tags {
 			tags[idx] = tag.String()
 		}
-		doc.Image = &image{
+		doc.Image = &Image{
 			Digest:    src.Img.Metadata.Digest,
 			Size:      src.Img.Metadata.Size,
 			MediaType: string(src.Img.Metadata.MediaType),
 			Tags:      tags,
-			Layers:    make([]layer, len(src.Img.Layers)),
+			Layers:    make([]Layer, len(src.Img.Layers)),
 		}
 
 		// populate image metadata
 		for idx, l := range src.Img.Layers {
-			doc.Image.Layers[idx] = layer{
+			doc.Image.Layers[idx] = Layer{
 				MediaType: string(l.Metadata.MediaType),
 				Digest:    l.Metadata.Digest,
 				Size:      l.Metadata.Size,
@@ -91,20 +93,38 @@ func (pres *Presenter) Present(output io.Writer) error {
 	}
 
 	for _, p := range pres.catalog.Sorted() {
-		art := artifact{
+		art := Artifact{
 			Name:     p.Name,
 			Version:  p.Version,
 			Type:     string(p.Type),
-			Sources:  make([]source, len(p.Source)),
+			FoundBy:  []string{p.FoundBy},
 			Metadata: p.Metadata,
 		}
 
-		for idx := range p.Source {
-			srcObj := source{
-				FoundBy:   p.FoundBy,
-				Locations: []string{string(p.Source[idx].Path)},
+		switch src := srcObj.(type) {
+		case scope.ImageSource:
+			locations := make([]ImageLocation, len(p.Source))
+			for idx := range p.Source {
+				entry, err := src.Img.FileCatalog.Get(p.Source[idx])
+				if err != nil {
+					return fmt.Errorf("unable to find layer index for source-idx=%d package=%s", idx, p.Name)
+				}
+
+				artifactSource := ImageLocation{
+					LayerIndex: entry.Source.Metadata.Index,
+					Path:       string(p.Source[idx].Path),
+				}
+
+				locations[idx] = artifactSource
 			}
-			art.Sources[idx] = srcObj
+			art.Locations = locations
+
+		case scope.DirSource:
+			locations := make([]string, len(p.Source))
+			for idx := range p.Source {
+				locations[idx] = string(p.Source[idx].Path)
+			}
+			art.Locations = locations
 		}
 
 		doc.Artifacts = append(doc.Artifacts, art)
