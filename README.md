@@ -57,7 +57,7 @@ brew tap anchore/syft
 brew install syft
 ```
 
-You may experience a "macOS cannot verify app is free from malware" error upon running Grype because it is not yet signed and notarized. You can override this using `xattr`.
+You may experience a "macOS cannot verify app is free from malware" error upon running Syft because it is not yet signed and notarized. You can override this using `xattr`.
 ```bash
 xattr -rd com.apple.quarantine syft
 ```
