@@ -40,7 +40,7 @@ syft <image> -o text
 
 ## Installation
 
-*NOTE: This tool hasn't been released yet, so these installation methods work right now*
+*NOTE: This tool hasn't been released yet, so these installation methods do not work yet*
 
 **Recommended**
 ```bash

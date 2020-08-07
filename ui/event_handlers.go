@@ -189,7 +189,7 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Fetching image")
+	title := tileFormat.Sprint("Loading image")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -211,7 +211,7 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Fetched image")
+		title = tileFormat.Sprint("Loaded image")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 	return err
@@ -232,7 +232,7 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Reading image")
+	title := tileFormat.Sprint("Parsing image")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -253,7 +253,7 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Read image")
+		title = tileFormat.Sprint("Parsed image")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 

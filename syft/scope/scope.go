@@ -8,7 +8,6 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/scope/resolvers"
 )
 
@@ -45,7 +44,6 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 		return s, func() {}, nil
 
 	case imageProtocol:
-		log.Infof("Fetching image '%s'", userInput)
 		img, err := stereoscope.GetImage(userInput)
 		cleanup := func() {
 			stereoscope.Cleanup()
