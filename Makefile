@@ -21,6 +21,7 @@ COVERAGE_THRESHOLD := 72
 DISTDIR=./dist
 SNAPSHOTDIR=./snapshot
 GITTREESTATE=$(if $(shell git status --porcelain),dirty,clean)
+SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/syft_linux_amd64/syft)
 
 ifeq "$(strip $(VERSION))" ""
  override VERSION = $(shell git describe --always --tags --dirty)
@@ -57,10 +58,6 @@ endef
 .PHONY: all
 all: clean static-analysis test ## Run all linux-based checks (linting, license check, unit, integration, and linux acceptance tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
-
-.PHONY: compare
-compare:
-	@cd test/inline-compare && make
 
 .PHONY: test
 test: unit integration acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests)
@@ -191,6 +188,19 @@ acceptance-mac: $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binarie
 
 .PHONY: acceptance-linux
 acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages (Linux)
+
+.PHONY: compare-fingerprint
+compare-fingerprint:
+	find test/inline-compare/* -type f -exec md5sum {} + | grep -v '\-reports' | grep -v 'fingerprint' | awk '{print $1}' | sort | md5sum | tee test/inline-compare/inline-compare.fingerprint
+
+.PHONY: compare-snapshot
+compare-snapshot: $(SNAPSHOTDIR)
+	chmod 755 $(SNAPSHOT_CMD)
+	@cd test/inline-compare && SYFT_CMD=$(SNAPSHOT_CMD) make
+
+.PHONY: compare
+compare:
+	@cd test/inline-compare && make
 
 .PHONY: acceptance-test-deb-package-install
 acceptance-test-deb-package-install: $(SNAPSHOTDIR)

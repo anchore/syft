@@ -10,6 +10,7 @@ type DpkgMetadata struct {
 }
 
 type RpmMetadata struct {
+	Version string `mapstructure:"Version" json:"version"`
 	Epoch   int    `mapstructure:"Epoch" json:"epoch"`
 	Arch    string `mapstructure:"Arch" json:"architecture"`
 	Release string `mapstructure:"Release" json:"release"`

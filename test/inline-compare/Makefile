@@ -1,12 +1,15 @@
-IMAGE = "centos:8"
-IMAGE_CLEAN = $(shell echo $(IMAGE) | tr ":" "_")
-syft_DIR = syft-reports
-syft_REPORT = $(syft_DIR)/$(IMAGE_CLEAN).json
+ifndef SYFT_CMD
+	SYFT_CMD = go run ../../main.go
+endif
+
+IMAGE_CLEAN = $(shell echo $(COMPARE_IMAGE) | tr ":" "_")
+SYFT_DIR = syft-reports
+SYFT_REPORT = $(SYFT_DIR)/$(IMAGE_CLEAN).json
 INLINE_DIR = inline-reports
 INLINE_REPORT = $(INLINE_DIR)/$(IMAGE_CLEAN)-content-os.json
 
-ifndef syft_DIR
-	$(error syft_DIR is not set)
+ifndef SYFT_DIR
+	$(error SYFT_DIR is not set)
 endif
 
 ifndef INLINE_DIR
@@ -14,26 +17,33 @@ ifndef INLINE_DIR
 endif
 
 .PHONY: all
-all: compare
+.DEFAULT_GOAL :=
+all: clean-syft
+	./compare-all.sh
 
-.PHONY: compare
-compare: $(INLINE_REPORT) $(syft_REPORT)
-	docker build -t compare-syft:latest .
-	docker run compare-syft:latest $(IMAGE)
+.PHONY: compare-image
+compare-image: $(SYFT_REPORT) $(INLINE_REPORT)
+	./compare.py $(COMPARE_IMAGE)
+
+.PHONY: gather-iamge
+gather-image: $(SYFT_REPORT) $(INLINE_REPORT)
 
 $(INLINE_REPORT):
 	echo "Creating $(INLINE_REPORT)..."
 	mkdir -p $(INLINE_DIR)
-	curl -s https://ci-tools.anchore.io/inline_scan-v0.7.0 | bash -s -- -p -r $(IMAGE)
+	curl -s https://ci-tools.anchore.io/inline_scan-v0.7.0 | bash -s -- -p -r $(COMPARE_IMAGE)
 	mv anchore-reports/* $(INLINE_DIR)/
 	rmdir anchore-reports
 
-$(syft_REPORT):
-	echo "Creating $(syft_REPORT)..."
-	mkdir -p $(syft_DIR)
-	docker pull $(IMAGE)
-	go run ../../main.go $(IMAGE) -o json > $(syft_REPORT)
+$(SYFT_REPORT):
+	echo "Creating $(SYFT_REPORT)..."
+	mkdir -p $(SYFT_DIR)
+	$(SYFT_CMD) $(COMPARE_IMAGE) -o json > $(SYFT_REPORT)
 
 .PHONY: clean
-clean:
-	rm -f $(INLINE_DIR)/*  $(syft_DIR)/*
+clean: clean-syft
+	rm -f $(INLINE_DIR)/*
+
+.PHONY: clean-syft
+clean-syft:
+	rm -f $(SYFT_DIR)/*
