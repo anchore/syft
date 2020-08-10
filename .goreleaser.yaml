@@ -39,13 +39,12 @@ nfpms:
       - rpm
       - deb
 
-# TODO: add back in when open sourced
-#brews:
-#  - tap:
-#      owner: anchore
-#      name: homebrew-syft
-#    homepage: *website
-#    description: *description
+brews:
+  - tap:
+      owner: anchore
+      name: homebrew-syft
+    homepage: *website
+    description: *description
 
 archives:
   - format: tar.gz
