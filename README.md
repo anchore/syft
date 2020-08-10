@@ -45,8 +45,6 @@ syft <image> -o text
 
 ## Installation
 
-*NOTE: This tool hasn't been released yet, so these installation methods do not work yet*
-
 **Recommended**
 ```bash
 # install the latest version to /usr/local/bin
