@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eux
 
-docker create --name generate-rpmdb-fixture centos:latest sh -c 'tail -f /dev/null'
+docker create --name generate-rpmdb-fixture centos:8 sh -c 'tail -f /dev/null'
 
 function cleanup {
   docker kill generate-rpmdb-fixture

@@ -14,10 +14,14 @@ func TestParseRpmDB(t *testing.T) {
 			Version: "0.9.2-1",
 			Type:    pkg.RpmPkg,
 			Metadata: pkg.RpmMetadata{
-				Epoch:   0,
-				Arch:    "x86_64",
-				Release: "1",
-				Version: "0.9.2",
+				Epoch:     0,
+				Arch:      "x86_64",
+				Release:   "1",
+				Version:   "0.9.2",
+				SourceRpm: "dive-0.9.2-1.src.rpm",
+				Size:      12406784,
+				License:   "MIT",
+				Vendor:    "",
 			},
 		},
 	}
@@ -32,11 +36,11 @@ func TestParseRpmDB(t *testing.T) {
 		t.Fatalf("failed to parse rpmdb: %+v", err)
 	}
 
-	if len(actual) != 1 {
+	if len(actual) != len(expected) {
 		for _, a := range actual {
 			t.Log("   ", a)
 		}
-		t.Fatalf("unexpected package count: %d!=%d", len(actual), 1)
+		t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expected))
 	}
 
 	for _, a := range actual {

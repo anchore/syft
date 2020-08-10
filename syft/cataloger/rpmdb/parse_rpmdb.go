@@ -49,10 +49,14 @@ func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 			//Version: fmt.Sprintf("%d:%s-%s.%s", entry.Epoch, entry.Version, entry.Release, entry.Arch),
 			Type: pkg.RpmPkg,
 			Metadata: pkg.RpmMetadata{
-				Version: entry.Version,
-				Epoch:   entry.Epoch,
-				Arch:    entry.Arch,
-				Release: entry.Release,
+				Version:   entry.Version,
+				Epoch:     entry.Epoch,
+				Arch:      entry.Arch,
+				Release:   entry.Release,
+				SourceRpm: entry.SourceRpm,
+				Vendor:    entry.Vendor,
+				License:   entry.License,
+				Size:      entry.Size,
 			},
 		}
 
