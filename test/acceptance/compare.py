@@ -5,10 +5,9 @@ import collections
 
 Metadata = collections.namedtuple("Metadata", "metadata sources")
 Package = collections.namedtuple("Package", "name type version")
-Vulnerability = collections.namedtuple("Vulnerability", "cve package")
 
 
-class syft:
+class Syft:
     def __init__(self, report_path):
         self.report_path = report_path
 
@@ -35,10 +34,10 @@ class syft:
 
 
 def main(baseline_report, new_report):
-    report1_obj = syft(report_path=baseline_report)
+    report1_obj = Syft(report_path=baseline_report)
     report1_packages, report1_metadata = report1_obj.packages()
 
-    report2_obj = syft(report_path=new_report)
+    report2_obj = Syft(report_path=new_report)
     report2_packages, report2_metadata = report2_obj.packages()
 
     if len(report2_packages) == 0 and len(report1_packages) == 0:
@@ -102,9 +101,9 @@ def main(baseline_report, new_report):
 
 
 if __name__ == "__main__":
-    print("\nComparing two syft reports...\n")
+    print("\nComparing two Syft reports...\n")
     if len(sys.argv) != 3:
-        sys.exit("please provide two syft json files")
+        sys.exit("please provide two Syft json files")
 
     rc = main(sys.argv[1], sys.argv[2])
     sys.exit(rc)

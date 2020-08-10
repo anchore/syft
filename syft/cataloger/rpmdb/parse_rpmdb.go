@@ -45,12 +45,18 @@ func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	for _, entry := range pkgList {
 		p := pkg.Package{
 			Name:    entry.Name,
-			Version: entry.Version,
-			Type:    pkg.RpmPkg,
+			Version: fmt.Sprintf("%s-%s", entry.Version, entry.Release), // this is what engine does
+			//Version: fmt.Sprintf("%d:%s-%s.%s", entry.Epoch, entry.Version, entry.Release, entry.Arch),
+			Type: pkg.RpmPkg,
 			Metadata: pkg.RpmMetadata{
-				Epoch:   entry.Epoch,
-				Arch:    entry.Arch,
-				Release: entry.Release,
+				Version:   entry.Version,
+				Epoch:     entry.Epoch,
+				Arch:      entry.Arch,
+				Release:   entry.Release,
+				SourceRpm: entry.SourceRpm,
+				Vendor:    entry.Vendor,
+				License:   entry.License,
+				Size:      entry.Size,
 			},
 		}
 

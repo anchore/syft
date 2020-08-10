@@ -14,7 +14,7 @@ var cases = []struct {
 		name:    "find rpmdb packages",
 		pkgType: pkg.RpmPkg,
 		pkgInfo: map[string]string{
-			"dive": "0.9.2",
+			"dive": "0.9.2-1",
 		},
 	},
 	{

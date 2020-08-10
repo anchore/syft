@@ -832,8 +832,8 @@ github.com/wagoodman/go-progress v0.0.0-20200621122631-1a2120f0695a h1:lV3ioFpbq
 github.com/wagoodman/go-progress v0.0.0-20200621122631-1a2120f0695a/go.mod h1:jLXFoL31zFaHKAAyZUh+sxiTDFe1L1ZHrcK2T1itVKA=
 github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240 h1:r6BlIP7CVZtMlxUQhT40h1IE1TzEgKVqwmsVGuscvdk=
 github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240/go.mod h1:jLXFoL31zFaHKAAyZUh+sxiTDFe1L1ZHrcK2T1itVKA=
-github.com/wagoodman/go-rpmdb v0.0.0-20200719223757-ce54a4b0607b h1:elYGLFZPymeTWJ6qA3tIzFet3LQ9D/Jl6HLWNyFjdQc=
-github.com/wagoodman/go-rpmdb v0.0.0-20200719223757-ce54a4b0607b/go.mod h1:MjoIZzKmbYfcpbC6ARWMcHijAjtLBViDaHcayXKWQWI=
+github.com/wagoodman/go-rpmdb v0.0.0-20200810111121-8136676cb95c h1:eEWc4HjIq0gSno1apdb5MjRn2995xNrNmRTiJyjUJd8=
+github.com/wagoodman/go-rpmdb v0.0.0-20200810111121-8136676cb95c/go.mod h1:MjoIZzKmbYfcpbC6ARWMcHijAjtLBViDaHcayXKWQWI=
 github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163 h1:qoZwR+bHbFFNirY4Yt7lqbOXnFAMnlFfR89w0TXwjrc=
 github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163/go.mod h1:DzXZ1wfRedNhC3KQTick8Gf3CEPMFHsP5k4R/ldjKtw=
 github.com/x-cray/logrus-prefixed-formatter v0.5.2 h1:00txxvfBM9muc0jiLIEAkAcIMJzfthRT6usrui8uGmg=

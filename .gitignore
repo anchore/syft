@@ -2,6 +2,7 @@
 /snapshot
 .server/
 .vscode/
+*.fingerprint
 *.tar
 *.jar
 *.war

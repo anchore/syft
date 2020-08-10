@@ -10,10 +10,14 @@ type DpkgMetadata struct {
 }
 
 type RpmMetadata struct {
-	Epoch   int    `mapstructure:"Epoch" json:"epoch"`
-	Arch    string `mapstructure:"Arch" json:"architecture"`
-	Release string `mapstructure:"Release" json:"release"`
-	// TODO: consider keeping the remaining values as an embedded map
+	Version   string `mapstructure:"Version" json:"version"`
+	Epoch     int    `mapstructure:"Epoch" json:"epoch"`
+	Arch      string `mapstructure:"Arch" json:"architecture"`
+	Release   string `mapstructure:"Release" json:"release"`
+	SourceRpm string `mapstructure:"SourceRpm" json:"source-rpm"`
+	Size      int    `mapstructure:"Size" json:"size"`
+	License   string `mapstructure:"License" json:"license"`
+	Vendor    string `mapstructure:"Vendor" json:"vendor"`
 }
 
 type JavaManifest struct {
