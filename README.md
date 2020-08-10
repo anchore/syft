@@ -9,7 +9,7 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 - Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
 - OS distribution detection (supports alpine, busybox, centos/redhat, debian/ubuntu flavored distributions)
 
-> :warning: **This is pre-release software** and it may not work as expected. If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/grype/issues).
+> :warning: **This is pre-release software** and it may not work as expected. If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
 
 ## Getting started
 
