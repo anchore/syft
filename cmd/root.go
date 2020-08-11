@@ -28,8 +28,16 @@ Supports the following image sources:
 `, map[string]interface{}{
 		"appName": internal.ApplicationName,
 	}),
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			err := cmd.Help()
+			if err != nil {
+				log.Errorf(err.Error())
+				os.Exit(1)
+			}
+			os.Exit(1)
+		}
 		err := doRunCmd(cmd, args)
 		if err != nil {
 			log.Errorf(err.Error())
