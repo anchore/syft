@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 
+	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	rpmdb "github.com/wagoodman/go-rpmdb/pkg"
 )
 
 func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
