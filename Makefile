@@ -68,7 +68,7 @@ help:
 
 .PHONY: ci-bootstrap
 ci-bootstrap: bootstrap
-	sudo apt install -y bc
+	sudo apt update && sudo apt install -y bc jq
 
 .PHONY: bootstrap
 bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
