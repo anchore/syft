@@ -8,9 +8,13 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	rpmdb "github.com/wagoodman/go-rpmdb/pkg"
 )
+
+// integrity check
+var _ common.ParserFn = parseRpmDB
 
 func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")

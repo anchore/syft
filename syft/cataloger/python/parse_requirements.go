@@ -6,8 +6,12 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+// integrity check
+var _ common.ParserFn = parseRequirementsTxt
 
 func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages := make([]pkg.Package, 0)

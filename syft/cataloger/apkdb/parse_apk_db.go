@@ -9,10 +9,16 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
 )
 
+// integrity check
+var _ common.ParserFn = parseApkDB
+
+// parseApkDb parses individual packages from a given Alpine DB file. For more information on specific fields
+// see https://wiki.alpinelinux.org/wiki/Apk_spec .
 func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages := make([]pkg.Package, 0)
 
@@ -55,6 +61,7 @@ func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 }
 
 // nolint:funlen
+// parseApkDBEntry reads and parses a single pkg.ApkMetadata element from the stream, returning nil if their are no more entries.
 func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 	var entry pkg.ApkMetadata
 	pkgFields := make(map[string]interface{})

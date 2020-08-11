@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+// integrity check
+var _ common.ParserFn = parsePackageLock
 
 type PackageLock struct {
 	Requires        bool `json:"requires"`

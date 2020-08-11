@@ -7,8 +7,12 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+// integrity check
+var _ common.ParserFn = parseJavaArchive
 
 var archiveFormatGlobs = []string{
 	"**/*.jar",

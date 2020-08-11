@@ -6,8 +6,12 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+// integrity check
+var _ common.ParserFn = parseGemfileLockEntries
 
 var sectionsOfInterest = internal.NewStringSetFromSlice([]string{"GEM"})
 
