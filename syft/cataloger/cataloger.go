@@ -1,7 +1,7 @@
 /*
 Package cataloger provides the ability to process files from a container image or file system and discover packages
 (e.g. gems, wheels, jars, rpms, debs, etc.). Specifically, this package contains both a catalog function to utilize all
-catalogers in child packages as well as the interface definition to implement a specific cataloger.
+catalogers defined in child packages as well as the interface definition to implement a cataloger.
 */
 package cataloger
 
@@ -33,7 +33,7 @@ type Cataloger interface {
 	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
 }
 
-// All returns a slice of all locally defined catalogers (defined in child packages)
+// All returns a slice of all locally defined catalogers (defined in child packages).
 func All() []Cataloger {
 	return []Cataloger{
 		dpkg.New(),

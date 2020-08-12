@@ -8,6 +8,8 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
+// CatalogerFinishedHandler is a UI function for processing the CatalogerFinished bus event, displaying the catalog
+// via the given presenter to stdout.
 func CatalogerFinishedHandler(event partybus.Event) error {
 	// show the report to stdout
 	pres, err := syftEventParsers.ParseCatalogerFinished(event)

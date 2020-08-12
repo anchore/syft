@@ -14,6 +14,8 @@ import (
 var _ common.ParserFn = parseWheelMetadata
 var _ common.ParserFn = parseEggMetadata
 
+// parseWheelMetadata is a parser function for individual Python Wheel metadata file contents, returning all Python
+// packages listed.
 func parseWheelMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages, err := parseWheelOrEggMetadata(reader)
 	for idx := range packages {
@@ -22,6 +24,8 @@ func parseWheelMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
 	return packages, err
 }
 
+// parseEggMetadata is a parser function for individual Python Egg metadata file contents, returning all Python
+// packages listed.
 func parseEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages, err := parseWheelOrEggMetadata(reader)
 	for idx := range packages {
@@ -30,6 +34,8 @@ func parseEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
 	return packages, err
 }
 
+// parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
+// returning all Python packages listed.
 func parseWheelOrEggMetadata(reader io.Reader) ([]pkg.Package, error) {
 	fields := make(map[string]string)
 	var key string

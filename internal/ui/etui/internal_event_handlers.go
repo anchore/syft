@@ -13,6 +13,7 @@ import (
 	"github.com/wagoodman/jotframe/pkg/frame"
 )
 
+// appUpdateAvailableHandler is a UI handler function to display a new application version to the top of the screen.
 func appUpdateAvailableHandler(_ context.Context, fr *frame.Frame, event partybus.Event, _ *sync.WaitGroup) error {
 	newVersion, err := syftEventParsers.ParseAppUpdateAvailable(event)
 	if err != nil {

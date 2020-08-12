@@ -16,6 +16,7 @@ import (
 // integrity check
 var _ common.ParserFn = parseRpmDB
 
+// parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
 func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {

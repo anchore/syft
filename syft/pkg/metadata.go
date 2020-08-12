@@ -1,7 +1,7 @@
 package pkg
 
-// Available fields are described at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html
-// in the --showformat section
+// DpkgMetadata represents all captured data for a Debian package DB entry; available fields are described
+// at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section.
 type DpkgMetadata struct {
 	Package string `mapstructure:"Package" json:"package"`
 	Source  string `mapstructure:"Source" json:"source"`
@@ -9,6 +9,7 @@ type DpkgMetadata struct {
 	// TODO: consider keeping the remaining values as an embedded map
 }
 
+// RpmMetadata represents all captured data for a RHEL package DB entry.
 type RpmMetadata struct {
 	Version   string `mapstructure:"Version" json:"version"`
 	Epoch     int    `mapstructure:"Epoch" json:"epoch"`

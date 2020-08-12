@@ -13,6 +13,8 @@ import (
 // integrity check
 var _ common.ParserFn = parseRequirementsTxt
 
+// parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
+// specific version.
 func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages := make([]pkg.Package, 0)
 
@@ -59,6 +61,7 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, error) {
 	return packages, nil
 }
 
+// removeTrailingComment takes a requirements.txt line and strips off comment strings.
 func removeTrailingComment(line string) string {
 	parts := strings.Split(line, "#")
 	switch len(parts) {

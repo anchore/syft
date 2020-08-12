@@ -12,12 +12,14 @@ import (
 // integrity check
 var _ common.ParserFn = parsePackageLock
 
+// PackageLock represents a JavaScript package.lock json file
 type PackageLock struct {
 	Requires        bool `json:"requires"`
 	LockfileVersion int  `json:"lockfileVersion"`
-	Dependencies    Dependencies
+	Dependencies    map[string]Dependency
 }
 
+// Dependency represents a single package dependency listed in the package.lock json file
 type Dependency struct {
 	Version   string `json:"version"`
 	Resolved  string `json:"resolved"`
@@ -25,8 +27,7 @@ type Dependency struct {
 	Requires  map[string]string
 }
 
-type Dependencies map[string]Dependency
-
+// parsePackageLock parses a package.lock and returns the discovered JavaScript packages.
 func parsePackageLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)

@@ -32,6 +32,7 @@ type archiveParser struct {
 	detectNested   bool
 }
 
+// parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
 func parseJavaArchive(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(virtualPath, reader, true)
 	// note: even on error, we should always run cleanup functions
@@ -42,6 +43,7 @@ func parseJavaArchive(virtualPath string, reader io.Reader) ([]pkg.Package, erro
 	return parser.parse()
 }
 
+// uniquePkgKey creates a unique string to identify the given package.
 func uniquePkgKey(p *pkg.Package) string {
 	if p == nil {
 		return ""
@@ -49,6 +51,8 @@ func uniquePkgKey(p *pkg.Package) string {
 	return fmt.Sprintf("%s|%s", p.Name, p.Version)
 }
 
+// newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
+// and parse nested archives or ignore them.
 func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested bool) (*archiveParser, func(), error) {
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader)
 	if err != nil {
@@ -71,6 +75,7 @@ func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested boo
 	}, cleanupFn, nil
 }
 
+// parse the loaded archive and return all packages found.
 func (j *archiveParser) parse() ([]pkg.Package, error) {
 	var pkgs = make([]pkg.Package, 0)
 
@@ -110,6 +115,7 @@ func (j *archiveParser) parse() ([]pkg.Package, error) {
 	return pkgs, nil
 }
 
+// discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	// search and parse java manifest files
 	manifestMatches := j.fileManifest.GlobMatch(manifestPath)
@@ -144,6 +150,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}, nil
 }
 
+// discoverPkgsFromPomProperties parses Maven POM properties for a given parent package, returning all listed Java packages found and
+// associating each discovered package to the given parent package.
 func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([]pkg.Package, error) {
 	var pkgs = make([]pkg.Package, 0)
 	parentKey := uniquePkgKey(parentPkg)
@@ -196,6 +204,8 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 	return pkgs, nil
 }
 
+// discoverPkgsFromNestedArchives finds Java archives within Java archives, returning all listed Java packages found and
+// associating each discovered package to the given parent package.
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, error) {
 	var pkgs = make([]pkg.Package, 0)
 
