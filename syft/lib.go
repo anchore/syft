@@ -41,7 +41,7 @@ func IdentifyDistro(s scope.Scope) distro.Distro {
 
 func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
 	log.Info("building the catalog")
-	return cataloger.Catalog(s)
+	return cataloger.Catalog(s, cataloger.All()...)
 }
 
 func SetLogger(logger logger.Logger) {

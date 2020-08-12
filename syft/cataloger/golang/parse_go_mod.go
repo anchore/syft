@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// parseGoMod takes a go.mod and lists all packages discovered.
 func parseGoMod(path string, reader io.Reader) ([]pkg.Package, error) {
 	packages := make(map[string]pkg.Package)
 

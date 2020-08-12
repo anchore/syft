@@ -36,6 +36,8 @@ var (
 	dockerPullStageChars     = strings.Split("▁▃▄▅▆▇█", "")
 )
 
+// startProcess is a helper function for providing common elements for long-running UI elements (such as a
+// progress bar formatter and status spinner)
 func startProcess() (format.Simple, *common.Spinner) {
 	width, _ := frame.GetTerminalSize()
 	barWidth := int(0.25 * float64(width))
@@ -48,6 +50,7 @@ func startProcess() (format.Simple, *common.Spinner) {
 	return formatter, &spinner
 }
 
+// formatDockerPullPhase returns a single character that represents the status of a layer pull.
 func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 	switch phase {
 	case docker.WaitingPhase:
@@ -69,6 +72,7 @@ func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 }
 
 // nolint:funlen
+// formatDockerImagePullStatus writes the docker image pull status summarized into a single line for the given state.
 func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *common.Spinner, line *frame.Line) {
 	var size, current uint64
 
@@ -136,6 +140,7 @@ func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *common.
 	_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s%s", spin, title, progStr, auxInfo))
 }
 
+// PullDockerImageHandler periodically writes a formatted line widget representing a docker image pull event.
 func PullDockerImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, pullStatus, err := stereoEventParsers.ParsePullDockerImage(event)
 	if err != nil {
@@ -175,6 +180,7 @@ func PullDockerImageHandler(ctx context.Context, fr *frame.Frame, event partybus
 	return err
 }
 
+// FetchImageHandler periodically writes a the image save and write-to-disk process in the form of a progress bar.
 func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseFetchImage(event)
 	if err != nil {
@@ -217,6 +223,7 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 	return err
 }
 
+// ReadImageHandler periodically writes a the image read/parse/build-tree status in the form of a progress bar.
 func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseReadImage(event)
 	if err != nil {
@@ -260,6 +267,7 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 	return nil
 }
 
+// CatalogerStartedHandler periodically writes catalog statistics to a single line.
 func CatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	monitor, err := syftEventParsers.ParseCatalogerStarted(event)
 	if err != nil {

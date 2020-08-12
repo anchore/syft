@@ -6,12 +6,17 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
 )
 
+// integrity check
+var _ common.ParserFn = parseDpkgStatus
+
 var errEndOfPackages = fmt.Errorf("no more packages to read")
 
+// parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
 func parseDpkgStatus(_ string, reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
 	var packages = make([]pkg.Package, 0)
@@ -35,6 +40,7 @@ func parseDpkgStatus(_ string, reader io.Reader) ([]pkg.Package, error) {
 	return packages, nil
 }
 
+// parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
 func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
 	dpkgFields := make(map[string]string)
 	var key string

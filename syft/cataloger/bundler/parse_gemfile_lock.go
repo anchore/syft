@@ -6,11 +6,16 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// integrity check
+var _ common.ParserFn = parseGemfileLockEntries
+
 var sectionsOfInterest = internal.NewStringSetFromSlice([]string{"GEM"})
 
+// parseGemfileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
 func parseGemfileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 	pkgs := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(reader)

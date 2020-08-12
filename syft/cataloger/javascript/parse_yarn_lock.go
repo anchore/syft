@@ -8,8 +8,12 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+// integrity check
+var _ common.ParserFn = parseYarnLock
 
 var composedNameExp = regexp.MustCompile("^\"(@{1}[^@]+)")
 var simpleNameExp = regexp.MustCompile(`^[a-zA-Z\-]+@`)

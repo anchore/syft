@@ -4,14 +4,6 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/cataloger/apkdb"
-	"github.com/anchore/syft/syft/cataloger/bundler"
-	"github.com/anchore/syft/syft/cataloger/dpkg"
-	golang "github.com/anchore/syft/syft/cataloger/golang"
-	"github.com/anchore/syft/syft/cataloger/java"
-	"github.com/anchore/syft/syft/cataloger/javascript"
-	"github.com/anchore/syft/syft/cataloger/python"
-	"github.com/anchore/syft/syft/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
@@ -20,54 +12,14 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
-var controllerInstance controller
-
-func init() {
-	controllerInstance = newController()
-}
-
-func Catalogers() []string {
-	c := make([]string, len(controllerInstance.catalogers))
-	for idx, catalog := range controllerInstance.catalogers {
-		c[idx] = catalog.Name()
-	}
-	return c
-}
-
-func Catalog(s scope.Resolver) (*pkg.Catalog, error) {
-	return controllerInstance.catalog(s)
-}
-
-type controller struct {
-	catalogers []Cataloger
-}
-
-func newController() controller {
-	ctrlr := controller{
-		catalogers: make([]Cataloger, 0),
-	}
-	ctrlr.add(dpkg.NewCataloger())
-	ctrlr.add(bundler.NewCataloger())
-	ctrlr.add(python.NewCataloger())
-	ctrlr.add(rpmdb.NewCataloger())
-	ctrlr.add(java.NewCataloger())
-	ctrlr.add(apkdb.NewCataloger())
-	ctrlr.add(golang.NewCataloger())
-	ctrlr.add(javascript.NewCataloger())
-	return ctrlr
-}
-
-func (c *controller) add(a Cataloger) {
-	log.Debugf("adding cataloger: %s", a.Name())
-	c.catalogers = append(c.catalogers, a)
-}
-
+// Monitor provides progress-related data for observing the progress of a Catalog() call (published on the event bus).
 type Monitor struct {
-	FilesProcessed     progress.Monitorable
-	PackagesDiscovered progress.Monitorable
+	FilesProcessed     progress.Monitorable // the number of files selected and contents analyzed from all registered catalogers
+	PackagesDiscovered progress.Monitorable // the number of packages discovered from all registered catalogers
 }
 
-func (c *controller) trackCataloger() (*progress.Manual, *progress.Manual) {
+// newMonitor creates a new Monitor object and publishes the object on the bus as a CatalogerStarted event.
+func newMonitor() (*progress.Manual, *progress.Manual) {
 	filesProcessed := progress.Manual{}
 	packagesDiscovered := progress.Manual{}
 
@@ -81,20 +33,25 @@ func (c *controller) trackCataloger() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-func (c *controller) catalog(s scope.Resolver) (*pkg.Catalog, error) {
+// Catalog a given scope (container image or filesystem) with the given catalogers, returning all discovered packages.
+// In order to efficiently retrieve contents from a underlying container image the content fetch requests are
+// done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
+// request.
+func Catalog(s scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
 	fileSelection := make([]file.Reference, 0)
 
-	filesProcessed, packagesDiscovered := c.trackCataloger()
+	filesProcessed, packagesDiscovered := newMonitor()
 
 	// ask catalogers for files to extract from the image tar
-	for _, a := range c.catalogers {
+	for _, a := range catalogers {
 		fileSelection = append(fileSelection, a.SelectFiles(s)...)
 		log.Debugf("cataloger '%s' selected '%d' files", a.Name(), len(fileSelection))
 		filesProcessed.N += int64(len(fileSelection))
 	}
 
 	// fetch contents for requested selection by catalogers
+	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
 	contents, err := s.MultipleFileContentsByRef(fileSelection...)
 	if err != nil {
 		return nil, err
@@ -102,7 +59,7 @@ func (c *controller) catalog(s scope.Resolver) (*pkg.Catalog, error) {
 
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
-	for _, a := range c.catalogers {
+	for _, a := range catalogers {
 		// TODO: check for multiple rounds of analyses by Iterate error
 		packages, err := a.Catalog(contents)
 		if err != nil {

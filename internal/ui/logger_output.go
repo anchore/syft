@@ -7,6 +7,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
+// LoggerUI is a UI function that leverages the displays all application logs to the screen.
 func LoggerUI(workerErrs <-chan error, subscription *partybus.Subscription) error {
 	events := subscription.Events()
 eventLoop:
