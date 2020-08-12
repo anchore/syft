@@ -1,6 +1,6 @@
 /*
 Package bus provides access to a singleton instance of an event bus (provided by the calling application). The event bus
-is intended to allow for the syft library to publish events for which library consumers can subscribe to. These events
+is intended to allow for the syft library to publish events which library consumers can subscribe to. These events
 can provide static information, but also have an object as a payload for which the consumer can poll for updates.
 This is akin to a logger, except instead of only allowing strings to be logged, rich objects that can be interacted with.
 
