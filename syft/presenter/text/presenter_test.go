@@ -31,7 +31,7 @@ func TestTextDirPresenter(t *testing.T) {
 		Type:    pkg.DebPkg,
 	})
 
-	s, err := scope.NewScopeFromDir("/some/path", scope.AllLayersScope)
+	s, err := scope.NewScopeFromDir("/some/path")
 	if err != nil {
 		t.Fatalf("unable to create scope: %+v", err)
 	}

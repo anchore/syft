@@ -39,7 +39,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 		},
 	})
 
-	s, err := scope.NewScopeFromDir("/some/path", scope.AllLayersScope)
+	s, err := scope.NewScopeFromDir("/some/path")
 	if err != nil {
 		t.Fatal(err)
 	}

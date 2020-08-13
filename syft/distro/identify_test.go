@@ -80,7 +80,7 @@ func TestIdentifyDistro(t *testing.T) {
 				t.Fatalf("unable to produce a new scope for testing: %s", test.fixture)
 			}
 
-			d := Identify(s)
+			d := Identify(s.Resolver)
 			observedDistros.Add(d.String())
 
 			if d.Type != test.Type {

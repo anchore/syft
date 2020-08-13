@@ -70,7 +70,7 @@ func TestDirectoryScope(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			p, err := NewScopeFromDir(test.input, AllLayersScope)
+			p, err := NewScopeFromDir(test.input)
 
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %w", err)
@@ -79,7 +79,7 @@ func TestDirectoryScope(t *testing.T) {
 				t.Errorf("mismatched stringer: '%s' != '%s'", p.DirSrc.Path, test.input)
 			}
 
-			refs, err := p.FilesByPath(test.inputPaths...)
+			refs, err := p.Resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %w", err)
 			}
@@ -114,11 +114,11 @@ func TestMultipleFileContentsByRefContents(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			p, err := NewScopeFromDir(test.input, AllLayersScope)
+			p, err := NewScopeFromDir(test.input)
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %w", err)
 			}
-			refs, err := p.FilesByPath(file.Path(test.path))
+			refs, err := p.Resolver.FilesByPath(file.Path(test.path))
 			if err != nil {
 				t.Errorf("could not get file references from path: %s, %v", test.path, err)
 			}
@@ -128,7 +128,7 @@ func TestMultipleFileContentsByRefContents(t *testing.T) {
 			}
 			ref := refs[0]
 
-			contents, err := p.MultipleFileContentsByRef(ref)
+			contents, err := p.Resolver.MultipleFileContentsByRef(ref)
 			content := contents[ref]
 
 			if content != test.expected {
@@ -154,11 +154,11 @@ func TestMultipleFileContentsByRefNoContents(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			p, err := NewScopeFromDir(test.input, AllLayersScope)
+			p, err := NewScopeFromDir(test.input)
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %w", err)
 			}
-			refs, err := p.FilesByPath(file.Path(test.path))
+			refs, err := p.Resolver.FilesByPath(file.Path(test.path))
 			if err != nil {
 				t.Errorf("could not get file references from path: %s, %v", test.path, err)
 			}
@@ -199,12 +199,12 @@ func TestFilesByGlob(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			p, err := NewScopeFromDir(test.input, AllLayersScope)
+			p, err := NewScopeFromDir(test.input)
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %w", err)
 			}
 
-			contents, err := p.FilesByGlob(test.glob)
+			contents, err := p.Resolver.FilesByGlob(test.glob)
 
 			if len(contents) != test.expected {
 				t.Errorf("unexpected number of files found by glob (%s): %d != %d", test.glob, len(contents), test.expected)
