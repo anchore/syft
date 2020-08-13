@@ -7,7 +7,7 @@ require (
 	github.com/anchore/go-rpmdb v0.0.0-20200811175839-cbc751c28e8e
 	github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/stereoscope v0.0.0-20200803190343-146f38f8cc19
+	github.com/anchore/stereoscope v0.0.0-20200813152757-548b22c8a0b3
 	github.com/bmatcuk/doublestar v1.3.1
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
 	github.com/dustin/go-humanize v1.0.0
@@ -20,6 +20,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/olekukonko/tablewriter v0.0.4
+	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/pelletier/go-toml v1.8.0
 	github.com/rogpeppe/go-internal v1.5.2
 	github.com/sergi/go-diff v1.1.0
