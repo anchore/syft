@@ -1,3 +1,6 @@
+/*
+Package bundler provides a concrete Cataloger implementation for Ruby Gemfile.lock bundler files.
+*/
 package bundler
 
 import (

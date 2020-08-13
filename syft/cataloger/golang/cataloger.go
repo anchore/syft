@@ -1,3 +1,6 @@
+/*
+Package golang provides a concrete Cataloger implementation for go.mod files.
+*/
 package golang
 
 import (

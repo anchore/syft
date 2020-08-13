@@ -9,7 +9,7 @@ type DpkgMetadata struct {
 	// TODO: consider keeping the remaining values as an embedded map
 }
 
-// RpmMetadata represents all captured data for a RHEL package DB entry.
+// RpmMetadata represents all captured data for a RPM DB package entry.
 type RpmMetadata struct {
 	Version   string `mapstructure:"Version" json:"version"`
 	Epoch     int    `mapstructure:"Epoch" json:"epoch"`
@@ -21,6 +21,7 @@ type RpmMetadata struct {
 	Vendor    string `mapstructure:"Vendor" json:"vendor"`
 }
 
+// JavaManifest represents the fields of interest extracted from a Java archive's META-INF/MANIFEST.MF file.
 type JavaManifest struct {
 	Name            string            `mapstructure:"Name" json:"name"`
 	ManifestVersion string            `mapstructure:"Manifest-Version" json:"manifest-version"`
@@ -33,6 +34,7 @@ type JavaManifest struct {
 	Extra           map[string]string `mapstructure:",remain" json:"extra-fields"`
 }
 
+// PomProperties represents the fields of interest extracted from a Java archive's pom.xml file.
 type PomProperties struct {
 	Path       string
 	Name       string            `mapstructure:"name" json:"name"`
@@ -42,13 +44,14 @@ type PomProperties struct {
 	Extra      map[string]string `mapstructure:",remain" json:"extra-fields"`
 }
 
+// JavaMetadata encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
 type JavaMetadata struct {
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pom-properties"`
 	Parent        *Package       `json:"parent-package"`
 }
 
-// source: https://wiki.alpinelinux.org/wiki/Apk_spec
+// ApkMetadata represents all captured data for a Alpine DB package entry. See https://wiki.alpinelinux.org/wiki/Apk_spec for more information.
 type ApkMetadata struct {
 	Package          string          `mapstructure:"P" json:"package"`
 	OriginPackage    string          `mapstructure:"o" json:"origin-package"`
@@ -66,6 +69,7 @@ type ApkMetadata struct {
 	Files            []ApkFileRecord `json:"files"`
 }
 
+// ApkFileRecord represents a single file listing and metadata from a APK DB entry (which may have many of these file records).
 type ApkFileRecord struct {
 	Path        string `json:"path"`
 	OwnerUID    string `json:"owner-uid"`

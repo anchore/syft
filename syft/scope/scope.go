@@ -1,3 +1,8 @@
+/*
+Package scope provides an abstraction to allow a user to loosely define a data source to catalog and expose a common interface that
+catalogers and use explore and analyze data from the data source. All valid (cataloggable) data sources are defined
+within this package.
+*/
 package scope
 
 import (
@@ -6,24 +11,27 @@ import (
 
 	"github.com/anchore/stereoscope"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/scope/resolvers"
 )
 
+// ImageSource represents a data source that is a container image
 type ImageSource struct {
-	Img *image.Image
+	Img *image.Image // the image object to be cataloged
 }
 
+// DirSource represents a data source that is a filesystem directory tree
 type DirSource struct {
-	Path string
+	Path string // the root path to be cataloged
 }
 
+// Scope is an object that captures the data source to be cataloged, configuration, and a specific resolver used
+// in cataloging (based on the data source and configuration)
 type Scope struct {
-	Option   Option
-	resolver Resolver
-	ImgSrc   ImageSource
-	DirSrc   DirSource
+	Option   Option      // specific perspective to catalog
+	Resolver Resolver    // a Resolver object to use in file path/glob resolution and file contents resolution
+	ImgSrc   ImageSource // the specific image to be cataloged
+	DirSrc   DirSource   // the specific directory to be cataloged
 }
 
 // NewScope produces a Scope based on userInput like dir:// or image:tag
@@ -37,7 +45,7 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 			return Scope{}, func() {}, fmt.Errorf("unable to process path, must exist and be a directory: %w", err)
 		}
 
-		s, err := NewScopeFromDir(protocol.Value, o)
+		s, err := NewScopeFromDir(protocol.Value)
 		if err != nil {
 			return Scope{}, func() {}, fmt.Errorf("could not populate scope from path (%s): %w", protocol.Value, err)
 		}
@@ -64,10 +72,10 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 	}
 }
 
-func NewScopeFromDir(path string, option Option) (Scope, error) {
+// NewScopeFromDir creates a new scope object tailored to catalog a given filesystem directory recursively.
+func NewScopeFromDir(path string) (Scope, error) {
 	return Scope{
-		Option: option,
-		resolver: &resolvers.DirectoryResolver{
+		Resolver: &resolvers.DirectoryResolver{
 			Path: path,
 		},
 		DirSrc: DirSource{
@@ -76,6 +84,8 @@ func NewScopeFromDir(path string, option Option) (Scope, error) {
 	}, nil
 }
 
+// NewScopeFromImage creates a new scope object tailored to catalog a given container image, relative to the
+// option given (e.g. all-layers, squashed, etc)
 func NewScopeFromImage(img *image.Image, option Option) (Scope, error) {
 	if img == nil {
 		return Scope{}, fmt.Errorf("no image given")
@@ -88,26 +98,14 @@ func NewScopeFromImage(img *image.Image, option Option) (Scope, error) {
 
 	return Scope{
 		Option:   option,
-		resolver: resolver,
+		Resolver: resolver,
 		ImgSrc: ImageSource{
 			Img: img,
 		},
 	}, nil
 }
 
-func (s Scope) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
-	return s.resolver.FilesByPath(paths...)
-}
-
-func (s Scope) FilesByGlob(patterns ...string) ([]file.Reference, error) {
-	return s.resolver.FilesByGlob(patterns...)
-}
-
-func (s Scope) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
-	return s.resolver.MultipleFileContentsByRef(f...)
-}
-
-// return either a dir source or img source
+// Source returns the configured data source (either a dir source or container image source)
 func (s Scope) Source() interface{} {
 	if s.ImgSrc != (ImageSource{}) {
 		return s.ImgSrc
@@ -119,8 +117,7 @@ func (s Scope) Source() interface{} {
 	return nil
 }
 
-// isValidPath ensures that the user-provided input will correspond to a path
-// that exists and is a directory
+// isValidPath ensures that the user-provided input will correspond to a path that exists and is a directory
 func isValidPath(userInput string) error {
 	fileMeta, err := os.Stat(userInput)
 	if err != nil {

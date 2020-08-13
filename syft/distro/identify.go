@@ -17,8 +17,8 @@ type parseEntry struct {
 	fn   parseFunc
 }
 
-// Identify parses distro-specific files to determine distro metadata like version and release
-func Identify(s scope.Scope) Distro {
+// Identify parses distro-specific files to determine distro metadata like version and release.
+func Identify(resolver scope.Resolver) Distro {
 	distro := NewUnknownDistro()
 
 	identityFiles := []parseEntry{
@@ -41,7 +41,7 @@ func Identify(s scope.Scope) Distro {
 
 identifyLoop:
 	for _, entry := range identityFiles {
-		refs, err := s.FilesByPath(entry.path)
+		refs, err := resolver.FilesByPath(entry.path)
 		if err != nil {
 			log.Errorf("unable to get path refs from %s: %s", entry.path, err)
 			break
@@ -52,7 +52,7 @@ identifyLoop:
 		}
 
 		for _, ref := range refs {
-			contents, err := s.MultipleFileContentsByRef(ref)
+			contents, err := resolver.MultipleFileContentsByRef(ref)
 			content, ok := contents[ref]
 
 			if !ok {

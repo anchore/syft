@@ -75,7 +75,7 @@ func TestIdentifyDistro(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			s, err := scope.NewScopeFromDir(test.fixture, scope.AllLayersScope)
+			s, err := scope.NewScopeFromDir(test.fixture)
 			if err != nil {
 				t.Fatalf("unable to produce a new scope for testing: %s", test.fixture)
 			}

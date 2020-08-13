@@ -1,3 +1,6 @@
+/*
+Package apkdb provides a concrete Cataloger implementation for Alpine DB files.
+*/
 package apkdb
 
 import (

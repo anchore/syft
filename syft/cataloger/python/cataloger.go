@@ -1,3 +1,6 @@
+/*
+Package python provides a concrete Cataloger implementation for Python ecosystem files (egg, wheel, requirements.txt).
+*/
 package python
 
 import (

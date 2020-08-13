@@ -1,3 +1,6 @@
+/*
+Package parsers provides parser helpers to extract payloads for each event type that the syft library publishes onto the event bus.
+*/
 package parsers
 
 import (

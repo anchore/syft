@@ -1,3 +1,6 @@
+/*
+Package javascript provides a concrete Cataloger implementation for JavaScript ecosystem files (yarn and npm).
+*/
 package javascript
 
 import (

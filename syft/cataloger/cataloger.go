@@ -1,6 +1,6 @@
 /*
 Package cataloger provides the ability to process files from a container image or file system and discover packages
-(e.g. gems, wheels, jars, rpms, debs, etc.). Specifically, this package contains both a catalog function to utilize all
+(gems, wheels, jars, rpms, debs, etc). Specifically, this package contains both a catalog function to utilize all
 catalogers defined in child packages as well as the interface definition to implement a cataloger.
 */
 package cataloger

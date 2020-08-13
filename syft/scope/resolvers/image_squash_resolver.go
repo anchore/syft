@@ -7,10 +7,12 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
+// ImageSquashResolver implements path and content access for the Squashed scope option for container image data sources.
 type ImageSquashResolver struct {
 	img *image.Image
 }
 
+// NewImageSquashResolver returns a new resolver from the perspective of the squashed representation for the given image.
 func NewImageSquashResolver(img *image.Image) (*ImageSquashResolver, error) {
 	if img.SquashedTree() == nil {
 		return nil, fmt.Errorf("the image does not have have a squashed tree")
@@ -18,6 +20,7 @@ func NewImageSquashResolver(img *image.Image) (*ImageSquashResolver, error) {
 	return &ImageSquashResolver{img: img}, nil
 }
 
+// FilesByPath returns all file.References that match the given paths within the squashed representation of the image.
 func (r *ImageSquashResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueFiles := make([]file.Reference, 0)
@@ -42,6 +45,7 @@ func (r *ImageSquashResolver) FilesByPath(paths ...file.Path) ([]file.Reference,
 	return uniqueFiles, nil
 }
 
+// FilesByGlob returns all file.References that match the given path glob pattern within the squashed representation of the image.
 func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueFiles := make([]file.Reference, 0)
@@ -69,6 +73,8 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference,
 	return uniqueFiles, nil
 }
 
+// MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
+// file.Reference is a path relative to a particular layer, in this case only from the squashed representation.
 func (r *ImageSquashResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
 	return r.img.MultipleFileContentsByRef(f...)
 }

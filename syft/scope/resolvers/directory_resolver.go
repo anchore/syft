@@ -11,14 +11,17 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
+// DirectoryResolver implements path and content access for the directory data source.
 type DirectoryResolver struct {
 	Path string
 }
 
+// Stringer to represent a directory path data source
 func (s DirectoryResolver) String() string {
 	return fmt.Sprintf("dir://%s", s.Path)
 }
 
+// FilesByPath returns all file.References that match the given paths from the directory.
 func (s DirectoryResolver) FilesByPath(userPaths ...file.Path) ([]file.Reference, error) {
 	var references = make([]file.Reference, 0)
 
@@ -46,6 +49,7 @@ func fileContents(path file.Path) ([]byte, error) {
 	return contents, nil
 }
 
+// FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, error) {
 	result := make([]file.Reference, 0)
 
@@ -71,6 +75,7 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, er
 	return result, nil
 }
 
+// MultipleFileContentsByRef returns the file contents for all file.References relative a directory.
 func (s DirectoryResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
 	refContents := make(map[file.Reference]string)
 	for _, fileRef := range f {

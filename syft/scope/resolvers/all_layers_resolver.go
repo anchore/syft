@@ -8,11 +8,13 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
+// AllLayersResolver implements path and content access for the AllLayers scope option for container image data sources.
 type AllLayersResolver struct {
 	img    *image.Image
 	layers []int
 }
 
+// NewAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
 func NewAllLayersResolver(img *image.Image) (*AllLayersResolver, error) {
 	if len(img.Layers) == 0 {
 		return nil, fmt.Errorf("the image does not contain any layers")
@@ -58,6 +60,7 @@ func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 	return uniqueFiles, nil
 }
 
+// FilesByPath returns all file.References that match the given paths from any layer in the image.
 func (r *AllLayersResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueFiles := make([]file.Reference, 0)
@@ -81,6 +84,7 @@ func (r *AllLayersResolver) FilesByPath(paths ...file.Path) ([]file.Reference, e
 	return uniqueFiles, nil
 }
 
+// FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueFiles := make([]file.Reference, 0)
@@ -105,6 +109,8 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, e
 	return uniqueFiles, nil
 }
 
+// MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
+// file.Reference is a path relative to a particular layer.
 func (r *AllLayersResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
 	return r.img.MultipleFileContentsByRef(f...)
 }
