@@ -1,5 +1,6 @@
 package pkg
 
+// Type represents a Package Type for or within a language ecosystem (there may be multiple package types within a language ecosystem)
 type Type string
 
 const (

@@ -1,3 +1,6 @@
+/*
+Package rpmdb provides a concrete Cataloger implementation for RPM "Package" DB files.
+*/
 package rpmdb
 
 import (

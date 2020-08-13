@@ -37,7 +37,7 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
 // request.
-func Catalog(s scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, error) {
+func Catalog(resolver scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
 	fileSelection := make([]file.Reference, 0)
 
@@ -45,14 +45,14 @@ func Catalog(s scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, error) {
 
 	// ask catalogers for files to extract from the image tar
 	for _, a := range catalogers {
-		fileSelection = append(fileSelection, a.SelectFiles(s)...)
+		fileSelection = append(fileSelection, a.SelectFiles(resolver)...)
 		log.Debugf("cataloger '%s' selected '%d' files", a.Name(), len(fileSelection))
 		filesProcessed.N += int64(len(fileSelection))
 	}
 
 	// fetch contents for requested selection by catalogers
 	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
-	contents, err := s.MultipleFileContentsByRef(fileSelection...)
+	contents, err := resolver.MultipleFileContentsByRef(fileSelection...)
 	if err != nil {
 		return nil, err
 	}

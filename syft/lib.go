@@ -1,3 +1,6 @@
+/*
+A "one-stop-shop" for helper utilities for all major functionality provided by child packages of the syft library.
+*/
 package syft
 
 import (
@@ -11,6 +14,8 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
+// Catalog the given image from a particular perspective (e.g. squashed scope, all-layers scope). Returns the discovered
+// set of packages, the identified Linux distribution, and the scope object used to wrap the data source.
 func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scope, *distro.Distro, error) {
 	log.Info("cataloging image")
 	s, cleanup, err := scope.NewScope(userInput, scoptOpt)
@@ -29,8 +34,10 @@ func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scop
 	return catalog, &s, &d, nil
 }
 
+// IdentifyDistro attempts to discover what the underlying Linux distribution may be from the available flat files
+// provided by the given scope object. If results are inconclusive a "UnknownDistro" Type is returned.
 func IdentifyDistro(s scope.Scope) distro.Distro {
-	d := distro.Identify(s)
+	d := distro.Identify(s.Resolver)
 	if d.Type != distro.UnknownDistroType {
 		log.Infof("identified distro: %s", d.String())
 	} else {
@@ -39,15 +46,18 @@ func IdentifyDistro(s scope.Scope) distro.Distro {
 	return d
 }
 
+// Catalog the given scope, which may represent a container image or filesystem. Returns the discovered set of packages.
 func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
 	log.Info("building the catalog")
-	return cataloger.Catalog(s, cataloger.All()...)
+	return cataloger.Catalog(s.Resolver, cataloger.All()...)
 }
 
+// SetLogger sets the logger object used for all syft logging calls.
 func SetLogger(logger logger.Logger) {
 	log.Log = logger
 }
 
+// SetBus sets the event bus for all syft library bus publish events onto (in-library subscriptions are not allowed).
 func SetBus(b *partybus.Bus) {
 	bus.SetPublisher(b)
 }

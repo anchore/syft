@@ -12,6 +12,7 @@ import (
 
 var nextPackageID int64
 
+// Catalog represents a collection of Packages.
 type Catalog struct {
 	byID   map[ID]*Package
 	byType map[Type][]*Package
@@ -19,6 +20,7 @@ type Catalog struct {
 	lock   sync.RWMutex
 }
 
+// NewCatalog returns a new empty Catalog
 func NewCatalog() *Catalog {
 	return &Catalog{
 		byID:   make(map[ID]*Package),
@@ -27,18 +29,22 @@ func NewCatalog() *Catalog {
 	}
 }
 
+// PackageCount returns the total number of packages that have been added.
 func (c *Catalog) PackageCount() int {
 	return len(c.byID)
 }
 
+// Package returns the package with the given ID.
 func (c *Catalog) Package(id ID) *Package {
 	return c.byID[id]
 }
 
+// PackagesByFile returns all packages that were discovered from the given source file reference.
 func (c *Catalog) PackagesByFile(ref file.Reference) []*Package {
 	return c.byFile[ref]
 }
 
+// Add a package to the Catalog.
 func (c *Catalog) Add(p Package) {
 	if p.id != 0 {
 		log.Errorf("package already added to catalog: %s", p)
@@ -70,6 +76,7 @@ func (c *Catalog) Add(p Package) {
 	}
 }
 
+// Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
 func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
 	channel := make(chan *Package)
 	go func() {
@@ -96,6 +103,8 @@ func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
 	return channel
 }
 
+// Sorted enumerates all packages for the given types sorted by package name. Enumerates all packages if no type
+// is specified.
 func (c *Catalog) Sorted(types ...Type) []*Package {
 	pkgs := make([]*Package, 0)
 	for p := range c.Enumerate(types...) {

@@ -1,3 +1,6 @@
+/*
+Defines the logging interface which is used throughout the syft library.
+*/
 package logger
 
 type Logger interface {

@@ -1,3 +1,6 @@
+/*
+Package dpkg provides a concrete Cataloger implementation for Debian package DB status files.
+*/
 package dpkg
 
 import (

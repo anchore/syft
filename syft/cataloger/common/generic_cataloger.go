@@ -1,3 +1,6 @@
+/*
+Package common provides generic utilities used by multiple catalogers.
+*/
 package common
 
 import (
