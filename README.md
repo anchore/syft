@@ -7,7 +7,7 @@
 
 A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems.
 
-![Demo](.github/assets/syft-demo.gif)
+![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
 **Features**
 - Catalog container images and filesystems to discover packages and libraries.
