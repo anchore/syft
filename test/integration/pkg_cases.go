@@ -77,11 +77,19 @@ var cases = []struct {
 		},
 	},
 	{
-		name:        "find python packages",
+		name:        "find python requirements.txt packages",
 		pkgType:     pkg.PythonRequirementsPkg,
 		pkgLanguage: pkg.Python,
 		pkgInfo: map[string]string{
 			"flask": "4.0.0",
+		},
+	},
+	{
+		name:        "find python setup.py packages",
+		pkgType:     pkg.PythonSetupPkg,
+		pkgLanguage: pkg.Python,
+		pkgInfo: map[string]string{
+			"mypy": "v0.770",
 		},
 	},
 	{

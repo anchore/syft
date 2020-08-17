@@ -22,6 +22,7 @@ func New() *Cataloger {
 		"**/*dist-info/METADATA": parseWheelMetadata,
 		"**/requirements.txt":    parseRequirementsTxt,
 		"**/poetry.lock":         parsePoetryLock,
+		"**/setup.py":            parseSetup,
 	}
 
 	return &Cataloger{

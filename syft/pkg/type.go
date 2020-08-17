@@ -16,6 +16,7 @@ const (
 	NpmPkg                Type = "npm"
 	YarnPkg               Type = "yarn"
 	PythonRequirementsPkg Type = "python-requirements"
+	PythonSetupPkg        Type = "python-setup"
 	JavaPkg               Type = "java-archive"
 	JenkinsPluginPkg      Type = "jenkins-plugin"
 	GoModulePkg           Type = "go-module"
@@ -32,6 +33,7 @@ var AllPkgs = []Type{
 	NpmPkg,
 	YarnPkg,
 	PythonRequirementsPkg,
+	PythonSetupPkg,
 	JavaPkg,
 	JenkinsPluginPkg,
 	GoModulePkg,
