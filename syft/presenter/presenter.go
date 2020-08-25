@@ -7,6 +7,8 @@ package presenter
 import (
 	"io"
 
+	"github.com/anchore/syft/syft/presenter/cyclonedx"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/presenter/json"
 	"github.com/anchore/syft/syft/presenter/table"
@@ -29,6 +31,8 @@ func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog) Presenter 
 		return text.NewPresenter(catalog, s)
 	case TablePresenter:
 		return table.NewPresenter(catalog, s)
+	case CycloneDxPresenter:
+		return cyclonedx.NewPresenter(catalog, s)
 	default:
 		return nil
 	}

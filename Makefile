@@ -253,4 +253,4 @@ clean-dist:
 
 .PHONY: clean-json-schema-examples
 clean-json-schema-examples:
-	rm json-schema/examples/*
+	rm -f json-schema/examples/*

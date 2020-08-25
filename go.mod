@@ -13,6 +13,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-test/deep v1.0.6
 	github.com/google/go-containerregistry v0.1.1 // indirect
+	github.com/google/uuid v1.1.1
 	github.com/gookit/color v1.2.7
 	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
 	github.com/hashicorp/go-multierror v1.1.0

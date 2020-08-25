@@ -3,44 +3,33 @@ package presenter
 import "strings"
 
 const (
-	UnknownPresenter Option = iota
-	JSONPresenter
-	TextPresenter
-	TablePresenter
+	UnknownPresenter   Option = "UnknownPresenter"
+	JSONPresenter      Option = "json"
+	TextPresenter      Option = "text"
+	TablePresenter     Option = "table"
+	CycloneDxPresenter Option = "cyclonedx"
 )
-
-var optionStr = []string{
-	"UnknownPresenter",
-	"json",
-	"text",
-	"table",
-}
 
 var Options = []Option{
 	JSONPresenter,
 	TextPresenter,
 	TablePresenter,
+	CycloneDxPresenter,
 }
 
-type Option int
+type Option string
 
 func ParseOption(userStr string) Option {
 	switch strings.ToLower(userStr) {
-	case strings.ToLower(JSONPresenter.String()):
+	case string(JSONPresenter):
 		return JSONPresenter
-	case strings.ToLower(TextPresenter.String()):
+	case string(TextPresenter):
 		return TextPresenter
-	case strings.ToLower(TablePresenter.String()):
+	case string(TablePresenter):
 		return TablePresenter
+	case string(CycloneDxPresenter), "cyclone", "cyclone-dx":
+		return CycloneDxPresenter
 	default:
 		return UnknownPresenter
 	}
-}
-
-func (o Option) String() string {
-	if int(o) >= len(optionStr) || o < 0 {
-		return optionStr[0]
-	}
-
-	return optionStr[o]
 }
