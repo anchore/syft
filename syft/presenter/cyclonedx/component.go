@@ -2,6 +2,7 @@ package cyclonedx
 
 import "encoding/xml"
 
+// Component represents a single element in the CycloneDX BOM
 type Component struct {
 	XMLName     xml.Name   `xml:"component"`
 	Type        string     `xml:"type,attr"`             // Required; Describes if the component is a library, framework, application, container, operating system, firmware, hardware device, or file
@@ -14,8 +15,10 @@ type Component struct {
 	Description string     `xml:"description,omitempty"` // A description of the component
 	Licenses    *[]License `xml:"licenses>license"`      // A node describing zero or more license names, SPDX license IDs or expressions
 	// TODO: scope, hashes, copyright, cpe, purl, swid, modified, pedigree, externalReferences
+	// TODO: add user-defined parameters for syft-specific values (image layer index, cataloger, location path, etc.)
 }
 
+// License represents a single software license for a Component
 type License struct {
 	XMLName xml.Name `xml:"license"`
 	ID      string   `xml:"id,omitempty"`   // A valid SPDX license ID

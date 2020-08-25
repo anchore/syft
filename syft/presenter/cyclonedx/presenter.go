@@ -1,3 +1,6 @@
+/*
+Package cyclonedx is responsible for generating a CycloneDX XML report for the given container image or file system.
+*/
 package cyclonedx
 
 import (
@@ -9,11 +12,13 @@ import (
 	"github.com/anchore/syft/syft/scope"
 )
 
+// Presenter writes a CycloneDX report from the given Catalog and Scope contents
 type Presenter struct {
 	catalog *pkg.Catalog
 	scope   scope.Scope
 }
 
+// NewPresenter creates a CycloneDX presenter from the given Catalog and Scope objects.
 func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
 	return &Presenter{
 		catalog: catalog,
@@ -21,6 +26,7 @@ func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
 	}
 }
 
+// Present writes the CycloneDX report to the given io.Writer.
 func (pres *Presenter) Present(output io.Writer) error {
 	bom := NewDocumentFromCatalog(pres.catalog)
 
