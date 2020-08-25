@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -eux
+set -o pipefail
 
 DISTDIR=$1
 ACC_DIR=$2
@@ -20,7 +21,10 @@ if [[ ! "${WORK_DIR}" || ! -d "${WORK_DIR}" ]]; then
 fi
 
 function cleanup {
+  # we should still preserve previous failures
+  exit_code=$?
   rm -rf "${WORK_DIR}"
+  exit ${exit_code}
 }
 
 trap cleanup EXIT
@@ -35,8 +39,7 @@ ls -alh ${TEST_IMAGE_TAR}
 # run syft
 chmod 755 ${DISTDIR}/syft_darwin_amd64/syft
 ${DISTDIR}/syft_darwin_amd64/syft version -v
-${DISTDIR}/syft_darwin_amd64/syft docker-archive://${TEST_IMAGE_TAR} -vv -o json > ${REPORT}
-cat ${REPORT}
+SYFT_CHECK_FOR_APP_UPDATE=0 ${DISTDIR}/syft_darwin_amd64/syft docker-archive://${TEST_IMAGE_TAR} -vv -o json > ${REPORT}
 
 # keep the generated report around
 mkdir -p ${RESULTSDIR}

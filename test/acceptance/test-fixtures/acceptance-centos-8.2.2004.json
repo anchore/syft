@@ -1,1 +1,4161 @@
-{"artifacts":[{"name":"acl","version":"2.2.53","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"audit-libs","version":"3.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"0.17.20191104git1c2f876.el8"}},{"name":"basesystem","version":"11","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"5.el8"}},{"name":"bash","version":"4.4.19","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"10.el8"}},{"name":"bind-export-libs","version":"9.11.13","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":32,"Arch":"x86_64","Release":"3.el8"}},{"name":"binutils","version":"2.30","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"73.el8"}},{"name":"bzip2-libs","version":"1.0.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"26.el8"}},{"name":"ca-certificates","version":"2019.2.32","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"80.0.el8_1"}},{"name":"centos-gpg-keys","version":"8.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"2.2004.0.1.el8"}},{"name":"centos-release","version":"8.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.2004.0.1.el8"}},{"name":"centos-repos","version":"8.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.2004.0.1.el8"}},{"name":"chkconfig","version":"1.11","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"coreutils-single","version":"8.30","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"7.el8_2.1"}},{"name":"cpio","version":"2.12","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"8.el8"}},{"name":"cracklib","version":"2.9.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"15.el8"}},{"name":"crypto-policies","version":"20191128","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"2.git23e1bf1.el8"}},{"name":"cryptsetup-libs","version":"2.2.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"curl","version":"7.61.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"12.el8"}},{"name":"cyrus-sasl-lib","version":"2.1.27","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"dbus","version":"1.12.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"9.el8"}},{"name":"dbus-common","version":"1.12.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"noarch","Release":"9.el8"}},{"name":"dbus-daemon","version":"1.12.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"9.el8"}},{"name":"dbus-libs","version":"1.12.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"9.el8"}},{"name":"dbus-tools","version":"1.12.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"9.el8"}},{"name":"device-mapper","version":"1.02.169","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":8,"Arch":"x86_64","Release":"3.el8"}},{"name":"device-mapper-libs","version":"1.02.169","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":8,"Arch":"x86_64","Release":"3.el8"}},{"name":"dhcp-client","version":"4.3.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":12,"Arch":"x86_64","Release":"40.el8"}},{"name":"dhcp-common","version":"4.3.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":12,"Arch":"noarch","Release":"40.el8"}},{"name":"dhcp-libs","version":"4.3.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":12,"Arch":"x86_64","Release":"40.el8"}},{"name":"dnf","version":"4.2.17","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"6.el8"}},{"name":"dnf-data","version":"4.2.17","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"6.el8"}},{"name":"dracut","version":"049","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"70.git20200228.el8"}},{"name":"dracut-network","version":"049","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"70.git20200228.el8"}},{"name":"dracut-squash","version":"049","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"70.git20200228.el8"}},{"name":"elfutils-default-yama-scope","version":"0.178","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"7.el8"}},{"name":"elfutils-libelf","version":"0.178","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"7.el8"}},{"name":"elfutils-libs","version":"0.178","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"7.el8"}},{"name":"ethtool","version":"5.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":2,"Arch":"x86_64","Release":"2.el8"}},{"name":"expat","version":"2.2.5","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"file-libs","version":"5.33","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"13.el8"}},{"name":"filesystem","version":"3.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.el8"}},{"name":"findutils","version":"4.6.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"20.el8"}},{"name":"gawk","version":"4.2.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"gdbm","version":"1.18","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"1.el8"}},{"name":"gdbm-libs","version":"1.18","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"1.el8"}},{"name":"glib2","version":"2.56.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"8.el8"}},{"name":"glibc","version":"2.28","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"101.el8"}},{"name":"glibc-common","version":"2.28","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"101.el8"}},{"name":"glibc-minimal-langpack","version":"2.28","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"101.el8"}},{"name":"gmp","version":"6.1.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"10.el8"}},{"name":"gnupg2","version":"2.2.9","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"gnutls","version":"3.6.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"10.el8_2"}},{"name":"gpgme","version":"1.10.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8.0.1"}},{"name":"grep","version":"3.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8"}},{"name":"gzip","version":"1.9","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"9.el8"}},{"name":"hostname","version":"3.20","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8"}},{"name":"ima-evm-utils","version":"1.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"info","version":"6.5","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8"}},{"name":"ipcalc","version":"0.2.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"iproute","version":"5.3.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"iptables-libs","version":"1.8.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"10.el8"}},{"name":"iputils","version":"20180629","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.el8"}},{"name":"json-c","version":"0.13.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"0.2.el8"}},{"name":"kexec-tools","version":"2.0.20","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"14.el8"}},{"name":"keyutils-libs","version":"1.5.10","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8"}},{"name":"kmod","version":"25","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"16.el8"}},{"name":"kmod-libs","version":"25","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"16.el8"}},{"name":"krb5-libs","version":"1.17","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"18.el8"}},{"name":"langpacks-en","version":"1.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"12.el8"}},{"name":"less","version":"530","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libacl","version":"2.2.53","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libarchive","version":"3.3.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"8.el8_1"}},{"name":"libassuan","version":"2.5.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"libattr","version":"2.4.48","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"libblkid","version":"2.32.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"22.el8"}},{"name":"libcap","version":"2.26","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"libcap-ng","version":"0.7.9","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"libcom_err","version":"1.45.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"libcomps","version":"0.1.11","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"libcurl-minimal","version":"7.61.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"12.el8"}},{"name":"libdb","version":"5.3.28","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"37.el8"}},{"name":"libdb-utils","version":"5.3.28","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"37.el8"}},{"name":"libdnf","version":"0.39.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"libfdisk","version":"2.32.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"22.el8"}},{"name":"libffi","version":"3.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"21.el8"}},{"name":"libgcc","version":"8.3.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8.0.2"}},{"name":"libgcrypt","version":"1.8.3","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"libgpg-error","version":"1.31","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libidn2","version":"2.2.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libkcapi","version":"1.1.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"16_1.el8"}},{"name":"libkcapi-hmaccalc","version":"1.1.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"16_1.el8"}},{"name":"libksba","version":"1.3.5","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"7.el8"}},{"name":"libmetalink","version":"0.1.3","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"7.el8"}},{"name":"libmnl","version":"1.0.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8"}},{"name":"libmodulemd1","version":"1.8.16","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"0.2.8.2.1"}},{"name":"libmount","version":"2.32.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"22.el8"}},{"name":"libnghttp2","version":"1.33.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8_0.1"}},{"name":"libnsl2","version":"1.2.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.20180605git4a062cf.el8"}},{"name":"libpcap","version":"1.9.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":14,"Arch":"x86_64","Release":"3.el8"}},{"name":"libpwquality","version":"1.4.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"9.el8"}},{"name":"librepo","version":"1.11.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.el8"}},{"name":"libreport-filesystem","version":"2.9.5","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"10.el8"}},{"name":"libseccomp","version":"2.4.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libselinux","version":"2.9","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"libsemanage","version":"2.9","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.el8"}},{"name":"libsepol","version":"2.9","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libsigsegv","version":"2.11","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"libsmartcols","version":"2.32.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"22.el8"}},{"name":"libsolv","version":"0.7.7","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libstdc++","version":"8.3.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8.0.2"}},{"name":"libtasn1","version":"4.13","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"libtirpc","version":"1.1.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"libunistring","version":"0.9.9","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"libusbx","version":"1.0.22","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"libutempter","version":"1.1.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"14.el8"}},{"name":"libuuid","version":"2.32.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"22.el8"}},{"name":"libverto","version":"0.3.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"libxcrypt","version":"4.1.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"libxml2","version":"2.9.7","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"7.el8"}},{"name":"libyaml","version":"0.1.7","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"libzstd","version":"1.4.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"2.el8"}},{"name":"lua-libs","version":"5.3.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"11.el8"}},{"name":"lz4-libs","version":"1.8.1.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"lzo","version":"2.08","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"14.el8"}},{"name":"mpfr","version":"3.1.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"ncurses-base","version":"6.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"7.20180224.el8"}},{"name":"ncurses-libs","version":"6.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"7.20180224.el8"}},{"name":"nettle","version":"3.4.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"npth","version":"1.5","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"openldap","version":"2.4.46","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"11.el8_1"}},{"name":"openssl-libs","version":"1.1.1c","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":1,"Arch":"x86_64","Release":"15.el8"}},{"name":"p11-kit","version":"0.23.14","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8_0"}},{"name":"p11-kit-trust","version":"0.23.14","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8_0"}},{"name":"pam","version":"1.3.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"8.el8"}},{"name":"pcre","version":"8.42","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"pcre2","version":"10.32","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"platform-python","version":"3.6.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"23.el8"}},{"name":"platform-python-setuptools","version":"39.2.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"5.el8"}},{"name":"popt","version":"1.16","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"14.el8"}},{"name":"procps-ng","version":"3.3.15","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"python3-dnf","version":"4.2.17","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"6.el8"}},{"name":"python3-gpg","version":"1.10.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8.0.1"}},{"name":"python3-hawkey","version":"0.39.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"python3-libcomps","version":"0.1.11","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"4.el8"}},{"name":"python3-libdnf","version":"0.39.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"python3-libs","version":"3.6.8","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"23.el8"}},{"name":"python3-pip-wheel","version":"9.0.3","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"16.el8"}},{"name":"python3-rpm","version":"4.14.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"37.el8"}},{"name":"python3-setuptools-wheel","version":"39.2.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"5.el8"}},{"name":"readline","version":"7.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"10.el8"}},{"name":"rootfiles","version":"8.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"22.el8"}},{"name":"rpm","version":"4.14.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"37.el8"}},{"name":"rpm-build-libs","version":"4.14.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"37.el8"}},{"name":"rpm-libs","version":"4.14.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"37.el8"}},{"name":"sed","version":"4.5","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"1.el8"}},{"name":"setup","version":"2.12.2","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"5.el8"}},{"name":"setuptools","version":"39.2.0","type":"wheel","cataloger":"","sources":[{"foundBy":"python-cataloger","effects":[]}]},{"name":"shadow-utils","version":"4.6","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":2,"Arch":"x86_64","Release":"8.el8"}},{"name":"snappy","version":"1.1.7","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"5.el8"}},{"name":"sqlite-libs","version":"3.26.0","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"6.el8"}},{"name":"squashfs-tools","version":"4.3","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"19.el8"}},{"name":"systemd","version":"239","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"30.el8_2"}},{"name":"systemd-libs","version":"239","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"30.el8_2"}},{"name":"systemd-pam","version":"239","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"30.el8_2"}},{"name":"systemd-udev","version":"239","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"30.el8_2"}},{"name":"tar","version":"1.30","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":2,"Arch":"x86_64","Release":"4.el8"}},{"name":"tzdata","version":"2020a","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"1.el8"}},{"name":"util-linux","version":"2.32.1","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"22.el8"}},{"name":"vim-minimal","version":"8.0.1763","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":2,"Arch":"x86_64","Release":"13.el8"}},{"name":"xz","version":"5.2.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"xz-libs","version":"5.2.4","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"3.el8"}},{"name":"yum","version":"4.2.17","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"noarch","Release":"6.el8"}},{"name":"zlib","version":"1.2.11","type":"rpm","cataloger":"","sources":[{"foundBy":"rpmdb-cataloger","effects":[]}],"metadata":{"Epoch":0,"Arch":"x86_64","Release":"13.el8"}}],"image":{"layers":[{"mediaType":"","digest":"","size":0}],"size":215273207,"digest":"sha256:831691599b88ad6cc2a4abbd0e89661a121aff14cfa289ad840fd3946f274f1f","mediaType":"application/vnd.docker.distribution.manifest.v2+json","tags":["centos:8.2.2004"]},"Source":""}
+{
+  "artifacts": [
+    {
+      "name": "acl",
+      "version": "2.2.53-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.2.53",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "acl-2.2.53-1.el8.src.rpm",
+        "size": 205740,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "audit-libs",
+      "version": "3.0-0.17.20191104git1c2f876.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "0.17.20191104git1c2f876.el8",
+        "source-rpm": "audit-3.0-0.17.20191104git1c2f876.el8.src.rpm",
+        "size": 283708,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "basesystem",
+      "version": "11-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "11",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "5.el8",
+        "source-rpm": "basesystem-11-5.el8.src.rpm",
+        "size": 0,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "bash",
+      "version": "4.4.19-10.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.4.19",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "10.el8",
+        "source-rpm": "bash-4.4.19-10.el8.src.rpm",
+        "size": 6930068,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "bind-export-libs",
+      "version": "9.11.13-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "9.11.13",
+        "epoch": 32,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "bind-9.11.13-3.el8.src.rpm",
+        "size": 3067009,
+        "license": "MPLv2.0",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "binutils",
+      "version": "2.30-73.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.30",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "73.el8",
+        "source-rpm": "binutils-2.30-73.el8.src.rpm",
+        "size": 24856745,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "bzip2-libs",
+      "version": "1.0.6-26.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.0.6",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "26.el8",
+        "source-rpm": "bzip2-1.0.6-26.el8.src.rpm",
+        "size": 77229,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "ca-certificates",
+      "version": "2019.2.32-80.0.el8_1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2019.2.32",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "80.0.el8_1",
+        "source-rpm": "ca-certificates-2019.2.32-80.0.el8_1.src.rpm",
+        "size": 993761,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "centos-gpg-keys",
+      "version": "8.2-2.2004.0.1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.2",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "2.2004.0.1.el8",
+        "source-rpm": "centos-release-8.2-2.2004.0.1.el8.src.rpm",
+        "size": 3370,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "centos-release",
+      "version": "8.2-2.2004.0.1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.2004.0.1.el8",
+        "source-rpm": "centos-release-8.2-2.2004.0.1.el8.src.rpm",
+        "size": 25430,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "centos-repos",
+      "version": "8.2-2.2004.0.1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.2004.0.1.el8",
+        "source-rpm": "centos-release-8.2-2.2004.0.1.el8.src.rpm",
+        "size": 9660,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "chkconfig",
+      "version": "1.11-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.11",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "chkconfig-1.11-1.el8.src.rpm",
+        "size": 791234,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "coreutils-single",
+      "version": "8.30-7.el8_2.1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.30",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "7.el8_2.1",
+        "source-rpm": "coreutils-8.30-7.el8_2.1.src.rpm",
+        "size": 1356273,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "cpio",
+      "version": "2.12-8.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.12",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "8.el8",
+        "source-rpm": "cpio-2.12-8.el8.src.rpm",
+        "size": 989536,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "cracklib",
+      "version": "2.9.6-15.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.9.6",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "15.el8",
+        "source-rpm": "cracklib-2.9.6-15.el8.src.rpm",
+        "size": 239047,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "crypto-policies",
+      "version": "20191128-2.git23e1bf1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "20191128",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "2.git23e1bf1.el8",
+        "source-rpm": "crypto-policies-20191128-2.git23e1bf1.el8.src.rpm",
+        "size": 190228,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "cryptsetup-libs",
+      "version": "2.2.2-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.2.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "cryptsetup-2.2.2-1.el8.src.rpm",
+        "size": 1871402,
+        "license": "GPLv2+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "curl",
+      "version": "7.61.1-12.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "7.61.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "12.el8",
+        "source-rpm": "curl-7.61.1-12.el8.src.rpm",
+        "size": 709006,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "cyrus-sasl-lib",
+      "version": "2.1.27-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.1.27",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "cyrus-sasl-2.1.27-1.el8.src.rpm",
+        "size": 734978,
+        "license": "BSD with advertising",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dbus",
+      "version": "1.12.8-9.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.12.8",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "9.el8",
+        "source-rpm": "dbus-1.12.8-9.el8.src.rpm",
+        "size": 0,
+        "license": "(GPLv2+ or AFL) and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dbus-common",
+      "version": "1.12.8-9.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.12.8",
+        "epoch": 1,
+        "architecture": "noarch",
+        "release": "9.el8",
+        "source-rpm": "dbus-1.12.8-9.el8.src.rpm",
+        "size": 11131,
+        "license": "(GPLv2+ or AFL) and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dbus-daemon",
+      "version": "1.12.8-9.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.12.8",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "9.el8",
+        "source-rpm": "dbus-1.12.8-9.el8.src.rpm",
+        "size": 583585,
+        "license": "(GPLv2+ or AFL) and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dbus-libs",
+      "version": "1.12.8-9.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.12.8",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "9.el8",
+        "source-rpm": "dbus-1.12.8-9.el8.src.rpm",
+        "size": 399664,
+        "license": "(GPLv2+ or AFL) and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dbus-tools",
+      "version": "1.12.8-9.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.12.8",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "9.el8",
+        "source-rpm": "dbus-1.12.8-9.el8.src.rpm",
+        "size": 129722,
+        "license": "(GPLv2+ or AFL) and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "device-mapper",
+      "version": "1.02.169-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.02.169",
+        "epoch": 8,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "lvm2-2.03.08-3.el8.src.rpm",
+        "size": 355102,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "device-mapper-libs",
+      "version": "1.02.169-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.02.169",
+        "epoch": 8,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "lvm2-2.03.08-3.el8.src.rpm",
+        "size": 416167,
+        "license": "LGPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dhcp-client",
+      "version": "4.3.6-40.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.3.6",
+        "epoch": 12,
+        "architecture": "x86_64",
+        "release": "40.el8",
+        "source-rpm": "dhcp-4.3.6-40.el8.src.rpm",
+        "size": 530732,
+        "license": "ISC",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dhcp-common",
+      "version": "4.3.6-40.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.3.6",
+        "epoch": 12,
+        "architecture": "noarch",
+        "release": "40.el8",
+        "source-rpm": "dhcp-4.3.6-40.el8.src.rpm",
+        "size": 301814,
+        "license": "ISC",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dhcp-libs",
+      "version": "4.3.6-40.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.3.6",
+        "epoch": 12,
+        "architecture": "x86_64",
+        "release": "40.el8",
+        "source-rpm": "dhcp-4.3.6-40.el8.src.rpm",
+        "size": 161256,
+        "license": "ISC",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dnf",
+      "version": "4.2.17-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.2.17",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "6.el8",
+        "source-rpm": "dnf-4.2.17-6.el8.src.rpm",
+        "size": 1670640,
+        "license": "GPLv2+ and GPLv2 and GPL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dnf-data",
+      "version": "4.2.17-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.2.17",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "6.el8",
+        "source-rpm": "dnf-4.2.17-6.el8.src.rpm",
+        "size": 36253,
+        "license": "GPLv2+ and GPLv2 and GPL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dracut",
+      "version": "049-70.git20200228.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "049",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "70.git20200228.el8",
+        "source-rpm": "dracut-049-70.git20200228.el8.src.rpm",
+        "size": 1046582,
+        "license": "GPLv2+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dracut-network",
+      "version": "049-70.git20200228.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "049",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "70.git20200228.el8",
+        "source-rpm": "dracut-049-70.git20200228.el8.src.rpm",
+        "size": 160704,
+        "license": "GPLv2+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "dracut-squash",
+      "version": "049-70.git20200228.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "049",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "70.git20200228.el8",
+        "source-rpm": "dracut-049-70.git20200228.el8.src.rpm",
+        "size": 3054,
+        "license": "GPLv2+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "elfutils-default-yama-scope",
+      "version": "0.178-7.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.178",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "7.el8",
+        "source-rpm": "elfutils-0.178-7.el8.src.rpm",
+        "size": 1810,
+        "license": "GPLv2+ or LGPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "elfutils-libelf",
+      "version": "0.178-7.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.178",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "7.el8",
+        "source-rpm": "elfutils-0.178-7.el8.src.rpm",
+        "size": 920699,
+        "license": "GPLv2+ or LGPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "elfutils-libs",
+      "version": "0.178-7.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.178",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "7.el8",
+        "source-rpm": "elfutils-0.178-7.el8.src.rpm",
+        "size": 717567,
+        "license": "GPLv2+ or LGPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "ethtool",
+      "version": "5.0-2.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.0",
+        "epoch": 2,
+        "architecture": "x86_64",
+        "release": "2.el8",
+        "source-rpm": "ethtool-5.0-2.el8.src.rpm",
+        "size": 502623,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "expat",
+      "version": "2.2.5-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.2.5",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "expat-2.2.5-3.el8.src.rpm",
+        "size": 314068,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "file-libs",
+      "version": "5.33-13.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.33",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "13.el8",
+        "source-rpm": "file-5.33-13.el8.src.rpm",
+        "size": 6382974,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "filesystem",
+      "version": "3.8-2.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.8",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.el8",
+        "source-rpm": "filesystem-3.8-2.el8.src.rpm",
+        "size": 0,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "findutils",
+      "version": "4.6.0-20.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.6.0",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "20.el8",
+        "source-rpm": "findutils-4.6.0-20.el8.src.rpm",
+        "size": 1816673,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gawk",
+      "version": "4.2.1-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.2.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "gawk-4.2.1-1.el8.src.rpm",
+        "size": 2717614,
+        "license": "GPLv3+ and GPLv2+ and LGPLv2+ and BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gdbm",
+      "version": "1.18-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.18",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "gdbm-1.18-1.el8.src.rpm",
+        "size": 399977,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gdbm-libs",
+      "version": "1.18-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.18",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "gdbm-1.18-1.el8.src.rpm",
+        "size": 135248,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "glib2",
+      "version": "2.56.4-8.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.56.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "8.el8",
+        "source-rpm": "glib2-2.56.4-8.el8.src.rpm",
+        "size": 12272168,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "glibc",
+      "version": "2.28-101.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.28",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "101.el8",
+        "source-rpm": "glibc-2.28-101.el8.src.rpm",
+        "size": 17885631,
+        "license": "LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and GPLv2+ with exceptions and BSD and Inner-Net and ISC and Public Domain and GFDL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "glibc-common",
+      "version": "2.28-101.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.28",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "101.el8",
+        "source-rpm": "glibc-2.28-101.el8.src.rpm",
+        "size": 9531204,
+        "license": "LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and GPLv2+ with exceptions and BSD and Inner-Net and ISC and Public Domain and GFDL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "glibc-minimal-langpack",
+      "version": "2.28-101.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.28",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "101.el8",
+        "source-rpm": "glibc-2.28-101.el8.src.rpm",
+        "size": 0,
+        "license": "LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and GPLv2+ with exceptions and BSD and Inner-Net and ISC and Public Domain and GFDL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gmp",
+      "version": "6.1.2-10.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "6.1.2",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "10.el8",
+        "source-rpm": "gmp-6.1.2-10.el8.src.rpm",
+        "size": 1678740,
+        "license": "LGPLv3+ or GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gnupg2",
+      "version": "2.2.9-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.2.9",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "gnupg2-2.2.9-1.el8.src.rpm",
+        "size": 9632671,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gnutls",
+      "version": "3.6.8-10.el8_2",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.6.8",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "10.el8_2",
+        "source-rpm": "gnutls-3.6.8-10.el8_2.src.rpm",
+        "size": 2687449,
+        "license": "GPLv3+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gpgme",
+      "version": "1.10.0-6.el8.0.1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.10.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8.0.1",
+        "source-rpm": "gpgme-1.10.0-6.el8.0.1.src.rpm",
+        "size": 741097,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "grep",
+      "version": "3.1-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8",
+        "source-rpm": "grep-3.1-6.el8.src.rpm",
+        "size": 835205,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "gzip",
+      "version": "1.9-9.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.9",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "9.el8",
+        "source-rpm": "gzip-1.9-9.el8.src.rpm",
+        "size": 426515,
+        "license": "GPLv3+ and GFDL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "hostname",
+      "version": "3.20-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.20",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8",
+        "source-rpm": "hostname-3.20-6.el8.src.rpm",
+        "size": 43979,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "ima-evm-utils",
+      "version": "1.1-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "ima-evm-utils-1.1-5.el8.src.rpm",
+        "size": 123538,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "info",
+      "version": "6.5-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "6.5",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8",
+        "source-rpm": "texinfo-6.5-6.el8.src.rpm",
+        "size": 386513,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "ipcalc",
+      "version": "0.2.4-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.2.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "ipcalc-0.2.4-4.el8.src.rpm",
+        "size": 67705,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "iproute",
+      "version": "5.3.0-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.3.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "iproute-5.3.0-1.el8.src.rpm",
+        "size": 1894954,
+        "license": "GPLv2+ and Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "iptables-libs",
+      "version": "1.8.4-10.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.8.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "10.el8",
+        "source-rpm": "iptables-1.8.4-10.el8.src.rpm",
+        "size": 201888,
+        "license": "GPLv2 and Artistic 2.0 and ISC",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "iputils",
+      "version": "20180629-2.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "20180629",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.el8",
+        "source-rpm": "iputils-20180629-2.el8.src.rpm",
+        "size": 351665,
+        "license": "BSD and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "json-c",
+      "version": "0.13.1-0.2.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.13.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "0.2.el8",
+        "source-rpm": "json-c-0.13.1-0.2.el8.src.rpm",
+        "size": 73898,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "kexec-tools",
+      "version": "2.0.20-14.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.0.20",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "14.el8",
+        "source-rpm": "kexec-tools-2.0.20-14.el8.src.rpm",
+        "size": 1222009,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "keyutils-libs",
+      "version": "1.5.10-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.5.10",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8",
+        "source-rpm": "keyutils-1.5.10-6.el8.src.rpm",
+        "size": 43926,
+        "license": "GPLv2+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "kmod",
+      "version": "25-16.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "25",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "16.el8",
+        "source-rpm": "kmod-25-16.el8.src.rpm",
+        "size": 243998,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "kmod-libs",
+      "version": "25-16.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "25",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "16.el8",
+        "source-rpm": "kmod-25-16.el8.src.rpm",
+        "size": 126640,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "krb5-libs",
+      "version": "1.17-18.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.17",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "18.el8",
+        "source-rpm": "krb5-1.17-18.el8.src.rpm",
+        "size": 2259532,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "langpacks-en",
+      "version": "1.0-12.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.0",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "12.el8",
+        "source-rpm": "langpacks-1.0-12.el8.src.rpm",
+        "size": 400,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "less",
+      "version": "530-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "530",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "less-530-1.el8.src.rpm",
+        "size": 344874,
+        "license": "GPLv3+ or BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libacl",
+      "version": "2.2.53-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.2.53",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "acl-2.2.53-1.el8.src.rpm",
+        "size": 59272,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libarchive",
+      "version": "3.3.2-8.el8_1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.3.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "8.el8_1",
+        "source-rpm": "libarchive-3.3.2-8.el8_1.src.rpm",
+        "size": 1139914,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libassuan",
+      "version": "2.5.1-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.5.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "libassuan-2.5.1-3.el8.src.rpm",
+        "size": 202763,
+        "license": "LGPLv2+ and GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libattr",
+      "version": "2.4.48-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.4.48",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "attr-2.4.48-3.el8.src.rpm",
+        "size": 27346,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libblkid",
+      "version": "2.32.1-22.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.32.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "22.el8",
+        "source-rpm": "util-linux-2.32.1-22.el8.src.rpm",
+        "size": 339680,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libcap",
+      "version": "2.26-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.26",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "libcap-2.26-3.el8.src.rpm",
+        "size": 124170,
+        "license": "GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libcap-ng",
+      "version": "0.7.9-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.7.9",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "libcap-ng-0.7.9-5.el8.src.rpm",
+        "size": 51278,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libcom_err",
+      "version": "1.45.4-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.45.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "e2fsprogs-1.45.4-3.el8.src.rpm",
+        "size": 61921,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libcomps",
+      "version": "0.1.11-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.1.11",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "libcomps-0.1.11-4.el8.src.rpm",
+        "size": 217067,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libcurl-minimal",
+      "version": "7.61.1-12.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "7.61.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "12.el8",
+        "source-rpm": "curl-7.61.1-12.el8.src.rpm",
+        "size": 551776,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libdb",
+      "version": "5.3.28-37.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.3.28",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "37.el8",
+        "source-rpm": "libdb-5.3.28-37.el8.src.rpm",
+        "size": 2515048,
+        "license": "BSD and LGPLv2 and Sleepycat",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libdb-utils",
+      "version": "5.3.28-37.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.3.28",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "37.el8",
+        "source-rpm": "libdb-5.3.28-37.el8.src.rpm",
+        "size": 536911,
+        "license": "BSD and LGPLv2 and Sleepycat",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libdnf",
+      "version": "0.39.1-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.39.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "libdnf-0.39.1-5.el8.src.rpm",
+        "size": 2123733,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libfdisk",
+      "version": "2.32.1-22.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.32.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "22.el8",
+        "source-rpm": "util-linux-2.32.1-22.el8.src.rpm",
+        "size": 438722,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libffi",
+      "version": "3.1-21.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "21.el8",
+        "source-rpm": "libffi-3.1-21.el8.src.rpm",
+        "size": 68404,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libgcc",
+      "version": "8.3.1-5.el8.0.2",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.3.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8.0.2",
+        "source-rpm": "gcc-8.3.1-5.el8.0.2.src.rpm",
+        "size": 190232,
+        "license": "GPLv3+ and GPLv3+ with exceptions and GPLv2+ with exceptions and LGPLv2+ and BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libgcrypt",
+      "version": "1.8.3-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.8.3",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "libgcrypt-1.8.3-4.el8.src.rpm",
+        "size": 1547061,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libgpg-error",
+      "version": "1.31-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.31",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "libgpg-error-1.31-1.el8.src.rpm",
+        "size": 902818,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libidn2",
+      "version": "2.2.0-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.2.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "libidn2-2.2.0-1.el8.src.rpm",
+        "size": 287762,
+        "license": "(GPLv2+ or LGPLv3+) and GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libkcapi",
+      "version": "1.1.1-16_1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.1.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "16_1.el8",
+        "source-rpm": "libkcapi-1.1.1-16_1.el8.src.rpm",
+        "size": 82828,
+        "license": "BSD or GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libkcapi-hmaccalc",
+      "version": "1.1.1-16_1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.1.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "16_1.el8",
+        "source-rpm": "libkcapi-1.1.1-16_1.el8.src.rpm",
+        "size": 35165,
+        "license": "BSD or GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libksba",
+      "version": "1.3.5-7.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.3.5",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "7.el8",
+        "source-rpm": "libksba-1.3.5-7.el8.src.rpm",
+        "size": 342935,
+        "license": "(LGPLv3+ or GPLv2+) and GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libmetalink",
+      "version": "0.1.3-7.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.1.3",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "7.el8",
+        "source-rpm": "libmetalink-0.1.3-7.el8.src.rpm",
+        "size": 76960,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libmnl",
+      "version": "1.0.4-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.0.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8",
+        "source-rpm": "libmnl-1.0.4-6.el8.src.rpm",
+        "size": 53687,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libmodulemd1",
+      "version": "1.8.16-0.2.8.2.1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.8.16",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "0.2.8.2.1",
+        "source-rpm": "libmodulemd-2.8.2-1.el8.src.rpm",
+        "size": 546039,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libmount",
+      "version": "2.32.1-22.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.32.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "22.el8",
+        "source-rpm": "util-linux-2.32.1-22.el8.src.rpm",
+        "size": 398154,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libnghttp2",
+      "version": "1.33.0-1.el8_0.1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.33.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8_0.1",
+        "source-rpm": "nghttp2-1.33.0-1.el8_0.1.src.rpm",
+        "size": 233188,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libnsl2",
+      "version": "1.2.0-2.20180605git4a062cf.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.2.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.20180605git4a062cf.el8",
+        "source-rpm": "libnsl2-1.2.0-2.20180605git4a062cf.el8.src.rpm",
+        "size": 147122,
+        "license": "BSD and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libpcap",
+      "version": "1.9.0-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.9.0",
+        "epoch": 14,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "libpcap-1.9.0-3.el8.src.rpm",
+        "size": 424251,
+        "license": "BSD with advertising",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libpwquality",
+      "version": "1.4.0-9.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.4.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "9.el8",
+        "source-rpm": "libpwquality-1.4.0-9.el8.src.rpm",
+        "size": 384791,
+        "license": "BSD or GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "librepo",
+      "version": "1.11.0-2.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.11.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.el8",
+        "source-rpm": "librepo-1.11.0-2.el8.src.rpm",
+        "size": 262664,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libreport-filesystem",
+      "version": "2.9.5-10.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.9.5",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "10.el8",
+        "source-rpm": "libreport-2.9.5-10.el8.src.rpm",
+        "size": 0,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libseccomp",
+      "version": "2.4.1-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.4.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "libseccomp-2.4.1-1.el8.src.rpm",
+        "size": 402960,
+        "license": "LGPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libselinux",
+      "version": "2.9-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.9",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "libselinux-2.9-3.el8.src.rpm",
+        "size": 305912,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libsemanage",
+      "version": "2.9-2.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.9",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.el8",
+        "source-rpm": "libsemanage-2.9-2.el8.src.rpm",
+        "size": 477962,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libsepol",
+      "version": "2.9-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.9",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "libsepol-2.9-1.el8.src.rpm",
+        "size": 996264,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libsigsegv",
+      "version": "2.11-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.11",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "libsigsegv-2.11-5.el8.src.rpm",
+        "size": 47034,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libsmartcols",
+      "version": "2.32.1-22.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.32.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "22.el8",
+        "source-rpm": "util-linux-2.32.1-22.el8.src.rpm",
+        "size": 244258,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libsolv",
+      "version": "0.7.7-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.7.7",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "libsolv-0.7.7-1.el8.src.rpm",
+        "size": 789176,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libstdc++",
+      "version": "8.3.1-5.el8.0.2",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.3.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8.0.2",
+        "source-rpm": "gcc-8.3.1-5.el8.0.2.src.rpm",
+        "size": 1855607,
+        "license": "GPLv3+ and GPLv3+ with exceptions and GPLv2+ with exceptions and LGPLv2+ and BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libtasn1",
+      "version": "4.13-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.13",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "libtasn1-4.13-3.el8.src.rpm",
+        "size": 168725,
+        "license": "GPLv3+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libtirpc",
+      "version": "1.1.4-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.1.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "libtirpc-1.1.4-4.el8.src.rpm",
+        "size": 381964,
+        "license": "SISSL and BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libunistring",
+      "version": "0.9.9-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.9.9",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "libunistring-0.9.9-3.el8.src.rpm",
+        "size": 1855932,
+        "license": "GPLv2+ or LGPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libusbx",
+      "version": "1.0.22-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.0.22",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "libusbx-1.0.22-1.el8.src.rpm",
+        "size": 151177,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libutempter",
+      "version": "1.1.6-14.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.1.6",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "14.el8",
+        "source-rpm": "libutempter-1.1.6-14.el8.src.rpm",
+        "size": 52637,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libuuid",
+      "version": "2.32.1-22.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.32.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "22.el8",
+        "source-rpm": "util-linux-2.32.1-22.el8.src.rpm",
+        "size": 34832,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libverto",
+      "version": "0.3.0-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.3.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "libverto-0.3.0-5.el8.src.rpm",
+        "size": 28244,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libxcrypt",
+      "version": "4.1.1-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.1.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "libxcrypt-4.1.1-4.el8.src.rpm",
+        "size": 194420,
+        "license": "LGPLv2+ and BSD and Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libxml2",
+      "version": "2.9.7-7.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.9.7",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "7.el8",
+        "source-rpm": "libxml2-2.9.7-7.el8.src.rpm",
+        "size": 1752506,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libyaml",
+      "version": "0.1.7-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.1.7",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "libyaml-0.1.7-5.el8.src.rpm",
+        "size": 136478,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "libzstd",
+      "version": "1.4.2-2.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.4.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "2.el8",
+        "source-rpm": "zstd-1.4.2-2.el8.src.rpm",
+        "size": 703765,
+        "license": "BSD and GPLv2",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "lua-libs",
+      "version": "5.3.4-11.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.3.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "11.el8",
+        "source-rpm": "lua-5.3.4-11.el8.src.rpm",
+        "size": 351728,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "lz4-libs",
+      "version": "1.8.1.2-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.8.1.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "lz4-1.8.1.2-4.el8.src.rpm",
+        "size": 97367,
+        "license": "GPLv2+ and BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "lzo",
+      "version": "2.08-14.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.08",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "14.el8",
+        "source-rpm": "lzo-2.08-14.el8.src.rpm",
+        "size": 198757,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "mpfr",
+      "version": "3.1.6-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.1.6",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "mpfr-3.1.6-1.el8.src.rpm",
+        "size": 612625,
+        "license": "LGPLv3+ and GPLv3+ and GFDL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "ncurses-base",
+      "version": "6.1-7.20180224.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "6.1",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "7.20180224.el8",
+        "source-rpm": "ncurses-6.1-7.20180224.el8.src.rpm",
+        "size": 290089,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "ncurses-libs",
+      "version": "6.1-7.20180224.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "6.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "7.20180224.el8",
+        "source-rpm": "ncurses-6.1-7.20180224.el8.src.rpm",
+        "size": 1120040,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "nettle",
+      "version": "3.4.1-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.4.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "nettle-3.4.1-1.el8.src.rpm",
+        "size": 683185,
+        "license": "LGPLv3+ or GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "npth",
+      "version": "1.5-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.5",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "npth-1.5-4.el8.src.rpm",
+        "size": 47909,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "openldap",
+      "version": "2.4.46-11.el8_1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.4.46",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "11.el8_1",
+        "source-rpm": "openldap-2.4.46-11.el8_1.src.rpm",
+        "size": 1388793,
+        "license": "OpenLDAP",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "openssl-libs",
+      "version": "1.1.1c-15.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.1.1c",
+        "epoch": 1,
+        "architecture": "x86_64",
+        "release": "15.el8",
+        "source-rpm": "openssl-1.1.1c-15.el8.src.rpm",
+        "size": 3744176,
+        "license": "OpenSSL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "p11-kit",
+      "version": "0.23.14-5.el8_0",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.23.14",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8_0",
+        "source-rpm": "p11-kit-0.23.14-5.el8_0.src.rpm",
+        "size": 1394732,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "p11-kit-trust",
+      "version": "0.23.14-5.el8_0",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.23.14",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8_0",
+        "source-rpm": "p11-kit-0.23.14-5.el8_0.src.rpm",
+        "size": 508547,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "pam",
+      "version": "1.3.1-8.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.3.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "8.el8",
+        "source-rpm": "pam-1.3.1-8.el8.src.rpm",
+        "size": 2857052,
+        "license": "BSD and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "pcre",
+      "version": "8.42-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.42",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "pcre-8.42-4.el8.src.rpm",
+        "size": 518067,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "pcre2",
+      "version": "10.32-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "10.32",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "pcre2-10.32-1.el8.src.rpm",
+        "size": 667046,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "platform-python",
+      "version": "3.6.8-23.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.6.8",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "23.el8",
+        "source-rpm": "python3-3.6.8-23.el8.src.rpm",
+        "size": 41790,
+        "license": "Python",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "platform-python-setuptools",
+      "version": "39.2.0-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "39.2.0",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "5.el8",
+        "source-rpm": "python-setuptools-39.2.0-5.el8.src.rpm",
+        "size": 2930163,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "popt",
+      "version": "1.16-14.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.16",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "14.el8",
+        "source-rpm": "popt-1.16-14.el8.src.rpm",
+        "size": 128374,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "procps-ng",
+      "version": "3.3.15-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.3.15",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "procps-ng-3.3.15-1.el8.src.rpm",
+        "size": 938380,
+        "license": "GPL+ and GPLv2 and GPLv2+ and GPLv3+ and LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-dnf",
+      "version": "4.2.17-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.2.17",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "6.el8",
+        "source-rpm": "dnf-4.2.17-6.el8.src.rpm",
+        "size": 1829453,
+        "license": "GPLv2+ and GPLv2 and GPL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-gpg",
+      "version": "1.10.0-6.el8.0.1",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.10.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8.0.1",
+        "source-rpm": "gpgme-1.10.0-6.el8.0.1.src.rpm",
+        "size": 1295107,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-hawkey",
+      "version": "0.39.1-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.39.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "libdnf-0.39.1-5.el8.src.rpm",
+        "size": 263176,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-libcomps",
+      "version": "0.1.11-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.1.11",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "libcomps-0.1.11-4.el8.src.rpm",
+        "size": 147027,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-libdnf",
+      "version": "0.39.1-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "0.39.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "libdnf-0.39.1-5.el8.src.rpm",
+        "size": 3666830,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-libs",
+      "version": "3.6.8-23.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.6.8",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "23.el8",
+        "source-rpm": "python3-3.6.8-23.el8.src.rpm",
+        "size": 32187857,
+        "license": "Python",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-pip-wheel",
+      "version": "9.0.3-16.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "9.0.3",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "16.el8",
+        "source-rpm": "python-pip-9.0.3-16.el8.src.rpm",
+        "size": 1255748,
+        "license": "MIT and Python and ASL 2.0 and BSD and ISC and LGPLv2 and MPLv2.0 and (ASL 2.0 or BSD)",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-rpm",
+      "version": "4.14.2-37.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.14.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "37.el8",
+        "source-rpm": "rpm-4.14.2-37.el8.src.rpm",
+        "size": 430929,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "python3-setuptools-wheel",
+      "version": "39.2.0-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "39.2.0",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "5.el8",
+        "source-rpm": "python-setuptools-39.2.0-5.el8.src.rpm",
+        "size": 347696,
+        "license": "MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "readline",
+      "version": "7.0-10.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "7.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "10.el8",
+        "source-rpm": "readline-7.0-10.el8.src.rpm",
+        "size": 466321,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "rootfiles",
+      "version": "8.1-22.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.1",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "22.el8",
+        "source-rpm": "rootfiles-8.1-22.el8.src.rpm",
+        "size": 599,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "rpm",
+      "version": "4.14.2-37.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.14.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "37.el8",
+        "source-rpm": "rpm-4.14.2-37.el8.src.rpm",
+        "size": 2084270,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "rpm-build-libs",
+      "version": "4.14.2-37.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.14.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "37.el8",
+        "source-rpm": "rpm-4.14.2-37.el8.src.rpm",
+        "size": 215992,
+        "license": "GPLv2+ and LGPLv2+ with exceptions",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "rpm-libs",
+      "version": "4.14.2-37.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.14.2",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "37.el8",
+        "source-rpm": "rpm-4.14.2-37.el8.src.rpm",
+        "size": 722464,
+        "license": "GPLv2+ and LGPLv2+ with exceptions",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "sed",
+      "version": "4.5-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.5",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "1.el8",
+        "source-rpm": "sed-4.5-1.el8.src.rpm",
+        "size": 776854,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "setup",
+      "version": "2.12.2-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.12.2",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "5.el8",
+        "source-rpm": "setup-2.12.2-5.el8.src.rpm",
+        "size": 724831,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "setuptools",
+      "version": "39.2.0",
+      "type": "wheel",
+      "found-by": [
+        "python-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/usr/lib/python3.6/site-packages/setuptools-39.2.0.dist-info/METADATA",
+          "layer-index": 0
+        }
+      ]
+    },
+    {
+      "name": "shadow-utils",
+      "version": "4.6-8.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.6",
+        "epoch": 2,
+        "architecture": "x86_64",
+        "release": "8.el8",
+        "source-rpm": "shadow-utils-4.6-8.el8.src.rpm",
+        "size": 5368080,
+        "license": "BSD and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "snappy",
+      "version": "1.1.7-5.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.1.7",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "5.el8",
+        "source-rpm": "snappy-1.1.7-5.el8.src.rpm",
+        "size": 58789,
+        "license": "BSD",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "sqlite-libs",
+      "version": "3.26.0-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "3.26.0",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "6.el8",
+        "source-rpm": "sqlite-3.26.0-6.el8.src.rpm",
+        "size": 1162241,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "squashfs-tools",
+      "version": "4.3-19.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.3",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "19.el8",
+        "source-rpm": "squashfs-tools-4.3-19.el8.src.rpm",
+        "size": 502829,
+        "license": "GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "systemd",
+      "version": "239-30.el8_2",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "239",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "30.el8_2",
+        "source-rpm": "systemd-239-30.el8_2.src.rpm",
+        "size": 11073156,
+        "license": "LGPLv2+ and MIT and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "systemd-libs",
+      "version": "239-30.el8_2",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "239",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "30.el8_2",
+        "source-rpm": "systemd-239-30.el8_2.src.rpm",
+        "size": 4497918,
+        "license": "LGPLv2+ and MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "systemd-pam",
+      "version": "239-30.el8_2",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "239",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "30.el8_2",
+        "source-rpm": "systemd-239-30.el8_2.src.rpm",
+        "size": 902496,
+        "license": "LGPLv2+ and MIT and GPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "systemd-udev",
+      "version": "239-30.el8_2",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "239",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "30.el8_2",
+        "source-rpm": "systemd-239-30.el8_2.src.rpm",
+        "size": 7939885,
+        "license": "LGPLv2+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "tar",
+      "version": "1.30-4.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.30",
+        "epoch": 2,
+        "architecture": "x86_64",
+        "release": "4.el8",
+        "source-rpm": "tar-1.30-4.el8.src.rpm",
+        "size": 2914728,
+        "license": "GPLv3+",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "tzdata",
+      "version": "2020a-1.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2020a",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "1.el8",
+        "source-rpm": "tzdata-2020a-1.el8.src.rpm",
+        "size": 1904256,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "util-linux",
+      "version": "2.32.1-22.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "2.32.1",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "22.el8",
+        "source-rpm": "util-linux-2.32.1-22.el8.src.rpm",
+        "size": 11560494,
+        "license": "GPLv2 and GPLv2+ and LGPLv2+ and BSD with advertising and Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "vim-minimal",
+      "version": "8.0.1763-13.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "8.0.1763",
+        "epoch": 2,
+        "architecture": "x86_64",
+        "release": "13.el8",
+        "source-rpm": "vim-8.0.1763-13.el8.src.rpm",
+        "size": 1420484,
+        "license": "Vim and MIT",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "xz",
+      "version": "5.2.4-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.2.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "xz-5.2.4-3.el8.src.rpm",
+        "size": 432832,
+        "license": "GPLv2+ and Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "xz-libs",
+      "version": "5.2.4-3.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "5.2.4",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "3.el8",
+        "source-rpm": "xz-5.2.4-3.el8.src.rpm",
+        "size": 194799,
+        "license": "Public Domain",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "yum",
+      "version": "4.2.17-6.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "4.2.17",
+        "epoch": 0,
+        "architecture": "noarch",
+        "release": "6.el8",
+        "source-rpm": "dnf-4.2.17-6.el8.src.rpm",
+        "size": 70881,
+        "license": "GPLv2+ and GPLv2 and GPL",
+        "vendor": "CentOS"
+      }
+    },
+    {
+      "name": "zlib",
+      "version": "1.2.11-13.el8",
+      "type": "rpm",
+      "found-by": [
+        "rpmdb-cataloger"
+      ],
+      "locations": [
+        {
+          "path": "/var/lib/rpm/Packages",
+          "layer-index": 0
+        }
+      ],
+      "metadata": {
+        "version": "1.2.11",
+        "epoch": 0,
+        "architecture": "x86_64",
+        "release": "13.el8",
+        "source-rpm": "zlib-1.2.11-13.el8.src.rpm",
+        "size": 195551,
+        "license": "zlib and Boost",
+        "vendor": "CentOS"
+      }
+    }
+  ],
+  "image": {
+    "layers": [
+      {
+        "media-type": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+        "digest": "sha256:eb29745b8228e1e97c01b1d5c2554a319c00a94d8dd5746a3904222ad65a13f8",
+        "size": 215273207
+      }
+    ],
+    "size": 215273207,
+    "digest": "sha256:831691599b88ad6cc2a4abbd0e89661a121aff14cfa289ad840fd3946f274f1f",
+    "media-type": "application/vnd.docker.distribution.manifest.v2+json",
+    "tags": [
+      "centos:8.2.2004"
+    ]
+  }
+}

@@ -171,7 +171,7 @@ def main(image):
     ) * 100.0
     missing_metadata = inline_metadata_set - same_metadata
 
-    if len(bonus_packages) > 0:
+    if bonus_packages:
         rows = []
         print(colors.bold + "Syft found extra packages:", colors.reset)
         for package in sorted(list(bonus_packages)):
@@ -179,7 +179,7 @@ def main(image):
         print_rows(rows)
         print()
 
-    if len(missing_pacakges) > 0:
+    if missing_pacakges:
         rows = []
         print(colors.bold + "Syft missed packages:", colors.reset)
         for package in sorted(list(missing_pacakges)):
@@ -187,7 +187,7 @@ def main(image):
         print_rows(rows)
         print()
 
-    if len(missing_metadata) > 0:
+    if missing_metadata:
         rows = []
         print(colors.bold + "Syft mismatched metadata:", colors.reset)
         for inline_metadata_pair in sorted(list(missing_metadata)):

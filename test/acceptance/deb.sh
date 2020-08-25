@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -eux
+set -o pipefail
 
 DISTDIR=$1
 ACC_DIR=$2
@@ -19,7 +20,10 @@ if [[ ! "${WORK_DIR}" || ! -d "${WORK_DIR}" ]]; then
 fi
 
 function cleanup {
+  # we should still preserve previous failures
+  exit_code=$?
   rm -rf "${WORK_DIR}"
+  exit ${exit_code}
 }
 
 trap cleanup EXIT
@@ -32,13 +36,13 @@ docker run --rm \
     -v /var/run/docker.sock://var/run/docker.sock \
     -v /${PWD}:/src \
     -v ${WORK_DIR}:${WORK_DIR} \
+    -e SYFT_CHECK_FOR_APP_UPDATE=0 \
     -w /src \
     ubuntu:latest \
         /bin/bash -x -c "\
             DEBIAN_FRONTEND=noninteractive apt install ${DISTDIR}/syft_*_linux_amd64.deb -y && \
             syft version -v && \
-            syft ${TEST_IMAGE} -vv -o json > ${REPORT} && \
-            cat ${REPORT} \
+            syft ${TEST_IMAGE} -vv -o json > ${REPORT} \
         "
 
 # keep the generated report around
