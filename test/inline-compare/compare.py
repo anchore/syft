@@ -151,7 +151,7 @@ def main(image):
     ) * 100.0
 
     bonus_packages = syft_packages - inline_packages
-    missing_pacakges = inline_packages - syft_packages
+    missing_packages = inline_packages - syft_packages
 
     inline_metadata_set = set()
     for package in inline_packages:
@@ -179,10 +179,10 @@ def main(image):
         print_rows(rows)
         print()
 
-    if missing_pacakges:
+    if missing_packages:
         rows = []
         print(colors.bold + "Syft missed packages:", colors.reset)
-        for package in sorted(list(missing_pacakges)):
+        for package in sorted(list(missing_packages)):
             rows.append([INDENT, repr(package)])
         print_rows(rows)
         print()
