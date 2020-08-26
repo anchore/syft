@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
- <bom xmlns="http://cyclonedx.org/schema/bom/1.2" version="1" serialNumber="urn:uuid:4448d650-a65e-49e4-b826-30d2010dfcd9">
+ <bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:2e7af7d0-83a4-4730-9175-66858406b285">
    <components>
      <component type="library">
        <name>package-1</name>
@@ -19,7 +19,7 @@
      </component>
    </components>
    <bd:metadata>
-     <bd:timestamp>2020-08-24T17:37:37-04:00</bd:timestamp>
+     <bd:timestamp>2020-08-26T15:31:39-04:00</bd:timestamp>
      <bd:tool>
        <bd:vendor>anchore</bd:vendor>
        <bd:name>syft</bd:name>

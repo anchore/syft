@@ -5,21 +5,23 @@ package integration
 import (
 	"bytes"
 	"fmt"
-	"github.com/anchore/go-testutils"
-	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/presenter"
-	"github.com/anchore/syft/syft/scope"
-	"github.com/xeipuuv/gojsonschema"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/anchore/go-testutils"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/presenter"
+	"github.com/anchore/syft/syft/scope"
+	"github.com/xeipuuv/gojsonschema"
 )
 
-const jsonSchemaExamplesPath = "json-schema/examples"
+const jsonSchemaPath = "schema/json"
+const jsonSchemaExamplesPath = jsonSchemaPath + "/examples"
 
 func repoRoot(t *testing.T) string {
 	t.Helper()
@@ -35,7 +37,7 @@ func repoRoot(t *testing.T) string {
 }
 
 func validateAgainstV1Schema(t *testing.T, json string) {
-	fullSchemaPath := path.Join(repoRoot(t), "json-schema", "schema.json")
+	fullSchemaPath := path.Join(repoRoot(t), jsonSchemaPath, "schema.json")
 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
 	documentLoader := gojsonschema.NewStringLoader(json)
 
