@@ -60,7 +60,7 @@ all: clean static-analysis test ## Run all linux-based checks (linting, license 
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 .PHONY: test
-test: unit integration acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests)
+test: unit validate-cyclonedx-schema integration acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests)
 
 .PHONY: help
 help:
@@ -68,7 +68,7 @@ help:
 
 .PHONY: ci-bootstrap
 ci-bootstrap: bootstrap
-	sudo apt update && sudo apt install -y bc jq
+	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils
 
 .PHONY: bootstrap
 bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
@@ -111,6 +111,10 @@ lint-fix: ## Auto-format all source code + run golangci lint fixers
 check-licenses:
 	$(TEMPDIR)/bouncer check
 
+.PHONY: validate-cyclonedx-schema
+validate-cyclonedx-schema:
+	cd schema/cyclonedx && make
+
 .PHONY: unit
 unit: fixtures ## Run unit tests (with coverage)
 	$(call title,Running unit tests)
@@ -143,7 +147,7 @@ generate-json-schema: clean-json-schema-examples integration ## Generate a new j
 	docker run \
 		-i \
 		--rm \
-		-v $(shell pwd)/json-schema:/work \
+		-v $(shell pwd)/schema/json:/work \
 		-w /work \
 		python:3.8 \
 			bash -x -c "\
@@ -269,4 +273,4 @@ clean-dist:
 
 .PHONY: clean-json-schema-examples
 clean-json-schema-examples:
-	rm -f json-schema/examples/*
+	rm -f schema/json/examples/*

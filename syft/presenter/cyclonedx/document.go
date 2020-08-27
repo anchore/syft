@@ -13,6 +13,7 @@ import (
 type Document struct {
 	XMLName       xml.Name       `xml:"bom"`
 	XMLNs         string         `xml:"xmlns,attr"`
+	XMLNsBd       string         `xml:"xmlns:bd,attr"`
 	Version       int            `xml:"version,attr"`
 	SerialNumber  string         `xml:"serialNumber,attr"`
 	Components    []Component    `xml:"components>component"` // The BOM contents
@@ -23,6 +24,7 @@ type Document struct {
 func NewDocument() Document {
 	return Document{
 		XMLNs:        "http://cyclonedx.org/schema/bom/1.2",
+		XMLNsBd:      "http://cyclonedx.org/schema/ext/bom-descriptor/1.0",
 		Version:      1,
 		SerialNumber: uuid.New().URN(),
 	}

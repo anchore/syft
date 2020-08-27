@@ -15,7 +15,6 @@ jobs:
     # 2CPU / 4GB RAM
     resource_class: medium
     steps:
-
       - checkout
 
       - restore_cache:
@@ -48,7 +47,6 @@ jobs:
     # 2CPU / 4GB RAM
     resource_class: medium
     steps:
-
       - checkout
 
       - restore_cache:
@@ -69,15 +67,15 @@ jobs:
       - run:
           name: enable docker client
           command: |
-              # all of this to enable "circleci local execute ..." cli commands for /var/run/docker.sock
-              mkdir -p ${HOME}/.local/bin
-              cat \<< EOF > ${HOME}/.local/bin/docker
-              #!/bin/bash
-              set -xue
-              sudo -E ${HOME}/.local/bin/docker.bin \$@
-              EOF
-              sudo mv /usr/bin/docker ${HOME}/.local/bin/docker.bin
-              chmod 755 ${HOME}/.local/bin/docker
+            # all of this to enable "circleci local execute ..." cli commands for /var/run/docker.sock
+            mkdir -p ${HOME}/.local/bin
+            cat \<< EOF > ${HOME}/.local/bin/docker
+            #!/bin/bash
+            set -xue
+            sudo -E ${HOME}/.local/bin/docker.bin \$@
+            EOF
+            sudo mv /usr/bin/docker ${HOME}/.local/bin/docker.bin
+            chmod 755 ${HOME}/.local/bin/docker
 
       - run:
           name: build cache key for java test-fixture blobs
@@ -95,6 +93,10 @@ jobs:
           key: syft-unit-test-java-cache-{{ checksum "syft/cataloger/java/test-fixtures/java-builds/packages.fingerprint" }}
           paths:
             - "syft/cataloger/java/test-fixtures/java-builds/packages"
+
+      - run:
+          name: validate syft output against the CycloneDX schema
+          command: make validate-cyclonedx-schema
 
       - run:
           name: build hash key for integration test-fixtures blobs
