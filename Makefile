@@ -222,8 +222,21 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 			$(ACC_TEST_IMAGE) \
 			$(RESULTSDIR)
 
+.PHONY: changlog
+changelog:
+	mkdir -p $(DISTDIR)
+	@docker run -it --rm  \
+		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
+		--user anchore \
+		--project $(BIN) \
+		-t ${GITHUB_TOKEN} \
+		--no-pr-wo-labels \
+		--no-issues-wo-labels \
+		--unreleased-only \
+		--future-release $(VERSION)
+
 .PHONY: release
-release: clean-dist ## Build and publish final binaries and packages
+release: clean-dist changelog ## Build and publish final binaries and packages
 	$(call title,Publishing release artifacts)
 	# create a config with the dist dir overridden
 	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
@@ -231,7 +244,10 @@ release: clean-dist ## Build and publish final binaries and packages
 
 	# release
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	$(TEMPDIR)/goreleaser --rm-dist --config $(TEMPDIR)/goreleaser.yaml
+	$(TEMPDIR)/goreleaser \
+		--rm-dist \
+		--config $(TEMPDIR)/goreleaser.yaml \
+		--release-notes <(cat CHANGELOG.md)
 
 	# verify checksum signatures
 	.github/scripts/verify-signature.sh "$(DISTDIR)"
