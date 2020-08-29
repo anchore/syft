@@ -13,7 +13,8 @@ type Component struct {
 	Name        string     `xml:"name"`                  // Required; The name of the component as defined by the project
 	Version     string     `xml:"version"`               // Required; The version of the component as defined by the project
 	Description string     `xml:"description,omitempty"` // A description of the component
-	Licenses    *[]License `xml:"licenses>license"`      // A node describing zero or more license names, SPDX license IDs or expressions
+	Licenses    *[]License `xml:"licenses"`              // A node describing zero or more license names, SPDX license IDs or expressions
+	PackageURL  string     `xml:"purl,omitempty"`        // Specifies the package-url (PackageURL). The purl, if specified, must be valid and conform to the specification defined at: https://github.com/package-url/purl-spec
 	// TODO: scope, hashes, copyright, cpe, purl, swid, modified, pedigree, externalReferences
 	// TODO: add user-defined parameters for syft-specific values (image layer index, cataloger, location path, etc.)
 }

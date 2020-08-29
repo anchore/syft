@@ -68,7 +68,7 @@ func startWorker(userInput string) <-chan error {
 			}
 		}
 
-		catalog, scope, _, err := syft.Catalog(userInput, appConfig.ScopeOpt)
+		catalog, scope, distro, err := syft.Catalog(userInput, appConfig.ScopeOpt)
 		if err != nil {
 			errs <- fmt.Errorf("failed to catalog input: %+v", err)
 			return
@@ -76,7 +76,7 @@ func startWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.CatalogerFinished,
-			Value: presenter.GetPresenter(appConfig.PresenterOpt, *scope, catalog),
+			Value: presenter.GetPresenter(appConfig.PresenterOpt, *scope, catalog, distro),
 		})
 	}()
 	return errs

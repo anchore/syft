@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
- <bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:0667955f-34d0-49c1-8062-996dbc636974">
+ <bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:897b827f-af57-449c-b376-594978264b7c">
    <components>
      <component type="library">
-       <name>package-1</name>
+       <name>package1</name>
        <version>1.0.1</version>
+       <purl>pkg:deb/ubuntu/package1@1.0.1?arch=amd64</purl>
      </component>
      <component type="library">
-       <name>package-2</name>
+       <name>package2</name>
        <version>2.0.1</version>
-       <licenses>
-         <license>
-           <name>MIT</name>
-         </license>
-         <license>
-           <name>Apache-v2</name>
-         </license>
-       </licenses>
+       <license>
+         <name>MIT</name>
+       </license>
+       <license>
+         <name>Apache-v2</name>
+       </license>
+       <purl>pkg:deb/ubuntu/package2@1.0.2?arch=amd64</purl>
      </component>
    </components>
    <bd:metadata>
-     <bd:timestamp>2020-08-26T15:31:39-04:00</bd:timestamp>
+     <bd:timestamp>2020-08-29T17:32:04-04:00</bd:timestamp>
      <bd:tool>
        <bd:vendor>anchore</bd:vendor>
        <bd:name>syft</bd:name>
