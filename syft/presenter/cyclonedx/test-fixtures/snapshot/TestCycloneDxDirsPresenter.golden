@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
- <bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:88c9a559-fb74-45a1-9dbb-a3d8bcbcacc8">
-   <components>
-     <component type="library">
-       <name>package1</name>
-       <version>1.0.1</version>
-       <purl>pkg:deb/ubuntu/package1@1.0.1?arch=amd64</purl>
-     </component>
-     <component type="library">
-       <name>package2</name>
-       <version>2.0.1</version>
-       <licenses>
-         <license>
-           <name>MIT</name>
-         </license>
-         <license>
-           <name>Apache-v2</name>
-         </license>
-       </licenses>
-       <purl>pkg:deb/ubuntu/package2@1.0.2?arch=amd64</purl>
-     </component>
-   </components>
-   <bd:metadata>
-     <bd:timestamp>2020-08-29T20:17:49-04:00</bd:timestamp>
-     <bd:tool>
-       <bd:vendor>anchore</bd:vendor>
-       <bd:name>syft</bd:name>
-       <bd:version>[not provided]</bd:version>
-     </bd:tool>
-     <bd:component type="file">
-       <name>/some/path</name>
-       <version></version>
-     </bd:component>
-   </bd:metadata>
- </bom>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:b3b1786a-2de3-4501-b902-58b701b8ad0e">
+  <components>
+    <component type="library">
+      <name>package1</name>
+      <version>1.0.1</version>
+      <purl>pkg:deb/ubuntu/package1@1.0.1?arch=amd64</purl>
+    </component>
+    <component type="library">
+      <name>package2</name>
+      <version>2.0.1</version>
+      <licenses>
+        <license>
+          <name>MIT</name>
+        </license>
+        <license>
+          <name>Apache-v2</name>
+        </license>
+      </licenses>
+      <purl>pkg:deb/ubuntu/package2@1.0.2?arch=amd64</purl>
+    </component>
+  </components>
+  <bd:metadata>
+    <bd:timestamp>2020-08-30T21:50:50-04:00</bd:timestamp>
+    <bd:tool>
+      <bd:vendor>anchore</bd:vendor>
+      <bd:name>syft</bd:name>
+      <bd:version>[not provided]</bd:version>
+    </bd:tool>
+    <bd:component type="file">
+      <name>/some/path</name>
+      <version></version>
+    </bd:component>
+  </bd:metadata>
+</bom>

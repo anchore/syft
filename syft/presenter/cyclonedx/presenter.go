@@ -66,16 +66,15 @@ func (pres *Presenter) Present(output io.Writer) error {
 		return fmt.Errorf("unsupported source: %T", src)
 	}
 
-	xmlOut, err := xml.MarshalIndent(bom, " ", "  ")
+	encoder := xml.NewEncoder(output)
+	encoder.Indent("", "  ")
+
+	_, err := output.Write([]byte(xml.Header))
 	if err != nil {
 		return err
 	}
 
-	_, err = output.Write([]byte(xml.Header))
-	if err != nil {
-		return err
-	}
-	_, err = output.Write(xmlOut)
+	err = encoder.Encode(bom)
 	if err != nil {
 		return err
 	}
