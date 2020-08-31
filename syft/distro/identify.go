@@ -1,6 +1,7 @@
 package distro
 
 import (
+	"io/ioutil"
 	"regexp"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 )
 
 // returns a distro or nil
+// TODO: refactor to io.Reader
 type parseFunc func(string) *Distro
 
 type parseEntry struct {
@@ -52,8 +54,8 @@ identifyLoop:
 		}
 
 		for _, ref := range refs {
-			contents, err := resolver.MultipleFileContentsByRef(ref)
-			content, ok := contents[ref]
+			contentReaders, err := resolver.MultipleFileContentsByRef(ref)
+			contentReader, ok := contentReaders[ref]
 
 			if !ok {
 				log.Infof("no content present for ref: %s", ref)
@@ -64,6 +66,14 @@ identifyLoop:
 				log.Debugf("unable to get contents from %s: %s", entry.path, err)
 				continue
 			}
+
+			bytes, err := ioutil.ReadAll(contentReader)
+			if err != nil {
+				log.Debugf("unable to read contents from %s: %s", entry.path, err)
+				continue
+			}
+
+			content := string(bytes)
 
 			if content == "" {
 				log.Debugf("no contents in file, skipping: %s", entry.path)

@@ -2,6 +2,7 @@ package scope
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -16,7 +17,7 @@ type Resolver interface {
 
 // ContentResolver knows how to get file content for given file.References
 type ContentResolver interface {
-	MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error)
+	MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]io.Reader, error)
 }
 
 //  FileResolver knows how to get file.References for given string paths and globs

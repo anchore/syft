@@ -79,17 +79,15 @@ func TestGenericCataloger(t *testing.T) {
 		selectionByPath[string(s.Path)] = s
 	}
 
-	upstream := "some-other-cataloger"
 	expectedPkgs := make(map[file.Reference]pkg.Package)
 	for path, ref := range selectionByPath {
 		expectedPkgs[ref] = pkg.Package{
-			FoundBy: upstream,
-			Source:  []file.Reference{ref},
-			Name:    fmt.Sprintf("%s file contents!", path),
+			Source: []file.Reference{ref},
+			Name:   fmt.Sprintf("%s file contents!", path),
 		}
 	}
 
-	actualPkgs, err := cataloger.Catalog(resolver.contents, upstream)
+	actualPkgs, err := cataloger.Catalog(resolver.contents)
 	if err != nil {
 		t.Fatalf("cataloger catalog action failed: %+v", err)
 	}

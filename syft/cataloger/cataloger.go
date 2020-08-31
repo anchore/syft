@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/syft/syft/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
+	"io"
 )
 
 // Cataloger describes behavior for an object to participate in parsing container image or file system
@@ -28,9 +29,8 @@ type Cataloger interface {
 	// SelectFiles discovers and returns specific files that the cataloger would like to inspect the contents of.
 	SelectFiles(scope.FileResolver) []file.Reference
 	// Catalog is given the file contents and should return any discovered Packages after analyzing the contents.
-	Catalog(map[file.Reference]string) ([]pkg.Package, error)
+	Catalog(map[file.Reference]io.Reader) ([]pkg.Package, error)
 	// TODO: add "IterationNeeded" error to indicate to the driver to continue with another Select/Catalog pass
-	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
 }
 
 // All returns a slice of all locally defined catalogers (defined in child packages).

@@ -21,6 +21,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/olekukonko/tablewriter v0.0.4
+	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/package-url/packageurl-go v0.1.0
 	github.com/pelletier/go-toml v1.8.0
 	github.com/rogpeppe/go-internal v1.5.2
@@ -41,3 +42,5 @@ require (
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace github.com/anchore/stereoscope => ../stereoscope

@@ -4,12 +4,11 @@ Package common provides generic utilities used by multiple catalogers.
 package common
 
 import (
-	"strings"
-
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
+	"io"
 )
 
 // GenericCataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
@@ -73,7 +72,7 @@ func (a *GenericCataloger) SelectFiles(resolver scope.FileResolver) []file.Refer
 }
 
 // Catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
-func (a *GenericCataloger) Catalog(contents map[file.Reference]string, upstreamMatcher string) ([]pkg.Package, error) {
+func (a *GenericCataloger) Catalog(contents map[file.Reference]io.Reader) ([]pkg.Package, error) {
 	defer a.clear()
 
 	packages := make([]pkg.Package, 0)
@@ -81,19 +80,18 @@ func (a *GenericCataloger) Catalog(contents map[file.Reference]string, upstreamM
 	for reference, parser := range a.parsers {
 		content, ok := contents[reference]
 		if !ok {
-			log.Errorf("cataloger '%s' missing file content: %+v", upstreamMatcher, reference)
+			log.Errorf("cataloger missing file content: %+v", reference)
 			continue
 		}
 
-		entries, err := parser(string(reference.Path), strings.NewReader(content))
+		entries, err := parser(string(reference.Path), content)
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %w", upstreamMatcher, reference, err)
+			log.Errorf("cataloger failed to parse entries (reference=%+v): %w", reference, err)
 			continue
 		}
 
 		for _, entry := range entries {
-			entry.FoundBy = upstreamMatcher
 			entry.Source = []file.Reference{reference}
 
 			packages = append(packages, entry)

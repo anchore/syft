@@ -3,6 +3,7 @@ package resolvers
 import (
 	"archive/tar"
 	"fmt"
+	"io"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -111,6 +112,6 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, e
 
 // MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer.
-func (r *AllLayersResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
+func (r *AllLayersResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]io.Reader, error) {
 	return r.img.MultipleFileContentsByRef(f...)
 }

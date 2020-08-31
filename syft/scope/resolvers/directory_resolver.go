@@ -2,13 +2,12 @@ package resolvers
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
-
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/bmatcuk/doublestar"
+	"io"
+	"os"
+	"path"
 )
 
 // DirectoryResolver implements path and content access for the directory data source.
@@ -40,15 +39,6 @@ func (s DirectoryResolver) FilesByPath(userPaths ...file.Path) ([]file.Reference
 	return references, nil
 }
 
-func fileContents(path file.Path) ([]byte, error) {
-	contents, err := ioutil.ReadFile(string(path))
-
-	if err != nil {
-		return nil, err
-	}
-	return contents, nil
-}
-
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, error) {
 	result := make([]file.Reference, 0)
@@ -76,15 +66,15 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, er
 }
 
 // MultipleFileContentsByRef returns the file contents for all file.References relative a directory.
-func (s DirectoryResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
-	refContents := make(map[file.Reference]string)
+func (s DirectoryResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]io.Reader, error) {
+	refContents := make(map[file.Reference]io.Reader)
 	for _, fileRef := range f {
-		contents, err := fileContents(fileRef.Path)
-
+		targetFile, err := os.Open(string(fileRef.Path))
 		if err != nil {
-			return refContents, fmt.Errorf("could not read contents of file: %s", fileRef.Path)
+			return refContents, fmt.Errorf("could not open file=%q: %w", fileRef.Path, err)
 		}
-		refContents[fileRef] = string(contents)
+
+		refContents[fileRef] = targetFile
 	}
 	return refContents, nil
 }
