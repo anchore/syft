@@ -3,6 +3,7 @@ package cyclonedx
 import (
 	"bytes"
 	"flag"
+	"github.com/anchore/syft/syft/distro"
 	"regexp"
 	"testing"
 
@@ -22,16 +23,21 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
-		Name:    "package-1",
+		Name:    "package1",
 		Version: "1.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-1",
 		Source: []file.Reference{
 			{Path: "/some/path/pkg1"},
 		},
+		Metadata: pkg.DpkgMetadata{
+			Package:      "package1",
+			Version:      "1.0.1",
+			Architecture: "amd64",
+		},
 	})
 	catalog.Add(pkg.Package{
-		Name:    "package-2",
+		Name:    "package2",
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
@@ -42,13 +48,24 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 			"MIT",
 			"Apache-v2",
 		},
+		Metadata: pkg.DpkgMetadata{
+			Package:      "package2",
+			Version:      "1.0.2",
+			Architecture: "amd64",
+		},
 	})
 
 	s, err := scope.NewScopeFromDir("/some/path")
 	if err != nil {
 		t.Fatal(err)
 	}
-	pres := NewPresenter(catalog, s)
+
+	d, err := distro.NewDistro(distro.Ubuntu, "20.04")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pres := NewPresenter(catalog, s, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -84,30 +101,61 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
-		Name:    "package-1",
+		Name:    "package1",
 		Version: "1.0.1",
 		Source: []file.Reference{
 			*img.SquashedTree().File("/somefile-1.txt"),
 		},
-		Type:    pkg.DebPkg,
+		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-1",
+		Metadata: pkg.RpmMetadata{
+			Name:      "package1",
+			Epoch:     0,
+			Arch:      "x86_64",
+			Release:   "1",
+			Version:   "1.0.1",
+			SourceRpm: "package1-1.0.1-1.src.rpm",
+			Size:      12406784,
+			License:   "MIT",
+			Vendor:    "",
+		},
 	})
 	catalog.Add(pkg.Package{
-		Name:    "package-2",
+		Name:    "package2",
 		Version: "2.0.1",
 		Source: []file.Reference{
 			*img.SquashedTree().File("/somefile-2.txt"),
 		},
-		Type:    pkg.DebPkg,
+		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-2",
 		Licenses: []string{
 			"MIT",
 			"Apache-v2",
 		},
+		Metadata: pkg.RpmMetadata{
+			Name:      "package2",
+			Epoch:     0,
+			Arch:      "x86_64",
+			Release:   "1",
+			Version:   "1.0.2",
+			SourceRpm: "package2-1.0.2-1.src.rpm",
+			Size:      12406784,
+			License:   "MIT",
+			Vendor:    "",
+		},
 	})
 
 	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
-	pres := NewPresenter(catalog, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	d, err := distro.NewDistro(distro.RedHat, "8")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pres := NewPresenter(catalog, s, d)
 
 	// run presenter
 	err = pres.Present(&buffer)

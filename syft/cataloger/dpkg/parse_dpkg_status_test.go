@@ -24,9 +24,10 @@ func TestSinglePackage(t *testing.T) {
 		{
 			name: "Test Single Package",
 			expected: pkg.DpkgMetadata{
-				Package: "apt",
-				Source:  "apt-dev",
-				Version: "1.8.2",
+				Package:      "apt",
+				Source:       "apt-dev",
+				Version:      "1.8.2",
+				Architecture: "amd64",
 			},
 		},
 	}
@@ -65,13 +66,15 @@ func TestMultiplePackages(t *testing.T) {
 			name: "Test Multiple Package",
 			expected: []pkg.DpkgMetadata{
 				{
-					Package: "tzdata",
-					Version: "2020a-0+deb10u1",
-					Source:  "tzdata-dev",
+					Package:      "tzdata",
+					Version:      "2020a-0+deb10u1",
+					Source:       "tzdata-dev",
+					Architecture: "all",
 				},
 				{
-					Package: "util-linux",
-					Version: "2.33.1-0.1",
+					Package:      "util-linux",
+					Version:      "2.33.1-0.1",
+					Architecture: "amd64",
 				},
 			},
 		},

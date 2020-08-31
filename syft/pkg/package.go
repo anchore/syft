@@ -5,8 +5,12 @@ package pkg
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/distro"
+	"github.com/package-url/packageurl-go"
 )
 
 type ID int64
@@ -33,4 +37,43 @@ func (p Package) ID() ID {
 // Stringer to represent a package.
 func (p Package) String() string {
 	return fmt.Sprintf("Pkg(type=%s, name=%s, version=%s)", p.Type, p.Name, p.Version)
+}
+
+// PackageURL returns a package-URL representation of the given package (see https://github.com/package-url/purl-spec)
+func (p Package) PackageURL(d distro.Distro) string {
+	// default to pURLs on the metadata
+	if p.Metadata != nil {
+		if i, ok := p.Metadata.(interface{ PackageURL() string }); ok {
+			return i.PackageURL()
+		} else if i, ok := p.Metadata.(interface{ PackageURL(distro.Distro) string }); ok {
+			return i.PackageURL(d)
+		}
+	}
+
+	var purlType = p.Type.PackageURLType()
+	var name = p.Name
+	var namespace = ""
+
+	switch {
+	case purlType == "":
+		// there is no purl type, don't attempt to craft a purl
+		// TODO: should this be a "generic" purl type instead?
+		return ""
+	case p.Type == GoModulePkg:
+		re := regexp.MustCompile(`(\/)[^\/]*$`)
+		fields := re.Split(p.Name, -1)
+		namespace = fields[0]
+		name = strings.TrimPrefix(p.Name, namespace+"/")
+	}
+
+	// generate a purl from the package data
+	pURL := packageurl.NewPackageURL(
+		purlType,
+		namespace,
+		name,
+		p.Version,
+		nil,
+		"")
+
+	return pURL.ToString()
 }

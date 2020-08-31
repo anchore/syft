@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/presenter"
 	"github.com/anchore/syft/syft/scope"
@@ -63,12 +64,17 @@ func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope *scope.Scope, p
 
 	output := bytes.NewBufferString("")
 
-	p := presenter.GetPresenter(presenter.JSONPresenter, *theScope, catalog)
+	d, err := distro.NewDistro(distro.CentOS, "5")
+	if err != nil {
+		t.Fatalf("bad distro: %+v", err)
+	}
+
+	p := presenter.GetPresenter(presenter.JSONPresenter, *theScope, catalog, &d)
 	if p == nil {
 		t.Fatal("unable to get presenter")
 	}
 
-	err := p.Present(output)
+	err = p.Present(output)
 	if err != nil {
 		t.Fatalf("unable to present: %+v", err)
 	}

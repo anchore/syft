@@ -14,6 +14,7 @@ func TestParseRpmDB(t *testing.T) {
 			Version: "0.9.2-1",
 			Type:    pkg.RpmPkg,
 			Metadata: pkg.RpmMetadata{
+				Name:      "dive",
 				Epoch:     0,
 				Arch:      "x86_64",
 				Release:   "1",

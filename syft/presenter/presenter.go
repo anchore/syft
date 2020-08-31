@@ -7,6 +7,8 @@ package presenter
 import (
 	"io"
 
+	"github.com/anchore/syft/syft/distro"
+
 	"github.com/anchore/syft/syft/presenter/cyclonedx"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -23,7 +25,7 @@ type Presenter interface {
 }
 
 // GetPresenter returns a presenter for images or directories
-func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog) Presenter {
+func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog, d *distro.Distro) Presenter {
 	switch option {
 	case JSONPresenter:
 		return json.NewPresenter(catalog, s)
@@ -32,7 +34,7 @@ func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog) Presenter 
 	case TablePresenter:
 		return table.NewPresenter(catalog, s)
 	case CycloneDxPresenter:
-		return cyclonedx.NewPresenter(catalog, s)
+		return cyclonedx.NewPresenter(catalog, s, *d)
 	default:
 		return nil
 	}

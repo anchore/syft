@@ -3,6 +3,8 @@ package cyclonedx
 import (
 	"encoding/xml"
 
+	"github.com/anchore/syft/syft/distro"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/google/uuid"
 )
@@ -31,13 +33,14 @@ func NewDocument() Document {
 }
 
 // NewDocumentFromCatalog returns a CycloneDX Document object populated with the catalog contents.
-func NewDocumentFromCatalog(catalog *pkg.Catalog) Document {
+func NewDocumentFromCatalog(catalog *pkg.Catalog, d distro.Distro) Document {
 	bom := NewDocument()
 	for p := range catalog.Enumerate() {
 		component := Component{
-			Type:    "library", // TODO: this is not accurate
-			Name:    p.Name,
-			Version: p.Version,
+			Type:       "library", // TODO: this is not accurate
+			Name:       p.Name,
+			Version:    p.Version,
+			PackageURL: p.PackageURL(d),
 		}
 		var licenses []License
 		for _, licenseName := range p.Licenses {

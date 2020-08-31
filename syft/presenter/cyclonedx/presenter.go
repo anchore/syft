@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/syft/distro"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
 )
@@ -16,19 +18,21 @@ import (
 type Presenter struct {
 	catalog *pkg.Catalog
 	scope   scope.Scope
+	distro  distro.Distro
 }
 
 // NewPresenter creates a CycloneDX presenter from the given Catalog and Scope objects.
-func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) *Presenter {
 	return &Presenter{
 		catalog: catalog,
 		scope:   s,
+		distro:  d,
 	}
 }
 
 // Present writes the CycloneDX report to the given io.Writer.
 func (pres *Presenter) Present(output io.Writer) error {
-	bom := NewDocumentFromCatalog(pres.catalog)
+	bom := NewDocumentFromCatalog(pres.catalog, pres.distro)
 
 	srcObj := pres.scope.Source()
 

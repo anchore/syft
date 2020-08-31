@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
- <bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:2e7af7d0-83a4-4730-9175-66858406b285">
+ <bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:6da957f1-3337-4128-870c-fe271aa195d1">
    <components>
      <component type="library">
-       <name>package-1</name>
+       <name>package1</name>
        <version>1.0.1</version>
+       <purl>pkg:rpm/redhat/package1@0:1.0.1-1?arch=x86_64</purl>
      </component>
      <component type="library">
-       <name>package-2</name>
+       <name>package2</name>
        <version>2.0.1</version>
        <licenses>
          <license>
@@ -16,10 +17,11 @@
            <name>Apache-v2</name>
          </license>
        </licenses>
+       <purl>pkg:rpm/redhat/package2@0:1.0.2-1?arch=x86_64</purl>
      </component>
    </components>
    <bd:metadata>
-     <bd:timestamp>2020-08-26T15:31:39-04:00</bd:timestamp>
+     <bd:timestamp>2020-08-29T20:17:49-04:00</bd:timestamp>
      <bd:tool>
        <bd:vendor>anchore</bd:vendor>
        <bd:name>syft</bd:name>
