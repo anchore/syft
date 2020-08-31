@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
- <bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:6da957f1-3337-4128-870c-fe271aa195d1">
-   <components>
-     <component type="library">
-       <name>package1</name>
-       <version>1.0.1</version>
-       <purl>pkg:rpm/redhat/package1@0:1.0.1-1?arch=x86_64</purl>
-     </component>
-     <component type="library">
-       <name>package2</name>
-       <version>2.0.1</version>
-       <licenses>
-         <license>
-           <name>MIT</name>
-         </license>
-         <license>
-           <name>Apache-v2</name>
-         </license>
-       </licenses>
-       <purl>pkg:rpm/redhat/package2@0:1.0.2-1?arch=x86_64</purl>
-     </component>
-   </components>
-   <bd:metadata>
-     <bd:timestamp>2020-08-29T20:17:49-04:00</bd:timestamp>
-     <bd:tool>
-       <bd:vendor>anchore</bd:vendor>
-       <bd:name>syft</bd:name>
-       <bd:version>[not provided]</bd:version>
-     </bd:tool>
-     <bd:component type="container">
-       <name>index.docker.io/library/anchore-fixture-image-simple</name>
-       <version>04e16e44161c8888a1a963720fd0443cbf7eef8101434c431de8725cd98cc9f7</version>
-     </bd:component>
-   </bd:metadata>
- </bom>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:ab970429-e6a2-44a1-810c-f9ed2b7c3147">
+  <components>
+    <component type="library">
+      <name>package1</name>
+      <version>1.0.1</version>
+      <purl>pkg:rpm/redhat/package1@0:1.0.1-1?arch=x86_64</purl>
+    </component>
+    <component type="library">
+      <name>package2</name>
+      <version>2.0.1</version>
+      <licenses>
+        <license>
+          <name>MIT</name>
+        </license>
+        <license>
+          <name>Apache-v2</name>
+        </license>
+      </licenses>
+      <purl>pkg:rpm/redhat/package2@0:1.0.2-1?arch=x86_64</purl>
+    </component>
+  </components>
+  <bd:metadata>
+    <bd:timestamp>2020-08-30T21:50:50-04:00</bd:timestamp>
+    <bd:tool>
+      <bd:vendor>anchore</bd:vendor>
+      <bd:name>syft</bd:name>
+      <bd:version>[not provided]</bd:version>
+    </bd:tool>
+    <bd:component type="container">
+      <name>index.docker.io/library/anchore-fixture-image-simple</name>
+      <version>04e16e44161c8888a1a963720fd0443cbf7eef8101434c431de8725cd98cc9f7</version>
+    </bd:component>
+  </bd:metadata>
+</bom>
