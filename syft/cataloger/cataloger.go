@@ -34,6 +34,7 @@ type Cataloger interface {
 	// TODO: add "IterationNeeded" error to indicate to the driver to continue with another Select/Catalog pass
 }
 
+// All returns a slice of all locally defined catalogers (defined in child packages).
 func BuiltIn() []Cataloger {
 	return []Cataloger{
 		dpkg.New(),
@@ -45,9 +46,4 @@ func BuiltIn() []Cataloger {
 		golang.New(),
 		javascript.New(),
 	}
-}
-
-// All returns a slice of all locally defined catalogers (defined in child packages).
-func All() []Cataloger {
-	return BuiltIn()
 }

@@ -10,13 +10,35 @@ import (
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/logger"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/plugin"
 	"github.com/anchore/syft/syft/scope"
 	"github.com/wagoodman/go-partybus"
 )
 
+type Config struct {
+	PluginDirectory string
+}
+
+type Client struct {
+	config  Config
+	plugins *plugin.Repository
+}
+
+func NewClient(config Config) (Client, error) {
+	plugins, err := plugin.NewRepositoryFromDirectory(config.PluginDirectory)
+	if err != nil {
+		return Client{}, err
+	}
+
+	return Client{
+		config:  config,
+		plugins: plugins,
+	}, nil
+}
+
 // Catalog the given image from a particular perspective (e.g. squashed scope, all-layers scope). Returns the discovered
 // set of packages, the identified Linux distribution, and the scope object used to wrap the data source.
-func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scope, *distro.Distro, error) {
+func (c *Client) Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scope, *distro.Distro, error) {
 	log.Info("cataloging image")
 	s, cleanup, err := scope.NewScope(userInput, scoptOpt)
 	defer cleanup()
@@ -24,9 +46,9 @@ func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scop
 		return nil, nil, nil, err
 	}
 
-	d := IdentifyDistro(s)
+	d := c.IdentifyDistro(s)
 
-	catalog, err := CatalogFromScope(s)
+	catalog, err := c.CatalogFromScope(s)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -36,7 +58,7 @@ func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scop
 
 // IdentifyDistro attempts to discover what the underlying Linux distribution may be from the available flat files
 // provided by the given scope object. If results are inconclusive a "UnknownDistro" Type is returned.
-func IdentifyDistro(s scope.Scope) distro.Distro {
+func (c *Client) IdentifyDistro(s scope.Scope) distro.Distro {
 	d := distro.Identify(s.Resolver)
 	if d.Type != distro.UnknownDistroType {
 		log.Infof("identified distro: %s", d.String())
@@ -47,9 +69,15 @@ func IdentifyDistro(s scope.Scope) distro.Distro {
 }
 
 // Catalog the given scope, which may represent a container image or filesystem. Returns the discovered set of packages.
-func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
+func (c *Client) CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
 	log.Info("building the catalog")
-	return cataloger.Catalog(s.Resolver, cataloger.All()...)
+	pluginCatalogers, deactivatePluginsFn, err := c.plugins.ActivateCatalogers()
+	defer deactivatePluginsFn()
+	if err != nil {
+		return nil, err
+	}
+
+	return cataloger.Catalog(s.Resolver, append(pluginCatalogers, cataloger.BuiltIn()...)...)
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

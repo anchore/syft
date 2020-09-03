@@ -68,7 +68,17 @@ func startWorker(userInput string) <-chan error {
 			}
 		}
 
-		catalog, scope, distro, err := syft.Catalog(userInput, appConfig.ScopeOpt)
+		config := syft.Config{
+			PluginDirectory: appConfig.Plugins.Directory,
+		}
+
+		client, err := syft.NewClient(config)
+		if err != nil {
+			errs <- fmt.Errorf("could not initialize syft: %+v", err)
+			return
+		}
+
+		catalog, scope, distro, err := client.Catalog(userInput, appConfig.ScopeOpt)
 		if err != nil {
 			errs <- fmt.Errorf("failed to catalog input: %+v", err)
 			return
