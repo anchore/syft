@@ -64,7 +64,7 @@ func (s *CatalogerServer) Catalog(ctx context.Context, req *proto.CatalogRequest
 		return nil, err
 	}
 
-	var results []proto.Package
+	var results []*proto.Package
 	for _, p := range packages {
 		var sources []*proto.FileReference
 		for _, s := range p.Source {
@@ -80,7 +80,7 @@ func (s *CatalogerServer) Catalog(ctx context.Context, req *proto.CatalogRequest
 		}
 
 		// TODO: this is potentially brittle
-		results = append(results, proto.Package{
+		results = append(results, &proto.Package{
 			Name:     p.Name,
 			Version:  p.Version,
 			FoundBy:  p.FoundBy,
@@ -94,6 +94,6 @@ func (s *CatalogerServer) Catalog(ctx context.Context, req *proto.CatalogRequest
 	}
 
 	return &proto.CatalogResponse{
-		Package: nil,
+		Package: results,
 	}, nil
 }

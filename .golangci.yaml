@@ -31,7 +31,6 @@ linters:
     - misspell
     - nakedret
     - nolintlint
-#    - prealloc
     - rowserrcheck
     - scopelint
     - staticcheck
@@ -55,5 +54,6 @@ linters:
 #    - lll         # without a way to specify per-line exception cases, this is not usable
 #    - maligned    # this is an excellent linter, but tricky to optimize and we are not sensitive to memory layout optimizations
 #    - nestif
+#    - prealloc    # this unnecessarily requires preallocations for slices
 #    - testpackage
 #    - wsl

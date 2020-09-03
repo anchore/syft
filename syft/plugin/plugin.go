@@ -13,18 +13,9 @@ var plugins = map[int]plugin.PluginSet{
 	},
 }
 
-type Config struct {
-	Name    string
-	Type    Type
-	Command string
-	Args    []string
-	Env     []string
-	//Sha256  []byte
-}
-
 type Plugin struct {
 	Config       Config
-	clientConfig *plugin.ClientConfig
+	clientConfig plugin.ClientConfig
 	client       *plugin.Client
 }
 
@@ -37,7 +28,7 @@ func NewPlugin(config Config) Plugin {
 	//	Hash:     sha256.New(),
 	//}
 
-	clientConfig := &plugin.ClientConfig{
+	clientConfig := plugin.ClientConfig{
 		HandshakeConfig:  config.Type.HandshakeConfig(),
 		VersionedPlugins: plugins,
 		//SecureConfig:     secureConfig,
@@ -59,7 +50,7 @@ func (p Plugin) Start() (interface{}, error) {
 	}
 
 	// start the plugin in a sub process
-	p.client = plugin.NewClient(p.clientConfig)
+	p.client = plugin.NewClient(&p.clientConfig)
 
 	// connect to the sub process via RPC
 	rpcClient, err := p.client.Client()

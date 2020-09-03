@@ -12,27 +12,6 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
-// Monitor provides progress-related data for observing the progress of a Catalog() call (published on the event bus).
-type Monitor struct {
-	FilesProcessed     progress.Monitorable // the number of files selected and contents analyzed from all registered catalogers
-	PackagesDiscovered progress.Monitorable // the number of packages discovered from all registered catalogers
-}
-
-// newMonitor creates a new Monitor object and publishes the object on the bus as a CatalogerStarted event.
-func newMonitor() (*progress.Manual, *progress.Manual) {
-	filesProcessed := progress.Manual{}
-	packagesDiscovered := progress.Manual{}
-
-	bus.Publish(partybus.Event{
-		Type: event.CatalogerStarted,
-		Value: Monitor{
-			FilesProcessed:     progress.Monitorable(&filesProcessed),
-			PackagesDiscovered: progress.Monitorable(&packagesDiscovered),
-		},
-	})
-	return &filesProcessed, &packagesDiscovered
-}
-
 // Catalog a given scope (container image or filesystem) with the given catalogers, returning all discovered packages.
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
@@ -85,4 +64,25 @@ func Catalog(resolver scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, er
 	packagesDiscovered.SetCompleted()
 
 	return catalog, nil
+}
+
+// Monitor provides progress-related data for observing the progress of a Catalog() call (published on the event bus).
+type Monitor struct {
+	FilesProcessed     progress.Monitorable // the number of files selected and contents analyzed from all registered catalogers
+	PackagesDiscovered progress.Monitorable // the number of packages discovered from all registered catalogers
+}
+
+// newMonitor creates a new Monitor object and publishes the object on the bus as a CatalogerStarted event.
+func newMonitor() (*progress.Manual, *progress.Manual) {
+	filesProcessed := progress.Manual{}
+	packagesDiscovered := progress.Manual{}
+
+	bus.Publish(partybus.Event{
+		Type: event.CatalogerStarted,
+		Value: Monitor{
+			FilesProcessed:     progress.Monitorable(&filesProcessed),
+			PackagesDiscovered: progress.Monitorable(&packagesDiscovered),
+		},
+	})
+	return &filesProcessed, &packagesDiscovered
 }

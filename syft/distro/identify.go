@@ -19,6 +19,7 @@ type parseEntry struct {
 	fn   parseFunc
 }
 
+// nolint: funlen
 // Identify parses distro-specific files to determine distro metadata like version and release.
 func Identify(resolver scope.Resolver) Distro {
 	distro := NewUnknownDistro()
