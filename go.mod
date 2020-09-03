@@ -7,7 +7,7 @@ require (
 	github.com/anchore/go-rpmdb v0.0.0-20200811175839-cbc751c28e8e
 	github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/stereoscope v0.0.0-20200813152757-548b22c8a0b3
+	github.com/anchore/stereoscope v0.0.0-20200903223322-a3806f515470
 	github.com/bmatcuk/doublestar v1.3.1
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
 	github.com/dustin/go-humanize v1.0.0
@@ -45,5 +45,3 @@ require (
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace github.com/anchore/stereoscope => ../stereoscope
