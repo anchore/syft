@@ -20,7 +20,7 @@ func New() *Cataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/*egg-info/PKG-INFO":  parseEggMetadata,
 		"**/*dist-info/METADATA": parseWheelMetadata,
-		"**/requirements.txt":    parseRequirementsTxt,
+		"**/*requirements*.txt":  parseRequirementsTxt,
 		"**/poetry.lock":         parsePoetryLock,
 		"**/setup.py":            parseSetup,
 	}
