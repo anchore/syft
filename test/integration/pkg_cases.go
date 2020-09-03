@@ -82,6 +82,12 @@ var cases = []struct {
 		pkgLanguage: pkg.Python,
 		pkgInfo: map[string]string{
 			"flask": "4.0.0",
+			"python-dateutil": "2.8.1",
+			"python-swiftclient": "3.8.1",
+			"pytz": "2019.3",
+			"jsonschema": "2.6.0",
+			"passlib": "1.7.2",
+			"pathlib": "1.0.1",
 		},
 	},
 	{
