@@ -12,11 +12,13 @@ require (
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-test/deep v1.0.6
+	github.com/golang/protobuf v1.4.2
 	github.com/google/go-containerregistry v0.1.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gookit/color v1.2.7
 	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hashicorp/go-plugin v1.3.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
@@ -39,6 +41,7 @@ require (
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208 // indirect
 	golang.org/x/sys v0.0.0-20200610111108-226ff32320da // indirect
 	google.golang.org/genproto v0.0.0-20200615140333-fd031eab31e7 // indirect
+	google.golang.org/grpc v1.31.1
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )

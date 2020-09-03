@@ -3,6 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
+
+	"github.com/adrg/xdg"
+	"github.com/anchore/syft/internal"
 
 	"github.com/spf13/cobra"
 
@@ -78,6 +82,18 @@ func setGlobalCliOptions() {
 	}
 
 	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
+
+	// plugins
+	defaultPluginDir := path.Join(xdg.ConfigHome, internal.ApplicationName, "plugins")
+	flag = "plugins.dir"
+	rootCmd.Flags().String(
+		flag, defaultPluginDir,
+		"plugin storage directory",
+	)
+	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
+		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
+		os.Exit(1)
+	}
 }
 
 func initAppConfig() {

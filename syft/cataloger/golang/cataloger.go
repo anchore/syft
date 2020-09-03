@@ -4,11 +4,12 @@ Package golang provides a concrete Cataloger implementation for go.mod files.
 package golang
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // Cataloger catalogs pkg.GoModulePkg Package Types defined in go.mod files.

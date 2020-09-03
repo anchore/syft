@@ -1,0 +1,67 @@
+syntax = "proto3";
+package proto;
+
+message FileReference {
+    int64 id = 1;
+    string path = 2;
+}
+
+message FileReferenceContents {
+    int64 id = 1;
+    string path = 2;
+    string contents = 3;
+}
+
+message Empty {
+}
+
+message FileResolverRequest {
+    repeated string paths = 1;
+}
+
+message FileResolverResponse {
+    repeated FileReference files = 1;
+}
+
+message NameResponse {
+    string name = 1;
+}
+
+message SelectFilesRequest {
+    uint32 fileResolverBrokerId = 1;
+}
+
+message SelectFilesResponse {
+    repeated FileReference files = 1;
+}
+
+message Package {
+    string name = 1;
+    string version = 2;
+    string foundBy = 3;
+    repeated FileReference source = 4;
+    repeated string licenses = 5;
+    uint64 language = 6;
+    string type = 7;
+    map<string, string> metadata = 8;
+}
+
+message CatalogRequest {
+    repeated FileReferenceContents contents = 1;
+}
+
+message CatalogResponse {
+    repeated Package package = 1;
+}
+
+service Cataloger {
+    rpc Name(Empty) returns (NameResponse);
+    rpc SelectFiles(SelectFilesRequest) returns (SelectFilesResponse);
+    rpc Catalog(CatalogRequest) returns (CatalogResponse);
+}
+
+service FileResolver {
+    rpc FilesByPath(FileResolverRequest) returns (FileResolverResponse);
+    rpc FilesByGlob(FileResolverRequest) returns (FileResolverResponse);
+}
+

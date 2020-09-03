@@ -4,11 +4,12 @@ Package python provides a concrete Cataloger implementation for Python ecosystem
 package python
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // Cataloger catalogs pkg.WheelPkg, pkg.EggPkg, and pkg.PythonRequirementsPkg Package Types defined in Python ecosystem files.

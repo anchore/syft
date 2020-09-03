@@ -6,6 +6,8 @@ catalogers defined in child packages as well as the interface definition to impl
 package cataloger
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/apkdb"
 	"github.com/anchore/syft/syft/cataloger/bundler"
@@ -17,7 +19,6 @@ import (
 	"github.com/anchore/syft/syft/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // Cataloger describes behavior for an object to participate in parsing container image or file system

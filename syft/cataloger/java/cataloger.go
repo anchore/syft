@@ -4,11 +4,12 @@ Package java provides a concrete Cataloger implementation for Java archives (jar
 package java
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // Cataloger catalogs pkg.JavaPkg and pkg.JenkinsPluginPkg Package Types defined in java archive files.

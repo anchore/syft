@@ -4,11 +4,12 @@ Package common provides generic utilities used by multiple catalogers.
 package common
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // GenericCataloger implements the Catalog interface and is responsible for dispatching the proper parser function for

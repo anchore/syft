@@ -28,7 +28,13 @@ type Application struct {
 	Quiet             bool    `mapstructure:"quiet"`
 	Log               Logging `mapstructure:"log"`
 	CliOptions        CliOnlyOptions
-	CheckForAppUpdate bool `mapstructure:"check-for-app-update"`
+	CheckForAppUpdate bool    `mapstructure:"check-for-app-update"`
+	Plugins           Plugins `mapstructure:"plugins"`
+}
+
+type Plugins struct {
+	Enabled   bool   `mapstructure:"enabled"`
+	Directory string `mapstructure:"dir"`
 }
 
 type Logging struct {

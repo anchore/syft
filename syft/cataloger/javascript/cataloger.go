@@ -4,11 +4,12 @@ Package javascript provides a concrete Cataloger implementation for JavaScript e
 package javascript
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // Cataloger catalogs pkg.YarnPkg and pkg.NpmPkg Package Types defined in package-lock.json and yarn.lock files.

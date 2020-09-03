@@ -4,11 +4,12 @@ Package apkdb provides a concrete Cataloger implementation for Alpine DB files.
 package apkdb
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // Cataloger catalogs pkg.ApkPkg Package Types defined in Alpine DB files.

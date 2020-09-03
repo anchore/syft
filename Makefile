@@ -169,6 +169,9 @@ check-pipeline: ## Run local CircleCI pipeline locally (sanity check)
 	circleci local execute -c .tmp/circleci.yml --job "Unit & Integration Tests (go-latest)"
 	@printf '$(SUCCESS)Pipeline checks pass!$(RESET)\n'
 
+proto:
+	protoc -I syft/plugin/proto/ syft/plugin/proto/cataloger.proto --go_out=plugins=grpc:syft/plugin/proto/
+
 .PHONY: build
 build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
 

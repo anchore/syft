@@ -2,12 +2,13 @@ package resolvers
 
 import (
 	"fmt"
-	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/internal/log"
-	"github.com/bmatcuk/doublestar"
 	"io"
 	"os"
 	"path"
+
+	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal/log"
+	"github.com/bmatcuk/doublestar"
 )
 
 // DirectoryResolver implements path and content access for the directory data source.

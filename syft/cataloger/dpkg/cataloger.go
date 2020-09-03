@@ -4,11 +4,12 @@ Package dpkg provides a concrete Cataloger implementation for Debian package DB 
 package dpkg
 
 import (
+	"io"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
-	"io"
 )
 
 // Cataloger catalogs pkg.DebPkg Package Types defined in DPKG status files.
