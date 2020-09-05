@@ -2,12 +2,14 @@ package plugin
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-hclog"
+	"os"
 	"os/exec"
 
 	"github.com/hashicorp/go-plugin"
 )
 
-var plugins = map[int]plugin.PluginSet{
+var versionedPlugins = map[int]plugin.PluginSet{
 	1: {
 		TypeCataloger.String(): &CatalogerPlugin{},
 	},
@@ -19,8 +21,10 @@ type Plugin struct {
 	client       *plugin.Client
 }
 
+// TODO: type should be in the name like with terraform "terraform-<TYPE>-<NAME>"
+
 func NewPlugin(config Config) Plugin {
-	cmd := exec.Command(config.Command, config.Args...)
+	cmd := exec.Command("sh", "-c", config.Command) //, config.Args...)
 	cmd.Env = append(cmd.Env, config.Env...)
 
 	//secureConfig := &plugin.SecureConfig{
@@ -28,11 +32,19 @@ func NewPlugin(config Config) Plugin {
 	//	Hash:     sha256.New(),
 	//}
 
+	// TODO: temp?
+	logger := hclog.New(&hclog.LoggerOptions{
+		Name:   config.Name,
+		Level:  hclog.Trace,
+		Output: os.Stderr,
+	})
+
 	clientConfig := plugin.ClientConfig{
 		HandshakeConfig:  config.Type.HandshakeConfig(),
-		VersionedPlugins: plugins,
+		VersionedPlugins: versionedPlugins,
 		//SecureConfig:     secureConfig,
-		Cmd: cmd,
+		Cmd:    cmd,
+		Logger: logger,
 		AllowedProtocols: []plugin.Protocol{
 			plugin.ProtocolGRPC,
 		},

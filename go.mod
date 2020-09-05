@@ -17,13 +17,13 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gookit/color v1.2.7
 	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
+	github.com/hashicorp/go-hclog v0.9.2
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-plugin v1.3.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/package-url/packageurl-go v0.1.0
 	github.com/pelletier/go-toml v1.8.0
 	github.com/rogpeppe/go-internal v1.5.2

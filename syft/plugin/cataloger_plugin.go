@@ -13,13 +13,10 @@ import (
 // integrity check
 var _ plugin.GRPCPlugin = &CatalogerPlugin{}
 
-// Cataloger is the interface exposed as a plugin.
-type Cataloger cataloger.Cataloger
-
 // CatalogerPlugin is the implementation of plugin.Plugin that is served/consumed.
 type CatalogerPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
-	Impl Cataloger
+	Impl cataloger.Cataloger
 }
 
 func (p *CatalogerPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {

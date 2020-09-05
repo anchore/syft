@@ -63,7 +63,7 @@ func (c *Repository) ActivateCatalogers() ([]cataloger.Cataloger, func(), error)
 
 		theCataloger, ok := raw.(cataloger.Cataloger)
 		if !ok {
-			return nil, deactivateFn, fmt.Errorf("activation of cataloger did not return a cataloger object (name=%s)", plugin.Config.Name)
+			return nil, deactivateFn, fmt.Errorf("activation of cataloger did not return a cataloger object (name=%s type=%T)", plugin.Config.Name, theCataloger)
 		}
 
 		result = append(result, theCataloger)

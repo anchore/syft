@@ -3,6 +3,8 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloger"
 	"io"
 	"io/ioutil"
 
@@ -13,6 +15,8 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 )
+
+var _ cataloger.Cataloger = &CatalogerClient{}
 
 type CatalogerClient struct {
 	broker *plugin.GRPCBroker
@@ -35,7 +39,7 @@ func (c *CatalogerClient) Name() string {
 	return resp.Name
 }
 
-func (c *CatalogerClient) SelectFiles(resolver scope.FileResolver) error {
+func (c *CatalogerClient) SelectFiles(resolver scope.FileResolver) []file.Reference {
 	fileResolverServer := &FileResolverServer{Impl: resolver}
 
 	var s *grpc.Server
@@ -49,12 +53,25 @@ func (c *CatalogerClient) SelectFiles(resolver scope.FileResolver) error {
 	brokerID := c.broker.NextId()
 	go c.broker.AcceptAndServe(brokerID, serverFunc)
 
-	_, err := c.client.SelectFiles(context.Background(), &proto.SelectFilesRequest{
+	resp, err := c.client.SelectFiles(context.Background(), &proto.SelectFilesRequest{
 		FileResolverBrokerId: brokerID,
 	})
 
+	log.Debugf("Select Files Response: %+v", resp)
+
+	if err != nil {
+		// TODO: nope
+		panic(err)
+	}
+
 	s.Stop()
-	return err
+
+	var result []file.Reference
+	for _, f := range resp.Files {
+		result = append(result, file.NewFileReferenceWithID(file.Path(f.Path), uint64(f.Id)))
+	}
+
+	return result
 }
 
 func (c *CatalogerClient) Catalog(contents map[file.Reference]io.Reader) ([]pkg.Package, error) {

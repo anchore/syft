@@ -131,8 +131,6 @@ github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db/go.mod h1:D3r
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b h1:e1bmaoJfZVsCYMrIZBpFxwV26CbsuoEh5muXD5I1Ods=
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b/go.mod h1:Bkc+JYWjMCF8OyZ340IMSIi2Ebf3uwByOk6ho4wne1E=
 github.com/anchore/stereoscope v0.0.0-20200520221116-025e07f1c93e/go.mod h1:bkyLl5VITnrmgErv4S1vDfVz/TGAZ5il6161IQo7w2g=
-github.com/anchore/stereoscope v0.0.0-20200813152757-548b22c8a0b3 h1:pl+txuYlhK8Mmio4d+4zQI/1xg8X6BtNErTASrx23Wk=
-github.com/anchore/stereoscope v0.0.0-20200813152757-548b22c8a0b3/go.mod h1:WntReQTI/I27FOQ87UgLVVzWgku6+ZsqfOTLxpIZFCs=
 github.com/anchore/stereoscope v0.0.0-20200903223322-a3806f515470 h1:apXyPyfiaL/YQF7VeXRbDDB9TA7dA9rxdq8YbzPk9ko=
 github.com/anchore/stereoscope v0.0.0-20200903223322-a3806f515470/go.mod h1:WntReQTI/I27FOQ87UgLVVzWgku6+ZsqfOTLxpIZFCs=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
@@ -518,6 +516,7 @@ github.com/imdario/mergo v0.3.9/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJ
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jarcoal/httpmock v1.0.5/go.mod h1:ATjnClrvW/3tijVmpL/va5Z3aAyGvqU3gCT8nX0Txik=
+github.com/jhump/protoreflect v1.6.0 h1:h5jfMVslIg6l29nsMs0D8Wj17RDVdNYti0vDN/PZZoE=
 github.com/jhump/protoreflect v1.6.0/go.mod h1:eaTn3RZAmMBcV0fifFvlm6VHNz3wSkYyXYWUh7ymB74=
 github.com/jingyugao/rowserrcheck v0.0.0-20191204022205-72ab7603b68a h1:GmsqmapfzSJkm28dhRoHz2tLRbJmqhU86IPgBtN3mmk=
 github.com/jingyugao/rowserrcheck v0.0.0-20191204022205-72ab7603b68a/go.mod h1:xRskid8CManxVta/ALEhJha/pweKBaVG6fWgc0yH25s=

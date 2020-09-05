@@ -84,7 +84,7 @@ func setGlobalCliOptions() {
 	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
 
 	// plugins
-	defaultPluginDir := path.Join(xdg.ConfigHome, internal.ApplicationName, "plugins")
+	defaultPluginDir := path.Join(xdg.CacheHome, internal.ApplicationName, "plugins")
 	flag = "plugins.dir"
 	rootCmd.Flags().String(
 		flag, defaultPluginDir,
