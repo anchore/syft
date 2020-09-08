@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/cataloger"
 	"io"
 	"io/ioutil"
+
+	"github.com/anchore/syft/syft/cataloger"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -56,8 +56,6 @@ func (c *CatalogerClient) SelectFiles(resolver scope.FileResolver) []file.Refere
 	resp, err := c.client.SelectFiles(context.Background(), &proto.SelectFilesRequest{
 		FileResolverBrokerId: brokerID,
 	})
-
-	log.Debugf("Select Files Response: %+v", resp)
 
 	if err != nil {
 		// TODO: nope

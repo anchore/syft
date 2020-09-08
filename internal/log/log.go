@@ -1,11 +1,17 @@
 package log
 
-import "github.com/anchore/syft/syft/logger"
+import (
+	"github.com/anchore/syft/syft/logger"
+)
 
 var Log logger.Logger = &nopLogger{}
 
 func Errorf(format string, args ...interface{}) {
 	Log.Errorf(format, args...)
+}
+
+func Error(args ...interface{}) {
+	Log.Error(args...)
 }
 
 func Infof(format string, args ...interface{}) {

@@ -8,6 +8,8 @@ package cataloger
 import (
 	"io"
 
+	"github.com/anchore/syft/syft/cataloger/dpkg"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/apkdb"
 	"github.com/anchore/syft/syft/cataloger/bundler"
@@ -36,7 +38,7 @@ type Cataloger interface {
 // All returns a slice of all locally defined catalogers (defined in child packages).
 func BuiltIn() []Cataloger {
 	return []Cataloger{
-		//dpkg.New(),
+		dpkg.New(),
 		bundler.New(),
 		python.New(),
 		rpmdb.New(),

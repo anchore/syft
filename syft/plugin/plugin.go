@@ -1,11 +1,13 @@
 package plugin
 
 import (
+	"crypto/sha256"
 	"fmt"
-	"github.com/hashicorp/go-hclog"
-	"os"
 	"os/exec"
 
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/logger"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -24,27 +26,33 @@ type Plugin struct {
 // TODO: type should be in the name like with terraform "terraform-<TYPE>-<NAME>"
 
 func NewPlugin(config Config) Plugin {
-	cmd := exec.Command("sh", "-c", config.Command) //, config.Args...)
+	//cmd := exec.Command("sh", "-c", config.Command) //, config.Args...)
+	cmd := exec.Command(config.Command)
 	cmd.Env = append(cmd.Env, config.Env...)
 
-	//secureConfig := &plugin.SecureConfig{
-	//	Checksum: config.Sha256,
-	//	Hash:     sha256.New(),
-	//}
+	var secureConfig *plugin.SecureConfig
+	if len(config.Sha256) > 0 {
+		secureConfig = &plugin.SecureConfig{
+			Checksum: config.Sha256,
+			Hash:     sha256.New(),
+		}
+	}
 
-	// TODO: temp?
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   config.Name,
-		Level:  hclog.Trace,
-		Output: os.Stderr,
-	})
+	var pluginLogger hclog.Logger
+	if logrusLogger, ok := log.Log.(*logger.LogrusLogger); ok {
+		pluginLogger = logger.NewLogrusHCLogAdapter(logrusLogger.Logger, map[string]interface{}{"plugin": config.Name})
+	} else {
+		// TODO: this does not fully map features, thus logging will be awkward
+		// TODO: find a better way to map loggers (expand our interface?)
+		pluginLogger = logger.NewLoggerHCLogAdapter(log.Log)
+	}
 
 	clientConfig := plugin.ClientConfig{
 		HandshakeConfig:  config.Type.HandshakeConfig(),
 		VersionedPlugins: versionedPlugins,
-		//SecureConfig:     secureConfig,
-		Cmd:    cmd,
-		Logger: logger,
+		SecureConfig:     secureConfig,
+		Cmd:              cmd,
+		Logger:           pluginLogger,
 		AllowedProtocols: []plugin.Protocol{
 			plugin.ProtocolGRPC,
 		},
@@ -56,7 +64,7 @@ func NewPlugin(config Config) Plugin {
 	}
 }
 
-func (p Plugin) Start() (interface{}, error) {
+func (p *Plugin) Start() (interface{}, error) {
 	if p.client != nil {
 		return nil, fmt.Errorf("plugin already started")
 	}
@@ -79,7 +87,7 @@ func (p Plugin) Start() (interface{}, error) {
 	return raw, nil
 }
 
-func (p Plugin) Stop() error {
+func (p *Plugin) Stop() error {
 	if p.client == nil {
 		return fmt.Errorf("plugin has not been started")
 	}

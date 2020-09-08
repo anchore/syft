@@ -31,7 +31,7 @@ func (p Type) HandshakeConfig() plugin.HandshakeConfig {
 	case TypeCataloger:
 		return plugin.HandshakeConfig{
 			ProtocolVersion:  1,
-			MagicCookieKey:   "SYFT_CATALOGER_PLUGIN",
+			MagicCookieKey:   "SYFT_PLUGIN_MAGIC_COOKIE",
 			MagicCookieValue: "0f86cc7f-6f97-410e-a844-087cd12e36e3",
 		}
 	default:

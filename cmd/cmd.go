@@ -117,7 +117,7 @@ func initLogging() {
 	logWrapper := logger.NewLogrusLogger(cfg)
 	syft.SetLogger(logWrapper)
 	stereoscope.SetLogger(&logger.LogrusNestedLogger{
-		Logger: logWrapper.Logger.WithField("from-lib", "steroscope"),
+		Logger: logWrapper.Logger.WithField("from-lib", "stereoscope"),
 	})
 }
 

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+
 	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/stereoscope/pkg/file"

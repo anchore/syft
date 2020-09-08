@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/plugin/proto"
@@ -37,14 +36,10 @@ func (m *FileResolverServer) FilesByPath(ctx context.Context, req *proto.FileRes
 }
 
 func (m *FileResolverServer) FilesByGlob(ctx context.Context, req *proto.FileResolverRequest) (resp *proto.FileResolverResponse, err error) {
-	log.Debugf("FilesByGlob Request: %+v", req)
-
 	r, err := m.Impl.FilesByGlob(req.Paths...)
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debugf("FilesByGlob Result: %+v", r)
 
 	var refs []*proto.FileReference
 	for _, ref := range r {

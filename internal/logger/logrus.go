@@ -6,9 +6,14 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/syft/logger"
 	"github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
+
+// integrity check
+var _ logger.Logger = &LogrusLogger{}
+var _ logger.Logger = &LogrusNestedLogger{}
 
 type LogrusConfig struct {
 	EnableConsole bool
@@ -76,42 +81,50 @@ func NewLogrusLogger(cfg LogrusConfig) *LogrusLogger {
 	}
 }
 
-func (l *LogrusLogger) Debugf(format string, args ...interface{}) {
-	l.Logger.Debugf(format, args...)
+func (l *LogrusLogger) Errorf(format string, args ...interface{}) {
+	l.Logger.Errorf(format, args...)
 }
 
 func (l *LogrusLogger) Infof(format string, args ...interface{}) {
 	l.Logger.Infof(format, args...)
 }
 
-func (l *LogrusLogger) Debug(args ...interface{}) {
-	l.Logger.Debug(args...)
+func (l *LogrusLogger) Debugf(format string, args ...interface{}) {
+	l.Logger.Debugf(format, args...)
+}
+
+func (l *LogrusLogger) Error(args ...interface{}) {
+	l.Logger.Error(args...)
 }
 
 func (l *LogrusLogger) Info(args ...interface{}) {
 	l.Logger.Info(args...)
 }
 
-func (l *LogrusLogger) Errorf(format string, args ...interface{}) {
-	l.Logger.Errorf(format, args...)
+func (l *LogrusLogger) Debug(args ...interface{}) {
+	l.Logger.Debug(args...)
 }
 
-func (l *LogrusNestedLogger) Debugf(format string, args ...interface{}) {
-	l.Logger.Debugf(format, args...)
+func (l *LogrusNestedLogger) Errorf(format string, args ...interface{}) {
+	l.Logger.Errorf(format, args...)
 }
 
 func (l *LogrusNestedLogger) Infof(format string, args ...interface{}) {
 	l.Logger.Infof(format, args...)
 }
 
-func (l *LogrusNestedLogger) Debug(args ...interface{}) {
-	l.Logger.Debug(args...)
+func (l *LogrusNestedLogger) Debugf(format string, args ...interface{}) {
+	l.Logger.Debugf(format, args...)
+}
+
+func (l *LogrusNestedLogger) Error(args ...interface{}) {
+	l.Logger.Error(args...)
 }
 
 func (l *LogrusNestedLogger) Info(args ...interface{}) {
 	l.Logger.Info(args...)
 }
 
-func (l *LogrusNestedLogger) Errorf(format string, args ...interface{}) {
-	l.Logger.Errorf(format, args...)
+func (l *LogrusNestedLogger) Debug(args ...interface{}) {
+	l.Logger.Debug(args...)
 }

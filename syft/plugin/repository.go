@@ -2,8 +2,11 @@ package plugin
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/cataloger"
 	"path/filepath"
+	"strings"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloger"
 )
 
 type Repository struct {
@@ -35,8 +38,11 @@ func (c *Repository) AddFromDirectory(dir string, pluginTypes ...Type) error {
 		return err
 	}
 	for _, plugin := range plugins {
+		log.Debugf("added plugin: %q", plugin.Config.Name)
 		c.Add(plugin)
 	}
+	log.Debugf("%d plugins added", len(plugins))
+
 	return nil
 }
 
@@ -49,8 +55,9 @@ func (c *Repository) ActivateCatalogers() ([]cataloger.Cataloger, func(), error)
 	var plugins []Plugin
 	var deactivateFn = func() {
 		for _, plugin := range plugins {
-			// TODO: handle error by log
-			plugin.Stop()
+			if err := plugin.Stop(); err != nil {
+				log.Errorf("failed to stop plugin: %w", err)
+			}
 		}
 	}
 
@@ -88,10 +95,10 @@ func Discover(dir string, pluginTypes ...Type) ([]Plugin, error) {
 	var plugins []Plugin
 
 	for _, pluginType := range pluginTypes {
-		// look into a sub dir named by the plugin type
-		searchDir := filepath.Join(dir, pluginType.String())
+		pluginPrefix := pluginType.String()
+		pluginGlob := fmt.Sprintf("%s-*", pluginPrefix)
+		paths, err := filepath.Glob(filepath.Join(dir, pluginGlob))
 
-		paths, err := filepath.Glob(filepath.Join(searchDir, "*"))
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +107,7 @@ func Discover(dir string, pluginTypes ...Type) ([]Plugin, error) {
 			// TODO: should we use a config for some of this?
 			plugins = append(plugins, NewPlugin(Config{
 				// TODO: should the name be org/name instead of just name? this implies changing the dir storage too
-				Name:    filepath.Base(path),
+				Name:    strings.TrimPrefix(filepath.Base(path), pluginPrefix+"-"),
 				Type:    pluginType,
 				Command: path,
 				Args:    nil, // TODO

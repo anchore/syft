@@ -6,5 +6,5 @@ type Config struct {
 	Command string
 	Args    []string
 	Env     []string
-	//Sha256  []byte
+	Sha256  []byte
 }
