@@ -11,7 +11,8 @@ const (
 	Busybox
 	AmazonLinux
 	OracleLinux
-	//ArchLinux
+	ArchLinux
+	OpenSuseLeap
 )
 
 type Type int
@@ -27,7 +28,8 @@ var distroStr = []string{
 	"busybox",
 	"amazn",
 	"oraclelinux",
-	//"archlinux",
+	"archlinux",
+	"opensuse-leap",
 }
 
 var All = []Type{
@@ -40,7 +42,8 @@ var All = []Type{
 	Busybox,
 	AmazonLinux,
 	OracleLinux,
-	//ArchLinux,
+	ArchLinux,
+	OpenSuseLeap,
 }
 
 func (t Type) String() string {
@@ -53,14 +56,15 @@ func (t Type) String() string {
 
 // IDMapping connects a distro ID like "ubuntu" to a Distro type
 var IDMapping = map[string]Type{
-	"debian":  Debian,
-	"ubuntu":  Ubuntu,
-	"rhel":    RedHat,
-	"centos":  CentOS,
-	"fedora":  Fedora,
-	"alpine":  Alpine,
-	"busybox": Busybox,
-	"amzn":    AmazonLinux,
-	"ol":      OracleLinux,
-	//"arch":    ArchLinux,
+	"debian":        Debian,
+	"ubuntu":        Ubuntu,
+	"rhel":          RedHat,
+	"centos":        CentOS,
+	"fedora":        Fedora,
+	"alpine":        Alpine,
+	"busybox":       Busybox,
+	"amzn":          AmazonLinux,
+	"ol":            OracleLinux,
+	"arch":          ArchLinux,
+	"opensuse-leap": OpenSuseLeap,
 }

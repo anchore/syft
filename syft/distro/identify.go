@@ -48,6 +48,7 @@ identifyLoop:
 		}
 
 		if len(refs) == 0 {
+			log.Debugf("No Refs found from path: %s", entry.path)
 			continue
 		}
 
@@ -84,7 +85,7 @@ func assemble(name, version string) *Distro {
 	distroType, ok := IDMapping[name]
 
 	// Both distro and version must be present
-	if len(name) == 0 || len(version) == 0 {
+	if len(name) == 0 {
 		return nil
 	}
 

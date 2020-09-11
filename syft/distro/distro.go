@@ -20,6 +20,9 @@ func NewUnknownDistro() Distro {
 }
 
 func NewDistro(t Type, ver string) (Distro, error) {
+	if ver == "" {
+		return Distro{Type: t}, nil
+	}
 	verObj, err := hashiVer.NewVersion(ver)
 	if err != nil {
 		return Distro{}, fmt.Errorf("could not create distro version: %w", err)
@@ -32,6 +35,9 @@ func NewDistro(t Type, ver string) (Distro, error) {
 }
 
 func (d Distro) MajorVersion() string {
+	if d.Version == nil {
+		return fmt.Sprint("(version unknown)")
+	}
 	return fmt.Sprintf("%d", d.Version.Segments()[0])
 }
 
@@ -40,7 +46,11 @@ func (d Distro) FullVersion() string {
 }
 
 func (d Distro) String() string {
-	return fmt.Sprintf("%s %s", d.Type, d.RawVersion)
+	versionStr := "(version unknown)"
+	if d.RawVersion != "" {
+		versionStr = d.RawVersion
+	}
+	return fmt.Sprintf("%s %s", d.Type, versionStr)
 }
 
 // Name provides a string repr of the distro
