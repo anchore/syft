@@ -10,6 +10,7 @@ require (
 	github.com/anchore/stereoscope v0.0.0-20200813152757-548b22c8a0b3
 	github.com/bmatcuk/doublestar v1.3.1
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
+	github.com/docker/docker v17.12.0-ce-rc1.0.20200309214505-aa6a9891b09c+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-test/deep v1.0.6
 	github.com/google/go-containerregistry v0.1.1 // indirect
@@ -26,7 +27,7 @@ require (
 	github.com/rogpeppe/go-internal v1.5.2
 	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.6.0
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.0.1-0.20200909172742-8a63648dd905
 	github.com/spf13/viper v1.7.0
 	github.com/wagoodman/go-partybus v0.0.0-20200526224238-eb215533f07d
 	github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240
