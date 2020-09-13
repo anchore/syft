@@ -1,8 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
@@ -43,6 +49,20 @@ Supports the following image sources:
 			log.Errorf(err.Error())
 			os.Exit(1)
 		}
+	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		// Since we use ValidArgsFunction, Cobra will call this AFTER having parsed all flags and arguments provided
+		dockerImageRepoTags, err := ListLocalDockerImages(toComplete)
+		if err != nil {
+			// Indicates that an error occurred and completions should be ignored
+			return []string{"completion failed"}, cobra.ShellCompDirectiveError
+		}
+		if len(dockerImageRepoTags) == 0 {
+			return []string{"no docker images found"}, cobra.ShellCompDirectiveError
+		}
+		// ShellCompDirectiveDefault indicates that the shell will perform its default behavior after completions have
+		// been provided (without implying other possible directives)
+		return dockerImageRepoTags, cobra.ShellCompDirectiveDefault
 	},
 }
 
@@ -87,4 +107,31 @@ func doRunCmd(_ *cobra.Command, args []string) error {
 	errs := startWorker(userInput)
 	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)
 	return ux(errs, eventSubscription)
+}
+
+func ListLocalDockerImages(prefix string) ([]string, error) {
+	var repoTags = make([]string, 0)
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return repoTags, err
+	}
+
+	// Only want to return tagged images
+	imageListArgs := filters.NewArgs()
+	imageListArgs.Add("dangling", "false")
+	images, err := cli.ImageList(ctx, types.ImageListOptions{All: false, Filters: imageListArgs})
+	if err != nil {
+		return repoTags, err
+	}
+
+	for _, image := range images {
+		// image may have multiple tags
+		for _, tag := range image.RepoTags {
+			if strings.HasPrefix(tag, prefix) {
+				repoTags = append(repoTags, tag)
+			}
+		}
+	}
+	return repoTags, nil
 }
