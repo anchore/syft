@@ -65,6 +65,15 @@ func TestIdentifyDistro(t *testing.T) {
 			fixture: "test-fixtures/os/unmatchable",
 			Type:    UnknownDistroType,
 		},
+		{
+			fixture: "test-fixtures/os/opensuse-leap",
+			Type:    OpenSuseLeap,
+			Version: "15.2.0",
+		},
+		{
+			fixture: "test-fixtures/os/arch",
+			Type:    ArchLinux,
+		},
 	}
 
 	observedDistros := internal.NewStringSet()
@@ -91,6 +100,11 @@ func TestIdentifyDistro(t *testing.T) {
 				t.Fatalf("version should be nil for unknown distros")
 			} else if d.Type == UnknownDistroType && d.Version == nil {
 				// don't check versions for unknown distro types
+				return
+			}
+
+			if d.Version == nil {
+				t.Log("Distro doesn't have a Version")
 				return
 			}
 
@@ -175,10 +189,6 @@ func TestParseOsReleaseFailures(t *testing.T) {
 		fixture string
 		name    string
 	}{
-		{
-			fixture: "test-fixtures/bad-version",
-			name:    "No version",
-		},
 		{
 			fixture: "test-fixtures/bad-id",
 			name:    "No name ID",
