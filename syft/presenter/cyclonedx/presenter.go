@@ -54,7 +54,6 @@ func (pres *Presenter) Present(output io.Writer) error {
 		} else {
 			imageID = src.Img.Metadata.Digest
 		}
-		src.Img.Metadata.Tags[0].TagStr()
 		bom.BomDescriptor.Component = &BdComponent{
 			Component: Component{
 				Type:    "container",
