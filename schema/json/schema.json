@@ -4,7 +4,7 @@
         "artifacts": {
             "items": {
                 "properties": {
-                    "found-by": {
+                    "foundBy": {
                         "items": {
                             "type": "string"
                         },
@@ -18,7 +18,7 @@
                                 },
                                 {
                                     "properties": {
-                                        "layer-index": {
+                                        "layerIndex": {
                                             "type": "integer"
                                         },
                                         "path": {
@@ -26,7 +26,7 @@
                                         }
                                     },
                                     "required": [
-                                        "layer-index",
+                                        "layerIndex",
                                         "path"
                                     ],
                                     "type": "object"
@@ -52,10 +52,10 @@
                                         "checksum": {
                                             "type": "string"
                                         },
-                                        "owner-gid": {
+                                        "ownerGid": {
                                             "type": "string"
                                         },
-                                        "owner-uid": {
+                                        "ownerUid": {
                                             "type": "string"
                                         },
                                         "path": {
@@ -67,8 +67,8 @@
                                     },
                                     "required": [
                                         "checksum",
-                                        "owner-gid",
-                                        "owner-uid",
+                                        "ownerGid",
+                                        "ownerUid",
                                         "path",
                                         "permissions"
                                     ],
@@ -76,10 +76,10 @@
                                 },
                                 "type": "array"
                             },
-                            "git-commit-of-apk-port": {
+                            "gitCommitOfApkPort": {
                                 "type": "string"
                             },
-                            "installed-size": {
+                            "installedSize": {
                                 "type": "integer"
                             },
                             "license": {
@@ -95,7 +95,7 @@
                                     },
                                     {
                                         "properties": {
-                                            "extra-fields": {
+                                            "extraFields": {
                                                 "properties": {
                                                     "Archiver-Version": {
                                                         "type": "string"
@@ -160,60 +160,60 @@
                                                 ],
                                                 "type": "object"
                                             },
-                                            "implementation-title": {
+                                            "implementationTitle": {
                                                 "type": "string"
                                             },
-                                            "implementation-vendor": {
+                                            "implementationVendor": {
                                                 "type": "string"
                                             },
-                                            "implementation-version": {
+                                            "implementationVersion": {
                                                 "type": "string"
                                             },
-                                            "manifest-version": {
+                                            "manifestVersion": {
                                                 "type": "string"
                                             },
                                             "name": {
                                                 "type": "string"
                                             },
-                                            "specification-title": {
+                                            "specificationTitle": {
                                                 "type": "string"
                                             },
-                                            "specification-vendor": {
+                                            "specificationVendor": {
                                                 "type": "string"
                                             },
-                                            "specification-version": {
+                                            "specificationVersion": {
                                                 "type": "string"
                                             }
                                         },
                                         "required": [
-                                            "extra-fields",
-                                            "implementation-title",
-                                            "implementation-vendor",
-                                            "implementation-version",
-                                            "manifest-version",
+                                            "extraFields",
+                                            "implementationTitle",
+                                            "implementationVendor",
+                                            "implementationVersion",
+                                            "manifestVersion",
                                             "name",
-                                            "specification-title",
-                                            "specification-vendor",
-                                            "specification-version"
+                                            "specificationTitle",
+                                            "specificationVendor",
+                                            "specificationVersion"
                                         ],
                                         "type": "object"
                                     }
                                 ]
                             },
-                            "origin-package": {
+                            "originPackage": {
                                 "type": "string"
                             },
                             "package": {
                                 "type": "string"
                             },
-                            "parent-package": {
+                            "parentPackage": {
                                 "anyOf": [
                                     {
                                         "type": "null"
                                     },
                                     {
                                         "properties": {
-                                            "found-by": {
+                                            "foundBy": {
                                                 "type": "string"
                                             },
                                             "language": {
@@ -229,7 +229,7 @@
                                                 "properties": {
                                                     "manifest": {
                                                         "properties": {
-                                                            "extra-fields": {
+                                                            "extraFields": {
                                                                 "properties": {
                                                                     "Archiver-Version": {
                                                                         "type": "string"
@@ -294,59 +294,59 @@
                                                                 ],
                                                                 "type": "object"
                                                             },
-                                                            "implementation-title": {
+                                                            "implementationTitle": {
                                                                 "type": "string"
                                                             },
-                                                            "implementation-vendor": {
+                                                            "implementationVendor": {
                                                                 "type": "string"
                                                             },
-                                                            "implementation-version": {
+                                                            "implementationVersion": {
                                                                 "type": "string"
                                                             },
-                                                            "manifest-version": {
+                                                            "manifestVersion": {
                                                                 "type": "string"
                                                             },
                                                             "name": {
                                                                 "type": "string"
                                                             },
-                                                            "specification-title": {
+                                                            "specificationTitle": {
                                                                 "type": "string"
                                                             },
-                                                            "specification-vendor": {
+                                                            "specificationVendor": {
                                                                 "type": "string"
                                                             },
-                                                            "specification-version": {
+                                                            "specificationVersion": {
                                                                 "type": "string"
                                                             }
                                                         },
                                                         "required": [
-                                                            "extra-fields",
-                                                            "implementation-title",
-                                                            "implementation-vendor",
-                                                            "implementation-version",
-                                                            "manifest-version",
+                                                            "extraFields",
+                                                            "implementationTitle",
+                                                            "implementationVendor",
+                                                            "implementationVersion",
+                                                            "manifestVersion",
                                                             "name",
-                                                            "specification-title",
-                                                            "specification-vendor",
-                                                            "specification-version"
+                                                            "specificationTitle",
+                                                            "specificationVendor",
+                                                            "specificationVersion"
                                                         ],
                                                         "type": "object"
                                                     },
-                                                    "parent-package": {
+                                                    "parentPackage": {
                                                         "type": "null"
                                                     },
-                                                    "pom-properties": {
+                                                    "pomProperties": {
                                                         "properties": {
                                                             "Path": {
                                                                 "type": "string"
                                                             },
-                                                            "artifact-id": {
+                                                            "artifactId": {
                                                                 "type": "string"
                                                             },
-                                                            "extra-fields": {
+                                                            "extraFields": {
                                                                 "type": "null"
                                                             },
-                                                            "group-id": {
+                                                            "groupId": {
                                                                 "type": "string"
                                                             },
                                                             "name": {
@@ -358,9 +358,9 @@
                                                         },
                                                         "required": [
                                                             "Path",
-                                                            "artifact-id",
-                                                            "extra-fields",
-                                                            "group-id",
+                                                            "artifactId",
+                                                            "extraFields",
+                                                            "groupId",
                                                             "name",
                                                             "version"
                                                         ],
@@ -369,8 +369,8 @@
                                                 },
                                                 "required": [
                                                     "manifest",
-                                                    "parent-package",
-                                                    "pom-properties"
+                                                    "parentPackage",
+                                                    "pomProperties"
                                                 ],
                                                 "type": "object"
                                             },
@@ -385,7 +385,7 @@
                                             }
                                         },
                                         "required": [
-                                            "found-by",
+                                            "foundBy",
                                             "language",
                                             "licenses",
                                             "manifest",
@@ -398,18 +398,18 @@
                                     }
                                 ]
                             },
-                            "pom-properties": {
+                            "pomProperties": {
                                 "properties": {
                                     "Path": {
                                         "type": "string"
                                     },
-                                    "artifact-id": {
+                                    "artifactId": {
                                         "type": "string"
                                     },
-                                    "extra-fields": {
+                                    "extraFields": {
                                         "type": "null"
                                     },
-                                    "group-id": {
+                                    "groupId": {
                                         "type": "string"
                                     },
                                     "name": {
@@ -421,18 +421,18 @@
                                 },
                                 "required": [
                                     "Path",
-                                    "artifact-id",
-                                    "extra-fields",
-                                    "group-id",
+                                    "artifactId",
+                                    "extraFields",
+                                    "groupId",
                                     "name",
                                     "version"
                                 ],
                                 "type": "object"
                             },
-                            "pull-checksum": {
+                            "pullChecksum": {
                                 "type": "string"
                             },
-                            "pull-dependencies": {
+                            "pullDependencies": {
                                 "type": "string"
                             },
                             "release": {
@@ -464,7 +464,7 @@
                     }
                 },
                 "required": [
-                    "found-by",
+                    "foundBy",
                     "locations",
                     "name",
                     "type",
@@ -488,7 +488,7 @@
                             "digest": {
                                 "type": "string"
                             },
-                            "media-type": {
+                            "mediaType": {
                                 "type": "string"
                             },
                             "size": {
@@ -497,14 +497,14 @@
                         },
                         "required": [
                             "digest",
-                            "media-type",
+                            "mediaType",
                             "size"
                         ],
                         "type": "object"
                     },
                     "type": "array"
                 },
-                "media-type": {
+                "mediaType": {
                     "type": "string"
                 },
                 "size": {
@@ -520,7 +520,7 @@
             "required": [
                 "digest",
                 "layers",
-                "media-type",
+                "mediaType",
                 "size",
                 "tags"
             ],

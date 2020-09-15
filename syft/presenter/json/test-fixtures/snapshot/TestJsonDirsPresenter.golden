@@ -4,7 +4,7 @@
    "name": "package-1",
    "version": "1.0.1",
    "type": "deb",
-   "found-by": [
+   "foundBy": [
     "the-cataloger-1"
    ],
    "locations": [
@@ -15,7 +15,7 @@
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
-   "found-by": [
+   "foundBy": [
     "the-cataloger-2"
    ],
    "locations": [

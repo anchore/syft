@@ -6,12 +6,12 @@ type Image struct {
 	Layers    []Layer  `json:"layers"`
 	Size      int64    `json:"size"`
 	Digest    string   `json:"digest"`
-	MediaType string   `json:"media-type"`
+	MediaType string   `json:"mediaType"`
 	Tags      []string `json:"tags"`
 }
 
 type Layer struct {
-	MediaType string `json:"media-type"`
+	MediaType string `json:"mediaType"`
 	Digest    string `json:"digest"`
 	Size      int64  `json:"size"`
 }
