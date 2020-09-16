@@ -7,7 +7,7 @@ Here is what the main execution path for syft does:
 	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
 	3. Invoke a single presenter to show the contents of the catalog
 
-A Scope object encapsulates the image object to be cataloged and the user options (catalog all layers vs squashed layer)
+A Scope object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
 providing a way to inspect paths and file content within the image. It is the Scope object, not the image object, that
 is used throughout the main execution path. This abstraction allows for decoupling of what is cataloged (a docker image,
 an OCI image, a filesystem, etc) and how it is cataloged (the individual catalogers).
