@@ -1,5 +1,18 @@
 /*
 A "one-stop-shop" for helper utilities for all major functionality provided by child packages of the syft library.
+
+Here is what the main execution path for syft does:
+
+	1. Parse a user image string to get a stereoscope image.Image object
+	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
+	3. Invoke a single presenter to show the contents of the catalog
+
+A Scope object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
+providing a way to inspect paths and file content within the image. The Scope object, not the image object, is used
+throughout the main execution path. This abstraction allows for decoupling of what is cataloged (a docker image, an OCI
+image, a filesystem, etc) and how it is cataloged (the individual catalogers).
+
+Similar to the cataloging process, Linux distribution identification is also performed based on what is discovered within the image.
 */
 package syft
 
