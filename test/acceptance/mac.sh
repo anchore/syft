@@ -29,8 +29,8 @@ function cleanup {
 
 trap cleanup EXIT
 
-# install skopeo (pinned to 1.1.0)
-skopeo --version || brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/75e8d7a40af77b48cc91f4bdb7d669f891a6de60/Formula/skopeo.rb
+# install skopeo
+skopeo --version || brew install skopeo
 
 # fetch test image
 skopeo --override-os linux copy docker://docker.io/${TEST_IMAGE} docker-archive:${TEST_IMAGE_TAR}
