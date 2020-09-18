@@ -20,7 +20,7 @@ type Package struct {
 	id      ID               // uniquely identifies a package, set by the cataloger
 	Name    string           `json:"manifest"` // the package name
 	Version string           `json:"version"`  // the version of the package
-	FoundBy string           `json:"found-by"` // the specific cataloger that discovered this package
+	FoundBy string           `json:"foundBy"`  // the specific cataloger that discovered this package
 	Source  []file.Reference `json:"sources"`  // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
 	// TODO: should we move licenses into metadata?
 	Licenses []string    `json:"licenses"`           // licenses discovered with the package metadata

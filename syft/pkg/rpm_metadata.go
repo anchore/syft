@@ -14,7 +14,7 @@ type RpmMetadata struct {
 	Epoch     int    `json:"epoch"`
 	Arch      string `json:"architecture"`
 	Release   string `json:"release"`
-	SourceRpm string `json:"source-rpm"`
+	SourceRpm string `json:"sourceRpm"`
 	Size      int    `json:"size"`
 	License   string `json:"license"`
 	Vendor    string `json:"vendor"`

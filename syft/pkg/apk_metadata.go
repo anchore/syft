@@ -7,7 +7,7 @@ import (
 // ApkMetadata represents all captured data for a Alpine DB package entry. See https://wiki.alpinelinux.org/wiki/Apk_spec for more information.
 type ApkMetadata struct {
 	Package          string          `mapstructure:"P" json:"package"`
-	OriginPackage    string          `mapstructure:"o" json:"origin-package"`
+	OriginPackage    string          `mapstructure:"o" json:"originPackage"`
 	Maintainer       string          `mapstructure:"m" json:"maintainer"`
 	Version          string          `mapstructure:"V" json:"version"`
 	License          string          `mapstructure:"L" json:"license"`
@@ -15,18 +15,18 @@ type ApkMetadata struct {
 	URL              string          `mapstructure:"U" json:"url"`
 	Description      string          `mapstructure:"T" json:"description"`
 	Size             int             `mapstructure:"S" json:"size"`
-	InstalledSize    int             `mapstructure:"I" json:"installed-size"`
-	PullDependencies string          `mapstructure:"D" json:"pull-dependencies"`
-	PullChecksum     string          `mapstructure:"C" json:"pull-checksum"`
-	GitCommitOfAport string          `mapstructure:"c" json:"git-commit-of-apk-port"`
+	InstalledSize    int             `mapstructure:"I" json:"installedSize"`
+	PullDependencies string          `mapstructure:"D" json:"pullDependencies"`
+	PullChecksum     string          `mapstructure:"C" json:"pullChecksum"`
+	GitCommitOfAport string          `mapstructure:"c" json:"gitCommitOfApkPort"`
 	Files            []ApkFileRecord `json:"files"`
 }
 
 // ApkFileRecord represents a single file listing and metadata from a APK DB entry (which may have many of these file records).
 type ApkFileRecord struct {
 	Path        string `json:"path"`
-	OwnerUID    string `json:"owner-uid"`
-	OwnerGUI    string `json:"owner-gid"`
+	OwnerUID    string `json:"ownerUid"`
+	OwnerGUI    string `json:"ownerGid"`
 	Permissions string `json:"permissions"`
 	Checksum    string `json:"checksum"`
 }

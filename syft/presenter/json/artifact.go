@@ -9,7 +9,7 @@ type Artifact struct {
 	Name      string      `json:"name"`
 	Version   string      `json:"version"`
 	Type      string      `json:"type"`
-	FoundBy   []string    `json:"found-by"`
+	FoundBy   []string    `json:"foundBy"`
 	Locations Locations   `json:"locations,omitempty"`
 	Metadata  interface{} `json:"metadata,omitempty"`
 }

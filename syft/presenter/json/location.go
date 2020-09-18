@@ -11,7 +11,7 @@ type Locations interface{}
 
 type ImageLocation struct {
 	Path       string `json:"path"`
-	LayerIndex uint   `json:"layer-index"`
+	LayerIndex uint   `json:"layerIndex"`
 }
 
 func NewLocations(p *pkg.Package, s scope.Scope) (Locations, error) {
