@@ -6,10 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -18,6 +14,9 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/presenter"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
 )

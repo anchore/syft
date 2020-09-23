@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -72,11 +73,11 @@ func TestJsonImgsPresenter(t *testing.T) {
 	testImage := "image-simple"
 
 	if *update {
-		testutils.UpdateGoldenFixtureImage(t, testImage)
+		imagetest.UpdateGoldenFixtureImage(t, testImage)
 	}
 
 	catalog := pkg.NewCatalog()
-	img := testutils.GetGoldenFixtureImage(t, testImage)
+	img := imagetest.GetGoldenFixtureImage(t, testImage)
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{

@@ -5,9 +5,8 @@ package integration
 import (
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
-
-	"github.com/anchore/go-testutils"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/scope"
 	"github.com/go-test/deep"
@@ -15,11 +14,11 @@ import (
 
 func TestDistroImage(t *testing.T) {
 	fixtureImageName := "image-distro-id"
-	_, cleanup := testutils.GetFixtureImage(t, "docker-archive", fixtureImageName)
-	tarPath := testutils.GetFixtureImageTarPath(t, fixtureImageName)
+	_, cleanup := imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
+	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	_, _, actualDistro, err := syft.Catalog("docker-archive://"+tarPath, scope.AllLayersScope)
+	_, _, actualDistro, err := syft.Catalog("docker-archive:"+tarPath, scope.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}

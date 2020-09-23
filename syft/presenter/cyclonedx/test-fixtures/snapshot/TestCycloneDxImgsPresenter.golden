@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:ab970429-e6a2-44a1-810c-f9ed2b7c3147">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:94dae829-4d5d-482f-afab-27f43f919e2c">
   <components>
     <component type="library">
       <name>package1</name>
@@ -21,14 +21,14 @@
     </component>
   </components>
   <bd:metadata>
-    <bd:timestamp>2020-08-30T21:50:50-04:00</bd:timestamp>
+    <bd:timestamp>2020-09-23T18:26:58-04:00</bd:timestamp>
     <bd:tool>
       <bd:vendor>anchore</bd:vendor>
       <bd:name>syft</bd:name>
       <bd:version>[not provided]</bd:version>
     </bd:tool>
     <bd:component type="container">
-      <name>index.docker.io/library/anchore-fixture-image-simple</name>
+      <name>index.docker.io/library/stereoscope-fixture-image-simple</name>
       <version>04e16e44161c8888a1a963720fd0443cbf7eef8101434c431de8725cd98cc9f7</version>
     </bd:component>
   </bd:metadata>
