@@ -26,10 +26,15 @@ var rootCmd = &cobra.Command{
 	Short: "A tool for generating a Software Bill Of Materials (SBOM) from container images and filesystems",
 	Long: internal.Tprintf(`
 Supports the following image sources:
-    {{.appName}} yourrepo/yourimage:tag             defaults to using images from a docker daemon
-    {{.appName}} docker://yourrepo/yourimage:tag    explicitly use the docker daemon
-    {{.appName}} tar://path/to/yourimage.tar        use a tarball from disk
-    {{.appName}} dir://path/to/yourproject          read directly from a path in disk
+    {{.appName}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon
+    {{.appName}} path/to/yourproject        a Docker tar, OCI tar, OCI directory, or generic filesystem directory 
+
+You can also explicitly specify the scheme to use:
+    {{.appName}} docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
+    {{.appName}} docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
+    {{.appName}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Podman or otherwise)
+    {{.appName}} oci-directory:path/to/yourimage        read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
+    {{.appName}} dir:path/to/yourproject                read directly from a path on disk (any directory)
 `, map[string]interface{}{
 		"appName": internal.ApplicationName,
 	}),
