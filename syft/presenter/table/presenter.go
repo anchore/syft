@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 
@@ -50,6 +51,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 		}
 		return false
 	})
+	rows = removeDuplicateRows(rows)
 
 	table := tablewriter.NewWriter(output)
 
@@ -70,4 +72,22 @@ func (pres *Presenter) Present(output io.Writer) error {
 	table.Render()
 
 	return nil
+}
+
+func removeDuplicateRows(items [][]string) [][]string {
+	seen := map[string][]string{}
+	// nolint:prealloc
+	var result [][]string
+
+	for _, v := range items {
+		key := strings.Join(v, "|")
+		if seen[key] != nil {
+			// dup!
+			continue
+		}
+
+		seen[key] = v
+		result = append(result, v)
+	}
+	return result
 }

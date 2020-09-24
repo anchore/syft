@@ -3,6 +3,7 @@ package table
 import (
 	"bytes"
 	"flag"
+	"github.com/go-test/deep"
 	"testing"
 
 	"github.com/anchore/go-testutils"
@@ -62,4 +63,33 @@ func TestTablePresenter(t *testing.T) {
 		diffs := dmp.DiffMain(string(actual), string(expected), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
+}
+
+func TestRemoveDuplicateRows(t *testing.T) {
+	data := [][]string{
+		{"1", "2", "3"},
+		{"a", "b", "c"},
+		{"1", "2", "3"},
+		{"a", "b", "c"},
+		{"1", "2", "3"},
+		{"4", "5", "6"},
+		{"1", "2", "1"},
+	}
+
+	expected := [][]string{
+		{"1", "2", "3"},
+		{"a", "b", "c"},
+		{"4", "5", "6"},
+		{"1", "2", "1"},
+	}
+
+	actual := removeDuplicateRows(data)
+
+	if diffs := deep.Equal(expected, actual); len(diffs) > 0 {
+		t.Errorf("found diffs!")
+		for _, d := range diffs {
+			t.Errorf("   diff: %+v", d)
+		}
+	}
+
 }
