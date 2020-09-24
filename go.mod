@@ -6,7 +6,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.10 // indirect
 	github.com/adrg/xdg v0.2.1
 	github.com/anchore/go-rpmdb v0.0.0-20200811175839-cbc751c28e8e
-	github.com/anchore/go-testutils v0.0.0-20200922194607-6dea1542b4ff
+	github.com/anchore/go-testutils v0.0.0-20200924130829-c7fdedf242b7
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/stereoscope v0.0.0-20200922191919-df2d5de22d9d
 	github.com/bmatcuk/doublestar v1.3.1
