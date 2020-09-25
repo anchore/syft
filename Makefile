@@ -261,11 +261,10 @@ release: clean-dist changelog-release ## Build and publish final binaries and pa
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# release
-	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	$(TEMPDIR)/goreleaser \
+	bash -c "BUILD_GIT_TREE_STATE=$(GITTREESTATE) $(TEMPDIR)/goreleaser \
 		--rm-dist \
 		--config $(TEMPDIR)/goreleaser.yaml \
-		--release-notes <(cat CHANGELOG.md)
+		--release-notes <(cat CHANGELOG.md)"
 
 	# verify checksum signatures
 	.github/scripts/verify-signature.sh "$(DISTDIR)"
