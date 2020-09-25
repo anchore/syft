@@ -1,9 +1,9 @@
 package resolvers
 
 import (
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"testing"
 
-	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/file"
 )
 
@@ -83,7 +83,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-symlinks")
+			img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 			defer cleanup()
 
 			resolver, err := NewAllLayersResolver(img)
@@ -191,7 +191,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-symlinks")
+			img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 			defer cleanup()
 
 			resolver, err := NewAllLayersResolver(img)

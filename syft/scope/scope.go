@@ -7,13 +7,24 @@ package scope
 
 import (
 	"fmt"
-	"os"
+	"strings"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/spf13/afero"
 
 	"github.com/anchore/stereoscope"
 
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/scope/resolvers"
 )
+
+const (
+	unknownScheme   scheme = "unknown-scheme"
+	directoryScheme scheme = "directory-scheme"
+	imageScheme     scheme = "image-scheme"
+)
+
+type scheme string
 
 // ImageSource represents a data source that is a container image
 type ImageSource struct {
@@ -34,31 +45,36 @@ type Scope struct {
 	DirSrc   DirSource   // the specific directory to be cataloged
 }
 
-// NewScope produces a Scope based on userInput like dir:// or image:tag
+// NewScope produces a Scope based on userInput like dir: or image:tag
 func NewScope(userInput string, o Option) (Scope, func(), error) {
-	protocol := newProtocol(userInput)
+	fs := afero.NewOsFs()
+	parsedScheme, location := detectScheme(fs, image.DetectSource, userInput)
 
-	switch protocol.Type {
-	case directoryProtocol:
-		err := isValidPath(protocol.Value)
+	switch parsedScheme {
+	case directoryScheme:
+		fileMeta, err := fs.Stat(location)
 		if err != nil {
-			return Scope{}, func() {}, fmt.Errorf("unable to process path, must exist and be a directory: %w", err)
+			return Scope{}, nil, fmt.Errorf("unable to stat dir=%q: %w", location, err)
 		}
 
-		s, err := NewScopeFromDir(protocol.Value)
+		if !fileMeta.IsDir() {
+			return Scope{}, nil, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		}
+
+		s, err := NewScopeFromDir(location)
 		if err != nil {
-			return Scope{}, func() {}, fmt.Errorf("could not populate scope from path (%s): %w", protocol.Value, err)
+			return Scope{}, func() {}, fmt.Errorf("could not populate scope from path=%q: %w", location, err)
 		}
 		return s, func() {}, nil
 
-	case imageProtocol:
-		img, err := stereoscope.GetImage(userInput)
+	case imageScheme:
+		img, err := stereoscope.GetImage(location)
 		cleanup := func() {
 			stereoscope.Cleanup()
 		}
 
 		if err != nil || img == nil {
-			return Scope{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", userInput, err)
+			return Scope{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
 		}
 
 		s, err := NewScopeFromImage(img, o)
@@ -66,10 +82,9 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 			return Scope{}, cleanup, fmt.Errorf("could not populate scope with image: %w", err)
 		}
 		return s, cleanup, nil
-
-	default:
-		return Scope{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 	}
+
+	return Scope{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 }
 
 // NewScopeFromDir creates a new scope object tailored to catalog a given filesystem directory recursively.
@@ -117,16 +132,34 @@ func (s Scope) Source() interface{} {
 	return nil
 }
 
-// isValidPath ensures that the user-provided input will correspond to a path that exists and is a directory
-func isValidPath(userInput string) error {
-	fileMeta, err := os.Stat(userInput)
+type sourceDetector func(string) (image.Source, string, error)
+
+func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (scheme, string) {
+	if strings.HasPrefix(userInput, "dir:") {
+		// blindly trust the user's scheme
+		return directoryScheme, strings.TrimPrefix(userInput, "dir:")
+	}
+
+	// we should attempt to let stereoscope determine what the source is first --just because the source is a valid directory
+	// doesn't mean we yet know if it is an OCI layout directory (to be treated as an image) or if it is a generic filesystem directory.
+	source, imageSpec, err := imageDetector(userInput)
 	if err != nil {
-		return err
+		// this is not necessarily an error we care a
+		log.Debugf("unable to detect the scheme from %q: %w", userInput, err)
+		return unknownScheme, ""
 	}
 
-	if fileMeta.IsDir() {
-		return nil
+	if source == image.UnknownSource {
+		fileMeta, err := fs.Stat(userInput)
+		if err != nil {
+			return unknownScheme, ""
+		}
+
+		if fileMeta.IsDir() {
+			return directoryScheme, userInput
+		}
+		return unknownScheme, ""
 	}
 
-	return fmt.Errorf("path is not a directory: %s", userInput)
+	return imageScheme, imageSpec
 }

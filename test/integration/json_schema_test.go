@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/go-testutils"
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
@@ -99,11 +99,11 @@ func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope *scope.Scope, p
 
 func TestJsonSchemaImg(t *testing.T) {
 	fixtureImageName := "image-pkg-coverage"
-	_, cleanup := testutils.GetFixtureImage(t, "docker-archive", fixtureImageName)
-	tarPath := testutils.GetFixtureImageTarPath(t, fixtureImageName)
+	_, cleanup := imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
+	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	catalog, theScope, _, err := syft.Catalog("docker-archive://"+tarPath, scope.AllLayersScope)
+	catalog, theScope, _, err := syft.Catalog("docker-archive:"+tarPath, scope.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -116,7 +116,7 @@ func TestJsonSchemaImg(t *testing.T) {
 }
 
 func TestJsonSchemaDirs(t *testing.T) {
-	catalog, theScope, _, err := syft.Catalog("dir://test-fixtures/image-pkg-coverage", scope.AllLayersScope)
+	catalog, theScope, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", scope.AllLayersScope)
 	if err != nil {
 		t.Errorf("unable to create scope from dir: %+v", err)
 	}

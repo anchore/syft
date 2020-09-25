@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -67,7 +68,7 @@ func TestTextImgPresenter(t *testing.T) {
 	var buffer bytes.Buffer
 
 	catalog := pkg.NewCatalog()
-	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-simple")
+	img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-simple")
 	defer cleanup()
 
 	// populate catalog with test data
