@@ -104,15 +104,15 @@ jobs:
 
       - restore_cache:
           keys:
-            - syft-integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
+            - syft-integration-test-cache-{{ checksum "test/integration/test-fixtures/cache.fingerprint" }}
       - run:
           name: run integration tests
           command: make integration
 
       - save_cache:
-          key: syft-integration-test-tar-cache-{{ checksum "test/integration/test-fixtures/tar-cache.fingerprint" }}
+          key: syft-integration-test-cache-{{ checksum "test/integration/test-fixtures/cache.fingerprint" }}
           paths:
-            - "test/integration/test-fixtures/tar-cache"
+            - "test/integration/test-fixtures/cache"
 
 workflows:
   # Note: changing this workflow name requires making the same update in the .github/workflows/release.yaml pipeline

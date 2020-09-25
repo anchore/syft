@@ -130,7 +130,7 @@ integration: ## Run integration tests
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
-	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/tar-cache.fingerprint
+	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/cache.fingerprint
 
 .PHONY: java-packages-fingerprint
 java-packages-fingerprint:
@@ -157,7 +157,7 @@ generate-json-schema: clean-json-schema-examples integration ## Generate a new j
 
 .PHONY: clear-test-cache
 clear-test-cache: ## Delete all test cache (built docker image tars)
-	find . -type f -wholename "**/test-fixtures/tar-cache/*.tar" -delete
+	find . -type f -wholename "**/test-fixtures/cache/*.tar" -delete
 
 .PHONY: check-pipeline
 check-pipeline: ## Run local CircleCI pipeline locally (sanity check)

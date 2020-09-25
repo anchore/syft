@@ -3,6 +3,7 @@ package cyclonedx
 import (
 	"bytes"
 	"flag"
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
 	"regexp"
 	"testing"
@@ -96,7 +97,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	var buffer bytes.Buffer
 
 	catalog := pkg.NewCatalog()
-	img, cleanup := testutils.GetFixtureImage(t, "docker-archive", "image-simple")
+	img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-simple")
 	defer cleanup()
 
 	// populate catalog with test data

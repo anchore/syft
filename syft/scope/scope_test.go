@@ -1,6 +1,8 @@
 package scope
 
 import (
+	"github.com/spf13/afero"
+	"os"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -214,39 +216,183 @@ func TestFilesByGlob(t *testing.T) {
 	}
 }
 
-func TestIsValidPath(t *testing.T) {
+func TestDetectScheme(t *testing.T) {
+	type detectorResult struct {
+		src image.Source
+		ref string
+		err error
+	}
+
 	testCases := []struct {
-		desc    string
-		input   string
-		isError bool
+		name             string
+		userInput        string
+		dirs             []string
+		detection        detectorResult
+		expectedScheme   scheme
+		expectedLocation string
 	}{
 		{
-			desc:    "path is valid",
-			input:   "test-fixtures",
-			isError: false,
+			name:      "docker-image-ref",
+			userInput: "wagoodman/dive:latest",
+			detection: detectorResult{
+				src: image.DockerDaemonSource,
+				ref: "wagoodman/dive:latest",
+			},
+			expectedScheme:   imageScheme,
+			expectedLocation: "wagoodman/dive:latest",
 		},
 		{
-			desc:    "file is invalid",
-			input:   "test-fixtures/.vimrc",
-			isError: true,
+			name:      "docker-image-ref-no-tag",
+			userInput: "wagoodman/dive",
+			detection: detectorResult{
+				src: image.DockerDaemonSource,
+				ref: "wagoodman/dive",
+			},
+			expectedScheme:   imageScheme,
+			expectedLocation: "wagoodman/dive",
 		},
 		{
-			desc:    "path does not exist",
-			input:   "foo/bar/baz",
-			isError: true,
+			name:      "docker-image-explicit-scheme",
+			userInput: "docker:wagoodman/dive:latest",
+			detection: detectorResult{
+				src: image.DockerDaemonSource,
+				ref: "wagoodman/dive:latest",
+			},
+			expectedScheme:   imageScheme,
+			expectedLocation: "wagoodman/dive:latest",
+		},
+		{
+			name:      "docker-image-explicit-scheme-no-tag",
+			userInput: "docker:wagoodman/dive",
+			detection: detectorResult{
+				src: image.DockerDaemonSource,
+				ref: "wagoodman/dive",
+			},
+			expectedScheme:   imageScheme,
+			expectedLocation: "wagoodman/dive",
+		},
+		{
+			name:      "docker-image-edge-case",
+			userInput: "docker:latest",
+			detection: detectorResult{
+				src: image.DockerDaemonSource,
+				ref: "latest",
+			},
+			expectedScheme: imageScheme,
+			// we want to be able to handle this case better, however, I don't see a way to do this
+			// the user will need to provide more explicit input (docker:docker:latest)
+			expectedLocation: "latest",
+		},
+		{
+			name:      "docker-image-edge-case-explicit",
+			userInput: "docker:docker:latest",
+			detection: detectorResult{
+				src: image.DockerDaemonSource,
+				ref: "docker:latest",
+			},
+			expectedScheme: imageScheme,
+			// we want to be able to handle this case better, however, I don't see a way to do this
+			// the user will need to provide more explicit input (docker:docker:latest)
+			expectedLocation: "docker:latest",
+		},
+		{
+			name:      "oci-tar",
+			userInput: "some/path-to-file",
+			detection: detectorResult{
+				src: image.OciTarballSource,
+				ref: "some/path-to-file",
+			},
+			expectedScheme:   imageScheme,
+			expectedLocation: "some/path-to-file",
+		},
+		{
+			name:      "oci-dir",
+			userInput: "some/path-to-dir",
+			detection: detectorResult{
+				src: image.OciDirectorySource,
+				ref: "some/path-to-dir",
+			},
+			dirs:             []string{"some/path-to-dir"},
+			expectedScheme:   imageScheme,
+			expectedLocation: "some/path-to-dir",
+		},
+		{
+			name:      "guess-dir",
+			userInput: "some/path-to-dir",
+			detection: detectorResult{
+				src: image.UnknownSource,
+				ref: "",
+			},
+			dirs:             []string{"some/path-to-dir"},
+			expectedScheme:   directoryScheme,
+			expectedLocation: "some/path-to-dir",
+		},
+		{
+			name:      "generic-dir-does-not-exist",
+			userInput: "some/path-to-dir",
+			detection: detectorResult{
+				src: image.DockerDaemonSource,
+				ref: "some/path-to-dir",
+			},
+			expectedScheme:   imageScheme,
+			expectedLocation: "some/path-to-dir",
+		},
+		{
+			name:      "explicit-dir",
+			userInput: "dir:some/path-to-dir",
+			detection: detectorResult{
+				src: image.UnknownSource,
+				ref: "",
+			},
+			dirs:             []string{"some/path-to-dir"},
+			expectedScheme:   directoryScheme,
+			expectedLocation: "some/path-to-dir",
+		},
+		{
+			name:      "explicit-current-dir",
+			userInput: "dir:.",
+			detection: detectorResult{
+				src: image.UnknownSource,
+				ref: "",
+			},
+			expectedScheme:   directoryScheme,
+			expectedLocation: ".",
+		},
+		{
+			name:      "current-dir",
+			userInput: ".",
+			detection: detectorResult{
+				src: image.UnknownSource,
+				ref: "",
+			},
+			expectedScheme:   directoryScheme,
+			expectedLocation: ".",
 		},
 	}
 	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			err := isValidPath(test.input)
-			if err != nil && !test.isError {
-				t.Errorf("did not expect and error, got: %w", err)
+		t.Run(test.name, func(t *testing.T) {
+			fs := afero.NewMemMapFs()
+
+			for _, p := range test.dirs {
+				err := fs.Mkdir(p, os.ModePerm)
+				if err != nil {
+					t.Fatalf("failed to create dummy tar: %+v", err)
+				}
 			}
 
-			if err == nil && test.isError {
-				t.Errorf("expected an error but didn't get one")
+			imageDetector := func(string) (image.Source, string, error) {
+				return test.detection.src, test.detection.ref, test.detection.err
 			}
 
+			actualScheme, actualLocation := detectScheme(fs, imageDetector, test.userInput)
+
+			if actualScheme != test.expectedScheme {
+				t.Errorf("expected scheme %q , got %q", test.expectedScheme, actualScheme)
+			}
+
+			if actualLocation != test.expectedLocation {
+				t.Errorf("expected location %q , got %q", test.expectedLocation, actualLocation)
+			}
 		})
 	}
 }

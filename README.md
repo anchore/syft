@@ -13,12 +13,13 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 - Catalog container images and filesystems to discover packages and libraries.
 - Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
+- Supports Docker and OCI image formats
 
 > :warning: **This is pre-release software** and it may not work as expected. If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
 
 ## Getting started
 
-To generate an SBOM for an image:
+To generate an SBOM for a Docker or OCI image:
 ```
 syft <image>
 ```
@@ -32,18 +33,23 @@ syft <image> --scope all-layers
 
 Syft can generate a SBOM from a variety of sources:
 ```
-# catalog a docker image tar (from the result of "docker image save ... -o image.tar" command)
-syft docker-archive://path/to/image.tar
+# catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
+syft path/to/image.tar
 
 # catalog a directory
-syft dir://path/to/dir
+syft path/to/dir
 ```
 
-By default Syft shows a summary table, however, more detailed `text` and `json` formats are also available.
+The output format for Syft is configurable as well:
 ```
-syft <image> -o json
-syft <image> -o text
+syft <image> -o <format>
 ```
+
+Where the `format`s available are:
+- `json`: Use this to get as much information out of Syft as possible!
+- `text`: A row-oriented, human-and-machine-friendly output.
+- `cyclonedx`: A XML report conforming to the [CycloneDX 1.2](https://cyclonedx.org/) specification.
+- `table`: A columnar summary (default).
 
 ## Installation
 
