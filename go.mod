@@ -8,7 +8,7 @@ require (
 	github.com/anchore/go-rpmdb v0.0.0-20200811175839-cbc751c28e8e
 	github.com/anchore/go-testutils v0.0.0-20200924130829-c7fdedf242b7
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/stereoscope v0.0.0-20200922191919-df2d5de22d9d
+	github.com/anchore/stereoscope v0.0.0-20200925141829-d086a3427f85
 	github.com/bmatcuk/doublestar v1.3.1
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200309214505-aa6a9891b09c+incompatible
@@ -38,7 +38,3 @@ require (
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace github.com/anchore/stereoscope => ../stereoscope
-
-replace github.com/anchore/go-testutils => ../go-testutils
