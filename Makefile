@@ -28,6 +28,7 @@ ifeq "$(strip $(VERSION))" ""
 endif
 
 # used to generate the changelog from the second to last tag to the current tag (used in the release pipeline when the release tag is in place)
+LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --max-count=1))
 SECOND_TO_LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --skip=1 --max-count=1))
 
 ## Variable assertions
@@ -238,10 +239,10 @@ changelog-release:
 		--user anchore \
 		--project $(BIN) \
 		-t ${GITHUB_TOKEN} \
+		--exclude-labels 'duplicate,question,invalid,wontfix,size:small,size:medium,size:large,size:x-large' \
 		--no-pr-wo-labels \
 		--no-issues-wo-labels \
-		--since-tag $(SECOND_TO_LAST_TAG) \
-		--due-tag $(VERSION)
+		--since-tag $(SECOND_TO_LAST_TAG)
 
 .PHONY: changelog-unreleased
 changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
@@ -250,12 +251,15 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 		--user anchore \
 		--project $(BIN) \
 		-t ${GITHUB_TOKEN} \
-		--unreleased-only
+		--exclude-labels 'duplicate,question,invalid,wontfix,size:small,size:medium,size:large,size:x-large' \
+		--since-tag $(LAST_TAG)
+
 	@printf '\n$(BOLD)$(CYAN)Unreleased Changes (closed PRs and issues will not be in the final changelog)$(RESET)\n'
+
 	@docker run -it --rm \
 		-v $(shell pwd)/CHANGELOG.md:/CHANGELOG.md \
 		rawkode/mdv \
-			-t 785.3229 \
+			-t 696.6153 \
 			/CHANGELOG.md
 
 .PHONY: release
