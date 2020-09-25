@@ -54,11 +54,11 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 	case directoryScheme:
 		fileMeta, err := fs.Stat(location)
 		if err != nil {
-			return Scope{}, nil, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+			return Scope{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
 		}
 
 		if !fileMeta.IsDir() {
-			return Scope{}, nil, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+			return Scope{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
 		}
 
 		s, err := NewScopeFromDir(location)
