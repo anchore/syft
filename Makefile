@@ -226,9 +226,8 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 			$(ACC_TEST_IMAGE) \
 			$(RESULTSDIR)
 
-.PHONY: changlog
+.PHONY: changlog-release
 changelog-release:
-	mkdir -p $(DISTDIR)
 	@docker run -it --rm  \
 		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
 		--user anchore \
@@ -239,9 +238,8 @@ changelog-release:
 		--unreleased-only \
 		--future-release $(VERSION)
 
-.PHONY: changlog
+.PHONY: changelog-unreleased
 changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
-	mkdir -p $(DISTDIR)
 	@docker run -it --rm  \
 		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
 		--user anchore \

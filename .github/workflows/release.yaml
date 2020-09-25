@@ -127,7 +127,7 @@ jobs:
         with:
           status: ${{ job.status }}
           fields: repo,workflow,action,eventName
-          text: "A new release is ready to be published from the GitHub Releases page"
+          text: "A new Syft release is ready to be (manually) published from the GitHub Releases page"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}
