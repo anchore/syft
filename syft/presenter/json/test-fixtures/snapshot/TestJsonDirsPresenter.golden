@@ -23,5 +23,8 @@
    ]
   }
  ],
- "directory": "/some/path"
+ "source": {
+  "type": "directory",
+  "target": "/some/path"
+ }
 }

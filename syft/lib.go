@@ -3,7 +3,7 @@ A "one-stop-shop" for helper utilities for all major functionality provided by c
 
 Here is what the main execution path for syft does:
 
-	1. Parse a user image string to get a stereoscope image.Image object
+	1. Parse a user image string to get a stereoscope image.Source object
 	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
 	3. Invoke a single presenter to show the contents of the catalog
 
