@@ -240,7 +240,6 @@ changelog-release:
 		-t ${GITHUB_TOKEN} \
 		--no-pr-wo-labels \
 		--no-issues-wo-labels \
-		--unreleased-only \
 		--since-tag $(SECOND_TO_LAST_TAG) \
 		--due-tag $(VERSION)
 

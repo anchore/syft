@@ -25,7 +25,7 @@ jobs:
           git fetch origin main
           git merge-base --is-ancestor ${GITHUB_REF##*/} origin/main && echo "${GITHUB_REF##*/} is a commit on main!"
 
-      - name: Check static anaylysis, unit, and integration test results
+      - name: Check static analysis, unit, and integration test results
         uses: fountainhead/action-wait-for-check@v1.0.0
         id: sa-unit-int
         with:
