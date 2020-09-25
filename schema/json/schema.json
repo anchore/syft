@@ -200,6 +200,9 @@
                                     }
                                 ]
                             },
+                            "name": {
+                                "type": "string"
+                            },
                             "originPackage": {
                                 "type": "string"
                             },
@@ -444,7 +447,13 @@
                             "source": {
                                 "type": "string"
                             },
+                            "sourceRpm": {
+                                "type": "string"
+                            },
                             "url": {
+                                "type": "string"
+                            },
+                            "vendor": {
                                 "type": "string"
                             },
                             "version": {
@@ -474,61 +483,78 @@
             },
             "type": "array"
         },
-        "directory": {
-            "type": "string"
-        },
-        "image": {
+        "source": {
             "properties": {
-                "digest": {
-                    "type": "string"
-                },
-                "layers": {
-                    "items": {
-                        "properties": {
-                            "digest": {
-                                "type": "string"
-                            },
-                            "mediaType": {
-                                "type": "string"
-                            },
-                            "size": {
-                                "type": "integer"
-                            }
+                "target": {
+                    "anyOf": [
+                        {
+                            "type": "string"
                         },
-                        "required": [
-                            "digest",
-                            "mediaType",
-                            "size"
-                        ],
-                        "type": "object"
-                    },
-                    "type": "array"
+                        {
+                            "properties": {
+                                "digest": {
+                                    "type": "string"
+                                },
+                                "layers": {
+                                    "items": {
+                                        "properties": {
+                                            "digest": {
+                                                "type": "string"
+                                            },
+                                            "mediaType": {
+                                                "type": "string"
+                                            },
+                                            "size": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "required": [
+                                            "digest",
+                                            "mediaType",
+                                            "size"
+                                        ],
+                                        "type": "object"
+                                    },
+                                    "type": "array"
+                                },
+                                "mediaType": {
+                                    "type": "string"
+                                },
+                                "size": {
+                                    "type": "integer"
+                                },
+                                "tags": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            },
+                            "required": [
+                                "digest",
+                                "layers",
+                                "mediaType",
+                                "size",
+                                "tags"
+                            ],
+                            "type": "object"
+                        }
+                    ]
                 },
-                "mediaType": {
+                "type": {
                     "type": "string"
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "tags": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
                 }
             },
             "required": [
-                "digest",
-                "layers",
-                "mediaType",
-                "size",
-                "tags"
+                "target",
+                "type"
             ],
             "type": "object"
         }
     },
     "required": [
-        "artifacts"
+        "artifacts",
+        "source"
     ],
     "type": "object"
 }

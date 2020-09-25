@@ -15,7 +15,7 @@ const (
 
 var protocolStr = []string{
 	"UnknownProtocol",
-	"Image",
+	"Source",
 	"Directory",
 }
 
@@ -37,7 +37,7 @@ func newProtocol(userStr string) protocol {
 				Value: strings.TrimPrefix(userStr, "dir://"),
 			}
 		}
-		// default to an Image for anything else since stereoscope can handle this
+		// default to an Source for anything else since stereoscope can handle this
 		return protocol{
 			Type:  imageProtocol,
 			Value: userStr,
