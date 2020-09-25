@@ -226,9 +226,8 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 			$(ACC_TEST_IMAGE) \
 			$(RESULTSDIR)
 
-.PHONY: changlog
-changelog:
-	mkdir -p $(DISTDIR)
+.PHONY: changlog-release
+changelog-release:
 	@docker run -it --rm  \
 		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
 		--user anchore \
@@ -239,8 +238,23 @@ changelog:
 		--unreleased-only \
 		--future-release $(VERSION)
 
+.PHONY: changelog-unreleased
+changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
+	@docker run -it --rm  \
+		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
+		--user anchore \
+		--project $(BIN) \
+		-t ${GITHUB_TOKEN} \
+		--unreleased-only
+	@printf '\n$(BOLD)$(CYAN)Unreleased Changes (closed PRs and issues will not be in the final changelog)$(RESET)\n'
+	@docker run -it --rm \
+		-v $(shell pwd)/CHANGELOG.md:/CHANGELOG.md \
+		rawkode/mdv \
+			-t 785.3229 \
+			/CHANGELOG.md
+
 .PHONY: release
-release: clean-dist changelog ## Build and publish final binaries and packages
+release: clean-dist changelog-release ## Build and publish final binaries and packages
 	$(call title,Publishing release artifacts)
 	# create a config with the dist dir overridden
 	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
