@@ -27,6 +27,9 @@ ifeq "$(strip $(VERSION))" ""
  override VERSION = $(shell git describe --always --tags --dirty)
 endif
 
+# used to generate the changelog from the second to last tag to the current tag (used in the release pipeline when the release tag is in place)
+SECOND_TO_LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --skip=1 --max-count=1))
+
 ## Variable assertions
 
 ifndef TEMPDIR
@@ -228,6 +231,8 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 
 .PHONY: changlog-release
 changelog-release:
+	@echo "Last tag: $(SECOND_TO_LAST_TAG)"
+	@echo "Current tag: $(VERSION)"
 	@docker run -i --rm  \
 		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
 		--user anchore \
@@ -236,7 +241,8 @@ changelog-release:
 		--no-pr-wo-labels \
 		--no-issues-wo-labels \
 		--unreleased-only \
-		--future-release $(VERSION)
+		--since-tag $(SECOND_TO_LAST_TAG) \
+		--due-tag $(VERSION)
 
 .PHONY: changelog-unreleased
 changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
