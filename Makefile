@@ -228,7 +228,7 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 
 .PHONY: changlog-release
 changelog-release:
-	@docker run -it --rm  \
+	@docker run -i --rm  \
 		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
 		--user anchore \
 		--project $(BIN) \
