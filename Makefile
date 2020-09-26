@@ -244,6 +244,9 @@ changelog-release:
 		--no-issues-wo-labels \
 		--since-tag $(SECOND_TO_LAST_TAG)
 
+	@printf '\n$(BOLD)$(CYAN)Release $(VERSION) Changelog$(RESET)\n\n'
+	@cat CHANGELOG.md
+
 .PHONY: changelog-unreleased
 changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
 	@docker run -it --rm  \
@@ -259,7 +262,7 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 	@docker run -it --rm \
 		-v $(shell pwd)/CHANGELOG.md:/CHANGELOG.md \
 		rawkode/mdv \
-			-t 696.6153 \
+			-t 748.5989 \
 			/CHANGELOG.md
 
 .PHONY: release
