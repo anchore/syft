@@ -10,6 +10,56 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+func TestExtraFileAttributes(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected pkg.ApkMetadata
+	}{
+		{
+			name: "test extra file attributes (checksum) are ignored",
+			expected: pkg.ApkMetadata{
+				Files: []pkg.ApkFileRecord{
+					{
+						Path:        "/usr/lib/jvm/java-1.8-openjdk/bin/policytool",
+						OwnerUID:    "0",
+						OwnerGUI:    "0",
+						Permissions: "755",
+						Checksum:    "Q1M0C9qfC/+kdRiOodeihG2GMRtkE=",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			file, err := os.Open("test-fixtures/extra-file-attributes")
+			if err != nil {
+				t.Fatal("Unable to read test-fixtures/extra-file-attributes: ", err)
+			}
+			defer func() {
+				err := file.Close()
+				if err != nil {
+					t.Fatal("closing file failed:", err)
+				}
+			}()
+
+			reader := bufio.NewReader(file)
+
+			entry, err := parseApkDBEntry(reader)
+			if err != nil {
+				t.Fatal("Unable to read file contents: ", err)
+			}
+
+			if diff := deep.Equal(entry.Files, test.expected.Files); diff != nil {
+				for _, d := range diff {
+					t.Errorf("diff: %+v", d)
+				}
+			}
+		})
+	}
+}
+
 func TestSinglePackage(t *testing.T) {
 	tests := []struct {
 		name     string

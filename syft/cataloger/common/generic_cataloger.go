@@ -51,7 +51,7 @@ func (a *GenericCataloger) SelectFiles(resolver scope.FileResolver) []file.Refer
 	for path, parser := range a.pathParsers {
 		files, err := resolver.FilesByPath(file.Path(path))
 		if err != nil {
-			log.Errorf("cataloger failed to select files by path: %w", err)
+			log.Errorf("cataloger failed to select files by path: %+v", err)
 		}
 		if files != nil {
 			a.register(files, parser)
@@ -88,7 +88,7 @@ func (a *GenericCataloger) Catalog(contents map[file.Reference]string, upstreamM
 		entries, err := parser(string(reference.Path), strings.NewReader(content))
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %w", upstreamMatcher, reference, err)
+			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %+v", upstreamMatcher, reference, err)
 			continue
 		}
 

@@ -93,7 +93,7 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 			fileRecord = &files[len(files)-1]
 		case "a":
 			ownershipFields := strings.Split(value, ":")
-			if len(ownershipFields) != 3 {
+			if len(ownershipFields) < 3 {
 				log.Errorf("unexpected APK ownership field: %q", value)
 				continue
 			}
@@ -104,6 +104,8 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 			fileRecord.OwnerUID = ownershipFields[0]
 			fileRecord.OwnerGUI = ownershipFields[1]
 			fileRecord.Permissions = ownershipFields[2]
+			// note: there are more optional fields available that we are not capturing, e.g.:
+			// "0:0:755:Q1JaDEHQHBbizhEzoWK1YxuraNU/4="
 		case "Z":
 			if fileRecord == nil {
 				log.Errorf("checksum field with no parent record: %q", value)
