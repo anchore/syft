@@ -9,7 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
+	"github.com/mitchellh/go-homedir"
+
 	"github.com/spf13/afero"
 
 	"github.com/anchore/stereoscope"
@@ -48,7 +49,10 @@ type Scope struct {
 // NewScope produces a Scope based on userInput like dir: or image:tag
 func NewScope(userInput string, o Option) (Scope, func(), error) {
 	fs := afero.NewOsFs()
-	parsedScheme, location := detectScheme(fs, image.DetectSource, userInput)
+	parsedScheme, location, err := detectScheme(fs, image.DetectSource, userInput)
+	if err != nil {
+		return Scope{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
+	}
 
 	switch parsedScheme {
 	case directoryScheme:
@@ -134,32 +138,39 @@ func (s Scope) Source() interface{} {
 
 type sourceDetector func(string) (image.Source, string, error)
 
-func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (scheme, string) {
+func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (scheme, string, error) {
 	if strings.HasPrefix(userInput, "dir:") {
 		// blindly trust the user's scheme
-		return directoryScheme, strings.TrimPrefix(userInput, "dir:")
+		dirLocation, err := homedir.Expand(strings.TrimPrefix(userInput, "dir:"))
+		if err != nil {
+			return unknownScheme, "", fmt.Errorf("unable to expand directory path: %w", err)
+		}
+		return directoryScheme, dirLocation, nil
 	}
 
 	// we should attempt to let stereoscope determine what the source is first --just because the source is a valid directory
 	// doesn't mean we yet know if it is an OCI layout directory (to be treated as an image) or if it is a generic filesystem directory.
 	source, imageSpec, err := imageDetector(userInput)
 	if err != nil {
-		// this is not necessarily an error we care a
-		log.Debugf("unable to detect the scheme from %q: %w", userInput, err)
-		return unknownScheme, ""
+		return unknownScheme, "", fmt.Errorf("unable to detect the scheme from %q: %w", userInput, err)
 	}
 
 	if source == image.UnknownSource {
-		fileMeta, err := fs.Stat(userInput)
+		dirLocation, err := homedir.Expand(userInput)
 		if err != nil {
-			return unknownScheme, ""
+			return unknownScheme, "", fmt.Errorf("unable to expand potential directory path: %w", err)
+		}
+
+		fileMeta, err := fs.Stat(dirLocation)
+		if err != nil {
+			return unknownScheme, "", nil
 		}
 
 		if fileMeta.IsDir() {
-			return directoryScheme, userInput
+			return directoryScheme, dirLocation, nil
 		}
-		return unknownScheme, ""
+		return unknownScheme, "", nil
 	}
 
-	return imageScheme, imageSpec
+	return imageScheme, imageSpec, nil
 }
