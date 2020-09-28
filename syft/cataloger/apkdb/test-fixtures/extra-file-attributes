@@ -1,0 +1,22 @@
+P:openjdk8-jre
+V:8.212.04-r0
+A:x86_64
+S:359029
+I:970752
+T:OpenJDK 8 Java Runtime
+U:https://icedtea.classpath.org/
+L:custom
+o:openjdk8
+m:Timo Teras <timo.teras@iki.fi>
+t:1556993127
+c:46badd1aabd3375ae4b41c7194bc448f74b2ea4a
+D:java-cacerts nss so:libX11.so.6 so:libXcomposite.so.1 so:libXext.so.6 so:libXi.so.6 so:libXrender.so.1 so:libXtst.so.6 so:libasound.so.2 so:libc.musl-x86_64.so.1 so:libfreetype.so.6 so:libgcc_s.so.1 so:libgif.so.7 so:libjpeg.so.8 so:libpng16.so.16 so:libstdc++.so.6 so:openjdk8:libawt.so so:openjdk8:libjava.so so:openjdk8:libjli.so so:openjdk8:libjvm.so
+p:so:openjdk8:libawt_xawt.so=0 so:openjdk8:libfontmanager.so=0 so:openjdk8:libjawt.so=0 so:openjdk8:libjsoundalsa.so=0 so:openjdk8:libsplashscreen.so=0
+F:usr
+F:usr/lib
+F:usr/lib/jvm
+F:usr/lib/jvm/java-1.8-openjdk
+F:usr/lib/jvm/java-1.8-openjdk/bin
+R:policytool
+a:0:0:755:Q1JaDEHQHBbizhEzoWK1YxuraNU/4=
+Z:Q1M0C9qfC/+kdRiOodeihG2GMRtkE=

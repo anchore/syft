@@ -4,7 +4,11 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
-// ApkMetadata represents all captured data for a Alpine DB package entry. See https://wiki.alpinelinux.org/wiki/Apk_spec for more information.
+// ApkMetadata represents all captured data for a Alpine DB package entry.
+// See the following sources for more information:
+// - https://wiki.alpinelinux.org/wiki/Apk_spec
+// - https://git.alpinelinux.org/apk-tools/tree/src/package.c
+// - https://git.alpinelinux.org/apk-tools/tree/src/database.c
 type ApkMetadata struct {
 	Package          string          `mapstructure:"P" json:"package"`
 	OriginPackage    string          `mapstructure:"o" json:"originPackage"`
