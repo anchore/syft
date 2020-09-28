@@ -6,9 +6,8 @@ import (
 	"io/ioutil"
 	"sort"
 
-	"github.com/rogpeppe/go-internal/modfile"
-
 	"github.com/anchore/syft/syft/pkg"
+	"golang.org/x/mod/modfile"
 )
 
 // parseGoMod takes a go.mod and lists all packages discovered.
