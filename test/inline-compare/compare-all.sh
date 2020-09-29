@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
-# TODO: add "alpine:3.12.0" back
-images=("debian:10.5" "centos:8.2.2004" )
+# TODO: Add "alpine:3.12.0" back in when we've figured out how to handle the apk version field w/ and w/o release information (see issue: https://github.com/anchore/syft/pull/195)
+images=("debian:10.5" "centos:8.2.2004")
 
 # gather all image analyses
 for img in "${images[@]}"; do

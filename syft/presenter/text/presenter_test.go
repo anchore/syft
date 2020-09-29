@@ -93,7 +93,7 @@ func TestTextImgPresenter(t *testing.T) {
 	})
 
 	// stub out all the digests so that they don't affect tests comparisons
-	// TODO: update with go-testutils feature when issue #1 is resolved
+	// TODO: update with stereoscope test utils feature when this issue is resolved: https://github.com/anchore/stereoscope/issues/43
 	for _, l := range img.Layers {
 		l.Metadata.Digest = "sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53"
 	}
