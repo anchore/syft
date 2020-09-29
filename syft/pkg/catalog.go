@@ -8,8 +8,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-// TODO: add reader methods (by type, id, fuzzy search, etc)
-
 var nextPackageID int64
 
 // Catalog represents a collection of Packages.
