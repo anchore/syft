@@ -18,7 +18,8 @@ type Cataloger struct {
 // New returns a new Bundler cataloger object.
 func New() *Cataloger {
 	globParsers := map[string]common.ParserFn{
-		"**/Gemfile.lock": parseGemfileLockEntries,
+		"**/Gemfile.lock": parseGemfileLockEntries, // valid in a dir context
+		//"**/specification/*.gemspec": parseGemSpecEntries,     // valid in an image context (against installed gems)
 	}
 
 	return &Cataloger{

@@ -62,6 +62,16 @@ func IdentifyDistro(s scope.Scope) distro.Distro {
 // Catalog the given scope, which may represent a container image or filesystem. Returns the discovered set of packages.
 func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
 	log.Info("building the catalog")
+
+	// conditionally have two sets of catalogers
+	//var catalogers []cataloger.Cataloger
+	//// if image
+	//// use one set of catalogers
+	//catalogers = ...
+	//
+	//// if dir
+	//// use another set of catalogers
+
 	return cataloger.Catalog(s.Resolver, cataloger.All()...)
 }
 
