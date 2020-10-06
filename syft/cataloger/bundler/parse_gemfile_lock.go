@@ -44,7 +44,7 @@ func parseGemfileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) 
 				Name:     candidate[0],
 				Version:  strings.Trim(candidate[1], "()"),
 				Language: pkg.Ruby,
-				Type:     pkg.BundlerPkg,
+				Type:     pkg.GemPkg,
 			})
 		}
 	}

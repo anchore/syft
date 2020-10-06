@@ -104,7 +104,7 @@ func parseGemspecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Name:     metadata.Name,
 			Version:  metadata.Version,
 			Language: pkg.Ruby,
-			Type:     pkg.BundlerPkg,
+			Type:     pkg.GemPkg,
 			Metadata: metadata,
 		})
 	}

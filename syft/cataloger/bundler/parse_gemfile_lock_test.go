@@ -94,7 +94,7 @@ func TestParseGemfileLockEntries(t *testing.T) {
 			t.Errorf("bad language (pkg=%+v): %+v", a.Name, a.Language)
 		}
 
-		if a.Type != pkg.BundlerPkg {
+		if a.Type != pkg.GemPkg {
 			t.Errorf("bad package type (pkg=%+v): %+v", a.Name, a.Type)
 		}
 	}

@@ -108,6 +108,10 @@ func TestJsonSchemaImg(t *testing.T) {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
 
+	var cases []testCase
+	cases = append(cases, commonTestCases...)
+	cases = append(cases, imageOnlyTestCases...)
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			testJsonSchema(t, catalog, theScope, "img")
@@ -120,6 +124,10 @@ func TestJsonSchemaDirs(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create scope from dir: %+v", err)
 	}
+
+	var cases []testCase
+	cases = append(cases, commonTestCases...)
+	cases = append(cases, dirOnlyTestCases...)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

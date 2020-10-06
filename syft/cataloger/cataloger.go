@@ -33,16 +33,30 @@ type Cataloger interface {
 	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
 }
 
-// All returns a slice of all locally defined catalogers (defined in child packages).
-func All() []Cataloger {
+// ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
+func ImageCatalogers() []Cataloger {
 	return []Cataloger{
+		bundler.NewGemspecCataloger(),
+		python.NewPythonCataloger(),         // TODO: split and replace me
+		javascript.NewJavascriptCataloger(), // TODO: split and replace me
 		deb.NewDpkgdbCataloger(),
-		bundler.NewGemfileLockCataloger(),
-		python.NewPythonCataloger(),
 		rpmdb.NewRpmdbCataloger(),
 		java.NewJavaCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModCataloger(),
-		javascript.NewJavascriptCataloger(),
+	}
+}
+
+// DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
+func DirectoryCatalogers() []Cataloger {
+	return []Cataloger{
+		bundler.NewGemfileLockCataloger(),
+		python.NewPythonCataloger(),         // TODO: split and replace me
+		javascript.NewJavascriptCataloger(), // TODO: split and replace me
+		deb.NewDpkgdbCataloger(),
+		rpmdb.NewRpmdbCataloger(),
+		java.NewJavaCataloger(),
+		apkdb.NewApkdbCataloger(),
+		golang.NewGoModCataloger(),
 	}
 }

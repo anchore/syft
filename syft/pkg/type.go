@@ -8,7 +8,7 @@ type Type string
 const (
 	UnknownPkg Type = "UnknownPackage"
 	ApkPkg     Type = "apk"
-	BundlerPkg Type = "bundle"
+	GemPkg     Type = "gem"
 	DebPkg     Type = "deb"
 	EggPkg     Type = "egg"
 	// PacmanPkg Type = "pacman"
@@ -26,7 +26,7 @@ const (
 
 var AllPkgs = []Type{
 	ApkPkg,
-	BundlerPkg,
+	GemPkg,
 	DebPkg,
 	EggPkg,
 	// PacmanPkg,
@@ -45,7 +45,7 @@ func (t Type) PackageURLType() string {
 	switch t {
 	case ApkPkg:
 		return "alpine"
-	case BundlerPkg:
+	case GemPkg:
 		return packageurl.TypeGem
 	case DebPkg:
 		return "deb"

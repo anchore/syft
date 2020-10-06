@@ -130,7 +130,7 @@ unit: fixtures ## Run unit tests (with coverage)
 .PHONY: integration
 integration: ## Run integration tests
 	$(call title,Running integration tests)
-	go test -v -tags=integration ./test/integration
+	go test -tags=integration ./test/integration
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
