@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/apkdb"
 	"github.com/anchore/syft/syft/cataloger/bundler"
-	"github.com/anchore/syft/syft/cataloger/dpkg"
+	"github.com/anchore/syft/syft/cataloger/deb"
 	"github.com/anchore/syft/syft/cataloger/golang"
 	"github.com/anchore/syft/syft/cataloger/java"
 	"github.com/anchore/syft/syft/cataloger/javascript"
@@ -36,13 +36,13 @@ type Cataloger interface {
 // All returns a slice of all locally defined catalogers (defined in child packages).
 func All() []Cataloger {
 	return []Cataloger{
-		dpkg.New(),
-		bundler.New(),
-		python.New(),
-		rpmdb.New(),
-		java.New(),
-		apkdb.New(),
-		golang.New(),
-		javascript.New(),
+		deb.NewDpkgdbCataloger(),
+		bundler.NewGemfileLockCataloger(),
+		python.NewPythonCataloger(),
+		rpmdb.NewRpmdbCataloger(),
+		java.NewJavaCataloger(),
+		apkdb.NewApkdbCataloger(),
+		golang.NewGoModCataloger(),
+		javascript.NewJavascriptCataloger(),
 	}
 }
