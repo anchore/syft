@@ -14,7 +14,7 @@ import (
 )
 
 // integrity check
-var _ common.ParserFn = parseGemfileLockEntries
+var _ common.ParserFn = parseGemFileLockEntries
 
 // for line in gem.splitlines():
 // line = line.strip()
@@ -65,7 +65,7 @@ var postProcessors = map[string]listProcessor{
 	//},
 }
 
-func parseGemspecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)

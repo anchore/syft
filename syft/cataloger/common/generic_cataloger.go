@@ -15,27 +15,27 @@ import (
 // GenericCataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
 type GenericCataloger struct {
-	globParsers     map[string]ParserFn
-	pathParsers     map[string]ParserFn
-	selectedFiles   []file.Reference
-	parsers         map[file.Reference]ParserFn
-	upstreamMatcher string
+	globParsers       map[string]ParserFn
+	pathParsers       map[string]ParserFn
+	selectedFiles     []file.Reference
+	parsers           map[file.Reference]ParserFn
+	upstreamCataloger string
 }
 
 // NewGenericCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a GenericCataloger
-func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamMatcher string) *GenericCataloger {
+func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string) *GenericCataloger {
 	return &GenericCataloger{
-		globParsers:     globParsers,
-		pathParsers:     pathParsers,
-		selectedFiles:   make([]file.Reference, 0),
-		parsers:         make(map[file.Reference]ParserFn),
-		upstreamMatcher: upstreamMatcher,
+		globParsers:       globParsers,
+		pathParsers:       pathParsers,
+		selectedFiles:     make([]file.Reference, 0),
+		parsers:           make(map[file.Reference]ParserFn),
+		upstreamCataloger: upstreamCataloger,
 	}
 }
 
 // Name returns a string that uniquely describes the upstream cataloger that this Generic Cataloger represents.
 func (a *GenericCataloger) Name() string {
-	return a.upstreamMatcher
+	return a.upstreamCataloger
 }
 
 // register pairs a set of file references with a parser function for future cataloging (when the file contents are resolved)
@@ -88,19 +88,19 @@ func (a *GenericCataloger) Catalog(contents map[file.Reference]string) ([]pkg.Pa
 	for reference, parser := range a.parsers {
 		content, ok := contents[reference]
 		if !ok {
-			log.Errorf("cataloger '%s' missing file content: %+v", a.upstreamMatcher, reference)
+			log.Errorf("cataloger '%s' missing file content: %+v", a.upstreamCataloger, reference)
 			continue
 		}
 
 		entries, err := parser(string(reference.Path), strings.NewReader(content))
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %+v", a.upstreamMatcher, reference, err)
+			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %+v", a.upstreamCataloger, reference, err)
 			continue
 		}
 
 		for _, entry := range entries {
-			entry.FoundBy = a.upstreamMatcher
+			entry.FoundBy = a.upstreamCataloger
 			entry.Source = []file.Reference{reference}
 
 			packages = append(packages, entry)

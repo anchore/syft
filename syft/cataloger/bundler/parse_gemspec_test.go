@@ -17,7 +17,7 @@ func TestParseGemspec(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseGemspecEntries(fixture.Name(), fixture)
+	actual, err := parseGemSpecEntries(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse gemspec: %+v", err)
 	}

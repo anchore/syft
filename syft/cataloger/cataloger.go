@@ -36,7 +36,7 @@ type Cataloger interface {
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
 func ImageCatalogers() []Cataloger {
 	return []Cataloger{
-		bundler.NewGemspecCataloger(),
+		bundler.NewGemSpecCataloger(),
 		python.NewPythonCataloger(),         // TODO: split and replace me
 		javascript.NewJavascriptCataloger(), // TODO: split and replace me
 		deb.NewDpkgdbCataloger(),
@@ -50,7 +50,7 @@ func ImageCatalogers() []Cataloger {
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
 func DirectoryCatalogers() []Cataloger {
 	return []Cataloger{
-		bundler.NewGemfileLockCataloger(),
+		bundler.NewGemFileLockCataloger(),
 		python.NewPythonCataloger(),         // TODO: split and replace me
 		javascript.NewJavascriptCataloger(), // TODO: split and replace me
 		deb.NewDpkgdbCataloger(),
