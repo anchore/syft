@@ -16,53 +16,42 @@ import (
 // integrity check
 var _ common.ParserFn = parseGemFileLockEntries
 
-// for line in gem.splitlines():
-// line = line.strip()
-// line = re.sub(r"\.freeze", "", line)
-
-// # look for the unicode \u{} format and try to convert to something python can use
-// patt = re.match(r".*\.homepage *= *(.*) *", line)
-// if patt:
-// 	sourcepkg = json.loads(patt.group(1))
-
-// patt = re.match(r".*\.licenses *= *(.*) *", line)
-// if patt:
-// 	lstr = re.sub(r"^\[|\]$", "", patt.group(1)).split(',')
-// 	for thestr in lstr:
-// 		thestr = re.sub(' *" *', "", thestr)
-// 		lics.append(thestr)
-
-// patt = re.match(r".*\.authors *= *(.*) *", line)
-// if patt:
-// 	lstr = re.sub(r"^\[|\]$", "", patt.group(1)).split(',')
-// 	for thestr in lstr:
-// 		thestr = re.sub(' *" *', "", thestr)
-// 		origins.append(thestr)
-
-// patt = re.match(r".*\.files *= *(.*) *", line)
-// if patt:
-// 	lstr = re.sub(r"^\[|\]$", "", patt.group(1)).split(',')
-// 	for thestr in lstr:
-// 		thestr = re.sub(' *" *', "", thestr)
-// 		rfiles.append(thestr)
-
-type listProcessor func(string) []string
+type postProcessor func(string) []string
 
 var patterns = map[string]*regexp.Regexp{
 	// match example:       name = "railties".freeze   --->   railties
 	"name": regexp.MustCompile(`.*\.name\s*=\s*["']{1}(?P<name>.*)["']{1} *`),
+
 	// match example:       version = "1.0.4".freeze   --->   1.0.4
 	"version": regexp.MustCompile(`.*\.version\s*=\s*["']{1}(?P<version>.*)["']{1} *`),
-	// match example:       homepage = "https://github.com/anchore/syft".freeze   --->   https://github.com/anchore/syft
+
+	// match example:
+	// homepage = "https://github.com/anchore/syft".freeze   --->   https://github.com/anchore/syft
 	"homepage": regexp.MustCompile(`.*\.homepage\s*=\s*["']{1}(?P<homepage>.*)["']{1} *`),
-	// TODO: add more fields
+
+	// match example:       files = ["exe/bundle".freeze, "exe/bundler".freeze]    --->    "exe/bundle".freeze, "exe/bundler".freeze
+	"files": regexp.MustCompile(`.*\.files\s*=\s*\[(?P<files>.*)\] *`),
+
+	// match example:       authors = ["Andr\u00E9 Arko".freeze, "Samuel Giddins".freeze, "Colby Swandale".freeze,
+	//								   "Hiroshi Shibata".freeze, "David Rodr\u00EDguez".freeze, "Grey Baker".freeze...]
+	"authors": regexp.MustCompile(`.*\.authors\s*=\s*\[(?P<authors>.*)\] *`),
+
+	// match example:	    licenses = ["MIT".freeze]   ----> "MIT".freeze
+	"licenses": regexp.MustCompile(`.*\.licenses\s*=\s*\[(?P<licenses>.*)\] *`),
 }
 
-// TODO: use post processors for lists
-var postProcessors = map[string]listProcessor{
-	//"files": func(s string) []string {
-	//
-	//},
+var postProcessors = map[string]postProcessor{
+	"files":    processList,
+	"authors":  processList,
+	"licenses": processList,
+}
+
+func processList(s string) []string {
+	var results []string
+	for _, item := range strings.Split(s, ",") {
+		results = append(results, strings.Trim(item, "\" "))
+	}
+	return results
 }
 
 func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
@@ -75,12 +64,16 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 
 		// TODO: sanitize unicode? (see engine code)
 		sanitizedLine := strings.TrimSpace(line)
+		sanitizedLine = strings.ReplaceAll(sanitizedLine, ".freeze", "")
 
 		if sanitizedLine == "" {
 			continue
 		}
 
 		for field, pattern := range patterns {
+			if strings.Contains(sanitizedLine, "licenses") {
+				println("Found it.")
+			}
 			matchMap := matchCaptureGroups(pattern, sanitizedLine)
 			if value := matchMap[field]; value != "" {
 				if postProcessor := postProcessors[field]; postProcessor != nil {
@@ -103,6 +96,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 		pkgs = append(pkgs, pkg.Package{
 			Name:     metadata.Name,
 			Version:  metadata.Version,
+			Licenses: metadata.Licenses,
 			Language: pkg.Ruby,
 			Type:     pkg.GemPkg,
 			Metadata: metadata,
