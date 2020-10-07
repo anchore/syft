@@ -38,7 +38,7 @@ ls -alh ${TEST_IMAGE_TAR}
 
 # run syft
 chmod 755 ${DISTDIR}/syft_darwin_amd64/syft
-${DISTDIR}/syft_darwin_amd64/syft version -v
+${DISTDIR}/syft_darwin_amd64/syft version
 SYFT_CHECK_FOR_APP_UPDATE=0 ${DISTDIR}/syft_darwin_amd64/syft docker-archive://${TEST_IMAGE_TAR} -vv -o json > ${REPORT}
 
 # keep the generated report around
