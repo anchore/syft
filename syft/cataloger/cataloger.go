@@ -8,13 +8,13 @@ package cataloger
 import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/apkdb"
-	"github.com/anchore/syft/syft/cataloger/bundler"
 	"github.com/anchore/syft/syft/cataloger/deb"
 	"github.com/anchore/syft/syft/cataloger/golang"
 	"github.com/anchore/syft/syft/cataloger/java"
 	"github.com/anchore/syft/syft/cataloger/javascript"
 	"github.com/anchore/syft/syft/cataloger/python"
 	"github.com/anchore/syft/syft/cataloger/rpmdb"
+	"github.com/anchore/syft/syft/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
 )
@@ -36,7 +36,7 @@ type Cataloger interface {
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
 func ImageCatalogers() []Cataloger {
 	return []Cataloger{
-		bundler.NewGemSpecCataloger(),
+		ruby.NewGemSpecCataloger(),
 		python.NewPythonCataloger(),         // TODO: split and replace me
 		javascript.NewJavascriptCataloger(), // TODO: split and replace me
 		deb.NewDpkgdbCataloger(),
@@ -50,7 +50,7 @@ func ImageCatalogers() []Cataloger {
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
 func DirectoryCatalogers() []Cataloger {
 	return []Cataloger{
-		bundler.NewGemFileLockCataloger(),
+		ruby.NewGemFileLockCataloger(),
 		python.NewPythonCataloger(),         // TODO: split and replace me
 		javascript.NewJavascriptCataloger(), // TODO: split and replace me
 		deb.NewDpkgdbCataloger(),

@@ -1,11 +1,11 @@
-package bundler
+package ruby
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -48,6 +48,7 @@ var postProcessors = map[string]postProcessor{
 }
 
 func processList(s string) []string {
+	// nolint:prealloc
 	var results []string
 	for _, item := range strings.Split(s, ",") {
 		results = append(results, strings.Trim(item, "\" "))
@@ -106,45 +107,17 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 
 // renderUtf8 takes any string escaped string sub-sections from the ruby string and replaces those sections with the UTF8 runes.
 func renderUtf8(s string) string {
-	pattern := regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4,8})`)
-	fullReplacement := replaceAllStringSubmatchFunc(pattern, s, func(unicodeSection []string) string {
-		replacement := ""
-		if len(unicodeSection) == 1 {
-			return unicodeSection[0]
-		}
-		for idx, m := range unicodeSection {
-			if idx == 0 {
-				continue
-			}
-			value, err := strconv.ParseInt(m, 16, 64)
-			if err != nil {
-				// TODO: log?
-				panic(err)
-				//return unicodeSection[0]
-			}
-			replacement = strings.ReplaceAll(unicodeSection[0], "\\u"+m, string(rune(value)))
+	pattern := regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
+	fullReplacement := pattern.ReplaceAllStringFunc(s, func(unicodeSection string) string {
+		var replacement string
+		// note: the json parser already has support for interpreting hex-representations of unicode escaped strings as unicode runes.
+		// we can do this ourselves with strconv.Atoi, or leverage the existing json package.
+		if err := json.Unmarshal([]byte(`"`+unicodeSection+`"`), &replacement); err != nil {
+			return unicodeSection
 		}
 		return replacement
 	})
 	return fullReplacement
-}
-
-// replaceAllStringSubmatchFunc finds and replaces the given capture groups from the
-func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
-	result := ""
-	lastIndex := 0
-
-	for _, v := range re.FindAllSubmatchIndex([]byte(str), -1) {
-		var groups []string
-		for i := 0; i < len(v); i += 2 {
-			groups = append(groups, str[v[i]:v[i+1]])
-		}
-
-		result += str[lastIndex:v[0]] + repl(groups)
-		lastIndex = v[1]
-	}
-
-	return result + str[lastIndex:]
 }
 
 // matchCaptureGroups takes a regular expression and string and returns all of the named capture group results in a map.

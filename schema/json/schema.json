@@ -40,6 +40,9 @@
                             "architecture": {
                                 "type": "string"
                             },
+                            "authors": {
+                                "type": "null"
+                            },
                             "description": {
                                 "type": "string"
                             },
@@ -48,31 +51,38 @@
                             },
                             "files": {
                                 "items": {
-                                    "properties": {
-                                        "checksum": {
+                                    "anyOf": [
+                                        {
                                             "type": "string"
                                         },
-                                        "ownerGid": {
-                                            "type": "string"
-                                        },
-                                        "ownerUid": {
-                                            "type": "string"
-                                        },
-                                        "path": {
-                                            "type": "string"
-                                        },
-                                        "permissions": {
-                                            "type": "string"
+                                        {
+                                            "properties": {
+                                                "checksum": {
+                                                    "type": "string"
+                                                },
+                                                "ownerGid": {
+                                                    "type": "string"
+                                                },
+                                                "ownerUid": {
+                                                    "type": "string"
+                                                },
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "permissions": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "checksum",
+                                                "ownerGid",
+                                                "ownerUid",
+                                                "path",
+                                                "permissions"
+                                            ],
+                                            "type": "object"
                                         }
-                                    },
-                                    "required": [
-                                        "checksum",
-                                        "ownerGid",
-                                        "ownerUid",
-                                        "path",
-                                        "permissions"
-                                    ],
-                                    "type": "object"
+                                    ]
                                 },
                                 "type": "array"
                             },
@@ -84,6 +94,12 @@
                             },
                             "license": {
                                 "type": "string"
+                            },
+                            "licenses": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
                             },
                             "maintainer": {
                                 "type": "string"

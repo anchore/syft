@@ -1,7 +1,7 @@
 /*
 Package bundler provides a concrete Cataloger implementation for Ruby Gemfile.lock bundler files.
 */
-package bundler
+package ruby
 
 import (
 	"github.com/anchore/syft/syft/cataloger/common"

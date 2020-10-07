@@ -1,4 +1,4 @@
-package bundler
+package ruby
 
 import (
 	"os"
@@ -19,7 +19,7 @@ func TestParseGemspec(t *testing.T) {
 			Name:     "bundler",
 			Version:  "2.1.4",
 			Files:    []string{"exe/bundle", "exe/bundler"},
-			Authors:  []string{"André Arko", "Samuel Giddins", "Colby Swandale", "Hiroshi Shibata", "David Rodréguez", "Grey Baker", "Stephanie Morillo", "Chris Morris", "James Wen", "Tim Moore", "André Medeiros", "Jessica Lynn Suttles", "Terence Lee", "Carl Lerche", "Yehuda Katz"},
+			Authors:  []string{"André Arko", "Samuel Giddins", "Colby Swandale", "Hiroshi Shibata", "David Rodríguez", "Grey Baker", "Stephanie Morillo", "Chris Morris", "James Wen", "Tim Moore", "André Medeiros", "Jessica Lynn Suttles", "Terence Lee", "Carl Lerche", "Yehuda Katz"},
 			Licenses: []string{"MIT"},
 		},
 	}
