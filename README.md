@@ -15,7 +15,7 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
 - Supports Docker and OCI image formats
 
-> :warning: **This is pre-release software** and it may not work as expected. If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
+If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
 
 ## Getting started
 
