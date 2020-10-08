@@ -33,8 +33,9 @@ class InlineScan:
 
     def packages(self):
         python_packages, python_metadata = self._python_packages()
-        os_pacakges, os_metadata = self._os_packages()
-        return python_packages | os_pacakges, {**python_metadata, **os_metadata}
+        gem_packages, gem_metadata = self._gem_packages()
+        os_packages, os_metadata = self._os_packages()
+        return python_packages | os_packages | gem_packages , {**python_metadata, **os_metadata, **gem_metadata}
 
     def _report_path(self, report):
         return os.path.join(
@@ -60,6 +61,18 @@ class InlineScan:
         metadata = collections.defaultdict(dict)
         for entry in self._enumerate_section(
             report="content-python", section="content"
+        ):
+            package = Package(name=entry["package"], type=entry["type"].lower(),)
+            packages.add(package)
+            metadata[package.type][package] = Metadata(version=entry["version"])
+
+        return packages, metadata
+
+    def _gem_packages(self):
+        packages = set()
+        metadata = collections.defaultdict(dict)
+        for entry in self._enumerate_section(
+                report="content-gem", section="content"
         ):
             package = Package(name=entry["package"], type=entry["type"].lower(),)
             packages.add(package)
@@ -162,7 +175,7 @@ def main(image):
     for package in syft_packages:
         metadata = syft_metadata[package.type][package]
         # we only want to really count mismatched metadata for packages that are at least found by inline
-        if package in inline_metadata[package.type]:
+        if package in inline_metadata.get(package.type, []):
             syft_overlap_metadata_set.add((package, metadata))
 
     same_metadata = syft_overlap_metadata_set & inline_metadata_set
@@ -202,8 +215,10 @@ def main(image):
 
     print(colors.bold+"Summary:", colors.reset)
     print("   Image: %s" % image)
-    print("   Inline Packages: %d" % len(inline_packages))
-    print("   Syft Packages: %d" % len(syft_packages))
+    print("   Inline Packages : %d" % len(inline_packages))
+    print("   Syft Packages   : %d" % len(syft_packages))
+    print("         (extra)   : %d" % len(bonus_packages))
+    print("       (missing)   : %d" % len(missing_packages))
     print(
         "   Baseline Packages Matched: %2.3f %% (%d/%d packages)"
         % (percent_overlap_packages, len(same_packages), len(inline_packages))

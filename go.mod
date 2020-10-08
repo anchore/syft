@@ -21,7 +21,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/package-url/packageurl-go v0.1.0
 	github.com/pelletier/go-toml v1.8.0
-	github.com/rogpeppe/go-internal v1.5.2
 	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.2.2
@@ -33,5 +32,6 @@ require (
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/mod v0.3.0
 	gopkg.in/yaml.v2 v2.3.0
 )

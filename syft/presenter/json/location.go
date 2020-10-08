@@ -15,8 +15,7 @@ type ImageLocation struct {
 }
 
 func NewLocations(p *pkg.Package, s scope.Scope) (Locations, error) {
-	srcObj := s.Source()
-	switch src := srcObj.(type) {
+	switch src := s.Source.(type) {
 	case scope.ImageSource:
 		locations := make([]ImageLocation, len(p.Source))
 		for idx := range p.Source {

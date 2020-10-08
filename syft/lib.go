@@ -17,6 +17,8 @@ Similar to the cataloging process, Linux distribution identification is also per
 package syft
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cataloger"
@@ -62,7 +64,19 @@ func IdentifyDistro(s scope.Scope) distro.Distro {
 // Catalog the given scope, which may represent a container image or filesystem. Returns the discovered set of packages.
 func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
 	log.Info("building the catalog")
-	return cataloger.Catalog(s.Resolver, cataloger.All()...)
+
+	// conditionally have two sets of catalogers
+	var catalogers []cataloger.Cataloger
+	switch s.Scheme {
+	case scope.ImageScheme:
+		catalogers = cataloger.ImageCatalogers()
+	case scope.DirectoryScheme:
+		catalogers = cataloger.DirectoryCatalogers()
+	default:
+		return nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", s.Scheme)
+	}
+
+	return cataloger.Catalog(s.Resolver, catalogers...)
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

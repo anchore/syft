@@ -40,7 +40,7 @@ docker run --rm \
     centos:latest \
         /bin/bash -x -c "\
             rpm -ivh ${DISTDIR}/syft_*_linux_amd64.rpm && \
-            syft version -v && \
+            syft version && \
             syft ${TEST_IMAGE} -vv -o json > ${REPORT} \
         "
 

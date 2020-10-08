@@ -43,7 +43,7 @@ func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths
 	defer func() {
 		err = zipReader.Close()
 		if err != nil {
-			log.Errorf("unable to close zip archive (%s): %w", archivePath, err)
+			log.Errorf("unable to close zip archive (%s): %+v", archivePath, err)
 		}
 	}()
 

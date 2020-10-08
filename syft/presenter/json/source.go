@@ -12,8 +12,7 @@ type Source struct {
 }
 
 func NewSource(s scope.Scope) (Source, error) {
-	srcObj := s.Source()
-	switch src := srcObj.(type) {
+	switch src := s.Source.(type) {
 	case scope.ImageSource:
 		return Source{
 			Type:   "image",
@@ -22,7 +21,7 @@ func NewSource(s scope.Scope) (Source, error) {
 	case scope.DirSource:
 		return Source{
 			Type:   "directory",
-			Target: s.DirSrc.Path,
+			Target: src.Path,
 		}, nil
 	default:
 		return Source{}, fmt.Errorf("unsupported source: %T", src)

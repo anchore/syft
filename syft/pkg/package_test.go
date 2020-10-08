@@ -1,9 +1,10 @@
 package pkg
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/distro"
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"testing"
 )
 
 func TestPackage_pURL(t *testing.T) {
@@ -56,7 +57,7 @@ func TestPackage_pURL(t *testing.T) {
 			pkg: Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    BundlerPkg,
+				Type:    GemPkg,
 			},
 			expected: "pkg:gem/name@v0.1.0",
 		},

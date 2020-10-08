@@ -64,6 +64,15 @@ jobs:
           name: artifacts
           path: snapshot/**/*
 
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,job,commit,message,author
+          text: The syft acceptance tests have failed tragically!
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+        if: ${{ failure() }}
+
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
     needs: [ Build-Snapshot-Artifacts ]
@@ -80,6 +89,15 @@ jobs:
       - name: Run Acceptance Tests (Linux)
         run: make acceptance-linux
 
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,job,commit,message,author
+          text: The syft acceptance tests have failed tragically!
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+        if: ${{ failure() }}
+
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Mac:
     needs: [ Build-Snapshot-Artifacts ]
@@ -95,6 +113,15 @@ jobs:
 
       - name: Run Acceptance Tests (Mac)
         run: make acceptance-mac
+
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,job,commit,message,author
+          text: The syft acceptance tests have failed tragically!
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+        if: ${{ failure() }}
 
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Inline-Compare:
@@ -121,3 +148,12 @@ jobs:
 
       - name: Compare Anchore inline-scan results against snapshot build output
         run: make compare-snapshot
+
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,job,commit,message,author
+          text: The syft acceptance tests have failed tragically!
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+        if: ${{ failure() }}

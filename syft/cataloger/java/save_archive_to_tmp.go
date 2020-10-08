@@ -19,7 +19,7 @@ func saveArchiveToTmp(reader io.Reader) (string, string, func(), error) {
 	cleanupFn := func() {
 		err = os.RemoveAll(tempDir)
 		if err != nil {
-			log.Errorf("unable to cleanup jar tempdir: %w", err)
+			log.Errorf("unable to cleanup jar tempdir: %+v", err)
 		}
 	}
 

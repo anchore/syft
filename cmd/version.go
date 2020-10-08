@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var showVerboseVersionInfo bool
 var outputFormat string
 
 var versionCmd = &cobra.Command{
@@ -22,7 +21,6 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
-	versionCmd.Flags().BoolVarP(&showVerboseVersionInfo, "verbose", "v", false, "show additional version information")
 	versionCmd.Flags().StringVarP(&outputFormat, "output", "o", string(presenter.TextPresenter), "format to show version information (available=[text, json])")
 	rootCmd.AddCommand(versionCmd)
 }
@@ -32,18 +30,15 @@ func printVersion(_ *cobra.Command, _ []string) {
 
 	switch outputFormat {
 	case "text":
-		if showVerboseVersionInfo {
-			fmt.Println("Application:  ", internal.ApplicationName)
-			fmt.Println("Version:      ", versionInfo.Version)
-			fmt.Println("BuildDate:    ", versionInfo.BuildDate)
-			fmt.Println("GitCommit:    ", versionInfo.GitCommit)
-			fmt.Println("GitTreeState: ", versionInfo.GitTreeState)
-			fmt.Println("Platform:     ", versionInfo.Platform)
-			fmt.Println("GoVersion:    ", versionInfo.GoVersion)
-			fmt.Println("Compiler:     ", versionInfo.Compiler)
-		} else {
-			fmt.Printf("%s %s\n", internal.ApplicationName, versionInfo.Version)
-		}
+		fmt.Println("Application:  ", internal.ApplicationName)
+		fmt.Println("Version:      ", versionInfo.Version)
+		fmt.Println("BuildDate:    ", versionInfo.BuildDate)
+		fmt.Println("GitCommit:    ", versionInfo.GitCommit)
+		fmt.Println("GitTreeState: ", versionInfo.GitTreeState)
+		fmt.Println("Platform:     ", versionInfo.Platform)
+		fmt.Println("GoVersion:    ", versionInfo.GoVersion)
+		fmt.Println("Compiler:     ", versionInfo.Compiler)
+
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetEscapeHTML(false)

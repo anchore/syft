@@ -27,6 +27,10 @@ ifeq "$(strip $(VERSION))" ""
  override VERSION = $(shell git describe --always --tags --dirty)
 endif
 
+# used to generate the changelog from the second to last tag to the current tag (used in the release pipeline when the release tag is in place)
+LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --max-count=1))
+SECOND_TO_LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --skip=1 --max-count=1))
+
 ## Variable assertions
 
 ifndef TEMPDIR
@@ -67,7 +71,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BOLD)$(CYAN)%-25s$(RESET)%s\n", $$1, $$2}'
 
 .PHONY: ci-bootstrap
-ci-bootstrap: bootstrap
+ci-bootstrap:
 	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils
 
 .PHONY: bootstrap
@@ -126,7 +130,7 @@ unit: fixtures ## Run unit tests (with coverage)
 .PHONY: integration
 integration: ## Run integration tests
 	$(call title,Running integration tests)
-	go test -v -tags=integration ./test/integration
+	go test -tags=integration ./test/integration
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
@@ -158,16 +162,6 @@ generate-json-schema: clean-json-schema-examples integration ## Generate a new j
 .PHONY: clear-test-cache
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/cache/*.tar" -delete
-
-.PHONY: check-pipeline
-check-pipeline: ## Run local CircleCI pipeline locally (sanity check)
-	$(call title,Check pipeline)
-	# note: this is meant for local development & testing of the pipeline, NOT to be run in CI
-	mkdir -p $(TEMPDIR)
-	circleci config process .circleci/config.yml > .tmp/circleci.yml
-	circleci local execute -c .tmp/circleci.yml --job "Static Analysis"
-	circleci local execute -c .tmp/circleci.yml --job "Unit & Integration Tests (go-latest)"
-	@printf '$(SUCCESS)Pipeline checks pass!$(RESET)\n'
 
 .PHONY: build
 build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
@@ -228,15 +222,20 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 
 .PHONY: changlog-release
 changelog-release:
+	@echo "Last tag: $(SECOND_TO_LAST_TAG)"
+	@echo "Current tag: $(VERSION)"
 	@docker run -i --rm  \
 		-v "$(shell pwd)":/usr/local/src/your-app ferrarimarco/github-changelog-generator \
 		--user anchore \
 		--project $(BIN) \
 		-t ${GITHUB_TOKEN} \
+		--exclude-labels 'duplicate,question,invalid,wontfix,size:small,size:medium,size:large,size:x-large' \
 		--no-pr-wo-labels \
 		--no-issues-wo-labels \
-		--unreleased-only \
-		--future-release $(VERSION)
+		--since-tag $(SECOND_TO_LAST_TAG)
+
+	@printf '\n$(BOLD)$(CYAN)Release $(VERSION) Changelog$(RESET)\n\n'
+	@cat CHANGELOG.md
 
 .PHONY: changelog-unreleased
 changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
@@ -245,12 +244,15 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 		--user anchore \
 		--project $(BIN) \
 		-t ${GITHUB_TOKEN} \
-		--unreleased-only
+		--exclude-labels 'duplicate,question,invalid,wontfix,size:small,size:medium,size:large,size:x-large' \
+		--since-tag $(LAST_TAG)
+
 	@printf '\n$(BOLD)$(CYAN)Unreleased Changes (closed PRs and issues will not be in the final changelog)$(RESET)\n'
+
 	@docker run -it --rm \
 		-v $(shell pwd)/CHANGELOG.md:/CHANGELOG.md \
 		rawkode/mdv \
-			-t 785.3229 \
+			-t 748.5989 \
 			/CHANGELOG.md
 
 .PHONY: release
@@ -261,11 +263,10 @@ release: clean-dist changelog-release ## Build and publish final binaries and pa
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# release
-	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	$(TEMPDIR)/goreleaser \
+	bash -c "BUILD_GIT_TREE_STATE=$(GITTREESTATE) $(TEMPDIR)/goreleaser \
 		--rm-dist \
 		--config $(TEMPDIR)/goreleaser.yaml \
-		--release-notes <(cat CHANGELOG.md)
+		--release-notes <(cat CHANGELOG.md)"
 
 	# verify checksum signatures
 	.github/scripts/verify-signature.sh "$(DISTDIR)"
