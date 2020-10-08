@@ -1,6 +1,7 @@
 # syft
 
-[![CircleCI](https://circleci.com/gh/anchore/syft.svg?style=svg)](https://circleci.com/gh/anchore/syft)
+[![Static Analysis + Unit + Integration](https://github.com/anchore/syft/workflows/Static%20Analysis%20+%20Unit%20+%20Integration/badge.svg)](https://github.com/anchore/syft/actions?query=workflow%3A%22Static+Analysis+%2B+Unit+%2B+Integration%22)
+[![Acceptance](https://github.com/anchore/syft/workflows/Acceptance/badge.svg)](https://github.com/anchore/syft/actions?query=workflow%3AAcceptance)
 [![Go Report Card](https://goreportcard.com/badge/github.com/anchore/syft)](https://goreportcard.com/report/github.com/anchore/syft)
 [![GitHub release](https://img.shields.io/github/release/anchore/syft.svg)](https://github.com/anchore/syft/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/anchore/syft/blob/main/LICENSE)
