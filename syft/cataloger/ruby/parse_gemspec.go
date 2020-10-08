@@ -19,6 +19,9 @@ var _ common.ParserFn = parseGemFileLockEntries
 
 type postProcessor func(string) []string
 
+// match example:      Al\u003Ex   --->   003E
+var unicodePattern = regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
+
 var patterns = map[string]*regexp.Regexp{
 	// match example:       name = "railties".freeze   --->   railties
 	"name": regexp.MustCompile(`.*\.name\s*=\s*["']{1}(?P<name>.*)["']{1} *`),
@@ -107,8 +110,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 
 // renderUtf8 takes any string escaped string sub-sections from the ruby string and replaces those sections with the UTF8 runes.
 func renderUtf8(s string) string {
-	pattern := regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
-	fullReplacement := pattern.ReplaceAllStringFunc(s, func(unicodeSection string) string {
+	fullReplacement := unicodePattern.ReplaceAllStringFunc(s, func(unicodeSection string) string {
 		var replacement string
 		// note: the json parser already has support for interpreting hex-representations of unicode escaped strings as unicode runes.
 		// we can do this ourselves with strconv.Atoi, or leverage the existing json package.
