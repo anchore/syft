@@ -20,12 +20,12 @@ import (
 )
 
 const (
-	unknownScheme   scheme = "unknown-scheme"
-	directoryScheme scheme = "directory-scheme"
-	imageScheme     scheme = "image-scheme"
+	UnknownScheme   Scheme = "unknown-scheme"
+	DirectoryScheme Scheme = "directory-scheme"
+	ImageScheme     Scheme = "image-scheme"
 )
 
-type scheme string
+type Scheme string
 
 // ImageSource represents a data source that is a container image
 type ImageSource struct {
@@ -42,8 +42,8 @@ type DirSource struct {
 type Scope struct {
 	Option   Option      // specific perspective to catalog
 	Resolver Resolver    // a Resolver object to use in file path/glob resolution and file contents resolution
-	ImgSrc   ImageSource // the specific image to be cataloged
-	DirSrc   DirSource   // the specific directory to be cataloged
+	Source   interface{} // the specific source object to be cataloged
+	Scheme   Scheme      // the source data scheme type (directory or image)
 }
 
 // NewScope produces a Scope based on userInput like dir: or image:tag
@@ -55,7 +55,7 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 	}
 
 	switch parsedScheme {
-	case directoryScheme:
+	case DirectoryScheme:
 		fileMeta, err := fs.Stat(location)
 		if err != nil {
 			return Scope{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
@@ -71,7 +71,7 @@ func NewScope(userInput string, o Option) (Scope, func(), error) {
 		}
 		return s, func() {}, nil
 
-	case imageScheme:
+	case ImageScheme:
 		img, err := stereoscope.GetImage(location)
 		cleanup := func() {
 			stereoscope.Cleanup()
@@ -97,9 +97,10 @@ func NewScopeFromDir(path string) (Scope, error) {
 		Resolver: &resolvers.DirectoryResolver{
 			Path: path,
 		},
-		DirSrc: DirSource{
+		Source: DirSource{
 			Path: path,
 		},
+		Scheme: DirectoryScheme,
 	}, nil
 }
 
@@ -118,59 +119,48 @@ func NewScopeFromImage(img *image.Image, option Option) (Scope, error) {
 	return Scope{
 		Option:   option,
 		Resolver: resolver,
-		ImgSrc: ImageSource{
+		Source: ImageSource{
 			Img: img,
 		},
+		Scheme: ImageScheme,
 	}, nil
-}
-
-// Source returns the configured data source (either a dir source or container image source)
-func (s Scope) Source() interface{} {
-	if s.ImgSrc != (ImageSource{}) {
-		return s.ImgSrc
-	}
-	if s.DirSrc != (DirSource{}) {
-		return s.DirSrc
-	}
-
-	return nil
 }
 
 type sourceDetector func(string) (image.Source, string, error)
 
-func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (scheme, string, error) {
+func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (Scheme, string, error) {
 	if strings.HasPrefix(userInput, "dir:") {
 		// blindly trust the user's scheme
 		dirLocation, err := homedir.Expand(strings.TrimPrefix(userInput, "dir:"))
 		if err != nil {
-			return unknownScheme, "", fmt.Errorf("unable to expand directory path: %w", err)
+			return UnknownScheme, "", fmt.Errorf("unable to expand directory path: %w", err)
 		}
-		return directoryScheme, dirLocation, nil
+		return DirectoryScheme, dirLocation, nil
 	}
 
 	// we should attempt to let stereoscope determine what the source is first --just because the source is a valid directory
 	// doesn't mean we yet know if it is an OCI layout directory (to be treated as an image) or if it is a generic filesystem directory.
 	source, imageSpec, err := imageDetector(userInput)
 	if err != nil {
-		return unknownScheme, "", fmt.Errorf("unable to detect the scheme from %q: %w", userInput, err)
+		return UnknownScheme, "", fmt.Errorf("unable to detect the scheme from %q: %w", userInput, err)
 	}
 
 	if source == image.UnknownSource {
 		dirLocation, err := homedir.Expand(userInput)
 		if err != nil {
-			return unknownScheme, "", fmt.Errorf("unable to expand potential directory path: %w", err)
+			return UnknownScheme, "", fmt.Errorf("unable to expand potential directory path: %w", err)
 		}
 
 		fileMeta, err := fs.Stat(dirLocation)
 		if err != nil {
-			return unknownScheme, "", nil
+			return UnknownScheme, "", nil
 		}
 
 		if fileMeta.IsDir() {
-			return directoryScheme, dirLocation, nil
+			return DirectoryScheme, dirLocation, nil
 		}
-		return unknownScheme, "", nil
+		return UnknownScheme, "", nil
 	}
 
-	return imageScheme, imageSpec, nil
+	return ImageScheme, imageSpec, nil
 }

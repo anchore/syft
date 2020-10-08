@@ -3,8 +3,10 @@
 package integration
 
 import (
-	"github.com/anchore/stereoscope/pkg/imagetest"
 	"testing"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/go-test/deep"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft"
@@ -34,6 +36,10 @@ func TestPkgCoverageImage(t *testing.T) {
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
+
+	var cases []testCase
+	cases = append(cases, commonTestCases...)
+	cases = append(cases, imageOnlyTestCases...)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -81,10 +87,16 @@ func TestPkgCoverageImage(t *testing.T) {
 	// ensure that integration test cases stay in sync with the available catalogers
 	if len(observedLanguages) < len(definedLanguages) {
 		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", len(definedLanguages), len(observedLanguages))
+		for _, d := range deep.Equal(observedLanguages, definedLanguages) {
+			t.Errorf("diff: %+v", d)
+		}
 	}
 
 	if len(observedPkgs) < len(definedPkgs) {
 		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", len(definedPkgs), len(observedPkgs))
+		for _, d := range deep.Equal(observedPkgs, definedPkgs) {
+			t.Errorf("diff: %+v", d)
+		}
 	}
 }
 
@@ -106,6 +118,10 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
+
+	var cases []testCase
+	cases = append(cases, commonTestCases...)
+	cases = append(cases, dirOnlyTestCases...)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -150,7 +166,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
-	// ensure that integration test cases stay in sync with the available catalogers
+	// ensure that integration test commonTestCases stay in sync with the available catalogers
 	if len(observedLanguages) < len(definedLanguages) {
 		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", len(definedLanguages), len(observedLanguages))
 	}

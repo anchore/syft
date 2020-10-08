@@ -8,13 +8,13 @@ package cataloger
 import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cataloger/apkdb"
-	"github.com/anchore/syft/syft/cataloger/bundler"
-	"github.com/anchore/syft/syft/cataloger/dpkg"
+	"github.com/anchore/syft/syft/cataloger/deb"
 	"github.com/anchore/syft/syft/cataloger/golang"
 	"github.com/anchore/syft/syft/cataloger/java"
 	"github.com/anchore/syft/syft/cataloger/javascript"
 	"github.com/anchore/syft/syft/cataloger/python"
 	"github.com/anchore/syft/syft/cataloger/rpmdb"
+	"github.com/anchore/syft/syft/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
 )
@@ -33,16 +33,30 @@ type Cataloger interface {
 	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
 }
 
-// All returns a slice of all locally defined catalogers (defined in child packages).
-func All() []Cataloger {
+// ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
+func ImageCatalogers() []Cataloger {
 	return []Cataloger{
-		dpkg.New(),
-		bundler.New(),
-		python.New(),
-		rpmdb.New(),
-		java.New(),
-		apkdb.New(),
-		golang.New(),
-		javascript.New(),
+		ruby.NewGemSpecCataloger(),
+		python.NewPythonCataloger(),         // TODO: split and replace me
+		javascript.NewJavascriptCataloger(), // TODO: split and replace me
+		deb.NewDpkgdbCataloger(),
+		rpmdb.NewRpmdbCataloger(),
+		java.NewJavaCataloger(),
+		apkdb.NewApkdbCataloger(),
+		golang.NewGoModCataloger(),
+	}
+}
+
+// DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
+func DirectoryCatalogers() []Cataloger {
+	return []Cataloger{
+		ruby.NewGemFileLockCataloger(),
+		python.NewPythonCataloger(),         // TODO: split and replace me
+		javascript.NewJavascriptCataloger(), // TODO: split and replace me
+		deb.NewDpkgdbCataloger(),
+		rpmdb.NewRpmdbCataloger(),
+		java.NewJavaCataloger(),
+		apkdb.NewApkdbCataloger(),
+		golang.NewGoModCataloger(),
 	}
 }

@@ -27,9 +27,8 @@ func (pres *Presenter) Present(output io.Writer) error {
 	// init the tabular writer
 	w := new(tabwriter.Writer)
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
-	srcObj := pres.scope.Source()
 
-	switch src := srcObj.(type) {
+	switch src := pres.scope.Source.(type) {
 	case scope.DirSource:
 		fmt.Fprintln(w, fmt.Sprintf("[Path: %s]", src.Path))
 	case scope.ImageSource:

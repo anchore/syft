@@ -34,9 +34,7 @@ func NewPresenter(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) *Present
 func (pres *Presenter) Present(output io.Writer) error {
 	bom := NewDocumentFromCatalog(pres.catalog, pres.distro)
 
-	srcObj := pres.scope.Source()
-
-	switch src := srcObj.(type) {
+	switch src := pres.scope.Source.(type) {
 	case scope.DirSource:
 		bom.BomDescriptor.Component = &BdComponent{
 			Component: Component{

@@ -60,9 +60,9 @@ func TestGenericCataloger(t *testing.T) {
 		"/another-path.txt": parser,
 		"/last/path.txt":    parser,
 	}
-
+	upstream := "some-other-cataloger"
 	resolver := newTestResolver()
-	cataloger := NewGenericCataloger(pathParsers, globParsers)
+	cataloger := NewGenericCataloger(pathParsers, globParsers, upstream)
 
 	selected := cataloger.SelectFiles(resolver)
 
@@ -79,7 +79,6 @@ func TestGenericCataloger(t *testing.T) {
 		selectionByPath[string(s.Path)] = s
 	}
 
-	upstream := "some-other-cataloger"
 	expectedPkgs := make(map[file.Reference]pkg.Package)
 	for path, ref := range selectionByPath {
 		expectedPkgs[ref] = pkg.Package{
@@ -89,7 +88,7 @@ func TestGenericCataloger(t *testing.T) {
 		}
 	}
 
-	actualPkgs, err := cataloger.Catalog(resolver.contents, upstream)
+	actualPkgs, err := cataloger.Catalog(resolver.contents)
 	if err != nil {
 		t.Fatalf("cataloger catalog action failed: %+v", err)
 	}

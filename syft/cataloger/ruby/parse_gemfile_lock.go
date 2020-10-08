@@ -1,4 +1,4 @@
-package bundler
+package ruby
 
 import (
 	"bufio"
@@ -11,12 +11,12 @@ import (
 )
 
 // integrity check
-var _ common.ParserFn = parseGemfileLockEntries
+var _ common.ParserFn = parseGemFileLockEntries
 
 var sectionsOfInterest = internal.NewStringSetFromSlice([]string{"GEM"})
 
-// parseGemfileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
-func parseGemfileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
+// parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
+func parseGemFileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 	pkgs := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(reader)
 
@@ -44,7 +44,7 @@ func parseGemfileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) 
 				Name:     candidate[0],
 				Version:  strings.Trim(candidate[1], "()"),
 				Language: pkg.Ruby,
-				Type:     pkg.BundlerPkg,
+				Type:     pkg.GemPkg,
 			})
 		}
 	}

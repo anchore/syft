@@ -1,13 +1,13 @@
 package scope
 
 import (
-	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/afero"
 	"os"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/afero"
 )
 
 func TestNewScopeFromImageFails(t *testing.T) {
@@ -78,8 +78,8 @@ func TestDirectoryScope(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %w", err)
 			}
-			if p.DirSrc.Path != test.input {
-				t.Errorf("mismatched stringer: '%s' != '%s'", p.DirSrc.Path, test.input)
+			if p.Source.(DirSource).Path != test.input {
+				t.Errorf("mismatched stringer: '%s' != '%s'", p.Source.(DirSource).Path, test.input)
 			}
 
 			refs, err := p.Resolver.FilesByPath(test.inputPaths...)
@@ -229,7 +229,7 @@ func TestDetectScheme(t *testing.T) {
 		userInput        string
 		dirs             []string
 		detection        detectorResult
-		expectedScheme   scheme
+		expectedScheme   Scheme
 		expectedLocation string
 	}{
 		{
@@ -239,7 +239,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.DockerDaemonSource,
 				ref: "wagoodman/dive:latest",
 			},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "wagoodman/dive:latest",
 		},
 		{
@@ -249,7 +249,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.DockerDaemonSource,
 				ref: "wagoodman/dive",
 			},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "wagoodman/dive",
 		},
 		{
@@ -259,7 +259,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.DockerDaemonSource,
 				ref: "wagoodman/dive:latest",
 			},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "wagoodman/dive:latest",
 		},
 		{
@@ -269,7 +269,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.DockerDaemonSource,
 				ref: "wagoodman/dive",
 			},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "wagoodman/dive",
 		},
 		{
@@ -279,7 +279,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.DockerDaemonSource,
 				ref: "latest",
 			},
-			expectedScheme: imageScheme,
+			expectedScheme: ImageScheme,
 			// we want to be able to handle this case better, however, I don't see a way to do this
 			// the user will need to provide more explicit input (docker:docker:latest)
 			expectedLocation: "latest",
@@ -291,7 +291,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.DockerDaemonSource,
 				ref: "docker:latest",
 			},
-			expectedScheme: imageScheme,
+			expectedScheme: ImageScheme,
 			// we want to be able to handle this case better, however, I don't see a way to do this
 			// the user will need to provide more explicit input (docker:docker:latest)
 			expectedLocation: "docker:latest",
@@ -303,7 +303,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.OciTarballSource,
 				ref: "some/path-to-file",
 			},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "some/path-to-file",
 		},
 		{
@@ -314,7 +314,7 @@ func TestDetectScheme(t *testing.T) {
 				ref: "some/path-to-dir",
 			},
 			dirs:             []string{"some/path-to-dir"},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "some/path-to-dir",
 		},
 		{
@@ -325,7 +325,7 @@ func TestDetectScheme(t *testing.T) {
 				ref: "",
 			},
 			dirs:             []string{"some/path-to-dir"},
-			expectedScheme:   directoryScheme,
+			expectedScheme:   DirectoryScheme,
 			expectedLocation: "some/path-to-dir",
 		},
 		{
@@ -335,7 +335,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.DockerDaemonSource,
 				ref: "some/path-to-dir",
 			},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "some/path-to-dir",
 		},
 		{
@@ -346,7 +346,7 @@ func TestDetectScheme(t *testing.T) {
 				ref: "",
 			},
 			dirs:             []string{"some/path-to-dir"},
-			expectedScheme:   directoryScheme,
+			expectedScheme:   DirectoryScheme,
 			expectedLocation: "some/path-to-dir",
 		},
 		{
@@ -356,7 +356,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.UnknownSource,
 				ref: "",
 			},
-			expectedScheme:   directoryScheme,
+			expectedScheme:   DirectoryScheme,
 			expectedLocation: ".",
 		},
 		{
@@ -366,7 +366,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.UnknownSource,
 				ref: "",
 			},
-			expectedScheme:   directoryScheme,
+			expectedScheme:   DirectoryScheme,
 			expectedLocation: ".",
 		},
 		// we should support tilde expansion
@@ -377,7 +377,7 @@ func TestDetectScheme(t *testing.T) {
 				src: image.OciDirectorySource,
 				ref: "~/some-path",
 			},
-			expectedScheme:   imageScheme,
+			expectedScheme:   ImageScheme,
 			expectedLocation: "~/some-path",
 		},
 		{
@@ -388,26 +388,26 @@ func TestDetectScheme(t *testing.T) {
 				ref: "",
 			},
 			dirs:             []string{"~/some-path"},
-			expectedScheme:   directoryScheme,
+			expectedScheme:   DirectoryScheme,
 			expectedLocation: "~/some-path",
 		},
 		{
 			name:             "tilde-expansion-dir-explicit-exists",
 			userInput:        "dir:~/some-path",
 			dirs:             []string{"~/some-path"},
-			expectedScheme:   directoryScheme,
+			expectedScheme:   DirectoryScheme,
 			expectedLocation: "~/some-path",
 		},
 		{
 			name:             "tilde-expansion-dir-explicit-dne",
 			userInput:        "dir:~/some-path",
-			expectedScheme:   directoryScheme,
+			expectedScheme:   DirectoryScheme,
 			expectedLocation: "~/some-path",
 		},
 		{
 			name:             "tilde-expansion-dir-implicit-dne",
 			userInput:        "~/some-path",
-			expectedScheme:   unknownScheme,
+			expectedScheme:   UnknownScheme,
 			expectedLocation: "",
 		},
 	}
