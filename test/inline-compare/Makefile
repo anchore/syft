@@ -25,7 +25,7 @@ all: clean-syft
 compare-image: $(SYFT_REPORT) $(INLINE_REPORT)
 	./compare.py $(COMPARE_IMAGE)
 
-.PHONY: gather-iamge
+.PHONY: gather-image
 gather-image: $(SYFT_REPORT) $(INLINE_REPORT)
 
 $(INLINE_REPORT):
