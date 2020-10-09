@@ -60,7 +60,7 @@ Where the `format`s available are:
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
 # install a specific version into a specific dir
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s <RELEASE_VERSION> -b <SOME_BIN_PATH>
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <SOME_BIN_PATH> <RELEASE_VERSION>
 ```
 
 **macOS**
