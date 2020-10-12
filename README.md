@@ -1,6 +1,7 @@
 # syft
 
-[![CircleCI](https://circleci.com/gh/anchore/syft.svg?style=svg)](https://circleci.com/gh/anchore/syft)
+[![Static Analysis + Unit + Integration](https://github.com/anchore/syft/workflows/Static%20Analysis%20+%20Unit%20+%20Integration/badge.svg)](https://github.com/anchore/syft/actions?query=workflow%3A%22Static+Analysis+%2B+Unit+%2B+Integration%22)
+[![Acceptance](https://github.com/anchore/syft/workflows/Acceptance/badge.svg)](https://github.com/anchore/syft/actions?query=workflow%3AAcceptance)
 [![Go Report Card](https://goreportcard.com/badge/github.com/anchore/syft)](https://goreportcard.com/report/github.com/anchore/syft)
 [![GitHub release](https://img.shields.io/github/release/anchore/syft.svg)](https://github.com/anchore/syft/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/anchore/syft/blob/main/LICENSE)
@@ -15,7 +16,7 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
 - Supports Docker and OCI image formats
 
-> :warning: **This is pre-release software** and it may not work as expected. If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
+If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
 
 ## Getting started
 
@@ -59,7 +60,7 @@ Where the `format`s available are:
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
 # install a specific version into a specific dir
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s <RELEASE_VERSION> -b <SOME_BIN_PATH>
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <SOME_BIN_PATH> <RELEASE_VERSION>
 ```
 
 **macOS**
