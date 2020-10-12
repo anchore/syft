@@ -6,4 +6,5 @@ type GemMetadata struct {
 	Files    []string `mapstructure:"files" json:"files"`
 	Authors  []string `mapstructure:"authors" json:"authors"`
 	Licenses []string `mapstructure:"licenses" json:"licenses"`
+	Homepage string   `mapstructure:"homepage" json:"homepage"`
 }

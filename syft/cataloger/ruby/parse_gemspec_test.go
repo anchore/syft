@@ -21,6 +21,7 @@ func TestParseGemspec(t *testing.T) {
 			Files:    []string{"exe/bundle", "exe/bundler"},
 			Authors:  []string{"André Arko", "Samuel Giddins", "Colby Swandale", "Hiroshi Shibata", "David Rodríguez", "Grey Baker", "Stephanie Morillo", "Chris Morris", "James Wen", "Tim Moore", "André Medeiros", "Jessica Lynn Suttles", "Terence Lee", "Carl Lerche", "Yehuda Katz"},
 			Licenses: []string{"MIT"},
+			Homepage: "https://bundler.io",
 		},
 	}
 
