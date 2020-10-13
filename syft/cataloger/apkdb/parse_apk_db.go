@@ -20,9 +20,14 @@ var _ common.ParserFn = parseApkDB
 // parseApkDb parses individual packages from a given Alpine DB file. For more information on specific fields
 // see https://wiki.alpinelinux.org/wiki/Apk_spec .
 func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
+	// larger capacity for the scanner.
+	const maxScannerCapacity = 1024 * 1024
+	// a new larger buffer for the scanner
+	bufScan := make([]byte, maxScannerCapacity)
 	packages := make([]pkg.Package, 0)
 
 	scanner := bufio.NewScanner(reader)
+	scanner.Buffer(bufScan, maxScannerCapacity)
 	onDoubleLF := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		for i := 0; i < len(data); i++ {
 			if i > 0 && data[i-1] == '\n' && data[i] == '\n' {
