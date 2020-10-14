@@ -1,5 +1,3 @@
-// +build integration
-
 package integration
 
 import (
@@ -123,39 +121,39 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	cases = append(cases, commonTestCases...)
 	cases = append(cases, dirOnlyTestCases...)
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			pkgCount := 0
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			actualPkgCount := 0
 
-			for a := range catalog.Enumerate(c.pkgType) {
+			for actualPkg := range catalog.Enumerate(test.pkgType) {
 
-				observedLanguages.Add(a.Language.String())
-				observedPkgs.Add(string(a.Type))
+				observedLanguages.Add(actualPkg.Language.String())
+				observedPkgs.Add(string(actualPkg.Type))
 
-				expectedVersion, ok := c.pkgInfo[a.Name]
+				expectedVersion, ok := test.pkgInfo[actualPkg.Name]
 				if !ok {
-					t.Errorf("unexpected package found: %s", a.Name)
+					t.Errorf("unexpected package found: %s", actualPkg.Name)
 				}
 
-				if expectedVersion != a.Version {
-					t.Errorf("unexpected package version (pkg=%s): %s", a.Name, a.Version)
+				if expectedVersion != actualPkg.Version {
+					t.Errorf("unexpected package version (pkg=%s): %s", actualPkg.Name, actualPkg.Version)
 				}
 
-				if a.Language != c.pkgLanguage {
-					t.Errorf("bad language (pkg=%+v): %+v", a.Name, a.Language)
+				if actualPkg.Language != test.pkgLanguage {
+					t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)
 				}
 
-				if a.Type != c.pkgType {
-					t.Errorf("bad package type (pkg=%+v): %+v", a.Name, a.Type)
+				if actualPkg.Type != test.pkgType {
+					t.Errorf("bad package type (pkg=%+v): %+v", actualPkg.Name, actualPkg.Type)
 				}
-				pkgCount++
+				actualPkgCount++
 			}
 
-			if pkgCount != len(c.pkgInfo) {
-				for a := range catalog.Enumerate(c.pkgType) {
-					t.Log("   ", a)
+			if actualPkgCount != len(test.pkgInfo) {
+				for actualPkg := range catalog.Enumerate(test.pkgType) {
+					t.Log("   ", actualPkg)
 				}
-				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
+				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
 			}
 
 		})

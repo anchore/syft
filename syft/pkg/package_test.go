@@ -70,14 +70,6 @@ func TestPackage_pURL(t *testing.T) {
 			expected: "pkg:npm/name@v0.1.0",
 		},
 		{
-			pkg: Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    YarnPkg,
-			},
-			expected: "pkg:npm/name@v0.1.0",
-		},
-		{
 			distro: distro.Distro{
 				Type: distro.Ubuntu,
 			},

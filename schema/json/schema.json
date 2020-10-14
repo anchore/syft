@@ -40,6 +40,9 @@
                             "architecture": {
                                 "type": "string"
                             },
+                            "author": {
+                                "type": "string"
+                            },
                             "description": {
                                 "type": "string"
                             },
@@ -47,41 +50,48 @@
                                 "type": "integer"
                             },
                             "files": {
-                                "items": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "properties": {
-                                                "checksum": {
+                                "anyOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "items": {
+                                            "anyOf": [
+                                                {
                                                     "type": "string"
                                                 },
-                                                "ownerGid": {
-                                                    "type": "string"
-                                                },
-                                                "ownerUid": {
-                                                    "type": "string"
-                                                },
-                                                "path": {
-                                                    "type": "string"
-                                                },
-                                                "permissions": {
-                                                    "type": "string"
+                                                {
+                                                    "properties": {
+                                                        "checksum": {
+                                                            "type": "string"
+                                                        },
+                                                        "ownerGid": {
+                                                            "type": "string"
+                                                        },
+                                                        "ownerUid": {
+                                                            "type": "string"
+                                                        },
+                                                        "path": {
+                                                            "type": "string"
+                                                        },
+                                                        "permissions": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "checksum",
+                                                        "ownerGid",
+                                                        "ownerUid",
+                                                        "path",
+                                                        "permissions"
+                                                    ],
+                                                    "type": "object"
                                                 }
-                                            },
-                                            "required": [
-                                                "checksum",
-                                                "ownerGid",
-                                                "ownerUid",
-                                                "path",
-                                                "permissions"
-                                            ],
-                                            "type": "object"
-                                        }
-                                    ]
-                                },
-                                "type": "array"
+                                            ]
+                                        },
+                                        "type": "array"
+                                    }
+                                ]
                             },
                             "gitCommitOfApkPort": {
                                 "type": "string"

@@ -1,5 +1,3 @@
-// +build integration
-
 package integration
 
 import "github.com/anchore/syft/syft/pkg"
@@ -18,6 +16,14 @@ var imageOnlyTestCases = []testCase{
 		pkgLanguage: pkg.Ruby,
 		pkgInfo: map[string]string{
 			"bundler": "2.1.4",
+		},
+	},
+	{
+		name:        "find npm package",
+		pkgType:     pkg.NpmPkg,
+		pkgLanguage: pkg.JavaScript,
+		pkgInfo: map[string]string{
+			"npm": "6.14.6",
 		},
 	},
 }
@@ -81,6 +87,15 @@ var dirOnlyTestCases = []testCase{
 			"unicorn":              "4.8.3",
 		},
 	},
+	{
+		name:        "find javascript npm packages (yarn.lock & package-lock.json)",
+		pkgType:     pkg.NpmPkg,
+		pkgLanguage: pkg.JavaScript,
+		pkgInfo: map[string]string{
+			"@babel/code-frame": "7.10.4",
+			"get-stdin":         "8.0.0",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
@@ -123,22 +138,6 @@ var commonTestCases = []testCase{
 		pkgInfo: map[string]string{
 			"Pygments": "2.6.1",
 			"requests": "2.10.0",
-		},
-	},
-	{
-		name:        "find javascript npm packages",
-		pkgType:     pkg.NpmPkg,
-		pkgLanguage: pkg.JavaScript,
-		pkgInfo: map[string]string{
-			"get-stdin": "8.0.0",
-		},
-	},
-	{
-		name:        "find javascript yarn packages",
-		pkgType:     pkg.YarnPkg,
-		pkgLanguage: pkg.JavaScript,
-		pkgInfo: map[string]string{
-			"@babel/code-frame": "7.10.4",
 		},
 	},
 	{
