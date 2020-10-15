@@ -16,5 +16,5 @@ assignees: ''
 **Anything else we need to know?**:
 
 **Environment**:
-- syft version (use `syft version -v`):
+- Output of `syft version`:
 - OS (e.g: `cat /etc/os-release` or similar):
