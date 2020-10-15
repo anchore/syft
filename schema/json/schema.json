@@ -40,9 +40,6 @@
                             "architecture": {
                                 "type": "string"
                             },
-                            "authors": {
-                                "type": "null"
-                            },
                             "description": {
                                 "type": "string"
                             },
@@ -87,6 +84,9 @@
                                 "type": "array"
                             },
                             "gitCommitOfApkPort": {
+                                "type": "string"
+                            },
+                            "homepage": {
                                 "type": "string"
                             },
                             "installedSize": {
