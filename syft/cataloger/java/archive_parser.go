@@ -5,6 +5,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/cataloger/common"
@@ -214,17 +216,27 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 	}
 
 	// search and parse pom.properties files & fetch the contents
-	readers, err := file.ExtractFromZipToUniqueTempFile(j.archivePath, j.contentPath, j.fileManifest.GlobMatch(archiveFormatGlobs...)...)
+	openers, err := file.ExtractFromZipToUniqueTempFile(j.archivePath, j.contentPath, j.fileManifest.GlobMatch(archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
 
 	// discover nested artifacts
-	for archivePath, archiveReader := range readers {
-		nestedPath := fmt.Sprintf("%s:%s", j.virtualPath, archivePath)
-		nestedPkgs, err := parseJavaArchive(nestedPath, archiveReader)
+	for archivePath, archiveOpener := range openers {
+		archiveReadCloser, err := archiveOpener.Open()
 		if err != nil {
+			return nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
+		}
+		nestedPath := fmt.Sprintf("%s:%s", j.virtualPath, archivePath)
+		nestedPkgs, err := parseJavaArchive(nestedPath, archiveReadCloser)
+		if err != nil {
+			if closeErr := archiveReadCloser.Close(); closeErr != nil {
+				log.Errorf("unable to close archived file from tempdir: %+v", closeErr)
+			}
 			return nil, fmt.Errorf("unable to process nested java archive (%s): %w", archivePath, err)
+		}
+		if err = archiveReadCloser.Close(); err != nil {
+			return nil, fmt.Errorf("unable to close archived file from tempdir: %w", err)
 		}
 
 		// attach the parent package to all discovered packages that are not already associated with a java archive

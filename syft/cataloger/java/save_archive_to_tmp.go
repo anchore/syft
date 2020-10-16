@@ -35,6 +35,7 @@ func saveArchiveToTmp(reader io.Reader) (string, string, func(), error) {
 	if err != nil {
 		return contentDir, "", cleanupFn, fmt.Errorf("unable to create archive: %w", err)
 	}
+	defer archiveFile.Close()
 
 	_, err = io.Copy(archiveFile, reader)
 	if err != nil {

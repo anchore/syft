@@ -63,8 +63,8 @@ func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths
 	return nil
 }
 
-func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (map[string]io.Reader, error) {
-	results := make(map[string]io.Reader)
+func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (map[string]Opener, error) {
+	results := make(map[string]Opener)
 
 	// don't allow for full traversal, only select traversal from given paths
 	if len(paths) == 0 {
@@ -78,11 +78,21 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 		if err != nil {
 			return fmt.Errorf("unable to create temp file: %w", err)
 		}
+		// we shouldn't try and keep the tempfile open as the returned result may have several files, which takes up
+		// resources (leading to "too many open files"). Instead we'll return a file opener to the caller which
+		// provides a ReadCloser. It is up to the caller to handle closing the file explicitly.
+		defer tempFile.Close()
 
 		zippedFile, err := file.Open()
 		if err != nil {
 			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
 		}
+		defer func() {
+			err := zippedFile.Close()
+			if err != nil {
+				log.Errorf("unable to close source file=%q from zip=%q: %+v", file.Name, archivePath, err)
+			}
+		}()
 
 		if file.FileInfo().IsDir() {
 			return fmt.Errorf("unable to extract directories, only files: %s", file.Name)
@@ -103,12 +113,8 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 			return fmt.Errorf("unable to reset file pointer (%s): %w", tempFile.Name(), err)
 		}
 
-		results[file.Name] = tempFile
+		results[file.Name] = Opener{path: tempFile.Name()}
 
-		err = zippedFile.Close()
-		if err != nil {
-			return fmt.Errorf("unable to close source file=%q from zip=%q: %w", file.Name, archivePath, err)
-		}
 		return nil
 	}
 
