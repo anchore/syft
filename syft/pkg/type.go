@@ -6,17 +6,15 @@ import "github.com/package-url/packageurl-go"
 type Type string
 
 const (
-	UnknownPkg Type = "UnknownPackage"
-	ApkPkg     Type = "apk"
-	GemPkg     Type = "gem"
-	DebPkg     Type = "deb"
-	EggPkg     Type = "egg"
-	// PacmanPkg Type = "pacman"
+	UnknownPkg            Type = "UnknownPackage"
+	ApkPkg                Type = "apk"
+	GemPkg                Type = "gem"
+	DebPkg                Type = "deb"
+	EggPkg                Type = "egg"
 	RpmPkg                Type = "rpm"
 	WheelPkg              Type = "wheel"
 	PoetryPkg             Type = "poetry"
 	NpmPkg                Type = "npm"
-	YarnPkg               Type = "yarn"
 	PythonRequirementsPkg Type = "python-requirements"
 	PythonSetupPkg        Type = "python-setup"
 	JavaPkg               Type = "java-archive"
@@ -29,11 +27,9 @@ var AllPkgs = []Type{
 	GemPkg,
 	DebPkg,
 	EggPkg,
-	// PacmanPkg,
 	RpmPkg,
 	WheelPkg,
 	NpmPkg,
-	YarnPkg,
 	PythonRequirementsPkg,
 	PythonSetupPkg,
 	JavaPkg,
@@ -51,7 +47,7 @@ func (t Type) PackageURLType() string {
 		return "deb"
 	case EggPkg, WheelPkg, PythonRequirementsPkg, PythonSetupPkg:
 		return packageurl.TypePyPi
-	case NpmPkg, YarnPkg:
+	case NpmPkg:
 		return packageurl.TypeNPM
 	case JavaPkg, JenkinsPluginPkg:
 		return packageurl.TypeMaven

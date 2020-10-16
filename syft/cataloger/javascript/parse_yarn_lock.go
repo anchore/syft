@@ -66,7 +66,7 @@ func parseYarnLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Name:     currentName,
 				Version:  strings.Trim(version, "\""),
 				Language: pkg.JavaScript,
-				Type:     pkg.YarnPkg,
+				Type:     pkg.NpmPkg,
 			})
 		}
 	}
