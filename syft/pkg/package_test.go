@@ -25,7 +25,7 @@ func TestPackage_pURL(t *testing.T) {
 			pkg: Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    WheelPkg,
+				Type:    PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
@@ -33,7 +33,7 @@ func TestPackage_pURL(t *testing.T) {
 			pkg: Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    EggPkg,
+				Type:    PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
@@ -41,7 +41,7 @@ func TestPackage_pURL(t *testing.T) {
 			pkg: Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    PythonSetupPkg,
+				Type:    PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
@@ -49,7 +49,7 @@ func TestPackage_pURL(t *testing.T) {
 			pkg: Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    PythonRequirementsPkg,
+				Type:    PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},

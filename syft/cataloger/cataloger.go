@@ -32,7 +32,7 @@ type Cataloger interface {
 func ImageCatalogers() []Cataloger {
 	return []Cataloger{
 		ruby.NewGemSpecCataloger(),
-		python.NewPythonCataloger(), // TODO: split and replace me
+		python.NewPythonPackageCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
@@ -46,7 +46,8 @@ func ImageCatalogers() []Cataloger {
 func DirectoryCatalogers() []Cataloger {
 	return []Cataloger{
 		ruby.NewGemFileLockCataloger(),
-		python.NewPythonCataloger(), // TODO: split and replace me
+		python.NewPythonIndexCataloger(),
+		python.NewPythonPackageCataloger(),
 		javascript.NewJavascriptLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),

@@ -41,7 +41,7 @@ func parseSetup(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Name:     strings.Trim(name, "'\""),
 				Version:  strings.Trim(version, "'\""),
 				Language: pkg.Python,
-				Type:     pkg.PythonSetupPkg,
+				Type:     pkg.PythonPkg,
 			})
 		}
 	}

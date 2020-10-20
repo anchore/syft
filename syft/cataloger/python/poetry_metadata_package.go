@@ -16,6 +16,6 @@ func (p PoetryMetadataPackage) Pkg() pkg.Package {
 		Name:     p.Name,
 		Version:  p.Version,
 		Language: pkg.Python,
-		Type:     pkg.PoetryPkg,
+		Type:     pkg.PythonPkg,
 	}
 }

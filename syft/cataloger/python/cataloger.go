@@ -7,15 +7,23 @@ import (
 	"github.com/anchore/syft/syft/cataloger/common"
 )
 
-// NewPythonCataloger returns a new Python cataloger object.
-func NewPythonCataloger() *common.GenericCataloger {
+// NewPythonPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
+func NewPythonPackageCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
-		"**/*egg-info/PKG-INFO":  parseEggMetadata,
-		"**/*dist-info/METADATA": parseWheelMetadata,
-		"**/*requirements*.txt":  parseRequirementsTxt,
-		"**/poetry.lock":         parsePoetryLock,
-		"**/setup.py":            parseSetup,
+		"**/*egg-info/PKG-INFO":  parseWheelOrEggMetadata,
+		"**/*dist-info/METADATA": parseWheelOrEggMetadata,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "python-cataloger")
+	return common.NewGenericCataloger(nil, globParsers, "python-package-cataloger")
+}
+
+// NewPythonIndexCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
+func NewPythonIndexCataloger() *common.GenericCataloger {
+	globParsers := map[string]common.ParserFn{
+		"**/*requirements*.txt": parseRequirementsTxt,
+		"**/poetry.lock":        parsePoetryLock,
+		"**/setup.py":           parseSetup,
+	}
+
+	return common.NewGenericCataloger(nil, globParsers, "python-index-cataloger")
 }

@@ -13,14 +13,14 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Name:     "foo",
 			Version:  "1.0.0",
 			Language: pkg.Python,
-			Type:     pkg.PythonRequirementsPkg,
+			Type:     pkg.PythonPkg,
 			Licenses: []string{},
 		},
 		"flask": {
 			Name:     "flask",
 			Version:  "4.0.0",
 			Language: pkg.Python,
-			Type:     pkg.PythonRequirementsPkg,
+			Type:     pkg.PythonPkg,
 			Licenses: []string{},
 		},
 	}

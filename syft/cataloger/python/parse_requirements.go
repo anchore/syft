@@ -47,7 +47,7 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Name:     name,
 				Version:  version,
 				Language: pkg.Python,
-				Type:     pkg.PythonRequirementsPkg,
+				Type:     pkg.PythonPkg,
 			})
 		default:
 			continue

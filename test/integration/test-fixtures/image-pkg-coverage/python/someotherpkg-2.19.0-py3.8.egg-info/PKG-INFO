@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
-Name: otherpkg
-Version: 2.19.0
+Name: someotherpkg
+Version: 3.19.0
 Summary: Python HTTP for Humans.
 Home-page: http://python-requests.org
 Author: Kenneth Reitz

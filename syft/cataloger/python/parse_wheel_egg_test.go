@@ -52,7 +52,7 @@ func TestParseEggMetadata(t *testing.T) {
 			Name:     "requests",
 			Version:  "2.22.0",
 			Language: pkg.Python,
-			Type:     pkg.EggPkg,
+			Type:     pkg.PythonPkg,
 			Licenses: []string{"Apache 2.0"},
 		},
 	}
@@ -61,7 +61,7 @@ func TestParseEggMetadata(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseEggMetadata(fixture.Name(), fixture)
+	actual, err := parseWheelOrEggMetadata(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse egg-info: %+v", err)
 	}
@@ -75,7 +75,7 @@ func TestParseWheelMetadata(t *testing.T) {
 			Name:     "Pygments",
 			Version:  "2.6.1",
 			Language: pkg.Python,
-			Type:     pkg.WheelPkg,
+			Type:     pkg.PythonPkg,
 			Licenses: []string{"BSD License"},
 		},
 	}
@@ -84,7 +84,7 @@ func TestParseWheelMetadata(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseWheelMetadata(fixture.Name(), fixture)
+	actual, err := parseWheelOrEggMetadata(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse dist-info: %+v", err)
 	}

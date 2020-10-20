@@ -11,39 +11,17 @@ import (
 )
 
 // integrity check
-var _ common.ParserFn = parseWheelMetadata
-var _ common.ParserFn = parseEggMetadata
-
-// parseWheelMetadata is a parser function for individual Python Wheel metadata file contents, returning all Python
-// packages listed.
-func parseWheelMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
-	packages, err := parseWheelOrEggMetadata(reader)
-	for idx := range packages {
-		packages[idx].Type = pkg.WheelPkg
-	}
-	return packages, err
-}
-
-// parseEggMetadata is a parser function for individual Python Egg metadata file contents, returning all Python
-// packages listed.
-func parseEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
-	packages, err := parseWheelOrEggMetadata(reader)
-	for idx := range packages {
-		packages[idx].Type = pkg.EggPkg
-	}
-	return packages, err
-}
+var _ common.ParserFn = parseWheelOrEggMetadata
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(reader io.Reader) ([]pkg.Package, error) {
+func parseWheelOrEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
 	fields := make(map[string]string)
 	var key string
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
-
 		line = strings.TrimRight(line, "\n")
 
 		// empty line indicates end of entry
@@ -90,6 +68,7 @@ func parseWheelOrEggMetadata(reader io.Reader) ([]pkg.Package, error) {
 		Name:     fields["Name"],
 		Version:  fields["Version"],
 		Language: pkg.Python,
+		Type:     pkg.PythonPkg,
 	}
 
 	if license, ok := fields["License"]; ok && license != "" {
