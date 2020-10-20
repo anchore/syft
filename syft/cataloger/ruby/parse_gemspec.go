@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/anchore/syft/syft/cataloger/common"
@@ -76,7 +78,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 
 		for field, pattern := range patterns {
-			matchMap := matchCaptureGroups(pattern, sanitizedLine)
+			matchMap := internal.MatchCaptureGroups(pattern, sanitizedLine)
 			if value := matchMap[field]; value != "" {
 				if postProcessor := postProcessors[field]; postProcessor != nil {
 					fields[field] = postProcessor(value)
@@ -120,16 +122,4 @@ func renderUtf8(s string) string {
 		return replacement
 	})
 	return fullReplacement
-}
-
-// matchCaptureGroups takes a regular expression and string and returns all of the named capture group results in a map.
-func matchCaptureGroups(regEx *regexp.Regexp, str string) map[string]string {
-	match := regEx.FindStringSubmatch(str)
-	results := make(map[string]string)
-	for i, name := range regEx.SubexpNames() {
-		if i > 0 && i <= len(match) {
-			results[name] = match[i]
-		}
-	}
-	return results
 }

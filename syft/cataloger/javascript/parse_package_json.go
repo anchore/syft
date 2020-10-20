@@ -4,6 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
+
+	"github.com/anchore/syft/internal"
+
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
@@ -16,12 +21,63 @@ var _ common.ParserFn = parsePackageLock
 type PackageJSON struct {
 	Version      string            `json:"version"`
 	Latest       []string          `json:"latest"`
-	Author       string            `json:"author"`
+	Author       Author            `json:"author"`
 	License      string            `json:"license"`
 	Name         string            `json:"name"`
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
 	Dependencies map[string]string `json:"dependencies"`
+}
+
+type Author struct {
+	Name  string `json:"name" mapstruct:"name"`
+	Email string `json:"email" mapstruct:"email"`
+	URL   string `json:"url" mapstruct:"url"`
+}
+
+var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
+
+func (a *Author) UnmarshalJSON(b []byte) error {
+	var authorStr string
+	if err := json.Unmarshal(b, &authorStr); err != nil {
+		// string parsing did not work, assume a map was given
+		// for more information: https://docs.npmjs.com/files/package.json#people-fields-author-contributors
+		var fields map[string]string
+		var author Author
+		if err := json.Unmarshal(b, &fields); err != nil {
+			return fmt.Errorf("unable to parse package.json author: %w", err)
+		}
+		// translate the map into a structure
+		if err := mapstructure.Decode(fields, &author); err != nil {
+			return fmt.Errorf("unable to decode package.json author: %w", err)
+		}
+		*a = author
+	} else {
+		// parse out "name <email> (url)" into an Author struct
+		var fields = internal.MatchCaptureGroups(authorPattern, authorStr)
+		*a = Author{
+			Name:  fields["name"],
+			Email: fields["email"],
+			URL:   fields["url"],
+		}
+	}
+
+	if a.Name == "" {
+		return fmt.Errorf("package.json author name is empty")
+	}
+
+	return nil
+}
+
+func (a *Author) String() string {
+	result := a.Name
+	if a.Email != "" {
+		result += fmt.Sprintf(" <%s>", a.Email)
+	}
+	if a.URL != "" {
+		result += fmt.Sprintf(" (%s)", a.URL)
+	}
+	return result
 }
 
 // parsePackageJson parses a package.json and returns the discovered JavaScript packages.
@@ -44,7 +100,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Metadata: pkg.NpmMetadata{
-				Author:   p.Author,
+				Author:   p.Author.String(),
 				Homepage: p.Homepage,
 			},
 		})
