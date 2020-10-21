@@ -82,9 +82,20 @@ func (s DirectoryResolver) MultipleFileContentsByRef(f ...file.Reference) (map[f
 		contents, err := fileContents(fileRef.Path)
 
 		if err != nil {
-			return refContents, fmt.Errorf("could not read contents of file: %s", fileRef.Path)
+			return nil, fmt.Errorf("could not read contents of file: %s", fileRef.Path)
 		}
 		refContents[fileRef] = string(contents)
 	}
 	return refContents, nil
+}
+
+// FileContentsByRef fetches file contents for a single file reference relative to a directory.
+// If the path does not exist an error is returned.
+func (s DirectoryResolver) FileContentsByRef(ref file.Reference) (string, error) {
+	contents, err := fileContents(ref.Path)
+	if err != nil {
+		return "", fmt.Errorf("could not read contents of file: %s", ref.Path)
+	}
+
+	return string(contents), nil
 }

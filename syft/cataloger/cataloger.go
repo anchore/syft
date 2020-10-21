@@ -24,10 +24,8 @@ import (
 type Cataloger interface {
 	// Name returns a string that uniquely describes a cataloger
 	Name() string
-	// Catalog is given an object to resolve file references and content, this function should return any discovered Packages after analyzing the catalog source.
+	// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 	Catalog(resolver scope.Resolver) ([]pkg.Package, error)
-	// TODO: add "IterationNeeded" error to indicate to the driver to continue with another Select/Catalog pass
-	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
 }
 
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.

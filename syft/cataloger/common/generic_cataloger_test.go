@@ -20,6 +20,10 @@ func newTestResolver() *testResolver {
 	}
 }
 
+func (r *testResolver) FileContentsByRef(_ file.Reference) (string, error) {
+	return "", fmt.Errorf("not implemented")
+}
+
 func (r *testResolver) MultipleFileContentsByRef(_ ...file.Reference) (map[file.Reference]string, error) {
 	return r.contents, nil
 }

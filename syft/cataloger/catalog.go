@@ -43,15 +43,16 @@ func Catalog(resolver scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, er
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
 	for _, theCataloger := range catalogers {
-		// TODO: check for multiple rounds of analyses by Iterate error
 		packages, err := theCataloger.Catalog(resolver)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 			continue
 		}
 
-		log.Debugf("cataloger '%s' discovered '%d' packages", theCataloger.Name(), len(packages))
-		packagesDiscovered.N += int64(len(packages))
+		catalogedPackages := len(packages)
+
+		log.Debugf("cataloger '%s' discovered '%d' packages", theCataloger.Name(), catalogedPackages)
+		packagesDiscovered.N += int64(catalogedPackages)
 
 		for _, p := range packages {
 			catalog.Add(p)

@@ -52,6 +52,7 @@ func (c *GenericCataloger) clear() {
 	c.parsers = make(map[file.Reference]ParserFn)
 }
 
+// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 func (c *GenericCataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, error) {
 	fileSelection := c.selectFiles(resolver)
 	contents, err := resolver.MultipleFileContentsByRef(fileSelection...)
@@ -88,7 +89,7 @@ func (c *GenericCataloger) selectFiles(resolver scope.FileResolver) []file.Refer
 	return c.selectedFiles
 }
 
-// Catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
+// catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
 func (c *GenericCataloger) catalog(contents map[file.Reference]string) ([]pkg.Package, error) {
 	defer c.clear()
 
