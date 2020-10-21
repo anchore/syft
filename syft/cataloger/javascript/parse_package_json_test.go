@@ -15,7 +15,7 @@ func TestParsePackageJSON(t *testing.T) {
 		Type:     pkg.NpmPkg,
 		Licenses: []string{"Artistic-2.0"},
 		Language: pkg.JavaScript,
-		Metadata: pkg.NpmMetadata{
+		Metadata: pkg.NpmPackageJsonMetadata{
 			Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 			Homepage: "https://docs.npmjs.com/",
 		},

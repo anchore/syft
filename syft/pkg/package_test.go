@@ -93,7 +93,7 @@ func TestPackage_pURL(t *testing.T) {
 				Name:    "bad-name",
 				Version: "bad-v0.1.0",
 				Type:    RpmPkg,
-				Metadata: RpmMetadata{
+				Metadata: RpmdbMetadata{
 					Name:    "name",
 					Version: "v0.1.0",
 					Epoch:   2,

@@ -7,8 +7,8 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
-// RpmMetadata represents all captured data for a RPM DB package entry.
-type RpmMetadata struct {
+// RpmdbMetadata represents all captured data for a RPM DB package entry.
+type RpmdbMetadata struct {
 	Name      string `json:"name"`
 	Version   string `json:"version"`
 	Epoch     int    `json:"epoch"`
@@ -20,7 +20,7 @@ type RpmMetadata struct {
 	Vendor    string `json:"vendor"`
 }
 
-func (m RpmMetadata) PackageURL(d distro.Distro) string {
+func (m RpmdbMetadata) PackageURL(d distro.Distro) string {
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypeRPM,
 		d.Type.String(),

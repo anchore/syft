@@ -55,6 +55,6 @@ func TestParseSetup(t *testing.T) {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}
 
-	assertPkgsEqual(t, actual, expected)
+	assertPackagesEqual(t, actual, expected)
 
 }

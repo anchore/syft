@@ -30,10 +30,11 @@ func parseDpkgStatus(_ string, reader io.Reader) ([]pkg.Package, error) {
 			return nil, err
 		}
 		packages = append(packages, pkg.Package{
-			Name:     entry.Package,
-			Version:  entry.Version,
-			Type:     pkg.DebPkg,
-			Metadata: entry,
+			Name:         entry.Package,
+			Version:      entry.Version,
+			Type:         pkg.DebPkg,
+			MetadataType: pkg.DpkgMetadataType,
+			Metadata:     entry,
 		})
 	}
 

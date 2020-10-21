@@ -6,16 +6,14 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anchore/syft/syft/cataloger/common"
+	"github.com/mitchellh/mapstructure"
+
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// integrity check
-var _ common.ParserFn = parseWheelOrEggMetadata
-
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseWheelOrEggMetadata(_ string, reader io.Reader) (*pkg.EggWheelMetadata, error) {
 	fields := make(map[string]string)
 	var key string
 
@@ -64,16 +62,11 @@ func parseWheelOrEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) 
 		return nil, fmt.Errorf("failed to parse python wheel/egg: %w", err)
 	}
 
-	p := pkg.Package{
-		Name:     fields["Name"],
-		Version:  fields["Version"],
-		Language: pkg.Python,
-		Type:     pkg.PythonPkg,
+	var metadata pkg.EggWheelMetadata
+
+	if err := mapstructure.Decode(fields, &metadata); err != nil {
+		return nil, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
 
-	if license, ok := fields["License"]; ok && license != "" {
-		p.Licenses = []string{license}
-	}
-
-	return []pkg.Package{p}, nil
+	return &metadata, nil
 }

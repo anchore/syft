@@ -3,10 +3,11 @@ package cyclonedx
 import (
 	"bytes"
 	"flag"
-	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/distro"
 	"regexp"
 	"testing"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/distro"
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/file"
@@ -109,7 +110,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-1",
-		Metadata: pkg.RpmMetadata{
+		Metadata: pkg.RpmdbMetadata{
 			Name:      "package1",
 			Epoch:     0,
 			Arch:      "x86_64",
@@ -133,7 +134,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 			"MIT",
 			"Apache-v2",
 		},
-		Metadata: pkg.RpmMetadata{
+		Metadata: pkg.RpmdbMetadata{
 			Name:      "package2",
 			Epoch:     0,
 			Arch:      "x86_64",

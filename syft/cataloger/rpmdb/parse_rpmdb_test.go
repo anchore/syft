@@ -1,10 +1,11 @@
 package rpmdb
 
 import (
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
 	"os"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/go-test/deep"
 )
 
 func TestParseRpmDB(t *testing.T) {
@@ -13,7 +14,7 @@ func TestParseRpmDB(t *testing.T) {
 			Name:    "dive",
 			Version: "0.9.2-1",
 			Type:    pkg.RpmPkg,
-			Metadata: pkg.RpmMetadata{
+			Metadata: pkg.RpmdbMetadata{
 				Name:      "dive",
 				Epoch:     0,
 				Arch:      "x86_64",

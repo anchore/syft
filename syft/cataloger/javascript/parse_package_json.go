@@ -38,12 +38,13 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 
 		packages = append(packages, pkg.Package{
-			Name:     p.Name,
-			Version:  p.Version,
-			Licenses: []string{p.License},
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmMetadata{
+			Name:         p.Name,
+			Version:      p.Version,
+			Licenses:     []string{p.License},
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			MetadataType: pkg.NpmPackageJsonMetadataType,
+			Metadata: pkg.NpmPackageJsonMetadata{
 				Author:   p.Author,
 				Homepage: p.Homepage,
 			},
