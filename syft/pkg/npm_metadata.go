@@ -9,4 +9,5 @@ type NpmMetadata struct {
 	License     string   `mapstructure:"license" json:"license"`
 	Homepage    string   `mapstructure:"homepage" json:"homepage"`
 	Description string   `mapstructure:"description" json:"description"`
+	URL         string   `mapstructure:"url" json:"url"`
 }

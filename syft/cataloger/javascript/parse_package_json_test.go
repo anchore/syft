@@ -24,6 +24,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Metadata: pkg.NpmMetadata{
 					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
 				},
 			},
 		},
@@ -38,6 +39,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Metadata: pkg.NpmMetadata{
 					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
 				},
 			},
 		},
@@ -62,6 +64,7 @@ func TestParsePackageJSON(t *testing.T) {
 			}
 
 			for _, d := range deep.Equal(actual[0], test.ExpectedPkg) {
+
 				t.Errorf("diff: %+v", d)
 			}
 		})

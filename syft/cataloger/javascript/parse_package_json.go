@@ -27,6 +27,7 @@ type PackageJSON struct {
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
 	Dependencies map[string]string `json:"dependencies"`
+	Repository   Repository        `json:"repository"`
 }
 
 type Author struct {
@@ -35,36 +36,39 @@ type Author struct {
 	URL   string `json:"url" mapstruct:"url"`
 }
 
+type Repository struct {
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
+
+// match example: "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)"
+// ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
+// This method implements the UnmarshalJSON interface to help normalize
+// the json structure.
 func (a *Author) UnmarshalJSON(b []byte) error {
 	var authorStr string
+	var fields map[string]string
+	var author Author
+
 	if err := json.Unmarshal(b, &authorStr); err != nil {
 		// string parsing did not work, assume a map was given
 		// for more information: https://docs.npmjs.com/files/package.json#people-fields-author-contributors
-		var fields map[string]string
-		var author Author
 		if err := json.Unmarshal(b, &fields); err != nil {
 			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
-		// translate the map into a structure
-		if err := mapstructure.Decode(fields, &author); err != nil {
-			return fmt.Errorf("unable to decode package.json author: %w", err)
-		}
-		*a = author
 	} else {
 		// parse out "name <email> (url)" into an Author struct
-		var fields = internal.MatchCaptureGroups(authorPattern, authorStr)
-		*a = Author{
-			Name:  fields["name"],
-			Email: fields["email"],
-			URL:   fields["url"],
-		}
+		fields = internal.MatchCaptureGroups(authorPattern, authorStr)
 	}
 
-	if a.Name == "" {
-		return fmt.Errorf("package.json author name is empty")
+	// translate the map into a structure
+	if err := mapstructure.Decode(fields, &author); err != nil {
+		return fmt.Errorf("unable to decode package.json author: %w", err)
 	}
+
+	*a = author
 
 	return nil
 }
@@ -102,6 +106,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Metadata: pkg.NpmMetadata{
 				Author:   p.Author.String(),
 				Homepage: p.Homepage,
+				URL:      p.Repository.URL,
 			},
 		})
 	}
