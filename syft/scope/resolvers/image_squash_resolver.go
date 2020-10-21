@@ -78,3 +78,9 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference,
 func (r *ImageSquashResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
 	return r.img.MultipleFileContentsByRef(f...)
 }
+
+// FileContentsByRef fetches file contents for a single file reference, irregardless of the source layer.
+// If the path does not exist an error is returned.
+func (r *ImageSquashResolver) FileContentsByRef(ref file.Reference) (string, error) {
+	return r.img.FileContentsByRef(ref)
+}
