@@ -61,13 +61,13 @@ func TestDirectoryScope(t *testing.T) {
 		{
 			desc:       "path detected",
 			input:      "test-fixtures",
-			inputPaths: []file.Path{file.Path("path-detected")},
+			inputPaths: []file.Path{file.Path("test-fixtures/path-detected")},
 			expRefs:    1,
 		},
 		{
 			desc:       "no files-by-path detected",
 			input:      "test-fixtures",
-			inputPaths: []file.Path{file.Path("no-path-detected")},
+			inputPaths: []file.Path{file.Path("test-fixtures/no-path-detected")},
 			expRefs:    0,
 		},
 	}
@@ -105,13 +105,13 @@ func TestMultipleFileContentsByRefContents(t *testing.T) {
 		{
 			input:    "test-fixtures/path-detected",
 			desc:     "empty file",
-			path:     "empty",
+			path:     "test-fixtures/path-detected/empty",
 			expected: "",
 		},
 		{
 			input:    "test-fixtures/path-detected",
 			desc:     "file has contents",
-			path:     ".vimrc",
+			path:     "test-fixtures/path-detected/.vimrc",
 			expected: "\" A .vimrc file\n",
 		},
 	}
@@ -127,7 +127,7 @@ func TestMultipleFileContentsByRefContents(t *testing.T) {
 			}
 
 			if len(refs) != 1 {
-				t.Errorf("expected a single ref to be generated but got: %d", len(refs))
+				t.Fatalf("expected a single ref to be generated but got: %d", len(refs))
 			}
 			ref := refs[0]
 

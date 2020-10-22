@@ -4,7 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
+
+	"github.com/anchore/stereoscope/pkg/file"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -13,7 +16,7 @@ import (
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(reader io.Reader) (pkg.PythonPackageMetadata, error) {
+func parseWheelOrEggMetadata(path file.Path, reader io.Reader) (pkg.PythonPackageMetadata, error) {
 	fields := make(map[string]string)
 	var key string
 
@@ -67,6 +70,11 @@ func parseWheelOrEggMetadata(reader io.Reader) (pkg.PythonPackageMetadata, error
 	if err := mapstructure.Decode(fields, &metadata); err != nil {
 		return pkg.PythonPackageMetadata{}, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
+
+	// add additional metadata not stored in the egg/wheel metadata file
+
+	sitePackagesRoot := filepath.Clean(filepath.Join(filepath.Dir(string(path)), ".."))
+	metadata.SitePackagesRootPath = sitePackagesRoot
 
 	return metadata, nil
 }

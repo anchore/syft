@@ -1,6 +1,7 @@
 package python
 
 import (
+	"bufio"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -53,17 +54,17 @@ func (c *PackageCataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, erro
 	return pkgs, nil
 }
 
-func (c *PackageCataloger) catalogEggOrWheel(resolver scope.Resolver, metadataRef file.Reference) (*pkg.Package, error) {
+func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver scope.Resolver, metadataRef file.Reference) (*pkg.PythonPackageMetadata, []file.Reference, error) {
 	var sources = []file.Reference{metadataRef}
 
 	metadataContents, err := resolver.FileContentsByRef(metadataRef)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	metadata, err := parseWheelOrEggMetadata(strings.NewReader(metadataContents))
+	metadata, err := parseWheelOrEggMetadata(metadataRef.Path, strings.NewReader(metadataContents))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
@@ -74,7 +75,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver scope.Resolver, metadataRe
 	recordPath := filepath.Join(filepath.Dir(string(metadataRef.Path)), "RECORD")
 	recordRef, err := resolver.RelativeFileByPath(metadataRef, recordPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if recordRef != nil {
@@ -82,20 +83,56 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver scope.Resolver, metadataRe
 
 		recordContents, err := resolver.FileContentsByRef(*recordRef)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		// parse the record contents
 		records, err := parseWheelOrEggRecord(strings.NewReader(recordContents))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		// append the record files list to the metadata
 		metadata.Files = records
 	}
 
-	// assemble the package
+	// a top_level.txt file specifies the python top-level packages (provided by this python package) installed into site-packages
+	parentDir := filepath.Dir(string(metadataRef.Path))
+	topLevelPath := filepath.Join(parentDir, "top_level.txt")
+	topLevelRef, err := resolver.RelativeFileByPath(metadataRef, topLevelPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	if topLevelRef == nil {
+		return nil, nil, fmt.Errorf("missing python package top_level.txt (package=%q)", string(metadataRef.Path))
+	}
+
+	topLevelContents, err := resolver.FileContentsByRef(*topLevelRef)
+	if err != nil {
+		return nil, nil, err
+	}
+	// nolint:prealloc
+	var topLevelPackages []string
+	scanner := bufio.NewScanner(strings.NewReader(topLevelContents))
+	for scanner.Scan() {
+		topLevelPackages = append(topLevelPackages, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, nil, fmt.Errorf("could not read python package top_level.txt: %w", err)
+	}
+
+	metadata.TopLevelPackages = topLevelPackages
+
+	return &metadata, sources, nil
+}
+
+func (c *PackageCataloger) catalogEggOrWheel(resolver scope.Resolver, metadataRef file.Reference) (*pkg.Package, error) {
+
+	metadata, sources, err := c.assembleEggOrWheelMetadata(resolver, metadataRef)
+	if err != nil {
+		return nil, err
+	}
 
 	var licenses []string
 	if metadata.License != "" {
@@ -111,6 +148,6 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver scope.Resolver, metadataRe
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Metadata:     metadata,
+		Metadata:     *metadata,
 	}, nil
 }

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
@@ -18,7 +19,7 @@ type DirectoryResolver struct {
 
 // Stringer to represent a directory path data source
 func (s DirectoryResolver) String() string {
-	return fmt.Sprintf("dir://%s", s.Path)
+	return fmt.Sprintf("dir:%s", s.Path)
 }
 
 // FilesByPath returns all file.References that match the given paths from the directory.
@@ -26,15 +27,19 @@ func (s DirectoryResolver) FilesByPath(userPaths ...file.Path) ([]file.Reference
 	var references = make([]file.Reference, 0)
 
 	for _, userPath := range userPaths {
-		resolvedPath := path.Join(s.Path, string(userPath))
-		_, err := os.Stat(resolvedPath)
+		userStrPath := string(userPath)
+
+		if filepath.IsAbs(userStrPath) {
+			// a path relative to root should be prefixed with the resolvers directory path, otherwise it should be left as is
+			userStrPath = path.Join(s.Path, userStrPath)
+		}
+		_, err := os.Stat(userStrPath)
 		if os.IsNotExist(err) {
 			continue
 		} else if err != nil {
-			log.Errorf("path (%s) is not valid: %v", resolvedPath, err)
+			log.Errorf("path (%s) is not valid: %v", userStrPath, err)
 		}
-		filePath := file.Path(resolvedPath)
-		references = append(references, file.NewFileReference(filePath))
+		references = append(references, file.NewFileReference(file.Path(userStrPath)))
 	}
 
 	return references, nil
