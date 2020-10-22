@@ -43,6 +43,9 @@
                             "author": {
                                 "type": "string"
                             },
+                            "authorEmail": {
+                                "type": "string"
+                            },
                             "description": {
                                 "type": "string"
                             },
@@ -65,6 +68,21 @@
                                                         "checksum": {
                                                             "type": "string"
                                                         },
+                                                        "digest": {
+                                                            "properties": {
+                                                                "algorithm": {
+                                                                    "type": "string"
+                                                                },
+                                                                "value": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "algorithm",
+                                                                "value"
+                                                            ],
+                                                            "type": "object"
+                                                        },
                                                         "ownerGid": {
                                                             "type": "string"
                                                         },
@@ -76,14 +94,13 @@
                                                         },
                                                         "permissions": {
                                                             "type": "string"
+                                                        },
+                                                        "size": {
+                                                            "type": "string"
                                                         }
                                                     },
                                                     "required": [
-                                                        "checksum",
-                                                        "ownerGid",
-                                                        "ownerUid",
-                                                        "path",
-                                                        "permissions"
+                                                        "path"
                                                     ],
                                                     "type": "object"
                                                 }
@@ -403,6 +420,9 @@
                                                 ],
                                                 "type": "object"
                                             },
+                                            "metadataType": {
+                                                "type": "string"
+                                            },
                                             "sources": {
                                                 "type": "null"
                                             },
@@ -419,6 +439,7 @@
                                             "licenses",
                                             "manifest",
                                             "metadata",
+                                            "metadataType",
                                             "sources",
                                             "type",
                                             "version"
@@ -426,6 +447,9 @@
                                         "type": "object"
                                     }
                                 ]
+                            },
+                            "platform": {
+                                "type": "string"
                             },
                             "pomProperties": {
                                 "properties": {

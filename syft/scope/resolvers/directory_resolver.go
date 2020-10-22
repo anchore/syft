@@ -75,6 +75,18 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, er
 	return result, nil
 }
 
+func (s *DirectoryResolver) RelativeFileByPath(_ file.Reference, path string) (*file.Reference, error) {
+	paths, err := s.FilesByPath(file.Path(path))
+	if err != nil {
+		return nil, err
+	}
+	if len(paths) == 0 {
+		return nil, nil
+	}
+
+	return &paths[0], nil
+}
+
 // MultipleFileContentsByRef returns the file contents for all file.References relative a directory.
 func (s DirectoryResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
 	refContents := make(map[file.Reference]string)
@@ -91,10 +103,10 @@ func (s DirectoryResolver) MultipleFileContentsByRef(f ...file.Reference) (map[f
 
 // FileContentsByRef fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
-func (s DirectoryResolver) FileContentsByRef(ref file.Reference) (string, error) {
-	contents, err := fileContents(ref.Path)
+func (s DirectoryResolver) FileContentsByRef(reference file.Reference) (string, error) {
+	contents, err := fileContents(reference.Path)
 	if err != nil {
-		return "", fmt.Errorf("could not read contents of file: %s", ref.Path)
+		return "", fmt.Errorf("could not read contents of file: %s", reference.Path)
 	}
 
 	return string(contents), nil

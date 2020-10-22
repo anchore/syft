@@ -11,9 +11,10 @@ import (
 func TestParseRpmDB(t *testing.T) {
 	expected := map[string]pkg.Package{
 		"dive": {
-			Name:    "dive",
-			Version: "0.9.2-1",
-			Type:    pkg.RpmPkg,
+			Name:         "dive",
+			Version:      "0.9.2-1",
+			Type:         pkg.RpmPkg,
+			MetadataType: pkg.RpmdbMetadataType,
 			Metadata: pkg.RpmdbMetadata{
 				Name:      "dive",
 				Epoch:     0,

@@ -137,10 +137,11 @@ func TestParseJar(t *testing.T) {
 			},
 			expected: map[string]pkg.Package{
 				"example-jenkins-plugin": {
-					Name:     "example-jenkins-plugin",
-					Version:  "1.0-SNAPSHOT",
-					Language: pkg.Java,
-					Type:     pkg.JenkinsPluginPkg,
+					Name:         "example-jenkins-plugin",
+					Version:      "1.0-SNAPSHOT",
+					Language:     pkg.Java,
+					Type:         pkg.JenkinsPluginPkg,
+					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						Manifest: &pkg.JavaManifest{
 							ManifestVersion: "1.0",
@@ -181,10 +182,11 @@ func TestParseJar(t *testing.T) {
 			fixture: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 			expected: map[string]pkg.Package{
 				"example-java-app-gradle": {
-					Name:     "example-java-app-gradle",
-					Version:  "0.1.0",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
+					Name:         "example-java-app-gradle",
+					Version:      "0.1.0",
+					Language:     pkg.Java,
+					Type:         pkg.JavaPkg,
+					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						Manifest: &pkg.JavaManifest{
 							ManifestVersion: "1.0",
@@ -200,10 +202,11 @@ func TestParseJar(t *testing.T) {
 			},
 			expected: map[string]pkg.Package{
 				"example-java-app-maven": {
-					Name:     "example-java-app-maven",
-					Version:  "0.1.0",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
+					Name:         "example-java-app-maven",
+					Version:      "0.1.0",
+					Language:     pkg.Java,
+					Type:         pkg.JavaPkg,
+					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						Manifest: &pkg.JavaManifest{
 							ManifestVersion: "1.0",
@@ -224,10 +227,11 @@ func TestParseJar(t *testing.T) {
 					},
 				},
 				"joda-time": {
-					Name:     "joda-time",
-					Version:  "2.9.2",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
+					Name:         "joda-time",
+					Version:      "2.9.2",
+					Language:     pkg.Java,
+					Type:         pkg.JavaPkg,
+					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",

@@ -8,7 +8,7 @@ const (
 	DpkgMetadataType           MetadataType = "dpkg-metadata"
 	GemMetadataType            MetadataType = "gem-metadata"
 	JavaMetadataType           MetadataType = "java-metadata"
-	NpmPackageJsonMetadataType MetadataType = "npm-package-json-metadata"
+	NpmPackageJSONMetadataType MetadataType = "npm-package-json-metadata"
 	RpmdbMetadataType          MetadataType = "rpmdb-metadata"
-	PythonEggWheelMetadataType MetadataType = "python-egg-wheel-metadata"
+	PythonPackageMetadataType  MetadataType = "python-package-metadata"
 )

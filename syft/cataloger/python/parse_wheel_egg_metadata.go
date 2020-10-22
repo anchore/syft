@@ -13,7 +13,7 @@ import (
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(_ string, reader io.Reader) (*pkg.EggWheelMetadata, error) {
+func parseWheelOrEggMetadata(reader io.Reader) (pkg.PythonPackageMetadata, error) {
 	fields := make(map[string]string)
 	var key string
 
@@ -35,12 +35,12 @@ func parseWheelOrEggMetadata(_ string, reader io.Reader) (*pkg.EggWheelMetadata,
 		case strings.HasPrefix(line, " "):
 			// a field-body continuation
 			if len(key) == 0 {
-				return nil, fmt.Errorf("no match for continuation: line: '%s'", line)
+				return pkg.PythonPackageMetadata{}, fmt.Errorf("no match for continuation: line: '%s'", line)
 			}
 
 			val, ok := fields[key]
 			if !ok {
-				return nil, fmt.Errorf("no previous key exists, expecting: %s", key)
+				return pkg.PythonPackageMetadata{}, fmt.Errorf("no previous key exists, expecting: %s", key)
 			}
 			// concatenate onto previous value
 			val = fmt.Sprintf("%s\n %s", val, strings.TrimSpace(line))
@@ -48,25 +48,25 @@ func parseWheelOrEggMetadata(_ string, reader io.Reader) (*pkg.EggWheelMetadata,
 		default:
 			// parse a new key (note, duplicate keys are overridden)
 			if i := strings.Index(line, ":"); i > 0 {
-				key = strings.TrimSpace(line[0:i])
+				// mapstruct cannot map keys with dashes, and we are expected to persist the "Author-email" field
+				key = strings.ReplaceAll(strings.TrimSpace(line[0:i]), "-", "")
 				val := strings.TrimSpace(line[i+1:])
 
 				fields[key] = val
 			} else {
-				return nil, fmt.Errorf("cannot parse field from line: '%s'", line)
+				return pkg.PythonPackageMetadata{}, fmt.Errorf("cannot parse field from line: '%s'", line)
 			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to parse python wheel/egg: %w", err)
+		return pkg.PythonPackageMetadata{}, fmt.Errorf("failed to parse python wheel/egg: %w", err)
 	}
 
-	var metadata pkg.EggWheelMetadata
-
+	var metadata pkg.PythonPackageMetadata
 	if err := mapstructure.Decode(fields, &metadata); err != nil {
-		return nil, fmt.Errorf("unable to parse APK metadata: %w", err)
+		return pkg.PythonPackageMetadata{}, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
 
-	return &metadata, nil
+	return metadata, nil
 }

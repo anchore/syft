@@ -37,14 +37,12 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Version:  "1.0.0",
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
-			Licenses: []string{},
 		},
 		"flask": {
 			Name:     "flask",
 			Version:  "4.0.0",
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
-			Licenses: []string{},
 		},
 	}
 	fixture, err := os.Open("test-fixtures/requires/requirements.txt")

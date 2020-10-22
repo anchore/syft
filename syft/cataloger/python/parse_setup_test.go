@@ -14,35 +14,30 @@ func TestParseSetup(t *testing.T) {
 			Version:  "2.2.0",
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
-			Licenses: []string{},
 		},
 		"mypy": {
 			Name:     "mypy",
 			Version:  "v0.770",
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
-			Licenses: []string{},
 		},
 		"mypy1": {
 			Name:     "mypy1",
 			Version:  "v0.770",
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
-			Licenses: []string{},
 		},
 		"mypy2": {
 			Name:     "mypy2",
 			Version:  "v0.770",
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
-			Licenses: []string{},
 		},
 		"mypy3": {
 			Name:     "mypy3",
 			Version:  "v0.770",
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
-			Licenses: []string{},
 		},
 	}
 	fixture, err := os.Open("test-fixtures/setup/setup.py")

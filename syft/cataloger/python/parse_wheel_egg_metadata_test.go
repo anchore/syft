@@ -8,14 +8,14 @@ import (
 	"github.com/go-test/deep"
 )
 
-func TestParseEggMetadata(t *testing.T) {
+func TestParseWheelEggMetadata(t *testing.T) {
 	tests := []struct {
 		Fixture          string
-		ExpectedMetadata pkg.EggWheelMetadata
+		ExpectedMetadata pkg.PythonPackageMetadata
 	}{
 		{
 			Fixture: "test-fixtures/egg-info/PKG-INFO",
-			ExpectedMetadata: pkg.EggWheelMetadata{
+			ExpectedMetadata: pkg.PythonPackageMetadata{
 				Name:        "requests",
 				Version:     "2.22.0",
 				License:     "Apache 2.0",
@@ -26,7 +26,7 @@ func TestParseEggMetadata(t *testing.T) {
 		},
 		{
 			Fixture: "test-fixtures/dist-info/METADATA",
-			ExpectedMetadata: pkg.EggWheelMetadata{
+			ExpectedMetadata: pkg.PythonPackageMetadata{
 				Name:        "Pygments",
 				Version:     "2.6.1",
 				License:     "BSD License",
@@ -44,12 +44,12 @@ func TestParseEggMetadata(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseWheelOrEggMetadata(fixture.Name(), fixture)
+			actual, err := parseWheelOrEggMetadata(fixture)
 			if err != nil {
-				t.Fatalf("failed to parse egg-info: %+v", err)
+				t.Fatalf("failed to parse: %+v", err)
 			}
 
-			for _, d := range deep.Equal(actual, &test.ExpectedMetadata) {
+			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
 				t.Errorf("diff: %+v", d)
 			}
 		})

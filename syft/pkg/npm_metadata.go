@@ -1,7 +1,7 @@
 package pkg
 
-// NpmPackageJsonMetadata holds extra information that is used in pkg.Package
-type NpmPackageJsonMetadata struct {
+// NpmPackageJSONMetadata holds extra information that is used in pkg.Package
+type NpmPackageJSONMetadata struct {
 	Name        string   `mapstructure:"name" json:"name"`
 	Version     string   `mapstructure:"version" json:"version"`
 	Files       []string `mapstructure:"files" json:"files"`

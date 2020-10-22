@@ -10,12 +10,13 @@ import (
 
 func TestParsePackageJSON(t *testing.T) {
 	expected := pkg.Package{
-		Name:     "npm",
-		Version:  "6.14.6",
-		Type:     pkg.NpmPkg,
-		Licenses: []string{"Artistic-2.0"},
-		Language: pkg.JavaScript,
-		Metadata: pkg.NpmPackageJsonMetadata{
+		Name:         "npm",
+		Version:      "6.14.6",
+		Type:         pkg.NpmPkg,
+		Licenses:     []string{"Artistic-2.0"},
+		Language:     pkg.JavaScript,
+		MetadataType: pkg.NpmPackageJSONMetadataType,
+		Metadata: pkg.NpmPackageJSONMetadata{
 			Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 			Homepage: "https://docs.npmjs.com/",
 		},

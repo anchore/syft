@@ -43,8 +43,8 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Licenses:     []string{p.License},
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageJsonMetadataType,
-			Metadata: pkg.NpmPackageJsonMetadata{
+			MetadataType: pkg.NpmPackageJSONMetadataType,
+			Metadata: pkg.NpmPackageJSONMetadata{
 				Author:   p.Author,
 				Homepage: p.Homepage,
 			},

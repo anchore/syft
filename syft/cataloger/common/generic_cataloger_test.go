@@ -10,25 +10,25 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-type testResolver struct {
+type testResolverMock struct {
 	contents map[file.Reference]string
 }
 
-func newTestResolver() *testResolver {
-	return &testResolver{
+func newTestResolver() *testResolverMock {
+	return &testResolverMock{
 		contents: make(map[file.Reference]string),
 	}
 }
 
-func (r *testResolver) FileContentsByRef(_ file.Reference) (string, error) {
+func (r *testResolverMock) FileContentsByRef(_ file.Reference) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }
 
-func (r *testResolver) MultipleFileContentsByRef(_ ...file.Reference) (map[file.Reference]string, error) {
+func (r *testResolverMock) MultipleFileContentsByRef(_ ...file.Reference) (map[file.Reference]string, error) {
 	return r.contents, nil
 }
 
-func (r *testResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
+func (r *testResolverMock) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
 	results := make([]file.Reference, len(paths))
 
 	for idx, p := range paths {
@@ -39,11 +39,15 @@ func (r *testResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error)
 	return results, nil
 }
 
-func (r *testResolver) FilesByGlob(_ ...string) ([]file.Reference, error) {
+func (r *testResolverMock) FilesByGlob(_ ...string) ([]file.Reference, error) {
 	path := "/a-path.txt"
 	ref := file.NewFileReference(file.Path(path))
 	r.contents[ref] = fmt.Sprintf("%s file contents!", path)
 	return []file.Reference{ref}, nil
+}
+
+func (r *testResolverMock) RelativeFileByPath(_ file.Reference, _ string) (*file.Reference, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 func parser(_ string, reader io.Reader) ([]pkg.Package, error) {
