@@ -7,9 +7,9 @@ type Digest struct {
 
 // PythonFileRecord represents a single entry within a RECORD file for a python wheel or egg package
 type PythonFileRecord struct {
-	Path   string `json:"path"`
-	Digest Digest `json:"digest"`
-	Size   string `json:"size"`
+	Path   string  `json:"path"`
+	Digest *Digest `json:"digest,omitempty"`
+	Size   string  `json:"size,omitempty"`
 }
 
 // PythonPackageMetadata represents all captured data for a python egg or wheel package.

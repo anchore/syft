@@ -16,22 +16,22 @@ func TestParseWheelEggRecord(t *testing.T) {
 		{
 			Fixture: "test-fixtures/egg-info/RECORD",
 			ExpectedMetadata: []pkg.PythonFileRecord{
-				{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: pkg.Digest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
-				{Path: "requests/__init__.py", Digest: pkg.Digest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
+				{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.Digest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
+				{Path: "requests/__init__.py", Digest: &pkg.Digest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
 				{Path: "requests/__pycache__/__version__.cpython-38.pyc"},
 				{Path: "requests/__pycache__/utils.cpython-38.pyc"},
-				{Path: "requests/__version__.py", Digest: pkg.Digest{"sha256", "Bm-GFstQaFezsFlnmEMrJDe8JNROz9n2XXYtODdvjjc"}, Size: "436"},
-				{Path: "requests/utils.py", Digest: pkg.Digest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
+				{Path: "requests/__version__.py", Digest: &pkg.Digest{"sha256", "Bm-GFstQaFezsFlnmEMrJDe8JNROz9n2XXYtODdvjjc"}, Size: "436"},
+				{Path: "requests/utils.py", Digest: &pkg.Digest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
 			},
 		},
 		{
 			Fixture: "test-fixtures/dist-info/RECORD",
 			ExpectedMetadata: []pkg.PythonFileRecord{
-				{Path: "../../../bin/pygmentize", Digest: pkg.Digest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
-				{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: pkg.Digest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
+				{Path: "../../../bin/pygmentize", Digest: &pkg.Digest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
+				{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: &pkg.Digest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
 				{Path: "Pygments-2.6.1.dist-info/RECORD"},
 				{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
-				{Path: "pygments/util.py", Digest: pkg.Digest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
+				{Path: "pygments/util.py", Digest: &pkg.Digest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
 			},
 		},
 	}

@@ -491,6 +491,9 @@
                             "release": {
                                 "type": "string"
                             },
+                            "sitePackagesRootPath": {
+                                "type": "string"
+                            },
                             "size": {
                                 "type": "integer"
                             },
@@ -499,6 +502,12 @@
                             },
                             "sourceRpm": {
                                 "type": "string"
+                            },
+                            "topLevelPackages": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
                             },
                             "url": {
                                 "type": "string"
