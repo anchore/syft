@@ -27,6 +27,7 @@ type PackageJSON struct {
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
 	Dependencies map[string]string `json:"dependencies"`
+	Repository   Repository        `json:"repository"`
 }
 
 type Author struct {
@@ -35,10 +36,17 @@ type Author struct {
 	URL   string `json:"url" mapstruct:"url"`
 }
 
+type Repository struct {
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
+
 // match example: "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)"
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
+// This method implements the UnmarshalJSON interface to help normalize
+// the json structure.
 func (a *Author) UnmarshalJSON(b []byte) error {
 	var authorStr string
 	var fields map[string]string
@@ -98,6 +106,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Metadata: pkg.NpmMetadata{
 				Author:   p.Author.String(),
 				Homepage: p.Homepage,
+				URL:      p.Repository.URL,
 			},
 		})
 	}
