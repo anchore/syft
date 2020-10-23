@@ -210,7 +210,9 @@ def pair_similar(extra_packages, missing_packages):
         missed = tuple([ProbableMatch(pkg=i, ratio=found[i]) for i in i_set])
         results.append(SimilarPackages(pkg=s, missed=missed))
 
-    return sorted(results, key=lambda x: x.pkg)
+    not_found = [i for i in missing_packages if i not in found]
+
+    return sorted(results, key=lambda x: x.pkg), sorted(not_found, key=lambda x: x.name)
 
 
 def main(image):
@@ -286,12 +288,20 @@ def main(image):
         print_rows(rows)
         print()
 
-    paired_mismatches = pair_similar(bonus_packages, missing_packages)
+    paired_mismatches, truly_missing_packages = pair_similar(bonus_packages, missing_packages)
     if paired_mismatches:
         rows = []
         print(colors.bold + "Probably pairings of missing/extra packages:", colors.reset, "to aid in troubleshooting missed/extra packages")
         for similar_packages in paired_mismatches:
             rows.append([INDENT, repr(similar_packages.pkg), "--->", repr(similar_packages.missed)])
+        print_rows(rows)
+        print()
+
+    if truly_missing_packages and bonus_packages:
+        rows = []
+        print(colors.bold + "Probably missed packages:", colors.reset, "a probable pair was not found")
+        for p in truly_missing_packages:
+            rows.append([INDENT, repr(p)])
         print_rows(rows)
         print()
 
@@ -301,14 +311,16 @@ def main(image):
     print("   Syft Packages   : %d" % len(syft_packages))
     print("         (extra)   : %d (note: this is ignored in the analysis!)" % len(bonus_packages))
     print("       (missing)   : %d" % len(missing_packages))
-    print("   Probable Package Matches  : %d (matches not made, but were probably found by both Inline and Syft)" % len(paired_mismatches))
+    print()
 
-    if len(paired_mismatches) > 0:
+    if paired_mismatches and bonus_packages:
         percent_probable_overlap_packages = (
                                            float(len(same_packages)+len(paired_mismatches)) / float(len(inline_packages))
                                    ) * 100.0
-
+        print("   Probable Package Matches  : %d (matches not made, but were probably found by both Inline and Syft)" % len(paired_mismatches))
         print("   Probable Packages Matched : %2.3f %% (%d/%d packages)"% (percent_probable_overlap_packages, len(same_packages)+len(paired_mismatches), len(inline_packages)))
+        print("   Probable Packages Missing : %d "% len(truly_missing_packages))
+        print()
     print(
         "   Baseline Packages Matched : %2.3f %% (%d/%d packages)"
         % (percent_overlap_packages, len(same_packages), len(inline_packages))
