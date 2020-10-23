@@ -37,16 +37,15 @@ type Author struct {
 }
 
 type Repository struct {
-	Type string `json:"type"`
-	URL  string `json:"url"`
+	Type string `json:"type" mapstructure:"type"`
+	URL  string `json:"url" mapstructure:"url"`
 }
 
 // match example: "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)"
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
-// This method implements the UnmarshalJSON interface to help normalize
-// the json structure.
+// Exports Author.UnmarshalJSON interface to help normalize the json structure.
 func (a *Author) UnmarshalJSON(b []byte) error {
 	var authorStr string
 	var fields map[string]string
@@ -73,7 +72,7 @@ func (a *Author) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (a *Author) String() string {
+func (a *Author) AuthorString() string {
 	result := a.Name
 	if a.Email != "" {
 		result += fmt.Sprintf(" <%s>", a.Email)
@@ -82,6 +81,30 @@ func (a *Author) String() string {
 		result += fmt.Sprintf(" (%s)", a.URL)
 	}
 	return result
+}
+
+func (r *Repository) UnmarshalJSON(b []byte) error {
+	var repositoryStr string
+	var fields map[string]string
+	var repository Repository
+
+	if err := json.Unmarshal(b, &repositoryStr); err != nil {
+		// string parsing did not work, assume a map was given
+		// for more information: https://docs.npmjs.com/files/package.json#people-fields-author-contributors
+		if err := json.Unmarshal(b, &fields); err != nil {
+			return fmt.Errorf("unable to parse package.json author: %w", err)
+		}
+		// translate the map into a structure
+		if err := mapstructure.Decode(fields, &repository); err != nil {
+			return fmt.Errorf("unable to decode package.json author: %w", err)
+		}
+
+		*r = repository
+	} else {
+		r.URL = repositoryStr
+	}
+
+	return nil
 }
 
 // parsePackageJson parses a package.json and returns the discovered JavaScript packages.
@@ -104,7 +127,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Metadata: pkg.NpmMetadata{
-				Author:   p.Author.String(),
+				Author:   p.Author.AuthorString(),
 				Homepage: p.Homepage,
 				URL:      p.Repository.URL,
 			},

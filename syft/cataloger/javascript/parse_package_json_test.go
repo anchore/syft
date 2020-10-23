@@ -43,6 +43,21 @@ func TestParsePackageJSON(t *testing.T) {
 				},
 			},
 		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-repo-string.json",
+			ExpectedPkg: pkg.Package{
+				Name:     "function-bind",
+				Version:  "1.1.1",
+				Type:     pkg.NpmPkg,
+				Licenses: []string{"MIT"},
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmMetadata{
+					Author:   "Raynos <raynos2@gmail.com>",
+					Homepage: "https://github.com/Raynos/function-bind",
+					URL:      "git://github.com/Raynos/function-bind.git",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
