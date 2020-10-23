@@ -35,8 +35,11 @@ jobs:
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
-      - name: Bootstrap dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Bootstrap project dependencies
+        if: steps.bootstrap-cache.outputs.cache-hit != 'true'
+        run: make bootstrap
+
+      - name: Bootstrap CI dependencies
         run: make ci-bootstrap
 
       - name: Import GPG key
