@@ -112,5 +112,4 @@ check-for-app-update: true
 ## Future plans
 
 The following areas of potential development are currently being investigated:
-- Add CycloneDX to list of output formats
 - Establish a stable interchange format w/Grype
