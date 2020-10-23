@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import difflib
 import collections
 
 QUALITY_GATE_THRESHOLD = 0.95
@@ -23,6 +24,10 @@ Metadata = collections.namedtuple("Metadata", "version")
 Package = collections.namedtuple("Package", "name type")
 
 
+def clean(image: str) -> str:
+    return os.path.basename(image.replace(":", "_"))
+
+
 class InlineScan:
 
     report_tmpl = "{image}-{report}.json"
@@ -34,13 +39,15 @@ class InlineScan:
     def packages(self):
         python_packages, python_metadata = self._python_packages()
         gem_packages, gem_metadata = self._gem_packages()
+        java_packages, java_metadata = self._java_packages()
+        npm_packages, npm_metadata = self._npm_packages()
         os_packages, os_metadata = self._os_packages()
-        return python_packages | os_packages | gem_packages , {**python_metadata, **os_metadata, **gem_metadata}
+        return python_packages | os_packages | gem_packages | java_packages | npm_packages, {**python_metadata, **os_metadata, **gem_metadata, **java_metadata, **npm_metadata}
 
     def _report_path(self, report):
         return os.path.join(
             self.report_dir,
-            self.report_tmpl.format(image=self.image.replace(":", "_"), report=report),
+            self.report_tmpl.format(image=clean(self.image), report=report),
         )
 
     def _enumerate_section(self, report, section):
@@ -55,6 +62,37 @@ class InlineScan:
             data = json.load(json_file)
             for entry in data[section]:
                 yield entry
+
+    def _java_packages(self):
+        packages = set()
+        metadata = collections.defaultdict(dict)
+        for entry in self._enumerate_section(
+                report="content-java", section="content"
+        ):
+            # normalize to pseudo-inline
+            pkg_type = entry["type"].lower()
+            if pkg_type in ("java-jar", "java-war", "java-ear"):
+                pkg_type = "java-?ar"
+            elif pkg_type in ("java-jpi", "java-hpi"):
+                pkg_type = "java-?pi"
+
+            package = Package(name=entry["package"], type=pkg_type,)
+            packages.add(package)
+            metadata[package.type][package] = Metadata(version=entry["maven-version"])
+
+        return packages, metadata
+
+    def _npm_packages(self):
+        packages = set()
+        metadata = collections.defaultdict(dict)
+        for entry in self._enumerate_section(
+                report="content-npm", section="content"
+        ):
+            package = Package(name=entry["package"], type=entry["type"].lower(),)
+            packages.add(package)
+            metadata[package.type][package] = Metadata(version=entry["version"])
+
+        return packages, metadata
 
     def _python_packages(self):
         packages = set()
@@ -97,7 +135,7 @@ class Syft:
 
     def __init__(self, image, report_dir="./"):
         self.report_path = os.path.join(
-            report_dir, self.report_tmpl.format(image=image.replace(":", "_"))
+            report_dir, self.report_tmpl.format(image=clean(image))
         )
 
     def _enumerate_section(self, section):
@@ -113,12 +151,16 @@ class Syft:
 
             # normalize to inline
             pkg_type = entry["type"].lower()
-            if pkg_type in ("wheel", "egg"):
+            if pkg_type in ("wheel", "egg", "python"):
                 pkg_type = "python"
             elif pkg_type in ("deb",):
                 pkg_type = "dpkg"
             elif pkg_type in ("java-archive",):
-                pkg_type = "java"
+                # normalize to pseudo-inline
+                pkg_type = "java-?ar"
+            elif pkg_type in ("jenkins-plugin",):
+                # normalize to pseudo-inline
+                pkg_type = "java-?pi"
             elif pkg_type in ("apk",):
                 pkg_type = "apkg"
 
@@ -138,6 +180,37 @@ def print_rows(rows):
         widths.append(width)
     for row in rows:
         print("".join(word.ljust(widths[col_idx]) for col_idx, word in enumerate(row)))
+
+
+SimilarPackages = collections.namedtuple("SimilarPackages", "pkg missed")
+ProbableMatch = collections.namedtuple("ProbableMatch", "pkg ratio")
+SIMILAR_THRESHOLD = 0.7
+
+
+def pair_similar(extra_packages, missing_packages):
+    matches = collections.defaultdict(set)
+    found = {}
+    for s in extra_packages:
+        for i in missing_packages:
+            ratio = difflib.SequenceMatcher(None, s.name, i.name).ratio()
+            if ratio >= SIMILAR_THRESHOLD:
+                if i in found:
+                    # only allow for an inline package to be paired once
+                    if ratio < found[i]:
+                        continue
+                    else:
+                        matches[s].discard(i)
+
+                # persist the result
+                found[i] = ratio
+                matches[s].add(i)
+
+    results = []
+    for s, i_set in matches.items():
+        missed = tuple([ProbableMatch(pkg=i, ratio=found[i]) for i in i_set])
+        results.append(SimilarPackages(pkg=s, missed=missed))
+
+    return sorted(results, key=lambda x: x.pkg)
 
 
 def main(image):
@@ -186,7 +259,7 @@ def main(image):
 
     if bonus_packages:
         rows = []
-        print(colors.bold + "Syft found extra packages:", colors.reset)
+        print(colors.bold + "Syft found extra packages:", colors.reset, "Syft discovered packages that Inline did not")
         for package in sorted(list(bonus_packages)):
             rows.append([INDENT, repr(package)])
         print_rows(rows)
@@ -194,7 +267,7 @@ def main(image):
 
     if missing_packages:
         rows = []
-        print(colors.bold + "Syft missed packages:", colors.reset)
+        print(colors.bold + "Syft missed packages:", colors.reset, "Inline discovered packages that Syft did not")
         for package in sorted(list(missing_packages)):
             rows.append([INDENT, repr(package)])
         print_rows(rows)
@@ -202,7 +275,7 @@ def main(image):
 
     if missing_metadata:
         rows = []
-        print(colors.bold + "Syft mismatched metadata:", colors.reset)
+        print(colors.bold + "Syft mismatched metadata:", colors.reset, "the packages between Syft and Inline are the same, the metadata is not")
         for inline_metadata_pair in sorted(list(missing_metadata)):
             pkg, metadata = inline_metadata_pair
             if pkg in syft_metadata[pkg.type]:
@@ -213,18 +286,35 @@ def main(image):
         print_rows(rows)
         print()
 
+    paired_mismatches = pair_similar(bonus_packages, missing_packages)
+    if paired_mismatches:
+        rows = []
+        print(colors.bold + "Probably pairings of missing/extra packages:", colors.reset, "to aid in troubleshooting missed/extra packages")
+        for similar_packages in paired_mismatches:
+            rows.append([INDENT, repr(similar_packages.pkg), "--->", repr(similar_packages.missed)])
+        print_rows(rows)
+        print()
+
     print(colors.bold+"Summary:", colors.reset)
     print("   Image: %s" % image)
     print("   Inline Packages : %d" % len(inline_packages))
     print("   Syft Packages   : %d" % len(syft_packages))
-    print("         (extra)   : %d" % len(bonus_packages))
+    print("         (extra)   : %d (note: this is ignored in the analysis!)" % len(bonus_packages))
     print("       (missing)   : %d" % len(missing_packages))
+    print("   Probable Package Matches  : %d (matches not made, but were probably found by both Inline and Syft)" % len(paired_mismatches))
+
+    if len(paired_mismatches) > 0:
+        percent_probable_overlap_packages = (
+                                           float(len(same_packages)+len(paired_mismatches)) / float(len(inline_packages))
+                                   ) * 100.0
+
+        print("   Probable Packages Matched : %2.3f %% (%d/%d packages)"% (percent_probable_overlap_packages, len(same_packages)+len(paired_mismatches), len(inline_packages)))
     print(
-        "   Baseline Packages Matched: %2.3f %% (%d/%d packages)"
+        "   Baseline Packages Matched : %2.3f %% (%d/%d packages)"
         % (percent_overlap_packages, len(same_packages), len(inline_packages))
     )
     print(
-        "   Baseline Metadata Matched: %2.3f %% (%d/%d metadata)"
+        "   Baseline Metadata Matched : %2.3f %% (%d/%d metadata)"
         % (percent_overlap_metadata, len(same_metadata), len(inline_metadata_set))
     )
 
