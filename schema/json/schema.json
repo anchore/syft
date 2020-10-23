@@ -53,62 +53,55 @@
                                 "type": "integer"
                             },
                             "files": {
-                                "anyOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "items": {
-                                            "anyOf": [
-                                                {
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "properties": {
+                                                "checksum": {
                                                     "type": "string"
                                                 },
-                                                {
+                                                "digest": {
                                                     "properties": {
-                                                        "checksum": {
+                                                        "algorithm": {
                                                             "type": "string"
                                                         },
-                                                        "digest": {
-                                                            "properties": {
-                                                                "algorithm": {
-                                                                    "type": "string"
-                                                                },
-                                                                "value": {
-                                                                    "type": "string"
-                                                                }
-                                                            },
-                                                            "required": [
-                                                                "algorithm",
-                                                                "value"
-                                                            ],
-                                                            "type": "object"
-                                                        },
-                                                        "ownerGid": {
-                                                            "type": "string"
-                                                        },
-                                                        "ownerUid": {
-                                                            "type": "string"
-                                                        },
-                                                        "path": {
-                                                            "type": "string"
-                                                        },
-                                                        "permissions": {
-                                                            "type": "string"
-                                                        },
-                                                        "size": {
+                                                        "value": {
                                                             "type": "string"
                                                         }
                                                     },
                                                     "required": [
-                                                        "path"
+                                                        "algorithm",
+                                                        "value"
                                                     ],
                                                     "type": "object"
+                                                },
+                                                "ownerGid": {
+                                                    "type": "string"
+                                                },
+                                                "ownerUid": {
+                                                    "type": "string"
+                                                },
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "permissions": {
+                                                    "type": "string"
+                                                },
+                                                "size": {
+                                                    "type": "string"
                                                 }
-                                            ]
-                                        },
-                                        "type": "array"
-                                    }
-                                ]
+                                            },
+                                            "required": [
+                                                "path"
+                                            ],
+                                            "type": "object"
+                                        }
+                                    ]
+                                },
+                                "type": "array"
                             },
                             "gitCommitOfApkPort": {
                                 "type": "string"
