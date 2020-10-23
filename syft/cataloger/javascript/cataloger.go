@@ -11,6 +11,7 @@ import (
 func NewJavascriptPackageCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/package.json": parsePackageJSON,
+		"package.json":    parsePackageJSON,
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "javascript-package-cataloger")
@@ -19,7 +20,9 @@ func NewJavascriptPackageCataloger() *common.GenericCataloger {
 // NewJavascriptLockCataloger returns a new Javascript cataloger object base on package lock files.
 func NewJavascriptLockCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
+		"package-lock.json":    parsePackageLock,
 		"**/package-lock.json": parsePackageLock,
+		"yarn.lock":            parseYarnLock,
 		"**/yarn.lock":         parseYarnLock,
 	}
 

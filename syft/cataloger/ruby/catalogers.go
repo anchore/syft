@@ -11,6 +11,7 @@ import (
 func NewGemFileLockCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/Gemfile.lock": parseGemFileLockEntries,
+		"Gemfile.lock":    parseGemFileLockEntries,
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "ruby-gemfile-cataloger")
@@ -20,6 +21,7 @@ func NewGemFileLockCataloger() *common.GenericCataloger {
 func NewGemSpecCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/specifications/*.gemspec": parseGemSpecEntries,
+		"specifications/*.gemspec":    parseGemSpecEntries,
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "ruby-gemspec-cataloger")

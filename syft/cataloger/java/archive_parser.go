@@ -17,6 +17,11 @@ import (
 var _ common.ParserFn = parseJavaArchive
 
 var archiveFormatGlobs = []string{
+	"*.jar",
+	"*.war",
+	"*.ear",
+	"*.jpi",
+	"*.hpi",
 	"**/*.jar",
 	"**/*.war",
 	"**/*.ear",

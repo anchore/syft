@@ -10,6 +10,9 @@ import (
 // NewPythonIndexCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
 func NewPythonIndexCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
+		"*requirements*.txt":    parseRequirementsTxt,
+		"poetry.lock":           parsePoetryLock,
+		"setup.py":              parseSetup,
 		"**/*requirements*.txt": parseRequirementsTxt,
 		"**/poetry.lock":        parsePoetryLock,
 		"**/setup.py":           parseSetup,
