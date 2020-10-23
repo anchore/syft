@@ -1,7 +1,6 @@
 package cataloger
 
 import (
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
@@ -39,36 +38,21 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // request.
 func Catalog(resolver scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
-	fileSelection := make([]file.Reference, 0)
-
 	filesProcessed, packagesDiscovered := newMonitor()
-
-	// ask catalogers for files to extract from the image tar
-	for _, a := range catalogers {
-		fileSelection = append(fileSelection, a.SelectFiles(resolver)...)
-		log.Debugf("cataloger '%s' selected '%d' files", a.Name(), len(fileSelection))
-		filesProcessed.N += int64(len(fileSelection))
-	}
-
-	// fetch contents for requested selection by catalogers
-	// TODO: we should consider refactoring to return a set of io.Readers instead of the full contents themselves (allow for optional buffering).
-	contents, err := resolver.MultipleFileContentsByRef(fileSelection...)
-	if err != nil {
-		return nil, err
-	}
 
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
-	for _, a := range catalogers {
-		// TODO: check for multiple rounds of analyses by Iterate error
-		packages, err := a.Catalog(contents)
+	for _, theCataloger := range catalogers {
+		packages, err := theCataloger.Catalog(resolver)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 			continue
 		}
 
-		log.Debugf("cataloger '%s' discovered '%d' packages", a.Name(), len(packages))
-		packagesDiscovered.N += int64(len(packages))
+		catalogedPackages := len(packages)
+
+		log.Debugf("cataloger '%s' discovered '%d' packages", theCataloger.Name(), catalogedPackages)
+		packagesDiscovered.N += int64(catalogedPackages)
 
 		for _, p := range packages {
 			catalog.Add(p)

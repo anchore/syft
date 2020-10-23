@@ -1,3 +1,2 @@
 jsonschema==2.6.0
 passlib==1.7.2
-pathlib==1.0.1

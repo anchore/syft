@@ -34,73 +34,83 @@ func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string
 }
 
 // Name returns a string that uniquely describes the upstream cataloger that this Generic Cataloger represents.
-func (a *GenericCataloger) Name() string {
-	return a.upstreamCataloger
+func (c *GenericCataloger) Name() string {
+	return c.upstreamCataloger
 }
 
 // register pairs a set of file references with a parser function for future cataloging (when the file contents are resolved)
-func (a *GenericCataloger) register(files []file.Reference, parser ParserFn) {
-	a.selectedFiles = append(a.selectedFiles, files...)
+func (c *GenericCataloger) register(files []file.Reference, parser ParserFn) {
+	c.selectedFiles = append(c.selectedFiles, files...)
 	for _, f := range files {
-		a.parsers[f] = parser
+		c.parsers[f] = parser
 	}
 }
 
 // clear deletes all registered file-reference-to-parser-function pairings from former SelectFiles() and register() calls
-func (a *GenericCataloger) clear() {
-	a.selectedFiles = make([]file.Reference, 0)
-	a.parsers = make(map[file.Reference]ParserFn)
+func (c *GenericCataloger) clear() {
+	c.selectedFiles = make([]file.Reference, 0)
+	c.parsers = make(map[file.Reference]ParserFn)
+}
+
+// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
+func (c *GenericCataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, error) {
+	fileSelection := c.selectFiles(resolver)
+	contents, err := resolver.MultipleFileContentsByRef(fileSelection...)
+	if err != nil {
+		return nil, err
+	}
+	return c.catalog(contents)
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (a *GenericCataloger) SelectFiles(resolver scope.FileResolver) []file.Reference {
+func (c *GenericCataloger) selectFiles(resolver scope.FileResolver) []file.Reference {
 	// select by exact path
-	for path, parser := range a.pathParsers {
+	for path, parser := range c.pathParsers {
 		files, err := resolver.FilesByPath(file.Path(path))
 		if err != nil {
 			log.Errorf("cataloger failed to select files by path: %+v", err)
 		}
 		if files != nil {
-			a.register(files, parser)
+			c.register(files, parser)
 		}
 	}
 
 	// select by glob pattern
-	for globPattern, parser := range a.globParsers {
+	for globPattern, parser := range c.globParsers {
 		fileMatches, err := resolver.FilesByGlob(globPattern)
 		if err != nil {
 			log.Errorf("failed to find files by glob: %s", globPattern)
 		}
 		if fileMatches != nil {
-			a.register(fileMatches, parser)
+			c.register(fileMatches, parser)
 		}
 	}
 
-	return a.selectedFiles
+	return c.selectedFiles
 }
 
-// Catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
-func (a *GenericCataloger) Catalog(contents map[file.Reference]string) ([]pkg.Package, error) {
-	defer a.clear()
+// catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
+func (c *GenericCataloger) catalog(contents map[file.Reference]string) ([]pkg.Package, error) {
+	defer c.clear()
 
 	packages := make([]pkg.Package, 0)
 
-	for reference, parser := range a.parsers {
+	for reference, parser := range c.parsers {
 		content, ok := contents[reference]
 		if !ok {
-			log.Errorf("cataloger '%s' missing file content: %+v", a.upstreamCataloger, reference)
+			log.Errorf("cataloger '%s' missing file content: %+v", c.upstreamCataloger, reference)
 			continue
 		}
 
 		entries, err := parser(string(reference.Path), strings.NewReader(content))
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %+v", a.upstreamCataloger, reference, err)
+			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %+v", c.upstreamCataloger, reference, err)
 			continue
 		}
 
 		for _, entry := range entries {
-			entry.FoundBy = a.upstreamCataloger
+			entry.FoundBy = c.upstreamCataloger
 			entry.Source = []file.Reference{reference}
 
 			packages = append(packages, entry)

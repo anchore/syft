@@ -121,15 +121,17 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 
 		packages = append(packages, pkg.Package{
-			Name:     p.Name,
-			Version:  p.Version,
-			Licenses: []string{p.License},
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmMetadata{
+			Name:         p.Name,
+			Version:      p.Version,
+			Licenses:     []string{p.License},
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			MetadataType: pkg.NpmPackageJSONMetadataType,
+			Metadata: pkg.NpmPackageJSONMetadata{
 				Author:   p.Author.AuthorString(),
 				Homepage: p.Homepage,
 				URL:      p.Repository.URL,
+				Licenses: []string{p.License},
 			},
 		})
 	}

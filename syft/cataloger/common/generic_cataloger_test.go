@@ -7,21 +7,28 @@ import (
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-type testResolver struct {
+type testResolverMock struct {
 	contents map[file.Reference]string
 }
 
-func newTestResolver() *testResolver {
-	return &testResolver{
+func newTestResolver() *testResolverMock {
+	return &testResolverMock{
 		contents: make(map[file.Reference]string),
 	}
 }
 
-func (r *testResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
+func (r *testResolverMock) FileContentsByRef(_ file.Reference) (string, error) {
+	return "", fmt.Errorf("not implemented")
+}
+
+func (r *testResolverMock) MultipleFileContentsByRef(_ ...file.Reference) (map[file.Reference]string, error) {
+	return r.contents, nil
+}
+
+func (r *testResolverMock) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
 	results := make([]file.Reference, len(paths))
 
 	for idx, p := range paths {
@@ -32,11 +39,15 @@ func (r *testResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error)
 	return results, nil
 }
 
-func (r *testResolver) FilesByGlob(patterns ...string) ([]file.Reference, error) {
+func (r *testResolverMock) FilesByGlob(_ ...string) ([]file.Reference, error) {
 	path := "/a-path.txt"
 	ref := file.NewFileReference(file.Path(path))
 	r.contents[ref] = fmt.Sprintf("%s file contents!", path)
 	return []file.Reference{ref}, nil
+}
+
+func (r *testResolverMock) RelativeFileByPath(_ file.Reference, _ string) (*file.Reference, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 func parser(_ string, reader io.Reader) ([]pkg.Package, error) {
@@ -64,31 +75,16 @@ func TestGenericCataloger(t *testing.T) {
 	resolver := newTestResolver()
 	cataloger := NewGenericCataloger(pathParsers, globParsers, upstream)
 
-	selected := cataloger.SelectFiles(resolver)
-
-	if len(selected) != 3 {
-		t.Fatalf("unexpected selection length: %d", len(selected))
-	}
-
-	expectedSelection := internal.NewStringSetFromSlice([]string{"/last/path.txt", "/another-path.txt", "/a-path.txt"})
-	selectionByPath := make(map[string]file.Reference)
-	for _, s := range selected {
-		if !expectedSelection.Contains(string(s.Path)) {
-			t.Errorf("unexpected selection path: %+v", s.Path)
-		}
-		selectionByPath[string(s.Path)] = s
-	}
-
-	expectedPkgs := make(map[file.Reference]pkg.Package)
-	for path, ref := range selectionByPath {
-		expectedPkgs[ref] = pkg.Package{
+	expectedSelection := []string{"/last/path.txt", "/another-path.txt", "/a-path.txt"}
+	expectedPkgs := make(map[string]pkg.Package)
+	for _, path := range expectedSelection {
+		expectedPkgs[path] = pkg.Package{
 			FoundBy: upstream,
-			Source:  []file.Reference{ref},
 			Name:    fmt.Sprintf("%s file contents!", path),
 		}
 	}
 
-	actualPkgs, err := cataloger.Catalog(resolver.contents)
+	actualPkgs, err := cataloger.Catalog(resolver)
 	if err != nil {
 		t.Fatalf("cataloger catalog action failed: %+v", err)
 	}
@@ -99,7 +95,7 @@ func TestGenericCataloger(t *testing.T) {
 
 	for _, p := range actualPkgs {
 		ref := p.Source[0]
-		exP, ok := expectedPkgs[ref]
+		exP, ok := expectedPkgs[string(ref.Path)]
 		if !ok {
 			t.Errorf("missing expected pkg: ref=%+v", ref)
 			continue

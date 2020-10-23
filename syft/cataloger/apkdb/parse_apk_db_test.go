@@ -160,10 +160,11 @@ func TestMultiplePackages(t *testing.T) {
 			fixture: "test-fixtures/multiple",
 			expected: []pkg.Package{
 				{
-					Name:     "libc-utils",
-					Version:  "0.7.2-r0",
-					Licenses: []string{"BSD"},
-					Type:     pkg.ApkPkg,
+					Name:         "libc-utils",
+					Version:      "0.7.2-r0",
+					Licenses:     []string{"BSD"},
+					Type:         pkg.ApkPkg,
+					MetadataType: pkg.ApkMetadataType,
 					Metadata: pkg.ApkMetadata{
 						Package:          "libc-utils",
 						OriginPackage:    "libc-dev",
@@ -182,10 +183,11 @@ func TestMultiplePackages(t *testing.T) {
 					},
 				},
 				{
-					Name:     "musl-utils",
-					Version:  "1.1.24-r2",
-					Licenses: []string{"MIT", "BSD", "GPL2+"},
-					Type:     pkg.ApkPkg,
+					Name:         "musl-utils",
+					Version:      "1.1.24-r2",
+					Licenses:     []string{"MIT", "BSD", "GPL2+"},
+					Type:         pkg.ApkPkg,
+					MetadataType: pkg.ApkMetadataType,
 					Metadata: pkg.ApkMetadata{
 						Package:          "musl-utils",
 						OriginPackage:    "musl",

@@ -49,11 +49,12 @@ func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 		if metadata != nil {
 			packages = append(packages, pkg.Package{
-				Name:     metadata.Package,
-				Version:  metadata.Version,
-				Licenses: strings.Split(metadata.License, " "),
-				Type:     pkg.ApkPkg,
-				Metadata: *metadata,
+				Name:         metadata.Package,
+				Version:      metadata.Version,
+				Licenses:     strings.Split(metadata.License, " "),
+				Type:         pkg.ApkPkg,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata:     *metadata,
 			})
 		}
 	}
