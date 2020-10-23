@@ -280,12 +280,14 @@ def main(image):
         print(colors.bold + "Syft mismatched metadata:", colors.reset, "the packages between Syft and Inline are the same, the metadata is not")
         for inline_metadata_pair in sorted(list(missing_metadata)):
             pkg, metadata = inline_metadata_pair
-            if pkg in syft_metadata[pkg.type]:
-                syft_metadata_item = syft_metadata[pkg.type][pkg]
-            else:
-                syft_metadata_item = "--- MISSING ---"
+            if pkg not in syft_metadata[pkg.type]:
+                continue
+            syft_metadata_item = syft_metadata[pkg.type][pkg]
             rows.append([INDENT, "for:", repr(pkg), ":", repr(syft_metadata_item), "!=", repr(metadata)])
-        print_rows(rows)
+        if rows:
+            print_rows(rows)
+        else:
+            print(INDENT, "There are mismatches, but only due to packages Syft did not find (but inline did).")
         print()
 
     paired_mismatches, truly_missing_packages = pair_similar(bonus_packages, missing_packages)
