@@ -23,10 +23,11 @@ type Package struct {
 	FoundBy string           `json:"foundBy"`  // the specific cataloger that discovered this package
 	Source  []file.Reference `json:"sources"`  // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
 	// TODO: should we move licenses into metadata?
-	Licenses []string    `json:"licenses"`           // licenses discovered with the package metadata
-	Language Language    `json:"language"`           // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
-	Type     Type        `json:"type"`               // the package type (e.g. Npm, Yarn, Egg, Wheel, Rpm, Deb, etc)
-	Metadata interface{} `json:"metadata,omitempty"` // additional data found while parsing the package source
+	Licenses     []string     `json:"licenses"`           // licenses discovered with the package metadata
+	Language     Language     `json:"language"`           // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
+	Type         Type         `json:"type"`               // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
+	MetadataType MetadataType `json:"metadataType"`       // the shape of the additional data in the "metadata" field
+	Metadata     interface{}  `json:"metadata,omitempty"` // additional data found while parsing the package source
 }
 
 // ID returns the package ID, which is unique relative to a package catalog.

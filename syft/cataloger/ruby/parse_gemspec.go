@@ -96,12 +96,13 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 
 		pkgs = append(pkgs, pkg.Package{
-			Name:     metadata.Name,
-			Version:  metadata.Version,
-			Licenses: metadata.Licenses,
-			Language: pkg.Ruby,
-			Type:     pkg.GemPkg,
-			Metadata: metadata,
+			Name:         metadata.Name,
+			Version:      metadata.Version,
+			Licenses:     metadata.Licenses,
+			Language:     pkg.Ruby,
+			Type:         pkg.GemPkg,
+			MetadataType: pkg.GemMetadataType,
+			Metadata:     metadata,
 		})
 	}
 

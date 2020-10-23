@@ -1,22 +1,23 @@
 package pkg
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/distro"
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"testing"
 )
 
 func TestRpmMetadata_pURL(t *testing.T) {
 	tests := []struct {
 		distro   distro.Distro
-		metadata RpmMetadata
+		metadata RpmdbMetadata
 		expected string
 	}{
 		{
 			distro: distro.Distro{
 				Type: distro.CentOS,
 			},
-			metadata: RpmMetadata{
+			metadata: RpmdbMetadata{
 				Name:    "p",
 				Version: "v",
 				Arch:    "a",
@@ -29,7 +30,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 			distro: distro.Distro{
 				Type: distro.RedHat,
 			},
-			metadata: RpmMetadata{
+			metadata: RpmdbMetadata{
 				Name:    "p",
 				Version: "v",
 				Arch:    "a",

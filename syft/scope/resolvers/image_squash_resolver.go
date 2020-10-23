@@ -73,6 +73,18 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference,
 	return uniqueFiles, nil
 }
 
+func (r *ImageSquashResolver) RelativeFileByPath(reference file.Reference, path string) (*file.Reference, error) {
+	paths, err := r.FilesByPath(file.Path(path))
+	if err != nil {
+		return nil, err
+	}
+	if len(paths) == 0 {
+		return nil, nil
+	}
+
+	return &paths[0], nil
+}
+
 // MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer, in this case only from the squashed representation.
 func (r *ImageSquashResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {

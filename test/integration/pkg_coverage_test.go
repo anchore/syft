@@ -68,6 +68,7 @@ func TestPkgCoverageImage(t *testing.T) {
 			}
 
 			if pkgCount != len(c.pkgInfo) {
+				t.Logf("Discovered packages of type %+v", c.pkgType)
 				for a := range catalog.Enumerate(c.pkgType) {
 					t.Log("   ", a)
 				}

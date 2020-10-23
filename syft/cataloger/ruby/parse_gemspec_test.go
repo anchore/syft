@@ -10,11 +10,12 @@ import (
 
 func TestParseGemspec(t *testing.T) {
 	var expectedPkg = pkg.Package{
-		Name:     "bundler",
-		Version:  "2.1.4",
-		Type:     pkg.GemPkg,
-		Licenses: []string{"MIT"},
-		Language: pkg.Ruby,
+		Name:         "bundler",
+		Version:      "2.1.4",
+		Type:         pkg.GemPkg,
+		Licenses:     []string{"MIT"},
+		Language:     pkg.Ruby,
+		MetadataType: pkg.GemMetadataType,
 		Metadata: pkg.GemMetadata{
 			Name:     "bundler",
 			Version:  "2.1.4",

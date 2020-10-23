@@ -109,6 +109,15 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, e
 	return uniqueFiles, nil
 }
 
+func (r *AllLayersResolver) RelativeFileByPath(reference file.Reference, path string) (*file.Reference, error) {
+	entry, err := r.img.FileCatalog.Get(reference)
+	if err != nil {
+		return nil, err
+	}
+
+	return entry.Source.SquashedTree.File(file.Path(path)), nil
+}
+
 // MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer.
 func (r *AllLayersResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {

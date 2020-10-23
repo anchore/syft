@@ -1,7 +1,6 @@
 package resolvers
 
 import (
-	"path"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -10,24 +9,49 @@ import (
 func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	cases := []struct {
 		name     string
+		root     string
 		input    string
+		expected string
 		refCount int
 	}{
 		{
-			name:     "finds a file",
-			input:    "image-symlinks/file-1.txt",
+			name:     "finds a file (relative)",
+			root:     "./test-fixtures/",
+			input:    "test-fixtures/image-symlinks/file-1.txt",
+			expected: "test-fixtures/image-symlinks/file-1.txt",
 			refCount: 1,
 		},
 		{
-			name:     "managed non-existing files",
-			input:    "image-symlinks/bogus.txt",
+			name:     "finds a file with relative indirection",
+			root:     "./test-fixtures/../test-fixtures",
+			input:    "test-fixtures/image-symlinks/file-1.txt",
+			expected: "test-fixtures/image-symlinks/file-1.txt",
+			refCount: 1,
+		},
+		{
+			// note: this is asserting the old behavior is not supported
+			name:     "relative lookup with wrong path fails",
+			root:     "./test-fixtures/",
+			input:    "image-symlinks/file-1.txt",
 			refCount: 0,
+		},
+		{
+			name:     "managed non-existing files (relative)",
+			root:     "./test-fixtures/",
+			input:    "test-fixtures/image-symlinks/bogus.txt",
+			refCount: 0,
+		},
+		{
+			name:     "finds a file (absolute)",
+			root:     "./test-fixtures/",
+			input:    "/image-symlinks/file-1.txt",
+			expected: "test-fixtures/image-symlinks/file-1.txt",
+			refCount: 1,
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := DirectoryResolver{"test-fixtures"}
-			expected := path.Join("test-fixtures", c.input)
+			resolver := DirectoryResolver{c.root}
 			refs, err := resolver.FilesByPath(file.Path(c.input))
 			if err != nil {
 				t.Fatalf("could not use resolver: %+v, %+v", err, refs)
@@ -38,8 +62,8 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 			}
 
 			for _, actual := range refs {
-				if actual.Path != file.Path(expected) {
-					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, c.input)
+				if actual.Path != file.Path(c.expected) {
+					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, c.expected)
 				}
 			}
 		})
@@ -54,17 +78,17 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}{
 		{
 			name:     "finds multiple files",
-			input:    []file.Path{file.Path("image-symlinks/file-1.txt"), file.Path("image-symlinks/file-2.txt")},
+			input:    []file.Path{file.Path("test-fixtures/image-symlinks/file-1.txt"), file.Path("test-fixtures/image-symlinks/file-2.txt")},
 			refCount: 2,
 		},
 		{
 			name:     "skips non-existing files",
-			input:    []file.Path{file.Path("image-symlinks/bogus.txt"), file.Path("image-symlinks/file-1.txt")},
+			input:    []file.Path{file.Path("test-fixtures/image-symlinks/bogus.txt"), file.Path("test-fixtures/image-symlinks/file-1.txt")},
 			refCount: 1,
 		},
 		{
 			name:     "does not return anything for non-existing directories",
-			input:    []file.Path{file.Path("non-existing/bogus.txt"), file.Path("non-existing/file-1.txt")},
+			input:    []file.Path{file.Path("test-fixtures/non-existing/bogus.txt"), file.Path("test-fixtures/non-existing/file-1.txt")},
 			refCount: 0,
 		},
 	}
@@ -93,17 +117,17 @@ func TestDirectoryResolver_MultipleFileContentsByRef(t *testing.T) {
 	}{
 		{
 			name:     "gets multiple file contents",
-			input:    []file.Path{file.Path("image-symlinks/file-1.txt"), file.Path("image-symlinks/file-2.txt")},
+			input:    []file.Path{file.Path("test-fixtures/image-symlinks/file-1.txt"), file.Path("test-fixtures/image-symlinks/file-2.txt")},
 			refCount: 2,
 		},
 		{
 			name:     "skips non-existing files",
-			input:    []file.Path{file.Path("image-symlinks/bogus.txt"), file.Path("image-symlinks/file-1.txt")},
+			input:    []file.Path{file.Path("test-fixtures/image-symlinks/bogus.txt"), file.Path("test-fixtures/image-symlinks/file-1.txt")},
 			refCount: 1,
 		},
 		{
 			name:     "does not return anything for non-existing directories",
-			input:    []file.Path{file.Path("non-existing/bogus.txt"), file.Path("non-existing/file-1.txt")},
+			input:    []file.Path{file.Path("test-fixtures/non-existing/bogus.txt"), file.Path("test-fixtures/non-existing/file-1.txt")},
 			refCount: 0,
 		},
 	}

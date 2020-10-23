@@ -26,6 +26,17 @@ var imageOnlyTestCases = []testCase{
 			"npm": "6.14.6",
 		},
 	},
+	{
+		name:        "find python egg & wheel packages",
+		pkgType:     pkg.PythonPkg,
+		pkgLanguage: pkg.Python,
+		pkgInfo: map[string]string{
+			"Pygments":     "2.6.1",
+			"requests":     "2.22.0",
+			"somerequests": "3.22.0",
+			"someotherpkg": "3.19.0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -96,6 +107,26 @@ var dirOnlyTestCases = []testCase{
 			"get-stdin":         "8.0.0",
 		},
 	},
+	{
+		name:        "find python requirements.txt & setup.py package references",
+		pkgType:     pkg.PythonPkg,
+		pkgLanguage: pkg.Python,
+		pkgInfo: map[string]string{
+			// dir specific test cases
+			"flask":              "4.0.0",
+			"python-dateutil":    "2.8.1",
+			"python-swiftclient": "3.8.1",
+			"pytz":               "2019.3",
+			"jsonschema":         "2.6.0",
+			"passlib":            "1.7.2",
+			"mypy":               "v0.770",
+			// common to image and directory
+			"Pygments":     "2.6.1",
+			"requests":     "2.22.0",
+			"somerequests": "3.22.0",
+			"someotherpkg": "3.19.0",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
@@ -129,46 +160,6 @@ var commonTestCases = []testCase{
 		pkgLanguage: pkg.Java,
 		pkgInfo: map[string]string{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
-		},
-	},
-	{
-		name:        "find python wheel packages",
-		pkgType:     pkg.WheelPkg,
-		pkgLanguage: pkg.Python,
-		pkgInfo: map[string]string{
-			"Pygments": "2.6.1",
-			"requests": "2.10.0",
-		},
-	},
-	{
-		name:        "find python egg packages",
-		pkgType:     pkg.EggPkg,
-		pkgLanguage: pkg.Python,
-		pkgInfo: map[string]string{
-			"requests": "2.22.0",
-			"otherpkg": "2.19.0",
-		},
-	},
-	{
-		name:        "find python requirements.txt packages",
-		pkgType:     pkg.PythonRequirementsPkg,
-		pkgLanguage: pkg.Python,
-		pkgInfo: map[string]string{
-			"flask":              "4.0.0",
-			"python-dateutil":    "2.8.1",
-			"python-swiftclient": "3.8.1",
-			"pytz":               "2019.3",
-			"jsonschema":         "2.6.0",
-			"passlib":            "1.7.2",
-			"pathlib":            "1.0.1",
-		},
-	},
-	{
-		name:        "find python setup.py packages",
-		pkgType:     pkg.PythonSetupPkg,
-		pkgLanguage: pkg.Python,
-		pkgInfo: map[string]string{
-			"mypy": "v0.770",
 		},
 	},
 	{

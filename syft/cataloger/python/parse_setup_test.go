@@ -13,36 +13,31 @@ func TestParseSetup(t *testing.T) {
 			Name:     "pathlib3",
 			Version:  "2.2.0",
 			Language: pkg.Python,
-			Type:     pkg.PythonSetupPkg,
-			Licenses: []string{},
+			Type:     pkg.PythonPkg,
 		},
 		"mypy": {
 			Name:     "mypy",
 			Version:  "v0.770",
 			Language: pkg.Python,
-			Type:     pkg.PythonSetupPkg,
-			Licenses: []string{},
+			Type:     pkg.PythonPkg,
 		},
 		"mypy1": {
 			Name:     "mypy1",
 			Version:  "v0.770",
 			Language: pkg.Python,
-			Type:     pkg.PythonSetupPkg,
-			Licenses: []string{},
+			Type:     pkg.PythonPkg,
 		},
 		"mypy2": {
 			Name:     "mypy2",
 			Version:  "v0.770",
 			Language: pkg.Python,
-			Type:     pkg.PythonSetupPkg,
-			Licenses: []string{},
+			Type:     pkg.PythonPkg,
 		},
 		"mypy3": {
 			Name:     "mypy3",
 			Version:  "v0.770",
 			Language: pkg.Python,
-			Type:     pkg.PythonSetupPkg,
-			Licenses: []string{},
+			Type:     pkg.PythonPkg,
 		},
 	}
 	fixture, err := os.Open("test-fixtures/setup/setup.py")
@@ -55,6 +50,6 @@ func TestParseSetup(t *testing.T) {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}
 
-	assertPkgsEqual(t, actual, expected)
+	assertPackagesEqual(t, actual, expected)
 
 }
