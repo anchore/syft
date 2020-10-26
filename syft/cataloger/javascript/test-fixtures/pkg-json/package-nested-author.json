@@ -1,0 +1,16 @@
+{
+  "version": "6.14.6",
+  "name": "npm",
+  "description": "a package manager for JavaScript",
+  "homepage": "https://docs.npmjs.com/",
+  "author": {
+    "name": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/npm/cli"
+  },
+  "license": "Artistic-2.0"
+}
