@@ -2,7 +2,7 @@ ifndef SYFT_CMD
 	SYFT_CMD = go run ../../main.go
 endif
 
-IMAGE_CLEAN = $(shell echo $(COMPARE_IMAGE) | tr ":" "_")
+IMAGE_CLEAN = $(shell basename $(COMPARE_IMAGE) | tr ":" "_" )
 SYFT_DIR = syft-reports
 SYFT_REPORT = $(SYFT_DIR)/$(IMAGE_CLEAN).json
 INLINE_DIR = inline-reports
