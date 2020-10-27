@@ -14,7 +14,8 @@ env:
 
 jobs:
   Build-Snapshot-Artifacts:
-    runs-on: ubuntu-latest
+    # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
+    runs-on: ubuntu-20.04
     steps:
 
       - uses: actions/setup-go@v2
@@ -79,7 +80,8 @@ jobs:
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
     needs: [ Build-Snapshot-Artifacts ]
-    runs-on: ubuntu-latest
+    # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
+    runs-on: ubuntu-20.04
     steps:
 
       - uses: actions/checkout@v2
@@ -129,7 +131,8 @@ jobs:
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Inline-Compare:
     needs: [ Build-Snapshot-Artifacts ]
-    runs-on: ubuntu-latest
+    # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
+    runs-on: ubuntu-20.04
     steps:
 
       - uses: actions/checkout@v2
