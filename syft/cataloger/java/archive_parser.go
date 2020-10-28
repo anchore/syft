@@ -148,7 +148,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Type:         pkg.JavaPkg,
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
-			Manifest: manifest,
+			VirtualPath: j.virtualPath,
+			Manifest:    manifest,
 		},
 	}, nil
 }
@@ -184,6 +185,7 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						VirtualPath:   j.virtualPath,
 						PomProperties: propsObj,
 						Parent:        parentPkg,
 					},
