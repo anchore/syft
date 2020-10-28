@@ -2,10 +2,11 @@ package java
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
 	"os"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/go-test/deep"
 )
 
 func TestParseJavaManifest(t *testing.T) {
@@ -38,10 +39,16 @@ func TestParseJavaManifest(t *testing.T) {
 				ManifestVersion: "1.0",
 				Extra: map[string]string{
 					"Archiver-Version": "Plexus Archiver",
-					"Build-Jdk":        "14.0.1",
-					"Built-By":         "?",
 					"Created-By":       "Apache Maven 3.6.3",
-					"Main-Class":       "hello.HelloWorld",
+				},
+				Sections: []map[string]string{
+					{
+						"Built-By": "?",
+					},
+					{
+						"Build-Jdk":  "14.0.1",
+						"Main-Class": "hello.HelloWorld",
+					},
 				},
 			},
 		},

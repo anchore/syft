@@ -12,17 +12,29 @@ import (
 
 const manifestGlob = "/META-INF/MANIFEST.MF"
 
+// nolint:funlen
 func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
-	manifestMap := make(map[string]string)
+	sections := []map[string]string{
+		make(map[string]string),
+	}
+	currentSection := 0
 	scanner := bufio.NewScanner(reader)
 	var lastKey string
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// ignore empty lines
+		// empty lines denote section separators
 		if strings.TrimSpace(line) == "" {
+			currentSection++
+			// we don't want to allocate a new section map that wont necessarily be used, do that once there is
+			// a non-empty line to process
+
+			// do not process line continuations after this
+			lastKey = ""
 			continue
+		} else if currentSection >= len(sections) {
+			sections = append(sections, make(map[string]string))
 		}
 
 		if line[0] == ' ' {
@@ -30,7 +42,7 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 			if lastKey == "" {
 				return nil, fmt.Errorf("found continuation with no previous key (%s)", line)
 			}
-			manifestMap[lastKey] += strings.TrimSpace(line)
+			sections[currentSection][lastKey] += strings.TrimSpace(line)
 		} else {
 			// this is a new key-value pair
 			idx := strings.Index(line, ":")
@@ -40,9 +52,9 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 
 			key := strings.TrimSpace(line[0:idx])
 			value := strings.TrimSpace(line[idx+1:])
-			manifestMap[key] = value
+			sections[currentSection][key] = value
 
-			// keep track of key for future continuations
+			// keep track of key for potential future continuations
 			lastKey = key
 		}
 	}
@@ -51,8 +63,13 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 		return nil, fmt.Errorf("unable to read java manifest: %w", err)
 	}
 
-	if err := mapstructure.Decode(manifestMap, &manifest); err != nil {
+	if err := mapstructure.Decode(sections[0], &manifest); err != nil {
 		return nil, fmt.Errorf("unable to parse java manifest: %w", err)
+	}
+
+	// append on extra sections
+	if len(sections) > 1 {
+		manifest.Sections = sections[1:]
 	}
 
 	// clean select fields
