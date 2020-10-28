@@ -120,7 +120,7 @@ func (j *archiveParser) parse() ([]pkg.Package, error) {
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	// search and parse java manifest files
-	manifestMatches := j.fileManifest.GlobMatch(manifestPath)
+	manifestMatches := j.fileManifest.GlobMatch(manifestGlob)
 	if len(manifestMatches) > 1 {
 		return nil, fmt.Errorf("found multiple manifests in the jar: %+v", manifestMatches)
 	} else if len(manifestMatches) == 0 {

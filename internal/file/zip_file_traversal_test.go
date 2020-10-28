@@ -6,46 +6,13 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/go-test/deep"
 )
-
-func generateFixture(t *testing.T, archivePath string) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Errorf("unable to get cwd: %+v", err)
-	}
-
-	cmd := exec.Command("./generate-zip-fixture.sh", archivePath)
-	cmd.Dir = filepath.Join(cwd, "test-fixtures")
-
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("unable to start generate zip fixture script: %+v", err)
-	}
-
-	if err := cmd.Wait(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			// The program has exited with an exit code != 0
-
-			// This works on both Unix and Windows. Although package
-			// syscall is generally platform dependent, WaitStatus is
-			// defined for both Unix and Windows and in both cases has
-			// an ExitStatus() method with the same signature.
-			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				if status.ExitStatus() != 0 {
-					t.Fatalf("failed to generate fixture: rc=%d", status.ExitStatus())
-				}
-			}
-		} else {
-			t.Fatalf("unable to get generate fixture script result: %+v", err)
-		}
-	}
-}
 
 func equal(r1, r2 io.Reader) (bool, error) {
 	w1 := sha256.New()
@@ -67,54 +34,50 @@ func equal(r1, r2 io.Reader) (bool, error) {
 }
 
 func TestUnzipToDir(t *testing.T) {
-	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
+	cwd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("unable to create tempfile: %+v", err)
+		t.Fatal(err)
 	}
-	defer os.Remove(archivePrefix.Name())
-	// the zip utility will add ".zip" to the end of the given name
-	archivePath := archivePrefix.Name() + ".zip"
-	defer os.Remove(archivePath)
-	t.Logf("archive path: %s", archivePath)
 
-	generateFixture(t, archivePrefix.Name())
+	goldenRootDir := filepath.Join(cwd, "test-fixtures")
+	sourceDirPath := path.Join(goldenRootDir, "zip-source")
+	cleanup, archiveFilePath, err := setupZipFileTest(t, sourceDirPath)
+	defer fatalIfError(t, cleanup)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	contentsDir, err := ioutil.TempDir("", "syft-ziputil-contents-TEST-")
+	unzipDestinationDir, err := ioutil.TempDir("", "syft-ziputil-contents-TEST-")
+	defer os.RemoveAll(unzipDestinationDir)
 	if err != nil {
 		t.Fatalf("unable to create tempdir: %+v", err)
 	}
-	defer os.RemoveAll(contentsDir)
 
-	t.Logf("content path: %s", contentsDir)
+	t.Logf("content path: %s", unzipDestinationDir)
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Errorf("unable to get cwd: %+v", err)
-	}
-
-	t.Logf("running from: %s", cwd)
-
-	// note: zip utility already includes "zip-source" as a parent dir for all contained files
-	goldenRootDir := filepath.Join(cwd, "test-fixtures")
-	expectedPaths := 4
+	expectedPaths := len(expectedZipArchiveEntries)
 	observedPaths := 0
 
-	err = UnzipToDir(archivePath, contentsDir)
+	err = UnzipToDir(archiveFilePath, unzipDestinationDir)
 	if err != nil {
 		t.Fatalf("unable to unzip archive: %+v", err)
 	}
 
 	// compare the source dir tree and the unzipped tree
-	err = filepath.Walk(filepath.Join(contentsDir, "zip-source"),
+	err = filepath.Walk(unzipDestinationDir,
 		func(path string, info os.FileInfo, err error) error {
-			t.Logf("unzipped path: %s", path)
-			observedPaths++
+			// We don't unzip the root archive dir, since there's no archive entry for it
+			if path != unzipDestinationDir {
+				t.Logf("unzipped path: %s", path)
+				observedPaths++
+			}
+
 			if err != nil {
 				t.Fatalf("this should not happen")
 				return err
 			}
 
-			goldenPath := filepath.Join(goldenRootDir, strings.TrimPrefix(path, contentsDir))
+			goldenPath := filepath.Join(sourceDirPath, strings.TrimPrefix(path, unzipDestinationDir))
 
 			if info.IsDir() {
 				i, err := os.Stat(goldenPath)
@@ -156,12 +119,11 @@ func TestUnzipToDir(t *testing.T) {
 	}
 
 	if observedPaths != expectedPaths {
-		t.Errorf("missed test paths: %d!=%d", observedPaths, expectedPaths)
+		t.Errorf("missed test paths: %d != %d", observedPaths, expectedPaths)
 	}
-
 }
 
-func TestExtractFilesFromZipFile(t *testing.T) {
+func TestContentsFromZip(t *testing.T) {
 	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
 	if err != nil {
 		t.Fatalf("unable to create tempfile: %+v", err)
@@ -172,7 +134,10 @@ func TestExtractFilesFromZipFile(t *testing.T) {
 	defer os.Remove(archivePath)
 	t.Logf("archive path: %s", archivePath)
 
-	generateFixture(t, archivePrefix.Name())
+	err = createZipArchive(t, "zip-source", archivePrefix.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -181,8 +146,8 @@ func TestExtractFilesFromZipFile(t *testing.T) {
 
 	t.Logf("running from: %s", cwd)
 
-	aFilePath := filepath.Join("zip-source", "some-dir", "a-file.txt")
-	bFilePath := filepath.Join("zip-source", "b-file.txt")
+	aFilePath := filepath.Join("some-dir", "a-file.txt")
+	bFilePath := filepath.Join("b-file.txt")
 
 	expected := map[string]string{
 		aFilePath: "A file! nice!",
@@ -207,60 +172,4 @@ func TestExtractFilesFromZipFile(t *testing.T) {
 
 		t.Errorf("full result: %s", string(b))
 	}
-
-}
-
-func TestZipFileManifest(t *testing.T) {
-	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
-	if err != nil {
-		t.Fatalf("unable to create tempfile: %+v", err)
-	}
-	defer os.Remove(archivePrefix.Name())
-	// the zip utility will add ".zip" to the end of the given name
-	archivePath := archivePrefix.Name() + ".zip"
-	defer os.Remove(archivePath)
-	t.Logf("archive path: %s", archivePath)
-
-	generateFixture(t, archivePrefix.Name())
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Errorf("unable to get cwd: %+v", err)
-	}
-
-	t.Logf("running from: %s", cwd)
-
-	expected := []string{
-		filepath.Join("zip-source") + string(os.PathSeparator),
-		filepath.Join("zip-source", "some-dir") + string(os.PathSeparator),
-		filepath.Join("zip-source", "some-dir", "a-file.txt"),
-		filepath.Join("zip-source", "b-file.txt"),
-	}
-
-	actual, err := NewZipFileManifest(archivePath)
-	if err != nil {
-		t.Fatalf("unable to extract from unzip archive: %+v", err)
-	}
-
-	if len(expected) != len(actual) {
-		t.Fatalf("mismatched manifest: %d != %d", len(actual), len(expected))
-	}
-
-	for _, e := range expected {
-		_, ok := actual[e]
-		if !ok {
-			t.Errorf("missing path: %s", e)
-		}
-	}
-
-	if t.Failed() {
-
-		b, err := json.MarshalIndent(actual, "", "  ")
-		if err != nil {
-			t.Fatalf("can't show results: %+v", err)
-		}
-
-		t.Errorf("full result: %s", string(b))
-	}
-
 }
