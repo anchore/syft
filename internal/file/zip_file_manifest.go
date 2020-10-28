@@ -26,7 +26,7 @@ func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 
 	for _, pattern := range patterns {
 		for entry := range z {
-			if GlobMatch(pattern, entry) {
+			if GlobMatch(pattern, "/"+entry) {
 				uniqueMatches.Add(entry)
 			}
 		}

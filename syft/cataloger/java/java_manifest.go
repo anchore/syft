@@ -10,7 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-const manifestPath = "META-INF/MANIFEST.MF"
+const manifestGlob = "/META-INF/MANIFEST.MF"
 
 func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
