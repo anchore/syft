@@ -4,7 +4,7 @@ import "github.com/package-url/packageurl-go"
 
 // JavaMetadata encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
 type JavaMetadata struct {
-	VirtualPath   string         `json:"virtual-path"`
+	VirtualPath   string         `json:"virtualPath"`
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties"`
 	Parent        *Package       `json:"parentPackage"` // TODO: should this be included in the json output?

@@ -143,6 +143,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JenkinsPluginPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
 							ManifestVersion: "1.0",
 							SpecTitle:       "The Jenkins Plugins Parent POM Project",
@@ -188,6 +189,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
 							ManifestVersion: "1.0",
 						},
@@ -208,6 +210,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
 							ManifestVersion: "1.0",
 							Extra: map[string]string{
@@ -233,6 +236,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",

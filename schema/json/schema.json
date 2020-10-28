@@ -376,9 +376,6 @@
                                                     },
                                                     "pomProperties": {
                                                         "properties": {
-                                                            "Path": {
-                                                                "type": "string"
-                                                            },
                                                             "artifactId": {
                                                                 "type": "string"
                                                             },
@@ -391,25 +388,32 @@
                                                             "name": {
                                                                 "type": "string"
                                                             },
+                                                            "path": {
+                                                                "type": "string"
+                                                            },
                                                             "version": {
                                                                 "type": "string"
                                                             }
                                                         },
                                                         "required": [
-                                                            "Path",
                                                             "artifactId",
                                                             "extraFields",
                                                             "groupId",
                                                             "name",
+                                                            "path",
                                                             "version"
                                                         ],
                                                         "type": "object"
+                                                    },
+                                                    "virtualPath": {
+                                                        "type": "string"
                                                     }
                                                 },
                                                 "required": [
                                                     "manifest",
                                                     "parentPackage",
-                                                    "pomProperties"
+                                                    "pomProperties",
+                                                    "virtualPath"
                                                 ],
                                                 "type": "object"
                                             },
@@ -446,9 +450,6 @@
                             },
                             "pomProperties": {
                                 "properties": {
-                                    "Path": {
-                                        "type": "string"
-                                    },
                                     "artifactId": {
                                         "type": "string"
                                     },
@@ -461,16 +462,19 @@
                                     "name": {
                                         "type": "string"
                                     },
+                                    "path": {
+                                        "type": "string"
+                                    },
                                     "version": {
                                         "type": "string"
                                     }
                                 },
                                 "required": [
-                                    "Path",
                                     "artifactId",
                                     "extraFields",
                                     "groupId",
                                     "name",
+                                    "path",
                                     "version"
                                 ],
                                 "type": "object"
@@ -509,6 +513,9 @@
                                 "type": "string"
                             },
                             "version": {
+                                "type": "string"
+                            },
+                            "virtualPath": {
                                 "type": "string"
                             }
                         },
