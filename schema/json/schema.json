@@ -125,116 +125,109 @@
                                 "type": "string"
                             },
                             "manifest": {
-                                "anyOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
+                                "properties": {
+                                    "extraFields": {
                                         "properties": {
-                                            "extraFields": {
-                                                "properties": {
-                                                    "Archiver-Version": {
-                                                        "type": "string"
-                                                    },
-                                                    "Build-Jdk": {
-                                                        "type": "string"
-                                                    },
-                                                    "Built-By": {
-                                                        "type": "string"
-                                                    },
-                                                    "Created-By": {
-                                                        "type": "string"
-                                                    },
-                                                    "Extension-Name": {
-                                                        "type": "string"
-                                                    },
-                                                    "Group-Id": {
-                                                        "type": "string"
-                                                    },
-                                                    "Hudson-Version": {
-                                                        "type": "string"
-                                                    },
-                                                    "Jenkins-Version": {
-                                                        "type": "string"
-                                                    },
-                                                    "Long-Name": {
-                                                        "type": "string"
-                                                    },
-                                                    "Main-Class": {
-                                                        "type": "string"
-                                                    },
-                                                    "Minimum-Java-Version": {
-                                                        "type": "string"
-                                                    },
-                                                    "Plugin-Dependencies": {
-                                                        "type": "string"
-                                                    },
-                                                    "Plugin-Developers": {
-                                                        "type": "string"
-                                                    },
-                                                    "Plugin-License-Name": {
-                                                        "type": "string"
-                                                    },
-                                                    "Plugin-License-Url": {
-                                                        "type": "string"
-                                                    },
-                                                    "Plugin-ScmUrl": {
-                                                        "type": "string"
-                                                    },
-                                                    "Plugin-Version": {
-                                                        "type": "string"
-                                                    },
-                                                    "Short-Name": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "Archiver-Version",
-                                                    "Build-Jdk",
-                                                    "Built-By",
-                                                    "Created-By"
-                                                ],
-                                                "type": "object"
-                                            },
-                                            "implementationTitle": {
+                                            "Archiver-Version": {
                                                 "type": "string"
                                             },
-                                            "implementationVendor": {
+                                            "Build-Jdk": {
                                                 "type": "string"
                                             },
-                                            "implementationVersion": {
+                                            "Built-By": {
                                                 "type": "string"
                                             },
-                                            "manifestVersion": {
+                                            "Created-By": {
                                                 "type": "string"
                                             },
-                                            "name": {
+                                            "Extension-Name": {
                                                 "type": "string"
                                             },
-                                            "specificationTitle": {
+                                            "Group-Id": {
                                                 "type": "string"
                                             },
-                                            "specificationVendor": {
+                                            "Hudson-Version": {
                                                 "type": "string"
                                             },
-                                            "specificationVersion": {
+                                            "Jenkins-Version": {
+                                                "type": "string"
+                                            },
+                                            "Long-Name": {
+                                                "type": "string"
+                                            },
+                                            "Main-Class": {
+                                                "type": "string"
+                                            },
+                                            "Minimum-Java-Version": {
+                                                "type": "string"
+                                            },
+                                            "Plugin-Dependencies": {
+                                                "type": "string"
+                                            },
+                                            "Plugin-Developers": {
+                                                "type": "string"
+                                            },
+                                            "Plugin-License-Name": {
+                                                "type": "string"
+                                            },
+                                            "Plugin-License-Url": {
+                                                "type": "string"
+                                            },
+                                            "Plugin-ScmUrl": {
+                                                "type": "string"
+                                            },
+                                            "Plugin-Version": {
+                                                "type": "string"
+                                            },
+                                            "Short-Name": {
                                                 "type": "string"
                                             }
                                         },
                                         "required": [
-                                            "extraFields",
-                                            "implementationTitle",
-                                            "implementationVendor",
-                                            "implementationVersion",
-                                            "manifestVersion",
-                                            "name",
-                                            "specificationTitle",
-                                            "specificationVendor",
-                                            "specificationVersion"
+                                            "Archiver-Version",
+                                            "Build-Jdk",
+                                            "Built-By",
+                                            "Created-By"
                                         ],
                                         "type": "object"
+                                    },
+                                    "implementationTitle": {
+                                        "type": "string"
+                                    },
+                                    "implementationVendor": {
+                                        "type": "string"
+                                    },
+                                    "implementationVersion": {
+                                        "type": "string"
+                                    },
+                                    "manifestVersion": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "specificationTitle": {
+                                        "type": "string"
+                                    },
+                                    "specificationVendor": {
+                                        "type": "string"
+                                    },
+                                    "specificationVersion": {
+                                        "type": "string"
                                     }
-                                ]
+                                },
+                                "required": [
+                                    "extraFields",
+                                    "implementationTitle",
+                                    "implementationVendor",
+                                    "implementationVersion",
+                                    "manifestVersion",
+                                    "name",
+                                    "specificationTitle",
+                                    "specificationVendor",
+                                    "specificationVersion"
+                                ],
+                                "type": "object"
                             },
                             "name": {
                                 "type": "string"
@@ -244,206 +237,6 @@
                             },
                             "package": {
                                 "type": "string"
-                            },
-                            "parentPackage": {
-                                "anyOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "properties": {
-                                            "foundBy": {
-                                                "type": "string"
-                                            },
-                                            "language": {
-                                                "type": "integer"
-                                            },
-                                            "licenses": {
-                                                "type": "null"
-                                            },
-                                            "manifest": {
-                                                "type": "string"
-                                            },
-                                            "metadata": {
-                                                "properties": {
-                                                    "manifest": {
-                                                        "properties": {
-                                                            "extraFields": {
-                                                                "properties": {
-                                                                    "Archiver-Version": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Build-Jdk": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Built-By": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Created-By": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Extension-Name": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Group-Id": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Hudson-Version": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Jenkins-Version": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Long-Name": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Main-Class": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Minimum-Java-Version": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Plugin-Dependencies": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Plugin-Developers": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Plugin-License-Name": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Plugin-License-Url": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Plugin-ScmUrl": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Plugin-Version": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "Short-Name": {
-                                                                        "type": "string"
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "Archiver-Version",
-                                                                    "Build-Jdk",
-                                                                    "Built-By",
-                                                                    "Created-By"
-                                                                ],
-                                                                "type": "object"
-                                                            },
-                                                            "implementationTitle": {
-                                                                "type": "string"
-                                                            },
-                                                            "implementationVendor": {
-                                                                "type": "string"
-                                                            },
-                                                            "implementationVersion": {
-                                                                "type": "string"
-                                                            },
-                                                            "manifestVersion": {
-                                                                "type": "string"
-                                                            },
-                                                            "name": {
-                                                                "type": "string"
-                                                            },
-                                                            "specificationTitle": {
-                                                                "type": "string"
-                                                            },
-                                                            "specificationVendor": {
-                                                                "type": "string"
-                                                            },
-                                                            "specificationVersion": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "extraFields",
-                                                            "implementationTitle",
-                                                            "implementationVendor",
-                                                            "implementationVersion",
-                                                            "manifestVersion",
-                                                            "name",
-                                                            "specificationTitle",
-                                                            "specificationVendor",
-                                                            "specificationVersion"
-                                                        ],
-                                                        "type": "object"
-                                                    },
-                                                    "parentPackage": {
-                                                        "type": "null"
-                                                    },
-                                                    "pomProperties": {
-                                                        "properties": {
-                                                            "artifactId": {
-                                                                "type": "string"
-                                                            },
-                                                            "extraFields": {
-                                                                "type": "null"
-                                                            },
-                                                            "groupId": {
-                                                                "type": "string"
-                                                            },
-                                                            "name": {
-                                                                "type": "string"
-                                                            },
-                                                            "path": {
-                                                                "type": "string"
-                                                            },
-                                                            "version": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "artifactId",
-                                                            "extraFields",
-                                                            "groupId",
-                                                            "name",
-                                                            "path",
-                                                            "version"
-                                                        ],
-                                                        "type": "object"
-                                                    },
-                                                    "virtualPath": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "manifest",
-                                                    "parentPackage",
-                                                    "pomProperties",
-                                                    "virtualPath"
-                                                ],
-                                                "type": "object"
-                                            },
-                                            "metadataType": {
-                                                "type": "string"
-                                            },
-                                            "sources": {
-                                                "type": "null"
-                                            },
-                                            "type": {
-                                                "type": "string"
-                                            },
-                                            "version": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "foundBy",
-                                            "language",
-                                            "licenses",
-                                            "manifest",
-                                            "metadata",
-                                            "metadataType",
-                                            "sources",
-                                            "type",
-                                            "version"
-                                        ],
-                                        "type": "object"
-                                    }
-                                ]
                             },
                             "platform": {
                                 "type": "string"

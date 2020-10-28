@@ -70,10 +70,14 @@ func (a archiveFilename) version() string {
 }
 
 func (a archiveFilename) name() string {
-	// there should be only one name, if there is more or less then something is wrong
-	if len(a.fields) != 1 {
-		return ""
+	for _, fieldSet := range a.fields {
+		if name, ok := fieldSet["name"]; ok {
+			// return the first name
+			return name
+		}
 	}
 
-	return a.fields[0]["name"]
+	// derive the name from the archive name (no path or extension)
+	basename := filepath.Base(a.raw)
+	return strings.TrimSuffix(basename, filepath.Ext(basename))
 }

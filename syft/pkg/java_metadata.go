@@ -7,7 +7,7 @@ type JavaMetadata struct {
 	VirtualPath   string         `json:"virtualPath"`
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty"`
-	Parent        *Package       `json:"parentPackage,omitempty"` // TODO: should this be included in the json output?
+	Parent        *Package       `json:"-"`
 }
 
 // PomProperties represents the fields of interest extracted from a Java archive's pom.xml file.
@@ -31,7 +31,7 @@ type JavaManifest struct {
 	ImplVersion     string              `mapstructure:"Implementation-Version" json:"implementationVersion"`
 	ImplVendor      string              `mapstructure:"Implementation-Vendor" json:"implementationVendor"`
 	Extra           map[string]string   `mapstructure:",remain" json:"extraFields"`
-	Sections        []map[string]string `json:"sections"`
+	Sections        []map[string]string `json:"sections,omitempty"`
 }
 
 func (m JavaMetadata) PackageURL() string {
