@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/anchore/syft/internal"
 
@@ -26,7 +27,11 @@ func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 
 	for _, pattern := range patterns {
 		for entry := range z {
-			if GlobMatch(pattern, "/"+entry) {
+			// We want to match globs as if entries begin with a leading slash (akin to an absolute path)
+			// so that glob logic is consistent inside and outside of ZIP archives
+			normalizedEntry := normalizeZipEntryName(entry)
+
+			if GlobMatch(pattern, normalizedEntry) {
 				uniqueMatches.Add(entry)
 			}
 		}
@@ -55,4 +60,12 @@ func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
 		manifest.Add(file.Name, file.FileInfo())
 	}
 	return manifest, nil
+}
+
+func normalizeZipEntryName(entry string) string {
+	if !strings.HasPrefix(entry, "/") {
+		return "/" + entry
+	}
+
+	return entry
 }
