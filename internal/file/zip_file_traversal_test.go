@@ -39,9 +39,9 @@ func TestUnzipToDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
+	goldenRootDir := filepath.Join(cwd, "test-fixtures")
+	sourceDirPath := path.Join(goldenRootDir, "zip-source")
 	cleanup, archiveFilePath, err := setupZipFileTest(t, sourceDirPath)
-	//goland:noinspection GoNilness
 	defer fatalIfError(t, cleanup)
 	if err != nil {
 		t.Fatal(err)
@@ -55,8 +55,6 @@ func TestUnzipToDir(t *testing.T) {
 
 	t.Logf("content path: %s", unzipDestinationDir)
 
-	// note: zip utility already includes "zip-source" as a parent dir for all contained files
-	goldenRootDir := filepath.Join(cwd, "test-fixtures")
 	expectedPaths := len(expectedZipArchiveEntries)
 	observedPaths := 0
 
@@ -66,16 +64,20 @@ func TestUnzipToDir(t *testing.T) {
 	}
 
 	// compare the source dir tree and the unzipped tree
-	err = filepath.Walk(filepath.Join(unzipDestinationDir, "zip-source"),
+	err = filepath.Walk(unzipDestinationDir,
 		func(path string, info os.FileInfo, err error) error {
-			t.Logf("unzipped path: %s", path)
-			observedPaths++
+			// We don't unzip the root archive dir, since there's no archive entry for it
+			if path != unzipDestinationDir {
+				t.Logf("unzipped path: %s", path)
+				observedPaths++
+			}
+
 			if err != nil {
 				t.Fatalf("this should not happen")
 				return err
 			}
 
-			goldenPath := filepath.Join(goldenRootDir, strings.TrimPrefix(path, unzipDestinationDir))
+			goldenPath := filepath.Join(sourceDirPath, strings.TrimPrefix(path, unzipDestinationDir))
 
 			if info.IsDir() {
 				i, err := os.Stat(goldenPath)
@@ -132,7 +134,10 @@ func TestContentsFromZip(t *testing.T) {
 	defer os.Remove(archivePath)
 	t.Logf("archive path: %s", archivePath)
 
-	createZipArchive(t, "zip-source", archivePrefix.Name())
+	err = createZipArchive(t, "zip-source", archivePrefix.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -141,8 +146,8 @@ func TestContentsFromZip(t *testing.T) {
 
 	t.Logf("running from: %s", cwd)
 
-	aFilePath := filepath.Join("zip-source", "some-dir", "a-file.txt")
-	bFilePath := filepath.Join("zip-source", "b-file.txt")
+	aFilePath := filepath.Join("some-dir", "a-file.txt")
+	bFilePath := filepath.Join("b-file.txt")
 
 	expected := map[string]string{
 		aFilePath: "A file! nice!",

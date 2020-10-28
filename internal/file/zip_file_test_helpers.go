@@ -12,11 +12,10 @@ import (
 )
 
 var expectedZipArchiveEntries = []string{
-	filepath.Join("zip-source") + string(os.PathSeparator),
-	filepath.Join("zip-source", "some-dir") + string(os.PathSeparator),
-	filepath.Join("zip-source", "some-dir", "a-file.txt"),
-	filepath.Join("zip-source", "b-file.txt"),
-	filepath.Join("zip-source", "nested.zip"),
+	"some-dir" + string(os.PathSeparator),
+	filepath.Join("some-dir", "a-file.txt"),
+	"b-file.txt",
+	"nested.zip",
 }
 
 // fatalIfError calls the supplied function. If the function returns a non-nil error, t.Fatal(err) is called.
@@ -115,4 +114,18 @@ func setupZipFileTest(t *testing.T, sourceDirPath string) (func() error, string,
 	t.Logf("running from: %s", cwd)
 
 	return cleanup(cleanupFns), destinationArchiveFilePath, nil
+}
+
+// TODO: Consider moving any non-git asset generation to a task (e.g. make) that's run ahead of running go tests.
+func ensureNestedZipExists(t *testing.T, sourceDirPath string) error {
+	t.Helper()
+
+	nestedArchiveFilePath := path.Join(sourceDirPath, "nested.zip")
+	err := createZipArchive(t, sourceDirPath, nestedArchiveFilePath)
+
+	if err != nil {
+		return fmt.Errorf("unable to create nested archive for test fixture: %+v", err)
+	}
+
+	return nil
 }

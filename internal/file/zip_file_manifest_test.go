@@ -14,14 +14,12 @@ func TestNewZipFileManifest(t *testing.T) {
 	}
 
 	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
-	nestedArchiveFilePath := path.Join(sourceDirPath, "nested.zip")
-	err = createZipArchive(t, sourceDirPath, nestedArchiveFilePath)
+	err = ensureNestedZipExists(t, sourceDirPath)
 	if err != nil {
-		t.Fatalf("unable to create nested archive for test fixture: %+v", err)
+		t.Fatal(err)
 	}
 
 	cleanup, archiveFilePath, err := setupZipFileTest(t, sourceDirPath)
-	//goland:noinspection GoNilness
 	defer fatalIfError(t, cleanup)
 	if err != nil {
 		t.Fatal(err)
@@ -50,5 +48,62 @@ func TestNewZipFileManifest(t *testing.T) {
 		}
 
 		t.Errorf("full result: %s", string(b))
+	}
+}
+
+func TestZipFileManifest_GlobMatch(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
+	err = ensureNestedZipExists(t, sourceDirPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cleanup, archiveFilePath, err := setupZipFileTest(t, sourceDirPath)
+	//goland:noinspection GoNilness
+	defer fatalIfError(t, cleanup)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	z, err := NewZipFileManifest(archiveFilePath)
+	if err != nil {
+		t.Fatalf("unable to extract from unzip archive: %+v", err)
+	}
+
+	cases := []struct {
+		glob     string
+		expected string
+	}{
+		{
+			"/b*",
+			"b-file.txt",
+		},
+		{
+			"*/a-file.txt",
+			"some-dir/a-file.txt",
+		},
+		{
+			"**/*.zip",
+			"nested.zip",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.glob, func(t *testing.T) {
+			glob := tc.glob
+
+			results := z.GlobMatch(glob)
+
+			if len(results) == 1 && results[0] == tc.expected {
+				return
+			}
+
+			t.Errorf("unexpected results for glob '%s': %+v", glob, results)
+		})
 	}
 }
