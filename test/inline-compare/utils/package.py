@@ -144,13 +144,3 @@ class Analysis:
             float(len(self.overlapping_packages) + len(self.similar_missing_packages))
             / float(len(self.inline_data.packages))
         ) * 100.0
-
-    @property
-    def quality_gate_score(self):
-        """
-        The result of the analysis in the form of an aggregated percentage; it is up to the caller to use this value
-        and enforce a quality gate.
-        """
-        return (
-            self.percent_overlapping_packages + self.percent_overlapping_metadata
-        ) / 2.0

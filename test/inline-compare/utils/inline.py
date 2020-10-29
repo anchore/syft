@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import collections
 
@@ -66,21 +67,26 @@ class InlineScan:
             elif pkg_type in ("java-jpi", "java-hpi"):
                 pkg_type = "java-?pi"
 
+            # this would usually be "package" but this would not be able to account for duplicate dependencies in
+            # nested jars of the same name. Fallback to the package name if there is no given location
+            name = entry["location"]
+
+            # replace fields with "N/A" with None
+            for k, v in dict(entry).items():
+                if v in ("", "N/A"):
+                    entry[k] = None
+
+            extra = {}
+            # extra = dict(entry)
+            # extra.pop('type')
+            # extra.pop('maven-version')
+            # extra.pop("origin")  # don't include origin as syft does not compact several fields into 1
+
             pkg = utils.package.Package(
-                name=entry["package"],
+                name=name,
                 type=pkg_type,
             )
             packages.add(pkg)
-
-            extra = dict(entry)
-            extra.pop('type')
-            extra.pop('maven-version')
-            for k, v in dict(extra).items():
-                if v in ("", "N/A"):
-                    extra[k] = None
-
-            # temp temp temp
-            extra.pop("location")
 
             metadata[pkg.type][pkg] = utils.package.Metadata(
                 version=entry["maven-version"],

@@ -9,9 +9,13 @@ from utils.format import Colors, print_rows
 from utils.inline import InlineScan
 from utils.syft import Syft
 
-QUALITY_GATE_THRESHOLD = 0.95
+DEFAULT_QUALITY_GATE_THRESHOLD = 0.95
 INDENT = "    "
-IMAGE_QUALITY_GATE = collections.defaultdict(lambda: QUALITY_GATE_THRESHOLD, **{})
+
+PACKAGE_QUALITY_GATE = collections.defaultdict(lambda: DEFAULT_QUALITY_GATE_THRESHOLD, **{})
+METADATA_QUALITY_GATE = collections.defaultdict(lambda: DEFAULT_QUALITY_GATE_THRESHOLD, **{
+    "anchore/test_images:java": 0.58,
+})
 
 # We additionally fail if an image is above a particular threshold. Why? We expect the lower threshold to be 90%,
 # however additional functionality in grype is still being implemented, so this threshold may not be able to be met.
@@ -19,10 +23,14 @@ IMAGE_QUALITY_GATE = collections.defaultdict(lambda: QUALITY_GATE_THRESHOLD, **{
 # issues/enhancements are done we want to ensure that the lower threshold is bumped up to catch regression. The only way
 # to do this is to select an upper threshold for images with known threshold values, so we have a failure that
 # loudly indicates the lower threshold should be bumped.
-IMAGE_UPPER_THRESHOLD = collections.defaultdict(lambda: 1, **{})
+PACKAGE_UPPER_THRESHOLD = collections.defaultdict(lambda: 1, **{})
+METADATA_UPPER_THRESHOLD = collections.defaultdict(lambda: 1, **{
+    # syft is better at detecting package versions in specific cases, leading to a drop in matching metadata
+    "anchore/test_images:java": 0.65,
+})
 
 
-def report(analysis):
+def report(image, analysis):
     if analysis.extra_packages:
         rows = []
         print(
@@ -48,7 +56,6 @@ def report(analysis):
         print()
 
     if analysis.missing_metadata:
-        rows = []
         print(
             Colors.bold + "Syft mismatched metadata:",
             Colors.reset,
@@ -62,7 +69,7 @@ def report(analysis):
 
             diffs = difflib.ndiff([repr(syft_metadata_item)], [repr(metadata)])
 
-            print(INDENT + "for: " + repr(pkg))
+            print(INDENT + "for: " + repr(pkg), "(top is syft, bottom is inline)")
             print(INDENT+INDENT+("\n"+INDENT+INDENT).join(list(diffs)))
             print()
 
@@ -73,42 +80,42 @@ def report(analysis):
             )
         print()
 
-    if analysis.similar_missing_packages:
-        rows = []
-        print(
-            Colors.bold + "Probably pairings of missing/extra packages:",
-            Colors.reset,
-            "to aid in troubleshooting missed/extra packages",
-        )
-        for similar_packages in analysis.similar_missing_packages:
-            rows.append(
-                [
-                    INDENT,
-                    repr(similar_packages.pkg),
-                    "--->",
-                    repr(similar_packages.missed),
-                ]
-            )
-        print_rows(rows)
-        print()
+    # if analysis.similar_missing_packages:
+    #     rows = []
+    #     print(
+    #         Colors.bold + "Probably pairings of missing/extra packages:",
+    #         Colors.reset,
+    #         "to aid in troubleshooting missed/extra packages",
+    #     )
+    #     for similar_packages in analysis.similar_missing_packages:
+    #         rows.append(
+    #             [
+    #                 INDENT,
+    #                 repr(similar_packages.pkg),
+    #                 "--->",
+    #                 repr(similar_packages.missed),
+    #             ]
+    #         )
+    #     print_rows(rows)
+    #     print()
 
-    if analysis.unmatched_missing_packages and analysis.extra_packages:
-        rows = []
-        print(
-            Colors.bold + "Probably missed packages:",
-            Colors.reset,
-            "a probable pair was not found",
-        )
-        for p in analysis.unmatched_missing_packages:
-            rows.append([INDENT, repr(p)])
-        print_rows(rows)
-        print()
+    # if analysis.unmatched_missing_packages and analysis.extra_packages:
+    #     rows = []
+    #     print(
+    #         Colors.bold + "Probably missed packages:",
+    #         Colors.reset,
+    #         "a probable pair was not found",
+    #     )
+    #     for p in analysis.unmatched_missing_packages:
+    #         rows.append([INDENT, repr(p)])
+    #     print_rows(rows)
+    #     print()
 
-    print(Colors.bold + "Summary:", Colors.reset)
+    print(Colors.bold + "Summary:", Colors.reset, image)
     print("   Inline Packages : %d" % len(analysis.inline_data.packages))
     print("   Syft Packages   : %d" % len(analysis.syft_data.packages))
     print(
-        "         (extra)   : %d (note: this is ignored in the analysis!)"
+        "         (extra)   : %d (note: this is ignored by the quality gate!)"
         % len(analysis.extra_packages)
     )
     print("       (missing)   : %d" % len(analysis.missing_packages))
@@ -150,12 +157,37 @@ def report(analysis):
         )
     )
 
-    overall_score = (
-        analysis.percent_overlapping_packages + analysis.percent_overlapping_metadata
-    ) / 2.0
 
-    print(Colors.bold + "   Overall Score: %2.1f %%" % overall_score, Colors.reset)
+def enforce_quality_gate(title, actual_value, lower_gate_value, upper_gate_value):
 
+    if actual_value < lower_gate_value:
+        print(
+            Colors.bold
+            + "   %s Quality Gate:\t" % title
+            + Colors.FG.red
+            + "FAIL (is not >= %d %%)" % lower_gate_value,
+            Colors.reset,
+            )
+        return False
+    elif actual_value > upper_gate_value:
+        print(
+            Colors.bold
+            + "   %s Quality Gate:\t" % title
+            + Colors.FG.orange
+            + "FAIL (lower threshold is artificially low and should be updated)",
+            Colors.reset,
+            )
+        return False
+
+    print(
+        Colors.bold
+        + "   %s Quality Gate:\t" % title
+        + Colors.FG.green
+        + "Pass (>= %d %%)" % lower_gate_value,
+        Colors.reset,
+        )
+
+    return True
 
 def main(image):
     cwd = os.path.dirname(os.path.abspath(__file__))
@@ -170,40 +202,26 @@ def main(image):
     )
 
     # show some useful report data for debugging / warm fuzzies
-    report(analysis)
+    report(image, analysis)
 
     # enforce a quality gate based on the comparison of package values and metadata values
-    upper_gate_value = IMAGE_UPPER_THRESHOLD[image] * 100
-    lower_gate_value = IMAGE_QUALITY_GATE[image] * 100
-    if analysis.quality_gate_score < lower_gate_value:
-        print(
-            Colors.bold
-            + "   Quality Gate: "
-            + Colors.FG.red
-            + "FAILED (is not >= %d %%)\n" % lower_gate_value,
-            Colors.reset,
-        )
-        return 1
-    elif analysis.quality_gate_score > upper_gate_value:
-        print(
-            Colors.bold
-            + "   Quality Gate: "
-            + Colors.FG.orange
-            + "FAILED (lower threshold is artificially low and should be updated)\n",
-            Colors.reset,
-        )
-        return 1
-    else:
-        print(
-            Colors.bold
-            + "   Quality Gate: "
-            + Colors.FG.green
-            + "pass (>= %d %%)\n" % lower_gate_value,
-            Colors.reset,
-        )
+    success = True
+    success &= enforce_quality_gate(
+        title="Package",
+        actual_value=analysis.percent_overlapping_packages,
+        lower_gate_value=PACKAGE_QUALITY_GATE[image] * 100,
+        upper_gate_value=PACKAGE_UPPER_THRESHOLD[image] * 100
+    )
+    success &= enforce_quality_gate(
+        title="Metadata",
+        actual_value=analysis.percent_overlapping_metadata,
+        lower_gate_value=METADATA_QUALITY_GATE[image] * 100,
+        upper_gate_value=METADATA_UPPER_THRESHOLD[image] * 100
+    )
 
+    if not success:
+        return 1
     return 0
-
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
