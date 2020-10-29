@@ -71,8 +71,20 @@ class InlineScan:
                 type=pkg_type,
             )
             packages.add(pkg)
+
+            extra = dict(entry)
+            extra.pop('type')
+            extra.pop('maven-version')
+            for k, v in dict(extra).items():
+                if v in ("", "N/A"):
+                    extra[k] = None
+
+            # temp temp temp
+            extra.pop("location")
+
             metadata[pkg.type][pkg] = utils.package.Metadata(
-                version=entry["maven-version"]
+                version=entry["maven-version"],
+                extra=tuple(sorted(extra.items())),
             )
 
         return packages, metadata
@@ -86,7 +98,7 @@ class InlineScan:
                 type=entry["type"].lower(),
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
 
         return packages, metadata
 
@@ -101,7 +113,7 @@ class InlineScan:
                 type=entry["type"].lower(),
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
 
         return packages, metadata
 
@@ -114,7 +126,7 @@ class InlineScan:
                 type=entry["type"].lower(),
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
 
         return packages, metadata
 
@@ -126,6 +138,6 @@ class InlineScan:
                 name=entry["package"], type=entry["type"].lower()
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
 
         return packages, metadata

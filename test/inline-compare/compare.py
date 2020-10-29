@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import difflib
 import collections
 
 import utils.package
@@ -58,19 +59,13 @@ def report(analysis):
             if pkg not in analysis.syft_data.metadata[pkg.type]:
                 continue
             syft_metadata_item = analysis.syft_data.metadata[pkg.type][pkg]
-            rows.append(
-                [
-                    INDENT,
-                    "for:",
-                    repr(pkg),
-                    ":",
-                    repr(syft_metadata_item),
-                    "!=",
-                    repr(metadata),
-                ]
-            )
-        if rows:
-            print_rows(rows)
+
+            diffs = difflib.ndiff([repr(syft_metadata_item)], [repr(metadata)])
+
+            print(INDENT + "for: " + repr(pkg))
+            print(INDENT+INDENT+("\n"+INDENT+INDENT).join(list(diffs)))
+            print()
+
         else:
             print(
                 INDENT,

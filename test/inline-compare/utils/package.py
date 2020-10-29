@@ -3,7 +3,7 @@ import collections
 import dataclasses
 from typing import Set, FrozenSet, Tuple, Any, List
 
-Metadata = collections.namedtuple("Metadata", "version")
+Metadata = collections.namedtuple("Metadata", "version extra")
 Package = collections.namedtuple("Package", "name type")
 Info = collections.namedtuple("Info", "packages metadata")
 
