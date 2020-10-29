@@ -50,29 +50,14 @@ class Syft:
             version = entry["version"]
 
             if "java" in pkg_type:
-                # lets match what inline scan expects to output
-
-                # specVersion = dig(entry, "metadata", "manifest", "specificationVersion") or None
-                # implVersion = dig(entry, "metadata", "manifest", "implementationVersion") or None
-                virtualPath = dig(entry, "metadata", "virtualPath")
-
-                # package = dig(entry, "metadata", "pomProperties", "artifactId")
-                # if not package:
-                #     package = "%s-%s" % (dig(entry, "name"), dig(entry, "version"))
-                #
-                # extra = {
-                #     "implementation-version": implVersion,
-                #     "specification-version": specVersion,
-                #     "location": virtualPath,
-                #     "package": package,
-                # }
-
                 # we need to use the virtual path instead of the name to account for nested dependencies with the same
                 # package name (but potentially different metadata)
-                name = virtualPath
+                name = dig(entry, "metadata", "virtualPath")
 
             elif pkg_type == "apkg":
-                version = entry["version"].split("-")[0]
+                # inline scan strips off the release from the version, which should be normalized here
+                fields = entry["version"].split("-")
+                version = "-".join(fields[:-1])
 
             pkg = utils.package.Package(
                 name=name,
@@ -81,6 +66,6 @@ class Syft:
 
             packages.add(pkg)
 
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=version, extra=tuple(sorted(extra.items())))
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=version, extra=tuple())
 
         return utils.package.Info(packages=frozenset(packages), metadata=metadata)

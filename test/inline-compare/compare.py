@@ -14,7 +14,9 @@ INDENT = "    "
 
 PACKAGE_QUALITY_GATE = collections.defaultdict(lambda: DEFAULT_QUALITY_GATE_THRESHOLD, **{})
 METADATA_QUALITY_GATE = collections.defaultdict(lambda: DEFAULT_QUALITY_GATE_THRESHOLD, **{
-    "anchore/test_images:java": 0.58,
+    # syft is better at detecting package versions in specific cases, leading to a drop in matching metadata
+    "anchore/test_images:java": 0.52,
+    "jenkins/jenkins:2.249.2-lts-jdk11": 0.82,
 })
 
 # We additionally fail if an image is above a particular threshold. Why? We expect the lower threshold to be 90%,
@@ -26,7 +28,8 @@ METADATA_QUALITY_GATE = collections.defaultdict(lambda: DEFAULT_QUALITY_GATE_THR
 PACKAGE_UPPER_THRESHOLD = collections.defaultdict(lambda: 1, **{})
 METADATA_UPPER_THRESHOLD = collections.defaultdict(lambda: 1, **{
     # syft is better at detecting package versions in specific cases, leading to a drop in matching metadata
-    "anchore/test_images:java": 0.65,
+    "anchore/test_images:java": 0.54,
+    "jenkins/jenkins:2.249.2-lts-jdk11": 0.84,
 })
 
 
@@ -71,45 +74,45 @@ def report(image, analysis):
 
             print(INDENT + "for: " + repr(pkg), "(top is syft, bottom is inline)")
             print(INDENT+INDENT+("\n"+INDENT+INDENT).join(list(diffs)))
-            print()
 
-        else:
+        if not analysis.missing_metadata:
             print(
                 INDENT,
-                "There are mismatches, but only due to packages Syft did not find (but inline did).",
+                "There are mismatches, but only due to packages Syft did not find (but inline did).\n",
             )
+
+    if analysis.similar_missing_packages:
+        rows = []
+        print(
+            Colors.bold + "Probably pairings of missing/extra packages:",
+            Colors.reset,
+            "to aid in troubleshooting missed/extra packages",
+        )
+        for similar_packages in analysis.similar_missing_packages:
+            rows.append(
+                [
+                    INDENT,
+                    repr(similar_packages.pkg),
+                    "--->",
+                    repr(similar_packages.missed),
+                ]
+            )
+        print_rows(rows)
         print()
 
-    # if analysis.similar_missing_packages:
-    #     rows = []
-    #     print(
-    #         Colors.bold + "Probably pairings of missing/extra packages:",
-    #         Colors.reset,
-    #         "to aid in troubleshooting missed/extra packages",
-    #     )
-    #     for similar_packages in analysis.similar_missing_packages:
-    #         rows.append(
-    #             [
-    #                 INDENT,
-    #                 repr(similar_packages.pkg),
-    #                 "--->",
-    #                 repr(similar_packages.missed),
-    #             ]
-    #         )
-    #     print_rows(rows)
-    #     print()
+    show_probable_mismatches = analysis.unmatched_missing_packages and analysis.extra_packages and len(analysis.unmatched_missing_packages) != len(analysis.missing_packages)
 
-    # if analysis.unmatched_missing_packages and analysis.extra_packages:
-    #     rows = []
-    #     print(
-    #         Colors.bold + "Probably missed packages:",
-    #         Colors.reset,
-    #         "a probable pair was not found",
-    #     )
-    #     for p in analysis.unmatched_missing_packages:
-    #         rows.append([INDENT, repr(p)])
-    #     print_rows(rows)
-    #     print()
+    if show_probable_mismatches:
+        rows = []
+        print(
+            Colors.bold + "Probably missed packages:",
+            Colors.reset,
+            "a probable pair was not found",
+        )
+        for p in analysis.unmatched_missing_packages:
+            rows.append([INDENT, repr(p)])
+        print_rows(rows)
+        print()
 
     print(Colors.bold + "Summary:", Colors.reset, image)
     print("   Inline Packages : %d" % len(analysis.inline_data.packages))
@@ -121,7 +124,7 @@ def report(image, analysis):
     print("       (missing)   : %d" % len(analysis.missing_packages))
     print()
 
-    if analysis.unmatched_missing_packages and analysis.extra_packages:
+    if show_probable_mismatches:
         print(
             "   Probable Package Matches  : %d (matches not made, but were probably found by both Inline and Syft)"
             % len(analysis.similar_missing_packages)

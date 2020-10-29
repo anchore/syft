@@ -76,12 +76,6 @@ class InlineScan:
                 if v in ("", "N/A"):
                     entry[k] = None
 
-            extra = {}
-            # extra = dict(entry)
-            # extra.pop('type')
-            # extra.pop('maven-version')
-            # extra.pop("origin")  # don't include origin as syft does not compact several fields into 1
-
             pkg = utils.package.Package(
                 name=name,
                 type=pkg_type,
@@ -90,7 +84,7 @@ class InlineScan:
 
             metadata[pkg.type][pkg] = utils.package.Metadata(
                 version=entry["maven-version"],
-                extra=tuple(sorted(extra.items())),
+                extra=tuple(),
             )
 
         return packages, metadata
