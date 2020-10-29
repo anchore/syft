@@ -89,18 +89,19 @@ func TestSelectName(t *testing.T) {
 			desc:    "name from Implementation-Title",
 			archive: archiveFilename{},
 			manifest: pkg.JavaManifest{
-				Name:      "",
-				SpecTitle: "",
-				ImplTitle: "maven-wrapper",
+				Main: map[string]string{
+					"Implementation-Title": "maven-wrapper",
+				},
 			},
 			expected: "maven-wrapper",
 		},
 		{
 			desc: "Implementation-Title does not override",
 			manifest: pkg.JavaManifest{
-				Name:      "Foo",
-				SpecTitle: "",
-				ImplTitle: "maven-wrapper",
+				Main: map[string]string{
+					"Name":                 "foo",
+					"Implementation-Title": "maven-wrapper",
+				},
 			},
 			archive: archiveFilename{
 				fields: []map[string]string{
@@ -145,11 +146,12 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
-							ManifestVersion: "1.0",
-							SpecTitle:       "The Jenkins Plugins Parent POM Project",
-							ImplTitle:       "example-jenkins-plugin",
-							ImplVersion:     "1.0-SNAPSHOT",
-							Extra: map[string]string{
+							Main: map[string]string{
+								"Manifest-Version":       "1.0",
+								"Specification-Title":    "The Jenkins Plugins Parent POM Project",
+								"Implementation-Title":   "example-jenkins-plugin",
+								"Implementation-Version": "1.0-SNAPSHOT",
+								// extra fields...
 								"Archiver-Version":    "Plexus Archiver",
 								"Plugin-License-Url":  "https://opensource.org/licenses/MIT",
 								"Plugin-License-Name": "MIT License",
@@ -191,7 +193,9 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
-							ManifestVersion: "1.0",
+							Main: map[string]string{
+								"Manifest-Version": "1.0",
+							},
 						},
 					},
 				},
@@ -212,8 +216,9 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
-							ManifestVersion: "1.0",
-							Extra: map[string]string{
+							Main: map[string]string{
+								"Manifest-Version": "1.0",
+								// extra fields...
 								"Archiver-Version": "Plexus Archiver",
 								"Created-By":       "Apache Maven 3.6.3",
 								"Built-By":         "?",
@@ -305,11 +310,11 @@ func TestParseJar(t *testing.T) {
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				metadata.Parent = nil
 
-				// ignore select fields
+				// ignore select fields (only works for the main section)
 				for _, field := range test.ignoreExtras {
-					if metadata.Manifest != nil && metadata.Manifest.Extra != nil {
-						if _, ok := metadata.Manifest.Extra[field]; ok {
-							delete(metadata.Manifest.Extra, field)
+					if metadata.Manifest != nil && metadata.Manifest.Main != nil {
+						if _, ok := metadata.Manifest.Main[field]; ok {
+							delete(metadata.Manifest.Main, field)
 						}
 					}
 				}

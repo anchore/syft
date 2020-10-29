@@ -17,35 +17,39 @@ func TestParseJavaManifest(t *testing.T) {
 		{
 			fixture: "test-fixtures/manifest/small",
 			expected: pkg.JavaManifest{
-				ManifestVersion: "1.0",
+				Main: map[string]string{
+					"Manifest-Version": "1.0",
+				},
 			},
 		},
 		{
 			fixture: "test-fixtures/manifest/standard-info",
 			expected: pkg.JavaManifest{
-				ManifestVersion: "1.0",
-				Name:            "the-best-name",
-				SpecTitle:       "the-spec-title",
-				SpecVersion:     "the-spec-version",
-				SpecVendor:      "the-spec-vendor",
-				ImplTitle:       "the-impl-title",
-				ImplVersion:     "the-impl-version",
-				ImplVendor:      "the-impl-vendor",
+				Main: map[string]string{
+					"Name":                   "the-best-name",
+					"Manifest-Version":       "1.0",
+					"Specification-Title":    "the-spec-title",
+					"Specification-Version":  "the-spec-version",
+					"Specification-Vendor":   "the-spec-vendor",
+					"Implementation-Title":   "the-impl-title",
+					"Implementation-Version": "the-impl-version",
+					"Implementation-Vendor":  "the-impl-vendor",
+				},
 			},
 		},
 		{
 			fixture: "test-fixtures/manifest/extra-info",
 			expected: pkg.JavaManifest{
-				ManifestVersion: "1.0",
-				Extra: map[string]string{
+				Main: map[string]string{
+					"Manifest-Version": "1.0",
 					"Archiver-Version": "Plexus Archiver",
 					"Created-By":       "Apache Maven 3.6.3",
 				},
-				Sections: []map[string]string{
-					{
+				Sections: map[string]map[string]string{
+					"thing-1": {
 						"Built-By": "?",
 					},
-					{
+					"2": {
 						"Build-Jdk":  "14.0.1",
 						"Main-Class": "hello.HelloWorld",
 					},
@@ -55,9 +59,9 @@ func TestParseJavaManifest(t *testing.T) {
 		{
 			fixture: "test-fixtures/manifest/continuation",
 			expected: pkg.JavaManifest{
-				ManifestVersion: "1.0",
-				Extra: map[string]string{
-					"Plugin-ScmUrl": "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin",
+				Main: map[string]string{
+					"Manifest-Version": "1.0",
+					"Plugin-ScmUrl":    "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin",
 				},
 			},
 		},
@@ -65,8 +69,10 @@ func TestParseJavaManifest(t *testing.T) {
 			// regression test, we should always keep the full version
 			fixture: "test-fixtures/manifest/version-with-date",
 			expected: pkg.JavaManifest{
-				ManifestVersion: "1.0",
-				ImplVersion:     "1.3 2244 October 5 2005",
+				Main: map[string]string{
+					"Manifest-Version":       "1.0",
+					"Implementation-Version": "1.3 2244 October 5 2005",
+				},
 			},
 		},
 	}
@@ -78,7 +84,7 @@ func TestParseJavaManifest(t *testing.T) {
 				t.Fatalf("could not open fixture: %+v", err)
 			}
 
-			actual, err := parseJavaManifest(fixture)
+			actual, err := parseJavaManifest(test.fixture, fixture)
 			if err != nil {
 				t.Fatalf("failed to parse manifest: %+v", err)
 			}

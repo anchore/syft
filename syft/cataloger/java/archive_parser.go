@@ -136,7 +136,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 
 	// parse the manifest file into a rich object
 	manifestContents := contents[manifestMatches[0]]
-	manifest, err := parseJavaManifest(strings.NewReader(manifestContents))
+	manifest, err := parseJavaManifest(j.archivePath, strings.NewReader(manifestContents))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse java manifest (%s): %w", j.virtualPath, err)
 	}

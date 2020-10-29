@@ -4,16 +4,20 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
+
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/mitchellh/mapstructure"
 )
 
 const manifestGlob = "/META-INF/MANIFEST.MF"
 
 // nolint:funlen
-func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
+// parseJavaManifest takes MANIFEST.MF file content and returns sections of parsed key/value pairs.
+// For more information: https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest
+func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
 	sections := []map[string]string{
 		make(map[string]string),
@@ -63,13 +67,24 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 		return nil, fmt.Errorf("unable to read java manifest: %w", err)
 	}
 
-	if err := mapstructure.Decode(sections[0], &manifest); err != nil {
-		return nil, fmt.Errorf("unable to parse java manifest: %w", err)
-	}
-
-	// append on extra sections
-	if len(sections) > 1 {
-		manifest.Sections = sections[1:]
+	if len(sections) > 0 {
+		manifest.Main = sections[0]
+		if len(sections) > 1 {
+			manifest.Sections = make(map[string]map[string]string)
+			for i, s := range sections[1:] {
+				name, ok := s["Name"]
+				if !ok {
+					// per the manifest spec (https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest)
+					// this should never happen. If it does we want to know about it, but not necessarily stop
+					// cataloging entirely... for this reason we only log.
+					log.Errorf("java manifest section found without a name: %s", path)
+					name = strconv.Itoa(i)
+				} else {
+					delete(s, "Name")
+				}
+				manifest.Sections[name] = s
+			}
+		}
 	}
 
 	return &manifest, nil
@@ -80,24 +95,21 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 	switch {
 	case filenameObj.name() != "":
 		name = filenameObj.name()
-	case manifest.Name != "":
+	case manifest.Main["Name"] != "":
 		// Manifest original spec...
-		name = manifest.Name
-	case manifest.Extra["Bundle-Name"] != "":
+		name = manifest.Main["Name"]
+	case manifest.Main["Bundle-Name"] != "":
 		// BND tooling...
-		name = manifest.Extra["Bundle-Name"]
-	case manifest.Extra["Short-Name"] != "":
+		name = manifest.Main["Bundle-Name"]
+	case manifest.Main["Short-Name"] != "":
 		// Jenkins...
-		name = manifest.Extra["Short-Name"]
-	case manifest.Extra["Extension-Name"] != "":
+		name = manifest.Main["Short-Name"]
+	case manifest.Main["Extension-Name"] != "":
 		// Jenkins...
-		name = manifest.Extra["Extension-Name"]
-	}
-
-	// in situations where we hit this point and no name was
-	// determined, look at the Implementation-Title
-	if name == "" && manifest.ImplTitle != "" {
-		name = manifest.ImplTitle
+		name = manifest.Main["Extension-Name"]
+	case manifest.Main["Implementation-Title"] != "":
+		// last ditch effort...
+		name = manifest.Main["Implementation-Title"]
 	}
 	return name
 }
@@ -105,14 +117,14 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	var version string
 	switch {
-	case manifest.ImplVersion != "":
-		version = manifest.ImplVersion
+	case manifest.Main["Implementation-Version"] != "":
+		version = manifest.Main["Implementation-Version"]
 	case filenameObj.version() != "":
 		version = filenameObj.version()
-	case manifest.SpecVersion != "":
-		version = manifest.SpecVersion
-	case manifest.Extra["Plugin-Version"] != "":
-		version = manifest.Extra["Plugin-Version"]
+	case manifest.Main["Specification-Version"] != "":
+		version = manifest.Main["Specification-Version"]
+	case manifest.Main["Plugin-Version"] != "":
+		version = manifest.Main["Plugin-Version"]
 	}
 	return version
 }
