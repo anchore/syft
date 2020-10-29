@@ -194,38 +194,19 @@
                                     "implementationTitle": {
                                         "type": "string"
                                     },
-                                    "implementationVendor": {
-                                        "type": "string"
-                                    },
                                     "implementationVersion": {
                                         "type": "string"
                                     },
                                     "manifestVersion": {
                                         "type": "string"
                                     },
-                                    "name": {
-                                        "type": "string"
-                                    },
                                     "specificationTitle": {
-                                        "type": "string"
-                                    },
-                                    "specificationVendor": {
-                                        "type": "string"
-                                    },
-                                    "specificationVersion": {
                                         "type": "string"
                                     }
                                 },
                                 "required": [
                                     "extraFields",
-                                    "implementationTitle",
-                                    "implementationVendor",
-                                    "implementationVersion",
-                                    "manifestVersion",
-                                    "name",
-                                    "specificationTitle",
-                                    "specificationVendor",
-                                    "specificationVersion"
+                                    "manifestVersion"
                                 ],
                                 "type": "object"
                             },

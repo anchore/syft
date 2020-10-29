@@ -72,12 +72,6 @@ func parseJavaManifest(reader io.Reader) (*pkg.JavaManifest, error) {
 		manifest.Sections = sections[1:]
 	}
 
-	// clean select fields
-	if strings.Trim(manifest.ImplVersion, " ") != "" {
-		// transform versions with dates attached to just versions (e.g. "1.3 2244 October 5 2008" --> "1.3")
-		manifest.ImplVersion = strings.Split(manifest.ImplVersion, " ")[0]
-	}
-
 	return &manifest, nil
 }
 

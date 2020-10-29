@@ -236,7 +236,9 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+						// ensure that nested packages with different names than that of the parent are appended as
+						// a suffix on the virtual path
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",

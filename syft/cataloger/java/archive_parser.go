@@ -177,6 +177,12 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 			if propsObj.Version != "" && propsObj.ArtifactID != "" {
 				// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
 
+				// keep the artifact name within the virtual path if this package does not match the parent package
+				vPathSuffix := ""
+				if !strings.HasPrefix(propsObj.ArtifactID, parentPkg.Name) {
+					vPathSuffix += ":" + propsObj.ArtifactID
+				}
+
 				// discovered props = new package
 				p := pkg.Package{
 					Name:         propsObj.ArtifactID,
@@ -185,7 +191,7 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						VirtualPath:   j.virtualPath,
+						VirtualPath:   j.virtualPath + vPathSuffix,
 						PomProperties: propsObj,
 						Parent:        parentPkg,
 					},

@@ -62,10 +62,11 @@ func TestParseJavaManifest(t *testing.T) {
 			},
 		},
 		{
+			// regression test, we should always keep the full version
 			fixture: "test-fixtures/manifest/version-with-date",
 			expected: pkg.JavaManifest{
 				ManifestVersion: "1.0",
-				ImplVersion:     "1.3", // ensure the date is stripped off during processing
+				ImplVersion:     "1.3 2244 October 5 2005",
 			},
 		},
 	}
