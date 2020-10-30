@@ -22,16 +22,8 @@ type PomProperties struct {
 
 // JavaManifest represents the fields of interest extracted from a Java archive's META-INF/MANIFEST.MF file.
 type JavaManifest struct {
-	Name            string              `mapstructure:"Name" json:"name"`
-	ManifestVersion string              `mapstructure:"Manifest-Version" json:"manifestVersion"`
-	SpecTitle       string              `mapstructure:"Specification-Title" json:"specificationTitle"`
-	SpecVersion     string              `mapstructure:"Specification-Version" json:"specificationVersion"`
-	SpecVendor      string              `mapstructure:"Specification-Vendor" json:"specificationVendor"`
-	ImplTitle       string              `mapstructure:"Implementation-Title" json:"implementationTitle"`
-	ImplVersion     string              `mapstructure:"Implementation-Version" json:"implementationVersion"`
-	ImplVendor      string              `mapstructure:"Implementation-Vendor" json:"implementationVendor"`
-	Extra           map[string]string   `mapstructure:",remain" json:"extraFields"`
-	Sections        []map[string]string `json:"sections,omitempty"`
+	Main          map[string]string            `json:"main,omitempty"`
+	NamedSections map[string]map[string]string `json:"namedSections,omitempty"`
 }
 
 func (m JavaMetadata) PackageURL() string {

@@ -1,9 +1,10 @@
 package java
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"testing"
 )
 
 func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
@@ -56,11 +57,77 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			name:      "pkg-extra-field-maven",
 			ty:        pkg.JenkinsPluginPkg,
 		},
+		{
+			filename:  "/some/path-with-version-5.4.3/wagon-webdav-1.0.2-beta-2.2.3a-hudson.jar",
+			version:   "1.0.2-beta-2.2.3a-hudson",
+			extension: "jar",
+			name:      "wagon-webdav",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/some/path-with-version-5.4.3/wagon-webdav-1.0.2-beta-2.2.3-hudson.jar",
+			version:   "1.0.2-beta-2.2.3-hudson",
+			extension: "jar",
+			name:      "wagon-webdav",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/some/path-with-version-5.4.3/windows-remote-command-1.0.jar",
+			version:   "1.0",
+			extension: "jar",
+			name:      "windows-remote-command",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/some/path-with-version-5.4.3/wagon-http-lightweight-1.0.5-beta-2.jar",
+			version:   "1.0.5-beta-2",
+			extension: "jar",
+			name:      "wagon-http-lightweight",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/hudson.war:WEB-INF/lib/commons-jelly-1.1-hudson-20100305.jar",
+			version:   "1.1-hudson-20100305",
+			extension: "jar",
+			name:      "commons-jelly",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename: "/hudson.war:WEB-INF/lib/jtidy-4aug2000r7-dev-hudson-1.jar",
+			// I don't see how we can reliably account for this case
+			//version:   "4aug2000r7-dev-hudson-1",
+			version:   "",
+			extension: "jar",
+			name:      "jtidy",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename: "/hudson.war:WEB-INF/lib/trilead-ssh2-build212-hudson-5.jar",
+			// I don't see how we can reliably account for this case
+			//version:   "build212-hudson-5",
+			version:   "5",
+			extension: "jar",
+			// name: "trilead-ssh2",
+			name: "trilead-ssh2-build212-hudson",
+			ty:   pkg.JavaPkg,
+		},
+		{
+			filename:  "/hudson.war:WEB-INF/lib/guava-r06.jar",
+			version:   "r06",
+			extension: "jar",
+			name:      "guava",
+			ty:        pkg.JavaPkg,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.filename, func(t *testing.T) {
 			obj := newJavaArchiveFilename(test.filename)
+
+			ty := obj.pkgType()
+			if ty != test.ty {
+				t.Errorf("mismatched type: %+v != %v", ty, test.ty)
+			}
 
 			version := obj.version()
 			if version != test.version {

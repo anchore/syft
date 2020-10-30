@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-# TODO: Add "alpine:3.12.0" back in when we've figured out how to handle the apk version field w/ and w/o release information (see issue: https://github.com/anchore/syft/pull/195)
-images=("debian:10.5" "centos:8.2.2004" "rails:5.0.1")
+images=("debian:10.5" "centos:8.2.2004" "rails:5.0.1" "alpine:3.12.0" "anchore/test_images:java" "anchore/test_images:py38" "anchore/anchore-engine:v0.8.2" "jenkins/jenkins:2.249.2-lts-jdk11" )
 
 # gather all image analyses
 for img in "${images[@]}"; do

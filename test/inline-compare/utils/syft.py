@@ -43,12 +43,26 @@ class Syft:
             elif pkg_type in ("apk",):
                 pkg_type = "apkg"
 
+            name = entry["name"]
+            version = entry["version"]
+
+            if "java" in pkg_type:
+                # we need to use the virtual path instead of the name to account for nested dependencies with the same
+                # package name (but potentially different metadata)
+                name = entry.get("metadata", {}).get("virtualPath")
+
+            elif pkg_type == "apkg":
+                # inline scan strips off the release from the version, which should be normalized here
+                fields = entry["version"].split("-")
+                version = "-".join(fields[:-1])
+
             pkg = utils.package.Package(
-                name=entry["name"],
+                name=name,
                 type=pkg_type,
             )
 
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
+
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=version)
 
         return utils.package.Info(packages=frozenset(packages), metadata=metadata)

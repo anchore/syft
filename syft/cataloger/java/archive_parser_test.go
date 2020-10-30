@@ -78,51 +78,6 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	}
 }
 
-func TestSelectName(t *testing.T) {
-	tests := []struct {
-		desc     string
-		manifest pkg.JavaManifest
-		archive  archiveFilename
-		expected string
-	}{
-		{
-			desc:    "name from Implementation-Title",
-			archive: archiveFilename{},
-			manifest: pkg.JavaManifest{
-				Name:      "",
-				SpecTitle: "",
-				ImplTitle: "maven-wrapper",
-			},
-			expected: "maven-wrapper",
-		},
-		{
-			desc: "Implementation-Title does not override",
-			manifest: pkg.JavaManifest{
-				Name:      "Foo",
-				SpecTitle: "",
-				ImplTitle: "maven-wrapper",
-			},
-			archive: archiveFilename{
-				fields: []map[string]string{
-					{"name": "omg"},
-				},
-			},
-			expected: "omg",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			result := selectName(&test.manifest, test.archive)
-
-			if result != test.expected {
-				t.Errorf("mismatch in names: '%s' != '%s'", result, test.expected)
-			}
-		})
-	}
-
-}
-
 func TestParseJar(t *testing.T) {
 	tests := []struct {
 		fixture      string
@@ -145,11 +100,12 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
-							ManifestVersion: "1.0",
-							SpecTitle:       "The Jenkins Plugins Parent POM Project",
-							ImplTitle:       "example-jenkins-plugin",
-							ImplVersion:     "1.0-SNAPSHOT",
-							Extra: map[string]string{
+							Main: map[string]string{
+								"Manifest-Version":       "1.0",
+								"Specification-Title":    "The Jenkins Plugins Parent POM Project",
+								"Implementation-Title":   "example-jenkins-plugin",
+								"Implementation-Version": "1.0-SNAPSHOT",
+								// extra fields...
 								"Archiver-Version":    "Plexus Archiver",
 								"Plugin-License-Url":  "https://opensource.org/licenses/MIT",
 								"Plugin-License-Name": "MIT License",
@@ -191,7 +147,9 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
-							ManifestVersion: "1.0",
+							Main: map[string]string{
+								"Manifest-Version": "1.0",
+							},
 						},
 					},
 				},
@@ -212,8 +170,9 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
-							ManifestVersion: "1.0",
-							Extra: map[string]string{
+							Main: map[string]string{
+								"Manifest-Version": "1.0",
+								// extra fields...
 								"Archiver-Version": "Plexus Archiver",
 								"Created-By":       "Apache Maven 3.6.3",
 								"Built-By":         "?",
@@ -236,7 +195,9 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+						// ensure that nested packages with different names than that of the parent are appended as
+						// a suffix on the virtual path
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -303,11 +264,11 @@ func TestParseJar(t *testing.T) {
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				metadata.Parent = nil
 
-				// ignore select fields
+				// ignore select fields (only works for the main section)
 				for _, field := range test.ignoreExtras {
-					if metadata.Manifest != nil && metadata.Manifest.Extra != nil {
-						if _, ok := metadata.Manifest.Extra[field]; ok {
-							delete(metadata.Manifest.Extra, field)
+					if metadata.Manifest != nil && metadata.Manifest.Main != nil {
+						if _, ok := metadata.Manifest.Main[field]; ok {
+							delete(metadata.Manifest.Main, field)
 						}
 					}
 				}
@@ -342,7 +303,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "jul-to-slf4j",
@@ -354,7 +315,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-validation",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "hibernate-validator",
@@ -366,7 +327,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-expression",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 				{
 					Name:    "jakarta.validation-api",
@@ -374,11 +335,11 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-web",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 				{
 					Name:    "spring-boot-starter-actuator",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "log4j-api",
@@ -398,23 +359,23 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-aop",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 				{
 					Name:    "spring-boot-actuator-autoconfigure",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "spring-jcl",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 				{
 					Name:    "spring-boot",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "spring-boot-starter-logging",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "jakarta.annotation-api",
@@ -422,7 +383,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-webmvc",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 				{
 					Name:    "HdrHistogram",
@@ -430,7 +391,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-web",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "logback-classic",
@@ -442,7 +403,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-json",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "jackson-databind",
@@ -458,7 +419,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-autoconfigure",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "jackson-datatype-jdk8",
@@ -474,11 +435,11 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-beans",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 				{
 					Name:    "spring-boot-actuator",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "slf4j-api",
@@ -486,7 +447,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-core",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 				{
 					Name:    "logback-core",
@@ -506,7 +467,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-tomcat",
-					Version: "2.2.2.RELEASE",
+					Version: "2.2.2",
 				},
 				{
 					Name:    "classmate",
@@ -514,7 +475,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-context",
-					Version: "5.2.2.RELEASE",
+					Version: "5.2.2",
 				},
 			},
 		},
@@ -535,7 +496,7 @@ func TestParseNestedJar(t *testing.T) {
 				t.Fatalf("failed to parse java archive: %+v", err)
 			}
 
-			nameVersionPairSet := internal.NewStringSet()
+			expectedNameVersionPairSet := internal.NewStringSet()
 
 			makeKey := func(p *pkg.Package) string {
 				if p == nil {
@@ -545,20 +506,32 @@ func TestParseNestedJar(t *testing.T) {
 			}
 
 			for _, e := range test.expected {
-				nameVersionPairSet.Add(makeKey(&e))
+				expectedNameVersionPairSet.Add(makeKey(&e))
 			}
 
-			if len(actual) != len(nameVersionPairSet) {
+			if len(actual) != len(expectedNameVersionPairSet) {
+				actualNameVersionPairSet := internal.NewStringSet()
 				for _, a := range actual {
-					t.Log("   ", a)
+					key := makeKey(&a)
+					actualNameVersionPairSet.Add(key)
+					if !expectedNameVersionPairSet.Contains(key) {
+						t.Logf("extra package: %s", a)
+					}
 				}
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(nameVersionPairSet))
+
+				for _, key := range expectedNameVersionPairSet.ToSlice() {
+					if !actualNameVersionPairSet.Contains(key) {
+						t.Logf("missing package: %s", key)
+					}
+				}
+
+				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expectedNameVersionPairSet))
 			}
 
 			for _, a := range actual {
 				actualKey := makeKey(&a)
 
-				if !nameVersionPairSet.Contains(actualKey) {
+				if !expectedNameVersionPairSet.Contains(actualKey) {
 					t.Errorf("unexpected pkg: %q", actualKey)
 				}
 
@@ -571,7 +544,7 @@ func TestParseNestedJar(t *testing.T) {
 					if metadata.Parent == nil {
 						t.Errorf("unassigned error for pkg=%q", actualKey)
 					} else if makeKey(metadata.Parent) != "spring-boot|0.0.1-SNAPSHOT" {
-						// NB: this is a hard-coded condition to simplify the test harness
+						// NB: this is a hard-coded condition to simplify the test harness to account for https://github.com/micrometer-metrics/micrometer/issues/1785
 						if a.Name == "pcollections" {
 							if metadata.Parent.Name != "micrometer-core" {
 								t.Errorf("nested 'pcollections' pkg has wrong parent: %q", metadata.Parent.Name)

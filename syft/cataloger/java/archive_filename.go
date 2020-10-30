@@ -10,11 +10,20 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// match on versions and anything after the version. This is used to isolate the name from the version.
+// match examples:
+// wagon-webdav-1.0.2-rc1-hudson.jar      --->     -1.0.2-rc1-hudson.jar
+// windows-remote-command-1.0.jar         --->     -1.0.jar
+// wstx-asl-1-2.jar                       --->     -1-2.jar
+// guava-rc0.jar                          --->     -rc0.jar
+var versionAreaPattern = regexp.MustCompile(`-(?P<version>(\d+\.)?(\d+\.)?(r?c?\d+)(-[a-zA-Z0-9\-.]+)*)(?P<remaining>.*)$`)
+
+// match on explicit versions. This is used for extracting version information.
 // match examples:
 //	pkg-extra-field-4.3.2-rc1 --> match(name=pkg-extra-field version=4.3.2-rc1)
 //	pkg-extra-field-4.3-rc1   --> match(name=pkg-extra-field version=4.3-rc1)
 //	pkg-extra-field-4.3       --> match(name=pkg-extra-field version=4.3)
-var versionPattern = regexp.MustCompile(`(?P<name>.+)-(?P<version>(\d+\.)?(\d+\.)?(\*|\d+)(-[a-zA-Z0-9\-\.]+)*)`)
+var versionPattern = regexp.MustCompile(`-(?P<version>(\d+\.)?(\d+\.)?(r?c?\d+)(-[a-zA-Z0-9\-.]+)*)`)
 
 type archiveFilename struct {
 	raw    string
@@ -70,14 +79,8 @@ func (a archiveFilename) version() string {
 }
 
 func (a archiveFilename) name() string {
-	for _, fieldSet := range a.fields {
-		if name, ok := fieldSet["name"]; ok {
-			// return the first name
-			return name
-		}
-	}
-
-	// derive the name from the archive name (no path or extension)
+	// derive the name from the archive name (no path or extension) and remove any versions found
 	basename := filepath.Base(a.raw)
-	return strings.TrimSuffix(basename, filepath.Ext(basename))
+	cleaned := strings.TrimSuffix(basename, filepath.Ext(basename))
+	return versionAreaPattern.ReplaceAllString(cleaned, "")
 }

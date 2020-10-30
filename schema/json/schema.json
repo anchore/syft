@@ -126,7 +126,7 @@
                             },
                             "manifest": {
                                 "properties": {
-                                    "extraFields": {
+                                    "main": {
                                         "properties": {
                                             "Archiver-Version": {
                                                 "type": "string"
@@ -149,6 +149,12 @@
                                             "Hudson-Version": {
                                                 "type": "string"
                                             },
+                                            "Implementation-Title": {
+                                                "type": "string"
+                                            },
+                                            "Implementation-Version": {
+                                                "type": "string"
+                                            },
                                             "Jenkins-Version": {
                                                 "type": "string"
                                             },
@@ -156,6 +162,9 @@
                                                 "type": "string"
                                             },
                                             "Main-Class": {
+                                                "type": "string"
+                                            },
+                                            "Manifest-Version": {
                                                 "type": "string"
                                             },
                                             "Minimum-Java-Version": {
@@ -181,51 +190,23 @@
                                             },
                                             "Short-Name": {
                                                 "type": "string"
+                                            },
+                                            "Specification-Title": {
+                                                "type": "string"
                                             }
                                         },
                                         "required": [
                                             "Archiver-Version",
                                             "Build-Jdk",
                                             "Built-By",
-                                            "Created-By"
+                                            "Created-By",
+                                            "Manifest-Version"
                                         ],
                                         "type": "object"
-                                    },
-                                    "implementationTitle": {
-                                        "type": "string"
-                                    },
-                                    "implementationVendor": {
-                                        "type": "string"
-                                    },
-                                    "implementationVersion": {
-                                        "type": "string"
-                                    },
-                                    "manifestVersion": {
-                                        "type": "string"
-                                    },
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "specificationTitle": {
-                                        "type": "string"
-                                    },
-                                    "specificationVendor": {
-                                        "type": "string"
-                                    },
-                                    "specificationVersion": {
-                                        "type": "string"
                                     }
                                 },
                                 "required": [
-                                    "extraFields",
-                                    "implementationTitle",
-                                    "implementationVendor",
-                                    "implementationVersion",
-                                    "manifestVersion",
-                                    "name",
-                                    "specificationTitle",
-                                    "specificationVendor",
-                                    "specificationVersion"
+                                    "main"
                                 ],
                                 "type": "object"
                             },
