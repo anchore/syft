@@ -49,7 +49,7 @@ func TestParseJavaManifest(t *testing.T) {
 					"thing-1": {
 						"Built-By": "?",
 					},
-					"2": {
+					"1": {
 						"Build-Jdk":  "14.0.1",
 						"Main-Class": "hello.HelloWorld",
 					},
@@ -104,4 +104,46 @@ func TestParseJavaManifest(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSelectName(t *testing.T) {
+	tests := []struct {
+		desc     string
+		manifest pkg.JavaManifest
+		archive  archiveFilename
+		expected string
+	}{
+		{
+			desc:    "Get name from Implementation-Title",
+			archive: archiveFilename{},
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Implementation-Title": "maven-wrapper",
+				},
+			},
+			expected: "maven-wrapper",
+		},
+		{
+			desc: "Implementation-Title does not override name from filename",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Name":                 "foo",
+					"Implementation-Title": "maven-wrapper",
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/omg.jar"),
+			expected: "omg",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			result := selectName(&test.manifest, test.archive)
+
+			if result != test.expected {
+				t.Errorf("mismatch in names: '%s' != '%s'", result, test.expected)
+			}
+		})
+	}
+
 }

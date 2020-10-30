@@ -160,6 +160,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 
 // discoverPkgsFromPomProperties parses Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
+// nolint:funlen,gocognit
 func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([]pkg.Package, error) {
 	var pkgs = make([]pkg.Package, 0)
 	parentKey := uniquePkgKey(parentPkg)
@@ -204,7 +205,18 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 
 				pkgKey := uniquePkgKey(&p)
 
-				if pkgKey == parentKey || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == virtualPath || len(contents) == 1 {
+				// the name/version pair matches...
+				matchesParentPkg := pkgKey == parentKey
+
+				// the virtual path matches...
+				matchesParentPkg = matchesParentPkg || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == virtualPath
+
+				// the pom artifactId has the parent name or vice versa
+				if propsObj.ArtifactID != "" {
+					matchesParentPkg = matchesParentPkg || strings.Contains(parentPkg.Name, propsObj.ArtifactID) || strings.Contains(propsObj.ArtifactID, parentPkg.Name)
+				}
+
+				if matchesParentPkg {
 					// we've run across more information about our parent package, add this info to the parent package metadata
 					// the pom properties is typically a better source of information for name and version than the manifest
 					if p.Name != parentPkg.Name {
