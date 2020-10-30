@@ -45,7 +45,7 @@ func TestParseJavaManifest(t *testing.T) {
 					"Archiver-Version": "Plexus Archiver",
 					"Created-By":       "Apache Maven 3.6.3",
 				},
-				Sections: map[string]map[string]string{
+				NamedSections: map[string]map[string]string{
 					"thing-1": {
 						"Built-By": "?",
 					},

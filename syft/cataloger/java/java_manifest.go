@@ -70,7 +70,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 	if len(sections) > 0 {
 		manifest.Main = sections[0]
 		if len(sections) > 1 {
-			manifest.Sections = make(map[string]map[string]string)
+			manifest.NamedSections = make(map[string]map[string]string)
 			for i, s := range sections[1:] {
 				name, ok := s["Name"]
 				if !ok {
@@ -82,7 +82,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 				} else {
 					delete(s, "Name")
 				}
-				manifest.Sections[name] = s
+				manifest.NamedSections[name] = s
 			}
 		}
 	}
@@ -117,10 +117,10 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	var version string
 	switch {
-	case manifest.Main["Implementation-Version"] != "":
-		version = manifest.Main["Implementation-Version"]
 	case filenameObj.version() != "":
 		version = filenameObj.version()
+	case manifest.Main["Implementation-Version"] != "":
+		version = manifest.Main["Implementation-Version"]
 	case manifest.Main["Specification-Version"] != "":
 		version = manifest.Main["Specification-Version"]
 	case manifest.Main["Plugin-Version"] != "":

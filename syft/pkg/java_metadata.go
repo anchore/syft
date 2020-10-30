@@ -22,8 +22,8 @@ type PomProperties struct {
 
 // JavaManifest represents the fields of interest extracted from a Java archive's META-INF/MANIFEST.MF file.
 type JavaManifest struct {
-	Main     map[string]string            `json:"main,omitempty"`
-	Sections map[string]map[string]string `json:"sections,omitempty"`
+	Main          map[string]string            `json:"main,omitempty"`
+	NamedSections map[string]map[string]string `json:"namedSections,omitempty"`
 }
 
 func (m JavaMetadata) PackageURL() string {

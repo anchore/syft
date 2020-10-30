@@ -66,13 +66,17 @@ func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested boo
 		return nil, cleanupFn, fmt.Errorf("unable to read files from java archive: %w", err)
 	}
 
+	// fetch the last element of the virtual path
+	virtualElements := strings.Split(virtualPath, ":")
+	currentFilepath := virtualElements[len(virtualElements)-1]
+
 	return &archiveParser{
 		discoveredPkgs: internal.NewStringSet(),
 		fileManifest:   fileManifest,
 		virtualPath:    virtualPath,
 		archivePath:    archivePath,
 		contentPath:    contentPath,
-		fileInfo:       newJavaArchiveFilename(virtualPath),
+		fileInfo:       newJavaArchiveFilename(currentFilepath),
 		detectNested:   detectNested,
 	}, cleanupFn, nil
 }
@@ -182,6 +186,7 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 				if !strings.HasPrefix(propsObj.ArtifactID, parentPkg.Name) {
 					vPathSuffix += ":" + propsObj.ArtifactID
 				}
+				virtualPath := j.virtualPath + vPathSuffix
 
 				// discovered props = new package
 				p := pkg.Package{
@@ -191,7 +196,7 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						VirtualPath:   j.virtualPath + vPathSuffix,
+						VirtualPath:   virtualPath,
 						PomProperties: propsObj,
 						Parent:        parentPkg,
 					},
@@ -199,16 +204,24 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 
 				pkgKey := uniquePkgKey(&p)
 
-				if !j.discoveredPkgs.Contains(pkgKey) {
-					// only keep packages we haven't seen yet
-					pkgs = append(pkgs, p)
-				} else if pkgKey == parentKey {
+				if pkgKey == parentKey || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == virtualPath || len(contents) == 1 {
 					// we've run across more information about our parent package, add this info to the parent package metadata
+					// the pom properties is typically a better source of information for name and version than the manifest
+					if p.Name != parentPkg.Name {
+						parentPkg.Name = p.Name
+					}
+					if p.Version != parentPkg.Version {
+						parentPkg.Version = p.Version
+					}
+
 					parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
 					if ok {
 						parentMetadata.PomProperties = propsObj
 						parentPkg.Metadata = parentMetadata
 					}
+				} else if !j.discoveredPkgs.Contains(pkgKey) {
+					// only keep packages we haven't seen yet (and are not related to the parent package)
+					pkgs = append(pkgs, p)
 				}
 			}
 		}
