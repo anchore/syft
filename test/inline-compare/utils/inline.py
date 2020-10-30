@@ -84,7 +84,6 @@ class InlineScan:
 
             metadata[pkg.type][pkg] = utils.package.Metadata(
                 version=entry["maven-version"],
-                extra=tuple(),
             )
 
         return packages, metadata
@@ -98,7 +97,7 @@ class InlineScan:
                 type=entry["type"].lower(),
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
 
         return packages, metadata
 
@@ -113,7 +112,7 @@ class InlineScan:
                 type=entry["type"].lower(),
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
 
         return packages, metadata
 
@@ -126,7 +125,7 @@ class InlineScan:
                 type=entry["type"].lower(),
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
 
         return packages, metadata
 
@@ -138,6 +137,6 @@ class InlineScan:
                 name=entry["package"], type=entry["type"].lower()
             )
             packages.add(pkg)
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"], extra=tuple())
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=entry["version"])
 
         return packages, metadata

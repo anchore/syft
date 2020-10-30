@@ -4,7 +4,6 @@ import collections
 
 import utils.package
 import utils.image
-from utils.traverse import dig
 
 
 class Syft:
@@ -29,8 +28,6 @@ class Syft:
         metadata = collections.defaultdict(dict)
         for entry in self._enumerate_section(section="artifacts"):
 
-            extra = {}
-
             # normalize to inline
             pkg_type = entry["type"].lower()
             if pkg_type in ("wheel", "egg", "python"):
@@ -52,7 +49,7 @@ class Syft:
             if "java" in pkg_type:
                 # we need to use the virtual path instead of the name to account for nested dependencies with the same
                 # package name (but potentially different metadata)
-                name = dig(entry, "metadata", "virtualPath")
+                name = entry.get("metadata", {}).get("virtualPath")
 
             elif pkg_type == "apkg":
                 # inline scan strips off the release from the version, which should be normalized here
@@ -66,6 +63,6 @@ class Syft:
 
             packages.add(pkg)
 
-            metadata[pkg.type][pkg] = utils.package.Metadata(version=version, extra=tuple())
+            metadata[pkg.type][pkg] = utils.package.Metadata(version=version)
 
         return utils.package.Info(packages=frozenset(packages), metadata=metadata)
