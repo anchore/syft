@@ -16,7 +16,7 @@ PACKAGE_QUALITY_GATE = collections.defaultdict(lambda: DEFAULT_QUALITY_GATE_THRE
 METADATA_QUALITY_GATE = collections.defaultdict(lambda: DEFAULT_QUALITY_GATE_THRESHOLD, **{
     # syft is better at detecting package versions in specific cases, leading to a drop in matching metadata
     "anchore/test_images:java": 0.61,
-    "jenkins/jenkins:2.249.2-lts-jdk11": 0.82,
+    "jenkins/jenkins:2.249.2-lts-jdk11": 0.85,
 })
 
 # We additionally fail if an image is above a particular threshold. Why? We expect the lower threshold to be 90%,
@@ -29,7 +29,7 @@ PACKAGE_UPPER_THRESHOLD = collections.defaultdict(lambda: 1, **{})
 METADATA_UPPER_THRESHOLD = collections.defaultdict(lambda: 1, **{
     # syft is better at detecting package versions in specific cases, leading to a drop in matching metadata
     "anchore/test_images:java": 0.65,
-    "jenkins/jenkins:2.249.2-lts-jdk11": 0.84,
+    "jenkins/jenkins:2.249.2-lts-jdk11": 0.9,
 })
 
 
