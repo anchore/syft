@@ -29,10 +29,10 @@ type ApkMetadata struct {
 // ApkFileRecord represents a single file listing and metadata from a APK DB entry (which may have many of these file records).
 type ApkFileRecord struct {
 	Path        string `json:"path"`
-	OwnerUID    string `json:"ownerUid"`
-	OwnerGUI    string `json:"ownerGid"`
-	Permissions string `json:"permissions"`
-	Checksum    string `json:"checksum"`
+	OwnerUID    string `json:"ownerUid,omitempty"`
+	OwnerGID    string `json:"ownerGid,omitempty"`
+	Permissions string `json:"permissions,omitempty"`
+	Checksum    string `json:"checksum,omitempty"`
 }
 
 func (m ApkMetadata) PackageURL() string {

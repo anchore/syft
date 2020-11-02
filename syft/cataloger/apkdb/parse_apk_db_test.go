@@ -20,9 +20,24 @@ func TestExtraFileAttributes(t *testing.T) {
 			expected: pkg.ApkMetadata{
 				Files: []pkg.ApkFileRecord{
 					{
+						Path: "/usr",
+					},
+					{
+						Path: "/usr/lib",
+					},
+					{
+						Path: "/usr/lib/jvm",
+					},
+					{
+						Path: "/usr/lib/jvm/java-1.8-openjdk",
+					},
+					{
+						Path: "/usr/lib/jvm/java-1.8-openjdk/bin",
+					},
+					{
 						Path:        "/usr/lib/jvm/java-1.8-openjdk/bin/policytool",
 						OwnerUID:    "0",
-						OwnerGUI:    "0",
+						OwnerGID:    "0",
 						Permissions: "755",
 						Checksum:    "Q1M0C9qfC/+kdRiOodeihG2GMRtkE=",
 					},
@@ -60,13 +75,13 @@ func TestExtraFileAttributes(t *testing.T) {
 	}
 }
 
-func TestSinglePackage(t *testing.T) {
+func TestSinglePackageDetails(t *testing.T) {
 	tests := []struct {
-		name     string
+		fixture  string
 		expected pkg.ApkMetadata
 	}{
 		{
-			name: "Test Single Package",
+			fixture: "test-fixtures/single",
 			expected: pkg.ApkMetadata{
 				Package:          "musl-utils",
 				OriginPackage:    "musl",
@@ -83,39 +98,416 @@ func TestSinglePackage(t *testing.T) {
 				GitCommitOfAport: "4024cc3b29ad4c65544ad068b8f59172b5494306",
 				Files: []pkg.ApkFileRecord{
 					{
+						Path: "/sbin",
+					},
+					{
 						Path:        "/sbin/ldconfig",
 						OwnerUID:    "0",
-						OwnerGUI:    "0",
+						OwnerGID:    "0",
 						Permissions: "755",
 						Checksum:    "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
 					},
 					{
+						Path: "/usr",
+					},
+					{
+						Path: "/usr/bin",
+					},
+					{
 						Path:        "/usr/bin/iconv",
 						OwnerUID:    "0",
-						OwnerGUI:    "0",
+						OwnerGID:    "0",
 						Permissions: "755",
 						Checksum:    "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
 					},
 					{
 						Path:        "/usr/bin/ldd",
 						OwnerUID:    "0",
-						OwnerGUI:    "0",
+						OwnerGID:    "0",
 						Permissions: "755",
 						Checksum:    "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
 					},
 					{
 						Path:        "/usr/bin/getconf",
 						OwnerUID:    "0",
-						OwnerGUI:    "0",
+						OwnerGID:    "0",
 						Permissions: "755",
 						Checksum:    "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
 					},
 					{
 						Path:        "/usr/bin/getent",
 						OwnerUID:    "0",
-						OwnerGUI:    "0",
+						OwnerGID:    "0",
 						Permissions: "755",
 						Checksum:    "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
+					},
+				},
+			},
+		},
+		{
+			fixture: "test-fixtures/base",
+			expected: pkg.ApkMetadata{
+				Package:          "alpine-baselayout",
+				OriginPackage:    "alpine-baselayout",
+				Version:          "3.2.0-r6",
+				Description:      "Alpine base dir structure and init scripts",
+				Maintainer:       "Natanael Copa <ncopa@alpinelinux.org>",
+				License:          "GPL-2.0-only",
+				Architecture:     "x86_64",
+				URL:              "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
+				Size:             19917,
+				InstalledSize:    409600,
+				PullDependencies: "/bin/sh so:libc.musl-x86_64.so.1",
+				PullChecksum:     "Q1myMNfd7u5v5UTgNHeq1e31qTjZU=",
+				GitCommitOfAport: "e1c51734fa96fa4bac92e9f14a474324c67916fc",
+				Files: []pkg.ApkFileRecord{
+					{
+						Path: "/dev",
+					},
+					{
+						Path: "/dev/pts",
+					},
+					{
+						Path: "/dev/shm",
+					},
+					{
+						Path: "/etc",
+					},
+					{
+						Path:     "/etc/fstab",
+						Checksum: "Q11Q7hNe8QpDS531guqCdrXBzoA/o=",
+					},
+					{
+						Path:     "/etc/group",
+						Checksum: "Q1oJ16xWudgKOrXIEquEDzlF2Lsm4=",
+					},
+					{
+						Path:     "/etc/hostname",
+						Checksum: "Q16nVwYVXP/tChvUPdukVD2ifXOmc=",
+					},
+					{
+						Path:     "/etc/hosts",
+						Checksum: "Q1BD6zJKZTRWyqGnPi4tSfd3krsMU=",
+					},
+					{
+						Path:     "/etc/inittab",
+						Checksum: "Q1TsthbhW7QzWRe1E/NKwTOuD4pHc=",
+					},
+					{
+						Path:     "/etc/modules",
+						Checksum: "Q1toogjUipHGcMgECgPJX64SwUT1M=",
+					},
+					{
+						Path:     "/etc/motd",
+						Checksum: "Q1XmduVVNURHQ27TvYp1Lr5TMtFcA=",
+					},
+					{
+						Path:        "/etc/mtab",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "777",
+						Checksum:    "Q1kiljhXXH1LlQroHsEJIkPZg2eiw=",
+					},
+					{
+						Path:     "/etc/passwd",
+						Checksum: "Q1TchuuLUfur0izvfZQZxgN/LJhB8=",
+					},
+					{
+						Path:     "/etc/profile",
+						Checksum: "Q1KpFb8kl5LvwXWlY3e58FNsjrI34=",
+					},
+					{
+						Path:     "/etc/protocols",
+						Checksum: "Q13FqXUnvuOpMDrH/6rehxuYAEE34=",
+					},
+					{
+						Path:     "/etc/services",
+						Checksum: "Q1C6HJNgQvLWqt5VY+n7MZJ1rsDuY=",
+					},
+					{
+						Path:        "/etc/shadow",
+						OwnerUID:    "0",
+						OwnerGID:    "42",
+						Permissions: "640",
+						Checksum:    "Q1ltrPIAW2zHeDiajsex2Bdmq3uqA=",
+					},
+					{
+						Path:     "/etc/shells",
+						Checksum: "Q1ojm2YdpCJ6B/apGDaZ/Sdb2xJkA=",
+					},
+					{
+						Path:     "/etc/sysctl.conf",
+						Checksum: "Q14upz3tfnNxZkIEsUhWn7Xoiw96g=",
+					},
+					{
+						Path: "/etc/apk",
+					},
+					{
+						Path: "/etc/conf.d",
+					},
+					{
+						Path: "/etc/crontabs",
+					},
+					{
+						Path:        "/etc/crontabs/root",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "600",
+						Checksum:    "Q1vfk1apUWI4yLJGhhNRd0kJixfvY=",
+					},
+					{
+						Path: "/etc/init.d",
+					},
+					{
+						Path: "/etc/modprobe.d",
+					},
+					{
+						Path:     "/etc/modprobe.d/aliases.conf",
+						Checksum: "Q1WUbh6TBYNVK7e4Y+uUvLs/7viqk=",
+					},
+					{
+						Path:     "/etc/modprobe.d/blacklist.conf",
+						Checksum: "Q1xxYGU6S6TLQvb7ervPrWWwAWqMg=",
+					},
+					{
+						Path:     "/etc/modprobe.d/i386.conf",
+						Checksum: "Q1pnay/njn6ol9cCssL7KiZZ8etlc=",
+					},
+					{
+						Path:     "/etc/modprobe.d/kms.conf",
+						Checksum: "Q1ynbLn3GYDpvajba/ldp1niayeog=",
+					},
+					{
+						Path: "/etc/modules-load.d",
+					},
+					{
+						Path: "/etc/network",
+					},
+					{
+						Path: "/etc/network/if-down.d",
+					},
+					{
+						Path: "/etc/network/if-post-down.d",
+					},
+					{
+						Path: "/etc/network/if-pre-up.d",
+					},
+					{
+						Path: "/etc/network/if-up.d",
+					},
+					{
+						Path: "/etc/opt",
+					},
+					{
+						Path: "/etc/periodic",
+					},
+					{
+						Path: "/etc/periodic/15min",
+					},
+					{
+						Path: "/etc/periodic/daily",
+					},
+					{
+						Path: "/etc/periodic/hourly",
+					},
+					{
+						Path: "/etc/periodic/monthly",
+					},
+					{
+						Path: "/etc/periodic/weekly",
+					},
+					{
+						Path: "/etc/profile.d",
+					},
+					{
+						Path:     "/etc/profile.d/color_prompt",
+						Checksum: "Q10wL23GuSCVfumMRgakabUI6EsSk=",
+					},
+					{
+						Path:     "/etc/profile.d/locale",
+						Checksum: "Q1R4bIEpnKxxOSrlnZy9AoawqZ5DU=",
+					},
+					{
+						Path: "/etc/sysctl.d",
+					},
+					{
+						Path: "/home",
+					},
+					{
+						Path: "/lib",
+					},
+					{
+						Path: "/lib/firmware",
+					},
+					{
+						Path: "/lib/mdev",
+					},
+					{
+						Path: "/lib/modules-load.d",
+					},
+					{
+						Path: "/lib/sysctl.d",
+					},
+					{
+						Path:     "/lib/sysctl.d/00-alpine.conf",
+						Checksum: "Q1HpElzW1xEgmKfERtTy7oommnq6c=",
+					},
+					{
+						Path: "/media",
+					},
+					{
+						Path: "/media/cdrom",
+					},
+					{
+						Path: "/media/floppy",
+					},
+					{
+						Path: "/media/usb",
+					},
+					{
+						Path: "/mnt",
+					},
+					{
+						Path: "/opt",
+					},
+					{
+						Path: "/proc",
+					},
+					{
+						Path:        "/root",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "700",
+					},
+					{
+						Path: "/run",
+					},
+					{
+						Path: "/sbin",
+					},
+					{
+						Path:        "/sbin/mkmntdirs",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "755",
+						Checksum:    "Q1YeuSmC7iDbEWrusPzA/zUQF6YSg=",
+					},
+					{
+						Path: "/srv",
+					},
+					{
+						Path: "/sys",
+					},
+					{
+						Path:        "/tmp",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "1777",
+					},
+					{
+						Path: "/usr",
+					},
+					{
+						Path: "/usr/lib",
+					},
+					{
+						Path: "/usr/lib/modules-load.d",
+					},
+					{
+						Path: "/usr/local",
+					},
+					{
+						Path: "/usr/local/bin",
+					},
+					{
+						Path: "/usr/local/lib",
+					},
+					{
+						Path: "/usr/local/share",
+					},
+					{
+						Path: "/usr/sbin",
+					},
+					{
+						Path: "/usr/share",
+					},
+					{
+						Path: "/usr/share/man",
+					},
+					{
+						Path: "/usr/share/misc",
+					},
+					{
+						Path: "/var",
+					},
+					{
+						Path:        "/var/run",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "777",
+						Checksum:    "Q11/SNZz/8cK2dSKK+cJpVrZIuF4Q=",
+					},
+					{
+						Path: "/var/cache",
+					},
+					{
+						Path: "/var/cache/misc",
+					},
+					{
+						Path:        "/var/empty",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "555",
+					},
+					{
+						Path: "/var/lib",
+					},
+					{
+						Path: "/var/lib/misc",
+					},
+					{
+						Path: "/var/local",
+					},
+					{
+						Path: "/var/lock",
+					},
+					{
+						Path: "/var/lock/subsys",
+					},
+					{
+						Path: "/var/log",
+					},
+					{
+						Path: "/var/mail",
+					},
+					{
+						Path: "/var/opt",
+					},
+					{
+						Path: "/var/spool",
+					},
+					{
+						Path:        "/var/spool/mail",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "777",
+						Checksum:    "Q1dzbdazYZA2nTzSIG3YyNw7d4Juc=",
+					},
+					{
+						Path: "/var/spool/cron",
+					},
+					{
+						Path:        "/var/spool/cron/crontabs",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "777",
+						Checksum:    "Q1OFZt+ZMp7j0Gny0rqSKuWJyqYmA=",
+					},
+					{
+						Path:        "/var/tmp",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "1777",
 					},
 				},
 			},
@@ -123,10 +515,10 @@ func TestSinglePackage(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/single")
+		t.Run(test.fixture, func(t *testing.T) {
+			file, err := os.Open(test.fixture)
 			if err != nil {
-				t.Fatal("Unable to read test_fixtures/single: ", err)
+				t.Fatal("Unable to read fixture: ", err)
 			}
 			defer func() {
 				err := file.Close()
@@ -204,37 +596,46 @@ func TestMultiplePackages(t *testing.T) {
 						GitCommitOfAport: "4024cc3b29ad4c65544ad068b8f59172b5494306",
 						Files: []pkg.ApkFileRecord{
 							{
+								Path: "/sbin",
+							},
+							{
 								Path:        "/sbin/ldconfig",
 								OwnerUID:    "0",
-								OwnerGUI:    "0",
+								OwnerGID:    "0",
 								Permissions: "755",
 								Checksum:    "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
 							},
 							{
+								Path: "/usr",
+							},
+							{
+								Path: "/usr/bin",
+							},
+							{
 								Path:        "/usr/bin/iconv",
 								OwnerUID:    "0",
-								OwnerGUI:    "0",
+								OwnerGID:    "0",
 								Permissions: "755",
 								Checksum:    "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
 							},
 							{
 								Path:        "/usr/bin/ldd",
 								OwnerUID:    "0",
-								OwnerGUI:    "0",
+								OwnerGID:    "0",
 								Permissions: "755",
 								Checksum:    "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
 							},
 							{
 								Path:        "/usr/bin/getconf",
 								OwnerUID:    "0",
-								OwnerGUI:    "0",
+								OwnerGID:    "0",
 								Permissions: "755",
 								Checksum:    "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
 							},
 							{
 								Path:        "/usr/bin/getent",
 								OwnerUID:    "0",
-								OwnerGUI:    "0",
+								OwnerGID:    "0",
 								Permissions: "755",
 								Checksum:    "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
 							},
