@@ -89,7 +89,16 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 
 		switch key {
 		case "F":
-			lastFile = "/" + value
+			currentFile := "/" + value
+
+			newFileRecord := pkg.ApkFileRecord{
+				Path: currentFile,
+			}
+			files = append(files, newFileRecord)
+			fileRecord = &files[len(files)-1]
+
+			// future aux references are relative to previous "F" records
+			lastFile = currentFile
 			continue
 		case "R":
 			newFileRecord := pkg.ApkFileRecord{
@@ -97,7 +106,7 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 			}
 			files = append(files, newFileRecord)
 			fileRecord = &files[len(files)-1]
-		case "a":
+		case "a", "M":
 			ownershipFields := strings.Split(value, ":")
 			if len(ownershipFields) < 3 {
 				log.Errorf("unexpected APK ownership field: %q", value)
@@ -108,7 +117,7 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 				continue
 			}
 			fileRecord.OwnerUID = ownershipFields[0]
-			fileRecord.OwnerGUI = ownershipFields[1]
+			fileRecord.OwnerGID = ownershipFields[1]
 			fileRecord.Permissions = ownershipFields[2]
 			// note: there are more optional fields available that we are not capturing, e.g.:
 			// "0:0:755:Q1JaDEHQHBbizhEzoWK1YxuraNU/4="
