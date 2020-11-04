@@ -37,9 +37,10 @@ skopeo --override-os linux copy docker://docker.io/${TEST_IMAGE} docker-archive:
 ls -alh ${TEST_IMAGE_TAR}
 
 # run syft
-chmod 755 ${DISTDIR}/syft_darwin_amd64/syft
-${DISTDIR}/syft_darwin_amd64/syft version
-SYFT_CHECK_FOR_APP_UPDATE=0 ${DISTDIR}/syft_darwin_amd64/syft docker-archive://${TEST_IMAGE_TAR} -vv -o json > ${REPORT}
+SYFT_PATH="${DISTDIR}/syft-macos_darwin_amd64/syft"
+chmod 755 "${SYFT_PATH}"
+"${SYFT_PATH}" version
+SYFT_CHECK_FOR_APP_UPDATE=0 "${SYFT_PATH}" docker-archive://${TEST_IMAGE_TAR} -vv -o json > "${REPORT}"
 
 # keep the generated report around
 mkdir -p ${RESULTSDIR}

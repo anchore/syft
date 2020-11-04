@@ -14,8 +14,7 @@ env:
 
 jobs:
   Build-Snapshot-Artifacts:
-    # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
-    runs-on: ubuntu-20.04
+    runs-on: macos-latest # We're creating these snapshot builds on macOS to be consistent with our release workflow's build process, which also takes place on macOS (due to code signing requirements).
     steps:
 
       - uses: actions/setup-go@v2
@@ -39,9 +38,6 @@ jobs:
       - name: Bootstrap project dependencies
         if: steps.bootstrap-cache.outputs.cache-hit != 'true'
         run: make bootstrap
-
-      - name: Bootstrap CI dependencies
-        run: make ci-bootstrap
 
       - name: Import GPG key
         id: import_gpg
