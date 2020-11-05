@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -39,12 +40,12 @@ func TestJsonDirsPresenter(t *testing.T) {
 			{Path: "/some/path/pkg1"},
 		},
 	})
-
+	d := distro.NewUnknownDistro()
 	s, err := scope.NewScopeFromDir("/some/path")
 	if err != nil {
 		t.Fatal(err)
 	}
-	pres := NewPresenter(catalog, s)
+	pres := NewPresenter(catalog, s, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -100,7 +101,8 @@ func TestJsonImgsPresenter(t *testing.T) {
 	})
 
 	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
-	pres := NewPresenter(catalog, s)
+	d := distro.NewUnknownDistro()
+	pres := NewPresenter(catalog, s, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
