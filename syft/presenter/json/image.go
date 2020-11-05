@@ -1,6 +1,8 @@
 package json
 
-import "github.com/anchore/syft/syft/scope"
+import (
+	"github.com/anchore/syft/syft/scope"
+)
 
 type Image struct {
 	Layers    []Layer  `json:"layers"`
