@@ -11,7 +11,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.3
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200309214505-aa6a9891b09c+incompatible
 	github.com/dustin/go-humanize v1.0.0
-	github.com/go-test/deep v1.0.6
+	github.com/go-test/deep v1.0.7
 	github.com/google/uuid v1.1.1
 	github.com/gookit/color v1.2.7
 	github.com/hashicorp/go-multierror v1.1.0
