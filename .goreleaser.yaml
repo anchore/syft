@@ -51,7 +51,7 @@ builds:
       -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
       -X github.com/anchore/syft/internal/version.gitTreeState={{.Env.BUILD_GIT_TREE_STATE}}
     hooks:
-      post: ./.github/scripts/mac-sign-and-notarize.sh "{{.IsSnapshot}}" "gon.hcl" "./dist/syft_{{.Tag}}_{{.Target}}.dmg"
+      post: ./.github/scripts/mac-sign-and-notarize.sh "{{.IsSnapshot}}" "gon.hcl" "./dist/syft_{{.Version}}_{{.Target}}.dmg"
 
 signs:
   - artifacts: checksum
