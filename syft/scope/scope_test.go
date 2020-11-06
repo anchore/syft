@@ -61,8 +61,14 @@ func TestDirectoryScope(t *testing.T) {
 		{
 			desc:       "path detected",
 			input:      "test-fixtures",
-			inputPaths: []file.Path{file.Path("test-fixtures/path-detected")},
+			inputPaths: []file.Path{file.Path("test-fixtures/path-detected/.vimrc")},
 			expRefs:    1,
+		},
+		{
+			desc:       "directory ignored",
+			input:      "test-fixtures",
+			inputPaths: []file.Path{file.Path("test-fixtures/path-detected")},
+			expRefs:    0,
 		},
 		{
 			desc:       "no files-by-path detected",

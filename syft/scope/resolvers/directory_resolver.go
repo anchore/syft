@@ -33,12 +33,18 @@ func (s DirectoryResolver) FilesByPath(userPaths ...file.Path) ([]file.Reference
 			// a path relative to root should be prefixed with the resolvers directory path, otherwise it should be left as is
 			userStrPath = path.Join(s.Path, userStrPath)
 		}
-		_, err := os.Stat(userStrPath)
+		fileMeta, err := os.Stat(userStrPath)
 		if os.IsNotExist(err) {
 			continue
 		} else if err != nil {
 			log.Errorf("path (%s) is not valid: %v", userStrPath, err)
 		}
+
+		// don't consider directories
+		if fileMeta.IsDir() {
+			continue
+		}
+
 		references = append(references, file.NewFileReference(file.Path(userStrPath)))
 	}
 
@@ -69,9 +75,12 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]file.Reference, er
 			if err != nil {
 				continue
 			}
+
+			// don't consider directories
 			if fileMeta.IsDir() {
 				continue
 			}
+
 			matchedPath := file.Path(match)
 			result = append(result, file.NewFileReference(matchedPath))
 		}

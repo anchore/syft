@@ -1,8 +1,9 @@
 package resolvers
 
 import (
-	"github.com/anchore/stereoscope/pkg/imagetest"
 	"testing"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
 
 	"github.com/anchore/stereoscope/pkg/file"
 )
@@ -79,6 +80,11 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 					path:  "/link-dead",
 				},
 			},
+		},
+		{
+			name:        "ignore directories",
+			linkPath:    "/bin",
+			resolutions: []resolution{},
 		},
 	}
 	for _, c := range cases {
@@ -187,6 +193,11 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 					path:  "/link-dead",
 				},
 			},
+		},
+		{
+			name:        "ignore directories",
+			glob:        "**/bin",
+			resolutions: []resolution{},
 		},
 	}
 	for _, c := range cases {
