@@ -111,7 +111,6 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, e
 			}
 
 			for _, ref := range refs {
-
 				// don't consider directories (special case: there is no path information for /)
 				if ref.Path == "/" {
 					continue

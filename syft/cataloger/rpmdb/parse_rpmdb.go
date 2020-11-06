@@ -48,24 +48,9 @@ func parseRpmDB(resolver scope.FileResolver, reader io.Reader) ([]pkg.Package, e
 	allPkgs := make([]pkg.Package, 0)
 
 	for _, entry := range pkgList {
-		var records = make([]pkg.RpmdbFileRecord, 0)
-
-		for _, record := range entry.Files {
-			refs, err := resolver.FilesByPath(file.Path(record.Path))
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve path=%+v: %w", record.Path, err)
-			}
-			//only persist RPMDB file records which exist in the image/directory, otherwise ignore them
-			if len(refs) == 0 {
-				continue
-			}
-
-			records = append(records, pkg.RpmdbFileRecord{
-				Path:   record.Path,
-				Mode:   pkg.RpmdbFileMode(record.Mode),
-				Size:   int(record.Size),
-				SHA256: record.SHA256,
-			})
+		records, err := extractRpmdbFileRecords(resolver, entry)
+		if err != nil {
+			return nil, err
 		}
 
 		p := pkg.Package{
@@ -92,4 +77,27 @@ func parseRpmDB(resolver scope.FileResolver, reader io.Reader) ([]pkg.Package, e
 	}
 
 	return allPkgs, nil
+}
+
+func extractRpmdbFileRecords(resolver scope.FileResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
+	var records = make([]pkg.RpmdbFileRecord, 0)
+
+	for _, record := range entry.Files {
+		refs, err := resolver.FilesByPath(file.Path(record.Path))
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve path=%+v: %w", record.Path, err)
+		}
+		//only persist RPMDB file records which exist in the image/directory, otherwise ignore them
+		if len(refs) == 0 {
+			continue
+		}
+
+		records = append(records, pkg.RpmdbFileRecord{
+			Path:   record.Path,
+			Mode:   pkg.RpmdbFileMode(record.Mode),
+			Size:   int(record.Size),
+			SHA256: record.SHA256,
+		})
+	}
+	return records, nil
 }

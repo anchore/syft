@@ -73,7 +73,6 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference,
 		}
 
 		for _, ref := range refs {
-
 			// don't consider directories (special case: there is no path information for /)
 			if ref.Path == "/" {
 				continue

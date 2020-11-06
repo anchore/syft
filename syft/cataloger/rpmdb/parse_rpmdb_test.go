@@ -33,10 +33,10 @@ func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...file.Path) ([]file.Refe
 	return refs, nil
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByGlob(_ ...string) ([]file.Reference, error) {
+func (r *rpmdbTestFileResolverMock) FilesByGlob(...string) ([]file.Reference, error) {
 	return nil, fmt.Errorf("not implemented")
 }
-func (r *rpmdbTestFileResolverMock) RelativeFileByPath(_ file.Reference, path string) (*file.Reference, error) {
+func (r *rpmdbTestFileResolverMock) RelativeFileByPath(file.Reference, string) (*file.Reference, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

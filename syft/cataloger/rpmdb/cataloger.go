@@ -27,17 +27,15 @@ func (c *Cataloger) Name() string {
 	return "rpmdb-cataloger"
 }
 
-// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
+// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
 func (c *Cataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, error) {
-
 	fileMatches, err := resolver.FilesByGlob(packagesGlob)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find rpmdb's by glob")
+		return nil, fmt.Errorf("failed to find rpmdb's by glob: %w", err)
 	}
 
 	var pkgs []pkg.Package
 	for _, ref := range fileMatches {
-
 		dbContents, err := resolver.FileContentsByRef(ref)
 		if err != nil {
 			return nil, err
