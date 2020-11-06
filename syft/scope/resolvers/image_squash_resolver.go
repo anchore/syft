@@ -26,16 +26,32 @@ func (r *ImageSquashResolver) FilesByPath(paths ...file.Path) ([]file.Reference,
 	uniqueFiles := make([]file.Reference, 0)
 
 	for _, path := range paths {
-		ref := r.img.SquashedTree().File(path)
+		tree := r.img.SquashedTree()
+		ref := tree.File(path)
 		if ref == nil {
 			// no file found, keep looking through layers
 			continue
 		}
 
+		// don't consider directories (special case: there is no path information for /)
+		if ref.Path == "/" {
+			continue
+		} else if r.img.FileCatalog.Exists(*ref) {
+			metadata, err := r.img.FileCatalog.Get(*ref)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+			}
+			if metadata.Metadata.IsDir {
+				continue
+			}
+		}
+
+		// a file may be a symlink, process it as such and resolve it
 		resolvedRef, err := r.img.ResolveLinkByImageSquash(*ref)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve link from img (ref=%+v): %w", ref, err)
 		}
+
 		if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
 			uniqueFileIDs.Add(*resolvedRef)
 			uniqueFiles = append(uniqueFiles, *resolvedRef)
@@ -57,6 +73,19 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference,
 		}
 
 		for _, ref := range refs {
+			// don't consider directories (special case: there is no path information for /)
+			if ref.Path == "/" {
+				continue
+			} else if r.img.FileCatalog.Exists(ref) {
+				metadata, err := r.img.FileCatalog.Get(ref)
+				if err != nil {
+					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+				}
+				if metadata.Metadata.IsDir {
+					continue
+				}
+			}
+
 			resolvedRefs, err := r.FilesByPath(ref.Path)
 			if err != nil {
 				return nil, fmt.Errorf("failed to find files by path (ref=%+v): %w", ref, err)

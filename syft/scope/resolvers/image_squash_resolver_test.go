@@ -1,8 +1,9 @@
 package resolvers
 
 import (
-	"github.com/anchore/stereoscope/pkg/imagetest"
 	"testing"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
 
 	"github.com/anchore/stereoscope/pkg/file"
 )
@@ -44,6 +45,11 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			resolveLayer: 8,
 			resolvePath:  "/link-dead",
 		},
+		{
+			name:        "ignore directories",
+			linkPath:    "/bin",
+			resolvePath: "",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -60,8 +66,18 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 				t.Fatalf("could not use resolver: %+v", err)
 			}
 
-			if len(refs) != 1 {
+			expectedRefs := 1
+			if c.resolvePath == "" {
+				expectedRefs = 0
+			}
+
+			if len(refs) != expectedRefs {
 				t.Fatalf("unexpected number of resolutions: %d", len(refs))
+			}
+
+			if expectedRefs == 0 {
+				// nothing else to assert
+				return
 			}
 
 			actual := refs[0]
@@ -119,6 +135,11 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 			resolveLayer: 8,
 			resolvePath:  "/link-dead",
 		},
+		{
+			name:        "ignore directories",
+			glob:        "**/bin",
+			resolvePath: "",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -135,8 +156,18 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 				t.Fatalf("could not use resolver: %+v", err)
 			}
 
-			if len(refs) != 1 {
+			expectedRefs := 1
+			if c.resolvePath == "" {
+				expectedRefs = 0
+			}
+
+			if len(refs) != expectedRefs {
 				t.Fatalf("unexpected number of resolutions: %d", len(refs))
+			}
+
+			if expectedRefs == 0 {
+				// nothing else to assert
+				return
 			}
 
 			actual := refs[0]

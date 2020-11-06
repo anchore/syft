@@ -48,6 +48,12 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 			expected: "test-fixtures/image-symlinks/file-1.txt",
 			refCount: 1,
 		},
+		{
+			name:     "directories ignored",
+			root:     "./test-fixtures/",
+			input:    "/image-symlinks",
+			refCount: 0,
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

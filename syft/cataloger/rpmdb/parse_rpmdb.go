@@ -6,18 +6,18 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/stereoscope/pkg/file"
+
+	"github.com/anchore/syft/syft/scope"
+
 	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// integrity check
-var _ common.ParserFn = parseRpmDB
-
 // parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
-func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseRpmDB(resolver scope.FileResolver, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
@@ -48,6 +48,11 @@ func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	allPkgs := make([]pkg.Package, 0)
 
 	for _, entry := range pkgList {
+		records, err := extractRpmdbFileRecords(resolver, entry)
+		if err != nil {
+			return nil, err
+		}
+
 		p := pkg.Package{
 			Name:    entry.Name,
 			Version: fmt.Sprintf("%s-%s", entry.Version, entry.Release), // this is what engine does
@@ -64,6 +69,7 @@ func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Vendor:    entry.Vendor,
 				License:   entry.License,
 				Size:      entry.Size,
+				Files:     records,
 			},
 		}
 
@@ -71,4 +77,27 @@ func parseRpmDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	}
 
 	return allPkgs, nil
+}
+
+func extractRpmdbFileRecords(resolver scope.FileResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
+	var records = make([]pkg.RpmdbFileRecord, 0)
+
+	for _, record := range entry.Files {
+		refs, err := resolver.FilesByPath(file.Path(record.Path))
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve path=%+v: %w", record.Path, err)
+		}
+		//only persist RPMDB file records which exist in the image/directory, otherwise ignore them
+		if len(refs) == 0 {
+			continue
+		}
+
+		records = append(records, pkg.RpmdbFileRecord{
+			Path:   record.Path,
+			Mode:   pkg.RpmdbFileMode(record.Mode),
+			Size:   int(record.Size),
+			SHA256: record.SHA256,
+		})
+	}
+	return records, nil
 }

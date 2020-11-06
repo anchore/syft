@@ -67,10 +67,24 @@ func (r *AllLayersResolver) FilesByPath(paths ...file.Path) ([]file.Reference, e
 
 	for _, path := range paths {
 		for idx, layerIdx := range r.layers {
-			ref := r.img.Layers[layerIdx].Tree.File(path)
+			tree := r.img.Layers[layerIdx].Tree
+			ref := tree.File(path)
 			if ref == nil {
 				// no file found, keep looking through layers
 				continue
+			}
+
+			// don't consider directories (special case: there is no path information for /)
+			if ref.Path == "/" {
+				continue
+			} else if r.img.FileCatalog.Exists(*ref) {
+				metadata, err := r.img.FileCatalog.Get(*ref)
+				if err != nil {
+					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+				}
+				if metadata.Metadata.IsDir {
+					continue
+				}
 			}
 
 			results, err := r.fileByRef(*ref, uniqueFileIDs, idx)
@@ -97,6 +111,19 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, e
 			}
 
 			for _, ref := range refs {
+				// don't consider directories (special case: there is no path information for /)
+				if ref.Path == "/" {
+					continue
+				} else if r.img.FileCatalog.Exists(ref) {
+					metadata, err := r.img.FileCatalog.Get(ref)
+					if err != nil {
+						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+					}
+					if metadata.Metadata.IsDir {
+						continue
+					}
+				}
+
 				results, err := r.fileByRef(ref, uniqueFileIDs, idx)
 				if err != nil {
 					return nil, err
