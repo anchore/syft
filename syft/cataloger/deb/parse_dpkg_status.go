@@ -2,40 +2,43 @@ package deb
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
-	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
 )
 
-// integrity check
-var _ common.ParserFn = parseDpkgStatus
-
 var errEndOfPackages = fmt.Errorf("no more packages to read")
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
-func parseDpkgStatus(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
 	var packages = make([]pkg.Package, 0)
 
-	for {
+	continueProcessing := true
+	for continueProcessing {
 		entry, err := parseDpkgStatusEntry(buffedReader)
 		if err != nil {
-			if err == errEndOfPackages {
-				break
+			if errors.Is(err, errEndOfPackages) {
+				continueProcessing = false
+			} else {
+				return nil, err
 			}
-			return nil, err
 		}
-		packages = append(packages, pkg.Package{
-			Name:         entry.Package,
-			Version:      entry.Version,
-			Type:         pkg.DebPkg,
-			MetadataType: pkg.DpkgMetadataType,
-			Metadata:     entry,
-		})
+
+		if entry.Package != "" {
+			packages = append(packages, pkg.Package{
+				Name:         entry.Package,
+				Version:      entry.Version,
+				Type:         pkg.DebPkg,
+				MetadataType: pkg.DpkgMetadataType,
+				Metadata:     entry,
+			})
+		}
 	}
 
 	return packages, nil
@@ -43,14 +46,16 @@ func parseDpkgStatus(_ string, reader io.Reader) ([]pkg.Package, error) {
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
 func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
-	dpkgFields := make(map[string]string)
+	dpkgFields := make(map[string]interface{})
+	var retErr error
 	var key string
 
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				return pkg.DpkgMetadata{}, errEndOfPackages
+				retErr = errEndOfPackages
+				break
 			}
 			return pkg.DpkgMetadata{}, err
 		}
@@ -82,18 +87,16 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err err
 			dpkgFields[key] = val
 		default:
 			// parse a new key
-			if i := strings.Index(line, ":"); i > 0 {
-				key = strings.TrimSpace(line[0:i])
-				val := strings.TrimSpace(line[i+1:])
-
-				if _, ok := dpkgFields[key]; ok {
-					return pkg.DpkgMetadata{}, fmt.Errorf("duplicate key discovered: %s", key)
-				}
-
-				dpkgFields[key] = val
-			} else {
-				return pkg.DpkgMetadata{}, fmt.Errorf("cannot parse field from line: '%s'", line)
+			var val interface{}
+			key, val, err = handleNewKeyValue(line)
+			if err != nil {
+				return pkg.DpkgMetadata{}, err
 			}
+
+			if _, ok := dpkgFields[key]; ok {
+				return pkg.DpkgMetadata{}, fmt.Errorf("duplicate key discovered: %s", key)
+			}
+			dpkgFields[key] = val
 		}
 	}
 
@@ -102,5 +105,29 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err err
 		return pkg.DpkgMetadata{}, err
 	}
 
-	return entry, nil
+	return entry, retErr
+}
+
+// handleNewKeyValue parse a new key-value pair from the given unprocessed line
+func handleNewKeyValue(line string) (string, interface{}, error) {
+	if i := strings.Index(line, ":"); i > 0 {
+		var key = strings.TrimSpace(line[0:i])
+		// mapstruct cant handle "-"
+		key = strings.ReplaceAll(key, "-", "")
+		val := strings.TrimSpace(line[i+1:])
+
+		// further processing of values based on the key that was discovered
+		switch key {
+		case "InstalledSize":
+			numVal, err := strconv.Atoi(val)
+			if err != nil {
+				return "", nil, fmt.Errorf("bad installed-size value=%q: %w", val, err)
+			}
+			return key, numVal, nil
+		default:
+			return key, val, nil
+		}
+	}
+
+	return "", nil, fmt.Errorf("cannot parse field from line: '%s'", line)
 }

@@ -12,7 +12,8 @@
      "path": "/somefile-1.txt",
      "layerIndex": 0
     }
-   ]
+   ],
+   "licenses": null
   },
   {
    "name": "package-2",
@@ -26,7 +27,8 @@
      "path": "/somefile-2.txt",
      "layerIndex": 1
     }
-   ]
+   ],
+   "licenses": null
   }
  ],
  "source": {

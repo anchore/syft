@@ -10,6 +10,19 @@
                         },
                         "type": "array"
                     },
+                    "licenses": {
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        ]
+                    },
                     "locations": {
                         "items": {
                             "anyOf": [
@@ -53,55 +66,62 @@
                                 "type": "integer"
                             },
                             "files": {
-                                "items": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "properties": {
-                                                "checksum": {
+                                "anyOf": [
+                                    {
+                                        "type": "null"
+                                    },
+                                    {
+                                        "items": {
+                                            "anyOf": [
+                                                {
                                                     "type": "string"
                                                 },
-                                                "digest": {
+                                                {
                                                     "properties": {
-                                                        "algorithm": {
+                                                        "checksum": {
                                                             "type": "string"
                                                         },
-                                                        "value": {
+                                                        "digest": {
+                                                            "properties": {
+                                                                "algorithm": {
+                                                                    "type": "string"
+                                                                },
+                                                                "value": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "algorithm",
+                                                                "value"
+                                                            ],
+                                                            "type": "object"
+                                                        },
+                                                        "ownerGid": {
+                                                            "type": "string"
+                                                        },
+                                                        "ownerUid": {
+                                                            "type": "string"
+                                                        },
+                                                        "path": {
+                                                            "type": "string"
+                                                        },
+                                                        "permissions": {
+                                                            "type": "string"
+                                                        },
+                                                        "size": {
                                                             "type": "string"
                                                         }
                                                     },
                                                     "required": [
-                                                        "algorithm",
-                                                        "value"
+                                                        "path"
                                                     ],
                                                     "type": "object"
-                                                },
-                                                "ownerGid": {
-                                                    "type": "string"
-                                                },
-                                                "ownerUid": {
-                                                    "type": "string"
-                                                },
-                                                "path": {
-                                                    "type": "string"
-                                                },
-                                                "permissions": {
-                                                    "type": "string"
-                                                },
-                                                "size": {
-                                                    "type": "string"
                                                 }
-                                            },
-                                            "required": [
-                                                "path"
-                                            ],
-                                            "type": "object"
-                                        }
-                                    ]
-                                },
-                                "type": "array"
+                                            ]
+                                        },
+                                        "type": "array"
+                                    }
+                                ]
                             },
                             "gitCommitOfApkPort": {
                                 "type": "string"
@@ -307,6 +327,7 @@
                 },
                 "required": [
                     "foundBy",
+                    "licenses",
                     "locations",
                     "name",
                     "type",

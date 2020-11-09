@@ -24,17 +24,19 @@ func TestSinglePackage(t *testing.T) {
 		{
 			name: "Test Single Package",
 			expected: pkg.DpkgMetadata{
-				Package:      "apt",
-				Source:       "apt-dev",
-				Version:      "1.8.2",
-				Architecture: "amd64",
+				Package:       "apt",
+				Source:        "apt-dev",
+				Version:       "1.8.2",
+				Architecture:  "amd64",
+				InstalledSize: 4064,
+				Maintainer:    "APT Development Team <deity@lists.debian.org>",
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/single")
+			file, err := os.Open("test-fixtures/status/single")
 			if err != nil {
 				t.Fatal("Unable to read test_fixtures/single: ", err)
 			}
@@ -66,15 +68,19 @@ func TestMultiplePackages(t *testing.T) {
 			name: "Test Multiple Package",
 			expected: []pkg.DpkgMetadata{
 				{
-					Package:      "tzdata",
-					Version:      "2020a-0+deb10u1",
-					Source:       "tzdata-dev",
-					Architecture: "all",
+					Package:       "tzdata",
+					Version:       "2020a-0+deb10u1",
+					Source:        "tzdata-dev",
+					Architecture:  "all",
+					InstalledSize: 3036,
+					Maintainer:    "GNU Libc Maintainers <debian-glibc@lists.debian.org>",
 				},
 				{
-					Package:      "util-linux",
-					Version:      "2.33.1-0.1",
-					Architecture: "amd64",
+					Package:       "util-linux",
+					Version:       "2.33.1-0.1",
+					Architecture:  "amd64",
+					InstalledSize: 4327,
+					Maintainer:    "LaMont Jones <lamont@debian.org>",
 				},
 			},
 		},
@@ -82,7 +88,7 @@ func TestMultiplePackages(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/multiple")
+			file, err := os.Open("test-fixtures/status/multiple")
 			if err != nil {
 				t.Fatal("Unable to read: ", err)
 			}
@@ -93,7 +99,7 @@ func TestMultiplePackages(t *testing.T) {
 				}
 			}()
 
-			pkgs, err := parseDpkgStatus(file.Name(), file)
+			pkgs, err := parseDpkgStatus(file)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}
