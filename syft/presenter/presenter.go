@@ -28,7 +28,7 @@ type Presenter interface {
 func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog, d *distro.Distro) Presenter {
 	switch option {
 	case JSONPresenter:
-		return json.NewPresenter(catalog, s)
+		return json.NewPresenter(catalog, s, *d)
 	case TextPresenter:
 		return text.NewPresenter(catalog, s)
 	case TablePresenter:

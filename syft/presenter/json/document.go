@@ -1,16 +1,24 @@
 package json
 
 import (
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/scope"
 )
 
 type Document struct {
-	Artifacts []Artifact `json:"artifacts"`
-	Source    Source     `json:"source"`
+	Artifacts []Artifact   `json:"artifacts"`
+	Source    Source       `json:"source"`
+	Distro    Distribution `json:"distro"`
 }
 
-func NewDocument(catalog *pkg.Catalog, s scope.Scope) (Document, error) {
+// Distritbution provides information about a detected Linux Distribution
+type Distribution struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+func NewDocument(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) (Document, error) {
 	doc := Document{
 		Artifacts: make([]Artifact, 0),
 	}
@@ -20,6 +28,14 @@ func NewDocument(catalog *pkg.Catalog, s scope.Scope) (Document, error) {
 		return Document{}, nil
 	}
 	doc.Source = src
+	distroName := d.Name()
+	if distroName == "UnknownDistroType" {
+		distroName = ""
+	}
+	doc.Distro = Distribution{
+		Name:    distroName,
+		Version: d.FullVersion(),
+	}
 
 	for _, p := range catalog.Sorted() {
 		art, err := NewArtifact(p, s)

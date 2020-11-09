@@ -26,5 +26,9 @@
  "source": {
   "type": "directory",
   "target": "/some/path"
+ },
+ "distro": {
+  "name": "",
+  "version": ""
  }
 }
