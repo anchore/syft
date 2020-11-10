@@ -16,6 +16,7 @@ type Document struct {
 type Distribution struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+	IDLike  string `json:"idLike"`
 }
 
 func NewDocument(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) (Document, error) {
@@ -35,6 +36,7 @@ func NewDocument(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) (Document
 	doc.Distro = Distribution{
 		Name:    distroName,
 		Version: d.FullVersion(),
+		IDLike:  d.IDLike,
 	}
 
 	for _, p := range catalog.Sorted() {
