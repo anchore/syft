@@ -62,7 +62,7 @@ func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope *scope.Scope, p
 
 	output := bytes.NewBufferString("")
 
-	d, err := distro.NewDistro(distro.CentOS, "5")
+	d, err := distro.NewDistro(distro.CentOS, "5", "rhel fedora")
 	if err != nil {
 		t.Fatalf("bad distro: %+v", err)
 	}

@@ -24,7 +24,7 @@ func TestDistroImage(t *testing.T) {
 		t.Fatalf("could not find distro")
 	}
 
-	expected, err := distro.NewDistro(distro.Busybox, "1.31.1")
+	expected, err := distro.NewDistro(distro.Busybox, "1.31.1", "")
 	if err != nil {
 		t.Fatalf("could not create distro: %+v", err)
 	}

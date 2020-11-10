@@ -59,6 +59,7 @@
  },
  "distro": {
   "name": "",
-  "version": ""
+  "version": "",
+  "idLike": ""
  }
 }
