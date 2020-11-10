@@ -33,7 +33,7 @@ func TestDistro_FullVersion(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("%s:%s", test.dist, test.version)
 		t.Run(name, func(t *testing.T) {
-			d, err := NewDistro(test.dist, test.version)
+			d, err := NewDistro(test.dist, test.version, "")
 			if err != nil {
 				t.Errorf("could not create distro='%+v:%+v': %+v", test.dist, test.version, err)
 			}
@@ -53,29 +53,34 @@ func TestDistro_MajorVersion(t *testing.T) {
 		dist     Type
 		version  string
 		expected string
+		like     string
 	}{
 		{
 			version:  "8",
 			expected: "8",
+			like:     "",
 		},
 		{
 			version:  "18.04",
 			expected: "18",
+			like:     "debian",
 		},
 		{
 			version:  "0",
 			expected: "0",
+			like:     "",
 		},
 		{
 			version:  "18.1.2",
 			expected: "18",
+			like:     "debian",
 		},
 	}
 
 	for _, test := range tests {
 		name := fmt.Sprintf("%s:%s", test.dist, test.version)
 		t.Run(name, func(t *testing.T) {
-			d, err := NewDistro(test.dist, test.version)
+			d, err := NewDistro(test.dist, test.version, test.like)
 			if err != nil {
 				t.Errorf("could not create distro='%+v:%+v': %+v", test.dist, test.version, err)
 			}

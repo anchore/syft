@@ -81,7 +81,7 @@ identifyLoop:
 	return distro
 }
 
-func assemble(name, version string) *Distro {
+func assemble(name, version, like string) *Distro {
 	distroType, ok := IDMapping[name]
 
 	// Both distro and version must be present
@@ -90,7 +90,7 @@ func assemble(name, version string) *Distro {
 	}
 
 	if ok {
-		distro, err := NewDistro(distroType, version)
+		distro, err := NewDistro(distroType, version, like)
 		if err != nil {
 			return nil
 		}
@@ -101,7 +101,7 @@ func assemble(name, version string) *Distro {
 }
 
 func parseOsRelease(contents string) *Distro {
-	id, vers := "", ""
+	id, vers, like := "", "", ""
 	for _, line := range strings.Split(contents, "\n") {
 		parts := strings.Split(line, "=")
 		prefix := parts[0]
@@ -112,10 +112,12 @@ func parseOsRelease(contents string) *Distro {
 			id = strings.TrimSpace(value)
 		case "VERSION_ID":
 			vers = strings.TrimSpace(value)
+		case "ID_LIKE":
+			like = strings.TrimSpace(value)
 		}
 	}
 
-	return assemble(id, vers)
+	return assemble(id, vers, like)
 }
 
 var busyboxVersionMatcher = regexp.MustCompile(`BusyBox v[\d\.]+`)
@@ -125,7 +127,7 @@ func parseBusyBox(contents string) *Distro {
 	for _, match := range matches {
 		parts := strings.Split(match, " ")
 		version := strings.ReplaceAll(parts[1], "v", "")
-		distro := assemble("busybox", version)
+		distro := assemble("busybox", version, "")
 		if distro != nil {
 			return distro
 		}
