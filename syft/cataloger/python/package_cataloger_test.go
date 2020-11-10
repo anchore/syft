@@ -69,20 +69,20 @@ func newTestResolver(metaPath, recordPath, topPath string) *pythonTestResolverMo
 }
 
 func (r *pythonTestResolverMock) FileContentsByRef(ref file.Reference) (string, error) {
-	switch ref.Path {
-	case r.topLevelRef.Path:
+	switch {
+	case r.topLevelRef != nil && ref.Path == r.topLevelRef.Path:
 		b, err := ioutil.ReadAll(r.topLevelReader)
 		if err != nil {
 			return "", err
 		}
 		return string(b), nil
-	case r.metadataRef.Path:
+	case ref.Path == r.metadataRef.Path:
 		b, err := ioutil.ReadAll(r.metadataReader)
 		if err != nil {
 			return "", err
 		}
 		return string(b), nil
-	case r.recordRef.Path:
+	case ref.Path == r.recordRef.Path:
 		b, err := ioutil.ReadAll(r.recordReader)
 		if err != nil {
 			return "", err
@@ -188,7 +188,6 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			// in cases where the metadata file is available and the record is not we should still record there is a package
 			// additionally empty top_level.txt files should not result in an error
 			MetadataFixture: "test-fixtures/partial.dist-info/METADATA",
-			TopLevelFixture: "test-fixtures/partial.dist-info/top_level.txt",
 			ExpectedPackage: pkg.Package{
 				Name:         "Pygments",
 				Version:      "2.6.1",

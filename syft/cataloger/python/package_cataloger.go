@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
+
 	"github.com/anchore/stereoscope/pkg/file"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -123,7 +125,8 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver scope.Resolver, metada
 		return nil, nil, err
 	}
 	if topLevelRef == nil {
-		return nil, nil, fmt.Errorf("missing python package top_level.txt (package=%q)", string(metadataRef.Path))
+		log.Warnf("missing python package top_level.txt (package=%q)", string(metadataRef.Path))
+		return nil, nil, nil
 	}
 
 	sources = append(sources, *topLevelRef)

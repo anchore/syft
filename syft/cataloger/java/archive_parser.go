@@ -266,7 +266,7 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 		nestedPkgs, err := parseJavaArchive(nestedPath, archiveReadCloser)
 		if err != nil {
 			if closeErr := archiveReadCloser.Close(); closeErr != nil {
-				log.Errorf("unable to close archived file from tempdir: %+v", closeErr)
+				log.Warnf("unable to close archived file from tempdir: %+v", closeErr)
 			}
 			return nil, fmt.Errorf("unable to process nested java archive (%s): %w", archivePath, err)
 		}
