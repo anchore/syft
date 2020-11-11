@@ -9,3 +9,7 @@ dmg {
   output_path = "./dist/output.dmg"
   volume_name = "Syft"
 }
+
+zip {
+  output_path = "./dist/output.zip"
+}
