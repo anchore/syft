@@ -6,10 +6,6 @@ release:
   # If set to true, will not auto-publish the release. This is done to allow us to review the changelog before publishing.
   draft: true
 
-  # This ensures any macOS signed artifacts get included with the release.
-  extra_files:
-    - glob: "./dist/*.dmg"
-
 builds:
   - binary: syft
     id: syft
@@ -62,14 +58,17 @@ archives:
 
 signs:
   - artifacts: checksum
-    ids:
-      - syft # i.e. Linux only
-    args: ["--output", "${signature}", "--detach-sign", "${artifact}"]
+    cmd: sh
+    args:
+      - '-c'
+      # we should not include the zip artifact, as the artifact is mutated throughout the next macOS notarization step
+      # note: sed -i is not portable
+      - 'sed "/.*\.zip/d" ${artifact} > tmpfile && mv tmpfile ${artifact} && gpg --output ${signature} --detach-sign ${artifact}'
   - id: syft-macos-signing
-    signature: "./dist/syft_{{ .Version }}_darwin_amd64.dmg"
     ids:
       - syft-macos
     cmd: ./.github/scripts/mac-sign-and-notarize.sh
+    signature: "syft_${VERSION}_darwin_amd64.dmg" # This is somewhat unintuitive. This gets the DMG file recognized as an artifact. In fact, both a DMG and a ZIP file are being produced by this signing step.
     args:
       - "{{ .IsSnapshot }}"
       - "gon.hcl"
