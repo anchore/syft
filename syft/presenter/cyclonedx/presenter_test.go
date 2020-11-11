@@ -62,7 +62,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	d, err := distro.NewDistro(distro.Ubuntu, "20.04")
+	d, err := distro.NewDistro(distro.Ubuntu, "20.04", "debian")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +152,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	d, err := distro.NewDistro(distro.RedHat, "8")
+	d, err := distro.NewDistro(distro.RedHat, "8", "")
 	if err != nil {
 		t.Fatal(err)
 	}

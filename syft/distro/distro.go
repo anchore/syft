@@ -10,6 +10,7 @@ type Distro struct {
 	Type       Type
 	Version    *hashiVer.Version
 	RawVersion string
+	IDLike     string
 }
 
 // NewUnknownDistro creates a standardized Distro object for unidentifiable distros
@@ -19,7 +20,7 @@ func NewUnknownDistro() Distro {
 	}
 }
 
-func NewDistro(t Type, ver string) (Distro, error) {
+func NewDistro(t Type, ver, like string) (Distro, error) {
 	if ver == "" {
 		return Distro{Type: t}, nil
 	}
@@ -31,6 +32,7 @@ func NewDistro(t Type, ver string) (Distro, error) {
 		Type:       t,
 		Version:    verObj,
 		RawVersion: ver,
+		IDLike:     like,
 	}, nil
 }
 
