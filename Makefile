@@ -273,10 +273,13 @@ release: clean-dist ci-bootstrap-mac changelog-release ## Build and publish fina
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# release
-	bash -c "BUILD_GIT_TREE_STATE=$(GITTREESTATE) $(TEMPDIR)/goreleaser \
-		--rm-dist \
-		--config $(TEMPDIR)/goreleaser.yaml \
-		--release-notes <(cat CHANGELOG.md)"
+	bash -c "\
+		BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
+		VERSION=$(VERSION) \
+		$(TEMPDIR)/goreleaser \
+			--rm-dist \
+			--config $(TEMPDIR)/goreleaser.yaml \
+			--release-notes <(cat CHANGELOG.md)"
 
 	# verify checksum signatures
 	.github/scripts/verify-signature.sh "$(DISTDIR)"
