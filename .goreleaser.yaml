@@ -57,6 +57,13 @@ archives:
       - syft-macos
 
 signs:
+  - artifacts: checksum
+    cmd: sh
+    args:
+      - '-c'
+      # we should not include the zip artifact, as the artifact is mutated throughout the next macOS notarization step
+      # note: sed -i is not portable
+      - 'sed "/.*\.zip/d" ${artifact} > tmpfile && mv tmpfile ${artifact} && gpg --output ${signature} --detach-sign ${artifact}'
   - id: syft-macos-signing
     ids:
       - syft-macos
