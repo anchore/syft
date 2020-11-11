@@ -11,6 +11,7 @@ type Artifact struct {
 	Type      string      `json:"type"`
 	FoundBy   []string    `json:"foundBy"`
 	Locations Locations   `json:"locations,omitempty"`
+	Licenses  []string    `json:"licenses"`
 	Metadata  interface{} `json:"metadata,omitempty"`
 }
 
@@ -26,6 +27,7 @@ func NewArtifact(p *pkg.Package, s scope.Scope) (Artifact, error) {
 		Type:      string(p.Type),
 		FoundBy:   []string{p.FoundBy},
 		Locations: locations,
+		Licenses:  p.Licenses,
 		Metadata:  p.Metadata,
 	}, nil
 }

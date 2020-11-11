@@ -1,0 +1,13 @@
+Files: src/js/editline/*
+Copyright: 1993, John Doe
+           1993, Joe Average
+License: MPL-1.1 or GPL-2 or LGPL-2.1
+
+License: MPL-1.1
+ [LICENSE TEXT]
+
+License: GPL-2
+ [LICENSE TEXT]
+
+License: LGPL-2.1
+ [LICENSE TEXT]
