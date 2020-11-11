@@ -40,7 +40,7 @@ func parseYarnLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 		case composedNameExp.MatchString(line):
 			name := composedNameExp.FindString(line)
 			if len(name) == 0 {
-				log.Errorf("unable to parse line: '%s'", line)
+				log.Warnf("unable to parse yarn.lock line: %q", line)
 			}
 			currentName = strings.TrimLeft(name, "\"")
 		case simpleNameExp.MatchString(line):

@@ -69,7 +69,7 @@ func (a archiveFilename) pkgType() pkg.Type {
 
 func (a archiveFilename) version() string {
 	if len(a.fields) > 1 {
-		log.Errorf("discovered multiple name-version pairings from %q: %+v", a.raw, a.fields)
+		log.Warnf("discovered multiple name-version pairings from %q: %+v", a.raw, a.fields)
 		return ""
 	} else if len(a.fields) < 1 {
 		return ""

@@ -109,11 +109,11 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 		case "a", "M":
 			ownershipFields := strings.Split(value, ":")
 			if len(ownershipFields) < 3 {
-				log.Errorf("unexpected APK ownership field: %q", value)
+				log.Warnf("unexpected APK ownership field: %q", value)
 				continue
 			}
 			if fileRecord == nil {
-				log.Errorf("ownership field with no parent record: %q", value)
+				log.Warnf("ownership field with no parent record: %q", value)
 				continue
 			}
 			fileRecord.OwnerUID = ownershipFields[0]
@@ -123,7 +123,7 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 			// "0:0:755:Q1JaDEHQHBbizhEzoWK1YxuraNU/4="
 		case "Z":
 			if fileRecord == nil {
-				log.Errorf("checksum field with no parent record: %q", value)
+				log.Warnf("checksum field with no parent record: %q", value)
 				continue
 			}
 			fileRecord.Checksum = value

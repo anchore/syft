@@ -68,7 +68,7 @@ func (c *GenericCataloger) selectFiles(resolver scope.FileResolver) []file.Refer
 	for path, parser := range c.pathParsers {
 		files, err := resolver.FilesByPath(file.Path(path))
 		if err != nil {
-			log.Errorf("cataloger failed to select files by path: %+v", err)
+			log.Warnf("cataloger failed to select files by path: %+v", err)
 		}
 		if files != nil {
 			c.register(files, parser)
@@ -79,7 +79,7 @@ func (c *GenericCataloger) selectFiles(resolver scope.FileResolver) []file.Refer
 	for globPattern, parser := range c.globParsers {
 		fileMatches, err := resolver.FilesByGlob(globPattern)
 		if err != nil {
-			log.Errorf("failed to find files by glob: %s", globPattern)
+			log.Warnf("failed to find files by glob: %s", globPattern)
 		}
 		if fileMatches != nil {
 			c.register(fileMatches, parser)
@@ -98,14 +98,14 @@ func (c *GenericCataloger) catalog(contents map[file.Reference]string) ([]pkg.Pa
 	for reference, parser := range c.parsers {
 		content, ok := contents[reference]
 		if !ok {
-			log.Errorf("cataloger '%s' missing file content: %+v", c.upstreamCataloger, reference)
+			log.Warnf("cataloger '%s' missing file content: %+v", c.upstreamCataloger, reference)
 			continue
 		}
 
 		entries, err := parser(string(reference.Path), strings.NewReader(content))
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Errorf("cataloger '%s' failed to parse entries (reference=%+v): %+v", c.upstreamCataloger, reference, err)
+			log.Warnf("cataloger '%s' failed to parse entries (reference=%+v): %+v", c.upstreamCataloger, reference, err)
 			continue
 		}
 

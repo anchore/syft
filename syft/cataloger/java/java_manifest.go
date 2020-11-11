@@ -77,7 +77,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 					// per the manifest spec (https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest)
 					// this should never happen. If it does we want to know about it, but not necessarily stop
 					// cataloging entirely... for this reason we only log.
-					log.Errorf("java manifest section found without a name: %s", path)
+					log.Warnf("java manifest section found without a name: %s", path)
 					name = strconv.Itoa(i)
 				} else {
 					delete(s, "Name")
