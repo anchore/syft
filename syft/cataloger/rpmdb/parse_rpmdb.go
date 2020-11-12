@@ -17,7 +17,7 @@ import (
 )
 
 // parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
-func parseRpmDB(resolver scope.FileResolver, reader io.Reader) ([]pkg.Package, error) {
+func parseRpmDB(resolver scope.FileResolver, dbRef file.Reference, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
@@ -57,6 +57,7 @@ func parseRpmDB(resolver scope.FileResolver, reader io.Reader) ([]pkg.Package, e
 			Name:    entry.Name,
 			Version: fmt.Sprintf("%s-%s", entry.Version, entry.Release), // this is what engine does
 			//Version: fmt.Sprintf("%d:%s-%s.%s", entry.Epoch, entry.Version, entry.Release, entry.Arch),
+			Source:       []file.Reference{dbRef},
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmdbMetadataType,
 			Metadata: pkg.RpmdbMetadata{
