@@ -17,7 +17,9 @@ Similar to the cataloging process, Linux distribution identification is also per
 package syft
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -25,6 +27,7 @@ import (
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/logger"
 	"github.com/anchore/syft/syft/pkg"
+	jsonPresenter "github.com/anchore/syft/syft/presenter/json"
 	"github.com/anchore/syft/syft/scope"
 	"github.com/wagoodman/go-partybus"
 )
@@ -77,6 +80,42 @@ func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
 	}
 
 	return cataloger.Catalog(s.Resolver, catalogers...)
+}
+
+// TODO: we shouldn't return the jsonPresenter.Image object! this is leaky
+func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, error) {
+	var doc jsonPresenter.Document
+	decoder := json.NewDecoder(reader)
+	if err := decoder.Decode(&doc); err != nil {
+		return nil, nil, err
+	}
+
+	var pkgs = make([]pkg.Package, len(doc.Artifacts))
+	for i, a := range doc.Artifacts {
+		pkgs[i] = a.ToPackage()
+	}
+
+	catalog := pkg.NewCatalog(pkgs...)
+
+	var distroType distro.Type
+	if doc.Distro.Name == "" {
+		distroType = distro.UnknownDistroType
+	} else {
+		distroType = distro.Type(doc.Distro.Name)
+	}
+
+	d, err := distro.NewDistro(distroType, doc.Distro.Version, doc.Distro.IDLike)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	//var theImg *jsonPresenter.Image
+	//if doc.Source.Type == "image" {
+	//	img := doc.Source.Target.(jsonPresenter.Image)
+	//	theImg = &img
+	//}
+
+	return catalog, &d, nil
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

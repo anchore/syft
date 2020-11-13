@@ -19,12 +19,18 @@ type Catalog struct {
 }
 
 // NewCatalog returns a new empty Catalog
-func NewCatalog() *Catalog {
-	return &Catalog{
+func NewCatalog(pkgs ...Package) *Catalog {
+	catalog := Catalog{
 		byID:   make(map[ID]*Package),
 		byType: make(map[Type][]*Package),
 		byFile: make(map[file.Reference][]*Package),
 	}
+
+	for _, p := range pkgs {
+		catalog.Add(p)
+	}
+
+	return &catalog
 }
 
 // PackageCount returns the total number of packages that have been added.
@@ -111,6 +117,9 @@ func (c *Catalog) Sorted(types ...Type) []*Package {
 
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
+			if pkgs[i].Version == pkgs[j].Version {
+				return pkgs[i].Type < pkgs[j].Type
+			}
 			return pkgs[i].Version < pkgs[j].Version
 		}
 		return pkgs[i].Name < pkgs[j].Name

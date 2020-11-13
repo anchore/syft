@@ -57,5 +57,5 @@ func (d Distro) String() string {
 
 // Name provides a string repr of the distro
 func (d Distro) Name() string {
-	return d.Type.String()
+	return string(d.Type)
 }

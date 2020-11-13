@@ -78,8 +78,8 @@ func TestIdentifyDistro(t *testing.T) {
 
 	observedDistros := internal.NewStringSet()
 	definedDistros := internal.NewStringSet()
-	for _, d := range All {
-		definedDistros.Add(d.String())
+	for _, distroType := range All {
+		definedDistros.Add(string(distroType))
 	}
 
 	for _, test := range tests {

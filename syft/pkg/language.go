@@ -1,24 +1,15 @@
 package pkg
 
+type Language string
+
 const (
-	UnknownLanguage Language = iota
-	Java
-	JavaScript
-	Python
-	Ruby
-	Go
+	UnknownLanguage Language = "UnknownLanguage"
+	Java            Language = "java"
+	JavaScript      Language = "javascript"
+	Python          Language = "python"
+	Ruby            Language = "ruby"
+	Go              Language = "go"
 )
-
-type Language uint
-
-var languageStr = []string{
-	"UnknownLanguage",
-	"java",
-	"javascript",
-	"python",
-	"ruby",
-	"go",
-}
 
 var AllLanguages = []Language{
 	Java,
@@ -28,9 +19,6 @@ var AllLanguages = []Language{
 	Go,
 }
 
-func (t Language) String() string {
-	if int(t) >= len(languageStr) {
-		return languageStr[0]
-	}
-	return languageStr[t]
+func (l Language) String() string {
+	return string(l)
 }
