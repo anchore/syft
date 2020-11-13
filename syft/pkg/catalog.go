@@ -4,7 +4,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/source"
+
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -14,7 +15,7 @@ var nextPackageID int64
 type Catalog struct {
 	byID   map[ID]*Package
 	byType map[Type][]*Package
-	byFile map[file.Reference][]*Package
+	byFile map[source.Location][]*Package
 	lock   sync.RWMutex
 }
 
@@ -23,7 +24,7 @@ func NewCatalog(pkgs ...Package) *Catalog {
 	catalog := Catalog{
 		byID:   make(map[ID]*Package),
 		byType: make(map[Type][]*Package),
-		byFile: make(map[file.Reference][]*Package),
+		byFile: make(map[source.Location][]*Package),
 	}
 
 	for _, p := range pkgs {
@@ -44,8 +45,8 @@ func (c *Catalog) Package(id ID) *Package {
 }
 
 // PackagesByFile returns all packages that were discovered from the given source file reference.
-func (c *Catalog) PackagesByFile(ref file.Reference) []*Package {
-	return c.byFile[ref]
+func (c *Catalog) PackagesByFile(location source.Location) []*Package {
+	return c.byFile[location]
 }
 
 // Add a package to the Catalog.
@@ -71,7 +72,7 @@ func (c *Catalog) Add(p Package) {
 	c.byType[p.Type] = append(c.byType[p.Type], &p)
 
 	// store by file references
-	for _, s := range p.Source {
+	for _, s := range p.Locations {
 		_, ok := c.byFile[s]
 		if !ok {
 			c.byFile[s] = make([]*Package, 0)

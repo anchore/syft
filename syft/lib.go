@@ -7,8 +7,8 @@ Here is what the main execution path for syft does:
 	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
 	3. Invoke a single presenter to show the contents of the catalog
 
-A Source object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
-providing a way to inspect paths and file content within the image. The Source object, not the image object, is used
+A Locations object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
+providing a way to inspect paths and file content within the image. The Locations object, not the image object, is used
 throughout the main execution path. This abstraction allows for decoupling of what is cataloged (a docker image, an OCI
 image, a filesystem, etc) and how it is cataloged (the individual catalogers).
 
@@ -110,8 +110,8 @@ func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, error) {
 	}
 
 	//var theImg *jsonPresenter.Image
-	//if doc.Source.Type == "image" {
-	//	img := doc.Source.Target.(jsonPresenter.Image)
+	//if doc.Locations.Type == "image" {
+	//	img := doc.Locations.Target.(jsonPresenter.Image)
 	//	theImg = &img
 	//}
 

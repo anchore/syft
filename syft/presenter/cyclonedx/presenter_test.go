@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/syft/syft/distro"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -29,7 +28,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		Version: "1.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-1",
-		Source: []file.Reference{
+		Locations: []source.Location{
 			{Path: "/some/path/pkg1"},
 		},
 		Metadata: pkg.DpkgMetadata{
@@ -43,7 +42,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Source: []file.Reference{
+		Locations: []source.Location{
 			{Path: "/some/path/pkg1"},
 		},
 		Licenses: []string{
@@ -105,8 +104,8 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package1",
 		Version: "1.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-1.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-1",
@@ -125,8 +124,8 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package2",
 		Version: "2.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-2.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-2",

@@ -35,15 +35,15 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	}
 
 	var pkgs []pkg.Package
-	for _, dbRef := range fileMatches {
-		dbContents, err := resolver.FileContentsByRef(dbRef)
+	for _, location := range fileMatches {
+		dbContents, err := resolver.FileContentsByLocation(location)
 		if err != nil {
 			return nil, err
 		}
 
-		pkgs, err = parseRpmDB(resolver, dbRef, strings.NewReader(dbContents))
+		pkgs, err = parseRpmDB(resolver, location, strings.NewReader(dbContents))
 		if err != nil {
-			return nil, fmt.Errorf("unable to catalog rpmdb package=%+v: %w", dbRef.Path, err)
+			return nil, fmt.Errorf("unable to catalog rpmdb package=%+v: %w", location.Path, err)
 		}
 	}
 	return pkgs, nil

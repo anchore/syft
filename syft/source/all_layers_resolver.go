@@ -94,7 +94,7 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 				return nil, err
 			}
 			for _, result := range results {
-				uniqueLocations = append(uniqueLocations, newLocationFromImage(result, r.img))
+				uniqueLocations = append(uniqueLocations, NewLocationFromImage(result, r.img))
 			}
 		}
 	}
@@ -132,7 +132,7 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 					return nil, err
 				}
 				for _, result := range results {
-					uniqueLocations = append(uniqueLocations, newLocationFromImage(result, r.img))
+					uniqueLocations = append(uniqueLocations, NewLocationFromImage(result, r.img))
 				}
 			}
 		}
@@ -152,20 +152,20 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 		return nil
 	}
 
-	relativeLocation := newLocationFromImage(*relativeRef, r.img)
+	relativeLocation := NewLocationFromImage(*relativeRef, r.img)
 
 	return &relativeLocation
 }
 
 // MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer.
-func (r *AllLayersResolver) MultipleFileContentsByRef(locations []Location) (map[Location]string, error) {
+func (r *AllLayersResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
 	return mapLocationRefs(r.img.MultipleFileContentsByRef, locations)
 }
 
 // FileContentsByRef fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
-func (r *AllLayersResolver) FileContentsByRef(location Location) (string, error) {
+func (r *AllLayersResolver) FileContentsByLocation(location Location) (string, error) {
 	return r.img.FileContentsByRef(location.ref)
 }
 

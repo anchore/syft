@@ -7,8 +7,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/docker/distribution/reference"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/bmatcuk/doublestar"
 )
@@ -48,7 +46,7 @@ func (s DirectoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
-		references = append(references, newLocation(userStrPath))
+		references = append(references, NewLocation(userStrPath))
 	}
 
 	return references, nil
@@ -75,7 +73,7 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 				continue
 			}
 
-			result = append(result, newLocation(matchedPath))
+			result = append(result, NewLocation(matchedPath))
 		}
 	}
 
@@ -95,7 +93,7 @@ func (s *DirectoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 }
 
 // MultipleFileContentsByRef returns the file contents for all file.References relative a directory.
-func (s DirectoryResolver) MultipleFileContentsByRef(locations []Location) (map[Location]string, error) {
+func (s DirectoryResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
 	refContents := make(map[Location]string)
 	for _, location := range locations {
 		contents, err := fileContents(location.Path)
@@ -110,10 +108,10 @@ func (s DirectoryResolver) MultipleFileContentsByRef(locations []Location) (map[
 
 // FileContentsByRef fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
-func (s DirectoryResolver) FileContentsByRef(location Location) (string, error) {
+func (s DirectoryResolver) FileContentsByLocation(location Location) (string, error) {
 	contents, err := fileContents(location.Path)
 	if err != nil {
-		return "", fmt.Errorf("could not read contents of file: %s", reference.Path)
+		return "", fmt.Errorf("could not read contents of file: %s", location.Path)
 	}
 
 	return string(contents), nil

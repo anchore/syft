@@ -6,7 +6,6 @@ package common
 import (
 	"strings"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -17,8 +16,8 @@ import (
 type GenericCataloger struct {
 	globParsers       map[string]ParserFn
 	pathParsers       map[string]ParserFn
-	selectedFiles     []file.Reference
-	parsers           map[file.Reference]ParserFn
+	selectedFiles     []source.Location
+	parsers           map[source.Location]ParserFn
 	upstreamCataloger string
 }
 
@@ -27,8 +26,8 @@ func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string
 	return &GenericCataloger{
 		globParsers:       globParsers,
 		pathParsers:       pathParsers,
-		selectedFiles:     make([]file.Reference, 0),
-		parsers:           make(map[file.Reference]ParserFn),
+		selectedFiles:     make([]source.Location, 0),
+		parsers:           make(map[source.Location]ParserFn),
 		upstreamCataloger: upstreamCataloger,
 	}
 }
@@ -39,7 +38,7 @@ func (c *GenericCataloger) Name() string {
 }
 
 // register pairs a set of file references with a parser function for future cataloging (when the file contents are resolved)
-func (c *GenericCataloger) register(files []file.Reference, parser ParserFn) {
+func (c *GenericCataloger) register(files []source.Location, parser ParserFn) {
 	c.selectedFiles = append(c.selectedFiles, files...)
 	for _, f := range files {
 		c.parsers[f] = parser
@@ -48,14 +47,14 @@ func (c *GenericCataloger) register(files []file.Reference, parser ParserFn) {
 
 // clear deletes all registered file-reference-to-parser-function pairings from former SelectFiles() and register() calls
 func (c *GenericCataloger) clear() {
-	c.selectedFiles = make([]file.Reference, 0)
-	c.parsers = make(map[file.Reference]ParserFn)
+	c.selectedFiles = make([]source.Location, 0)
+	c.parsers = make(map[source.Location]ParserFn)
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 func (c *GenericCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	fileSelection := c.selectFiles(resolver)
-	contents, err := resolver.MultipleFileContentsByRef(fileSelection...)
+	contents, err := resolver.MultipleFileContentsByLocation(fileSelection)
 	if err != nil {
 		return nil, err
 	}
@@ -63,10 +62,10 @@ func (c *GenericCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, err
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *GenericCataloger) selectFiles(resolver source.FileResolver) []file.Reference {
+func (c *GenericCataloger) selectFiles(resolver source.FileResolver) []source.Location {
 	// select by exact path
 	for path, parser := range c.pathParsers {
-		files, err := resolver.FilesByPath(file.Path(path))
+		files, err := resolver.FilesByPath(path)
 		if err != nil {
 			log.Warnf("cataloger failed to select files by path: %+v", err)
 		}
@@ -90,28 +89,28 @@ func (c *GenericCataloger) selectFiles(resolver source.FileResolver) []file.Refe
 }
 
 // catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
-func (c *GenericCataloger) catalog(contents map[file.Reference]string) ([]pkg.Package, error) {
+func (c *GenericCataloger) catalog(contents map[source.Location]string) ([]pkg.Package, error) {
 	defer c.clear()
 
 	packages := make([]pkg.Package, 0)
 
-	for reference, parser := range c.parsers {
-		content, ok := contents[reference]
+	for location, parser := range c.parsers {
+		content, ok := contents[location]
 		if !ok {
-			log.Warnf("cataloger '%s' missing file content: %+v", c.upstreamCataloger, reference)
+			log.Warnf("cataloger '%s' missing file content: %+v", c.upstreamCataloger, location)
 			continue
 		}
 
-		entries, err := parser(string(reference.Path), strings.NewReader(content))
+		entries, err := parser(location.Path, strings.NewReader(content))
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Warnf("cataloger '%s' failed to parse entries (reference=%+v): %+v", c.upstreamCataloger, reference, err)
+			log.Warnf("cataloger '%s' failed to parse entries (location=%+v): %+v", c.upstreamCataloger, location, err)
 			continue
 		}
 
 		for _, entry := range entries {
 			entry.FoundBy = c.upstreamCataloger
-			entry.Source = []file.Reference{reference}
+			entry.Locations = []source.Location{location}
 
 			packages = append(packages, entry)
 		}

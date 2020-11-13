@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
@@ -18,10 +18,10 @@ type pythonTestResolverMock struct {
 	metadataReader io.Reader
 	recordReader   io.Reader
 	topLevelReader io.Reader
-	metadataRef    *file.Reference
-	recordRef      *file.Reference
-	topLevelRef    *file.Reference
-	contents       map[file.Reference]string
+	metadataRef    *source.Location
+	recordRef      *source.Location
+	topLevelRef    *source.Location
+	contents       map[source.Location]string
 }
 
 func newTestResolver(metaPath, recordPath, topPath string) *pythonTestResolverMock {
@@ -46,17 +46,17 @@ func newTestResolver(metaPath, recordPath, topPath string) *pythonTestResolverMo
 		}
 	}
 
-	var recordRef *file.Reference
+	var recordRef *source.Location
 	if recordReader != nil {
-		ref := file.NewFileReference("test-fixtures/dist-info/RECORD")
+		ref := source.NewLocation("test-fixtures/dist-info/RECORD")
 		recordRef = &ref
 	}
-	var topLevelRef *file.Reference
+	var topLevelRef *source.Location
 	if topLevelReader != nil {
-		ref := file.NewFileReference("test-fixtures/dist-info/top_level.txt")
+		ref := source.NewLocation("test-fixtures/dist-info/top_level.txt")
 		topLevelRef = &ref
 	}
-	metadataRef := file.NewFileReference("test-fixtures/dist-info/METADATA")
+	metadataRef := source.NewLocation("test-fixtures/dist-info/METADATA")
 	return &pythonTestResolverMock{
 		recordReader:   recordReader,
 		metadataReader: metadataReader,
@@ -64,11 +64,11 @@ func newTestResolver(metaPath, recordPath, topPath string) *pythonTestResolverMo
 		metadataRef:    &metadataRef,
 		recordRef:      recordRef,
 		topLevelRef:    topLevelRef,
-		contents:       make(map[file.Reference]string),
+		contents:       make(map[source.Location]string),
 	}
 }
 
-func (r *pythonTestResolverMock) FileContentsByRef(ref file.Reference) (string, error) {
+func (r *pythonTestResolverMock) FileContentsByLocation(ref source.Location) (string, error) {
 	switch {
 	case r.topLevelRef != nil && ref.Path == r.topLevelRef.Path:
 		b, err := ioutil.ReadAll(r.topLevelReader)
@@ -92,25 +92,25 @@ func (r *pythonTestResolverMock) FileContentsByRef(ref file.Reference) (string, 
 	return "", fmt.Errorf("invalid value given")
 }
 
-func (r *pythonTestResolverMock) MultipleFileContentsByRef(_ ...file.Reference) (map[file.Reference]string, error) {
+func (r *pythonTestResolverMock) MultipleFileContentsByLocation(_ []source.Location) (map[source.Location]string, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *pythonTestResolverMock) FilesByPath(_ ...file.Path) ([]file.Reference, error) {
+func (r *pythonTestResolverMock) FilesByPath(_ ...string) ([]source.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *pythonTestResolverMock) FilesByGlob(_ ...string) ([]file.Reference, error) {
+func (r *pythonTestResolverMock) FilesByGlob(_ ...string) ([]source.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
-func (r *pythonTestResolverMock) RelativeFileByPath(_ file.Reference, path string) (*file.Reference, error) {
+func (r *pythonTestResolverMock) RelativeFileByPath(_ source.Location, path string) *source.Location {
 	switch {
 	case strings.Contains(path, "RECORD"):
-		return r.recordRef, nil
+		return r.recordRef
 	case strings.Contains(path, "top_level.txt"):
-		return r.topLevelRef, nil
+		return r.topLevelRef
 	default:
-		return nil, fmt.Errorf("invalid RelativeFileByPath value given: %q", path)
+		panic(fmt.Errorf("invalid RelativeFileByPath value given: %q", path))
 	}
 }
 
@@ -214,13 +214,13 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			resolver := newTestResolver(test.MetadataFixture, test.RecordFixture, test.TopLevelFixture)
 
 			// note that the source is the record ref created by the resolver mock... attach the expected values
-			test.ExpectedPackage.Source = []file.Reference{*resolver.metadataRef}
+			test.ExpectedPackage.Locations = []source.Location{*resolver.metadataRef}
 			if resolver.recordRef != nil {
-				test.ExpectedPackage.Source = append(test.ExpectedPackage.Source, *resolver.recordRef)
+				test.ExpectedPackage.Locations = append(test.ExpectedPackage.Locations, *resolver.recordRef)
 			}
 
 			if resolver.topLevelRef != nil {
-				test.ExpectedPackage.Source = append(test.ExpectedPackage.Source, *resolver.topLevelRef)
+				test.ExpectedPackage.Locations = append(test.ExpectedPackage.Locations, *resolver.topLevelRef)
 			}
 			// end patching expected values with runtime data...
 

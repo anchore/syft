@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -16,7 +14,7 @@ import (
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(path file.Path, reader io.Reader) (pkg.PythonPackageMetadata, error) {
+func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMetadata, error) {
 	fields := make(map[string]string)
 	var key string
 
@@ -73,7 +71,7 @@ func parseWheelOrEggMetadata(path file.Path, reader io.Reader) (pkg.PythonPackag
 
 	// add additional metadata not stored in the egg/wheel metadata file
 
-	sitePackagesRoot := filepath.Clean(filepath.Join(filepath.Dir(string(path)), ".."))
+	sitePackagesRoot := filepath.Clean(filepath.Join(filepath.Dir(path), ".."))
 	metadata.SitePackagesRootPath = sitePackagesRoot
 
 	return metadata, nil

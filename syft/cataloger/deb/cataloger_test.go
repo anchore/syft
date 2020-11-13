@@ -77,11 +77,11 @@ func TestDpkgCataloger(t *testing.T) {
 			for idx := range actual {
 				a := &actual[idx]
 				// we will test the sources separately
-				var sourcesList = make([]string, len(a.Source))
-				for i, s := range a.Source {
+				var sourcesList = make([]string, len(a.Locations))
+				for i, s := range a.Locations {
 					sourcesList[i] = string(s.Path)
 				}
-				a.Source = nil
+				a.Locations = nil
 
 				for _, d := range deep.Equal(sourcesList, test.sources[a.Name]) {
 					t.Errorf("diff: %+v", d)

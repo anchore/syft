@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
-
-	"github.com/anchore/stereoscope/pkg/file"
 )
 
 func TestImageSquashResolver_FilesByPath(t *testing.T) {
@@ -61,7 +59,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 				t.Fatalf("could not create resolver: %+v", err)
 			}
 
-			refs, err := resolver.FilesByPath(file.Path(c.linkPath))
+			refs, err := resolver.FilesByPath(c.linkPath)
 			if err != nil {
 				t.Fatalf("could not use resolver: %+v", err)
 			}
@@ -82,11 +80,11 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 
 			actual := refs[0]
 
-			if actual.Path != file.Path(c.resolvePath) {
+			if actual.Path != c.resolvePath {
 				t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, c.resolvePath)
 			}
 
-			entry, err := img.FileCatalog.Get(actual)
+			entry, err := img.FileCatalog.Get(actual.ref)
 			if err != nil {
 				t.Fatalf("failed to get metadata: %+v", err)
 			}
@@ -172,11 +170,11 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 
 			actual := refs[0]
 
-			if actual.Path != file.Path(c.resolvePath) {
+			if actual.Path != c.resolvePath {
 				t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, c.resolvePath)
 			}
 
-			entry, err := img.FileCatalog.Get(actual)
+			entry, err := img.FileCatalog.Get(actual.ref)
 			if err != nil {
 				t.Fatalf("failed to get metadata: %+v", err)
 			}

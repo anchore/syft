@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"path/filepath"
 	"strings"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -40,23 +40,23 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	}
 
 	var pkgs []pkg.Package
-	for _, dbRef := range dbFileMatches {
-		dbContents, err := resolver.FileContentsByRef(dbRef)
+	for _, dbLocation := range dbFileMatches {
+		dbContents, err := resolver.FileContentsByLocation(dbLocation)
 		if err != nil {
 			return nil, err
 		}
 
 		pkgs, err = parseDpkgStatus(strings.NewReader(dbContents))
 		if err != nil {
-			return nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbRef.Path, err)
+			return nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.Path, err)
 		}
 
-		md5ContentsByName, md5RefsByName, err := fetchMd5Contents(resolver, dbRef, pkgs)
+		md5ContentsByName, md5RefsByName, err := fetchMd5Contents(resolver, dbLocation, pkgs)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find dpkg md5 contents: %w", err)
 		}
 
-		copyrightContentsByName, copyrightRefsByName, err := fetchCopyrightContents(resolver, dbRef, pkgs)
+		copyrightContentsByName, copyrightRefsByName, err := fetchCopyrightContents(resolver, dbLocation, pkgs)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find dpkg copyright contents: %w", err)
 		}
@@ -64,7 +64,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 		for i := range pkgs {
 			p := &pkgs[i]
 			p.FoundBy = c.Name()
-			p.Source = []file.Reference{dbRef}
+			p.Locations = []source.Location{dbLocation}
 
 			if md5Reader, ok := md5ContentsByName[md5Key(*p)]; ok {
 				// attach the file list
@@ -74,7 +74,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 
 				// keep a record of the file where this was discovered
 				if ref, ok := md5RefsByName[md5Key(*p)]; ok {
-					p.Source = append(p.Source, ref)
+					p.Locations = append(p.Locations, ref)
 				}
 			}
 
@@ -85,7 +85,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 
 				// keep a record of the file where this was discovered
 				if ref, ok := copyrightRefsByName[p.Name]; ok {
-					p.Source = append(p.Source, ref)
+					p.Locations = append(p.Locations, ref)
 				}
 			}
 		}
@@ -93,93 +93,82 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	return pkgs, nil
 }
 
-func fetchMd5Contents(resolver source.Resolver, dbRef file.Reference, pkgs []pkg.Package) (map[string]io.Reader, map[string]file.Reference, error) {
+func fetchMd5Contents(resolver source.Resolver, dbLocation source.Location, pkgs []pkg.Package) (map[string]io.Reader, map[string]source.Location, error) {
 	// fetch all MD5 file contents. This approach is more efficient than fetching each MD5 file one at a time
 
-	var md5FileMatches []file.Reference
-	var nameByRef = make(map[file.Reference]string)
-	parentPath, err := dbRef.Path.ParentPath()
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to find parent of path=%+v: %w", dbRef.Path, err)
-	}
+	var md5FileMatches []source.Location
+	var nameByRef = make(map[source.Location]string)
+	parentPath := filepath.Dir(dbLocation.Path)
+
 	for _, p := range pkgs {
 		// look for /var/lib/dpkg/info/NAME:ARCH.md5sums
 		name := md5Key(p)
-		md5sumPath := path.Join(string(parentPath), "info", name+md5sumsExt)
-		md5SumRef, err := resolver.RelativeFileByPath(dbRef, md5sumPath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to find relative md5sum from path=%+v: %w", dbRef.Path, err)
-		}
+		md5sumPath := path.Join(parentPath, "info", name+md5sumsExt)
+		md5SumLocation := resolver.RelativeFileByPath(dbLocation, md5sumPath)
 
-		if md5SumRef == nil {
+		if md5SumLocation == nil {
 			// the most specific key did not work, fallback to just the name
 			// look for /var/lib/dpkg/info/NAME.md5sums
 			name := p.Name
-			md5sumPath := path.Join(string(parentPath), "info", name+md5sumsExt)
-			md5SumRef, err = resolver.RelativeFileByPath(dbRef, md5sumPath)
-			if err != nil {
-				return nil, nil, fmt.Errorf("unable to find relative md5sum from path=%+v: %w", dbRef.Path, err)
-			}
+			md5sumPath := path.Join(parentPath, "info", name+md5sumsExt)
+			md5SumLocation = resolver.RelativeFileByPath(dbLocation, md5sumPath)
 		}
 		// we should have at least one reference
-		if md5SumRef != nil {
-			md5FileMatches = append(md5FileMatches, *md5SumRef)
-			nameByRef[*md5SumRef] = name
+		if md5SumLocation != nil {
+			md5FileMatches = append(md5FileMatches, *md5SumLocation)
+			nameByRef[*md5SumLocation] = name
 		}
 	}
 
 	// fetch the md5 contents
-	md5ContentsByRef, err := resolver.MultipleFileContentsByRef(md5FileMatches...)
+	md5ContentsByLocation, err := resolver.MultipleFileContentsByLocation(md5FileMatches)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// organize content results and refs by a combination of name and architecture
 	var contentsByName = make(map[string]io.Reader)
-	var refsByName = make(map[string]file.Reference)
-	for ref, contents := range md5ContentsByRef {
-		name := nameByRef[ref]
+	var refsByName = make(map[string]source.Location)
+	for location, contents := range md5ContentsByLocation {
+		name := nameByRef[location]
 		contentsByName[name] = strings.NewReader(contents)
-		refsByName[name] = ref
+		refsByName[name] = location
 	}
 
 	return contentsByName, refsByName, nil
 }
 
-func fetchCopyrightContents(resolver source.Resolver, dbRef file.Reference, pkgs []pkg.Package) (map[string]io.Reader, map[string]file.Reference, error) {
+func fetchCopyrightContents(resolver source.Resolver, dbLocation source.Location, pkgs []pkg.Package) (map[string]io.Reader, map[string]source.Location, error) {
 	// fetch all copyright file contents. This approach is more efficient than fetching each copyright file one at a time
 
-	var copyrightFileMatches []file.Reference
-	var nameByRef = make(map[file.Reference]string)
+	var copyrightFileMatches []source.Location
+	var nameByLocation = make(map[source.Location]string)
 	for _, p := range pkgs {
 		// look for /usr/share/docs/NAME/copyright files
 		name := p.Name
 		copyrightPath := path.Join(docsPath, name, "copyright")
-		copyrightRef, err := resolver.RelativeFileByPath(dbRef, copyrightPath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to find relative copyright from path=%+v: %w", dbRef.Path, err)
-		}
+		copyrightLocation := resolver.RelativeFileByPath(dbLocation, copyrightPath)
 
 		// we may not have a copyright file for each package, ignore missing files
-		if copyrightRef != nil {
-			copyrightFileMatches = append(copyrightFileMatches, *copyrightRef)
-			nameByRef[*copyrightRef] = name
+		if copyrightLocation != nil {
+			copyrightFileMatches = append(copyrightFileMatches, *copyrightLocation)
+			nameByLocation[*copyrightLocation] = name
 		}
 	}
 
 	// fetch the copyright contents
-	copyrightContentsByRef, err := resolver.MultipleFileContentsByRef(copyrightFileMatches...)
+	copyrightContentsByLocation, err := resolver.MultipleFileContentsByLocation(copyrightFileMatches)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// organize content results and refs by package name
 	var contentsByName = make(map[string]io.Reader)
-	var refsByName = make(map[string]file.Reference)
-	for ref, contents := range copyrightContentsByRef {
-		name := nameByRef[ref]
+	var refsByName = make(map[string]source.Location)
+	for location, contents := range copyrightContentsByLocation {
+		name := nameByLocation[location]
 		contentsByName[name] = strings.NewReader(contents)
-		refsByName[name] = ref
+		refsByName[name] = location
 	}
 
 	return contentsByName, refsByName, nil

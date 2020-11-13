@@ -80,7 +80,7 @@ func (cfg *Application) Build() error {
 	cfg.PresenterOpt = presenterOption
 
 	// set the source
-	scopeOption := source.ParseOption(cfg.Scope)
+	scopeOption := source.ParseScope(cfg.Scope)
 	if scopeOption == source.UnknownScope {
 		return fmt.Errorf("bad --scope value '%s'", cfg.Scope)
 	}

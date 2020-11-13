@@ -21,7 +21,7 @@ var Options = []Scope{
 	AllLayersScope,
 }
 
-func ParseOption(userStr string) Scope {
+func ParseScope(userStr string) Scope {
 	switch strings.ToLower(userStr) {
 	case strings.ToLower(SquashedScope.String()):
 		return SquashedScope

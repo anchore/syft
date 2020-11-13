@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/internal/version"
 )
 
-// Source: https://cyclonedx.org/ext/bom-descriptor/
+// Locations: https://cyclonedx.org/ext/bom-descriptor/
 
 // BomDescriptor represents all metadata surrounding the BOM report (such as when the BOM was made, with which tool, and the item being cataloged).
 type BomDescriptor struct {

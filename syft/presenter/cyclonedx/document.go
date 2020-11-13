@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Source: https://github.com/CycloneDX/specification
+// Locations: https://github.com/CycloneDX/specification
 
 // Document represents a CycloneDX BOM Document.
 type Document struct {

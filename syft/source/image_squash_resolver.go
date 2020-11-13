@@ -56,7 +56,7 @@ func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 		if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
 			uniqueFileIDs.Add(*resolvedRef)
-			uniqueLocations = append(uniqueLocations, newLocationFromImage(*resolvedRef, r.img))
+			uniqueLocations = append(uniqueLocations, NewLocationFromImage(*resolvedRef, r.img))
 		}
 	}
 
@@ -118,12 +118,12 @@ func (r *ImageSquashResolver) RelativeFileByPath(_ Location, path string) *Locat
 
 // MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer, in this case only from the squashed representation.
-func (r *ImageSquashResolver) MultipleFileContentsByRef(locations []Location) (map[Location]string, error) {
+func (r *ImageSquashResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
 	return mapLocationRefs(r.img.MultipleFileContentsByRef, locations)
 }
 
 // FileContentsByRef fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
-func (r *ImageSquashResolver) FileContentsByRef(location Location) (string, error) {
+func (r *ImageSquashResolver) FileContentsByLocation(location Location) (string, error) {
 	return r.img.FileContentsByRef(location.ref)
 }

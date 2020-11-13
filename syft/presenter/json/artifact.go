@@ -14,13 +14,13 @@ type Artifact struct {
 }
 
 type ArtifactBasicMetadata struct {
-	Name      string    `json:"name"`
-	Version   string    `json:"version"`
-	Type      string    `json:"type"`
-	FoundBy   []string  `json:"foundBy"`
-	Locations Locations `json:"locations,omitempty"`
-	Licenses  []string  `json:"licenses"`
-	Language  string    `json:"language"`
+	Name      string            `json:"name"`
+	Version   string            `json:"version"`
+	Type      string            `json:"type"`
+	FoundBy   []string          `json:"foundBy"`
+	Locations []source.Location `json:"locations"`
+	Licenses  []string          `json:"licenses"`
+	Language  string            `json:"language"`
 }
 
 type ArtifactCustomMetadata struct {
@@ -34,10 +34,6 @@ type ArtifactMetadataUnpacker struct {
 }
 
 func NewArtifact(p *pkg.Package, s source.Source) (Artifact, error) {
-	locations, err := NewLocations(p, s)
-	if err != nil {
-		return Artifact{}, err
-	}
 
 	return Artifact{
 		ArtifactBasicMetadata: ArtifactBasicMetadata{
@@ -45,7 +41,7 @@ func NewArtifact(p *pkg.Package, s source.Source) (Artifact, error) {
 			Version:   p.Version,
 			Type:      string(p.Type),
 			FoundBy:   []string{p.FoundBy},
-			Locations: locations,
+			Locations: p.Locations,
 			Licenses:  p.Licenses,
 			Language:  string(p.Language),
 		},

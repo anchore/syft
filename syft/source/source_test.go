@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
@@ -36,10 +35,10 @@ func TestNewScopeFromImage(t *testing.T) {
 		Layers: []*image.Layer{layer},
 	}
 
-	t.Run("create a new Source object from image", func(t *testing.T) {
+	t.Run("create a new Locations object from image", func(t *testing.T) {
 		_, err := NewFromImage(&img, AllLayersScope)
 		if err != nil {
-			t.Errorf("unexpected error when creating a new Source from img: %w", err)
+			t.Errorf("unexpected error when creating a new Locations from img: %+v", err)
 		}
 	})
 }
@@ -49,31 +48,31 @@ func TestDirectoryScope(t *testing.T) {
 		desc       string
 		input      string
 		expString  string
-		inputPaths []file.Path
+		inputPaths []string
 		expRefs    int
 	}{
 		{
 			desc:       "no paths exist",
 			input:      "foobar/",
-			inputPaths: []file.Path{file.Path("/opt/"), file.Path("/other")},
+			inputPaths: []string{"/opt/", "/other"},
 			expRefs:    0,
 		},
 		{
 			desc:       "path detected",
 			input:      "test-fixtures",
-			inputPaths: []file.Path{file.Path("test-fixtures/path-detected/.vimrc")},
+			inputPaths: []string{"test-fixtures/path-detected/.vimrc"},
 			expRefs:    1,
 		},
 		{
 			desc:       "directory ignored",
 			input:      "test-fixtures",
-			inputPaths: []file.Path{file.Path("test-fixtures/path-detected")},
+			inputPaths: []string{"test-fixtures/path-detected"},
 			expRefs:    0,
 		},
 		{
 			desc:       "no files-by-path detected",
 			input:      "test-fixtures",
-			inputPaths: []file.Path{file.Path("test-fixtures/no-path-detected")},
+			inputPaths: []string{"test-fixtures/no-path-detected"},
 			expRefs:    0,
 		},
 	}
@@ -82,7 +81,7 @@ func TestDirectoryScope(t *testing.T) {
 			p, err := NewFromDirectory(test.input)
 
 			if err != nil {
-				t.Errorf("could not create NewDirScope: %w", err)
+				t.Errorf("could not create NewDirScope: %+v", err)
 			}
 			if p.Target.(DirSource).Path != test.input {
 				t.Errorf("mismatched stringer: '%s' != '%s'", p.Target.(DirSource).Path, test.input)
@@ -90,7 +89,7 @@ func TestDirectoryScope(t *testing.T) {
 
 			refs, err := p.Resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
-				t.Errorf("FilesByPath call produced an error: %w", err)
+				t.Errorf("FilesByPath call produced an error: %+v", err)
 			}
 			if len(refs) != test.expRefs {
 				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expRefs)
@@ -125,20 +124,19 @@ func TestMultipleFileContentsByRefContents(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			p, err := NewFromDirectory(test.input)
 			if err != nil {
-				t.Errorf("could not create NewDirScope: %w", err)
+				t.Errorf("could not create NewDirScope: %+v", err)
 			}
-			refs, err := p.Resolver.FilesByPath(file.Path(test.path))
+			locations, err := p.Resolver.FilesByPath(test.path)
 			if err != nil {
 				t.Errorf("could not get file references from path: %s, %v", test.path, err)
 			}
 
-			if len(refs) != 1 {
-				t.Fatalf("expected a single ref to be generated but got: %d", len(refs))
+			if len(locations) != 1 {
+				t.Fatalf("expected a single location to be generated but got: %d", len(locations))
 			}
-			ref := refs[0]
+			location := locations[0]
 
-			contents, err := p.Resolver.MultipleFileContentsByRef(ref)
-			content := contents[ref]
+			content, err := p.Resolver.FileContentsByLocation(location)
 
 			if content != test.expected {
 				t.Errorf("unexpected contents from file: '%s' != '%s'", content, test.expected)
@@ -165,9 +163,9 @@ func TestMultipleFileContentsByRefNoContents(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			p, err := NewFromDirectory(test.input)
 			if err != nil {
-				t.Errorf("could not create NewDirScope: %w", err)
+				t.Errorf("could not create NewDirScope: %+v", err)
 			}
-			refs, err := p.Resolver.FilesByPath(file.Path(test.path))
+			refs, err := p.Resolver.FilesByPath(test.path)
 			if err != nil {
 				t.Errorf("could not get file references from path: %s, %v", test.path, err)
 			}
@@ -210,7 +208,7 @@ func TestFilesByGlob(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			p, err := NewFromDirectory(test.input)
 			if err != nil {
-				t.Errorf("could not create NewDirScope: %w", err)
+				t.Errorf("could not create NewDirScope: %+v", err)
 			}
 
 			contents, err := p.Resolver.FilesByGlob(test.glob)

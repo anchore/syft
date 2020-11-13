@@ -14,14 +14,14 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-// Presenter writes a CycloneDX report from the given Catalog and Source contents
+// Presenter writes a CycloneDX report from the given Catalog and Locations contents
 type Presenter struct {
 	catalog *pkg.Catalog
 	source  source.Source
 	distro  distro.Distro
 }
 
-// NewPresenter creates a CycloneDX presenter from the given Catalog and Source objects.
+// NewPresenter creates a CycloneDX presenter from the given Catalog and Locations objects.
 func NewPresenter(catalog *pkg.Catalog, s source.Source, d distro.Distro) *Presenter {
 	return &Presenter{
 		catalog: catalog,

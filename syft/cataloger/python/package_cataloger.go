@@ -8,8 +8,6 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
 	"github.com/anchore/syft/syft/pkg"
 
 	"github.com/anchore/syft/syft/source"
@@ -35,7 +33,7 @@ func (c *PackageCataloger) Name() string {
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
 func (c *PackageCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	// nolint:prealloc
-	var fileMatches []file.Reference
+	var fileMatches []source.Location
 
 	for _, glob := range []string{eggMetadataGlob, wheelMetadataGlob} {
 		matches, err := resolver.FilesByGlob(glob)
@@ -46,10 +44,10 @@ func (c *PackageCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, err
 	}
 
 	var pkgs []pkg.Package
-	for _, ref := range fileMatches {
-		p, err := c.catalogEggOrWheel(resolver, ref)
+	for _, location := range fileMatches {
+		p, err := c.catalogEggOrWheel(resolver, location)
 		if err != nil {
-			return nil, fmt.Errorf("unable to catalog python package=%+v: %w", ref.Path, err)
+			return nil, fmt.Errorf("unable to catalog python package=%+v: %w", location.Path, err)
 		}
 		if p != nil {
 			pkgs = append(pkgs, *p)
@@ -59,8 +57,8 @@ func (c *PackageCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, err
 }
 
 // catalogEggOrWheel takes the primary metadata file reference and returns the python package it represents.
-func (c *PackageCataloger) catalogEggOrWheel(resolver source.Resolver, metadataRef file.Reference) (*pkg.Package, error) {
-	metadata, sources, err := c.assembleEggOrWheelMetadata(resolver, metadataRef)
+func (c *PackageCataloger) catalogEggOrWheel(resolver source.Resolver, metadataLocation source.Location) (*pkg.Package, error) {
+	metadata, sources, err := c.assembleEggOrWheelMetadata(resolver, metadataLocation)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +72,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.Resolver, metadataR
 		Name:         metadata.Name,
 		Version:      metadata.Version,
 		FoundBy:      c.Name(),
-		Source:       sources,
+		Locations:    sources,
 		Licenses:     licenses,
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
@@ -84,22 +82,19 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.Resolver, metadataR
 }
 
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.
-func (c *PackageCataloger) fetchRecordFiles(resolver source.Resolver, metadataRef file.Reference) (files []pkg.PythonFileRecord, sources []file.Reference, err error) {
+func (c *PackageCataloger) fetchRecordFiles(resolver source.Resolver, metadataLocation source.Location) (files []pkg.PythonFileRecord, sources []source.Location, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
 
 	// lets find the RECORD file relative to the directory where the METADATA file resides (in path AND layer structure)
-	recordPath := filepath.Join(filepath.Dir(string(metadataRef.Path)), "RECORD")
-	recordRef, err := resolver.RelativeFileByPath(metadataRef, recordPath)
-	if err != nil {
-		return nil, nil, err
-	}
+	recordPath := filepath.Join(filepath.Dir(metadataLocation.Path), "RECORD")
+	recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
 
 	if recordRef != nil {
 		sources = append(sources, *recordRef)
 
-		recordContents, err := resolver.FileContentsByRef(*recordRef)
+		recordContents, err := resolver.FileContentsByLocation(*recordRef)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -116,22 +111,20 @@ func (c *PackageCataloger) fetchRecordFiles(resolver source.Resolver, metadataRe
 }
 
 // fetchTopLevelPackages finds a corresponding top_level.txt file for the given python package metadata file and returns the set of package names contained.
-func (c *PackageCataloger) fetchTopLevelPackages(resolver source.Resolver, metadataRef file.Reference) (pkgs []string, sources []file.Reference, err error) {
+func (c *PackageCataloger) fetchTopLevelPackages(resolver source.Resolver, metadataLocation source.Location) (pkgs []string, sources []source.Location, err error) {
 	// a top_level.txt file specifies the python top-level packages (provided by this python package) installed into site-packages
-	parentDir := filepath.Dir(string(metadataRef.Path))
+	parentDir := filepath.Dir(metadataLocation.Path)
 	topLevelPath := filepath.Join(parentDir, "top_level.txt")
-	topLevelRef, err := resolver.RelativeFileByPath(metadataRef, topLevelPath)
-	if err != nil {
-		return nil, nil, err
-	}
+	topLevelRef := resolver.RelativeFileByPath(metadataLocation, topLevelPath)
+
 	if topLevelRef == nil {
-		log.Warnf("missing python package top_level.txt (package=%q)", string(metadataRef.Path))
+		log.Warnf("missing python package top_level.txt (package=%q)", metadataLocation.Path)
 		return nil, nil, nil
 	}
 
 	sources = append(sources, *topLevelRef)
 
-	topLevelContents, err := resolver.FileContentsByRef(*topLevelRef)
+	topLevelContents, err := resolver.FileContentsByLocation(*topLevelRef)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -149,21 +142,21 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.Resolver, metad
 }
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
-func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.Resolver, metadataRef file.Reference) (*pkg.PythonPackageMetadata, []file.Reference, error) {
-	var sources = []file.Reference{metadataRef}
+func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.Resolver, metadataLocation source.Location) (*pkg.PythonPackageMetadata, []source.Location, error) {
+	var sources = []source.Location{metadataLocation}
 
-	metadataContents, err := resolver.FileContentsByRef(metadataRef)
+	metadataContents, err := resolver.FileContentsByLocation(metadataLocation)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	metadata, err := parseWheelOrEggMetadata(metadataRef.Path, strings.NewReader(metadataContents))
+	metadata, err := parseWheelOrEggMetadata(metadataLocation.Path, strings.NewReader(metadataContents))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// attach any python files found for the given wheel/egg installation
-	r, s, err := c.fetchRecordFiles(resolver, metadataRef)
+	r, s, err := c.fetchRecordFiles(resolver, metadataLocation)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -171,7 +164,7 @@ func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.Resolver, 
 	metadata.Files = r
 
 	// attach any top-level package names found for the given wheel/egg installation
-	p, s, err := c.fetchTopLevelPackages(resolver, metadataRef)
+	p, s, err := c.fetchTopLevelPackages(resolver, metadataLocation)
 	if err != nil {
 		return nil, nil, err
 	}

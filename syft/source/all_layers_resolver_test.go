@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
-
-	"github.com/anchore/stereoscope/pkg/file"
 )
 
 type resolution struct {
@@ -97,7 +95,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 				t.Fatalf("could not create resolver: %+v", err)
 			}
 
-			refs, err := resolver.FilesByPath(file.Path(c.linkPath))
+			refs, err := resolver.FilesByPath(c.linkPath)
 			if err != nil {
 				t.Fatalf("could not use resolver: %+v", err)
 			}
@@ -109,11 +107,11 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			for idx, actual := range refs {
 				expected := c.resolutions[idx]
 
-				if actual.Path != file.Path(expected.path) {
+				if actual.Path != expected.path {
 					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, expected.path)
 				}
 
-				entry, err := img.FileCatalog.Get(actual)
+				entry, err := img.FileCatalog.Get(actual.ref)
 				if err != nil {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}
@@ -222,11 +220,11 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 			for idx, actual := range refs {
 				expected := c.resolutions[idx]
 
-				if actual.Path != file.Path(expected.path) {
+				if actual.Path != expected.path {
 					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, expected.path)
 				}
 
-				entry, err := img.FileCatalog.Get(actual)
+				entry, err := img.FileCatalog.Get(actual.ref)
 				if err != nil {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}

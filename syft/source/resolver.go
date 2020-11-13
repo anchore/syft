@@ -14,8 +14,8 @@ type Resolver interface {
 
 // ContentResolver knows how to get file content for given file.References
 type ContentResolver interface {
-	FileContentsByRef(Location) (string, error)
-	MultipleFileContentsByRef([]Location) (map[Location]string, error)
+	FileContentsByLocation(Location) (string, error)
+	MultipleFileContentsByLocation([]Location) (map[Location]string, error)
 	// TODO: we should consider refactoring to return a set of io.Readers or file.Openers instead of the full contents themselves (allow for optional buffering).
 }
 

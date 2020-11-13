@@ -10,6 +10,9 @@
                         },
                         "type": "array"
                     },
+                    "language": {
+                        "type": "string"
+                    },
                     "licenses": {
                         "anyOf": [
                             {
@@ -24,13 +27,16 @@
                         ]
                     },
                     "locations": {
-                        "items": {
-                            "anyOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "items": {
                                     "properties": {
+                                        "layerID": {
+                                            "type": "string"
+                                        },
                                         "layerIndex": {
                                             "type": "integer"
                                         },
@@ -39,14 +45,15 @@
                                         }
                                     },
                                     "required": [
+                                        "layerID",
                                         "layerIndex",
                                         "path"
                                     ],
                                     "type": "object"
-                                }
-                            ]
-                        },
-                        "type": "array"
+                                },
+                                "type": "array"
+                            }
+                        ]
                     },
                     "metadata": {
                         "properties": {
@@ -315,6 +322,9 @@
                         },
                         "type": "object"
                     },
+                    "metadataType": {
+                        "type": "string"
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -327,8 +337,10 @@
                 },
                 "required": [
                     "foundBy",
+                    "language",
                     "licenses",
                     "locations",
+                    "metadataType",
                     "name",
                     "type",
                     "version"
@@ -336,6 +348,44 @@
                 "type": "object"
             },
             "type": "array"
+        },
+        "descriptor": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "reportTimestamp": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "reportTimestamp",
+                "version"
+            ],
+            "type": "object"
+        },
+        "distro": {
+            "properties": {
+                "idLike": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "idLike",
+                "name",
+                "version"
+            ],
+            "type": "object"
         },
         "source": {
             "properties": {
@@ -408,6 +458,8 @@
     },
     "required": [
         "artifacts",
+        "descriptor",
+        "distro",
         "source"
     ],
     "type": "object"

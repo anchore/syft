@@ -14,20 +14,13 @@ type Location struct {
 	ref        file.Reference
 }
 
-func newLocation(path string) Location {
+func NewLocation(path string) Location {
 	return Location{
 		Path: path,
 	}
 }
 
-func newLocationFromRef(ref file.Reference) Location {
-	return Location{
-		Path: string(ref.Path),
-		ref:  ref,
-	}
-}
-
-func newLocationFromImage(ref file.Reference, img *image.Image) Location {
+func NewLocationFromImage(ref file.Reference, img *image.Image) Location {
 	entry, err := img.FileCatalog.Get(ref)
 	if err != nil {
 		log.Warnf("unable to find file catalog entry for ref=%+v", ref)

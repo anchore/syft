@@ -6,48 +6,50 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/source"
+
 	"github.com/anchore/syft/syft/pkg"
 )
 
 type testResolverMock struct {
-	contents map[file.Reference]string
+	contents map[source.Location]string
 }
 
 func newTestResolver() *testResolverMock {
 	return &testResolverMock{
-		contents: make(map[file.Reference]string),
+		contents: make(map[source.Location]string),
 	}
 }
 
-func (r *testResolverMock) FileContentsByRef(_ file.Reference) (string, error) {
+func (r *testResolverMock) FileContentsByLocation(_ source.Location) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }
 
-func (r *testResolverMock) MultipleFileContentsByRef(_ ...file.Reference) (map[file.Reference]string, error) {
+func (r *testResolverMock) MultipleFileContentsByLocation([]source.Location) (map[source.Location]string, error) {
 	return r.contents, nil
 }
 
-func (r *testResolverMock) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
-	results := make([]file.Reference, len(paths))
+func (r *testResolverMock) FilesByPath(paths ...string) ([]source.Location, error) {
+	results := make([]source.Location, len(paths))
 
 	for idx, p := range paths {
-		results[idx] = file.NewFileReference(p)
+		results[idx] = source.NewLocation(p)
 		r.contents[results[idx]] = fmt.Sprintf("%s file contents!", p)
 	}
 
 	return results, nil
 }
 
-func (r *testResolverMock) FilesByGlob(_ ...string) ([]file.Reference, error) {
+func (r *testResolverMock) FilesByGlob(_ ...string) ([]source.Location, error) {
 	path := "/a-path.txt"
-	ref := file.NewFileReference(file.Path(path))
-	r.contents[ref] = fmt.Sprintf("%s file contents!", path)
-	return []file.Reference{ref}, nil
+	location := source.NewLocation(path)
+	r.contents[location] = fmt.Sprintf("%s file contents!", path)
+	return []source.Location{location}, nil
 }
 
-func (r *testResolverMock) RelativeFileByPath(_ file.Reference, _ string) (*file.Reference, error) {
-	return nil, fmt.Errorf("not implemented")
+func (r *testResolverMock) RelativeFileByPath(_ source.Location, _ string) *source.Location {
+	panic(fmt.Errorf("not implemented"))
+	return nil
 }
 
 func parser(_ string, reader io.Reader) ([]pkg.Package, error) {
@@ -94,8 +96,8 @@ func TestGenericCataloger(t *testing.T) {
 	}
 
 	for _, p := range actualPkgs {
-		ref := p.Source[0]
-		exP, ok := expectedPkgs[string(ref.Path)]
+		ref := p.Locations[0]
+		exP, ok := expectedPkgs[ref.Path]
 		if !ok {
 			t.Errorf("missing expected pkg: ref=%+v", ref)
 			continue
@@ -106,7 +108,7 @@ func TestGenericCataloger(t *testing.T) {
 		}
 
 		if exP.Name != p.Name {
-			t.Errorf("bad contents mapping: %+v", p.Source)
+			t.Errorf("bad contents mapping: %+v", p.Locations)
 		}
 	}
 }

@@ -73,7 +73,7 @@ func TestCatalogFromJSON(t *testing.T) {
 				a := actualPackages[i]
 
 				// omit fields that should be missing
-				e.Source = nil
+				e.Locations = nil
 				e.FoundBy = ""
 				if e.MetadataType == pkg.JavaMetadataType {
 					metadata := e.Metadata.(pkg.JavaMetadata)

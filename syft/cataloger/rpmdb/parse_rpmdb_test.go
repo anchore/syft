@@ -5,7 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/source"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 )
@@ -20,24 +21,25 @@ func newTestFileResolver(ignorePaths bool) *rpmdbTestFileResolverMock {
 	}
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
+func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...string) ([]source.Location, error) {
 	if r.ignorePaths {
 		// act as if no paths exist
 		return nil, nil
 	}
 	// act as if all files exist
-	var refs = make([]file.Reference, len(paths))
+	var locations = make([]source.Location, len(paths))
 	for i, p := range paths {
-		refs[i] = file.NewFileReference(p)
+		locations[i] = source.NewLocation(p)
 	}
-	return refs, nil
+	return locations, nil
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByGlob(...string) ([]file.Reference, error) {
+func (r *rpmdbTestFileResolverMock) FilesByGlob(...string) ([]source.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
-func (r *rpmdbTestFileResolverMock) RelativeFileByPath(file.Reference, string) (*file.Reference, error) {
-	return nil, fmt.Errorf("not implemented")
+func (r *rpmdbTestFileResolverMock) RelativeFileByPath(source.Location, string) *source.Location {
+	panic(fmt.Errorf("not implemented"))
+	return nil
 }
 
 func TestParseRpmDB(t *testing.T) {

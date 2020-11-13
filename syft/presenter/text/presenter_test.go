@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -75,8 +74,8 @@ func TestTextImgPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-1.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
 		},
 		FoundBy: "dpkg",
 		Type:    pkg.DebPkg,
@@ -84,8 +83,8 @@ func TestTextImgPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-2.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
 		},
 		FoundBy:  "dpkg",
 		Metadata: PackageInfo{Name: "package-2", Version: "1.0.2"},
