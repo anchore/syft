@@ -7,6 +7,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
+var _ Resolver = &ImageSquashResolver{}
+
 // ImageSquashResolver implements path and content access for the Squashed source option for container image data sources.
 type ImageSquashResolver struct {
 	img *image.Image
@@ -21,13 +23,13 @@ func NewImageSquashResolver(img *image.Image) (*ImageSquashResolver, error) {
 }
 
 // FilesByPath returns all file.References that match the given paths within the squashed representation of the image.
-func (r *ImageSquashResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
+func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
-	uniqueFiles := make([]file.Reference, 0)
+	uniqueLocations := make([]Location, 0)
 
 	for _, path := range paths {
 		tree := r.img.SquashedTree()
-		ref := tree.File(path)
+		ref := tree.File(file.Path(path))
 		if ref == nil {
 			// no file found, keep looking through layers
 			continue
@@ -54,17 +56,17 @@ func (r *ImageSquashResolver) FilesByPath(paths ...file.Path) ([]file.Reference,
 
 		if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
 			uniqueFileIDs.Add(*resolvedRef)
-			uniqueFiles = append(uniqueFiles, *resolvedRef)
+			uniqueLocations = append(uniqueLocations, newLocationFromImage(*resolvedRef, r.img))
 		}
 	}
 
-	return uniqueFiles, nil
+	return uniqueLocations, nil
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern within the squashed representation of the image.
-func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference, error) {
+func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
-	uniqueFiles := make([]file.Reference, 0)
+	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
 		refs, err := r.img.SquashedTree().FilesByGlob(pattern)
@@ -86,42 +88,42 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]file.Reference,
 				}
 			}
 
-			resolvedRefs, err := r.FilesByPath(ref.Path)
+			resolvedLocations, err := r.FilesByPath(string(ref.Path))
 			if err != nil {
 				return nil, fmt.Errorf("failed to find files by path (ref=%+v): %w", ref, err)
 			}
-			for _, resolvedRef := range resolvedRefs {
-				if !uniqueFileIDs.Contains(resolvedRef) {
-					uniqueFileIDs.Add(resolvedRef)
-					uniqueFiles = append(uniqueFiles, resolvedRef)
+			for _, resolvedLocation := range resolvedLocations {
+				if !uniqueFileIDs.Contains(resolvedLocation.ref) {
+					uniqueFileIDs.Add(resolvedLocation.ref)
+					uniqueLocations = append(uniqueLocations, resolvedLocation)
 				}
 			}
 		}
 	}
 
-	return uniqueFiles, nil
+	return uniqueLocations, nil
 }
 
-func (r *ImageSquashResolver) RelativeFileByPath(reference file.Reference, path string) (*file.Reference, error) {
-	paths, err := r.FilesByPath(file.Path(path))
+func (r *ImageSquashResolver) RelativeFileByPath(_ Location, path string) *Location {
+	paths, err := r.FilesByPath(path)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	if len(paths) == 0 {
-		return nil, nil
+		return nil
 	}
 
-	return &paths[0], nil
+	return &paths[0]
 }
 
 // MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer, in this case only from the squashed representation.
-func (r *ImageSquashResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
-	return r.img.MultipleFileContentsByRef(f...)
+func (r *ImageSquashResolver) MultipleFileContentsByRef(locations []Location) (map[Location]string, error) {
+	return mapLocationRefs(r.img.MultipleFileContentsByRef, locations)
 }
 
 // FileContentsByRef fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
-func (r *ImageSquashResolver) FileContentsByRef(ref file.Reference) (string, error) {
-	return r.img.FileContentsByRef(ref)
+func (r *ImageSquashResolver) FileContentsByRef(location Location) (string, error) {
+	return r.img.FileContentsByRef(location.ref)
 }
