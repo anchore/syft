@@ -8,10 +8,9 @@ import (
 )
 
 type Location struct {
-	Path       string `json:"path"`
-	LayerIndex uint   `json:"layerIndex"`
-	LayerID    string `json:"layerID"`
-	ref        file.Reference
+	Path         string `json:"path"`
+	FileSystemID string `json:"layerID,omitempty"` // TODO: comment
+	ref          file.Reference
 }
 
 func NewLocation(path string) Location {
@@ -31,9 +30,8 @@ func NewLocationFromImage(ref file.Reference, img *image.Image) Location {
 	}
 
 	return Location{
-		Path:       string(ref.Path),
-		LayerIndex: entry.Source.Metadata.Index,
-		LayerID:    entry.Source.Metadata.Digest,
-		ref:        ref,
+		Path:         string(ref.Path),
+		FileSystemID: entry.Source.Metadata.Digest,
+		ref:          ref,
 	}
 }

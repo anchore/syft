@@ -10,21 +10,21 @@ import (
 )
 
 type Presenter struct {
-	catalog *pkg.Catalog
-	source  source.Source
-	distro  distro.Distro
+	catalog     *pkg.Catalog
+	srcMetadata source.Metadata
+	distro      distro.Distro
 }
 
-func NewPresenter(catalog *pkg.Catalog, s source.Source, d distro.Distro) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, s source.Metadata, d distro.Distro) *Presenter {
 	return &Presenter{
-		catalog: catalog,
-		source:  s,
-		distro:  d,
+		catalog:     catalog,
+		srcMetadata: s,
+		distro:      d,
 	}
 }
 
 func (pres *Presenter) Present(output io.Writer) error {
-	doc, err := NewDocument(pres.catalog, pres.source, pres.distro)
+	doc, err := NewDocument(pres.catalog, pres.srcMetadata, pres.distro)
 	if err != nil {
 		return err
 	}

@@ -9,7 +9,7 @@ import (
 // at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section.
 type DpkgMetadata struct {
 	Package       string           `mapstructure:"Package" json:"package"`
-	Source        string           `mapstructure:"Locations" json:"source"`
+	Source        string           `mapstructure:"Source" json:"source"`
 	Version       string           `mapstructure:"Version" json:"version"`
 	Architecture  string           `mapstructure:"Architecture" json:"architecture"`
 	Maintainer    string           `mapstructure:"Maintainer" json:"maintainer"`

@@ -2,21 +2,15 @@ package source
 
 import "strings"
 
+type Scope string
+
 const (
-	UnknownScope Scope = iota
-	SquashedScope
-	AllLayersScope
+	UnknownScope   Scope = "UnknownScope"
+	SquashedScope  Scope = "Squashed"
+	AllLayersScope Scope = "AllLayers"
 )
 
-type Scope int
-
-var optionStr = []string{
-	"UnknownScope",
-	"Squashed",
-	"AllLayers",
-}
-
-var Options = []Scope{
+var AllScopes = []Scope{
 	SquashedScope,
 	AllLayersScope,
 }
@@ -32,9 +26,5 @@ func ParseScope(userStr string) Scope {
 }
 
 func (o Scope) String() string {
-	if int(o) >= len(optionStr) || o < 0 {
-		return optionStr[0]
-	}
-
-	return optionStr[o]
+	return string(o)
 }

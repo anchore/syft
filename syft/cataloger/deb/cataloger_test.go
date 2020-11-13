@@ -54,7 +54,7 @@ func TestDpkgCataloger(t *testing.T) {
 			img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-dpkg")
 			defer cleanup()
 
-			s, err := source.NewFromImage(img, source.AllLayersScope)
+			s, err := source.NewFromImage(img, source.AllLayersScope, "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -79,7 +79,7 @@ func TestDpkgCataloger(t *testing.T) {
 				// we will test the sources separately
 				var sourcesList = make([]string, len(a.Locations))
 				for i, s := range a.Locations {
-					sourcesList[i] = string(s.Path)
+					sourcesList[i] = s.Path
 				}
 				a.Locations = nil
 

@@ -16,17 +16,17 @@ import (
 
 // Presenter writes a CycloneDX report from the given Catalog and Locations contents
 type Presenter struct {
-	catalog *pkg.Catalog
-	source  source.Source
-	distro  distro.Distro
+	catalog     *pkg.Catalog
+	srcMetadata source.Metadata
+	distro      distro.Distro
 }
 
 // NewPresenter creates a CycloneDX presenter from the given Catalog and Locations objects.
-func NewPresenter(catalog *pkg.Catalog, s source.Source, d distro.Distro) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, s source.Metadata, d distro.Distro) *Presenter {
 	return &Presenter{
-		catalog: catalog,
-		source:  s,
-		distro:  d,
+		catalog:     catalog,
+		srcMetadata: s,
+		distro:      d,
 	}
 }
 
@@ -34,33 +34,26 @@ func NewPresenter(catalog *pkg.Catalog, s source.Source, d distro.Distro) *Prese
 func (pres *Presenter) Present(output io.Writer) error {
 	bom := NewDocumentFromCatalog(pres.catalog, pres.distro)
 
-	switch src := pres.source.Target.(type) {
-	case source.DirSource:
+	switch pres.srcMetadata.Scheme {
+	case source.DirectoryScheme:
 		bom.BomDescriptor.Component = &BdComponent{
 			Component: Component{
 				Type:    "file",
-				Name:    src.Path,
+				Name:    pres.srcMetadata.Path,
 				Version: "",
 			},
 		}
-	case source.ImageSource:
-		var imageID string
-		var versionStr string
-		if len(src.Img.Metadata.Tags) > 0 {
-			imageID = src.Img.Metadata.Tags[0].Context().Name()
-			versionStr = src.Img.Metadata.Tags[0].TagStr()
-		} else {
-			imageID = src.Img.Metadata.Digest
-		}
+	case source.ImageScheme:
+		// TODO: can we use the tags a bit better?
 		bom.BomDescriptor.Component = &BdComponent{
 			Component: Component{
 				Type:    "container",
-				Name:    imageID,
-				Version: versionStr,
+				Name:    pres.srcMetadata.ImageMetadata.UserInput,
+				Version: pres.srcMetadata.ImageMetadata.Digest,
 			},
 		}
 	default:
-		return fmt.Errorf("unsupported source: %T", src)
+		return fmt.Errorf("unsupported source: %T", pres.srcMetadata.Scheme)
 	}
 
 	encoder := xml.NewEncoder(output)

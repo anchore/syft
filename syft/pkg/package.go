@@ -19,16 +19,16 @@ type ID int64
 // Package represents an application or library that has been bundled into a distributable format.
 type Package struct {
 	id        ID                // uniquely identifies a package, set by the cataloger
-	Name      string            `json:"manifest"` // the package name
-	Version   string            `json:"version"`  // the version of the package
-	FoundBy   string            `json:"foundBy"`  // the specific cataloger that discovered this package
-	Locations []source.Location `json:"-"`        // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
+	Name      string            // the package name
+	Version   string            // the version of the package
+	FoundBy   string            // the specific cataloger that discovered this package
+	Locations []source.Location // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
 	// TODO: should we move licenses into metadata?
-	Licenses     []string     `json:"licenses"`               // licenses discovered with the package metadata
-	Language     Language     `json:"language"`               // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
-	Type         Type         `json:"type"`                   // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
-	MetadataType MetadataType `json:"metadataType,omitempty"` // the shape of the additional data in the "metadata" field
-	Metadata     interface{}  `json:"metadata,omitempty"`     // additional data found while parsing the package source
+	Licenses     []string     // licenses discovered with the package metadata
+	Language     Language     // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
+	Type         Type         // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
+	MetadataType MetadataType // the shape of the additional data in the "metadata" field
+	Metadata     interface{}  // additional data found while parsing the package source
 }
 
 // ID returns the package ID, which is unique relative to a package catalog.

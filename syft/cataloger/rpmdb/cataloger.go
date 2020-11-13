@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	packagesGlob = "**/var/lib/rpm/Packages"
+	packagesGlob  = "**/var/lib/rpm/Packages"
+	catalogerName = "rpmdb-cataloger"
 )
 
 type Cataloger struct{}
@@ -24,7 +25,7 @@ func NewRpmdbCataloger() *Cataloger {
 
 // Name returns a string that uniquely describes a cataloger
 func (c *Cataloger) Name() string {
-	return "rpmdb-cataloger"
+	return catalogerName
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.

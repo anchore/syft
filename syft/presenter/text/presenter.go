@@ -11,14 +11,14 @@ import (
 )
 
 type Presenter struct {
-	catalog *pkg.Catalog
-	source  source.Source
+	catalog     *pkg.Catalog
+	srcMetadata source.Metadata
 }
 
-func NewPresenter(catalog *pkg.Catalog, s source.Source) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *Presenter {
 	return &Presenter{
-		catalog: catalog,
-		source:  s,
+		catalog:     catalog,
+		srcMetadata: srcMetadata,
 	}
 }
 
@@ -28,22 +28,22 @@ func (pres *Presenter) Present(output io.Writer) error {
 	w := new(tabwriter.Writer)
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
 
-	switch src := pres.source.Target.(type) {
-	case source.DirSource:
-		fmt.Fprintln(w, fmt.Sprintf("[Path: %s]", src.Path))
-	case source.ImageSource:
+	switch pres.srcMetadata.Scheme {
+	case source.DirectoryScheme:
+		fmt.Fprintln(w, fmt.Sprintf("[Path: %s]", pres.srcMetadata.Path))
+	case source.ImageScheme:
 		fmt.Fprintln(w, "[Image]")
 
-		for idx, l := range src.Img.Layers {
+		for idx, l := range pres.srcMetadata.ImageMetadata.Layers {
 			fmt.Fprintln(w, " Layer:\t", idx)
-			fmt.Fprintln(w, " Digest:\t", l.Metadata.Digest)
-			fmt.Fprintln(w, " Size:\t", l.Metadata.Size)
-			fmt.Fprintln(w, " MediaType:\t", l.Metadata.MediaType)
+			fmt.Fprintln(w, " Digest:\t", l.Digest)
+			fmt.Fprintln(w, " Size:\t", l.Size)
+			fmt.Fprintln(w, " MediaType:\t", l.MediaType)
 			fmt.Fprintln(w)
 			w.Flush()
 		}
 	default:
-		return fmt.Errorf("unsupported source: %T", src)
+		return fmt.Errorf("unsupported source: %T", pres.srcMetadata.Scheme)
 	}
 
 	// populate artifacts...

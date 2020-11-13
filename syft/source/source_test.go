@@ -9,41 +9,41 @@ import (
 	"github.com/spf13/afero"
 )
 
-func TestNewScopeFromImageFails(t *testing.T) {
+func TestNewFromImageFails(t *testing.T) {
 	t.Run("no image given", func(t *testing.T) {
-		_, err := NewFromImage(nil, AllLayersScope)
+		_, err := NewFromImage(nil, AllLayersScope, "")
 		if err == nil {
 			t.Errorf("expected an error condition but none was given")
 		}
 	})
 }
 
-func TestNewScopeFromImageUnknownOption(t *testing.T) {
+func TestNewFromImageUnknownOption(t *testing.T) {
 	img := image.Image{}
 
 	t.Run("unknown option is an error", func(t *testing.T) {
-		_, err := NewFromImage(&img, UnknownScope)
+		_, err := NewFromImage(&img, UnknownScope, "")
 		if err == nil {
 			t.Errorf("expected an error condition but none was given")
 		}
 	})
 }
 
-func TestNewScopeFromImage(t *testing.T) {
+func TestNewFromImage(t *testing.T) {
 	layer := image.NewLayer(nil)
 	img := image.Image{
 		Layers: []*image.Layer{layer},
 	}
 
 	t.Run("create a new Locations object from image", func(t *testing.T) {
-		_, err := NewFromImage(&img, AllLayersScope)
+		_, err := NewFromImage(&img, AllLayersScope, "")
 		if err != nil {
 			t.Errorf("unexpected error when creating a new Locations from img: %+v", err)
 		}
 	})
 }
 
-func TestDirectoryScope(t *testing.T) {
+func TestNewFromDirectory(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		input      string
@@ -78,16 +78,16 @@ func TestDirectoryScope(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			p, err := NewFromDirectory(test.input)
+			src, err := NewFromDirectory(test.input)
 
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %+v", err)
 			}
-			if p.Target.(DirSource).Path != test.input {
-				t.Errorf("mismatched stringer: '%s' != '%s'", p.Target.(DirSource).Path, test.input)
+			if src.Metadata.Path != test.input {
+				t.Errorf("mismatched stringer: '%s' != '%s'", src.Metadata.Path, test.input)
 			}
 
-			refs, err := p.Resolver.FilesByPath(test.inputPaths...)
+			refs, err := src.Resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)
 			}
@@ -100,7 +100,7 @@ func TestDirectoryScope(t *testing.T) {
 	}
 }
 
-func TestMultipleFileContentsByRefContents(t *testing.T) {
+func TestMultipleFileContentsByLocation(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		input    string
@@ -136,7 +136,8 @@ func TestMultipleFileContentsByRefContents(t *testing.T) {
 			}
 			location := locations[0]
 
-			content, err := p.Resolver.FileContentsByLocation(location)
+			contents, err := p.Resolver.MultipleFileContentsByLocation([]Location{location})
+			content := contents[location]
 
 			if content != test.expected {
 				t.Errorf("unexpected contents from file: '%s' != '%s'", content, test.expected)
@@ -146,7 +147,7 @@ func TestMultipleFileContentsByRefContents(t *testing.T) {
 	}
 }
 
-func TestMultipleFileContentsByRefNoContents(t *testing.T) {
+func TestFilesByPathDoesNotExist(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		input    string

@@ -36,7 +36,7 @@ import (
 // set of packages, the identified Linux distribution, and the source object used to wrap the data source.
 func Catalog(userInput string, scoptOpt source.Scope) (*pkg.Catalog, *source.Source, *distro.Distro, error) {
 	log.Info("cataloging image")
-	s, cleanup, err := source.NewSource(userInput, scoptOpt)
+	s, cleanup, err := source.New(userInput, scoptOpt)
 	defer cleanup()
 	if err != nil {
 		return nil, nil, nil, err
@@ -70,13 +70,13 @@ func CatalogFromScope(s source.Source) (*pkg.Catalog, error) {
 
 	// conditionally have two sets of catalogers
 	var catalogers []cataloger.Cataloger
-	switch s.Scheme {
+	switch s.Metadata.Scheme {
 	case source.ImageScheme:
 		catalogers = cataloger.ImageCatalogers()
 	case source.DirectoryScheme:
 		catalogers = cataloger.DirectoryCatalogers()
 	default:
-		return nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", s.Scheme)
+		return nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", s.Metadata.Scheme)
 	}
 
 	return cataloger.Catalog(s.Resolver, catalogers...)

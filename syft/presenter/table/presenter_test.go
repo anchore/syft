@@ -43,11 +43,10 @@ func TestTablePresenter(t *testing.T) {
 		Type: pkg.DebPkg,
 	})
 
-	s, err := source.NewFromImage(img, source.AllLayersScope)
-	pres := NewPresenter(catalog, s)
+	pres := NewPresenter(catalog)
 
 	// run presenter
-	err = pres.Present(&buffer)
+	err := pres.Present(&buffer)
 	if err != nil {
 		t.Fatal(err)
 	}

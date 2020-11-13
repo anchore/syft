@@ -5,10 +5,7 @@
             "items": {
                 "properties": {
                     "foundBy": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
+                        "type": "string"
                     },
                     "language": {
                         "type": "string"
@@ -27,33 +24,21 @@
                         ]
                     },
                     "locations": {
-                        "anyOf": [
-                            {
-                                "type": "null"
-                            },
-                            {
-                                "items": {
-                                    "properties": {
-                                        "layerID": {
-                                            "type": "string"
-                                        },
-                                        "layerIndex": {
-                                            "type": "integer"
-                                        },
-                                        "path": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "layerID",
-                                        "layerIndex",
-                                        "path"
-                                    ],
-                                    "type": "object"
+                        "items": {
+                            "properties": {
+                                "layerID": {
+                                    "type": "string"
                                 },
-                                "type": "array"
-                            }
-                        ]
+                                "path": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "path"
+                            ],
+                            "type": "object"
+                        },
+                        "type": "array"
                     },
                     "metadata": {
                         "properties": {
@@ -354,7 +339,7 @@
                 "name": {
                     "type": "string"
                 },
-                "reportTimestamp": {
+                "scope": {
                     "type": "string"
                 },
                 "version": {
@@ -363,7 +348,7 @@
             },
             "required": [
                 "name",
-                "reportTimestamp",
+                "scope",
                 "version"
             ],
             "type": "object"
@@ -432,6 +417,9 @@
                                         "type": "string"
                                     },
                                     "type": "array"
+                                },
+                                "userInput": {
+                                    "type": "string"
                                 }
                             },
                             "required": [
@@ -439,7 +427,8 @@
                                 "layers",
                                 "mediaType",
                                 "size",
-                                "tags"
+                                "tags",
+                                "userInput"
                             ],
                             "type": "object"
                         }

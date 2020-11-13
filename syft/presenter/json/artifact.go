@@ -16,11 +16,11 @@ type Artifact struct {
 type ArtifactBasicMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
-	Type      string            `json:"type"`
-	FoundBy   []string          `json:"foundBy"`
+	Type      pkg.Type          `json:"type"`
+	FoundBy   string            `json:"foundBy"`
 	Locations []source.Location `json:"locations"`
 	Licenses  []string          `json:"licenses"`
-	Language  string            `json:"language"`
+	Language  pkg.Language      `json:"language"`
 }
 
 type ArtifactCustomMetadata struct {
@@ -33,17 +33,17 @@ type ArtifactMetadataUnpacker struct {
 	Metadata     json.RawMessage `json:"metadata"`
 }
 
-func NewArtifact(p *pkg.Package, s source.Source) (Artifact, error) {
+func NewArtifact(p *pkg.Package) (Artifact, error) {
 
 	return Artifact{
 		ArtifactBasicMetadata: ArtifactBasicMetadata{
 			Name:      p.Name,
 			Version:   p.Version,
-			Type:      string(p.Type),
-			FoundBy:   []string{p.FoundBy},
+			Type:      p.Type,
+			FoundBy:   p.FoundBy,
 			Locations: p.Locations,
 			Licenses:  p.Licenses,
-			Language:  string(p.Language),
+			Language:  p.Language,
 		},
 		ArtifactCustomMetadata: ArtifactCustomMetadata{
 			MetadataType: p.MetadataType,
@@ -57,9 +57,11 @@ func (a Artifact) ToPackage() pkg.Package {
 		// does not include found-by and locations
 		Name:         a.Name,
 		Version:      a.Version,
+		FoundBy:      a.FoundBy,
 		Licenses:     a.Licenses,
-		Language:     pkg.Language(a.Language),
-		Type:         pkg.Type(a.Type),
+		Language:     a.Language,
+		Locations:    a.Locations,
+		Type:         a.Type,
 		MetadataType: a.MetadataType,
 		Metadata:     a.Metadata,
 	}

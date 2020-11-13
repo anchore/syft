@@ -56,7 +56,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pres := NewPresenter(catalog, s, d)
+	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -73,7 +73,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(actual), string(expected), true)
+		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 
@@ -123,9 +123,9 @@ func TestJsonImgsPresenter(t *testing.T) {
 		},
 	})
 
-	s, err := source.NewFromImage(img, source.AllLayersScope)
+	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
 	d := distro.NewUnknownDistro()
-	pres := NewPresenter(catalog, s, d)
+	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -142,7 +142,7 @@ func TestJsonImgsPresenter(t *testing.T) {
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(actual), string(expected), true)
+		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }

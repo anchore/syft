@@ -3,14 +3,29 @@
   {
    "name": "package-1",
    "version": "1.0.1",
-   "type": "deb",
+   "type": "python",
    "foundBy": [
     "the-cataloger-1"
    ],
    "locations": [
-    "/some/path/pkg1"
+    {
+     "path": "/some/path/pkg1"
+    }
    ],
-   "licenses": null
+   "licenses": [
+    "MIT"
+   ],
+   "language": "python",
+   "metadataType": "python-package-metadata",
+   "metadata": {
+    "name": "package-1",
+    "version": "1.0.1",
+    "license": "",
+    "author": "",
+    "authorEmail": "",
+    "platform": "",
+    "sitePackagesRootPath": ""
+   }
   },
   {
    "name": "package-2",
@@ -20,9 +35,22 @@
     "the-cataloger-2"
    ],
    "locations": [
-    "/some/path/pkg1"
+    {
+     "path": "/some/path/pkg1"
+    }
    ],
-   "licenses": null
+   "licenses": null,
+   "language": "",
+   "metadataType": "dpkg-metadata",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": null
+   }
   }
  ],
  "source": {
@@ -33,5 +61,10 @@
   "name": "",
   "version": "",
   "idLike": ""
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "[not provided]",
+  "scope": ""
  }
 }

@@ -55,6 +55,7 @@ func parseRpmDB(resolver source.FileResolver, dbLocation source.Location, reader
 			Version: fmt.Sprintf("%s-%s", entry.Version, entry.Release), // this is what engine does
 			//Version: fmt.Sprintf("%d:%s-%s.%s", entry.Epoch, entry.Version, entry.Release, entry.Arch),
 			Locations:    []source.Location{dbLocation},
+			FoundBy:      catalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmdbMetadataType,
 			Metadata: pkg.RpmdbMetadata{

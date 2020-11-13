@@ -43,7 +43,7 @@ func (r *rpmdbTestFileResolverMock) RelativeFileByPath(source.Location, string) 
 }
 
 func TestParseRpmDB(t *testing.T) {
-	dbRef := file.NewFileReference("test-path")
+	dbLocation := source.NewLocation("test-path")
 
 	tests := []struct {
 		fixture     string
@@ -58,7 +58,8 @@ func TestParseRpmDB(t *testing.T) {
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Source:       []file.Reference{dbRef},
+					Locations:    []source.Location{dbLocation},
+					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
 					Metadata: pkg.RpmdbMetadata{
@@ -84,7 +85,8 @@ func TestParseRpmDB(t *testing.T) {
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Source:       []file.Reference{dbRef},
+					Locations:    []source.Location{dbLocation},
+					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
 					Metadata: pkg.RpmdbMetadata{
@@ -120,7 +122,7 @@ func TestParseRpmDB(t *testing.T) {
 
 			fileResolver := newTestFileResolver(test.ignorePaths)
 
-			actual, err := parseRpmDB(fileResolver, dbRef, fixture)
+			actual, err := parseRpmDB(fileResolver, dbLocation, fixture)
 			if err != nil {
 				t.Fatalf("failed to parse rpmdb: %+v", err)
 			}

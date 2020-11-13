@@ -15,29 +15,18 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-// ImageSource represents a data source that is a container image
-type ImageSource struct {
-	Img *image.Image // the image object to be cataloged
-}
-
-// DirSource represents a data source that is a filesystem directory tree
-type DirSource struct {
-	Path string // the root path to be cataloged
-}
-
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
-	Scope    Scope       // specific perspective to catalog
-	Resolver Resolver    // a Resolver object to use in file path/glob resolution and file contents resolution
-	Target   interface{} // the specific source object to be cataloged
-	Scheme   Scheme      // the source data scheme type (directory or image)
+	Resolver Resolver     // a Resolver object to use in file path/glob resolution and file contents resolution
+	Image    *image.Image // the image object to be cataloged (image only)
+	Metadata Metadata
 }
 
 type sourceDetector func(string) (image.Source, string, error)
 
-// NewSource produces a Source based on userInput like dir: or image:tag
-func NewSource(userInput string, o Scope) (Source, func(), error) {
+// New produces a Source based on userInput like dir: or image:tag
+func New(userInput string, o Scope) (Source, func(), error) {
 	fs := afero.NewOsFs()
 	parsedScheme, location, err := detectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -71,7 +60,7 @@ func NewSource(userInput string, o Scope) (Source, func(), error) {
 			return Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
 		}
 
-		s, err := NewFromImage(img, o)
+		s, err := NewFromImage(img, o, location)
 		if err != nil {
 			return Source{}, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 		}
@@ -87,16 +76,16 @@ func NewFromDirectory(path string) (Source, error) {
 		Resolver: &DirectoryResolver{
 			Path: path,
 		},
-		Target: DirSource{
-			Path: path,
+		Metadata: Metadata{
+			Scheme: DirectoryScheme,
+			Path:   path,
 		},
-		Scheme: DirectoryScheme,
 	}, nil
 }
 
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the
 // option given (e.g. all-layers, squashed, etc)
-func NewFromImage(img *image.Image, option Scope) (Source, error) {
+func NewFromImage(img *image.Image, option Scope, userImageStr string) (Source, error) {
 	if img == nil {
 		return Source{}, fmt.Errorf("no image given")
 	}
@@ -107,11 +96,12 @@ func NewFromImage(img *image.Image, option Scope) (Source, error) {
 	}
 
 	return Source{
-		Scope:    option,
 		Resolver: resolver,
-		Target: ImageSource{
-			Img: img,
+		Image:    img,
+		Metadata: Metadata{
+			Scope:         option,
+			Scheme:        ImageScheme,
+			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
-		Scheme: ImageScheme,
 	}, nil
 }

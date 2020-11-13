@@ -17,14 +17,14 @@ type SourceUnpacker struct {
 	Target json.RawMessage `json:"target"`
 }
 
-func NewSource(s source.Source) (Source, error) {
-	switch src := s.Target.(type) {
-	case source.ImageSource:
+func NewSource(src source.Metadata) (Source, error) {
+	switch src.Scheme {
+	case source.ImageScheme:
 		return Source{
 			Type:   "image",
-			Target: NewImage(src),
+			Target: src.ImageMetadata,
 		}, nil
-	case source.DirSource:
+	case source.DirectoryScheme:
 		return Source{
 			Type:   "directory",
 			Target: src.Path,
@@ -44,7 +44,7 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 
 	switch s.Type {
 	case "image":
-		var payload Image
+		var payload source.ImageMetadata
 		if err := json.Unmarshal(unpacker.Target, &payload); err != nil {
 			return err
 		}

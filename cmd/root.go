@@ -100,7 +100,7 @@ func startWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.CatalogerFinished,
-			Value: presenter.GetPresenter(appConfig.PresenterOpt, *scope, catalog, distro),
+			Value: presenter.GetPresenter(appConfig.PresenterOpt, scope.Metadata, catalog, distro),
 		})
 	}()
 	return errs

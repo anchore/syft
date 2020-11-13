@@ -1,8 +1,6 @@
 package json
 
 import (
-	"time"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
@@ -19,10 +17,9 @@ type Document struct {
 
 // Descriptor describes what created the document as well as surrounding metadata
 type Descriptor struct {
-	Name            string `json:"name"`
-	Version         string `json:"version"`
-	ReportTimestamp string `json:"reportTimestamp"`
-	// TODO: we should include source option here as well (or in source)
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Scope   string `json:"scope"`
 }
 
 // Distribution provides information about a detected Linux Distribution
@@ -32,8 +29,8 @@ type Distribution struct {
 	IDLike  string `json:"idLike"`
 }
 
-func NewDocument(catalog *pkg.Catalog, s source.Source, d distro.Distro) (Document, error) {
-	src, err := NewSource(s)
+func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Distro) (Document, error) {
+	src, err := NewSource(srcMetadata)
 	if err != nil {
 		return Document{}, nil
 	}
@@ -52,14 +49,14 @@ func NewDocument(catalog *pkg.Catalog, s source.Source, d distro.Distro) (Docume
 			IDLike:  d.IDLike,
 		},
 		Descriptor: Descriptor{
-			Name:            internal.ApplicationName,
-			Version:         version.FromBuild().Version,
-			ReportTimestamp: time.Now().Format(time.RFC3339),
+			Name:    internal.ApplicationName,
+			Version: version.FromBuild().Version,
+			Scope:   srcMetadata.Scope.String(),
 		},
 	}
 
 	for _, p := range catalog.Sorted() {
-		art, err := NewArtifact(p, s)
+		art, err := NewArtifact(p)
 		if err != nil {
 			return Document{}, err
 		}

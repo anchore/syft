@@ -37,7 +37,7 @@ func TestCatalogFromJSON(t *testing.T) {
 			}
 
 			var buf bytes.Buffer
-			jsonPres := json.NewPresenter(expectedCatalog, *s, *expectedDistro)
+			jsonPres := json.NewPresenter(expectedCatalog, s.Metadata, *expectedDistro)
 			if err = jsonPres.Present(&buf); err != nil {
 				t.Fatalf("failed to write to presenter: %+v", err)
 			}
@@ -73,8 +73,6 @@ func TestCatalogFromJSON(t *testing.T) {
 				a := actualPackages[i]
 
 				// omit fields that should be missing
-				e.Locations = nil
-				e.FoundBy = ""
 				if e.MetadataType == pkg.JavaMetadataType {
 					metadata := e.Metadata.(pkg.JavaMetadata)
 					metadata.Parent = nil

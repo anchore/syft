@@ -3,17 +3,30 @@
   {
    "name": "package-1",
    "version": "1.0.1",
-   "type": "deb",
+   "type": "python",
    "foundBy": [
     "the-cataloger-1"
    ],
    "locations": [
     {
      "path": "/somefile-1.txt",
-     "layerIndex": 0
+     "layerID": "sha256:e158b57d6f5a96ef5fd22f2fe76c70b5ba6ff5b2619f9d83125b2aad0492ac7b"
     }
    ],
-   "licenses": null
+   "licenses": [
+    "MIT"
+   ],
+   "language": "python",
+   "metadataType": "python-package-metadata",
+   "metadata": {
+    "name": "package-1",
+    "version": "1.0.1",
+    "license": "",
+    "author": "",
+    "authorEmail": "",
+    "platform": "",
+    "sitePackagesRootPath": ""
+   }
   },
   {
    "name": "package-2",
@@ -25,10 +38,21 @@
    "locations": [
     {
      "path": "/somefile-2.txt",
-     "layerIndex": 1
+     "layerID": "sha256:da21056e7bf4308ecea0c0836848a7fe92f38fdcf35bc09ee6d98e7ab7beeebf"
     }
    ],
-   "licenses": null
+   "licenses": null,
+   "language": "",
+   "metadataType": "dpkg-metadata",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": null
+   }
   }
  ],
  "source": {
@@ -37,22 +61,22 @@
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:78783bfc74fef84f899b4977561ad1172f87753f82cc2157b06bf097e56dfbce",
+     "digest": "sha256:e158b57d6f5a96ef5fd22f2fe76c70b5ba6ff5b2619f9d83125b2aad0492ac7b",
      "size": 22
     },
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:54ec7f643dafbf9f27032a5e60afe06248c0e99b50aed54bb0fe28ea4825ccaf",
+     "digest": "sha256:da21056e7bf4308ecea0c0836848a7fe92f38fdcf35bc09ee6d98e7ab7beeebf",
      "size": 16
     },
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:ec4775a139c45b1ddf9ea8e1cb43385e92e5c0bf6ec2e3f4192372785b18c106",
+     "digest": "sha256:f0e18aa6032c24659a9c741fc36ca56f589782ea132061ccf6f52b952403da94",
      "size": 27
     }
    ],
    "size": 65,
-   "digest": "sha256:fedd7bcc0b90f071501b662d8e7c9ac7548b88daba6b3deedfdf33f22ed8d95b",
+   "digest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
    "tags": [
     "stereoscope-fixture-image-simple:04e16e44161c8888a1a963720fd0443cbf7eef8101434c431de8725cd98cc9f7"
@@ -63,5 +87,10 @@
   "name": "",
   "version": "",
   "idLike": ""
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "[not provided]",
+  "scope": "AllLayers"
  }
 }
