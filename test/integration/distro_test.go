@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
@@ -16,7 +16,7 @@ func TestDistroImage(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	_, _, actualDistro, err := syft.Catalog("docker-archive:"+tarPath, scope.AllLayersScope)
+	_, _, actualDistro, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}

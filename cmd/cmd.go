@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/syft/syft/presenter"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
@@ -49,8 +49,8 @@ func setGlobalCliOptions() {
 	// scan options
 	flag := "scope"
 	rootCmd.Flags().StringP(
-		"scope", "s", scope.SquashedScope.String(),
-		fmt.Sprintf("selection of layers to catalog, options=%v", scope.Options))
+		"scope", "s", source.SquashedScope.String(),
+		fmt.Sprintf("selection of layers to catalog, options=%v", source.Options))
 	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
 		os.Exit(1)

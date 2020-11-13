@@ -1,11 +1,10 @@
-package scope
+package source
 
 import (
 	"fmt"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/syft/scope/resolvers"
 )
 
 // Resolver is an interface that encompasses how to get specific file references and file contents for a generic data source.
@@ -32,13 +31,13 @@ type FileResolver interface {
 	RelativeFileByPath(reference file.Reference, path string) (*file.Reference, error)
 }
 
-// getImageResolver returns the appropriate resolve for a container image given the scope option
-func getImageResolver(img *image.Image, option Option) (Resolver, error) {
+// getImageResolver returns the appropriate resolve for a container image given the source option
+func getImageResolver(img *image.Image, option Scope) (Resolver, error) {
 	switch option {
 	case SquashedScope:
-		return resolvers.NewImageSquashResolver(img)
+		return NewImageSquashResolver(img)
 	case AllLayersScope:
-		return resolvers.NewAllLayersResolver(img)
+		return NewAllLayersResolver(img)
 	default:
 		return nil, fmt.Errorf("bad option provided: %+v", option)
 	}

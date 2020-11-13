@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -53,7 +53,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 		},
 	})
 	d := distro.NewUnknownDistro()
-	s, err := scope.NewScopeFromDir("/some/path")
+	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestJsonImgsPresenter(t *testing.T) {
 		},
 	})
 
-	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+	s, err := source.NewFromImage(img, source.AllLayersScope)
 	d := distro.NewUnknownDistro()
 	pres := NewPresenter(catalog, s, d)
 

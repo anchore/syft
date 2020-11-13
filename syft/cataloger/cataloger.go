@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 // Cataloger describes behavior for an object to participate in parsing container image or file system
@@ -25,7 +25,7 @@ type Cataloger interface {
 	// Name returns a string that uniquely describes a cataloger
 	Name() string
 	// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-	Catalog(resolver scope.Resolver) ([]pkg.Package, error)
+	Catalog(resolver source.Resolver) ([]pkg.Package, error)
 }
 
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.

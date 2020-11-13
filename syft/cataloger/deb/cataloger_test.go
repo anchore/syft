@@ -5,7 +5,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
@@ -54,7 +54,7 @@ func TestDpkgCataloger(t *testing.T) {
 			img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-dpkg")
 			defer cleanup()
 
-			s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+			s, err := source.NewFromImage(img, source.AllLayersScope)
 			if err != nil {
 				t.Fatal(err)
 			}

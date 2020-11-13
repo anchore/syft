@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 // GenericCataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
@@ -53,7 +53,7 @@ func (c *GenericCataloger) clear() {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-func (c *GenericCataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, error) {
+func (c *GenericCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	fileSelection := c.selectFiles(resolver)
 	contents, err := resolver.MultipleFileContentsByRef(fileSelection...)
 	if err != nil {
@@ -63,7 +63,7 @@ func (c *GenericCataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, erro
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *GenericCataloger) selectFiles(resolver scope.FileResolver) []file.Reference {
+func (c *GenericCataloger) selectFiles(resolver source.FileResolver) []file.Reference {
 	// select by exact path
 	for path, parser := range c.pathParsers {
 		files, err := resolver.FilesByPath(file.Path(path))

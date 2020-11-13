@@ -6,25 +6,25 @@ import (
 
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 type Presenter struct {
 	catalog *pkg.Catalog
-	scope   scope.Scope
+	source  source.Source
 	distro  distro.Distro
 }
 
-func NewPresenter(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, s source.Source, d distro.Distro) *Presenter {
 	return &Presenter{
 		catalog: catalog,
-		scope:   s,
+		source:  s,
 		distro:  d,
 	}
 }
 
 func (pres *Presenter) Present(output io.Writer) error {
-	doc, err := NewDocument(pres.catalog, pres.scope, pres.distro)
+	doc, err := NewDocument(pres.catalog, pres.source, pres.distro)
 	if err != nil {
 		return err
 	}

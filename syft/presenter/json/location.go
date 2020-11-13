@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 type Locations interface{}
@@ -14,9 +14,9 @@ type ImageLocation struct {
 	LayerIndex uint   `json:"layerIndex"`
 }
 
-func NewLocations(p *pkg.Package, s scope.Scope) (Locations, error) {
-	switch src := s.Source.(type) {
-	case scope.ImageSource:
+func NewLocations(p *pkg.Package, s source.Source) (Locations, error) {
+	switch src := s.Target.(type) {
+	case source.ImageSource:
 		locations := make([]ImageLocation, len(p.Source))
 		for idx := range p.Source {
 			entry, err := src.Img.FileCatalog.Get(p.Source[idx])
@@ -33,7 +33,7 @@ func NewLocations(p *pkg.Package, s scope.Scope) (Locations, error) {
 		}
 		return locations, nil
 
-	case scope.DirSource:
+	case source.DirSource:
 		locations := make([]string, len(p.Source))
 		for idx := range p.Source {
 			locations[idx] = string(p.Source[idx].Path)

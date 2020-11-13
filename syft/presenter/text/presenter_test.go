@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -32,9 +32,9 @@ func TestTextDirPresenter(t *testing.T) {
 		Type:    pkg.DebPkg,
 	})
 
-	s, err := scope.NewScopeFromDir("/some/path")
+	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
-		t.Fatalf("unable to create scope: %+v", err)
+		t.Fatalf("unable to create source: %+v", err)
 	}
 	pres := NewPresenter(catalog, s)
 
@@ -98,7 +98,7 @@ func TestTextImgPresenter(t *testing.T) {
 		l.Metadata.Digest = "sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53"
 	}
 
-	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+	s, err := source.NewFromImage(img, source.AllLayersScope)
 	if err != nil {
 		t.Fatal(err)
 	}

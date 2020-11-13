@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/presenter"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -53,7 +53,7 @@ func validateAgainstV1Schema(t *testing.T, json string) {
 	}
 }
 
-func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope *scope.Scope, prefix string) {
+func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope *source.Source, prefix string) {
 	// make the json output example dir if it does not exist
 	absJsonSchemaExamplesPath := path.Join(repoRoot(t), jsonSchemaExamplesPath)
 	if _, err := os.Stat(absJsonSchemaExamplesPath); os.IsNotExist(err) {
@@ -101,7 +101,7 @@ func TestJsonSchemaImg(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	catalog, theScope, _, err := syft.Catalog("docker-archive:"+tarPath, scope.AllLayersScope)
+	catalog, theScope, _, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -118,9 +118,9 @@ func TestJsonSchemaImg(t *testing.T) {
 }
 
 func TestJsonSchemaDirs(t *testing.T) {
-	catalog, theScope, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", scope.AllLayersScope)
+	catalog, theScope, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.AllLayersScope)
 	if err != nil {
-		t.Errorf("unable to create scope from dir: %+v", err)
+		t.Errorf("unable to create source from dir: %+v", err)
 	}
 
 	var cases []testCase

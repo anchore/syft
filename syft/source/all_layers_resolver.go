@@ -1,4 +1,4 @@
-package resolvers
+package source
 
 import (
 	"archive/tar"
@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-// AllLayersResolver implements path and content access for the AllLayers scope option for container image data sources.
+// AllLayersResolver implements path and content access for the AllLayers source option for container image data sources.
 type AllLayersResolver struct {
 	img    *image.Image
 	layers []int
@@ -41,7 +41,7 @@ func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 
 	if entry.Metadata.TypeFlag == tar.TypeLink || entry.Metadata.TypeFlag == tar.TypeSymlink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
-		// we should search all possible resolutions within the valid scope
+		// we should search all possible resolutions within the valid source
 		for _, subLayerIdx := range r.layers[layerIdx:] {
 			resolvedRef, err := r.img.ResolveLinkByLayerSquash(ref, subLayerIdx)
 			if err != nil {

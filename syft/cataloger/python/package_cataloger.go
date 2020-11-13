@@ -12,7 +12,7 @@ import (
 
 	"github.com/anchore/syft/syft/pkg"
 
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -33,7 +33,7 @@ func (c *PackageCataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
-func (c *PackageCataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, error) {
+func (c *PackageCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	// nolint:prealloc
 	var fileMatches []file.Reference
 
@@ -59,7 +59,7 @@ func (c *PackageCataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, erro
 }
 
 // catalogEggOrWheel takes the primary metadata file reference and returns the python package it represents.
-func (c *PackageCataloger) catalogEggOrWheel(resolver scope.Resolver, metadataRef file.Reference) (*pkg.Package, error) {
+func (c *PackageCataloger) catalogEggOrWheel(resolver source.Resolver, metadataRef file.Reference) (*pkg.Package, error) {
 	metadata, sources, err := c.assembleEggOrWheelMetadata(resolver, metadataRef)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver scope.Resolver, metadataRe
 }
 
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.
-func (c *PackageCataloger) fetchRecordFiles(resolver scope.Resolver, metadataRef file.Reference) (files []pkg.PythonFileRecord, sources []file.Reference, err error) {
+func (c *PackageCataloger) fetchRecordFiles(resolver source.Resolver, metadataRef file.Reference) (files []pkg.PythonFileRecord, sources []file.Reference, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
@@ -116,7 +116,7 @@ func (c *PackageCataloger) fetchRecordFiles(resolver scope.Resolver, metadataRef
 }
 
 // fetchTopLevelPackages finds a corresponding top_level.txt file for the given python package metadata file and returns the set of package names contained.
-func (c *PackageCataloger) fetchTopLevelPackages(resolver scope.Resolver, metadataRef file.Reference) (pkgs []string, sources []file.Reference, err error) {
+func (c *PackageCataloger) fetchTopLevelPackages(resolver source.Resolver, metadataRef file.Reference) (pkgs []string, sources []file.Reference, err error) {
 	// a top_level.txt file specifies the python top-level packages (provided by this python package) installed into site-packages
 	parentDir := filepath.Dir(string(metadataRef.Path))
 	topLevelPath := filepath.Join(parentDir, "top_level.txt")
@@ -149,7 +149,7 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver scope.Resolver, metada
 }
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
-func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver scope.Resolver, metadataRef file.Reference) (*pkg.PythonPackageMetadata, []file.Reference, error) {
+func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.Resolver, metadataRef file.Reference) (*pkg.PythonPackageMetadata, []file.Reference, error) {
 	var sources = []file.Reference{metadataRef}
 
 	metadataContents, err := resolver.FileContentsByRef(metadataRef)

@@ -1,4 +1,4 @@
-package scope
+package source
 
 import (
 	"fmt"
@@ -6,12 +6,12 @@ import (
 )
 
 func TestOptionStringerBoundary(t *testing.T) {
-	var _ fmt.Stringer = Option(0)
+	var _ fmt.Stringer = Scope(0)
 
 	for _, c := range []int{-1, 0, 3} {
-		option := Option(c)
+		option := Scope(c)
 		if option.String() != UnknownScope.String() {
-			t.Errorf("expected Option(%d) to be unknown, found '%+v'", c, option)
+			t.Errorf("expected Scope(%d) to be unknown, found '%+v'", c, option)
 		}
 	}
 }

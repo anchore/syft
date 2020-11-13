@@ -1,4 +1,4 @@
-package resolvers
+package source
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-// ImageSquashResolver implements path and content access for the Squashed scope option for container image data sources.
+// ImageSquashResolver implements path and content access for the Squashed source option for container image data sources.
 type ImageSquashResolver struct {
 	img *image.Image
 }

@@ -11,7 +11,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -33,7 +33,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
-func (c *Cataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, error) {
+func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	dbFileMatches, err := resolver.FilesByGlob(dpkgStatusGlob)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find dpkg status files's by glob: %w", err)
@@ -93,7 +93,7 @@ func (c *Cataloger) Catalog(resolver scope.Resolver) ([]pkg.Package, error) {
 	return pkgs, nil
 }
 
-func fetchMd5Contents(resolver scope.Resolver, dbRef file.Reference, pkgs []pkg.Package) (map[string]io.Reader, map[string]file.Reference, error) {
+func fetchMd5Contents(resolver source.Resolver, dbRef file.Reference, pkgs []pkg.Package) (map[string]io.Reader, map[string]file.Reference, error) {
 	// fetch all MD5 file contents. This approach is more efficient than fetching each MD5 file one at a time
 
 	var md5FileMatches []file.Reference
@@ -146,7 +146,7 @@ func fetchMd5Contents(resolver scope.Resolver, dbRef file.Reference, pkgs []pkg.
 	return contentsByName, refsByName, nil
 }
 
-func fetchCopyrightContents(resolver scope.Resolver, dbRef file.Reference, pkgs []pkg.Package) (map[string]io.Reader, map[string]file.Reference, error) {
+func fetchCopyrightContents(resolver source.Resolver, dbRef file.Reference, pkgs []pkg.Package) (map[string]io.Reader, map[string]file.Reference, error) {
 	// fetch all copyright file contents. This approach is more efficient than fetching each copyright file one at a time
 
 	var copyrightFileMatches []file.Reference

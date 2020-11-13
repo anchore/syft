@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/presenter/json"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
@@ -31,7 +31,7 @@ func TestCatalogFromJSON(t *testing.T) {
 			tarPath := imagetest.GetFixtureImageTarPath(t, test.fixture)
 			defer cleanup()
 
-			expectedCatalog, s, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, scope.AllLayersScope)
+			expectedCatalog, s, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
 			if err != nil {
 				t.Fatalf("failed to catalog image: %+v", err)
 			}

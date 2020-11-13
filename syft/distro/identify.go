@@ -6,7 +6,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 // returns a distro or nil
@@ -18,7 +18,7 @@ type parseEntry struct {
 }
 
 // Identify parses distro-specific files to determine distro metadata like version and release.
-func Identify(resolver scope.Resolver) Distro {
+func Identify(resolver source.Resolver) Distro {
 	distro := NewUnknownDistro()
 
 	identityFiles := []parseEntry{

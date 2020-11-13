@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 type Source struct {
@@ -17,14 +17,14 @@ type SourceUnpacker struct {
 	Target json.RawMessage `json:"target"`
 }
 
-func NewSource(s scope.Scope) (Source, error) {
-	switch src := s.Source.(type) {
-	case scope.ImageSource:
+func NewSource(s source.Source) (Source, error) {
+	switch src := s.Target.(type) {
+	case source.ImageSource:
 		return Source{
 			Type:   "image",
 			Target: NewImage(src),
 		}, nil
-	case scope.DirSource:
+	case source.DirSource:
 		return Source{
 			Type:   "directory",
 			Target: src.Path,

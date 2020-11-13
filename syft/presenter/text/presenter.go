@@ -7,18 +7,18 @@ import (
 	"text/tabwriter"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 type Presenter struct {
 	catalog *pkg.Catalog
-	scope   scope.Scope
+	source  source.Source
 }
 
-func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, s source.Source) *Presenter {
 	return &Presenter{
 		catalog: catalog,
-		scope:   s,
+		source:  s,
 	}
 }
 
@@ -28,10 +28,10 @@ func (pres *Presenter) Present(output io.Writer) error {
 	w := new(tabwriter.Writer)
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
 
-	switch src := pres.scope.Source.(type) {
-	case scope.DirSource:
+	switch src := pres.source.Target.(type) {
+	case source.DirSource:
 		fmt.Fprintln(w, fmt.Sprintf("[Path: %s]", src.Path))
-	case scope.ImageSource:
+	case source.ImageSource:
 		fmt.Fprintln(w, "[Image]")
 
 		for idx, l := range src.Img.Layers {

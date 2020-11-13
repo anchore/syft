@@ -11,21 +11,21 @@ import (
 	"github.com/anchore/syft/syft/distro"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
-// Presenter writes a CycloneDX report from the given Catalog and Scope contents
+// Presenter writes a CycloneDX report from the given Catalog and Source contents
 type Presenter struct {
 	catalog *pkg.Catalog
-	scope   scope.Scope
+	source  source.Source
 	distro  distro.Distro
 }
 
-// NewPresenter creates a CycloneDX presenter from the given Catalog and Scope objects.
-func NewPresenter(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) *Presenter {
+// NewPresenter creates a CycloneDX presenter from the given Catalog and Source objects.
+func NewPresenter(catalog *pkg.Catalog, s source.Source, d distro.Distro) *Presenter {
 	return &Presenter{
 		catalog: catalog,
-		scope:   s,
+		source:  s,
 		distro:  d,
 	}
 }
@@ -34,8 +34,8 @@ func NewPresenter(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) *Present
 func (pres *Presenter) Present(output io.Writer) error {
 	bom := NewDocumentFromCatalog(pres.catalog, pres.distro)
 
-	switch src := pres.scope.Source.(type) {
-	case scope.DirSource:
+	switch src := pres.source.Target.(type) {
+	case source.DirSource:
 		bom.BomDescriptor.Component = &BdComponent{
 			Component: Component{
 				Type:    "file",
@@ -43,7 +43,7 @@ func (pres *Presenter) Present(output io.Writer) error {
 				Version: "",
 			},
 		}
-	case scope.ImageSource:
+	case source.ImageSource:
 		var imageID string
 		var versionStr string
 		if len(src.Img.Metadata.Tags) > 0 {

@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 type Document struct {
@@ -22,7 +22,7 @@ type Descriptor struct {
 	Name            string `json:"name"`
 	Version         string `json:"version"`
 	ReportTimestamp string `json:"reportTimestamp"`
-	// TODO: we should include scope option here as well (or in source)
+	// TODO: we should include source option here as well (or in source)
 }
 
 // Distribution provides information about a detected Linux Distribution
@@ -32,7 +32,7 @@ type Distribution struct {
 	IDLike  string `json:"idLike"`
 }
 
-func NewDocument(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) (Document, error) {
+func NewDocument(catalog *pkg.Catalog, s source.Source, d distro.Distro) (Document, error) {
 	src, err := NewSource(s)
 	if err != nil {
 		return Document{}, nil

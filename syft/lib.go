@@ -7,8 +7,8 @@ Here is what the main execution path for syft does:
 	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
 	3. Invoke a single presenter to show the contents of the catalog
 
-A Scope object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
-providing a way to inspect paths and file content within the image. The Scope object, not the image object, is used
+A Source object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
+providing a way to inspect paths and file content within the image. The Source object, not the image object, is used
 throughout the main execution path. This abstraction allows for decoupling of what is cataloged (a docker image, an OCI
 image, a filesystem, etc) and how it is cataloged (the individual catalogers).
 
@@ -28,15 +28,15 @@ import (
 	"github.com/anchore/syft/syft/logger"
 	"github.com/anchore/syft/syft/pkg"
 	jsonPresenter "github.com/anchore/syft/syft/presenter/json"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/wagoodman/go-partybus"
 )
 
-// Catalog the given image from a particular perspective (e.g. squashed scope, all-layers scope). Returns the discovered
-// set of packages, the identified Linux distribution, and the scope object used to wrap the data source.
-func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scope, *distro.Distro, error) {
+// Catalog the given image from a particular perspective (e.g. squashed source, all-layers source). Returns the discovered
+// set of packages, the identified Linux distribution, and the source object used to wrap the data source.
+func Catalog(userInput string, scoptOpt source.Scope) (*pkg.Catalog, *source.Source, *distro.Distro, error) {
 	log.Info("cataloging image")
-	s, cleanup, err := scope.NewScope(userInput, scoptOpt)
+	s, cleanup, err := source.NewSource(userInput, scoptOpt)
 	defer cleanup()
 	if err != nil {
 		return nil, nil, nil, err
@@ -53,8 +53,8 @@ func Catalog(userInput string, scoptOpt scope.Option) (*pkg.Catalog, *scope.Scop
 }
 
 // IdentifyDistro attempts to discover what the underlying Linux distribution may be from the available flat files
-// provided by the given scope object. If results are inconclusive a "UnknownDistro" Type is returned.
-func IdentifyDistro(s scope.Scope) distro.Distro {
+// provided by the given source object. If results are inconclusive a "UnknownDistro" Type is returned.
+func IdentifyDistro(s source.Source) distro.Distro {
 	d := distro.Identify(s.Resolver)
 	if d.Type != distro.UnknownDistroType {
 		log.Infof("identified distro: %s", d.String())
@@ -64,16 +64,16 @@ func IdentifyDistro(s scope.Scope) distro.Distro {
 	return d
 }
 
-// Catalog the given scope, which may represent a container image or filesystem. Returns the discovered set of packages.
-func CatalogFromScope(s scope.Scope) (*pkg.Catalog, error) {
+// Catalog the given source, which may represent a container image or filesystem. Returns the discovered set of packages.
+func CatalogFromScope(s source.Source) (*pkg.Catalog, error) {
 	log.Info("building the catalog")
 
 	// conditionally have two sets of catalogers
 	var catalogers []cataloger.Cataloger
 	switch s.Scheme {
-	case scope.ImageScheme:
+	case source.ImageScheme:
 		catalogers = cataloger.ImageCatalogers()
-	case scope.DirectoryScheme:
+	case source.DirectoryScheme:
 		catalogers = cataloger.DirectoryCatalogers()
 	default:
 		return nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", s.Scheme)

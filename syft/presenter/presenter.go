@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/presenter/json"
 	"github.com/anchore/syft/syft/presenter/table"
 	"github.com/anchore/syft/syft/presenter/text"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 // Presenter defines the expected behavior for an object responsible for displaying arbitrary input and processed data
@@ -25,7 +25,7 @@ type Presenter interface {
 }
 
 // GetPresenter returns a presenter for images or directories
-func GetPresenter(option Option, s scope.Scope, catalog *pkg.Catalog, d *distro.Distro) Presenter {
+func GetPresenter(option Option, s source.Source, catalog *pkg.Catalog, d *distro.Distro) Presenter {
 	switch option {
 	case JSONPresenter:
 		return json.NewPresenter(catalog, s, *d)

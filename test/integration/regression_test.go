@@ -9,7 +9,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestRegression212ApkBufferSize(t *testing.T) {
@@ -21,7 +21,7 @@ func TestRegression212ApkBufferSize(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	catalog, _, _, err := syft.Catalog("docker-archive:"+tarPath, scope.SquashedScope)
+	catalog, _, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}

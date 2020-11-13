@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -57,7 +57,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		},
 	})
 
-	s, err := scope.NewScopeFromDir("/some/path")
+	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		},
 	})
 
-	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+	s, err := source.NewFromImage(img, source.AllLayersScope)
 	if err != nil {
 		t.Fatal(err)
 	}

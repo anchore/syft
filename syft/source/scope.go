@@ -1,14 +1,14 @@
-package scope
+package source
 
 import "strings"
 
 const (
-	UnknownScope Option = iota
+	UnknownScope Scope = iota
 	SquashedScope
 	AllLayersScope
 )
 
-type Option int
+type Scope int
 
 var optionStr = []string{
 	"UnknownScope",
@@ -16,12 +16,12 @@ var optionStr = []string{
 	"AllLayers",
 }
 
-var Options = []Option{
+var Options = []Scope{
 	SquashedScope,
 	AllLayersScope,
 }
 
-func ParseOption(userStr string) Option {
+func ParseOption(userStr string) Scope {
 	switch strings.ToLower(userStr) {
 	case strings.ToLower(SquashedScope.String()):
 		return SquashedScope
@@ -31,7 +31,7 @@ func ParseOption(userStr string) Option {
 	return UnknownScope
 }
 
-func (o Option) String() string {
+func (o Scope) String() string {
 	if int(o) >= len(optionStr) || o < 0 {
 		return optionStr[0]
 	}

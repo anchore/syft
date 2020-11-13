@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 type Artifact struct {
@@ -33,7 +33,7 @@ type ArtifactMetadataUnpacker struct {
 	Metadata     json.RawMessage `json:"metadata"`
 }
 
-func NewArtifact(p *pkg.Package, s scope.Scope) (Artifact, error) {
+func NewArtifact(p *pkg.Package, s source.Source) (Artifact, error) {
 	locations, err := NewLocations(p, s)
 	if err != nil {
 		return Artifact{}, err

@@ -1,7 +1,7 @@
 package json
 
 import (
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 type Image struct {
@@ -18,7 +18,7 @@ type Layer struct {
 	Size      int64  `json:"size"`
 }
 
-func NewImage(src scope.ImageSource) *Image {
+func NewImage(src source.ImageSource) *Image {
 	// populate artifacts...
 	tags := make([]string, len(src.Img.Metadata.Tags))
 	for idx, tag := range src.Img.Metadata.Tags {

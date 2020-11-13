@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 
 	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 
 	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal"
@@ -80,7 +81,7 @@ func parseRpmDB(resolver scope.FileResolver, dbRef file.Reference, reader io.Rea
 	return allPkgs, nil
 }
 
-func extractRpmdbFileRecords(resolver scope.FileResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
+func extractRpmdbFileRecords(resolver source.FileResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
 	for _, record := range entry.Files {
