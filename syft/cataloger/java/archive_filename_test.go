@@ -118,6 +118,13 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			name:      "guava",
 			ty:        pkg.JavaPkg,
 		},
+		{
+			filename:  "BOOT-INF/lib/spring-data-r2dbc-1.1.0.RELEASE.jar", // Regression: https://github.com/anchore/syft/issues/255
+			version:   "1.1.0.RELEASE",
+			extension: "jar",
+			name:      "spring-data-r2dbc",
+			ty:        pkg.JavaPkg,
+		},
 	}
 
 	for _, test := range tests {
