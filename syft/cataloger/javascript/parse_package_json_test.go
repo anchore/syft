@@ -31,6 +31,57 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
+			Fixture: "test-fixtures/pkg-json/package-license-object.json",
+			ExpectedPkg: pkg.Package{
+				Name:         "npm",
+				Version:      "6.14.6",
+				Type:         pkg.NpmPkg,
+				Licenses:     []string{"ISC"},
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
+					Licenses: []string{"ISC"},
+				},
+			},
+		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-license-objects.json",
+			ExpectedPkg: pkg.Package{
+				Name:         "npm",
+				Version:      "6.14.6",
+				Type:         pkg.NpmPkg,
+				Licenses:     []string{"MIT", "Apache-2.0"},
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
+					Licenses: []string{"MIT", "Apache-2.0"},
+				},
+			},
+		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-no-license.json",
+			ExpectedPkg: pkg.Package{
+				Name:         "npm",
+				Version:      "6.14.6",
+				Type:         pkg.NpmPkg,
+				Licenses:     []string{},
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
+					Licenses: []string{},
+				},
+			},
+		},
+		{
 			Fixture: "test-fixtures/pkg-json/package-nested-author.json",
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
@@ -73,7 +124,7 @@ func TestParsePackageJSON(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parsePackageJSON(fixture.Name(), fixture)
+			actual, err := parsePackageJSON("", fixture)
 			if err != nil {
 				t.Fatalf("failed to parse package-lock.json: %+v", err)
 			}

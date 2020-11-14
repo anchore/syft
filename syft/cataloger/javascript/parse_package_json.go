@@ -2,6 +2,7 @@ package javascript
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -22,7 +23,8 @@ type PackageJSON struct {
 	Version      string            `json:"version"`
 	Latest       []string          `json:"latest"`
 	Author       Author            `json:"author"`
-	License      string            `json:"license"`
+	License      json.RawMessage   `json:"license"`
+	Licenses     []license         `json:"licenses,omitempty"`
 	Name         string            `json:"name"`
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
@@ -107,6 +109,56 @@ func (r *Repository) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type license struct {
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
+
+func licenseFromJSON(b []byte) (string, error) {
+	// first try as string
+	var licenseString string
+	err := json.Unmarshal(b, &licenseString)
+	if err == nil {
+		return licenseString, nil
+	}
+
+	// then try as object (this format is deprecated)
+	var licenseObject license
+	err = json.Unmarshal(b, &licenseObject)
+	if err == nil {
+		return licenseObject.Type, nil
+	}
+
+	return "", errors.New("unable to unmarshal license field as either string or object")
+}
+
+func licensesFromJSON(p PackageJSON) ([]string, error) {
+	if p.License == nil && p.Licenses == nil {
+		// This package.json doesn't specify any licenses whatsoever
+		return []string{}, nil
+	}
+
+	singleLicense, err := licenseFromJSON(p.License)
+	if err == nil {
+		return []string{singleLicense}, nil
+	}
+
+	// The "licenses" field is deprecated. It should be inspected as a last resort.
+	if p.Licenses != nil {
+		mapLicenses := func(licenses []license) []string {
+			mappedLicenses := make([]string, len(licenses))
+			for i, l := range licenses {
+				mappedLicenses[i] = l.Type
+			}
+			return mappedLicenses
+		}
+
+		return mapLicenses(p.Licenses), nil
+	}
+
+	return nil, fmt.Errorf("unable to parse license field: %w", err)
+}
+
 // parsePackageJson parses a package.json and returns the discovered JavaScript packages.
 func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages := make([]pkg.Package, 0)
@@ -120,10 +172,15 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
+		licenses, err := licensesFromJSON(p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
+		}
+
 		packages = append(packages, pkg.Package{
 			Name:         p.Name,
 			Version:      p.Version,
-			Licenses:     []string{p.License},
+			Licenses:     licenses,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
 			MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -131,7 +188,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Author:   p.Author.AuthorString(),
 				Homepage: p.Homepage,
 				URL:      p.Repository.URL,
-				Licenses: []string{p.License},
+				Licenses: licenses,
 			},
 		})
 	}

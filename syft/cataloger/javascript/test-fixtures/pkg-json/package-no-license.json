@@ -1,0 +1,18 @@
+{
+  "version": "6.14.6",
+  "name": "npm",
+  "description": "a package manager for JavaScript",
+  "homepage": "https://docs.npmjs.com/",
+  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/npm/cli"
+  },
+  "bugs": {
+    "url": "https://npm.community/c/bugs"
+  },
+  "main": "./lib/npm.js",
+  "engines": {
+    "node": "6 >=6.2.0 || 8 || >=9.3.0"
+  }
+}
