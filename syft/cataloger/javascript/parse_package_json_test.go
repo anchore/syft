@@ -124,7 +124,7 @@ func TestParsePackageJSON(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parsePackageJSON(fixture.Name(), fixture)
+			actual, err := parsePackageJSON("", fixture)
 			if err != nil {
 				t.Fatalf("failed to parse package-lock.json: %+v", err)
 			}
