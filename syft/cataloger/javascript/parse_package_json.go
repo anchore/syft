@@ -133,6 +133,11 @@ func licenseFromJSON(b []byte) (string, error) {
 }
 
 func licensesFromJSON(p PackageJSON) ([]string, error) {
+	if p.License == nil && p.Licenses == nil {
+		// This package.json doesn't specify any licenses whatsoever
+		return []string{}, nil
+	}
+
 	singleLicense, err := licenseFromJSON(p.License)
 	if err == nil {
 		return []string{singleLicense}, nil
