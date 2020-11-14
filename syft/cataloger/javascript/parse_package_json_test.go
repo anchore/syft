@@ -65,6 +65,23 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
+			Fixture: "test-fixtures/pkg-json/package-no-license.json",
+			ExpectedPkg: pkg.Package{
+				Name:         "npm",
+				Version:      "6.14.6",
+				Type:         pkg.NpmPkg,
+				Licenses:     []string{},
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
+					Licenses: []string{},
+				},
+			},
+		},
+		{
 			Fixture: "test-fixtures/pkg-json/package-nested-author.json",
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
