@@ -93,23 +93,18 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			ty:        pkg.JavaPkg,
 		},
 		{
-			filename: "/hudson.war:WEB-INF/lib/jtidy-4aug2000r7-dev-hudson-1.jar",
-			// I don't see how we can reliably account for this case
-			//version:   "4aug2000r7-dev-hudson-1",
-			version:   "",
+			filename:  "/hudson.war:WEB-INF/lib/jtidy-4aug2000r7-dev-hudson-1.jar",
+			version:   "4aug2000r7-dev-hudson-1",
 			extension: "jar",
 			name:      "jtidy",
 			ty:        pkg.JavaPkg,
 		},
 		{
-			filename: "/hudson.war:WEB-INF/lib/trilead-ssh2-build212-hudson-5.jar",
-			// I don't see how we can reliably account for this case
-			//version:   "build212-hudson-5",
-			version:   "5",
+			filename:  "/hudson.war:WEB-INF/lib/trilead-ssh2-build212-hudson-5.jar",
+			version:   "build212-hudson-5",
 			extension: "jar",
-			// name: "trilead-ssh2",
-			name: "trilead-ssh2-build212-hudson",
-			ty:   pkg.JavaPkg,
+			name:      "trilead-ssh2",
+			ty:        pkg.JavaPkg,
 		},
 		{
 			filename:  "/hudson.war:WEB-INF/lib/guava-r06.jar",
