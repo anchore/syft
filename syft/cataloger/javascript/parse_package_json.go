@@ -24,6 +24,7 @@ type PackageJSON struct {
 	Latest       []string          `json:"latest"`
 	Author       Author            `json:"author"`
 	License      json.RawMessage   `json:"license"`
+	Licenses     []license         `json:"licenses,omitempty"`
 	Name         string            `json:"name"`
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
@@ -131,6 +132,28 @@ func licenseFromJSON(b []byte) (string, error) {
 	return "", errors.New("unable to unmarshal license field as either string or object")
 }
 
+func licensesFromJSON(p PackageJSON) ([]string, error) {
+	singleLicense, err := licenseFromJSON(p.License)
+	if err == nil {
+		return []string{singleLicense}, nil
+	}
+
+	// The "licenses" field is deprecated. It should be inspected as a last resort.
+	if p.Licenses != nil {
+		mapLicenses := func(licenses []license) []string {
+			mappedLicenses := make([]string, len(licenses))
+			for i, l := range licenses {
+				mappedLicenses[i] = l.Type
+			}
+			return mappedLicenses
+		}
+
+		return mapLicenses(p.Licenses), nil
+	}
+
+	return nil, fmt.Errorf("unable to parse license field: %w", err)
+}
+
 // parsePackageJson parses a package.json and returns the discovered JavaScript packages.
 func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 	packages := make([]pkg.Package, 0)
@@ -144,11 +167,10 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
-		singleLicense, err := licenseFromJSON(p.License)
+		licenses, err := licensesFromJSON(p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
-		licenses := []string{singleLicense}
 
 		packages = append(packages, pkg.Package{
 			Name:         p.Name,
