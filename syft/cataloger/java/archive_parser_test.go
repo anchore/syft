@@ -303,7 +303,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "jul-to-slf4j",
@@ -315,7 +315,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-validation",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "hibernate-validator",
@@ -327,7 +327,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-expression",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 				{
 					Name:    "jakarta.validation-api",
@@ -335,11 +335,11 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-web",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 				{
 					Name:    "spring-boot-starter-actuator",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "log4j-api",
@@ -359,23 +359,23 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-aop",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 				{
 					Name:    "spring-boot-actuator-autoconfigure",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "spring-jcl",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 				{
 					Name:    "spring-boot",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "spring-boot-starter-logging",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "jakarta.annotation-api",
@@ -383,7 +383,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-webmvc",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 				{
 					Name:    "HdrHistogram",
@@ -391,7 +391,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-web",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "logback-classic",
@@ -403,7 +403,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-json",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "jackson-databind",
@@ -419,7 +419,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-autoconfigure",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "jackson-datatype-jdk8",
@@ -435,11 +435,11 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-beans",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 				{
 					Name:    "spring-boot-actuator",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "slf4j-api",
@@ -447,7 +447,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-core",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 				{
 					Name:    "logback-core",
@@ -467,7 +467,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-boot-starter-tomcat",
-					Version: "2.2.2",
+					Version: "2.2.2.RELEASE",
 				},
 				{
 					Name:    "classmate",
@@ -475,7 +475,7 @@ func TestParseNestedJar(t *testing.T) {
 				},
 				{
 					Name:    "spring-context",
-					Version: "5.2.2",
+					Version: "5.2.2.RELEASE",
 				},
 			},
 		},
@@ -509,31 +509,27 @@ func TestParseNestedJar(t *testing.T) {
 				expectedNameVersionPairSet.Add(makeKey(&e))
 			}
 
+			actualNameVersionPairSet := internal.NewStringSet()
+			for _, a := range actual {
+				key := makeKey(&a)
+				actualNameVersionPairSet.Add(key)
+				if !expectedNameVersionPairSet.Contains(key) {
+					t.Errorf("extra package: %s", a)
+				}
+			}
+
+			for _, key := range expectedNameVersionPairSet.ToSlice() {
+				if !actualNameVersionPairSet.Contains(key) {
+					t.Errorf("missing package: %s", key)
+				}
+			}
+
 			if len(actual) != len(expectedNameVersionPairSet) {
-				actualNameVersionPairSet := internal.NewStringSet()
-				for _, a := range actual {
-					key := makeKey(&a)
-					actualNameVersionPairSet.Add(key)
-					if !expectedNameVersionPairSet.Contains(key) {
-						t.Logf("extra package: %s", a)
-					}
-				}
-
-				for _, key := range expectedNameVersionPairSet.ToSlice() {
-					if !actualNameVersionPairSet.Contains(key) {
-						t.Logf("missing package: %s", key)
-					}
-				}
-
 				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expectedNameVersionPairSet))
 			}
 
 			for _, a := range actual {
 				actualKey := makeKey(&a)
-
-				if !expectedNameVersionPairSet.Contains(actualKey) {
-					t.Errorf("unexpected pkg: %q", actualKey)
-				}
 
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				if actualKey == "spring-boot|0.0.1-SNAPSHOT" {

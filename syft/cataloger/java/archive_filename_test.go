@@ -131,24 +131,24 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 				t.Errorf("mismatched type: %+v != %v", ty, test.ty)
 			}
 
-			version := obj.version()
+			version := obj.version
 			if version != test.version {
 				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(version, test.version, true)
+				diffs := dmp.DiffMain(test.version, version, true)
 				t.Errorf("mismatched version:\n%s", dmp.DiffPrettyText(diffs))
 			}
 
 			extension := obj.extension()
 			if extension != test.extension {
 				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(extension, test.extension, true)
+				diffs := dmp.DiffMain(test.extension, extension, true)
 				t.Errorf("mismatched extension:\n%s", dmp.DiffPrettyText(diffs))
 			}
 
-			name := obj.name()
+			name := obj.name
 			if name != test.name {
 				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(name, test.name, true)
+				diffs := dmp.DiffMain(test.name, name, true)
 				t.Errorf("mismatched name:\n%s", dmp.DiffPrettyText(diffs))
 			}
 		})
