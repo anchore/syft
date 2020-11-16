@@ -7,16 +7,19 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// Source object represents the thing that was cataloged
 type Source struct {
 	Type   string      `json:"type"`
 	Target interface{} `json:"target"`
 }
 
-type SourceUnpacker struct {
+// sourceUnpacker is used to unmarshal Source objects
+type sourceUnpacker struct {
 	Type   string          `json:"type"`
 	Target json.RawMessage `json:"target"`
 }
 
+// NewSource creates a new source object to be represented into JSON.
 func NewSource(src source.Metadata) (Source, error) {
 	switch src.Scheme {
 	case source.ImageScheme:
@@ -34,8 +37,9 @@ func NewSource(src source.Metadata) (Source, error) {
 	}
 }
 
+// UnmarshalJSON populates a source object from JSON bytes.
 func (s *Source) UnmarshalJSON(b []byte) error {
-	var unpacker SourceUnpacker
+	var unpacker sourceUnpacker
 	if err := json.Unmarshal(b, &unpacker); err != nil {
 		return err
 	}
@@ -57,6 +61,7 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// ToSourceMetadata takes a source object represented from JSON and creates a source.Metadata object.
 func (s *Source) ToSourceMetadata() source.Metadata {
 	var metadata source.Metadata
 	switch s.Type {

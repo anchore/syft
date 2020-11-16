@@ -9,11 +9,11 @@ import (
 )
 
 type Artifact struct {
-	ArtifactBasicMetadata
-	ArtifactCustomMetadata
+	artifactBasicMetadata
+	artifactCustomMetadata
 }
 
-type ArtifactBasicMetadata struct {
+type artifactBasicMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
 	Type      pkg.Type          `json:"type"`
@@ -23,12 +23,12 @@ type ArtifactBasicMetadata struct {
 	Language  pkg.Language      `json:"language"`
 }
 
-type ArtifactCustomMetadata struct {
+type artifactCustomMetadata struct {
 	MetadataType pkg.MetadataType `json:"metadataType"`
 	Metadata     interface{}      `json:"metadata,omitempty"`
 }
 
-type ArtifactMetadataUnpacker struct {
+type artifactMetadataUnpacker struct {
 	MetadataType string          `json:"metadataType"`
 	Metadata     json.RawMessage `json:"metadata"`
 }
@@ -36,7 +36,7 @@ type ArtifactMetadataUnpacker struct {
 func NewArtifact(p *pkg.Package) (Artifact, error) {
 
 	return Artifact{
-		ArtifactBasicMetadata: ArtifactBasicMetadata{
+		artifactBasicMetadata: artifactBasicMetadata{
 			Name:      p.Name,
 			Version:   p.Version,
 			Type:      p.Type,
@@ -45,7 +45,7 @@ func NewArtifact(p *pkg.Package) (Artifact, error) {
 			Licenses:  p.Licenses,
 			Language:  p.Language,
 		},
-		ArtifactCustomMetadata: ArtifactCustomMetadata{
+		artifactCustomMetadata: artifactCustomMetadata{
 			MetadataType: p.MetadataType,
 			Metadata:     p.Metadata,
 		},
@@ -68,13 +68,13 @@ func (a Artifact) ToPackage() pkg.Package {
 }
 
 func (a *Artifact) UnmarshalJSON(b []byte) error {
-	var basic ArtifactBasicMetadata
+	var basic artifactBasicMetadata
 	if err := json.Unmarshal(b, &basic); err != nil {
 		return err
 	}
-	a.ArtifactBasicMetadata = basic
+	a.artifactBasicMetadata = basic
 
-	var unpacker ArtifactMetadataUnpacker
+	var unpacker artifactMetadataUnpacker
 	if err := json.Unmarshal(b, &unpacker); err != nil {
 		return err
 	}
