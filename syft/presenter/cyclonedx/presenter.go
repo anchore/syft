@@ -5,7 +5,6 @@ package cyclonedx
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io"
 
 	"github.com/anchore/syft/syft/distro"
@@ -22,39 +21,17 @@ type Presenter struct {
 }
 
 // NewPresenter creates a CycloneDX presenter from the given Catalog and Locations objects.
-func NewPresenter(catalog *pkg.Catalog, s source.Metadata, d distro.Distro) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Distro) *Presenter {
 	return &Presenter{
 		catalog:     catalog,
-		srcMetadata: s,
+		srcMetadata: srcMetadata,
 		distro:      d,
 	}
 }
 
 // Present writes the CycloneDX report to the given io.Writer.
 func (pres *Presenter) Present(output io.Writer) error {
-	bom := NewDocumentFromCatalog(pres.catalog, pres.distro)
-
-	switch pres.srcMetadata.Scheme {
-	case source.DirectoryScheme:
-		bom.BomDescriptor.Component = &BdComponent{
-			Component: Component{
-				Type:    "file",
-				Name:    pres.srcMetadata.Path,
-				Version: "",
-			},
-		}
-	case source.ImageScheme:
-		// TODO: can we use the tags a bit better?
-		bom.BomDescriptor.Component = &BdComponent{
-			Component: Component{
-				Type:    "container",
-				Name:    pres.srcMetadata.ImageMetadata.UserInput,
-				Version: pres.srcMetadata.ImageMetadata.Digest,
-			},
-		}
-	default:
-		return fmt.Errorf("unsupported source: %T", pres.srcMetadata.Scheme)
-	}
+	bom := NewDocument(pres.catalog, pres.distro, pres.srcMetadata)
 
 	encoder := xml.NewEncoder(output)
 	encoder.Indent("", "  ")

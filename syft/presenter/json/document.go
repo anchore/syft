@@ -21,19 +21,10 @@ func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Dis
 		return Document{}, nil
 	}
 
-	distroName := d.Name()
-	if distroName == "UnknownDistroType" {
-		distroName = ""
-	}
-
 	doc := Document{
 		Artifacts: make([]Artifact, 0),
 		Source:    src,
-		Distro: Distribution{
-			Name:    distroName,
-			Version: d.FullVersion(),
-			IDLike:  d.IDLike,
-		},
+		Distro:    NewDistribution(d),
 		Descriptor: Descriptor{
 			Name:    internal.ApplicationName,
 			Version: version.FromBuild().Version,

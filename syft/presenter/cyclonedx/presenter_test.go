@@ -177,7 +177,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(expected), string(actual), true)
+		diffs := dmp.DiffMain(string(actual), string(expected), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }
