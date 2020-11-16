@@ -4,9 +4,7 @@
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
-   "foundBy": [
-    "the-cataloger-1"
-   ],
+   "foundBy": "the-cataloger-1",
    "locations": [
     {
      "path": "/somefile-1.txt",
@@ -32,9 +30,7 @@
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
-   "foundBy": [
-    "the-cataloger-2"
-   ],
+   "foundBy": "the-cataloger-2",
    "locations": [
     {
      "path": "/somefile-2.txt",
@@ -58,6 +54,8 @@
  "source": {
   "type": "image",
   "target": {
+   "userInput": "user-image-input",
+   "scope": "AllLayers",
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
@@ -90,7 +88,6 @@
  },
  "descriptor": {
   "name": "syft",
-  "version": "[not provided]",
-  "scope": "AllLayers"
+  "version": "[not provided]"
  }
 }

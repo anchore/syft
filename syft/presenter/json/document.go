@@ -15,20 +15,6 @@ type Document struct {
 	Descriptor Descriptor   `json:"descriptor"`
 }
 
-// Descriptor describes what created the document as well as surrounding metadata
-type Descriptor struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Scope   string `json:"scope"`
-}
-
-// Distribution provides information about a detected Linux Distribution
-type Distribution struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	IDLike  string `json:"idLike"`
-}
-
 func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Distro) (Document, error) {
 	src, err := NewSource(srcMetadata)
 	if err != nil {
@@ -51,7 +37,6 @@ func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Dis
 		Descriptor: Descriptor{
 			Name:    internal.ApplicationName,
 			Version: version.FromBuild().Version,
-			Scope:   srcMetadata.Scope.String(),
 		},
 	}
 

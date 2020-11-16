@@ -4,6 +4,7 @@ import "github.com/anchore/stereoscope/pkg/image"
 
 type ImageMetadata struct {
 	UserInput string          `json:"userInput"`
+	Scope     Scope           `json:"scope"` // specific perspective to catalog
 	Layers    []LayerMetadata `json:"layers"`
 	Size      int64           `json:"size"`
 	Digest    string          `json:"digest"`
@@ -17,7 +18,7 @@ type LayerMetadata struct {
 	Size      int64  `json:"size"`
 }
 
-func NewImageMetadata(img *image.Image, userInput string) ImageMetadata {
+func NewImageMetadata(img *image.Image, userInput string, scope Scope) ImageMetadata {
 	// populate artifacts...
 	tags := make([]string, len(img.Metadata.Tags))
 	for idx, tag := range img.Metadata.Tags {
@@ -25,6 +26,7 @@ func NewImageMetadata(img *image.Image, userInput string) ImageMetadata {
 	}
 	theImg := ImageMetadata{
 		UserInput: userInput,
+		Scope:     scope,
 		Digest:    img.Metadata.Digest,
 		Size:      img.Metadata.Size,
 		MediaType: string(img.Metadata.MediaType),

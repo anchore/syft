@@ -83,11 +83,11 @@ func CatalogFromScope(s source.Source) (*pkg.Catalog, error) {
 }
 
 // CatalogFromJSON takes an existing syft report and generates catalog primitives.
-func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, *source.ImageMetadata, error) {
+func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, source.Metadata, error) {
 	var doc jsonPresenter.Document
 	decoder := json.NewDecoder(reader)
 	if err := decoder.Decode(&doc); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, source.Metadata{}, err
 	}
 
 	var pkgs = make([]pkg.Package, len(doc.Artifacts))
@@ -104,18 +104,12 @@ func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, *source.Im
 		distroType = distro.Type(doc.Distro.Name)
 	}
 
-	d, err := distro.NewDistro(distroType, doc.Distro.Version, doc.Distro.IDLike)
+	theDistro, err := distro.NewDistro(distroType, doc.Distro.Version, doc.Distro.IDLike)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, source.Metadata{}, err
 	}
 
-	var imageMetadata *source.ImageMetadata
-	if doc.Source.Type == "image" {
-		payload := doc.Source.Target.(source.ImageMetadata)
-		imageMetadata = &payload
-	}
-
-	return catalog, &d, imageMetadata, nil
+	return catalog, &theDistro, doc.Source.ToSourceMetadata(), nil
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

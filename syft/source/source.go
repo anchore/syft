@@ -85,12 +85,12 @@ func NewFromDirectory(path string) (Source, error) {
 
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the
 // option given (e.g. all-layers, squashed, etc)
-func NewFromImage(img *image.Image, option Scope, userImageStr string) (Source, error) {
+func NewFromImage(img *image.Image, scope Scope, userImageStr string) (Source, error) {
 	if img == nil {
 		return Source{}, fmt.Errorf("no image given")
 	}
 
-	resolver, err := getImageResolver(img, option)
+	resolver, err := getImageResolver(img, scope)
 	if err != nil {
 		return Source{}, fmt.Errorf("could not determine file resolver: %w", err)
 	}
@@ -99,9 +99,8 @@ func NewFromImage(img *image.Image, option Scope, userImageStr string) (Source, 
 		Resolver: resolver,
 		Image:    img,
 		Metadata: Metadata{
-			Scope:         option,
 			Scheme:        ImageScheme,
-			ImageMetadata: NewImageMetadata(img, userImageStr),
+			ImageMetadata: NewImageMetadata(img, userImageStr, scope),
 		},
 	}, nil
 }

@@ -56,3 +56,16 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 
 	return nil
 }
+
+func (s *Source) ToSourceMetadata() source.Metadata {
+	var metadata source.Metadata
+	switch s.Type {
+	case "directory":
+		metadata.Scheme = source.DirectoryScheme
+		metadata.Path = s.Target.(string)
+	case "image":
+		metadata.Scheme = source.ImageScheme
+		metadata.ImageMetadata = s.Target.(source.ImageMetadata)
+	}
+	return metadata
+}

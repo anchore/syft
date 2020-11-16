@@ -339,16 +339,12 @@
                 "name": {
                     "type": "string"
                 },
-                "scope": {
-                    "type": "string"
-                },
                 "version": {
                     "type": "string"
                 }
             },
             "required": [
                 "name",
-                "scope",
                 "version"
             ],
             "type": "object"
@@ -409,6 +405,9 @@
                                 "mediaType": {
                                     "type": "string"
                                 },
+                                "scope": {
+                                    "type": "string"
+                                },
                                 "size": {
                                     "type": "integer"
                                 },
@@ -426,6 +425,7 @@
                                 "digest",
                                 "layers",
                                 "mediaType",
+                                "scope",
                                 "size",
                                 "tags",
                                 "userInput"

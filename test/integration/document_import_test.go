@@ -42,12 +42,12 @@ func TestCatalogFromJSON(t *testing.T) {
 				t.Fatalf("failed to write to presenter: %+v", err)
 			}
 
-			actualCatalog, actualDistro, imageMetadata, err := syft.CatalogFromJSON(&buf)
+			actualCatalog, actualDistro, sourceMetadata, err := syft.CatalogFromJSON(&buf)
 			if err != nil {
 				t.Fatalf("failed to import document: %+v", err)
 			}
 
-			for _, d := range deep.Equal(*imageMetadata, expectedSource.Metadata.ImageMetadata) {
+			for _, d := range deep.Equal(sourceMetadata, expectedSource.Metadata) {
 				t.Errorf("   image metadata diff: %+v", d)
 			}
 
