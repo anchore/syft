@@ -7,8 +7,8 @@ Here is what the main execution path for syft does:
 	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
 	3. Invoke a single presenter to show the contents of the catalog
 
-A Locations object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
-providing a way to inspect paths and file content within the image. The Locations object, not the image object, is used
+A Source object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
+providing a way to inspect paths and file content within the image. The Source object, not the image object, is used
 throughout the main execution path. This abstraction allows for decoupling of what is cataloged (a docker image, an OCI
 image, a filesystem, etc) and how it is cataloged (the individual catalogers).
 
@@ -82,12 +82,12 @@ func CatalogFromScope(s source.Source) (*pkg.Catalog, error) {
 	return cataloger.Catalog(s.Resolver, catalogers...)
 }
 
-// TODO: we shouldn't return the jsonPresenter.Image object! this is leaky
-func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, error) {
+// CatalogFromJSON takes an existing syft report and generates catalog primitives.
+func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, *source.ImageMetadata, error) {
 	var doc jsonPresenter.Document
 	decoder := json.NewDecoder(reader)
 	if err := decoder.Decode(&doc); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var pkgs = make([]pkg.Package, len(doc.Artifacts))
@@ -106,16 +106,16 @@ func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, error) {
 
 	d, err := distro.NewDistro(distroType, doc.Distro.Version, doc.Distro.IDLike)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	//var theImg *jsonPresenter.Image
-	//if doc.Locations.Type == "image" {
-	//	img := doc.Locations.Target.(jsonPresenter.Image)
-	//	theImg = &img
-	//}
+	var imageMetadata *source.ImageMetadata
+	if doc.Source.Type == "image" {
+		payload := doc.Source.Target.(source.ImageMetadata)
+		imageMetadata = &payload
+	}
 
-	return catalog, &d, nil
+	return catalog, &d, imageMetadata, nil
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

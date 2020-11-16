@@ -1,6 +1,6 @@
 package file
 
-// Locations: https://research.swtch.com/glob.go
+// Source: https://research.swtch.com/glob.go
 func GlobMatch(pattern, name string) bool {
 	px := 0
 	nx := 0

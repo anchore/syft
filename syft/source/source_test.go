@@ -35,7 +35,7 @@ func TestNewFromImage(t *testing.T) {
 		Layers: []*image.Layer{layer},
 	}
 
-	t.Run("create a new Locations object from image", func(t *testing.T) {
+	t.Run("create a new source object from image", func(t *testing.T) {
 		_, err := NewFromImage(&img, AllLayersScope, "")
 		if err != nil {
 			t.Errorf("unexpected error when creating a new Locations from img: %+v", err)
