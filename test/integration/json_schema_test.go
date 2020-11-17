@@ -53,7 +53,7 @@ func validateAgainstV1Schema(t *testing.T, json string) {
 	}
 }
 
-func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope *source.Source, prefix string) {
+func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope source.Source, prefix string) {
 	// make the json output example dir if it does not exist
 	absJsonSchemaExamplesPath := path.Join(repoRoot(t), jsonSchemaExamplesPath)
 	if _, err := os.Stat(absJsonSchemaExamplesPath); os.IsNotExist(err) {
@@ -67,7 +67,7 @@ func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope *source.Source,
 		t.Fatalf("bad distro: %+v", err)
 	}
 
-	p := presenter.GetPresenter(presenter.JSONPresenter, theScope.Metadata, catalog, &d)
+	p := presenter.GetPresenter(presenter.JSONPresenter, theScope.Metadata, catalog, d)
 	if p == nil {
 		t.Fatal("unable to get presenter")
 	}
@@ -101,7 +101,7 @@ func TestJsonSchemaImg(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	catalog, theScope, _, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
+	src, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -112,13 +112,13 @@ func TestJsonSchemaImg(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			testJsonSchema(t, catalog, theScope, "img")
+			testJsonSchema(t, catalog, src, "img")
 		})
 	}
 }
 
 func TestJsonSchemaDirs(t *testing.T) {
-	catalog, theScope, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.AllLayersScope)
+	src, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.AllLayersScope)
 	if err != nil {
 		t.Errorf("unable to create source from dir: %+v", err)
 	}
@@ -129,7 +129,7 @@ func TestJsonSchemaDirs(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			testJsonSchema(t, catalog, theScope, "dir")
+			testJsonSchema(t, catalog, src, "dir")
 		})
 	}
 }

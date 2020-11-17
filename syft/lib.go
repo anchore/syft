@@ -34,22 +34,22 @@ import (
 
 // Catalog the given image from a particular perspective (e.g. squashed source, all-layers source). Returns the discovered
 // set of packages, the identified Linux distribution, and the source object used to wrap the data source.
-func Catalog(userInput string, scoptOpt source.Scope) (*pkg.Catalog, *source.Source, *distro.Distro, error) {
+func Catalog(userInput string, scope source.Scope) (source.Source, *pkg.Catalog, distro.Distro, error) {
 	log.Info("cataloging image")
-	s, cleanup, err := source.New(userInput, scoptOpt)
+	s, cleanup, err := source.New(userInput, scope)
 	defer cleanup()
 	if err != nil {
-		return nil, nil, nil, err
+		return source.Source{}, nil, distro.Distro{}, err
 	}
 
 	d := IdentifyDistro(s)
 
 	catalog, err := CatalogFromScope(s)
 	if err != nil {
-		return nil, nil, nil, err
+		return source.Source{}, nil, distro.Distro{}, err
 	}
 
-	return catalog, &s, &d, nil
+	return s, catalog, d, nil
 }
 
 // IdentifyDistro attempts to discover what the underlying Linux distribution may be from the available flat files
@@ -82,12 +82,12 @@ func CatalogFromScope(s source.Source) (*pkg.Catalog, error) {
 	return cataloger.Catalog(s.Resolver, catalogers...)
 }
 
-// CatalogFromJSON takes an existing syft report and generates catalog primitives.
-func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, source.Metadata, error) {
+// CatalogFromJSON takes an existing syft report and generates native syft objects.
+func CatalogFromJSON(reader io.Reader) (source.Metadata, *pkg.Catalog, distro.Distro, error) {
 	var doc jsonPresenter.Document
 	decoder := json.NewDecoder(reader)
 	if err := decoder.Decode(&doc); err != nil {
-		return nil, nil, source.Metadata{}, err
+		return source.Metadata{}, nil, distro.Distro{}, err
 	}
 
 	var pkgs = make([]pkg.Package, len(doc.Artifacts))
@@ -106,10 +106,10 @@ func CatalogFromJSON(reader io.Reader) (*pkg.Catalog, *distro.Distro, source.Met
 
 	theDistro, err := distro.NewDistro(distroType, doc.Distro.Version, doc.Distro.IDLike)
 	if err != nil {
-		return nil, nil, source.Metadata{}, err
+		return source.Metadata{}, nil, distro.Distro{}, err
 	}
 
-	return catalog, &theDistro, doc.Source.ToSourceMetadata(), nil
+	return doc.Source.ToSourceMetadata(), catalog, theDistro, nil
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

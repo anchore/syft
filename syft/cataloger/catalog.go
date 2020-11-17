@@ -54,8 +54,6 @@ func Catalog(resolver source.Resolver, catalogers ...Cataloger) (*pkg.Catalog, e
 		log.Debugf("cataloger '%s' discovered '%d' packages", theCataloger.Name(), catalogedPackages)
 		packagesDiscovered.N += int64(catalogedPackages)
 
-		// helper function to add synthesized information...
-
 		for _, p := range packages {
 			catalog.Add(p)
 		}

@@ -25,16 +25,16 @@ type Presenter interface {
 }
 
 // GetPresenter returns a presenter for images or directories
-func GetPresenter(option Option, srcMetadata source.Metadata, catalog *pkg.Catalog, d *distro.Distro) Presenter {
+func GetPresenter(option Option, srcMetadata source.Metadata, catalog *pkg.Catalog, d distro.Distro) Presenter {
 	switch option {
 	case JSONPresenter:
-		return json.NewPresenter(catalog, srcMetadata, *d)
+		return json.NewPresenter(catalog, srcMetadata, d)
 	case TextPresenter:
 		return text.NewPresenter(catalog, srcMetadata)
 	case TablePresenter:
 		return table.NewPresenter(catalog)
 	case CycloneDxPresenter:
-		return cyclonedx.NewPresenter(catalog, srcMetadata, *d)
+		return cyclonedx.NewPresenter(catalog, srcMetadata, d)
 	default:
 		return nil
 	}

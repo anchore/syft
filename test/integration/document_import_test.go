@@ -31,18 +31,18 @@ func TestCatalogFromJSON(t *testing.T) {
 			tarPath := imagetest.GetFixtureImageTarPath(t, test.fixture)
 			defer cleanup()
 
-			expectedCatalog, expectedSource, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
+			expectedSource, expectedCatalog, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
 			if err != nil {
 				t.Fatalf("failed to catalog image: %+v", err)
 			}
 
 			var buf bytes.Buffer
-			jsonPres := json.NewPresenter(expectedCatalog, expectedSource.Metadata, *expectedDistro)
+			jsonPres := json.NewPresenter(expectedCatalog, expectedSource.Metadata, expectedDistro)
 			if err = jsonPres.Present(&buf); err != nil {
 				t.Fatalf("failed to write to presenter: %+v", err)
 			}
 
-			actualCatalog, actualDistro, sourceMetadata, err := syft.CatalogFromJSON(&buf)
+			sourceMetadata, actualCatalog, actualDistro, err := syft.CatalogFromJSON(&buf)
 			if err != nil {
 				t.Fatalf("failed to import document: %+v", err)
 			}

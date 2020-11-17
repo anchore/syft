@@ -20,20 +20,14 @@ func TestDistroImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
-	if actualDistro == nil {
-		t.Fatalf("could not find distro")
-	}
 
 	expected, err := distro.NewDistro(distro.Busybox, "1.31.1", "")
 	if err != nil {
 		t.Fatalf("could not create distro: %+v", err)
 	}
 
-	diffs := deep.Equal(*actualDistro, expected)
-	if len(diffs) != 0 {
-		for _, d := range diffs {
-			t.Errorf("found distro difference: %+v", d)
-		}
+	for _, d := range deep.Equal(actualDistro, expected) {
+		t.Errorf("found distro difference: %+v", d)
 	}
 
 }

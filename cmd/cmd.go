@@ -112,7 +112,7 @@ func logAppConfig() {
 	if err != nil {
 		log.Debugf("Could not display application config: %+v", err)
 	} else {
-		log.Debugf("Application config:\n%+v", color.Magenta.Sprint(appCfgStr))
+		log.Debugf("Application config:\n%+v", color.Magenta.Sprint(string(appCfgStr)))
 	}
 }
 
