@@ -1,8 +1,9 @@
 /*
-Defines the logging interface which is used throughout the syft library.
+Package logger defines the logging interface which is used throughout the syft library.
 */
 package logger
 
+// Logger represents the behavior for logging within the syft library.
 type Logger interface {
 	Errorf(format string, args ...interface{})
 	Error(args ...interface{})

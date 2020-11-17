@@ -1,3 +1,6 @@
+/*
+Package version contains all build time metadata (version, build time, git commit, etc).
+*/
 package version
 
 import (

@@ -19,7 +19,7 @@ type ContentResolver interface {
 	// TODO: we should consider refactoring to return a set of io.Readers or file.Openers instead of the full contents themselves (allow for optional buffering).
 }
 
-//  FileResolver knows how to get file.References for given string paths and globs
+// FileResolver knows how to get file.References for given string paths and globs
 type FileResolver interface {
 	// FilesByPath fetches a set of file references which have the given path (for an image, there may be multiple matches)
 	FilesByPath(paths ...string) ([]Location, error)

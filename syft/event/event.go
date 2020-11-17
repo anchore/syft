@@ -7,7 +7,12 @@ package event
 import "github.com/wagoodman/go-partybus"
 
 const (
+	// AppUpdateAvailable is a partybus event that occurs when an application update is available
 	AppUpdateAvailable partybus.EventType = "syft-app-update-available"
-	CatalogerStarted   partybus.EventType = "syft-cataloger-started-event"
-	CatalogerFinished  partybus.EventType = "syft-cataloger-finished-event"
+
+	// CatalogerStarted is a partybus event that occurs when the package cataloging has begun
+	CatalogerStarted partybus.EventType = "syft-cataloger-started-event"
+
+	// CatalogerFinished is a partybus event that occurs when the package cataloging has completed
+	CatalogerFinished partybus.EventType = "syft-cataloger-finished-event"
 )

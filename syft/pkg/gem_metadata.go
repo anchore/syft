@@ -1,5 +1,6 @@
 package pkg
 
+// GemMetadata represents all metadata parsed from the gemspec file
 type GemMetadata struct {
 	Name     string   `mapstructure:"name" json:"name"`
 	Version  string   `mapstructure:"version" json:"version"`

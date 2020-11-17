@@ -26,6 +26,7 @@ type JavaManifest struct {
 	NamedSections map[string]map[string]string `json:"namedSections,omitempty"`
 }
 
+// PackageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
 func (m JavaMetadata) PackageURL() string {
 	if m.PomProperties != nil {
 		pURL := packageurl.NewPackageURL(

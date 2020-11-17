@@ -21,6 +21,7 @@ type RpmdbMetadata struct {
 	Files     []RpmdbFileRecord `json:"files"`
 }
 
+// RpmdbFileRecord represents the file metadata for a single file attributed to a RPM package.
 type RpmdbFileRecord struct {
 	Path   string        `json:"path"`
 	Mode   RpmdbFileMode `json:"mode"`
@@ -28,8 +29,10 @@ type RpmdbFileRecord struct {
 	SHA256 string        `json:"sha256"`
 }
 
+// RpmdbFileMode is the raw file mode for a single file. This can be interpreted as the linux stat.h mode (see https://pubs.opengroup.org/onlinepubs/007908799/xsh/sysstat.h.html)
 type RpmdbFileMode uint16
 
+// PackageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
 func (m RpmdbMetadata) PackageURL(d distro.Distro) string {
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypeRPM,

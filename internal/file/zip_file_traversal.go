@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	// represents the order of bytes
 	_  = iota
 	KB = 1 << (10 * iota)
 	MB
@@ -33,6 +34,7 @@ func newZipTraverseRequest(paths ...string) zipTraversalRequest {
 	return results
 }
 
+// TraverseFilesInZip enumerates all paths stored within a zip archive using the visitor pattern.
 func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths ...string) error {
 	request := newZipTraverseRequest(paths...)
 
@@ -63,6 +65,7 @@ func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths
 	return nil
 }
 
+// ExtractFromZipToUniqueTempFile extracts select paths for the given archive to a temporary directory, returning file openers for each file extracted.
 func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (map[string]Opener, error) {
 	results := make(map[string]Opener)
 
@@ -121,6 +124,7 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 	return results, TraverseFilesInZip(archivePath, visitor, paths...)
 }
 
+// ContentsFromZip extracts select paths for the given archive and returns a set of string contents for each path.
 func ContentsFromZip(archivePath string, paths ...string) (map[string]string, error) {
 	results := make(map[string]string)
 
@@ -162,6 +166,7 @@ func ContentsFromZip(archivePath string, paths ...string) (map[string]string, er
 	return results, TraverseFilesInZip(archivePath, visitor, paths...)
 }
 
+// UnzipToDir extracts a zip archive to a target directory.
 func UnzipToDir(archivePath, targetDir string) error {
 	visitor := func(file *zip.File) error {
 		// the zip-slip attack protection is still being erroneously detected

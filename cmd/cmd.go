@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gookit/color"
+
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/syft/syft/presenter"
@@ -11,7 +13,6 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/format"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
 	"github.com/anchore/syft/syft"
@@ -111,7 +112,7 @@ func logAppConfig() {
 	if err != nil {
 		log.Debugf("Could not display application config: %+v", err)
 	} else {
-		log.Debugf("Application config:\n%+v", format.Magenta.Format(string(appCfgStr)))
+		log.Debugf("Application config:\n%+v", color.Magenta.Sprint(appCfgStr))
 	}
 }
 

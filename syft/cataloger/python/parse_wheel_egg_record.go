@@ -44,7 +44,7 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 					return nil, fmt.Errorf("unexpected python record digest: %q", item)
 				}
 
-				record.Digest = &pkg.Digest{
+				record.Digest = &pkg.PythonFileDigest{
 					Algorithm: fields[0],
 					Value:     fields[1],
 				}

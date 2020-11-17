@@ -18,6 +18,7 @@ var latestAppVersionURL = struct {
 	path: fmt.Sprintf("/%s/releases/latest/VERSION", internal.ApplicationName),
 }
 
+// IsUpdateAvailable indicates if there is a newer application version available, and if so, what the new version is.
 func IsUpdateAvailable() (bool, string, error) {
 	currentVersionStr := FromBuild().Version
 	currentVersion, err := hashiVersion.NewVersion(currentVersionStr)

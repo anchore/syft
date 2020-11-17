@@ -14,6 +14,7 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
+// ID represents a unique value for each package added to a package catalog.
 type ID int64
 
 // Package represents an application or library that has been bundled into a distributable format.

@@ -1,15 +1,16 @@
 package pkg
 
-type Digest struct {
+// PythonFileDigest represents the file metadata for a single file attributed to a python package.
+type PythonFileDigest struct {
 	Algorithm string `json:"algorithm"`
 	Value     string `json:"value"`
 }
 
 // PythonFileRecord represents a single entry within a RECORD file for a python wheel or egg package
 type PythonFileRecord struct {
-	Path   string  `json:"path"`
-	Digest *Digest `json:"digest,omitempty"`
-	Size   string  `json:"size,omitempty"`
+	Path   string            `json:"path"`
+	Digest *PythonFileDigest `json:"digest,omitempty"`
+	Size   string            `json:"size,omitempty"`
 }
 
 // PythonPackageMetadata represents all captured data for a python egg or wheel package.

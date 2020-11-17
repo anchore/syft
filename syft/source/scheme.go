@@ -9,12 +9,16 @@ import (
 	"github.com/spf13/afero"
 )
 
+// Scheme represents the optional prefixed string at the beginning of a user request (e.g. "docker:").
 type Scheme string
 
 const (
-	UnknownScheme   Scheme = "unknown-scheme"
-	DirectoryScheme Scheme = "directory-scheme"
-	ImageScheme     Scheme = "image-scheme"
+	// UnknownScheme is the default scheme
+	UnknownScheme Scheme = "UnknownScheme"
+	// DirectoryScheme indicates the source being cataloged is a directory on the root filesystem
+	DirectoryScheme Scheme = "DirectoryScheme"
+	// ImageScheme indicates the source being cataloged is a container image
+	ImageScheme Scheme = "ImageScheme"
 )
 
 func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (Scheme, string, error) {

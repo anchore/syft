@@ -10,11 +10,13 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// Presenter is a human-friendly text presenter to represent package and source data.
 type Presenter struct {
 	catalog     *pkg.Catalog
 	srcMetadata source.Metadata
 }
 
+// NewPresenter creates a new presenter for the given set of catalog and image data.
 func NewPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *Presenter {
 	return &Presenter{
 		catalog:     catalog,

@@ -1,14 +1,16 @@
 package pkg
 
+// MetadataType represents the data shape stored within pkg.Package.Metadata.
 type MetadataType string
 
 const (
+	// this is the full set of data shapes that can be represented within the pkg.Package.Metadata field
 	UnknownMetadataType        MetadataType = "UnknownMetadata"
-	ApkMetadataType            MetadataType = "apk-metadata"
-	DpkgMetadataType           MetadataType = "dpkg-metadata"
-	GemMetadataType            MetadataType = "gem-metadata"
-	JavaMetadataType           MetadataType = "java-metadata"
-	NpmPackageJSONMetadataType MetadataType = "npm-package-json-metadata"
-	RpmdbMetadataType          MetadataType = "rpmdb-metadata"
-	PythonPackageMetadataType  MetadataType = "python-package-metadata"
+	ApkMetadataType            MetadataType = "ApkMetadata"
+	DpkgMetadataType           MetadataType = "DpkgMetadata"
+	GemMetadataType            MetadataType = "GemMetadata"
+	JavaMetadataType           MetadataType = "JavaMetadata"
+	NpmPackageJSONMetadataType MetadataType = "NpmPackageJsonMetadata"
+	RpmdbMetadataType          MetadataType = "RpmdbMetadata"
+	PythonPackageMetadataType  MetadataType = "PythonPackageMetadata"
 )

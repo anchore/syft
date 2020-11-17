@@ -104,6 +104,9 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 	return uniqueLocations, nil
 }
 
+// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
+// This is helpful when attempting to find a file that is in the same layer or lower as another file. For the
+// ImageSquashResolver, this is a simple path lookup.
 func (r *ImageSquashResolver) RelativeFileByPath(_ Location, path string) *Location {
 	paths, err := r.FilesByPath(path)
 	if err != nil {
@@ -116,13 +119,13 @@ func (r *ImageSquashResolver) RelativeFileByPath(_ Location, path string) *Locat
 	return &paths[0]
 }
 
-// MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
+// MultipleFileContentsByLocation returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer, in this case only from the squashed representation.
 func (r *ImageSquashResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
 	return mapLocationRefs(r.img.MultipleFileContentsByRef, locations)
 }
 
-// FileContentsByRef fetches file contents for a single file reference, irregardless of the source layer.
+// FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
 func (r *ImageSquashResolver) FileContentsByLocation(location Location) (string, error) {
 	return r.img.FileContentsByRef(location.ref)

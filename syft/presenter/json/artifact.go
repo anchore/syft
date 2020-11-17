@@ -34,7 +34,6 @@ type artifactMetadataUnpacker struct {
 }
 
 func NewArtifact(p *pkg.Package) (Artifact, error) {
-
 	return Artifact{
 		artifactBasicMetadata: artifactBasicMetadata{
 			Name:      p.Name,
@@ -67,6 +66,7 @@ func (a Artifact) ToPackage() pkg.Package {
 	}
 }
 
+// nolint:funlen
 func (a *Artifact) UnmarshalJSON(b []byte) error {
 	var basic artifactBasicMetadata
 	if err := json.Unmarshal(b, &basic); err != nil {
@@ -128,7 +128,6 @@ func (a *Artifact) UnmarshalJSON(b []byte) error {
 		// there may be packages with no metadata, which is OK
 	default:
 		return fmt.Errorf("unsupported package metadata type: %+v", a.MetadataType)
-
 	}
 
 	return nil

@@ -1,8 +1,10 @@
 package distro
 
+// Type represents the different Linux distribution options
 type Type string
 
 const (
+	// represents the set of valid/supported Linux Distributions
 	UnknownDistroType Type = "UnknownDistroType"
 	Debian            Type = "debian"
 	Ubuntu            Type = "ubuntu"
@@ -17,6 +19,7 @@ const (
 	OpenSuseLeap      Type = "opensuseleap"
 )
 
+// All contains all Linux distribution options
 var All = []Type{
 	Debian,
 	Ubuntu,
@@ -46,6 +49,7 @@ var IDMapping = map[string]Type{
 	"opensuse-leap": OpenSuseLeap,
 }
 
+// String returns the string representation of the given Linux distribution.
 func (t Type) String() string {
 	return string(t)
 }

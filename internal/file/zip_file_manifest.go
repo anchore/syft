@@ -12,16 +12,20 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
+// ZipFileManifest is a collection of paths and their file metadata.
 type ZipFileManifest map[string]os.FileInfo
 
+// newZipManifest creates an empty ZipFileManifest.
 func newZipManifest() ZipFileManifest {
 	return make(ZipFileManifest)
 }
 
+// Add a new path and it's file metadata to the collection.
 func (z ZipFileManifest) Add(entry string, info os.FileInfo) {
 	z[entry] = info
 }
 
+// GlobMatch returns the path keys that match the given value(s).
 func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 	uniqueMatches := internal.NewStringSet()
 
@@ -43,6 +47,7 @@ func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 	return results
 }
 
+// NewZipFileManifest creates and returns a new ZipFileManifest populated with path and metadata from the given zip archive path.
 func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
 	zipReader, err := zip.OpenReader(archivePath)
 	manifest := newZipManifest()
@@ -62,6 +67,7 @@ func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
 	return manifest, nil
 }
 
+// normalizeZipEntryName takes the given path entry and ensures it is prefixed with "/".
 func normalizeZipEntryName(entry string) string {
 	if !strings.HasPrefix(entry, "/") {
 		return "/" + entry

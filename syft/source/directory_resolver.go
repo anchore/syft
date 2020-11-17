@@ -80,6 +80,9 @@ func (s DirectoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	return result, nil
 }
 
+// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
+// This is helpful when attempting to find a file that is in the same layer or lower as another file. For the
+// DirectoryResolver, this is a simple path lookup.
 func (s *DirectoryResolver) RelativeFileByPath(_ Location, path string) *Location {
 	paths, err := s.FilesByPath(path)
 	if err != nil {
@@ -92,7 +95,7 @@ func (s *DirectoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 	return &paths[0]
 }
 
-// MultipleFileContentsByRef returns the file contents for all file.References relative a directory.
+// MultipleFileContentsByLocation returns the file contents for all file.References relative a directory.
 func (s DirectoryResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
 	refContents := make(map[Location]string)
 	for _, location := range locations {
@@ -106,7 +109,7 @@ func (s DirectoryResolver) MultipleFileContentsByLocation(locations []Location) 
 	return refContents, nil
 }
 
-// FileContentsByRef fetches file contents for a single file reference relative to a directory.
+// FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
 func (s DirectoryResolver) FileContentsByLocation(location Location) (string, error) {
 	contents, err := fileContents(location.Path)

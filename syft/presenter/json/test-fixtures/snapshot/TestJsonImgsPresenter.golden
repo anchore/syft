@@ -15,7 +15,7 @@
     "MIT"
    ],
    "language": "python",
-   "metadataType": "python-package-metadata",
+   "metadataType": "PythonPackageMetadata",
    "metadata": {
     "name": "package-1",
     "version": "1.0.1",
@@ -39,7 +39,7 @@
    ],
    "licenses": null,
    "language": "",
-   "metadataType": "dpkg-metadata",
+   "metadataType": "DpkgMetadata",
    "metadata": {
     "package": "package-2",
     "source": "",
