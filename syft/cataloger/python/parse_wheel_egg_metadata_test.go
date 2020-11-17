@@ -4,8 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 )
@@ -48,7 +46,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseWheelOrEggMetadata(file.Path(test.Fixture), fixture)
+			actual, err := parseWheelOrEggMetadata(test.Fixture, fixture)
 			if err != nil {
 				t.Fatalf("failed to parse: %+v", err)
 			}

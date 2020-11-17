@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gookit/color"
+
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/syft/syft/presenter"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/format"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
 	"github.com/anchore/syft/syft"
@@ -49,8 +50,8 @@ func setGlobalCliOptions() {
 	// scan options
 	flag := "scope"
 	rootCmd.Flags().StringP(
-		"scope", "s", scope.SquashedScope.String(),
-		fmt.Sprintf("selection of layers to catalog, options=%v", scope.Options))
+		"scope", "s", source.SquashedScope.String(),
+		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
 		os.Exit(1)
@@ -111,7 +112,7 @@ func logAppConfig() {
 	if err != nil {
 		log.Debugf("Could not display application config: %+v", err)
 	} else {
-		log.Debugf("Application config:\n%+v", format.Magenta.Format(string(appCfgStr)))
+		log.Debugf("Application config:\n%+v", color.Magenta.Sprint(string(appCfgStr)))
 	}
 }
 

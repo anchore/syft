@@ -9,18 +9,15 @@ import (
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
 )
 
 type Presenter struct {
 	catalog *pkg.Catalog
-	scope   scope.Scope
 }
 
-func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
+func NewPresenter(catalog *pkg.Catalog) *Presenter {
 	return &Presenter{
 		catalog: catalog,
-		scope:   s,
 	}
 }
 

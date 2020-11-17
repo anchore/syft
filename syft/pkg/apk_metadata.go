@@ -35,6 +35,7 @@ type ApkFileRecord struct {
 	Checksum    string `json:"checksum,omitempty"`
 }
 
+// PackageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
 func (m ApkMetadata) PackageURL() string {
 	pURL := packageurl.NewPackageURL(
 		// note: this is currently a candidate and not technically within spec

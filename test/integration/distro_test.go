@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
@@ -16,12 +16,9 @@ func TestDistroImage(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	_, _, actualDistro, err := syft.Catalog("docker-archive:"+tarPath, scope.AllLayersScope)
+	_, _, actualDistro, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
-	}
-	if actualDistro == nil {
-		t.Fatalf("could not find distro")
 	}
 
 	expected, err := distro.NewDistro(distro.Busybox, "1.31.1", "")
@@ -29,11 +26,8 @@ func TestDistroImage(t *testing.T) {
 		t.Fatalf("could not create distro: %+v", err)
 	}
 
-	diffs := deep.Equal(*actualDistro, expected)
-	if len(diffs) != 0 {
-		for _, d := range diffs {
-			t.Errorf("found distro difference: %+v", d)
-		}
+	for _, d := range deep.Equal(actualDistro, expected) {
+		t.Errorf("found distro difference: %+v", d)
 	}
 
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
@@ -54,7 +54,7 @@ func TestDpkgCataloger(t *testing.T) {
 			img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-dpkg")
 			defer cleanup()
 
-			s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+			s, err := source.NewFromImage(img, source.AllLayersScope, "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -77,11 +77,11 @@ func TestDpkgCataloger(t *testing.T) {
 			for idx := range actual {
 				a := &actual[idx]
 				// we will test the sources separately
-				var sourcesList = make([]string, len(a.Source))
-				for i, s := range a.Source {
-					sourcesList[i] = string(s.Path)
+				var sourcesList = make([]string, len(a.Locations))
+				for i, s := range a.Locations {
+					sourcesList[i] = s.Path
 				}
-				a.Source = nil
+				a.Locations = nil
 
 				for _, d := range deep.Equal(sourcesList, test.sources[a.Name]) {
 					t.Errorf("diff: %+v", d)

@@ -1,4 +1,4 @@
-package resolvers
+package source
 
 import (
 	"archive/tar"
@@ -8,7 +8,9 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-// AllLayersResolver implements path and content access for the AllLayers scope option for container image data sources.
+var _ Resolver = (*AllLayersResolver)(nil)
+
+// AllLayersResolver implements path and content access for the AllLayers source option for container image data sources.
 type AllLayersResolver struct {
 	img    *image.Image
 	layers []int
@@ -41,7 +43,7 @@ func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 
 	if entry.Metadata.TypeFlag == tar.TypeLink || entry.Metadata.TypeFlag == tar.TypeSymlink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
-		// we should search all possible resolutions within the valid scope
+		// we should search all possible resolutions within the valid source
 		for _, subLayerIdx := range r.layers[layerIdx:] {
 			resolvedRef, err := r.img.ResolveLinkByLayerSquash(ref, subLayerIdx)
 			if err != nil {
@@ -61,14 +63,14 @@ func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 }
 
 // FilesByPath returns all file.References that match the given paths from any layer in the image.
-func (r *AllLayersResolver) FilesByPath(paths ...file.Path) ([]file.Reference, error) {
+func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
-	uniqueFiles := make([]file.Reference, 0)
+	uniqueLocations := make([]Location, 0)
 
 	for _, path := range paths {
 		for idx, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
-			ref := tree.File(path)
+			ref := tree.File(file.Path(path))
 			if ref == nil {
 				// no file found, keep looking through layers
 				continue
@@ -91,17 +93,19 @@ func (r *AllLayersResolver) FilesByPath(paths ...file.Path) ([]file.Reference, e
 			if err != nil {
 				return nil, err
 			}
-			uniqueFiles = append(uniqueFiles, results...)
+			for _, result := range results {
+				uniqueLocations = append(uniqueLocations, NewLocationFromImage(result, r.img))
+			}
 		}
 	}
-
-	return uniqueFiles, nil
+	return uniqueLocations, nil
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, error) {
+// nolint:gocognit
+func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
-	uniqueFiles := make([]file.Reference, 0)
+	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
 		for idx, layerIdx := range r.layers {
@@ -128,31 +132,65 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]file.Reference, e
 				if err != nil {
 					return nil, err
 				}
-				uniqueFiles = append(uniqueFiles, results...)
+				for _, result := range results {
+					uniqueLocations = append(uniqueLocations, NewLocationFromImage(result, r.img))
+				}
 			}
 		}
 	}
 
-	return uniqueFiles, nil
+	return uniqueLocations, nil
 }
 
-func (r *AllLayersResolver) RelativeFileByPath(reference file.Reference, path string) (*file.Reference, error) {
-	entry, err := r.img.FileCatalog.Get(reference)
+// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
+// This is helpful when attempting to find a file that is in the same layer or lower as another file.
+func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *Location {
+	entry, err := r.img.FileCatalog.Get(location.ref)
+	if err != nil {
+		return nil
+	}
+
+	relativeRef := entry.Source.SquashedTree.File(file.Path(path))
+	if relativeRef == nil {
+		return nil
+	}
+
+	relativeLocation := NewLocationFromImage(*relativeRef, r.img)
+
+	return &relativeLocation
+}
+
+// MultipleFileContentsByLocation returns the file contents for all file.References relative to the image. Note that a
+// file.Reference is a path relative to a particular layer.
+func (r *AllLayersResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
+	return mapLocationRefs(r.img.MultipleFileContentsByRef, locations)
+}
+
+// FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
+// If the path does not exist an error is returned.
+func (r *AllLayersResolver) FileContentsByLocation(location Location) (string, error) {
+	return r.img.FileContentsByRef(location.ref)
+}
+
+type multiContentFetcher func(refs ...file.Reference) (map[file.Reference]string, error)
+
+func mapLocationRefs(callback multiContentFetcher, locations []Location) (map[Location]string, error) {
+	var fileRefs = make([]file.Reference, len(locations))
+	var locationByRefs = make(map[file.Reference]Location)
+	var results = make(map[Location]string)
+
+	for i, location := range locations {
+		locationByRefs[location.ref] = location
+		fileRefs[i] = location.ref
+	}
+
+	contentsByRef, err := callback(fileRefs...)
 	if err != nil {
 		return nil, err
 	}
 
-	return entry.Source.SquashedTree.File(file.Path(path)), nil
-}
-
-// MultipleFileContentsByRef returns the file contents for all file.References relative to the image. Note that a
-// file.Reference is a path relative to a particular layer.
-func (r *AllLayersResolver) MultipleFileContentsByRef(f ...file.Reference) (map[file.Reference]string, error) {
-	return r.img.MultipleFileContentsByRef(f...)
-}
-
-// FileContentsByRef fetches file contents for a single file reference, irregardless of the source layer.
-// If the path does not exist an error is returned.
-func (r *AllLayersResolver) FileContentsByRef(ref file.Reference) (string, error) {
-	return r.img.FileContentsByRef(ref)
+	for ref, content := range contentsByRef {
+		results[locationByRefs[ref]] = content
+	}
+	return results, nil
 }

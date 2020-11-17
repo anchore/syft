@@ -1,46 +1,40 @@
 package json
 
 import (
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
+// Document represents the syft cataloging findings as a JSON document
 type Document struct {
-	Artifacts []Artifact   `json:"artifacts"`
-	Source    Source       `json:"source"`
-	Distro    Distribution `json:"distro"`
+	Artifacts  []Package    `json:"artifacts"`  // Artifacts is the list of packages discovered and placed into the catalog
+	Source     Source       `json:"source"`     // Source represents the original object that was cataloged
+	Distro     Distribution `json:"distro"`     // Distro represents the Linux distribution that was detected from the source
+	Descriptor Descriptor   `json:"descriptor"` // Descriptor is a block containing self-describing information about syft
 }
 
-// Distritbution provides information about a detected Linux Distribution
-type Distribution struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	IDLike  string `json:"idLike"`
-}
-
-func NewDocument(catalog *pkg.Catalog, s scope.Scope, d distro.Distro) (Document, error) {
-	doc := Document{
-		Artifacts: make([]Artifact, 0),
-	}
-
-	src, err := NewSource(s)
+// NewDocument creates and populates a new JSON document struct from the given cataloging results.
+func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Distro) (Document, error) {
+	src, err := NewSource(srcMetadata)
 	if err != nil {
 		return Document{}, nil
 	}
-	doc.Source = src
-	distroName := d.Name()
-	if distroName == "UnknownDistroType" {
-		distroName = ""
-	}
-	doc.Distro = Distribution{
-		Name:    distroName,
-		Version: d.FullVersion(),
-		IDLike:  d.IDLike,
+
+	doc := Document{
+		Artifacts: make([]Package, 0),
+		Source:    src,
+		Distro:    NewDistribution(d),
+		Descriptor: Descriptor{
+			Name:    internal.ApplicationName,
+			Version: version.FromBuild().Version,
+		},
 	}
 
 	for _, p := range catalog.Sorted() {
-		art, err := NewArtifact(p, s)
+		art, err := NewPackage(p)
 		if err != nil {
 			return Document{}, err
 		}

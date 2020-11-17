@@ -6,11 +6,10 @@ import (
 	"testing"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -25,10 +24,17 @@ func TestJsonDirsPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Type:    pkg.DebPkg,
+		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
-		Source: []file.Reference{
+		Locations: []source.Location{
 			{Path: "/some/path/pkg1"},
+		},
+		Language:     pkg.Python,
+		MetadataType: pkg.PythonPackageMetadataType,
+		Licenses:     []string{"MIT"},
+		Metadata: pkg.PythonPackageMetadata{
+			Name:    "package-1",
+			Version: "1.0.1",
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -36,16 +42,21 @@ func TestJsonDirsPresenter(t *testing.T) {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Source: []file.Reference{
+		Locations: []source.Location{
 			{Path: "/some/path/pkg1"},
+		},
+		MetadataType: pkg.DpkgMetadataType,
+		Metadata: pkg.DpkgMetadata{
+			Package: "package-2",
+			Version: "2.0.1",
 		},
 	})
 	d := distro.NewUnknownDistro()
-	s, err := scope.NewScopeFromDir("/some/path")
+	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
 		t.Fatal(err)
 	}
-	pres := NewPresenter(catalog, s, d)
+	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -62,7 +73,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(actual), string(expected), true)
+		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 
@@ -84,25 +95,37 @@ func TestJsonImgsPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-1.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
 		},
-		Type:    pkg.DebPkg,
-		FoundBy: "the-cataloger-1",
+		Type:         pkg.PythonPkg,
+		FoundBy:      "the-cataloger-1",
+		Language:     pkg.Python,
+		MetadataType: pkg.PythonPackageMetadataType,
+		Licenses:     []string{"MIT"},
+		Metadata: pkg.PythonPackageMetadata{
+			Name:    "package-1",
+			Version: "1.0.1",
+		},
 	})
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-2.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
 		},
-		Type:    pkg.DebPkg,
-		FoundBy: "the-cataloger-2",
+		Type:         pkg.DebPkg,
+		FoundBy:      "the-cataloger-2",
+		MetadataType: pkg.DpkgMetadataType,
+		Metadata: pkg.DpkgMetadata{
+			Package: "package-2",
+			Version: "2.0.1",
+		},
 	})
 
-	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
 	d := distro.NewUnknownDistro()
-	pres := NewPresenter(catalog, s, d)
+	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -119,7 +142,7 @@ func TestJsonImgsPresenter(t *testing.T) {
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(actual), string(expected), true)
+		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }

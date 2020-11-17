@@ -4,21 +4,20 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 // returns a distro or nil
 type parseFunc func(string) *Distro
 
 type parseEntry struct {
-	path file.Path
+	path string
 	fn   parseFunc
 }
 
 // Identify parses distro-specific files to determine distro metadata like version and release.
-func Identify(resolver scope.Resolver) Distro {
+func Identify(resolver source.Resolver) Distro {
 	distro := NewUnknownDistro()
 
 	identityFiles := []parseEntry{
@@ -41,25 +40,19 @@ func Identify(resolver scope.Resolver) Distro {
 
 identifyLoop:
 	for _, entry := range identityFiles {
-		refs, err := resolver.FilesByPath(entry.path)
+		locations, err := resolver.FilesByPath(entry.path)
 		if err != nil {
-			log.Errorf("unable to get path refs from %s: %s", entry.path, err)
+			log.Errorf("unable to get path locations from %s: %s", entry.path, err)
 			break
 		}
 
-		if len(refs) == 0 {
+		if len(locations) == 0 {
 			log.Debugf("No Refs found from path: %s", entry.path)
 			continue
 		}
 
-		for _, ref := range refs {
-			contents, err := resolver.MultipleFileContentsByRef(ref)
-			content, ok := contents[ref]
-
-			if !ok {
-				log.Infof("no content present for ref: %s", ref)
-				continue
-			}
+		for _, location := range locations {
+			content, err := resolver.FileContentsByLocation(location)
 
 			if err != nil {
 				log.Debugf("unable to get contents from %s: %s", entry.path, err)

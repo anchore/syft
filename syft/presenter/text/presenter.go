@@ -7,18 +7,20 @@ import (
 	"text/tabwriter"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
+// Presenter is a human-friendly text presenter to represent package and source data.
 type Presenter struct {
-	catalog *pkg.Catalog
-	scope   scope.Scope
+	catalog     *pkg.Catalog
+	srcMetadata source.Metadata
 }
 
-func NewPresenter(catalog *pkg.Catalog, s scope.Scope) *Presenter {
+// NewPresenter creates a new presenter for the given set of catalog and image data.
+func NewPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *Presenter {
 	return &Presenter{
-		catalog: catalog,
-		scope:   s,
+		catalog:     catalog,
+		srcMetadata: srcMetadata,
 	}
 }
 
@@ -28,22 +30,22 @@ func (pres *Presenter) Present(output io.Writer) error {
 	w := new(tabwriter.Writer)
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
 
-	switch src := pres.scope.Source.(type) {
-	case scope.DirSource:
-		fmt.Fprintln(w, fmt.Sprintf("[Path: %s]", src.Path))
-	case scope.ImageSource:
+	switch pres.srcMetadata.Scheme {
+	case source.DirectoryScheme:
+		fmt.Fprintln(w, fmt.Sprintf("[Path: %s]", pres.srcMetadata.Path))
+	case source.ImageScheme:
 		fmt.Fprintln(w, "[Image]")
 
-		for idx, l := range src.Img.Layers {
+		for idx, l := range pres.srcMetadata.ImageMetadata.Layers {
 			fmt.Fprintln(w, " Layer:\t", idx)
-			fmt.Fprintln(w, " Digest:\t", l.Metadata.Digest)
-			fmt.Fprintln(w, " Size:\t", l.Metadata.Size)
-			fmt.Fprintln(w, " MediaType:\t", l.Metadata.MediaType)
+			fmt.Fprintln(w, " Digest:\t", l.Digest)
+			fmt.Fprintln(w, " Size:\t", l.Size)
+			fmt.Fprintln(w, " MediaType:\t", l.MediaType)
 			fmt.Fprintln(w)
 			w.Flush()
 		}
 	default:
-		return fmt.Errorf("unsupported source: %T", src)
+		return fmt.Errorf("unsupported source: %T", pres.srcMetadata.Scheme)
 	}
 
 	// populate artifacts...

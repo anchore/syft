@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestPkgCoverageImage(t *testing.T) {
@@ -18,7 +18,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	catalog, _, _, err := syft.Catalog("docker-archive:"+tarPath, scope.AllLayersScope)
+	_, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -100,10 +100,10 @@ func TestPkgCoverageImage(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
-	catalog, _, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", scope.AllLayersScope)
+	_, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.AllLayersScope)
 
 	if err != nil {
-		t.Errorf("unable to create scope from dir: %+v", err)
+		t.Errorf("unable to create source from dir: %+v", err)
 	}
 
 	observedLanguages := internal.NewStringSet()

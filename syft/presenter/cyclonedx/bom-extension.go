@@ -4,8 +4,7 @@ import (
 	"encoding/xml"
 	"time"
 
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft/source"
 )
 
 // Source: https://cyclonedx.org/ext/bom-descriptor/
@@ -35,15 +34,34 @@ type BdComponent struct {
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func NewBomDescriptor() *BomDescriptor {
-	versionInfo := version.FromBuild()
-	return &BomDescriptor{
+func NewBomDescriptor(name, version string, srcMetadata source.Metadata) *BomDescriptor {
+	descriptor := BomDescriptor{
 		XMLName:   xml.Name{},
 		Timestamp: time.Now().Format(time.RFC3339),
 		Tool: &BdTool{
 			Vendor:  "anchore",
-			Name:    internal.ApplicationName,
-			Version: versionInfo.Version,
+			Name:    name,
+			Version: version,
 		},
 	}
+
+	switch srcMetadata.Scheme {
+	case source.ImageScheme:
+		descriptor.Component = &BdComponent{
+			Component: Component{
+				Type:    "container",
+				Name:    srcMetadata.ImageMetadata.UserInput,
+				Version: srcMetadata.ImageMetadata.Digest,
+			},
+		}
+	case source.DirectoryScheme:
+		descriptor.Component = &BdComponent{
+			Component: Component{
+				Type: "file",
+				Name: srcMetadata.Path,
+			},
+		}
+	}
+
+	return &descriptor
 }

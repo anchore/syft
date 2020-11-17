@@ -3,9 +3,11 @@ package cyclonedx
 import (
 	"encoding/xml"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
 )
 
@@ -22,19 +24,19 @@ type Document struct {
 	BomDescriptor *BomDescriptor `xml:"bd:metadata"`          // The BOM descriptor extension
 }
 
-// NewDocument returns an empty CycloneDX Document object.
-func NewDocument() Document {
-	return Document{
-		XMLNs:        "http://cyclonedx.org/schema/bom/1.2",
-		XMLNsBd:      "http://cyclonedx.org/schema/ext/bom-descriptor/1.0",
-		Version:      1,
-		SerialNumber: uuid.New().URN(),
-	}
-}
-
 // NewDocumentFromCatalog returns a CycloneDX Document object populated with the catalog contents.
-func NewDocumentFromCatalog(catalog *pkg.Catalog, d distro.Distro) Document {
-	bom := NewDocument()
+func NewDocument(catalog *pkg.Catalog, d distro.Distro, srcMetadata source.Metadata) Document {
+	versionInfo := version.FromBuild()
+
+	doc := Document{
+		XMLNs:         "http://cyclonedx.org/schema/bom/1.2",
+		XMLNsBd:       "http://cyclonedx.org/schema/ext/bom-descriptor/1.0",
+		Version:       1,
+		SerialNumber:  uuid.New().URN(),
+		BomDescriptor: NewBomDescriptor(internal.ApplicationName, versionInfo.Version, srcMetadata),
+	}
+
+	// attach components
 	for p := range catalog.Enumerate() {
 		component := Component{
 			Type:       "library", // TODO: this is not accurate
@@ -51,10 +53,8 @@ func NewDocumentFromCatalog(catalog *pkg.Catalog, d distro.Distro) Document {
 		if len(licenses) > 0 {
 			component.Licenses = &licenses
 		}
-		bom.Components = append(bom.Components, component)
+		doc.Components = append(doc.Components, component)
 	}
 
-	bom.BomDescriptor = NewBomDescriptor()
-
-	return bom
+	return doc
 }

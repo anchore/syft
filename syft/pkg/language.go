@@ -1,25 +1,19 @@
 package pkg
 
+// Language represents a single programming language.
+type Language string
+
 const (
-	UnknownLanguage Language = iota
-	Java
-	JavaScript
-	Python
-	Ruby
-	Go
+	// the full set of supported programming languages
+	UnknownLanguage Language = "UnknownLanguage"
+	Java            Language = "java"
+	JavaScript      Language = "javascript"
+	Python          Language = "python"
+	Ruby            Language = "ruby"
+	Go              Language = "go"
 )
 
-type Language uint
-
-var languageStr = []string{
-	"UnknownLanguage",
-	"java",
-	"javascript",
-	"python",
-	"ruby",
-	"go",
-}
-
+// AllLanguages is a set of all programming languages detected by syft.
 var AllLanguages = []Language{
 	Java,
 	JavaScript,
@@ -28,9 +22,7 @@ var AllLanguages = []Language{
 	Go,
 }
 
-func (t Language) String() string {
-	if int(t) >= len(languageStr) {
-		return languageStr[0]
-	}
-	return languageStr[t]
+// String returns the string representation of the language.
+func (l Language) String() string {
+	return string(l)
 }

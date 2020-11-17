@@ -8,7 +8,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestIdentifyDistro(t *testing.T) {
@@ -78,15 +78,15 @@ func TestIdentifyDistro(t *testing.T) {
 
 	observedDistros := internal.NewStringSet()
 	definedDistros := internal.NewStringSet()
-	for _, d := range All {
-		definedDistros.Add(d.String())
+	for _, distroType := range All {
+		definedDistros.Add(string(distroType))
 	}
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			s, err := scope.NewScopeFromDir(test.fixture)
+			s, err := source.NewFromDirectory(test.fixture)
 			if err != nil {
-				t.Fatalf("unable to produce a new scope for testing: %s", test.fixture)
+				t.Fatalf("unable to produce a new source for testing: %s", test.fixture)
 			}
 
 			d := Identify(s.Resolver)

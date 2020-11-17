@@ -10,9 +10,8 @@ import (
 	"github.com/anchore/syft/syft/distro"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -29,7 +28,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		Version: "1.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-1",
-		Source: []file.Reference{
+		Locations: []source.Location{
 			{Path: "/some/path/pkg1"},
 		},
 		Metadata: pkg.DpkgMetadata{
@@ -43,7 +42,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Source: []file.Reference{
+		Locations: []source.Location{
 			{Path: "/some/path/pkg1"},
 		},
 		Licenses: []string{
@@ -57,7 +56,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		},
 	})
 
-	s, err := scope.NewScopeFromDir("/some/path")
+	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +66,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pres := NewPresenter(catalog, s, d)
+	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -105,8 +104,8 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package1",
 		Version: "1.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-1.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-1",
@@ -125,8 +124,8 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package2",
 		Version: "2.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-2.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-2",
@@ -147,7 +146,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		},
 	})
 
-	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +156,15 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pres := NewPresenter(catalog, s, d)
+	// This accounts for the non-deterministic digest value that we end up with when
+	// we build a container image dynamically during testing. Ultimately, we should
+	// use a golden image as a test fixture in place of building this image during
+	// testing. At that time, this line will no longer be necessary.
+	//
+	// This value is sourced from the "version" node in "./test-fixtures/snapshot/TestCycloneDxImgsPresenter.golden"
+	s.Metadata.ImageMetadata.Digest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+
+	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -178,7 +185,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(actual), string(expected), true)
+		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }

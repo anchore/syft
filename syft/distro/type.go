@@ -1,37 +1,25 @@
 package distro
 
+// Type represents the different Linux distribution options
+type Type string
+
 const (
-	UnknownDistroType Type = iota
-	Debian
-	Ubuntu
-	RedHat
-	CentOS
-	Fedora
-	Alpine
-	Busybox
-	AmazonLinux
-	OracleLinux
-	ArchLinux
-	OpenSuseLeap
+	// represents the set of valid/supported Linux Distributions
+	UnknownDistroType Type = "UnknownDistroType"
+	Debian            Type = "debian"
+	Ubuntu            Type = "ubuntu"
+	RedHat            Type = "redhat"
+	CentOS            Type = "centos"
+	Fedora            Type = "fedora"
+	Alpine            Type = "alpine"
+	Busybox           Type = "busybox"
+	AmazonLinux       Type = "amazonlinux"
+	OracleLinux       Type = "oraclelinux"
+	ArchLinux         Type = "archlinux"
+	OpenSuseLeap      Type = "opensuseleap"
 )
 
-type Type int
-
-var distroStr = []string{
-	"UnknownDistroType",
-	"debian",
-	"ubuntu",
-	"redhat",
-	"centos",
-	"fedora",
-	"alpine",
-	"busybox",
-	"amazn",
-	"oraclelinux",
-	"archlinux",
-	"opensuse-leap",
-}
-
+// All contains all Linux distribution options
 var All = []Type{
 	Debian,
 	Ubuntu,
@@ -44,14 +32,6 @@ var All = []Type{
 	OracleLinux,
 	ArchLinux,
 	OpenSuseLeap,
-}
-
-func (t Type) String() string {
-	if int(t) >= len(distroStr) || t < 0 {
-		return distroStr[0]
-	}
-
-	return distroStr[t]
 }
 
 // IDMapping connects a distro ID like "ubuntu" to a Distro type
@@ -67,4 +47,9 @@ var IDMapping = map[string]Type{
 	"ol":            OracleLinux,
 	"arch":          ArchLinux,
 	"opensuse-leap": OpenSuseLeap,
+}
+
+// String returns the string representation of the given Linux distribution.
+func (t Type) String() string {
+	return string(t)
 }

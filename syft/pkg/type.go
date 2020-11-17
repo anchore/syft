@@ -6,6 +6,7 @@ import "github.com/package-url/packageurl-go"
 type Type string
 
 const (
+	// the full set of supported packages
 	UnknownPkg       Type = "UnknownPackage"
 	ApkPkg           Type = "apk"
 	GemPkg           Type = "gem"
@@ -18,6 +19,7 @@ const (
 	GoModulePkg      Type = "go-module"
 )
 
+// AllPkgs represents all supported package types
 var AllPkgs = []Type{
 	ApkPkg,
 	GemPkg,
@@ -30,6 +32,7 @@ var AllPkgs = []Type{
 	GoModulePkg,
 }
 
+// PackageURLType returns the PURL package type for the current package.
 func (t Type) PackageURLType() string {
 	switch t {
 	case ApkPkg:

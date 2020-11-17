@@ -6,10 +6,9 @@ import (
 	"testing"
 
 	"github.com/anchore/go-testutils"
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -32,11 +31,11 @@ func TestTextDirPresenter(t *testing.T) {
 		Type:    pkg.DebPkg,
 	})
 
-	s, err := scope.NewScopeFromDir("/some/path")
+	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
-		t.Fatalf("unable to create scope: %+v", err)
+		t.Fatalf("unable to create source: %+v", err)
 	}
-	pres := NewPresenter(catalog, s)
+	pres := NewPresenter(catalog, s.Metadata)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -75,8 +74,8 @@ func TestTextImgPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-1.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
 		},
 		FoundBy: "dpkg",
 		Type:    pkg.DebPkg,
@@ -84,8 +83,8 @@ func TestTextImgPresenter(t *testing.T) {
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Source: []file.Reference{
-			*img.SquashedTree().File("/somefile-2.txt"),
+		Locations: []source.Location{
+			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
 		},
 		FoundBy:  "dpkg",
 		Metadata: PackageInfo{Name: "package-2", Version: "1.0.2"},
@@ -98,11 +97,11 @@ func TestTextImgPresenter(t *testing.T) {
 		l.Metadata.Digest = "sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53"
 	}
 
-	s, err := scope.NewScopeFromImage(img, scope.AllLayersScope)
+	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
 	if err != nil {
 		t.Fatal(err)
 	}
-	pres := NewPresenter(catalog, s)
+	pres := NewPresenter(catalog, s.Metadata)
 	// run presenter
 	err = pres.Present(&buffer)
 	if err != nil {

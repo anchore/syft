@@ -5,10 +5,10 @@
             "items": {
                 "properties": {
                     "foundBy": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
                     },
                     "licenses": {
                         "anyOf": [
@@ -25,26 +25,18 @@
                     },
                     "locations": {
                         "items": {
-                            "anyOf": [
-                                {
+                            "properties": {
+                                "layerID": {
                                     "type": "string"
                                 },
-                                {
-                                    "properties": {
-                                        "layerIndex": {
-                                            "type": "integer"
-                                        },
-                                        "path": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "layerIndex",
-                                        "path"
-                                    ],
-                                    "type": "object"
+                                "path": {
+                                    "type": "string"
                                 }
-                            ]
+                            },
+                            "required": [
+                                "path"
+                            ],
+                            "type": "object"
                         },
                         "type": "array"
                     },
@@ -315,6 +307,9 @@
                         },
                         "type": "object"
                     },
+                    "metadataType": {
+                        "type": "string"
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -327,8 +322,10 @@
                 },
                 "required": [
                     "foundBy",
+                    "language",
                     "licenses",
                     "locations",
+                    "metadataType",
                     "name",
                     "type",
                     "version"
@@ -336,6 +333,40 @@
                 "type": "object"
             },
             "type": "array"
+        },
+        "descriptor": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "version"
+            ],
+            "type": "object"
+        },
+        "distro": {
+            "properties": {
+                "idLike": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "idLike",
+                "name",
+                "version"
+            ],
+            "type": "object"
         },
         "source": {
             "properties": {
@@ -374,6 +405,9 @@
                                 "mediaType": {
                                     "type": "string"
                                 },
+                                "scope": {
+                                    "type": "string"
+                                },
                                 "size": {
                                     "type": "integer"
                                 },
@@ -382,14 +416,19 @@
                                         "type": "string"
                                     },
                                     "type": "array"
+                                },
+                                "userInput": {
+                                    "type": "string"
                                 }
                             },
                             "required": [
                                 "digest",
                                 "layers",
                                 "mediaType",
+                                "scope",
                                 "size",
-                                "tags"
+                                "tags",
+                                "userInput"
                             ],
                             "type": "object"
                         }
@@ -408,6 +447,8 @@
     },
     "required": [
         "artifacts",
+        "descriptor",
+        "distro",
         "source"
     ],
     "type": "object"

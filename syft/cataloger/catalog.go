@@ -5,7 +5,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/scope"
+	"github.com/anchore/syft/syft/source"
 	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -32,11 +32,11 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-// Catalog a given scope (container image or filesystem) with the given catalogers, returning all discovered packages.
+// Catalog a given source (container image or filesystem) with the given catalogers, returning all discovered packages.
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
 // request.
-func Catalog(resolver scope.Resolver, catalogers ...Cataloger) (*pkg.Catalog, error) {
+func Catalog(resolver source.Resolver, catalogers ...Cataloger) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
 	filesProcessed, packagesDiscovered := newMonitor()
 
