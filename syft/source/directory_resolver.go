@@ -11,7 +11,7 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-var _ Resolver = &DirectoryResolver{}
+var _ Resolver = (*DirectoryResolver)(nil)
 
 // DirectoryResolver implements path and content access for the directory data source.
 type DirectoryResolver struct {

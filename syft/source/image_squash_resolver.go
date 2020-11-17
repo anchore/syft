@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-var _ Resolver = &ImageSquashResolver{}
+var _ Resolver = (*ImageSquashResolver)(nil)
 
 // ImageSquashResolver implements path and content access for the Squashed source option for container image data sources.
 type ImageSquashResolver struct {

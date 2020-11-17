@@ -8,12 +8,14 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type Artifact struct {
-	artifactBasicMetadata
-	artifactCustomMetadata
+// Package represents a pkg.Package object specialized for JSON marshaling and unmarshaling.
+type Package struct {
+	packageBasicMetadata
+	packageCustomMetadata
 }
 
-type artifactBasicMetadata struct {
+// packageBasicMetadata contains non-ambiguous values (type-wise) from pkg.Package.
+type packageBasicMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
 	Type      pkg.Type          `json:"type"`
@@ -23,19 +25,22 @@ type artifactBasicMetadata struct {
 	Language  pkg.Language      `json:"language"`
 }
 
-type artifactCustomMetadata struct {
+// packageCustomMetadata contains ambiguous values (type-wise) from pkg.Package.
+type packageCustomMetadata struct {
 	MetadataType pkg.MetadataType `json:"metadataType"`
 	Metadata     interface{}      `json:"metadata,omitempty"`
 }
 
-type artifactMetadataUnpacker struct {
+// packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
+type packageMetadataUnpacker struct {
 	MetadataType string          `json:"metadataType"`
 	Metadata     json.RawMessage `json:"metadata"`
 }
 
-func NewArtifact(p *pkg.Package) (Artifact, error) {
-	return Artifact{
-		artifactBasicMetadata: artifactBasicMetadata{
+// NewPackage crates a new Package from the given pkg.Package.
+func NewPackage(p *pkg.Package) (Package, error) {
+	return Package{
+		packageBasicMetadata: packageBasicMetadata{
 			Name:      p.Name,
 			Version:   p.Version,
 			Type:      p.Type,
@@ -44,14 +49,15 @@ func NewArtifact(p *pkg.Package) (Artifact, error) {
 			Licenses:  p.Licenses,
 			Language:  p.Language,
 		},
-		artifactCustomMetadata: artifactCustomMetadata{
+		packageCustomMetadata: packageCustomMetadata{
 			MetadataType: p.MetadataType,
 			Metadata:     p.Metadata,
 		},
 	}, nil
 }
 
-func (a Artifact) ToPackage() pkg.Package {
+// ToPackage generates a pkg.Package from the current Package.
+func (a Package) ToPackage() pkg.Package {
 	return pkg.Package{
 		// does not include found-by and locations
 		Name:         a.Name,
@@ -66,15 +72,16 @@ func (a Artifact) ToPackage() pkg.Package {
 	}
 }
 
+// UnmarshalJSON is a custom unmarshaller for handling basic values and values with ambiguous types.
 // nolint:funlen
-func (a *Artifact) UnmarshalJSON(b []byte) error {
-	var basic artifactBasicMetadata
+func (a *Package) UnmarshalJSON(b []byte) error {
+	var basic packageBasicMetadata
 	if err := json.Unmarshal(b, &basic); err != nil {
 		return err
 	}
-	a.artifactBasicMetadata = basic
+	a.packageBasicMetadata = basic
 
-	var unpacker artifactMetadataUnpacker
+	var unpacker packageMetadataUnpacker
 	if err := json.Unmarshal(b, &unpacker); err != nil {
 		return err
 	}

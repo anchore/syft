@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-var _ Resolver = &AllLayersResolver{}
+var _ Resolver = (*AllLayersResolver)(nil)
 
 // AllLayersResolver implements path and content access for the AllLayers source option for container image data sources.
 type AllLayersResolver struct {
