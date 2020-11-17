@@ -156,6 +156,14 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// This accounts for the non-deterministic digest value that we end up with when
+	// we build a container image dynamically during testing. Ultimately, we should
+	// use a golden image as a test fixture in place of building this image during
+	// testing. At that time, this line will no longer be necessary.
+	//
+	// This value is sourced from the "version" node in "./test-fixtures/snapshot/TestCycloneDxImgsPresenter.golden"
+	s.Metadata.ImageMetadata.Digest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+
 	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter
@@ -177,7 +185,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(actual), string(expected), true)
+		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }
