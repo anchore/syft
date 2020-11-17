@@ -93,8 +93,8 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	var name string
 	switch {
-	case filenameObj.name() != "":
-		name = filenameObj.name()
+	case filenameObj.name != "":
+		name = filenameObj.name
 	case manifest.Main["Name"] != "":
 		// Manifest original spec...
 		name = manifest.Main["Name"]
@@ -117,8 +117,8 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	var version string
 	switch {
-	case filenameObj.version() != "":
-		version = filenameObj.version()
+	case filenameObj.version != "":
+		version = filenameObj.version
 	case manifest.Main["Implementation-Version"] != "":
 		version = manifest.Main["Implementation-Version"]
 	case manifest.Main["Specification-Version"] != "":

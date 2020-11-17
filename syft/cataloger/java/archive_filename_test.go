@@ -93,29 +93,31 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			ty:        pkg.JavaPkg,
 		},
 		{
-			filename: "/hudson.war:WEB-INF/lib/jtidy-4aug2000r7-dev-hudson-1.jar",
-			// I don't see how we can reliably account for this case
-			//version:   "4aug2000r7-dev-hudson-1",
-			version:   "",
+			filename:  "/hudson.war:WEB-INF/lib/jtidy-4aug2000r7-dev-hudson-1.jar",
+			version:   "4aug2000r7-dev-hudson-1",
 			extension: "jar",
 			name:      "jtidy",
 			ty:        pkg.JavaPkg,
 		},
 		{
-			filename: "/hudson.war:WEB-INF/lib/trilead-ssh2-build212-hudson-5.jar",
-			// I don't see how we can reliably account for this case
-			//version:   "build212-hudson-5",
-			version:   "5",
+			filename:  "/hudson.war:WEB-INF/lib/trilead-ssh2-build212-hudson-5.jar",
+			version:   "build212-hudson-5",
 			extension: "jar",
-			// name: "trilead-ssh2",
-			name: "trilead-ssh2-build212-hudson",
-			ty:   pkg.JavaPkg,
+			name:      "trilead-ssh2",
+			ty:        pkg.JavaPkg,
 		},
 		{
 			filename:  "/hudson.war:WEB-INF/lib/guava-r06.jar",
 			version:   "r06",
 			extension: "jar",
 			name:      "guava",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "BOOT-INF/lib/spring-data-r2dbc-1.1.0.RELEASE.jar", // Regression: https://github.com/anchore/syft/issues/255
+			version:   "1.1.0.RELEASE",
+			extension: "jar",
+			name:      "spring-data-r2dbc",
 			ty:        pkg.JavaPkg,
 		},
 	}
@@ -129,24 +131,24 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 				t.Errorf("mismatched type: %+v != %v", ty, test.ty)
 			}
 
-			version := obj.version()
+			version := obj.version
 			if version != test.version {
 				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(version, test.version, true)
+				diffs := dmp.DiffMain(test.version, version, true)
 				t.Errorf("mismatched version:\n%s", dmp.DiffPrettyText(diffs))
 			}
 
 			extension := obj.extension()
 			if extension != test.extension {
 				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(extension, test.extension, true)
+				diffs := dmp.DiffMain(test.extension, extension, true)
 				t.Errorf("mismatched extension:\n%s", dmp.DiffPrettyText(diffs))
 			}
 
-			name := obj.name()
+			name := obj.name
 			if name != test.name {
 				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(name, test.name, true)
+				diffs := dmp.DiffMain(test.name, name, true)
 				t.Errorf("mismatched name:\n%s", dmp.DiffPrettyText(diffs))
 			}
 		})
