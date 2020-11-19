@@ -67,7 +67,7 @@ func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope source.Source, 
 		t.Fatalf("bad distro: %+v", err)
 	}
 
-	p := presenter.GetPresenter(presenter.JSONPresenter, theScope.Metadata, catalog, d)
+	p := presenter.GetPresenter(presenter.JSONPresenter, theScope.Metadata, catalog, &d)
 	if p == nil {
 		t.Fatal("unable to get presenter")
 	}

@@ -14,13 +14,6 @@ type Distro struct {
 	IDLike     string
 }
 
-// NewUnknownDistro creates a standardized Distro object for unidentifiable distros
-func NewUnknownDistro() Distro {
-	return Distro{
-		Type: UnknownDistroType,
-	}
-}
-
 // NewDistro creates a new Distro object populated with the given values.
 func NewDistro(t Type, ver, like string) (Distro, error) {
 	if ver == "" {

@@ -17,7 +17,7 @@ type Document struct {
 }
 
 // NewDocument creates and populates a new JSON document struct from the given cataloging results.
-func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Distro) (Document, error) {
+func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d *distro.Distro) (Document, error) {
 	src, err := NewSource(srcMetadata)
 	if err != nil {
 		return Document{}, nil

@@ -15,6 +15,13 @@ import (
 
 var update = flag.Bool("update", false, "update the *.golden files for json presenters")
 
+func must(c pkg.CPE, e error) pkg.CPE {
+	if e != nil {
+		panic(e)
+	}
+	return c
+}
+
 func TestJsonDirsPresenter(t *testing.T) {
 	var buffer bytes.Buffer
 
@@ -36,6 +43,10 @@ func TestJsonDirsPresenter(t *testing.T) {
 			Name:    "package-1",
 			Version: "1.0.1",
 		},
+		PURL: "a-purl-2",
+		CPEs: []pkg.CPE{
+			must(pkg.NewCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*")),
+		},
 	})
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
@@ -50,8 +61,12 @@ func TestJsonDirsPresenter(t *testing.T) {
 			Package: "package-2",
 			Version: "2.0.1",
 		},
+		PURL: "a-purl-2",
+		CPEs: []pkg.CPE{
+			must(pkg.NewCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*")),
+		},
 	})
-	d := distro.NewUnknownDistro()
+	var d *distro.Distro
 	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
 		t.Fatal(err)
@@ -107,6 +122,10 @@ func TestJsonImgsPresenter(t *testing.T) {
 			Name:    "package-1",
 			Version: "1.0.1",
 		},
+		PURL: "a-purl-1",
+		CPEs: []pkg.CPE{
+			must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
+		},
 	})
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
@@ -121,10 +140,14 @@ func TestJsonImgsPresenter(t *testing.T) {
 			Package: "package-2",
 			Version: "2.0.1",
 		},
+		PURL: "a-purl-2",
+		CPEs: []pkg.CPE{
+			must(pkg.NewCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*")),
+		},
 	})
 
 	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
-	d := distro.NewUnknownDistro()
+	var d *distro.Distro
 	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter

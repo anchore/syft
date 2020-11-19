@@ -1,83 +1,84 @@
-package pkg
+package cataloger
 
 import (
 	"testing"
 
 	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestPackage_pURL(t *testing.T) {
+func TestPackageURL(t *testing.T) {
 	tests := []struct {
-		pkg      Package
-		distro   distro.Distro
+		pkg      pkg.Package
+		distro   *distro.Distro
 		expected string
 	}{
 		{
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "github.com/anchore/syft",
 				Version: "v0.1.0",
-				Type:    GoModulePkg,
+				Type:    pkg.GoModulePkg,
 			},
 			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
 		},
 		{
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    PythonPkg,
+				Type:    pkg.PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
 		{
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    PythonPkg,
+				Type:    pkg.PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
 		{
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    PythonPkg,
+				Type:    pkg.PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
 		{
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    PythonPkg,
+				Type:    pkg.PythonPkg,
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
 		{
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    GemPkg,
+				Type:    pkg.GemPkg,
 			},
 			expected: "pkg:gem/name@v0.1.0",
 		},
 		{
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    NpmPkg,
+				Type:    pkg.NpmPkg,
 			},
 			expected: "pkg:npm/name@v0.1.0",
 		},
 		{
-			distro: distro.Distro{
+			distro: &distro.Distro{
 				Type: distro.Ubuntu,
 			},
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "bad-name",
 				Version: "bad-v0.1.0",
-				Type:    DebPkg,
-				Metadata: DpkgMetadata{
+				Type:    pkg.DebPkg,
+				Metadata: pkg.DpkgMetadata{
 					Package:      "name",
 					Version:      "v0.1.0",
 					Architecture: "amd64",
@@ -86,14 +87,14 @@ func TestPackage_pURL(t *testing.T) {
 			expected: "pkg:deb/ubuntu/name@v0.1.0?arch=amd64",
 		},
 		{
-			distro: distro.Distro{
+			distro: &distro.Distro{
 				Type: distro.CentOS,
 			},
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "bad-name",
 				Version: "bad-v0.1.0",
-				Type:    RpmPkg,
-				Metadata: RpmdbMetadata{
+				Type:    pkg.RpmPkg,
+				Metadata: pkg.RpmdbMetadata{
 					Name:    "name",
 					Version: "v0.1.0",
 					Epoch:   2,
@@ -104,13 +105,13 @@ func TestPackage_pURL(t *testing.T) {
 			expected: "pkg:rpm/centos/name@2:v0.1.0-3?arch=amd64",
 		},
 		{
-			distro: distro.Distro{
+			distro: &distro.Distro{
 				Type: distro.UnknownDistroType,
 			},
-			pkg: Package{
+			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    DebPkg,
+				Type:    pkg.DebPkg,
 			},
 			expected: "pkg:deb/name@v0.1.0",
 		},
@@ -118,7 +119,7 @@ func TestPackage_pURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(string(test.pkg.Type)+"|"+test.expected, func(t *testing.T) {
-			actual := test.pkg.PackageURL(test.distro)
+			actual := generatePackageURL(test.pkg, test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

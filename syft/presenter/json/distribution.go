@@ -10,14 +10,13 @@ type Distribution struct {
 }
 
 // NewDistribution creates a struct with the Linux distribution to be represented in JSON.
-func NewDistribution(d distro.Distro) Distribution {
-	distroName := d.Name()
-	if distroName == "UnknownDistroType" {
-		distroName = ""
+func NewDistribution(d *distro.Distro) Distribution {
+	if d == nil {
+		return Distribution{}
 	}
 
 	return Distribution{
-		Name:    distroName,
+		Name:    d.Name(),
 		Version: d.FullVersion(),
 		IDLike:  d.IDLike,
 	}

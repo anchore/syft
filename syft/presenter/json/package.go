@@ -23,6 +23,8 @@ type packageBasicMetadata struct {
 	Locations []source.Location `json:"locations"`
 	Licenses  []string          `json:"licenses"`
 	Language  pkg.Language      `json:"language"`
+	CPEs      []string          `json:"cpes"`
+	PURL      string            `json:"purl"`
 }
 
 // packageCustomMetadata contains ambiguous values (type-wise) from pkg.Package.
@@ -39,6 +41,10 @@ type packageMetadataUnpacker struct {
 
 // NewPackage crates a new Package from the given pkg.Package.
 func NewPackage(p *pkg.Package) (Package, error) {
+	var cpes = make([]string, len(p.CPEs))
+	for i, c := range p.CPEs {
+		cpes[i] = c.BindToFmtString()
+	}
 	return Package{
 		packageBasicMetadata: packageBasicMetadata{
 			Name:      p.Name,
@@ -48,6 +54,8 @@ func NewPackage(p *pkg.Package) (Package, error) {
 			Locations: p.Locations,
 			Licenses:  p.Licenses,
 			Language:  p.Language,
+			CPEs:      cpes,
+			PURL:      p.PURL,
 		},
 		packageCustomMetadata: packageCustomMetadata{
 			MetadataType: p.MetadataType,
@@ -57,7 +65,15 @@ func NewPackage(p *pkg.Package) (Package, error) {
 }
 
 // ToPackage generates a pkg.Package from the current Package.
-func (a Package) ToPackage() pkg.Package {
+func (a Package) ToPackage() (pkg.Package, error) {
+	var cpes = make([]pkg.CPE, len(a.CPEs))
+	var err error
+	for i, c := range a.CPEs {
+		cpes[i], err = pkg.NewCPE(c)
+		if err != nil {
+			return pkg.Package{}, fmt.Errorf("unable to parse CPE from JSON package: %w", err)
+		}
+	}
 	return pkg.Package{
 		// does not include found-by and locations
 		Name:         a.Name,
@@ -66,10 +82,12 @@ func (a Package) ToPackage() pkg.Package {
 		Licenses:     a.Licenses,
 		Language:     a.Language,
 		Locations:    a.Locations,
+		CPEs:         cpes,
+		PURL:         a.PURL,
 		Type:         a.Type,
 		MetadataType: a.MetadataType,
 		Metadata:     a.Metadata,
-	}
+	}, nil
 }
 
 // UnmarshalJSON is a custom unmarshaller for handling basic values and values with ambiguous types.

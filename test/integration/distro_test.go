@@ -26,7 +26,7 @@ func TestDistroImage(t *testing.T) {
 		t.Fatalf("could not create distro: %+v", err)
 	}
 
-	for _, d := range deep.Equal(actualDistro, expected) {
+	for _, d := range deep.Equal(actualDistro, &expected) {
 		t.Errorf("found distro difference: %+v", d)
 	}
 
