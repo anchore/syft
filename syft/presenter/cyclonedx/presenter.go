@@ -7,8 +7,6 @@ import (
 	"encoding/xml"
 	"io"
 
-	"github.com/anchore/syft/syft/distro"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -17,21 +15,19 @@ import (
 type Presenter struct {
 	catalog     *pkg.Catalog
 	srcMetadata source.Metadata
-	distro      distro.Distro
 }
 
 // NewPresenter creates a CycloneDX presenter from the given Catalog and Locations objects.
-func NewPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata, d distro.Distro) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *Presenter {
 	return &Presenter{
 		catalog:     catalog,
 		srcMetadata: srcMetadata,
-		distro:      d,
 	}
 }
 
 // Present writes the CycloneDX report to the given io.Writer.
 func (pres *Presenter) Present(output io.Writer) error {
-	bom := NewDocument(pres.catalog, pres.distro, pres.srcMetadata)
+	bom := NewDocument(pres.catalog, pres.srcMetadata)
 
 	encoder := xml.NewEncoder(output)
 	encoder.Indent("", "  ")

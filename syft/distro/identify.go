@@ -17,8 +17,8 @@ type parseEntry struct {
 }
 
 // Identify parses distro-specific files to determine distro metadata like version and release.
-func Identify(resolver source.Resolver) Distro {
-	distro := NewUnknownDistro()
+func Identify(resolver source.Resolver) *Distro {
+	var distro *Distro
 
 	identityFiles := []parseEntry{
 		{
@@ -65,10 +65,14 @@ identifyLoop:
 			}
 
 			if candidateDistro := entry.fn(content); candidateDistro != nil {
-				distro = *candidateDistro
+				distro = candidateDistro
 				break identifyLoop
 			}
 		}
+	}
+
+	if distro != nil && distro.Type == UnknownDistroType {
+		return nil
 	}
 
 	return distro
@@ -113,7 +117,7 @@ func parseOsRelease(contents string) *Distro {
 	return assemble(id, vers, like)
 }
 
-var busyboxVersionMatcher = regexp.MustCompile(`BusyBox v[\d\.]+`)
+var busyboxVersionMatcher = regexp.MustCompile(`BusyBox v[\d.]+`)
 
 func parseBusyBox(contents string) *Distro {
 	matches := busyboxVersionMatcher.FindAllString(contents, -1)

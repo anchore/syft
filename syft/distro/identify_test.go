@@ -58,6 +58,11 @@ func TestIdentifyDistro(t *testing.T) {
 			Version: "20.4.0",
 		},
 		{
+			fixture: "test-fixtures/os/oraclelinux",
+			Type:    OracleLinux,
+			Version: "8.3.0",
+		},
+		{
 			fixture: "test-fixtures/os/empty",
 			Type:    UnknownDistroType,
 		},
@@ -90,6 +95,12 @@ func TestIdentifyDistro(t *testing.T) {
 			}
 
 			d := Identify(s.Resolver)
+			if d == nil {
+				if test.Type == UnknownDistroType {
+					return
+				}
+				t.Fatalf("expected a distro but got none")
+			}
 			observedDistros.Add(d.String())
 
 			if d.Type != test.Type {
@@ -103,8 +114,8 @@ func TestIdentifyDistro(t *testing.T) {
 				return
 			}
 
-			if d.Version == nil {
-				t.Log("Distro doesn't have a Version")
+			if d.Version == nil && test.Version == "" {
+				// this distro does not have a version
 				return
 			}
 
@@ -116,7 +127,13 @@ func TestIdentifyDistro(t *testing.T) {
 
 	// ensure that test cases stay in sync with the distros that can be identified
 	if len(observedDistros) < len(definedDistros) {
-		t.Errorf("distro coverage incomplete (distro=%d, coverage=%d)", len(definedDistros), len(observedDistros))
+		for _, d := range definedDistros.ToSlice() {
+			t.Logf("   defined: %s", d)
+		}
+		for _, d := range observedDistros.ToSlice() {
+			t.Logf("   observed: %s", d)
+		}
+		t.Errorf("distro coverage incomplete (defined=%d, coverage=%d)", len(definedDistros), len(observedDistros))
 	}
 
 }

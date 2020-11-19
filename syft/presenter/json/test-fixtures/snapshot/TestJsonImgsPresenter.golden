@@ -15,6 +15,10 @@
     "MIT"
    ],
    "language": "python",
+   "cpes": [
+    "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
+   ],
+   "purl": "a-purl-1",
    "metadataType": "PythonPackageMetadata",
    "metadata": {
     "name": "package-1",
@@ -39,6 +43,10 @@
    ],
    "licenses": null,
    "language": "",
+   "cpes": [
+    "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+   ],
+   "purl": "a-purl-2",
    "metadataType": "DpkgMetadata",
    "metadata": {
     "package": "package-2",

@@ -13,11 +13,11 @@ import (
 type Presenter struct {
 	catalog     *pkg.Catalog
 	srcMetadata source.Metadata
-	distro      distro.Distro
+	distro      *distro.Distro
 }
 
 // NewPresenter creates a new JSON presenter object for the given cataloging results.
-func NewPresenter(catalog *pkg.Catalog, s source.Metadata, d distro.Distro) *Presenter {
+func NewPresenter(catalog *pkg.Catalog, s source.Metadata, d *distro.Distro) *Presenter {
 	return &Presenter{
 		catalog:     catalog,
 		srcMetadata: s,

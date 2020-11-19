@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/distro"
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/syft/syft/pkg"
@@ -61,12 +60,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	d, err := distro.NewDistro(distro.Ubuntu, "20.04", "debian")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	pres := NewPresenter(catalog, s.Metadata, d)
+	pres := NewPresenter(catalog, s.Metadata)
 
 	// run presenter
 	err = pres.Present(&buffer)
@@ -109,17 +103,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-1",
-		Metadata: pkg.RpmdbMetadata{
-			Name:      "package1",
-			Epoch:     0,
-			Arch:      "x86_64",
-			Release:   "1",
-			Version:   "1.0.1",
-			SourceRpm: "package1-1.0.1-1.src.rpm",
-			Size:      12406784,
-			License:   "MIT",
-			Vendor:    "",
-		},
+		PURL:    "the-purl-1",
 	})
 	catalog.Add(pkg.Package{
 		Name:    "package2",
@@ -133,25 +117,10 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 			"MIT",
 			"Apache-v2",
 		},
-		Metadata: pkg.RpmdbMetadata{
-			Name:      "package2",
-			Epoch:     0,
-			Arch:      "x86_64",
-			Release:   "1",
-			Version:   "1.0.2",
-			SourceRpm: "package2-1.0.2-1.src.rpm",
-			Size:      12406784,
-			License:   "MIT",
-			Vendor:    "",
-		},
+		PURL: "the-purl-2",
 	})
 
 	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	d, err := distro.NewDistro(distro.RedHat, "8", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,7 +133,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	// This value is sourced from the "version" node in "./test-fixtures/snapshot/TestCycloneDxImgsPresenter.golden"
 	s.Metadata.ImageMetadata.Digest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
 
-	pres := NewPresenter(catalog, s.Metadata, d)
+	pres := NewPresenter(catalog, s.Metadata)
 
 	// run presenter
 	err = pres.Present(&buffer)

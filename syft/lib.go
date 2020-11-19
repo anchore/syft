@@ -34,79 +34,68 @@ import (
 
 // Catalog the given image from a particular perspective (e.g. squashed source, all-layers source). Returns the discovered
 // set of packages, the identified Linux distribution, and the source object used to wrap the data source.
-func Catalog(userInput string, scope source.Scope) (source.Source, *pkg.Catalog, distro.Distro, error) {
-	log.Info("cataloging image")
-	s, cleanup, err := source.New(userInput, scope)
+func Catalog(userInput string, scope source.Scope) (source.Source, *pkg.Catalog, *distro.Distro, error) {
+	theSource, cleanup, err := source.New(userInput, scope)
 	defer cleanup()
 	if err != nil {
-		return source.Source{}, nil, distro.Distro{}, err
+		return source.Source{}, nil, nil, err
 	}
 
-	d := IdentifyDistro(s)
-
-	catalog, err := CatalogFromScope(s)
-	if err != nil {
-		return source.Source{}, nil, distro.Distro{}, err
-	}
-
-	return s, catalog, d, nil
-}
-
-// IdentifyDistro attempts to discover what the underlying Linux distribution may be from the available flat files
-// provided by the given source object. If results are inconclusive a "UnknownDistro" Type is returned.
-func IdentifyDistro(s source.Source) distro.Distro {
-	d := distro.Identify(s.Resolver)
-	if d.Type != distro.UnknownDistroType {
-		log.Infof("identified distro: %s", d.String())
+	// find the distro
+	theDistro := distro.Identify(theSource.Resolver)
+	if theDistro != nil {
+		log.Infof("identified distro: %s", theDistro.String())
 	} else {
 		log.Info("could not identify distro")
 	}
-	return d
-}
 
-// Catalog the given source, which may represent a container image or filesystem. Returns the discovered set of packages.
-func CatalogFromScope(s source.Source) (*pkg.Catalog, error) {
-	log.Info("building the catalog")
-
-	// conditionally have two sets of catalogers
+	// conditionally use the correct set of loggers based on the input type (container image or directory)
 	var catalogers []cataloger.Cataloger
-	switch s.Metadata.Scheme {
+	switch theSource.Metadata.Scheme {
 	case source.ImageScheme:
+		log.Info("cataloging image")
 		catalogers = cataloger.ImageCatalogers()
 	case source.DirectoryScheme:
+		log.Info("cataloging directory")
 		catalogers = cataloger.DirectoryCatalogers()
 	default:
-		return nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", s.Metadata.Scheme)
+		return source.Source{}, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", theSource.Metadata.Scheme)
 	}
 
-	return cataloger.Catalog(s.Resolver, catalogers...)
+	catalog, err := cataloger.Catalog(theSource.Resolver, theDistro, catalogers...)
+	if err != nil {
+		return source.Source{}, nil, nil, err
+	}
+
+	return theSource, catalog, theDistro, nil
 }
 
 // CatalogFromJSON takes an existing syft report and generates native syft objects.
-func CatalogFromJSON(reader io.Reader) (source.Metadata, *pkg.Catalog, distro.Distro, error) {
+func CatalogFromJSON(reader io.Reader) (source.Metadata, *pkg.Catalog, *distro.Distro, error) {
 	var doc jsonPresenter.Document
+	var err error
 	decoder := json.NewDecoder(reader)
 	if err := decoder.Decode(&doc); err != nil {
-		return source.Metadata{}, nil, distro.Distro{}, err
+		return source.Metadata{}, nil, nil, err
 	}
 
 	var pkgs = make([]pkg.Package, len(doc.Artifacts))
 	for i, a := range doc.Artifacts {
-		pkgs[i] = a.ToPackage()
+		pkgs[i], err = a.ToPackage()
+		if err != nil {
+			return source.Metadata{}, nil, nil, err
+		}
 	}
 
 	catalog := pkg.NewCatalog(pkgs...)
 
-	var distroType distro.Type
-	if doc.Distro.Name == "" {
-		distroType = distro.UnknownDistroType
-	} else {
-		distroType = distro.Type(doc.Distro.Name)
-	}
-
-	theDistro, err := distro.NewDistro(distroType, doc.Distro.Version, doc.Distro.IDLike)
-	if err != nil {
-		return source.Metadata{}, nil, distro.Distro{}, err
+	var theDistro *distro.Distro
+	if doc.Distro.Name != "" {
+		d, err := distro.NewDistro(distro.Type(doc.Distro.Name), doc.Distro.Version, doc.Distro.IDLike)
+		if err != nil {
+			return source.Metadata{}, nil, nil, err
+		}
+		theDistro = &d
 	}
 
 	return doc.Source.ToSourceMetadata(), catalog, theDistro, nil

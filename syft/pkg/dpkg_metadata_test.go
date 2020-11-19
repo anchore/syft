@@ -1,9 +1,10 @@
 package pkg
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/distro"
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"testing"
 )
 
 func TestDpkgMetadata_pURL(t *testing.T) {
@@ -40,7 +41,7 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.expected, func(t *testing.T) {
-			actual := test.metadata.PackageURL(test.distro)
+			actual := test.metadata.PackageURL(&test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

@@ -5,7 +5,6 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
@@ -25,7 +24,7 @@ type Document struct {
 }
 
 // NewDocumentFromCatalog returns a CycloneDX Document object populated with the catalog contents.
-func NewDocument(catalog *pkg.Catalog, d distro.Distro, srcMetadata source.Metadata) Document {
+func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) Document {
 	versionInfo := version.FromBuild()
 
 	doc := Document{
@@ -42,7 +41,7 @@ func NewDocument(catalog *pkg.Catalog, d distro.Distro, srcMetadata source.Metad
 			Type:       "library", // TODO: this is not accurate
 			Name:       p.Name,
 			Version:    p.Version,
-			PackageURL: p.PackageURL(d),
+			PackageURL: p.PURL,
 		}
 		var licenses []License
 		for _, licenseName := range p.Licenses {
