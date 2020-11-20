@@ -24,7 +24,7 @@ type PackageJSON struct {
 	Latest       []string          `json:"latest"`
 	Author       Author            `json:"author"`
 	License      json.RawMessage   `json:"license"`
-	Licenses     []license         `json:"licenses,omitempty"`
+	Licenses     []license         `json:"licenses"`
 	Name         string            `json:"name"`
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
