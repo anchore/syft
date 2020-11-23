@@ -23,7 +23,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   fmt.Sprintf("%s [SOURCE]", internal.ApplicationName),
-	Short: "A tool for generating a Software Bill Of Materials (SBOM) from container images and filesystems",
+	Short: "A tool for generating a Software Bill Of Materials (PackageSBOM) from container images and filesystems",
 	Long: internal.Tprintf(`
 Supports the following image sources:
     {{.appName}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon
@@ -97,6 +97,17 @@ func startWorker(userInput string) <-chan error {
 			errs <- fmt.Errorf("failed to catalog input: %+v", err)
 			return
 		}
+
+		//if appConfig.Anchore.UploadEnabled {
+		//	c, err := anchore.NewClient(appConfig.Anchore.Hostname)
+		//	if err != nil {
+		//		errs <- err
+		//		return
+		//	}
+		//
+		//	session, status, err = c.Import(context.Background(), anchore.NewPackageSBOM(catalog))
+		//	// TODO: show status and session?
+		//}
 
 		bus.Publish(partybus.Event{
 			Type:  event.CatalogerFinished,

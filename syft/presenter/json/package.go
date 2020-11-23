@@ -18,19 +18,19 @@ type Package struct {
 type packageBasicMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
-	Type      pkg.Type          `json:"type"`
+	Type      string            `json:"type"`
 	FoundBy   string            `json:"foundBy"`
 	Locations []source.Location `json:"locations"`
 	Licenses  []string          `json:"licenses"`
-	Language  pkg.Language      `json:"language"`
+	Language  string            `json:"language"`
 	CPEs      []string          `json:"cpes"`
 	PURL      string            `json:"purl"`
 }
 
 // packageCustomMetadata contains ambiguous values (type-wise) from pkg.Package.
 type packageCustomMetadata struct {
-	MetadataType pkg.MetadataType `json:"metadataType"`
-	Metadata     interface{}      `json:"metadata"`
+	MetadataType string      `json:"metadataType"`
+	Metadata     interface{} `json:"metadata"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
@@ -62,16 +62,16 @@ func NewPackage(p *pkg.Package) (Package, error) {
 		packageBasicMetadata: packageBasicMetadata{
 			Name:      p.Name,
 			Version:   p.Version,
-			Type:      p.Type,
+			Type:      string(p.Type),
 			FoundBy:   p.FoundBy,
 			Locations: locations,
 			Licenses:  licenses,
-			Language:  p.Language,
+			Language:  string(p.Language),
 			CPEs:      cpes,
 			PURL:      p.PURL,
 		},
 		packageCustomMetadata: packageCustomMetadata{
-			MetadataType: p.MetadataType,
+			MetadataType: string(p.MetadataType),
 			Metadata:     p.Metadata,
 		},
 	}, nil
@@ -93,12 +93,12 @@ func (a Package) ToPackage() (pkg.Package, error) {
 		Version:      a.Version,
 		FoundBy:      a.FoundBy,
 		Licenses:     a.Licenses,
-		Language:     a.Language,
+		Language:     pkg.Language(a.Language),
 		Locations:    a.Locations,
 		CPEs:         cpes,
 		PURL:         a.PURL,
-		Type:         a.Type,
-		MetadataType: a.MetadataType,
+		Type:         pkg.Type(a.Type),
+		MetadataType: pkg.MetadataType(a.MetadataType),
 		Metadata:     a.Metadata,
 	}, nil
 }
@@ -117,9 +117,9 @@ func (a *Package) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	a.MetadataType = pkg.MetadataType(unpacker.MetadataType)
+	a.MetadataType = unpacker.MetadataType
 
-	switch a.MetadataType {
+	switch pkg.MetadataType(a.MetadataType) {
 	case pkg.RpmdbMetadataType:
 		var payload pkg.RpmdbMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {

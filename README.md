@@ -81,27 +81,35 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# same as -o ; the output format of the SBOM report (options: table, text, json)
+# the output format of the SBOM report (options: table, text, json)
+# same as -o ; SYFT_OUTPUT env var
 output: "table"
 
-# same as -s ; the search space to look for packages (options: all-layers, squashed)
+# the search space to look for packages (options: all-layers, squashed)
+# same as -s ; SYFT_SCOPE env var
 scope: "squashed"
 
-# same as -q ; suppress all output (except for the SBOM report)
+# suppress all output (except for the SBOM report)
+# same as -q ; SYFT_QUIET env var
 quiet: false
+
+# enable/disable checking for application updates on startup
+# same as SYFT_CHECK_FOR_APP_UPDATE env var
+check-for-app-update: true
 
 log:
   # use structured logging
+  # same as SYFT_LOG_STRUCTURED env var
   structured: false
 
   # the log level; note: detailed logging suppress the ETUI
+  # same as SYFT_LOG_LEVEL env var
   level: "error"
 
   # location to write the log file (default is not to have a log file)
+  # same as SYFT_LOG_FILE env var
   file: ""
 
-# enable/disable checking for application updates on startup
-check-for-app-update: true
 ```
 
 ## Future plans
