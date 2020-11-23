@@ -82,6 +82,11 @@ func TestCatalogFromJSON(t *testing.T) {
 				}
 
 				for _, d := range deep.Equal(a, e) {
+					// ignore errors for empty collections vs nil for select fields
+					// TODO: this is brittle, but not dangerously so. We should still find a better way to do this.
+					if d == "Licenses: [] != <nil slice>" {
+						continue
+					}
 					t.Errorf("   package %d (name=%s) diff: %+v", i, e.Name, d)
 				}
 			}

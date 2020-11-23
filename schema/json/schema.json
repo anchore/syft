@@ -1,455 +1,165 @@
 {
-    "$schema": "http://json-schema.org/schema#",
-    "properties": {
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/Document",
+  "definitions": {
+    "Descriptor": {
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Distribution": {
+      "required": [
+        "name",
+        "version",
+        "idLike"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "idLike": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Document": {
+      "required": [
+        "artifacts",
+        "source",
+        "distro",
+        "descriptor"
+      ],
+      "properties": {
         "artifacts": {
-            "items": {
-                "properties": {
-                    "foundBy": {
-                        "type": "string"
-                    },
-                    "language": {
-                        "type": "string"
-                    },
-                    "licenses": {
-                        "anyOf": [
-                            {
-                                "type": "null"
-                            },
-                            {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            }
-                        ]
-                    },
-                    "locations": {
-                        "items": {
-                            "properties": {
-                                "layerID": {
-                                    "type": "string"
-                                },
-                                "path": {
-                                    "type": "string"
-                                }
-                            },
-                            "required": [
-                                "path"
-                            ],
-                            "type": "object"
-                        },
-                        "type": "array"
-                    },
-                    "metadata": {
-                        "properties": {
-                            "architecture": {
-                                "type": "string"
-                            },
-                            "author": {
-                                "type": "string"
-                            },
-                            "authorEmail": {
-                                "type": "string"
-                            },
-                            "description": {
-                                "type": "string"
-                            },
-                            "epoch": {
-                                "type": "integer"
-                            },
-                            "files": {
-                                "anyOf": [
-                                    {
-                                        "type": "null"
-                                    },
-                                    {
-                                        "items": {
-                                            "anyOf": [
-                                                {
-                                                    "type": "string"
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "checksum": {
-                                                            "type": "string"
-                                                        },
-                                                        "digest": {
-                                                            "properties": {
-                                                                "algorithm": {
-                                                                    "type": "string"
-                                                                },
-                                                                "value": {
-                                                                    "type": "string"
-                                                                }
-                                                            },
-                                                            "required": [
-                                                                "algorithm",
-                                                                "value"
-                                                            ],
-                                                            "type": "object"
-                                                        },
-                                                        "ownerGid": {
-                                                            "type": "string"
-                                                        },
-                                                        "ownerUid": {
-                                                            "type": "string"
-                                                        },
-                                                        "path": {
-                                                            "type": "string"
-                                                        },
-                                                        "permissions": {
-                                                            "type": "string"
-                                                        },
-                                                        "size": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "path"
-                                                    ],
-                                                    "type": "object"
-                                                }
-                                            ]
-                                        },
-                                        "type": "array"
-                                    }
-                                ]
-                            },
-                            "gitCommitOfApkPort": {
-                                "type": "string"
-                            },
-                            "homepage": {
-                                "type": "string"
-                            },
-                            "installedSize": {
-                                "type": "integer"
-                            },
-                            "license": {
-                                "type": "string"
-                            },
-                            "licenses": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            "maintainer": {
-                                "type": "string"
-                            },
-                            "manifest": {
-                                "properties": {
-                                    "main": {
-                                        "properties": {
-                                            "Archiver-Version": {
-                                                "type": "string"
-                                            },
-                                            "Build-Jdk": {
-                                                "type": "string"
-                                            },
-                                            "Built-By": {
-                                                "type": "string"
-                                            },
-                                            "Created-By": {
-                                                "type": "string"
-                                            },
-                                            "Extension-Name": {
-                                                "type": "string"
-                                            },
-                                            "Group-Id": {
-                                                "type": "string"
-                                            },
-                                            "Hudson-Version": {
-                                                "type": "string"
-                                            },
-                                            "Implementation-Title": {
-                                                "type": "string"
-                                            },
-                                            "Implementation-Version": {
-                                                "type": "string"
-                                            },
-                                            "Jenkins-Version": {
-                                                "type": "string"
-                                            },
-                                            "Long-Name": {
-                                                "type": "string"
-                                            },
-                                            "Main-Class": {
-                                                "type": "string"
-                                            },
-                                            "Manifest-Version": {
-                                                "type": "string"
-                                            },
-                                            "Minimum-Java-Version": {
-                                                "type": "string"
-                                            },
-                                            "Plugin-Dependencies": {
-                                                "type": "string"
-                                            },
-                                            "Plugin-Developers": {
-                                                "type": "string"
-                                            },
-                                            "Plugin-License-Name": {
-                                                "type": "string"
-                                            },
-                                            "Plugin-License-Url": {
-                                                "type": "string"
-                                            },
-                                            "Plugin-ScmUrl": {
-                                                "type": "string"
-                                            },
-                                            "Plugin-Version": {
-                                                "type": "string"
-                                            },
-                                            "Short-Name": {
-                                                "type": "string"
-                                            },
-                                            "Specification-Title": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "Archiver-Version",
-                                            "Build-Jdk",
-                                            "Built-By",
-                                            "Created-By",
-                                            "Manifest-Version"
-                                        ],
-                                        "type": "object"
-                                    }
-                                },
-                                "required": [
-                                    "main"
-                                ],
-                                "type": "object"
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "originPackage": {
-                                "type": "string"
-                            },
-                            "package": {
-                                "type": "string"
-                            },
-                            "platform": {
-                                "type": "string"
-                            },
-                            "pomProperties": {
-                                "properties": {
-                                    "artifactId": {
-                                        "type": "string"
-                                    },
-                                    "extraFields": {
-                                        "type": "null"
-                                    },
-                                    "groupId": {
-                                        "type": "string"
-                                    },
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "path": {
-                                        "type": "string"
-                                    },
-                                    "version": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "artifactId",
-                                    "extraFields",
-                                    "groupId",
-                                    "name",
-                                    "path",
-                                    "version"
-                                ],
-                                "type": "object"
-                            },
-                            "pullChecksum": {
-                                "type": "string"
-                            },
-                            "pullDependencies": {
-                                "type": "string"
-                            },
-                            "release": {
-                                "type": "string"
-                            },
-                            "sitePackagesRootPath": {
-                                "type": "string"
-                            },
-                            "size": {
-                                "type": "integer"
-                            },
-                            "source": {
-                                "type": "string"
-                            },
-                            "sourceRpm": {
-                                "type": "string"
-                            },
-                            "topLevelPackages": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            "url": {
-                                "type": "string"
-                            },
-                            "vendor": {
-                                "type": "string"
-                            },
-                            "version": {
-                                "type": "string"
-                            },
-                            "virtualPath": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "metadataType": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "type": {
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "foundBy",
-                    "language",
-                    "licenses",
-                    "locations",
-                    "metadataType",
-                    "name",
-                    "type",
-                    "version"
-                ],
-                "type": "object"
-            },
-            "type": "array"
-        },
-        "descriptor": {
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "name",
-                "version"
-            ],
-            "type": "object"
-        },
-        "distro": {
-            "properties": {
-                "idLike": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "idLike",
-                "name",
-                "version"
-            ],
-            "type": "object"
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Package"
+          },
+          "type": "array"
         },
         "source": {
-            "properties": {
-                "target": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "properties": {
-                                "digest": {
-                                    "type": "string"
-                                },
-                                "layers": {
-                                    "items": {
-                                        "properties": {
-                                            "digest": {
-                                                "type": "string"
-                                            },
-                                            "mediaType": {
-                                                "type": "string"
-                                            },
-                                            "size": {
-                                                "type": "integer"
-                                            }
-                                        },
-                                        "required": [
-                                            "digest",
-                                            "mediaType",
-                                            "size"
-                                        ],
-                                        "type": "object"
-                                    },
-                                    "type": "array"
-                                },
-                                "mediaType": {
-                                    "type": "string"
-                                },
-                                "scope": {
-                                    "type": "string"
-                                },
-                                "size": {
-                                    "type": "integer"
-                                },
-                                "tags": {
-                                    "items": {
-                                        "type": "string"
-                                    },
-                                    "type": "array"
-                                },
-                                "userInput": {
-                                    "type": "string"
-                                }
-                            },
-                            "required": [
-                                "digest",
-                                "layers",
-                                "mediaType",
-                                "scope",
-                                "size",
-                                "tags",
-                                "userInput"
-                            ],
-                            "type": "object"
-                        }
-                    ]
-                },
-                "type": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "target",
-                "type"
-            ],
-            "type": "object"
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Source"
+        },
+        "distro": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Distribution"
+        },
+        "descriptor": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Descriptor"
         }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
-    "required": [
-        "artifacts",
-        "descriptor",
-        "distro",
-        "source"
-    ],
-    "type": "object"
+    "Location": {
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "layerID": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Package": {
+      "required": [
+        "name",
+        "version",
+        "type",
+        "foundBy",
+        "locations",
+        "licenses",
+        "language",
+        "cpes",
+        "purl",
+        "metadataType"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "foundBy": {
+          "type": "string"
+        },
+        "locations": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Location"
+          },
+          "type": "array"
+        },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "type": "string"
+        },
+        "cpes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "purl": {
+          "type": "string"
+        },
+        "metadataType": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Source": {
+      "required": [
+        "type",
+        "target"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "target": {
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
 }

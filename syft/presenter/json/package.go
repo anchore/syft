@@ -30,7 +30,7 @@ type packageBasicMetadata struct {
 // packageCustomMetadata contains ambiguous values (type-wise) from pkg.Package.
 type packageCustomMetadata struct {
 	MetadataType pkg.MetadataType `json:"metadataType"`
-	Metadata     interface{}      `json:"metadata,omitempty"`
+	Metadata     interface{}      `json:"metadata"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
@@ -45,14 +45,27 @@ func NewPackage(p *pkg.Package) (Package, error) {
 	for i, c := range p.CPEs {
 		cpes[i] = c.BindToFmtString()
 	}
+
+	// ensure collections are never nil for presentation reasons
+
+	var locations = make([]source.Location, 0)
+	if p.Locations != nil {
+		locations = p.Locations
+	}
+
+	var licenses = make([]string, 0)
+	if p.Licenses != nil {
+		licenses = p.Licenses
+	}
+
 	return Package{
 		packageBasicMetadata: packageBasicMetadata{
 			Name:      p.Name,
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-			Locations: p.Locations,
-			Licenses:  p.Licenses,
+			Locations: locations,
+			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
 			PURL:      p.PURL,

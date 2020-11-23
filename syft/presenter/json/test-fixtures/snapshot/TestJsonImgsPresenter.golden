@@ -41,7 +41,7 @@
      "layerID": "sha256:da21056e7bf4308ecea0c0836848a7fe92f38fdcf35bc09ee6d98e7ab7beeebf"
     }
    ],
-   "licenses": null,
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"

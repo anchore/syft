@@ -3,7 +3,6 @@ package integration
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -20,7 +19,6 @@ import (
 )
 
 const jsonSchemaPath = "schema/json"
-const jsonSchemaExamplesPath = jsonSchemaPath + "/examples"
 
 func repoRoot(t *testing.T) string {
 	t.Helper()
@@ -54,11 +52,6 @@ func validateAgainstV1Schema(t *testing.T, json string) {
 }
 
 func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope source.Source, prefix string) {
-	// make the json output example dir if it does not exist
-	absJsonSchemaExamplesPath := path.Join(repoRoot(t), jsonSchemaExamplesPath)
-	if _, err := os.Stat(absJsonSchemaExamplesPath); os.IsNotExist(err) {
-		os.Mkdir(absJsonSchemaExamplesPath, 0755)
-	}
 
 	output := bytes.NewBufferString("")
 
@@ -75,21 +68,6 @@ func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope source.Source, 
 	err = p.Present(output)
 	if err != nil {
 		t.Fatalf("unable to present: %+v", err)
-	}
-
-	// we use the examples dir as a way to use integration tests to drive what valid examples are in case we
-	// want to update the json schema. We do not want to validate the output of the presentation format as the
-	// contents may change regularly, making the integration tests brittle.
-	testFileName := prefix + "_" + path.Base(t.Name()) + ".json"
-	testFilePath := path.Join(absJsonSchemaExamplesPath, testFileName)
-
-	fh, err := os.OpenFile(testFilePath, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		t.Fatalf("unable to open json example path: %+v", err)
-	}
-	_, err = fh.WriteString(output.String())
-	if err != nil {
-		t.Fatalf("unable to write json example: %+v", err)
 	}
 
 	validateAgainstV1Schema(t, output.String())
