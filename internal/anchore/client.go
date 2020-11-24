@@ -9,59 +9,38 @@ import (
 	"github.com/anchore/syft/internal/version"
 )
 
-type Option func(*Client) error
+type Configuration struct {
+	Hostname  string
+	Username  string
+	Password  string
+	UserAgent string
+	Scheme    string
+}
 
 type Client struct {
-	config    external.Configuration
-	username  string
-	password  string
-	sessionID string
-	client    *external.APIClient
+	config Configuration
+	client *external.APIClient
 }
 
-func NewClient(host string, options ...Option) (*Client, error) {
-	// create the client and default configuration object
-	theClient := &Client{
-		config: external.Configuration{
-			Host:      host,
-			UserAgent: defaultUserAgent(),
-		},
+func NewClient(cfg Configuration) (*Client, error) {
+	if cfg.UserAgent == "" {
+		versionInfo := version.FromBuild()
+		// format: product / product-version comment
+		cfg.UserAgent = fmt.Sprintf("%s / %s %s", internal.ApplicationName, versionInfo.Version, versionInfo.Platform)
 	}
 
-	// apply all given options
-	for _, option := range options {
-		err := option(theClient)
-		if err != nil {
-			return nil, err
-		}
+	if cfg.Scheme == "" {
+		cfg.Scheme = "https"
 	}
 
-	// create external client
-	theClient.client = external.NewAPIClient(&theClient.config)
-
-	return theClient, nil
-}
-
-func WithUserAgent(userAgent string) Option {
-	return func(c *Client) error {
-		c.config.UserAgent = userAgent
-		return nil
-	}
-}
-
-func WithCredentials(username, password string) Option {
-	return func(c *Client) error {
-		c.username = username
-		c.password = password
-		return nil
-	}
-}
-
-func WithSessionID(sessionID string) Option {
-	return func(c *Client) error {
-		c.sessionID = sessionID
-		return nil
-	}
+	return &Client{
+		config: cfg,
+		client: external.NewAPIClient(&external.Configuration{
+			Host:      cfg.Hostname,
+			UserAgent: cfg.UserAgent,
+			Scheme:    cfg.Scheme,
+		}),
+	}, nil
 }
 
 func (c *Client) newRequestContext(parentContext context.Context) context.Context {
@@ -72,14 +51,8 @@ func (c *Client) newRequestContext(parentContext context.Context) context.Contex
 		parentContext,
 		external.ContextBasicAuth,
 		external.BasicAuth{
-			UserName: c.username,
-			Password: c.password,
+			UserName: c.config.Username,
+			Password: c.config.Password,
 		},
 	)
-}
-
-func defaultUserAgent() string {
-	// format: product / product-version comment
-	versionInfo := version.FromBuild()
-	return fmt.Sprintf("%s / %s %s", internal.ApplicationName, versionInfo.Version, versionInfo.Platform)
 }

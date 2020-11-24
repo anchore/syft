@@ -206,5 +206,4 @@ func setNonCliDefaultValues(v *viper.Viper) {
 	v.SetDefault("log.file", "")
 	v.SetDefault("log.structured", false)
 	v.SetDefault("check-for-app-update", true)
-	v.SetDefault("anchore.upload-enabled", false)
 }

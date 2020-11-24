@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
@@ -98,16 +99,28 @@ func startWorker(userInput string) <-chan error {
 			return
 		}
 
-		//if appConfig.Anchore.UploadEnabled {
-		//	c, err := anchore.NewClient(appConfig.Anchore.Hostname)
-		//	if err != nil {
-		//		errs <- err
-		//		return
-		//	}
-		//
-		//	session, status, err = c.Import(context.Background(), anchore.NewPackageSBOM(catalog))
-		//	// TODO: show status and session?
-		//}
+		if appConfig.Anchore.UploadEnabled {
+			// TODO: ETUI element for this
+			log.Infof("uploading results to %s", appConfig.Anchore.Hostname)
+
+			c, err := anchore.NewClient(anchore.Configuration{
+				Hostname: appConfig.Anchore.Hostname,
+				Username: appConfig.Anchore.Username,
+				Password: appConfig.Anchore.Password,
+			})
+			if err != nil {
+				errs <- fmt.Errorf("failed to create anchore client: %+v", err)
+				return
+			}
+
+			_, _, err = c.Import(context.Background(), catalog)
+			if err != nil {
+				errs <- fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Hostname, err)
+				return
+			}
+
+			// TODO: show status / session ID?
+		}
 
 		bus.Publish(partybus.Event{
 			Type:  event.CatalogerFinished,

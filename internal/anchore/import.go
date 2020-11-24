@@ -3,35 +3,38 @@ package anchore
 import (
 	"context"
 	"fmt"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
-type Importer interface {
-	doImport(ctx context.Context, sessionID string, importsApi interface{}) error
-}
+type importer func() error
 
-func (c *Client) Import(ctx context.Context, importers ...Importer) (string, string, error) {
+func (c *Client) Import(ctx context.Context, catalog *pkg.Catalog) (string, string, error) {
+	authedCtx := c.newRequestContext(ctx)
+	startOperation, _, err := c.client.ImportsApi.StartImageImport(authedCtx)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to start doImport session: %w", err)
+	}
+	sessionID := startOperation.Uuid
 
-	if c.sessionID == "" {
-		startOperation, _, err := c.client.ImportsApi.StartImageImport(c.newRequestContext(ctx))
-		if err != nil {
-			return "", "", fmt.Errorf("unable to start doImport session: %w", err)
-		}
-		c.sessionID = startOperation.Uuid
+	// do the imports...
+
+	var importers = []importer{
+		generatePackageSbomImporter(authedCtx, c.client.ImportsApi, sessionID, catalog),
 	}
 
 	for _, importer := range importers {
 		// TODO: are there any useful return values that should be persisted or shown to the user?
-		err := importer.doImport(c.newRequestContext(ctx), c.sessionID, c.client.ImportsApi)
-		if err != nil {
+		if err := importer(); err != nil {
 			return "", "", err
 		}
 	}
 
 	// TODO: are there any useful return values that should be persisted or shown to the user?
-	//finalizeResponse, _, err := c.client.ImportsApi.FinalizeImageImport(c.newRequestContext(ctx), c.sessionID, _TODO_)
+	//finalizeResponse, _, err := c.client.ImportsApi.FinalizeImageImport(authedCtx, sessionID, _TODO_)
 	//if err != nil {
-	//	return "", "", fmt.Errorf("unable to complete doImport session=%q: %w", c.sessionID, err)
+	//	return "", "", fmt.Errorf("unable to complete doImport session=%q: %w", sessionID, err)
 	//}
-	//return c.sessionID, finalizeResponse.Status, nil
+	//return sessionID, finalizeResponse.Status, nil
 	return "", "", nil
 }
