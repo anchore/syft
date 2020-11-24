@@ -112,20 +112,26 @@ func setGlobalCliOptions() {
 		os.Exit(1)
 	}
 
+	// add dockerfile support...
+	flag = "dockerfile"
+	rootCmd.Flags().StringP(
+		flag, "d", "",
+		"include dockerfile for upload to Anchore Engine/Enterprise",
+		)
+	if err := viper.BindPFlag("anchore.dockerfile", rootCmd.Flags().Lookup(flag)); err != nil {
+		fmt.Printf("unable to bind flag '#{flag}': #{err}")
+		os.Exit(1)
+	}
+
 }
 
 func initAppConfig() {
 	cfgVehicle := viper.GetViper()
-	cfg, err := config.LoadApplicationConfig(cfgVehicle, cliOpts)
+	wasHostnameSet := rootCmd.Flags().Changed("hostname")
+	cfg, err := config.LoadApplicationConfig(cfgVehicle, cliOpts, wasHostnameSet)
 	if err != nil {
 		fmt.Printf("failed to load application config: \n\t%+v\n", err)
 		os.Exit(1)
-	}
-
-	// check if upload should be done relative to the CLI and config behavior
-	if !cfgVehicle.IsSet("anchore.upload-enabled") && rootCmd.Flags().Changed("hostname") {
-		// we know the user didn't specify to upload in the config file and a --hostname option was provided (so set upload)
-		cfg.Anchore.UploadEnabled = true
 	}
 
 	appConfig = cfg

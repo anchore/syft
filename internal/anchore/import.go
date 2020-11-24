@@ -9,7 +9,7 @@ import (
 
 type importer func() error
 
-func (c *Client) Import(ctx context.Context, catalog *pkg.Catalog) (string, string, error) {
+func (c *Client) Import(ctx context.Context, catalog *pkg.Catalog, dockerfilepath string) (string, string, error) {
 	authedCtx := c.newRequestContext(ctx)
 	startOperation, _, err := c.client.ImportsApi.StartImageImport(authedCtx)
 	if err != nil {
@@ -18,8 +18,10 @@ func (c *Client) Import(ctx context.Context, catalog *pkg.Catalog) (string, stri
 	sessionID := startOperation.Uuid
 
 	// do the imports...
-
 	var importers = []importer{
+		// another dockerfile importer...
+
+		uploadDockerfile(authedCtx, c.client.ImportsApi, sessionID, dockerfilepath),
 		generatePackageSbomImporter(authedCtx, c.client.ImportsApi, sessionID, catalog),
 	}
 

@@ -113,7 +113,7 @@ func startWorker(userInput string) <-chan error {
 				return
 			}
 
-			_, _, err = c.Import(context.Background(), catalog)
+			_, _, err = c.Import(context.Background(), catalog) //add dockerfile contents...
 			if err != nil {
 				errs <- fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Hostname, err)
 				return

@@ -14,6 +14,10 @@ type packageSBOMImportAPI interface {
 	ImportImagePackages(context.Context, string, []external.SyftPackage) (external.ImageImportContentResponse, *http.Response, error)
 }
 
+type dockerfileImportAPI interface {
+
+}
+
 // TODO: write test that ensures a 100% match of jsonPresenter.Package to external.SyftPackage with deep.Equals (should work)
 
 func toPackageSbomModel(catalog *pkg.Catalog) ([]external.SyftPackage, error) {
@@ -50,6 +54,10 @@ func toPackageSbomModel(catalog *pkg.Catalog) ([]external.SyftPackage, error) {
 		})
 	}
 	return model, nil
+}
+
+func uploadDockerfile(ctx context.Context, api dockerfileImportAPI, sessionID string, dockerfilepath string) error {
+	return nil
 }
 
 func generatePackageSbomImporter(ctx context.Context, api packageSBOMImportAPI, sessionID string, catalog *pkg.Catalog) func() error {

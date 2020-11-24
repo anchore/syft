@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"os"
 
 	"github.com/adrg/xdg"
 	"github.com/anchore/syft/internal"
@@ -50,10 +51,12 @@ type anchore struct {
 	Path          string `yaml:"path" mapstructure:"path"`                      // override the engine/enterprise API upload path
 	Username      string `yaml:"username" mapstructure:"username"`              // -u , username to authenticate upload
 	Password      string `yaml:"password" mapstructure:"password"`              // -p , password to authenticate upload
+	Dockerfile    string `yaml:"dockerfile" mapstructure:"dockerfile"`		    // -d , dockerfile to attach for upload
 }
 
 // LoadApplicationConfig populates the given viper object with application configuration discovered on disk
-func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application, error) {
+func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions, wasHostnameSet bool) (*Application, error) {
+
 	// the user may not have a config, and this is OK, we can use the default config + default cobra cli values instead
 	setNonCliDefaultValues(v)
 	_ = readConfig(v, cliOpts.ConfigPath)
@@ -67,7 +70,7 @@ func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application
 	}
 	config.ConfigPath = v.ConfigFileUsed()
 
-	if err := config.build(); err != nil {
+	if err := config.build(v, wasHostnameSet); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
@@ -75,7 +78,7 @@ func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application
 }
 
 // build inflates simple config values into syft native objects (or other complex objects) after the config is fully read in.
-func (cfg *Application) build() error {
+func (cfg *Application) build(v *viper.Viper, wasHostnameSet bool) error {
 	// set the presenter
 	presenterOption := presenter.ParseOption(cfg.Output)
 	if presenterOption == presenter.UnknownPresenter {
@@ -119,9 +122,25 @@ func (cfg *Application) build() error {
 			}
 		}
 	}
+	// check if upload should be done relative to the CLI and config behavior
+	if !v.IsSet("anchore.upload-enabled") && wasHostnameSet{
+		// we know the user didn't specify to upload in the config file and a --hostname option was provided (so set upload)
+		cfg.Anchore.UploadEnabled = true
+	}
+
+	// dockerfile validation....
+
+	_, err := os.Stat(cfg.Anchore.Dockerfile)
+	if !cfg.Anchore.UploadEnabled && cfg.Anchore.Dockerfile != "" {
+		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
+	}
+	if err != nil {
+		return fmt.Errorf("unable to read: %q", cfg.Anchore.Dockerfile)
+	}
 
 	return nil
 }
+
 
 func (cfg Application) String() string {
 	// redact sensitive information
