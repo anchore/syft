@@ -1,5 +1,3 @@
-// +build integration
-
 package integration
 
 import (
@@ -21,7 +19,7 @@ func TestRegression212ApkBufferSize(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	catalog, _, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
+	_, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}

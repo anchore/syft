@@ -2,6 +2,7 @@ package cataloger
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
@@ -31,6 +32,7 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 
 				// add a new entry...
 				candidateCpe := wfn.NewAttributesWithAny()
+				candidateCpe.Part = "a"
 				candidateCpe.Product = product
 				candidateCpe.Vendor = vendor
 				candidateCpe.Version = p.Version
@@ -45,8 +47,6 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 }
 
 func candidateTargetSoftwareAttrs(p pkg.Package) []string {
-	// TODO: expand with package metadata (from type assert)
-
 	// TODO: would be great to allow these to be overridden by user data/config
 	var targetSw []string
 	switch p.Language {
@@ -68,14 +68,43 @@ func candidateTargetSoftwareAttrs(p pkg.Package) []string {
 }
 
 func candidateVendors(p pkg.Package) []string {
-	// TODO: expand with package metadata (from type assert)
-	vendors := []string{p.Name}
-	if p.Language == pkg.Python {
+	vendors := candidateProducts(p)
+	switch p.Language {
+	case pkg.Python:
 		vendors = append(vendors, fmt.Sprintf("python-%s", p.Name))
+	case pkg.Java:
+		if p.MetadataType == pkg.JavaMetadataType {
+			if metadata, ok := p.Metadata.(pkg.JavaMetadata); ok && metadata.PomProperties != nil {
+				// derive the vendor from the groupID (e.g. org.sonatype.nexus --> sonatype)
+				if strings.HasPrefix(metadata.PomProperties.GroupID, "org.") || strings.HasPrefix(metadata.PomProperties.GroupID, "com.") {
+					fields := strings.Split(metadata.PomProperties.GroupID, ".")
+					if len(fields) >= 3 {
+						vendors = append(vendors, fields[1])
+					}
+				}
+			}
+		}
 	}
 	return vendors
 }
 
 func candidateProducts(p pkg.Package) []string {
-	return []string{p.Name}
+	var products = []string{p.Name}
+	switch p.Language {
+	case pkg.Java:
+		if p.MetadataType == pkg.JavaMetadataType {
+			if metadata, ok := p.Metadata.(pkg.JavaMetadata); ok && metadata.PomProperties != nil {
+				// derive the product from the groupID (e.g. org.sonatype.nexus --> nexus)
+				if strings.HasPrefix(metadata.PomProperties.GroupID, "org.") || strings.HasPrefix(metadata.PomProperties.GroupID, "com.") {
+					fields := strings.Split(metadata.PomProperties.GroupID, ".")
+					if len(fields) >= 3 {
+						products = append(products, fields[2])
+					}
+				}
+			}
+		}
+	default:
+		return products
+	}
+	return products
 }
