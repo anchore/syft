@@ -23,29 +23,28 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 		line := scanner.Text()
 		line = strings.TrimRight(line, "\n")
 
-		// empty line indicates end of entry
+		// An empty line means we are done parsing (either because there's no more data,
+		// or because a description follows as specified in
+		// https://packaging.python.org/specifications/core-metadata/#description;
+		// and at this time, we're not interested in the description).
 		if len(line) == 0 {
-			// if the entry has not started, keep parsing lines
-			if len(fields) == 0 {
-				continue
+			if len(fields) > 0 {
+				break
 			}
-			break
+
+			// however, if the field parsing has not started yet, keep scanning lines
+			continue
 		}
 
 		switch {
 		case strings.HasPrefix(line, " "):
 			// a field-body continuation
-			if len(key) == 0 {
-				return pkg.PythonPackageMetadata{}, fmt.Errorf("no match for continuation: line: '%s'", line)
+			updatedValue, err := handleFieldBodyContinuation(key, line, fields)
+			if err != nil {
+				return pkg.PythonPackageMetadata{}, err
 			}
 
-			val, ok := fields[key]
-			if !ok {
-				return pkg.PythonPackageMetadata{}, fmt.Errorf("no previous key exists, expecting: %s", key)
-			}
-			// concatenate onto previous value
-			val = fmt.Sprintf("%s\n %s", val, strings.TrimSpace(line))
-			fields[key] = val
+			fields[key] = updatedValue
 		default:
 			// parse a new key (note, duplicate keys are overridden)
 			if i := strings.Index(line, ":"); i > 0 {
@@ -71,8 +70,23 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 
 	// add additional metadata not stored in the egg/wheel metadata file
 
-	sitePackagesRoot := filepath.Clean(filepath.Join(filepath.Dir(path), ".."))
-	metadata.SitePackagesRootPath = sitePackagesRoot
+	metadata.SitePackagesRootPath = filepath.Clean(filepath.Join(filepath.Dir(path), ".."))
 
 	return metadata, nil
+}
+
+// handleFieldBodyContinuation returns the updated value for the specified field after processing the specified line.
+// If the continuation cannot be processed, it returns an error.
+func handleFieldBodyContinuation(key, line string, fields map[string]string) (string, error) {
+	if len(key) == 0 {
+		return "", fmt.Errorf("no match for continuation: line: '%s'", line)
+	}
+
+	val, ok := fields[key]
+	if !ok {
+		return "", fmt.Errorf("no previous key exists, expecting: %s", key)
+	}
+
+	// concatenate onto previous value
+	return fmt.Sprintf("%s\n %s", val, strings.TrimSpace(line)), nil
 }
