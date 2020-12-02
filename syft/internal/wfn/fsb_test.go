@@ -46,6 +46,10 @@ func TestUnbindFmtString(t *testing.T) {
 			Expect: `wfn:[part="a",vendor="foo\\bar",product="big\$money",version="2010",update=ANY,edition=ANY,sw_edition="special",target_sw="ipod_touch",target_hw="80gb",other=ANY,language=ANY]`,
 		},
 		{
+			FSB:  `cpe:2.3:a:cisco:cisco_security_monitoring\`,
+			Fail: true,
+		},
+		{
 			FSB:  `cpe:2.3:a:disney:where\\'s_my_perry?_free:1.5.1:*:*:*:*:android:*:*`,
 			Fail: true,
 		},

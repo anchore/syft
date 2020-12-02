@@ -137,6 +137,9 @@ func addSlashesAt(s string, at int) (string, int, error) {
 		switch c {
 		case '\\':
 			i++
+			if i == len(s) {
+				return "", i, fmt.Errorf("unquoted '\\' at the end of the FSB fragment: %q", s)
+			}
 			b = append(b, c, s[i])
 			embedded = true
 		case '*':
