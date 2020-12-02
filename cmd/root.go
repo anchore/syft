@@ -3,8 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -103,6 +106,31 @@ func startWorker(userInput string) <-chan error {
 			// TODO: ETUI element for this
 			log.Infof("uploading results to %s", appConfig.Anchore.Hostname)
 
+			if src.Metadata.Scheme != source.ImageScheme {
+				errs <- fmt.Errorf("unable to upload results: only images are supported")
+				return
+			}
+
+			var dockerfileContents []byte
+			if appConfig.Anchore.Dockerfile != "" {
+				if _, err := os.Stat(appConfig.Anchore.Dockerfile); os.IsNotExist(err) {
+					errs <- fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+					return
+				}
+
+				fh, err := os.Open(appConfig.Anchore.Dockerfile)
+				if err != nil {
+					errs <- fmt.Errorf("unable to open dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+					return
+				}
+
+				dockerfileContents, err = ioutil.ReadAll(fh)
+				if err != nil {
+					errs <- fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+					return
+				}
+			}
+
 			c, err := anchore.NewClient(anchore.Configuration{
 				Hostname: appConfig.Anchore.Hostname,
 				Username: appConfig.Anchore.Username,
@@ -113,8 +141,7 @@ func startWorker(userInput string) <-chan error {
 				return
 			}
 
-			_, _, err = c.Import(context.Background(), catalog) //add dockerfile contents...
-			if err != nil {
+			if err := c.Import(context.Background(), src.Image.Metadata, catalog, dockerfileContents); err != nil {
 				errs <- fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Hostname, err)
 				return
 			}

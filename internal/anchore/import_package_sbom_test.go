@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
+
+	"github.com/docker/docker/pkg/ioutils"
 
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/syft/pkg"
@@ -84,18 +87,23 @@ func must(c pkg.CPE, e error) pkg.CPE {
 // }
 
 type mockPackageSBOMImportAPI struct {
-	sessionID    string
-	model        []external.SyftPackage
-	httpResponse *http.Response
-	err          error
-	ctx          context.Context
+	sessionID      string
+	model          []external.SyftPackage
+	httpResponse   *http.Response
+	err            error
+	ctx            context.Context
+	responseDigest string
 }
 
 func (m *mockPackageSBOMImportAPI) ImportImagePackages(ctx context.Context, sessionID string, model []external.SyftPackage) (external.ImageImportContentResponse, *http.Response, error) {
 	m.model = model
 	m.sessionID = sessionID
 	m.ctx = ctx
-	return external.ImageImportContentResponse{}, m.httpResponse, m.err
+	if m.httpResponse == nil {
+		m.httpResponse = &http.Response{}
+	}
+	m.httpResponse.Body = ioutils.NewReadCloserWrapper(strings.NewReader(""), func() error { return nil })
+	return external.ImageImportContentResponse{Digest: m.responseDigest}, m.httpResponse, m.err
 }
 
 func TestPackageSbomImport(t *testing.T) {
@@ -140,7 +148,7 @@ func TestPackageSbomImport(t *testing.T) {
 		},
 	})
 
-	theModel, err := toPackageSbomModel(catalog)
+	theModel, err := packageSbomModel(catalog)
 	if err != nil {
 		t.Fatalf("could not get sbom model: %+v", err)
 	}
@@ -153,14 +161,13 @@ func TestPackageSbomImport(t *testing.T) {
 		expectsError bool
 	}{
 
-		// go case: import works (200)
 		{
 			name: "Go case: import works",
 			api: &mockPackageSBOMImportAPI{
-				httpResponse: &http.Response{StatusCode: 200},
+				httpResponse:   &http.Response{StatusCode: 200},
+				responseDigest: "digest!",
 			},
 		},
-		// api returns an error
 		{
 			name: "API returns an error",
 			api: &mockPackageSBOMImportAPI{
@@ -168,7 +175,6 @@ func TestPackageSbomImport(t *testing.T) {
 			},
 			expectsError: true,
 		},
-		// api returns no error, but have non-200 http code
 		{
 			name: "API HTTP-level error",
 			api: &mockPackageSBOMImportAPI{
@@ -181,13 +187,17 @@ func TestPackageSbomImport(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			err = generatePackageSbomImporter(context.TODO(), test.api, sessionID, catalog)()
+			digest, err := importPackageSBOM(context.TODO(), test.api, sessionID, catalog)
 
 			// validate error handling
 			if err != nil && !test.expectsError {
 				t.Fatalf("did not expect an error, but got: %+v", err)
 			} else if err == nil && test.expectsError {
 				t.Fatalf("did expect an error, but got none")
+			}
+
+			if digest != test.api.responseDigest {
+				t.Errorf("unexpected content digest: %q != %q", digest, test.api.responseDigest)
 			}
 
 			// validating that the mock got the right parameters (api.ImportImagePackages)

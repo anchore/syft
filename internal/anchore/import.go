@@ -4,39 +4,59 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/anchore/client-go/pkg/external"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-type importer func() error
-
-func (c *Client) Import(ctx context.Context, catalog *pkg.Catalog, dockerfilepath string) (string, string, error) {
+func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, catalog *pkg.Catalog, dockerfile []byte) error {
 	authedCtx := c.newRequestContext(ctx)
-	startOperation, _, err := c.client.ImportsApi.StartImageImport(authedCtx)
+	startOperation, _, err := c.client.ImportsApi.CreateOperation(authedCtx)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to start doImport session: %w", err)
+		return fmt.Errorf("unable to start import session: %w", err)
 	}
 	sessionID := startOperation.Uuid
 
-	// do the imports...
-	var importers = []importer{
-		// another dockerfile importer...
-
-		uploadDockerfile(authedCtx, c.client.ImportsApi, sessionID, dockerfilepath),
-		generatePackageSbomImporter(authedCtx, c.client.ImportsApi, sessionID, catalog),
+	packageDigest, err := importPackageSBOM(authedCtx, c.client.ImportsApi, sessionID, catalog)
+	if err != nil {
+		return fmt.Errorf("failed to import Package SBOM: %w", err)
 	}
 
-	for _, importer := range importers {
-		// TODO: are there any useful return values that should be persisted or shown to the user?
-		if err := importer(); err != nil {
-			return "", "", err
-		}
+	manifestDigest, err := importManifest(authedCtx, c.client.ImportsApi, sessionID, imageMetadata.RawManifest)
+	if err != nil {
+		return fmt.Errorf("failed to import Manifest: %w", err)
 	}
 
-	// TODO: are there any useful return values that should be persisted or shown to the user?
-	//finalizeResponse, _, err := c.client.ImportsApi.FinalizeImageImport(authedCtx, sessionID, _TODO_)
-	//if err != nil {
-	//	return "", "", fmt.Errorf("unable to complete doImport session=%q: %w", sessionID, err)
-	//}
-	//return sessionID, finalizeResponse.Status, nil
-	return "", "", nil
+	dockerfileDigest, err := importDockerfile(authedCtx, c.client.ImportsApi, sessionID, dockerfile)
+	if err != nil {
+		return fmt.Errorf("failed to import Dockerfile: %w", err)
+	}
+
+	imageModel := addImageModel(imageMetadata, packageDigest, manifestDigest, dockerfileDigest)
+	_, _, err = c.client.ImagesApi.AddImage(authedCtx, imageModel, nil)
+	if err != nil {
+		return fmt.Errorf("unable to complete import session=%q: %w", sessionID, err)
+	}
+	return nil
+}
+
+func addImageModel(imageMetadata image.Metadata, packageDigest, manifestDigest, dockerfileDigest string) external.ImageAnalysisRequest {
+	var tags = make([]string, len(imageMetadata.Tags))
+	for i, t := range imageMetadata.Tags {
+		tags[i] = t.String()
+	}
+	return external.ImageAnalysisRequest{
+		Source: external.ImageSource{
+			Import: external.ImageImportManifest{
+				Contents: external.ImportContentDigests{
+					Packages:   packageDigest,
+					Manifest:   manifestDigest,
+					Dockerfile: dockerfileDigest,
+				},
+				Tags:         tags,
+				Digest:       imageMetadata.ManifestDigest,
+				LocalImageId: imageMetadata.ID,
+			},
+		},
+	}
 }

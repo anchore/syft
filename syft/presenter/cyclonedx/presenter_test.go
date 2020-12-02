@@ -131,7 +131,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	// testing. At that time, this line will no longer be necessary.
 	//
 	// This value is sourced from the "version" node in "./test-fixtures/snapshot/TestCycloneDxImgsPresenter.golden"
-	s.Metadata.ImageMetadata.Digest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+	s.Metadata.ImageMetadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
 
 	pres := NewPresenter(catalog, s.Metadata)
 

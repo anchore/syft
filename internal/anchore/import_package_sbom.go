@@ -14,13 +14,10 @@ type packageSBOMImportAPI interface {
 	ImportImagePackages(context.Context, string, []external.SyftPackage) (external.ImageImportContentResponse, *http.Response, error)
 }
 
-type dockerfileImportAPI interface {
-
-}
-
 // TODO: write test that ensures a 100% match of jsonPresenter.Package to external.SyftPackage with deep.Equals (should work)
 
-func toPackageSbomModel(catalog *pkg.Catalog) ([]external.SyftPackage, error) {
+func packageSbomModel(catalog *pkg.Catalog) ([]external.SyftPackage, error) {
+	// nolint:prealloc
 	var model []external.SyftPackage
 	for p := range catalog.Enumerate() {
 		// the client schema is based on the json presenter, so we should derive all values from this source
@@ -56,26 +53,22 @@ func toPackageSbomModel(catalog *pkg.Catalog) ([]external.SyftPackage, error) {
 	return model, nil
 }
 
-func uploadDockerfile(ctx context.Context, api dockerfileImportAPI, sessionID string, dockerfilepath string) error {
-	return nil
-}
-
-func generatePackageSbomImporter(ctx context.Context, api packageSBOMImportAPI, sessionID string, catalog *pkg.Catalog) func() error {
-	return func() error {
-		model, err := toPackageSbomModel(catalog)
-		if err != nil {
-			return fmt.Errorf("unable to create PackageSBOM model: %w", err)
-		}
-
-		_, httpResponse, err := api.ImportImagePackages(ctx, sessionID, model)
-		if err != nil {
-			return fmt.Errorf("unable to import PackageSBOM: %w", err)
-		}
-
-		if httpResponse.StatusCode != 200 {
-			return fmt.Errorf("unable to import PackageSBOM: %s", httpResponse.Status)
-		}
-
-		return nil
+func importPackageSBOM(ctx context.Context, api packageSBOMImportAPI, sessionID string, catalog *pkg.Catalog) (string, error) {
+	model, err := packageSbomModel(catalog)
+	if err != nil {
+		return "", fmt.Errorf("unable to create PackageSBOM model: %w", err)
 	}
+
+	response, httpResponse, err := api.ImportImagePackages(ctx, sessionID, model)
+	if err != nil {
+		return "", fmt.Errorf("unable to import PackageSBOM: %w", err)
+	}
+
+	defer httpResponse.Body.Close()
+
+	if httpResponse.StatusCode != 200 {
+		return "", fmt.Errorf("unable to import PackageSBOM: %s", httpResponse.Status)
+	}
+
+	return response.Digest, nil
 }

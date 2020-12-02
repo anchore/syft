@@ -54,8 +54,13 @@ func setGlobalCliOptions() {
 		os.Exit(1)
 	}
 
+	setGlobalFormatOptions()
+	setGlobalUploadOptions()
+}
+
+func setGlobalFormatOptions() {
 	// output & formatting options
-	flag = "output"
+	flag := "output"
 	rootCmd.Flags().StringP(
 		flag, "o", string(presenter.TablePresenter),
 		fmt.Sprintf("report output formatter, options=%v", presenter.Options),
@@ -76,13 +81,13 @@ func setGlobalCliOptions() {
 	}
 
 	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
+}
 
-	// upload options
-
+func setGlobalUploadOptions() {
 	// since -h defaults to --help, we need to set a --help that does not have a shorthand
 	rootCmd.Flags().Bool("help", false, "help for "+internal.ApplicationName)
 
-	flag = "hostname"
+	flag := "hostname"
 	rootCmd.Flags().StringP(
 		flag, "h", "",
 		"the hostname of the Anchore Engine/Enterprise instance to upload to",
@@ -112,17 +117,15 @@ func setGlobalCliOptions() {
 		os.Exit(1)
 	}
 
-	// add dockerfile support...
 	flag = "dockerfile"
 	rootCmd.Flags().StringP(
 		flag, "d", "",
 		"include dockerfile for upload to Anchore Engine/Enterprise",
-		)
+	)
 	if err := viper.BindPFlag("anchore.dockerfile", rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '#{flag}': #{err}")
 		os.Exit(1)
 	}
-
 }
 
 func initAppConfig() {
