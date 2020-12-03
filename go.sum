@@ -136,6 +136,8 @@ github.com/anchore/stereoscope v0.0.0-20201106140100-12e75c48f409 h1:xKSpDRjmYrE
 github.com/anchore/stereoscope v0.0.0-20201106140100-12e75c48f409/go.mod h1:2Jja/4l0zYggW52og+nn0rut4i+OYjCf9vTyrM8RT4E=
 github.com/anchore/stereoscope v0.0.0-20201130153727-b3f1fad856b0 h1:wa0hdnvBeCpI+rmzDbPG7k5SKlsGkot7aZ8Az1i/vws=
 github.com/anchore/stereoscope v0.0.0-20201130153727-b3f1fad856b0/go.mod h1:2Jja/4l0zYggW52og+nn0rut4i+OYjCf9vTyrM8RT4E=
+github.com/anchore/stereoscope v0.0.0-20201203153145-3f9a05a624d7 h1:G3LnRqHL/IIeQZTAMtDOJNYfSYsXLNCZX4DCiS0R0FY=
+github.com/anchore/stereoscope v0.0.0-20201203153145-3f9a05a624d7/go.mod h1:2Jja/4l0zYggW52og+nn0rut4i+OYjCf9vTyrM8RT4E=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/apex/log v1.1.4/go.mod h1:AlpoD9aScyQfJDVHmLMEcx4oU6LqzkWp4Mg9GdAcEvQ=
 github.com/apex/log v1.3.0 h1:1fyfbPvUwD10nMoh3hY6MXzvZShJQn9/ck7ATgAt5pA=
