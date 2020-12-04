@@ -69,5 +69,9 @@
  "descriptor": {
   "name": "syft",
   "version": "[not provided]"
+ },
+ "schema": {
+  "version": "1.0.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.0.0.json"
  }
 }

@@ -1,6 +1,8 @@
 package json
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
@@ -14,6 +16,7 @@ type Document struct {
 	Source     Source       `json:"source"`     // Source represents the original object that was cataloged
 	Distro     Distribution `json:"distro"`     // Distro represents the Linux distribution that was detected from the source
 	Descriptor Descriptor   `json:"descriptor"` // Descriptor is a block containing self-describing information about syft
+	Schema     Schema       `json:"schema"`     // Schema is a block reserved for defining the version for the shape of this JSON document and where to find the schema document to validate the shape
 }
 
 // NewDocument creates and populates a new JSON document struct from the given cataloging results.
@@ -30,6 +33,10 @@ func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d *distro.Di
 		Descriptor: Descriptor{
 			Name:    internal.ApplicationName,
 			Version: version.FromBuild().Version,
+		},
+		Schema: Schema{
+			Version: internal.JSONSchemaVersion,
+			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
 		},
 	}
 

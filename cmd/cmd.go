@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/anchore/stereoscope"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
@@ -84,15 +83,12 @@ func setGlobalFormatOptions() {
 }
 
 func setGlobalUploadOptions() {
-	// since -h defaults to --help, we need to set a --help that does not have a shorthand
-	rootCmd.Flags().Bool("help", false, "help for "+internal.ApplicationName)
-
-	flag := "hostname"
+	flag := "host"
 	rootCmd.Flags().StringP(
-		flag, "h", "",
+		flag, "H", "",
 		"the hostname of the Anchore Engine/Enterprise instance to upload to",
 	)
-	if err := viper.BindPFlag("anchore.hostname", rootCmd.Flags().Lookup(flag)); err != nil {
+	if err := viper.BindPFlag("anchore.host", rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
 		os.Exit(1)
 	}

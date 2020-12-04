@@ -9,7 +9,8 @@ import (
 )
 
 func parseDpkgMD5Info(reader io.Reader) []pkg.DpkgFileRecord {
-	var findings []pkg.DpkgFileRecord
+	// we must preallocate to ensure the resulting struct does not have null
+	var findings = make([]pkg.DpkgFileRecord, 0)
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {

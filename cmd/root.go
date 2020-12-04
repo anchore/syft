@@ -104,7 +104,7 @@ func startWorker(userInput string) <-chan error {
 
 		if appConfig.Anchore.UploadEnabled {
 			// TODO: ETUI element for this
-			log.Infof("uploading results to %s", appConfig.Anchore.Hostname)
+			log.Infof("uploading results to %s", appConfig.Anchore.Host)
 
 			if src.Metadata.Scheme != source.ImageScheme {
 				errs <- fmt.Errorf("unable to upload results: only images are supported")
@@ -132,7 +132,7 @@ func startWorker(userInput string) <-chan error {
 			}
 
 			c, err := anchore.NewClient(anchore.Configuration{
-				Hostname: appConfig.Anchore.Hostname,
+				Hostname: appConfig.Anchore.Host,
 				Username: appConfig.Anchore.Username,
 				Password: appConfig.Anchore.Password,
 			})
@@ -142,7 +142,7 @@ func startWorker(userInput string) <-chan error {
 			}
 
 			if err := c.Import(context.Background(), src.Image.Metadata, catalog, dockerfileContents); err != nil {
-				errs <- fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Hostname, err)
+				errs <- fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
 				return
 			}
 

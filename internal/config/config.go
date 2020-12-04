@@ -46,7 +46,7 @@ type logging struct {
 type anchore struct {
 	// upload options
 	UploadEnabled bool   `yaml:"upload-enabled"  mapstructure:"upload-enabled"` // whether to upload results to Anchore Engine/Enterprise (defaults to "false" unless there is the presence of -h CLI option)
-	Hostname      string `yaml:"hostname" mapstructure:"hostname"`              // -h , hostname of the engine/enterprise instance to upload to
+	Host          string `yaml:"host" mapstructure:"host"`                      // -H , hostname of the engine/enterprise instance to upload to
 	Path          string `yaml:"path" mapstructure:"path"`                      // override the engine/enterprise API upload path
 	Username      string `yaml:"username" mapstructure:"username"`              // -u , username to authenticate upload
 	Password      string `yaml:"password" mapstructure:"password"`              // -p , password to authenticate upload
