@@ -11,25 +11,25 @@ import (
 
 // BomDescriptor represents all metadata surrounding the BOM report (such as when the BOM was made, with which tool, and the item being cataloged).
 type BomDescriptor struct {
-	XMLName   xml.Name     `xml:"bd:metadata"`
-	Timestamp string       `xml:"bd:timestamp,omitempty"` // The date and time (timestamp) when the document was created
-	Tool      *BdTool      `xml:"bd:tool"`                // The tool used to create the BOM.
-	Component *BdComponent `xml:"bd:component"`           // The component that the BOM describes.
+	XMLName   xml.Name     `xml:"metadata"`
+	Timestamp string       `xml:"timestamp,omitempty"` // The date and time (timestamp) when the document was created
+	Tools     []BdTool     `xml:"tools>tool"`          // The tool used to create the BOM.
+	Component *BdComponent `xml:"component"`           // The component that the BOM describes.
 }
 
 // BdTool represents the tool that created the BOM report.
 type BdTool struct {
-	XMLName xml.Name `xml:"bd:tool"`
-	Vendor  string   `xml:"bd:vendor,omitempty"`  // The vendor of the tool used to create the BOM.
-	Name    string   `xml:"bd:name,omitempty"`    // The name of the tool used to create the BOM.
-	Version string   `xml:"bd:version,omitempty"` // The version of the tool used to create the BOM.
+	XMLName xml.Name `xml:"tool"`
+	Vendor  string   `xml:"vendor,omitempty"`  // The vendor of the tool used to create the BOM.
+	Name    string   `xml:"name,omitempty"`    // The name of the tool used to create the BOM.
+	Version string   `xml:"version,omitempty"` // The version of the tool used to create the BOM.
 	// TODO: hashes, author, manufacture, supplier
 	// TODO: add user-defined fields for the remaining build/version parameters
 }
 
 // BdComponent represents the software/package being cataloged.
 type BdComponent struct {
-	XMLName xml.Name `xml:"bd:component"`
+	XMLName xml.Name `xml:"component"`
 	Component
 }
 
@@ -38,10 +38,12 @@ func NewBomDescriptor(name, version string, srcMetadata source.Metadata) *BomDes
 	descriptor := BomDescriptor{
 		XMLName:   xml.Name{},
 		Timestamp: time.Now().Format(time.RFC3339),
-		Tool: &BdTool{
-			Vendor:  "anchore",
-			Name:    name,
-			Version: version,
+		Tools: []BdTool{
+			{
+				Vendor:  "anchore",
+				Name:    name,
+				Version: version,
+			},
 		},
 	}
 

@@ -16,11 +16,10 @@ import (
 type Document struct {
 	XMLName       xml.Name       `xml:"bom"`
 	XMLNs         string         `xml:"xmlns,attr"`
-	XMLNsBd       string         `xml:"xmlns:bd,attr"`
 	Version       int            `xml:"version,attr"`
 	SerialNumber  string         `xml:"serialNumber,attr"`
+	BomDescriptor *BomDescriptor `xml:"metadata"`             // The BOM descriptor extension
 	Components    []Component    `xml:"components>component"` // The BOM contents
-	BomDescriptor *BomDescriptor `xml:"bd:metadata"`          // The BOM descriptor extension
 }
 
 // NewDocumentFromCatalog returns a CycloneDX Document object populated with the catalog contents.
@@ -29,7 +28,6 @@ func NewDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) Document {
 
 	doc := Document{
 		XMLNs:         "http://cyclonedx.org/schema/bom/1.2",
-		XMLNsBd:       "http://cyclonedx.org/schema/ext/bom-descriptor/1.0",
 		Version:       1,
 		SerialNumber:  uuid.New().URN(),
 		BomDescriptor: NewBomDescriptor(internal.ApplicationName, versionInfo.Version, srcMetadata),

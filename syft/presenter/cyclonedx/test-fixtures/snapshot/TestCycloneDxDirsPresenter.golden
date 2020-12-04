@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.2" xmlns:bd="http://cyclonedx.org/schema/ext/bom-descriptor/1.0" version="1" serialNumber="urn:uuid:aa1738d1-1c6e-45e4-a530-5a04d2c2b1a7">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.2" version="1" serialNumber="urn:uuid:553b2601-a7b0-4461-bce9-fd56e2e2a4be">
+  <metadata>
+    <timestamp>2020-12-01T22:19:00-05:00</timestamp>
+    <tools>
+      <tool>
+        <vendor>anchore</vendor>
+        <name>syft</name>
+        <version>[not provided]</version>
+      </tool>
+    </tools>
+    <component type="file">
+      <name>/some/path</name>
+      <version></version>
+    </component>
+  </metadata>
   <components>
     <component type="library">
       <name>package1</name>
@@ -18,16 +32,4 @@
       </licenses>
     </component>
   </components>
-  <bd:metadata>
-    <bd:timestamp>2020-11-19T10:11:26-05:00</bd:timestamp>
-    <bd:tool>
-      <bd:vendor>anchore</bd:vendor>
-      <bd:name>syft</bd:name>
-      <bd:version>[not provided]</bd:version>
-    </bd:tool>
-    <bd:component type="file">
-      <name>/some/path</name>
-      <version></version>
-    </bd:component>
-  </bd:metadata>
 </bom>
