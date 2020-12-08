@@ -86,7 +86,7 @@ func setGlobalUploadOptions() {
 	flag := "host"
 	rootCmd.Flags().StringP(
 		flag, "H", "",
-		"the hostname of the Anchore Engine/Enterprise instance to upload to",
+		"the hostname or URL of the Anchore Engine/Enterprise instance to upload to",
 	)
 	if err := viper.BindPFlag("anchore.host", rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
@@ -126,7 +126,7 @@ func setGlobalUploadOptions() {
 
 func initAppConfig() {
 	cfgVehicle := viper.GetViper()
-	wasHostnameSet := rootCmd.Flags().Changed("hostname")
+	wasHostnameSet := rootCmd.Flags().Changed("host")
 	cfg, err := config.LoadApplicationConfig(cfgVehicle, cliOpts, wasHostnameSet)
 	if err != nil {
 		fmt.Printf("failed to load application config: \n\t%+v\n", err)

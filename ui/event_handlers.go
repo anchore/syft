@@ -307,3 +307,46 @@ func CatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybu
 
 	return nil
 }
+
+// ImportStartedHandler shows the intermittent upload progress to Anchore Enterprise.
+func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	_, prog, err := syftEventParsers.ParseImportStarted(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+	wg.Add(1)
+
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, interval)
+	title := tileFormat.Sprint("Uploading image")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
+		}
+	}
+
+	go func() {
+		defer wg.Done()
+
+		formatFn(progress.Progress{})
+		for p := range stream {
+			formatFn(p)
+		}
+
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("Uploaded image")
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+	}()
+	return err
+}

@@ -7,6 +7,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anchore/syft/syft/distro"
+
+	"github.com/anchore/syft/syft/pkg"
+
 	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/internal"
@@ -103,50 +107,10 @@ func startWorker(userInput string) <-chan error {
 		}
 
 		if appConfig.Anchore.UploadEnabled {
-			// TODO: ETUI element for this
-			log.Infof("uploading results to %s", appConfig.Anchore.Host)
-
-			if src.Metadata.Scheme != source.ImageScheme {
-				errs <- fmt.Errorf("unable to upload results: only images are supported")
+			if err := doImport(src, src.Metadata, catalog, distro); err != nil {
+				errs <- err
 				return
 			}
-
-			var dockerfileContents []byte
-			if appConfig.Anchore.Dockerfile != "" {
-				if _, err := os.Stat(appConfig.Anchore.Dockerfile); os.IsNotExist(err) {
-					errs <- fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
-					return
-				}
-
-				fh, err := os.Open(appConfig.Anchore.Dockerfile)
-				if err != nil {
-					errs <- fmt.Errorf("unable to open dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
-					return
-				}
-
-				dockerfileContents, err = ioutil.ReadAll(fh)
-				if err != nil {
-					errs <- fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
-					return
-				}
-			}
-
-			c, err := anchore.NewClient(anchore.Configuration{
-				Hostname: appConfig.Anchore.Host,
-				Username: appConfig.Anchore.Username,
-				Password: appConfig.Anchore.Password,
-			})
-			if err != nil {
-				errs <- fmt.Errorf("failed to create anchore client: %+v", err)
-				return
-			}
-
-			if err := c.Import(context.Background(), src.Image.Metadata, catalog, dockerfileContents); err != nil {
-				errs <- fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
-				return
-			}
-
-			// TODO: show status / session ID?
 		}
 
 		bus.Publish(partybus.Event{
@@ -155,6 +119,55 @@ func startWorker(userInput string) <-chan error {
 		})
 	}()
 	return errs
+}
+
+func doImport(src source.Source, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro) error {
+	// TODO: ETUI element for this
+	log.Infof("uploading results to %s", appConfig.Anchore.Host)
+
+	if src.Metadata.Scheme != source.ImageScheme {
+		return fmt.Errorf("unable to upload results: only images are supported")
+	}
+
+	var dockerfileContents []byte
+	if appConfig.Anchore.Dockerfile != "" {
+		if _, err := os.Stat(appConfig.Anchore.Dockerfile); os.IsNotExist(err) {
+			return fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+		}
+
+		fh, err := os.Open(appConfig.Anchore.Dockerfile)
+		if err != nil {
+			return fmt.Errorf("unable to open dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+		}
+
+		dockerfileContents, err = ioutil.ReadAll(fh)
+		if err != nil {
+			return fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+		}
+	}
+
+	var scheme string
+	var hostname = appConfig.Anchore.Host
+	urlFields := strings.Split(hostname, "://")
+	if len(urlFields) > 1 {
+		scheme = urlFields[0]
+		hostname = urlFields[1]
+	}
+
+	c, err := anchore.NewClient(anchore.Configuration{
+		Hostname: hostname,
+		Username: appConfig.Anchore.Username,
+		Password: appConfig.Anchore.Password,
+		Scheme:   scheme,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create anchore client: %+v", err)
+	}
+
+	if err := c.Import(context.Background(), src.Image.Metadata, s, catalog, d, dockerfileContents); err != nil {
+		return fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
+	}
+	return nil
 }
 
 func doRunCmd(_ *cobra.Command, args []string) error {

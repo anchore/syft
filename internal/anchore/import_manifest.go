@@ -2,20 +2,31 @@ package anchore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/client-go/pkg/external"
+	"github.com/anchore/syft/internal/log"
 )
 
 type manifestImportAPI interface {
 	ImportImageManifest(ctx context.Context, sessionID string, contents string) (external.ImageImportContentResponse, *http.Response, error)
 }
 
-func importManifest(ctx context.Context, api manifestImportAPI, sessionID string, manifest []byte) (string, error) {
+func importManifest(ctx context.Context, api manifestImportAPI, sessionID string, manifest []byte, stage *progress.Stage) (string, error) {
 	if len(manifest) > 0 {
+		log.Debug("importing manifest")
+		stage.Current = "image manifest"
+
 		response, httpResponse, err := api.ImportImageManifest(ctx, sessionID, string(manifest))
 		if err != nil {
+			var openApiErr external.GenericOpenAPIError
+			if errors.As(err, &openApiErr) {
+				log.Errorf("api response: %+v", string(openApiErr.Body()))
+			}
 			return "", fmt.Errorf("unable to import Manifest: %w", err)
 		}
 

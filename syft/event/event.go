@@ -15,4 +15,7 @@ const (
 
 	// CatalogerFinished is a partybus event that occurs when the package cataloging has completed
 	CatalogerFinished partybus.EventType = "syft-cataloger-finished-event"
+
+	// ImportStarted is a partybus event that occurs when an SBOM upload process has begun
+	ImportStarted partybus.EventType = "syft-import-started-event"
 )

@@ -6,6 +6,8 @@ package parsers
 import (
 	"fmt"
 
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/syft/syft/cataloger"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/presenter"
@@ -74,4 +76,22 @@ func ParseAppUpdateAvailable(e partybus.Event) (string, error) {
 	}
 
 	return newVersion, nil
+}
+
+func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, error) {
+	if err := checkEventType(e.Type, event.ImportStarted); err != nil {
+		return "", nil, err
+	}
+
+	imgName, ok := e.Source.(string)
+	if !ok {
+		return "", nil, newPayloadErr(e.Type, "Source", e.Source)
+	}
+
+	prog, ok := e.Value.(progress.StagedProgressable)
+	if !ok {
+		return "", nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return imgName, prog, nil
 }

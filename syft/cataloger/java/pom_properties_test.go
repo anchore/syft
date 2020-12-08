@@ -2,10 +2,11 @@ package java
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
 	"os"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/go-test/deep"
 )
 
 func TestParseJavaPomProperties(t *testing.T) {
@@ -20,6 +21,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
+				Extra:      map[string]string{},
 			},
 		},
 		{

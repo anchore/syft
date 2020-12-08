@@ -41,3 +41,5 @@ require (
 )
 
 replace github.com/anchore/client-go => ../client-go
+
+replace github.com/anchore/stereoscope => ../stereoscope

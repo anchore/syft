@@ -1,11 +1,17 @@
 package anchore
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
+
+	jsonPresenter "github.com/anchore/syft/syft/presenter/json"
+
+	"github.com/anchore/syft/syft/distro"
 
 	"github.com/docker/docker/pkg/ioutils"
 
@@ -22,80 +28,97 @@ func must(c pkg.CPE, e error) pkg.CPE {
 	return c
 }
 
-// func TestPackageSbomToModel(t *testing.T) {
-// 	tests := []struct {
-// 		name string
-// 		p    pkg.Package
-// 	}{
-// 		{
-// 			p: pkg.Package{
-// 				Name:    "name",
-// 				Version: "version",
-// 				FoundBy: "foundBy",
-// 				Locations: []source.Location{
-// 					{
-// 						Path:         "path",
-// 						FileSystemID: "layerID",
-// 					},
-// 				},
-// 				Licenses: []string{"license"},
-// 				Language: pkg.Python,
-// 				Type:     pkg.PythonPkg,
-// 				CPEs: []pkg.CPE{
-// 					must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
-// 				},
-// 				PURL:         "purl",
-// 				MetadataType: pkg.PythonPackageMetadataType,
-// 				Metadata: pkg.PythonPackageMetadata{
-// 					Name:        "p-name",
-// 					Version:     "p-version",
-// 					License:     "p-license",
-// 					Author:      "p-author",
-// 					AuthorEmail: "p-email",
-// 					Platform:    "p-platform",
-// 					Files: []pkg.PythonFileRecord{
-// 						{
-// 							Path: "p-path",
-// 							Digest: &pkg.PythonFileDigest{
-// 								Algorithm: "p-alg",
-// 								Value:     "p-digest",
-// 							},
-// 							Size: "p-size",
-// 						},
-// 					},
-// 					SitePackagesRootPath: "p-site-packages-root",
-// 					TopLevelPackages:     []string{"top-level"},
-// 				},
-// 			},
-// 		},
-// 	}
+// this test is tailored towards the assumption that the import doc shape and the syft json shape are the same.
+// TODO: replace this as the document shapes diverge.
+func TestPackageSbomToModel(t *testing.T) {
 
-// 	for _, test := range tests {
-// 		t.Run(test.name, func(t *testing.T) {
-// 			importer := newPackageSBOMImporter(pkg.NewCatalog(test.p))
-// 			model, err := importer.model()
-// 			if err != nil {
-// 				t.Fatalf("unable to generate model from source material: %+v", err)
-// 			}
+	m := source.Metadata{
+		Scheme: source.ImageScheme,
+		ImageMetadata: source.ImageMetadata{
+			UserInput: "user-in",
+			Scope:     "scope!",
+			Layers: []source.LayerMetadata{
+				{
+					MediaType: "layer-metadata-type!",
+					Digest:    "layer-digest",
+					Size:      20,
+				},
+			},
+			Size:           10,
+			ManifestDigest: "sha256:digest!",
+			MediaType:      "mediatype!",
+			Tags:           nil,
+		},
+	}
 
-// 			//fmt.Println(reflect.DeepEqual(model, test.p))
-// 			//t.Errorf("sure")
+	d, _ := distro.NewDistro(distro.CentOS, "8.0", "")
 
-// 		})
-// 	}
+	p := pkg.Package{
+		Name:    "name",
+		Version: "version",
+		FoundBy: "foundBy",
+		Locations: []source.Location{
+			{
+				Path:         "path",
+				FileSystemID: "layerID",
+			},
+		},
+		Licenses: []string{"license"},
+		Language: pkg.Python,
+		Type:     pkg.PythonPkg,
+		CPEs: []pkg.CPE{
+			must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
+		},
+		PURL: "purl",
+	}
 
-// }
+	c := pkg.NewCatalog(p)
+
+	model, err := packageSbomModel(m, c, &d)
+	if err != nil {
+		t.Fatalf("unable to generate model from source material: %+v", err)
+	}
+
+	var modelJSON []byte
+
+	modelJSON, err = json.Marshal(&model)
+	if err != nil {
+		t.Fatalf("unable to marshal model: %+v", err)
+	}
+
+	var buf bytes.Buffer
+	pres := jsonPresenter.NewPresenter(c, m, &d)
+	if err := pres.Present(&buf); err != nil {
+		t.Fatalf("unable to get expected json: %+v", err)
+	}
+
+	// unmarshal expected result
+	var expectedDoc jsonPresenter.Document
+	if err := json.Unmarshal(buf.Bytes(), &expectedDoc); err != nil {
+		t.Fatalf("unable to parse json doc: %+v", err)
+	}
+
+	// unmarshal actual result
+	var actualDoc jsonPresenter.Document
+	if err := json.Unmarshal(modelJSON, &actualDoc); err != nil {
+		t.Fatalf("unable to parse json doc: %+v", err)
+	}
+
+	for _, d := range deep.Equal(actualDoc, expectedDoc) {
+		t.Errorf("diff: %+v", d)
+	}
+}
 
 type mockPackageSBOMImportAPI struct {
 	sessionID      string
-	model          []external.SyftPackage
+	model          external.ImagePackageManifest
 	httpResponse   *http.Response
 	err            error
 	ctx            context.Context
 	responseDigest string
 }
 
-func (m *mockPackageSBOMImportAPI) ImportImagePackages(ctx context.Context, sessionID string, model []external.SyftPackage) (external.ImageImportContentResponse, *http.Response, error) {
+func (m *mockPackageSBOMImportAPI) ImportImagePackages(ctx context.Context, sessionID string, model external.ImagePackageManifest) (external.ImageImportContentResponse, *http.Response, error) {
 	m.model = model
 	m.sessionID = sessionID
 	m.ctx = ctx
@@ -148,7 +171,22 @@ func TestPackageSbomImport(t *testing.T) {
 		},
 	})
 
-	theModel, err := packageSbomModel(catalog)
+	m := source.Metadata{
+		Scheme: "a-schema",
+		ImageMetadata: source.ImageMetadata{
+			UserInput:      "user-in",
+			Scope:          "scope!",
+			Layers:         nil,
+			Size:           10,
+			ManifestDigest: "sha256:digest!",
+			MediaType:      "mediatype!",
+			Tags:           nil,
+		},
+	}
+
+	d, _ := distro.NewDistro(distro.CentOS, "8.0", "")
+
+	theModel, err := packageSbomModel(m, catalog, &d)
 	if err != nil {
 		t.Fatalf("could not get sbom model: %+v", err)
 	}
@@ -187,7 +225,7 @@ func TestPackageSbomImport(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			digest, err := importPackageSBOM(context.TODO(), test.api, sessionID, catalog)
+			digest, err := importPackageSBOM(context.TODO(), test.api, sessionID, m, catalog, &d)
 
 			// validate error handling
 			if err != nil && !test.expectsError {
@@ -205,7 +243,7 @@ func TestPackageSbomImport(t *testing.T) {
 				t.Errorf("different session ID: %s != %s", test.api.sessionID, sessionID)
 			}
 
-			for _, d := range deep.Equal(test.api.model, theModel) {
+			for _, d := range deep.Equal(&test.api.model, theModel) {
 				t.Errorf("model difference: %s", d)
 			}
 
