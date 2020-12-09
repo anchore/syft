@@ -6,12 +6,15 @@ import "github.com/anchore/stereoscope/pkg/image"
 // "what" was cataloged without needing the more complicated stereoscope Image objects or Resolver objects.
 type ImageMetadata struct {
 	UserInput      string          `json:"userInput"`
-	Scope          Scope           `json:"scope"` // specific perspective to catalog
-	Layers         []LayerMetadata `json:"layers"`
-	Size           int64           `json:"size"`
-	ManifestDigest string          `json:"digest"`
+	ID             string          `json:"imageID"`
+	ManifestDigest string          `json:"manifestDigest"`
 	MediaType      string          `json:"mediaType"`
 	Tags           []string        `json:"tags"`
+	Size           int64           `json:"imageSize"`
+	Scope          Scope           `json:"scope"` // specific perspective to catalog
+	Layers         []LayerMetadata `json:"layers"`
+	RawManifest    []byte          `json:"manifest"`
+	RawConfig      []byte          `json:"config"`
 }
 
 // LayerMetadata represents all static metadata that defines what a container image layer is.
@@ -29,6 +32,7 @@ func NewImageMetadata(img *image.Image, userInput string, scope Scope) ImageMeta
 		tags[idx] = tag.String()
 	}
 	theImg := ImageMetadata{
+		ID:             img.Metadata.ID,
 		UserInput:      userInput,
 		Scope:          scope,
 		ManifestDigest: img.Metadata.ManifestDigest,
@@ -36,6 +40,8 @@ func NewImageMetadata(img *image.Image, userInput string, scope Scope) ImageMeta
 		MediaType:      string(img.Metadata.MediaType),
 		Tags:           tags,
 		Layers:         make([]LayerMetadata, len(img.Layers)),
+		RawConfig:      img.Metadata.RawConfig,
+		RawManifest:    img.Metadata.RawManifest,
 	}
 
 	// populate image metadata

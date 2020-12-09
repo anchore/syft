@@ -20,7 +20,7 @@ func importProgress(source string) (*progress.Stage, *progress.Manual) {
 	stage := &progress.Stage{}
 	prog := &progress.Manual{
 		// this is the number of stages to expect; start + individual endpoints + stop
-		Total: 5,
+		Total: 6,
 	}
 	bus.Publish(partybus.Event{
 		Type:   event.ImportStarted,
@@ -67,6 +67,12 @@ func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, s sou
 	}
 	prog.N++
 
+	configDigest, err := importConfig(authedCtx, c.client.ImportsApi, sessionID, imageMetadata.RawConfig, stage)
+	if err != nil {
+		return fmt.Errorf("failed to import Config: %w", err)
+	}
+	prog.N++
+
 	dockerfileDigest, err := importDockerfile(authedCtx, c.client.ImportsApi, sessionID, dockerfile, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Dockerfile: %w", err)
@@ -74,7 +80,7 @@ func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, s sou
 	prog.N++
 
 	stage.Current = "finalizing"
-	imageModel := addImageModel(imageMetadata, packageDigest, manifestDigest, dockerfileDigest, sessionID)
+	imageModel := addImageModel(imageMetadata, packageDigest, manifestDigest, dockerfileDigest, configDigest, sessionID)
 	_, _, err = c.client.ImagesApi.AddImage(authedCtx, imageModel, nil)
 	if err != nil {
 		var detail = "no details given"
@@ -92,7 +98,7 @@ func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, s sou
 	return nil
 }
 
-func addImageModel(imageMetadata image.Metadata, packageDigest, manifestDigest, dockerfileDigest, sessionID string) external.ImageAnalysisRequest {
+func addImageModel(imageMetadata image.Metadata, packageDigest, manifestDigest, dockerfileDigest, configDigest, sessionID string) external.ImageAnalysisRequest {
 	var tags = make([]string, len(imageMetadata.Tags))
 	for i, t := range imageMetadata.Tags {
 		tags[i] = t.String()
@@ -102,9 +108,10 @@ func addImageModel(imageMetadata image.Metadata, packageDigest, manifestDigest, 
 		Source: external.ImageSource{
 			Import: &external.ImageImportManifest{
 				Contents: external.ImportContentDigests{
-					Packages:   packageDigest,
-					Manifest:   manifestDigest,
-					Dockerfile: dockerfileDigest,
+					Packages:    packageDigest,
+					Manifest:    manifestDigest,
+					Dockerfile:  dockerfileDigest,
+					ImageConfig: configDigest,
 				},
 				Tags:          tags,
 				Digest:        imageMetadata.ManifestDigest,

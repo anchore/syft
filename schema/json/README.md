@@ -36,4 +36,4 @@ Create the new schema by running `cd schema/json && go run generate.go` (note yo
 - If there is an existing schema for the given version and the new schema matches the existing schema, no action is taken
 - If there is an existing schema for the given version and the new schema **does not** match the existing schema, an error is shown indicating to increment the version appropriately (see the "Versioning" section)
 
-***Note: never delete a JSON schema and never change an existing JSON schema!*** Only add new schemas with a newly incremented version. All previous schema files must be stored in the `schema/json/` directory.
+***Note: never delete a JSON schema and never change an existing JSON schema once it has been published in a release!*** Only add new schemas with a newly incremented version. All previous schema files must be stored in the `schema/json/` directory.

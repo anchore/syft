@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/go-test/deep"
@@ -84,7 +86,7 @@ func TestManifestImport(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			digest, err := importManifest(context.TODO(), test.api, sessionID, []byte(test.manifest))
+			digest, err := importManifest(context.TODO(), test.api, sessionID, []byte(test.manifest), &progress.Stage{})
 
 			// validate error handling
 			if err != nil && !test.expectsError {

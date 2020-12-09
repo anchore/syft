@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wagoodman/go-progress"
+
 	jsonPresenter "github.com/anchore/syft/syft/presenter/json"
 
 	"github.com/anchore/syft/syft/distro"
@@ -225,7 +227,7 @@ func TestPackageSbomImport(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			digest, err := importPackageSBOM(context.TODO(), test.api, sessionID, m, catalog, &d)
+			digest, err := importPackageSBOM(context.TODO(), test.api, sessionID, m, catalog, &d, &progress.Stage{})
 
 			// validate error handling
 			if err != nil && !test.expectsError {

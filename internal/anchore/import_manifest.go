@@ -18,7 +18,7 @@ type manifestImportAPI interface {
 
 func importManifest(ctx context.Context, api manifestImportAPI, sessionID string, manifest []byte, stage *progress.Stage) (string, error) {
 	if len(manifest) > 0 {
-		log.Debug("importing manifest")
+		log.Debug("importing image manifest")
 		stage.Current = "image manifest"
 
 		response, httpResponse, err := api.ImportImageManifest(ctx, sessionID, string(manifest))

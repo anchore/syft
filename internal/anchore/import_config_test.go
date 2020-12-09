@@ -9,13 +9,12 @@ import (
 
 	"github.com/wagoodman/go-progress"
 
-	"github.com/docker/docker/pkg/ioutils"
-
 	"github.com/anchore/client-go/pkg/external"
+	"github.com/docker/docker/pkg/ioutils"
 	"github.com/go-test/deep"
 )
 
-type mockDockerfileImportAPI struct {
+type mockConfigImportAPI struct {
 	sessionID      string
 	model          string
 	httpResponse   *http.Response
@@ -25,7 +24,7 @@ type mockDockerfileImportAPI struct {
 	wasCalled      bool
 }
 
-func (m *mockDockerfileImportAPI) ImportImageDockerfile(ctx context.Context, sessionID string, contents string) (external.ImageImportContentResponse, *http.Response, error) {
+func (m *mockConfigImportAPI) ImportImageConfig(ctx context.Context, sessionID string, contents string) (external.ImageImportContentResponse, *http.Response, error) {
 	m.wasCalled = true
 	m.model = contents
 	m.sessionID = sessionID
@@ -37,22 +36,22 @@ func (m *mockDockerfileImportAPI) ImportImageDockerfile(ctx context.Context, ses
 	return external.ImageImportContentResponse{Digest: m.responseDigest}, m.httpResponse, m.err
 }
 
-func TestDockerfileImport(t *testing.T) {
+func TestConfigImport(t *testing.T) {
 
 	sessionID := "my-session"
 
 	tests := []struct {
 		name         string
-		dockerfile   string
-		api          *mockDockerfileImportAPI
+		manifest     string
+		api          *mockConfigImportAPI
 		expectsError bool
 		expectsCall  bool
 	}{
 
 		{
-			name:       "Go case: import works",
-			dockerfile: "the-manifest-contents!",
-			api: &mockDockerfileImportAPI{
+			name:     "Go case: import works",
+			manifest: "the-manifest-contents!",
+			api: &mockConfigImportAPI{
 				httpResponse:   &http.Response{StatusCode: 200},
 				responseDigest: "digest!",
 			},
@@ -60,23 +59,23 @@ func TestDockerfileImport(t *testing.T) {
 		},
 		{
 			name:        "No manifest provided",
-			dockerfile:  "",
-			api:         &mockDockerfileImportAPI{},
+			manifest:    "",
+			api:         &mockConfigImportAPI{},
 			expectsCall: false,
 		},
 		{
-			name:       "API returns an error",
-			dockerfile: "the-manifest-contents!",
-			api: &mockDockerfileImportAPI{
+			name:     "API returns an error",
+			manifest: "the-manifest-contents!",
+			api: &mockConfigImportAPI{
 				err: fmt.Errorf("api error, something went wrong"),
 			},
 			expectsError: true,
 			expectsCall:  true,
 		},
 		{
-			name:       "API HTTP-level error",
-			dockerfile: "the-manifest-contents!",
-			api: &mockDockerfileImportAPI{
+			name:     "API HTTP-level error",
+			manifest: "the-manifest-contents!",
+			api: &mockConfigImportAPI{
 				httpResponse: &http.Response{StatusCode: 404},
 			},
 			expectsError: true,
@@ -87,7 +86,7 @@ func TestDockerfileImport(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			digest, err := importDockerfile(context.TODO(), test.api, sessionID, []byte(test.dockerfile), &progress.Stage{})
+			digest, err := importConfig(context.TODO(), test.api, sessionID, []byte(test.manifest), &progress.Stage{})
 
 			// validate error handling
 			if err != nil && !test.expectsError {
@@ -115,7 +114,7 @@ func TestDockerfileImport(t *testing.T) {
 				t.Errorf("different session ID: %s != %s", test.api.sessionID, sessionID)
 			}
 
-			for _, d := range deep.Equal(test.api.model, test.dockerfile) {
+			for _, d := range deep.Equal(test.api.model, test.manifest) {
 				t.Errorf("model difference: %s", d)
 			}
 
