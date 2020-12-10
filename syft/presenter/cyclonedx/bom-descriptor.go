@@ -53,7 +53,7 @@ func NewBomDescriptor(name, version string, srcMetadata source.Metadata) *BomDes
 			Component: Component{
 				Type:    "container",
 				Name:    srcMetadata.ImageMetadata.UserInput,
-				Version: srcMetadata.ImageMetadata.Digest,
+				Version: srcMetadata.ImageMetadata.ManifestDigest,
 			},
 		}
 	case source.DirectoryScheme:

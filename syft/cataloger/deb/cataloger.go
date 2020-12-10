@@ -33,6 +33,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
+// nolint:funlen
 func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 	dbFileMatches, err := resolver.FilesByGlob(dpkgStatusGlob)
 	if err != nil {
@@ -66,17 +67,23 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 			p.FoundBy = c.Name()
 			p.Locations = []source.Location{dbLocation}
 
+			metadata := p.Metadata.(pkg.DpkgMetadata)
+
 			if md5Reader, ok := md5ContentsByName[md5Key(*p)]; ok {
 				// attach the file list
-				metadata := p.Metadata.(pkg.DpkgMetadata)
 				metadata.Files = parseDpkgMD5Info(md5Reader)
-				p.Metadata = metadata
 
 				// keep a record of the file where this was discovered
 				if ref, ok := md5RefsByName[md5Key(*p)]; ok {
 					p.Locations = append(p.Locations, ref)
 				}
+			} else {
+				// ensure the file list is an empty collection (not nil)
+				metadata.Files = make([]pkg.DpkgFileRecord, 0)
 			}
+
+			// persist alterations
+			p.Metadata = metadata
 
 			copyrightReader, ok := copyrightContentsByName[p.Name]
 			if ok {

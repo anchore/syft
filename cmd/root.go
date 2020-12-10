@@ -3,10 +3,18 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/anchore/syft/syft/distro"
+
+	"github.com/anchore/syft/syft/pkg"
+
+	"github.com/anchore/syft/syft/source"
+
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
@@ -23,7 +31,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   fmt.Sprintf("%s [SOURCE]", internal.ApplicationName),
-	Short: "A tool for generating a Software Bill Of Materials (SBOM) from container images and filesystems",
+	Short: "A tool for generating a Software Bill Of Materials (PackageSBOM) from container images and filesystems",
 	Long: internal.Tprintf(`
 Supports the following image sources:
     {{.appName}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon
@@ -98,12 +106,68 @@ func startWorker(userInput string) <-chan error {
 			return
 		}
 
+		if appConfig.Anchore.UploadEnabled {
+			if err := doImport(src, src.Metadata, catalog, distro); err != nil {
+				errs <- err
+				return
+			}
+		}
+
 		bus.Publish(partybus.Event{
 			Type:  event.CatalogerFinished,
 			Value: presenter.GetPresenter(appConfig.PresenterOpt, src.Metadata, catalog, distro),
 		})
 	}()
 	return errs
+}
+
+func doImport(src source.Source, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro) error {
+	// TODO: ETUI element for this
+	log.Infof("uploading results to %s", appConfig.Anchore.Host)
+
+	if src.Metadata.Scheme != source.ImageScheme {
+		return fmt.Errorf("unable to upload results: only images are supported")
+	}
+
+	var dockerfileContents []byte
+	if appConfig.Anchore.Dockerfile != "" {
+		if _, err := os.Stat(appConfig.Anchore.Dockerfile); os.IsNotExist(err) {
+			return fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+		}
+
+		fh, err := os.Open(appConfig.Anchore.Dockerfile)
+		if err != nil {
+			return fmt.Errorf("unable to open dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+		}
+
+		dockerfileContents, err = ioutil.ReadAll(fh)
+		if err != nil {
+			return fmt.Errorf("unable to read dockerfile=%q: %w", appConfig.Anchore.Dockerfile, err)
+		}
+	}
+
+	var scheme string
+	var hostname = appConfig.Anchore.Host
+	urlFields := strings.Split(hostname, "://")
+	if len(urlFields) > 1 {
+		scheme = urlFields[0]
+		hostname = urlFields[1]
+	}
+
+	c, err := anchore.NewClient(anchore.Configuration{
+		Hostname: hostname,
+		Username: appConfig.Anchore.Username,
+		Password: appConfig.Anchore.Password,
+		Scheme:   scheme,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create anchore client: %+v", err)
+	}
+
+	if err := c.Import(context.Background(), src.Image.Metadata, s, catalog, d, dockerfileContents); err != nil {
+		return fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
+	}
+	return nil
 }
 
 func doRunCmd(_ *cobra.Command, args []string) error {

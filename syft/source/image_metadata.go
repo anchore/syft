@@ -5,13 +5,16 @@ import "github.com/anchore/stereoscope/pkg/image"
 // ImageMetadata represents all static metadata that defines what a container image is. This is useful to later describe
 // "what" was cataloged without needing the more complicated stereoscope Image objects or Resolver objects.
 type ImageMetadata struct {
-	UserInput string          `json:"userInput"`
-	Scope     Scope           `json:"scope"` // specific perspective to catalog
-	Layers    []LayerMetadata `json:"layers"`
-	Size      int64           `json:"size"`
-	Digest    string          `json:"digest"`
-	MediaType string          `json:"mediaType"`
-	Tags      []string        `json:"tags"`
+	UserInput      string          `json:"userInput"`
+	ID             string          `json:"imageID"`
+	ManifestDigest string          `json:"manifestDigest"`
+	MediaType      string          `json:"mediaType"`
+	Tags           []string        `json:"tags"`
+	Size           int64           `json:"imageSize"`
+	Scope          Scope           `json:"scope"` // specific perspective to catalog
+	Layers         []LayerMetadata `json:"layers"`
+	RawManifest    []byte          `json:"manifest"`
+	RawConfig      []byte          `json:"config"`
 }
 
 // LayerMetadata represents all static metadata that defines what a container image layer is.
@@ -29,13 +32,16 @@ func NewImageMetadata(img *image.Image, userInput string, scope Scope) ImageMeta
 		tags[idx] = tag.String()
 	}
 	theImg := ImageMetadata{
-		UserInput: userInput,
-		Scope:     scope,
-		Digest:    img.Metadata.Digest,
-		Size:      img.Metadata.Size,
-		MediaType: string(img.Metadata.MediaType),
-		Tags:      tags,
-		Layers:    make([]LayerMetadata, len(img.Layers)),
+		ID:             img.Metadata.ID,
+		UserInput:      userInput,
+		Scope:          scope,
+		ManifestDigest: img.Metadata.ManifestDigest,
+		Size:           img.Metadata.Size,
+		MediaType:      string(img.Metadata.MediaType),
+		Tags:           tags,
+		Layers:         make([]LayerMetadata, len(img.Layers)),
+		RawConfig:      img.Metadata.RawConfig,
+		RawManifest:    img.Metadata.RawManifest,
 	}
 
 	// populate image metadata

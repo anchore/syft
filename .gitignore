@@ -3,6 +3,7 @@ CHANGELOG.md
 /snapshot
 .server/
 .vscode/
+.history/
 *.fingerprint
 *.tar
 *.jar

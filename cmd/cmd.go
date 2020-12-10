@@ -4,21 +4,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gookit/color"
-
-	"github.com/spf13/cobra"
-
-	"github.com/anchore/syft/syft/presenter"
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/presenter"
+	"github.com/anchore/syft/syft/source"
+	"github.com/gookit/color"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
-	"gopkg.in/yaml.v2"
 )
 
 var appConfig *config.Application
@@ -57,8 +53,13 @@ func setGlobalCliOptions() {
 		os.Exit(1)
 	}
 
+	setGlobalFormatOptions()
+	setGlobalUploadOptions()
+}
+
+func setGlobalFormatOptions() {
 	// output & formatting options
-	flag = "output"
+	flag := "output"
 	rootCmd.Flags().StringP(
 		flag, "o", string(presenter.TablePresenter),
 		fmt.Sprintf("report output formatter, options=%v", presenter.Options),
@@ -81,12 +82,57 @@ func setGlobalCliOptions() {
 	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
 }
 
+func setGlobalUploadOptions() {
+	flag := "host"
+	rootCmd.Flags().StringP(
+		flag, "H", "",
+		"the hostname or URL of the Anchore Engine/Enterprise instance to upload to",
+	)
+	if err := viper.BindPFlag("anchore.host", rootCmd.Flags().Lookup(flag)); err != nil {
+		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
+		os.Exit(1)
+	}
+
+	flag = "username"
+	rootCmd.Flags().StringP(
+		flag, "u", "",
+		"the username to authenticate against Anchore Engine/Enterprise",
+	)
+	if err := viper.BindPFlag("anchore.username", rootCmd.Flags().Lookup(flag)); err != nil {
+		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
+		os.Exit(1)
+	}
+
+	flag = "password"
+	rootCmd.Flags().StringP(
+		flag, "p", "",
+		"the password to authenticate against Anchore Engine/Enterprise",
+	)
+	if err := viper.BindPFlag("anchore.password", rootCmd.Flags().Lookup(flag)); err != nil {
+		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
+		os.Exit(1)
+	}
+
+	flag = "dockerfile"
+	rootCmd.Flags().StringP(
+		flag, "d", "",
+		"include dockerfile for upload to Anchore Engine/Enterprise",
+	)
+	if err := viper.BindPFlag("anchore.dockerfile", rootCmd.Flags().Lookup(flag)); err != nil {
+		fmt.Printf("unable to bind flag '#{flag}': #{err}")
+		os.Exit(1)
+	}
+}
+
 func initAppConfig() {
-	cfg, err := config.LoadConfigFromFile(viper.GetViper(), &cliOpts)
+	cfgVehicle := viper.GetViper()
+	wasHostnameSet := rootCmd.Flags().Changed("host")
+	cfg, err := config.LoadApplicationConfig(cfgVehicle, cliOpts, wasHostnameSet)
 	if err != nil {
 		fmt.Printf("failed to load application config: \n\t%+v\n", err)
 		os.Exit(1)
 	}
+
 	appConfig = cfg
 }
 
@@ -107,13 +153,7 @@ func initLogging() {
 }
 
 func logAppConfig() {
-	appCfgStr, err := yaml.Marshal(&appConfig)
-
-	if err != nil {
-		log.Debugf("Could not display application config: %+v", err)
-	} else {
-		log.Debugf("Application config:\n%+v", color.Magenta.Sprint(string(appCfgStr)))
-	}
+	log.Debugf("Application config:\n%+v", color.Magenta.Sprint(appConfig.String()))
 }
 
 func initEventBus() {

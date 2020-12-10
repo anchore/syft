@@ -9,11 +9,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anchore/syft/internal"
+
+	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/presenter"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/presenter"
 	"github.com/anchore/syft/syft/source"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -34,7 +36,7 @@ func repoRoot(t *testing.T) string {
 }
 
 func validateAgainstV1Schema(t *testing.T, json string) {
-	fullSchemaPath := path.Join(repoRoot(t), jsonSchemaPath, "schema.json")
+	fullSchemaPath := path.Join(repoRoot(t), jsonSchemaPath, fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
 	documentLoader := gojsonschema.NewStringLoader(json)
 
@@ -45,32 +47,11 @@ func validateAgainstV1Schema(t *testing.T, json string) {
 
 	if !result.Valid() {
 		t.Errorf("failed json schema validation:")
+		t.Errorf("JSON:\n%s\n", json)
 		for _, desc := range result.Errors() {
 			t.Errorf("  - %s\n", desc)
 		}
 	}
-}
-
-func testJsonSchema(t *testing.T, catalog *pkg.Catalog, theScope source.Source, prefix string) {
-
-	output := bytes.NewBufferString("")
-
-	d, err := distro.NewDistro(distro.CentOS, "5", "rhel fedora")
-	if err != nil {
-		t.Fatalf("bad distro: %+v", err)
-	}
-
-	p := presenter.GetPresenter(presenter.JSONPresenter, theScope.Metadata, catalog, &d)
-	if p == nil {
-		t.Fatal("unable to get presenter")
-	}
-
-	err = p.Present(output)
-	if err != nil {
-		t.Fatalf("unable to present: %+v", err)
-	}
-
-	validateAgainstV1Schema(t, output.String())
 }
 
 func TestJsonSchemaImg(t *testing.T) {
@@ -84,15 +65,25 @@ func TestJsonSchemaImg(t *testing.T) {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
 
-	var cases []testCase
-	cases = append(cases, commonTestCases...)
-	cases = append(cases, imageOnlyTestCases...)
+	output := bytes.NewBufferString("")
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			testJsonSchema(t, catalog, src, "img")
-		})
+	d, err := distro.NewDistro(distro.CentOS, "5", "rhel fedora")
+	if err != nil {
+		t.Fatalf("bad distro: %+v", err)
 	}
+
+	p := presenter.GetPresenter(presenter.JSONPresenter, src.Metadata, catalog, &d)
+	if p == nil {
+		t.Fatal("unable to get presenter")
+	}
+
+	err = p.Present(output)
+	if err != nil {
+		t.Fatalf("unable to present: %+v", err)
+	}
+
+	validateAgainstV1Schema(t, output.String())
+
 }
 
 func TestJsonSchemaDirs(t *testing.T) {
@@ -101,13 +92,22 @@ func TestJsonSchemaDirs(t *testing.T) {
 		t.Errorf("unable to create source from dir: %+v", err)
 	}
 
-	var cases []testCase
-	cases = append(cases, commonTestCases...)
-	cases = append(cases, dirOnlyTestCases...)
+	output := bytes.NewBufferString("")
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			testJsonSchema(t, catalog, src, "dir")
-		})
+	d, err := distro.NewDistro(distro.CentOS, "5", "rhel fedora")
+	if err != nil {
+		t.Fatalf("bad distro: %+v", err)
 	}
+
+	p := presenter.GetPresenter(presenter.JSONPresenter, src.Metadata, catalog, &d)
+	if p == nil {
+		t.Fatal("unable to get presenter")
+	}
+
+	err = p.Present(output)
+	if err != nil {
+		t.Fatalf("unable to present: %+v", err)
+	}
+
+	validateAgainstV1Schema(t, output.String())
 }

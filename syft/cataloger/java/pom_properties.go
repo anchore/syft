@@ -42,6 +42,11 @@ func parsePomProperties(path string, reader io.Reader) (*pkg.PomProperties, erro
 		return nil, fmt.Errorf("unable to parse pom.properties: %w", err)
 	}
 
+	// don't allow for a nil collection, ensure it is empty
+	if props.Extra == nil {
+		props.Extra = make(map[string]string)
+	}
+
 	props.Path = path
 
 	return &props, nil

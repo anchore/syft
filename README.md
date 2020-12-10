@@ -81,30 +81,58 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# same as -o ; the output format of the SBOM report (options: table, text, json)
+# the output format of the SBOM report (options: table, text, json)
+# same as -o ; SYFT_OUTPUT env var
 output: "table"
 
-# same as -s ; the search space to look for packages (options: all-layers, squashed)
+# the search space to look for packages (options: all-layers, squashed)
+# same as -s ; SYFT_SCOPE env var
 scope: "squashed"
 
-# same as -q ; suppress all output (except for the SBOM report)
+# suppress all output (except for the SBOM report)
+# same as -q ; SYFT_QUIET env var
 quiet: false
+
+# enable/disable checking for application updates on startup
+# same as SYFT_CHECK_FOR_APP_UPDATE env var
+check-for-app-update: true
 
 log:
   # use structured logging
+  # same as SYFT_LOG_STRUCTURED env var
   structured: false
 
   # the log level; note: detailed logging suppress the ETUI
+  # same as SYFT_LOG_LEVEL env var
   level: "error"
 
   # location to write the log file (default is not to have a log file)
+  # same as SYFT_LOG_FILE env var
   file: ""
 
-# enable/disable checking for application updates on startup
-check-for-app-update: true
+anchore:
+  # (feature-preview) enable uploading of results to Anchore Enterprise automatically (supported on Enterprise 3.0+)
+  # same as SYFT_ANCHORE_UPLOAD_ENABLED env var
+  upload-enabled: false
+
+  # (feature-preview) the Anchore Enterprise Host or URL to upload results to (supported on Enterprise 3.0+)
+  # same as -H ; SYFT_ANCHORE_HOST env var
+  host: ""
+
+  # (feature-preview) the path after the host to the Anchore External API (supported on Enterprise 3.0+)
+  # same as SYFT_ANCHORE_PATH env var
+  path: ""
+
+  # (feature-preview) the username to authenticate against Anchore Enterprise (supported on Enterprise 3.0+)
+  # same as -u ; SYFT_ANCHORE_USERNAME env var
+  username: ""
+
+  # (feature-preview) the password to authenticate against Anchore Enterprise (supported on Enterprise 3.0+)
+  # same as -p ; SYFT_ANCHORE_PASSWORD env var
+  password: ""
+
+  # (feature-preview) path to dockerfile to be uploaded with the syft results to Anchore Enterprise (supported on Enterprise 3.0+)
+  # same as -d ; SYFT_ANCHORE_DOCKERFILE env var
+  dockerfile: ""
+
 ```
-
-## Future plans
-
-The following areas of potential development are currently being investigated:
-- Establish a stable interchange format w/Grype

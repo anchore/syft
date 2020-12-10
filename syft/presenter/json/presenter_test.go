@@ -146,6 +146,9 @@ func TestJsonImgsPresenter(t *testing.T) {
 		},
 	})
 
+	// this is a hard coded value that is not given by the fixture helper and must be provided manually
+	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+
 	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
 	var d *distro.Distro
 	pres := NewPresenter(catalog, s.Metadata, d)
