@@ -110,9 +110,29 @@ log:
   # same as SYFT_LOG_FILE env var
   file: ""
 
+anchore:
+  # (feature-preview) enable uploading of results to Anchore Enterprise automatically (supported on Enterprise 3.0+)
+  # same as SYFT_ANCHORE_UPLOAD_ENABLED env var
+  upload-enabled: false
+
+  # (feature-preview) the Anchore Enterprise Host or URL to upload results to (supported on Enterprise 3.0+)
+  # same as -H ; SYFT_ANCHORE_HOST env var
+  host: ""
+
+  # (feature-preview) the path after the host to the Anchore External API (supported on Enterprise 3.0+)
+  # same as SYFT_ANCHORE_PATH env var
+  path: ""
+
+  # (feature-preview) the username to authenticate against Anchore Enterprise (supported on Enterprise 3.0+)
+  # same as -u ; SYFT_ANCHORE_USERNAME env var
+  username: ""
+
+  # (feature-preview) the password to authenticate against Anchore Enterprise (supported on Enterprise 3.0+)
+  # same as -p ; SYFT_ANCHORE_PASSWORD env var
+  password: ""
+
+  # (feature-preview) path to dockerfile to be uploaded with the syft results to Anchore Enterprise (supported on Enterprise 3.0+)
+  # same as -d ; SYFT_ANCHORE_DOCKERFILE env var
+  dockerfile: ""
+
 ```
-
-## Future plans
-
-The following areas of potential development are currently being investigated:
-- Establish a stable interchange format w/Grype
