@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -37,18 +38,22 @@ func importProgress(source string) (*progress.Stage, *progress.Manual) {
 	return stage, prog
 }
 
+// nolint:funlen
 func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, dockerfile []byte) error {
 	stage, prog := importProgress(imageMetadata.ID)
 
-	authedCtx := c.newRequestContext(ctx)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
+
+	authedCtx := c.newRequestContext(ctxWithTimeout)
 
 	stage.Current = "starting session"
 	startOperation, _, err := c.client.ImportsApi.CreateOperation(authedCtx)
 	if err != nil {
 		var detail = "no details given"
-		var openApiErr external.GenericOpenAPIError
-		if errors.As(err, &openApiErr) {
-			detail = string(openApiErr.Body())
+		var openAPIErr external.GenericOpenAPIError
+		if errors.As(err, &openAPIErr) {
+			detail = string(openAPIErr.Body())
 		}
 		return fmt.Errorf("unable to start import session: %w: %s", err, detail)
 	}
@@ -84,9 +89,9 @@ func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, s sou
 	_, _, err = c.client.ImagesApi.AddImage(authedCtx, imageModel, nil)
 	if err != nil {
 		var detail = "no details given"
-		var openApiErr external.GenericOpenAPIError
-		if errors.As(err, &openApiErr) {
-			detail = string(openApiErr.Body())
+		var openAPIErr external.GenericOpenAPIError
+		if errors.As(err, &openAPIErr) {
+			detail = string(openAPIErr.Body())
 		}
 		return fmt.Errorf("unable to complete import session=%q: %w: %s", sessionID, err, detail)
 	}

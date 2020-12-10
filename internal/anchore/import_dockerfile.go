@@ -1,3 +1,4 @@
+// nolint:dupl
 package anchore
 
 import (
@@ -24,9 +25,9 @@ func importDockerfile(ctx context.Context, api dockerfileImportAPI, sessionID st
 
 		response, httpResponse, err := api.ImportImageDockerfile(ctx, sessionID, string(dockerfile))
 		if err != nil {
-			var openApiErr external.GenericOpenAPIError
-			if errors.As(err, &openApiErr) {
-				log.Errorf("api response: %+v", string(openApiErr.Body()))
+			var openAPIErr external.GenericOpenAPIError
+			if errors.As(err, &openAPIErr) {
+				log.Errorf("api response: %+v", string(openAPIErr.Body()))
 			}
 			return "", fmt.Errorf("unable to import Dockerfile: %w", err)
 		}

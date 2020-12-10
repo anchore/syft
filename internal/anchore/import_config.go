@@ -1,3 +1,4 @@
+// nolint:dupl
 package anchore
 
 import (
@@ -23,9 +24,9 @@ func importConfig(ctx context.Context, api configImportAPI, sessionID string, ma
 
 		response, httpResponse, err := api.ImportImageConfig(ctx, sessionID, string(manifest))
 		if err != nil {
-			var openApiErr external.GenericOpenAPIError
-			if errors.As(err, &openApiErr) {
-				log.Errorf("api response: %+v", string(openApiErr.Body()))
+			var openAPIErr external.GenericOpenAPIError
+			if errors.As(err, &openAPIErr) {
+				log.Errorf("api response: %+v", string(openAPIErr.Body()))
 			}
 			return "", fmt.Errorf("unable to import Config: %w", err)
 		}

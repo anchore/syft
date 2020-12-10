@@ -181,6 +181,7 @@ func PullDockerImageHandler(ctx context.Context, fr *frame.Frame, event partybus
 }
 
 // FetchImageHandler periodically writes a the image save and write-to-disk process in the form of a progress bar.
+// nolint:dupl
 func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseFetchImage(event)
 	if err != nil {
@@ -309,6 +310,7 @@ func CatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybu
 }
 
 // ImportStartedHandler shows the intermittent upload progress to Anchore Enterprise.
+// nolint:dupl
 func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := syftEventParsers.ParseImportStarted(event)
 	if err != nil {

@@ -126,6 +126,9 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuy
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
+github.com/anchore/client-go v0.0.0-20201120223920-9f812673f4d6/go.mod h1:FaODhIA06mxO1E6R32JE0TL1JWZZkmjRIAd4ULvHUKk=
+github.com/anchore/client-go v0.0.0-20201210022459-59e7a0749c74 h1:9kkKTIyXJC+/syUcY6KWxFoJZJ+GWwrIscF+gBY067k=
+github.com/anchore/client-go v0.0.0-20201210022459-59e7a0749c74/go.mod h1:FaODhIA06mxO1E6R32JE0TL1JWZZkmjRIAd4ULvHUKk=
 github.com/anchore/go-rpmdb v0.0.0-20201106153645-0043963c2e12 h1:xbeIbn5F52JVx3RUIajxCj8b0y+9lywspql4sFhcxWQ=
 github.com/anchore/go-rpmdb v0.0.0-20201106153645-0043963c2e12/go.mod h1:juoyWXIj7sJ1IDl4E/KIfyLtovbs5XQVSIdaQifFQT8=
 github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04 h1:VzprUTpc0vW0nnNKJfJieyH/TZ9UYAnTZs5/gHTdAe8=
@@ -140,6 +143,8 @@ github.com/anchore/stereoscope v0.0.0-20201203153145-3f9a05a624d7 h1:G3LnRqHL/II
 github.com/anchore/stereoscope v0.0.0-20201203153145-3f9a05a624d7/go.mod h1:2Jja/4l0zYggW52og+nn0rut4i+OYjCf9vTyrM8RT4E=
 github.com/anchore/stereoscope v0.0.0-20201203222654-09e79bf5fef4 h1:XDuCqOWKyQQlKhd9kEDnyKbvSCwShKBDCsyBmD/ALYs=
 github.com/anchore/stereoscope v0.0.0-20201203222654-09e79bf5fef4/go.mod h1:/dHAFjYflH/1tzhdHAcnMCjprMch+YzHJKi59m/1KCM=
+github.com/anchore/stereoscope v0.0.0-20201210022249-091f9bddb42e h1:vHUqHTvH9/oxdDDh1fxS9Ls9gWGytKO7XbbzcQ9MBwI=
+github.com/anchore/stereoscope v0.0.0-20201210022249-091f9bddb42e/go.mod h1:/dHAFjYflH/1tzhdHAcnMCjprMch+YzHJKi59m/1KCM=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/antihax/optional v1.0.0 h1:xK2lYat7ZLaVVcIuj82J8kIro4V6kDe0AUDFboUCwcg=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=

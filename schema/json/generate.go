@@ -35,6 +35,7 @@ type metadataContainer struct {
 	Rpm    pkg.RpmdbMetadata
 }
 
+// nolint:funlen
 func main() {
 	metadataSchema := jsonschema.Reflect(&metadataContainer{})
 	documentSchema := jsonschema.Reflect(&jsonPresenter.Document{})
@@ -101,7 +102,6 @@ func main() {
 			// the generated schema is the same, bail with no error :)
 			fmt.Println("No change to the existing schema!")
 			os.Exit(0)
-
 		}
 
 		// the generated schema is different, bail with error :(

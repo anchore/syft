@@ -52,9 +52,9 @@ func importPackageSBOM(ctx context.Context, api packageSBOMImportAPI, sessionID 
 
 	response, httpResponse, err := api.ImportImagePackages(ctx, sessionID, *model)
 	if err != nil {
-		var openApiErr external.GenericOpenAPIError
-		if errors.As(err, &openApiErr) {
-			log.Errorf("api response: %+v", string(openApiErr.Body()))
+		var openAPIErr external.GenericOpenAPIError
+		if errors.As(err, &openAPIErr) {
+			log.Errorf("api response: %+v", string(openAPIErr.Body()))
 		}
 		return "", fmt.Errorf("unable to import PackageSBOM: %w", err)
 	}

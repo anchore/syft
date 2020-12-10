@@ -1,3 +1,4 @@
+// nolint: dupl
 package anchore
 
 import (
@@ -23,9 +24,9 @@ func importManifest(ctx context.Context, api manifestImportAPI, sessionID string
 
 		response, httpResponse, err := api.ImportImageManifest(ctx, sessionID, string(manifest))
 		if err != nil {
-			var openApiErr external.GenericOpenAPIError
-			if errors.As(err, &openApiErr) {
-				log.Errorf("api response: %+v", string(openApiErr.Body()))
+			var openAPIErr external.GenericOpenAPIError
+			if errors.As(err, &openAPIErr) {
+				log.Errorf("api response: %+v", string(openAPIErr.Body()))
 			}
 			return "", fmt.Errorf("unable to import Manifest: %w", err)
 		}
