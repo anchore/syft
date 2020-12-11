@@ -17,14 +17,15 @@ import (
 
 // Application is the main syft application configuration.
 type Application struct {
-	ConfigPath        string           `yaml:",omitempty"`                                               // the location where the application config was read from (either from -c or discovered while loading)
-	PresenterOpt      presenter.Option `yaml:"-"`                                                        // -o, the native Presenter.Option to use for report formatting
-	Output            string           `yaml:"output" mapstructure:"output"`                             // -o, the Presenter hint string to use for report formatting
-	ScopeOpt          source.Scope     `yaml:"-"`                                                        // -s, the native source.Scope option to use for how to catalog the container image
-	Scope             string           `yaml:"scope" mapstructure:"scope"`                               // -s, the source.Scope string hint for how to catalog the container image
-	Quiet             bool             `yaml:"quiet" mapstructure:"quiet"`                               // -q, indicates to not show any status output to stderr (ETUI or logging UI)
-	Log               logging          `yaml:"log"  mapstructure:"log"`                                  // all logging-related options
-	CliOptions        CliOnlyOptions   `yaml:"-"`                                                        // all options only available through the CLI (not via env vars or config)
+	ConfigPath        string           `yaml:",omitempty"`                   // the location where the application config was read from (either from -c or discovered while loading)
+	PresenterOpt      presenter.Option `yaml:"-"`                            // -o, the native Presenter.Option to use for report formatting
+	Output            string           `yaml:"output" mapstructure:"output"` // -o, the Presenter hint string to use for report formatting
+	ScopeOpt          source.Scope     `yaml:"-"`                            // -s, the native source.Scope option to use for how to catalog the container image
+	Scope             string           `yaml:"scope" mapstructure:"scope"`   // -s, the source.Scope string hint for how to catalog the container image
+	Quiet             bool             `yaml:"quiet" mapstructure:"quiet"`   // -q, indicates to not show any status output to stderr (ETUI or logging UI)
+	Log               logging          `yaml:"log"  mapstructure:"log"`      // all logging-related options
+	CliOptions        CliOnlyOptions   `yaml:"-"`                            // all options only available through the CLI (not via env vars or config)
+	Dev               Development      `mapstructure:"dev"`
 	CheckForAppUpdate bool             `yaml:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
 	Anchore           anchore          `yaml:"anchore" mapstructure:"anchore"`                           // options for interacting with Anchore Engine/Enterprise
 }
@@ -51,6 +52,10 @@ type anchore struct {
 	Username      string `yaml:"username" mapstructure:"username"`              // -u , username to authenticate upload
 	Password      string `yaml:"password" mapstructure:"password"`              // -p , password to authenticate upload
 	Dockerfile    string `yaml:"dockerfile" mapstructure:"dockerfile"`          // -d , dockerfile to attach for upload
+}
+
+type Development struct {
+	ProfileCPU bool `mapstructure:"profile-cpu"`
 }
 
 // LoadApplicationConfig populates the given viper object with application configuration discovered on disk
@@ -216,4 +221,5 @@ func setNonCliDefaultValues(v *viper.Viper) {
 	v.SetDefault("log.file", "")
 	v.SetDefault("log.structured", false)
 	v.SetDefault("check-for-app-update", true)
+	v.SetDefault("dev.profile-cpu", false)
 }

@@ -5,13 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime/pprof"
 	"strings"
-
-	"github.com/anchore/syft/syft/distro"
-
-	"github.com/anchore/syft/syft/pkg"
-
-	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -20,8 +15,11 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/presenter"
+	"github.com/anchore/syft/syft/source"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
@@ -56,7 +54,25 @@ You can also explicitly specify the scheme to use:
 			}
 			os.Exit(1)
 		}
+
+		if appConfig.Dev.ProfileCPU {
+			f, err := os.Create("cpu.profile")
+			if err != nil {
+				log.Errorf("unable to create CPU profile: %+v", err)
+			} else {
+				err := pprof.StartCPUProfile(f)
+				if err != nil {
+					log.Errorf("unable to start CPU profile: %+v", err)
+				}
+			}
+		}
+
 		err := doRunCmd(cmd, args)
+
+		if appConfig.Dev.ProfileCPU {
+			pprof.StopCPUProfile()
+		}
+
 		if err != nil {
 			log.Errorf(err.Error())
 			os.Exit(1)
