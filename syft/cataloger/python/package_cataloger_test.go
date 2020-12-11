@@ -8,12 +8,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anchore/syft/internal/file"
+
 	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 )
 
+// TODO: make this generic (based on maps of source.FileData) and make a generic mock to move to the source pkg
 type pythonTestResolverMock struct {
 	metadataReader io.Reader
 	recordReader   io.Reader
@@ -68,21 +71,21 @@ func newTestResolver(metaPath, recordPath, topPath string) *pythonTestResolverMo
 	}
 }
 
-func (r *pythonTestResolverMock) FileContentsByLocation(ref source.Location) (string, error) {
+func (r *pythonTestResolverMock) FileContentsByLocation(location source.Location) (string, error) {
 	switch {
-	case r.topLevelRef != nil && ref.Path == r.topLevelRef.Path:
+	case r.topLevelRef != nil && location.Path == r.topLevelRef.Path:
 		b, err := ioutil.ReadAll(r.topLevelReader)
 		if err != nil {
 			return "", err
 		}
 		return string(b), nil
-	case ref.Path == r.metadataRef.Path:
+	case location.Path == r.metadataRef.Path:
 		b, err := ioutil.ReadAll(r.metadataReader)
 		if err != nil {
 			return "", err
 		}
 		return string(b), nil
-	case ref.Path == r.recordRef.Path:
+	case location.Path == r.recordRef.Path:
 		b, err := ioutil.ReadAll(r.recordReader)
 		if err != nil {
 			return "", err
@@ -92,16 +95,36 @@ func (r *pythonTestResolverMock) FileContentsByLocation(ref source.Location) (st
 	return "", fmt.Errorf("invalid value given")
 }
 
-func (r *pythonTestResolverMock) MultipleFileContentsByLocation(_ []source.Location) (map[source.Location]string, error) {
-	return nil, fmt.Errorf("not implemented")
+func (r *pythonTestResolverMock) MultipleFileContentsByLocation(locations []source.Location) (map[source.Location]string, error) {
+	var results = make(map[source.Location]string)
+	var err error
+	for _, l := range locations {
+		results[l], err = r.FileContentsByLocation(l)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return results, nil
 }
 
 func (r *pythonTestResolverMock) FilesByPath(_ ...string) ([]source.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *pythonTestResolverMock) FilesByGlob(_ ...string) ([]source.Location, error) {
-	return nil, fmt.Errorf("not implemented")
+func (r *pythonTestResolverMock) FilesByGlob(patterns ...string) ([]source.Location, error) {
+	var results []source.Location
+	for _, pattern := range patterns {
+		for _, l := range []*source.Location{r.topLevelRef, r.metadataRef, r.recordRef} {
+			if l == nil {
+				continue
+			}
+			if file.GlobMatch(pattern, l.Path) {
+				results = append(results, *l)
+			}
+		}
+	}
+	return results, nil
 }
 func (r *pythonTestResolverMock) RelativeFileByPath(_ source.Location, path string) *source.Location {
 	switch {
@@ -224,14 +247,16 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			}
 			// end patching expected values with runtime data...
 
-			pyPkgCataloger := NewPythonPackageCataloger()
-
-			actual, err := pyPkgCataloger.catalogEggOrWheel(resolver, *resolver.metadataRef)
+			actual, err := NewPythonPackageCataloger().Catalog(resolver)
 			if err != nil {
 				t.Fatalf("failed to catalog python package: %+v", err)
 			}
 
-			for _, d := range deep.Equal(actual, &test.ExpectedPackage) {
+			if len(actual) != 1 {
+				t.Fatalf("unexpected length: %d", len(actual))
+			}
+
+			for _, d := range deep.Equal(actual[0], test.ExpectedPackage) {
 				t.Errorf("diff: %+v", d)
 			}
 		})
