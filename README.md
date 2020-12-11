@@ -69,6 +69,16 @@ brew tap anchore/syft
 brew install syft
 ```
 
+**Container Image**
+
+Example of how to use Syft scratch image:
+
+
+```bash
+docker pull anchore/syft:latest
+docker run -v /var/run/docker.sock:/var/run/docker.sock anchore/syft -o json alpine:latest
+```
+
 ## Configuration
 
 Configuration search paths:
