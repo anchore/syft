@@ -56,6 +56,7 @@ type anchore struct {
 
 type Development struct {
 	ProfileCPU bool `mapstructure:"profile-cpu"`
+	ProfileMem bool `mapstructure:"profile-mem"`
 }
 
 // LoadApplicationConfig populates the given viper object with application configuration discovered on disk
@@ -222,4 +223,5 @@ func setNonCliDefaultValues(v *viper.Viper) {
 	v.SetDefault("log.structured", false)
 	v.SetDefault("check-for-app-update", true)
 	v.SetDefault("dev.profile-cpu", false)
+	v.SetDefault("dev.profile-mem", false)
 }

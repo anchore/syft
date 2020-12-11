@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime/pprof"
 	"strings"
+
+	"github.com/pkg/profile"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -55,23 +56,18 @@ You can also explicitly specify the scheme to use:
 			os.Exit(1)
 		}
 
+		if appConfig.Dev.ProfileCPU && appConfig.Dev.ProfileMem {
+			log.Errorf("cannot profile CPU and memory simultaneously")
+			os.Exit(1)
+		}
+
 		if appConfig.Dev.ProfileCPU {
-			f, err := os.Create("cpu.profile")
-			if err != nil {
-				log.Errorf("unable to create CPU profile: %+v", err)
-			} else {
-				err := pprof.StartCPUProfile(f)
-				if err != nil {
-					log.Errorf("unable to start CPU profile: %+v", err)
-				}
-			}
+			defer profile.Start(profile.CPUProfile).Stop()
+		} else if appConfig.Dev.ProfileMem {
+			defer profile.Start(profile.MemProfile).Stop()
 		}
 
 		err := doRunCmd(cmd, args)
-
-		if appConfig.Dev.ProfileCPU {
-			pprof.StopCPUProfile()
-		}
 
 		if err != nil {
 			log.Errorf(err.Error())
