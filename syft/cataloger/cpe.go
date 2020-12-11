@@ -2,6 +2,7 @@ package cataloger
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -11,6 +12,17 @@ import (
 
 // this is functionally equivalent to "*" and consistent with no input given (thus easier to test)
 const any = ""
+
+func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
+	cpe := *(wfn.NewAttributesWithAny())
+	cpe.Part = "a"
+	cpe.Product = product
+	cpe.Vendor = vendor
+	cpe.Version = version
+	cpe.TargetSW = targetSW
+
+	return cpe
+}
 
 // generatePackageCPEs Create a list of CPEs, trying to guess the vendor, product tuple and setting TargetSoftware if possible
 func generatePackageCPEs(p pkg.Package) []pkg.CPE {
@@ -31,17 +43,13 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 				keys.Add(key)
 
 				// add a new entry...
-				candidateCpe := wfn.NewAttributesWithAny()
-				candidateCpe.Part = "a"
-				candidateCpe.Product = product
-				candidateCpe.Vendor = vendor
-				candidateCpe.Version = p.Version
-				candidateCpe.TargetSW = targetSw
-
-				cpes = append(cpes, *candidateCpe)
+				c := newCPE(product, vendor, p.Version, targetSw)
+				cpes = append(cpes, c)
 			}
 		}
 	}
+
+	sort.Sort(ByCPESpecificity(cpes))
 
 	return cpes
 }
