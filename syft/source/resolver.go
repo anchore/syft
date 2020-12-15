@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/anchore/stereoscope/pkg/image"
 )
@@ -14,8 +15,8 @@ type Resolver interface {
 
 // ContentResolver knows how to get file content for given file.References
 type ContentResolver interface {
-	FileContentsByLocation(Location) (string, error)
-	MultipleFileContentsByLocation([]Location) (map[Location]string, error)
+	FileContentsByLocation(Location) (io.ReadCloser, error)
+	MultipleFileContentsByLocation([]Location) (map[Location]io.ReadCloser, error)
 	// TODO: we should consider refactoring to return a set of io.Readers or file.Openers instead of the full contents themselves (allow for optional buffering).
 }
 

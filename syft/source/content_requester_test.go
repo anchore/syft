@@ -1,6 +1,7 @@
 package source
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -54,10 +55,14 @@ func TestContentRequester(t *testing.T) {
 
 			for _, entry := range data {
 				if expected, ok := test.expectedContents[entry.Location.Path]; ok {
-					for expected != entry.Contents {
+					actualBytes, err := ioutil.ReadAll(entry.Contents)
+					if err != nil {
+						t.Fatalf("could not read %q: %+v", entry.Location.Path, err)
+					}
+					for expected != string(actualBytes) {
 						t.Errorf("mismatched contents for %q", entry.Location.Path)
 						dmp := diffmatchpatch.New()
-						diffs := dmp.DiffMain(expected, entry.Contents, true)
+						diffs := dmp.DiffMain(expected, string(actualBytes), true)
 						t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 					}
 					continue

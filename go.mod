@@ -9,7 +9,7 @@ require (
 	github.com/anchore/go-rpmdb v0.0.0-20201106153645-0043963c2e12
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/stereoscope v0.0.0-20201210022249-091f9bddb42e
+	github.com/anchore/stereoscope v0.0.0-20201219143203-af397ece87bf
 	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar v1.3.3
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200309214505-aa6a9891b09c+incompatible
