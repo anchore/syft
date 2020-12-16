@@ -7,11 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anchore/syft/syft/distro"
-
-	"github.com/anchore/syft/syft/pkg"
-
-	"github.com/anchore/syft/syft/source"
+	"github.com/pkg/profile"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -20,8 +16,11 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/presenter"
+	"github.com/anchore/syft/syft/source"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
@@ -56,7 +55,20 @@ You can also explicitly specify the scheme to use:
 			}
 			os.Exit(1)
 		}
+
+		if appConfig.Dev.ProfileCPU && appConfig.Dev.ProfileMem {
+			log.Errorf("cannot profile CPU and memory simultaneously")
+			os.Exit(1)
+		}
+
+		if appConfig.Dev.ProfileCPU {
+			defer profile.Start(profile.CPUProfile).Stop()
+		} else if appConfig.Dev.ProfileMem {
+			defer profile.Start(profile.MemProfile).Stop()
+		}
+
 		err := doRunCmd(cmd, args)
+
 		if err != nil {
 			log.Errorf(err.Error())
 			os.Exit(1)

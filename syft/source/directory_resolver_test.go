@@ -180,7 +180,7 @@ func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 
 func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
 	t.Run("finds multiple matching files", func(t *testing.T) {
-		resolver := DirectoryResolver{"test-fixtures"}
+		resolver := DirectoryResolver{"test-fixtures/image-symlinks"}
 		refs, err := resolver.FilesByGlob("**/*.txt")
 
 		if err != nil {

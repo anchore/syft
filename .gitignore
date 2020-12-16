@@ -33,3 +33,5 @@ coverage.txt
 
 # macOS Finder metadata
 .DS_STORE
+
+*.profile
