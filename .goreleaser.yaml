@@ -47,22 +47,6 @@ builds:
       -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
       -X github.com/anchore/syft/internal/version.gitTreeState={{.Env.BUILD_GIT_TREE_STATE}}
 
-dockers:
-  -
-    # Docker image name and tags
-    image_templates:
-    - "anchore/syft:latest"
-    - "anchore/syft:{{ .Version }}"
-    - "anchore/syft:{{ .Major }}.{{ .Minor }}"
-    - "anchore/syft:{{ .Major }}"
-    
-    # name of binary to release.
-    binaries:
-    - syft
-
-    # path to Dockerfile.
-    dockerfile: Dockerfile
-
 archives:
   - format: tar.gz
     builds:
