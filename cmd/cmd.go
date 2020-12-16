@@ -86,7 +86,7 @@ func setGlobalUploadOptions() {
 	flag := "host"
 	rootCmd.Flags().StringP(
 		flag, "H", "",
-		"the hostname or URL of the Anchore Engine/Enterprise instance to upload to",
+		"the hostname or URL of the Anchore Enterprise instance to upload to",
 	)
 	if err := viper.BindPFlag("anchore.host", rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
@@ -96,7 +96,7 @@ func setGlobalUploadOptions() {
 	flag = "username"
 	rootCmd.Flags().StringP(
 		flag, "u", "",
-		"the username to authenticate against Anchore Engine/Enterprise",
+		"the username to authenticate against Anchore Enterprise",
 	)
 	if err := viper.BindPFlag("anchore.username", rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
@@ -106,7 +106,7 @@ func setGlobalUploadOptions() {
 	flag = "password"
 	rootCmd.Flags().StringP(
 		flag, "p", "",
-		"the password to authenticate against Anchore Engine/Enterprise",
+		"the password to authenticate against Anchore Enterprise",
 	)
 	if err := viper.BindPFlag("anchore.password", rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
@@ -116,9 +116,19 @@ func setGlobalUploadOptions() {
 	flag = "dockerfile"
 	rootCmd.Flags().StringP(
 		flag, "d", "",
-		"include dockerfile for upload to Anchore Engine/Enterprise",
+		"include dockerfile for upload to Anchore Enterprise",
 	)
 	if err := viper.BindPFlag("anchore.dockerfile", rootCmd.Flags().Lookup(flag)); err != nil {
+		fmt.Printf("unable to bind flag '#{flag}': #{err}")
+		os.Exit(1)
+	}
+
+	flag = "overwrite-existing-image"
+	rootCmd.Flags().Bool(
+		flag, false,
+		"overwrite an existing image during the upload to Anchore Enterprise",
+	)
+	if err := viper.BindPFlag("anchore.overwrite-existing-image", rootCmd.Flags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '#{flag}': #{err}")
 		os.Exit(1)
 	}

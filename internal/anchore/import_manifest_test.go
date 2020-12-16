@@ -16,7 +16,7 @@ import (
 
 type mockManifestImportAPI struct {
 	sessionID      string
-	model          string
+	model          interface{}
 	httpResponse   *http.Response
 	err            error
 	ctx            context.Context
@@ -24,7 +24,7 @@ type mockManifestImportAPI struct {
 	wasCalled      bool
 }
 
-func (m *mockManifestImportAPI) ImportImageManifest(ctx context.Context, sessionID string, contents string) (external.ImageImportContentResponse, *http.Response, error) {
+func (m *mockManifestImportAPI) ImportImageManifest(ctx context.Context, sessionID string, contents interface{}) (external.ImageImportContentResponse, *http.Response, error) {
 	m.wasCalled = true
 	m.model = contents
 	m.sessionID = sessionID
