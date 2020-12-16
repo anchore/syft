@@ -2,6 +2,7 @@ package anchore
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -41,16 +42,16 @@ func TestConfigImport(t *testing.T) {
 	sessionID := "my-session"
 
 	tests := []struct {
-		name         string
-		manifest     string
-		api          *mockConfigImportAPI
-		expectsError bool
-		expectsCall  bool
+		name            string
+		manifestJSONStr string
+		api             *mockConfigImportAPI
+		expectsError    bool
+		expectsCall     bool
 	}{
 
 		{
-			name:     "Go case: import works",
-			manifest: "the-manifest-contents!",
+			name:            "Go case: import works",
+			manifestJSONStr: `{ "key": "the-manifest-contents!" }`,
 			api: &mockConfigImportAPI{
 				httpResponse:   &http.Response{StatusCode: 200},
 				responseDigest: "digest!",
@@ -58,14 +59,14 @@ func TestConfigImport(t *testing.T) {
 			expectsCall: true,
 		},
 		{
-			name:        "No manifest provided",
-			manifest:    "",
-			api:         &mockConfigImportAPI{},
-			expectsCall: false,
+			name:            "No manifest provided",
+			manifestJSONStr: "",
+			api:             &mockConfigImportAPI{},
+			expectsCall:     false,
 		},
 		{
-			name:     "API returns an error",
-			manifest: "the-manifest-contents!",
+			name:            "API returns an error",
+			manifestJSONStr: `{ "key": "the-manifest-contents!" }`,
 			api: &mockConfigImportAPI{
 				err: fmt.Errorf("api error, something went wrong"),
 			},
@@ -73,8 +74,8 @@ func TestConfigImport(t *testing.T) {
 			expectsCall:  true,
 		},
 		{
-			name:     "API HTTP-level error",
-			manifest: "the-manifest-contents!",
+			name:            "API HTTP-level error",
+			manifestJSONStr: `{ "key": "the-manifest-contents!" }`,
 			api: &mockConfigImportAPI{
 				httpResponse: &http.Response{StatusCode: 404},
 			},
@@ -86,7 +87,7 @@ func TestConfigImport(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			digest, err := importConfig(context.TODO(), test.api, sessionID, []byte(test.manifest), &progress.Stage{})
+			digest, err := importConfig(context.TODO(), test.api, sessionID, []byte(test.manifestJSONStr), &progress.Stage{})
 
 			// validate error handling
 			if err != nil && !test.expectsError {
@@ -114,7 +115,12 @@ func TestConfigImport(t *testing.T) {
 				t.Errorf("different session ID: %s != %s", test.api.sessionID, sessionID)
 			}
 
-			for _, d := range deep.Equal(test.api.model, test.manifest) {
+			var expected map[string]interface{}
+			if err := json.Unmarshal([]byte(test.manifestJSONStr), &expected); err != nil {
+				t.Fatalf("could not unmarshal expected results")
+			}
+
+			for _, d := range deep.Equal(test.api.model, expected) {
 				t.Errorf("model difference: %s", d)
 			}
 
