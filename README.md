@@ -69,6 +69,14 @@ brew tap anchore/syft
 brew install syft
 ```
 
+**Container Image**
+
+
+```bash
+
+docker run -v /var/run/docker.sock:/var/run/docker.sock anchore/syft:latest -o json alpine:latest
+```
+
 ## Configuration
 
 Configuration search paths:
