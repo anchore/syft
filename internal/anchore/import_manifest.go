@@ -3,6 +3,7 @@ package anchore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 )
 
 type manifestImportAPI interface {
-	ImportImageManifest(ctx context.Context, sessionID string, contents string) (external.ImageImportContentResponse, *http.Response, error)
+	ImportImageManifest(ctx context.Context, sessionID string, contents interface{}) (external.ImageImportContentResponse, *http.Response, error)
 }
 
 func importManifest(ctx context.Context, api manifestImportAPI, sessionID string, manifest []byte, stage *progress.Stage) (string, error) {
@@ -22,7 +23,13 @@ func importManifest(ctx context.Context, api manifestImportAPI, sessionID string
 		log.Debug("importing image manifest")
 		stage.Current = "image manifest"
 
-		response, httpResponse, err := api.ImportImageManifest(ctx, sessionID, string(manifest))
+		// API requires an object, but we do not verify the shape of this object locally
+		var sender map[string]interface{}
+		if err := json.Unmarshal(manifest, &sender); err != nil {
+			return "", err
+		}
+
+		response, httpResponse, err := api.ImportImageManifest(ctx, sessionID, sender)
 		if err != nil {
 			var openAPIErr external.GenericOpenAPIError
 			if errors.As(err, &openAPIErr) {

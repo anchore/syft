@@ -2,6 +2,7 @@ package anchore
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,7 +17,7 @@ import (
 
 type mockManifestImportAPI struct {
 	sessionID      string
-	model          string
+	model          interface{}
 	httpResponse   *http.Response
 	err            error
 	ctx            context.Context
@@ -24,7 +25,7 @@ type mockManifestImportAPI struct {
 	wasCalled      bool
 }
 
-func (m *mockManifestImportAPI) ImportImageManifest(ctx context.Context, sessionID string, contents string) (external.ImageImportContentResponse, *http.Response, error) {
+func (m *mockManifestImportAPI) ImportImageManifest(ctx context.Context, sessionID string, contents interface{}) (external.ImageImportContentResponse, *http.Response, error) {
 	m.wasCalled = true
 	m.model = contents
 	m.sessionID = sessionID
@@ -50,7 +51,7 @@ func TestManifestImport(t *testing.T) {
 
 		{
 			name:     "Go case: import works",
-			manifest: "the-manifest-contents!",
+			manifest: `{ "key": "the-config-contents!" }`,
 			api: &mockManifestImportAPI{
 				httpResponse:   &http.Response{StatusCode: 200},
 				responseDigest: "digest!",
@@ -65,7 +66,7 @@ func TestManifestImport(t *testing.T) {
 		},
 		{
 			name:     "API returns an error",
-			manifest: "the-manifest-contents!",
+			manifest: `{ "key": "the-config-contents!" }`,
 			api: &mockManifestImportAPI{
 				err: fmt.Errorf("api error, something went wrong"),
 			},
@@ -74,7 +75,7 @@ func TestManifestImport(t *testing.T) {
 		},
 		{
 			name:     "API HTTP-level error",
-			manifest: "the-manifest-contents!",
+			manifest: `{ "key": "the-config-contents!" }`,
 			api: &mockManifestImportAPI{
 				httpResponse: &http.Response{StatusCode: 404},
 			},
@@ -114,7 +115,12 @@ func TestManifestImport(t *testing.T) {
 				t.Errorf("different session ID: %s != %s", test.api.sessionID, sessionID)
 			}
 
-			for _, d := range deep.Equal(test.api.model, test.manifest) {
+			var expected map[string]interface{}
+			if err := json.Unmarshal([]byte(test.manifest), &expected); err != nil {
+				t.Fatalf("could not unmarshal expected results")
+			}
+
+			for _, d := range deep.Equal(test.api.model, expected) {
 				t.Errorf("model difference: %s", d)
 			}
 

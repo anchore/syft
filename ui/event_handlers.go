@@ -312,7 +312,7 @@ func CatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybu
 // ImportStartedHandler shows the intermittent upload progress to Anchore Enterprise.
 // nolint:dupl
 func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	_, prog, err := syftEventParsers.ParseImportStarted(event)
+	host, prog, err := syftEventParsers.ParseImportStarted(event)
 	if err != nil {
 		return fmt.Errorf("bad %s event: %w", event.Type, err)
 	}
@@ -348,7 +348,8 @@ func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.E
 
 		spin := color.Green.Sprint(completedStatus)
 		title = tileFormat.Sprint("Uploaded image")
-		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+		auxInfo := auxInfoFormat.Sprintf("[%s]", host)
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
 	return err
 }

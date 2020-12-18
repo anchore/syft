@@ -83,7 +83,7 @@ func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, 
 		return "", nil, err
 	}
 
-	imgName, ok := e.Source.(string)
+	host, ok := e.Source.(string)
 	if !ok {
 		return "", nil, newPayloadErr(e.Type, "Source", e.Source)
 	}
@@ -93,5 +93,5 @@ func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, 
 		return "", nil, newPayloadErr(e.Type, "Value", e.Value)
 	}
 
-	return imgName, prog, nil
+	return host, prog, nil
 }

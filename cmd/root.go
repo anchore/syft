@@ -176,7 +176,16 @@ func doImport(src source.Source, s source.Metadata, catalog *pkg.Catalog, d *dis
 		return fmt.Errorf("failed to create anchore client: %+v", err)
 	}
 
-	if err := c.Import(context.Background(), src.Image.Metadata, s, catalog, d, dockerfileContents); err != nil {
+	importCfg := anchore.ImportConfig{
+		ImageMetadata:           src.Image.Metadata,
+		SourceMetadata:          s,
+		Catalog:                 catalog,
+		Distro:                  d,
+		Dockerfile:              dockerfileContents,
+		OverwriteExistingUpload: appConfig.Anchore.OverwriteExistingImage,
+	}
+
+	if err := c.Import(context.Background(), importCfg); err != nil {
 		return fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
 	}
 	return nil

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/antihax/optional"
+
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/bus"
@@ -16,6 +18,15 @@ import (
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
+
+type ImportConfig struct {
+	ImageMetadata           image.Metadata
+	SourceMetadata          source.Metadata
+	Catalog                 *pkg.Catalog
+	Distro                  *distro.Distro
+	Dockerfile              []byte
+	OverwriteExistingUpload bool
+}
 
 func importProgress(source string) (*progress.Stage, *progress.Manual) {
 	stage := &progress.Stage{}
@@ -39,8 +50,8 @@ func importProgress(source string) (*progress.Stage, *progress.Manual) {
 }
 
 // nolint:funlen
-func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, dockerfile []byte) error {
-	stage, prog := importProgress(imageMetadata.ID)
+func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
+	stage, prog := importProgress(c.config.Hostname)
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
@@ -60,33 +71,37 @@ func (c *Client) Import(ctx context.Context, imageMetadata image.Metadata, s sou
 	prog.N++
 	sessionID := startOperation.Uuid
 
-	packageDigest, err := importPackageSBOM(authedCtx, c.client.ImportsApi, sessionID, s, catalog, d, stage)
+	packageDigest, err := importPackageSBOM(authedCtx, c.client.ImportsApi, sessionID, cfg.SourceMetadata, cfg.Catalog, cfg.Distro, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Package SBOM: %w", err)
 	}
 	prog.N++
 
-	manifestDigest, err := importManifest(authedCtx, c.client.ImportsApi, sessionID, imageMetadata.RawManifest, stage)
+	manifestDigest, err := importManifest(authedCtx, c.client.ImportsApi, sessionID, cfg.ImageMetadata.RawManifest, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Manifest: %w", err)
 	}
 	prog.N++
 
-	configDigest, err := importConfig(authedCtx, c.client.ImportsApi, sessionID, imageMetadata.RawConfig, stage)
+	configDigest, err := importConfig(authedCtx, c.client.ImportsApi, sessionID, cfg.ImageMetadata.RawConfig, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Config: %w", err)
 	}
 	prog.N++
 
-	dockerfileDigest, err := importDockerfile(authedCtx, c.client.ImportsApi, sessionID, dockerfile, stage)
+	dockerfileDigest, err := importDockerfile(authedCtx, c.client.ImportsApi, sessionID, cfg.Dockerfile, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Dockerfile: %w", err)
 	}
 	prog.N++
 
 	stage.Current = "finalizing"
-	imageModel := addImageModel(imageMetadata, packageDigest, manifestDigest, dockerfileDigest, configDigest, sessionID)
-	_, _, err = c.client.ImagesApi.AddImage(authedCtx, imageModel, nil)
+	imageModel := addImageModel(cfg.ImageMetadata, packageDigest, manifestDigest, dockerfileDigest, configDigest, sessionID)
+	opts := external.AddImageOpts{
+		Force: optional.NewBool(cfg.OverwriteExistingUpload),
+	}
+
+	_, _, err = c.client.ImagesApi.AddImage(authedCtx, imageModel, &opts)
 	if err != nil {
 		var detail = "no details given"
 		var openAPIErr external.GenericOpenAPIError
