@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	eggMetadataGlob   = "**/*egg-info/PKG-INFO"
-	wheelMetadataGlob = "**/*dist-info/METADATA"
+	eggMetadataGlob     = "**/*egg-info/PKG-INFO"
+	eggFileMetadataGlob = "**/*.egg-info"
+	wheelMetadataGlob   = "**/*dist-info/METADATA"
 )
 
 type PackageCataloger struct{}
@@ -53,7 +54,7 @@ func (c *PackageCataloger) getPackageEntries(resolver source.Resolver) ([]*packa
 	var metadataLocations []source.Location
 
 	// find all primary record paths
-	matches, err := resolver.FilesByGlob(eggMetadataGlob, wheelMetadataGlob)
+	matches, err := resolver.FilesByGlob(eggMetadataGlob, eggFileMetadataGlob, wheelMetadataGlob)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find files by glob: %w", err)
 	}

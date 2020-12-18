@@ -230,6 +230,27 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 				},
 			},
 		},
+		{
+			MetadataFixture: "test-fixtures/test.egg-info",
+			ExpectedPackage: pkg.Package{
+				Name:         "requests",
+				Version:      "2.22.0",
+				Type:         pkg.PythonPkg,
+				Language:     pkg.Python,
+				Licenses:     []string{"Apache 2.0"},
+				FoundBy:      "python-package-cataloger",
+				MetadataType: pkg.PythonPackageMetadataType,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:                 "requests",
+					Version:              "2.22.0",
+					License:              "Apache 2.0",
+					Platform:             "UNKNOWN",
+					Author:               "Kenneth Reitz",
+					AuthorEmail:          "me@kennethreitz.org",
+					SitePackagesRootPath: "test-fixtures",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
