@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	eggMetadataGlob   = "**/*egg-info/PKG-INFO"
-	eggFileMetadataGlob   = "**/*.egg-info"
-	wheelMetadataGlob = "**/*dist-info/METADATA"
+	eggMetadataGlob     = "**/*egg-info/PKG-INFO"
+	eggFileMetadataGlob = "**/*.egg-info"
+	wheelMetadataGlob   = "**/*dist-info/METADATA"
 )
 
 type PackageCataloger struct{}
