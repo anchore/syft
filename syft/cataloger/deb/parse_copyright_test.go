@@ -24,6 +24,11 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 			fixture:  "test-fixtures/copyright/libaudit-common",
 			expected: []string{"GPL-2", "LGPL-2.1"},
 		},
+		{
+			fixture: "test-fixtures/copyright/python",
+			// note: this should not capture #, Permission, This, see ... however it's not clear how to fix this (this is probably good enough)
+			expected: []string{"#", "Apache", "Apache-2", "Apache-2.0", "Expat", "ISC", "LGPL-2.1+", "PSF-2", "Permission", "Python", "This", "see"},
+		},
 	}
 
 	for _, test := range tests {
