@@ -11,6 +11,7 @@ type DpkgMetadata struct {
 	Package       string           `mapstructure:"Package" json:"package"`
 	Source        string           `mapstructure:"Source" json:"source"`
 	Version       string           `mapstructure:"Version" json:"version"`
+	SourceVersion string           `mapstructure:"SourceVersion" json:"sourceVersion"`
 	Architecture  string           `mapstructure:"Architecture" json:"architecture"`
 	Maintainer    string           `mapstructure:"Maintainer" json:"maintainer"`
 	InstalledSize int              `mapstructure:"InstalledSize" json:"installedSize"`

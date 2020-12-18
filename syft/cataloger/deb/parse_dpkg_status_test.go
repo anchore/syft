@@ -115,3 +115,35 @@ func TestMultiplePackages(t *testing.T) {
 		})
 	}
 }
+
+func TestSourceVersionExtract(t *testing.T) {
+	inputs := []string{
+		"test (1.2.3)",
+		"test",
+	}
+
+	tests := []struct {
+		name     string
+		expected [][]string
+	}{
+		{
+			name: "Test Source Version Extract",
+			expected: [][]string{
+				{"test", "1.2.3"},
+				{"test", ""},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			for idx, entry := range inputs {
+				name, version := extractSourceVersion(entry)
+
+				if name != test.expected[idx][0] || version != test.expected[idx][1] {
+					t.Fatal("mismatch on ", entry, " with expected ", version)
+				}
+			}
+		})
+	}
+}

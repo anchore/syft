@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -105,7 +106,28 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err err
 		return pkg.DpkgMetadata{}, err
 	}
 
+	name, version := extractSourceVersion(entry.Source)
+	if version != "" {
+		entry.SourceVersion = version
+		entry.Source = name
+	}
+
 	return entry, retErr
+}
+
+
+var sourceRegexp = regexp.MustCompile("(\\S+) \\((.*)\\)")
+
+// If the source entry string is of the form "<name> (<version>)" then parse and return the components, if
+// of the "<name>" form, then return name and nil
+func extractSourceVersion(source string) (string, string) {
+	//Special handling for the Source field since it has formatted data
+	m := sourceRegexp.FindStringSubmatch(source)
+	if len(m) == 3 {
+		return m[1], m[2]
+	}
+
+	return m[1], ""
 }
 
 // handleNewKeyValue parse a new key-value pair from the given unprocessed line
