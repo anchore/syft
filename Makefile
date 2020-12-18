@@ -154,8 +154,7 @@ fixtures:
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
-	cd schema/json
-	go run generate.go
+	cd schema/json && go run generate.go
 
 .PHONY: clear-test-cache
 clear-test-cache: ## Delete all test cache (built docker image tars)

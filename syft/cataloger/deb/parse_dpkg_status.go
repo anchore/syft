@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
 )
@@ -46,6 +48,7 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
+// nolint:funlen
 func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
 	dpkgFields := make(map[string]interface{})
 	var retErr error
@@ -115,19 +118,18 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err err
 	return entry, retErr
 }
 
-
-var sourceRegexp = regexp.MustCompile("(\\S+) \\((.*)\\)")
+// match examples:
+// "a-thing (1.2.3)"     name="a-thing" version="1.2.3"
+// "a-thing"             name="a-thing" version=""
+// ""                    name=""        version=""
+var sourceRegexp = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 
 // If the source entry string is of the form "<name> (<version>)" then parse and return the components, if
 // of the "<name>" form, then return name and nil
 func extractSourceVersion(source string) (string, string) {
-	//Special handling for the Source field since it has formatted data
-	m := sourceRegexp.FindStringSubmatch(source)
-	if len(m) == 3 {
-		return m[1], m[2]
-	}
-
-	return m[1], ""
+	// special handling for the Source field since it has formatted data
+	match := internal.MatchCaptureGroups(sourceRegexp, source)
+	return match["name"], match["version"]
 }
 
 // handleNewKeyValue parse a new key-value pair from the given unprocessed line
