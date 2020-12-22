@@ -3,6 +3,7 @@ package python
 import (
 	"bufio"
 	"fmt"
+	"github.com/anchore/syft/internal/file"
 	"io"
 	"path/filepath"
 	"strings"
@@ -70,9 +71,26 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 
 	// add additional metadata not stored in the egg/wheel metadata file
 
-	metadata.SitePackagesRootPath = filepath.Clean(filepath.Join(filepath.Dir(path), ".."))
+	metadata.SitePackagesRootPath = determineSitePackagesRootPath(path)
 
 	return metadata, nil
+}
+
+// isEggRegularFile determines if the specified path is the regular file variant
+// of egg metadata (as opposed to a directory that contains more metadata
+// files).
+func isEggRegularFile(path string) bool {
+	return file.GlobMatch(eggFileMetadataGlob, path)
+}
+
+// determineSitePackagesRootPath returns the path of the site packages root,
+// given the egg metadata file or directory specified in the path.
+func determineSitePackagesRootPath(path string) string {
+	if isEggRegularFile(path) {
+		return filepath.Clean(filepath.Dir(path))
+	}
+
+	return filepath.Clean(filepath.Dir(filepath.Dir(path)))
 }
 
 // handleFieldBodyContinuation returns the updated value for the specified field after processing the specified line.
