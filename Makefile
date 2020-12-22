@@ -16,6 +16,9 @@ TITLE := $(BOLD)$(PURPLE)
 SUCCESS := $(BOLD)$(GREEN)
 # the quality gate lower threshold for unit test total % coverage (by function statements)
 COVERAGE_THRESHOLD := 68
+# CI cache busting values; change these if you want CI to not use previous stored cache
+COMPARE_CACHE_BUSTER="f7e689d76a9"
+INTEGRATION_CACHE_BUSTER="789bacdf"
 
 ## Build variables
 DISTDIR=./dist
@@ -140,7 +143,7 @@ integration: ## Run integration tests
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
-	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/cache.fingerprint
+	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/cache.fingerprint && echo "$(INTEGRATION_CACHE_BUSTER)" >> test/integration/test-fixtures/cache.fingerprint
 
 .PHONY: java-packages-fingerprint
 java-packages-fingerprint:
@@ -188,7 +191,7 @@ acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-packag
 # note: this is used by CI to determine if the inline-scan report cache should be busted for the inline-compare tests
 .PHONY: compare-fingerprint
 compare-fingerprint:
-	find test/inline-compare/* -type f -exec md5sum {} + | grep -v '\-reports' | grep -v 'fingerprint' | awk '{print $1}' | sort | md5sum | tee test/inline-compare/inline-compare.fingerprint
+	find test/inline-compare/* -type f -exec md5sum {} + | grep -v '\-reports' | grep -v 'fingerprint' | awk '{print $1}' | sort | md5sum | tee test/inline-compare/inline-compare.fingerprint && echo "$(COMPARE_CACHE_BUSTER)" >> test/inline-compare/inline-compare.fingerprint
 
 .PHONY: compare-snapshot
 compare-snapshot: $(SNAPSHOTDIR) ## Compare the reports of a run of a snapshot build of syft against inline-scan
