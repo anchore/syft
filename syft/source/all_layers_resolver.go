@@ -71,8 +71,11 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 	for _, path := range paths {
 		for idx, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
-			ref := tree.File(file.Path(path))
-			if ref == nil {
+			exists, _, ref, err := tree.File(file.Path(path), true)
+			if err != nil {
+				return nil, err
+			}
+			if !exists && ref == nil {
 				// no file found, keep looking through layers
 				continue
 			}
@@ -151,8 +154,11 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 		return nil
 	}
 
-	relativeRef := entry.Layer.SquashedTree.File(file.Path(path))
-	if relativeRef == nil {
+	exists, _, relativeRef, err := entry.Layer.SquashedTree.File(file.Path(path), true)
+	if err != nil {
+		return nil
+	}
+	if !exists && relativeRef == nil {
 		return nil
 	}
 

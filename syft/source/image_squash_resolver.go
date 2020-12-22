@@ -30,8 +30,8 @@ func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 	for _, path := range paths {
 		tree := r.img.SquashedTree()
-		ref := tree.File(file.Path(path))
-		if ref == nil {
+		exists, ref := tree.File(file.Path(path))
+		if !exists && ref == nil {
 			// no file found, keep looking through layers
 			continue
 		}

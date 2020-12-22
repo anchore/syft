@@ -41,3 +41,5 @@ require (
 	golang.org/x/mod v0.3.0
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace github.com/anchore/stereoscope => ../stereoscope

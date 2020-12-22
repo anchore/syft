@@ -48,6 +48,12 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			linkPath:    "/bin",
 			resolvePath: "",
 		},
+		{
+			name:         "parent is a link (with overridden data)",
+			linkPath:     "/parent-link/file-4.txt",
+			resolveLayer: 11,
+			resolvePath:  "/parent/file-4.txt",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -105,38 +111,50 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 	}{
 		{
 			name:         "link with previous data",
-			glob:         "**link-1",
+			glob:         "**/link-1",
 			resolveLayer: 1,
 			resolvePath:  "/file-1.txt",
 		},
 		{
 			name:         "link with in layer data",
-			glob:         "**link-within",
+			glob:         "**/link-within",
 			resolveLayer: 5,
 			resolvePath:  "/file-3.txt",
 		},
 		{
 			name:         "link with overridden data",
-			glob:         "**link-2",
+			glob:         "**/link-2",
 			resolveLayer: 7,
 			resolvePath:  "/file-2.txt",
 		},
 		{
 			name:         "indirect link (with overridden data)",
-			glob:         "**link-indirect",
+			glob:         "**/link-indirect",
 			resolveLayer: 7,
 			resolvePath:  "/file-2.txt",
 		},
 		{
-			name:         "dead link",
-			glob:         "**link-dead",
-			resolveLayer: 8,
-			resolvePath:  "/link-dead",
+			name: "dead link",
+			glob: "**/link-dead",
+			// dead links are dead! they shouldn't match on globs
+			resolvePath: "",
 		},
 		{
 			name:        "ignore directories",
 			glob:        "**/bin",
 			resolvePath: "",
+		},
+		{
+			name:         "parent without link",
+			glob:         "**/parent/*.txt",
+			resolveLayer: 11,
+			resolvePath:  "/parent/file-4.txt",
+		},
+		{
+			name:         "parent is a link (override)",
+			glob:         "**/parent-link/file-4.txt",
+			resolveLayer: 11,
+			resolvePath:  "/parent/file-4.txt",
 		},
 	}
 	for _, c := range cases {
