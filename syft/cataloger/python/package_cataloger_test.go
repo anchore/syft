@@ -284,3 +284,30 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 	}
 
 }
+
+func TestIgnorePackage(t *testing.T) {
+	tests := []struct {
+		MetadataFixture string
+	}{
+
+		{
+			MetadataFixture: "test-fixtures/Python-2.7.egg-info",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.MetadataFixture, func(t *testing.T) {
+			resolver := newTestResolver(test.MetadataFixture, "", "")
+
+			actual, err := NewPythonPackageCataloger().Catalog(resolver)
+			if err != nil {
+				t.Fatalf("failed to catalog python package: %+v", err)
+			}
+
+			if len(actual) != 0 {
+				t.Fatalf("Expected 0 packages but found: %d", len(actual))
+			}
+		})
+	}
+
+}
