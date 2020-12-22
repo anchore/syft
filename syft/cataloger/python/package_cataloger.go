@@ -91,6 +91,12 @@ func (c *PackageCataloger) catalogEggOrWheel(entry *packageEntry) (*pkg.Package,
 		return nil, err
 	}
 
+	// This can happen for Python 2.7 where it is reported from an egg-info, but Python is
+	// the actual runtime, it isn't a "package". The special-casing here allows to skip it
+	if metadata.Name == "Python" {
+		return nil, nil
+	}
+
 	var licenses []string
 	if metadata.License != "" {
 		licenses = []string{metadata.License}
