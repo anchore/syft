@@ -1,14 +1,7 @@
 package python
 
 import (
-	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
-	"strings"
 	"testing"
-
-	"github.com/anchore/syft/internal/file"
 
 	"github.com/anchore/syft/syft/source"
 
@@ -16,139 +9,20 @@ import (
 	"github.com/go-test/deep"
 )
 
-// TODO: make this generic (based on maps of source.FileData) and make a generic mock to move to the source pkg
-type pythonTestResolverMock struct {
-	metadataReader io.Reader
-	recordReader   io.Reader
-	topLevelReader io.Reader
-	metadataRef    *source.Location
-	recordRef      *source.Location
-	topLevelRef    *source.Location
-	contents       map[source.Location]string
-}
-
-func newTestResolver(metaPath, recordPath, topPath string) *pythonTestResolverMock {
-	metadataReader, err := os.Open(metaPath)
-	if err != nil {
-		panic(fmt.Errorf("failed to open metadata: %+v", err))
-	}
-
-	var recordReader io.Reader
-	if recordPath != "" {
-		recordReader, err = os.Open(recordPath)
-		if err != nil {
-			panic(fmt.Errorf("failed to open record: %+v", err))
-		}
-	}
-
-	var topLevelReader io.Reader
-	if topPath != "" {
-		topLevelReader, err = os.Open(topPath)
-		if err != nil {
-			panic(fmt.Errorf("failed to open top level: %+v", err))
-		}
-	}
-
-	var recordRef *source.Location
-	if recordReader != nil {
-		ref := source.NewLocation("test-fixtures/dist-info/RECORD")
-		recordRef = &ref
-	}
-	var topLevelRef *source.Location
-	if topLevelReader != nil {
-		ref := source.NewLocation("test-fixtures/dist-info/top_level.txt")
-		topLevelRef = &ref
-	}
-	metadataRef := source.NewLocation("test-fixtures/dist-info/METADATA")
-	return &pythonTestResolverMock{
-		recordReader:   recordReader,
-		metadataReader: metadataReader,
-		topLevelReader: topLevelReader,
-		metadataRef:    &metadataRef,
-		recordRef:      recordRef,
-		topLevelRef:    topLevelRef,
-		contents:       make(map[source.Location]string),
-	}
-}
-
-func (r *pythonTestResolverMock) FileContentsByLocation(location source.Location) (string, error) {
-	switch {
-	case r.topLevelRef != nil && location.Path == r.topLevelRef.Path:
-		b, err := ioutil.ReadAll(r.topLevelReader)
-		if err != nil {
-			return "", err
-		}
-		return string(b), nil
-	case location.Path == r.metadataRef.Path:
-		b, err := ioutil.ReadAll(r.metadataReader)
-		if err != nil {
-			return "", err
-		}
-		return string(b), nil
-	case location.Path == r.recordRef.Path:
-		b, err := ioutil.ReadAll(r.recordReader)
-		if err != nil {
-			return "", err
-		}
-		return string(b), nil
-	}
-	return "", fmt.Errorf("invalid value given")
-}
-
-func (r *pythonTestResolverMock) MultipleFileContentsByLocation(locations []source.Location) (map[source.Location]string, error) {
-	var results = make(map[source.Location]string)
-	var err error
-	for _, l := range locations {
-		results[l], err = r.FileContentsByLocation(l)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return results, nil
-}
-
-func (r *pythonTestResolverMock) FilesByPath(_ ...string) ([]source.Location, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (r *pythonTestResolverMock) FilesByGlob(patterns ...string) ([]source.Location, error) {
-	var results []source.Location
-	for _, pattern := range patterns {
-		for _, l := range []*source.Location{r.topLevelRef, r.metadataRef, r.recordRef} {
-			if l == nil {
-				continue
-			}
-			if file.GlobMatch(pattern, l.Path) {
-				results = append(results, *l)
-			}
-		}
-	}
-	return results, nil
-}
-func (r *pythonTestResolverMock) RelativeFileByPath(_ source.Location, path string) *source.Location {
-	switch {
-	case strings.Contains(path, "RECORD"):
-		return r.recordRef
-	case strings.Contains(path, "top_level.txt"):
-		return r.topLevelRef
-	default:
-		panic(fmt.Errorf("invalid RelativeFileByPath value given: %q", path))
-	}
-}
-
 func TestPythonPackageWheelCataloger(t *testing.T) {
 	tests := []struct {
-		MetadataFixture string
-		RecordFixture   string
-		TopLevelFixture string
-		ExpectedPackage pkg.Package
+		name            string
+		fixtures        []string
+		expectedPackage pkg.Package
 	}{
 		{
-			MetadataFixture: "test-fixtures/egg-info/PKG-INFO",
-			RecordFixture:   "test-fixtures/egg-info/RECORD",
-			TopLevelFixture: "test-fixtures/egg-info/top_level.txt",
-			ExpectedPackage: pkg.Package{
+			name: "egg-info directory",
+			fixtures: []string{
+				"test-fixtures/egg-info/PKG-INFO",
+				"test-fixtures/egg-info/RECORD",
+				"test-fixtures/egg-info/top_level.txt",
+			},
+			expectedPackage: pkg.Package{
 				Name:         "requests",
 				Version:      "2.22.0",
 				Type:         pkg.PythonPkg,
@@ -177,10 +51,13 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			},
 		},
 		{
-			MetadataFixture: "test-fixtures/dist-info/METADATA",
-			RecordFixture:   "test-fixtures/dist-info/RECORD",
-			TopLevelFixture: "test-fixtures/dist-info/top_level.txt",
-			ExpectedPackage: pkg.Package{
+			name: "dist-info directory",
+			fixtures: []string{
+				"test-fixtures/dist-info/METADATA",
+				"test-fixtures/dist-info/RECORD",
+				"test-fixtures/dist-info/top_level.txt",
+			},
+			expectedPackage: pkg.Package{
 				Name:         "Pygments",
 				Version:      "2.6.1",
 				Type:         pkg.PythonPkg,
@@ -210,8 +87,9 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 		{
 			// in cases where the metadata file is available and the record is not we should still record there is a package
 			// additionally empty top_level.txt files should not result in an error
-			MetadataFixture: "test-fixtures/partial.dist-info/METADATA",
-			ExpectedPackage: pkg.Package{
+			name:     "partial dist-info directory",
+			fixtures: []string{"test-fixtures/partial.dist-info/METADATA"},
+			expectedPackage: pkg.Package{
 				Name:         "Pygments",
 				Version:      "2.6.1",
 				Type:         pkg.PythonPkg,
@@ -231,8 +109,9 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			},
 		},
 		{
-			MetadataFixture: "test-fixtures/test.egg-info",
-			ExpectedPackage: pkg.Package{
+			name:     "egg-info regular file",
+			fixtures: []string{"test-fixtures/test.egg-info"},
+			expectedPackage: pkg.Package{
 				Name:         "requests",
 				Version:      "2.22.0",
 				Type:         pkg.PythonPkg,
@@ -254,19 +133,15 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.MetadataFixture, func(t *testing.T) {
-			resolver := newTestResolver(test.MetadataFixture, test.RecordFixture, test.TopLevelFixture)
+		t.Run(test.name, func(t *testing.T) {
+			resolver := source.NewMockResolverForPaths(test.fixtures...)
 
-			// note that the source is the record ref created by the resolver mock... attach the expected values
-			test.ExpectedPackage.Locations = []source.Location{*resolver.metadataRef}
-			if resolver.recordRef != nil {
-				test.ExpectedPackage.Locations = append(test.ExpectedPackage.Locations, *resolver.recordRef)
+			locations, err := resolver.FilesByPath(test.fixtures...)
+			if err != nil {
+				t.Fatal(err)
 			}
 
-			if resolver.topLevelRef != nil {
-				test.ExpectedPackage.Locations = append(test.ExpectedPackage.Locations, *resolver.topLevelRef)
-			}
-			// end patching expected values with runtime data...
+			test.expectedPackage.Locations = locations
 
 			actual, err := NewPythonPackageCataloger().Catalog(resolver)
 			if err != nil {
@@ -274,22 +149,20 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			}
 
 			if len(actual) != 1 {
-				t.Fatalf("unexpected length: %d", len(actual))
+				t.Fatalf("unexpected number of packages: %d", len(actual))
 			}
 
-			for _, d := range deep.Equal(actual[0], test.ExpectedPackage) {
+			for _, d := range deep.Equal(actual[0], test.expectedPackage) {
 				t.Errorf("diff: %+v", d)
 			}
 		})
 	}
-
 }
 
 func TestIgnorePackage(t *testing.T) {
 	tests := []struct {
 		MetadataFixture string
 	}{
-
 		{
 			MetadataFixture: "test-fixtures/Python-2.7.egg-info",
 		},
@@ -297,7 +170,7 @@ func TestIgnorePackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
-			resolver := newTestResolver(test.MetadataFixture, "", "")
+			resolver := source.NewMockResolverForPaths(test.MetadataFixture)
 
 			actual, err := NewPythonPackageCataloger().Catalog(resolver)
 			if err != nil {
@@ -309,5 +182,4 @@ func TestIgnorePackage(t *testing.T) {
 			}
 		})
 	}
-
 }

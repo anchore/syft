@@ -56,5 +56,64 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestIsRegularEggFile(t *testing.T) {
+	cases := []struct {
+		path     string
+		expected bool
+	}{
+		{
+			"/usr/lib64/python2.6/site-packages/M2Crypto-0.20.2-py2.6.egg-info",
+			true,
+		},
+		{
+			"/usr/lib64/python2.6/site-packages/M2Crypto-0.20.2-py2.6.egg-info/PKG-INFO",
+			false,
+		},
+		{
+			"/usr/lib64/python2.6/site-packages/M2Crypto-0.20.2-py2.6.dist-info/METADATA",
+			false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.path, func(t *testing.T) {
+			actual := isEggRegularFile(c.path)
+
+			if actual != c.expected {
+				t.Errorf("expected %t but got %t", c.expected, actual)
+			}
+		})
+	}
+}
+
+func TestDetermineSitePackagesRootPath(t *testing.T) {
+	cases := []struct {
+		inputPath string
+		expected  string
+	}{
+		{
+			inputPath: "/usr/lib64/python2.6/site-packages/ethtool-0.6-py2.6.egg-info",
+			expected:  "/usr/lib64/python2.6/site-packages",
+		},
+		{
+			inputPath: "/usr/lib/python2.7/dist-packages/configobj-5.0.6.egg-info/top_level.txt",
+			expected:  "/usr/lib/python2.7/dist-packages",
+		},
+		{
+			inputPath: "/usr/lib/python2.7/dist-packages/six-1.10.0.egg-info/PKG-INFO",
+			expected:  "/usr/lib/python2.7/dist-packages",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.inputPath, func(t *testing.T) {
+			actual := determineSitePackagesRootPath(c.inputPath)
+
+			if actual != c.expected {
+				t.Errorf("expected %s but got %s", c.expected, actual)
+			}
+		})
+	}
 }
