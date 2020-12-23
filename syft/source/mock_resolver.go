@@ -2,9 +2,10 @@ package source
 
 import (
 	"fmt"
-	"github.com/anchore/syft/internal/file"
 	"io/ioutil"
 	"os"
+
+	"github.com/anchore/syft/internal/file"
 )
 
 var _ Resolver = (*MockResolver)(nil)
