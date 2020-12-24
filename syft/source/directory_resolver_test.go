@@ -171,8 +171,9 @@ func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
 		}
 
-		if len(refs) != 2 {
-			t.Errorf("unexpected number of refs: %d != 2", len(refs))
+		expected := 2
+		if len(refs) != expected {
+			t.Errorf("unexpected number of refs: %d != %d", len(refs), expected)
 		}
 
 	})
@@ -187,8 +188,9 @@ func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
 			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
 		}
 
-		if len(refs) != 4 {
-			t.Errorf("unexpected number of refs: %d != 4", len(refs))
+		expected := 6
+		if len(refs) != expected {
+			t.Errorf("unexpected number of refs: %d != %d", len(refs), expected)
 		}
 
 	})
@@ -202,8 +204,9 @@ func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
 			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
 		}
 
-		if len(refs) != 1 {
-			t.Errorf("unexpected number of refs: %d != 1", len(refs))
+		expected := 1
+		if len(refs) != expected {
+			t.Errorf("unexpected number of refs: %d != %d", len(refs), expected)
 		}
 
 	})

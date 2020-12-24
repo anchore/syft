@@ -100,7 +100,7 @@ func TestTextImgPresenter(t *testing.T) {
 		l.Metadata.Digest = "sha256:ad8ecdc058976c07e7e347cb89fa9ad86a294b5ceaae6d09713fb035f84115abf3c4a2388a4af3aa60f13b94f4c6846930bdf53"
 	}
 
-	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
+	s, err := source.NewFromImage(img, source.SquashedScope, "user-image-input")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,13 +18,16 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 		resolutions []resolution
 	}{
 		{
-			name:     "link with previous data",
-			linkPath: "/link-1",
+			name:        "link with previous data",
+			linkPath:    "/link-1",
 			resolutions: []resolution{
-				{
-					layer: 1,
-					path:  "/file-1.txt",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 1,
+				//	path:  "/file-1.txt",
+				//},
 			},
 		},
 		{
@@ -38,45 +41,54 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			},
 		},
 		{
-			name:     "link with overridden data",
-			linkPath: "/link-2",
+			name:        "link with overridden data",
+			linkPath:    "/link-2",
 			resolutions: []resolution{
-				{
-					layer: 3,
-					path:  "/link-2",
-				},
-				{
-					layer: 4,
-					path:  "/file-2.txt",
-				},
-				{
-					layer: 7,
-					path:  "/file-2.txt",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 3,
+				//	path:  "/link-2",
+				//},
+				//{
+				//	layer: 4,
+				//	path:  "/file-2.txt",
+				//},
+				//{
+				//	layer: 7,
+				//	path:  "/file-2.txt",
+				//},
 			},
 		},
 		{
-			name:     "indirect link (with overridden data)",
-			linkPath: "/link-indirect",
+			name:        "indirect link (with overridden data)",
+			linkPath:    "/link-indirect",
 			resolutions: []resolution{
-				{
-					layer: 4,
-					path:  "/file-2.txt",
-				},
-				{
-					layer: 7,
-					path:  "/file-2.txt",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 4,
+				//	path:  "/file-2.txt",
+				//},
+				//{
+				//	layer: 7,
+				//	path:  "/file-2.txt",
+				//},
 			},
 		},
 		{
-			name:     "dead link",
-			linkPath: "/link-dead",
+			name:        "dead link",
+			linkPath:    "/link-dead",
 			resolutions: []resolution{
-				{
-					layer: 8,
-					path:  "/link-dead",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 8,
+				//	path:  "/link-dead",
+				//},
 			},
 		},
 		{
@@ -131,13 +143,16 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 		resolutions []resolution
 	}{
 		{
-			name: "link with previous data",
-			glob: "**/*ink-1",
+			name:        "link with previous data",
+			glob:        "**/*ink-1",
 			resolutions: []resolution{
-				{
-					layer: 1,
-					path:  "/file-1.txt",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 1,
+				//	path:  "/file-1.txt",
+				//},
 			},
 		},
 		{
@@ -151,45 +166,54 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 			},
 		},
 		{
-			name: "link with overridden data",
-			glob: "**/*ink-2",
+			name:        "link with overridden data",
+			glob:        "**/*ink-2",
 			resolutions: []resolution{
-				{
-					layer: 3,
-					path:  "/link-2",
-				},
-				{
-					layer: 4,
-					path:  "/file-2.txt",
-				},
-				{
-					layer: 7,
-					path:  "/file-2.txt",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 3,
+				//	path:  "/link-2",
+				//},
+				//{
+				//	layer: 4,
+				//	path:  "/file-2.txt",
+				//},
+				//{
+				//	layer: 7,
+				//	path:  "/file-2.txt",
+				//},
 			},
 		},
 		{
-			name: "indirect link (with overridden data)",
-			glob: "**/*nk-indirect",
+			name:        "indirect link (with overridden data)",
+			glob:        "**/*nk-indirect",
 			resolutions: []resolution{
-				{
-					layer: 4,
-					path:  "/file-2.txt",
-				},
-				{
-					layer: 7,
-					path:  "/file-2.txt",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 4,
+				//	path:  "/file-2.txt",
+				//},
+				//{
+				//	layer: 7,
+				//	path:  "/file-2.txt",
+				//},
 			},
 		},
 		{
-			name: "dead link",
-			glob: "**/*k-dead",
+			name:        "dead link",
+			glob:        "**/*k-dead",
 			resolutions: []resolution{
-				{
-					layer: 8,
-					path:  "/link-dead",
-				},
+				// commented out to illustrate previous behavior, when dead links were resolved to the nearest lower
+				// layer with a valid link resolution. Symlink resolution changes in stereoscope makes this
+				// very difficult to do.
+				//{
+				//	layer: 8,
+				//	path:  "/link-dead",
+				//},
 			},
 		},
 		{

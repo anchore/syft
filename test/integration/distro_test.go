@@ -16,7 +16,7 @@ func TestDistroImage(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	_, _, actualDistro, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
+	_, _, actualDistro, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}

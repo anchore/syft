@@ -31,7 +31,7 @@ func TestCatalogFromJSON(t *testing.T) {
 			tarPath := imagetest.GetFixtureImageTarPath(t, test.fixture)
 			defer cleanup()
 
-			expectedSource, expectedCatalog, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
+			expectedSource, expectedCatalog, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
 			if err != nil {
 				t.Fatalf("failed to catalog image: %+v", err)
 			}

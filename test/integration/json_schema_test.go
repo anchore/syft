@@ -60,7 +60,7 @@ func TestJsonSchemaImg(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	src, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.AllLayersScope)
+	src, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -87,7 +87,7 @@ func TestJsonSchemaImg(t *testing.T) {
 }
 
 func TestJsonSchemaDirs(t *testing.T) {
-	src, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.AllLayersScope)
+	src, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.SquashedScope)
 	if err != nil {
 		t.Errorf("unable to create source from dir: %+v", err)
 	}
