@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/internal/log"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 )
@@ -156,6 +158,7 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 
 	exists, _, relativeRef, err := entry.Layer.SquashedTree.File(file.Path(path), true)
 	if err != nil {
+		log.Errorf("failed to find path=%q in squash: %+w", path, err)
 		return nil
 	}
 	if !exists && relativeRef == nil {

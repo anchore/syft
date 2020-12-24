@@ -41,7 +41,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			name:         "dead link",
 			linkPath:     "/link-dead",
 			resolveLayer: 8,
-			resolvePath:  "/link-dead",
+			resolvePath:  "",
 		},
 		{
 			name:        "ignore directories",
