@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/stereoscope/pkg/filetree"
+
 	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -83,12 +85,12 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 			}
 
 			// don't consider directories (special case: there is no path information for /)
-			if ref.Path == "/" {
+			if ref.RealPath == "/" {
 				continue
 			} else if r.img.FileCatalog.Exists(*ref) {
 				metadata, err := r.img.FileCatalog.Get(*ref)
 				if err != nil {
-					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 				}
 				if metadata.Metadata.IsDir {
 					continue
@@ -115,31 +117,31 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 
 	for _, pattern := range patterns {
 		for idx, layerIdx := range r.layers {
-			refs, err := r.img.Layers[layerIdx].Tree.FilesByGlob(pattern)
+			results, err := r.img.Layers[layerIdx].Tree.FilesByGlob(pattern, filetree.GlobDoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 			}
 
-			for _, ref := range refs {
+			for _, result := range results {
 				// don't consider directories (special case: there is no path information for /)
-				if ref.Path == "/" {
+				if result.RealPath == "/" {
 					continue
-				} else if r.img.FileCatalog.Exists(ref) {
-					metadata, err := r.img.FileCatalog.Get(ref)
+				} else if r.img.FileCatalog.Exists(result.Reference) {
+					metadata, err := r.img.FileCatalog.Get(result.Reference)
 					if err != nil {
-						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.Path, err)
 					}
 					if metadata.Metadata.IsDir {
 						continue
 					}
 				}
 
-				results, err := r.fileByRef(ref, uniqueFileIDs, idx)
+				refResults, err := r.fileByRef(result.Reference, uniqueFileIDs, idx)
 				if err != nil {
 					return nil, err
 				}
-				for _, result := range results {
-					uniqueLocations = append(uniqueLocations, NewLocationFromImage(result, r.img))
+				for _, refResult := range refResults {
+					uniqueLocations = append(uniqueLocations, NewLocationFromImage(refResult, r.img))
 				}
 			}
 		}

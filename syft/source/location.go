@@ -27,13 +27,13 @@ func NewLocationFromImage(ref file.Reference, img *image.Image) Location {
 	if err != nil {
 		log.Warnf("unable to find file catalog entry for ref=%+v", ref)
 		return Location{
-			Path: string(ref.Path),
+			Path: string(ref.RealPath),
 			ref:  ref,
 		}
 	}
 
 	return Location{
-		Path:         string(ref.Path),
+		Path:         string(ref.RealPath),
 		FileSystemID: entry.Layer.Metadata.Digest,
 		ref:          ref,
 	}

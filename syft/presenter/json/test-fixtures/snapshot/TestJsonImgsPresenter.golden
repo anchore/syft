@@ -71,7 +71,7 @@
     "stereoscope-fixture-image-simple:04e16e44161c8888a1a963720fd0443cbf7eef8101434c431de8725cd98cc9f7"
    ],
    "imageSize": 65,
-   "scope": "AllLayers",
+   "scope": "Squashed",
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
