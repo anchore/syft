@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/stereoscope/pkg/filetree"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 )
@@ -30,11 +32,11 @@ func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 	for _, path := range paths {
 		tree := r.img.SquashedTree()
-		exists, _, ref, err := tree.File(file.Path(path), true)
+		_, _, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
-		if !exists && ref == nil {
+		if ref == nil {
 			// no file found, keep looking through layers
 			continue
 		}
@@ -80,19 +82,19 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 
 		for _, result := range results {
 			// don't consider directories (special case: there is no path information for /)
-			if result.Path == "/" {
+			if result.MatchPath == "/" {
 				continue
 			} else if r.img.FileCatalog.Exists(result.Reference) {
 				metadata, err := r.img.FileCatalog.Get(result.Reference)
 				if err != nil {
-					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.Path, err)
+					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.MatchPath, err)
 				}
 				if metadata.Metadata.IsDir {
 					continue
 				}
 			}
 
-			resolvedLocations, err := r.FilesByPath(string(result.Path))
+			resolvedLocations, err := r.FilesByPath(string(result.MatchPath))
 			if err != nil {
 				return nil, fmt.Errorf("failed to find files by path (result=%+v): %w", result, err)
 			}

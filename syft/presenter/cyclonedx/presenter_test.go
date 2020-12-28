@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/filetree"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 
 	"github.com/anchore/go-testutils"
@@ -94,8 +96,8 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-simple")
 	defer cleanup()
 
-	_, _, ref1, _ := img.SquashedTree().File("/somefile-1.txt", true)
-	_, _, ref2, _ := img.SquashedTree().File("/somefile-2.txt", true)
+	_, _, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
+	_, _, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{

@@ -75,11 +75,11 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 	for _, path := range paths {
 		for idx, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
-			exists, _, ref, err := tree.File(file.Path(path), true)
+			_, _, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, err
 			}
-			if !exists && ref == nil {
+			if ref == nil {
 				// no file found, keep looking through layers
 				continue
 			}
@@ -117,7 +117,7 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 
 	for _, pattern := range patterns {
 		for idx, layerIdx := range r.layers {
-			results, err := r.img.Layers[layerIdx].Tree.FilesByGlob(pattern, filetree.GlobDoNotFollowDeadBasenameLinks)
+			results, err := r.img.Layers[layerIdx].Tree.FilesByGlob(pattern, filetree.DoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 			}
@@ -129,7 +129,7 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 				} else if r.img.FileCatalog.Exists(result.Reference) {
 					metadata, err := r.img.FileCatalog.Get(result.Reference)
 					if err != nil {
-						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.Path, err)
+						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.MatchPath, err)
 					}
 					if metadata.Metadata.IsDir {
 						continue
@@ -158,7 +158,7 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 		return nil
 	}
 
-	exists, _, relativeRef, err := entry.Layer.SquashedTree.File(file.Path(path), true)
+	exists, _, relativeRef, err := entry.Layer.SquashedTree.File(file.Path(path), filetree.FollowBasenameLinks)
 	if err != nil {
 		log.Errorf("failed to find path=%q in squash: %+w", path, err)
 		return nil
