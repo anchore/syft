@@ -108,8 +108,8 @@ func TestJsonImgsPresenter(t *testing.T) {
 	catalog := pkg.NewCatalog()
 	img := imagetest.GetGoldenFixtureImage(t, testImage)
 
-	_, _, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
-	_, _, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
+	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
+	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{

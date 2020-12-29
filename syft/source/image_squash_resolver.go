@@ -32,7 +32,7 @@ func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 	for _, path := range paths {
 		tree := r.img.SquashedTree()
-		_, _, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks)
+		_, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}

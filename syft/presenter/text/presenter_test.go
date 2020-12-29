@@ -72,8 +72,8 @@ func TestTextImgPresenter(t *testing.T) {
 	img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-simple")
 	defer cleanup()
 
-	_, _, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
-	_, _, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
+	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
+	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{

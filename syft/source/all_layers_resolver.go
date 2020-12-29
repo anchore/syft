@@ -75,7 +75,7 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 	for _, path := range paths {
 		for idx, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
-			_, _, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
+			_, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, err
 			}
@@ -158,7 +158,7 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 		return nil
 	}
 
-	exists, _, relativeRef, err := entry.Layer.SquashedTree.File(file.Path(path), filetree.FollowBasenameLinks)
+	exists, relativeRef, err := entry.Layer.SquashedTree.File(file.Path(path), filetree.FollowBasenameLinks)
 	if err != nil {
 		log.Errorf("failed to find path=%q in squash: %+w", path, err)
 		return nil
