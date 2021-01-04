@@ -54,7 +54,7 @@ func TestDpkgCataloger(t *testing.T) {
 			img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-dpkg")
 			defer cleanup()
 
-			s, err := source.NewFromImage(img, source.AllLayersScope, "")
+			s, err := source.NewFromImage(img, source.SquashedScope, "")
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -5,6 +5,8 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/filetree"
+
 	"github.com/go-test/deep"
 
 	"github.com/anchore/go-testutils"
@@ -25,12 +27,15 @@ func TestTablePresenter(t *testing.T) {
 	img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 	defer cleanup()
 
+	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
+	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
+
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
+			source.NewLocationFromImage(*ref1, img),
 		},
 		Type: pkg.DebPkg,
 	})
@@ -38,7 +43,7 @@ func TestTablePresenter(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
+			source.NewLocationFromImage(*ref2, img),
 		},
 		Type: pkg.DebPkg,
 	})

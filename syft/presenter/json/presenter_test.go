@@ -5,6 +5,8 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/filetree"
+
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
@@ -106,12 +108,15 @@ func TestJsonImgsPresenter(t *testing.T) {
 	catalog := pkg.NewCatalog()
 	img := imagetest.GetGoldenFixtureImage(t, testImage)
 
+	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
+	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
+
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
+			source.NewLocationFromImage(*ref1, img),
 		},
 		Type:         pkg.PythonPkg,
 		FoundBy:      "the-cataloger-1",
@@ -131,7 +136,7 @@ func TestJsonImgsPresenter(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
+			source.NewLocationFromImage(*ref2, img),
 		},
 		Type:         pkg.DebPkg,
 		FoundBy:      "the-cataloger-2",
@@ -149,7 +154,7 @@ func TestJsonImgsPresenter(t *testing.T) {
 	// this is a hard coded value that is not given by the fixture helper and must be provided manually
 	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
 
-	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
+	s, err := source.NewFromImage(img, source.SquashedScope, "user-image-input")
 	var d *distro.Distro
 	pres := NewPresenter(catalog, s.Metadata, d)
 

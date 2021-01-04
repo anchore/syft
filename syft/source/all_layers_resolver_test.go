@@ -42,10 +42,6 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			linkPath: "/link-2",
 			resolutions: []resolution{
 				{
-					layer: 3,
-					path:  "/link-2",
-				},
-				{
 					layer: 4,
 					path:  "/file-2.txt",
 				},
@@ -70,14 +66,9 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			},
 		},
 		{
-			name:     "dead link",
-			linkPath: "/link-dead",
-			resolutions: []resolution{
-				{
-					layer: 8,
-					path:  "/link-dead",
-				},
-			},
+			name:        "dead link",
+			linkPath:    "/link-dead",
+			resolutions: []resolution{},
 		},
 		{
 			name:        "ignore directories",
@@ -132,7 +123,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 	}{
 		{
 			name: "link with previous data",
-			glob: "**ink-1",
+			glob: "**/*ink-1",
 			resolutions: []resolution{
 				{
 					layer: 1,
@@ -142,7 +133,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 		},
 		{
 			name: "link with in layer data",
-			glob: "**nk-within",
+			glob: "**/*nk-within",
 			resolutions: []resolution{
 				{
 					layer: 5,
@@ -152,12 +143,8 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 		},
 		{
 			name: "link with overridden data",
-			glob: "**ink-2",
+			glob: "**/*ink-2",
 			resolutions: []resolution{
-				{
-					layer: 3,
-					path:  "/link-2",
-				},
 				{
 					layer: 4,
 					path:  "/file-2.txt",
@@ -170,7 +157,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 		},
 		{
 			name: "indirect link (with overridden data)",
-			glob: "**nk-indirect",
+			glob: "**/*nk-indirect",
 			resolutions: []resolution{
 				{
 					layer: 4,
@@ -183,14 +170,9 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 			},
 		},
 		{
-			name: "dead link",
-			glob: "**k-dead",
-			resolutions: []resolution{
-				{
-					layer: 8,
-					path:  "/link-dead",
-				},
-			},
+			name:        "dead link",
+			glob:        "**/*k-dead",
+			resolutions: []resolution{},
 		},
 		{
 			name:        "ignore directories",

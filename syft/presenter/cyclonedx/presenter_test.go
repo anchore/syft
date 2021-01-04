@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/filetree"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 
 	"github.com/anchore/go-testutils"
@@ -94,12 +96,15 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 	img, cleanup := imagetest.GetFixtureImage(t, "docker-archive", "image-simple")
 	defer cleanup()
 
+	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
+	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
+
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
 		Name:    "package1",
 		Version: "1.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-1.txt"), img),
+			source.NewLocationFromImage(*ref1, img),
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-1",
@@ -109,7 +114,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		Name:    "package2",
 		Version: "2.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*img.SquashedTree().File("/somefile-2.txt"), img),
+			source.NewLocationFromImage(*ref2, img),
 		},
 		Type:    pkg.RpmPkg,
 		FoundBy: "the-cataloger-2",
@@ -120,7 +125,7 @@ func TestCycloneDxImgsPresenter(t *testing.T) {
 		PURL: "the-purl-2",
 	})
 
-	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
+	s, err := source.NewFromImage(img, source.SquashedScope, "user-image-input")
 	if err != nil {
 		t.Fatal(err)
 	}

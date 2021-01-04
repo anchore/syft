@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/stereoscope/pkg/filetree"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 )
@@ -30,19 +32,22 @@ func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 	for _, path := range paths {
 		tree := r.img.SquashedTree()
-		ref := tree.File(file.Path(path))
+		_, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks)
+		if err != nil {
+			return nil, err
+		}
 		if ref == nil {
 			// no file found, keep looking through layers
 			continue
 		}
 
 		// don't consider directories (special case: there is no path information for /)
-		if ref.Path == "/" {
+		if ref.RealPath == "/" {
 			continue
 		} else if r.img.FileCatalog.Exists(*ref) {
 			metadata, err := r.img.FileCatalog.Get(*ref)
 			if err != nil {
-				return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+				return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 			}
 			if metadata.Metadata.IsDir {
 				continue
@@ -70,28 +75,28 @@ func (r *ImageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		refs, err := r.img.SquashedTree().FilesByGlob(pattern)
+		results, err := r.img.SquashedTree().FilesByGlob(pattern)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 		}
 
-		for _, ref := range refs {
+		for _, result := range results {
 			// don't consider directories (special case: there is no path information for /)
-			if ref.Path == "/" {
+			if result.MatchPath == "/" {
 				continue
-			} else if r.img.FileCatalog.Exists(ref) {
-				metadata, err := r.img.FileCatalog.Get(ref)
+			} else if r.img.FileCatalog.Exists(result.Reference) {
+				metadata, err := r.img.FileCatalog.Get(result.Reference)
 				if err != nil {
-					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.Path, err)
+					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.MatchPath, err)
 				}
 				if metadata.Metadata.IsDir {
 					continue
 				}
 			}
 
-			resolvedLocations, err := r.FilesByPath(string(ref.Path))
+			resolvedLocations, err := r.FilesByPath(string(result.MatchPath))
 			if err != nil {
-				return nil, fmt.Errorf("failed to find files by path (ref=%+v): %w", ref, err)
+				return nil, fmt.Errorf("failed to find files by path (result=%+v): %w", result, err)
 			}
 			for _, resolvedLocation := range resolvedLocations {
 				if !uniqueFileIDs.Contains(resolvedLocation.ref) {
