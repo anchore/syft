@@ -140,6 +140,8 @@ github.com/anchore/stereoscope v0.0.0-20201210022249-091f9bddb42e h1:vHUqHTvH9/o
 github.com/anchore/stereoscope v0.0.0-20201210022249-091f9bddb42e/go.mod h1:/dHAFjYflH/1tzhdHAcnMCjprMch+YzHJKi59m/1KCM=
 github.com/anchore/stereoscope v0.0.0-20201219143203-af397ece87bf h1:4sN/HJ6whcrK/HxORFGAQUWM58Q7EFiPmoxRKcEs76A=
 github.com/anchore/stereoscope v0.0.0-20201219143203-af397ece87bf/go.mod h1:/dHAFjYflH/1tzhdHAcnMCjprMch+YzHJKi59m/1KCM=
+github.com/anchore/stereoscope v0.0.0-20210104203718-4c1d1bd9a255 h1:Ng7BDr9PQTCztANogjfEdEjjWUylhlPyZPhtarIGo00=
+github.com/anchore/stereoscope v0.0.0-20210104203718-4c1d1bd9a255/go.mod h1:BMdPL0QEIYfpjQ3M7sHYZvuh6+vcomqF3TMHL8gr6Vw=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/antihax/optional v1.0.0 h1:xK2lYat7ZLaVVcIuj82J8kIro4V6kDe0AUDFboUCwcg=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
