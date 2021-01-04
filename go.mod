@@ -11,7 +11,7 @@ require (
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/stereoscope v0.0.0-20210104203718-4c1d1bd9a255
 	github.com/antihax/optional v1.0.0
-	github.com/bmatcuk/doublestar v1.3.3
+	github.com/bmatcuk/doublestar/v2 v2.0.4
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200309214505-aa6a9891b09c+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/facebookincubator/nvdtools v0.1.4
