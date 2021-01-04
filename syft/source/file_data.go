@@ -1,6 +1,8 @@
 package source
 
+import "io"
+
 type FileData struct {
 	Location Location
-	Contents string
+	Contents io.ReadCloser
 }

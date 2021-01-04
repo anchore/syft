@@ -116,8 +116,8 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}
 
-				if entry.Source.Metadata.Index != expected.layer {
-					t.Errorf("bad resolve layer: '%d'!='%d'", entry.Source.Metadata.Index, expected.layer)
+				if entry.Layer.Metadata.Index != expected.layer {
+					t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, expected.layer)
 				}
 			}
 		})
@@ -229,8 +229,8 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}
 
-				if entry.Source.Metadata.Index != expected.layer {
-					t.Errorf("bad resolve layer: '%d'!='%d'", entry.Source.Metadata.Index, expected.layer)
+				if entry.Layer.Metadata.Index != expected.layer {
+					t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, expected.layer)
 				}
 			}
 		})

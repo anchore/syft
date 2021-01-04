@@ -1,6 +1,7 @@
 package distro
 
 import (
+	"io/ioutil"
 	"regexp"
 	"strings"
 
@@ -16,27 +17,27 @@ type parseEntry struct {
 	fn   parseFunc
 }
 
+var identityFiles = []parseEntry{
+	{
+		// most distros provide a link at this location
+		path: "/etc/os-release",
+		fn:   parseOsRelease,
+	},
+	{
+		// standard location for rhel & debian distros
+		path: "/usr/lib/os-release",
+		fn:   parseOsRelease,
+	},
+	{
+		// check for busybox (important to check this last since other distros contain the busybox binary)
+		path: "/bin/busybox",
+		fn:   parseBusyBox,
+	},
+}
+
 // Identify parses distro-specific files to determine distro metadata like version and release.
 func Identify(resolver source.Resolver) *Distro {
 	var distro *Distro
-
-	identityFiles := []parseEntry{
-		{
-			// most distros provide a link at this location
-			path: "/etc/os-release",
-			fn:   parseOsRelease,
-		},
-		{
-			// standard location for rhel & debian distros
-			path: "/usr/lib/os-release",
-			fn:   parseOsRelease,
-		},
-		{
-			// check for busybox (important to check this last since other distros contain the busybox binary)
-			path: "/bin/busybox",
-			fn:   parseBusyBox,
-		},
-	}
 
 identifyLoop:
 	for _, entry := range identityFiles {
@@ -52,19 +53,25 @@ identifyLoop:
 		}
 
 		for _, location := range locations {
-			content, err := resolver.FileContentsByLocation(location)
+			contentReader, err := resolver.FileContentsByLocation(location)
 
 			if err != nil {
 				log.Debugf("unable to get contents from %s: %s", entry.path, err)
 				continue
 			}
 
-			if content == "" {
+			content, err := ioutil.ReadAll(contentReader)
+			if err != nil {
+				log.Errorf("unable to read %q: %+v", location.Path, err)
+				break
+			}
+
+			if len(content) == 0 {
 				log.Debugf("no contents in file, skipping: %s", entry.path)
 				continue
 			}
 
-			if candidateDistro := entry.fn(content); candidateDistro != nil {
+			if candidateDistro := entry.fn(string(content)); candidateDistro != nil {
 				distro = candidateDistro
 				break identifyLoop
 			}

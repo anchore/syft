@@ -4,28 +4,28 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 type testResolverMock struct {
-	contents map[source.Location]string
+	contents map[source.Location]io.ReadCloser
 }
 
 func newTestResolver() *testResolverMock {
 	return &testResolverMock{
-		contents: make(map[source.Location]string),
+		contents: make(map[source.Location]io.ReadCloser),
 	}
 }
 
-func (r *testResolverMock) FileContentsByLocation(_ source.Location) (string, error) {
-	return "", fmt.Errorf("not implemented")
+func (r *testResolverMock) FileContentsByLocation(_ source.Location) (io.ReadCloser, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *testResolverMock) MultipleFileContentsByLocation([]source.Location) (map[source.Location]string, error) {
+func (r *testResolverMock) MultipleFileContentsByLocation([]source.Location) (map[source.Location]io.ReadCloser, error) {
 	return r.contents, nil
 }
 
@@ -34,7 +34,7 @@ func (r *testResolverMock) FilesByPath(paths ...string) ([]source.Location, erro
 
 	for idx, p := range paths {
 		results[idx] = source.NewLocation(p)
-		r.contents[results[idx]] = fmt.Sprintf("%s file contents!", p)
+		r.contents[results[idx]] = ioutil.NopCloser(strings.NewReader(fmt.Sprintf("%s file contents!", p)))
 	}
 
 	return results, nil
@@ -43,7 +43,7 @@ func (r *testResolverMock) FilesByPath(paths ...string) ([]source.Location, erro
 func (r *testResolverMock) FilesByGlob(_ ...string) ([]source.Location, error) {
 	path := "/a-path.txt"
 	location := source.NewLocation(path)
-	r.contents[location] = fmt.Sprintf("%s file contents!", path)
+	r.contents[location] = ioutil.NopCloser(strings.NewReader(fmt.Sprintf("%s file contents!", path)))
 	return []source.Location{location}, nil
 }
 

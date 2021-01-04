@@ -4,7 +4,7 @@ Package common provides generic utilities used by multiple catalogers.
 package common
 
 import (
-	"strings"
+	"io"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -89,7 +89,7 @@ func (c *GenericCataloger) selectFiles(resolver source.FileResolver) []source.Lo
 }
 
 // catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
-func (c *GenericCataloger) catalog(contents map[source.Location]string) ([]pkg.Package, error) {
+func (c *GenericCataloger) catalog(contents map[source.Location]io.ReadCloser) ([]pkg.Package, error) {
 	defer c.clear()
 
 	packages := make([]pkg.Package, 0)
@@ -101,7 +101,7 @@ func (c *GenericCataloger) catalog(contents map[source.Location]string) ([]pkg.P
 			continue
 		}
 
-		entries, err := parser(location.Path, strings.NewReader(content))
+		entries, err := parser(location.Path, content)
 		if err != nil {
 			// TODO: should we fail? or only log?
 			log.Warnf("cataloger '%s' failed to parse entries (location=%+v): %+v", c.upstreamCataloger, location, err)

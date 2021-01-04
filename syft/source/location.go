@@ -34,7 +34,7 @@ func NewLocationFromImage(ref file.Reference, img *image.Image) Location {
 
 	return Location{
 		Path:         string(ref.Path),
-		FileSystemID: entry.Source.Metadata.Digest,
+		FileSystemID: entry.Layer.Metadata.Digest,
 		ref:          ref,
 	}
 }

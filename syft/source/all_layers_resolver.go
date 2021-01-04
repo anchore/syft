@@ -3,6 +3,7 @@ package source
 import (
 	"archive/tar"
 	"fmt"
+	"io"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -150,7 +151,7 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 		return nil
 	}
 
-	relativeRef := entry.Source.SquashedTree.File(file.Path(path))
+	relativeRef := entry.Layer.SquashedTree.File(file.Path(path))
 	if relativeRef == nil {
 		return nil
 	}
@@ -162,22 +163,22 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 
 // MultipleFileContentsByLocation returns the file contents for all file.References relative to the image. Note that a
 // file.Reference is a path relative to a particular layer.
-func (r *AllLayersResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
+func (r *AllLayersResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]io.ReadCloser, error) {
 	return mapLocationRefs(r.img.MultipleFileContentsByRef, locations)
 }
 
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
-func (r *AllLayersResolver) FileContentsByLocation(location Location) (string, error) {
+func (r *AllLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	return r.img.FileContentsByRef(location.ref)
 }
 
-type multiContentFetcher func(refs ...file.Reference) (map[file.Reference]string, error)
+type multiContentFetcher func(refs ...file.Reference) (map[file.Reference]io.ReadCloser, error)
 
-func mapLocationRefs(callback multiContentFetcher, locations []Location) (map[Location]string, error) {
+func mapLocationRefs(callback multiContentFetcher, locations []Location) (map[Location]io.ReadCloser, error) {
 	var fileRefs = make([]file.Reference, len(locations))
 	var locationByRefs = make(map[file.Reference]Location)
-	var results = make(map[Location]string)
+	var results = make(map[Location]io.ReadCloser)
 
 	for i, location := range locations {
 		locationByRefs[location.ref] = location

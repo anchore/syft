@@ -2,10 +2,12 @@ package source
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/anchore/stereoscope/pkg/file"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/bmatcuk/doublestar"
@@ -96,35 +98,16 @@ func (s *DirectoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 }
 
 // MultipleFileContentsByLocation returns the file contents for all file.References relative a directory.
-func (s DirectoryResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
-	refContents := make(map[Location]string)
+func (s DirectoryResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]io.ReadCloser, error) {
+	refContents := make(map[Location]io.ReadCloser)
 	for _, location := range locations {
-		contents, err := fileContents(location.Path)
-
-		if err != nil {
-			return nil, fmt.Errorf("could not read contents of file: %s", location.Path)
-		}
-		refContents[location] = string(contents)
+		refContents[location] = file.NewDeferredReadCloser(location.Path)
 	}
 	return refContents, nil
 }
 
 // FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
-func (s DirectoryResolver) FileContentsByLocation(location Location) (string, error) {
-	contents, err := fileContents(location.Path)
-	if err != nil {
-		return "", fmt.Errorf("could not read contents of file: %s", location.Path)
-	}
-
-	return string(contents), nil
-}
-
-func fileContents(path string) ([]byte, error) {
-	contents, err := ioutil.ReadFile(path)
-
-	if err != nil {
-		return nil, err
-	}
-	return contents, nil
+func (s DirectoryResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+	return file.NewDeferredReadCloser(location.Path), nil
 }

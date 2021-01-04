@@ -89,8 +89,8 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 				t.Fatalf("failed to get metadata: %+v", err)
 			}
 
-			if entry.Source.Metadata.Index != c.resolveLayer {
-				t.Errorf("bad resolve layer: '%d'!='%d'", entry.Source.Metadata.Index, c.resolveLayer)
+			if entry.Layer.Metadata.Index != c.resolveLayer {
+				t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, c.resolveLayer)
 			}
 		})
 	}
@@ -179,8 +179,8 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 				t.Fatalf("failed to get metadata: %+v", err)
 			}
 
-			if entry.Source.Metadata.Index != c.resolveLayer {
-				t.Errorf("bad resolve layer: '%d'!='%d'", entry.Source.Metadata.Index, c.resolveLayer)
+			if entry.Layer.Metadata.Index != c.resolveLayer {
+				t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, c.resolveLayer)
 			}
 		})
 	}

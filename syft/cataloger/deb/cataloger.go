@@ -8,7 +8,6 @@ import (
 	"io"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -47,7 +46,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 			return nil, err
 		}
 
-		pkgs, err = parseDpkgStatus(strings.NewReader(dbContents))
+		pkgs, err = parseDpkgStatus(dbContents)
 		if err != nil {
 			return nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.Path, err)
 		}
@@ -138,7 +137,7 @@ func fetchMd5Contents(resolver source.Resolver, dbLocation source.Location, pkgs
 	var refsByName = make(map[string]source.Location)
 	for location, contents := range md5ContentsByLocation {
 		name := nameByRef[location]
-		contentsByName[name] = strings.NewReader(contents)
+		contentsByName[name] = contents
 		refsByName[name] = location
 	}
 
@@ -174,7 +173,7 @@ func fetchCopyrightContents(resolver source.Resolver, dbLocation source.Location
 	var refsByName = make(map[string]source.Location)
 	for location, contents := range copyrightContentsByLocation {
 		name := nameByLocation[location]
-		contentsByName[name] = strings.NewReader(contents)
+		contentsByName[name] = contents
 		refsByName[name] = location
 	}
 

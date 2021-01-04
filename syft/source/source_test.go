@@ -1,6 +1,7 @@
 package source
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -137,9 +138,14 @@ func TestMultipleFileContentsByLocation(t *testing.T) {
 			location := locations[0]
 
 			contents, err := p.Resolver.MultipleFileContentsByLocation([]Location{location})
-			content := contents[location]
+			contentReader := contents[location]
 
-			if content != test.expected {
+			content, err := ioutil.ReadAll(contentReader)
+			if err != nil {
+				t.Fatalf("cannot read contents: %+v", err)
+			}
+
+			if string(content) != test.expected {
 				t.Errorf("unexpected contents from file: '%s' != '%s'", content, test.expected)
 			}
 
