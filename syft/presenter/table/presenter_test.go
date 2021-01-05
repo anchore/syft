@@ -35,7 +35,7 @@ func TestTablePresenter(t *testing.T) {
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*ref1, img),
+			source.NewLocationFromImage(string(ref1.RealPath), *ref1, img),
 		},
 		Type: pkg.DebPkg,
 	})
@@ -43,7 +43,7 @@ func TestTablePresenter(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*ref2, img),
+			source.NewLocationFromImage(string(ref2.RealPath), *ref2, img),
 		},
 		Type: pkg.DebPkg,
 	})

@@ -102,8 +102,8 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 
 			actual := refs[0]
 
-			if actual.Path != c.resolvePath {
-				t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, c.resolvePath)
+			if string(actual.ref.RealPath) != c.resolvePath {
+				t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), c.resolvePath)
 			}
 
 			entry, err := img.FileCatalog.Get(actual.ref)
@@ -204,8 +204,8 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 
 			actual := refs[0]
 
-			if actual.Path != c.resolvePath {
-				t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, c.resolvePath)
+			if string(actual.ref.RealPath) != c.resolvePath {
+				t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), c.resolvePath)
 			}
 
 			entry, err := img.FileCatalog.Get(actual.ref)

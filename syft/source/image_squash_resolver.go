@@ -66,7 +66,7 @@ func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 		if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
 			uniqueFileIDs.Add(*resolvedRef)
-			uniqueLocations = append(uniqueLocations, NewLocationFromImage(*resolvedRef, r.img))
+			uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, *resolvedRef, r.img))
 		}
 	}
 
