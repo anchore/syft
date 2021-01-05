@@ -109,15 +109,12 @@ func fetchMd5Contents(resolver source.Resolver, dbLocation source.Location, pkgs
 	for _, p := range pkgs {
 		// look for /var/lib/dpkg/info/NAME:ARCH.md5sums
 		name := md5Key(p)
-		md5sumPath := path.Join(parentPath, "info", name+md5sumsExt)
-		md5SumLocation := resolver.RelativeFileByPath(dbLocation, md5sumPath)
+		md5SumLocation := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "info", name+md5sumsExt))
 
 		if md5SumLocation == nil {
 			// the most specific key did not work, fallback to just the name
 			// look for /var/lib/dpkg/info/NAME.md5sums
-			name = p.Name
-			md5sumPath = path.Join(parentPath, "info", name+md5sumsExt)
-			md5SumLocation = resolver.RelativeFileByPath(dbLocation, md5sumPath)
+			md5SumLocation = resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "info", p.Name+md5sumsExt))
 		}
 		// we should have at least one reference
 		if md5SumLocation != nil {
