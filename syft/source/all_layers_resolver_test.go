@@ -13,9 +13,10 @@ type resolution struct {
 
 func TestAllLayersResolver_FilesByPath(t *testing.T) {
 	cases := []struct {
-		name        string
-		linkPath    string
-		resolutions []resolution
+		name                 string
+		linkPath             string
+		resolutions          []resolution
+		forcePositiveHasPath bool
 	}{
 		{
 			name:     "link with previous data",
@@ -66,14 +67,17 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			},
 		},
 		{
-			name:        "dead link",
-			linkPath:    "/link-dead",
-			resolutions: []resolution{},
+			name:                 "dead link",
+			linkPath:             "/link-dead",
+			resolutions:          []resolution{},
+			forcePositiveHasPath: true,
 		},
 		{
 			name:        "ignore directories",
 			linkPath:    "/bin",
 			resolutions: []resolution{},
+			// directories don't resolve BUT do exist
+			forcePositiveHasPath: true,
 		},
 	}
 	for _, c := range cases {
@@ -84,6 +88,17 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			resolver, err := NewAllLayersResolver(img)
 			if err != nil {
 				t.Fatalf("could not create resolver: %+v", err)
+			}
+
+			hasPath := resolver.HasPath(c.linkPath)
+			if !c.forcePositiveHasPath {
+				if len(c.resolutions) > 0 && !hasPath {
+					t.Errorf("expected HasPath() to indicate existance, but did not")
+				} else if len(c.resolutions) == 0 && hasPath {
+					t.Errorf("expeced HasPath() to NOT indicate existance, but does")
+				}
+			} else if !hasPath {
+				t.Errorf("expected HasPath() to indicate existance, but did not (force path)")
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)

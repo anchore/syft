@@ -6,11 +6,12 @@ import (
 
 func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	cases := []struct {
-		name     string
-		root     string
-		input    string
-		expected string
-		refCount int
+		name                 string
+		root                 string
+		input                string
+		expected             string
+		refCount             int
+		forcePositiveHasPath bool
 	}{
 		{
 			name:     "finds a file (relative)",
@@ -47,15 +48,28 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 			refCount: 1,
 		},
 		{
-			name:     "directories ignored",
-			root:     "./test-fixtures/",
-			input:    "/image-symlinks",
-			refCount: 0,
+			name:                 "directories ignored",
+			root:                 "./test-fixtures/",
+			input:                "/image-symlinks",
+			refCount:             0,
+			forcePositiveHasPath: true,
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			resolver := DirectoryResolver{c.root}
+
+			hasPath := resolver.HasPath(c.input)
+			if !c.forcePositiveHasPath {
+				if c.refCount != 0 && !hasPath {
+					t.Errorf("expected HasPath() to indicate existance, but did not")
+				} else if c.refCount == 0 && hasPath {
+					t.Errorf("expeced HasPath() to NOT indicate existance, but does")
+				}
+			} else if !hasPath {
+				t.Errorf("expected HasPath() to indicate existance, but did not (force path)")
+			}
+
 			refs, err := resolver.FilesByPath(c.input)
 			if err != nil {
 				t.Fatalf("could not use resolver: %+v, %+v", err, refs)

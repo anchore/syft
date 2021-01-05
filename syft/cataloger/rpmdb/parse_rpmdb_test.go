@@ -21,6 +21,10 @@ func newTestFileResolver(ignorePaths bool) *rpmdbTestFileResolverMock {
 	}
 }
 
+func (r rpmdbTestFileResolverMock) HasPath(path string) bool {
+	return !r.ignorePaths
+}
+
 func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...string) ([]source.Location, error) {
 	if r.ignorePaths {
 		// act as if no paths exist
