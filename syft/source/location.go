@@ -22,18 +22,18 @@ func NewLocation(path string) Location {
 }
 
 // NewLocationFromImage creates a new Location representing the given path (extracted from the ref) relative to the given image.
-func NewLocationFromImage(ref file.Reference, img *image.Image) Location {
+func NewLocationFromImage(path string, ref file.Reference, img *image.Image) Location {
 	entry, err := img.FileCatalog.Get(ref)
 	if err != nil {
 		log.Warnf("unable to find file catalog entry for ref=%+v", ref)
 		return Location{
-			Path: string(ref.RealPath),
+			Path: path,
 			ref:  ref,
 		}
 	}
 
 	return Location{
-		Path:         string(ref.RealPath),
+		Path:         path,
 		FileSystemID: entry.Layer.Metadata.Digest,
 		ref:          ref,
 	}

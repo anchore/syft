@@ -2,8 +2,10 @@ package source
 
 import (
 	"archive/tar"
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -112,7 +114,7 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 				return nil, err
 			}
 			for _, result := range results {
-				uniqueLocations = append(uniqueLocations, NewLocationFromImage(result, r.img))
+				uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, result, r.img))
 			}
 		}
 	}
@@ -151,7 +153,7 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 					return nil, err
 				}
 				for _, refResult := range refResults {
-					uniqueLocations = append(uniqueLocations, NewLocationFromImage(refResult, r.img))
+					uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(result.MatchPath), refResult, r.img))
 				}
 			}
 		}
@@ -177,7 +179,7 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 		return nil
 	}
 
-	relativeLocation := NewLocationFromImage(*relativeRef, r.img)
+	relativeLocation := NewLocationFromImage(path, *relativeRef, r.img)
 
 	return &relativeLocation
 }
@@ -198,11 +200,11 @@ type multiContentFetcher func(refs ...file.Reference) (map[file.Reference]io.Rea
 
 func mapLocationRefs(callback multiContentFetcher, locations []Location) (map[Location]io.ReadCloser, error) {
 	var fileRefs = make([]file.Reference, len(locations))
-	var locationByRefs = make(map[file.Reference]Location)
+	var locationByRefs = make(map[file.Reference][]Location)
 	var results = make(map[Location]io.ReadCloser)
 
 	for i, location := range locations {
-		locationByRefs[location.ref] = location
+		locationByRefs[location.ref] = append(locationByRefs[location.ref], location)
 		fileRefs[i] = location.ref
 	}
 
@@ -211,8 +213,26 @@ func mapLocationRefs(callback multiContentFetcher, locations []Location) (map[Lo
 		return nil, err
 	}
 
+	// TODO: this is not tested, we need a test case that covers a mapLocationRefs which has multiple Locations with the same reference in the request. The io.Reader should be copied.
 	for ref, content := range contentsByRef {
-		results[locationByRefs[ref]] = content
+		mappedLocations := locationByRefs[ref]
+		switch {
+		case len(mappedLocations) > 1:
+			// TODO: fixme... this can lead to lots of unexpected memory usage in unusual circumstances (cache is not leveraged for large files).
+			// stereoscope wont duplicate content requests if the caller asks for the same file multiple times... thats up to the caller
+			contentsBytes, err := ioutil.ReadAll(content)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read ref=%+v :%w", ref, err)
+			}
+			for _, loc := range mappedLocations {
+				results[loc] = ioutil.NopCloser(bytes.NewReader(contentsBytes))
+			}
+
+		case len(mappedLocations) == 1:
+			results[locationByRefs[ref][0]] = content
+		default:
+			return nil, fmt.Errorf("unexpected ref-location count=%d for ref=%v", len(mappedLocations), ref)
+		}
 	}
 	return results, nil
 }

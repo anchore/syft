@@ -113,8 +113,8 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			for idx, actual := range refs {
 				expected := c.resolutions[idx]
 
-				if actual.Path != expected.path {
-					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, expected.path)
+				if string(actual.ref.RealPath) != expected.path {
+					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), expected.path)
 				}
 
 				entry, err := img.FileCatalog.Get(actual.ref)
@@ -217,8 +217,8 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 			for idx, actual := range refs {
 				expected := c.resolutions[idx]
 
-				if actual.Path != expected.path {
-					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, expected.path)
+				if string(actual.ref.RealPath) != expected.path {
+					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), expected.path)
 				}
 
 				entry, err := img.FileCatalog.Get(actual.ref)

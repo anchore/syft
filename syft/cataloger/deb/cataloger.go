@@ -56,7 +56,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 			return nil, fmt.Errorf("unable to find dpkg md5 contents: %w", err)
 		}
 
-		copyrightContentsByName, copyrightRefsByName, err := fetchCopyrightContents(resolver, dbLocation, pkgs)
+		copyrightContentsByName, copyrightLocationByName, err := fetchCopyrightContents(resolver, dbLocation, pkgs)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find dpkg copyright contents: %w", err)
 		}
@@ -90,7 +90,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 				p.Licenses = parseLicensesFromCopyright(copyrightReader)
 
 				// keep a record of the file where this was discovered
-				if ref, ok := copyrightRefsByName[p.Name]; ok {
+				if ref, ok := copyrightLocationByName[p.Name]; ok {
 					p.Locations = append(p.Locations, ref)
 				}
 			}
@@ -115,8 +115,8 @@ func fetchMd5Contents(resolver source.Resolver, dbLocation source.Location, pkgs
 		if md5SumLocation == nil {
 			// the most specific key did not work, fallback to just the name
 			// look for /var/lib/dpkg/info/NAME.md5sums
-			name := p.Name
-			md5sumPath := path.Join(parentPath, "info", name+md5sumsExt)
+			name = p.Name
+			md5sumPath = path.Join(parentPath, "info", name+md5sumsExt)
 			md5SumLocation = resolver.RelativeFileByPath(dbLocation, md5sumPath)
 		}
 		// we should have at least one reference
@@ -134,14 +134,14 @@ func fetchMd5Contents(resolver source.Resolver, dbLocation source.Location, pkgs
 
 	// organize content results and refs by a combination of name and architecture
 	var contentsByName = make(map[string]io.Reader)
-	var refsByName = make(map[string]source.Location)
+	var locationByName = make(map[string]source.Location)
 	for location, contents := range md5ContentsByLocation {
 		name := nameByRef[location]
 		contentsByName[name] = contents
-		refsByName[name] = location
+		locationByName[name] = location
 	}
 
-	return contentsByName, refsByName, nil
+	return contentsByName, locationByName, nil
 }
 
 func fetchCopyrightContents(resolver source.Resolver, dbLocation source.Location, pkgs []pkg.Package) (map[string]io.Reader, map[string]source.Location, error) {

@@ -80,7 +80,7 @@ func TestTextImgPresenter(t *testing.T) {
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*ref1, img),
+			source.NewLocationFromImage(string(ref1.RealPath), *ref1, img),
 		},
 		FoundBy: "dpkg",
 		Type:    pkg.DebPkg,
@@ -89,7 +89,7 @@ func TestTextImgPresenter(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: []source.Location{
-			source.NewLocationFromImage(*ref2, img),
+			source.NewLocationFromImage(string(ref2.RealPath), *ref2, img),
 		},
 		FoundBy:  "dpkg",
 		Metadata: PackageInfo{Name: "package-2", Version: "1.0.2"},
