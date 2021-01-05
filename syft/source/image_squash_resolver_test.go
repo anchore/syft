@@ -106,6 +106,10 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 				t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), c.resolvePath)
 			}
 
+			if c.resolvePath != "" && string(actual.ref.RealPath) != actual.Path {
+				t.Errorf("we should always prefer real paths over ones with links")
+			}
+
 			entry, err := img.FileCatalog.Get(actual.ref)
 			if err != nil {
 				t.Fatalf("failed to get metadata: %+v", err)
@@ -206,6 +210,10 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 
 			if string(actual.ref.RealPath) != c.resolvePath {
 				t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), c.resolvePath)
+			}
+
+			if c.resolvePath != "" && string(actual.ref.RealPath) != actual.Path {
+				t.Errorf("we should always prefer real paths over ones with links")
 			}
 
 			entry, err := img.FileCatalog.Get(actual.ref)

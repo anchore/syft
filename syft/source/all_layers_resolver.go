@@ -114,7 +114,8 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 				return nil, err
 			}
 			for _, result := range results {
-				uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, result, r.img))
+				// we always prefer the REAL path (not the user given path which may have symlinks)
+				uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(result.RealPath), result, r.img))
 			}
 		}
 	}
@@ -153,7 +154,8 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 					return nil, err
 				}
 				for _, refResult := range refResults {
-					uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(result.MatchPath), refResult, r.img))
+					// we always prefer the REAL path (not the user given path which may have symlinks)
+					uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(refResult.RealPath), refResult, r.img))
 				}
 			}
 		}
