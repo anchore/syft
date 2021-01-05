@@ -45,11 +45,6 @@ func parseRpmDB(resolver source.FileResolver, dbLocation source.Location, reader
 	allPkgs := make([]pkg.Package, 0)
 
 	for _, entry := range pkgList {
-		records, err := extractRpmdbFileRecords(resolver, entry)
-		if err != nil {
-			return nil, err
-		}
-
 		p := pkg.Package{
 			Name:         entry.Name,
 			Version:      fmt.Sprintf("%s-%s", entry.Version, entry.Release), // this is what engine does, instead of fmt.Sprintf("%d:%s-%s.%s", entry.Epoch, entry.Version, entry.Release, entry.Arch)
@@ -67,7 +62,7 @@ func parseRpmDB(resolver source.FileResolver, dbLocation source.Location, reader
 				Vendor:    entry.Vendor,
 				License:   entry.License,
 				Size:      entry.Size,
-				Files:     records,
+				Files:     extractRpmdbFileRecords(resolver, entry),
 			},
 		}
 
@@ -77,25 +72,19 @@ func parseRpmDB(resolver source.FileResolver, dbLocation source.Location, reader
 	return allPkgs, nil
 }
 
-func extractRpmdbFileRecords(resolver source.FileResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
+func extractRpmdbFileRecords(resolver source.FileResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
 	for _, record := range entry.Files {
-		refs, err := resolver.FilesByPath(record.Path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve path=%+v: %w", record.Path, err)
-		}
 		//only persist RPMDB file records which exist in the image/directory, otherwise ignore them
-		if len(refs) == 0 {
-			continue
+		if resolver.HasPath(record.Path) {
+			records = append(records, pkg.RpmdbFileRecord{
+				Path:   record.Path,
+				Mode:   pkg.RpmdbFileMode(record.Mode),
+				Size:   int(record.Size),
+				SHA256: record.SHA256,
+			})
 		}
-
-		records = append(records, pkg.RpmdbFileRecord{
-			Path:   record.Path,
-			Mode:   pkg.RpmdbFileMode(record.Mode),
-			Size:   int(record.Size),
-			SHA256: record.SHA256,
-		})
 	}
-	return records, nil
+	return records
 }

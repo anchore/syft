@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/anchore/stereoscope/pkg/filetree"
-
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
@@ -23,6 +22,11 @@ func NewImageSquashResolver(img *image.Image) (*ImageSquashResolver, error) {
 		return nil, fmt.Errorf("the image does not have have a squashed tree")
 	}
 	return &ImageSquashResolver{img: img}, nil
+}
+
+// HasPath indicates if the given path exists in the underlying source.
+func (r *ImageSquashResolver) HasPath(path string) bool {
+	return r.img.SquashedTree().HasPath(file.Path(path))
 }
 
 // FilesByPath returns all file.References that match the given paths within the squashed representation of the image.

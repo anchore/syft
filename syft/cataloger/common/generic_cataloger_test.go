@@ -21,6 +21,10 @@ func newTestResolver() *testResolverMock {
 	}
 }
 
+func (r testResolverMock) HasPath(path string) bool {
+	panic("not implemented")
+}
+
 func (r *testResolverMock) FileContentsByLocation(_ source.Location) (io.ReadCloser, error) {
 	return nil, fmt.Errorf("not implemented")
 }

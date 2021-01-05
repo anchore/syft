@@ -8,10 +8,11 @@ import (
 
 func TestImageSquashResolver_FilesByPath(t *testing.T) {
 	cases := []struct {
-		name         string
-		linkPath     string
-		resolveLayer uint
-		resolvePath  string
+		name                 string
+		linkPath             string
+		resolveLayer         uint
+		resolvePath          string
+		forcePositiveHasPath bool
 	}{
 		{
 			name:         "link with previous data",
@@ -42,11 +43,15 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			linkPath:     "/link-dead",
 			resolveLayer: 8,
 			resolvePath:  "",
+			// the path should exist, even if the link is dead
+			forcePositiveHasPath: true,
 		},
 		{
 			name:        "ignore directories",
 			linkPath:    "/bin",
 			resolvePath: "",
+			// the path should exist, even if we ignore it
+			forcePositiveHasPath: true,
 		},
 		{
 			name:         "parent is a link (with overridden data)",
@@ -63,6 +68,17 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			resolver, err := NewImageSquashResolver(img)
 			if err != nil {
 				t.Fatalf("could not create resolver: %+v", err)
+			}
+
+			hasPath := resolver.HasPath(c.linkPath)
+			if !c.forcePositiveHasPath {
+				if c.resolvePath != "" && !hasPath {
+					t.Errorf("expected HasPath() to indicate existance, but did not")
+				} else if c.resolvePath == "" && hasPath {
+					t.Errorf("expeced HasPath() to NOT indicate existance, but does")
+				}
+			} else if !hasPath {
+				t.Errorf("expected HasPath() to indicate existance, but did not (force path)")
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)

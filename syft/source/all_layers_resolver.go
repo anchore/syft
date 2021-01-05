@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/anchore/stereoscope/pkg/filetree"
-
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 )
 
 var _ Resolver = (*AllLayersResolver)(nil)
@@ -35,6 +33,18 @@ func NewAllLayersResolver(img *image.Image) (*AllLayersResolver, error) {
 		img:    img,
 		layers: layers,
 	}, nil
+}
+
+// HasPath indicates if the given path exists in the underlying source.
+func (r *AllLayersResolver) HasPath(path string) bool {
+	p := file.Path(path)
+	for _, layerIdx := range r.layers {
+		tree := r.img.Layers[layerIdx].Tree
+		if tree.HasPath(p) {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.ReferenceSet, layerIdx int) ([]file.Reference, error) {

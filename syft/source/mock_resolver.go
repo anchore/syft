@@ -28,6 +28,16 @@ func NewMockResolverForPaths(paths ...string) *MockResolver {
 	return &MockResolver{Locations: locations}
 }
 
+// HasPath indicates if the given path exists in the underlying source.
+func (r MockResolver) HasPath(path string) bool {
+	for _, l := range r.Locations {
+		if l.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
 // String returns the string representation of the MockResolver.
 func (r MockResolver) String() string {
 	return fmt.Sprintf("mock:(%s,...)", r.Locations[0].Path)
