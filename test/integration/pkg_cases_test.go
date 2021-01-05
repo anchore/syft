@@ -15,7 +15,10 @@ var imageOnlyTestCases = []testCase{
 		pkgType:     pkg.GemPkg,
 		pkgLanguage: pkg.Ruby,
 		pkgInfo: map[string]string{
+			// specifications in the root specification directory
 			"bundler": "2.1.4",
+			// specifications in named directories
+			"unbundler": "3.1.4",
 		},
 	},
 	{
