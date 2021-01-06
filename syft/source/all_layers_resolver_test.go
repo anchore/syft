@@ -117,7 +117,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), expected.path)
 				}
 
-				if expected.path != "" && string(actual.ref.RealPath) != actual.Path {
+				if expected.path != "" && string(actual.ref.RealPath) != actual.RealPath {
 					t.Errorf("we should always prefer real paths over ones with links")
 				}
 
@@ -225,7 +225,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), expected.path)
 				}
 
-				if expected.path != "" && string(actual.ref.RealPath) != actual.Path {
+				if expected.path != "" && string(actual.ref.RealPath) != actual.RealPath {
 					t.Errorf("we should always prefer real paths over ones with links")
 				}
 

@@ -31,7 +31,7 @@ func NewMockResolverForPaths(paths ...string) *MockResolver {
 // HasPath indicates if the given path exists in the underlying source.
 func (r MockResolver) HasPath(path string) bool {
 	for _, l := range r.Locations {
-		if l.Path == path {
+		if l.RealPath == path {
 			return true
 		}
 	}
@@ -40,7 +40,7 @@ func (r MockResolver) HasPath(path string) bool {
 
 // String returns the string representation of the MockResolver.
 func (r MockResolver) String() string {
-	return fmt.Sprintf("mock:(%s,...)", r.Locations[0].Path)
+	return fmt.Sprintf("mock:(%s,...)", r.Locations[0].RealPath)
 }
 
 // FileContentsByLocation fetches file contents for a single location. If the
@@ -48,7 +48,7 @@ func (r MockResolver) String() string {
 func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	for _, l := range r.Locations {
 		if l == location {
-			return os.Open(location.Path)
+			return os.Open(location.RealPath)
 		}
 	}
 
@@ -74,7 +74,7 @@ func (r MockResolver) FilesByPath(paths ...string) ([]Location, error) {
 	var results []Location
 	for _, p := range paths {
 		for _, location := range r.Locations {
-			if p == location.Path {
+			if p == location.RealPath {
 				results = append(results, NewLocation(p))
 			}
 		}
@@ -88,7 +88,7 @@ func (r MockResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	var results []Location
 	for _, pattern := range patterns {
 		for _, location := range r.Locations {
-			if file.GlobMatch(pattern, location.Path) {
+			if file.GlobMatch(pattern, location.RealPath) {
 				results = append(results, location)
 			}
 		}

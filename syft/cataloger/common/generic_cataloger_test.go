@@ -101,7 +101,7 @@ func TestGenericCataloger(t *testing.T) {
 
 	for _, p := range actualPkgs {
 		ref := p.Locations[0]
-		exP, ok := expectedPkgs[ref.Path]
+		exP, ok := expectedPkgs[ref.RealPath]
 		if !ok {
 			t.Errorf("missing expected pkg: ref=%+v", ref)
 			continue

@@ -30,7 +30,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-1",
 		Locations: []source.Location{
-			{Path: "/some/path/pkg1"},
+			{RealPath: "/some/path/pkg1"},
 		},
 		Metadata: pkg.DpkgMetadata{
 			Package:      "package1",
@@ -44,7 +44,7 @@ func TestCycloneDxDirsPresenter(t *testing.T) {
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
 		Locations: []source.Location{
-			{Path: "/some/path/pkg1"},
+			{RealPath: "/some/path/pkg1"},
 		},
 		Licenses: []string{
 			"MIT",

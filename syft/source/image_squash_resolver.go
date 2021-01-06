@@ -66,8 +66,7 @@ func (r *ImageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 		if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
 			uniqueFileIDs.Add(*resolvedRef)
-			// we always prefer the REAL path (not the user given path which may have symlinks)
-			uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(resolvedRef.RealPath), *resolvedRef, r.img))
+			uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, *resolvedRef, r.img))
 		}
 	}
 

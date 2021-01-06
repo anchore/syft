@@ -61,7 +61,7 @@ func TestPackageSbomToModel(t *testing.T) {
 		FoundBy: "foundBy",
 		Locations: []source.Location{
 			{
-				Path:         "path",
+				RealPath:     "path",
 				FileSystemID: "layerID",
 			},
 		},
@@ -139,7 +139,7 @@ func TestPackageSbomImport(t *testing.T) {
 		FoundBy: "foundBy",
 		Locations: []source.Location{
 			{
-				Path:         "path",
+				RealPath:     "path",
 				FileSystemID: "layerID",
 			},
 		},

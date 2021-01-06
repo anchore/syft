@@ -106,7 +106,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 				t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), c.resolvePath)
 			}
 
-			if c.resolvePath != "" && string(actual.ref.RealPath) != actual.Path {
+			if c.resolvePath != "" && string(actual.ref.RealPath) != actual.RealPath {
 				t.Errorf("we should always prefer real paths over ones with links")
 			}
 
@@ -212,7 +212,7 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 				t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), c.resolvePath)
 			}
 
-			if c.resolvePath != "" && string(actual.ref.RealPath) != actual.Path {
+			if c.resolvePath != "" && string(actual.ref.RealPath) != actual.RealPath {
 				t.Errorf("we should always prefer real paths over ones with links")
 			}
 

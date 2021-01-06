@@ -79,7 +79,7 @@ func TestDpkgCataloger(t *testing.T) {
 				// we will test the sources separately
 				var sourcesList = make([]string, len(a.Locations))
 				for i, s := range a.Locations {
-					sourcesList[i] = s.Path
+					sourcesList[i] = s.RealPath
 				}
 				a.Locations = nil
 
