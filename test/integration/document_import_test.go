@@ -81,6 +81,12 @@ func TestCatalogFromJSON(t *testing.T) {
 					e.Metadata = metadata
 				}
 
+				// ignore the virtual path on the location for now
+				for l := range a.Locations {
+					a.Locations[l].VirtualPath = ""
+					e.Locations[l].VirtualPath = ""
+				}
+
 				for _, d := range deep.Equal(a, e) {
 					// ignore errors for empty collections vs nil for select fields
 					// TODO: this is brittle, but not dangerously so. We should still find a better way to do this.

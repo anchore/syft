@@ -80,8 +80,8 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 			}
 
 			for _, actual := range refs {
-				if actual.Path != c.expected {
-					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, c.expected)
+				if actual.RealPath != c.expected {
+					t.Errorf("bad resolve path: '%s'!='%s'", actual.RealPath, c.expected)
 				}
 			}
 		})

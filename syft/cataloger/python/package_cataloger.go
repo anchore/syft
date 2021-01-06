@@ -38,7 +38,7 @@ func (c *PackageCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, err
 	for _, entry := range entries {
 		p, err := c.catalogEggOrWheel(entry)
 		if err != nil {
-			return nil, fmt.Errorf("unable to catalog python package=%+v: %w", entry.Metadata.Location.Path, err)
+			return nil, fmt.Errorf("unable to catalog python package=%+v: %w", entry.Metadata.Location.RealPath, err)
 		}
 		if p != nil {
 			packages = append(packages, *p)
@@ -118,7 +118,7 @@ func (c *PackageCataloger) catalogEggOrWheel(entry *packageEntry) (*pkg.Package,
 func (c *PackageCataloger) assembleEggOrWheelMetadata(entry *packageEntry) (*pkg.PythonPackageMetadata, []source.Location, error) {
 	var sources = []source.Location{entry.Metadata.Location}
 
-	metadata, err := parseWheelOrEggMetadata(entry.Metadata.Location.Path, entry.Metadata.Contents)
+	metadata, err := parseWheelOrEggMetadata(entry.Metadata.Location.RealPath, entry.Metadata.Contents)
 	if err != nil {
 		return nil, nil, err
 	}

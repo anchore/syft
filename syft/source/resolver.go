@@ -16,8 +16,8 @@ type Resolver interface {
 // ContentResolver knows how to get file content for given file.References
 type ContentResolver interface {
 	FileContentsByLocation(Location) (io.ReadCloser, error)
+	// TODO: it is possible to be given duplicate locations that will be overridden in the map (key), a subtle problem that coule easily be misued.
 	MultipleFileContentsByLocation([]Location) (map[Location]io.ReadCloser, error)
-	// TODO: we should consider refactoring to return a set of io.Readers or file.Openers instead of the full contents themselves (allow for optional buffering).
 }
 
 // FileResolver knows how to get a Location for given string paths and globs

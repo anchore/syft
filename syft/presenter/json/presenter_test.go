@@ -36,7 +36,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
 		Locations: []source.Location{
-			{Path: "/some/path/pkg1"},
+			{RealPath: "/some/path/pkg1"},
 		},
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
@@ -56,7 +56,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
 		Locations: []source.Location{
-			{Path: "/some/path/pkg1"},
+			{RealPath: "/some/path/pkg1"},
 		},
 		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{

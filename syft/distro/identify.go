@@ -62,7 +62,7 @@ identifyLoop:
 
 			content, err := ioutil.ReadAll(contentReader)
 			if err != nil {
-				log.Errorf("unable to read %q: %+v", location.Path, err)
+				log.Errorf("unable to read %q: %+v", location.RealPath, err)
 				break
 			}
 

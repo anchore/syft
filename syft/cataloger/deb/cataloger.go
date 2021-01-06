@@ -48,7 +48,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 
 		pkgs, err = parseDpkgStatus(dbContents)
 		if err != nil {
-			return nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.Path, err)
+			return nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.RealPath, err)
 		}
 
 		md5ContentsByName, md5RefsByName, err := fetchMd5Contents(resolver, dbLocation, pkgs)
@@ -104,7 +104,7 @@ func fetchMd5Contents(resolver source.Resolver, dbLocation source.Location, pkgs
 
 	var md5FileMatches []source.Location
 	var nameByRef = make(map[source.Location]string)
-	parentPath := filepath.Dir(dbLocation.Path)
+	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	for _, p := range pkgs {
 		// look for /var/lib/dpkg/info/NAME:ARCH.md5sums

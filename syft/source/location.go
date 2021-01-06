@@ -7,9 +7,11 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-// Location represents a path relative to a particular filesystem.
+// Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
+// in content fetching to uniquely identify a file relative to a request (the VirtualPath).
 type Location struct {
-	Path         string         `json:"path"`              // The string path of the location (e.g. /etc/hosts)
+	RealPath     string         `json:"path"`              // The path where all path ancestors have no hardlinks / symlinks
+	VirtualPath  string         `json:"-"`                 // The path to the file which may or may not have hardlinks / symlinks
 	FileSystemID string         `json:"layerID,omitempty"` // An ID representing the filesystem. For container images this is a layer digest, directories or root filesystem this is blank.
 	ref          file.Reference // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
 }
@@ -17,23 +19,25 @@ type Location struct {
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
 func NewLocation(path string) Location {
 	return Location{
-		Path: path,
+		RealPath: path,
 	}
 }
 
 // NewLocationFromImage creates a new Location representing the given path (extracted from the ref) relative to the given image.
-func NewLocationFromImage(path string, ref file.Reference, img *image.Image) Location {
+func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Image) Location {
 	entry, err := img.FileCatalog.Get(ref)
 	if err != nil {
 		log.Warnf("unable to find file catalog entry for ref=%+v", ref)
 		return Location{
-			Path: path,
-			ref:  ref,
+			VirtualPath: virtualPath,
+			RealPath:    string(ref.RealPath),
+			ref:         ref,
 		}
 	}
 
 	return Location{
-		Path:         path,
+		VirtualPath:  virtualPath,
+		RealPath:     string(ref.RealPath),
 		FileSystemID: entry.Layer.Metadata.Digest,
 		ref:          ref,
 	}
