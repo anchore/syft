@@ -57,3 +57,21 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
+
+  build_and_push_container_image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.TOOLBOX_DOCKER_USER }}
+          password: ${{ secrets.TOOLBOX_DOCKER_PASS }}
+
+      - name: Build and tag Docker images
+        run: make container-image-build
+
+      - name: Test Docker images
+        run: make container-image-test
+
+      - name: Push Docker images
+        run: make container-image-push

@@ -42,13 +42,23 @@ ifeq "$(strip $(VERSION_TAG))" ""
 	override VERSION_TAG = $(shell git describe --always --tags --dirty)
 endif
 
+# Version variables and functions
 is_dirty = $(findstring dirty,$(1))
 get_version_from_version_tag = $(shell echo "$(1)" | tr -d 'v')
 VERSION = $(call get_version_from_version_tag,$(VERSION_TAG))
+major = $(shell echo "$(1)" | cut -d '.' -f 1)
+minor = $(shell echo "$(1)" | cut -d '.' -f 2)
+patch = $(shell echo "$(1)" | cut -d '.' -f 3)
 
 # used to generate the changelog from the second to last tag to the current tag (used in the release pipeline when the release tag is in place)
 LAST_TAG = $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --max-count=1))
 SECOND_TO_LAST_TAG = $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --skip=1 --max-count=1))
+
+CONTAINER_IMAGE_REPOSITORY := "anchore/$(BIN)"
+CONTAINER_IMAGE_TAG_MAJOR := "$(CONTAINER_IMAGE_REPOSITORY):$(call major,$(VERSION))"
+CONTAINER_IMAGE_TAG_MINOR := "$(CONTAINER_IMAGE_REPOSITORY):$(call major,$(VERSION)).$(call minor,$(VERSION))"
+CONTAINER_IMAGE_TAG_PATCH := "$(CONTAINER_IMAGE_REPOSITORY):$(call major,$(VERSION)).$(call minor,$(VERSION)).$(call patch,$(VERSION))"
+CONTAINER_IMAGE_TAG_LATEST := "$(CONTAINER_IMAGE_REPOSITORY):latest"
 
 asset_url = $(shell cat $(1) | jq '.assets[] | select(.name | contains($(2))) | .browser_download_url')
 sha256 = $(shell openssl dgst -sha256 "$(1)" | cut -d ' ' -f 2)
