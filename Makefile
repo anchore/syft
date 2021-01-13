@@ -255,6 +255,24 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 			$(ACC_TEST_IMAGE) \
 			$(RESULTSDIR)
 
+.PHONY: setup-macos-signing
+setup-macos-signing: ## Prepare for macOS-specific signing process
+	$(call title,Preparing macOS environment for code signing)
+
+	@.github/scripts/mac-prepare-for-signing.sh
+
+.PHONY: package-mac
+package-mac: setup-macos-signing ## Create signed and notarized release assets for macOS
+	$(call title,Creating packaging for macOS -- signed and notarized)
+
+	# Create signed and notarized assets
+	@gon "./gon.hcl"
+
+	# Update asset names. This won't be necessary once Gon supports variable injection.
+	@ORIGINAL_NAME="$(DISTDIR)/output" && NEW_NAME="$(DISTDIR)/syft_$(version)_darwin_amd64" && \
+		mv -v "$${ORIGINAL_NAME}.dmg" "$${NEW_NAME}.dmg" && \
+		mv -v "$${ORIGINAL_NAME}.zip" "$${NEW_NAME}.zip"
+
 .PHONY: changlog-release
 changelog-release:
 	@echo "Last tag: $(SECOND_TO_LAST_TAG)"
