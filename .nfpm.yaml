@@ -1,0 +1,8 @@
+name: "syft"
+license: "Apache 2.0"
+maintainer: "Anchore, Inc"
+homepage: "https://github.com/anchore/syft"
+description: "A tool that generates a Software Bill Of Materials (SBOM) from container images and filesystems"
+contents:
+  - src: ./dist/syft_linux_amd64/syft # TODO: Use a template w/ var(s) for this path
+    dst: /usr/local/bin/syft

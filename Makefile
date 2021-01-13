@@ -101,6 +101,7 @@ bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./
 	[ -f "$(TEMPDIR)/golangci" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
 	[ -f "$(TEMPDIR)/bouncer" ] || curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0
 	[ -f "$(TEMPDIR)/goreleaser" ] || curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
+	[ -f "$(TEMPDIR)/nfpm" ] || curl -sfL curl -sfL https://install.goreleaser.com/github.com/goreleaser/nfpm.sh | sh -s -- -b $(TEMPDIR)/ v2.2.2
 
 .PHONY: static-analysis
 static-analysis: lint check-licenses
@@ -272,6 +273,34 @@ package-mac: setup-macos-signing ## Create signed and notarized release assets f
 	@ORIGINAL_NAME="$(DISTDIR)/output" && NEW_NAME="$(DISTDIR)/syft_$(version)_darwin_amd64" && \
 		mv -v "$${ORIGINAL_NAME}.dmg" "$${NEW_NAME}.dmg" && \
 		mv -v "$${ORIGINAL_NAME}.zip" "$${NEW_NAME}.zip"
+
+.PHONY: package-linux
+.SILENT: package-linux
+package-linux:
+	$(call title,Creating packaging for Linux)
+
+	# Produce .tar.gz
+	SYFT_PATH=$(DISTDIR)/syft_linux_amd64/syft && \
+		tar -cvzf $(DISTDIR)/syft_$(version)_linux_amd64.tar.gz "$$SYFT_PATH" "./README.md" "./LICENSE"
+
+	# Produce .deb, .rpm
+	for packager in "deb" "rpm"; do \
+		$(TEMPDIR)/nfpm -f "./.nfpm.yaml" pkg --packager="$$packager" --target="$(DISTDIR)/syft_$(version)_linux_amd64.$$packager"; \
+	done
+
+	# Produce integrity-check files (checksums.txt, checksums.txt.sig)
+	# "Why `cd` instead of `pushd`?" Good question —— `pushd` was causing an error on the GitHub Actions runner. Not sure why.
+	cd $(DISTDIR) && \
+		CHECKSUMS_FILE="syft_$(version)_checksums.txt" && \
+		echo "" > "$$CHECKSUMS_FILE" && \
+		for file in ./*linux*.*; do \
+			openssl dgst -sha256 "$$file" >> "$$CHECKSUMS_FILE"; \
+		done && \
+		gpg --detach-sign "$$CHECKSUMS_FILE" && \
+	cd ..
+
+.PHONY: package
+package: package-mac package-linux
 
 .PHONY: changlog-release
 changelog-release:
