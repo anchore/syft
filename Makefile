@@ -24,12 +24,18 @@ BOOTSTRAP_CACHE="789bacdf"
 ## Build variables
 DISTDIR=./dist
 SNAPSHOTDIR=./snapshot
+COMMIT=$(shell git log --format=%H -n 1)
+DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GITTREESTATE=$(if $(shell git status --porcelain),dirty,clean)
 SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/syft_linux_amd64/syft)
 
 ifeq "$(strip $(VERSION))" ""
  override VERSION = $(shell git describe --always --tags --dirty)
 endif
+
+is_dirty = $(findstring dirty,$(1))
+get_version = $(shell echo "$(1)" | tr -d 'v')
+version = $(if $(call is_dirty,$(VERSION)),$(VERSION),$(call get_version,$(VERSION)))
 
 # used to generate the changelog from the second to last tag to the current tag (used in the release pipeline when the release tag is in place)
 LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --max-count=1))
@@ -164,8 +170,34 @@ generate-json-schema:  ## Generate a new json schema
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/cache/*.tar" -delete
 
+.PHONY: build-mac
+build-mac: ## Build binary for macOS
+	$(call title,Building binary for macOS)
+
+	@OS="darwin" && ARCH="amd64" && GOOS="$$OS" GOARCH="$$ARCH" CGO_ENABLED=0 \
+	go build \
+		-o "./$(DISTDIR)/syft_$${OS}_$${ARCH}/syft" \
+		-ldflags "-w -s -extldflags '-static' \
+		-X github.com/anchore/syft/internal/version.version=$(version) \
+		-X github.com/anchore/syft/internal/version.gitCommit=$(COMMIT) \
+		-X github.com/anchore/syft/internal/version.buildDate=$(DATE) \
+		-X github.com/anchore/syft/internal/version.gitTreeState=$(BUILD_GIT_TREE_STATE)"
+
+.PHONY: build-linux
+build-linux: ## Build binary for macOS
+	$(call title,Building binary for Linux)
+
+	@OS="linux" && ARCH="amd64" && GOOS="$$OS" GOARCH="$$ARCH" CGO_ENABLED=0 \
+	go build \
+		-o "./$(DISTDIR)/syft_$${OS}_$${ARCH}/syft" \
+		-ldflags "-w -s -extldflags '-static' \
+		-X github.com/anchore/syft/internal/version.version=$(version) \
+		-X github.com/anchore/syft/internal/version.gitCommit=$(COMMIT) \
+		-X github.com/anchore/syft/internal/version.buildDate=$(DATE) \
+		-X github.com/anchore/syft/internal/version.gitTreeState=$(BUILD_GIT_TREE_STATE)"
+
 .PHONY: build
-build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
+build: build-mac build-linux
 
 $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)
