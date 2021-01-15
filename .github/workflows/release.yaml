@@ -12,76 +12,118 @@ env:
   GO_VERSION: "1.14.x"
 
 jobs:
-  wait-for-checks:
-    runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
+#  wait-for-checks:
+#    runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
+#    steps:
+#
+#      - uses: actions/checkout@v2
+#
+#      # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
+#      - name: Ensure tagged commit is on main
+#        run: |
+#          echo "Tag: ${GITHUB_REF##*/}"
+#          git fetch origin main
+#          git merge-base --is-ancestor ${GITHUB_REF##*/} origin/main && echo "${GITHUB_REF##*/} is a commit on main!"
+#
+#      - name: Check static analysis results
+#        uses: fountainhead/action-wait-for-check@v1.0.0
+#        id: static-analysis
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
+#          checkName: "Static-Analysis (1.x, ubuntu-latest)"
+#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+#
+#      - name: Check unit + integration results (latest go version)
+#        uses: fountainhead/action-wait-for-check@v1.0.0
+#        id: unit-integration
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
+#          checkName: "Tests (1.x, ubuntu-latest)"
+#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+#
+#      - name: Check acceptance test results (linux)
+#        uses: fountainhead/action-wait-for-check@v1.0.0
+#        id: acceptance-linux
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
+#          checkName: "Acceptance-Linux"
+#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+#
+#      - name: Check acceptance test results (mac)
+#        uses: fountainhead/action-wait-for-check@v1.0.0
+#        id: acceptance-mac
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
+#          checkName: "Acceptance-Mac"
+#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+#
+#      - name: Check inline comparison test results
+#        uses: fountainhead/action-wait-for-check@v1.0.0
+#        id: inline-compare
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
+#          checkName: "Inline-Compare"
+#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+#
+#      - name: Quality gate
+#        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
+#        run: |
+#          echo "Static Analysis Status: ${{ steps.static-analysis.conclusion }}"
+#          echo "Unit & Integration Test Status: ${{ steps.unit-integration.outputs.conclusion }}"
+#          echo "Acceptance Test (Linux) Status: ${{ steps.acceptance-linux.outputs.conclusion }}"
+#          echo "Acceptance Test (Mac) Status: ${{ steps.acceptance-mac.outputs.conclusion }}"
+#          echo "Inline Compare Status: ${{ steps.inline-compare.outputs.conclusion }}"
+#          false
+
+  release-assets-mac:
+#    needs: [ wait-for-checks ]
+    runs-on: macos-latest # Due to our code signing process, it's vital that we run these release steps on macOS.
     steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
       - uses: actions/checkout@v2
-
-      # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
-      - name: Ensure tagged commit is on main
-        run: |
-          echo "Tag: ${GITHUB_REF##*/}"
-          git fetch origin main
-          git merge-base --is-ancestor ${GITHUB_REF##*/} origin/main && echo "${GITHUB_REF##*/} is a commit on main!"
-
-      - name: Check static analysis results
-        uses: fountainhead/action-wait-for-check@v1.0.0
-        id: static-analysis
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
-          checkName: "Static-Analysis (1.x, ubuntu-latest)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
 
-      - name: Check unit + integration results (latest go version)
-        uses: fountainhead/action-wait-for-check@v1.0.0
-        id: unit-integration
+      # We are expecting this cache to have been created during the "Build-Snapshot-Artifacts" job in the "Acceptance" workflow.
+      - name: Restore bootstrap cache
+        id: cache
+        uses: actions/cache@v2.1.3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
-          checkName: "Tests (1.x, ubuntu-latest)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ~/go/pkg/mod
+            ${{ github.workspace }}/.tmp
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
-      - name: Check acceptance test results (linux)
-        uses: fountainhead/action-wait-for-check@v1.0.0
-        id: acceptance-linux
+      - name: Build for macOS
+        run: make build-mac
+
+      - name: Create macOS release assets
+        run: make package-mac
+        env:
+          APPLE_DEVELOPER_ID_CERT: ${{ secrets.APPLE_DEVELOPER_ID_CERT }} # Used during macOS code signing.
+          APPLE_DEVELOPER_ID_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }} # Used during macOS code signing.
+          AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }} # Used during macOS notarization.
+          AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }} # Used during macOS notarization.
+
+      - uses: actions/upload-artifact@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
-          checkName: "Acceptance-Linux"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          name: macOS-artifacts
+          path: "./dist/*_darwin_*.*"
 
-      - name: Check acceptance test results (mac)
-        uses: fountainhead/action-wait-for-check@v1.0.0
-        id: acceptance-mac
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
-          checkName: "Acceptance-Mac"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Check inline comparison test results
-        uses: fountainhead/action-wait-for-check@v1.0.0
-        id: inline-compare
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
-          checkName: "Inline-Compare"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Quality gate
-        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
-        run: |
-          echo "Static Analysis Status: ${{ steps.static-analysis.conclusion }}"
-          echo "Unit & Integration Test Status: ${{ steps.unit-integration.outputs.conclusion }}"
-          echo "Acceptance Test (Linux) Status: ${{ steps.acceptance-linux.outputs.conclusion }}"
-          echo "Acceptance Test (Mac) Status: ${{ steps.acceptance-mac.outputs.conclusion }}"
-          echo "Inline Compare Status: ${{ steps.inline-compare.outputs.conclusion }}"
-          false
-
-  release:
-    needs: [wait-for-checks]
-    runs-on: macos-latest # Due to our code signing process, it's vital that we run our release steps on macOS.
+  release-assets-linux:
+#    needs: [ wait-for-checks ]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -118,19 +160,51 @@ jobs:
           echo "name:        ${{ steps.import_gpg.outputs.name }}"
           echo "email:       ${{ steps.import_gpg.outputs.email }}"
 
-      - name: Build & publish release artifacts
-        run: make release
+      - name: Build for Linux
+        run: make build-linux
+
+      - name: Create Linux release assets
+        run: make package-linux
         env:
-          GITHUB_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
           GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
           PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
-          SIGNING_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
-          APPLE_DEVELOPER_ID_CERT: ${{ secrets.APPLE_DEVELOPER_ID_CERT }} # Used during macOS code signing.
-          APPLE_DEVELOPER_ID_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }} # Used during macOS code signing.
-          AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }} # Used during macOS notarization.
-          AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }} # Used during macOS notarization.
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Linux-artifacts
+          path: |
+            ./dist/*_linux_*.*
+            ./dist/*_checksums.*
+
+  draft-release:
+    needs: [ release-assets-mac, release-assets-linux ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v2 # Downloads all artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Generate changelog
+        run: make changelog-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+
+      - name: Create draft release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body_path: "./CHANGELOG.md"
+          draft: true
+          prerelease: false
 
       - uses: 8398a7/action-slack@v3
         with:
@@ -140,8 +214,3 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: artifacts
-          path: dist/**/*

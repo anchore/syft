@@ -80,13 +80,13 @@ test: unit validate-cyclonedx-schema integration acceptance-linux ## Run all tes
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BOLD)$(CYAN)%-25s$(RESET)%s\n", $$1, $$2}'
 
-.PHONY: ci-bootstrap
-ci-bootstrap:
+.PHONY: bootstrap-ci-linux
+bootstrap-ci-linux: bootstrap
 	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils
-
-.PHONY:
-ci-bootstrap-mac:
 	github_changelog_generator --version || sudo gem install github_changelog_generator
+
+.PHONY: bootstrap-ci-mac
+bootstrap-ci-mac: bootstrap
 
 .PHONY: bootstrap
 bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
@@ -263,7 +263,7 @@ setup-macos-signing: ## Prepare for macOS-specific signing process
 	@.github/scripts/mac-prepare-for-signing.sh
 
 .PHONY: package-mac
-package-mac: setup-macos-signing ## Create signed and notarized release assets for macOS
+package-mac: setup-macos-signing bootstrap-ci-mac ## Create signed and notarized release assets for macOS
 	$(call title,Creating packaging for macOS -- signed and notarized)
 
 	# Create signed and notarized assets
@@ -276,7 +276,7 @@ package-mac: setup-macos-signing ## Create signed and notarized release assets f
 
 .PHONY: package-linux
 .SILENT: package-linux
-package-linux:
+package-linux: bootstrap-ci-linux
 	$(call title,Creating packaging for Linux)
 
 	# Produce .tar.gz
@@ -303,7 +303,7 @@ package-linux:
 package: package-mac package-linux
 
 .PHONY: changlog-release
-changelog-release:
+changelog-release: bootstrap-ci-linux
 	@echo "Last tag: $(SECOND_TO_LAST_TAG)"
 	@echo "Current tag: $(VERSION)"
 	@github_changelog_generator \
