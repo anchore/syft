@@ -186,16 +186,12 @@ jobs:
 
       - uses: actions/download-artifact@v2 # Downloads all artifacts
 
-      - name: Display structure of downloaded files
-        run: ls -R
-
       - name: Generate changelog
         run: make changelog-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
 
       - name: Create draft release
-        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
@@ -205,6 +201,21 @@ jobs:
           body_path: "./CHANGELOG.md"
           draft: true
           prerelease: false
+
+      - name: Upload release assets
+        run: | # Solution found at https://github.com/actions/upload-release-asset/issues/28#issuecomment-617208601 after seeing that the native "actions/upload-release-asset" might not be actively maintained.
+          set -eux
+          assets=()
+          for asset in ./Linux-artifacts/*; do
+            assets+=("-a" "$asset")
+          done
+          for asset in ./macOS-artifacts/*; do
+            assets+=("-a" "$asset")
+          done
+          tag_name="${GITHUB_REF##*/}"
+          hub release edit -m "" "${assets[@]}" "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: 8398a7/action-slack@v3
         with:
