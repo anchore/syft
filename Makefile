@@ -1,11 +1,14 @@
-BIN = syft
-TEMPDIR = ./.tmp
+.SHELLFLAGS := -o pipefail -ec
+SHELL := /bin/bash
+
+BIN := syft
+TEMPDIR := ./.tmp
 RESULTSDIR = $(TEMPDIR)/results
 COVER_REPORT = $(RESULTSDIR)/cover.report
 COVER_TOTAL = $(RESULTSDIR)/cover.total
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --config .golangci.yaml
-ACC_TEST_IMAGE = centos:8.2.2004
-ACC_DIR = ./test/acceptance
+ACC_TEST_IMAGE := centos:8.2.2004
+ACC_DIR := ./test/acceptance
 BOLD := $(shell tput -T linux bold)
 PURPLE := $(shell tput -T linux setaf 5)
 GREEN := $(shell tput -T linux setaf 2)
@@ -22,24 +25,33 @@ INTEGRATION_CACHE_BUSTER="789bacdf"
 BOOTSTRAP_CACHE="789bacdf"
 
 ## Build variables
-DISTDIR=./dist
-SNAPSHOTDIR=./snapshot
-COMMIT=$(shell git log --format=%H -n 1)
-DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-GITTREESTATE=$(if $(shell git status --porcelain),dirty,clean)
-SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/syft_linux_amd64/syft)
+DISTDIR := ./dist
+SNAPSHOTDIR := ./snapshot
+COMMIT = $(shell git log --format=%H -n 1)
+DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+GITTREESTATE = $(if $(shell git status --porcelain),dirty,clean)
+SNAPSHOT_CMD = $(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/syft_linux_amd64/syft)
 
-ifeq "$(strip $(VERSION))" ""
- override VERSION = $(shell git describe --always --tags --dirty)
+# Homebrew variables
+HOMEBREW_FORMULA_FILE = "$(DISTDIR)/$(BIN).rb"
+BREW_DIR = "$(TEMPDIR)/homebrew"
+BREW_BIN_DIR = "$(BREW_DIR)/bin"
+BREW_CMD = "$(BREW_BIN_DIR)/brew"
+
+ifeq "$(strip $(VERSION_TAG))" ""
+	override VERSION_TAG = $(shell git describe --always --tags --dirty)
 endif
 
 is_dirty = $(findstring dirty,$(1))
-get_version = $(shell echo "$(1)" | tr -d 'v')
-version = $(if $(call is_dirty,$(VERSION)),$(VERSION),$(call get_version,$(VERSION)))
+get_version_from_version_tag = $(shell echo "$(1)" | tr -d 'v')
+VERSION = $(call get_version_from_version_tag,$(VERSION_TAG))
 
 # used to generate the changelog from the second to last tag to the current tag (used in the release pipeline when the release tag is in place)
-LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --max-count=1))
-SECOND_TO_LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --skip=1 --max-count=1))
+LAST_TAG = $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --max-count=1))
+SECOND_TO_LAST_TAG = $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --skip=1 --max-count=1))
+
+asset_url = $(shell cat $(1) | jq '.assets[] | select(.name | contains($(2))) | .browser_download_url')
+sha256 = $(shell openssl dgst -sha256 "$(1)" | cut -d ' ' -f 2)
 
 ## Variable assertions
 
@@ -102,6 +114,7 @@ bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./
 	[ -f "$(TEMPDIR)/bouncer" ] || curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0
 	[ -f "$(TEMPDIR)/goreleaser" ] || curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
 	[ -f "$(TEMPDIR)/nfpm" ] || curl -sfL curl -sfL https://install.goreleaser.com/github.com/goreleaser/nfpm.sh | sh -s -- -b $(TEMPDIR)/ v2.2.2
+	[ -f "$(BREW_CMD)" ] || (mkdir -p "$(BREW_DIR)" && curl -L https://github.com/Homebrew/brew/tarball/master | tar -xz --strip 1 -C "$(BREW_DIR)")
 
 .PHONY: static-analysis
 static-analysis: lint check-licenses
@@ -179,7 +192,7 @@ build-mac: ## Build binary for macOS
 	go build \
 		-o "./$(DISTDIR)/syft_$${OS}_$${ARCH}/syft" \
 		-ldflags "-w -s -extldflags '-static' \
-		-X github.com/anchore/syft/internal/version.version=$(version) \
+		-X github.com/anchore/syft/internal/version.version=$(VERSION) \
 		-X github.com/anchore/syft/internal/version.gitCommit=$(COMMIT) \
 		-X github.com/anchore/syft/internal/version.buildDate=$(DATE) \
 		-X github.com/anchore/syft/internal/version.gitTreeState=$(BUILD_GIT_TREE_STATE)"
@@ -192,7 +205,7 @@ build-linux: ## Build binary for macOS
 	go build \
 		-o "./$(DISTDIR)/syft_$${OS}_$${ARCH}/syft" \
 		-ldflags "-w -s -extldflags '-static' \
-		-X github.com/anchore/syft/internal/version.version=$(version) \
+		-X github.com/anchore/syft/internal/version.version=$(VERSION) \
 		-X github.com/anchore/syft/internal/version.gitCommit=$(COMMIT) \
 		-X github.com/anchore/syft/internal/version.buildDate=$(DATE) \
 		-X github.com/anchore/syft/internal/version.gitTreeState=$(BUILD_GIT_TREE_STATE)"
@@ -270,7 +283,7 @@ package-mac: setup-macos-signing bootstrap-ci-mac ## Create signed and notarized
 	@gon "./gon.hcl"
 
 	# Update asset names. This won't be necessary once Gon supports variable injection.
-	@ORIGINAL_NAME="$(DISTDIR)/output" && NEW_NAME="$(DISTDIR)/syft_$(version)_darwin_amd64" && \
+	@ORIGINAL_NAME="$(DISTDIR)/output" && NEW_NAME="$(DISTDIR)/syft_$(VERSION)_darwin_amd64" && \
 		mv -v "$${ORIGINAL_NAME}.dmg" "$${NEW_NAME}.dmg" && \
 		mv -v "$${ORIGINAL_NAME}.zip" "$${NEW_NAME}.zip"
 
@@ -281,23 +294,22 @@ package-linux: bootstrap-ci-linux
 
 	# Produce .tar.gz
 	SYFT_PATH=$(DISTDIR)/syft_linux_amd64/syft && \
-		tar -cvzf $(DISTDIR)/syft_$(version)_linux_amd64.tar.gz "$$SYFT_PATH" "./README.md" "./LICENSE"
+		tar -cvzf $(DISTDIR)/syft_$(VERSION)_linux_amd64.tar.gz "$$SYFT_PATH" "./README.md" "./LICENSE"
 
 	# Produce .deb, .rpm
 	for packager in "deb" "rpm"; do \
-		$(TEMPDIR)/nfpm -f "./.nfpm.yaml" pkg --packager="$$packager" --target="$(DISTDIR)/syft_$(version)_linux_amd64.$$packager"; \
+		$(TEMPDIR)/nfpm -f "./.nfpm.yaml" pkg --packager="$$packager" --target="$(DISTDIR)/syft_$(VERSION)_linux_amd64.$$packager"; \
 	done
 
 	# Produce integrity-check files (checksums.txt, checksums.txt.sig)
-	# "Why `cd` instead of `pushd`?" Good question —— `pushd` was causing an error on the GitHub Actions runner. Not sure why.
-	cd $(DISTDIR) && \
-		CHECKSUMS_FILE="syft_$(version)_checksums.txt" && \
+	pushd $(DISTDIR) && \
+		CHECKSUMS_FILE="syft_$(VERSION)_checksums.txt" && \
 		echo "" > "$$CHECKSUMS_FILE" && \
 		for file in ./*linux*.*; do \
 			openssl dgst -sha256 "$$file" >> "$$CHECKSUMS_FILE"; \
 		done && \
 		gpg --detach-sign "$$CHECKSUMS_FILE" && \
-	cd ..
+	popd
 
 .PHONY: package
 package: package-mac package-linux
@@ -305,7 +317,7 @@ package: package-mac package-linux
 .PHONY: changlog-release
 changelog-release: bootstrap-ci-linux
 	@echo "Last tag: $(SECOND_TO_LAST_TAG)"
-	@echo "Current tag: $(VERSION)"
+	@echo "Current tag: $(VERSION_TAG)"
 	@github_changelog_generator \
 		--user anchore \
 		--project $(BIN) \
@@ -315,7 +327,7 @@ changelog-release: bootstrap-ci-linux
 		--no-issues-wo-labels \
 		--since-tag $(SECOND_TO_LAST_TAG)
 
-	@printf '\n$(BOLD)$(CYAN)Release $(VERSION) Changelog$(RESET)\n\n'
+	@printf '\n$(BOLD)$(CYAN)Release $(VERSION_TAG) Changelog$(RESET)\n\n'
 	@cat CHANGELOG.md
 
 .PHONY: changelog-unreleased
@@ -337,31 +349,71 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 			-t 748.5989 \
 			/CHANGELOG.md
 
+.PHONY: homebrew-formula-generate
+.SILENT: homebrew-formula-generate
+homebrew-formula-generate:
+	$(call title,Generating homebrew formula)
+	# dependencies: curl, jq, openssl
+
+	RELEASE_URL="https://api.github.com/repos/anchore/$(BIN)/releases/tags/$(VERSION_TAG)" && \
+	echo "Using release: $${RELEASE_URL}" && \
+	curl -sSL "$${RELEASE_URL}" > "$(TEMPDIR)/release.json"
+
+	export DARWIN_AMD64_ASSET_URL=$(call asset_url,"$(TEMPDIR)/release.json","darwin_amd64.zip") && \
+	curl -sSL "$${DARWIN_AMD64_ASSET_URL}" > "$(TEMPDIR)/darwin_amd64_asset" && \
+	export DARWIN_AMD64_ASSET_SHA256=$(call sha256,"$(TEMPDIR)/darwin_amd64_asset") && \
+	\
+	export LINUX_AMD64_ASSET_URL=$(call asset_url,"$(TEMPDIR)/release.json","linux_amd64.tar.gz") && \
+	curl -sSL "$${LINUX_AMD64_ASSET_URL}" > "$(TEMPDIR)/linux_amd64_asset" && \
+	export LINUX_AMD64_ASSET_SHA256=$(call sha256,"$(TEMPDIR)/linux_amd64_asset") && \
+	\
+	export VERSION=$(call get_version_from_version_tag,$(VERSION_TAG)) && \
+	\
+	cat "./.homebrew-formula-template.rb" | \
+		envsubst > "$(HOMEBREW_FORMULA_FILE)"
+
+	echo "Generated $(HOMEBREW_FORMULA_FILE):" && \
+	cat $(HOMEBREW_FORMULA_FILE)
+
+.PHONY: homebrew-formula-test
+.SILENT: homebrew-formula-test
+homebrew-formula-test: bootstrap
+	$(call title,Testing homebrew formula)
+
+	echo "Cleaning up any versions of $(BIN) previously installed by $(BREW_CMD)"
+	$(BREW_CMD) uninstall --force "$(HOMEBREW_FORMULA_FILE)"
+
+	echo "Testing homebrew installation using formula"
+	$(BREW_CMD) install --formula "$(HOMEBREW_FORMULA_FILE)"
+
+	INSTALLED_BIN="$(BREW_BIN_DIR)/$(BIN)" && \
+	echo "Now running '$${INSTALLED_BIN} version':" && \
+	"$${INSTALLED_BIN}" version
+
+.PHONY: homebrew-formula-publish
+.SILENT: homebrew-formula-publish
+homebrew-formula-publish:
+	$(call title,Publishing homebrew formula)
+
+	FORMULA_FILE="$$(realpath $(HOMEBREW_FORMULA_FILE))" && \
+	\
+	pushd "$(TEMPDIR)" && \
+		rm -rfv "./homebrew-syft" && \
+		gh repo clone anchore/homebrew-syft && \
+		\
+		pushd "homebrew-syft" && \
+			cp -vf "$${FORMULA_FILE}" "./$(BIN).rb" && \
+			git commit -am "Brew formula update for $(BIN) version $(VERSION_TAG)" && \
+			git push && \
+		popd && \
+	popd
+
 .PHONY: release
 release: clean-dist ci-bootstrap-mac changelog-release ## Build and publish final binaries and packages. Intended to be run only on macOS.
 	$(call title,Publishing release artifacts)
 
-	# Prepare for macOS-specific signing process
-	.github/scripts/mac-prepare-for-signing.sh
-
-	# create a config with the dist dir overridden
-	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
-
-	# release (note the version transformation from v0.7.0 --> 0.7.0)
-	bash -c "\
-		BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-		VERSION=$(VERSION:v%=%) \
-		$(TEMPDIR)/goreleaser \
-			--rm-dist \
-			--config $(TEMPDIR)/goreleaser.yaml \
-			--release-notes <(cat CHANGELOG.md)"
-
-	# verify checksum signatures
-	.github/scripts/verify-signature.sh "$(DISTDIR)"
-
 	# upload the version file that supports the application version update check (excluding pre-releases)
-	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
+	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION_TAG)"
 
 .PHONY: clean
 clean: clean-dist clean-snapshot ## Remove previous builds and result reports
