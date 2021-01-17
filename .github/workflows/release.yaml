@@ -12,76 +12,76 @@ env:
   GO_VERSION: "1.14.x"
 
 jobs:
-#  wait-for-checks:
-#    runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
-#    steps:
-#
-#      - uses: actions/checkout@v2
-#
-#      # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
-#      - name: Ensure tagged commit is on main
-#        run: |
-#          echo "Tag: ${GITHUB_REF##*/}"
-#          git fetch origin main
-#          git merge-base --is-ancestor ${GITHUB_REF##*/} origin/main && echo "${GITHUB_REF##*/} is a commit on main!"
-#
-#      - name: Check static analysis results
-#        uses: fountainhead/action-wait-for-check@v1.0.0
-#        id: static-analysis
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
-#          checkName: "Static-Analysis (1.x, ubuntu-latest)"
-#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-#
-#      - name: Check unit + integration results (latest go version)
-#        uses: fountainhead/action-wait-for-check@v1.0.0
-#        id: unit-integration
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
-#          checkName: "Tests (1.x, ubuntu-latest)"
-#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-#
-#      - name: Check acceptance test results (linux)
-#        uses: fountainhead/action-wait-for-check@v1.0.0
-#        id: acceptance-linux
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
-#          checkName: "Acceptance-Linux"
-#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-#
-#      - name: Check acceptance test results (mac)
-#        uses: fountainhead/action-wait-for-check@v1.0.0
-#        id: acceptance-mac
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
-#          checkName: "Acceptance-Mac"
-#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-#
-#      - name: Check inline comparison test results
-#        uses: fountainhead/action-wait-for-check@v1.0.0
-#        id: inline-compare
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
-#          checkName: "Inline-Compare"
-#          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-#
-#      - name: Quality gate
-#        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
-#        run: |
-#          echo "Static Analysis Status: ${{ steps.static-analysis.conclusion }}"
-#          echo "Unit & Integration Test Status: ${{ steps.unit-integration.outputs.conclusion }}"
-#          echo "Acceptance Test (Linux) Status: ${{ steps.acceptance-linux.outputs.conclusion }}"
-#          echo "Acceptance Test (Mac) Status: ${{ steps.acceptance-mac.outputs.conclusion }}"
-#          echo "Inline Compare Status: ${{ steps.inline-compare.outputs.conclusion }}"
-#          false
+  wait-for-checks:
+    runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
+    steps:
+
+      - uses: actions/checkout@v2
+
+      # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
+      - name: Ensure tagged commit is on main
+        run: |
+          echo "Tag: ${GITHUB_REF##*/}"
+          git fetch origin main
+          git merge-base --is-ancestor ${GITHUB_REF##*/} origin/main && echo "${GITHUB_REF##*/} is a commit on main!"
+
+      - name: Check static analysis results
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: static-analysis
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
+          checkName: "Static-Analysis (1.x, ubuntu-latest)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check unit + integration results (latest go version)
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: unit-integration
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the circle-ci workflow name (in .circleci/config.yaml)
+          checkName: "Tests (1.x, ubuntu-latest)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check acceptance test results (linux)
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: acceptance-linux
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
+          checkName: "Acceptance-Linux"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check acceptance test results (mac)
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: acceptance-mac
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
+          checkName: "Acceptance-Mac"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check inline comparison test results
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: inline-compare
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/acceptance-test.yaml)
+          checkName: "Inline-Compare"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Quality gate
+        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
+        run: |
+          echo "Static Analysis Status: ${{ steps.static-analysis.conclusion }}"
+          echo "Unit & Integration Test Status: ${{ steps.unit-integration.outputs.conclusion }}"
+          echo "Acceptance Test (Linux) Status: ${{ steps.acceptance-linux.outputs.conclusion }}"
+          echo "Acceptance Test (Mac) Status: ${{ steps.acceptance-mac.outputs.conclusion }}"
+          echo "Inline Compare Status: ${{ steps.inline-compare.outputs.conclusion }}"
+          false
 
   release-assets-mac:
-#    needs: [ wait-for-checks ]
+    needs: [ wait-for-checks ]
     runs-on: macos-latest # Due to our code signing process, it's vital that we run these release steps on macOS.
     steps:
       - uses: actions/setup-go@v2
@@ -120,7 +120,7 @@ jobs:
           path: "./dist/*_darwin_*.*"
 
   release-assets-linux:
-#    needs: [ wait-for-checks ]
+    needs: [ wait-for-checks ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v2
