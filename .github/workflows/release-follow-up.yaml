@@ -48,3 +48,14 @@ jobs:
 
       - name: Publish updated homebrew formula
         run: homebrew-formula-publish
+
+  update_version_check_file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Update version check file
+        run: make version-check-update
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}

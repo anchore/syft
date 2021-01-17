@@ -408,12 +408,58 @@ homebrew-formula-publish:
 		popd && \
 	popd
 
-.PHONY: release
-release: clean-dist ci-bootstrap-mac changelog-release ## Build and publish final binaries and packages. Intended to be run only on macOS.
-	$(call title,Publishing release artifacts)
+.PHONY: version-check-update
+.SILENT: version-check-update
+version-check-update:
+	$(call title,Updating version check)
 
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION_TAG)"
+
+.PHONY: container-image-build
+.SILENT: container-image-build
+container-image-build:
+	$(call title,Building and tagging container image for $(BIN))
+
+	tags=( \
+		"-t $(CONTAINER_IMAGE_TAG_MAJOR)" \
+		"-t $(CONTAINER_IMAGE_TAG_MINOR)" \
+		"-t $(CONTAINER_IMAGE_TAG_PATCH)" \
+		"-t $(CONTAINER_IMAGE_TAG_LATEST)" \
+	) && \
+	DOCKER_BUILDKIT=1 docker build --no-cache $${tags[@]} -f "./Dockerfile" .
+	# Using buildkit due to https://github.com/moby/moby/issues/37965
+
+.PHONY: container-image-test
+.SILENT: container-image-test
+container-image-test:
+	$(call title,Testing container image tags)
+
+	tags=( \
+		"$(CONTAINER_IMAGE_TAG_MAJOR)" \
+		"$(CONTAINER_IMAGE_TAG_MINOR)" \
+		"$(CONTAINER_IMAGE_TAG_PATCH)" \
+		"$(CONTAINER_IMAGE_TAG_LATEST)" \
+	) && \
+	for tag in $${tags[@]}; do \
+		echo "—— testing $${tag}..." && \
+		docker run --rm "$${tag}" version; \
+	done
+
+.PHONY: container-image-push
+.SILENT: container-image-push
+container-image-push:
+	$(call title,Pushing container image tags)
+
+	tags=( \
+		"$(CONTAINER_IMAGE_TAG_MAJOR)" \
+		"$(CONTAINER_IMAGE_TAG_MINOR)" \
+		"$(CONTAINER_IMAGE_TAG_PATCH)" \
+		"$(CONTAINER_IMAGE_TAG_LATEST)" \
+	) && \
+    for tag in $${tags[@]}; do \
+		docker push "$${tag}"; \
+    done
 
 .PHONY: clean
 clean: clean-dist clean-snapshot ## Remove previous builds and result reports
