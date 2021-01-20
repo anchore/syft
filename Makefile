@@ -60,9 +60,6 @@ CONTAINER_IMAGE_TAG_MINOR := "$(CONTAINER_IMAGE_REPOSITORY):$(call major,$(VERSI
 CONTAINER_IMAGE_TAG_PATCH := "$(CONTAINER_IMAGE_REPOSITORY):$(call major,$(VERSION)).$(call minor,$(VERSION)).$(call patch,$(VERSION))"
 CONTAINER_IMAGE_TAG_LATEST := "$(CONTAINER_IMAGE_REPOSITORY):latest"
 
-asset_url = $(shell cat $(1) | jq '.assets[] | select(.name | contains($(2))) | .browser_download_url')
-sha256 = $(shell openssl dgst -sha256 "$(1)" | cut -d ' ' -f 2)
-
 ## Variable assertions
 
 ifndef TEMPDIR
@@ -363,19 +360,22 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 .SILENT: homebrew-formula-generate
 homebrew-formula-generate:
 	$(call title,Generating homebrew formula)
-	# dependencies: curl, jq, openssl
+	# dependencies: curl, jq, openssl, envsubst
 
 	RELEASE_URL="https://api.github.com/repos/anchore/$(BIN)/releases/tags/$(VERSION_TAG)" && \
 	echo "Using release: $${RELEASE_URL}" && \
 	curl -sSL "$${RELEASE_URL}" > "$(TEMPDIR)/release.json"
 
-	export DARWIN_AMD64_ASSET_URL=$(call asset_url,"$(TEMPDIR)/release.json","darwin_amd64.zip") && \
-	curl -sSL "$${DARWIN_AMD64_ASSET_URL}" > "$(TEMPDIR)/darwin_amd64_asset" && \
-	export DARWIN_AMD64_ASSET_SHA256=$(call sha256,"$(TEMPDIR)/darwin_amd64_asset") && \
+	asset_url() { cat "$${1}" | jq -r ".assets[] | select(.name | contains(\"$${2}\")) | .browser_download_url"; } && \
+	sha256() { openssl dgst -sha256 "$${1}" | cut -d " " -f 2; } && \
 	\
-	export LINUX_AMD64_ASSET_URL=$(call asset_url,"$(TEMPDIR)/release.json","linux_amd64.tar.gz") && \
+	export DARWIN_AMD64_ASSET_URL=`asset_url "$(TEMPDIR)/release.json" "darwin_amd64.zip"` && \
+	curl -sSL "$${DARWIN_AMD64_ASSET_URL}" > "$(TEMPDIR)/darwin_amd64_asset" && \
+	export DARWIN_AMD64_ASSET_SHA256=`sha256 "$(TEMPDIR)/darwin_amd64_asset"` && \
+	\
+	export LINUX_AMD64_ASSET_URL=`asset_url "$(TEMPDIR)/release.json" "linux_amd64.tar.gz"` && \
 	curl -sSL "$${LINUX_AMD64_ASSET_URL}" > "$(TEMPDIR)/linux_amd64_asset" && \
-	export LINUX_AMD64_ASSET_SHA256=$(call sha256,"$(TEMPDIR)/linux_amd64_asset") && \
+	export LINUX_AMD64_ASSET_SHA256=`sha256 "$(TEMPDIR)/linux_amd64_asset"` && \
 	\
 	export VERSION=$(call get_version_from_version_tag,$(VERSION_TAG)) && \
 	\
