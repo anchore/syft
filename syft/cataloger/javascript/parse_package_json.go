@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/internal/log"
 	"io"
 	"regexp"
+
+	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/syft/internal"
 
