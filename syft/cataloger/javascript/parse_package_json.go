@@ -7,6 +7,8 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/anchore/syft/internal/log"
+
 	"github.com/anchore/syft/internal"
 
 	"github.com/mitchellh/mapstructure"
@@ -172,6 +174,11 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
+		if !p.hasNameAndVersionValues() {
+			log.Debug("encountered package.json file without a name and/or version field, ignoring this file")
+			return nil, nil
+		}
+
 		licenses, err := licensesFromJSON(p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
@@ -194,4 +201,8 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 	}
 
 	return packages, nil
+}
+
+func (p PackageJSON) hasNameAndVersionValues() bool {
+	return p.Name != "" && p.Version != ""
 }

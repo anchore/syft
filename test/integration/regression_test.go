@@ -24,7 +24,7 @@ func TestRegression212ApkBufferSize(t *testing.T) {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
 
-	expectedPkgs := 57
+	expectedPkgs := 58
 	actualPkgs := 0
 	for range catalog.Enumerate(pkg.ApkPkg) {
 		actualPkgs += 1
