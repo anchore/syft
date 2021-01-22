@@ -174,9 +174,8 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
-		if !p.hasMinimumRequiredValues() {
-			log.Debug("encountered package.json file without the minimum number of field values required for" +
-				" consideration as a package")
+		if !p.hasNameAndVersionValues() {
+			log.Debug("encountered package.json file without a name and/or version field, ignoring this file")
 			return nil, nil
 		}
 
@@ -204,6 +203,6 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 	return packages, nil
 }
 
-func (p PackageJSON) hasMinimumRequiredValues() bool {
+func (p PackageJSON) hasNameAndVersionValues() bool {
 	return p.Name != "" && p.Version != ""
 }
