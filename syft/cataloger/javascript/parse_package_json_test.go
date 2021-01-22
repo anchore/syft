@@ -155,7 +155,7 @@ func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anch
 		t.Fatalf("failed to parse package-lock.json: %+v", err)
 	}
 
-	if len(actual) != 0 {
-		t.Errorf("no packages should've been returned")
+	if actualCount := len(actual); actualCount != 0 {
+		t.Errorf("no packages should've been returned (but got %d packages)", actualCount)
 	}
 }
