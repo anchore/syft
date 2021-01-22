@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 	"io"
 	"regexp"
 
@@ -172,6 +173,12 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
+		if !p.hasMinimumRequiredValues() {
+			log.Debug("encountered package.json file without the minimum number of field values required for" +
+				" consideration as a package")
+			return nil, nil
+		}
+
 		licenses, err := licensesFromJSON(p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
@@ -194,4 +201,8 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 	}
 
 	return packages, nil
+}
+
+func (p PackageJSON) hasMinimumRequiredValues() bool {
+	return p.Name != "" && p.Version != ""
 }

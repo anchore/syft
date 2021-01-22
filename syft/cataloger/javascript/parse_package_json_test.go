@@ -142,3 +142,20 @@ func TestParsePackageJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
+	const fixtureFile = "test-fixtures/pkg-json/package-partial.json"
+	fixture, err := os.Open(fixtureFile)
+	if err != nil {
+		t.Fatalf("failed to open fixture: %+v", err)
+	}
+
+	actual, err := parsePackageJSON("", fixture)
+	if err != nil {
+		t.Fatalf("failed to parse package-lock.json: %+v", err)
+	}
+
+	if len(actual) != 0 {
+		t.Errorf("no packages should've been returned")
+	}
+}
