@@ -178,67 +178,69 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 			return nil, fmt.Errorf("failed to parse pom.properties (%s): %w", j.virtualPath, err)
 		}
 
-		if propsObj != nil {
-			if propsObj.Version != "" && propsObj.ArtifactID != "" {
-				// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
+		if propsObj == nil {
+			continue
+		}
 
-				// keep the artifact name within the virtual path if this package does not match the parent package
-				vPathSuffix := ""
-				if parentPkg != nil && !strings.HasPrefix(propsObj.ArtifactID, parentPkg.Name) {
-					vPathSuffix += ":" + propsObj.ArtifactID
+		if propsObj.Version != "" && propsObj.ArtifactID != "" {
+			// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
+
+			// keep the artifact name within the virtual path if this package does not match the parent package
+			vPathSuffix := ""
+			if parentPkg != nil && !strings.HasPrefix(propsObj.ArtifactID, parentPkg.Name) {
+				vPathSuffix += ":" + propsObj.ArtifactID
+			}
+			virtualPath := j.virtualPath + vPathSuffix
+
+			// discovered props = new package
+			p := pkg.Package{
+				Name:         propsObj.ArtifactID,
+				Version:      propsObj.Version,
+				Language:     pkg.Java,
+				Type:         pkg.JavaPkg,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					VirtualPath:   virtualPath,
+					PomProperties: propsObj,
+					Parent:        parentPkg,
+				},
+			}
+
+			pkgKey := uniquePkgKey(&p)
+
+			// the name/version pair matches...
+			matchesParentPkg := pkgKey == parentKey
+
+			if parentPkg != nil {
+				// the virtual path matches...
+				matchesParentPkg = matchesParentPkg || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == virtualPath
+
+				// the pom artifactId has the parent name or vice versa
+				if propsObj.ArtifactID != "" {
+					matchesParentPkg = matchesParentPkg || strings.Contains(parentPkg.Name, propsObj.ArtifactID) || strings.Contains(propsObj.ArtifactID, parentPkg.Name)
 				}
-				virtualPath := j.virtualPath + vPathSuffix
 
-				// discovered props = new package
-				p := pkg.Package{
-					Name:         propsObj.ArtifactID,
-					Version:      propsObj.Version,
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
-					Metadata: pkg.JavaMetadata{
-						VirtualPath:   virtualPath,
-						PomProperties: propsObj,
-						Parent:        parentPkg,
-					},
-				}
-
-				pkgKey := uniquePkgKey(&p)
-
-				// the name/version pair matches...
-				matchesParentPkg := pkgKey == parentKey
-
-				if parentPkg != nil {
-					// the virtual path matches...
-					matchesParentPkg = matchesParentPkg || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == virtualPath
-
-					// the pom artifactId has the parent name or vice versa
-					if propsObj.ArtifactID != "" {
-						matchesParentPkg = matchesParentPkg || strings.Contains(parentPkg.Name, propsObj.ArtifactID) || strings.Contains(propsObj.ArtifactID, parentPkg.Name)
+				if matchesParentPkg {
+					// we've run across more information about our parent package, add this info to the parent package metadata
+					// the pom properties is typically a better source of information for name and version than the manifest
+					if p.Name != parentPkg.Name {
+						parentPkg.Name = p.Name
+					}
+					if p.Version != parentPkg.Version {
+						parentPkg.Version = p.Version
 					}
 
-					if matchesParentPkg {
-						// we've run across more information about our parent package, add this info to the parent package metadata
-						// the pom properties is typically a better source of information for name and version than the manifest
-						if p.Name != parentPkg.Name {
-							parentPkg.Name = p.Name
-						}
-						if p.Version != parentPkg.Version {
-							parentPkg.Version = p.Version
-						}
-
-						parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
-						if ok {
-							parentMetadata.PomProperties = propsObj
-							parentPkg.Metadata = parentMetadata
-						}
+					parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
+					if ok {
+						parentMetadata.PomProperties = propsObj
+						parentPkg.Metadata = parentMetadata
 					}
 				}
+			}
 
-				if !matchesParentPkg && !j.discoveredPkgs.Contains(pkgKey) {
-					// only keep packages we haven't seen yet (and are not related to the parent package)
-					pkgs = append(pkgs, p)
-				}
+			if !matchesParentPkg && !j.discoveredPkgs.Contains(pkgKey) {
+				// only keep packages we haven't seen yet (and are not related to the parent package)
+				pkgs = append(pkgs, p)
 			}
 		}
 	}
