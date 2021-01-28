@@ -101,7 +101,7 @@ help:
 
 .PHONY: bootstrap-ci-linux
 bootstrap-ci-linux: bootstrap
-	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils
+	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils gettext
 	github_changelog_generator --version || sudo gem install github_changelog_generator
 
 .PHONY: bootstrap-ci-mac
