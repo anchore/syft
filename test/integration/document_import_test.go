@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"github.com/anchore/syft/syft/cpe"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -13,6 +14,7 @@ import (
 )
 
 func TestCatalogFromJSON(t *testing.T) {
+	cpeDictionary := cpe.NaiveDictionary{}
 
 	// ensure each of our fixture images results in roughly the same shape when:
 	//     generate json -> import json -> assert packages and distro are the same (except for select fields)
@@ -31,7 +33,7 @@ func TestCatalogFromJSON(t *testing.T) {
 			tarPath := imagetest.GetFixtureImageTarPath(t, test.fixture)
 			defer cleanup()
 
-			expectedSource, expectedCatalog, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
+			expectedSource, expectedCatalog, expectedDistro, err := syft.Catalog("docker-archive:"+tarPath, cpeDictionary, source.SquashedScope)
 			if err != nil {
 				t.Fatalf("failed to catalog image: %+v", err)
 			}

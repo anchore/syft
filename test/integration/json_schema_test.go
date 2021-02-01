@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"fmt"
+	"github.com/anchore/syft/syft/cpe"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -60,7 +61,9 @@ func TestJsonSchemaImg(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	src, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
+	cpeDictionary := cpe.NaiveDictionary{}
+
+	src, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, cpeDictionary, source.SquashedScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -87,7 +90,9 @@ func TestJsonSchemaImg(t *testing.T) {
 }
 
 func TestJsonSchemaDirs(t *testing.T) {
-	src, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.SquashedScope)
+	cpeDictionary := cpe.NaiveDictionary{}
+
+	src, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", cpeDictionary, source.SquashedScope)
 	if err != nil {
 		t.Errorf("unable to create source from dir: %+v", err)
 	}

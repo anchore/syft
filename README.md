@@ -110,6 +110,52 @@ log:
   # same as SYFT_LOG_FILE env var
   file: ""
 
+cpe-dictionary:
+  # Cache directory storing the indexed CPE dictionary
+  cache-dir: "$XDG_CACHE_HOME/syft/cpe-dictionary"
+  
+  # URL of the CPE dictionary archive. The matching `META file` should also be available.
+  update-url: "https://nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz"
+  
+  # Automatically check for new CPE dictionary version on start
+  auto-update: true
+  
+  # Validate downloaded CPE dictionary checksum on start 
+  validate-checksum: false
+  
+  # Minimum matching score for a CPE
+  # Having a score less than 2 often means that either vendor or products is not matching.
+  minimum-score: 4
+  
+  # Specific matching for vendors.
+  # Some vendors CPE are not matching Metadata.
+  # match: a regular expression to match the package name
+  # term: the vendor term to use for CPE matching
+  # boost: the term weight
+  specific-vendors:
+    - match: ^spring-.*$
+      term: pivotal_software
+      boost: 4
+    - match: ^swagger-.*$
+      term: smartbear
+      boost: 4
+
+  # Specific matching for products.
+  # Some vendors CPE are not matching Metadata.
+  # match: a regular expression to match the package name
+  # term: the product term to use for CPE matching
+  # boost: the term weight
+  specific-products:
+    - match: ^spring-boot.*$
+      term: boot
+      boost: 4
+    - match: ^spring-.*$
+      term: framework
+      boost: 4
+    - match: ^bcprov-.*$
+      term: legion-of-the-bouncy-castle
+      boost: 4
+
 anchore:
   # (feature-preview) enable uploading of results to Anchore Enterprise automatically (supported on Enterprise 3.0+)
   # same as SYFT_ANCHORE_UPLOAD_ENABLED env var

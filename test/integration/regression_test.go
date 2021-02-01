@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/anchore/syft/syft/cpe"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -19,7 +20,9 @@ func TestRegression212ApkBufferSize(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	_, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
+	cpeDictionary := cpe.NaiveDictionary{}
+
+	_, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, cpeDictionary, source.SquashedScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}

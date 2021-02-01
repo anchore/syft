@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import (
 	"fmt"
@@ -7,28 +7,16 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-// this is functionally equivalent to "*" and consistent with no input given (thus easier to test)
-const any = ""
-
-func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
-	cpe := *(wfn.NewAttributesWithAny())
-	cpe.Part = "a"
-	cpe.Product = product
-	cpe.Vendor = vendor
-	cpe.Version = version
-	cpe.TargetSW = targetSW
-
-	return cpe
+type NaiveDictionary struct {
 }
 
-// generatePackageCPEs Create a list of CPEs, trying to guess the vendor, product tuple and setting TargetSoftware if possible
-func generatePackageCPEs(p pkg.Package) []pkg.CPE {
+func (d NaiveDictionary) IdentifyPackageCPEs(p pkg.Package) []pkg.CPE {
+	vendors := d.candidateVendors(p)
+	products := d.candidateProducts(p)
 	targetSws := candidateTargetSoftwareAttrs(p)
-	vendors := candidateVendors(p)
-	products := candidateProducts(p)
+	version, update := extractVersionAndUpdate(p)
 
 	keys := internal.NewStringSet()
 	cpes := make([]pkg.CPE, 0)
@@ -43,7 +31,7 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 				keys.Add(key)
 
 				// add a new entry...
-				c := newCPE(product, vendor, p.Version, targetSw)
+				c := newCPE(product, vendor, version, update, targetSw)
 				cpes = append(cpes, c)
 			}
 		}
@@ -54,29 +42,12 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	return cpes
 }
 
-func candidateTargetSoftwareAttrs(p pkg.Package) []string {
-	// TODO: would be great to allow these to be overridden by user data/config
-	var targetSw []string
-	switch p.Language {
-	case pkg.Java:
-		targetSw = append(targetSw, "java", "maven")
-	case pkg.JavaScript:
-		targetSw = append(targetSw, "node.js", "nodejs")
-	case pkg.Ruby:
-		targetSw = append(targetSw, "ruby", "rails")
-	case pkg.Python:
-		targetSw = append(targetSw, "python")
-	}
-
-	if p.Type == pkg.JenkinsPluginPkg {
-		targetSw = append(targetSw, "jenkins", "cloudbees_jenkins")
-	}
-
-	return targetSw
+func (d NaiveDictionary) Close() error {
+	return nil
 }
 
-func candidateVendors(p pkg.Package) []string {
-	vendors := candidateProducts(p)
+func (d NaiveDictionary) candidateVendors(p pkg.Package) []string {
+	vendors := d.candidateProducts(p)
 	switch p.Language {
 	case pkg.Python:
 		vendors = append(vendors, fmt.Sprintf("python-%s", p.Name))
@@ -96,7 +67,7 @@ func candidateVendors(p pkg.Package) []string {
 	return vendors
 }
 
-func candidateProducts(p pkg.Package) []string {
+func (d NaiveDictionary) candidateProducts(p pkg.Package) []string {
 	var products = []string{p.Name}
 	switch p.Language {
 	case pkg.Java:

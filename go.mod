@@ -11,6 +11,7 @@ require (
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/stereoscope v0.0.0-20210105001222-7beea73cb7e5
 	github.com/antihax/optional v1.0.0
+	github.com/blevesearch/bleve/v2 v2.0.1
 	github.com/bmatcuk/doublestar/v2 v2.0.4
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200309214505-aa6a9891b09c+incompatible
 	github.com/dustin/go-humanize v1.0.0
@@ -18,6 +19,7 @@ require (
 	github.com/go-test/deep v1.0.7
 	github.com/google/uuid v1.1.1
 	github.com/gookit/color v1.2.7
+	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0

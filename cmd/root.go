@@ -7,8 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pkg/profile"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
@@ -24,6 +22,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
 )
@@ -112,7 +111,18 @@ func startWorker(userInput string) <-chan error {
 			}
 		}
 
-		src, catalog, distro, err := syft.Catalog(userInput, appConfig.ScopeOpt)
+		cpeDictionary, err := syft.LoadCPEDictionary(appConfig.CPEDictionary)
+		if err != nil {
+			errs <- fmt.Errorf("failed to update CPE dictionary: %w", err)
+		}
+		defer func() {
+			err = cpeDictionary.Close()
+			if err != nil {
+				log.Errorf("unable to close CPE dictionary index (%s): %w", cpeDictionary, err)
+			}
+		}()
+
+		src, catalog, distro, err := syft.Catalog(userInput, cpeDictionary, appConfig.ScopeOpt)
 		if err != nil {
 			errs <- fmt.Errorf("failed to catalog input: %+v", err)
 			return
