@@ -140,6 +140,8 @@ github.com/anchore/stereoscope v0.0.0-20210105000809-428eda0b2ec6 h1:JWpsV/8x1fu
 github.com/anchore/stereoscope v0.0.0-20210105000809-428eda0b2ec6/go.mod h1:BMdPL0QEIYfpjQ3M7sHYZvuh6+vcomqF3TMHL8gr6Vw=
 github.com/anchore/stereoscope v0.0.0-20210105001222-7beea73cb7e5 h1:NGRfS6BZKElgiMbqdoH9iQn+6oxT7CJdZYrqgwvGkWY=
 github.com/anchore/stereoscope v0.0.0-20210105001222-7beea73cb7e5/go.mod h1:BMdPL0QEIYfpjQ3M7sHYZvuh6+vcomqF3TMHL8gr6Vw=
+github.com/anchore/stereoscope v0.0.0-20210201165248-e94c52b4052d h1:2hv5NOZ0fD8tPk1UdGiW9PHxmjBmBLL+sFlhLXjjKgo=
+github.com/anchore/stereoscope v0.0.0-20210201165248-e94c52b4052d/go.mod h1:lhSEYyGLXTXMIFHAz7Ls/MNQ5EjYd5ziLxovKZp1xOs=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/antihax/optional v1.0.0 h1:xK2lYat7ZLaVVcIuj82J8kIro4V6kDe0AUDFboUCwcg=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
@@ -849,6 +851,7 @@ github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyC
 github.com/valyala/fasthttp v1.2.0/go.mod h1:4vX61m6KN+xDduDNwXrhIAVZaZaZiQ1luJk8LWSxF3s=
 github.com/valyala/quicktemplate v1.2.0/go.mod h1:EH+4AkTd43SvgIbQHYu59/cJyxDoOVRUAfrukLPuGJ4=
 github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV9WzVtRmSR+PDvWpU/qWl4Wa5LApYYX4ZtKbio=
+github.com/vbatts/tar-split v0.11.1/go.mod h1:LEuURwDEiWjRjwu46yU3KVGuUdVv/dcnpcEPSzR8z6g=
 github.com/vdemeester/k8s-pkg-credentialprovider v1.17.4/go.mod h1:inCTmtUdr5KJbreVojo06krnTgaeAz/Z7lynpPk/Q2c=
 github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
 github.com/wagoodman/go-partybus v0.0.0-20200526224238-eb215533f07d h1:KOxOL6qpmqwoPloNwi+CEgc1ayjHNOFNrvoOmeDOjDg=
