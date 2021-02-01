@@ -51,7 +51,7 @@ func importProgress(source string) (*progress.Stage, *progress.Manual) {
 
 // nolint:funlen
 func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
-	stage, prog := importProgress(c.config.Hostname)
+	stage, prog := importProgress(c.config.BasePath)
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()

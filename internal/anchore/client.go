@@ -3,6 +3,7 @@ package anchore
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/internal"
@@ -10,11 +11,10 @@ import (
 )
 
 type Configuration struct {
-	Hostname  string
+	BasePath  string
 	Username  string
 	Password  string
 	UserAgent string
-	Scheme    string
 }
 
 type Client struct {
@@ -29,16 +29,14 @@ func NewClient(cfg Configuration) (*Client, error) {
 		cfg.UserAgent = fmt.Sprintf("%s / %s %s", internal.ApplicationName, versionInfo.Version, versionInfo.Platform)
 	}
 
-	if cfg.Scheme == "" {
-		cfg.Scheme = "https"
-	}
+	basePath := ensureURLHasScheme(cfg.BasePath) // we can rely on the built-in URL parsing for the scheme, host,
+	// port, and path prefix, as long as a scheme is present
 
 	return &Client{
 		config: cfg,
 		client: external.NewAPIClient(&external.Configuration{
-			Host:      cfg.Hostname,
+			BasePath:  basePath,
 			UserAgent: cfg.UserAgent,
-			Scheme:    cfg.Scheme,
 		}),
 	}, nil
 }
@@ -55,4 +53,20 @@ func (c *Client) newRequestContext(parentContext context.Context) context.Contex
 			Password: c.config.Password,
 		},
 	)
+}
+
+func hasScheme(url string) bool {
+	parts := strings.Split(url, "://")
+
+	return len(parts) > 1
+}
+
+func ensureURLHasScheme(url string) string {
+	const defaultScheme = "http"
+
+	if !hasScheme(url) {
+		return fmt.Sprintf("%s://%s", defaultScheme, url)
+	}
+
+	return url
 }
