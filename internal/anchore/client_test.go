@@ -69,3 +69,41 @@ func TestEnsureURLHasScheme(t *testing.T) {
 		})
 	}
 }
+func TestEnsureURLHasSuffix(t *testing.T) {
+	cases := []struct {
+		url      string
+		suffix   string
+		expected string
+	}{
+		{
+			url:      "http://localhost",
+			suffix:   "/v1",
+			expected: "http://localhost/v1",
+		},
+		{
+			url:      "http://localhost/v1",
+			suffix:   "/v1",
+			expected: "http://localhost/v1",
+		},
+		{
+			url:      "http://localhost/v1/",
+			suffix:   "/v1",
+			expected: "http://localhost/v1//v1",
+		},
+		{
+			url:      "http://localhost-v1",
+			suffix:   "/v1",
+			expected: "http://localhost-v1/v1",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.url, func(t *testing.T) {
+			result := ensureURLHasSuffix(testCase.url, testCase.suffix)
+
+			if testCase.expected != result {
+				t.Errorf("expected '%s' but got '%s'", testCase.expected, result)
+			}
+		})
+	}
+}

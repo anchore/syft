@@ -31,6 +31,9 @@ func NewClient(cfg Configuration) (*Client, error) {
 
 	basePath := ensureURLHasScheme(cfg.BasePath) // we can rely on the built-in URL parsing for the scheme, host,
 	// port, and path prefix, as long as a scheme is present
+	basePath = strings.TrimSuffix(basePath, "/")
+	basePath = ensureURLHasSuffix(basePath,
+		"/v1") // We need some mechanism to ensure Syft doesn't try to communicate with the wrong API version.
 
 	return &Client{
 		config: cfg,
@@ -66,6 +69,14 @@ func ensureURLHasScheme(url string) string {
 
 	if !hasScheme(url) {
 		return fmt.Sprintf("%s://%s", defaultScheme, url)
+	}
+
+	return url
+}
+
+func ensureURLHasSuffix(url, suffix string) string {
+	if !strings.HasSuffix(url, suffix) {
+		return url + suffix
 	}
 
 	return url
