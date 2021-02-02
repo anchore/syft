@@ -2,7 +2,11 @@ package anchore
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"path"
+	"strings"
+	"unicode"
 
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/internal"
@@ -10,11 +14,10 @@ import (
 )
 
 type Configuration struct {
-	Hostname  string
+	BaseURL   string
 	Username  string
 	Password  string
 	UserAgent string
-	Scheme    string
 }
 
 type Client struct {
@@ -29,16 +32,16 @@ func NewClient(cfg Configuration) (*Client, error) {
 		cfg.UserAgent = fmt.Sprintf("%s / %s %s", internal.ApplicationName, versionInfo.Version, versionInfo.Platform)
 	}
 
-	if cfg.Scheme == "" {
-		cfg.Scheme = "https"
+	baseURL, err := prepareBaseURLForClient(cfg.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create client: %w", err)
 	}
 
 	return &Client{
 		config: cfg,
 		client: external.NewAPIClient(&external.Configuration{
-			Host:      cfg.Hostname,
+			BasePath:  baseURL,
 			UserAgent: cfg.UserAgent,
-			Scheme:    cfg.Scheme,
 		}),
 	}, nil
 }
@@ -55,4 +58,58 @@ func (c *Client) newRequestContext(parentContext context.Context) context.Contex
 			Password: c.config.Password,
 		},
 	)
+}
+
+var ErrInvalidBaseURLInput = errors.New("invalid base URL input")
+
+func prepareBaseURLForClient(baseURL string) (string, error) {
+	if err := checkBaseURLInput(baseURL); err != nil {
+		return "", err
+	}
+
+	scheme, urlWithoutScheme := splitSchemeFromURL(baseURL)
+
+	if scheme == "" {
+		scheme = "http"
+	}
+
+	urlWithoutScheme = path.Clean(urlWithoutScheme)
+
+	const requiredSuffix = "v1"
+	if path.Base(urlWithoutScheme) != requiredSuffix {
+		urlWithoutScheme = path.Join(urlWithoutScheme, requiredSuffix)
+	}
+
+	preparedBaseURL := scheme + "://" + urlWithoutScheme
+	return preparedBaseURL, nil
+}
+
+func checkBaseURLInput(url string) error {
+	if url == "" {
+		return ErrInvalidBaseURLInput
+	}
+
+	firstCharacter := rune(url[0])
+	if !(unicode.IsLetter(firstCharacter)) {
+		return ErrInvalidBaseURLInput
+	}
+
+	return nil
+}
+
+func splitSchemeFromURL(url string) (scheme, urlWithoutScheme string) {
+	if hasScheme(url) {
+		urlParts := strings.SplitN(url, "://", 2)
+		scheme = urlParts[0]
+		urlWithoutScheme = urlParts[1]
+		return
+	}
+
+	return "", url
+}
+
+func hasScheme(url string) bool {
+	parts := strings.Split(url, "://")
+
+	return len(parts) > 1
 }
