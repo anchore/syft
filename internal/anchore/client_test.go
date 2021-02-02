@@ -36,73 +36,174 @@ func TestHasScheme(t *testing.T) {
 	}
 }
 
-func TestEnsureURLHasScheme(t *testing.T) {
+func TestPrepareBaseURLForClient(t *testing.T) {
 	cases := []struct {
-		url      string
-		expected string
+		inputURL    string
+		expectedURL string
+		expectedErr error
 	}{
 		{
-			url:      "http://localhost",
-			expected: "http://localhost",
+			inputURL:    "",
+			expectedURL: "",
+			expectedErr: ErrInvalidBaseURLInput,
 		},
 		{
-			url:      "https://anchore.com:8443",
-			expected: "https://anchore.com:8443",
+			inputURL:    "localhost",
+			expectedURL: "http://localhost/v1",
+			expectedErr: nil,
 		},
 		{
-			url:      "google.com:1234/v1/",
-			expected: "http://google.com:1234/v1/",
+			inputURL:    "https://localhost",
+			expectedURL: "https://localhost/v1",
+			expectedErr: nil,
 		},
 		{
-			url:      "localhost",
-			expected: "http://localhost",
+			inputURL:    "https://localhost/",
+			expectedURL: "https://localhost/v1",
+			expectedErr: nil,
+		},
+		{
+			inputURL:    "https://localhost/v1/",
+			expectedURL: "https://localhost/v1",
+			expectedErr: nil,
+		},
+		{
+			inputURL:    "https://localhost/v1//",
+			expectedURL: "https://localhost/v1",
+			expectedErr: nil,
+		},
+		{
+			inputURL:    "http://something.com/platform/v1/services/anchore",
+			expectedURL: "http://something.com/platform/v1/services/anchore/v1",
+			expectedErr: nil,
+		},
+		{
+			inputURL:    "my-host:8228",
+			expectedURL: "http://my-host:8228/v1",
+			expectedErr: nil,
+		},
+		{
+			inputURL:    "v1/v1",
+			expectedURL: "http://v1/v1",
+			expectedErr: nil,
+		},
+		{
+			inputURL:    "/v1",
+			expectedURL: "",
+			expectedErr: ErrInvalidBaseURLInput,
+		},
+		{
+			inputURL:    "/imports/images",
+			expectedURL: "",
+			expectedErr: ErrInvalidBaseURLInput,
 		},
 	}
 
 	for _, testCase := range cases {
-		t.Run(testCase.url, func(t *testing.T) {
-			result := ensureURLHasScheme(testCase.url)
+		t.Run(testCase.inputURL, func(t *testing.T) {
+			resultURL, err := prepareBaseURLForClient(testCase.inputURL)
+			if err != testCase.expectedErr {
+				t.Errorf("expected err to be '%v' but got '%v'", testCase.expectedErr, err)
+			}
 
-			if testCase.expected != result {
-				t.Errorf("expected '%s' but got '%s'", testCase.expected, result)
+			if resultURL != testCase.expectedURL {
+				t.Errorf("expected URL to be '%v' but got '%v'", testCase.expectedURL, resultURL)
 			}
 		})
 	}
 }
-func TestEnsureURLHasSuffix(t *testing.T) {
+
+func TestCheckBaseURLInput(t *testing.T) {
 	cases := []struct {
-		url      string
-		suffix   string
-		expected string
+		input    string
+		expected error
 	}{
 		{
-			url:      "http://localhost",
-			suffix:   "/v1",
-			expected: "http://localhost/v1",
+			input:    "",
+			expected: ErrInvalidBaseURLInput,
 		},
 		{
-			url:      "http://localhost/v1",
-			suffix:   "/v1",
-			expected: "http://localhost/v1",
+			input:    "x",
+			expected: nil,
 		},
 		{
-			url:      "http://localhost/v1/",
-			suffix:   "/v1",
-			expected: "http://localhost/v1//v1",
+			input:    "localhost:8000",
+			expected: nil,
 		},
 		{
-			url:      "http://localhost-v1",
-			suffix:   "/v1",
-			expected: "http://localhost-v1/v1",
+			input:    ":80",
+			expected: ErrInvalidBaseURLInput,
+		},
+		{
+			input:    "/v1",
+			expected: ErrInvalidBaseURLInput,
 		},
 	}
 
 	for _, testCase := range cases {
-		t.Run(testCase.url, func(t *testing.T) {
-			result := ensureURLHasSuffix(testCase.url, testCase.suffix)
+		t.Run(testCase.input, func(t *testing.T) {
+			resultErr := checkBaseURLInput(testCase.input)
 
-			if testCase.expected != result {
-				t.Errorf("expected '%s' but got '%s'", testCase.expected, result)
+			if testCase.expected != resultErr {
+				t.Errorf("expected err to be '%v' but got '%v'", testCase.expected, resultErr)
+			}
+		})
+	}
+}
+
+func TestSplitSchemeFromURL(t *testing.T) {
+	cases := []struct {
+		input                    string
+		expectedScheme           string
+		expectedURLWithoutScheme string
+	}{
+		{
+			input:                    "",
+			expectedScheme:           "",
+			expectedURLWithoutScheme: "",
+		},
+		{
+			input:                    "localhost",
+			expectedScheme:           "",
+			expectedURLWithoutScheme: "localhost",
+		},
+		{
+			input:                    "https://anchore.com/path",
+			expectedScheme:           "https",
+			expectedURLWithoutScheme: "anchore.com/path",
+		},
+		{
+			input:                    "tcp://host:1234",
+			expectedScheme:           "tcp",
+			expectedURLWithoutScheme: "host:1234",
+		},
+		{
+			input:                    "/hello",
+			expectedScheme:           "",
+			expectedURLWithoutScheme: "/hello",
+		},
+		{
+			input:                    "://host",
+			expectedScheme:           "",
+			expectedURLWithoutScheme: "host",
+		},
+		{
+			input:                    "http//localhost",
+			expectedScheme:           "",
+			expectedURLWithoutScheme: "http//localhost",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.input, func(t *testing.T) {
+			resultScheme, resultURLWithoutScheme := splitSchemeFromURL(testCase.input)
+
+			if testCase.expectedScheme != resultScheme {
+				t.Errorf("expected scheme to be '%s' but got '%s'", testCase.expectedScheme, resultScheme)
+			}
+
+			if testCase.expectedURLWithoutScheme != resultURLWithoutScheme {
+				t.Errorf("expected urlWithoutScheme to be '%s' but got '%s'", testCase.expectedURLWithoutScheme, resultURLWithoutScheme)
 			}
 		})
 	}

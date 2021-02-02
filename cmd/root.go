@@ -159,12 +159,12 @@ func doImport(src source.Source, s source.Metadata, catalog *pkg.Catalog, d *dis
 	}
 
 	c, err := anchore.NewClient(anchore.Configuration{
-		BasePath: appConfig.Anchore.Host,
+		BaseURL:  appConfig.Anchore.Host,
 		Username: appConfig.Anchore.Username,
 		Password: appConfig.Anchore.Password,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create anchore client: %+v", err)
+		return fmt.Errorf("unable to upload results: %w", err)
 	}
 
 	importCfg := anchore.ImportConfig{

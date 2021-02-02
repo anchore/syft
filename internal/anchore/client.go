@@ -2,8 +2,11 @@ package anchore
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"path"
 	"strings"
+	"unicode"
 
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/internal"
@@ -11,7 +14,7 @@ import (
 )
 
 type Configuration struct {
-	BasePath  string
+	BaseURL   string
 	Username  string
 	Password  string
 	UserAgent string
@@ -29,16 +32,15 @@ func NewClient(cfg Configuration) (*Client, error) {
 		cfg.UserAgent = fmt.Sprintf("%s / %s %s", internal.ApplicationName, versionInfo.Version, versionInfo.Platform)
 	}
 
-	basePath := ensureURLHasScheme(cfg.BasePath) // we can rely on the built-in URL parsing for the scheme, host,
-	// port, and path prefix, as long as a scheme is present
-	basePath = strings.TrimSuffix(basePath, "/")
-	basePath = ensureURLHasSuffix(basePath,
-		"/v1") // We need some mechanism to ensure Syft doesn't try to communicate with the wrong API version.
+	baseURL, err := prepareBaseURLForClient(cfg.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create client: %w", err)
+	}
 
 	return &Client{
 		config: cfg,
 		client: external.NewAPIClient(&external.Configuration{
-			BasePath:  basePath,
+			BasePath:  baseURL,
 			UserAgent: cfg.UserAgent,
 		}),
 	}, nil
@@ -58,26 +60,56 @@ func (c *Client) newRequestContext(parentContext context.Context) context.Contex
 	)
 }
 
+var ErrInvalidBaseURLInput = errors.New("invalid base URL input")
+
+func prepareBaseURLForClient(baseURL string) (string, error) {
+	if err := checkBaseURLInput(baseURL); err != nil {
+		return "", err
+	}
+
+	scheme, urlWithoutScheme := splitSchemeFromURL(baseURL)
+
+	if scheme == "" {
+		scheme = "http"
+	}
+
+	urlWithoutScheme = path.Clean(urlWithoutScheme)
+
+	const requiredSuffix = "v1"
+	if path.Base(urlWithoutScheme) != requiredSuffix {
+		urlWithoutScheme = path.Join(urlWithoutScheme, requiredSuffix)
+	}
+
+	preparedBaseURL := scheme + "://" + urlWithoutScheme
+	return preparedBaseURL, nil
+}
+
+func checkBaseURLInput(url string) error {
+	if url == "" {
+		return ErrInvalidBaseURLInput
+	}
+
+	firstCharacter := rune(url[0])
+	if !(unicode.IsLetter(firstCharacter)) {
+		return ErrInvalidBaseURLInput
+	}
+
+	return nil
+}
+
+func splitSchemeFromURL(url string) (scheme, urlWithoutScheme string) {
+	if hasScheme(url) {
+		urlParts := strings.SplitN(url, "://", 2)
+		scheme = urlParts[0]
+		urlWithoutScheme = urlParts[1]
+		return
+	}
+
+	return "", url
+}
+
 func hasScheme(url string) bool {
 	parts := strings.Split(url, "://")
 
 	return len(parts) > 1
-}
-
-func ensureURLHasScheme(url string) string {
-	const defaultScheme = "http"
-
-	if !hasScheme(url) {
-		return fmt.Sprintf("%s://%s", defaultScheme, url)
-	}
-
-	return url
-}
-
-func ensureURLHasSuffix(url, suffix string) string {
-	if !strings.HasSuffix(url, suffix) {
-		return url + suffix
-	}
-
-	return url
 }
