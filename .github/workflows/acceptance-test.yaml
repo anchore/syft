@@ -1,4 +1,4 @@
-name: 'Acceptance'
+name: "Acceptance"
 on:
   workflow_dispatch:
   push:
@@ -16,7 +16,6 @@ jobs:
   Build-Snapshot-Artifacts:
     runs-on: macos-latest # We're creating these snapshot builds on macOS to be consistent with our release workflow's build process, which also takes place on macOS (due to code signing requirements).
     steps:
-
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -25,7 +24,7 @@ jobs:
 
       - name: Restore bootstrap cache
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.3
         with:
           path: |
             ~/go/pkg/mod
@@ -75,11 +74,10 @@ jobs:
 
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
-    needs: [ Build-Snapshot-Artifacts ]
+    needs: [Build-Snapshot-Artifacts]
     # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
     runs-on: ubuntu-20.04
     steps:
-
       - uses: actions/checkout@v2
 
       - uses: actions/download-artifact@v2
@@ -101,10 +99,9 @@ jobs:
 
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Mac:
-    needs: [ Build-Snapshot-Artifacts ]
+    needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
     steps:
-
       - uses: actions/checkout@v2
 
       - uses: actions/download-artifact@v2
@@ -126,11 +123,10 @@ jobs:
 
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Inline-Compare:
-    needs: [ Build-Snapshot-Artifacts ]
+    needs: [Build-Snapshot-Artifacts]
     # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
     runs-on: ubuntu-20.04
     steps:
-
       - uses: actions/checkout@v2
 
       - name: Fingerprint inline-compare sources
@@ -138,7 +134,7 @@ jobs:
 
       - name: Restore inline reports cache
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.3
         with:
           path: ${{ github.workspace }}/test/inline-compare/inline-reports
           key: inline-reports-${{ hashFiles('**/inline-compare.fingerprint') }}

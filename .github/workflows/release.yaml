@@ -1,12 +1,12 @@
-name: 'Release'
+name: "Release"
 on:
   push:
     # take no actions on push to any branch...
     branches-ignore:
-      - '**'
+      - "**"
     # ... only act on release tags
     tags:
-      - 'v*'
+      - "v*"
 
 env:
   GO_VERSION: "1.14.x"
@@ -15,7 +15,6 @@ jobs:
   wait-for-checks:
     runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
     steps:
-
       - uses: actions/checkout@v2
 
       # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
@@ -81,10 +80,9 @@ jobs:
           false
 
   release:
-    needs: [ wait-for-checks ]
+    needs: [wait-for-checks]
     runs-on: macos-latest # Due to our code signing process, it's vital that we run our release steps on macOS.
     steps:
-
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -96,7 +94,7 @@ jobs:
       # We are expecting this cache to have been created during the "Build-Snapshot-Artifacts" job in the "Acceptance" workflow.
       - name: Restore bootstrap cache
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.3
         with:
           path: |
             ~/go/pkg/mod
