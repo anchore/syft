@@ -19,6 +19,7 @@ COVERAGE_THRESHOLD := 68
 # CI cache busting values; change these if you want CI to not use previous stored cache
 COMPARE_CACHE_BUSTER="f7e689d76a9"
 INTEGRATION_CACHE_BUSTER="789bacdf"
+BOOTSTRAP_CACHE="789bacdf"
 
 ## Build variables
 DISTDIR=./dist
