@@ -322,10 +322,11 @@ package-linux: bootstrap-ci-linux
 package: package-mac package-linux
 
 .PHONY: changlog-release
+.SILIENT: changelog-release
 changelog-release: bootstrap-ci-linux
-	@echo "Last tag: $(SECOND_TO_LAST_TAG)"
-	@echo "Current tag: $(VERSION_TAG)"
-	@github_changelog_generator \
+	echo "Last tag: $(SECOND_TO_LAST_TAG)"
+	echo "Current tag: $(VERSION_TAG)"
+	github_changelog_generator \
 		--user anchore \
 		--project $(BIN) \
 		-t ${GITHUB_TOKEN} \
@@ -334,12 +335,13 @@ changelog-release: bootstrap-ci-linux
 		--no-issues-wo-labels \
 		--since-tag $(SECOND_TO_LAST_TAG)
 
-	@printf '\n$(BOLD)$(CYAN)Release $(VERSION_TAG) Changelog$(RESET)\n\n'
-	@cat CHANGELOG.md
+	printf '\n$(BOLD)$(CYAN)Release $(VERSION_TAG) Changelog$(RESET)\n\n'
+	cat CHANGELOG.md
 
 .PHONY: changelog-unreleased
+.SILENCE: changelog-unreleased
 changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
-	@docker run -it --rm \
+	docker run -it --rm \
 		-v "$(shell pwd)":/usr/local/src/your-app \
 		ferrarimarco/github-changelog-generator \
 		--user anchore \
@@ -348,9 +350,9 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 		--exclude-labels 'duplicate,question,invalid,wontfix,size:small,size:medium,size:large,size:x-large' \
 		--since-tag $(LAST_TAG)
 
-	@printf '\n$(BOLD)$(CYAN)Unreleased Changes (closed PRs and issues will not be in the final changelog)$(RESET)\n'
+	printf '\n$(BOLD)$(CYAN)Unreleased Changes (closed PRs and issues will not be in the final changelog)$(RESET)\n'
 
-	@docker run -it --rm \
+	docker run -it --rm \
 		-v $(shell pwd)/CHANGELOG.md:/CHANGELOG.md \
 		rawkode/mdv \
 			-t 748.5989 \
@@ -360,30 +362,8 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 .SILENT: homebrew-formula-generate
 homebrew-formula-generate:
 	$(call title,Generating homebrew formula)
-	# dependencies: curl, jq, openssl, envsubst
 
-	RELEASE_URL="https://api.github.com/repos/anchore/$(BIN)/releases/tags/$(VERSION_TAG)" && \
-	echo "Using release: $${RELEASE_URL}" && \
-	curl -sSL "$${RELEASE_URL}" > "$(TEMPDIR)/release.json"
-
-	asset_url() { cat "$${1}" | jq -r ".assets[] | select(.name | contains(\"$${2}\")) | .browser_download_url"; } && \
-	sha256() { openssl dgst -sha256 "$${1}" | cut -d " " -f 2; } && \
-	\
-	export DARWIN_AMD64_ASSET_URL=`asset_url "$(TEMPDIR)/release.json" "darwin_amd64.zip"` && \
-	curl -sSL "$${DARWIN_AMD64_ASSET_URL}" > "$(TEMPDIR)/darwin_amd64_asset" && \
-	export DARWIN_AMD64_ASSET_SHA256=`sha256 "$(TEMPDIR)/darwin_amd64_asset"` && \
-	\
-	export LINUX_AMD64_ASSET_URL=`asset_url "$(TEMPDIR)/release.json" "linux_amd64.tar.gz"` && \
-	curl -sSL "$${LINUX_AMD64_ASSET_URL}" > "$(TEMPDIR)/linux_amd64_asset" && \
-	export LINUX_AMD64_ASSET_SHA256=`sha256 "$(TEMPDIR)/linux_amd64_asset"` && \
-	\
-	export VERSION=$(call get_version_from_version_tag,$(VERSION_TAG)) && \
-	\
-	cat "./.homebrew-formula-template.rb" | \
-		envsubst > "$(HOMEBREW_FORMULA_FILE)"
-
-	echo "Generated $(HOMEBREW_FORMULA_FILE):" && \
-	cat $(HOMEBREW_FORMULA_FILE)
+	.github/scripts/homebrew-formula-generate.sh "$(VERSION_TAG)" "$(HOMEBREW_FORMULA_FILE)"
 
 .PHONY: homebrew-formula-test
 .SILENT: homebrew-formula-test
