@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/log"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -56,7 +57,7 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 
 				fields[key] = val
 			} else {
-				return pkg.PythonPackageMetadata{}, fmt.Errorf("cannot parse field from line: '%s'", line)
+				log.Warnf("cannot parse field from path: %q from line: %q", path, line)
 			}
 		}
 	}
