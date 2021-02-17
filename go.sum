@@ -134,12 +134,6 @@ github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04 h1:VzprUTpc0v
 github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04/go.mod h1:6dK64g27Qi1qGQZ67gFmBFvEHScy0/C8qhQhNe5B5pQ=
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b h1:e1bmaoJfZVsCYMrIZBpFxwV26CbsuoEh5muXD5I1Ods=
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b/go.mod h1:Bkc+JYWjMCF8OyZ340IMSIi2Ebf3uwByOk6ho4wne1E=
-github.com/anchore/stereoscope v0.0.0-20210104203718-4c1d1bd9a255 h1:Ng7BDr9PQTCztANogjfEdEjjWUylhlPyZPhtarIGo00=
-github.com/anchore/stereoscope v0.0.0-20210104203718-4c1d1bd9a255/go.mod h1:BMdPL0QEIYfpjQ3M7sHYZvuh6+vcomqF3TMHL8gr6Vw=
-github.com/anchore/stereoscope v0.0.0-20210105000809-428eda0b2ec6 h1:JWpsV/8x1fuCYjJmNjT43cVFblLTpO/ISDnePukiTNw=
-github.com/anchore/stereoscope v0.0.0-20210105000809-428eda0b2ec6/go.mod h1:BMdPL0QEIYfpjQ3M7sHYZvuh6+vcomqF3TMHL8gr6Vw=
-github.com/anchore/stereoscope v0.0.0-20210105001222-7beea73cb7e5 h1:NGRfS6BZKElgiMbqdoH9iQn+6oxT7CJdZYrqgwvGkWY=
-github.com/anchore/stereoscope v0.0.0-20210105001222-7beea73cb7e5/go.mod h1:BMdPL0QEIYfpjQ3M7sHYZvuh6+vcomqF3TMHL8gr6Vw=
 github.com/anchore/stereoscope v0.0.0-20210201165248-e94c52b4052d h1:2hv5NOZ0fD8tPk1UdGiW9PHxmjBmBLL+sFlhLXjjKgo=
 github.com/anchore/stereoscope v0.0.0-20210201165248-e94c52b4052d/go.mod h1:lhSEYyGLXTXMIFHAz7Ls/MNQ5EjYd5ziLxovKZp1xOs=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=

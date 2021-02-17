@@ -7,6 +7,8 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
+var _ fileOwner = (*RpmdbMetadata)(nil)
+
 // RpmdbMetadata represents all captured data for a RPM DB package entry.
 type RpmdbMetadata struct {
 	Name      string            `json:"name"`
@@ -51,4 +53,13 @@ func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
 		},
 		"")
 	return pURL.ToString()
+}
+
+func (m RpmdbMetadata) ownedFiles() (result []string) {
+	for _, f := range m.Files {
+		if f.Path != "" {
+			result = append(result, f.Path)
+		}
+	}
+	return
 }

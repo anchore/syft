@@ -39,6 +39,8 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // request.
 func Catalog(resolver source.Resolver, theDistro *distro.Distro, catalogers ...Cataloger) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
+	defer catalog.Finalize()
+
 	filesProcessed, packagesDiscovered := newMonitor()
 
 	// perform analysis, accumulating errors for each failed analysis

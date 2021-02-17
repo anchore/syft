@@ -16,6 +16,7 @@ type Package struct {
 
 // packageBasicMetadata contains non-ambiguous values (type-wise) from pkg.Package.
 type packageBasicMetadata struct {
+	ID        string            `json:"id"`
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
 	Type      string            `json:"type"`
@@ -25,6 +26,7 @@ type packageBasicMetadata struct {
 	Language  string            `json:"language"`
 	CPEs      []string          `json:"cpes"`
 	PURL      string            `json:"purl"`
+	Relations Relations         `json:"relations"`
 }
 
 // packageCustomMetadata contains ambiguous values (type-wise) from pkg.Package.
@@ -60,6 +62,7 @@ func NewPackage(p *pkg.Package) (Package, error) {
 
 	return Package{
 		packageBasicMetadata: packageBasicMetadata{
+			ID:        string(p.ID),
 			Name:      p.Name,
 			Version:   p.Version,
 			Type:      string(p.Type),
@@ -69,6 +72,7 @@ func NewPackage(p *pkg.Package) (Package, error) {
 			Language:  string(p.Language),
 			CPEs:      cpes,
 			PURL:      p.PURL,
+			Relations: newRelations(p.Relations),
 		},
 		packageCustomMetadata: packageCustomMetadata{
 			MetadataType: string(p.MetadataType),
@@ -89,6 +93,7 @@ func (a Package) ToPackage() (pkg.Package, error) {
 	}
 	return pkg.Package{
 		// does not include found-by and locations
+		ID:           pkg.ID(a.ID),
 		Name:         a.Name,
 		Version:      a.Version,
 		FoundBy:      a.FoundBy,
@@ -97,6 +102,7 @@ func (a Package) ToPackage() (pkg.Package, error) {
 		Locations:    a.Locations,
 		CPEs:         cpes,
 		PURL:         a.PURL,
+		Relations:    a.Relations.ToRelations(),
 		Type:         pkg.Type(a.Type),
 		MetadataType: pkg.MetadataType(a.MetadataType),
 		Metadata:     a.Metadata,

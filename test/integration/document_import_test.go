@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -57,8 +58,6 @@ func TestCatalogFromJSON(t *testing.T) {
 
 			var actualPackages, expectedPackages []*pkg.Package
 
-			// TODO: take out pkg.RpmdbMetadataType filter
-
 			for _, p := range expectedCatalog.Sorted() {
 				expectedPackages = append(expectedPackages, p)
 			}
@@ -89,8 +88,7 @@ func TestCatalogFromJSON(t *testing.T) {
 
 				for _, d := range deep.Equal(a, e) {
 					// ignore errors for empty collections vs nil for select fields
-					// TODO: this is brittle, but not dangerously so. We should still find a better way to do this.
-					if d == "Licenses: [] != <nil slice>" {
+					if strings.Contains(d, "[] != <nil slice>") {
 						continue
 					}
 					t.Errorf("   package %d (name=%s) diff: %+v", i, e.Name, d)

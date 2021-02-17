@@ -1,5 +1,7 @@
 package pkg
 
+var _ fileOwner = (*PythonPackageMetadata)(nil)
+
 // PythonFileDigest represents the file metadata for a single file attributed to a python package.
 type PythonFileDigest struct {
 	Algorithm string `json:"algorithm"`
@@ -24,4 +26,13 @@ type PythonPackageMetadata struct {
 	Files                []PythonFileRecord `json:"files,omitempty"`
 	SitePackagesRootPath string             `json:"sitePackagesRootPath"`
 	TopLevelPackages     []string           `json:"topLevelPackages,omitempty"`
+}
+
+func (m PythonPackageMetadata) ownedFiles() (result []string) {
+	for _, f := range m.Files {
+		if f.Path != "" {
+			result = append(result, f.Path)
+		}
+	}
+	return
 }
