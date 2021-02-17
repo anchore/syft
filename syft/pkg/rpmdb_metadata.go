@@ -2,6 +2,9 @@ package pkg
 
 import (
 	"fmt"
+	"sort"
+
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/distro"
 	"github.com/package-url/packageurl-go"
@@ -56,10 +59,13 @@ func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
 }
 
 func (m RpmdbMetadata) ownedFiles() (result []string) {
+	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {
-			result = append(result, f.Path)
+			s.Add(f.Path)
 		}
 	}
-	return
+	result = s.List()
+	sort.Strings(result)
+	return result
 }

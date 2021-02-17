@@ -39,7 +39,6 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // request.
 func Catalog(resolver source.Resolver, theDistro *distro.Distro, catalogers ...Cataloger) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
-	defer catalog.Finalize()
 
 	filesProcessed, packagesDiscovered := newMonitor()
 
@@ -73,6 +72,8 @@ func Catalog(resolver source.Resolver, theDistro *distro.Distro, catalogers ...C
 	if errs != nil {
 		return nil, errs
 	}
+
+	catalog.Finalize()
 
 	filesProcessed.SetCompleted()
 	packagesDiscovered.SetCompleted()

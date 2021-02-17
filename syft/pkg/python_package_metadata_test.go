@@ -20,8 +20,8 @@ func TestPythonMetadata_fileOwner(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"/somewhere",
 				"/else",
+				"/somewhere",
 			},
 		},
 		{

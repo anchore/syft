@@ -1,5 +1,11 @@
 package pkg
 
+import (
+	"sort"
+
+	"github.com/scylladb/go-set/strset"
+)
+
 var _ fileOwner = (*NpmPackageJSONMetadata)(nil)
 
 // NpmPackageJSONMetadata holds extra information that is used in pkg.Package
@@ -13,10 +19,13 @@ type NpmPackageJSONMetadata struct {
 }
 
 func (m NpmPackageJSONMetadata) ownedFiles() (result []string) {
+	s := strset.New()
 	for _, f := range m.Files {
 		if f != "" {
-			result = append(result, f)
+			s.Add(f)
 		}
 	}
-	return
+	result = s.List()
+	sort.Strings(result)
+	return result
 }

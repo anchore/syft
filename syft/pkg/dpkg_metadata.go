@@ -1,8 +1,11 @@
 package pkg
 
 import (
+	"sort"
+
 	"github.com/anchore/syft/syft/distro"
 	"github.com/package-url/packageurl-go"
+	"github.com/scylladb/go-set/strset"
 )
 
 var _ fileOwner = (*DpkgMetadata)(nil)
@@ -48,10 +51,13 @@ func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
 }
 
 func (m DpkgMetadata) ownedFiles() (result []string) {
+	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {
-			result = append(result, f.Path)
+			s.Add(f.Path)
 		}
 	}
+	result = s.List()
+	sort.Strings(result)
 	return
 }
