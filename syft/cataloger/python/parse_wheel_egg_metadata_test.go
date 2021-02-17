@@ -117,3 +117,37 @@ func TestDetermineSitePackagesRootPath(t *testing.T) {
 		})
 	}
 }
+
+func TestParseWheelEggMetadataInvalid(t *testing.T) {
+	tests := []struct {
+		Fixture          string
+		ExpectedMetadata pkg.PythonPackageMetadata
+	}{
+		{
+			Fixture: "test-fixtures/egg-info/PKG-INFO-INVALID",
+			ExpectedMetadata: pkg.PythonPackageMetadata{
+				Name:                 "mxnet",
+				Version:              "1.8.0",
+				SitePackagesRootPath: "test-fixtures",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Fixture, func(t *testing.T) {
+			fixture, err := os.Open(test.Fixture)
+			if err != nil {
+				t.Fatalf("failed to open fixture: %+v", err)
+			}
+
+			actual, err := parseWheelOrEggMetadata(test.Fixture, fixture)
+			if err != nil {
+				t.Fatalf("failed to parse: %+v", err)
+			}
+
+			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
+				t.Errorf("diff: %+v", d)
+			}
+		})
+	}
+}
