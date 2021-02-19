@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import "github.com/facebookincubator/nvdtools/wfn"
 

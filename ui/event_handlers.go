@@ -50,6 +50,59 @@ func startProcess() (format.Simple, *common.Spinner) {
 	return formatter, &spinner
 }
 
+func UpdateCPEDictionaryHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseUpdateCPEDictionary(event)
+	if err != nil {
+		return fmt.Errorf("bad UpdateCPEDictionary event: %w", err)
+	}
+
+	line, err := fr.Prepend()
+	if err != nil {
+		return err
+	}
+
+	wg.Add(1)
+
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, 150*time.Millisecond)
+	title := tileFormat.Sprint("CPE Dictionary")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			var auxInfo string
+			switch prog.Stage() {
+			case "downloading":
+				progStr += " "
+				auxInfo = auxInfoFormat.Sprintf(" [%s / %s]", humanize.Bytes(uint64(prog.Current())), humanize.Bytes(uint64(prog.Size())))
+			default:
+				progStr = ""
+				auxInfo = auxInfoFormat.Sprintf("[%s]", prog.Stage())
+			}
+
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s%s", spin, title, progStr, auxInfo))
+		}
+	}
+
+	go func() {
+		defer wg.Done()
+
+		formatFn(progress.Progress{})
+		for p := range stream {
+			formatFn(p)
+		}
+
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("CPE Dictionary")
+		auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
+	}()
+	return err
+}
+
 // formatDockerPullPhase returns a single character that represents the status of a layer pull.
 func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 	switch phase {

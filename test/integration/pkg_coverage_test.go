@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/anchore/syft/syft/cpe"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -18,7 +19,9 @@ func TestPkgCoverageImage(t *testing.T) {
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	defer cleanup()
 
-	_, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
+	cpeDictionary := cpe.NaiveDictionary{}
+
+	_, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, cpeDictionary, source.SquashedScope)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -100,7 +103,9 @@ func TestPkgCoverageImage(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
-	_, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.SquashedScope)
+	cpeDictionary := cpe.NaiveDictionary{}
+
+	_, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", cpeDictionary, source.SquashedScope)
 
 	if err != nil {
 		t.Errorf("unable to create source from dir: %+v", err)

@@ -25,6 +25,7 @@ type Application struct {
 	Quiet             bool             `yaml:"quiet" mapstructure:"quiet"`   // -q, indicates to not show any status output to stderr (ETUI or logging UI)
 	Log               logging          `yaml:"log"  mapstructure:"log"`      // all logging-related options
 	CliOptions        CliOnlyOptions   `yaml:"-"`                            // all options only available through the CLI (not via env vars or config)
+	CPEDictionary     CPEDictionary    `mapstructure:"cpe-dictionary"`
 	Dev               Development      `mapstructure:"dev"`
 	CheckForAppUpdate bool             `yaml:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
 	Anchore           anchore          `yaml:"anchore" mapstructure:"anchore"`                           // options for interacting with Anchore Engine/Enterprise
@@ -53,6 +54,22 @@ type anchore struct {
 	Password               string `yaml:"password" mapstructure:"password"`                                 // -p , password to authenticate upload
 	Dockerfile             string `yaml:"dockerfile" mapstructure:"dockerfile"`                             // -d , dockerfile to attach for upload
 	OverwriteExistingImage bool   `yaml:"overwrite-existing-image" mapstructure:"overwrite-existing-image"` // --overwrite-existing-image , if any of the SBOM components have already been uploaded this flag will ensure they are overwritten with the current upload
+}
+
+type CPEDictionary struct {
+	CacheDir         string          `mapstructure:"cache-dir"`
+	UpdateURL        string          `mapstructure:"update-url"`
+	AutoUpdate       bool            `mapstructure:"auto-update"`
+	ValidateChecksum bool            `mapstructure:"validate-checksum"`
+	MinimumScore     float64         `mapstructure:"minimum-score"`
+	SpecificVendors  []SpecificMatch `mapstructure:"specific-vendors"`
+	SpecificProducts []SpecificMatch `mapstructure:"specific-products"`
+}
+
+type SpecificMatch struct {
+	Match string  `mapstructure:"match"`
+	Term  string  `mapstructure:"term"`
+	Boost float64 `mapstructure:"boost"`
 }
 
 type Development struct {
@@ -223,6 +240,28 @@ func setNonCliDefaultValues(v *viper.Viper) {
 	v.SetDefault("log.file", "")
 	v.SetDefault("log.structured", false)
 	v.SetDefault("check-for-app-update", true)
+	v.SetDefault("cpe-dictionary.cache-dir", path.Join(xdg.CacheHome, internal.ApplicationName, "cpe-dictionary"))
+	v.SetDefault("cpe-dictionary.update-url", internal.CPEDictionaryUpdateURL)
+	v.SetDefault("cpe-dictionary.auto-update", true)
+	v.SetDefault("cpe-dictionary.validate-by-hash-on-start", false)
+	v.SetDefault("cpe-dictionary.minimum-score", 4)
+	v.SetDefault("cpe-dictionary.specific-vendors", specificVendorsDefaultValues())
+	v.SetDefault("cpe-dictionary.specific-products", specificProductsDefaultValues())
 	v.SetDefault("dev.profile-cpu", false)
 	v.SetDefault("dev.profile-mem", false)
+}
+
+func specificVendorsDefaultValues() []SpecificMatch {
+	return []SpecificMatch{
+		{"^spring-.*$", "pivotal_software", 4},
+		{"^swagger-.*$", "smartbear", 4},
+	}
+}
+
+func specificProductsDefaultValues() []SpecificMatch {
+	return []SpecificMatch{
+		{"^spring-boot.*$", "boot", 4},
+		{"^spring-.*$", "framework", 4},
+		{"^bcprov-.*$", "legion-of-the-bouncy-castle", 4},
+	}
 }

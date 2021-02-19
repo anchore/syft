@@ -21,6 +21,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/syft/cpe"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cataloger"
@@ -32,9 +35,28 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
+// LoadCPEDictionary retrieve the index used
+func LoadCPEDictionary(cfg config.CPEDictionary) (cpe.Dictionary, error) {
+	dictionaryCurator := cpe.NewCurator(cfg)
+
+	if cfg.AutoUpdate {
+		_, err := dictionaryCurator.Update()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	store, err := dictionaryCurator.GetDictionary()
+	if err != nil {
+		return nil, err
+	}
+
+	return store, nil
+}
+
 // Catalog the given image from a particular perspective (e.g. squashed source, all-layers source). Returns the discovered
 // set of packages, the identified Linux distribution, and the source object used to wrap the data source.
-func Catalog(userInput string, scope source.Scope) (source.Source, *pkg.Catalog, *distro.Distro, error) {
+func Catalog(userInput string, cpeDictionary cpe.Dictionary, scope source.Scope) (source.Source, *pkg.Catalog, *distro.Distro, error) {
 	theSource, cleanup, err := source.New(userInput, scope)
 	defer cleanup()
 	if err != nil {
@@ -62,7 +84,7 @@ func Catalog(userInput string, scope source.Scope) (source.Source, *pkg.Catalog,
 		return source.Source{}, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", theSource.Metadata.Scheme)
 	}
 
-	catalog, err := cataloger.Catalog(theSource.Resolver, theDistro, catalogers...)
+	catalog, err := cataloger.Catalog(theSource.Resolver, cpeDictionary, theDistro, catalogers...)
 	if err != nil {
 		return source.Source{}, nil, nil, err
 	}

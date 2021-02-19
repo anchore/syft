@@ -39,6 +39,19 @@ func checkEventType(actual, expected partybus.EventType) error {
 	return nil
 }
 
+func ParseUpdateCPEDictionary(e partybus.Event) (progress.StagedProgressable, error) {
+	if err := checkEventType(e.Type, event.UpdateCPEDictionary); err != nil {
+		return nil, err
+	}
+
+	prog, ok := e.Value.(progress.StagedProgressable)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return prog, nil
+}
+
 func ParseCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
 	if err := checkEventType(e.Type, event.CatalogerStarted); err != nil {
 		return nil, err

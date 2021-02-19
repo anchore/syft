@@ -27,7 +27,7 @@ func NewHandler() *Handler {
 // RespondsTo indicates if the handler is capable of handling the given event.
 func (r *Handler) RespondsTo(event partybus.Event) bool {
 	switch event.Type {
-	case stereoscopeEvent.PullDockerImage, stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.CatalogerStarted, syftEvent.ImportStarted:
+	case stereoscopeEvent.PullDockerImage, stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.UpdateCPEDictionary, syftEvent.CatalogerStarted, syftEvent.ImportStarted:
 		return true
 	default:
 		return false
@@ -45,6 +45,9 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 
 	case stereoscopeEvent.FetchImage:
 		return FetchImageHandler(ctx, fr, event, wg)
+
+	case syftEvent.UpdateCPEDictionary:
+		return UpdateCPEDictionaryHandler(ctx, fr, event, wg)
 
 	case syftEvent.CatalogerStarted:
 		return CatalogerStartedHandler(ctx, fr, event, wg)

@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import (
 	"sort"
@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func TestGenerate(t *testing.T) {
+func TestNaiveIdentifyPackageCPEs(t *testing.T) {
 	tests := []struct {
 		name     string
 		p        pkg.Package
@@ -83,10 +83,24 @@ func TestGenerate(t *testing.T) {
 			expected: []string{
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:maven:*:*",
+			},
+		},
+		{
+			name: "maven plugin",
+			p: pkg.Package{
+				Name:     "name-maven-plugin",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.DebPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name-maven-plugin:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name-maven-plugin:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:name-maven-plugin:name-maven-plugin:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name-maven-plugin:name-maven-plugin:3.2:*:*:*:*:maven:*:*",
 			},
 		},
 		{
@@ -107,28 +121,20 @@ func TestGenerate(t *testing.T) {
 			expected: []string{
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:*:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:*:nexus:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:*:nexus:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:name:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:nexus:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:nexus:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:maven:*:*",
 			},
 		},
 		{
@@ -142,22 +148,19 @@ func TestGenerate(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 			},
 		},
 	}
 
+	dictionary := &NaiveDictionary{}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := generatePackageCPEs(test.p)
+			actual := dictionary.IdentifyPackageCPEs(test.p)
 
 			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
@@ -176,7 +179,6 @@ func TestGenerate(t *testing.T) {
 			for _, d := range missing {
 				t.Errorf("missing CPE: %+v", d)
 			}
-
 		})
 	}
 }

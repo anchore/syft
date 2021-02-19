@@ -10,6 +10,9 @@ const (
 	// AppUpdateAvailable is a partybus event that occurs when an application update is available
 	AppUpdateAvailable partybus.EventType = "syft-app-update-available"
 
+	// UpdateCPEDictionary is a partybus event that occurs when the CPE Dictionary is updating
+	UpdateCPEDictionary partybus.EventType = "syft-update-cpe-dictionary"
+
 	// CatalogerStarted is a partybus event that occurs when the package cataloging has begun
 	CatalogerStarted partybus.EventType = "syft-cataloger-started-event"
 

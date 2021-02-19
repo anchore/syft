@@ -3,6 +3,7 @@ package cataloger
 import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg"
@@ -37,7 +38,7 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
 // request.
-func Catalog(resolver source.Resolver, theDistro *distro.Distro, catalogers ...Cataloger) (*pkg.Catalog, error) {
+func Catalog(resolver source.Resolver, cpeDictionary cpe.Dictionary, theDistro *distro.Distro, catalogers ...Cataloger) (*pkg.Catalog, error) {
 	catalog := pkg.NewCatalog()
 	filesProcessed, packagesDiscovered := newMonitor()
 
@@ -58,7 +59,7 @@ func Catalog(resolver source.Resolver, theDistro *distro.Distro, catalogers ...C
 
 		for _, p := range packages {
 			// generate CPEs
-			p.CPEs = generatePackageCPEs(p)
+			p.CPEs = cpeDictionary.IdentifyPackageCPEs(p)
 
 			// generate PURL
 			p.PURL = generatePackageURL(p, theDistro)

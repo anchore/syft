@@ -40,7 +40,8 @@ docker run --rm \
     -w /src \
     ubuntu:latest \
         /bin/bash -x -c "\
-            DEBIAN_FRONTEND=noninteractive apt install ${DISTDIR}/syft_*_linux_amd64.deb -y && \
+            DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get install ca-certificates -y && \
+            apt install ${DISTDIR}/syft_*_linux_amd64.deb -y && \
             syft version && \
             syft ${TEST_IMAGE} -vv -o json > ${REPORT} \
         "
