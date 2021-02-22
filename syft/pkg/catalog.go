@@ -4,10 +4,15 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/scylladb/go-set/strset"
-
 	"github.com/anchore/syft/internal/log"
+	"github.com/bmatcuk/doublestar/v2"
 )
+
+var forbiddenOwnershipGlobs = []string{
+	ApkDbGlob,
+	DpkgDbGlob,
+	RpmDbGlob,
+}
 
 // Catalog represents a collection of Packages.
 type Catalog struct {
@@ -123,52 +128,6 @@ func (c *Catalog) Remove(id ID) {
 	delete(c.byID, id)
 }
 
-func (c *Catalog) Finalize() {
-	c.markPackageOwnership()
-}
-
-// markPackageOwnership find overlaps in file ownership with a file that defines another package. Specifically, a .Location.Path of
-// a package is found to be owned by another (from the owner's .Metadata.Files[]). This relationship is captured on the
-// child package.
-func (c *Catalog) markPackageOwnership() {
-	var pkgParents = make(map[ID]*strset.Set)
-	for _, candidateOwnerPkg := range c.Sorted() {
-		if candidateOwnerPkg.Metadata == nil {
-			continue
-		}
-
-		// check to see if this is a file owner
-		pkgFileOwner, ok := candidateOwnerPkg.Metadata.(fileOwner)
-		if !ok {
-			continue
-		}
-		for _, ownedFilePath := range pkgFileOwner.ownedFiles() {
-			// look for package(s) in the catalog that may be owned by this package and mark the relationship
-			for _, subPackage := range c.PackagesByPath(ownedFilePath) {
-				if subPackage.ID == candidateOwnerPkg.ID {
-					continue
-				}
-				if _, exists := pkgParents[subPackage.ID]; !exists {
-					pkgParents[subPackage.ID] = strset.New()
-				}
-				pkgParents[subPackage.ID].Add(string(candidateOwnerPkg.ID))
-			}
-		}
-	}
-
-	// by this point we have a set of package IDs that own other package IDs, mark the relationship
-	for child, parents := range pkgParents {
-		p := c.Package(child)
-		if p != nil {
-			ids := make([]ID, 0)
-			for _, id := range parents.List() {
-				ids = append(ids, ID(id))
-			}
-			p.Relations.ParentsByFileOwnership = ids
-		}
-	}
-}
-
 // Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
 func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
 	channel := make(chan *Package)
@@ -224,4 +183,17 @@ func removeID(id ID, target []ID) (result []ID) {
 		}
 	}
 	return result
+}
+
+func matchesAny(s string, globs []string) bool {
+	for _, g := range globs {
+		matches, err := doublestar.Match(g, s)
+		if err != nil {
+			log.Errorf("failed to match glob=%q : %+v", g, err)
+		}
+		if matches {
+			return true
+		}
+	}
+	return false
 }

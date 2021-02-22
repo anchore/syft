@@ -20,9 +20,6 @@
     "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
    ],
    "purl": "a-purl-1",
-   "relations": {
-    "parentsByFileOwnership": []
-   },
    "metadataType": "PythonPackageMetadata",
    "metadata": {
     "name": "package-1",
@@ -52,9 +49,6 @@
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
    ],
    "purl": "a-purl-2",
-   "relations": {
-    "parentsByFileOwnership": []
-   },
    "metadataType": "DpkgMetadata",
    "metadata": {
     "package": "package-2",
@@ -113,5 +107,6 @@
  "schema": {
   "version": "1.0.2",
   "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.0.2.json"
- }
+ },
+ "artifactRelationships": []
 }

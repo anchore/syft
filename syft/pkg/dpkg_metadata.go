@@ -8,6 +8,8 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
+const DpkgDbGlob = "**/var/lib/dpkg/status"
+
 var _ fileOwner = (*DpkgMetadata)(nil)
 
 // DpkgMetadata represents all captured data for a Debian package DB entry; available fields are described

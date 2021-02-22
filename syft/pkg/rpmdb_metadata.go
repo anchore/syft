@@ -10,6 +10,8 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
+const RpmDbGlob = "**/var/lib/rpm/Packages"
+
 var _ fileOwner = (*RpmdbMetadata)(nil)
 
 // RpmdbMetadata represents all captured data for a RPM DB package entry.

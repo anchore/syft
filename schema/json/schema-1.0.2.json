@@ -136,7 +136,8 @@
         "source",
         "distro",
         "descriptor",
-        "schema"
+        "schema",
+        "artifactRelationships"
       ],
       "properties": {
         "artifacts": {
@@ -161,6 +162,13 @@
         "schema": {
           "$schema": "http://json-schema.org/draft-04/schema#",
           "$ref": "#/definitions/Schema"
+        },
+        "artifactRelationships": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Relationship"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,
@@ -374,7 +382,6 @@
         "language",
         "cpes",
         "purl",
-        "relations",
         "metadataType",
         "metadata"
       ],
@@ -418,10 +425,6 @@
         },
         "purl": {
           "type": "string"
-        },
-        "relations": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/Relations"
         },
         "metadataType": {
           "type": "string"
@@ -579,16 +582,25 @@
       "additionalProperties": false,
       "type": "object"
     },
-    "Relations": {
+    "Relationship": {
       "required": [
-        "parentsByFileOwnership"
+        "parent",
+        "child",
+        "type",
+        "metadata"
       ],
       "properties": {
-        "parentsByFileOwnership": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "parent": {
+          "type": "string"
+        },
+        "child": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true
         }
       },
       "additionalProperties": false,

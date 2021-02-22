@@ -73,8 +73,6 @@ func Catalog(resolver source.Resolver, theDistro *distro.Distro, catalogers ...C
 		return nil, errs
 	}
 
-	catalog.Finalize()
-
 	filesProcessed.SetCompleted()
 	packagesDiscovered.SetCompleted()
 

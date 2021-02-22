@@ -26,7 +26,6 @@ type packageBasicMetadata struct {
 	Language  string            `json:"language"`
 	CPEs      []string          `json:"cpes"`
 	PURL      string            `json:"purl"`
-	Relations Relations         `json:"relations"`
 }
 
 // packageCustomMetadata contains ambiguous values (type-wise) from pkg.Package.
@@ -72,7 +71,6 @@ func NewPackage(p *pkg.Package) (Package, error) {
 			Language:  string(p.Language),
 			CPEs:      cpes,
 			PURL:      p.PURL,
-			Relations: newRelations(p.Relations),
 		},
 		packageCustomMetadata: packageCustomMetadata{
 			MetadataType: string(p.MetadataType),
@@ -102,7 +100,6 @@ func (a Package) ToPackage() (pkg.Package, error) {
 		Locations:    a.Locations,
 		CPEs:         cpes,
 		PURL:         a.PURL,
-		Relations:    a.Relations.ToRelations(),
 		Type:         pkg.Type(a.Type),
 		MetadataType: pkg.MetadataType(a.MetadataType),
 		Metadata:     a.Metadata,

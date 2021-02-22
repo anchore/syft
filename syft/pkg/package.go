@@ -22,7 +22,6 @@ type Package struct {
 	Type         Type         // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
 	CPEs         []CPE        // all possible Common Platform Enumerators
 	PURL         string       // the Package URL (see https://github.com/package-url/purl-spec)
-	Relations    Relations    // describes any relationship of this package to other packages (referenced by ID)
 	MetadataType MetadataType // the shape of the additional data in the "metadata" field
 	Metadata     interface{}  // additional data found while parsing the package source
 }

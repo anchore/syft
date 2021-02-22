@@ -7,6 +7,8 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
+const ApkDbGlob = "**/lib/apk/db/installed"
+
 var _ fileOwner = (*ApkMetadata)(nil)
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
