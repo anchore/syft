@@ -14,6 +14,7 @@ type Relationship struct {
 	Metadata interface{}
 }
 
+// TODO: as more relationships are added, this function signature will probably accommodate selection
 func NewRelationships(catalog *Catalog) []Relationship {
 	return ownershipByFilesRelationships(catalog)
 }

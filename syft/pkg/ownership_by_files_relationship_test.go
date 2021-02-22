@@ -7,7 +7,7 @@ import (
 	"github.com/go-test/deep"
 )
 
-func TestCatalogMarkOwnership(t *testing.T) {
+func TestOwnershipByFilesRelationship(t *testing.T) {
 	tests := []struct {
 		name              string
 		pkgs              []Package
@@ -165,7 +165,7 @@ func TestCatalogMarkOwnership(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewCatalog(test.pkgs...)
-			relationships := NewRelationships(c)
+			relationships := ownershipByFilesRelationships(c)
 
 			for _, d := range deep.Equal(test.expectedRelations, relationships) {
 				t.Errorf("diff: %+v", d)
