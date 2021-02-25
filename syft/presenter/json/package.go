@@ -16,6 +16,7 @@ type Package struct {
 
 // packageBasicMetadata contains non-ambiguous values (type-wise) from pkg.Package.
 type packageBasicMetadata struct {
+	ID        string            `json:"id"`
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
 	Type      string            `json:"type"`
@@ -60,6 +61,7 @@ func NewPackage(p *pkg.Package) (Package, error) {
 
 	return Package{
 		packageBasicMetadata: packageBasicMetadata{
+			ID:        string(p.ID),
 			Name:      p.Name,
 			Version:   p.Version,
 			Type:      string(p.Type),
@@ -89,6 +91,7 @@ func (a Package) ToPackage() (pkg.Package, error) {
 	}
 	return pkg.Package{
 		// does not include found-by and locations
+		ID:           pkg.ID(a.ID),
 		Name:         a.Name,
 		Version:      a.Version,
 		FoundBy:      a.FoundBy,

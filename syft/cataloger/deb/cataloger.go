@@ -14,9 +14,8 @@ import (
 )
 
 const (
-	dpkgStatusGlob = "**/var/lib/dpkg/status"
-	md5sumsExt     = ".md5sums"
-	docsPath       = "/usr/share/doc"
+	md5sumsExt = ".md5sums"
+	docsPath   = "/usr/share/doc"
 )
 
 type Cataloger struct{}
@@ -34,7 +33,7 @@ func (c *Cataloger) Name() string {
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
 // nolint:funlen
 func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
-	dbFileMatches, err := resolver.FilesByGlob(dpkgStatusGlob)
+	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDbGlob)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find dpkg status files's by glob: %w", err)
 	}

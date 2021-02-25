@@ -1,5 +1,13 @@
 package pkg
 
+import (
+	"sort"
+
+	"github.com/scylladb/go-set/strset"
+)
+
+var _ fileOwner = (*PythonPackageMetadata)(nil)
+
 // PythonFileDigest represents the file metadata for a single file attributed to a python package.
 type PythonFileDigest struct {
 	Algorithm string `json:"algorithm"`
@@ -24,4 +32,16 @@ type PythonPackageMetadata struct {
 	Files                []PythonFileRecord `json:"files,omitempty"`
 	SitePackagesRootPath string             `json:"sitePackagesRootPath"`
 	TopLevelPackages     []string           `json:"topLevelPackages,omitempty"`
+}
+
+func (m PythonPackageMetadata) ownedFiles() (result []string) {
+	s := strset.New()
+	for _, f := range m.Files {
+		if f.Path != "" {
+			s.Add(f.Path)
+		}
+	}
+	result = s.List()
+	sort.Strings(result)
+	return result
 }

@@ -1,8 +1,15 @@
 package pkg
 
 import (
+	"sort"
+
 	"github.com/package-url/packageurl-go"
+	"github.com/scylladb/go-set/strset"
 )
+
+const ApkDbGlob = "**/lib/apk/db/installed"
+
+var _ fileOwner = (*ApkMetadata)(nil)
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
 // See the following sources for more information:
@@ -52,4 +59,16 @@ func (m ApkMetadata) PackageURL() string {
 		},
 		"")
 	return pURL.ToString()
+}
+
+func (m ApkMetadata) ownedFiles() (result []string) {
+	s := strset.New()
+	for _, f := range m.Files {
+		if f.Path != "" {
+			s.Add(f.Path)
+		}
+	}
+	result = s.List()
+	sort.Strings(result)
+	return result
 }

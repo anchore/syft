@@ -107,6 +107,10 @@ func TestPackageSbomToModel(t *testing.T) {
 	}
 
 	for _, d := range deep.Equal(actualDoc, expectedDoc) {
+		if strings.HasSuffix(d, "<nil slice> != []") {
+			// do not consider nil vs empty collection semantics as a "difference"
+			continue
+		}
 		t.Errorf("diff: %+v", d)
 	}
 }

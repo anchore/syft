@@ -2,10 +2,17 @@ package pkg
 
 import (
 	"fmt"
+	"sort"
+
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/distro"
 	"github.com/package-url/packageurl-go"
 )
+
+const RpmDbGlob = "**/var/lib/rpm/Packages"
+
+var _ fileOwner = (*RpmdbMetadata)(nil)
 
 // RpmdbMetadata represents all captured data for a RPM DB package entry.
 type RpmdbMetadata struct {
@@ -51,4 +58,16 @@ func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
 		},
 		"")
 	return pURL.ToString()
+}
+
+func (m RpmdbMetadata) ownedFiles() (result []string) {
+	s := strset.New()
+	for _, f := range m.Files {
+		if f.Path != "" {
+			s.Add(f.Path)
+		}
+	}
+	result = s.List()
+	sort.Strings(result)
+	return result
 }
