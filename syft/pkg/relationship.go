@@ -1,8 +1,8 @@
 package pkg
 
 const (
-	// OwnershipByFiles indicates that the parent package owns the child package made evident by the set of provided files
-	OwnershipByFilesRelationship RelationshipType = "ownership-by-files"
+	// OwnershipByFileOverlapRelationship indicates that the parent package owns the child package made evident by the set of provided files
+	OwnershipByFileOverlapRelationship RelationshipType = "ownership-by-file-overlap"
 )
 
 type RelationshipType string

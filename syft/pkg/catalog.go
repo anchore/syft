@@ -5,10 +5,9 @@ import (
 	"sync"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/bmatcuk/doublestar/v2"
 )
 
-var forbiddenOwnershipGlobs = []string{
+var globsForbiddenFromBeingOwned = []string{
 	ApkDbGlob,
 	DpkgDbGlob,
 	RpmDbGlob,
@@ -183,17 +182,4 @@ func removeID(id ID, target []ID) (result []ID) {
 		}
 	}
 	return result
-}
-
-func matchesAny(s string, globs []string) bool {
-	for _, g := range globs {
-		matches, err := doublestar.Match(g, s)
-		if err != nil {
-			log.Errorf("failed to match glob=%q : %+v", g, err)
-		}
-		if matches {
-			return true
-		}
-	}
-	return false
 }

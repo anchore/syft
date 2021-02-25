@@ -57,7 +57,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				{
 					Parent: "parent",
 					Child:  "child",
-					Type:   OwnershipByFilesRelationship,
+					Type:   OwnershipByFileOverlapRelationship,
 					Metadata: ownershipByFilesMetadata{
 						Files: []string{
 							"/d/path",
@@ -110,7 +110,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				{
 					Parent: "parent",
 					Child:  "child",
-					Type:   OwnershipByFilesRelationship,
+					Type:   OwnershipByFileOverlapRelationship,
 					Metadata: ownershipByFilesMetadata{
 						Files: []string{
 							"/another/path",

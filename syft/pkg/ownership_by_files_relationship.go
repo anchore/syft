@@ -1,6 +1,10 @@
 package pkg
 
-import "github.com/scylladb/go-set/strset"
+import (
+	"github.com/anchore/syft/internal/log"
+	"github.com/bmatcuk/doublestar/v2"
+	"github.com/scylladb/go-set/strset"
+)
 
 type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
@@ -15,7 +19,7 @@ func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
 			edges = append(edges, Relationship{
 				Parent: parent,
 				Child:  child,
-				Type:   OwnershipByFilesRelationship,
+				Type:   OwnershipByFileOverlapRelationship,
 				Metadata: ownershipByFilesMetadata{
 					Files: files.List(),
 				},
@@ -42,7 +46,7 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.S
 			continue
 		}
 		for _, ownedFilePath := range pkgFileOwner.ownedFiles() {
-			if matchesAny(ownedFilePath, forbiddenOwnershipGlobs) {
+			if matchesAny(ownedFilePath, globsForbiddenFromBeingOwned) {
 				// we skip over known exceptions to file ownership, such as the RPM package owning
 				// the RPM DB path, otherwise the RPM package would "own" all RPMs, which is not intended
 				continue
@@ -66,4 +70,17 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.S
 	}
 
 	return relationships
+}
+
+func matchesAny(s string, globs []string) bool {
+	for _, g := range globs {
+		matches, err := doublestar.Match(g, s)
+		if err != nil {
+			log.Errorf("failed to match glob=%q : %+v", g, err)
+		}
+		if matches {
+			return true
+		}
+	}
+	return false
 }
