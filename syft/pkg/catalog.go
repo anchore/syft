@@ -7,12 +7,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-var globsForbiddenFromBeingOwned = []string{
-	ApkDbGlob,
-	DpkgDbGlob,
-	RpmDbGlob,
-}
-
 // Catalog represents a collection of Packages.
 type Catalog struct {
 	byID      map[ID]*Package
