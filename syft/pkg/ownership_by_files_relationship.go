@@ -6,6 +6,16 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
+var globsForbiddenFromBeingOwned = []string{
+	// any OS DBs should automatically be ignored to prevent cyclic issues (e.g. the "rpm" RPM owns the path to the
+	// RPM DB, so if not ignored that package would own all other packages on the system).
+	ApkDbGlob,
+	DpkgDbGlob,
+	RpmDbGlob,
+	// DEB packages share common copyright info between, this does not mean that sharing these paths implies ownership.
+	"/usr/share/doc/**/copyright",
+}
+
 type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
