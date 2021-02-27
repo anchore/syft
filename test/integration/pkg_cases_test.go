@@ -144,7 +144,9 @@ var commonTestCases = []testCase{
 		name:    "find dpkg packages",
 		pkgType: pkg.DebPkg,
 		pkgInfo: map[string]string{
-			"apt": "1.8.2",
+			"apt":     "1.8.2",
+			"dash":    "0.5.8-2.4",
+			"netbase": "5.4",
 		},
 	},
 	{
