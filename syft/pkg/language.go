@@ -11,6 +11,7 @@ const (
 	Python          Language = "python"
 	Ruby            Language = "ruby"
 	Go              Language = "go"
+	Rust            Language = "rust"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.
@@ -20,6 +21,7 @@ var AllLanguages = []Language{
 	Python,
 	Ruby,
 	Go,
+	Rust,
 }
 
 // String returns the string representation of the language.

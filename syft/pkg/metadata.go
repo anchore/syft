@@ -13,4 +13,5 @@ const (
 	NpmPackageJSONMetadataType MetadataType = "NpmPackageJsonMetadata"
 	RpmdbMetadataType          MetadataType = "RpmdbMetadata"
 	PythonPackageMetadataType  MetadataType = "PythonPackageMetadata"
+	RustCrateMetadataType      MetadataType = "RustCrateMetadata"
 )

@@ -115,6 +115,14 @@ func TestPackageURL(t *testing.T) {
 			},
 			expected: "pkg:deb/name@v0.1.0",
 		},
+		{
+			pkg: pkg.Package{
+				Name:    "name",
+				Version: "v0.1.0",
+				Type:    pkg.RustPkg,
+			},
+			expected: "pkg:cargo/name@v0.1.0",
+		},
 	}
 
 	for _, test := range tests {

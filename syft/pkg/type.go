@@ -17,6 +17,7 @@ const (
 	JavaPkg          Type = "java-archive"
 	JenkinsPluginPkg Type = "jenkins-plugin"
 	GoModulePkg      Type = "go-module"
+	RustPkg          Type = "rust-crate"
 )
 
 // AllPkgs represents all supported package types
@@ -30,6 +31,7 @@ var AllPkgs = []Type{
 	JavaPkg,
 	JenkinsPluginPkg,
 	GoModulePkg,
+	RustPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -51,6 +53,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeRPM
 	case GoModulePkg:
 		return packageurl.TypeGolang
+	case RustPkg:
+		return "cargo"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
