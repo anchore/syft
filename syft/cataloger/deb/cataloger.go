@@ -38,6 +38,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 		return nil, fmt.Errorf("failed to find dpkg status files's by glob: %w", err)
 	}
 
+	var results []pkg.Package
 	var pkgs []pkg.Package
 	for _, dbLocation := range dbFileMatches {
 		dbContents, err := resolver.FileContentsByLocation(dbLocation)
@@ -94,8 +95,10 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 				}
 			}
 		}
+
+		results = append(results, pkgs...)
 	}
-	return pkgs, nil
+	return results, nil
 }
 
 func fetchMd5Contents(resolver source.Resolver, dbLocation source.Location, pkgs []pkg.Package) (map[string]io.Reader, map[string]source.Location, error) {
