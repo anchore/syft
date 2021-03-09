@@ -9,10 +9,11 @@ on:
       - "v*"
 
 env:
-  GO_VERSION: "1.14.x"
+  GO_VERSION: "1.15.x"
 
 jobs:
-  wait-for-checks:
+  quality-gate:
+    environment: release
     runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
     steps:
 
@@ -70,18 +71,28 @@ jobs:
           checkName: "Inline-Compare"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
+      - name: Check container image smoke test results
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: smoke-test-container-image
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the circle-ci workflow name (in .github/workflows/acceptance-test.yaml)
+          checkName: "Smoke-Test-Container-Image"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
       - name: Quality gate
-        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
+        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success' || steps.smoke-test-container-image.outputs.conclusion != 'success'
         run: |
           echo "Static Analysis Status: ${{ steps.static-analysis.conclusion }}"
           echo "Unit & Integration Test Status: ${{ steps.unit-integration.outputs.conclusion }}"
           echo "Acceptance Test (Linux) Status: ${{ steps.acceptance-linux.outputs.conclusion }}"
           echo "Acceptance Test (Mac) Status: ${{ steps.acceptance-mac.outputs.conclusion }}"
           echo "Inline Compare Status: ${{ steps.inline-compare.outputs.conclusion }}"
+          echo "Smoke Test Container Image Status: ${{ steps.smoke-test-container-image.outputs.conclusion }}"
           false
 
-  release-assets-mac:
-    needs: [ wait-for-checks ]
+  build-assets-mac:
+    needs: [ quality-gate ]
     runs-on: macos-latest # Due to our code signing process, it's vital that we run these release steps on macOS.
     steps:
       - uses: actions/setup-go@v2
@@ -119,8 +130,8 @@ jobs:
           name: macOS-artifacts
           path: "./dist/*_darwin_*.*"
 
-  release-assets-linux:
-    needs: [ wait-for-checks ]
+  build-assets-linux:
+    needs: [ quality-gate ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v2
@@ -156,10 +167,10 @@ jobs:
           echo "name:        ${{ steps.import_gpg.outputs.name }}"
           echo "email:       ${{ steps.import_gpg.outputs.email }}"
 
-      - name: Build for Linux
+      - name: Build Linux assets
         run: make build-linux
 
-      - name: Create Linux release assets
+      - name: Package Linux release assets
         run: make package-linux
         env:
           GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
@@ -173,10 +184,27 @@ jobs:
             ./dist/*_checksums.*
 
   draft-release:
-    needs: [ release-assets-mac, release-assets-linux ]
+    needs: [ build-assets-mac, build-assets-linux ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          # fetch all history --this is necessary since we are referencing multiple tags during the release process (for changelog generation)
+          fetch-depth: 0
+
+      # We are expecting this cache to have been created during the "Build-Snapshot-Artifacts" job in the "Acceptance" workflow.
+      - name: Restore bootstrap cache
+        id: cache
+        uses: actions/cache@v2.1.3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ${{ github.workspace }}/.tmp
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+
 
       - uses: actions/download-artifact@v2 # Downloads all artifacts
 

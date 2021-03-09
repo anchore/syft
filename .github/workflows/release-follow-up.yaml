@@ -67,11 +67,14 @@ jobs:
           username: ${{ secrets.TOOLBOX_DOCKER_USER }}
           password: ${{ secrets.TOOLBOX_DOCKER_PASS }}
 
+      - name: Stage released artifacts
+        run: make stage-released-linux-artifact
+
       - name: Build and tag Docker images
         run: make container-image-build
 
-      - name: Test Docker images
-        run: make container-image-test
+      - name: Smoke test Docker image
+        run: make container-image-smoke-test
 
       - name: Push Docker images
         run: make container-image-push

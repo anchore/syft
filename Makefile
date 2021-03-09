@@ -7,6 +7,7 @@ RESULTSDIR = $(TEMPDIR)/results
 COVER_REPORT = $(RESULTSDIR)/cover.report
 COVER_TOTAL = $(RESULTSDIR)/cover.total
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --config .golangci.yaml
+SNAPSHOT_CMD = $(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/syft_linux_amd64/syft)
 ACC_TEST_IMAGE := centos:8.2.2004
 ACC_DIR := ./test/acceptance
 BOLD := $(shell tput -T linux bold)
@@ -30,7 +31,6 @@ SNAPSHOTDIR := ./snapshot
 COMMIT = $(shell git log --format=%H -n 1)
 DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GITTREESTATE = $(if $(shell git status --porcelain),dirty,clean)
-SNAPSHOT_CMD = $(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/syft_linux_amd64/syft)
 
 # Homebrew variables
 HOMEBREW_FORMULA_FILE = "$(DISTDIR)/$(BIN).rb"
@@ -78,12 +78,32 @@ ifndef DISTDIR
 	$(error DISTDIR is not set)
 endif
 
-ifndef SNAPSHOTDIR
-	$(error SNAPSHOTDIR is not set)
-endif
-
 define title
     @printf '$(TITLE)$(1)$(RESET)\n'
+endef
+
+define build_binary
+	GOOS="$1" \
+	GOARCH="$2" \
+	CGO_ENABLED=0 \
+	go build \
+		-o "./$3/syft_$1_$2/syft" \
+		-ldflags "-w -s -extldflags '-static' \
+		-X github.com/anchore/syft/internal/version.version=$(VERSION) \
+		-X github.com/anchore/syft/internal/version.gitCommit=$(COMMIT) \
+		-X github.com/anchore/syft/internal/version.buildDate=$(DATE) \
+		-X github.com/anchore/syft/internal/version.gitTreeState=$(BUILD_GIT_TREE_STATE)"
+endef
+
+define build_container_image
+	tags=( \
+		"-t $(CONTAINER_IMAGE_TAG_MAJOR)" \
+		"-t $(CONTAINER_IMAGE_TAG_MINOR)" \
+		"-t $(CONTAINER_IMAGE_TAG_PATCH)" \
+		"-t $(CONTAINER_IMAGE_TAG_LATEST)" \
+	) && \
+	DOCKER_BUILDKIT=1 docker build --build-arg DIST_DIR=$1 --no-cache $${tags[@]} -f "./Dockerfile" .
+	# Using buildkit due to https://github.com/moby/moby/issues/37965
 endef
 
 ## Tasks
@@ -99,14 +119,6 @@ test: unit validate-cyclonedx-schema integration acceptance-linux ## Run all tes
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BOLD)$(CYAN)%-25s$(RESET)%s\n", $$1, $$2}'
 
-.PHONY: bootstrap-ci-linux
-bootstrap-ci-linux: bootstrap
-	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils gettext
-	github_changelog_generator --version || sudo gem install github_changelog_generator
-
-.PHONY: bootstrap-ci-mac
-bootstrap-ci-mac: bootstrap
-
 .PHONY: bootstrap
 bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
 	$(call title,Bootstrapping dependencies)
@@ -119,9 +131,15 @@ bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./
 	# install utilities
 	[ -f "$(TEMPDIR)/golangci" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
 	[ -f "$(TEMPDIR)/bouncer" ] || curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0
-	[ -f "$(TEMPDIR)/goreleaser" ] || curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
 	[ -f "$(TEMPDIR)/nfpm" ] || curl -sfL curl -sfL https://install.goreleaser.com/github.com/goreleaser/nfpm.sh | sh -s -- -b $(TEMPDIR)/ v2.2.2
 	[ -f "$(BREW_CMD)" ] || (mkdir -p "$(BREW_DIR)" && curl -L https://github.com/Homebrew/brew/tarball/master | tar -xz --strip 1 -C "$(BREW_DIR)")
+
+.PHONY: bootstrap-ci-linux
+bootstrap-ci-linux: bootstrap
+	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils gettext
+
+.PHONY: bootstrap-ci-mac
+bootstrap-ci-mac: bootstrap
 
 .PHONY: static-analysis
 static-analysis: lint check-licenses
@@ -165,9 +183,7 @@ unit: fixtures ## Run unit tests (with coverage)
 .PHONY: integration
 integration: ## Run integration tests
 	$(call title,Running integration tests)
-
 	go test -v ./test/integration
-
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
@@ -191,48 +207,32 @@ generate-json-schema:  ## Generate a new json schema
 clear-test-cache: ## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/cache/*.tar" -delete
 
-.PHONY: build-mac
-build-mac: ## Build binary for macOS
-	$(call title,Building binary for macOS)
-
-	@OS="darwin" && ARCH="amd64" && GOOS="$$OS" GOARCH="$$ARCH" CGO_ENABLED=0 \
-	go build \
-		-o "./$(DISTDIR)/syft_$${OS}_$${ARCH}/syft" \
-		-ldflags "-w -s -extldflags '-static' \
-		-X github.com/anchore/syft/internal/version.version=$(VERSION) \
-		-X github.com/anchore/syft/internal/version.gitCommit=$(COMMIT) \
-		-X github.com/anchore/syft/internal/version.buildDate=$(DATE) \
-		-X github.com/anchore/syft/internal/version.gitTreeState=$(BUILD_GIT_TREE_STATE)"
-
 .PHONY: build-linux
-build-linux: ## Build binary for macOS
-	$(call title,Building binary for Linux)
+build-linux: ## Build binaries for mac
+	$(call title,Building binaries for linux)
+	$(call build_binary,linux,amd64,$(DISTDIR))
 
-	@OS="linux" && ARCH="amd64" && GOOS="$$OS" GOARCH="$$ARCH" CGO_ENABLED=0 \
-	go build \
-		-o "./$(DISTDIR)/syft_$${OS}_$${ARCH}/syft" \
-		-ldflags "-w -s -extldflags '-static' \
-		-X github.com/anchore/syft/internal/version.version=$(VERSION) \
-		-X github.com/anchore/syft/internal/version.gitCommit=$(COMMIT) \
-		-X github.com/anchore/syft/internal/version.buildDate=$(DATE) \
-		-X github.com/anchore/syft/internal/version.gitTreeState=$(BUILD_GIT_TREE_STATE)"
+.PHONY: build-mac
+build-mac: ## Build binaries for mac
+	$(call title,Building binaries for macOS)
+	$(call build_binary,darwin,amd64,$(DISTDIR))
 
-.PHONY: build
-build: build-mac build-linux
+# note: mac packaging is intentionally left out (requires secrets and there is no acceptance test for packaged mac assets)
+.PHONY: snapshot
+snapshot:
+	$(call build_binary,linux,amd64,$(SNAPSHOTDIR))
+	$(call build_binary,darwin,amd64,$(SNAPSHOTDIR))
+	$(call build_container_image,$(SNAPSHOTDIR))
 
-$(SNAPSHOTDIR): ## Build snapshot release binaries and packages
-	$(call title,Building snapshot artifacts)
-	# create a config with the dist dir overridden
-	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
+	docker image save $(CONTAINER_IMAGE_TAG_LATEST) -o $(SNAPSHOTDIR)/image.tar
 
-	# build release snapshots
-	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	$(TEMPDIR)/goreleaser release --skip-publish --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
+	.github/scripts/package-linux.sh \
+		$(SNAPSHOTDIR) \
+		$(VERSION) \
+		$(TEMPDIR)
 
-# note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: acceptance-mac
-acceptance-mac: $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binaries and packages (Mac)
+acceptance-mac: ## Run acceptance tests on built binaries (Mac)
 	$(call title,Running acceptance test: Run on Mac)
 	$(ACC_DIR)/mac.sh \
 			$(SNAPSHOTDIR) \
@@ -240,26 +240,11 @@ acceptance-mac: $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binarie
 			$(ACC_TEST_IMAGE) \
 			$(RESULTSDIR)
 
-# note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: acceptance-linux
-acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages (Linux)
-
-# note: this is used by CI to determine if the inline-scan report cache should be busted for the inline-compare tests
-.PHONY: compare-fingerprint
-compare-fingerprint:
-	find test/inline-compare/* -type f -exec md5sum {} + | grep -v '\-reports' | grep -v 'fingerprint' | awk '{print $1}' | sort | md5sum | tee test/inline-compare/inline-compare.fingerprint && echo "$(COMPARE_CACHE_BUSTER)" >> test/inline-compare/inline-compare.fingerprint
-
-.PHONY: compare-snapshot
-compare-snapshot: $(SNAPSHOTDIR) ## Compare the reports of a run of a snapshot build of syft against inline-scan
-	chmod 755 $(SNAPSHOT_CMD)
-	@cd test/inline-compare && SYFT_CMD=$(SNAPSHOT_CMD) make
-
-.PHONY: compare
-compare:  ## Compare the reports of a run of a main-branch build of syft against inline-scan
-	@cd test/inline-compare && make
+acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on built binaries and packages (Linux)
 
 .PHONY: acceptance-test-deb-package-install
-acceptance-test-deb-package-install: $(SNAPSHOTDIR)
+acceptance-test-deb-package-install:
 	$(call title,Running acceptance test: DEB install)
 	$(ACC_DIR)/deb.sh \
 			$(SNAPSHOTDIR) \
@@ -268,7 +253,7 @@ acceptance-test-deb-package-install: $(SNAPSHOTDIR)
 			$(RESULTSDIR)
 
 .PHONY: acceptance-test-rpm-package-install
-acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
+acceptance-test-rpm-package-install:
 	$(call title,Running acceptance test: RPM install)
 	$(ACC_DIR)/rpm.sh \
 			$(SNAPSHOTDIR) \
@@ -276,18 +261,31 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 			$(ACC_TEST_IMAGE) \
 			$(RESULTSDIR)
 
+# note: this is used by CI to determine if the inline-scan report cache should be busted for the inline-compare tests
+.PHONY: compare-fingerprint
+compare-fingerprint:
+	find test/inline-compare/* -type f -exec md5sum {} + | grep -v '\-reports' | grep -v 'fingerprint' | awk '{print $1}' | sort | md5sum | tee test/inline-compare/inline-compare.fingerprint && echo "$(COMPARE_CACHE_BUSTER)" >> test/inline-compare/inline-compare.fingerprint
+
+.PHONY: compare-snapshot
+compare-snapshot:  ## Compare the reports of a run of a snapshot build of syft against inline-scan
+	chmod 755 $(SNAPSHOT_CMD)
+	@cd test/inline-compare && SYFT_CMD=$(SNAPSHOT_CMD) make
+
+.PHONY: compare
+compare:  ## Compare the reports of a run of a main-branch build of syft against inline-scan
+	cd test/inline-compare && make
+
 .PHONY: setup-macos-signing
 setup-macos-signing: ## Prepare for macOS-specific signing process
 	$(call title,Preparing macOS environment for code signing)
-
-	@.github/scripts/mac-prepare-for-signing.sh
+	.github/scripts/mac-prepare-for-signing.sh
 
 .PHONY: package-mac
 package-mac: setup-macos-signing bootstrap-ci-mac ## Create signed and notarized release assets for macOS
 	$(call title,Creating packaging for macOS -- signed and notarized)
 
 	# Create signed and notarized assets
-	@gon "./gon.hcl"
+	gon "./gon.hcl"
 
 	# Update asset names. This won't be necessary once Gon supports variable injection.
 	@ORIGINAL_NAME="$(DISTDIR)/output" && NEW_NAME="$(DISTDIR)/syft_$(VERSION)_darwin_amd64" && \
@@ -295,38 +293,24 @@ package-mac: setup-macos-signing bootstrap-ci-mac ## Create signed and notarized
 		mv -v "$${ORIGINAL_NAME}.zip" "$${NEW_NAME}.zip"
 
 .PHONY: package-linux
-.SILENT: package-linux
-package-linux: bootstrap-ci-linux
+package-linux:
 	$(call title,Creating packaging for Linux)
-
-	# Produce .tar.gz
-	SYFT_PATH=$(DISTDIR)/syft_linux_amd64/syft && \
-		tar -cvzf $(DISTDIR)/syft_$(VERSION)_linux_amd64.tar.gz "$$SYFT_PATH" "./README.md" "./LICENSE"
-
-	# Produce .deb, .rpm
-	for packager in "deb" "rpm"; do \
-		$(TEMPDIR)/nfpm -f "./.nfpm.yaml" pkg --packager="$$packager" --target="$(DISTDIR)/syft_$(VERSION)_linux_amd64.$$packager"; \
-	done
-
-	# Produce integrity-check files (checksums.txt, checksums.txt.sig)
-	pushd $(DISTDIR) && \
-		CHECKSUMS_FILE="syft_$(VERSION)_checksums.txt" && \
-		echo "" > "$$CHECKSUMS_FILE" && \
-		for file in ./*linux*.*; do \
-			openssl dgst -sha256 "$$file" >> "$$CHECKSUMS_FILE"; \
-		done && \
-		gpg --detach-sign "$$CHECKSUMS_FILE" && \
-	popd
+	.github/scripts/package-linux.sh \
+		$(DISTDIR) \
+		$(VERSION) \
+		$(TEMPDIR)
 
 .PHONY: package
 package: package-mac package-linux
 
 .PHONY: changlog-release
 .SILIENT: changelog-release
-changelog-release: bootstrap-ci-linux
+changelog-release:
 	echo "Last tag: $(SECOND_TO_LAST_TAG)"
 	echo "Current tag: $(VERSION_TAG)"
-	github_changelog_generator \
+	docker run --rm \
+		-v "$(shell pwd)":/usr/local/src/your-app \
+		ferrarimarco/github-changelog-generator \
 		--user anchore \
 		--project $(BIN) \
 		-t ${GITHUB_TOKEN} \
@@ -362,8 +346,9 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 .SILENT: homebrew-formula-generate
 homebrew-formula-generate:
 	$(call title,Generating homebrew formula)
-
-	.github/scripts/homebrew-formula-generate.sh "$(VERSION_TAG)" "$(HOMEBREW_FORMULA_FILE)"
+	.github/scripts/homebrew-formula-generate.sh \
+		"$(VERSION_TAG)" \
+		"$(HOMEBREW_FORMULA_FILE)"
 
 .PHONY: homebrew-formula-test
 .SILENT: homebrew-formula-test
@@ -406,35 +391,23 @@ version-check-update:
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION_TAG)"
 
+.PHONY: stage-released-linux-artifact
+stage-released-linux-artifact:
+	mkdir -p ./$(DISTDIR)/syft_linux_amd64
+	curl -L -o ./$(DISTDIR)/syft.tar.gz https://github.com/anchore/syft/releases/download/$(VERSION_TAG)/syft_$(VERSION)_linux_amd64.tar.gz
+	tar -C ./$(DISTDIR)/syft_linux_amd64 -xvf ./$(DISTDIR)/syft.tar.gz syft
+
 .PHONY: container-image-build
 .SILENT: container-image-build
 container-image-build:
 	$(call title,Building and tagging container image for $(BIN))
-
-	tags=( \
-		"-t $(CONTAINER_IMAGE_TAG_MAJOR)" \
-		"-t $(CONTAINER_IMAGE_TAG_MINOR)" \
-		"-t $(CONTAINER_IMAGE_TAG_PATCH)" \
-		"-t $(CONTAINER_IMAGE_TAG_LATEST)" \
-	) && \
-	DOCKER_BUILDKIT=1 docker build --no-cache $${tags[@]} -f "./Dockerfile" .
-	# Using buildkit due to https://github.com/moby/moby/issues/37965
+	$(call build_container_image,$(DISTDIR))
 
 .PHONY: container-image-test
 .SILENT: container-image-test
-container-image-test:
-	$(call title,Testing container image tags)
-
-	tags=( \
-		"$(CONTAINER_IMAGE_TAG_MAJOR)" \
-		"$(CONTAINER_IMAGE_TAG_MINOR)" \
-		"$(CONTAINER_IMAGE_TAG_PATCH)" \
-		"$(CONTAINER_IMAGE_TAG_LATEST)" \
-	) && \
-	for tag in $${tags[@]}; do \
-		echo "—— testing $${tag}..." && \
-		docker run --rm "$${tag}" version; \
-	done
+container-image-smoke-test:
+	$(call title,Smoke testing container image)
+	docker run --pull never --rm "$(CONTAINER_IMAGE_TAG_LATEST)" version
 
 .PHONY: container-image-push
 .SILENT: container-image-push
@@ -452,12 +425,8 @@ container-image-push:
     done
 
 .PHONY: clean
-clean: clean-dist clean-snapshot ## Remove previous builds and result reports
+clean: clean-dist ## Remove previous builds and result reports
 	rm -rf $(RESULTSDIR)/*
-
-.PHONY: clean-snapshot
-clean-snapshot:
-	rm -rf $(SNAPSHOTDIR) $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: clean-dist
 clean-dist:
