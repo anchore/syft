@@ -425,9 +425,13 @@ container-image-push:
     done
 
 .PHONY: clean
-clean: clean-dist ## Remove previous builds and result reports
+clean: clean-dist clean-snapshot ## Remove previous builds and result reports
 	rm -rf $(RESULTSDIR)/*
 
 .PHONY: clean-dist
 clean-dist:
 	rm -rf $(DISTDIR) $(TEMPDIR)/goreleaser.yaml
+
+.PHONY: clean-snapshot
+clean-snapshot:
+	rm -rf $(SNAPSHOTDIR) $(TEMPDIR)/goreleaser.yaml
