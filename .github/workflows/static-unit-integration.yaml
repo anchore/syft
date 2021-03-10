@@ -34,7 +34,7 @@ jobs:
         run: make bootstrap
 
       - name: Bootstrap CI dependencies
-        run: make ci-bootstrap
+        run: make bootstrap-ci-linux
 
       - name: Run static analysis
         run: make static-analysis
@@ -70,7 +70,7 @@ jobs:
         run: make bootstrap
 
       - name: Bootstrap CI dependencies
-        run: make ci-bootstrap
+        run: make bootstrap-ci-linux
 
       - name: Build cache key for java test-fixture blobs (for unit tests)
         run: make java-packages-fingerprint

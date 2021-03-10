@@ -10,11 +10,11 @@ on:
       - v*
 
 env:
-  GO_VERSION: "1.14.x"
+  GO_VERSION: "1.15.x"
 
 jobs:
   Build-Snapshot-Artifacts:
-    runs-on: macos-latest # We're creating these snapshot builds on macOS to be consistent with our release workflow's build process, which also takes place on macOS (due to code signing requirements).
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -52,7 +52,7 @@ jobs:
           echo "name:        ${{ steps.import_gpg.outputs.name }}"
           echo "email:       ${{ steps.import_gpg.outputs.email }}"
 
-      - name: Build snapshot artifacts
+      - name: Build & package snapshot artifacts
         run: make snapshot
         env:
           GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
@@ -75,7 +75,6 @@ jobs:
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
     needs: [Build-Snapshot-Artifacts]
-    # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -124,7 +123,6 @@ jobs:
   # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Inline-Compare:
     needs: [Build-Snapshot-Artifacts]
-    # come Nov 30 2020 ubuntu-latest will be ubuntu-20.04, until then it needs to be explicitly referenced due to python 3.7 specific features being used
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -146,6 +144,33 @@ jobs:
 
       - name: Compare Anchore inline-scan results against snapshot build output
         run: make compare-snapshot
+
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,job,commit,message,author
+          text: The syft acceptance tests have failed tragically!
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+        if: ${{ failure() }}
+
+  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
+  Smoke-Test-Container-Image:
+    needs: [Build-Snapshot-Artifacts]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: snapshot
+
+      - name: Load docker image
+        run: docker image load --input snapshot/image.tar
+
+      - name: Test Docker images
+        run: make container-image-smoke-test
 
       - uses: 8398a7/action-slack@v3
         with:
