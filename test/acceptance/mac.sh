@@ -22,6 +22,8 @@ if [[ ! "${WORK_DIR}" || ! -d "${WORK_DIR}" ]]; then
   exit 1
 fi
 
+trap "rm -f ${WORK_DIR}/*; rmdir ${WORK_DIR};" EXIT
+
 function cleanup {
   # we should still preserve previous failures
   exit_code=$?

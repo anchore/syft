@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu
+set -eu -o pipefail
 
 BIN="syft"
 DISTDIR=$1
@@ -10,6 +10,8 @@ SYFT_BIN_PATH=${DISTDIR}/${BIN}_linux_amd64/${BIN}
 
 # stage the release tar directory
 WORK_DIR=$(mktemp -d -t "syft-packaging-XXXXXX")
+trap "rm -f ${WORK_DIR}/*; rmdir ${WORK_DIR};" EXIT
+
 cp ./README.md ${WORK_DIR}
 cp ./LICENSE ${WORK_DIR}
 cp ${SYFT_BIN_PATH} ${WORK_DIR}
