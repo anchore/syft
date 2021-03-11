@@ -9,14 +9,12 @@ on:
       - "v*"
 
 env:
-  GO_VERSION: "1.15.x"
+  GO_VERSION: "1.14.x"
 
 jobs:
-  quality-gate:
-    environment: release
+  wait-for-checks:
     runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
     steps:
-
       - uses: actions/checkout@v2
 
       # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
@@ -71,74 +69,27 @@ jobs:
           checkName: "Inline-Compare"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Check container image smoke test results
-        uses: fountainhead/action-wait-for-check@v1.0.0
-        id: smoke-test-container-image
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the circle-ci workflow name (in .github/workflows/acceptance-test.yaml)
-          checkName: "Smoke-Test-Container-Image"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
       - name: Quality gate
-        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success' || steps.smoke-test-container-image.outputs.conclusion != 'success'
+        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit-integration.outputs.conclusion != 'success' || steps.inline-compare.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
         run: |
           echo "Static Analysis Status: ${{ steps.static-analysis.conclusion }}"
           echo "Unit & Integration Test Status: ${{ steps.unit-integration.outputs.conclusion }}"
           echo "Acceptance Test (Linux) Status: ${{ steps.acceptance-linux.outputs.conclusion }}"
           echo "Acceptance Test (Mac) Status: ${{ steps.acceptance-mac.outputs.conclusion }}"
           echo "Inline Compare Status: ${{ steps.inline-compare.outputs.conclusion }}"
-          echo "Smoke Test Container Image Status: ${{ steps.smoke-test-container-image.outputs.conclusion }}"
           false
 
-  build-assets-mac:
-    needs: [ quality-gate ]
-    runs-on: macos-latest # Due to our code signing process, it's vital that we run these release steps on macOS.
+  release:
+    needs: [wait-for-checks]
+    runs-on: macos-latest # Due to our code signing process, it's vital that we run our release steps on macOS.
     steps:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - uses: actions/checkout@v2
-
-      # We are expecting this cache to have been created during the "Build-Snapshot-Artifacts" job in the "Acceptance" workflow.
-      - name: Restore bootstrap cache
-        id: cache
-        uses: actions/cache@v2.1.3
         with:
-          path: |
-            ~/go/pkg/mod
-            ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-${{ hashFiles('Makefile') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-      - name: Build for macOS
-        run: make build-mac
-
-      - name: Create macOS release assets
-        run: make package-mac
-        env:
-          APPLE_DEVELOPER_ID_CERT: ${{ secrets.APPLE_DEVELOPER_ID_CERT }} # Used during macOS code signing.
-          APPLE_DEVELOPER_ID_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }} # Used during macOS code signing.
-          AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }} # Used during macOS notarization.
-          AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }} # Used during macOS notarization.
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: macOS-artifacts
-          path: "./dist/*_darwin_*.*"
-
-  build-assets-linux:
-    needs: [ quality-gate ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - uses: actions/checkout@v2
+          fetch-depth: 0
 
       # We are expecting this cache to have been created during the "Build-Snapshot-Artifacts" job in the "Acceptance" workflow.
       - name: Restore bootstrap cache
@@ -167,77 +118,19 @@ jobs:
           echo "name:        ${{ steps.import_gpg.outputs.name }}"
           echo "email:       ${{ steps.import_gpg.outputs.email }}"
 
-      - name: Build Linux assets
-        run: make build-linux
-
-      - name: Package Linux release assets
-        run: make package-linux
+      - name: Build & publish release artifacts
+        run: make release
         env:
+          GITHUB_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
           GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
           PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: Linux-artifacts
-          path: |
-            ./dist/*_linux_*.*
-            ./dist/*_checksums.*
-
-  draft-release:
-    needs: [ build-assets-mac, build-assets-linux ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          # fetch all history --this is necessary since we are referencing multiple tags during the release process (for changelog generation)
-          fetch-depth: 0
-
-      # We are expecting this cache to have been created during the "Build-Snapshot-Artifacts" job in the "Acceptance" workflow.
-      - name: Restore bootstrap cache
-        id: cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-${{ hashFiles('Makefile') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}-
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-
-      - uses: actions/download-artifact@v2 # Downloads all artifacts
-
-      - name: Generate changelog
-        run: make changelog-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-
-      - name: Create draft release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body_path: "./CHANGELOG.md"
-          draft: true
-          prerelease: false
-
-      - name: Upload release assets
-        run: | # Solution found at https://github.com/actions/upload-release-asset/issues/28#issuecomment-617208601 after seeing that the native "actions/upload-release-asset" might not be actively maintained.
-          set -eux
-          assets=()
-          for asset in ./Linux-artifacts/*; do
-            assets+=("-a" "$asset")
-          done
-          for asset in ./macOS-artifacts/*; do
-            assets+=("-a" "$asset")
-          done
-          tag_name="${GITHUB_REF##*/}"
-          hub release edit -m "" "${assets[@]}" "$tag_name"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SIGNING_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
+          APPLE_DEVELOPER_ID_CERT: ${{ secrets.APPLE_DEVELOPER_ID_CERT }} # Used during macOS code signing.
+          APPLE_DEVELOPER_ID_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }} # Used during macOS code signing.
+          AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }} # Used during macOS notarization.
+          AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }} # Used during macOS notarization.
 
       - uses: 8398a7/action-slack@v3
         with:
@@ -247,3 +140,8 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: dist/**/*
