@@ -90,3 +90,14 @@ brews:
       name: homebrew-syft
     homepage: *website
     description: *description
+
+dockers:
+  -
+    binaries:
+      - syft
+    dockerfile: Dockerfile
+    image_templates:
+      - "anchore/syft:latest"
+      - "anchore/syft:{{ .Tag }}"
+      - "anchore/syft:v{{ .Major }}"
+      - "anchore/syft:v{{ .Major }}.{{ .Minor }}"
