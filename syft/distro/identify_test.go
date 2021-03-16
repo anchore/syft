@@ -76,6 +76,11 @@ func TestIdentifyDistro(t *testing.T) {
 			Version: "15.2.0",
 		},
 		{
+			fixture: "test-fixtures/os/photon",
+			Type:    Photon,
+			Version: "2.0.0",
+		},
+		{
 			fixture: "test-fixtures/os/arch",
 			Type:    ArchLinux,
 		},
