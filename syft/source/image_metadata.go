@@ -3,7 +3,7 @@ package source
 import "github.com/anchore/stereoscope/pkg/image"
 
 // ImageMetadata represents all static metadata that defines what a container image is. This is useful to later describe
-// "what" was cataloged without needing the more complicated stereoscope Image objects or Resolver objects.
+// "what" was cataloged without needing the more complicated stereoscope Image objects or FileResolver objects.
 type ImageMetadata struct {
 	UserInput      string          `json:"userInput"`
 	ID             string          `json:"imageID"`
@@ -11,7 +11,6 @@ type ImageMetadata struct {
 	MediaType      string          `json:"mediaType"`
 	Tags           []string        `json:"tags"`
 	Size           int64           `json:"imageSize"`
-	Scope          Scope           `json:"scope"` // specific perspective to catalog
 	Layers         []LayerMetadata `json:"layers"`
 	RawManifest    []byte          `json:"manifest"`
 	RawConfig      []byte          `json:"config"`
@@ -25,7 +24,7 @@ type LayerMetadata struct {
 }
 
 // NewImageMetadata creates a new ImageMetadata object populated from the given stereoscope Image object and user configuration.
-func NewImageMetadata(img *image.Image, userInput string, scope Scope) ImageMetadata {
+func NewImageMetadata(img *image.Image, userInput string) ImageMetadata {
 	// populate artifacts...
 	tags := make([]string, len(img.Metadata.Tags))
 	for idx, tag := range img.Metadata.Tags {
@@ -34,7 +33,6 @@ func NewImageMetadata(img *image.Image, userInput string, scope Scope) ImageMeta
 	theImg := ImageMetadata{
 		ID:             img.Metadata.ID,
 		UserInput:      userInput,
-		Scope:          scope,
 		ManifestDigest: img.Metadata.ManifestDigest,
 		Size:           img.Metadata.Size,
 		MediaType:      string(img.Metadata.MediaType),

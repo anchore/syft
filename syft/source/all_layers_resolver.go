@@ -2,10 +2,8 @@ package source
 
 import (
 	"archive/tar"
-	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -13,16 +11,16 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-var _ Resolver = (*AllLayersResolver)(nil)
+var _ FileResolver = (*allLayersResolver)(nil)
 
-// AllLayersResolver implements path and content access for the AllLayers source option for container image data sources.
-type AllLayersResolver struct {
+// allLayersResolver implements path and content access for the AllLayers source option for container image data sources.
+type allLayersResolver struct {
 	img    *image.Image
 	layers []int
 }
 
-// NewAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
-func NewAllLayersResolver(img *image.Image) (*AllLayersResolver, error) {
+// newAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
+func newAllLayersResolver(img *image.Image) (*allLayersResolver, error) {
 	if len(img.Layers) == 0 {
 		return nil, fmt.Errorf("the image does not contain any layers")
 	}
@@ -31,14 +29,14 @@ func NewAllLayersResolver(img *image.Image) (*AllLayersResolver, error) {
 	for idx := range img.Layers {
 		layers = append(layers, idx)
 	}
-	return &AllLayersResolver{
+	return &allLayersResolver{
 		img:    img,
 		layers: layers,
 	}, nil
 }
 
 // HasPath indicates if the given path exists in the underlying source.
-func (r *AllLayersResolver) HasPath(path string) bool {
+func (r *allLayersResolver) HasPath(path string) bool {
 	p := file.Path(path)
 	for _, layerIdx := range r.layers {
 		tree := r.img.Layers[layerIdx].Tree
@@ -49,7 +47,7 @@ func (r *AllLayersResolver) HasPath(path string) bool {
 	return false
 }
 
-func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.ReferenceSet, layerIdx int) ([]file.Reference, error) {
+func (r *allLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.ReferenceSet, layerIdx int) ([]file.Reference, error) {
 	uniqueFiles := make([]file.Reference, 0)
 
 	// since there is potentially considerable work for each symlink/hardlink that needs to be resolved, let's check to see if this is a symlink/hardlink first
@@ -80,7 +78,7 @@ func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 }
 
 // FilesByPath returns all file.References that match the given paths from any layer in the image.
-func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
+func (r *allLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
@@ -123,7 +121,7 @@ func (r *AllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 // nolint:gocognit
-func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
+func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
@@ -164,7 +162,7 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
-func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *Location {
+func (r *allLayersResolver) RelativeFileByPath(location Location, path string) *Location {
 	entry, err := r.img.FileCatalog.Get(location.ref)
 	if err != nil {
 		return nil
@@ -184,55 +182,26 @@ func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *
 	return &relativeLocation
 }
 
-// MultipleFileContentsByLocation returns the file contents for all file.References relative to the image. Note that a
-// file.Reference is a path relative to a particular layer.
-func (r *AllLayersResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]io.ReadCloser, error) {
-	return mapLocationRefs(r.img.MultipleFileContentsByRef, locations)
-}
-
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
-func (r *AllLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (r *allLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	return r.img.FileContentsByRef(location.ref)
 }
 
-type multiContentFetcher func(refs ...file.Reference) (map[file.Reference]io.ReadCloser, error)
-
-func mapLocationRefs(callback multiContentFetcher, locations []Location) (map[Location]io.ReadCloser, error) {
-	var fileRefs = make([]file.Reference, len(locations))
-	var locationByRefs = make(map[file.Reference][]Location)
-	var results = make(map[Location]io.ReadCloser)
-
-	for i, location := range locations {
-		locationByRefs[location.ref] = append(locationByRefs[location.ref], location)
-		fileRefs[i] = location.ref
-	}
-
-	contentsByRef, err := callback(fileRefs...)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: this is not tested, we need a test case that covers a mapLocationRefs which has multiple Locations with the same reference in the request. The io.Reader should be copied.
-	for ref, content := range contentsByRef {
-		mappedLocations := locationByRefs[ref]
-		switch {
-		case len(mappedLocations) > 1:
-			// TODO: fixme... this can lead to lots of unexpected memory usage in unusual circumstances (cache is not leveraged for large files).
-			// stereoscope wont duplicate content requests if the caller asks for the same file multiple times... thats up to the caller
-			contentsBytes, err := ioutil.ReadAll(content)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read ref=%+v :%w", ref, err)
+func (r *allLayersResolver) AllLocations() <-chan Location {
+	results := make(chan Location)
+	go func() {
+		defer close(results)
+		for _, layerIdx := range r.layers {
+			tree := r.img.Layers[layerIdx].Tree
+			for _, ref := range tree.AllFiles() {
+				results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
 			}
-			for _, loc := range mappedLocations {
-				results[loc] = ioutil.NopCloser(bytes.NewReader(contentsBytes))
-			}
-
-		case len(mappedLocations) == 1:
-			results[locationByRefs[ref][0]] = content
-		default:
-			return nil, fmt.Errorf("unexpected ref-location count=%d for ref=%v", len(mappedLocations), ref)
 		}
-	}
-	return results, nil
+	}()
+	return results
+}
+
+func (r *allLayersResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
+	return fileMetadataByLocation(r.img, location)
 }
