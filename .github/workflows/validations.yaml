@@ -167,9 +167,9 @@ jobs:
   Benchmark-Test:
     name: "Benchmark tests"
     runs-on: ubuntu-20.04
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # note: we want benchmarks to run on pull_request events in order to publish results to a sticky comment, and
+    # we also want to run on push such that merges to main are recorded to the cache. For this reason we don't filter
+    # the job by event.
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -215,11 +215,7 @@ jobs:
         id: benchmark
         run: |
           REF_NAME=${GITHUB_REF##*/} make benchmark
-          OUTPUT=$(make show-benchstat)
-          OUTPUT="${OUTPUT//'%'/'%25'}"
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=result::$OUTPUT"
+          echo "::set-output name=result::$(make show-benchstat)"
 
       - uses: actions/upload-artifact@v2
         with:
