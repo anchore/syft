@@ -42,7 +42,7 @@ docker run --rm \
         /bin/bash -x -c "\
             DEBIAN_FRONTEND=noninteractive apt install ${DISTDIR}/syft_*_linux_amd64.deb -y && \
             syft version && \
-            syft ${TEST_IMAGE} -vv -o json > ${REPORT} \
+            syft packages ${TEST_IMAGE} -vv -o json > ${REPORT} \
         "
 
 # keep the generated report around

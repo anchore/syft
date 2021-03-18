@@ -3,25 +3,54 @@ package integration
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/pkg/cataloger"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/source"
+
 	"github.com/go-test/deep"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func TestPkgCoverageImage(t *testing.T) {
+func BenchmarkImagePackageCatalogers(b *testing.B) {
 	fixtureImageName := "image-pkg-coverage"
-	_, cleanup := imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
-	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
-	defer cleanup()
+	imagetest.GetFixtureImage(b, "docker-archive", fixtureImageName)
+	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
-	_, catalog, _, err := syft.Catalog("docker-archive:"+tarPath, source.SquashedScope)
-	if err != nil {
-		t.Fatalf("failed to catalog image: %+v", err)
+	var pc *pkg.Catalog
+	for _, c := range cataloger.ImageCatalogers() {
+		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
+		theSource, cleanupSource, err := source.New("docker-archive:" + tarPath)
+		b.Cleanup(cleanupSource)
+		if err != nil {
+			b.Fatalf("unable to get source: %+v", err)
+		}
+
+		resolver, err := theSource.FileResolver(source.SquashedScope)
+		if err != nil {
+			b.Fatalf("unable to get resolver: %+v", err)
+		}
+
+		theDistro := distro.Identify(resolver)
+
+		b.Run(c.Name(), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				pc, err = cataloger.Catalog(resolver, theDistro, c)
+				if err != nil {
+					b.Fatalf("failure during benchmark: %+v", err)
+				}
+			}
+		})
+
+		b.Logf("catalog for %q number of packages: %d", c.Name(), pc.PackageCount())
 	}
+}
+
+func TestPkgCoverageImage(t *testing.T) {
+	catalog, _, _ := catalogFixtureImage(t, "image-pkg-coverage")
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -100,11 +129,7 @@ func TestPkgCoverageImage(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
-	_, catalog, _, err := syft.Catalog("dir:test-fixtures/image-pkg-coverage", source.SquashedScope)
-
-	if err != nil {
-		t.Errorf("unable to create source from dir: %+v", err)
-	}
+	catalog, _, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
