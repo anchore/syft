@@ -1,10 +1,10 @@
 # JSON Schema
 
-This is the JSON schema for output from the JSON presenter (`syft <img> -o json`). The required inputs for defining the JSON schema are as follows:
+This is the JSON schema for output from the JSON presenters (`syft packages <img> -o json` and `syft power-user <img>`). The required inputs for defining the JSON schema are as follows:
 
 - the value of `internal.JSONSchemaVersion` that governs the schema filename
-- the `Document` struct definition within `syft/presenters/json/document.go` that governs the overall document shape
-- the `metadataContainer` struct definition within `schema/json/generate.go` that governs the allowable shapes of `pkg.Package.Metadata`
+- the `Document` struct definition within `internal/presenters/poweruser/json_document.go` that governs the overall document shape
+- the `artifactMetadataContainer` struct definition within `schema/json/generate.go` that governs the allowable shapes of `pkg.Package.Metadata`
 
 With regard to testing the JSON schema, integration test cases provided by the developer are used as examples to validate that JSON output from Syft is always valid relative to the `schema/json/schema-$VERSION.json` file.
 
@@ -26,7 +26,7 @@ When adding a new `pkg.*Metadata` that is assigned to the `pkg.Package.Metadata`
 are done:
 
 - a new integration test case is added to `test/integration/pkg_cases_test.go` that exercises the new package type with the new metadata
-- the new metadata struct is added to the `metadataContainer` struct within `schema/json/generate.go`
+- the new metadata struct is added to the `artifactMetadataContainer` struct within `schema/json/generate.go`
 
 ## Generating a New Schema
 

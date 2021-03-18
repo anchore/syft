@@ -6,11 +6,12 @@ package parsers
 import (
 	"fmt"
 
+	"github.com/anchore/syft/internal/presenter"
+
 	"github.com/wagoodman/go-progress"
 
-	"github.com/anchore/syft/syft/cataloger"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/presenter"
+	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/wagoodman/go-partybus"
 )
 
@@ -40,7 +41,7 @@ func checkEventType(actual, expected partybus.EventType) error {
 }
 
 func ParseCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
-	if err := checkEventType(e.Type, event.CatalogerStarted); err != nil {
+	if err := checkEventType(e.Type, event.PackageCatalogerStarted); err != nil {
 		return nil, err
 	}
 
@@ -52,8 +53,8 @@ func ParseCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
 	return &monitor, nil
 }
 
-func ParseCatalogerFinished(e partybus.Event) (presenter.Presenter, error) {
-	if err := checkEventType(e.Type, event.CatalogerFinished); err != nil {
+func ParsePresenterReady(e partybus.Event) (presenter.Presenter, error) {
+	if err := checkEventType(e.Type, event.PresenterReady); err != nil {
 		return nil, err
 	}
 

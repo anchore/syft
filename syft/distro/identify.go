@@ -36,7 +36,7 @@ var identityFiles = []parseEntry{
 }
 
 // Identify parses distro-specific files to determine distro metadata like version and release.
-func Identify(resolver source.Resolver) *Distro {
+func Identify(resolver source.FileResolver) *Distro {
 	var distro *Distro
 
 identifyLoop:
