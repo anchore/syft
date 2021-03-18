@@ -1,8 +1,8 @@
 BIN = syft
 TEMPDIR = ./.tmp
-RESULTSDIR = $(TEMPDIR)/results
-COVER_REPORT = $(RESULTSDIR)/cover.report
-COVER_TOTAL = $(RESULTSDIR)/cover.total
+RESULTSDIR = test/results
+COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
+COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --config .golangci.yaml
 ACC_TEST_IMAGE = centos:8.2.2004
 ACC_DIR = ./test/acceptance
@@ -19,6 +19,7 @@ COVERAGE_THRESHOLD := 68
 # CI cache busting values; change these if you want CI to not use previous stored cache
 COMPARE_CACHE_BUSTER="f7e689d76a9"
 INTEGRATION_CACHE_BUSTER="789bacdf"
+CLI_CACHE_BUSTER="789bacdf"
 BOOTSTRAP_CACHE="789bacdf"
 
 ## Build variables
@@ -57,6 +58,10 @@ ifndef SNAPSHOTDIR
 	$(error SNAPSHOTDIR is not set)
 endif
 
+ifndef REF_NAME
+	REF_NAME = $(VERSION)
+endif
+
 define title
     @printf '$(TITLE)$(1)$(RESET)\n'
 endef
@@ -68,7 +73,7 @@ all: clean static-analysis test ## Run all linux-based checks (linting, license 
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 .PHONY: test
-test: unit validate-cyclonedx-schema integration acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests)
+test: unit validate-cyclonedx-schema integration benchmark acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests)
 
 .PHONY: help
 help:
@@ -78,19 +83,30 @@ help:
 ci-bootstrap:
 	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils
 
-.PHONY: bootstrap
-bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
-	$(call title,Bootstrapping dependencies)
-	@pwd
-	# prep temp dirs
-	mkdir -p $(TEMPDIR)
+.PHONY:
+ci-bootstrap-mac:
+	github_changelog_generator --version || sudo gem install github_changelog_generator
+
+$(RESULTSDIR):
 	mkdir -p $(RESULTSDIR)
-	# install go dependencies
-	go mod download
-	# install utilities
+
+$(TEMPDIR):
+	mkdir -p $(TEMPDIR)
+
+.PHONY: bootstrap-tools
+bootstrap-tools: $(TEMPDIR)
+	[ -f "$(TEMPDIR)/benchstat" ] || GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
 	[ -f "$(TEMPDIR)/golangci" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.26.0
 	[ -f "$(TEMPDIR)/bouncer" ] || curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0
 	[ -f "$(TEMPDIR)/goreleaser" ] || curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(TEMPDIR)/ v0.140.0
+
+.PHONY: bootstrap-go
+bootstrap-go:
+	go mod download
+
+.PHONY: bootstrap
+bootstrap: $(RESULTSDIR) bootstrap-go bootstrap-tools ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
+	$(call title,Bootstrapping dependencies)
 
 .PHONY: static-analysis
 static-analysis: lint check-licenses
@@ -124,12 +140,25 @@ validate-cyclonedx-schema:
 	cd schema/cyclonedx && make
 
 .PHONY: unit
-unit: fixtures ## Run unit tests (with coverage)
+unit: $(RESULTSDIR) fixtures ## Run unit tests (with coverage)
 	$(call title,Running unit tests)
 	go test -coverprofile $(COVER_REPORT) $(shell go list ./... | grep -v anchore/syft/test)
 	@go tool cover -func $(COVER_REPORT) | grep total |  awk '{print substr($$3, 1, length($$3)-1)}' > $(COVER_TOTAL)
 	@echo "Coverage: $$(cat $(COVER_TOTAL))"
 	@if [ $$(echo "$$(cat $(COVER_TOTAL)) >= $(COVERAGE_THRESHOLD)" | bc -l) -ne 1 ]; then echo "$(RED)$(BOLD)Failed coverage quality gate (> $(COVERAGE_THRESHOLD)%)$(RESET)" && false; fi
+
+.PHONY: benchmark
+benchmark: $(RESULTSDIR) ## Run benchmark tests and compare against the baseline (if available)
+	$(call title,Running benchmark tests)
+	go test -p 1 -run=^Benchmark -bench=. -count=5 -benchmem ./... | tee $(RESULTSDIR)/benchmark-$(REF_NAME).txt
+	(test -s $(RESULTSDIR)/benchmark-main.txt && \
+		$(TEMPDIR)/benchstat $(RESULTSDIR)/benchmark-main.txt $(RESULTSDIR)/benchmark-$(REF_NAME).txt || \
+		$(TEMPDIR)/benchstat $(RESULTSDIR)/benchmark-$(REF_NAME).txt) \
+			| tee $(RESULTSDIR)/benchstat.txt
+
+.PHONY: show-benchstat
+show-benchstat:
+	@cat $(RESULTSDIR)/benchstat.txt
 
 .PHONY: integration
 integration: ## Run integration tests
@@ -137,20 +166,19 @@ integration: ## Run integration tests
 
 	go test -v ./test/integration
 
-
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
 	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/cache.fingerprint && echo "$(INTEGRATION_CACHE_BUSTER)" >> test/integration/test-fixtures/cache.fingerprint
 
 .PHONY: java-packages-fingerprint
 java-packages-fingerprint:
-	@cd syft/cataloger/java/test-fixtures/java-builds && \
+	@cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
 	make packages.fingerprint
 
 .PHONY: fixtures
 fixtures:
 	$(call title,Generating test fixtures)
-	cd syft/cataloger/java/test-fixtures/java-builds && make
+	cd syft/pkg/cataloger/java/test-fixtures/java-builds && make
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
@@ -175,7 +203,7 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: acceptance-mac
-acceptance-mac: $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binaries and packages (Mac)
+acceptance-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binaries and packages (Mac)
 	$(call title,Running acceptance test: Run on Mac)
 	$(ACC_DIR)/mac.sh \
 			$(SNAPSHOTDIR) \
@@ -202,7 +230,7 @@ compare:  ## Compare the reports of a run of a main-branch build of syft against
 	@cd test/inline-compare && make
 
 .PHONY: acceptance-test-deb-package-install
-acceptance-test-deb-package-install: $(SNAPSHOTDIR)
+acceptance-test-deb-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
 	$(call title,Running acceptance test: DEB install)
 	$(ACC_DIR)/deb.sh \
 			$(SNAPSHOTDIR) \
@@ -211,13 +239,30 @@ acceptance-test-deb-package-install: $(SNAPSHOTDIR)
 			$(RESULTSDIR)
 
 .PHONY: acceptance-test-rpm-package-install
-acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
+acceptance-test-rpm-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
 	$(call title,Running acceptance test: RPM install)
 	$(ACC_DIR)/rpm.sh \
 			$(SNAPSHOTDIR) \
 			$(ACC_DIR) \
 			$(ACC_TEST_IMAGE) \
 			$(RESULTSDIR)
+
+# note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
+cli-fingerprint:
+	find test/cli/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/cli/test-fixtures/cache.fingerprint && echo "$(CLI_CACHE_BUSTER)" >> test/cli/test-fixtures/cache.fingerprint
+
+.PHONY: cli-linux
+cli-linux: $(SNAPSHOTDIR) ## Run CLI tests for Linux executable
+	chmod 755 "$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN)"
+	$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN) version
+	SYFT_BINARY_LOCATION='$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN)' \
+		go test -count=1 -v ./test/cli
+
+.PHONY: cli-macos
+cli-macos: $(SNAPSHOTDIR) ## Run CLI tests for macOS executable
+	$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN) version
+	SYFT_BINARY_LOCATION='$(SNAPSHOTDIR)/$(BIN)-macos_darwin_amd64/$(BIN)' \
+		go test -count=1 -v ./test/cli
 
 .PHONY: changlog-release
 changelog-release:
