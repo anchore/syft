@@ -18,7 +18,7 @@ SUCCESS := $(BOLD)$(GREEN)
 COVERAGE_THRESHOLD := 68
 # CI cache busting values; change these if you want CI to not use previous stored cache
 COMPARE_CACHE_BUSTER="f7e689d76a9"
-INTEGRATION_CACHE_BUSTER="789bacdf"
+INTEGRATION_CACHE_BUSTER="23493ba738c3d2f"
 CLI_CACHE_BUSTER="789bacdf"
 BOOTSTRAP_CACHE="789bacdf"
 
