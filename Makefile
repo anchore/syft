@@ -78,10 +78,6 @@ help:
 ci-bootstrap:
 	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils
 
-.PHONY:
-ci-bootstrap-mac:
-	github_changelog_generator --version || sudo gem install github_changelog_generator
-
 .PHONY: bootstrap
 bootstrap: ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
 	$(call title,Bootstrapping dependencies)
@@ -226,8 +222,9 @@ acceptance-test-rpm-package-install: $(SNAPSHOTDIR)
 .PHONY: changlog-release
 changelog-release:
 	@echo "Last tag: $(SECOND_TO_LAST_TAG)"
-	@echo "Current tag: $(VERSION)"
-	@github_changelog_generator \
+	@docker run --rm \
+		-v "$(shell pwd)":/usr/local/src/your-app \
+		ferrarimarco/github-changelog-generator \
 		--user anchore \
 		--project $(BIN) \
 		-t ${GITHUB_TOKEN} \
@@ -259,7 +256,7 @@ changelog-unreleased: ## show the current changelog that will be produced on the
 			/CHANGELOG.md
 
 .PHONY: release
-release: clean-dist ci-bootstrap-mac changelog-release ## Build and publish final binaries and packages. Intended to be run only on macOS.
+release: clean-dist changelog-release ## Build and publish final binaries and packages. Intended to be run only on macOS.
 	$(call title,Publishing release artifacts)
 
 	# Prepare for macOS-specific signing process
@@ -283,6 +280,7 @@ release: clean-dist ci-bootstrap-mac changelog-release ## Build and publish fina
 
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
+
 
 .PHONY: clean
 clean: clean-dist clean-snapshot ## Remove previous builds and result reports
