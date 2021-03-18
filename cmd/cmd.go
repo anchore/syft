@@ -3,29 +3,29 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/presenter"
-	"github.com/anchore/syft/syft/source"
 	"github.com/gookit/color"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
 )
 
-var appConfig *config.Application
-var eventBus *partybus.Bus
-var eventSubscription *partybus.Subscription
-var cliOpts = config.CliOnlyOptions{}
+var (
+	appConfig         *config.Application
+	eventBus          *partybus.Bus
+	eventSubscription *partybus.Subscription
+)
 
 func init() {
-	setGlobalCliOptions()
-
 	cobra.OnInitialize(
+		initCmdAliasBindings,
 		initAppConfig,
 		initLogging,
 		logAppConfig,
@@ -33,111 +33,55 @@ func init() {
 	)
 }
 
+// provided to disambiguate the root vs packages command, whichever is indicated by the cli args will be set here.
+// TODO: when the root alias command is removed, this function (hack) can be removed
+var activeCmd *cobra.Command
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintln(os.Stderr, color.Red.Sprint(err.Error()))
 		os.Exit(1)
 	}
 }
 
-func setGlobalCliOptions() {
-	rootCmd.PersistentFlags().StringVarP(&cliOpts.ConfigPath, "config", "c", "", "application config file")
+func initCmdAliasBindings() {
+	// TODO: when the root alias command is removed, this function (hack) can be removed
 
-	// scan options
-	flag := "scope"
-	rootCmd.Flags().StringP(
-		"scope", "s", source.SquashedScope.String(),
-		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
-	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
-		os.Exit(1)
+	activeCmd = rootCmd
+	for i, a := range os.Args {
+		if i == 0 {
+			// don't consider the bin
+			continue
+		}
+		if a == "packages" {
+			// this is positively the first subcommand directive, and is "packages"
+			activeCmd = packagesCmd
+			break
+		}
+		if !strings.HasPrefix("-", a) {
+			// this is the first non-switch provided and was not "packages"
+			break
+		}
 	}
 
-	setGlobalFormatOptions()
-	setGlobalUploadOptions()
-}
-
-func setGlobalFormatOptions() {
-	// output & formatting options
-	flag := "output"
-	rootCmd.Flags().StringP(
-		flag, "o", string(presenter.TablePresenter),
-		fmt.Sprintf("report output formatter, options=%v", presenter.Options),
-	)
-	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
-		os.Exit(1)
+	if activeCmd == rootCmd {
+		// note: cobra supports command deprecation, however the command name is empty and does not report to stderr
+		fmt.Fprintln(os.Stderr, color.New(color.Bold, color.Red).Sprintf("The root command is deprecated, please use the 'packages' subcommand"))
 	}
 
-	flag = "quiet"
-	rootCmd.Flags().BoolP(
-		flag, "q", false,
-		"suppress all logging output",
-	)
-	if err := viper.BindPFlag(flag, rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
-		os.Exit(1)
-	}
-
-	rootCmd.Flags().CountVarP(&cliOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
-}
-
-func setGlobalUploadOptions() {
-	flag := "host"
-	rootCmd.Flags().StringP(
-		flag, "H", "",
-		"the hostname or URL of the Anchore Enterprise instance to upload to",
-	)
-	if err := viper.BindPFlag("anchore.host", rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
-		os.Exit(1)
-	}
-
-	flag = "username"
-	rootCmd.Flags().StringP(
-		flag, "u", "",
-		"the username to authenticate against Anchore Enterprise",
-	)
-	if err := viper.BindPFlag("anchore.username", rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
-		os.Exit(1)
-	}
-
-	flag = "password"
-	rootCmd.Flags().StringP(
-		flag, "p", "",
-		"the password to authenticate against Anchore Enterprise",
-	)
-	if err := viper.BindPFlag("anchore.password", rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
-		os.Exit(1)
-	}
-
-	flag = "dockerfile"
-	rootCmd.Flags().StringP(
-		flag, "d", "",
-		"include dockerfile for upload to Anchore Enterprise",
-	)
-	if err := viper.BindPFlag("anchore.dockerfile", rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '#{flag}': #{err}")
-		os.Exit(1)
-	}
-
-	flag = "overwrite-existing-image"
-	rootCmd.Flags().Bool(
-		flag, false,
-		"overwrite an existing image during the upload to Anchore Enterprise",
-	)
-	if err := viper.BindPFlag("anchore.overwrite-existing-image", rootCmd.Flags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '#{flag}': #{err}")
-		os.Exit(1)
+	// note: we need to lazily bind config options since they are shared between both the root command
+	// and the packages command. Otherwise there will be global viper state that is in contention.
+	// See for more details: https://github.com/spf13/viper/issues/233 . Additionally, the bindings must occur BEFORE
+	// reading the application configuration, which implies that it must be an initializer (or rewrite the command
+	// initialization structure against typical patterns used with cobra, which is somewhat extreme for a
+	// temporary alias)
+	if err := bindConfigOptions(activeCmd.Flags()); err != nil {
+		panic(err)
 	}
 }
 
 func initAppConfig() {
-	cfgVehicle := viper.GetViper()
-	wasHostnameSet := rootCmd.Flags().Changed("host")
-	cfg, err := config.LoadApplicationConfig(cfgVehicle, cliOpts, wasHostnameSet)
+	cfg, err := config.LoadApplicationConfig(viper.GetViper(), persistentOpts)
 	if err != nil {
 		fmt.Printf("failed to load application config: \n\t%+v\n", err)
 		os.Exit(1)
@@ -163,7 +107,7 @@ func initLogging() {
 }
 
 func logAppConfig() {
-	log.Debugf("Application config:\n%+v", color.Magenta.Sprint(appConfig.String()))
+	log.Debugf("application config:\n%+v", color.Magenta.Sprint(appConfig.String()))
 }
 
 func initEventBus() {

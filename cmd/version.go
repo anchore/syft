@@ -8,7 +8,6 @@ import (
 	"github.com/anchore/syft/internal"
 
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/presenter"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +20,7 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
-	versionCmd.Flags().StringVarP(&outputFormat, "output", "o", string(presenter.TextPresenter), "format to show version information (available=[text, json])")
+	versionCmd.Flags().StringVarP(&outputFormat, "output", "o", "text", "format to show version information (available=[text, json])")
 	rootCmd.AddCommand(versionCmd)
 }
 

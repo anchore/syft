@@ -85,10 +85,6 @@ Configuration options (example values are the default):
 # same as -o ; SYFT_OUTPUT env var
 output: "table"
 
-# the search space to look for packages (options: all-layers, squashed)
-# same as -s ; SYFT_SCOPE env var
-scope: "squashed"
-
 # suppress all output (except for the SBOM report)
 # same as -q ; SYFT_QUIET env var
 quiet: false
@@ -96,6 +92,21 @@ quiet: false
 # enable/disable checking for application updates on startup
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
+
+packages:
+    # the search space to look for packages (options: all-layers, squashed)
+    # same as -s ; SYFT_SCOPE env var
+    scope: "squashed"
+
+file-metadata:
+  # enable/disable cataloging if file metadata
+  cataloging-enabled: true
+  
+  # the search space to look for file metadata (options: all-layers, squashed)
+  scope: "squashed"
+  
+  # the file digest algorithms to use when cataloging files (options: "sha256", "md5", "sha1")
+  digests: ["sha256"]
 
 log:
   # use structured logging
@@ -111,10 +122,6 @@ log:
   file: ""
 
 anchore:
-  # (feature-preview) enable uploading of results to Anchore Enterprise automatically (supported on Enterprise 3.0+)
-  # same as SYFT_ANCHORE_UPLOAD_ENABLED env var
-  upload-enabled: false
-
   # (feature-preview) the Anchore Enterprise Host or URL to upload results to (supported on Enterprise 3.0+)
   # same as -H ; SYFT_ANCHORE_HOST env var
   host: ""
