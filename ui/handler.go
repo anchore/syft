@@ -15,7 +15,7 @@ import (
 	"github.com/wagoodman/jotframe/pkg/frame"
 )
 
-// Handler is an aggregated event handler for the set of supported events (PullDockerImage, ReadImage, FetchImage, CatalogerStarted)
+// Handler is an aggregated event handler for the set of supported events (PullDockerImage, ReadImage, FetchImage, PackageCatalogerStarted)
 type Handler struct {
 }
 
@@ -27,7 +27,7 @@ func NewHandler() *Handler {
 // RespondsTo indicates if the handler is capable of handling the given event.
 func (r *Handler) RespondsTo(event partybus.Event) bool {
 	switch event.Type {
-	case stereoscopeEvent.PullDockerImage, stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.CatalogerStarted, syftEvent.ImportStarted:
+	case stereoscopeEvent.PullDockerImage, stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.PackageCatalogerStarted, syftEvent.ImportStarted:
 		return true
 	default:
 		return false
@@ -46,8 +46,8 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 	case stereoscopeEvent.FetchImage:
 		return FetchImageHandler(ctx, fr, event, wg)
 
-	case syftEvent.CatalogerStarted:
-		return CatalogerStartedHandler(ctx, fr, event, wg)
+	case syftEvent.PackageCatalogerStarted:
+		return PackageCatalogerStartedHandler(ctx, fr, event, wg)
 
 	case syftEvent.ImportStarted:
 		return ImportStartedHandler(ctx, fr, event, wg)

@@ -268,8 +268,8 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 	return nil
 }
 
-// CatalogerStartedHandler periodically writes catalog statistics to a single line.
-func CatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+// PackageCatalogerStartedHandler periodically writes catalog statistics to a single line.
+func PackageCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	monitor, err := syftEventParsers.ParseCatalogerStarted(event)
 	if err != nil {
 		return fmt.Errorf("bad %s event: %w", event.Type, err)

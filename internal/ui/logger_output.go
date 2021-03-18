@@ -24,8 +24,8 @@ eventLoop:
 			}
 
 			// ignore all events except for the final event
-			if e.Type == syftEvent.CatalogerFinished {
-				err := common.CatalogerFinishedHandler(e)
+			if e.Type == syftEvent.PresenterReady {
+				err := common.CatalogerPresenterReady(e)
 				if err != nil {
 					log.Errorf("unable to show catalog image finished event: %+v", err)
 				}
