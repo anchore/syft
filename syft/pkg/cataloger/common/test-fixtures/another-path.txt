@@ -1,0 +1,1 @@
+test-fixtures/another-path.txt file contents!
