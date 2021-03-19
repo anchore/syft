@@ -14,7 +14,9 @@ env:
 
 jobs:
   Build-Snapshot-Artifacts:
-    runs-on: macos-latest # We're creating these snapshot builds on macOS to be consistent with our release workflow's build process, which also takes place on macOS (due to code signing requirements).
+    # though the release pipeline is running on mac for the signing step, we are skipping the signing step here and
+    # require a system with docker installed, which ubuntu-20.04 has by default (and mac does not for licensing reasons).
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -38,25 +40,8 @@ jobs:
         if: steps.bootstrap-cache.outputs.cache-hit != 'true'
         run: make bootstrap
 
-      - name: Import GPG key
-        id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v2
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
-
-      - name: GPG signing info
-        run: |
-          echo "fingerprint: ${{ steps.import_gpg.outputs.fingerprint }}"
-          echo "keyid:       ${{ steps.import_gpg.outputs.keyid }}"
-          echo "name:        ${{ steps.import_gpg.outputs.name }}"
-          echo "email:       ${{ steps.import_gpg.outputs.email }}"
-
       - name: Build snapshot artifacts
         run: make snapshot
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
 
       - uses: actions/upload-artifact@v2
         with:
