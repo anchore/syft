@@ -3,7 +3,7 @@ package rust
 import "github.com/anchore/syft/syft/pkg"
 
 type CargoMetadata struct {
-	Packages []CargoMetadataPackage `toml:"package"`
+	Packages []pkg.CargoPackageMetadata `toml:"package"`
 }
 
 // Pkgs returns all of the packages referenced within the Cargo.lock metadata.

@@ -33,6 +33,7 @@ type metadataContainer struct {
 	Npm    pkg.NpmPackageJSONMetadata
 	Python pkg.PythonPackageMetadata
 	Rpm    pkg.RpmdbMetadata
+	Cargo  pkg.CargoPackageMetadata
 }
 
 // nolint:funlen
