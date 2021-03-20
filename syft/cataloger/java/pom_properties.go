@@ -24,7 +24,7 @@ func parsePomProperties(path string, reader io.Reader) (*pkg.PomProperties, erro
 			continue
 		}
 
-		idx := strings.Index(line, "=")
+		idx := strings.IndexAny(line, "=:")
 		if idx == -1 {
 			return nil, fmt.Errorf("unable to split pom.properties key-value pairs: %q", line)
 		}

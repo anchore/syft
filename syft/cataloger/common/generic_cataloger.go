@@ -104,7 +104,7 @@ func (c *GenericCataloger) catalog(contents map[source.Location]io.ReadCloser) (
 		entries, err := parser(location.RealPath, content)
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Warnf("cataloger '%s' failed to parse entries (location=%+v): %+v", c.upstreamCataloger, location, err)
+			log.Warnf("cataloger '%s' failed to parse entries (%+v): %+v", c.upstreamCataloger, location, err)
 			continue
 		}
 
