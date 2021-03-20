@@ -142,7 +142,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	manifestContents := contents[manifestMatches[0]]
 	manifest, err := parseJavaManifest(j.archivePath, strings.NewReader(manifestContents))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse java manifest (%s): %w", j.virtualPath, err)
+		log.Warnf("failed to parse java manifest (%s): %+v", j.virtualPath, err)
+		return nil, nil
 	}
 
 	return &pkg.Package{
@@ -175,7 +176,8 @@ func (j *archiveParser) discoverPkgsFromPomProperties(parentPkg *pkg.Package) ([
 	for propsPath, propsContents := range contents {
 		propsObj, err := parsePomProperties(propsPath, strings.NewReader(propsContents))
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse pom.properties (%s): %w", j.virtualPath, err)
+			log.Warnf("failed to parse pom.properties (%s): %+v", j.virtualPath, err)
+			continue
 		}
 
 		if propsObj == nil {

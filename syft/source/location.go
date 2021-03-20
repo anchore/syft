@@ -1,6 +1,8 @@
 package source
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -41,4 +43,22 @@ func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Ima
 		FileSystemID: entry.Layer.Metadata.Digest,
 		ref:          ref,
 	}
+}
+
+func (l Location) String() string {
+	str := ""
+	if l.ref.ID() != 0 {
+		str += fmt.Sprintf("id=%d ", l.ref.ID())
+	}
+
+	str += fmt.Sprintf("RealPath=%q", l.RealPath)
+
+	if l.VirtualPath != "" {
+		str += fmt.Sprintf(" VirtualPath=%q", l.VirtualPath)
+	}
+
+	if l.FileSystemID != "" {
+		str += fmt.Sprintf(" Layer=%q", l.FileSystemID)
+	}
+	return fmt.Sprintf("Location<%s>", str)
 }
