@@ -93,24 +93,26 @@ quiet: false
 check-for-app-update: true
 
 # cataloging packages is exposed through the packages and power-user subcommands
-packages:
+package:
+  cataloger:
     # enable/disable cataloging of packages
-    # SYFT_PACKAGES_CATALOGING_ENABLED env var
-    cataloging-enabled: true
-  
+    # SYFT_PACKAGE_CATALOGER_ENABLED env var
+    enabled: true
+    
     # the search space to look for packages (options: all-layers, squashed)
-    # same as -s ; SYFT_PACKAGES_SCOPE env var
+    # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
 
 # cataloging file metadata is exposed through the power-user subcommand
 file-metadata:
-  # enable/disable cataloging of file metadata
-  # SYFT_FILE_METADATA_CATALOGING_ENABLED env var
-  cataloging-enabled: true
-  
-  # the search space to look for file metadata (options: all-layers, squashed)
-  # SYFT_FILE_METADATA_SCOPE env var
-  scope: "squashed"
+  cataloger:
+    # enable/disable cataloging of file metadata
+    # SYFT_FILE_METADATA_CATALOGER_ENABLED env var
+    enabled: true
+    
+    # the search space to look for file metadata (options: all-layers, squashed)
+    # SYFT_FILE_METADATA_CATALOGER_SCOPE env var
+    scope: "squashed"
   
   # the file digest algorithms to use when cataloging files (options: "sha256", "md5", "sha1")
   # SYFT_FILE_METADATA_DIGESTS env var

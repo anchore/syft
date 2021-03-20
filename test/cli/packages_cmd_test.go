@@ -71,7 +71,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		{
 			name: "packages-scope-env-binding",
 			env: map[string]string{
-				"SYFT_PACKAGES_SCOPE": "all-layers",
+				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
 			},
 			args: []string{"packages", "-o", "json", request},
 			assertions: []traitAssertion{

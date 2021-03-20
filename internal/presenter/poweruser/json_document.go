@@ -15,7 +15,7 @@ type JSONDocument struct {
 
 // NewJSONDocument creates and populates a new JSON document struct from the given cataloging results.
 func NewJSONDocument(config JSONDocumentConfig) (JSONDocument, error) {
-	pkgsDoc, err := packages.NewJSONDocument(config.PackageCatalog, config.SourceMetadata, config.Distro, config.ApplicationConfig.Packages.ScopeOpt, config.ApplicationConfig)
+	pkgsDoc, err := packages.NewJSONDocument(config.PackageCatalog, config.SourceMetadata, config.Distro, config.ApplicationConfig.Package.Cataloger.ScopeOpt, config.ApplicationConfig)
 	if err != nil {
 		return JSONDocument{}, err
 	}

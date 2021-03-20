@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
@@ -13,14 +15,24 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
+const powerUserExample = `  {{.appName}} {{.command}} <image>
+
+  Only image sources are supported (e.g. docker: , docker-archive: , oci: , etc.), the directory source (dir:) is not supported.
+
+  All behavior is controlled via application configuration and environment variables (see https://github.com/anchore/syft#configuration)
+`
+
 var powerUserOpts = struct {
 	configPath string
 }{}
 
 var powerUserCmd = &cobra.Command{
-	Use:           "power-user [SOURCE]",
-	Short:         "Run bulk operations on container images",
-	Example:       `  {{.appName}} power-user <image>`,
+	Use:   "power-user [IMAGE]",
+	Short: "Run bulk operations on container images",
+	Example: internal.Tprintf(powerUserExample, map[string]interface{}{
+		"appName": internal.ApplicationName,
+		"command": "power-user",
+	}),
 	Args:          cobra.ExactArgs(1),
 	Hidden:        true,
 	SilenceUsage:  true,

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -15,6 +16,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var ErrApplicationConfigNotFound = fmt.Errorf("application config not found")
+
 // Application is the main syft application configuration.
 type Application struct {
 	ConfigPath        string         `yaml:",omitempty" json:"configPath"`               // the location where the application config was read from (either from -c or discovered while loading)
@@ -25,7 +28,7 @@ type Application struct {
 	Dev               Development    `yaml:"dev" json:"dev" mapstructure:"dev"`
 	CheckForAppUpdate bool           `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
 	Anchore           anchore        `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
-	Packages          Packages       `yaml:"packages" json:"packages" mapstructure:"packages"`
+	Package           Packages       `yaml:"package" json:"package" mapstructure:"package"`
 	FileMetadata      FileMetadata   `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 }
 
@@ -33,7 +36,9 @@ type Application struct {
 func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application, error) {
 	// the user may not have a config, and this is OK, we can use the default config + default cobra cli values instead
 	setNonCliDefaultAppConfigValues(v)
-	_ = readConfig(v, cliOpts.ConfigPath)
+	if err := readConfig(v, cliOpts.ConfigPath); err != nil && !errors.Is(err, ErrApplicationConfigNotFound) {
+		return nil, err
+	}
 
 	config := &Application{
 		CliOptions: cliOpts,
@@ -88,7 +93,7 @@ func (cfg *Application) build() error {
 	}
 
 	for _, builder := range []func() error{
-		cfg.Packages.build,
+		cfg.Package.build,
 		cfg.FileMetadata.build,
 	} {
 		if err := builder(); err != nil {
@@ -111,7 +116,9 @@ func (cfg Application) String() string {
 }
 
 // readConfig attempts to read the given config path from disk or discover an alternate store location
+// nolint:funlen
 func readConfig(v *viper.Viper, configPath string) error {
+	var err error
 	v.AutomaticEnv()
 	v.SetEnvPrefix(internal.ApplicationName)
 	// allow for nested options to be specified via environment variables
@@ -132,16 +139,20 @@ func readConfig(v *viper.Viper, configPath string) error {
 
 	// 1. look for .<appname>.yaml (in the current directory)
 	v.AddConfigPath(".")
-	v.SetConfigName(internal.ApplicationName)
-	if err := v.ReadInConfig(); err == nil {
+	v.SetConfigName("." + internal.ApplicationName)
+	if err = v.ReadInConfig(); err == nil {
 		return nil
+	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 	}
 
 	// 2. look for .<appname>/config.yaml (in the current directory)
 	v.AddConfigPath("." + internal.ApplicationName)
 	v.SetConfigName("config")
-	if err := v.ReadInConfig(); err == nil {
+	if err = v.ReadInConfig(); err == nil {
 		return nil
+	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 	}
 
 	// 3. look for ~/.<appname>.yaml
@@ -149,8 +160,10 @@ func readConfig(v *viper.Viper, configPath string) error {
 	if err == nil {
 		v.AddConfigPath(home)
 		v.SetConfigName("." + internal.ApplicationName)
-		if err := v.ReadInConfig(); err == nil {
+		if err = v.ReadInConfig(); err == nil {
 			return nil
+		} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+			return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 		}
 	}
 
@@ -160,11 +173,13 @@ func readConfig(v *viper.Viper, configPath string) error {
 		v.AddConfigPath(path.Join(dir, internal.ApplicationName))
 	}
 	v.SetConfigName("config")
-	if err := v.ReadInConfig(); err == nil {
+	if err = v.ReadInConfig(); err == nil {
 		return nil
+	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 	}
 
-	return fmt.Errorf("application config not found")
+	return ErrApplicationConfigNotFound
 }
 
 // setNonCliDefaultAppConfigValues ensures that there are sane defaults for values that do not have CLI equivalent options (where there would already be a default value)
@@ -174,8 +189,8 @@ func setNonCliDefaultAppConfigValues(v *viper.Viper) {
 	v.SetDefault("check-for-app-update", true)
 	v.SetDefault("dev.profile-cpu", false)
 	v.SetDefault("dev.profile-mem", false)
-	v.SetDefault("packages.cataloging-enabled", true)
-	v.SetDefault("file-metadata.cataloging-enabled", true)
-	v.SetDefault("file-metadata.scope", source.SquashedScope)
+	v.SetDefault("package.cataloger.enabled", true)
+	v.SetDefault("file-metadata.cataloger.enabled", true)
+	v.SetDefault("file-metadata.cataloger.scope", source.SquashedScope)
 	v.SetDefault("file-metadata.digests", []string{"sha256"})
 }

@@ -17,7 +17,6 @@ SUCCESS := $(BOLD)$(GREEN)
 # the quality gate lower threshold for unit test total % coverage (by function statements)
 COVERAGE_THRESHOLD := 68
 # CI cache busting values; change these if you want CI to not use previous stored cache
-COMPARE_CACHE_BUSTER="f7e689d76a9"
 INTEGRATION_CACHE_BUSTER="23493ba738c3d2f"
 CLI_CACHE_BUSTER="789bacdf"
 BOOTSTRAP_CACHE="789bacdf"
@@ -26,7 +25,13 @@ BOOTSTRAP_CACHE="789bacdf"
 DISTDIR=./dist
 SNAPSHOTDIR=./snapshot
 GITTREESTATE=$(if $(shell git status --porcelain),dirty,clean)
-SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/syft_linux_amd64/syft)
+OS := $(shell uname)
+
+ifeq ($(OS),Darwin)
+	SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(BIN)-macos_darwin_amd64/$(BIN))
+else
+	SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN))
+endif
 
 ifeq "$(strip $(VERSION))" ""
  override VERSION = $(shell git describe --always --tags --dirty)
@@ -73,7 +78,7 @@ all: clean static-analysis test ## Run all linux-based checks (linting, license 
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 .PHONY: test
-test: unit validate-cyclonedx-schema integration benchmark acceptance-linux ## Run all tests (currently unit, integration, and linux acceptance tests)
+test: unit validate-cyclonedx-schema integration benchmark acceptance-linux cli ## Run all tests (currently unit, integration, linux acceptance, and mac cli tests)
 
 .PHONY: help
 help:
@@ -215,20 +220,6 @@ acceptance-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run acceptance tests on build sn
 .PHONY: acceptance-linux
 acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages (Linux)
 
-# note: this is used by CI to determine if the inline-scan report cache should be busted for the inline-compare tests
-.PHONY: compare-fingerprint
-compare-fingerprint:
-	find test/inline-compare/* -type f -exec md5sum {} + | grep -v '\-reports' | grep -v 'fingerprint' | awk '{print $1}' | sort | md5sum | tee test/inline-compare/inline-compare.fingerprint && echo "$(COMPARE_CACHE_BUSTER)" >> test/inline-compare/inline-compare.fingerprint
-
-.PHONY: compare-snapshot
-compare-snapshot: $(SNAPSHOTDIR) ## Compare the reports of a run of a snapshot build of syft against inline-scan
-	chmod 755 $(SNAPSHOT_CMD)
-	@cd test/inline-compare && SYFT_CMD=$(SNAPSHOT_CMD) make
-
-.PHONY: compare
-compare:  ## Compare the reports of a run of a main-branch build of syft against inline-scan
-	@cd test/inline-compare && make
-
 .PHONY: acceptance-test-deb-package-install
 acceptance-test-deb-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
 	$(call title,Running acceptance test: DEB install)
@@ -251,17 +242,11 @@ acceptance-test-rpm-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
 cli-fingerprint:
 	find test/cli/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/cli/test-fixtures/cache.fingerprint && echo "$(CLI_CACHE_BUSTER)" >> test/cli/test-fixtures/cache.fingerprint
 
-.PHONY: cli-linux
-cli-linux: $(SNAPSHOTDIR) ## Run CLI tests for Linux executable
-	chmod 755 "$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN)"
-	$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN) version
-	SYFT_BINARY_LOCATION='$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN)' \
-		go test -count=1 -v ./test/cli
-
-.PHONY: cli-macos
-cli-macos: $(SNAPSHOTDIR) ## Run CLI tests for macOS executable
-	$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN) version
-	SYFT_BINARY_LOCATION='$(SNAPSHOTDIR)/$(BIN)-macos_darwin_amd64/$(BIN)' \
+.PHONY: cli
+cli: $(SNAPSHOTDIR) ## Run CLI tests
+	chmod 755 "$(SNAPSHOT_CMD)"
+	$(SNAPSHOT_CMD) version
+	SYFT_BINARY_LOCATION='$(SNAPSHOT_CMD)' \
 		go test -count=1 -v ./test/cli
 
 .PHONY: changlog-release

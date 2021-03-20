@@ -25,6 +25,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			name: "default-results",
 			args: []string{"power-user", request},
 			assertions: []traitAssertion{
+				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
 				assertInOutput(`"type": "regularFile"`),         // proof of file-metadata data
 				assertInOutput(`"algorithm": "sha256"`),         // proof of file-metadata default digest algorithm of sha256
 				assertInOutput(`"metadataType": "ApkMetadata"`), // proof of package artifacts data

@@ -23,6 +23,9 @@ type JSONPackage struct {
 
 func NewJSONPackages(catalog *pkg.Catalog) ([]JSONPackage, error) {
 	artifacts := make([]JSONPackage, 0)
+	if catalog == nil {
+		return artifacts, nil
+	}
 	for _, p := range catalog.Sorted() {
 		art, err := NewJSONPackage(p)
 		if err != nil {

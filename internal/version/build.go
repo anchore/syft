@@ -6,6 +6,7 @@ package version
 import (
 	"fmt"
 	"runtime"
+	"strings"
 )
 
 const valueNotProvided = "[not provided]"
@@ -26,6 +27,13 @@ type Version struct {
 	GoVersion    string `json:"goVersion"`    // go runtime version at build-time
 	Compiler     string `json:"compiler"`     // compiler used at build-time
 	Platform     string `json:"platform"`     // GOOS and GOARCH at build-time
+}
+
+func (v Version) IsProductionBuild() bool {
+	if strings.Contains(v.Version, "SNAPSHOT") || strings.Contains(v.Version, valueNotProvided) {
+		return false
+	}
+	return true
 }
 
 // FromBuild provides all version details

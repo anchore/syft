@@ -82,6 +82,15 @@ func TestIsUpdateAvailable(t *testing.T) {
 			err:           false,
 		},
 		{
+			name:          "SnapshotBuildVersion",
+			buildVersion:  "2.0.0-SHAPSHOT-a78bf9c",
+			latestVersion: "1.0.0",
+			code:          200,
+			isAvailable:   false,
+			newVersion:    "",
+			err:           false,
+		},
+		{
 			name:          "BadUpdateValidVersion",
 			buildVersion:  "1.0.0",
 			latestVersion: "2.0.0",

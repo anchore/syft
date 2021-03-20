@@ -45,16 +45,19 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 
 	var binaryLocation string
 	if os.Getenv("SYFT_BINARY_LOCATION") != "" {
-		// SYFT_BINARY_LOCATION is relative to the repository root. (e.g., "snapshot/syft-linux_amd64/syft")
-		// This value is transformed due to the CLI tests' need for a path relative to the test directory.
-		binaryLocation = path.Join(repoRoot(t), os.Getenv("SYFT_BINARY_LOCATION"))
+		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
+		binaryLocation = os.Getenv("SYFT_BINARY_LOCATION")
 	} else {
-		os := runtime.GOOS
-		if os == "darwin" {
-			os = "macos_darwin"
+		// note: there is a subtle - vs _ difference between these versions
+		switch runtime.GOOS {
+		case "darwin":
+			binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-macos_darwin_%s/syft", runtime.GOARCH))
+		case "linux":
+			binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft_linux_%s/syft", runtime.GOARCH))
+		default:
+			t.Fatalf("unsupported OS: %s", runtime.GOOS)
 		}
 
-		binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-%s_%s/syft", os, runtime.GOARCH))
 	}
 	return exec.Command(binaryLocation, args...)
 }

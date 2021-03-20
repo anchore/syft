@@ -141,7 +141,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 func bindConfigOptions(flags *pflag.FlagSet) error {
 	///////// Formatting & Input options //////////////////////////////////////////////
 
-	if err := viper.BindPFlag("packages.scope", flags.Lookup("scope")); err != nil {
+	if err := viper.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
 		return err
 	}
 
@@ -194,14 +194,14 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 		defer cleanup()
 
-		catalog, d, err := syft.CatalogPackages(src, appConfig.Packages.ScopeOpt)
+		catalog, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {
 			errs <- fmt.Errorf("failed to catalog input: %+v", err)
 			return
 		}
 
 		if appConfig.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, src.Metadata, catalog, d, appConfig.Packages.ScopeOpt); err != nil {
+			if err := runPackageSbomUpload(src, src.Metadata, catalog, d, appConfig.Package.Cataloger.ScopeOpt); err != nil {
 				errs <- err
 				return
 			}
@@ -213,7 +213,7 @@ func packagesExecWorker(userInput string) <-chan error {
 				SourceMetadata: src.Metadata,
 				Catalog:        catalog,
 				Distro:         d,
-				Scope:          appConfig.Packages.ScopeOpt,
+				Scope:          appConfig.Package.Cataloger.ScopeOpt,
 			}),
 		})
 	}()

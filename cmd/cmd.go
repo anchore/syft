@@ -34,7 +34,7 @@ func init() {
 }
 
 // provided to disambiguate the root vs packages command, whichever is indicated by the cli args will be set here.
-// TODO: when the root alias command is removed, this function (hack) can be removed
+// TODO: when the root alias command is removed, this variable can be removed
 var activeCmd *cobra.Command
 
 func Execute() {
@@ -44,8 +44,18 @@ func Execute() {
 	}
 }
 
+// we must setup the config-cli bindings first before the application configuration is parsed. However, this cannot
+// be done without determining what the primary command that the config options should be bound to since there are
+// shared concerns (the root-packages alias).
 func initCmdAliasBindings() {
 	// TODO: when the root alias command is removed, this function (hack) can be removed
+
+	// map of all commands except for root
+	commands := make(map[string]*cobra.Command)
+	for _, c := range rootCmd.Commands() {
+		name := strings.Split(c.Use, " ")[0]
+		commands[name] = c
+	}
 
 	activeCmd = rootCmd
 	for i, a := range os.Args {
@@ -53,14 +63,9 @@ func initCmdAliasBindings() {
 			// don't consider the bin
 			continue
 		}
-		if a == "packages" {
-			// this is positively the first subcommand directive, and is "packages"
-			activeCmd = packagesCmd
-			break
-		}
-		if !strings.HasPrefix("-", a) {
-			// this is the first non-switch provided and was not "packages"
-			break
+		// check to see if this argument may be a command
+		if c, exists := commands[a]; exists {
+			activeCmd = c
 		}
 	}
 
@@ -69,14 +74,20 @@ func initCmdAliasBindings() {
 		fmt.Fprintln(os.Stderr, color.New(color.Bold, color.Red).Sprintf("The root command is deprecated, please use the 'packages' subcommand"))
 	}
 
-	// note: we need to lazily bind config options since they are shared between both the root command
-	// and the packages command. Otherwise there will be global viper state that is in contention.
-	// See for more details: https://github.com/spf13/viper/issues/233 . Additionally, the bindings must occur BEFORE
-	// reading the application configuration, which implies that it must be an initializer (or rewrite the command
-	// initialization structure against typical patterns used with cobra, which is somewhat extreme for a
-	// temporary alias)
-	if err := bindConfigOptions(activeCmd.Flags()); err != nil {
-		panic(err)
+	if activeCmd == packagesCmd || activeCmd == rootCmd {
+		// note: we need to lazily bind config options since they are shared between both the root command
+		// and the packages command. Otherwise there will be global viper state that is in contention.
+		// See for more details: https://github.com/spf13/viper/issues/233 . Additionally, the bindings must occur BEFORE
+		// reading the application configuration, which implies that it must be an initializer (or rewrite the command
+		// initialization structure against typical patterns used with cobra, which is somewhat extreme for a
+		// temporary alias)
+		if err := bindConfigOptions(activeCmd.Flags()); err != nil {
+			panic(err)
+		}
+	} else {
+		if err := bindConfigOptions(packagesCmd.Flags()); err != nil {
+			panic(err)
+		}
 	}
 }
 
