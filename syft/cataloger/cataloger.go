@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/cataloger/python"
 	"github.com/anchore/syft/syft/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/cataloger/ruby"
+	"github.com/anchore/syft/syft/cataloger/rust"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -39,6 +40,7 @@ func ImageCatalogers() []Cataloger {
 		java.NewJavaCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModCataloger(),
+		rust.NewCargoLockCataloger(),
 	}
 }
 
@@ -54,5 +56,6 @@ func DirectoryCatalogers() []Cataloger {
 		java.NewJavaCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModCataloger(),
+		rust.NewCargoLockCataloger(),
 	}
 }

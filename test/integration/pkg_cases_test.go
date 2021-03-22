@@ -184,4 +184,14 @@ var commonTestCases = []testCase{
 			"github.com/bmatcuk/doublestar": "v1.3.1",
 		},
 	},
+	{
+		name:        "find rust crates",
+		pkgType:     pkg.RustPkg,
+		pkgLanguage: pkg.Rust,
+		pkgInfo: map[string]string{
+			"memchr":        "2.3.3",
+			"nom":           "4.2.3",
+			"version_check": "0.1.5",
+		},
+	},
 }

@@ -165,6 +165,12 @@ func (a *Package) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		a.Metadata = payload
+	case pkg.RustCargoPackageMetadataType:
+		var payload pkg.CargoPackageMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		a.Metadata = payload
 	case "":
 		// there may be packages with no metadata, which is OK
 	default:
