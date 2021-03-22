@@ -11,6 +11,9 @@ func (m CargoMetadata) Pkgs() []pkg.Package {
 	pkgs := make([]pkg.Package, 0)
 
 	for _, p := range m.Packages {
+		if p.Dependencies == nil {
+			p.Dependencies = make([]string, 0)
+		}
 		pkgs = append(pkgs, p.Pkg())
 	}
 

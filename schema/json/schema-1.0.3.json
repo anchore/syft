@@ -97,7 +97,10 @@
     "CargoPackageMetadata": {
       "required": [
         "name",
-        "version"
+        "version",
+        "source",
+        "checksum",
+        "dependencies"
       ],
       "properties": {
         "name": {
