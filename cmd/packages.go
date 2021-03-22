@@ -138,7 +138,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 	)
 }
 
-func bindConfigOptions(flags *pflag.FlagSet) error {
+func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	///////// Formatting & Input options //////////////////////////////////////////////
 
 	if err := viper.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {

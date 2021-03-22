@@ -9,25 +9,50 @@ import (
 
 func TestRootCmdAliasesToPackagesSubcommand(t *testing.T) {
 	request := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
-	deprecationWarning := "The root command is deprecated"
 
-	_, aliasStdout, aliasStderr := runSyftCommand(t, nil, request)
-
-	if !strings.Contains(aliasStderr, deprecationWarning) {
-		t.Errorf("missing root-packages alias deprecation warning")
+	tests := []struct {
+		name       string
+		env        map[string]string
+		assertions []traitAssertion
+	}{
+		{
+			name: "go-case",
+			assertions: []traitAssertion{
+				assertTableReport,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "respond-to-output-binding",
+			env: map[string]string{
+				"SYFT_OUTPUT": "text",
+			},
+			assertions: []traitAssertion{
+				assertInOutput("[Image]"),
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
-	_, pkgsStdout, pkgsStderr := runSyftCommand(t, nil, "packages", request)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			aliasCmd, aliasStdout, aliasStderr := runSyftCommand(t, test.env, request)
+			for _, traitFn := range test.assertions {
+				traitFn(t, aliasStdout, aliasStderr, aliasCmd.ProcessState.ExitCode())
+			}
 
-	if strings.Contains(pkgsStderr, deprecationWarning) {
-		t.Errorf("packages command should not have deprecation warning")
-	}
+			pkgCmd, pkgsStdout, pkgsStderr := runSyftCommand(t, test.env, "packages", request)
+			for _, traitFn := range test.assertions {
+				traitFn(t, pkgsStdout, pkgsStderr, pkgCmd.ProcessState.ExitCode())
+			}
 
-	if aliasStdout != pkgsStdout {
-		t.Errorf("packages and root command should have same report output but do not!")
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(aliasStdout, pkgsStdout, true)
-		t.Error(dmp.DiffPrettyText(diffs))
+			if aliasStdout != pkgsStdout {
+				t.Errorf("packages and root command should have same report output but do not!")
+				dmp := diffmatchpatch.New()
+				diffs := dmp.DiffMain(aliasStdout, pkgsStdout, true)
+				t.Error(dmp.DiffPrettyText(diffs))
+			}
+		})
 	}
 }
 

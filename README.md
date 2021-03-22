@@ -22,6 +22,9 @@ If you encounter an issue, please [let us know using the issue tracker](https://
 To generate an SBOM for a Docker or OCI image:
 ```
 syft packages <image>
+
+# note: this is the same as not providing the "packages" subcommand
+syft <image>
 ```
 
 The above output includes only software that is visible in the container (i.e., the squashed representation of the image).

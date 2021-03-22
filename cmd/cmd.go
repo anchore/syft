@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -33,10 +32,6 @@ func init() {
 	)
 }
 
-// provided to disambiguate the root vs packages command, whichever is indicated by the cli args will be set here.
-// TODO: when the root alias command is removed, this variable can be removed
-var activeCmd *cobra.Command
-
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, color.Red.Sprint(err.Error()))
@@ -48,30 +43,9 @@ func Execute() {
 // be done without determining what the primary command that the config options should be bound to since there are
 // shared concerns (the root-packages alias).
 func initCmdAliasBindings() {
-	// TODO: when the root alias command is removed, this function (hack) can be removed
-
-	// map of all commands except for root
-	commands := make(map[string]*cobra.Command)
-	for _, c := range rootCmd.Commands() {
-		name := strings.Split(c.Use, " ")[0]
-		commands[name] = c
-	}
-
-	activeCmd = rootCmd
-	for i, a := range os.Args {
-		if i == 0 {
-			// don't consider the bin
-			continue
-		}
-		// check to see if this argument may be a command
-		if c, exists := commands[a]; exists {
-			activeCmd = c
-		}
-	}
-
-	if activeCmd == rootCmd {
-		// note: cobra supports command deprecation, however the command name is empty and does not report to stderr
-		fmt.Fprintln(os.Stderr, color.New(color.Bold, color.Red).Sprintf("The root command is deprecated, please use the 'packages' subcommand"))
+	activeCmd, _, err := rootCmd.Find(os.Args[1:])
+	if err != nil {
+		panic(err)
 	}
 
 	if activeCmd == packagesCmd || activeCmd == rootCmd {
@@ -81,11 +55,13 @@ func initCmdAliasBindings() {
 		// reading the application configuration, which implies that it must be an initializer (or rewrite the command
 		// initialization structure against typical patterns used with cobra, which is somewhat extreme for a
 		// temporary alias)
-		if err := bindConfigOptions(activeCmd.Flags()); err != nil {
+		if err = bindPackagesConfigOptions(activeCmd.Flags()); err != nil {
 			panic(err)
 		}
 	} else {
-		if err := bindConfigOptions(packagesCmd.Flags()); err != nil {
+		// even though the root command or packages command is NOT being run, we still need default bindings
+		// such that application config parsing passes.
+		if err = bindPackagesConfigOptions(packagesCmd.Flags()); err != nil {
 			panic(err)
 		}
 	}
