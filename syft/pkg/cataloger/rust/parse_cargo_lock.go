@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/anchore/syft/syft/cataloger/common"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/common"
 	"github.com/pelletier/go-toml"
 )
 
