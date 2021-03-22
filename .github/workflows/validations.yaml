@@ -225,7 +225,6 @@ jobs:
       - name: Update PR benchmark results comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           header: benchmark
           message: |
             ### Benchmark Test Results
