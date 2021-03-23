@@ -99,6 +99,13 @@ jobs:
       - name: Run unit tests
         run: make unit
 
+      # TODO: remove me
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: unit-test-cache
+          path: syft/file/test-fixtures/cache
+
       - uses: actions/upload-artifact@v2
         with:
           name: unit-test-results
@@ -207,7 +214,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: branchmark-test-results
+          name: benchmark-test-results
           path: test/results/**/*
 
       - name: Update PR benchmark results comment
@@ -301,6 +308,13 @@ jobs:
         with:
           name: artifacts
           path: snapshot
+
+      - name: Restore docker image cache
+        id: go-cache
+        uses: actions/cache@v2.1.3
+        with:
+          path: /tmp/image.tar
+          key: ${{ runner.os }}-${{ hashFiles('test/acceptance/mac.sh') }}
 
       - name: Run Acceptance Tests (Mac)
         run: make acceptance-mac

@@ -33,7 +33,7 @@ trap cleanup EXIT
 skopeo --version || brew install skopeo
 
 # fetch test image
-skopeo --override-os linux copy docker://docker.io/${TEST_IMAGE} docker-archive:${TEST_IMAGE_TAR}
+[[ -f ${TEST_IMAGE_TAR} ]] || skopeo --override-os linux copy "docker://docker.io/${TEST_IMAGE}" "docker-archive:${TEST_IMAGE_TAR}"
 ls -alh ${TEST_IMAGE_TAR}
 
 # run syft
