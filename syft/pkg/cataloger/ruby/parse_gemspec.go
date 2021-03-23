@@ -53,7 +53,6 @@ var postProcessors = map[string]postProcessor{
 }
 
 func processList(s string) []string {
-	// nolint:prealloc
 	var results []string
 	for _, item := range strings.Split(s, ",") {
 		results = append(results, strings.Trim(item, "\" "))

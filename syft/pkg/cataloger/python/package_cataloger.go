@@ -30,7 +30,6 @@ func (c *PackageCataloger) Name() string {
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
 func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
-	// nolint:prealloc
 	var fileMatches []source.Location
 
 	for _, glob := range []string{eggMetadataGlob, wheelMetadataGlob, eggFileMetadataGlob} {

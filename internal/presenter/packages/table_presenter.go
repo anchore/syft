@@ -73,7 +73,6 @@ func (pres *TablePresenter) Present(output io.Writer) error {
 
 func removeDuplicateRows(items [][]string) [][]string {
 	seen := map[string][]string{}
-	// nolint:prealloc
 	var result [][]string
 
 	for _, v := range items {
