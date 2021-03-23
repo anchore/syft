@@ -147,7 +147,7 @@ validate-cyclonedx-schema:
 .PHONY: unit
 unit: $(RESULTSDIR) fixtures ## Run unit tests (with coverage)
 	$(call title,Running unit tests)
-	go test -coverprofile $(COVER_REPORT) $(shell go list ./... | grep -v anchore/syft/test)
+	go test  -coverprofile $(COVER_REPORT) $(shell go list ./... | grep -v anchore/syft/test)
 	@go tool cover -func $(COVER_REPORT) | grep total |  awk '{print substr($$3, 1, length($$3)-1)}' > $(COVER_TOTAL)
 	@echo "Coverage: $$(cat $(COVER_TOTAL))"
 	@if [ $$(echo "$$(cat $(COVER_TOTAL)) >= $(COVERAGE_THRESHOLD)" | bc -l) -ne 1 ]; then echo "$(RED)$(BOLD)Failed coverage quality gate (> $(COVERAGE_THRESHOLD)%)$(RESET)" && false; fi
@@ -188,10 +188,6 @@ fixtures:
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
 	cd schema/json && go run generate.go
-
-.PHONY: clear-test-cache
-clear-test-cache: ## Delete all test cache (built docker image tars)
-	find . -type f -wholename "**/test-fixtures/cache/*.tar" -delete
 
 .PHONY: build
 build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
@@ -313,7 +309,7 @@ release: clean-dist changelog-release ## Build and publish final binaries and pa
 
 
 .PHONY: clean
-clean: clean-dist clean-snapshot ## Remove previous builds and result reports
+clean: clean-dist clean-snapshot clean-test-image-cache ## Remove previous builds, result reports, and test cache
 	rm -rf $(RESULTSDIR)/*
 
 .PHONY: clean-snapshot
@@ -323,3 +319,26 @@ clean-snapshot:
 .PHONY: clean-dist
 clean-dist:
 	rm -rf $(DISTDIR) $(TEMPDIR)/goreleaser.yaml
+
+clean-test-image-cache: clean-test-image-tar-cache clean-test-image-docker-cache
+
+.PHONY: clear-test-image-tar-cache
+clean-test-image-tar-cache: ## Delete all test cache (built docker image tars)
+	find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" -delete
+
+.PHONY: clear-test-image-docker-cache
+clean-test-image-docker-cache: ## Purge all test docker images
+	docker images --format '{{.ID}} {{.Repository}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs docker rmi --force
+
+.PHONY: show-test-image-cache
+show-test-image-cache: ## Show all docker and image tar cache
+	$(call title,Docker daemon cache)
+	@docker images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep stereoscope-fixture- | sort
+
+	$(call title,Tar cache)
+	@find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" | sort
+
+.PHONY: show-test-snapshots
+show-test-snapshots: ## Show all test snapshots
+	$(call title,Test snapshots)
+	@find . -type f -wholename "**/test-fixtures/snapshot/*" | sort
