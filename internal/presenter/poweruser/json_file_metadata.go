@@ -2,6 +2,7 @@ package poweruser
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/anchore/syft/syft/file"
@@ -46,5 +47,13 @@ func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests m
 			},
 		})
 	}
+
+	// sort by real path then virtual path to ensure the result is stable across multiple runs
+	sort.SliceStable(results, func(i, j int) bool {
+		if results[i].Location.RealPath != results[j].Location.RealPath {
+			return results[i].Location.VirtualPath < results[j].Location.VirtualPath
+		}
+		return false
+	})
 	return results, nil
 }
