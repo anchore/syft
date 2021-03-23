@@ -99,13 +99,6 @@ jobs:
       - name: Run unit tests
         run: make unit
 
-      # TODO: remove me
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: unit-test-cache
-          path: syft/file/test-fixtures/cache
-
       - uses: actions/upload-artifact@v2
         with:
           name: unit-test-results

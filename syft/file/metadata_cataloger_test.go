@@ -1,6 +1,7 @@
 package file
 
 import (
+	"flag"
 	"os"
 	"testing"
 
@@ -10,8 +11,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFileMetadataFetch(t *testing.T) {
-	img := imagetest.GetFixtureImage(t, "docker-archive", "image-file-type-mix")
+var updateImageGoldenFiles = flag.Bool("update-image", false, "update the golden fixture images used for testing")
+
+func TestFileMetadataCataloger(t *testing.T) {
+	testImage := "image-file-type-mix"
+
+	if *updateImageGoldenFiles {
+		imagetest.UpdateGoldenFixtureImage(t, testImage)
+	}
+
+	img := imagetest.GetGoldenFixtureImage(t, testImage)
 
 	c := NewMetadataCataloger()
 
