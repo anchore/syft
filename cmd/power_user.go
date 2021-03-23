@@ -72,6 +72,12 @@ func powerUserExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
+		tasks, err := powerUserTasks()
+		if err != nil {
+			errs <- err
+			return
+		}
+
 		checkForApplicationUpdate()
 
 		src, cleanup, err := source.New(userInput)
@@ -90,14 +96,9 @@ func powerUserExecWorker(userInput string) <-chan error {
 			SourceMetadata:    src.Metadata,
 			ApplicationConfig: *appConfig,
 		}
-		tasks, err := powerUserTasks(src)
-		if err != nil {
-			errs <- err
-			return
-		}
 
 		for _, task := range tasks {
-			if err = task(&analysisResults); err != nil {
+			if err = task(&analysisResults, src); err != nil {
 				errs <- err
 				return
 			}

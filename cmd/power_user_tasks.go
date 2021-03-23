@@ -7,41 +7,36 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type powerUserTask func(*poweruser.JSONDocumentConfig) error
+type powerUserTask func(*poweruser.JSONDocumentConfig, source.Source) error
 
-func powerUserTasks(src source.Source) ([]powerUserTask, error) {
+func powerUserTasks() ([]powerUserTask, error) {
 	var tasks []powerUserTask
-	var err error
-	var task powerUserTask
 
-	task = catalogPackagesTask(src)
-	if task != nil {
-		tasks = append(tasks, task)
+	generators := []func() (powerUserTask, error){
+		catalogPackagesTask,
+		catalogFileMetadataTask,
+		catalogFileDigestTask,
 	}
 
-	task, err = catalogFileMetadataTask(src)
-	if err != nil {
-		return nil, err
-	} else if task != nil {
-		tasks = append(tasks, task)
-	}
-
-	task, err = catalogFileDigestTask(src)
-	if err != nil {
-		return nil, err
-	} else if task != nil {
-		tasks = append(tasks, task)
+	for _, generator := range generators {
+		task, err := generator()
+		if err != nil {
+			return nil, err
+		}
+		if task != nil {
+			tasks = append(tasks, task)
+		}
 	}
 
 	return tasks, nil
 }
 
-func catalogPackagesTask(src source.Source) powerUserTask {
+func catalogPackagesTask() (powerUserTask, error) {
 	if !appConfig.Package.Cataloger.Enabled {
-		return nil
+		return nil, nil
 	}
 
-	task := func(results *poweruser.JSONDocumentConfig) error {
+	task := func(results *poweruser.JSONDocumentConfig, src source.Source) error {
 		packageCatalog, theDistro, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
@@ -53,21 +48,23 @@ func catalogPackagesTask(src source.Source) powerUserTask {
 		return nil
 	}
 
-	return task
+	return task, nil
 }
 
-func catalogFileMetadataTask(src source.Source) (powerUserTask, error) {
+func catalogFileMetadataTask() (powerUserTask, error) {
 	if !appConfig.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
-	if err != nil {
-		return nil, err
-	}
+	metadataCataloger := file.NewMetadataCataloger()
 
-	task := func(results *poweruser.JSONDocumentConfig) error {
-		result, err := file.NewMetadataCataloger(resolver).Catalog()
+	task := func(results *poweruser.JSONDocumentConfig, src source.Source) error {
+		resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
+		if err != nil {
+			return err
+		}
+
+		result, err := metadataCataloger.Catalog(resolver)
 		if err != nil {
 			return err
 		}
@@ -78,23 +75,23 @@ func catalogFileMetadataTask(src source.Source) (powerUserTask, error) {
 	return task, nil
 }
 
-func catalogFileDigestTask(src source.Source) (powerUserTask, error) {
+func catalogFileDigestTask() (powerUserTask, error) {
 	if !appConfig.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
+	digestsCataloger, err := file.NewDigestsCataloger(appConfig.FileMetadata.Digests)
 	if err != nil {
 		return nil, err
 	}
 
-	cataloger, err := file.NewDigestsCataloger(resolver, appConfig.FileMetadata.Digests)
-	if err != nil {
-		return nil, err
-	}
+	task := func(results *poweruser.JSONDocumentConfig, src source.Source) error {
+		resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
+		if err != nil {
+			return err
+		}
 
-	task := func(results *poweruser.JSONDocumentConfig) error {
-		result, err := cataloger.Catalog()
+		result, err := digestsCataloger.Catalog(resolver)
 		if err != nil {
 			return err
 		}
