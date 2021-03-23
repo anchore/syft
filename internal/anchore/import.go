@@ -26,6 +26,7 @@ type ImportConfig struct {
 	Distro                  *distro.Distro
 	Dockerfile              []byte
 	OverwriteExistingUpload bool
+	Scope                   source.Scope
 }
 
 func importProgress(source string) (*progress.Stage, *progress.Manual) {
@@ -71,7 +72,7 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 	prog.N++
 	sessionID := startOperation.Uuid
 
-	packageDigest, err := importPackageSBOM(authedCtx, c.client.ImportsApi, sessionID, cfg.SourceMetadata, cfg.Catalog, cfg.Distro, stage)
+	packageDigest, err := importPackageSBOM(authedCtx, c.client.ImportsApi, sessionID, cfg.SourceMetadata, cfg.Catalog, cfg.Distro, cfg.Scope, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Package SBOM: %w", err)
 	}

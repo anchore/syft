@@ -20,13 +20,13 @@ var latestAppVersionURL = struct {
 
 // IsUpdateAvailable indicates if there is a newer application version available, and if so, what the new version is.
 func IsUpdateAvailable() (bool, string, error) {
-	currentVersionStr := FromBuild().Version
-	currentVersion, err := hashiVersion.NewVersion(currentVersionStr)
+	currentBuildInfo := FromBuild()
+	if !currentBuildInfo.IsProductionBuild() {
+		// don't allow for non-production builds to check for a version.
+		return false, "", nil
+	}
+	currentVersion, err := hashiVersion.NewVersion(currentBuildInfo.Version)
 	if err != nil {
-		if currentVersionStr == valueNotProvided {
-			// this is the default build arg and should be ignored (this is not an error case)
-			return false, "", nil
-		}
 		return false, "", fmt.Errorf("failed to parse current application version: %w", err)
 	}
 

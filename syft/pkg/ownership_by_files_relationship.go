@@ -45,6 +45,10 @@ func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
 func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.Set {
 	var relationships = make(map[ID]map[ID]*strset.Set)
 
+	if catalog == nil {
+		return relationships
+	}
+
 	for _, candidateOwnerPkg := range catalog.Sorted() {
 		if candidateOwnerPkg.Metadata == nil {
 			continue

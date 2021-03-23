@@ -33,14 +33,14 @@ trap cleanup EXIT
 skopeo --version || brew install skopeo
 
 # fetch test image
-skopeo --override-os linux copy docker://docker.io/${TEST_IMAGE} docker-archive:${TEST_IMAGE_TAR}
+[[ -f ${TEST_IMAGE_TAR} ]] || skopeo --override-os linux copy "docker://docker.io/${TEST_IMAGE}" "docker-archive:${TEST_IMAGE_TAR}"
 ls -alh ${TEST_IMAGE_TAR}
 
 # run syft
 SYFT_PATH="${DISTDIR}/syft-macos_darwin_amd64/syft"
 chmod 755 "${SYFT_PATH}"
 "${SYFT_PATH}" version
-SYFT_CHECK_FOR_APP_UPDATE=0 "${SYFT_PATH}" docker-archive://${TEST_IMAGE_TAR} -vv -o json > "${REPORT}"
+SYFT_CHECK_FOR_APP_UPDATE=0 "${SYFT_PATH}" packages docker-archive://${TEST_IMAGE_TAR} -vv -o json > "${REPORT}"
 
 # keep the generated report around
 mkdir -p ${RESULTSDIR}

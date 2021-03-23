@@ -8,13 +8,14 @@ import (
 	"github.com/anchore/syft/internal/file"
 )
 
-var _ Resolver = (*MockResolver)(nil)
+var _ FileResolver = (*MockResolver)(nil)
 
-// MockResolver implements the Resolver interface and is intended for use *only in test code*.
+// MockResolver implements the FileResolver interface and is intended for use *only in test code*.
 // It provides an implementation that can resolve local filesystem paths using only a provided discrete list of file
 // paths, which are typically paths to test fixtures.
 type MockResolver struct {
 	Locations []Location
+	Metadata  map[Location]FileMetadata
 }
 
 // NewMockResolverForPaths creates a new MockResolver, where the only resolvable
@@ -26,6 +27,15 @@ func NewMockResolverForPaths(paths ...string) *MockResolver {
 	}
 
 	return &MockResolver{Locations: locations}
+}
+
+func NewMockResolverForPathsWithMetadata(metadata map[Location]FileMetadata) *MockResolver {
+	var locations []Location
+	for p := range metadata {
+		locations = append(locations, p)
+	}
+
+	return &MockResolver{Locations: locations, Metadata: metadata}
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -53,20 +63,6 @@ func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, 
 	}
 
 	return nil, fmt.Errorf("no file for location: %v", location)
-}
-
-// MultipleFileContentsByLocation returns the file contents for all specified Locations.
-func (r MockResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]io.ReadCloser, error) {
-	results := make(map[Location]io.ReadCloser)
-	for _, l := range locations {
-		contents, err := r.FileContentsByLocation(l)
-		if err != nil {
-			return nil, err
-		}
-		results[l] = contents
-	}
-
-	return results, nil
 }
 
 // FilesByPath returns all Locations that match the given paths.
@@ -109,4 +105,19 @@ func (r MockResolver) RelativeFileByPath(_ Location, path string) *Location {
 	}
 
 	return &paths[0]
+}
+
+func (r MockResolver) AllLocations() <-chan Location {
+	results := make(chan Location)
+	go func() {
+		defer close(results)
+		for _, l := range r.Locations {
+			results <- l
+		}
+	}()
+	return results
+}
+
+func (r MockResolver) FileMetadataByLocation(Location) (FileMetadata, error) {
+	panic("not implemented")
 }

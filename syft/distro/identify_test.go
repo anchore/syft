@@ -99,7 +99,12 @@ func TestIdentifyDistro(t *testing.T) {
 				t.Fatalf("unable to produce a new source for testing: %s", test.fixture)
 			}
 
-			d := Identify(s.Resolver)
+			resolver, err := s.FileResolver(source.SquashedScope)
+			if err != nil {
+				t.Fatalf("unable to get resolver: %+v", err)
+			}
+
+			d := Identify(resolver)
 			if d == nil {
 				if test.Type == UnknownDistroType {
 					return

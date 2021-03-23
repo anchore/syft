@@ -1,0 +1,91 @@
+package cli
+
+import (
+	"fmt"
+	"path"
+	"strings"
+	"testing"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal"
+	"github.com/xeipuuv/gojsonschema"
+)
+
+// this is the path to the json schema directory relative to the root of the repo
+const jsonSchemaPath = "schema/json"
+
+func TestJSONSchema(t *testing.T) {
+
+	imageFixture := func(t *testing.T) string {
+		fixtureImageName := "image-pkg-coverage"
+		imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
+		tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
+		return "docker-archive:" + tarPath
+	}
+
+	tests := []struct {
+		name       string
+		subcommand string
+		args       []string
+		fixture    func(*testing.T) string
+	}{
+		{
+			name:       "packages:image:docker-archive:pkg-coverage",
+			subcommand: "packages",
+			args:       []string{"-o", "json"},
+			fixture:    imageFixture,
+		},
+		{
+			name:       "power-user:image:docker-archive:pkg-coverage",
+			subcommand: "power-user",
+			fixture:    imageFixture,
+		},
+		{
+			name:       "packages:dir:pkg-coverage",
+			subcommand: "packages",
+			args:       []string{"-o", "json"},
+			fixture: func(t *testing.T) string {
+				return "dir:test-fixtures/image-pkg-coverage"
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fixtureRef := test.fixture(t)
+			args := []string{
+				test.subcommand, fixtureRef, "-q",
+			}
+			for _, a := range test.args {
+				args = append(args, a)
+			}
+
+			_, stdout, _ := runSyftCommand(t, nil, args...)
+
+			if len(strings.Trim(stdout, "\n ")) < 100 {
+				t.Fatalf("bad syft output: %q", stdout)
+			}
+
+			validateAgainstV1Schema(t, stdout)
+		})
+	}
+}
+
+func validateAgainstV1Schema(t testing.TB, json string) {
+	fullSchemaPath := path.Join(repoRoot(t), jsonSchemaPath, fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
+	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
+	documentLoader := gojsonschema.NewStringLoader(json)
+
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		t.Fatal("unable to validate json schema:", err.Error())
+	}
+
+	if !result.Valid() {
+		t.Errorf("failed json schema validation:")
+		t.Errorf("JSON:\n%s\n", json)
+		for _, desc := range result.Errors() {
+			t.Errorf("  - %s\n", desc)
+		}
+	}
+}

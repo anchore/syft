@@ -41,7 +41,7 @@ docker run --rm \
         /bin/bash -x -c "\
             rpm -ivh ${DISTDIR}/syft_*_linux_amd64.rpm && \
             syft version && \
-            syft ${TEST_IMAGE} -vv -o json > ${REPORT} \
+            syft packages ${TEST_IMAGE} -vv -o json > ${REPORT} \
         "
 
 # keep the generated report around

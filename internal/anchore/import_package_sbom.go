@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/wagoodman/go-progress"
+	"github.com/anchore/syft/internal/presenter/packages"
 
-	jsonPresenter "github.com/anchore/syft/syft/presenter/json"
+	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/source"
@@ -24,9 +24,9 @@ type packageSBOMImportAPI interface {
 	ImportImagePackages(context.Context, string, external.ImagePackageManifest) (external.ImageImportContentResponse, *http.Response, error)
 }
 
-func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro) (*external.ImagePackageManifest, error) {
+func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope) (*external.ImagePackageManifest, error) {
 	var buf bytes.Buffer
-	pres := jsonPresenter.NewPresenter(catalog, s, d)
+	pres := packages.NewJSONPresenter(catalog, s, d, scope)
 	err := pres.Present(&buf)
 	if err != nil {
 		return nil, fmt.Errorf("unable to serialize results: %w", err)
@@ -41,11 +41,11 @@ func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro)
 	return &model, nil
 }
 
-func importPackageSBOM(ctx context.Context, api packageSBOMImportAPI, sessionID string, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, stage *progress.Stage) (string, error) {
+func importPackageSBOM(ctx context.Context, api packageSBOMImportAPI, sessionID string, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope, stage *progress.Stage) (string, error) {
 	log.Debug("importing package SBOM")
 	stage.Current = "package SBOM"
 
-	model, err := packageSbomModel(s, catalog, d)
+	model, err := packageSbomModel(s, catalog, d, scope)
 	if err != nil {
 		return "", fmt.Errorf("unable to create PackageSBOM model: %w", err)
 	}

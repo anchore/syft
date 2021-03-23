@@ -129,7 +129,7 @@ eventLoop:
 					log.Errorf("unable to show %s event: %+v", e.Type, err)
 				}
 
-			case e.Type == syftEvent.CatalogerFinished:
+			case e.Type == syftEvent.PresenterReady:
 				// we may have other background processes still displaying progress, wait for them to
 				// finish before discontinuing dynamic content and showing the final report
 				wg.Wait()
@@ -146,7 +146,7 @@ eventLoop:
 					fmt.Fprint(output, logBuffer.String())
 				}
 
-				if err := common.CatalogerFinishedHandler(e); err != nil {
+				if err := common.CatalogerPresenterReady(e); err != nil {
 					log.Errorf("unable to show %s event: %+v", e.Type, err)
 				}
 
