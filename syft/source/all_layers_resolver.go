@@ -194,7 +194,7 @@ func (r *allLayersResolver) AllLocations() <-chan Location {
 		defer close(results)
 		for _, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
-			for _, ref := range tree.AllFiles() {
+			for _, ref := range tree.AllFiles(file.AllTypes...) {
 				results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
 			}
 		}

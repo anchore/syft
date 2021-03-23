@@ -144,7 +144,7 @@ func (r *imageSquashResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		for _, ref := range r.img.SquashedTree().AllFiles() {
+		for _, ref := range r.img.SquashedTree().AllFiles(file.AllTypes...) {
 			results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
 		}
 	}()

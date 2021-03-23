@@ -15,6 +15,7 @@ var _ FileResolver = (*MockResolver)(nil)
 // paths, which are typically paths to test fixtures.
 type MockResolver struct {
 	Locations []Location
+	Metadata  map[Location]FileMetadata
 }
 
 // NewMockResolverForPaths creates a new MockResolver, where the only resolvable
@@ -26,6 +27,15 @@ func NewMockResolverForPaths(paths ...string) *MockResolver {
 	}
 
 	return &MockResolver{Locations: locations}
+}
+
+func NewMockResolverForPathsWithMetadata(metadata map[Location]FileMetadata) *MockResolver {
+	var locations []Location
+	for p := range metadata {
+		locations = append(locations, p)
+	}
+
+	return &MockResolver{Locations: locations, Metadata: metadata}
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -98,7 +108,14 @@ func (r MockResolver) RelativeFileByPath(_ Location, path string) *Location {
 }
 
 func (r MockResolver) AllLocations() <-chan Location {
-	panic("not implemented")
+	results := make(chan Location)
+	go func() {
+		defer close(results)
+		for _, l := range r.Locations {
+			results <- l
+		}
+	}()
+	return results
 }
 
 func (r MockResolver) FileMetadataByLocation(Location) (FileMetadata, error) {

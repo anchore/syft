@@ -13,8 +13,7 @@ import (
 var supportedHashAlgorithms = make(map[string]crypto.Hash)
 
 type DigestsCataloger struct {
-	resolver source.FileResolver
-	hashes   []crypto.Hash
+	hashes []crypto.Hash
 }
 
 func init() {
@@ -27,7 +26,7 @@ func init() {
 	}
 }
 
-func NewDigestsCataloger(resolver source.FileResolver, hashAlgorithms []string) (*DigestsCataloger, error) {
+func NewDigestsCataloger(hashAlgorithms []string) (*DigestsCataloger, error) {
 	var hashes []crypto.Hash
 	for _, hashStr := range hashAlgorithms {
 		name := cleanAlgorithmName(hashStr)
@@ -39,15 +38,14 @@ func NewDigestsCataloger(resolver source.FileResolver, hashAlgorithms []string) 
 	}
 
 	return &DigestsCataloger{
-		resolver: resolver,
-		hashes:   hashes,
+		hashes: hashes,
 	}, nil
 }
 
-func (i *DigestsCataloger) Catalog() (map[source.Location][]Digest, error) {
+func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Location][]Digest, error) {
 	results := make(map[source.Location][]Digest)
-	for location := range i.resolver.AllLocations() {
-		result, err := i.catalogLocation(location)
+	for location := range resolver.AllLocations() {
+		result, err := i.catalogLocation(resolver, location)
 		if err != nil {
 			return nil, err
 		}
@@ -56,8 +54,8 @@ func (i *DigestsCataloger) Catalog() (map[source.Location][]Digest, error) {
 	return results, nil
 }
 
-func (i *DigestsCataloger) catalogLocation(location source.Location) ([]Digest, error) {
-	contentReader, err := i.resolver.FileContentsByLocation(location)
+func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]Digest, error) {
+	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, err
 	}
