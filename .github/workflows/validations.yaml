@@ -203,7 +203,11 @@ jobs:
         id: benchmark
         run: |
           REF_NAME=${GITHUB_REF##*/} make benchmark
-          echo "::set-output name=result::$(make show-benchstat)"
+          OUTPUT=$(make show-benchstat)
+          OUTPUT="${OUTPUT//'%'/'%25'}"   # URL encode all '%' characters
+          OUTPUT="${OUTPUT//$'\n'/'%0A'}" # URL encode all '\n' characters
+          OUTPUT="${OUTPUT//$'\r'/'%0D'}" # URL encode all '\r' characters
+          echo "::set-output name=result::$OUTPUT"
 
       - uses: actions/upload-artifact@v2
         with:
