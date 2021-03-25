@@ -89,11 +89,13 @@ This release process itself should be as automated as possible, and have only a 
    milestone with a partial version, the full version should be used for the git tag (e.g.
    with a Milestone of `v0.1` the tag should be `v0.1.0`).
 
-1. Push the tag, the release pipeline will generate and publish all assets as well as a
-   draft GitHub Release.
+1. Push the tag.
+   
+1. A release admin must approve the release on the GitHub Actions release pipeline run page.
+   Once approved, the release pipeline will generate all assets and draft a GitHub Release.
 
-1. Promote the GitHub Release from draft to public. Note: since extra assets are made
-   available immediately from previous steps (i.e. the brew formula) the release should
-   only be in this state for a small amount of time (minutes).
+1. Navigate to the GitHub Release draft page to review the final changelog and publish the
+   release. Once published, a release-follow-up pipeline will publish derivative artifacts
+   (docker image to DockerHub, brew formula to the external homebrew git repo, etc).
 
 1. If there is a release Milestone, close it.

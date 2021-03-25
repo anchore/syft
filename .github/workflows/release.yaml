@@ -12,7 +12,8 @@ env:
   GO_VERSION: "1.16.x"
 
 jobs:
-  wait-for-checks:
+  quality-gate:
+    environment: release
     runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
     steps:
       - uses: actions/checkout@v2
@@ -90,7 +91,7 @@ jobs:
           false
 
   release:
-    needs: [wait-for-checks]
+    needs: [quality-gate]
     runs-on: macos-latest # Due to our code signing process, it's vital that we run our release steps on macOS.
     steps:
       - uses: docker-practice/actions-setup-docker@v1
