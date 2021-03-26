@@ -155,3 +155,51 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 		}
 	}
 }
+
+func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
+	tests := []struct {
+		name string
+		pkg  Package
+	}{
+		{
+			name: "multiple locations with shared path",
+			pkg: Package{
+				ID: "my-id",
+				Locations: []source.Location{
+					{
+						RealPath:    "/b/path",
+						VirtualPath: "/another/path",
+					},
+					{
+						RealPath:    "/b/path",
+						VirtualPath: "/b/path",
+					},
+				},
+				Type: RpmPkg,
+			},
+		},
+		{
+			name: "one location with shared path",
+			pkg: Package{
+				ID: "my-id",
+				Locations: []source.Location{
+					{
+						RealPath:    "/b/path",
+						VirtualPath: "/b/path",
+					},
+				},
+				Type: RpmPkg,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := NewCatalog(test.pkg).PackagesByPath("/b/path")
+			if len(actual) != 1 {
+				t.Errorf("expected exactly one package path, got %d", len(actual))
+			}
+		})
+	}
+
+}
