@@ -16,11 +16,12 @@ type JSONFileMetadata struct {
 }
 
 type JSONFileMetadataEntry struct {
-	Mode    int             `json:"mode"`
-	Type    source.FileType `json:"type"`
-	UserID  int             `json:"userID"`
-	GroupID int             `json:"groupID"`
-	Digests []file.Digest   `json:"digests"`
+	Mode            int             `json:"mode"`
+	Type            source.FileType `json:"type"`
+	LinkDestination string          `json:"linkDestination,omitempty"`
+	UserID          int             `json:"userID"`
+	GroupID         int             `json:"groupID"`
+	Digests         []file.Digest   `json:"digests,omitempty"`
 }
 
 func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests map[source.Location][]file.Digest) ([]JSONFileMetadata, error) {
@@ -31,7 +32,7 @@ func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests m
 			return nil, fmt.Errorf("invalid mode found in file catalog @ location=%+v mode=%q: %w", location, metadata.Mode, err)
 		}
 
-		digestResults := make([]file.Digest, 0)
+		var digestResults []file.Digest
 		if digestsForLocation, exists := digests[location]; exists {
 			digestResults = digestsForLocation
 		}
@@ -39,21 +40,22 @@ func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests m
 		results = append(results, JSONFileMetadata{
 			Location: location,
 			Metadata: JSONFileMetadataEntry{
-				Mode:    mode,
-				Type:    metadata.Type,
-				UserID:  metadata.UserID,
-				GroupID: metadata.GroupID,
-				Digests: digestResults,
+				Mode:            mode,
+				Type:            metadata.Type,
+				LinkDestination: metadata.LinkDestination,
+				UserID:          metadata.UserID,
+				GroupID:         metadata.GroupID,
+				Digests:         digestResults,
 			},
 		})
 	}
 
 	// sort by real path then virtual path to ensure the result is stable across multiple runs
 	sort.SliceStable(results, func(i, j int) bool {
-		if results[i].Location.RealPath != results[j].Location.RealPath {
+		if results[i].Location.RealPath == results[j].Location.RealPath {
 			return results[i].Location.VirtualPath < results[j].Location.VirtualPath
 		}
-		return false
+		return results[i].Location.RealPath < results[j].Location.RealPath
 	})
 	return results, nil
 }

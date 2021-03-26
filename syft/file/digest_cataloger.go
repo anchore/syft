@@ -74,16 +74,18 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, fmt.Errorf("unable to observe contents of %+v: %+v", location.RealPath, err)
 	}
 
+	if size == 0 {
+		return make([]Digest, 0), nil
+	}
+
 	result := make([]Digest, len(i.hashes))
-	if size > 0 {
-		// only capture digests when there is content. It is important to do this based on SIZE and not
-		// FILE TYPE. The reasoning is that it is possible for a tar to be crafted with a header-only
-		// file type but a body is still allowed.
-		for idx, hasher := range hashers {
-			result[idx] = Digest{
-				Algorithm: cleanAlgorithmName(i.hashes[idx].String()),
-				Value:     fmt.Sprintf("%+x", hasher.Sum(nil)),
-			}
+	// only capture digests when there is content. It is important to do this based on SIZE and not
+	// FILE TYPE. The reasoning is that it is possible for a tar to be crafted with a header-only
+	// file type but a body is still allowed.
+	for idx, hasher := range hashers {
+		result[idx] = Digest{
+			Algorithm: cleanAlgorithmName(i.hashes[idx].String()),
+			Value:     fmt.Sprintf("%+x", hasher.Sum(nil)),
 		}
 	}
 
