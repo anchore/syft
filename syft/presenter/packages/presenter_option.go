@@ -8,6 +8,7 @@ const (
 	TextPresenterOption      PresenterOption = "text"
 	TablePresenterOption     PresenterOption = "table"
 	CycloneDxPresenterOption PresenterOption = "cyclonedx"
+	SPDXPresenterOption      PresenterOption = "spdx"
 )
 
 var AllPresenters = []PresenterOption{
@@ -15,6 +16,7 @@ var AllPresenters = []PresenterOption{
 	TextPresenterOption,
 	TablePresenterOption,
 	CycloneDxPresenterOption,
+	SPDXPresenterOption,
 }
 
 type PresenterOption string
@@ -29,6 +31,8 @@ func ParsePresenterOption(userStr string) PresenterOption {
 		return TablePresenterOption
 	case string(CycloneDxPresenterOption), "cyclone", "cyclone-dx":
 		return CycloneDxPresenterOption
+	case string(SPDXPresenterOption):
+		return SPDXPresenterOption
 	default:
 		return UnknownPresenterOption
 	}

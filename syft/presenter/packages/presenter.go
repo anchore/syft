@@ -20,6 +20,8 @@ func Presenter(option PresenterOption, config PresenterConfig) presenter.Present
 		return packages.NewTablePresenter(config.Catalog)
 	case CycloneDxPresenterOption:
 		return packages.NewCycloneDxPresenter(config.Catalog, config.SourceMetadata)
+	case SPDXPresenterOption:
+		return packages.NewSPDXPresenter(config.Catalog, config.SourceMetadata)
 	default:
 		return nil
 	}

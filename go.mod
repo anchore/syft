@@ -22,6 +22,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mitchellh/go-spdx v0.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/package-url/packageurl-go v0.1.0
@@ -30,6 +31,7 @@ require (
 	github.com/scylladb/go-set v1.0.2
 	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.6.0
+	github.com/spdx/tools-golang v0.1.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.1-0.20200909172742-8a63648dd905
 	github.com/spf13/pflag v1.0.5
