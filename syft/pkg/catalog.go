@@ -4,6 +4,8 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -82,12 +84,15 @@ func (c *Catalog) Add(p Package) {
 	c.idsByType[p.Type] = append(c.idsByType[p.Type], p.ID)
 
 	// store by file location paths
+	observedPaths := internal.NewStringSet()
 	for _, l := range p.Locations {
-		if l.RealPath != "" {
+		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
 			c.idsByPath[l.RealPath] = append(c.idsByPath[l.RealPath], p.ID)
+			observedPaths.Add(l.RealPath)
 		}
-		if l.VirtualPath != "" {
+		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Contains(l.VirtualPath) {
 			c.idsByPath[l.VirtualPath] = append(c.idsByPath[l.VirtualPath], p.ID)
+			observedPaths.Add(l.VirtualPath)
 		}
 	}
 }
