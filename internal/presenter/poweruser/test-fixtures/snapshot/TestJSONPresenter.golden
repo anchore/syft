@@ -115,7 +115,7 @@
     "architecture": "",
     "maintainer": "",
     "installedSize": 0,
-    "files": null
+    "files": []
    }
   }
  ],
@@ -145,6 +145,7 @@
    ],
    "manifest": "ZXlKelkyaGxiV0ZXWlhKemFXOXVJam95TENKdFpXUnBZVlI1Y0dVaU9pSmguLi4=",
    "config": "ZXlKaGNtTm9hWFJsWTNSMWNtVWlPaUpoYldRMk5DSXNJbU52Ym1acC4uLg==",
+   "repoDigests": [],
    "scope": ""
   }
  },
@@ -187,7 +188,9 @@
      "enabled": false,
      "scope": ""
     },
-    "digests": null
+    "digests": [
+     "sha256"
+    ]
    }
   }
  },

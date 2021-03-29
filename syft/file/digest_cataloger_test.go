@@ -33,7 +33,7 @@ func testDigests(t testing.TB, files []string, hashes ...crypto.Hash) map[source
 			h := hash.New()
 			h.Write(b)
 			digests[source.NewLocation(f)] = append(digests[source.NewLocation(f)], Digest{
-				Algorithm: cleanAlgorithmName(hash.String()),
+				Algorithm: CleanDigestAlgorithmName(hash.String()),
 				Value:     fmt.Sprintf("%x", h.Sum(nil)),
 			})
 		}
@@ -46,40 +46,27 @@ func TestDigestsCataloger_SimpleContents(t *testing.T) {
 	regularFiles := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"}
 
 	tests := []struct {
-		name           string
-		algorithms     []string
-		files          []string
-		expected       map[source.Location][]Digest
-		constructorErr bool
-		catalogErr     bool
+		name       string
+		digests    []crypto.Hash
+		files      []string
+		expected   map[source.Location][]Digest
+		catalogErr bool
 	}{
 		{
-			name:           "bad algorithm",
-			algorithms:     []string{"sha-nothing"},
-			files:          regularFiles,
-			constructorErr: true,
+			name:     "md5",
+			digests:  []crypto.Hash{crypto.MD5},
+			files:    regularFiles,
+			expected: testDigests(t, regularFiles, crypto.MD5),
 		},
 		{
-			name:           "unsupported algorithm",
-			algorithms:     []string{"sha512"},
-			files:          regularFiles,
-			constructorErr: true,
-		},
-		{
-			name:       "md5",
-			algorithms: []string{"md5"},
-			files:      regularFiles,
-			expected:   testDigests(t, regularFiles, crypto.MD5),
-		},
-		{
-			name:       "md5-sha1-sha256",
-			algorithms: []string{"md5", "sha1", "sha256"},
-			files:      regularFiles,
-			expected:   testDigests(t, regularFiles, crypto.MD5, crypto.SHA1, crypto.SHA256),
+			name:     "md5-sha1-sha256",
+			digests:  []crypto.Hash{crypto.MD5, crypto.SHA1, crypto.SHA256},
+			files:    regularFiles,
+			expected: testDigests(t, regularFiles, crypto.MD5, crypto.SHA1, crypto.SHA256),
 		},
 		{
 			name:       "directory returns error",
-			algorithms: []string{"md5"},
+			digests:    []crypto.Hash{crypto.MD5},
 			files:      []string{"test-fixtures/last"},
 			catalogErr: true,
 		},
@@ -87,13 +74,9 @@ func TestDigestsCataloger_SimpleContents(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, err := NewDigestsCataloger(test.algorithms)
-			if err != nil && !test.constructorErr {
-				t.Fatalf("could not create cataloger (but should have been able to): %+v", err)
-			} else if err == nil && test.constructorErr {
-				t.Fatalf("expected constructor error but did not get one")
-			} else if test.constructorErr && err != nil {
-				return
+			c, err := NewDigestsCataloger(test.digests)
+			if err != nil {
+				t.Fatalf("could not create cataloger: %+v", err)
 			}
 
 			resolver := source.NewMockResolverForPaths(test.files...)
@@ -161,7 +144,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			c, err := NewDigestsCataloger([]string{"md5"})
+			c, err := NewDigestsCataloger([]crypto.Hash{crypto.MD5})
 			if err != nil {
 				t.Fatalf("unable to get cataloger: %+v", err)
 			}

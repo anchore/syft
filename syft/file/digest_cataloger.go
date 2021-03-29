@@ -10,33 +10,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var supportedHashAlgorithms = make(map[string]crypto.Hash)
-
 type DigestsCataloger struct {
 	hashes []crypto.Hash
 }
 
-func init() {
-	for _, h := range []crypto.Hash{
-		crypto.MD5,
-		crypto.SHA1,
-		crypto.SHA256,
-	} {
-		supportedHashAlgorithms[cleanAlgorithmName(h.String())] = h
-	}
-}
-
-func NewDigestsCataloger(hashAlgorithms []string) (*DigestsCataloger, error) {
-	var hashes []crypto.Hash
-	for _, hashStr := range hashAlgorithms {
-		name := cleanAlgorithmName(hashStr)
-		hashObj, ok := supportedHashAlgorithms[name]
-		if !ok {
-			return nil, fmt.Errorf("unsupported hash algorithm: %s", hashStr)
-		}
-		hashes = append(hashes, hashObj)
-	}
-
+func NewDigestsCataloger(hashes []crypto.Hash) (*DigestsCataloger, error) {
 	return &DigestsCataloger{
 		hashes: hashes,
 	}, nil
@@ -84,7 +62,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	// file type but a body is still allowed.
 	for idx, hasher := range hashers {
 		result[idx] = Digest{
-			Algorithm: cleanAlgorithmName(i.hashes[idx].String()),
+			Algorithm: DigestAlgorithmName(i.hashes[idx]),
 			Value:     fmt.Sprintf("%+x", hasher.Sum(nil)),
 		}
 	}
@@ -92,7 +70,11 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	return result, nil
 }
 
-func cleanAlgorithmName(name string) string {
+func DigestAlgorithmName(hash crypto.Hash) string {
+	return CleanDigestAlgorithmName(hash.String())
+}
+
+func CleanDigestAlgorithmName(name string) string {
 	lower := strings.ToLower(name)
 	return strings.Replace(lower, "-", "", -1)
 }

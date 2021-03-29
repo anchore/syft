@@ -47,6 +47,7 @@ func TestJSONPresenter(t *testing.T) {
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
+			Files:   []pkg.PythonFileRecord{},
 		},
 		PURL: "a-purl-1",
 		CPEs: []pkg.CPE{
@@ -68,6 +69,7 @@ func TestJSONPresenter(t *testing.T) {
 		Metadata: pkg.DpkgMetadata{
 			Package: "package-2",
 			Version: "2.0.1",
+			Files:   []pkg.DpkgFileRecord{},
 		},
 		PURL: "a-purl-2",
 		CPEs: []pkg.CPE{
@@ -76,8 +78,12 @@ func TestJSONPresenter(t *testing.T) {
 	})
 
 	cfg := JSONDocumentConfig{
-		ApplicationConfig: config.Application{},
-		PackageCatalog:    catalog,
+		ApplicationConfig: config.Application{
+			FileMetadata: config.FileMetadata{
+				Digests: []string{"sha256"},
+			},
+		},
+		PackageCatalog: catalog,
 		FileMetadata: map[source.Location]source.FileMetadata{
 			source.NewLocation("/a/place"): {
 				Mode:    0775,
@@ -149,6 +155,7 @@ func TestJSONPresenter(t *testing.T) {
 				},
 				RawManifest: []byte("eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJh..."),
 				RawConfig:   []byte("eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZp..."),
+				RepoDigests: []string{},
 			},
 		},
 	}
@@ -162,7 +169,7 @@ func TestJSONPresenter(t *testing.T) {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
 
-	var expected = testutils.GetGoldenFileContents(t)
+	expected := testutils.GetGoldenFileContents(t)
 
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
