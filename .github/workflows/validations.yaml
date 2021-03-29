@@ -216,6 +216,7 @@ jobs:
 
       - name: Update PR benchmark results comment
         uses: marocchino/sticky-pull-request-comment@v2
+        continue-on-error: true
         with:
           header: benchmark
           message: |
