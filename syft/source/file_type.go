@@ -1,33 +1,35 @@
 package source
 
+import "archive/tar"
+
 const (
-	UnknownFileType FileType = "unknownFileType"
-	RegularFile     FileType = "regularFile"
-	HardLink        FileType = "hardLink"
-	SymbolicLink    FileType = "symbolicLink"
-	CharacterDevice FileType = "characterDevice"
-	BlockDevice     FileType = "blockDevice"
-	Directory       FileType = "directory"
-	FIFONode        FileType = "fifoNode"
+	UnknownFileType FileType = "UnknownFileType"
+	RegularFile     FileType = "RegularFile"
+	HardLink        FileType = "HardLink"
+	SymbolicLink    FileType = "SymbolicLink"
+	CharacterDevice FileType = "CharacterDevice"
+	BlockDevice     FileType = "BlockDevice"
+	Directory       FileType = "Directory"
+	FIFONode        FileType = "FIFONode"
 )
 
 type FileType string
 
 func newFileTypeFromTarHeaderTypeFlag(flag byte) FileType {
 	switch flag {
-	case '0', '\x00':
+	case tar.TypeReg, tar.TypeRegA:
 		return RegularFile
-	case '1':
+	case tar.TypeLink:
 		return HardLink
-	case '2':
+	case tar.TypeSymlink:
 		return SymbolicLink
-	case '3':
+	case tar.TypeChar:
 		return CharacterDevice
-	case '4':
+	case tar.TypeBlock:
 		return BlockDevice
-	case '5':
+	case tar.TypeDir:
 		return Directory
-	case '6':
+	case tar.TypeFifo:
 		return FIFONode
 	}
 	return UnknownFileType

@@ -345,14 +345,16 @@
         "mode",
         "type",
         "userID",
-        "groupID",
-        "digests"
+        "groupID"
       ],
       "properties": {
         "mode": {
           "type": "integer"
         },
         "type": {
+          "type": "string"
+        },
+        "linkDestination": {
           "type": "string"
         },
         "userID": {

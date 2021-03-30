@@ -7,10 +7,11 @@ import (
 )
 
 type FileMetadata struct {
-	Mode    os.FileMode
-	Type    FileType
-	UserID  int
-	GroupID int
+	Mode            os.FileMode
+	Type            FileType
+	UserID          int
+	GroupID         int
+	LinkDestination string
 }
 
 func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, error) {
@@ -20,9 +21,10 @@ func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, 
 	}
 
 	return FileMetadata{
-		Mode:    entry.Metadata.Mode,
-		Type:    newFileTypeFromTarHeaderTypeFlag(entry.Metadata.TypeFlag),
-		UserID:  entry.Metadata.UserID,
-		GroupID: entry.Metadata.GroupID,
+		Mode:            entry.Metadata.Mode,
+		Type:            newFileTypeFromTarHeaderTypeFlag(entry.Metadata.TypeFlag),
+		UserID:          entry.Metadata.UserID,
+		GroupID:         entry.Metadata.GroupID,
+		LinkDestination: entry.Metadata.Linkname,
 	}, nil
 }

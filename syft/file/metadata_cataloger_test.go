@@ -50,7 +50,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			exists: true,
 			expected: source.FileMetadata{
 				Mode:    0644,
-				Type:    "regularFile",
+				Type:    "RegularFile",
 				UserID:  1,
 				GroupID: 2,
 			},
@@ -59,20 +59,22 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/hardlink-1",
 			exists: true,
 			expected: source.FileMetadata{
-				Mode:    0644,
-				Type:    "hardLink",
-				UserID:  1,
-				GroupID: 2,
+				Mode:            0644,
+				Type:            "HardLink",
+				LinkDestination: "file-1.txt",
+				UserID:          1,
+				GroupID:         2,
 			},
 		},
 		{
 			path:   "/symlink-1",
 			exists: true,
 			expected: source.FileMetadata{
-				Mode:    0777 | os.ModeSymlink,
-				Type:    "symbolicLink",
-				UserID:  0,
-				GroupID: 0,
+				Mode:            0777 | os.ModeSymlink,
+				Type:            "SymbolicLink",
+				LinkDestination: "file-1.txt",
+				UserID:          0,
+				GroupID:         0,
 			},
 		},
 		{
@@ -80,7 +82,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			exists: true,
 			expected: source.FileMetadata{
 				Mode:    0644 | os.ModeDevice | os.ModeCharDevice,
-				Type:    "characterDevice",
+				Type:    "CharacterDevice",
 				UserID:  0,
 				GroupID: 0,
 			},
@@ -90,7 +92,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			exists: true,
 			expected: source.FileMetadata{
 				Mode:    0644 | os.ModeDevice,
-				Type:    "blockDevice",
+				Type:    "BlockDevice",
 				UserID:  0,
 				GroupID: 0,
 			},
@@ -100,7 +102,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			exists: true,
 			expected: source.FileMetadata{
 				Mode:    0644 | os.ModeNamedPipe,
-				Type:    "fifoNode",
+				Type:    "FIFONode",
 				UserID:  0,
 				GroupID: 0,
 			},
@@ -110,7 +112,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			exists: true,
 			expected: source.FileMetadata{
 				Mode:    0755 | os.ModeDir,
-				Type:    "directory",
+				Type:    "Directory",
 				UserID:  0,
 				GroupID: 0,
 			},
