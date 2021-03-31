@@ -182,7 +182,7 @@ func TestSecretsCataloger(t *testing.T) {
 	}
 }
 
-func TestCombineSecretPatterns(t *testing.T) {
+func TestGenerateSecretPatterns(t *testing.T) {
 	tests := []struct {
 		name       string
 		base       map[string]string
@@ -196,7 +196,7 @@ func TestCombineSecretPatterns(t *testing.T) {
 				"in-default": `^secret_key=.*`,
 			},
 			expected: map[string]string{
-				"in-default": `^secret_key=.*`,
+				"in-default": `(?m)^secret_key=.*`,
 			},
 		},
 		{
@@ -207,7 +207,7 @@ func TestCombineSecretPatterns(t *testing.T) {
 			},
 			exclude: []string{"also-in-default"},
 			expected: map[string]string{
-				"in-default": `^secret_key=.*`,
+				"in-default": `(?m)^secret_key=.*`,
 			},
 		},
 		{
@@ -228,7 +228,7 @@ func TestCombineSecretPatterns(t *testing.T) {
 			},
 			exclude: []string{"*-default"},
 			expected: map[string]string{
-				"real": `^real=.*`,
+				"real": `(?m)^real=.*`,
 			},
 		},
 		{
@@ -240,8 +240,8 @@ func TestCombineSecretPatterns(t *testing.T) {
 				"additional": `^additional=.*`,
 			},
 			expected: map[string]string{
-				"in-default": `^secret_key=.*`,
-				"additional": `^additional=.*`,
+				"in-default": `(?m)^secret_key=.*`,
+				"additional": `(?m)^additional=.*`,
 			},
 		},
 		{
@@ -253,7 +253,7 @@ func TestCombineSecretPatterns(t *testing.T) {
 				"in-default": `^additional=.*`,
 			},
 			expected: map[string]string{
-				"in-default": `^additional=.*`,
+				"in-default": `(?m)^additional=.*`,
 			},
 		},
 		{
@@ -266,14 +266,14 @@ func TestCombineSecretPatterns(t *testing.T) {
 				"in-default": `^additional=.*`,
 			},
 			expected: map[string]string{
-				"in-default": `^additional=.*`,
+				"in-default": `(?m)^additional=.*`,
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualObj, err := CombineSecretPatterns(test.base, test.additional, test.exclude)
+			actualObj, err := GenerateSecretPatterns(test.base, test.additional, test.exclude)
 			if err != nil {
 				t.Fatalf("unable to combine: %+v", err)
 			}
@@ -289,7 +289,7 @@ func TestCombineSecretPatterns(t *testing.T) {
 }
 
 func TestSecretsCataloger_DefaultSecrets(t *testing.T) {
-	regexObjs, err := CombineSecretPatterns(DefaultSecretsPatterns, nil, nil)
+	regexObjs, err := GenerateSecretPatterns(DefaultSecretsPatterns, nil, nil)
 	if err != nil {
 		t.Fatalf("unable to get patterns: %+v", err)
 	}
@@ -401,8 +401,10 @@ z3P668YfhUbKdRF6S42Cg6zn
 			}
 
 			loc := source.NewLocation(test.fixture)
-			if _, exists := actualResults[loc]; !exists {
+			if _, exists := actualResults[loc]; !exists && test.expected != nil {
 				t.Fatalf("could not find location=%q in results", loc)
+			} else if !exists && test.expected == nil {
+				return
 			}
 
 			assert.Equal(t, test.expected, actualResults[loc], "mismatched secrets")

@@ -1,7 +1,6 @@
 package file
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -10,28 +9,32 @@ import (
 	"sort"
 
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/event"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
-
 	"github.com/anchore/syft/syft/source"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/hashicorp/go-multierror"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 )
+
+const readFullFileThreshold = 50 * file.MB
 
 var DefaultSecretsPatterns = map[string]string{
 	"aws-access-key":     `(?i)aws_access_key_id["'=:\s]*(?P<value>(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16})`,
 	"aws-secret-key":     `(?i)aws_secret_access_key["'=:\s]*(?P<value>[0-9a-zA-Z/+]{40})`,
-	"pem-private-key":    `-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----`,
+	"pem-private-key":    `-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----((\n.*)+-----END (\S+ )?PRIVATE KEY(\sBLOCK)?-----)?`,
 	"docker-config-auth": `(?i)"auths"(.*\n)*.*"auth"\s*:\s*"(?P<value>[^"]+)"`,
 }
 
-func CombineSecretPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
+type secretsSearchStrategy func(source.FileResolver, source.Location, map[string]*regexp.Regexp) ([]Secret, error)
+
+func GenerateSecretPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
 	var regexObjs = make(map[string]*regexp.Regexp)
 	var errs error
 
 	addFn := func(name, pattern string) {
-		obj, err := regexp.Compile(pattern)
+		obj, err := regexp.Compile(`(?m)` + pattern)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("unable to parse %q regular expression: %w", name, err))
 		}
@@ -115,30 +118,14 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, nil
 	}
 
-	readCloser, err := resolver.FileContentsByLocation(location)
+	strategy, err := selectSearchStrategy(resolver, location)
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
+		return nil, err
 	}
-	defer readCloser.Close()
 
-	scanner := bufio.NewReader(readCloser)
-	var position int64
-	var secrets []Secret
-	for {
-		// TODO: we're at risk of large memory usage for very long lines (and searching binaries)
-		line, err := scanner.ReadBytes('\n')
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-
-		lineSecrets, err := i.searchForSecrets(line, position)
-		if err != nil {
-			return nil, err
-		}
-		position += int64(len(line)) + 1 // content + newline
-		secrets = append(secrets, lineSecrets...)
+	secrets, err := strategy(resolver, location, i.patterns)
+	if err != nil {
+		return nil, err
 	}
 
 	if i.revealValues {
@@ -159,34 +146,16 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	return secrets, nil
 }
 
-func (i *SecretsCataloger) searchForSecrets(line []byte, position int64) ([]Secret, error) {
-
-	var secrets []Secret
-	for name, pattern := range i.patterns {
-		positions := pattern.FindSubmatchIndex(line)
-		if len(positions) > 0 {
-			index := pattern.SubexpIndex("value")
-			if index == -1 {
-				// there is no capture group, use the entire expression as the secret value
-				start, stop := int64(positions[0]), int64(positions[1])
-				secrets = append(secrets, Secret{
-					PatternName: name,
-					Position:    start + position,
-					Length:      stop - start,
-				})
-			} else {
-				// use the capture group value
-				start, stop := int64(positions[index*2]), int64(positions[index*2+1])
-				secrets = append(secrets, Secret{
-					PatternName: name,
-					Position:    start + position,
-					Length:      stop - start,
-				})
-			}
-		}
+func selectSearchStrategy(resolver source.FileResolver, location source.Location) (secretsSearchStrategy, error) {
+	metadata, err := resolver.FileMetadataByLocation(location)
+	if err != nil {
+		return nil, err
 	}
 
-	return secrets, nil
+	if metadata.Size > readFullFileThreshold {
+		return catalogLocationByLine, nil
+	}
+	return catalogLocationFullyInMemory, nil
 }
 
 func extractValue(resolver source.FileResolver, location source.Location, start, length int64) (string, error) {
