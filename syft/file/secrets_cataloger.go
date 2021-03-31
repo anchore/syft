@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/syft/event"
@@ -69,13 +70,21 @@ func CombineSecretPatterns(basePatterns map[string]string, additionalPatterns ma
 
 type SecretsCataloger struct {
 	patterns           map[string]*regexp.Regexp
+	uberPattern        *regexp.Regexp
 	revealValues       bool
 	skipFilesAboveSize int64
 }
 
 func NewSecretsCataloger(patterns map[string]*regexp.Regexp, revealValues bool, maxFileSize int64) (*SecretsCataloger, error) {
+	var section []string
+	for name, pattern := range patterns {
+		section = append(section, fmt.Sprintf("(?P<%s>%s)", strings.Replace(name, "-", "_", -1), pattern.String()))
+	}
+	uberPattern := strings.Join(section, "|")
+
 	return &SecretsCataloger{
 		patterns:           patterns,
+		uberPattern:        regexp.MustCompile(fmt.Sprintf("(%s)", uberPattern)),
 		revealValues:       revealValues,
 		skipFilesAboveSize: maxFileSize,
 	}, nil
@@ -115,68 +124,11 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	}
 
 	var secrets []Secret
-	var results = make([]<-chan Secret, len(i.patterns)+1)
-	var readers = make(map[string]*io.PipeReader)
-	var writers = make([]*io.PipeWriter, len(i.patterns))
-	var idx int
-
-	for name := range i.patterns {
-		readers[name], writers[idx] = io.Pipe()
-		idx++
+	secret, err := searchForSecrets(resolver, location, "dunno", i.uberPattern)
+	if err != nil {
+		return nil, err
 	}
-
-	dummy := make(chan Secret)
-	results[len(i.patterns)] = dummy
-	go func(work chan Secret) {
-		defer close(work)
-		readCloser, err := resolver.FileContentsByLocation(location)
-		if err != nil {
-			// TODO: nope
-			panic(err)
-		}
-		defer readCloser.Close()
-
-		var ws = make([]io.Writer, len(i.patterns))
-		for i, w := range writers {
-			ws[i] = w
-		}
-
-		if _, err = io.Copy(io.MultiWriter(ws...), readCloser); err != nil {
-			// TODO: nope
-			panic(err)
-		}
-		for _, w := range writers {
-			w.Close()
-		}
-	}(dummy)
-
-	idx = 0
-	for name, pattern := range i.patterns {
-		results[idx] = func(name string, pattern *regexp.Regexp) <-chan Secret {
-			work := make(chan Secret)
-			go func() {
-				defer close(work)
-				//fmt.Println("reading...")
-				secret, err := searchForSecrets(readers[name], name, pattern)
-				//fmt.Println("read!")
-				if err != nil {
-					// TODO: nope....
-					panic(err)
-				}
-				for _, s := range secret {
-					work <- s
-				}
-			}()
-			return work
-		}(name, pattern)
-		idx++
-	}
-
-	for _, resultChan := range results {
-		for result := range resultChan {
-			secrets = append(secrets, result)
-		}
-	}
+	secrets = append(secrets, secret...)
 
 	if i.revealValues {
 		for idx, secret := range secrets {
@@ -196,8 +148,14 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	return secrets, nil
 }
 
-func searchForSecrets(reader io.Reader, name string, pattern *regexp.Regexp) ([]Secret, error) {
-	contents, err := ioutil.ReadAll(reader)
+func searchForSecrets(resolver source.FileResolver, location source.Location, name string, pattern *regexp.Regexp) ([]Secret, error) {
+	readCloser, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
+	}
+	defer readCloser.Close()
+
+	contents, err := ioutil.ReadAll(readCloser)
 	if err != nil {
 		return nil, err
 	}
