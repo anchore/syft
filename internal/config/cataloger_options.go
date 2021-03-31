@@ -12,7 +12,7 @@ type catalogerOptions struct {
 	ScopeOpt source.Scope `yaml:"-" json:"-"`
 }
 
-func (cfg *catalogerOptions) build() error {
+func (cfg *catalogerOptions) parseConfigValues() error {
 	scopeOption := source.ParseScope(cfg.Scope)
 	if scopeOption == source.UnknownScope {
 		return fmt.Errorf("bad scope value %q", cfg.Scope)

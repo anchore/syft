@@ -13,6 +13,7 @@ type JSONDocumentConfig struct {
 	PackageCatalog    *pkg.Catalog
 	FileMetadata      map[source.Location]source.FileMetadata
 	FileDigests       map[source.Location][]file.Digest
+	Secrets           map[source.Location][]file.Secret
 	Distro            *distro.Distro
 	SourceMetadata    source.Metadata
 }

@@ -12,6 +12,7 @@ type FileMetadata struct {
 	UserID          int
 	GroupID         int
 	LinkDestination string
+	Size            int64
 }
 
 func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, error) {
@@ -26,5 +27,6 @@ func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, 
 		UserID:          entry.Metadata.UserID,
 		GroupID:         entry.Metadata.GroupID,
 		LinkDestination: entry.Metadata.Linkname,
+		Size:            entry.Metadata.Size,
 	}, nil
 }

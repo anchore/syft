@@ -7,6 +7,11 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/syft/event"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -22,13 +27,21 @@ func NewDigestsCataloger(hashes []crypto.Hash) (*DigestsCataloger, error) {
 
 func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Location][]Digest, error) {
 	results := make(map[source.Location][]Digest)
+	var locations []source.Location
 	for location := range resolver.AllLocations() {
+		locations = append(locations, location)
+	}
+	stage, prog := digestsCatalogingProgress(int64(len(locations)))
+	for location := range resolver.AllLocations() {
+		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
 		if err != nil {
 			return nil, err
 		}
+		prog.N++
 		results[location] = result
 	}
+	prog.SetCompleted()
 	return results, nil
 }
 
@@ -77,4 +90,24 @@ func DigestAlgorithmName(hash crypto.Hash) string {
 func CleanDigestAlgorithmName(name string) string {
 	lower := strings.ToLower(name)
 	return strings.Replace(lower, "-", "", -1)
+}
+
+func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
+	stage := &progress.Stage{}
+	prog := &progress.Manual{
+		Total: locations,
+	}
+
+	bus.Publish(partybus.Event{
+		Type: event.FileDigestsCatalogerStarted,
+		Value: struct {
+			progress.Stager
+			progress.Progressable
+		}{
+			Stager:       progress.Stager(stage),
+			Progressable: prog,
+		},
+	})
+
+	return stage, prog
 }
