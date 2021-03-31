@@ -1,7 +1,6 @@
 package file
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -117,18 +116,14 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 
 	var secrets []Secret
 	for name, pattern := range i.patterns {
-		var position int64
-		for {
-			secret, err := searchForSecretFrom(resolver, location, name, pattern, position)
-			if err != nil {
-				return nil, err
-			}
-			if secret == nil {
-				break
-			} else {
-				secrets = append(secrets, *secret)
-				position = secret.Position + secret.Length
-			}
+		secret, err := searchForSecrets(resolver, location, name, pattern)
+		if err != nil {
+			return nil, err
+		}
+		if secret == nil {
+			break
+		} else {
+			secrets = append(secrets, secret...)
 		}
 	}
 
@@ -150,45 +145,43 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	return secrets, nil
 }
 
-func searchForSecretFrom(resolver source.FileResolver, location source.Location, name string, pattern *regexp.Regexp, position int64) (*Secret, error) {
+func searchForSecrets(resolver source.FileResolver, location source.Location, name string, pattern *regexp.Regexp) ([]Secret, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
 	defer readCloser.Close()
 
-	if position > 0 {
-		n, err := io.CopyN(ioutil.Discard, readCloser, position)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read contents for location=%q while searching for secrets: %w", location, err)
-		}
-		if n != position {
-			return nil, fmt.Errorf("unexpected seek location for location=%q while searching for secrets: %d != %d", location, n, position)
+	contents, err := ioutil.ReadAll(readCloser)
+	if err != nil {
+		return nil, err
+	}
+
+	var secrets []Secret
+	for _, positions := range pattern.FindAllSubmatchIndex(contents, -1) {
+		if len(positions) > 0 {
+			index := pattern.SubexpIndex("value")
+			if index == -1 {
+				// there is no capture group, use the entire expression as the secret value
+				start, stop := int64(positions[0]), int64(positions[1])
+				secrets = append(secrets, Secret{
+					PatternName: name,
+					Position:    start,
+					Length:      stop - start,
+				})
+			} else {
+				// use the capture group value
+				start, stop := int64(positions[index*2]), int64(positions[index*2+1])
+				secrets = append(secrets, Secret{
+					PatternName: name,
+					Position:    start,
+					Length:      stop - start,
+				})
+			}
 		}
 	}
 
-	positions := pattern.FindReaderSubmatchIndex(bufio.NewReader(readCloser))
-	for len(positions) > 0 {
-		index := pattern.SubexpIndex("value")
-		if index == -1 {
-			// there is no capture group, use the entire expression as the secret value
-			start, stop := int64(positions[0]), int64(positions[1])
-			return &Secret{
-				PatternName: name,
-				Position:    start + position,
-				Length:      stop - start,
-			}, nil
-		}
-		// use the capture group value
-		start, stop := int64(positions[index*2]), int64(positions[index*2+1])
-		return &Secret{
-			PatternName: name,
-			Position:    start + position,
-			Length:      stop - start,
-		}, nil
-	}
-
-	return nil, nil
+	return secrets, nil
 }
 
 func extractValue(resolver source.FileResolver, location source.Location, start, length int64) (string, error) {
