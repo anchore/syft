@@ -6,6 +6,8 @@ package parsers
 import (
 	"fmt"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/internal/presenter"
 
 	"github.com/wagoodman/go-progress"
@@ -40,7 +42,7 @@ func checkEventType(actual, expected partybus.EventType) error {
 	return nil
 }
 
-func ParseCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
+func ParsePackageCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
 	if err := checkEventType(e.Type, event.PackageCatalogerStarted); err != nil {
 		return nil, err
 	}
@@ -51,6 +53,45 @@ func ParseCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
 	}
 
 	return &monitor, nil
+}
+
+func ParseSecretsCatalogingStarted(e partybus.Event) (*file.SecretsMonitor, error) {
+	if err := checkEventType(e.Type, event.SecretsCatalogerStarted); err != nil {
+		return nil, err
+	}
+
+	monitor, ok := e.Value.(file.SecretsMonitor)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return &monitor, nil
+}
+
+func ParseFileMetadataCatalogingStarted(e partybus.Event) (progress.StagedProgressable, error) {
+	if err := checkEventType(e.Type, event.FileMetadataCatalogerStarted); err != nil {
+		return nil, err
+	}
+
+	prog, ok := e.Value.(progress.StagedProgressable)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return prog, nil
+}
+
+func ParseFileDigestsCatalogingStarted(e partybus.Event) (progress.StagedProgressable, error) {
+	if err := checkEventType(e.Type, event.FileDigestsCatalogerStarted); err != nil {
+		return nil, err
+	}
+
+	prog, ok := e.Value.(progress.StagedProgressable)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return prog, nil
 }
 
 func ParsePresenterReady(e partybus.Event) (presenter.Presenter, error) {

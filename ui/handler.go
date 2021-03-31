@@ -27,7 +27,7 @@ func NewHandler() *Handler {
 // RespondsTo indicates if the handler is capable of handling the given event.
 func (r *Handler) RespondsTo(event partybus.Event) bool {
 	switch event.Type {
-	case stereoscopeEvent.PullDockerImage, stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.PackageCatalogerStarted, syftEvent.ImportStarted:
+	case stereoscopeEvent.PullDockerImage, stereoscopeEvent.ReadImage, stereoscopeEvent.FetchImage, syftEvent.PackageCatalogerStarted, syftEvent.SecretsCatalogerStarted, syftEvent.FileDigestsCatalogerStarted, syftEvent.FileMetadataCatalogerStarted, syftEvent.ImportStarted:
 		return true
 	default:
 		return false
@@ -48,6 +48,15 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 
 	case syftEvent.PackageCatalogerStarted:
 		return PackageCatalogerStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.SecretsCatalogerStarted:
+		return SecretsCatalogerStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.FileDigestsCatalogerStarted:
+		return FileDigestsCatalogerStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.FileMetadataCatalogerStarted:
+		return FileMetadataCatalogerStartedHandler(ctx, fr, event, wg)
 
 	case syftEvent.ImportStarted:
 		return ImportStartedHandler(ctx, fr, event, wg)

@@ -25,7 +25,7 @@ const maxBarWidth = 50
 const statusSet = common.SpinnerDotSet // SpinnerCircleOutlineSet
 const completedStatus = "✔"            // "●"
 const tileFormat = color.Bold
-const statusTitleTemplate = " %s %-28s "
+const statusTitleTemplate = " %s %-31s "
 const interval = 150 * time.Millisecond
 
 var (
@@ -270,7 +270,7 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 
 // PackageCatalogerStartedHandler periodically writes catalog statistics to a single line.
 func PackageCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	monitor, err := syftEventParsers.ParseCatalogerStarted(event)
+	monitor, err := syftEventParsers.ParsePackageCatalogerStarted(event)
 	if err != nil {
 		return fmt.Errorf("bad %s event: %w", event.Type, err)
 	}
@@ -284,7 +284,7 @@ func PackageCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 
 	_, spinner := startProcess()
 	stream := progress.StreamMonitors(ctx, []progress.Monitorable{monitor.FilesProcessed, monitor.PackagesDiscovered}, interval)
-	title := tileFormat.Sprint("Cataloging image")
+	title := tileFormat.Sprint("Cataloging packages")
 
 	formatFn := func(p int64) {
 		spin := color.Magenta.Sprint(spinner.Next())
@@ -301,12 +301,143 @@ func PackageCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Cataloged image")
+		title = tileFormat.Sprint("Cataloged packages")
 		auxInfo := auxInfoFormat.Sprintf("[%d packages]", monitor.PackagesDiscovered.Current())
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
 
 	return nil
+}
+
+// SecretsCatalogerStartedHandler shows the intermittent secrets searching progress.
+// nolint:dupl
+func SecretsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseSecretsCatalogingStarted(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+	wg.Add(1)
+
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, interval)
+	title := tileFormat.Sprint("Cataloging secrets")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			auxInfo := auxInfoFormat.Sprintf("[%d secrets]", prog.SecretsDiscovered.Current())
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
+		}
+	}
+
+	go func() {
+		defer wg.Done()
+
+		formatFn(progress.Progress{})
+		for p := range stream {
+			formatFn(p)
+		}
+
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("Cataloged secrets")
+		auxInfo := auxInfoFormat.Sprintf("[%d secrets]", prog.SecretsDiscovered.Current())
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
+	}()
+	return err
+}
+
+// FileMetadataCatalogerStartedHandler shows the intermittent secrets searching progress.
+// nolint:dupl
+func FileMetadataCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseFileMetadataCatalogingStarted(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+	wg.Add(1)
+
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, interval)
+	title := tileFormat.Sprint("Cataloging file metadata")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, progStr))
+		}
+	}
+
+	go func() {
+		defer wg.Done()
+
+		formatFn(progress.Progress{})
+		for p := range stream {
+			formatFn(p)
+		}
+
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("Cataloged file metadata")
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+	}()
+	return err
+}
+
+// FileMetadataCatalogerStartedHandler shows the intermittent secrets searching progress.
+// nolint:dupl
+func FileDigestsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseFileDigestsCatalogingStarted(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+	wg.Add(1)
+
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, interval)
+	title := tileFormat.Sprint("Cataloging file digests")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, progStr))
+		}
+	}
+
+	go func() {
+		defer wg.Done()
+
+		formatFn(progress.Progress{})
+		for p := range stream {
+			formatFn(p)
+		}
+
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("Cataloged file digests")
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+	}()
+	return err
 }
 
 // ImportStartedHandler shows the intermittent upload progress to Anchore Enterprise.
