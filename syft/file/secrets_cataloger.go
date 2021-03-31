@@ -1,13 +1,13 @@
 package file
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"regexp"
 	"sort"
-	"strings"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/syft/event"
@@ -20,10 +20,10 @@ import (
 )
 
 var DefaultSecretsPatterns = map[string]string{
-	"aws-access-key":     `(?mi)aws_access_key_id["'=:\s]*(?P<value>(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16})`,
-	"aws-secret-key":     `(?mi)aws_secret_access_key["'=:\s]*(?P<value>[0-9a-zA-Z/+]{40})`,
-	"pem-private-key":    `(?m)-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----(\n.*)+-----END (\S+ )?PRIVATE KEY(\sBLOCK)?-----`,
-	"docker-config-auth": `(?mi)"auths"(.*\n)*.*"auth"\s*:\s*"(?P<value>[^"]+)"`,
+	"aws-access-key":     `(?i)aws_access_key_id["'=:\s]*(?P<value>(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16})`,
+	"aws-secret-key":     `(?i)aws_secret_access_key["'=:\s]*(?P<value>[0-9a-zA-Z/+]{40})`,
+	"pem-private-key":    `-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----`,
+	"docker-config-auth": `(?i)"auths"(.*\n)*.*"auth"\s*:\s*"(?P<value>[^"]+)"`,
 }
 
 func CombineSecretPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
@@ -70,21 +70,13 @@ func CombineSecretPatterns(basePatterns map[string]string, additionalPatterns ma
 
 type SecretsCataloger struct {
 	patterns           map[string]*regexp.Regexp
-	uberPattern        *regexp.Regexp
 	revealValues       bool
 	skipFilesAboveSize int64
 }
 
 func NewSecretsCataloger(patterns map[string]*regexp.Regexp, revealValues bool, maxFileSize int64) (*SecretsCataloger, error) {
-	var section []string
-	for name, pattern := range patterns {
-		section = append(section, fmt.Sprintf("(?P<%s>%s)", strings.Replace(name, "-", "_", -1), pattern.String()))
-	}
-	uberPattern := strings.Join(section, "|")
-
 	return &SecretsCataloger{
 		patterns:           patterns,
-		uberPattern:        regexp.MustCompile(fmt.Sprintf("(%s)", uberPattern)),
 		revealValues:       revealValues,
 		skipFilesAboveSize: maxFileSize,
 	}, nil
@@ -123,12 +115,31 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, nil
 	}
 
-	var secrets []Secret
-	secret, err := searchForSecrets(resolver, location, "dunno", i.uberPattern)
+	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
-	secrets = append(secrets, secret...)
+	defer readCloser.Close()
+
+	scanner := bufio.NewReader(readCloser)
+	var position int64
+	var secrets []Secret
+	for {
+		// TODO: we're at risk of large memory usage for very long lines (and searching binaries)
+		line, err := scanner.ReadBytes('\n')
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+
+		lineSecrets, err := i.searchForSecrets(line, position)
+		if err != nil {
+			return nil, err
+		}
+		position += int64(len(line)) + 1 // content + newline
+		secrets = append(secrets, lineSecrets...)
+	}
 
 	if i.revealValues {
 		for idx, secret := range secrets {
@@ -148,20 +159,11 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	return secrets, nil
 }
 
-func searchForSecrets(resolver source.FileResolver, location source.Location, name string, pattern *regexp.Regexp) ([]Secret, error) {
-	readCloser, err := resolver.FileContentsByLocation(location)
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
-	}
-	defer readCloser.Close()
-
-	contents, err := ioutil.ReadAll(readCloser)
-	if err != nil {
-		return nil, err
-	}
+func (i *SecretsCataloger) searchForSecrets(line []byte, position int64) ([]Secret, error) {
 
 	var secrets []Secret
-	for _, positions := range pattern.FindAllSubmatchIndex(contents, -1) {
+	for name, pattern := range i.patterns {
+		positions := pattern.FindSubmatchIndex(line)
 		if len(positions) > 0 {
 			index := pattern.SubexpIndex("value")
 			if index == -1 {
@@ -169,7 +171,7 @@ func searchForSecrets(resolver source.FileResolver, location source.Location, na
 				start, stop := int64(positions[0]), int64(positions[1])
 				secrets = append(secrets, Secret{
 					PatternName: name,
-					Position:    start,
+					Position:    start + position,
 					Length:      stop - start,
 				})
 			} else {
@@ -177,7 +179,7 @@ func searchForSecrets(resolver source.FileResolver, location source.Location, na
 				start, stop := int64(positions[index*2]), int64(positions[index*2+1])
 				secrets = append(secrets, Secret{
 					PatternName: name,
-					Position:    start,
+					Position:    start + position,
 					Length:      stop - start,
 				})
 			}
