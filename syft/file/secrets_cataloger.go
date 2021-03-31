@@ -9,7 +9,6 @@ import (
 	"sort"
 
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
 	"github.com/bmatcuk/doublestar/v2"
@@ -18,22 +17,19 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
-const readFullFileThreshold = 50 * file.MB
-
 var DefaultSecretsPatterns = map[string]string{
-	"aws-access-key":     `(?i)aws_access_key_id["'=:\s]*(?P<value>(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16})`,
-	"aws-secret-key":     `(?i)aws_secret_access_key["'=:\s]*(?P<value>[0-9a-zA-Z/+]{40})`,
-	"pem-private-key":    `-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----((\n.*)+-----END (\S+ )?PRIVATE KEY(\sBLOCK)?-----)?`,
-	"docker-config-auth": `(?i)"auths"(.*\n)*.*"auth"\s*:\s*"(?P<value>[^"]+)"`,
+	"aws-access-key":     `(?i)aws_access_key_id["'=:\s]*?(?P<value>(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16})`,
+	"aws-secret-key":     `(?i)aws_secret_access_key["'=:\s]*?(?P<value>[0-9a-zA-Z/+]{40})`,
+	"pem-private-key":    `-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----((?P<value>(\n.*?)+)-----END (\S+ )?PRIVATE KEY(\sBLOCK)?-----)?`,
+	"docker-config-auth": `"auths"((.*\n)*.*?"auth"\s*:\s*"(?P<value>[^"]+)")?`,
 }
-
-type secretsSearchStrategy func(source.FileResolver, source.Location, map[string]*regexp.Regexp) ([]Secret, error)
 
 func GenerateSecretPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
 	var regexObjs = make(map[string]*regexp.Regexp)
 	var errs error
 
 	addFn := func(name, pattern string) {
+		// always enable multiline search option for extracting secrets with multiline values
 		obj, err := regexp.Compile(`(?m)` + pattern)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("unable to parse %q regular expression: %w", name, err))
@@ -118,19 +114,14 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, nil
 	}
 
-	strategy, err := selectSearchStrategy(resolver, location)
-	if err != nil {
-		return nil, err
-	}
-
-	secrets, err := strategy(resolver, location, i.patterns)
+	secrets, err := catalogLocationByLine(resolver, location, i.patterns)
 	if err != nil {
 		return nil, err
 	}
 
 	if i.revealValues {
 		for idx, secret := range secrets {
-			value, err := extractValue(resolver, location, secret.Position, secret.Length)
+			value, err := extractValue(resolver, location, secret.SeekPosition, secret.Length)
 			if err != nil {
 				return nil, err
 			}
@@ -140,22 +131,10 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 
 	// sort by the start location of each secret as it appears in the location
 	sort.SliceStable(secrets, func(i, j int) bool {
-		return secrets[i].Position < secrets[j].Position
+		return secrets[i].SeekPosition < secrets[j].SeekPosition
 	})
 
 	return secrets, nil
-}
-
-func selectSearchStrategy(resolver source.FileResolver, location source.Location) (secretsSearchStrategy, error) {
-	metadata, err := resolver.FileMetadataByLocation(location)
-	if err != nil {
-		return nil, err
-	}
-
-	if metadata.Size > readFullFileThreshold {
-		return catalogLocationByLine, nil
-	}
-	return catalogLocationFullyInMemory, nil
 }
 
 func extractValue(resolver source.FileResolver, location source.Location, start, length int64) (string, error) {

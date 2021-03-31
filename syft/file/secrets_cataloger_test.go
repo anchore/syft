@@ -31,10 +31,12 @@ func TestSecretsCataloger(t *testing.T) {
 			},
 			expected: []Secret{
 				{
-					PatternName: "simple-secret-key",
-					Position:    34,
-					Length:      21,
-					Value:       "secret_key=clear_text",
+					PatternName:  "simple-secret-key",
+					LineNumber:   2,
+					LineOffset:   0,
+					SeekPosition: 34,
+					Length:       21,
+					Value:        "secret_key=clear_text",
 				},
 			},
 		},
@@ -47,10 +49,12 @@ func TestSecretsCataloger(t *testing.T) {
 			},
 			expected: []Secret{
 				{
-					PatternName: "simple-secret-key",
-					Position:    34,
-					Length:      21,
-					Value:       "",
+					PatternName:  "simple-secret-key",
+					LineNumber:   2,
+					LineOffset:   0,
+					SeekPosition: 34,
+					Length:       21,
+					Value:        "",
 				},
 			},
 		},
@@ -63,10 +67,12 @@ func TestSecretsCataloger(t *testing.T) {
 			},
 			expected: []Secret{
 				{
-					PatternName: "simple-secret-key",
-					Position:    45,
-					Length:      10,
-					Value:       "clear_text",
+					PatternName:  "simple-secret-key",
+					LineNumber:   2,
+					LineOffset:   11,
+					SeekPosition: 45,
+					Length:       10,
+					Value:        "clear_text",
 				},
 			},
 		},
@@ -75,32 +81,41 @@ func TestSecretsCataloger(t *testing.T) {
 			fixture: "test-fixtures/secrets/multiple.txt",
 			reveal:  true,
 			patterns: map[string]string{
-				"simple-secret-key": `^secret_key=.*`,
+				"simple-secret-key": `secret_key=.*`,
 			},
 			expected: []Secret{
 				{
-					PatternName: "simple-secret-key",
-					Position:    0,
-					Length:      22,
-					Value:       "secret_key=clear_text1",
+					PatternName:  "simple-secret-key",
+					LineNumber:   1,
+					LineOffset:   0,
+					SeekPosition: 0,
+					Length:       22,
+					Value:        "secret_key=clear_text1",
+				},
+				{
+					PatternName:  "simple-secret-key",
+					LineNumber:   3,
+					LineOffset:   0,
+					SeekPosition: 57,
+					Length:       22,
+					Value:        "secret_key=clear_text2",
 				},
 				{
 					PatternName: "simple-secret-key",
-					Position:    57,
-					Length:      22,
-					Value:       "secret_key=clear_text2",
+					LineNumber:  4,
+					// note: this test captures a line offset case
+					LineOffset:   1,
+					SeekPosition: 81,
+					Length:       22,
+					Value:        "secret_key=clear_text3",
 				},
 				{
-					PatternName: "simple-secret-key",
-					Position:    80,
-					Length:      22,
-					Value:       "secret_key=clear_text3",
-				},
-				{
-					PatternName: "simple-secret-key",
-					Position:    138,
-					Length:      22,
-					Value:       "secret_key=clear_text4",
+					PatternName:  "simple-secret-key",
+					LineNumber:   6,
+					LineOffset:   0,
+					SeekPosition: 139,
+					Length:       22,
+					Value:        "secret_key=clear_text4",
 				},
 			},
 		},
@@ -109,32 +124,42 @@ func TestSecretsCataloger(t *testing.T) {
 			fixture: "test-fixtures/secrets/multiple.txt",
 			reveal:  true,
 			patterns: map[string]string{
-				"simple-secret-key": `^secret_key=(?P<value>.*)`,
+				"simple-secret-key": `secret_key=(?P<value>.*)`,
 			},
 			expected: []Secret{
 				{
 					PatternName: "simple-secret-key",
-					Position:    11,
-					Length:      11,
-					Value:       "clear_text1",
+					LineNumber:  1,
+					// note: value capture group location
+					LineOffset:   11,
+					SeekPosition: 11,
+					Length:       11,
+					Value:        "clear_text1",
+				},
+				{
+					PatternName:  "simple-secret-key",
+					LineNumber:   3,
+					LineOffset:   11,
+					SeekPosition: 68,
+					Length:       11,
+					Value:        "clear_text2",
 				},
 				{
 					PatternName: "simple-secret-key",
-					Position:    68,
-					Length:      11,
-					Value:       "clear_text2",
+					LineNumber:  4,
+					// note: value capture group location + offset
+					LineOffset:   12,
+					SeekPosition: 92,
+					Length:       11,
+					Value:        "clear_text3",
 				},
 				{
-					PatternName: "simple-secret-key",
-					Position:    91,
-					Length:      11,
-					Value:       "clear_text3",
-				},
-				{
-					PatternName: "simple-secret-key",
-					Position:    149,
-					Length:      11,
-					Value:       "clear_text4",
+					PatternName:  "simple-secret-key",
+					LineNumber:   6,
+					LineOffset:   11,
+					SeekPosition: 150,
+					Length:       11,
+					Value:        "clear_text4",
 				},
 			},
 		},
@@ -302,16 +327,20 @@ func TestSecretsCataloger_DefaultSecrets(t *testing.T) {
 			fixture: "test-fixtures/secrets/default/aws.env",
 			expected: []Secret{
 				{
-					PatternName: "aws-access-key",
-					Position:    64,
-					Length:      20,
-					Value:       "AKIAIOSFODNN7EXAMPLE",
+					PatternName:  "aws-access-key",
+					LineNumber:   2,
+					LineOffset:   25,
+					SeekPosition: 64,
+					Length:       20,
+					Value:        "AKIAIOSFODNN7EXAMPLE",
 				},
 				{
-					PatternName: "aws-secret-key",
-					Position:    114,
-					Length:      40,
-					Value:       "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+					PatternName:  "aws-secret-key",
+					LineNumber:   3,
+					LineOffset:   29,
+					SeekPosition: 114,
+					Length:       40,
+					Value:        "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
 				},
 			},
 		},
@@ -319,16 +348,20 @@ func TestSecretsCataloger_DefaultSecrets(t *testing.T) {
 			fixture: "test-fixtures/secrets/default/aws.ini",
 			expected: []Secret{
 				{
-					PatternName: "aws-access-key",
-					Position:    67,
-					Length:      20,
-					Value:       "AKIAIOSFODNN7EXAMPLE",
+					PatternName:  "aws-access-key",
+					LineNumber:   3,
+					LineOffset:   18,
+					SeekPosition: 67,
+					Length:       20,
+					Value:        "AKIAIOSFODNN7EXAMPLE",
 				},
 				{
-					PatternName: "aws-secret-key",
-					Position:    110,
-					Length:      40,
-					Value:       "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+					PatternName:  "aws-secret-key",
+					LineNumber:   4,
+					LineOffset:   22,
+					SeekPosition: 110,
+					Length:       40,
+					Value:        "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
 				},
 			},
 		},
@@ -336,17 +369,19 @@ func TestSecretsCataloger_DefaultSecrets(t *testing.T) {
 			fixture: "test-fixtures/secrets/default/private-key.pem",
 			expected: []Secret{
 				{
-					PatternName: "pem-private-key",
-					Position:    39,
-					Length:      403,
-					Value: `-----BEGIN PRIVATE KEY-----
+					PatternName:  "pem-private-key",
+					LineNumber:   2,
+					LineOffset:   27,
+					SeekPosition: 66,
+					Length:       351,
+					Value: `
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDBj08sp5++4anG
 cmQxJjAkBgNVBAoTHVByb2dyZXNzIFNvZnR3YXJlIENvcnBvcmF0aW9uMSAwHgYD
 VQQDDBcqLmF3cy10ZXN0LnByb2dyZXNzLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
 bml6YXRpb252YWxzaGEyZzIuY3JsMIGgBggrBgEFBQcBAQSBkzCBkDBNBggrBgEF
 BQcwAoZBaHR0cDovL3NlY3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3Nvcmdh
 z3P668YfhUbKdRF6S42Cg6zn
------END PRIVATE KEY-----`,
+`,
 				},
 			},
 		},
@@ -354,28 +389,77 @@ z3P668YfhUbKdRF6S42Cg6zn
 			fixture: "test-fixtures/secrets/default/private-key-openssl.pem",
 			expected: []Secret{
 				{
-					PatternName: "pem-private-key",
-					Position:    39,
-					Length:      419,
-					Value: `-----BEGIN OPENSSL PRIVATE KEY-----
+					PatternName:  "pem-private-key",
+					LineNumber:   2,
+					LineOffset:   35,
+					SeekPosition: 74,
+					Length:       351,
+					Value: `
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDBj08sp5++4anG
 cmQxJjAkBgNVBAoTHVByb2dyZXNzIFNvZnR3YXJlIENvcnBvcmF0aW9uMSAwHgYD
 VQQDDBcqLmF3cy10ZXN0LnByb2dyZXNzLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
 bml6YXRpb252YWxzaGEyZzIuY3JsMIGgBggrBgEFBQcBAQSBkzCBkDBNBggrBgEF
 BQcwAoZBaHR0cDovL3NlY3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3Nvcmdh
 z3P668YfhUbKdRF6S42Cg6zn
------END OPENSSL PRIVATE KEY-----`,
+`,
 				},
 			},
 		},
 		{
+			// note: this test proves that the PEM regex matches the smallest possible match
+			// since the test catches two adjacent secrets
+			fixture: "test-fixtures/secrets/default/private-keys.pem",
+			expected: []Secret{
+				{
+					PatternName:  "pem-private-key",
+					LineNumber:   1,
+					LineOffset:   35,
+					SeekPosition: 35,
+					Length:       351,
+					Value: `
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDBj08sp5++4anG
+cmQxJjAkBgNVBAoTHVByb2dyZXNzIFNvZnR3YXJlIENvcnBvcmF0aW9uMSAwHgYD
+VQQDDBcqLmF3cy10ZXN0LnByb2dyZXNzLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
+bml6YXRpb252YWxzaGEyZzIuY3JsMIGgBggrBgEFBQcBAQSBkzCBkDBNBggrBgEF
+BQcwAoZBaHR0cDovL3NlY3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3Nvcmdh
+z3P668YfhUbKdRF6S42Cg6zn
+`,
+				},
+				{
+					PatternName:  "pem-private-key",
+					LineNumber:   9,
+					LineOffset:   35,
+					SeekPosition: 455,
+					Length:       351,
+					Value: `
+MIIEvgTHISISNOTAREALKEYoIBAQDBj08DBj08DBj08DBj08DBj08DBsp5++4an3
+cmQxJjAkBgNVBAoTHVByb2dyZXNzIFNvZnR3YXJlIENvcnBvcmF0aW9uMSAwHgY5
+VQQDDBcqLmF3cy10ZXN0SISNOTAREALKEYoIBAQDBj08DfffKoZIhvcNAQEBBQA7
+bml6SISNOTAREALKEYoIBAQDBj08DdssBggrBgEFBQcBAQSBkzCBkDBNBggrBgE8
+BQcwAoZBaHR0cDovL3NlY3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3Nvcmd1
+j4f668YfhUbKdRF6S6734856
+`,
+				},
+			},
+		},
+		{
+			fixture:  "test-fixtures/secrets/default/private-key-false-positive.pem",
+			expected: nil,
+		},
+		{
+			// this test represents:
+			// 1. a docker config
+			// 2. a named capture group with the correct line number and line offset case
+			// 3. the named capture group is in a different line than the match start, and both the match start and the capture group have different line offsets
 			fixture: "test-fixtures/secrets/default/docker-config.json",
 			expected: []Secret{
 				{
-					PatternName: "docker-config-auth",
-					Position:    100,
-					Length:      10,
-					Value:       "tOpsyKreTz",
+					PatternName:  "docker-config-auth",
+					LineNumber:   5,
+					LineOffset:   15,
+					SeekPosition: 100,
+					Length:       10,
+					Value:        "tOpsyKreTz",
 				},
 			},
 		},
