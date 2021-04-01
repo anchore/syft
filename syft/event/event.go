@@ -13,6 +13,7 @@ const (
 	// PackageCatalogerStarted is a partybus event that occurs when the package cataloging has begun
 	PackageCatalogerStarted partybus.EventType = "syft-package-cataloger-started-event"
 
+	// nolint:gosec
 	// SecretsCatalogerStarted is a partybus event that occurs when the secrets cataloging has begun
 	SecretsCatalogerStarted partybus.EventType = "syft-secrets-cataloger-started-event"
 

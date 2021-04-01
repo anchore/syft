@@ -54,7 +54,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 
 		catalogedPackages := len(packages)
 
-		log.Debugf("cataloger '%s' discovered '%d' packages", theCataloger.Name(), catalogedPackages)
+		log.Debugf("package cataloger %q discovered %d packages", theCataloger.Name(), catalogedPackages)
 		packagesDiscovered.N += int64(catalogedPackages)
 
 		for _, p := range packages {

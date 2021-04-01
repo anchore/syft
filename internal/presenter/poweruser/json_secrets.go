@@ -8,11 +8,11 @@ import (
 )
 
 type JSONSecrets struct {
-	Location source.Location `json:"location"`
-	Secrets  []file.Secret   `json:"secrets"`
+	Location source.Location     `json:"location"`
+	Secrets  []file.SearchResult `json:"secrets"`
 }
 
-func NewJSONSecrets(data map[source.Location][]file.Secret) []JSONSecrets {
+func NewJSONSecrets(data map[source.Location][]file.SearchResult) []JSONSecrets {
 	results := make([]JSONSecrets, 0)
 	for location, secrets := range data {
 		results = append(results, JSONSecrets{

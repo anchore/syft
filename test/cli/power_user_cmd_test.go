@@ -6,8 +6,6 @@ import (
 )
 
 func TestPowerUserCmdFlags(t *testing.T) {
-	request := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
-
 	tests := []struct {
 		name       string
 		args       []string
@@ -16,19 +14,40 @@ func TestPowerUserCmdFlags(t *testing.T) {
 	}{
 		{
 			name: "json-output-flag-fails",
-			args: []string{"power-user", "-o", "json", request},
+			args: []string{"power-user", "-o", "json", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
 			assertions: []traitAssertion{
 				assertFailingReturnCode,
 			},
 		},
 		{
-			name: "default-results",
-			args: []string{"power-user", request},
+			name: "default-results-w-pkg-coverage",
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
 			assertions: []traitAssertion{
 				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
 				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
 				assertInOutput(`"algorithm": "sha256"`),         // proof of file-metadata default digest algorithm of sha256
 				assertInOutput(`"metadataType": "ApkMetadata"`), // proof of package artifacts data
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "defaut-secrets-results-w-reveal-values",
+			env: map[string]string{
+				"SYFT_SECRETS_REVEAL_VALUES": "true",
+			},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
+			assertions: []traitAssertion{
+				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
+				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "default-secret-results-dont-reveal-values",
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
+			assertions: []traitAssertion{
+				assertInOutput(`"classification": "generic-api-key"`),                               // proof of the secrets cataloger finding something
+				assertNotInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
 				assertSuccessfulReturnCode,
 			},
 		},

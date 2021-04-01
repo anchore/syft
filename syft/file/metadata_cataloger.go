@@ -2,6 +2,7 @@ package file
 
 import (
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
 	"github.com/wagoodman/go-partybus"
@@ -32,6 +33,7 @@ func (i *MetadataCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 		results[location] = metadata
 		prog.N++
 	}
+	log.Debugf("file metadata cataloger processed %d files", prog.N)
 	prog.SetCompleted()
 	return results, nil
 }

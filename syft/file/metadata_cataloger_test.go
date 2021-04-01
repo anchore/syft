@@ -53,6 +53,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				Type:    "RegularFile",
 				UserID:  1,
 				GroupID: 2,
+				Size:    7,
 			},
 		},
 		{
@@ -128,7 +129,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 			l := source.NewLocationFromImage(test.path, *ref, img)
 
-			assert.Equal(t, actual[l], test.expected, "mismatched metadata")
+			assert.Equal(t, test.expected, actual[l], "mismatched metadata")
 
 		})
 	}

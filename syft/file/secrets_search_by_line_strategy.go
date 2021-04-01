@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func catalogLocationByLine(resolver source.FileResolver, location source.Location, patterns map[string]*regexp.Regexp) ([]Secret, error) {
+func catalogLocationByLine(resolver source.FileResolver, location source.Location, patterns map[string]*regexp.Regexp) ([]SearchResult, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
@@ -20,13 +20,13 @@ func catalogLocationByLine(resolver source.FileResolver, location source.Locatio
 
 	var scanner = bufio.NewReader(readCloser)
 	var position int64
-	var allSecrets []Secret
+	var allSecrets []SearchResult
 	var lineNo int64
 	var readErr error
 	for !errors.Is(readErr, io.EOF) {
 		lineNo++
 		var line []byte
-		// TODO: we're at risk of large memory usage for very long lines (and searching binaries)
+		// TODO: we're at risk of large memory usage for very long lines
 		line, readErr = scanner.ReadBytes('\n')
 		if readErr != nil && readErr != io.EOF {
 			return nil, readErr
@@ -43,8 +43,8 @@ func catalogLocationByLine(resolver source.FileResolver, location source.Locatio
 	return allSecrets, nil
 }
 
-func searchForSecretsWithinLine(resolver source.FileResolver, location source.Location, patterns map[string]*regexp.Regexp, line []byte, lineNo int64, position int64) ([]Secret, error) {
-	var secrets []Secret
+func searchForSecretsWithinLine(resolver source.FileResolver, location source.Location, patterns map[string]*regexp.Regexp, line []byte, lineNo int64, position int64) ([]SearchResult, error) {
+	var secrets []SearchResult
 	for name, pattern := range patterns {
 		matches := pattern.FindAllIndex(line, -1)
 		for i, match := range matches {
@@ -68,7 +68,7 @@ func searchForSecretsWithinLine(resolver source.FileResolver, location source.Lo
 	return secrets, nil
 }
 
-func extractSecretFromPosition(resolver source.FileResolver, location source.Location, name string, pattern *regexp.Regexp, lineNo, lineOffset, seekPosition int64) (*Secret, error) {
+func extractSecretFromPosition(resolver source.FileResolver, location source.Location, name string, pattern *regexp.Regexp, lineNo, lineOffset, seekPosition int64) (*SearchResult, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
@@ -110,50 +110,14 @@ func extractSecretFromPosition(resolver source.FileResolver, location source.Loc
 		}
 
 		if start >= 0 && stop >= 0 {
-			return &Secret{
-				PatternName:  name,
-				SeekPosition: start + seekPosition,
-				Length:       stop - start,
-				LineNumber:   lineNoOfSecret,
-				LineOffset:   lineOffsetOfSecret,
+			return &SearchResult{
+				Classification: name,
+				SeekPosition:   start + seekPosition,
+				Length:         stop - start,
+				LineNumber:     lineNoOfSecret,
+				LineOffset:     lineOffsetOfSecret,
 			}, nil
 		}
 	}
 	return nil, nil
-}
-
-type newlineCounter struct {
-	io.RuneReader
-	numBytes int64
-	newLines []int64
-}
-
-func (c *newlineCounter) ReadRune() (r rune, size int, err error) {
-	r, size, err = c.RuneReader.ReadRune()
-	c.numBytes += int64(size)
-	if r == '\n' {
-		c.newLines = append(c.newLines, c.numBytes)
-	}
-	return
-}
-
-func (c *newlineCounter) newlinesBefore(pos int64) int {
-	var result int
-	for _, nlPos := range c.newLines {
-		if nlPos <= pos {
-			result++
-		}
-	}
-	return result
-}
-
-func (c *newlineCounter) newlinePositionBefore(pos int64) int64 {
-	var last int64
-	for _, nlPos := range c.newLines {
-		if nlPos > pos {
-			break
-		}
-		last = nlPos
-	}
-	return last
 }

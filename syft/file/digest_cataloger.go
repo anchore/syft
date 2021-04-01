@@ -7,6 +7,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
@@ -41,6 +43,7 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Loc
 		prog.N++
 		results[location] = result
 	}
+	log.Debugf("file digests cataloger processed %d files", prog.N)
 	prog.SetCompleted()
 	return results, nil
 }

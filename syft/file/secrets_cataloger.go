@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
 	"github.com/bmatcuk/doublestar/v2"
@@ -22,9 +23,10 @@ var DefaultSecretsPatterns = map[string]string{
 	"aws-secret-key":     `(?i)aws_secret_access_key["'=:\s]*?(?P<value>[0-9a-zA-Z/+]{40})`,
 	"pem-private-key":    `-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----((?P<value>(\n.*?)+)-----END (\S+ )?PRIVATE KEY(\sBLOCK)?-----)?`,
 	"docker-config-auth": `"auths"((.*\n)*.*?"auth"\s*:\s*"(?P<value>[^"]+)")?`,
+	"generic-api-key":    `(?i)api(-|_)?key["'=:\s]*?(?P<value>[A-Z0-9]{20,60})["']?(\s|$)`,
 }
 
-func GenerateSecretPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
+func GenerateSearchPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
 	var regexObjs = make(map[string]*regexp.Regexp)
 	var errs error
 
@@ -43,7 +45,9 @@ func GenerateSecretPatterns(basePatterns map[string]string, additionalPatterns m
 			if err != nil {
 				return false
 			}
-			return matches
+			if matches {
+				return true
+			}
 		}
 		return false
 	}
@@ -81,8 +85,8 @@ func NewSecretsCataloger(patterns map[string]*regexp.Regexp, revealValues bool, 
 	}, nil
 }
 
-func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Location][]Secret, error) {
-	results := make(map[source.Location][]Secret)
+func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Location][]SearchResult, error) {
+	results := make(map[source.Location][]SearchResult)
 	var locations []source.Location
 	for location := range resolver.AllLocations() {
 		locations = append(locations, location)
@@ -100,11 +104,12 @@ func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Loc
 		}
 		prog.N++
 	}
+	log.Debugf("secrets cataloger discovered %d secrets", secretsDiscovered.N)
 	prog.SetCompleted()
 	return results, nil
 }
 
-func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]Secret, error) {
+func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]SearchResult, error) {
 	metadata, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -114,6 +119,7 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, nil
 	}
 
+	// TODO: in the future we can swap out search strategies here
 	secrets, err := catalogLocationByLine(resolver, location, i.patterns)
 	if err != nil {
 		return nil, err

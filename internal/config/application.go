@@ -71,12 +71,14 @@ func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application
 
 // init loads the default configuration values into the viper instance (before the config values are read and parsed).
 func (cfg Application) loadDefaultConfig(v *viper.Viper) {
-	// set the default values for primitive fields
+	// set the default values for primitive fields in this struct
 	v.SetDefault("check-for-app-update", true)
 
-	// for each field in the configuration struct, see if the field implements the loader interface
+	// for each field in the configuration struct, see if the field implements the loader interface and invoke it if it does
 	value := reflect.ValueOf(cfg)
 	for i := 0; i < value.NumField(); i++ {
+		// check to see if the field implements the loader interface. note: the loader method receiver is NOT a pointer
+		// receiver.
 		if loadable, ok := value.Field(i).Interface().(loader); ok {
 			// the field implements loader, call it
 			loadable.loadDefaultConfig(v)
@@ -120,27 +122,19 @@ func (cfg *Application) parseConfigValues() error {
 		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
 	}
 
-	for _, builder := range []func() error{
-		cfg.Package.parseConfigValues,
-		cfg.FileMetadata.parseConfigValues,
-		cfg.Secrets.parseConfigValues,
-	} {
-		if err := builder(); err != nil {
-			return err
+	// for each field in the configuration struct, see if the field implements the parser interface
+	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
+	value := reflect.ValueOf(cfg).Elem()
+	for i := 0; i < value.NumField(); i++ {
+		// check to see if the field implements the parser interface. note: since the interface method of parser
+		// is a pointer receiver we need to get the value of the field as a pointer.
+		if parsable, ok := value.Field(i).Addr().Interface().(parser); ok {
+			// the field implements parser, call it
+			if err := parsable.parseConfigValues(); err != nil {
+				return err
+			}
 		}
 	}
-
-	// TODO: figure this out
-	// for each field in the configuration struct, see if the field implements the parser interface
-	//value := reflect.ValueOf(*cfg)
-	//for i := 0; i < value.NumField(); i++ {
-	//	if parsable, ok := value.Field(i).Interface().(parser); ok {
-	//		// the field implements parser, call it
-	//		if err := parsable.parseConfigValues(); err != nil {
-	//			return err
-	//		}
-	//	}
-	//}
 
 	return nil
 }

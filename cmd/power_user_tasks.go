@@ -130,7 +130,7 @@ func catalogSecretsTask() (powerUserTask, error) {
 		return nil, nil
 	}
 
-	patterns, err := file.GenerateSecretPatterns(file.DefaultSecretsPatterns, appConfig.Secrets.AdditionalPatterns, appConfig.Secrets.ExcludePatternNames)
+	patterns, err := file.GenerateSearchPatterns(file.DefaultSecretsPatterns, appConfig.Secrets.AdditionalPatterns, appConfig.Secrets.ExcludePatternNames)
 	if err != nil {
 		return nil, err
 	}
