@@ -191,11 +191,21 @@
     "digests": [
      "sha256"
     ]
+   },
+   "secrets": {
+    "cataloger": {
+     "enabled": false,
+     "scope": ""
+    },
+    "additional-patterns": null,
+    "exclude-pattern-names": null,
+    "reveal-values": false,
+    "skip-files-above-size": 0
    }
   }
  },
  "schema": {
-  "version": "1.0.4",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.0.4.json"
+  "version": "1.0.5",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.0.5.json"
  }
 }
