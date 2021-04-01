@@ -55,10 +55,13 @@ func searchForSecretsWithinLine(resolver source.FileResolver, location source.Lo
 			}
 
 			lineOffset := int64(match[0])
-			secret, err := extractSecretFromPosition(resolver, location, name, pattern, lineNo, lineOffset, position+lineOffset)
+			seekLocation := position + lineOffset
+			reader, err := readerAtPosition(resolver, location, seekLocation)
 			if err != nil {
 				return nil, err
 			}
+
+			secret := extractSecretFromPosition(reader, name, pattern, lineNo, lineOffset, seekLocation)
 			if secret != nil {
 				secrets = append(secrets, *secret)
 			}
@@ -68,13 +71,11 @@ func searchForSecretsWithinLine(resolver source.FileResolver, location source.Lo
 	return secrets, nil
 }
 
-func extractSecretFromPosition(resolver source.FileResolver, location source.Location, name string, pattern *regexp.Regexp, lineNo, lineOffset, seekPosition int64) (*SearchResult, error) {
+func readerAtPosition(resolver source.FileResolver, location source.Location, seekPosition int64) (io.ReadCloser, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
-	defer readCloser.Close()
-
 	if seekPosition > 0 {
 		n, err := io.CopyN(ioutil.Discard, readCloser, seekPosition)
 		if err != nil {
@@ -84,40 +85,50 @@ func extractSecretFromPosition(resolver source.FileResolver, location source.Loc
 			return nil, fmt.Errorf("unexpected seek location for location=%q while searching for secrets: %d != %d", location, n, seekPosition)
 		}
 	}
+	return readCloser, nil
+}
 
+func extractSecretFromPosition(readCloser io.ReadCloser, name string, pattern *regexp.Regexp, lineNo, lineOffset, seekPosition int64) *SearchResult {
 	reader := &newlineCounter{RuneReader: bufio.NewReader(readCloser)}
 	positions := pattern.FindReaderSubmatchIndex(reader)
-	if len(positions) > 0 {
-		index := pattern.SubexpIndex("value")
-		var indexOffset int
-		if index != -1 {
-			// there is a capture group, use the capture group selection as the secret value. To do this we want to
-			// use the position at the discovered offset. Note: all positions come in pairs, so you will need to adjust
-			// the offset accordingly (multiply by 2).
-			indexOffset = index * 2
-		}
-		// get the start and stop of the secret value. Note: this covers both when there is a capture group
-		// and when there is not a capture group (full value match)
-		start, stop := int64(positions[indexOffset]), int64(positions[indexOffset+1])
-
-		// lineNoOfSecret are the number of lines which occur before the start of the secret value
-		var lineNoOfSecret = lineNo + int64(reader.newlinesBefore(start))
-		// lineOffsetOfSecret are the number of bytes that occur after the last newline but before the secret value.
-		var lineOffsetOfSecret = start - reader.newlinePositionBefore(start)
-		if lineNoOfSecret == lineNo {
-			// the secret value starts in the same line as the overall match, so we must consider that line offset
-			lineOffsetOfSecret += lineOffset
-		}
-
-		if start >= 0 && stop >= 0 {
-			return &SearchResult{
-				Classification: name,
-				SeekPosition:   start + seekPosition,
-				Length:         stop - start,
-				LineNumber:     lineNoOfSecret,
-				LineOffset:     lineOffsetOfSecret,
-			}, nil
-		}
+	if len(positions) == 0 {
+		// no matches found
+		return nil
 	}
-	return nil, nil
+
+	index := pattern.SubexpIndex("value")
+	var indexOffset int
+	if index != -1 {
+		// there is a capture group, use the capture group selection as the secret value. To do this we want to
+		// use the position at the discovered offset. Note: all positions come in pairs, so you will need to adjust
+		// the offset accordingly (multiply by 2).
+		indexOffset = index * 2
+	}
+	// get the start and stop of the secret value. Note: this covers both when there is a capture group
+	// and when there is not a capture group (full value match)
+	start, stop := int64(positions[indexOffset]), int64(positions[indexOffset+1])
+
+	if start < 0 || stop < 0 {
+		// no match location found. This can happen when there is a value capture group specified by the user
+		// and there was a match on the overall regex, but not for the capture group (which is possible if the capture
+		// group is optional).
+		return nil
+	}
+
+	// lineNoOfSecret are the number of lines which occur before the start of the secret value
+	var lineNoOfSecret = lineNo + int64(reader.newlinesBefore(start))
+	// lineOffsetOfSecret are the number of bytes that occur after the last newline but before the secret value.
+	var lineOffsetOfSecret = start - reader.newlinePositionBefore(start)
+	if lineNoOfSecret == lineNo {
+		// the secret value starts in the same line as the overall match, so we must consider that line offset
+		lineOffsetOfSecret += lineOffset
+	}
+
+	return &SearchResult{
+		Classification: name,
+		SeekPosition:   start + seekPosition,
+		Length:         stop - start,
+		LineNumber:     lineNoOfSecret,
+		LineOffset:     lineOffsetOfSecret,
+	}
 }

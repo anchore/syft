@@ -14,6 +14,6 @@ type anchore struct {
 	OverwriteExistingImage bool   `yaml:"overwrite-existing-image" json:"overwrite-existing-image" mapstructure:"overwrite-existing-image"` // --overwrite-existing-image , if any of the SBOM components have already been uploaded this flag will ensure they are overwritten with the current upload
 }
 
-func (cfg anchore) loadDefaultConfig(v *viper.Viper) {
+func (cfg anchore) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("anchore.path", "")
 }

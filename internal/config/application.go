@@ -17,8 +17,8 @@ import (
 
 var ErrApplicationConfigNotFound = fmt.Errorf("application config not found")
 
-type loader interface {
-	loadDefaultConfig(*viper.Viper)
+type defaultValueLoader interface {
+	loadDefaultValues(*viper.Viper)
 }
 
 type parser interface {
@@ -44,7 +44,7 @@ func newApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) *Application {
 	config := &Application{
 		CliOptions: cliOpts,
 	}
-	config.loadDefaultConfig(v)
+	config.loadDefaultValues(v)
 	return config
 }
 
@@ -70,18 +70,17 @@ func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application
 }
 
 // init loads the default configuration values into the viper instance (before the config values are read and parsed).
-func (cfg Application) loadDefaultConfig(v *viper.Viper) {
+func (cfg Application) loadDefaultValues(v *viper.Viper) {
 	// set the default values for primitive fields in this struct
 	v.SetDefault("check-for-app-update", true)
 
-	// for each field in the configuration struct, see if the field implements the loader interface and invoke it if it does
+	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
 	value := reflect.ValueOf(cfg)
 	for i := 0; i < value.NumField(); i++ {
-		// check to see if the field implements the loader interface. note: the loader method receiver is NOT a pointer
-		// receiver.
-		if loadable, ok := value.Field(i).Interface().(loader); ok {
-			// the field implements loader, call it
-			loadable.loadDefaultConfig(v)
+		// note: the defaultValueLoader method receiver is NOT a pointer receiver.
+		if loadable, ok := value.Field(i).Interface().(defaultValueLoader); ok {
+			// the field implements defaultValueLoader, call it
+			loadable.loadDefaultValues(v)
 		}
 	}
 }
@@ -126,8 +125,7 @@ func (cfg *Application) parseConfigValues() error {
 	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
 	value := reflect.ValueOf(cfg).Elem()
 	for i := 0; i < value.NumField(); i++ {
-		// check to see if the field implements the parser interface. note: since the interface method of parser
-		// is a pointer receiver we need to get the value of the field as a pointer.
+		// note: since the interface method of parser is a pointer receiver we need to get the value of the field as a pointer.
 		if parsable, ok := value.Field(i).Addr().Interface().(parser); ok {
 			// the field implements parser, call it
 			if err := parsable.parseConfigValues(); err != nil {

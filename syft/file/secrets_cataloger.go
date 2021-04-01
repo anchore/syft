@@ -12,8 +12,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
-	"github.com/bmatcuk/doublestar/v2"
-	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
@@ -24,51 +22,6 @@ var DefaultSecretsPatterns = map[string]string{
 	"pem-private-key":    `-----BEGIN (\S+ )?PRIVATE KEY(\sBLOCK)?-----((?P<value>(\n.*?)+)-----END (\S+ )?PRIVATE KEY(\sBLOCK)?-----)?`,
 	"docker-config-auth": `"auths"((.*\n)*.*?"auth"\s*:\s*"(?P<value>[^"]+)")?`,
 	"generic-api-key":    `(?i)api(-|_)?key["'=:\s]*?(?P<value>[A-Z0-9]{20,60})["']?(\s|$)`,
-}
-
-func GenerateSearchPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
-	var regexObjs = make(map[string]*regexp.Regexp)
-	var errs error
-
-	addFn := func(name, pattern string) {
-		// always enable multiline search option for extracting secrets with multiline values
-		obj, err := regexp.Compile(`(?m)` + pattern)
-		if err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("unable to parse %q regular expression: %w", name, err))
-		}
-		regexObjs[name] = obj
-	}
-
-	matchesExclusion := func(name string) bool {
-		for _, exclude := range excludePatternNames {
-			matches, err := doublestar.Match(exclude, name)
-			if err != nil {
-				return false
-			}
-			if matches {
-				return true
-			}
-		}
-		return false
-	}
-
-	// add all base cases... unless that base case was asked to be excluded
-	for name, pattern := range basePatterns {
-		if !matchesExclusion(name) {
-			addFn(name, pattern)
-		}
-	}
-
-	// add all additional cases
-	for name, pattern := range additionalPatterns {
-		addFn(name, pattern)
-	}
-
-	if errs != nil {
-		return nil, errs
-	}
-
-	return regexObjs, nil
 }
 
 type SecretsCataloger struct {

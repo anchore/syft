@@ -7,7 +7,7 @@ type Development struct {
 	ProfileMem bool `yaml:"profile-mem" json:"profile-mem" mapstructure:"profile-mem"`
 }
 
-func (cfg Development) loadDefaultConfig(v *viper.Viper) {
+func (cfg Development) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("dev.profile-cpu", false)
 	v.SetDefault("dev.profile-mem", false)
 }

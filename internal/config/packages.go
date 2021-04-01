@@ -6,7 +6,7 @@ type Packages struct {
 	Cataloger catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
 }
 
-func (cfg Packages) loadDefaultConfig(v *viper.Viper) {
+func (cfg Packages) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("package.cataloger.enabled", true)
 }
 

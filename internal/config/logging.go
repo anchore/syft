@@ -13,6 +13,6 @@ type logging struct {
 	FileLocation string       `yaml:"file" json:"file-location" mapstructure:"file"`          // the file path to write logs to
 }
 
-func (cfg logging) loadDefaultConfig(v *viper.Viper) {
+func (cfg logging) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("log.structured", false)
 }

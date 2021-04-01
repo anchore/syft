@@ -10,7 +10,7 @@ type FileMetadata struct {
 	Digests   []string         `yaml:"digests" json:"digests" mapstructure:"digests"`
 }
 
-func (cfg FileMetadata) loadDefaultConfig(v *viper.Viper) {
+func (cfg FileMetadata) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("file-metadata.cataloger.enabled", true)
 	v.SetDefault("file-metadata.cataloger.scope", source.SquashedScope)
 	v.SetDefault("file-metadata.digests", []string{"sha256"})
