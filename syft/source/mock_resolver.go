@@ -118,6 +118,23 @@ func (r MockResolver) AllLocations() <-chan Location {
 	return results
 }
 
-func (r MockResolver) FileMetadataByLocation(Location) (FileMetadata, error) {
-	panic("not implemented")
+func (r MockResolver) FileMetadataByLocation(l Location) (FileMetadata, error) {
+	info, err := os.Stat(l.RealPath)
+	if err != nil {
+		return FileMetadata{}, err
+	}
+
+	// other types not supported
+	ty := RegularFile
+	if info.IsDir() {
+		ty = Directory
+	}
+
+	return FileMetadata{
+		Mode:    info.Mode(),
+		Type:    ty,
+		UserID:  0, // not supported
+		GroupID: 0, // not supported
+		Size:    info.Size(),
+	}, nil
 }

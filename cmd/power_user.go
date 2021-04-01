@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/anchore/syft/internal"
 
@@ -97,12 +98,19 @@ func powerUserExecWorker(userInput string) <-chan error {
 			ApplicationConfig: *appConfig,
 		}
 
+		wg := &sync.WaitGroup{}
 		for _, task := range tasks {
-			if err = task(&analysisResults, src); err != nil {
-				errs <- err
-				return
-			}
+			wg.Add(1)
+			go func(task powerUserTask) {
+				defer wg.Done()
+				if err = task(&analysisResults, src); err != nil {
+					errs <- err
+					return
+				}
+			}(task)
 		}
+
+		wg.Wait()
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,

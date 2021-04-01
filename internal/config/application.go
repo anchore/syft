@@ -4,9 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"reflect"
 	"strings"
-
-	"github.com/anchore/syft/syft/source"
 
 	"github.com/adrg/xdg"
 	"github.com/anchore/syft/internal"
@@ -17,6 +16,14 @@ import (
 )
 
 var ErrApplicationConfigNotFound = fmt.Errorf("application config not found")
+
+type defaultValueLoader interface {
+	loadDefaultValues(*viper.Viper)
+}
+
+type parser interface {
+	parseConfigValues() error
+}
 
 // Application is the main syft application configuration.
 type Application struct {
@@ -30,18 +37,24 @@ type Application struct {
 	Anchore           anchore        `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
 	Package           Packages       `yaml:"package" json:"package" mapstructure:"package"`
 	FileMetadata      FileMetadata   `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
+	Secrets           Secrets        `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
+}
+
+func newApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) *Application {
+	config := &Application{
+		CliOptions: cliOpts,
+	}
+	config.loadDefaultValues(v)
+	return config
 }
 
 // LoadApplicationConfig populates the given viper object with application configuration discovered on disk
 func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application, error) {
 	// the user may not have a config, and this is OK, we can use the default config + default cobra cli values instead
-	setNonCliDefaultAppConfigValues(v)
+	config := newApplicationConfig(v, cliOpts)
+
 	if err := readConfig(v, cliOpts.ConfigPath); err != nil && !errors.Is(err, ErrApplicationConfigNotFound) {
 		return nil, err
-	}
-
-	config := &Application{
-		CliOptions: cliOpts,
 	}
 
 	if err := v.Unmarshal(config); err != nil {
@@ -49,15 +62,31 @@ func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application
 	}
 	config.ConfigPath = v.ConfigFileUsed()
 
-	if err := config.build(); err != nil {
+	if err := config.parseConfigValues(); err != nil {
 		return nil, fmt.Errorf("invalid application config: %w", err)
 	}
 
 	return config, nil
 }
 
+// init loads the default configuration values into the viper instance (before the config values are read and parsed).
+func (cfg Application) loadDefaultValues(v *viper.Viper) {
+	// set the default values for primitive fields in this struct
+	v.SetDefault("check-for-app-update", true)
+
+	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
+	value := reflect.ValueOf(cfg)
+	for i := 0; i < value.NumField(); i++ {
+		// note: the defaultValueLoader method receiver is NOT a pointer receiver.
+		if loadable, ok := value.Field(i).Interface().(defaultValueLoader); ok {
+			// the field implements defaultValueLoader, call it
+			loadable.loadDefaultValues(v)
+		}
+	}
+}
+
 // build inflates simple config values into syft native objects (or other complex objects) after the config is fully read in.
-func (cfg *Application) build() error {
+func (cfg *Application) parseConfigValues() error {
 	if cfg.Quiet {
 		// TODO: this is bad: quiet option trumps all other logging options
 		// we should be able to quiet the console logging and leave file logging alone...
@@ -92,12 +121,16 @@ func (cfg *Application) build() error {
 		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
 	}
 
-	for _, builder := range []func() error{
-		cfg.Package.build,
-		cfg.FileMetadata.build,
-	} {
-		if err := builder(); err != nil {
-			return err
+	// for each field in the configuration struct, see if the field implements the parser interface
+	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
+	value := reflect.ValueOf(cfg).Elem()
+	for i := 0; i < value.NumField(); i++ {
+		// note: since the interface method of parser is a pointer receiver we need to get the value of the field as a pointer.
+		if parsable, ok := value.Field(i).Addr().Interface().(parser); ok {
+			// the field implements parser, call it
+			if err := parsable.parseConfigValues(); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -180,17 +213,4 @@ func readConfig(v *viper.Viper, configPath string) error {
 	}
 
 	return ErrApplicationConfigNotFound
-}
-
-// setNonCliDefaultAppConfigValues ensures that there are sane defaults for values that do not have CLI equivalent options (where there would already be a default value)
-func setNonCliDefaultAppConfigValues(v *viper.Viper) {
-	v.SetDefault("anchore.path", "")
-	v.SetDefault("log.structured", false)
-	v.SetDefault("check-for-app-update", true)
-	v.SetDefault("dev.profile-cpu", false)
-	v.SetDefault("dev.profile-mem", false)
-	v.SetDefault("package.cataloger.enabled", true)
-	v.SetDefault("file-metadata.cataloger.enabled", true)
-	v.SetDefault("file-metadata.cataloger.scope", source.SquashedScope)
-	v.SetDefault("file-metadata.digests", []string{"sha256"})
 }

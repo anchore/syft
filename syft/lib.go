@@ -35,7 +35,7 @@ import (
 func CatalogPackages(src source.Source, scope source.Scope) (*pkg.Catalog, *distro.Distro, error) {
 	resolver, err := src.FileResolver(scope)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to determine FileResolver while cataloging packages: %w", err)
+		return nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
 	}
 
 	// find the distro
