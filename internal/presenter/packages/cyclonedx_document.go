@@ -34,7 +34,7 @@ func NewCycloneDxDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) Cyc
 	}
 
 	// attach components
-	for p := range catalog.Enumerate() {
+	for _, p := range catalog.Sorted() {
 		component := CycloneDxComponent{
 			Type:       "library", // TODO: this is not accurate
 			Name:       p.Name,

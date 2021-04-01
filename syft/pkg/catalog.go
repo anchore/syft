@@ -164,6 +164,9 @@ func (c *Catalog) Sorted(types ...Type) []*Package {
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
 			if pkgs[i].Version == pkgs[j].Version {
+				if pkgs[i].Type == pkgs[j].Type {
+					return pkgs[i].Locations[0].String() < pkgs[j].Locations[0].String()
+				}
 				return pkgs[i].Type < pkgs[j].Type
 			}
 			return pkgs[i].Version < pkgs[j].Version
