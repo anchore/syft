@@ -25,7 +25,7 @@ func (pres *TablePresenter) Present(output io.Writer) error {
 	rows := make([][]string, 0)
 
 	columns := []string{"Name", "Version", "Type"}
-	for p := range pres.catalog.Enumerate() {
+	for _, p := range pres.catalog.Sorted() {
 		row := []string{
 			p.Name,
 			p.Version,
