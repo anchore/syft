@@ -23,7 +23,7 @@ func (i *MetadataCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 		locations = append(locations, location)
 	}
 	stage, prog := metadataCatalogingProgress(int64(len(locations)))
-	for location := range resolver.AllLocations() {
+	for _, location := range locations {
 		stage.Current = location.RealPath
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {

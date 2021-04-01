@@ -34,7 +34,7 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Loc
 		locations = append(locations, location)
 	}
 	stage, prog := digestsCatalogingProgress(int64(len(locations)))
-	for location := range resolver.AllLocations() {
+	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
 		if err != nil {
