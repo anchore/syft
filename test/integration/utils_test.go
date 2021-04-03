@@ -14,7 +14,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (*pkg.Catalog, *
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 
-	theSource, cleanupSource, err := source.New("docker-archive:" + tarPath)
+	theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil)
 	t.Cleanup(cleanupSource)
 	if err != nil {
 		t.Fatalf("unable to get source: %+v", err)
@@ -29,7 +29,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (*pkg.Catalog, *
 }
 
 func catalogDirectory(t *testing.T, dir string) (*pkg.Catalog, *distro.Distro, source.Source) {
-	theSource, cleanupSource, err := source.New("dir:" + dir)
+	theSource, cleanupSource, err := source.New("dir:"+dir, nil)
 	t.Cleanup(cleanupSource)
 	if err != nil {
 		t.Fatalf("unable to get source: %+v", err)

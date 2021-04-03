@@ -31,14 +31,19 @@ func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (
 		return DirectoryScheme, dirLocation, nil
 	}
 
-	// we should attempt to let stereoscope determine what the source is first --just because the source is a valid directory
+	// we should attempt to let stereoscope determine what the source is first --but, just because the source is a valid directory
 	// doesn't mean we yet know if it is an OCI layout directory (to be treated as an image) or if it is a generic filesystem directory.
 	source, imageSpec, err := imageDetector(userInput)
 	if err != nil {
 		return UnknownScheme, "", fmt.Errorf("unable to detect the scheme from %q: %w", userInput, err)
 	}
 
-	if source == image.UnknownSource {
+	switch source {
+	case image.OciRegistrySource, image.DockerDaemonSource:
+		// return the original user input, not the image ref. In this way we ensure that stereoscope has enough
+		// information to make the final decision on the image source.
+		return ImageScheme, userInput, nil
+	case image.UnknownSource:
 		dirLocation, err := homedir.Expand(userInput)
 		if err != nil {
 			return UnknownScheme, "", fmt.Errorf("unable to expand potential directory path: %w", err)
