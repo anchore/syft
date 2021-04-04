@@ -1,5 +1,5 @@
 package pkg
 
-type fileOwner interface {
-	ownedFiles() []string
+type FileOwner interface {
+	OwnedFiles() []string
 }

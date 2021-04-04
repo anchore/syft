@@ -139,6 +139,8 @@ func (pres *SPDXPresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
 			}
 		}
 
+		filesAnalyzed, files := pres.packageFiles(p)
+
 		results[spdx.ElementID(id)] = &spdx.Package2_2{
 
 			// NOT PART OF SPEC
@@ -195,9 +197,9 @@ func (pres *SPDXPresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
 
 			// Intent: A package can refer to a project, product, artifact, distribution or a component that is
 			// external to the SPDX document.
-			FilesAnalyzed: false,
+			FilesAnalyzed: filesAnalyzed,
 			// NOT PART OF SPEC: did FilesAnalyzed tag appear?
-			IsFilesAnalyzedTagPresent: false,
+			IsFilesAnalyzedTagPresent: true,
 
 			// 3.9: Package Verification Code
 			// Cardinality: mandatory, one if filesAnalyzed is true / omitted;
@@ -210,6 +212,15 @@ func (pres *SPDXPresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
 
 			// 3.10: Package Checksum: may have keys for SHA1, SHA256 and/or MD5
 			// Cardinality: optional, one or many
+
+			// 3.10.1 Purpose: Provide an independently reproducible mechanism that permits unique identification of
+			// a specific package that correlates to the data in this SPDX file. This identifier enables a recipient
+			// to determine if any file in the original package has been changed. If the SPDX file is to be included
+			// in a package, this value should not be calculated. The SHA-1 algorithm will be used to provide the
+			// checksum by default.
+
+			// note: based on the purpose above no discovered checksums should be provided, but instead, only
+			// tool-derived checksums.
 			PackageChecksumSHA1:   "",
 			PackageChecksumSHA256: "",
 			PackageChecksumMD5:    "",
@@ -281,8 +292,92 @@ func (pres *SPDXPresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
 			PackageAttributionTexts: nil,
 
 			// Files contained in this Package
-			Files: nil,
+			Files: files,
 		}
 	}
 	return results
+}
+
+func (pres *SPDXPresenter) packageFiles(p *pkg.Package) (bool, map[spdx.ElementID]*spdx.File2_2) {
+	filesAnalyzed := false
+	files := make(map[spdx.ElementID]*spdx.File2_2)
+	if owner, ok := p.Metadata.(pkg.FileOwner); ok {
+		filesAnalyzed = true
+		for _, f := range owner.OwnedFiles() {
+			// TODO: should we include layer information in the element id?
+			id := spdx.ElementID(f)
+			files[id] = &spdx.File2_2{
+
+				// 4.1: File Name
+				// Cardinality: mandatory, one
+				FileName: f,
+
+				// 4.2: File SPDX Identifier: "SPDXRef-[idstring]"
+				// Cardinality: mandatory, one
+				FileSPDXIdentifier: id,
+
+				// 4.3: File Type
+				// Cardinality: optional, multiple
+				FileType: nil,
+
+				// 4.4: File Checksum: may have keys for SHA1, SHA256 and/or MD5
+				// Cardinality: mandatory, one SHA1, others may be optionally provided
+				// TODO: we don't have the resolvers at this point, but we could make that available?
+				FileChecksumSHA1:   "",
+				FileChecksumSHA256: "",
+				FileChecksumMD5:    "",
+
+				// 4.5: Concluded License: SPDX License Expression, "NONE" or "NOASSERTION"
+				// Cardinality: mandatory, one
+				LicenseConcluded: "NOASSERTION",
+
+				// 4.6: License Information in File: SPDX License Expression, "NONE" or "NOASSERTION"
+				// Cardinality: mandatory, one or many
+				// TODO: could use a license classifier here
+				LicenseInfoInFile: []string{"NOASSERTION"},
+
+				// 4.7: Comments on License
+				// Cardinality: optional, one
+				LicenseComments: "",
+
+				// 4.8: Copyright Text: copyright notice(s) text, "NONE" or "NOASSERTION"
+				// Cardinality: mandatory, one
+				FileCopyrightText: "NOASSERTION",
+
+				// DEPRECATED in version 2.1 of spec
+				// 4.9-4.11: Artifact of Project variables (defined below)
+				// Cardinality: optional, one or many
+				ArtifactOfProjects: nil,
+
+				// 4.12: File Comment
+				// Cardinality: optional, one
+				FileComment: "",
+
+				// 4.13: File Notice
+				// Cardinality: optional, one
+				FileNotice: "",
+
+				// 4.14: File Contributor
+				// Cardinality: optional, one or many
+				FileContributor: nil,
+
+				// 4.15: File Attribution Text
+				// Cardinality: optional, one or many
+				FileAttributionTexts: nil,
+
+				// DEPRECATED in version 2.0 of spec
+				// 4.16: File Dependencies
+				// Cardinality: optional, one or many
+				FileDependencies: nil,
+
+				// Snippets contained in this File
+				// Note that Snippets could be defined in a different Document! However,
+				// the only ones that _THIS_ document can contain are this ones that are
+				// defined here -- so this should just be an ElementID.
+				Snippets: nil,
+			}
+		}
+	}
+
+	return filesAnalyzed, files
 }

@@ -15,7 +15,7 @@ import (
 
 const RpmDbGlob = "**/var/lib/rpm/Packages"
 
-var _ fileOwner = (*RpmdbMetadata)(nil)
+var _ FileOwner = (*RpmdbMetadata)(nil)
 
 // RpmdbMetadata represents all captured data for a RPM DB package entry.
 type RpmdbMetadata struct {
@@ -79,7 +79,7 @@ func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
 	return pURL.ToString()
 }
 
-func (m RpmdbMetadata) ownedFiles() (result []string) {
+func (m RpmdbMetadata) OwnedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {

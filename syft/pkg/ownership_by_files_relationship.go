@@ -55,7 +55,7 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.S
 		}
 
 		// check to see if this is a file owner
-		pkgFileOwner, ok := candidateOwnerPkg.Metadata.(fileOwner)
+		pkgFileOwner, ok := candidateOwnerPkg.Metadata.(FileOwner)
 		if !ok {
 			continue
 		}
