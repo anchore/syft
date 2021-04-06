@@ -25,7 +25,7 @@ func parser(_ string, reader io.Reader) ([]pkg.Package, error) {
 func TestGenericCataloger(t *testing.T) {
 
 	globParsers := map[string]ParserFn{
-		"**a-path.txt": parser,
+		"**/a-path.txt": parser,
 	}
 	pathParsers := map[string]ParserFn{
 		"test-fixtures/another-path.txt": parser,
@@ -51,7 +51,7 @@ func TestGenericCataloger(t *testing.T) {
 	}
 
 	if len(actualPkgs) != len(expectedPkgs) {
-		t.Fatalf("unexpected packages len: %d", len(actualPkgs))
+		t.Fatalf("unexpected packages len: %d != %d", len(expectedPkgs), len(actualPkgs))
 	}
 
 	for _, p := range actualPkgs {
