@@ -10,6 +10,7 @@ type JSONDocument struct {
 	// require these fields. As an accepted rule in this repo all collections should still be initialized in the
 	// context of being used in a JSON document.
 	FileClassifications []JSONFileClassifications `json:"fileClassifications,omitempty"` // note: must have omitempty
+	FileContents        []JSONFileContents        `json:"fileContents,omitempty"`        // note: must have omitempty
 	FileMetadata        []JSONFileMetadata        `json:"fileMetadata,omitempty"`        // note: must have omitempty
 	Secrets             []JSONSecrets             `json:"secrets,omitempty"`             // note: must have omitempty
 	packages.JSONDocument
@@ -29,6 +30,7 @@ func NewJSONDocument(config JSONDocumentConfig) (JSONDocument, error) {
 
 	return JSONDocument{
 		FileClassifications: NewJSONFileClassifications(config.FileClassifications),
+		FileContents:        NewJSONFileContents(config.FileContents),
 		FileMetadata:        fileMetadata,
 		Secrets:             NewJSONSecrets(config.Secrets),
 		JSONDocument:        pkgsDoc,

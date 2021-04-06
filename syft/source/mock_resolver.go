@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/anchore/syft/internal/file"
+	"github.com/bmatcuk/doublestar/v2"
 )
 
 var _ FileResolver = (*MockResolver)(nil)
@@ -84,7 +84,11 @@ func (r MockResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	var results []Location
 	for _, pattern := range patterns {
 		for _, location := range r.Locations {
-			if file.GlobMatch(pattern, location.RealPath) {
+			matches, err := doublestar.Match(pattern, location.RealPath)
+			if err != nil {
+				return nil, err
+			}
+			if matches {
 				results = append(results, location)
 			}
 		}
