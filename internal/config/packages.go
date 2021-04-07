@@ -2,14 +2,14 @@ package config
 
 import "github.com/spf13/viper"
 
-type Packages struct {
+type packages struct {
 	Cataloger catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
 }
 
-func (cfg Packages) loadDefaultValues(v *viper.Viper) {
+func (cfg packages) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("package.cataloger.enabled", true)
 }
 
-func (cfg *Packages) parseConfigValues() error {
+func (cfg *packages) parseConfigValues() error {
 	return cfg.Cataloger.parseConfigValues()
 }

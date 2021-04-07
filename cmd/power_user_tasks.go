@@ -20,6 +20,7 @@ func powerUserTasks() ([]powerUserTask, error) {
 		catalogFileMetadataTask,
 		catalogFileDigestsTask,
 		catalogSecretsTask,
+		catalogFileClassificationsTask,
 	}
 
 	for _, generator := range generators {
@@ -151,6 +152,34 @@ func catalogSecretsTask() (powerUserTask, error) {
 			return err
 		}
 		results.Secrets = result
+		return nil
+	}
+
+	return task, nil
+}
+
+func catalogFileClassificationsTask() (powerUserTask, error) {
+	if !appConfig.FileClassification.Cataloger.Enabled {
+		return nil, nil
+	}
+
+	// TODO: in the future we could expose out the classifiers via configuration
+	classifierCataloger, err := file.NewClassificationCataloger(file.DefaultClassifiers)
+	if err != nil {
+		return nil, err
+	}
+
+	task := func(results *poweruser.JSONDocumentConfig, src source.Source) error {
+		resolver, err := src.FileResolver(appConfig.FileClassification.Cataloger.ScopeOpt)
+		if err != nil {
+			return err
+		}
+
+		result, err := classifierCataloger.Catalog(resolver)
+		if err != nil {
+			return err
+		}
+		results.FileClassifications = result
 		return nil
 	}
 

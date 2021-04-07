@@ -27,17 +27,18 @@ type parser interface {
 
 // Application is the main syft application configuration.
 type Application struct {
-	ConfigPath        string         `yaml:",omitempty" json:"configPath"`               // the location where the application config was read from (either from -c or discovered while loading)
-	Output            string         `yaml:"output" json:"output" mapstructure:"output"` // -o, the Presenter hint string to use for report formatting
-	Quiet             bool           `yaml:"quiet" json:"quiet" mapstructure:"quiet"`    // -q, indicates to not show any status output to stderr (ETUI or logging UI)
-	Log               logging        `yaml:"log" json:"log" mapstructure:"log"`          // all logging-related options
-	CliOptions        CliOnlyOptions `yaml:"-" json:"-"`                                 // all options only available through the CLI (not via env vars or config)
-	Dev               Development    `yaml:"dev" json:"dev" mapstructure:"dev"`
-	CheckForAppUpdate bool           `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
-	Anchore           anchore        `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
-	Package           Packages       `yaml:"package" json:"package" mapstructure:"package"`
-	FileMetadata      FileMetadata   `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
-	Secrets           Secrets        `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
+	ConfigPath         string             `yaml:",omitempty" json:"configPath"`                                                         // the location where the application config was read from (either from -c or discovered while loading)
+	Output             string             `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the Presenter hint string to use for report formatting
+	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`                                              // -q, indicates to not show any status output to stderr (ETUI or logging UI)
+	CheckForAppUpdate  bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
+	Anchore            anchore            `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
+	CliOptions         CliOnlyOptions     `yaml:"-" json:"-"`                                                                           // all options only available through the CLI (not via env vars or config)
+	Dev                development        `yaml:"dev" json:"dev" mapstructure:"dev"`
+	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
+	Package            packages           `yaml:"package" json:"package" mapstructure:"package"`
+	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
+	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
+	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
 }
 
 func newApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) *Application {
