@@ -77,7 +77,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 
 		for field, pattern := range patterns {
-			matchMap := internal.MatchCaptureGroups(pattern, sanitizedLine)
+			matchMap := internal.MatchNamedCaptureGroups(pattern, sanitizedLine)
 			if value := matchMap[field]; value != "" {
 				if postProcessor := postProcessors[field]; postProcessor != nil {
 					fields[field] = postProcessor(value)
