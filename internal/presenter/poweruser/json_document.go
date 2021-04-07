@@ -9,8 +9,9 @@ type JSONDocument struct {
 	// here should be optional by supplying "omitempty" on these fields hint to the jsonschema generator to not
 	// require these fields. As an accepted rule in this repo all collections should still be initialized in the
 	// context of being used in a JSON document.
-	FileMetadata []JSONFileMetadata `json:"fileMetadata,omitempty"` // note: must have omitempty
-	Secrets      []JSONSecrets      `json:"secrets,omitempty"`      // note: must have omitempty
+	FileClassifications []JSONFileClassifications `json:"fileClassifications,omitempty"` // note: must have omitempty
+	FileMetadata        []JSONFileMetadata        `json:"fileMetadata,omitempty"`        // note: must have omitempty
+	Secrets             []JSONSecrets             `json:"secrets,omitempty"`             // note: must have omitempty
 	packages.JSONDocument
 }
 
@@ -27,8 +28,9 @@ func NewJSONDocument(config JSONDocumentConfig) (JSONDocument, error) {
 	}
 
 	return JSONDocument{
-		FileMetadata: fileMetadata,
-		Secrets:      NewJSONSecrets(config.Secrets),
-		JSONDocument: pkgsDoc,
+		FileClassifications: NewJSONFileClassifications(config.FileClassifications),
+		FileMetadata:        fileMetadata,
+		Secrets:             NewJSONSecrets(config.Secrets),
+		JSONDocument:        pkgsDoc,
 	}, nil
 }
