@@ -161,21 +161,21 @@
    "configPath": "",
    "output": "",
    "quiet": false,
-   "log": {
-    "structured": false,
-    "level": "",
-    "file-location": ""
-   },
-   "dev": {
-    "profile-cpu": false,
-    "profile-mem": false
-   },
    "check-for-app-update": false,
    "anchore": {
     "host": "",
     "path": "",
     "dockerfile": "",
     "overwrite-existing-image": false
+   },
+   "dev": {
+    "profile-cpu": false,
+    "profile-mem": false
+   },
+   "log": {
+    "structured": false,
+    "level": "",
+    "file-location": ""
    },
    "package": {
     "cataloger": {
@@ -191,6 +191,12 @@
     "digests": [
      "sha256"
     ]
+   },
+   "file-classification": {
+    "cataloger": {
+     "enabled": false,
+     "scope": ""
+    }
    },
    "secrets": {
     "cataloger": {

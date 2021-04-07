@@ -29,7 +29,6 @@ func (i *ClassificationCataloger) Catalog(resolver source.FileResolver) (map[sou
 				results[location] = append(results[location], *result)
 				numResults++
 			}
-
 		}
 	}
 	log.Debugf("classification cataloger discovered %d results", numResults)
