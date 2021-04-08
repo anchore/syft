@@ -3,6 +3,8 @@ package pkg
 import (
 	"sort"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/syft/distro"
 	"github.com/package-url/packageurl-go"
 	"github.com/scylladb/go-set/strset"
@@ -27,8 +29,9 @@ type DpkgMetadata struct {
 
 // DpkgFileRecord represents a single file attributed to a debian package.
 type DpkgFileRecord struct {
-	Path string `json:"path"`
-	MD5  string `json:"md5"`
+	Path         string       `json:"path"`
+	Digest       *file.Digest `json:"digest,omitempty"`
+	IsConfigFile bool         `json:"isConfigFile"`
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)
