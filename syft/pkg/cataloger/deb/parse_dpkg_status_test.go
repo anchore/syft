@@ -110,6 +110,7 @@ func TestMultiplePackages(t *testing.T) {
 					Architecture:  "all",
 					InstalledSize: 3036,
 					Maintainer:    "GNU Libc Maintainers <debian-glibc@lists.debian.org>",
+					Files:         []pkg.DpkgFileRecord{},
 				},
 				{
 					Package:       "util-linux",
