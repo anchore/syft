@@ -9,7 +9,7 @@
    "locations": [
     {
      "path": "/somefile-1.txt",
-     "layerID": "sha256:6c376352c0537f4483e4033e332d7a4ab9433db68c54c297a834d36719aeb6c9"
+     "layerID": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"
     }
    ],
    "licenses": [
@@ -40,7 +40,7 @@
    "locations": [
     {
      "path": "/somefile-2.txt",
-     "layerID": "sha256:fc8218a8142ee4952bb8d9b96b3e9838322e9e6eae6477136bcad8fd768949b7"
+     "layerID": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec"
     }
    ],
    "licenses": [],
@@ -67,7 +67,7 @@
   "type": "image",
   "target": {
    "userInput": "user-image-input",
-   "imageID": "sha256:1f9cb9dc477f7482856f88ed40c38e260db0526d7a0dad5a0be566bfedde929b",
+   "imageID": "sha256:5900c94a5bc1e083aa24ad1a223bf6eb9910dc8a6b01cb979ec306cb91709ea1",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
    "tags": [
@@ -77,17 +77,17 @@
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:6c376352c0537f4483e4033e332d7a4ab9433db68c54c297a834d36719aeb6c9",
+     "digest": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59",
      "size": 22
     },
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:fc8218a8142ee4952bb8d9b96b3e9838322e9e6eae6477136bcad8fd768949b7",
+     "digest": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec",
      "size": 16
     }
    ],
-   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjoxNTg2LCJkaWdlc3QiOiJzaGEyNTY6MWY5Y2I5ZGM0NzdmNzQ4Mjg1NmY4OGVkNDBjMzhlMjYwZGIwNTI2ZDdhMGRhZDVhMGJlNTY2YmZlZGRlOTI5YiJ9LCJsYXllcnMiOlt7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuaW1hZ2Uucm9vdGZzLmRpZmYudGFyLmd6aXAiLCJzaXplIjoyMDQ4LCJkaWdlc3QiOiJzaGEyNTY6NmMzNzYzNTJjMDUzN2Y0NDgzZTQwMzNlMzMyZDdhNGFiOTQzM2RiNjhjNTRjMjk3YTgzNGQzNjcxOWFlYjZjOSJ9LHsibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjpmYzgyMThhODE0MmVlNDk1MmJiOGQ5Yjk2YjNlOTgzODMyMmU5ZTZlYWU2NDc3MTM2YmNhZDhmZDc2ODk0OWI3In1dfQ==",
-   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJIb3N0bmFtZSI6IiIsIkRvbWFpbm5hbWUiOiIiLCJVc2VyIjoiIiwiQXR0YWNoU3RkaW4iOmZhbHNlLCJBdHRhY2hTdGRvdXQiOmZhbHNlLCJBdHRhY2hTdGRlcnIiOmZhbHNlLCJUdHkiOmZhbHNlLCJPcGVuU3RkaW4iOmZhbHNlLCJTdGRpbk9uY2UiOmZhbHNlLCJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiQ21kIjpudWxsLCJJbWFnZSI6InNoYTI1NjoyOWQ1YjFjOTkyNjg0MzgwYjQ3NTEyMjliMmNjN2E4MzdkOTBmOWQ1OTJhYmIxZjAyZGYzZGRkMGQ3OWFjMDkxIiwiVm9sdW1lcyI6bnVsbCwiV29ya2luZ0RpciI6IiIsIkVudHJ5cG9pbnQiOm51bGwsIk9uQnVpbGQiOm51bGwsIkxhYmVscyI6bnVsbH0sImNvbnRhaW5lcl9jb25maWciOnsiSG9zdG5hbWUiOiIiLCJEb21haW5uYW1lIjoiIiwiVXNlciI6IiIsIkF0dGFjaFN0ZGluIjpmYWxzZSwiQXR0YWNoU3Rkb3V0IjpmYWxzZSwiQXR0YWNoU3RkZXJyIjpmYWxzZSwiVHR5IjpmYWxzZSwiT3BlblN0ZGluIjpmYWxzZSwiU3RkaW5PbmNlIjpmYWxzZSwiRW52IjpbIlBBVEg9L3Vzci9sb2NhbC9zYmluOi91c3IvbG9jYWwvYmluOi91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluIl0sIkNtZCI6WyIvYmluL3NoIiwiLWMiLCIjKG5vcCkgQUREIGZpbGU6ZGYzYjc0NGY1NGE5YjE2YjliOWFlZDQwZTNlOThkOWNhMmI0OWY1YTc3ZDlmYThhOTc2OTBkN2JhZjU4ODgyMCBpbiAvc29tZWZpbGUtMi50eHQgIl0sIkltYWdlIjoic2hhMjU2OjI5ZDViMWM5OTI2ODQzODBiNDc1MTIyOWIyY2M3YTgzN2Q5MGY5ZDU5MmFiYjFmMDJkZjNkZGQwZDc5YWMwOTEiLCJWb2x1bWVzIjpudWxsLCJXb3JraW5nRGlyIjoiIiwiRW50cnlwb2ludCI6bnVsbCwiT25CdWlsZCI6bnVsbCwiTGFiZWxzIjpudWxsfSwiY3JlYXRlZCI6IjIwMjEtMDQtMDFUMTI6NDg6MzIuMjYzNjAzMVoiLCJkb2NrZXJfdmVyc2lvbiI6IjIwLjEwLjIiLCJoaXN0b3J5IjpbeyJjcmVhdGVkIjoiMjAyMS0wNC0wMVQxMjo0ODozMi4wODY3MTY2WiIsImNyZWF0ZWRfYnkiOiIvYmluL3NoIC1jICMobm9wKSBBREQgZmlsZTphYzMyZGEyM2Q1MWU4MDFmMDJmOTI0MTIzZWQzMDk5MGViM2YwZmVjMWI5ZWQ0ZjBiMDZjMjRlODhiOWMzNjk1IGluIC9zb21lZmlsZS0xLnR4dCAifSx7ImNyZWF0ZWQiOiIyMDIxLTA0LTAxVDEyOjQ4OjMyLjI2MzYwMzFaIiwiY3JlYXRlZF9ieSI6Ii9iaW4vc2ggLWMgIyhub3ApIEFERCBmaWxlOmRmM2I3NDRmNTRhOWIxNmI5YjlhZWQ0MGUzZTk4ZDljYTJiNDlmNWE3N2Q5ZmE4YTk3NjkwZDdiYWY1ODg4MjAgaW4gL3NvbWVmaWxlLTIudHh0ICJ9XSwib3MiOiJsaW51eCIsInJvb3RmcyI6eyJ0eXBlIjoibGF5ZXJzIiwiZGlmZl9pZHMiOlsic2hhMjU2OjZjMzc2MzUyYzA1MzdmNDQ4M2U0MDMzZTMzMmQ3YTRhYjk0MzNkYjY4YzU0YzI5N2E4MzRkMzY3MTlhZWI2YzkiLCJzaGEyNTY6ZmM4MjE4YTgxNDJlZTQ5NTJiYjhkOWI5NmIzZTk4MzgzMjJlOWU2ZWFlNjQ3NzEzNmJjYWQ4ZmQ3Njg5NDliNyJdfX0=",
+   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NjUsImRpZ2VzdCI6InNoYTI1Njo1OTAwYzk0YTViYzFlMDgzYWEyNGFkMWEyMjNiZjZlYjk5MTBkYzhhNmIwMWNiOTc5ZWMzMDZjYjkxNzA5ZWExIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjpmYjZiZWVjYjc1YjM5ZjRiYjgxM2RiZjE3N2U1MDFlZGQ1ZGRiM2U2OWJiNDVjZWRlYjc4YzY3NmVlMWI3YTU5In0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OjMxOWI1ODhjZTY0MjUzYTg3YjUzM2M4ZWQwMWNmMDAyNWUwZWFjOThlN2I1MTZlMTI1MzI5NTdlMTI0NGZkZWMifV19",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjEtMDQtMDZUMTk6MTM6NTIuNTI0Mzc4WiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIxLTA0LTA2VDE5OjEzOjUyLjQ1ODIwNjFaIiwiY3JlYXRlZF9ieSI6IkFERCBmaWxlLTEudHh0IC9zb21lZmlsZS0xLnR4dCAjIGJ1aWxka2l0IiwiY29tbWVudCI6ImJ1aWxka2l0LmRvY2tlcmZpbGUudjAifSx7ImNyZWF0ZWQiOiIyMDIxLTA0LTA2VDE5OjEzOjUyLjUyNDM3OFoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMi50eHQgL3NvbWVmaWxlLTIudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9XSwib3MiOiJsaW51eCIsInJvb3RmcyI6eyJ0eXBlIjoibGF5ZXJzIiwiZGlmZl9pZHMiOlsic2hhMjU2OmZiNmJlZWNiNzViMzlmNGJiODEzZGJmMTc3ZTUwMWVkZDVkZGIzZTY5YmI0NWNlZGViNzhjNjc2ZWUxYjdhNTkiLCJzaGEyNTY6MzE5YjU4OGNlNjQyNTNhODdiNTMzYzhlZDAxY2YwMDI1ZTBlYWM5OGU3YjUxNmUxMjUzMjk1N2UxMjQ0ZmRlYyJdfX0=",
    "repoDigests": [],
    "scope": "Squashed"
   }
@@ -102,7 +102,7 @@
   "version": "[not provided]"
  },
  "schema": {
-  "version": "1.0.5",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.0.5.json"
+  "version": "1.1.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.1.0.json"
  }
 }

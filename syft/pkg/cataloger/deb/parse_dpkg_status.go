@@ -80,6 +80,11 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
 		}
 	}
 
+	if entry.Files == nil {
+		// ensure that the collection is always allocated
+		entry.Files = make([]pkg.DpkgFileRecord, 0)
+	}
+
 	return entry, retErr
 }
 

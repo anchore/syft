@@ -85,7 +85,7 @@ func build() *jsonschema.Schema {
 	}
 
 	// set the "anyOf" field for Package.Metadata to be a conjunction of several types
-	documentSchema.Definitions["Document"].Properties.Set("artifacts.metadata", map[string][]map[string]string{
+	documentSchema.Definitions["Package"].Properties.Set("metadata", map[string][]map[string]string{
 		"anyOf": metadataTypes,
 	})
 
