@@ -117,7 +117,7 @@ loopNewFiles:
 }
 
 func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) ([]pkg.DpkgFileRecord, []source.Location) {
-	// ensure the file list is an empty collection (not nil)
+	// ensure the default value for a collection is never nil since this may be shown as JSON
 	var files = make([]pkg.DpkgFileRecord, 0)
 	var locations []source.Location
 
@@ -140,7 +140,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 		files = append(files, parseDpkgConffileInfo(md5Reader)...)
 
 		// keep a record of the file where this was discovered
-		if md5Location != nil {
+		if conffilesLocation != nil {
 			locations = append(locations, *conffilesLocation)
 		}
 	}

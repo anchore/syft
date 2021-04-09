@@ -61,7 +61,10 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
 		retErr = err
 	}
 
-	var entry pkg.DpkgMetadata
+	entry := pkg.DpkgMetadata{
+		// ensure the default value for a collection is never nil since this may be shown as JSON
+		Files: make([]pkg.DpkgFileRecord, 0),
+	}
 	err = mapstructure.Decode(dpkgFields, &entry)
 	if err != nil {
 		return pkg.DpkgMetadata{}, err
@@ -78,11 +81,6 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
 		if sectionStr, ok := conffilesSection.(string); ok {
 			entry.Files = parseDpkgConffileInfo(strings.NewReader(sectionStr))
 		}
-	}
-
-	if entry.Files == nil {
-		// ensure that the collection is always allocated
-		entry.Files = make([]pkg.DpkgFileRecord, 0)
 	}
 
 	return entry, retErr
