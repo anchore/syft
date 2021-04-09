@@ -38,7 +38,7 @@ type Application struct {
 	Package            packages           `yaml:"package" json:"package" mapstructure:"package"`
 	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
-	Contents           contents           `yaml:"contents" json:"contents" mapstructure:"contents"`
+	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
 	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
 }
 

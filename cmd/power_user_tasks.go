@@ -188,11 +188,11 @@ func catalogFileClassificationsTask() (powerUserTask, error) {
 }
 
 func catalogContentsTask() (powerUserTask, error) {
-	if !appConfig.Contents.Cataloger.Enabled {
+	if !appConfig.FileContents.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	contentsCataloger, err := file.NewContentsCataloger(appConfig.Contents.Globs, appConfig.Contents.SkipFilesAboveSize)
+	contentsCataloger, err := file.NewContentsCataloger(appConfig.FileContents.Globs, appConfig.FileContents.SkipFilesAboveSize)
 	if err != nil {
 		return nil, err
 	}

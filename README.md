@@ -120,22 +120,22 @@ file-classification:
     scope: "squashed"
 
 # cataloging file contents is exposed through the power-user subcommand
-contents:
+file-contents:
   cataloger:
     # enable/disable cataloging of secrets
-    # SYFT_CONTENTS_CATALOGER_ENABLED env var
+    # SYFT_FILE_CONTENTS_CATALOGER_ENABLED env var
     enabled: true
 
     # the search space to look for secrets (options: all-layers, squashed)
-    # SYFT_CONTENTS_CATALOGER_SCOPE env var
+    # SYFT_FILE_CONTENTS_CATALOGER_SCOPE env var
     scope: "squashed"
 
   # skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)
-  # SYFT_CONTENTS_SKIP_FILES_ABOVE_SIZE env var
+  # SYFT_FILE_CONTENTS_SKIP_FILES_ABOVE_SIZE env var
   skip-files-above-size: 1048576
 
   # file globs for the cataloger to match on
-  # SYFT_CONTENTS_GLOBS env var
+  # SYFT_FILE_CONTENTS_GLOBS env var
   globs: []
 
 # cataloging file metadata is exposed through the power-user subcommand

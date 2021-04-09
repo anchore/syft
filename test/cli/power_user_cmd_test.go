@@ -55,7 +55,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			name: "content-cataloger-wired-up",
 			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
 			env: map[string]string{
-				"SYFT_CONTENTS_GLOBS": "/api-key.txt",
+				"SYFT_FILE_CONTENTS_GLOBS": "/api-key.txt",
 			},
 			assertions: []traitAssertion{
 				assertInOutput(`"contents": "c29tZV9BcEkta0V5ID0gIjEyMzQ1QTdhOTAxYjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MCIK"`), // proof of the content cataloger
