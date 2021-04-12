@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -46,13 +48,8 @@ func TestGenericCataloger(t *testing.T) {
 	}
 
 	actualPkgs, err := cataloger.Catalog(resolver)
-	if err != nil {
-		t.Fatalf("cataloger catalog action failed: %+v", err)
-	}
-
-	if len(actualPkgs) != len(expectedPkgs) {
-		t.Fatalf("unexpected packages len: %d != %d", len(expectedPkgs), len(actualPkgs))
-	}
+	assert.NoError(t, err)
+	assert.Len(t, actualPkgs, len(expectedPkgs))
 
 	for _, p := range actualPkgs {
 		ref := p.Locations[0]

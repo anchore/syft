@@ -11,12 +11,11 @@ func TestContentsCataloger(t *testing.T) {
 	allFiles := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"}
 
 	tests := []struct {
-		name       string
-		globs      []string
-		maxSize    int64
-		files      []string
-		expected   map[source.Location]string
-		catalogErr bool
+		name     string
+		globs    []string
+		maxSize  int64
+		files    []string
+		expected map[source.Location]string
 	}{
 		{
 			name:  "multi-pattern",
@@ -68,20 +67,11 @@ func TestContentsCataloger(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			c, err := NewContentsCataloger(test.globs, test.maxSize)
-			if err != nil {
-				t.Fatalf("could not create cataloger: %+v", err)
-			}
+			assert.NoError(t, err)
 
 			resolver := source.NewMockResolverForPaths(test.files...)
 			actual, err := c.Catalog(resolver)
-			if err != nil && !test.catalogErr {
-				t.Fatalf("could not catalog (but should have been able to): %+v", err)
-			} else if err == nil && test.catalogErr {
-				t.Fatalf("expected catalog error but did not get one")
-			} else if test.catalogErr && err != nil {
-				return
-			}
-
+			assert.NoError(t, err)
 			assert.Equal(t, test.expected, actual, "mismatched contents")
 
 		})

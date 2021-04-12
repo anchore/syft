@@ -11,14 +11,14 @@ import (
 )
 
 type ContentsCataloger struct {
-	globs              []string
-	skipFilesAboveSize int64
+	globs                     []string
+	skipFilesAboveSizeInBytes int64
 }
 
 func NewContentsCataloger(globs []string, skipFilesAboveSize int64) (*ContentsCataloger, error) {
 	return &ContentsCataloger{
-		globs:              globs,
-		skipFilesAboveSize: skipFilesAboveSize,
+		globs:                     globs,
+		skipFilesAboveSizeInBytes: skipFilesAboveSize,
 	}, nil
 }
 
@@ -37,7 +37,7 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 			return nil, err
 		}
 
-		if i.skipFilesAboveSize > 0 && metadata.Size > i.skipFilesAboveSize {
+		if i.skipFilesAboveSizeInBytes > 0 && metadata.Size > i.skipFilesAboveSizeInBytes {
 			continue
 		}
 
@@ -61,7 +61,7 @@ func (i *ContentsCataloger) catalogLocation(resolver source.FileResolver, locati
 
 	buf := &bytes.Buffer{}
 	if _, err = io.Copy(base64.NewEncoder(base64.StdEncoding, buf), contentReader); err != nil {
-		return "", fmt.Errorf("unable to observe contents of %+v: %+v", location.RealPath, err)
+		return "", fmt.Errorf("unable to observe contents of %+v: %w", location.RealPath, err)
 	}
 
 	return buf.String(), nil
