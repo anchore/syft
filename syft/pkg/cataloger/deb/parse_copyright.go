@@ -21,7 +21,7 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		matchesByGroup := internal.MatchCaptureGroups(licensePattern, line)
+		matchesByGroup := internal.MatchNamedCaptureGroups(licensePattern, line)
 		if len(matchesByGroup) > 0 {
 			candidate, ok := matchesByGroup["license"]
 			if !ok {

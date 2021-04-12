@@ -9,11 +9,12 @@ import (
 )
 
 type JSONDocumentConfig struct {
-	ApplicationConfig config.Application
-	PackageCatalog    *pkg.Catalog
-	FileMetadata      map[source.Location]source.FileMetadata
-	FileDigests       map[source.Location][]file.Digest
-	Secrets           map[source.Location][]file.SearchResult
-	Distro            *distro.Distro
-	SourceMetadata    source.Metadata
+	ApplicationConfig   config.Application
+	PackageCatalog      *pkg.Catalog
+	FileMetadata        map[source.Location]source.FileMetadata
+	FileDigests         map[source.Location][]file.Digest
+	FileClassifications map[source.Location][]file.Classification
+	Secrets             map[source.Location][]file.SearchResult
+	Distro              *distro.Distro
+	SourceMetadata      source.Metadata
 }

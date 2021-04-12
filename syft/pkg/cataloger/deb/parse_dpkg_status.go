@@ -145,7 +145,7 @@ func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
 // of the "<name>" form, then return name and nil
 func extractSourceVersion(source string) (string, string) {
 	// special handling for the Source field since it has formatted data
-	match := internal.MatchCaptureGroups(sourceRegexp, source)
+	match := internal.MatchNamedCaptureGroups(sourceRegexp, source)
 	return match["name"], match["version"]
 }
 

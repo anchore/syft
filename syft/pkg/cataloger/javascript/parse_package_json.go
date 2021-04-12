@@ -63,7 +63,7 @@ func (a *Author) UnmarshalJSON(b []byte) error {
 		}
 	} else {
 		// parse out "name <email> (url)" into an Author struct
-		fields = internal.MatchCaptureGroups(authorPattern, authorStr)
+		fields = internal.MatchNamedCaptureGroups(authorPattern, authorStr)
 	}
 
 	// translate the map into a structure
