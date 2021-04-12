@@ -21,6 +21,7 @@ func powerUserTasks() ([]powerUserTask, error) {
 		catalogFileDigestsTask,
 		catalogSecretsTask,
 		catalogFileClassificationsTask,
+		catalogContentsTask,
 	}
 
 	for _, generator := range generators {
@@ -180,6 +181,33 @@ func catalogFileClassificationsTask() (powerUserTask, error) {
 			return err
 		}
 		results.FileClassifications = result
+		return nil
+	}
+
+	return task, nil
+}
+
+func catalogContentsTask() (powerUserTask, error) {
+	if !appConfig.FileContents.Cataloger.Enabled {
+		return nil, nil
+	}
+
+	contentsCataloger, err := file.NewContentsCataloger(appConfig.FileContents.Globs, appConfig.FileContents.SkipFilesAboveSize)
+	if err != nil {
+		return nil, err
+	}
+
+	task := func(results *poweruser.JSONDocumentConfig, src source.Source) error {
+		resolver, err := src.FileResolver(appConfig.FileContents.Cataloger.ScopeOpt)
+		if err != nil {
+			return err
+		}
+
+		result, err := contentsCataloger.Catalog(resolver)
+		if err != nil {
+			return err
+		}
+		results.FileContents = result
 		return nil
 	}
 

@@ -1,4 +1,12 @@
 {
+ "fileContents": [
+  {
+   "location": {
+    "path": "/a/place/a"
+   },
+   "contents": "the-contents"
+  }
+ ],
  "fileMetadata": [
   {
    "location": {
@@ -197,6 +205,14 @@
      "enabled": false,
      "scope": ""
     }
+   },
+   "file-contents": {
+    "cataloger": {
+     "enabled": false,
+     "scope": ""
+    },
+    "skip-files-above-size": 0,
+    "globs": null
    },
    "secrets": {
     "cataloger": {

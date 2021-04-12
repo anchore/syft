@@ -125,6 +125,9 @@ func TestJSONPresenter(t *testing.T) {
 				},
 			},
 		},
+		FileContents: map[source.Location]string{
+			source.NewLocation("/a/place/a"): "the-contents",
+		},
 		Distro: &distro.Distro{
 			Type:       distro.RedHat,
 			RawVersion: "7",

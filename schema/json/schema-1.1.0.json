@@ -125,6 +125,27 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "Classification": {
+      "required": [
+        "class",
+        "metadata"
+      ],
+      "properties": {
+        "class": {
+          "type": "string"
+        },
+        "metadata": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
     "Descriptor": {
       "required": [
         "name",
@@ -190,6 +211,20 @@
         "schema"
       ],
       "properties": {
+        "fileClassifications": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/FileClassifications"
+          },
+          "type": "array"
+        },
+        "fileContents": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/FileContents"
+          },
+          "type": "array"
+        },
         "fileMetadata": {
           "items": {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -302,6 +337,40 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "FileClassifications": {
+      "required": [
+        "location",
+        "classification"
+      ],
+      "properties": {
+        "location": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Location"
+        },
+        "classification": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Classification"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "FileContents": {
+      "required": [
+        "location",
+        "contents"
+      ],
+      "properties": {
+        "location": {
+          "$ref": "#/definitions/Location"
+        },
+        "contents": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
     "FileMetadata": {
       "required": [
         "location",
@@ -309,7 +378,6 @@
       ],
       "properties": {
         "location": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
           "$ref": "#/definitions/Location"
         },
         "metadata": {

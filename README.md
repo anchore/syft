@@ -119,6 +119,25 @@ file-classification:
     # SYFT_FILE_CLASSIFICATION_CATALOGER_SCOPE env var
     scope: "squashed"
 
+# cataloging file contents is exposed through the power-user subcommand
+file-contents:
+  cataloger:
+    # enable/disable cataloging of secrets
+    # SYFT_FILE_CONTENTS_CATALOGER_ENABLED env var
+    enabled: true
+
+    # the search space to look for secrets (options: all-layers, squashed)
+    # SYFT_FILE_CONTENTS_CATALOGER_SCOPE env var
+    scope: "squashed"
+
+  # skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)
+  # SYFT_FILE_CONTENTS_SKIP_FILES_ABOVE_SIZE env var
+  skip-files-above-size: 1048576
+
+  # file globs for the cataloger to match on
+  # SYFT_FILE_CONTENTS_GLOBS env var
+  globs: []
+
 # cataloging file metadata is exposed through the power-user subcommand
 file-metadata:
   cataloger:
@@ -149,9 +168,9 @@ secrets:
   # SYFT_SECRETS_REVEAL_VALUES env var
   reveal-values: false
 
-  # skip searching a file entirely if it is above the given size (default = 10MB; unit = bytes)
+  # skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)
   # SYFT_SECRETS_SKIP_FILES_ABOVE_SIZE env var
-  skip-files-above-size: 10485760
+  skip-files-above-size: 1048576
 
   # name-regex pairs to consider when searching files for secrets. Note: the regex must match single line patterns
   # but may also have OPTIONAL multiline capture groups. Regexes with a named capture group of "value" will
