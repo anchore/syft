@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 )
@@ -30,6 +32,40 @@ func TestSinglePackage(t *testing.T) {
 				Architecture:  "amd64",
 				InstalledSize: 4064,
 				Maintainer:    "APT Development Team <deity@lists.debian.org>",
+				Files: []pkg.DpkgFileRecord{
+					{
+						Path: "/etc/apt/apt.conf.d/01autoremove",
+						Digest: &file.Digest{
+							Algorithm: "md5",
+							Value:     "76120d358bc9037bb6358e737b3050b5",
+						},
+						IsConfigFile: true,
+					},
+					{
+						Path: "/etc/cron.daily/apt-compat",
+						Digest: &file.Digest{
+							Algorithm: "md5",
+							Value:     "49e9b2cfa17849700d4db735d04244f3",
+						},
+						IsConfigFile: true,
+					},
+					{
+						Path: "/etc/kernel/postinst.d/apt-auto-removal",
+						Digest: &file.Digest{
+							Algorithm: "md5",
+							Value:     "4ad976a68f045517cf4696cec7b8aa3a",
+						},
+						IsConfigFile: true,
+					},
+					{
+						Path: "/etc/logrotate.d/apt",
+						Digest: &file.Digest{
+							Algorithm: "md5",
+							Value:     "179f2ed4f85cbaca12fa3d69c2a4a1c3",
+						},
+						IsConfigFile: true,
+					},
+				},
 			},
 		},
 	}
@@ -74,6 +110,7 @@ func TestMultiplePackages(t *testing.T) {
 					Architecture:  "all",
 					InstalledSize: 3036,
 					Maintainer:    "GNU Libc Maintainers <debian-glibc@lists.debian.org>",
+					Files:         []pkg.DpkgFileRecord{},
 				},
 				{
 					Package:       "util-linux",
@@ -81,6 +118,56 @@ func TestMultiplePackages(t *testing.T) {
 					Architecture:  "amd64",
 					InstalledSize: 4327,
 					Maintainer:    "LaMont Jones <lamont@debian.org>",
+					Files: []pkg.DpkgFileRecord{
+						{
+							Path: "/etc/default/hwclock",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "3916544450533eca69131f894db0ca12",
+							},
+							IsConfigFile: true,
+						},
+						{
+							Path: "/etc/init.d/hwclock.sh",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "1ca5c0743fa797ffa364db95bb8d8d8e",
+							},
+							IsConfigFile: true,
+						},
+						{
+							Path: "/etc/pam.d/runuser",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "b8b44b045259525e0fae9e38fdb2aeeb",
+							},
+							IsConfigFile: true,
+						},
+						{
+							Path: "/etc/pam.d/runuser-l",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "2106ea05877e8913f34b2c77fa02be45",
+							},
+							IsConfigFile: true,
+						},
+						{
+							Path: "/etc/pam.d/su",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "ce6dcfda3b190a27a455bb38a45ff34a",
+							},
+							IsConfigFile: true,
+						},
+						{
+							Path: "/etc/pam.d/su-l",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "756fef5687fecc0d986e5951427b0c4f",
+							},
+							IsConfigFile: true,
+						},
+					},
 				},
 			},
 		},

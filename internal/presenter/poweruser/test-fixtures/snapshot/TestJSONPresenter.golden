@@ -205,7 +205,7 @@
   }
  },
  "schema": {
-  "version": "1.0.5",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.0.5.json"
+  "version": "1.1.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.1.0.json"
  }
 }

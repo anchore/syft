@@ -15,7 +15,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-var errEndOfPackages = fmt.Errorf("no more packages to read")
+var (
+	errEndOfPackages = fmt.Errorf("no more packages to read")
+	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
+)
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
 func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
@@ -48,20 +51,52 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
-// nolint:funlen
-func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err error) {
-	dpkgFields := make(map[string]interface{})
+func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
 	var retErr error
+	dpkgFields, err := extractAllFields(reader)
+	if err != nil {
+		if !errors.Is(err, errEndOfPackages) {
+			return pkg.DpkgMetadata{}, err
+		}
+		retErr = err
+	}
+
+	entry := pkg.DpkgMetadata{
+		// ensure the default value for a collection is never nil since this may be shown as JSON
+		Files: make([]pkg.DpkgFileRecord, 0),
+	}
+	err = mapstructure.Decode(dpkgFields, &entry)
+	if err != nil {
+		return pkg.DpkgMetadata{}, err
+	}
+
+	name, version := extractSourceVersion(entry.Source)
+	if version != "" {
+		entry.SourceVersion = version
+		entry.Source = name
+	}
+
+	// there may be an optional conffiles section that we should persist as files
+	if conffilesSection, exists := dpkgFields["Conffiles"]; exists && conffilesSection != nil {
+		if sectionStr, ok := conffilesSection.(string); ok {
+			entry.Files = parseDpkgConffileInfo(strings.NewReader(sectionStr))
+		}
+	}
+
+	return entry, retErr
+}
+
+func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
+	dpkgFields := make(map[string]interface{})
 	var key string
 
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				retErr = errEndOfPackages
-				break
+				return dpkgFields, errEndOfPackages
 			}
-			return pkg.DpkgMetadata{}, err
+			return nil, err
 		}
 
 		line = strings.TrimRight(line, "\n")
@@ -79,12 +114,12 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err err
 		case strings.HasPrefix(line, " "):
 			// a field-body continuation
 			if len(key) == 0 {
-				return pkg.DpkgMetadata{}, fmt.Errorf("no match for continuation: line: '%s'", line)
+				return nil, fmt.Errorf("no match for continuation: line: '%s'", line)
 			}
 
 			val, ok := dpkgFields[key]
 			if !ok {
-				return pkg.DpkgMetadata{}, fmt.Errorf("no previous key exists, expecting: %s", key)
+				return nil, fmt.Errorf("no previous key exists, expecting: %s", key)
 			}
 			// concatenate onto previous value
 			val = fmt.Sprintf("%s\n %s", val, strings.TrimSpace(line))
@@ -94,35 +129,17 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (entry pkg.DpkgMetadata, err err
 			var val interface{}
 			key, val, err = handleNewKeyValue(line)
 			if err != nil {
-				return pkg.DpkgMetadata{}, err
+				return nil, err
 			}
 
 			if _, ok := dpkgFields[key]; ok {
-				return pkg.DpkgMetadata{}, fmt.Errorf("duplicate key discovered: %s", key)
+				return nil, fmt.Errorf("duplicate key discovered: %s", key)
 			}
 			dpkgFields[key] = val
 		}
 	}
-
-	err = mapstructure.Decode(dpkgFields, &entry)
-	if err != nil {
-		return pkg.DpkgMetadata{}, err
-	}
-
-	name, version := extractSourceVersion(entry.Source)
-	if version != "" {
-		entry.SourceVersion = version
-		entry.Source = name
-	}
-
-	return entry, retErr
+	return dpkgFields, nil
 }
-
-// match examples:
-// "a-thing (1.2.3)"     name="a-thing" version="1.2.3"
-// "a-thing"             name="a-thing" version=""
-// ""                    name=""        version=""
-var sourceRegexp = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 
 // If the source entry string is of the form "<name> (<version>)" then parse and return the components, if
 // of the "<name>" form, then return name and nil
