@@ -198,7 +198,7 @@ func catalogContentsTask() (powerUserTask, error) {
 	}
 
 	task := func(results *poweruser.JSONDocumentConfig, src source.Source) error {
-		resolver, err := src.FileResolver(appConfig.Contents.Cataloger.ScopeOpt)
+		resolver, err := src.FileResolver(appConfig.FileContents.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
 		}
