@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/syft/file"
+
 	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -79,10 +81,16 @@ func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.Pack
 		//only persist RPMDB file records which exist in the image/directory, otherwise ignore them
 		if resolver.HasPath(record.Path) {
 			records = append(records, pkg.RpmdbFileRecord{
-				Path:   record.Path,
-				Mode:   pkg.RpmdbFileMode(record.Mode),
-				Size:   int(record.Size),
-				SHA256: record.SHA256,
+				Path: record.Path,
+				Mode: pkg.RpmdbFileMode(record.Mode),
+				Size: int(record.Size),
+				Digest: file.Digest{
+					Value:     record.Digest,
+					Algorithm: entry.DigestAlgorithm.String(),
+				},
+				UserName:  record.Username,
+				GroupName: record.Groupname,
+				Flags:     record.Flags.String(),
 			})
 		}
 	}
