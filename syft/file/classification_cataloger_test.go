@@ -9,12 +9,11 @@ import (
 
 func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 	tests := []struct {
-		name           string
-		fixtureDir     string
-		location       string
-		expected       []Classification
-		constructorErr bool
-		catalogErr     bool
+		name        string
+		fixtureDir  string
+		location    string
+		expected    []Classification
+		expectedErr func(assert.TestingT, error, ...interface{}) bool
 	}{
 		{
 			name:       "positive-libpython3.7.so",
@@ -28,6 +27,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 					},
 				},
 			},
+			expectedErr: assert.NoError,
 		},
 		{
 			name:       "positive-python3.6",
@@ -41,6 +41,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 					},
 				},
 			},
+			expectedErr: assert.NoError,
 		},
 		{
 			name:       "positive-patchlevel.h",
@@ -54,6 +55,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 					},
 				},
 			},
+			expectedErr: assert.NoError,
 		},
 		{
 			name:       "positive-go",
@@ -67,6 +69,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 					},
 				},
 			},
+			expectedErr: assert.NoError,
 		},
 		{
 			name:       "positive-go-hint",
@@ -80,6 +83,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 					},
 				},
 			},
+			expectedErr: assert.NoError,
 		},
 		{
 			name:       "positive-busybox",
@@ -93,6 +97,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 					},
 				},
 			},
+			expectedErr: assert.NoError,
 		},
 	}
 
@@ -100,32 +105,16 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 
 			c, err := NewClassificationCataloger(DefaultClassifiers)
-			if err != nil && !test.constructorErr {
-				t.Fatalf("could not create cataloger (but should have been able to): %+v", err)
-			} else if err == nil && test.constructorErr {
-				t.Fatalf("expected constructor error but did not get one")
-			} else if test.constructorErr && err != nil {
-				return
-			}
+			test.expectedErr(t, err)
 
 			src, err := source.NewFromDirectory(test.fixtureDir)
-			if err != nil {
-				t.Fatalf("could not create source: %+v", err)
-			}
+			test.expectedErr(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			test.expectedErr(t, err)
 
 			actualResults, err := c.Catalog(resolver)
-			if err != nil && !test.catalogErr {
-				t.Fatalf("could not catalog (but should have been able to): %+v", err)
-			} else if err == nil && test.catalogErr {
-				t.Fatalf("expected catalog error but did not get one")
-			} else if test.catalogErr && err != nil {
-				return
-			}
+			test.expectedErr(t, err)
 
 			loc := source.NewLocation(test.location)
 
@@ -141,24 +130,16 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 
 	c, err := NewClassificationCataloger(DefaultClassifiers)
-	if err != nil {
-		t.Fatalf("could not create cataloger: %+v", err)
-	}
+	assert.NoError(t, err)
 
 	src, err := source.NewFromDirectory("test-fixtures/classifiers/negative")
-	if err != nil {
-		t.Fatalf("could not create source: %+v", err)
-	}
+	assert.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)
-	if err != nil {
-		t.Fatalf("could not create resolver: %+v", err)
-	}
+	assert.NoError(t, err)
 
 	actualResults, err := c.Catalog(resolver)
-	if err != nil {
-		t.Fatalf("could not catalog: %+v", err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 0, len(actualResults))
 
 }
