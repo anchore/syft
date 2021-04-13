@@ -25,8 +25,10 @@ const maxBarWidth = 50
 const statusSet = common.SpinnerDotSet // SpinnerCircleOutlineSet
 const completedStatus = "✔"            // "●"
 const tileFormat = color.Bold
-const statusTitleTemplate = " %s %-31s "
 const interval = 150 * time.Millisecond
+
+// StatusTitleColumn is the column index in a given row where status text will be displayed.
+const StatusTitleColumn = 31
 
 var (
 	auxInfoFormat            = color.HEX("#777777")
@@ -34,6 +36,7 @@ var (
 	dockerPullDownloadColor  = color.HEX("#777777")
 	dockerPullExtractColor   = color.White
 	dockerPullStageChars     = strings.Split("▁▃▄▅▆▇█", "")
+	statusTitleTemplate      = fmt.Sprintf(" %%s %%-%ds ", StatusTitleColumn)
 )
 
 // startProcess is a helper function for providing common elements for long-running UI elements (such as a
