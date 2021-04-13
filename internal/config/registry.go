@@ -37,7 +37,7 @@ func (cfg *registry) parseConfigValues() error {
 		os.Getenv("SYFT_REGISTRY_AUTH_PASSWORD"),
 		os.Getenv("SYFT_REGISTRY_AUTH_TOKEN")
 
-	if authority != "" && password != "" || authority != "" && token != "" {
+	if hasNonEmptyCredentials(authority, password, token) {
 		// note: we prepend the credentials such that the environment variables take precedence over on-disk configuration.
 		cfg.Auth = append([]RegistryCredentials{
 			{
@@ -49,6 +49,10 @@ func (cfg *registry) parseConfigValues() error {
 		}, cfg.Auth...)
 	}
 	return nil
+}
+
+func hasNonEmptyCredentials(authority, password, token string) bool {
+	return authority != "" && password != "" || authority != "" && token != ""
 }
 
 func (cfg *registry) ToOptions() *image.RegistryOptions {
