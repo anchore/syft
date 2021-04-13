@@ -28,16 +28,16 @@ func (cfg registry) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("registry.auth", []RegistryCredentials{})
 }
 
+// nolint: unparam
 func (cfg *registry) parseConfigValues() error {
 	// there may be additional credentials provided by env var that should be appended to the set of credentials
-	// note: only a authority and password would be required since a token
 	authority, username, password, token :=
 		os.Getenv("SYFT_REGISTRY_AUTH_AUTHORITY"),
 		os.Getenv("SYFT_REGISTRY_AUTH_USERNAME"),
 		os.Getenv("SYFT_REGISTRY_AUTH_PASSWORD"),
 		os.Getenv("SYFT_REGISTRY_AUTH_TOKEN")
 
-	if authority != "" && password != "" {
+	if authority != "" && password != "" || authority != "" && token != "" {
 		// note: we prepend the credentials such that the environment variables take precedence over on-disk configuration.
 		cfg.Auth = append([]RegistryCredentials{
 			{

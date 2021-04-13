@@ -25,7 +25,7 @@ type sourceDetector func(string) (image.Source, string, error)
 // New produces a Source based on userInput like dir: or image:tag
 func New(userInput string, registryOptions *image.RegistryOptions) (Source, func(), error) {
 	fs := afero.NewOsFs()
-	parsedScheme, location, err := detectScheme(fs, image.DetectSource, userInput)
+	parsedScheme, imageSource, location, err := detectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
 		return Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
 	}
@@ -48,7 +48,7 @@ func New(userInput string, registryOptions *image.RegistryOptions) (Source, func
 		return s, func() {}, nil
 
 	case ImageScheme:
-		img, err := stereoscope.GetImage(location, registryOptions)
+		img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
 		cleanup := func() {
 			stereoscope.Cleanup()
 		}
