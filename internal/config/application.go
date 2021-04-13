@@ -40,6 +40,7 @@ type Application struct {
 	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
 	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
 	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
+	Registry           registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
 }
 
 func newApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) *Application {

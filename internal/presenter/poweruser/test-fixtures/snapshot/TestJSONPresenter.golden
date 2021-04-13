@@ -223,6 +223,10 @@
     "exclude-pattern-names": null,
     "reveal-values": false,
     "skip-files-above-size": 0
+   },
+   "registry": {
+    "insecure-skip-tls-verify": false,
+    "auth": null
    }
   }
  },

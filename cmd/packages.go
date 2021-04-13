@@ -32,7 +32,7 @@ const (
   {{.appName}} {{.command}} alpine:latest -vv            show verbose debug information
 
   Supports the following image sources:
-    {{.appName}} {{.command}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon
+    {{.appName}} {{.command}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
     {{.appName}} {{.command}} path/to/a/file/or/dir      a Docker tar, OCI tar, OCI directory, or generic filesystem directory 
 
   You can also explicitly specify the scheme to use:
@@ -41,6 +41,7 @@ const (
     {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
     {{.appName}} {{.command}} oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
     {{.appName}} {{.command}} dir:path/to/yourproject                read directly from a path on disk (any directory)
+    {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 `
 )
 
@@ -187,7 +188,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		checkForApplicationUpdate()
 
-		src, cleanup, err := source.New(userInput)
+		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions())
 		if err != nil {
 			errs <- fmt.Errorf("failed to determine image source: %+v", err)
 			return

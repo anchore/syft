@@ -81,7 +81,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		checkForApplicationUpdate()
 
-		src, cleanup, err := source.New(userInput)
+		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions())
 		if err != nil {
 			errs <- err
 			return

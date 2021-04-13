@@ -21,7 +21,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", request},
 			assertions: []traitAssertion{
 				assertJsonReport,
-				assertSource(source.SquashedScope),
+				assertScope(source.SquashedScope),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -56,7 +56,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", request},
 			assertions: []traitAssertion{
-				assertSource(source.SquashedScope),
+				assertScope(source.SquashedScope),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -64,7 +64,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "all-layers-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "all-layers", request},
 			assertions: []traitAssertion{
-				assertSource(source.AllLayersScope),
+				assertScope(source.AllLayersScope),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -75,7 +75,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 			args: []string{"packages", "-o", "json", request},
 			assertions: []traitAssertion{
-				assertSource(source.AllLayersScope),
+				assertScope(source.AllLayersScope),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -128,6 +128,78 @@ func TestPackagesCmdFlags(t *testing.T) {
 			cmd, stdout, stderr := runSyftCommand(t, test.env, test.args...)
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
+			}
+			if t.Failed() {
+				t.Log("STDOUT:\n", stdout)
+				t.Log("STDERR:\n", stderr)
+				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
+			}
+		})
+	}
+}
+
+func TestRegistryAuth(t *testing.T) {
+	tests := []struct {
+		name       string
+		args       []string
+		env        map[string]string
+		assertions []traitAssertion
+	}{
+		{
+			name: "fallback to keychain",
+			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			assertions: []traitAssertion{
+				assertInOutput("source=OciRegistry"),
+				assertInOutput("localhost:5000/something:latest"),
+				assertInOutput("no registry credentials configured, using the default keychain"),
+			},
+		},
+		{
+			name: "use creds",
+			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			env: map[string]string{
+				"SYFT_REGISTRY_AUTH_AUTHORITY": "localhost:5000",
+				"SYFT_REGISTRY_AUTH_USERNAME":  "username",
+				"SYFT_REGISTRY_AUTH_PASSWORD":  "password",
+			},
+			assertions: []traitAssertion{
+				assertInOutput("source=OciRegistry"),
+				assertInOutput("localhost:5000/something:latest"),
+				assertInOutput(`using registry credentials for "localhost:5000"`),
+			},
+		},
+		{
+			name: "use token",
+			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			env: map[string]string{
+				"SYFT_REGISTRY_AUTH_AUTHORITY": "localhost:5000",
+				"SYFT_REGISTRY_AUTH_TOKEN":     "token",
+			},
+			assertions: []traitAssertion{
+				assertInOutput("source=OciRegistry"),
+				assertInOutput("localhost:5000/something:latest"),
+				assertInOutput(`using registry token for "localhost:5000"`),
+			},
+		},
+		{
+			name: "not enough info fallsback to keychain",
+			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			env: map[string]string{
+				"SYFT_REGISTRY_AUTH_AUTHORITY": "localhost:5000",
+			},
+			assertions: []traitAssertion{
+				assertInOutput("source=OciRegistry"),
+				assertInOutput("localhost:5000/something:latest"),
+				assertInOutput(`no registry credentials configured, using the default keychain`),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cmd, stdout, stderr := runSyftCommand(t, test.env, test.args...)
+			for _, traitAssertionFn := range test.assertions {
+				traitAssertionFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
 			if t.Failed() {
 				t.Log("STDOUT:\n", stdout)

@@ -27,7 +27,7 @@ func assertTableReport(tb testing.TB, stdout, _ string, _ int) {
 	}
 }
 
-func assertSource(scope source.Scope) traitAssertion {
+func assertScope(scope source.Scope) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, rc int) {
 		// we can only verify source with the json report
 		assertJsonReport(tb, stdout, stderr, rc)
