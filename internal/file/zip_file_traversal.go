@@ -24,6 +24,15 @@ const (
 
 const perFileReadLimit = 2 * GB
 
+type errZipSlipDetected struct {
+	Prefix   string
+	JoinArgs []string
+}
+
+func (e *errZipSlipDetected) Error() string {
+	return fmt.Sprintf("paths are not allowed to resolve outside of the root prefix (%q). Destination: %q", e.Prefix, e.JoinArgs)
+}
+
 type zipTraversalRequest map[string]struct{}
 
 func newZipTraverseRequest(paths ...string) zipTraversalRequest {
@@ -169,23 +178,32 @@ func ContentsFromZip(archivePath string, paths ...string) (map[string]string, er
 // UnzipToDir extracts a zip archive to a target directory.
 func UnzipToDir(archivePath, targetDir string) error {
 	visitor := func(file *zip.File) error {
-		// the zip-slip attack protection is still being erroneously detected
-		// nolint:gosec
-		expandedFilePath := filepath.Clean(filepath.Join(targetDir, file.Name))
-
-		// protect against zip slip attacks (traversing unintended parent paths from maliciously crafted relative-path entries)
-		if !strings.HasPrefix(expandedFilePath, filepath.Clean(targetDir)+string(os.PathSeparator)) {
-			return fmt.Errorf("potential zip slip attack: %q", expandedFilePath)
+		joinedPath, err := safeJoin(targetDir, file.Name)
+		if err != nil {
+			return err
 		}
 
-		err := extractSingleFile(file, expandedFilePath, archivePath)
-		if err != nil {
+		if err = extractSingleFile(file, joinedPath, archivePath); err != nil {
 			return err
 		}
 		return nil
 	}
 
 	return TraverseFilesInZip(archivePath, visitor)
+}
+
+// safeJoin ensures that any destinations do not resolve to a path above the prefix path.
+func safeJoin(prefix string, dest ...string) (string, error) {
+	joinResult := filepath.Join(append([]string{prefix}, dest...)...)
+	cleanJoinResult := filepath.Clean(joinResult)
+	if !strings.HasPrefix(cleanJoinResult, filepath.Clean(prefix)) {
+		return "", &errZipSlipDetected{
+			Prefix:   prefix,
+			JoinArgs: dest,
+		}
+	}
+	// why not return the clean path? the called may not be expected it from what should only be a join operation.
+	return joinResult, nil
 }
 
 func extractSingleFile(file *zip.File, expandedFilePath, archivePath string) error {
