@@ -18,6 +18,7 @@ const (
 	ArchLinux         Type = "archlinux"
 	OpenSuseLeap      Type = "opensuseleap"
 	Photon            Type = "photon"
+	Windows           Type = "windows"
 )
 
 // All contains all Linux distribution options
@@ -34,6 +35,7 @@ var All = []Type{
 	ArchLinux,
 	OpenSuseLeap,
 	Photon,
+	Windows,
 }
 
 // IDMapping connects a distro ID like "ubuntu" to a Distro type
@@ -50,6 +52,7 @@ var IDMapping = map[string]Type{
 	"arch":          ArchLinux,
 	"opensuse-leap": OpenSuseLeap,
 	"photon":        Photon,
+	"windows":       Windows,
 }
 
 // String returns the string representation of the given Linux distribution.
