@@ -63,6 +63,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
+	definedPkgs.Remove(string(pkg.KbPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -189,6 +190,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.KbPkg))
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
 	if len(observedLanguages) < len(definedLanguages) {
