@@ -7,7 +7,7 @@ ACC_DIR=$2
 TEST_IMAGE=$3
 RESULTSDIR=$4
 
-TEST_IMAGE_TAR=/tmp/image.tar
+TEST_IMAGE_TAR=image.tar
 TEST_TYPE=mac
 WORK_DIR=`mktemp -d -t "syft-acceptance-test-${TEST_TYPE}-XXXXXX"`
 NORMAL_TEST_IMAGE=$(echo ${TEST_IMAGE} | tr ':' '-' )
@@ -29,18 +29,20 @@ function cleanup {
 
 trap cleanup EXIT
 
-# install skopeo
-skopeo --version || brew install skopeo
-
 # fetch test image
-[[ -f ${TEST_IMAGE_TAR} ]] || skopeo --override-os linux copy "docker://docker.io/${TEST_IMAGE}" "docker-archive:${TEST_IMAGE_TAR}"
-ls -alh ${TEST_IMAGE_TAR}
+if [[ -f ${TEST_IMAGE_TAR} ]]
+then
+  echo "using existing image"
+else
+  skopeo --version || brew install skopeo
+  skopeo --override-os linux copy "docker://docker.io/${TEST_IMAGE}" "docker-archive:${TEST_IMAGE_TAR}"
+fi
 
 # run syft
 SYFT_PATH="${DISTDIR}/syft-macos_darwin_amd64/syft"
 chmod 755 "${SYFT_PATH}"
 "${SYFT_PATH}" version
-SYFT_CHECK_FOR_APP_UPDATE=0 "${SYFT_PATH}" packages docker-archive://${TEST_IMAGE_TAR} -vv -o json > "${REPORT}"
+SYFT_CHECK_FOR_APP_UPDATE=0 "${SYFT_PATH}" packages docker-archive:${TEST_IMAGE_TAR} -vv -o json > "${REPORT}"
 
 # keep the generated report around
 mkdir -p ${RESULTSDIR}
