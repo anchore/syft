@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenerate(t *testing.T) {
+func TestGeneratePackageCPEs(t *testing.T) {
 	tests := []struct {
 		name     string
 		p        pkg.Package
@@ -132,7 +132,7 @@ func TestGenerate(t *testing.T) {
 			},
 		},
 		{
-			name: "jenkins package",
+			name: "jenkins package identified via pkg type",
 			p: pkg.Package{
 				Name:     "name",
 				Version:  "3.2",
@@ -142,13 +142,32 @@ func TestGenerate(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+			},
+		},
+		{
+			name: "jenkins package identified via groupId",
+			p: pkg.Package{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.cloudbees.jenkins.plugins",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 			},
@@ -165,13 +184,13 @@ func TestGenerate(t *testing.T) {
 				actualCpeSet.Add(a.BindToFmtString())
 			}
 
-			extra := strset.Difference(expectedCpeSet, actualCpeSet).List()
+			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()
 			sort.Strings(extra)
 			for _, d := range extra {
 				t.Errorf("extra CPE: %+v", d)
 			}
 
-			missing := strset.Difference(actualCpeSet, expectedCpeSet).List()
+			missing := strset.Difference(expectedCpeSet, actualCpeSet).List()
 			sort.Strings(missing)
 			for _, d := range missing {
 				t.Errorf("missing CPE: %+v", d)
