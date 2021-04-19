@@ -801,7 +801,10 @@
         "path",
         "mode",
         "size",
-        "sha256"
+        "digest",
+        "userName",
+        "groupName",
+        "flags"
       ],
       "properties": {
         "path": {
@@ -813,7 +816,16 @@
         "size": {
           "type": "integer"
         },
-        "sha256": {
+        "digest": {
+          "$ref": "#/definitions/Digest"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "flags": {
           "type": "string"
         }
       },
