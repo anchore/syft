@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
@@ -126,7 +128,10 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 				log.Warnf("checksum field with no parent record: %q", value)
 				continue
 			}
-			fileRecord.Checksum = value
+			fileRecord.Digest = file.Digest{
+				Algorithm: "sha1",
+				Value:     value,
+			}
 		case "I", "S":
 			// coerce to integer
 			iVal, err := strconv.Atoi(value)
