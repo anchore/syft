@@ -128,6 +128,11 @@ func candidateVendors(p pkg.Package) []string {
 	switch p.Language {
 	case pkg.Python:
 		vendors = append(vendors, fmt.Sprintf("python-%s", p.Name))
+		if strings.Contains(p.Name, "-") {
+			vendors = append(vendors, fmt.Sprintf("python_%s", strings.ReplaceAll(p.Name, "-", "_")))
+		} else {
+			vendors = append(vendors, fmt.Sprintf("python_%s", p.Name))
+		}
 	case pkg.Java:
 		if p.MetadataType == pkg.JavaMetadataType {
 			vendors = append(vendors, candidateVendorsForJava(p)...)
@@ -141,6 +146,12 @@ func candidateProducts(p pkg.Package) []string {
 
 	if p.Language == pkg.Java {
 		products = append(products, candidateProductsForJava(p)...)
+	}
+
+	for _, prod := range products {
+		if strings.Contains(prod, "-") {
+			products = append(products, strings.ReplaceAll(prod, "-", "_"))
+		}
 	}
 
 	// return any known product name swaps prepended to the results

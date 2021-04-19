@@ -18,6 +18,38 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		expected []string
 	}{
 		{
+			name: "hyphen replacement",
+			p: pkg.Package{
+				Name:     "name-part",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Python,
+				Type:     pkg.DebPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name-part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:name-part:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name-part:name-part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python-name-part:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-name-part:name-part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:*:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name_part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:name_part:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name_part:name_part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python_name_part:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name_part:name_part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:name-part:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name-part:name_part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:name_part:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name_part:name-part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python-name-part:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-name-part:name_part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python_name_part:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name_part:name-part:3.2:*:*:*:*:python:*:*",
+			},
+		},
+		{
 			name: "python language",
 			p: pkg.Package{
 				Name:     "name",
@@ -33,6 +65,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python-name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name:name:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python_name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name:name:3.2:*:*:*:*:python:*:*",
 			},
 		},
 		{
