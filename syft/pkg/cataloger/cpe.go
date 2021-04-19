@@ -13,6 +13,47 @@ import (
 // this is functionally equivalent to "*" and consistent with no input given (thus easier to test)
 const any = ""
 
+// this is a static mapping of known package names (keys) to official cpe names for each package
+type candidateStore map[pkg.Type]map[string][]string
+
+var productCandidatesByPkgType = candidateStore{
+	pkg.JavaPkg: {
+		"springframework": []string{"spring_framework", "springsource_spring_framework"},
+		"spring-core":     []string{"spring_framework", "springsource_spring_framework"},
+	},
+	pkg.NpmPkg: {
+		"hapi":             []string{"hapi_server_framework"},
+		"handlebars.js":    []string{"handlebars"},
+		"is-my-json-valid": []string{"is_my_json_valid"},
+		"mustache":         []string{"mustache.js"},
+	},
+	pkg.GemPkg: {
+		"Arabic-Prawn":        []string{"arabic_prawn"},
+		"bio-basespace-sdk":   []string{"basespace_ruby_sdk"},
+		"cremefraiche":        []string{"creme_fraiche"},
+		"html-sanitizer":      []string{"html_sanitizer"},
+		"sentry-raven":        []string{"raven-ruby"},
+		"RedCloth":            []string{"redcloth_library"},
+		"VladTheEnterprising": []string{"vladtheenterprising"},
+		"yajl-ruby":           []string{"yajl-ruby_gem"},
+	},
+	pkg.PythonPkg: {
+		"python-rrdtool": []string{"rrdtool"},
+	},
+}
+
+func (s candidateStore) getCandidates(t pkg.Type, key string) []string {
+	if _, ok := s[t]; !ok {
+		return nil
+	}
+	value, ok := s[t][key]
+	if !ok {
+		return nil
+	}
+
+	return value
+}
+
 func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	cpe := *(wfn.NewAttributesWithAny())
 	cpe.Part = "a"
@@ -98,8 +139,8 @@ func candidateVendors(p pkg.Package) []string {
 
 func candidateProducts(p pkg.Package) []string {
 	var products = []string{p.Name}
-	switch p.Language {
-	case pkg.Java:
+
+	if p.Language == pkg.Java {
 		if p.MetadataType == pkg.JavaMetadataType {
 			if metadata, ok := p.Metadata.(pkg.JavaMetadata); ok && metadata.PomProperties != nil {
 				// derive the product from the groupID (e.g. org.sonatype.nexus --> nexus)
@@ -111,8 +152,8 @@ func candidateProducts(p pkg.Package) []string {
 				}
 			}
 		}
-	default:
-		return products
 	}
-	return products
+
+	// return any known product name swaps prepended to the results
+	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products...)
 }

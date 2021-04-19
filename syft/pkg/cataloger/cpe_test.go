@@ -1,14 +1,14 @@
 package cataloger
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
-	"github.com/scylladb/go-set/strset"
-
-	"github.com/scylladb/go-set"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/scylladb/go-set"
+	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGenerate(t *testing.T) {
@@ -177,6 +177,48 @@ func TestGenerate(t *testing.T) {
 				t.Errorf("missing CPE: %+v", d)
 			}
 
+		})
+	}
+}
+
+func TestCandidateProducts(t *testing.T) {
+	tests := []struct {
+		p        pkg.Package
+		expected []string
+	}{
+		{
+			p: pkg.Package{
+				Name: "springframework",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"spring_framework", "springsource_spring_framework" /* <-- known good names | default guess --> */, "springframework"},
+		},
+		{
+			p: pkg.Package{
+				Name: "handlebars.js",
+				Type: pkg.NpmPkg,
+			},
+			expected: []string{"handlebars" /* <-- known good names | default guess --> */, "handlebars.js"},
+		},
+		{
+			p: pkg.Package{
+				Name: "RedCloth",
+				Type: pkg.GemPkg,
+			},
+			expected: []string{"redcloth_library" /* <-- known good names | default guess --> */, "RedCloth"},
+		},
+		{
+			p: pkg.Package{
+				Name: "python-rrdtool",
+				Type: pkg.PythonPkg,
+			},
+			expected: []string{"rrdtool" /* <-- known good names | default guess --> */, "python-rrdtool"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
+			assert.Equal(t, test.expected, candidateProducts(test.p))
 		})
 	}
 }
