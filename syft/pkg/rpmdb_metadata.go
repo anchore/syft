@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/distro"
@@ -30,10 +32,13 @@ type RpmdbMetadata struct {
 
 // RpmdbFileRecord represents the file metadata for a single file attributed to a RPM package.
 type RpmdbFileRecord struct {
-	Path   string        `json:"path"`
-	Mode   RpmdbFileMode `json:"mode"`
-	Size   int           `json:"size"`
-	SHA256 string        `json:"sha256"`
+	Path      string        `json:"path"`
+	Mode      RpmdbFileMode `json:"mode"`
+	Size      int           `json:"size"`
+	Digest    file.Digest   `json:"digest"`
+	UserName  string        `json:"userName"`
+	GroupName string        `json:"groupName"`
+	Flags     string        `json:"flags"`
 }
 
 // RpmdbFileMode is the raw file mode for a single file. This can be interpreted as the linux stat.h mode (see https://pubs.opengroup.org/onlinepubs/007908799/xsh/sysstat.h.html)

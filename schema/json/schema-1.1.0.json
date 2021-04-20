@@ -19,8 +19,9 @@
         "permissions": {
           "type": "string"
         },
-        "checksum": {
-          "type": "string"
+        "digest": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Digest"
         }
       },
       "additionalProperties": true,
@@ -283,7 +284,6 @@
           "type": "string"
         },
         "digest": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
           "$ref": "#/definitions/Digest"
         },
         "isConfigFile": {
@@ -801,7 +801,10 @@
         "path",
         "mode",
         "size",
-        "sha256"
+        "digest",
+        "userName",
+        "groupName",
+        "flags"
       ],
       "properties": {
         "path": {
@@ -813,7 +816,16 @@
         "size": {
           "type": "integer"
         },
-        "sha256": {
+        "digest": {
+          "$ref": "#/definitions/Digest"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "flags": {
           "type": "string"
         }
       },

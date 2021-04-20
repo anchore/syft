@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -105,10 +107,14 @@ func TestParseRpmDB(t *testing.T) {
 						Vendor:    "",
 						Files: []pkg.RpmdbFileRecord{
 							{
-								Path:   "/usr/local/bin/dive",
-								Mode:   33261,
-								Size:   12406784,
-								SHA256: "81d29f327ba23096b3c52ff6fe1c425641e618bc87b5c05ee377edc650afaa55",
+								Path: "/usr/local/bin/dive",
+								Mode: 33261,
+								Size: 12406784,
+								Digest: file.Digest{
+									Algorithm: "sha256",
+									Value:     "81d29f327ba23096b3c52ff6fe1c425641e618bc87b5c05ee377edc650afaa55",
+								},
+								// note: there is no username, groupname, or flags for this RPM
 							},
 						},
 					},
