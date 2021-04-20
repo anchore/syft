@@ -186,14 +186,14 @@ func (j *archiveParser) discoverPkgsFromAllPomProperties(parentPkg *pkg.Package)
 			continue
 		}
 
-		pkgs = append(pkgs, j.packagesFromPomProperties(pomProperties, parentPkg)...)
+		pkgs = append(pkgs, j.packagesFromPomProperties(*pomProperties, parentPkg)...)
 	}
 	return pkgs, nil
 }
 
 // packagesFromPomProperties processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func (j *archiveParser) packagesFromPomProperties(pomProperties *pkg.PomProperties, parentPkg *pkg.Package) []pkg.Package {
+func (j *archiveParser) packagesFromPomProperties(pomProperties pkg.PomProperties, parentPkg *pkg.Package) []pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
@@ -206,11 +206,11 @@ func (j *archiveParser) packagesFromPomProperties(pomProperties *pkg.PomProperti
 		Name:         pomProperties.ArtifactID,
 		Version:      pomProperties.Version,
 		Language:     pkg.Java,
-		Type:         pkg.JavaPkg,
+		Type:         pomProperties.PkgTypeIndicated(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
 			VirtualPath:   virtualPath,
-			PomProperties: pomProperties,
+			PomProperties: &pomProperties,
 			Parent:        parentPkg,
 		},
 	}
@@ -243,10 +243,13 @@ func (j *archiveParser) packagesFromPomProperties(pomProperties *pkg.PomProperti
 		parentPkg.Version = p.Version
 	}
 
+	// We may have learned more about the type via data in the pom properties
+	parentPkg.Type = p.Type
+
 	// keep the pom properties, but don't overwrite existing pom properties
 	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
 	if ok && parentMetadata.PomProperties == nil {
-		parentMetadata.PomProperties = pomProperties
+		parentMetadata.PomProperties = &pomProperties
 		parentPkg.Metadata = parentMetadata
 	}
 

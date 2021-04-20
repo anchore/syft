@@ -20,6 +20,15 @@ type PomProperties struct {
 	Extra      map[string]string `mapstructure:",remain" json:"extraFields"`
 }
 
+// PkgTypeIndicated returns the package Type indicated by the data contained in the PomProperties.
+func (p PomProperties) PkgTypeIndicated() Type {
+	if p.GroupID == PomPropertiesGroupIDJenkinsPlugins {
+		return JenkinsPluginPkg
+	}
+
+	return JavaPkg
+}
+
 // JavaManifest represents the fields of interest extracted from a Java archive's META-INF/MANIFEST.MF file.
 type JavaManifest struct {
 	Main          map[string]string            `json:"main,omitempty"`
@@ -43,3 +52,6 @@ func (m JavaMetadata) PackageURL() string {
 
 	return ""
 }
+
+const PomPropertiesGroupIDJenkinsPlugins = "com.cloudbees.jenkins.plugins"
+const PomPropertiesGroupIDJiraPlugins = "com.atlassian.jira.plugins"

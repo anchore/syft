@@ -156,7 +156,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Version:  "3.2",
 				FoundBy:  "some-analyzer",
 				Language: pkg.Java,
-				Type:     pkg.JavaPkg,
+				Type:     pkg.JenkinsPluginPkg,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID: "com.cloudbees.jenkins.plugins",

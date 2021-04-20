@@ -54,9 +54,6 @@ func (s candidateStore) getCandidates(t pkg.Type, key string) []string {
 	return value
 }
 
-const pomPropertiesGroupIDJenkinsPlugins = "com.cloudbees.jenkins.plugins"
-const pomPropertiesGroupIDJiraPlugins = "com.atlassian.jira.plugins"
-
 func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	cpe := *(wfn.NewAttributesWithAny())
 	cpe.Part = "a"
@@ -115,22 +112,9 @@ func candidateTargetSoftwareAttrs(p pkg.Package) []string {
 	return targetSw
 }
 
-func isJenkinsPlugin(p pkg.Package) bool {
-	if p.Type == pkg.JenkinsPluginPkg {
-		return true
-	}
-
-	if groupID := groupIDFromPomProperties(p); groupID == pomPropertiesGroupIDJenkinsPlugins {
-		return true
-	}
-
-	return false
-}
-
 func candidateTargetSoftwareAttrsForJava(p pkg.Package) []string {
 	// Use the more specific indicator if available
-
-	if isJenkinsPlugin(p) {
+	if p.Type == pkg.JenkinsPluginPkg {
 		return []string{"jenkins", "cloudbees_jenkins"}
 	}
 
@@ -217,8 +201,8 @@ func shouldConsiderGroupID(groupID string) bool {
 	}
 
 	excludedGroupIDs := []string{
-		pomPropertiesGroupIDJiraPlugins,
-		pomPropertiesGroupIDJenkinsPlugins,
+		pkg.PomPropertiesGroupIDJiraPlugins,
+		pkg.PomPropertiesGroupIDJenkinsPlugins,
 	}
 
 	for _, excludedGroupID := range excludedGroupIDs {
