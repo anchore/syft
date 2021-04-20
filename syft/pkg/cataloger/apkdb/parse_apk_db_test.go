@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/go-test/deep"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -39,7 +41,10 @@ func TestExtraFileAttributes(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "755",
-						Checksum:    "Q1M0C9qfC/+kdRiOodeihG2GMRtkE=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1M0C9qfC/+kdRiOodeihG2GMRtkE=",
+						},
 					},
 				},
 			},
@@ -105,7 +110,10 @@ func TestSinglePackageDetails(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "755",
-						Checksum:    "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
+						},
 					},
 					{
 						Path: "/usr",
@@ -118,28 +126,40 @@ func TestSinglePackageDetails(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "755",
-						Checksum:    "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
+						},
 					},
 					{
 						Path:        "/usr/bin/ldd",
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "755",
-						Checksum:    "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
+						},
 					},
 					{
 						Path:        "/usr/bin/getconf",
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "755",
-						Checksum:    "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
+						},
 					},
 					{
 						Path:        "/usr/bin/getent",
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "755",
-						Checksum:    "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
+						},
 					},
 				},
 			},
@@ -174,70 +194,115 @@ func TestSinglePackageDetails(t *testing.T) {
 						Path: "/etc",
 					},
 					{
-						Path:     "/etc/fstab",
-						Checksum: "Q11Q7hNe8QpDS531guqCdrXBzoA/o=",
+						Path: "/etc/fstab",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q11Q7hNe8QpDS531guqCdrXBzoA/o=",
+						},
 					},
 					{
-						Path:     "/etc/group",
-						Checksum: "Q1oJ16xWudgKOrXIEquEDzlF2Lsm4=",
+						Path: "/etc/group",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1oJ16xWudgKOrXIEquEDzlF2Lsm4=",
+						},
 					},
 					{
-						Path:     "/etc/hostname",
-						Checksum: "Q16nVwYVXP/tChvUPdukVD2ifXOmc=",
+						Path: "/etc/hostname",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q16nVwYVXP/tChvUPdukVD2ifXOmc=",
+						},
 					},
 					{
-						Path:     "/etc/hosts",
-						Checksum: "Q1BD6zJKZTRWyqGnPi4tSfd3krsMU=",
+						Path: "/etc/hosts",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1BD6zJKZTRWyqGnPi4tSfd3krsMU=",
+						},
 					},
 					{
-						Path:     "/etc/inittab",
-						Checksum: "Q1TsthbhW7QzWRe1E/NKwTOuD4pHc=",
+						Path: "/etc/inittab",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1TsthbhW7QzWRe1E/NKwTOuD4pHc=",
+						},
 					},
 					{
-						Path:     "/etc/modules",
-						Checksum: "Q1toogjUipHGcMgECgPJX64SwUT1M=",
+						Path: "/etc/modules",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1toogjUipHGcMgECgPJX64SwUT1M=",
+						},
 					},
 					{
-						Path:     "/etc/motd",
-						Checksum: "Q1XmduVVNURHQ27TvYp1Lr5TMtFcA=",
+						Path: "/etc/motd",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1XmduVVNURHQ27TvYp1Lr5TMtFcA=",
+						},
 					},
 					{
 						Path:        "/etc/mtab",
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "777",
-						Checksum:    "Q1kiljhXXH1LlQroHsEJIkPZg2eiw=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1kiljhXXH1LlQroHsEJIkPZg2eiw=",
+						},
 					},
 					{
-						Path:     "/etc/passwd",
-						Checksum: "Q1TchuuLUfur0izvfZQZxgN/LJhB8=",
+						Path: "/etc/passwd",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1TchuuLUfur0izvfZQZxgN/LJhB8=",
+						},
 					},
 					{
-						Path:     "/etc/profile",
-						Checksum: "Q1KpFb8kl5LvwXWlY3e58FNsjrI34=",
+						Path: "/etc/profile",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1KpFb8kl5LvwXWlY3e58FNsjrI34=",
+						},
 					},
 					{
-						Path:     "/etc/protocols",
-						Checksum: "Q13FqXUnvuOpMDrH/6rehxuYAEE34=",
+						Path: "/etc/protocols",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q13FqXUnvuOpMDrH/6rehxuYAEE34=",
+						},
 					},
 					{
-						Path:     "/etc/services",
-						Checksum: "Q1C6HJNgQvLWqt5VY+n7MZJ1rsDuY=",
+						Path: "/etc/services",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1C6HJNgQvLWqt5VY+n7MZJ1rsDuY=",
+						},
 					},
 					{
 						Path:        "/etc/shadow",
 						OwnerUID:    "0",
 						OwnerGID:    "42",
 						Permissions: "640",
-						Checksum:    "Q1ltrPIAW2zHeDiajsex2Bdmq3uqA=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1ltrPIAW2zHeDiajsex2Bdmq3uqA=",
+						},
 					},
 					{
-						Path:     "/etc/shells",
-						Checksum: "Q1ojm2YdpCJ6B/apGDaZ/Sdb2xJkA=",
+						Path: "/etc/shells",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1ojm2YdpCJ6B/apGDaZ/Sdb2xJkA=",
+						},
 					},
 					{
-						Path:     "/etc/sysctl.conf",
-						Checksum: "Q14upz3tfnNxZkIEsUhWn7Xoiw96g=",
+						Path: "/etc/sysctl.conf",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q14upz3tfnNxZkIEsUhWn7Xoiw96g=",
+						},
 					},
 					{
 						Path: "/etc/apk",
@@ -253,7 +318,10 @@ func TestSinglePackageDetails(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "600",
-						Checksum:    "Q1vfk1apUWI4yLJGhhNRd0kJixfvY=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1vfk1apUWI4yLJGhhNRd0kJixfvY=",
+						},
 					},
 					{
 						Path: "/etc/init.d",
@@ -262,20 +330,32 @@ func TestSinglePackageDetails(t *testing.T) {
 						Path: "/etc/modprobe.d",
 					},
 					{
-						Path:     "/etc/modprobe.d/aliases.conf",
-						Checksum: "Q1WUbh6TBYNVK7e4Y+uUvLs/7viqk=",
+						Path: "/etc/modprobe.d/aliases.conf",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1WUbh6TBYNVK7e4Y+uUvLs/7viqk=",
+						},
 					},
 					{
-						Path:     "/etc/modprobe.d/blacklist.conf",
-						Checksum: "Q1xxYGU6S6TLQvb7ervPrWWwAWqMg=",
+						Path: "/etc/modprobe.d/blacklist.conf",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1xxYGU6S6TLQvb7ervPrWWwAWqMg=",
+						},
 					},
 					{
-						Path:     "/etc/modprobe.d/i386.conf",
-						Checksum: "Q1pnay/njn6ol9cCssL7KiZZ8etlc=",
+						Path: "/etc/modprobe.d/i386.conf",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1pnay/njn6ol9cCssL7KiZZ8etlc=",
+						},
 					},
 					{
-						Path:     "/etc/modprobe.d/kms.conf",
-						Checksum: "Q1ynbLn3GYDpvajba/ldp1niayeog=",
+						Path: "/etc/modprobe.d/kms.conf",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1ynbLn3GYDpvajba/ldp1niayeog=",
+						},
 					},
 					{
 						Path: "/etc/modules-load.d",
@@ -320,12 +400,18 @@ func TestSinglePackageDetails(t *testing.T) {
 						Path: "/etc/profile.d",
 					},
 					{
-						Path:     "/etc/profile.d/color_prompt",
-						Checksum: "Q10wL23GuSCVfumMRgakabUI6EsSk=",
+						Path: "/etc/profile.d/color_prompt",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q10wL23GuSCVfumMRgakabUI6EsSk=",
+						},
 					},
 					{
-						Path:     "/etc/profile.d/locale",
-						Checksum: "Q1R4bIEpnKxxOSrlnZy9AoawqZ5DU=",
+						Path: "/etc/profile.d/locale",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1R4bIEpnKxxOSrlnZy9AoawqZ5DU=",
+						},
 					},
 					{
 						Path: "/etc/sysctl.d",
@@ -349,8 +435,11 @@ func TestSinglePackageDetails(t *testing.T) {
 						Path: "/lib/sysctl.d",
 					},
 					{
-						Path:     "/lib/sysctl.d/00-alpine.conf",
-						Checksum: "Q1HpElzW1xEgmKfERtTy7oommnq6c=",
+						Path: "/lib/sysctl.d/00-alpine.conf",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1HpElzW1xEgmKfERtTy7oommnq6c=",
+						},
 					},
 					{
 						Path: "/media",
@@ -390,7 +479,10 @@ func TestSinglePackageDetails(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "755",
-						Checksum:    "Q1YeuSmC7iDbEWrusPzA/zUQF6YSg=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1YeuSmC7iDbEWrusPzA/zUQF6YSg=",
+						},
 					},
 					{
 						Path: "/srv",
@@ -445,7 +537,10 @@ func TestSinglePackageDetails(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "777",
-						Checksum:    "Q11/SNZz/8cK2dSKK+cJpVrZIuF4Q=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q11/SNZz/8cK2dSKK+cJpVrZIuF4Q=",
+						},
 					},
 					{
 						Path: "/var/cache",
@@ -491,7 +586,10 @@ func TestSinglePackageDetails(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "777",
-						Checksum:    "Q1dzbdazYZA2nTzSIG3YyNw7d4Juc=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1dzbdazYZA2nTzSIG3YyNw7d4Juc=",
+						},
 					},
 					{
 						Path: "/var/spool/cron",
@@ -501,7 +599,10 @@ func TestSinglePackageDetails(t *testing.T) {
 						OwnerUID:    "0",
 						OwnerGID:    "0",
 						Permissions: "777",
-						Checksum:    "Q1OFZt+ZMp7j0Gny0rqSKuWJyqYmA=",
+						Digest: file.Digest{
+							Algorithm: "sha1",
+							Value:     "Q1OFZt+ZMp7j0Gny0rqSKuWJyqYmA=",
+						},
 					},
 					{
 						Path:        "/var/tmp",
@@ -603,7 +704,10 @@ func TestMultiplePackages(t *testing.T) {
 								OwnerUID:    "0",
 								OwnerGID:    "0",
 								Permissions: "755",
-								Checksum:    "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
+								Digest: file.Digest{
+									Algorithm: "sha1",
+									Value:     "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
+								},
 							},
 							{
 								Path: "/usr",
@@ -616,28 +720,40 @@ func TestMultiplePackages(t *testing.T) {
 								OwnerUID:    "0",
 								OwnerGID:    "0",
 								Permissions: "755",
-								Checksum:    "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
+								Digest: file.Digest{
+									Algorithm: "sha1",
+									Value:     "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
+								},
 							},
 							{
 								Path:        "/usr/bin/ldd",
 								OwnerUID:    "0",
 								OwnerGID:    "0",
 								Permissions: "755",
-								Checksum:    "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
+								Digest: file.Digest{
+									Algorithm: "sha1",
+									Value:     "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
+								},
 							},
 							{
 								Path:        "/usr/bin/getconf",
 								OwnerUID:    "0",
 								OwnerGID:    "0",
 								Permissions: "755",
-								Checksum:    "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
+								Digest: file.Digest{
+									Algorithm: "sha1",
+									Value:     "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
+								},
 							},
 							{
 								Path:        "/usr/bin/getent",
 								OwnerUID:    "0",
 								OwnerGID:    "0",
 								Permissions: "755",
-								Checksum:    "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
+								Digest: file.Digest{
+									Algorithm: "sha1",
+									Value:     "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
+								},
 							},
 						},
 					},

@@ -3,6 +3,8 @@ package pkg
 import (
 	"sort"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/package-url/packageurl-go"
 	"github.com/scylladb/go-set/strset"
 )
@@ -35,11 +37,11 @@ type ApkMetadata struct {
 
 // ApkFileRecord represents a single file listing and metadata from a APK DB entry (which may have many of these file records).
 type ApkFileRecord struct {
-	Path        string `json:"path"`
-	OwnerUID    string `json:"ownerUid,omitempty"`
-	OwnerGID    string `json:"ownerGid,omitempty"`
-	Permissions string `json:"permissions,omitempty"`
-	Checksum    string `json:"checksum,omitempty"`
+	Path        string      `json:"path"`
+	OwnerUID    string      `json:"ownerUid,omitempty"`
+	OwnerGID    string      `json:"ownerGid,omitempty"`
+	Permissions string      `json:"permissions,omitempty"`
+	Digest      file.Digest `json:"digest,omitempty"`
 }
 
 // PackageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
