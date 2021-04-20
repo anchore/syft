@@ -125,15 +125,7 @@ func candidateVendors(p pkg.Package) []string {
 	// TODO: Confirm whether using products as vendors is helpful to the matching process
 	vendors := candidateProducts(p)
 
-	switch p.Language {
-	case pkg.Python:
-		vendors = append(vendors, fmt.Sprintf("python-%s", p.Name))
-		if strings.Contains(p.Name, "-") {
-			vendors = append(vendors, fmt.Sprintf("python_%s", strings.ReplaceAll(p.Name, "-", "_")))
-		} else {
-			vendors = append(vendors, fmt.Sprintf("python_%s", p.Name))
-		}
-	case pkg.Java:
+	if p.Language == pkg.Java {
 		if p.MetadataType == pkg.JavaMetadataType {
 			vendors = append(vendors, candidateVendorsForJava(p)...)
 		}
@@ -144,7 +136,12 @@ func candidateVendors(p pkg.Package) []string {
 func candidateProducts(p pkg.Package) []string {
 	products := []string{p.Name}
 
-	if p.Language == pkg.Java {
+	switch p.Language {
+	case pkg.Python:
+		if !strings.HasPrefix(p.Name, "python") {
+			products = append(products, "python-"+p.Name)
+		}
+	case pkg.Java:
 		products = append(products, candidateProductsForJava(p)...)
 	}
 
