@@ -106,8 +106,6 @@ func (j *archiveParser) parse() ([]pkg.Package, error) {
 
 	// lastly, add the parent package to the list (assuming the parent exists)
 	if parentPkg != nil {
-		// only the parent package gets the type, nested packages may be of a different package type (or not of a package type at all, since they may not be bundled)
-		parentPkg.Type = j.fileInfo.pkgType()
 		pkgs = append([]pkg.Package{*parentPkg}, pkgs...)
 	}
 
@@ -143,7 +141,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Name:         selectName(manifest, j.fileInfo),
 		Version:      selectVersion(manifest, j.fileInfo),
 		Language:     pkg.Java,
-		Type:         pkg.JavaPkg,
+		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
 			VirtualPath: j.virtualPath,

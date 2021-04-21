@@ -1,9 +1,10 @@
 package pkg
 
 import (
+	"testing"
+
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestPomProperties_PkgTypeIndicated(t *testing.T) {
@@ -24,11 +25,66 @@ func TestPomProperties_PkgTypeIndicated(t *testing.T) {
 			expectedType: JavaPkg,
 		},
 		{
-			name: "jenkins plugin",
+			name: "cloudbees jenkins plugin",
 			pomProperties: PomProperties{
 				Path:       "some path",
 				Name:       "some name",
 				GroupID:    "com.cloudbees.jenkins.plugins",
+				ArtifactID: "some artifact ID",
+				Version:    "1",
+			},
+			expectedType: JenkinsPluginPkg,
+		},
+		{
+			name: "jenkins.io plugin",
+			pomProperties: PomProperties{
+				Path:       "some path",
+				Name:       "some name",
+				GroupID:    "io.jenkins.plugins",
+				ArtifactID: "some artifact ID",
+				Version:    "1",
+			},
+			expectedType: JenkinsPluginPkg,
+		},
+		{
+			name: "jenkins-ci.io plugin",
+			pomProperties: PomProperties{
+				Path:       "some path",
+				Name:       "some name",
+				GroupID:    "io.jenkins-ci.plugins",
+				ArtifactID: "some artifact ID",
+				Version:    "1",
+			},
+			expectedType: JenkinsPluginPkg,
+		},
+		{
+			name: "jenkins-ci.org plugin",
+			pomProperties: PomProperties{
+				Path:       "some path",
+				Name:       "some name",
+				GroupID:    "org.jenkins-ci.plugins",
+				ArtifactID: "some artifact ID",
+				Version:    "1",
+			},
+			expectedType: JenkinsPluginPkg,
+		},
+		{
+			name: "jenkins.org plugin",
+			pomProperties: PomProperties{
+				Path:       "some path",
+				Name:       "some name",
+				GroupID:    "org.jenkins.plugins",
+				ArtifactID: "some artifact ID",
+				Version:    "1",
+			},
+			expectedType: JenkinsPluginPkg,
+		},
+		{
+			name: "jenkins plugin prefix",
+			pomProperties: PomProperties{
+				Path:       "some path",
+				Name:       "some name",
+				GroupID:    "com.cloudbees.jenkins.plugins.bluesteel",
 				ArtifactID: "some artifact ID",
 				Version:    "1",
 			},

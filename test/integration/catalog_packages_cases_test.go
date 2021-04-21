@@ -6,6 +6,7 @@ type testCase struct {
 	name        string
 	pkgType     pkg.Type
 	pkgLanguage pkg.Language
+	duplicates  int
 	pkgInfo     map[string]string
 }
 
@@ -155,7 +156,6 @@ var commonTestCases = []testCase{
 		pkgLanguage: pkg.Java,
 		pkgInfo: map[string]string{
 			"example-java-app-maven": "0.1.0",
-			"example-jenkins-plugin": "1.0-SNAPSHOT", // the jenkins HPI file has a nested JAR of the same name
 			"joda-time":              "2.9.2",
 		},
 	},
@@ -163,6 +163,7 @@ var commonTestCases = []testCase{
 		name:        "find jenkins plugins",
 		pkgType:     pkg.JenkinsPluginPkg,
 		pkgLanguage: pkg.Java,
+		duplicates:  1, // there is a "example-jenkins-plugin" HPI, and nested within that a JAR of the same name
 		pkgInfo: map[string]string{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
 		},

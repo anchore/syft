@@ -1,6 +1,19 @@
 package pkg
 
-import "github.com/package-url/packageurl-go"
+import (
+	"github.com/anchore/syft/internal"
+	"github.com/package-url/packageurl-go"
+)
+
+const PomPropertiesGroupIDJiraPlugins = "com.atlassian.jira.plugins"
+
+var JenkinsPluginPomPropertiesGroupIDs = []string{
+	"io.jenkins.plugins",
+	"org.jenkins.plugins",
+	"org.jenkins-ci.plugins",
+	"io.jenkins-ci.plugins",
+	"com.cloudbees.jenkins.plugins",
+}
 
 // JavaMetadata encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
 type JavaMetadata struct {
@@ -22,7 +35,7 @@ type PomProperties struct {
 
 // PkgTypeIndicated returns the package Type indicated by the data contained in the PomProperties.
 func (p PomProperties) PkgTypeIndicated() Type {
-	if p.GroupID == PomPropertiesGroupIDJenkinsPlugins {
+	if internal.HasAnyOfPrefixes(p.GroupID, JenkinsPluginPomPropertiesGroupIDs...) {
 		return JenkinsPluginPkg
 	}
 
@@ -52,6 +65,3 @@ func (m JavaMetadata) PackageURL() string {
 
 	return ""
 }
-
-const PomPropertiesGroupIDJenkinsPlugins = "com.cloudbees.jenkins.plugins"
-const PomPropertiesGroupIDJiraPlugins = "com.atlassian.jira.plugins"
