@@ -292,7 +292,7 @@ func TestCandidateProducts(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{"itunes", "some-java-package-with-group-id"},
+			expected: []string{"itunes", "some-java-package-with-group-id", "some_java_package_with_group_id"},
 		},
 		{
 			p: pkg.Package{
@@ -305,7 +305,7 @@ func TestCandidateProducts(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{"some-jenkins-plugin"},
+			expected: []string{"some-jenkins-plugin", "some_jenkins_plugin"},
 		},
 		{
 			p: pkg.Package{
@@ -326,7 +326,7 @@ func TestCandidateProducts(t *testing.T) {
 				Name: "python-rrdtool",
 				Type: pkg.PythonPkg,
 			},
-			expected: []string{"rrdtool" /* <-- known good names | default guess --> */, "python-rrdtool"},
+			expected: []string{"rrdtool" /* <-- known good names | default guess --> */, "python-rrdtool", "python_rrdtool"},
 		},
 	}
 
