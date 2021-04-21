@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenerate(t *testing.T) {
+func TestGeneratePackageCPEs(t *testing.T) {
 	tests := []struct {
 		name     string
 		p        pkg.Package
@@ -132,7 +132,7 @@ func TestGenerate(t *testing.T) {
 			},
 		},
 		{
-			name: "jenkins package",
+			name: "jenkins package identified via pkg type",
 			p: pkg.Package{
 				Name:     "name",
 				Version:  "3.2",
@@ -142,13 +142,32 @@ func TestGenerate(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+			},
+		},
+		{
+			name: "jenkins package identified via groupId",
+			p: pkg.Package{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.cloudbees.jenkins.plugins",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 			},
@@ -165,18 +184,17 @@ func TestGenerate(t *testing.T) {
 				actualCpeSet.Add(a.BindToFmtString())
 			}
 
-			extra := strset.Difference(expectedCpeSet, actualCpeSet).List()
+			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()
 			sort.Strings(extra)
 			for _, d := range extra {
 				t.Errorf("extra CPE: %+v", d)
 			}
 
-			missing := strset.Difference(actualCpeSet, expectedCpeSet).List()
+			missing := strset.Difference(expectedCpeSet, actualCpeSet).List()
 			sort.Strings(missing)
 			for _, d := range missing {
 				t.Errorf("missing CPE: %+v", d)
 			}
-
 		})
 	}
 }
@@ -192,6 +210,32 @@ func TestCandidateProducts(t *testing.T) {
 				Type: pkg.JavaPkg,
 			},
 			expected: []string{"spring_framework", "springsource_spring_framework" /* <-- known good names | default guess --> */, "springframework"},
+		},
+		{
+			p: pkg.Package{
+				Name:     "some-java-package-with-group-id",
+				Type:     pkg.JavaPkg,
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.apple.itunes",
+					},
+				},
+			},
+			expected: []string{"itunes", "some-java-package-with-group-id"},
+		},
+		{
+			p: pkg.Package{
+				Name:     "some-jenkins-plugin",
+				Type:     pkg.JenkinsPluginPkg,
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.cloudbees.jenkins.plugins",
+					},
+				},
+			},
+			expected: []string{"some-jenkins-plugin"},
 		},
 		{
 			p: pkg.Package{
@@ -218,7 +262,67 @@ func TestCandidateProducts(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
-			assert.Equal(t, test.expected, candidateProducts(test.p))
+			assert.ElementsMatch(t, test.expected, candidateProducts(test.p))
+		})
+	}
+}
+
+func TestCandidateTargetSoftwareAttrs(t *testing.T) {
+	cases := []struct {
+		name     string
+		p        pkg.Package
+		expected []string
+	}{
+		{
+			name: "Java",
+			p: pkg.Package{
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+			},
+			expected: []string{"java", "maven"},
+		},
+		{
+			name: "Jenkins plugin",
+			p: pkg.Package{
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+			},
+			expected: []string{"jenkins", "cloudbees_jenkins"},
+		},
+		{
+			name: "JavaScript",
+			p: pkg.Package{
+				Language: pkg.JavaScript,
+			},
+			expected: []string{"node.js", "nodejs"},
+		},
+		{
+			name: "Ruby",
+			p: pkg.Package{
+				Language: pkg.Ruby,
+			},
+			expected: []string{"ruby", "rails"},
+		},
+		{
+			name: "Python",
+			p: pkg.Package{
+				Language: pkg.Python,
+			},
+			expected: []string{"python"},
+		},
+		{
+			name: "Other language",
+			p: pkg.Package{
+				Language: pkg.Rust,
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual := candidateTargetSoftwareAttrs(tc.p)
+			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }

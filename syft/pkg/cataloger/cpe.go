@@ -100,7 +100,7 @@ func candidateTargetSoftwareAttrs(p pkg.Package) []string {
 	var targetSw []string
 	switch p.Language {
 	case pkg.Java:
-		targetSw = append(targetSw, "java", "maven")
+		targetSw = append(targetSw, candidateTargetSoftwareAttrsForJava(p)...)
 	case pkg.JavaScript:
 		targetSw = append(targetSw, "node.js", "nodejs")
 	case pkg.Ruby:
@@ -109,51 +109,118 @@ func candidateTargetSoftwareAttrs(p pkg.Package) []string {
 		targetSw = append(targetSw, "python")
 	}
 
-	if p.Type == pkg.JenkinsPluginPkg {
-		targetSw = append(targetSw, "jenkins", "cloudbees_jenkins")
-	}
-
 	return targetSw
 }
 
+func candidateTargetSoftwareAttrsForJava(p pkg.Package) []string {
+	// Use the more specific indicator if available
+	if p.Type == pkg.JenkinsPluginPkg {
+		return []string{"jenkins", "cloudbees_jenkins"}
+	}
+
+	return []string{"java", "maven"}
+}
+
 func candidateVendors(p pkg.Package) []string {
+	// TODO: Confirm whether using products as vendors is helpful to the matching process
 	vendors := candidateProducts(p)
+
 	switch p.Language {
 	case pkg.Python:
 		vendors = append(vendors, fmt.Sprintf("python-%s", p.Name))
 	case pkg.Java:
 		if p.MetadataType == pkg.JavaMetadataType {
-			if metadata, ok := p.Metadata.(pkg.JavaMetadata); ok && metadata.PomProperties != nil {
-				// derive the vendor from the groupID (e.g. org.sonatype.nexus --> sonatype)
-				if strings.HasPrefix(metadata.PomProperties.GroupID, "org.") || strings.HasPrefix(metadata.PomProperties.GroupID, "com.") {
-					fields := strings.Split(metadata.PomProperties.GroupID, ".")
-					if len(fields) >= 3 {
-						vendors = append(vendors, fields[1])
-					}
-				}
-			}
+			vendors = append(vendors, candidateVendorsForJava(p)...)
 		}
 	}
 	return vendors
 }
 
 func candidateProducts(p pkg.Package) []string {
-	var products = []string{p.Name}
+	products := []string{p.Name}
 
 	if p.Language == pkg.Java {
-		if p.MetadataType == pkg.JavaMetadataType {
-			if metadata, ok := p.Metadata.(pkg.JavaMetadata); ok && metadata.PomProperties != nil {
-				// derive the product from the groupID (e.g. org.sonatype.nexus --> nexus)
-				if strings.HasPrefix(metadata.PomProperties.GroupID, "org.") || strings.HasPrefix(metadata.PomProperties.GroupID, "com.") {
-					fields := strings.Split(metadata.PomProperties.GroupID, ".")
-					if len(fields) >= 3 {
-						products = append(products, fields[2])
-					}
-				}
-			}
-		}
+		products = append(products, candidateProductsForJava(p)...)
 	}
 
 	// return any known product name swaps prepended to the results
 	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products...)
+}
+
+func candidateProductsForJava(p pkg.Package) []string {
+	if product, _ := productAndVendorFromPomPropertiesGroupID(p); product != "" {
+		return []string{product}
+	}
+
+	return nil
+}
+
+func candidateVendorsForJava(p pkg.Package) []string {
+	if _, vendor := productAndVendorFromPomPropertiesGroupID(p); vendor != "" {
+		return []string{vendor}
+	}
+
+	return nil
+}
+
+func productAndVendorFromPomPropertiesGroupID(p pkg.Package) (string, string) {
+	groupID := groupIDFromPomProperties(p)
+	if !shouldConsiderGroupID(groupID) {
+		return "", ""
+	}
+
+	if !hasAnyOfPrefixes(groupID, "com", "org") {
+		return "", ""
+	}
+
+	fields := strings.Split(groupID, ".")
+	if len(fields) < 3 {
+		return "", ""
+	}
+
+	product := fields[2]
+	vendor := fields[1]
+	return product, vendor
+}
+
+func groupIDFromPomProperties(p pkg.Package) string {
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		return ""
+	}
+
+	if metadata.PomProperties == nil {
+		return ""
+	}
+
+	return metadata.PomProperties.GroupID
+}
+
+func shouldConsiderGroupID(groupID string) bool {
+	if groupID == "" {
+		return false
+	}
+
+	excludedGroupIDs := []string{
+		pkg.PomPropertiesGroupIDJiraPlugins,
+		pkg.PomPropertiesGroupIDJenkinsPlugins,
+	}
+
+	for _, excludedGroupID := range excludedGroupIDs {
+		if groupID == excludedGroupID {
+			return false
+		}
+	}
+
+	return true
+}
+
+func hasAnyOfPrefixes(input string, prefixes ...string) bool {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(input, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
