@@ -138,6 +138,7 @@ func candidateVendors(p pkg.Package) []string {
 
 func candidateProducts(p pkg.Package) []string {
 	products := []string{p.Name}
+
 	if p.Language == pkg.Java {
 		products = append(products, candidateProductsForJava(p)...)
 	}

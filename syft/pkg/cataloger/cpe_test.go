@@ -195,7 +195,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			for _, d := range missing {
 				t.Errorf("missing CPE: %+v", d)
 			}
-
 		})
 	}
 }
@@ -211,6 +210,32 @@ func TestCandidateProducts(t *testing.T) {
 				Type: pkg.JavaPkg,
 			},
 			expected: []string{"spring_framework", "springsource_spring_framework" /* <-- known good names | default guess --> */, "springframework"},
+		},
+		{
+			p: pkg.Package{
+				Name:     "some-java-package-with-group-id",
+				Type:     pkg.JavaPkg,
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.apple.itunes",
+					},
+				},
+			},
+			expected: []string{"itunes", "some-java-package-with-group-id"},
+		},
+		{
+			p: pkg.Package{
+				Name:     "some-jenkins-plugin",
+				Type:     pkg.JenkinsPluginPkg,
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.cloudbees.jenkins.plugins",
+					},
+				},
+			},
+			expected: []string{"some-jenkins-plugin"},
 		},
 		{
 			p: pkg.Package{
@@ -237,7 +262,67 @@ func TestCandidateProducts(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
-			assert.Equal(t, test.expected, candidateProducts(test.p))
+			assert.ElementsMatch(t, test.expected, candidateProducts(test.p))
+		})
+	}
+}
+
+func TestCandidateTargetSoftwareAttrs(t *testing.T) {
+	cases := []struct {
+		name     string
+		p        pkg.Package
+		expected []string
+	}{
+		{
+			name: "Java",
+			p: pkg.Package{
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+			},
+			expected: []string{"java", "maven"},
+		},
+		{
+			name: "Jenkins plugin",
+			p: pkg.Package{
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+			},
+			expected: []string{"jenkins", "cloudbees_jenkins"},
+		},
+		{
+			name: "JavaScript",
+			p: pkg.Package{
+				Language: pkg.JavaScript,
+			},
+			expected: []string{"node.js", "nodejs"},
+		},
+		{
+			name: "Ruby",
+			p: pkg.Package{
+				Language: pkg.Ruby,
+			},
+			expected: []string{"ruby", "rails"},
+		},
+		{
+			name: "Python",
+			p: pkg.Package{
+				Language: pkg.Python,
+			},
+			expected: []string{"python"},
+		},
+		{
+			name: "Other language",
+			p: pkg.Package{
+				Language: pkg.Rust,
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual := candidateTargetSoftwareAttrs(tc.p)
+			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }
