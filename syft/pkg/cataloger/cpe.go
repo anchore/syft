@@ -10,12 +10,6 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-// this is functionally equivalent to "*" and consistent with no input given (thus easier to test)
-const any = ""
-
-// this is a static mapping of known package names (keys) to official cpe names for each package
-type candidateStore map[pkg.Type]map[string][]string
-
 var productCandidatesByPkgType = candidateStore{
 	pkg.JavaPkg: {
 		"springframework": []string{"spring_framework", "springsource_spring_framework"},
@@ -42,6 +36,25 @@ var productCandidatesByPkgType = candidateStore{
 	},
 }
 
+var cpeFilters = []filterFn{
+	// nolint: goconst
+	func(cpe pkg.CPE, p pkg.Package) bool {
+		// jira / atlassian should not apply to clients
+		if cpe.Vendor == "atlassian" && cpe.Product == "jira" && strings.Contains(p.Name, "client") {
+			return true
+		}
+		if cpe.Vendor == "jira" && cpe.Product == "jira" && strings.Contains(p.Name, "client") {
+			return true
+		}
+		return false
+	},
+}
+
+type filterFn func(cpe pkg.CPE, p pkg.Package) bool
+
+// this is a static mapping of known package names (keys) to official cpe names for each package
+type candidateStore map[pkg.Type]map[string][]string
+
 func (s candidateStore) getCandidates(t pkg.Type, key string) []string {
 	if _, ok := s[t]; !ok {
 		return nil
@@ -65,6 +78,20 @@ func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	return cpe
 }
 
+func filterCpes(cpes []pkg.CPE, p pkg.Package, filters ...filterFn) (result []pkg.CPE) {
+cpeLoop:
+	for _, cpe := range cpes {
+		for _, fn := range filters {
+			if fn(cpe, p) {
+				continue cpeLoop
+			}
+		}
+		// all filter functions passed on filtering this CPE
+		result = append(result, cpe)
+	}
+	return result
+}
+
 // generatePackageCPEs Create a list of CPEs, trying to guess the vendor, product tuple and setting TargetSoftware if possible
 func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	targetSws := candidateTargetSoftwareAttrs(p)
@@ -74,8 +101,8 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	keys := internal.NewStringSet()
 	cpes := make([]pkg.CPE, 0)
 	for _, product := range products {
-		for _, vendor := range append([]string{any}, vendors...) {
-			for _, targetSw := range append([]string{any}, targetSws...) {
+		for _, vendor := range append([]string{wfn.Any}, vendors...) {
+			for _, targetSw := range append([]string{wfn.Any}, targetSws...) {
 				// prevent duplicate entries...
 				key := fmt.Sprintf("%s|%s|%s|%s", product, vendor, p.Version, targetSw)
 				if keys.Contains(key) {
@@ -89,6 +116,9 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 			}
 		}
 	}
+
+	// filter out any known combinations that don't accurately represent this package
+	cpes = filterCpes(cpes, p, cpeFilters...)
 
 	sort.Sort(ByCPESpecificity(cpes))
 
@@ -157,6 +187,11 @@ func candidateProducts(p pkg.Package) []string {
 
 func candidateProductsForJava(p pkg.Package) []string {
 	if product, _ := productAndVendorFromPomPropertiesGroupID(p); product != "" {
+		// ignore group ID info from a jenkins plugin, as using this info may imply that this package
+		// CPE belongs to the cloudbees org (or similar) which is wrong.
+		if p.Type == pkg.JenkinsPluginPkg && strings.ToLower(product) == "jenkins" {
+			return nil
+		}
 		return []string{product}
 	}
 
@@ -177,7 +212,7 @@ func productAndVendorFromPomPropertiesGroupID(p pkg.Package) (string, string) {
 		return "", ""
 	}
 
-	if !hasAnyOfPrefixes(groupID, "com", "org") {
+	if !internal.HasAnyOfPrefixes(groupID, "com", "org") {
 		return "", ""
 	}
 
@@ -209,26 +244,7 @@ func shouldConsiderGroupID(groupID string) bool {
 		return false
 	}
 
-	excludedGroupIDs := []string{
-		pkg.PomPropertiesGroupIDJiraPlugins,
-		pkg.PomPropertiesGroupIDJenkinsPlugins,
-	}
+	excludedGroupIDs := append([]string{pkg.JiraPluginPomPropertiesGroupID}, pkg.JenkinsPluginPomPropertiesGroupIDs...)
 
-	for _, excludedGroupID := range excludedGroupIDs {
-		if groupID == excludedGroupID {
-			return false
-		}
-	}
-
-	return true
-}
-
-func hasAnyOfPrefixes(input string, prefixes ...string) bool {
-	for _, prefix := range prefixes {
-		if strings.HasPrefix(input, prefix) {
-			return true
-		}
-	}
-
-	return false
+	return !internal.HasAnyOfPrefixes(groupID, excludedGroupIDs...)
 }

@@ -96,7 +96,7 @@ func TestPkgCoverageImage(t *testing.T) {
 				pkgCount++
 			}
 
-			if pkgCount != len(c.pkgInfo) {
+			if pkgCount != len(c.pkgInfo)+c.duplicates {
 				t.Logf("Discovered packages of type %+v", c.pkgType)
 				for a := range catalog.Enumerate(c.pkgType) {
 					t.Log("   ", a)
@@ -175,7 +175,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 				actualPkgCount++
 			}
 
-			if actualPkgCount != len(test.pkgInfo) {
+			if actualPkgCount != len(test.pkgInfo)+test.duplicates {
 				for actualPkg := range catalog.Enumerate(test.pkgType) {
 					t.Log("   ", actualPkg)
 				}

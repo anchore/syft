@@ -220,7 +220,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
-			name: "jenkins package identified via groupId",
+			name: "cloudbees jenkins package identified via groupId",
 			p: pkg.Package{
 				Name:     "name",
 				Version:  "3.2",
@@ -240,6 +240,135 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+			},
+		},
+		{
+			name: "jenkins.io package identified via groupId prefix",
+			p: pkg.Package{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "io.jenkins.plugins.name.something",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+			},
+		},
+		{
+			name: "jenkins.io package identified via groupId",
+			p: pkg.Package{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "io.jenkins.plugins",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+			},
+		},
+		{
+			name: "jenkins-ci.io package identified via groupId",
+			p: pkg.Package{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "io.jenkins-ci.plugins",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+			},
+		},
+		{
+			name: "jenkins-ci.org package identified via groupId",
+			p: pkg.Package{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "org.jenkins-ci.plugins",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:*:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+			},
+		},
+		{
+			name: "jira-atlassian filtering",
+			p: pkg.Package{
+				Name:         "jira_client_core",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.Java,
+				Type:         pkg.JavaPkg,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID:    "org.atlassian.jira",
+						ArtifactID: "jira_client_core",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:jira:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:jira:3.2:*:*:*:*:java:*:*",
+				"cpe:2.3:a:*:jira:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:*:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:jira_client_core:3.2:*:*:*:*:java:*:*",
+				"cpe:2.3:a:*:jira_client_core:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:java:*:*",
+				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:jira:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jira:jira_client_core:3.2:*:*:*:*:java:*:*",
+				"cpe:2.3:a:jira:jira_client_core:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:java:*:*",
+				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:java:*:*",
+				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:maven:*:*",
 			},
 		},
 	}
