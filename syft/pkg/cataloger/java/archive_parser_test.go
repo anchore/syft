@@ -564,11 +564,11 @@ func TestParseNestedJar(t *testing.T) {
 func TestPackagesFromPomProperties(t *testing.T) {
 	virtualPath := "given/virtual/path"
 	tests := []struct {
-		name             string
-		props            *pkg.PomProperties
-		parent           *pkg.Package
-		expectedParent   pkg.Package
-		expectedPackages []pkg.Package
+		name            string
+		props           *pkg.PomProperties
+		parent          *pkg.Package
+		expectedParent  pkg.Package
+		expectedPackage *pkg.Package
 	}{
 		{
 			name: "go case: get a single package from pom properties",
@@ -599,30 +599,28 @@ func TestPackagesFromPomProperties(t *testing.T) {
 					Parent:        nil,
 				},
 			},
-			expectedPackages: []pkg.Package{
-				{
-					Name:         "some-artifact-id",
-					Version:      "1.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
-					Metadata: pkg.JavaMetadata{
-						VirtualPath: virtualPath + ":" + "some-artifact-id",
-						PomProperties: &pkg.PomProperties{
-							Name:       "some-name",
-							GroupID:    "some-group-id",
-							ArtifactID: "some-artifact-id",
-							Version:    "1.0",
-						},
-						Parent: &pkg.Package{
-							Name:    "some-parent-name",
-							Version: "2.0",
-							Metadata: pkg.JavaMetadata{
-								VirtualPath:   "some-parent-virtual-path",
-								Manifest:      nil,
-								PomProperties: nil,
-								Parent:        nil,
-							},
+			expectedPackage: &pkg.Package{
+				Name:         "some-artifact-id",
+				Version:      "1.0",
+				Language:     pkg.Java,
+				Type:         pkg.JavaPkg,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					PomProperties: &pkg.PomProperties{
+						Name:       "some-name",
+						GroupID:    "some-group-id",
+						ArtifactID: "some-artifact-id",
+						Version:    "1.0",
+					},
+					Parent: &pkg.Package{
+						Name:    "some-parent-name",
+						Version: "2.0",
+						Metadata: pkg.JavaMetadata{
+							VirtualPath:   "some-parent-virtual-path",
+							Manifest:      nil,
+							PomProperties: nil,
+							Parent:        nil,
 						},
 					},
 				},
@@ -657,30 +655,28 @@ func TestPackagesFromPomProperties(t *testing.T) {
 					Parent:        nil,
 				},
 			},
-			expectedPackages: []pkg.Package{
-				{
-					Name:         "some-artifact-id",
-					Version:      "1.0",
-					Language:     pkg.Java,
-					Type:         pkg.JenkinsPluginPkg,
-					MetadataType: pkg.JavaMetadataType,
-					Metadata: pkg.JavaMetadata{
-						VirtualPath: virtualPath + ":" + "some-artifact-id",
-						PomProperties: &pkg.PomProperties{
-							Name:       "some-name",
-							GroupID:    "com.cloudbees.jenkins.plugins",
-							ArtifactID: "some-artifact-id",
-							Version:    "1.0",
-						},
-						Parent: &pkg.Package{
-							Name:    "some-parent-name",
-							Version: "2.0",
-							Metadata: pkg.JavaMetadata{
-								VirtualPath:   "some-parent-virtual-path",
-								Manifest:      nil,
-								PomProperties: nil,
-								Parent:        nil,
-							},
+			expectedPackage: &pkg.Package{
+				Name:         "some-artifact-id",
+				Version:      "1.0",
+				Language:     pkg.Java,
+				Type:         pkg.JenkinsPluginPkg,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					PomProperties: &pkg.PomProperties{
+						Name:       "some-name",
+						GroupID:    "com.cloudbees.jenkins.plugins",
+						ArtifactID: "some-artifact-id",
+						Version:    "1.0",
+					},
+					Parent: &pkg.Package{
+						Name:    "some-parent-name",
+						Version: "2.0",
+						Metadata: pkg.JavaMetadata{
+							VirtualPath:   "some-parent-virtual-path",
+							Manifest:      nil,
+							PomProperties: nil,
+							Parent:        nil,
 						},
 					},
 				},
@@ -723,7 +719,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 					Parent: nil,
 				},
 			},
-			expectedPackages: nil,
+			expectedPackage: nil,
 		},
 		{
 			name: "child matches parent by key and is Jenkins plugin",
@@ -761,45 +757,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 					Parent: nil,
 				},
 			},
-			expectedPackages: nil,
-		},
-		{
-			name: "child matches parent by virtual path",
-			props: &pkg.PomProperties{
-				Name:       "some-name",
-				GroupID:    "some-group-id",
-				ArtifactID: "some-parent-name",       // note: matches parent package
-				Version:    "NOT_THE_PARENT_VERSION", // note: DOES NOT match parent package
-			},
-			parent: &pkg.Package{
-				Name:    "some-parent-name",
-				Version: "2.0",
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath:   virtualPath + ":some-parent-name", // note: matching virtual path
-					Manifest:      nil,
-					PomProperties: nil,
-					Parent:        nil,
-				},
-			},
-			expectedParent: pkg.Package{
-				Name:    "some-parent-name",
-				Version: "2.0",
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":some-parent-name", // note: matching virtual path
-					Manifest:    nil,
-					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
-						Name:       "some-name",
-						GroupID:    "some-group-id",
-						ArtifactID: "some-parent-name",       // note: matches parent package
-						Version:    "NOT_THE_PARENT_VERSION", // note: DOES NOT match parent package
-					},
-					Parent: nil,
-				},
-			},
-			expectedPackages: nil,
+			expectedPackage: nil,
 		},
 		{
 			name: "child matches parent by virtual path -- override name and version",
@@ -810,11 +768,11 @@ func TestPackagesFromPomProperties(t *testing.T) {
 				Version:    "3.0",              // note: DOES NOT match parent package
 			},
 			parent: &pkg.Package{
-				Name:    "", // note: empty
-				Version: "", // note: empty
+				Name:    "", // note: empty, so should not be matched on
+				Version: "", // note: empty, so should not be matched on
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   virtualPath + ":some-parent-name", // note: matching virtual path
+					VirtualPath:   virtualPath, // note: matching virtual path
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -825,56 +783,19 @@ func TestPackagesFromPomProperties(t *testing.T) {
 				Version: "3.0",
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":some-parent-name", // note: matching virtual path
+					VirtualPath: virtualPath,
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
-						ArtifactID: "some-parent-name", // note: DOES NOT match parent package
-						Version:    "3.0",              // note: DOES NOT match parent package
+						ArtifactID: "some-parent-name",
+						Version:    "3.0",
 					},
 					Parent: nil,
 				},
 			},
-			expectedPackages: nil,
-		},
-		{
-			name: "child matches parent by virtual path -- do not override existing pom properties",
-			props: &pkg.PomProperties{
-				Name:       "some-name",
-				GroupID:    "some-group-id",
-				ArtifactID: "some-parent-name",       // note: matches parent package
-				Version:    "NOT_THE_PARENT_VERSION", // note: DOES NOT match parent package
-			},
-			parent: &pkg.Package{
-				Name:    "some-parent-name",
-				Version: "2.0",
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":some-parent-name", // note: matching virtual path
-					Manifest:    nil,
-					PomProperties: &pkg.PomProperties{
-						Name: "EXISTS", // note: this already exists and should not be overridden
-					},
-					Parent: nil,
-				},
-			},
-			expectedParent: pkg.Package{
-				Name:    "some-parent-name",
-				Version: "2.0",
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":some-parent-name", // note: matching virtual path
-					Manifest:    nil,
-					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
-						Name: "EXISTS", // note: this already exists and should not be overridden
-					},
-					Parent: nil,
-				},
-			},
-			expectedPackages: nil,
+			expectedPackage: nil,
 		},
 		{
 			name: "child matches parent by artifact id",
@@ -898,7 +819,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 			// note: the SAME as the original parent values
 			expectedParent: pkg.Package{
 				Name:    "some-parent-name",
-				Version: "2.0",
+				Version: "NOT_THE_PARENT_VERSION", // note: the version is updated from pom properties
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					VirtualPath: virtualPath + ":NEW_VIRTUAL_PATH",
@@ -907,13 +828,13 @@ func TestPackagesFromPomProperties(t *testing.T) {
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
-						ArtifactID: "some-parent-name",       // note: matches parent package
-						Version:    "NOT_THE_PARENT_VERSION", // note: DOES NOT match parent package
+						ArtifactID: "some-parent-name",
+						Version:    "NOT_THE_PARENT_VERSION",
 					},
 					Parent: nil,
 				},
 			},
-			expectedPackages: nil,
+			expectedPackage: nil,
 		},
 	}
 
@@ -929,9 +850,9 @@ func TestPackagesFromPomProperties(t *testing.T) {
 			t.Cleanup(cleanup)
 
 			// get the test data
-			actualPackages := parser.packagesFromPomProperties(*test.props, test.parent)
-			assert.Equal(t, test.expectedPackages, actualPackages)
-			assert.Equal(t, test.expectedParent, *test.parent)
+			actualPackage := parser.newPackageFromPomProperties(*test.props, test.parent)
+			assert.Equal(t, test.expectedPackage, actualPackage, "new package doesn't match")
+			assert.Equal(t, test.expectedParent, *test.parent, "parent doesn't match")
 		})
 	}
 }
