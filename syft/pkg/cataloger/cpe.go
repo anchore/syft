@@ -244,7 +244,7 @@ func shouldConsiderGroupID(groupID string) bool {
 		return false
 	}
 
-	excludedGroupIDs := append([]string{pkg.PomPropertiesGroupIDJiraPlugins}, pkg.JenkinsPluginPomPropertiesGroupIDs...)
+	excludedGroupIDs := append([]string{pkg.JiraPluginPomPropertiesGroupID}, pkg.JenkinsPluginPomPropertiesGroupIDs...)
 
 	return !internal.HasAnyOfPrefixes(groupID, excludedGroupIDs...)
 }
