@@ -269,30 +269,27 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 }
 
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
-	pkgKey := uniquePkgKey(&p)
-	parentKey := uniquePkgKey(parentPkg)
-
 	// the name/version pair matches...
-	matchesParentPkg := pkgKey == parentKey
+	if uniquePkgKey(&p) == uniquePkgKey(parentPkg) {
+		return true
+	}
+
+	metadata := p.Metadata.(pkg.JavaMetadata)
 
 	// the virtual path matches...
-	matchesParentPkg = matchesParentPkg || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == p.Metadata.(pkg.JavaMetadata).VirtualPath
-
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		return matchesParentPkg
+	if parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == metadata.VirtualPath {
+		return true
 	}
-	pomProperties := metadata.PomProperties
 
 	// the pom artifactId is the parent name
 	// note: you CANNOT use name-is-subset-of-artifact-id or vice versa --this is too generic. Shaded jars are a good
 	// example of this: where the package name is "cloudbees-analytics-segment-driver" and a child is "analytics", but
 	// they do not indicate the same package.
-	if pomProperties.ArtifactID != "" {
-		matchesParentPkg = matchesParentPkg || parentPkg.Name == pomProperties.ArtifactID
+	if metadata.PomProperties.ArtifactID != "" && parentPkg.Name == metadata.PomProperties.ArtifactID {
+		return true
 	}
 
-	return matchesParentPkg
+	return false
 }
 
 func updatePackage(p pkg.Package, parentPkg *pkg.Package) {
