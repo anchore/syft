@@ -184,14 +184,17 @@ func (j *archiveParser) discoverPkgsFromAllPomProperties(parentPkg *pkg.Package)
 			continue
 		}
 
-		pkgs = append(pkgs, j.packagesFromPomProperties(*pomProperties, parentPkg)...)
+		pkgFromPom := j.newPackageFromPomProperties(*pomProperties, parentPkg)
+		if pkgFromPom != nil {
+			pkgs = append(pkgs, *pkgFromPom)
+		}
 	}
 	return pkgs, nil
 }
 
 // packagesFromPomProperties processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func (j *archiveParser) packagesFromPomProperties(pomProperties pkg.PomProperties, parentPkg *pkg.Package) []pkg.Package {
+func (j *archiveParser) newPackageFromPomProperties(pomProperties pkg.PomProperties, parentPkg *pkg.Package) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
@@ -213,45 +216,12 @@ func (j *archiveParser) packagesFromPomProperties(pomProperties pkg.PomPropertie
 		},
 	}
 
-	pkgKey := uniquePkgKey(&p)
-	parentKey := uniquePkgKey(parentPkg)
-
-	// the name/version pair matches...
-	matchesParentPkg := pkgKey == parentKey
-
-	// the virtual path matches...
-	matchesParentPkg = matchesParentPkg || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == virtualPath
-
-	// the pom artifactId has the parent name or vice versa
-	if pomProperties.ArtifactID != "" {
-		matchesParentPkg = matchesParentPkg || strings.Contains(parentPkg.Name, pomProperties.ArtifactID) || strings.Contains(pomProperties.ArtifactID, parentPkg.Name)
+	if packageIdentitiesMatch(p, parentPkg) {
+		updatePackage(p, parentPkg)
+		return nil
 	}
 
-	if !matchesParentPkg {
-		// only keep packages we haven't seen yet (and are not related to the parent package)
-		return []pkg.Package{p}
-	}
-
-	// we've run across more information about our parent package, add this info to the parent package metadata
-	// the pom properties is typically a better source of information for name and version than the manifest
-	if parentPkg.Name == "" {
-		parentPkg.Name = p.Name
-	}
-	if parentPkg.Version == "" {
-		parentPkg.Version = p.Version
-	}
-
-	// We may have learned more about the type via data in the pom properties
-	parentPkg.Type = p.Type
-
-	// keep the pom properties, but don't overwrite existing pom properties
-	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
-	if ok && parentMetadata.PomProperties == nil {
-		parentMetadata.PomProperties = &pomProperties
-		parentPkg.Metadata = parentMetadata
-	}
-
-	return nil
+	return &p
 }
 
 // discoverPkgsFromNestedArchives finds Java archives within Java archives, returning all listed Java packages found and
@@ -296,4 +266,54 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 	}
 
 	return pkgs, nil
+}
+
+func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
+	pkgKey := uniquePkgKey(&p)
+	parentKey := uniquePkgKey(parentPkg)
+
+	// the name/version pair matches...
+	matchesParentPkg := pkgKey == parentKey
+
+	// the virtual path matches...
+	matchesParentPkg = matchesParentPkg || parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == p.Metadata.(pkg.JavaMetadata).VirtualPath
+
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		return matchesParentPkg
+	}
+	pomProperties := metadata.PomProperties
+
+	// the pom artifactId is the parent name
+	// note: you CANNOT use name-is-subset-of-artifact-id or vice versa --this is too generic. Shaded jars are a good
+	// example of this: where the package name is "cloudbees-analytics-segment-driver" and a child is "analytics", but
+	// they do not indicate the same package.
+	if pomProperties.ArtifactID != "" {
+		matchesParentPkg = matchesParentPkg || parentPkg.Name == pomProperties.ArtifactID
+	}
+
+	return matchesParentPkg
+}
+
+func updatePackage(p pkg.Package, parentPkg *pkg.Package) {
+	// we've run across more information about our parent package, add this info to the parent package metadata
+	// the pom properties is typically a better source of information for name and version than the manifest
+	parentPkg.Name = p.Name
+	parentPkg.Version = p.Version
+
+	// we may have learned more about the type via data in the pom properties
+	parentPkg.Type = p.Type
+
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		return
+	}
+	pomPropertiesCopy := *metadata.PomProperties
+
+	// keep the pom properties, but don't overwrite existing pom properties
+	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
+	if ok && parentMetadata.PomProperties == nil {
+		parentMetadata.PomProperties = &pomPropertiesCopy
+		parentPkg.Metadata = parentMetadata
+	}
 }
