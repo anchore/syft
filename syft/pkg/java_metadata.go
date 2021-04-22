@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"strings"
+
 	"github.com/anchore/syft/internal"
 	"github.com/package-url/packageurl-go"
 )
@@ -35,7 +37,7 @@ type PomProperties struct {
 
 // PkgTypeIndicated returns the package Type indicated by the data contained in the PomProperties.
 func (p PomProperties) PkgTypeIndicated() Type {
-	if internal.HasAnyOfPrefixes(p.GroupID, JenkinsPluginPomPropertiesGroupIDs...) {
+	if internal.HasAnyOfPrefixes(p.GroupID, JenkinsPluginPomPropertiesGroupIDs...) || strings.Contains(p.GroupID, ".jenkins.plugin") {
 		return JenkinsPluginPkg
 	}
 

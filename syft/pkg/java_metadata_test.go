@@ -90,6 +90,17 @@ func TestPomProperties_PkgTypeIndicated(t *testing.T) {
 			},
 			expectedType: JenkinsPluginPkg,
 		},
+		{
+			name: "jenkins.plugin somewhere in group id",
+			pomProperties: PomProperties{
+				Path:       "some path",
+				Name:       "some name",
+				GroupID:    "org.wagoodman.jenkins.plugins.something",
+				ArtifactID: "some artifact ID",
+				Version:    "1",
+			},
+			expectedType: JenkinsPluginPkg,
+		},
 	}
 
 	for _, tc := range cases {
