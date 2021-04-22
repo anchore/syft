@@ -9,8 +9,8 @@ env:
 
 jobs:
 
-  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Static-Analysis:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Static analysis"
     runs-on: ubuntu-20.04
     # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
@@ -49,8 +49,8 @@ jobs:
       - name: Run static analysis
         run: make static-analysis
 
-  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Unit-Test:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
     runs-on: ubuntu-20.04
     # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
@@ -104,8 +104,8 @@ jobs:
           name: unit-test-results
           path: test/results/**/*
 
-  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Integration-Test:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
     runs-on: ubuntu-20.04
     # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
@@ -272,8 +272,8 @@ jobs:
           name: artifacts
           path: snapshot/**/*
 
-  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Linux:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
@@ -291,8 +291,8 @@ jobs:
       - name: Run Acceptance Tests (Linux)
         run: make acceptance-linux
 
-  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Acceptance-Mac:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Mac)"
     needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
@@ -317,8 +317,8 @@ jobs:
       - name: Run Acceptance Tests (Mac)
         run: make acceptance-mac
 
-  # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
   Cli-Linux:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
