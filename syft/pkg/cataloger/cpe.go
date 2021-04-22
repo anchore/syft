@@ -37,14 +37,22 @@ var productCandidatesByPkgType = candidateStore{
 }
 
 var cpeFilters = []filterFn{
-	// nolint: goconst
 	func(cpe pkg.CPE, p pkg.Package) bool {
 		// jira / atlassian should not apply to clients
-		if cpe.Vendor == "atlassian" && cpe.Product == "jira" && strings.Contains(p.Name, "client") {
-			return true
+		if cpe.Product == "jira" && strings.Contains(strings.ToLower(p.Name), "client") {
+			if cpe.Vendor == wfn.Any || cpe.Vendor == "jira" || cpe.Vendor == "atlassian" {
+				return true
+			}
 		}
-		if cpe.Vendor == "jira" && cpe.Product == "jira" && strings.Contains(p.Name, "client") {
-			return true
+		return false
+	},
+	// nolint: goconst
+	func(cpe pkg.CPE, p pkg.Package) bool {
+		// jenkins server should only match against a product with the name jenkins
+		if cpe.Product == "jenkins" && !strings.Contains(strings.ToLower(p.Name), "jenkins") {
+			if cpe.Vendor == wfn.Any || cpe.Vendor == "jenkins" || cpe.Vendor == "cloudbees" {
+				return true
+			}
 		}
 		return false
 	},
@@ -186,6 +194,9 @@ func candidateProducts(p pkg.Package) []string {
 }
 
 func candidateProductsForJava(p pkg.Package) []string {
+	// TODO: we could get group-id-like info from the MANIFEST.MF "Automatic-Module-Name" field
+	// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
+	// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
 	if product, _ := productAndVendorFromPomPropertiesGroupID(p); product != "" {
 		// ignore group ID info from a jenkins plugin, as using this info may imply that this package
 		// CPE belongs to the cloudbees org (or similar) which is wrong.
