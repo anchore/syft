@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/internal"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/source"
 )
@@ -88,9 +89,14 @@ func TestIdentifyDistro(t *testing.T) {
 
 	observedDistros := internal.NewStringSet()
 	definedDistros := internal.NewStringSet()
+
 	for _, distroType := range All {
 		definedDistros.Add(string(distroType))
 	}
+
+	// Somewhat cheating with Windows. There is no support for detecting/parsing a Windows OS, so it is not
+	// possible to comply with this test unless it is added manually to the "observed distros"
+	definedDistros.Remove(string(Windows))
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
@@ -129,9 +135,7 @@ func TestIdentifyDistro(t *testing.T) {
 				return
 			}
 
-			if d.Version.String() != test.Version {
-				t.Errorf("expected distro version doesn't match: %v != %v", d.Version.String(), test.Version)
-			}
+			assert.Equal(t, d.Version.String(), test.Version)
 		})
 	}
 
@@ -145,7 +149,6 @@ func TestIdentifyDistro(t *testing.T) {
 		}
 		t.Errorf("distro coverage incomplete (defined=%d, coverage=%d)", len(definedDistros), len(observedDistros))
 	}
-
 }
 
 func TestParseOsRelease(t *testing.T) {

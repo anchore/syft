@@ -14,4 +14,5 @@ const (
 	RpmdbMetadataType            MetadataType = "RpmdbMetadata"
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
 	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
+	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
 )
