@@ -6,7 +6,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/anchore/syft/blob/main/LICENSE)
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/anchore/syft.svg)](https://github.com/anchore/syft)
 
-A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems.
+A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. Exceptional for vulnerability detection when used with a scanner tool like [Grype](https://github.com/anchore/grype).
 
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
@@ -15,6 +15,8 @@ A CLI tool and go library for generating a Software Bill of Materials (SBOM) fro
 - Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
 - Supports Docker and OCI image formats
+- Direct support for [Grype](https://github.com/anchore/grype), a fast and powerful vulnerability matcher.
+
 
 If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
 
@@ -114,7 +116,7 @@ package:
     # enable/disable cataloging of packages
     # SYFT_PACKAGE_CATALOGER_ENABLED env var
     enabled: true
-    
+
     # the search space to look for packages (options: all-layers, squashed)
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
@@ -155,11 +157,11 @@ file-metadata:
     # enable/disable cataloging of file metadata
     # SYFT_FILE_METADATA_CATALOGER_ENABLED env var
     enabled: true
-    
+
     # the search space to look for file metadata (options: all-layers, squashed)
     # SYFT_FILE_METADATA_CATALOGER_SCOPE env var
     scope: "squashed"
-  
+
   # the file digest algorithms to use when cataloging files (options: "sha256", "md5", "sha1")
   # SYFT_FILE_METADATA_DIGESTS env var
   digests: ["sha256"]
@@ -185,12 +187,12 @@ secrets:
 
   # name-regex pairs to consider when searching files for secrets. Note: the regex must match single line patterns
   # but may also have OPTIONAL multiline capture groups. Regexes with a named capture group of "value" will
-  # use the entire regex to match, but the secret value will be assumed to be entirely contained within the 
+  # use the entire regex to match, but the secret value will be assumed to be entirely contained within the
   # "value" named capture group.
   additional-patterns: {}
 
-  # names to exclude from the secrets search, valid values are: "aws-access-key", "aws-secret-key", "pem-private-key", 
-  # "docker-config-auth", and "generic-api-key". Note: this does not consider any names introduced in the 
+  # names to exclude from the secrets search, valid values are: "aws-access-key", "aws-secret-key", "pem-private-key",
+  # "docker-config-auth", and "generic-api-key". Note: this does not consider any names introduced in the
   # "secrets.additional-patterns" config option.
   # SYFT_SECRETS_EXCLUDE_PATTERN_NAMES env var
   exclude-pattern-names: []
