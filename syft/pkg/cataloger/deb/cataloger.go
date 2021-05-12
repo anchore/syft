@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -50,6 +52,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 		}
 
 		pkgs, err = parseDpkgStatus(dbContents)
+		internal.CloseAndLogError(dbContents, dbLocation.VirtualPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.RealPath, err)
 		}
@@ -78,6 +81,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, p)
 
 	if copyrightReader != nil {
+		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.VirtualPath)
 		// attach the licenses
 		p.Licenses = parseLicensesFromCopyright(copyrightReader)
 
@@ -124,6 +128,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 	md5Reader, md5Location := fetchMd5Contents(resolver, dbLocation, p)
 
 	if md5Reader != nil {
+		defer internal.CloseAndLogError(md5Reader, md5Location.VirtualPath)
 		// attach the file list
 		files = append(files, parseDpkgMD5Info(md5Reader)...)
 
@@ -136,6 +141,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 	conffilesReader, conffilesLocation := fetchConffileContents(resolver, dbLocation, p)
 
 	if conffilesReader != nil {
+		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.VirtualPath)
 		// attach the file list
 		files = append(files, parseDpkgConffileInfo(md5Reader)...)
 

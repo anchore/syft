@@ -18,7 +18,7 @@ import (
 )
 
 // integrity check
-var _ common.ParserFn = parsePackageLock
+var _ common.ParserFn = parsePackageJSON
 
 // PackageJSON represents a JavaScript package.json file
 type PackageJSON struct {

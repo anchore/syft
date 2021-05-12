@@ -6,6 +6,7 @@ package common
 import (
 	"fmt"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -39,13 +40,14 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 	parserByLocation := c.selectFiles(resolver)
 
 	for location, parser := range parserByLocation {
-		content, err := resolver.FileContentsByLocation(location)
+		contentReader, err := resolver.FileContentsByLocation(location)
 		if err != nil {
 			// TODO: fail or log?
 			return nil, fmt.Errorf("unable to fetch contents for location=%v : %w", location, err)
 		}
 
-		entries, err := parser(location.RealPath, content)
+		entries, err := parser(location.RealPath, contentReader)
+		internal.CloseAndLogError(contentReader, location.VirtualPath)
 		if err != nil {
 			// TODO: should we fail? or only log?
 			log.Warnf("cataloger '%s' failed to parse entries (location=%+v): %+v", c.upstreamCataloger, location, err)

@@ -6,6 +6,8 @@ package rpmdb
 import (
 	"fmt"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -39,6 +41,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 		}
 
 		pkgs, err = parseRpmDB(resolver, location, dbContentReader)
+		internal.CloseAndLogError(dbContentReader, location.VirtualPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to catalog rpmdb package=%+v: %w", location.RealPath, err)
 		}
