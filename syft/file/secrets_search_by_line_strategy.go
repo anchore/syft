@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"regexp"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -16,7 +18,7 @@ func catalogLocationByLine(resolver source.FileResolver, location source.Locatio
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
-	defer readCloser.Close()
+	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
 
 	var scanner = bufio.NewReader(readCloser)
 	var position int64
@@ -65,6 +67,7 @@ func searchForSecretsWithinLine(resolver source.FileResolver, location source.Lo
 			if secret != nil {
 				secrets = append(secrets, *secret)
 			}
+			internal.CloseAndLogError(reader, location.VirtualPath)
 		}
 	}
 

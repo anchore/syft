@@ -7,6 +7,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/syft/internal/bus"
@@ -53,7 +55,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	if err != nil {
 		return nil, err
 	}
-	defer contentReader.Close()
+	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
 
 	// create a set of hasher objects tied together with a single writer to feed content into
 	hashers := make([]hash.Hash, len(i.hashes))

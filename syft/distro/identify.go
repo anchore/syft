@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
 )
@@ -54,13 +56,13 @@ identifyLoop:
 
 		for _, location := range locations {
 			contentReader, err := resolver.FileContentsByLocation(location)
-
 			if err != nil {
 				log.Debugf("unable to get contents from %s: %s", entry.path, err)
 				continue
 			}
 
 			content, err := ioutil.ReadAll(contentReader)
+			internal.CloseAndLogError(contentReader, location.VirtualPath)
 			if err != nil {
 				log.Errorf("unable to read %q: %+v", location.RealPath, err)
 				break

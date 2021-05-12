@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"sort"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
@@ -101,7 +103,7 @@ func extractValue(resolver source.FileResolver, location source.Location, start,
 	if err != nil {
 		return "", fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
-	defer readCloser.Close()
+	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
 
 	n, err := io.CopyN(ioutil.Discard, readCloser, start)
 	if err != nil {

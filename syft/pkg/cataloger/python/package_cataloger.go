@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/syft/pkg"
 
 	"github.com/anchore/syft/syft/source"
@@ -101,6 +103,7 @@ func (c *PackageCataloger) fetchRecordFiles(resolver source.FileResolver, metada
 		if err != nil {
 			return nil, nil, err
 		}
+		defer internal.CloseAndLogError(recordContents, recordPath)
 
 		// parse the record contents
 		records, err := parseWheelOrEggRecord(recordContents)
@@ -130,6 +133,7 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, m
 	if err != nil {
 		return nil, nil, err
 	}
+	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.VirtualPath)
 
 	scanner := bufio.NewScanner(topLevelContents)
 	for scanner.Scan() {
@@ -151,6 +155,7 @@ func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolv
 	if err != nil {
 		return nil, nil, err
 	}
+	defer internal.CloseAndLogError(metadataContents, metadataLocation.VirtualPath)
 
 	metadata, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
 	if err != nil {
