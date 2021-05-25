@@ -27,6 +27,7 @@ type ImportConfig struct {
 	Dockerfile              []byte
 	OverwriteExistingUpload bool
 	Scope                   source.Scope
+	Timeout                 uint
 }
 
 func importProgress(source string) (*progress.Stage, *progress.Manual) {
@@ -54,7 +55,8 @@ func importProgress(source string) (*progress.Stage, *progress.Manual) {
 func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 	stage, prog := importProgress(c.config.BaseURL)
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*30)
+	timeout := time.Duration(cfg.Timeout) * time.Second
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	authedCtx := c.newRequestContext(ctxWithTimeout)

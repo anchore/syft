@@ -137,6 +137,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"overwrite-existing-image", false,
 		"overwrite an existing image during the upload to Anchore Enterprise",
 	)
+
+	flags.Uint(
+		"import-timeout", 30,
+		"set a timeout duration (in seconds) for the upload to Anchore Enterprise",
+	)
 }
 
 func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
@@ -169,6 +174,10 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	}
 
 	if err := viper.BindPFlag("anchore.overwrite-existing-image", flags.Lookup("overwrite-existing-image")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("anchore.import-timeout", flags.Lookup("import-timeout")); err != nil {
 		return err
 	}
 
@@ -262,6 +271,7 @@ func runPackageSbomUpload(src source.Source, s source.Metadata, catalog *pkg.Cat
 		Dockerfile:              dockerfileContents,
 		OverwriteExistingUpload: appConfig.Anchore.OverwriteExistingImage,
 		Scope:                   scope,
+		Timeout:                 appConfig.Anchore.ImportTimeout,
 	}
 
 	if err := c.Import(context.Background(), importCfg); err != nil {
