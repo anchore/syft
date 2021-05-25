@@ -12,6 +12,8 @@ type anchore struct {
 	Password               string `yaml:"-" json:"-" mapstructure:"password"`                                                               // -p , password to authenticate upload
 	Dockerfile             string `yaml:"dockerfile" json:"dockerfile" mapstructure:"dockerfile"`                                           // -d , dockerfile to attach for upload
 	OverwriteExistingImage bool   `yaml:"overwrite-existing-image" json:"overwrite-existing-image" mapstructure:"overwrite-existing-image"` // --overwrite-existing-image , if any of the SBOM components have already been uploaded this flag will ensure they are overwritten with the current upload
+	ImportTimeout          uint   `yaml:"import-timeout" json:"import-timeout" mapstructure:"import-timeout"`                               // --import-timeout
+	// , customize the number of seconds within which the SBOM import must be completed or canceled
 }
 
 func (cfg anchore) loadDefaultValues(v *viper.Viper) {

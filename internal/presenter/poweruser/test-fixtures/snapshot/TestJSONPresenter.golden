@@ -174,7 +174,8 @@
     "host": "",
     "path": "",
     "dockerfile": "",
-    "overwrite-existing-image": false
+    "overwrite-existing-image": false,
+    "import-timeout": 0
    },
    "dev": {
     "profile-cpu": false,
