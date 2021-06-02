@@ -10,6 +10,13 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
+func intRef(i ...int) *int {
+	if len(i) == 0 {
+		return nil
+	}
+	return &i[0]
+}
+
 func TestRpmMetadata_pURL(t *testing.T) {
 	tests := []struct {
 		distro   distro.Distro
@@ -25,9 +32,9 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				Version: "v",
 				Arch:    "a",
 				Release: "r",
-				Epoch:   1,
+				Epoch:   intRef(1),
 			},
-			expected: "pkg:rpm/centos/p@1:v-r?arch=a",
+			expected: "pkg:rpm/centos/p@v-r?arch=a&epoch=1",
 		},
 		{
 			distro: distro.Distro{
@@ -38,9 +45,9 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				Version: "v",
 				Arch:    "a",
 				Release: "r",
-				Epoch:   1,
+				Epoch:   intRef(),
 			},
-			expected: "pkg:rpm/redhat/p@1:v-r?arch=a",
+			expected: "pkg:rpm/redhat/p@v-r?arch=a",
 		},
 	}
 

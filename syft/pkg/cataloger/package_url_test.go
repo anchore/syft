@@ -34,30 +34,6 @@ func TestPackageURL(t *testing.T) {
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
-				Type:    pkg.PythonPkg,
-			},
-			expected: "pkg:pypi/name@v0.1.0",
-		},
-		{
-			pkg: pkg.Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    pkg.PythonPkg,
-			},
-			expected: "pkg:pypi/name@v0.1.0",
-		},
-		{
-			pkg: pkg.Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    pkg.PythonPkg,
-			},
-			expected: "pkg:pypi/name@v0.1.0",
-		},
-		{
-			pkg: pkg.Package{
-				Name:    "name",
-				Version: "v0.1.0",
 				Type:    pkg.GemPkg,
 			},
 			expected: "pkg:gem/name@v0.1.0",
@@ -96,13 +72,31 @@ func TestPackageURL(t *testing.T) {
 				Type:    pkg.RpmPkg,
 				Metadata: pkg.RpmdbMetadata{
 					Name:    "name",
-					Version: "v0.1.0",
-					Epoch:   2,
+					Version: "0.1.0",
+					Epoch:   intRef(2),
 					Arch:    "amd64",
 					Release: "3",
 				},
 			},
-			expected: "pkg:rpm/centos/name@2:v0.1.0-3?arch=amd64",
+			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64&epoch=2",
+		},
+		{
+			distro: &distro.Distro{
+				Type: distro.CentOS,
+			},
+			pkg: pkg.Package{
+				Name:    "bad-name",
+				Version: "bad-v0.1.0",
+				Type:    pkg.RpmPkg,
+				Metadata: pkg.RpmdbMetadata{
+					Name:    "name",
+					Version: "0.1.0",
+					Epoch:   intRef(),
+					Arch:    "amd64",
+					Release: "3",
+				},
+			},
+			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64",
 		},
 		{
 			distro: &distro.Distro{
@@ -135,4 +129,11 @@ func TestPackageURL(t *testing.T) {
 			}
 		})
 	}
+}
+
+func intRef(i ...int) *int {
+	if len(i) == 0 {
+		return nil
+	}
+	return &i[0]
 }
