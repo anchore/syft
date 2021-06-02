@@ -72,7 +72,7 @@ func TestParseRpmDB(t *testing.T) {
 					MetadataType: pkg.RpmdbMetadataType,
 					Metadata: pkg.RpmdbMetadata{
 						Name:      "dive",
-						Epoch:     intRef(),
+						Epoch:     nil,
 						Arch:      "x86_64",
 						Release:   "1",
 						Version:   "0.9.2",
@@ -99,7 +99,7 @@ func TestParseRpmDB(t *testing.T) {
 					MetadataType: pkg.RpmdbMetadataType,
 					Metadata: pkg.RpmdbMetadata{
 						Name:      "dive",
-						Epoch:     intRef(),
+						Epoch:     nil,
 						Arch:      "x86_64",
 						Release:   "1",
 						Version:   "0.9.2",
@@ -204,9 +204,6 @@ func TestToElVersion(t *testing.T) {
 	}
 }
 
-func intRef(i ...int) *int {
-	if len(i) == 0 {
-		return nil
-	}
-	return &i[0]
+func intRef(i int) *int {
+	return &i
 }

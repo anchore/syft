@@ -91,7 +91,7 @@ func TestPackageURL(t *testing.T) {
 				Metadata: pkg.RpmdbMetadata{
 					Name:    "name",
 					Version: "0.1.0",
-					Epoch:   intRef(),
+					Epoch:   nil,
 					Arch:    "amd64",
 					Release: "3",
 				},
@@ -131,9 +131,6 @@ func TestPackageURL(t *testing.T) {
 	}
 }
 
-func intRef(i ...int) *int {
-	if len(i) == 0 {
-		return nil
-	}
-	return &i[0]
+func intRef(i int) *int {
+	return &i
 }

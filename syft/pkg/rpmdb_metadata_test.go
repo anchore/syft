@@ -10,13 +10,6 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func intRef(i ...int) *int {
-	if len(i) == 0 {
-		return nil
-	}
-	return &i[0]
-}
-
 func TestRpmMetadata_pURL(t *testing.T) {
 	tests := []struct {
 		distro   distro.Distro
@@ -45,7 +38,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				Version: "v",
 				Arch:    "a",
 				Release: "r",
-				Epoch:   intRef(),
+				Epoch:   nil,
 			},
 			expected: "pkg:rpm/redhat/p@v-r?arch=a",
 		},
@@ -103,4 +96,8 @@ func TestRpmMetadata_fileOwner(t *testing.T) {
 			}
 		})
 	}
+}
+
+func intRef(i int) *int {
+	return &i
 }
