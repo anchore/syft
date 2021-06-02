@@ -52,10 +52,12 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>1.0.2.RELEASE</version>
+				<version>2.1.5.RELEASE</version>
 				<configuration>
 					<mainClass>${start-class}</mainClass>
 					<layout>ZIP</layout>
+					<!-- this gives us a specific build example with a self-executing jar (jar with a shell script prefixed to the archive) -->
+					<executable>true</executable>
 				</configuration>
 				<executions>
 					<execution>
