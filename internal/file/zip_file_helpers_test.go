@@ -1,7 +1,6 @@
 package file
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -9,6 +8,8 @@ import (
 	"path/filepath"
 	"syscall"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var expectedZipArchiveEntries = []string{
@@ -18,35 +19,21 @@ var expectedZipArchiveEntries = []string{
 	"nested.zip",
 }
 
-// fatalIfError calls the supplied function. If the function returns a non-nil error, t.Fatal(err) is called.
-func fatalIfError(t *testing.T, fn func() error) {
-	t.Helper()
-
-	if fn == nil {
-		return
-	}
-
-	err := fn()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 // createZipArchive creates a new ZIP archive file at destinationArchivePath based on the directory found at
 // sourceDirPath.
-func createZipArchive(t *testing.T, sourceDirPath, destinationArchivePath string) error {
+func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
 	t.Helper()
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("unable to get cwd: %+v", err)
+		t.Fatalf("unable to get cwd: %+v", err)
 	}
 
-	cmd := exec.Command("./generate-zip-fixture.sh", destinationArchivePath, path.Base(sourceDirPath))
+	cmd := exec.Command("./generate-zip-fixture-from-source-dir.sh", destinationArchivePath, path.Base(sourceDirPath))
 	cmd.Dir = filepath.Join(cwd, "test-fixtures")
 
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("unable to start generate zip fixture script: %+v", err)
+		t.Fatalf("unable to start generate zip fixture script: %+v", err)
 	}
 
 	if err := cmd.Wait(); err != nil {
@@ -59,61 +46,62 @@ func createZipArchive(t *testing.T, sourceDirPath, destinationArchivePath string
 			// an ExitStatus() method with the same signature.
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				if status.ExitStatus() != 0 {
-					return fmt.Errorf("failed to generate fixture: rc=%d", status.ExitStatus())
+					t.Fatalf("failed to generate fixture: rc=%d", status.ExitStatus())
 				}
 			}
 		} else {
-			return fmt.Errorf("unable to get generate fixture script result: %+v", err)
+			t.Fatalf("unable to get generate fixture script result: %+v", err)
 		}
 	}
 
-	return nil
+}
+
+func assertNoError(t testing.TB, fn func() error) func() {
+	return func() {
+		assert.NoError(t, fn())
+	}
 }
 
 // setupZipFileTest encapsulates common test setup work for zip file tests. It returns a cleanup function,
 // which should be called (typically deferred) by the caller, the path of the created zip archive, and an error,
 // which should trigger a fatal test failure in the consuming test. The returned cleanup function will never be nil
 // (even if there's an error), and it should always be called.
-func setupZipFileTest(t *testing.T, sourceDirPath string) (func() error, string, error) {
+func setupZipFileTest(t testing.TB, sourceDirPath string) string {
 	t.Helper()
-
-	// Keep track of any needed cleanup work as we go
-	var cleanupFns []func() error
-	cleanup := func(fns []func() error) func() error {
-		return func() error {
-			for _, fn := range fns {
-				err := fn()
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		}
-	}
 
 	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
 	if err != nil {
-		return cleanup(cleanupFns), "", fmt.Errorf("unable to create tempfile: %+v", err)
+		t.Fatalf("unable to create tempfile: %+v", err)
 	}
-	cleanupFns = append(cleanupFns, func() error { return os.Remove(archivePrefix.Name()) })
+
+	t.Cleanup(
+		assertNoError(t,
+			func() error {
+				return os.Remove(archivePrefix.Name())
+			},
+		),
+	)
 
 	destinationArchiveFilePath := archivePrefix.Name() + ".zip"
 	t.Logf("archive path: %s", destinationArchiveFilePath)
-	err = createZipArchive(t, sourceDirPath, destinationArchiveFilePath)
-	cleanupFns = append(cleanupFns, func() error { return os.Remove(destinationArchiveFilePath) })
-	if err != nil {
-		return cleanup(cleanupFns), "", err
-	}
+	createZipArchive(t, sourceDirPath, destinationArchiveFilePath)
+
+	t.Cleanup(
+		assertNoError(t,
+			func() error {
+				return os.Remove(destinationArchiveFilePath)
+			},
+		),
+	)
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return cleanup(cleanupFns), "", fmt.Errorf("unable to get cwd: %+v", err)
+		t.Fatalf("unable to get cwd: %+v", err)
 	}
 
 	t.Logf("running from: %s", cwd)
 
-	return cleanup(cleanupFns), destinationArchiveFilePath, nil
+	return destinationArchiveFilePath
 }
 
 // TODO: Consider moving any non-git asset generation to a task (e.g. make) that's run ahead of running go tests.
@@ -121,11 +109,7 @@ func ensureNestedZipExists(t *testing.T, sourceDirPath string) error {
 	t.Helper()
 
 	nestedArchiveFilePath := path.Join(sourceDirPath, "nested.zip")
-	err := createZipArchive(t, sourceDirPath, nestedArchiveFilePath)
-
-	if err != nil {
-		return fmt.Errorf("unable to create nested archive for test fixture: %+v", err)
-	}
+	createZipArchive(t, sourceDirPath, nestedArchiveFilePath)
 
 	return nil
 }

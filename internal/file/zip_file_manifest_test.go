@@ -19,11 +19,7 @@ func TestNewZipFileManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cleanup, archiveFilePath, err := setupZipFileTest(t, sourceDirPath)
-	defer fatalIfError(t, cleanup)
-	if err != nil {
-		t.Fatal(err)
-	}
+	archiveFilePath := setupZipFileTest(t, sourceDirPath)
 
 	actual, err := NewZipFileManifest(archiveFilePath)
 	if err != nil {
@@ -63,12 +59,7 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cleanup, archiveFilePath, err := setupZipFileTest(t, sourceDirPath)
-	//goland:noinspection GoNilness
-	defer fatalIfError(t, cleanup)
-	if err != nil {
-		t.Fatal(err)
-	}
+	archiveFilePath := setupZipFileTest(t, sourceDirPath)
 
 	z, err := NewZipFileManifest(archiveFilePath)
 	if err != nil {

@@ -44,14 +44,12 @@ func TestUnzipToDir(t *testing.T) {
 
 	goldenRootDir := filepath.Join(cwd, "test-fixtures")
 	sourceDirPath := path.Join(goldenRootDir, "zip-source")
-	cleanup, archiveFilePath, err := setupZipFileTest(t, sourceDirPath)
-	defer fatalIfError(t, cleanup)
-	if err != nil {
-		t.Fatal(err)
-	}
+	archiveFilePath := setupZipFileTest(t, sourceDirPath)
 
 	unzipDestinationDir, err := ioutil.TempDir("", "syft-ziputil-contents-TEST-")
-	defer os.RemoveAll(unzipDestinationDir)
+	t.Cleanup(assertNoError(t, func() error {
+		return os.RemoveAll(unzipDestinationDir)
+	}))
 	if err != nil {
 		t.Fatalf("unable to create tempdir: %+v", err)
 	}
@@ -127,41 +125,119 @@ func TestUnzipToDir(t *testing.T) {
 }
 
 func TestContentsFromZip(t *testing.T) {
+	tests := []struct {
+		name        string
+		archivePrep func(tb testing.TB) string
+	}{
+		{
+			name:        "standard, non-nested zip",
+			archivePrep: prepZipSourceFixture,
+		},
+		{
+			name:        "zip with prepended bytes",
+			archivePrep: prepZipSourceFixtureWithPrependedBytes(t, "junk at the beginning of the file..."),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			archivePath := test.archivePrep(t)
+			expected := zipSourceFixtureExpectedContents()
+
+			var paths []string
+			for p := range expected {
+				paths = append(paths, p)
+			}
+
+			actual, err := ContentsFromZip(archivePath, paths...)
+			if err != nil {
+				t.Fatalf("unable to extract from unzip archive: %+v", err)
+			}
+
+			assertZipSourceFixtureContents(t, actual, expected)
+		})
+	}
+}
+
+func prepZipSourceFixtureWithPrependedBytes(tb testing.TB, value string) func(tb testing.TB) string {
+	if len(value) == 0 {
+		tb.Fatalf("no bytes given to prefix")
+	}
+	return func(t testing.TB) string {
+		archivePath := prepZipSourceFixture(t)
+
+		// create a temp file
+		tmpFile, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
+		if err != nil {
+			t.Fatalf("unable to create tempfile: %+v", err)
+		}
+		defer tmpFile.Close()
+
+		// write junk to the temp file
+		if _, err := tmpFile.WriteString(value); err != nil {
+			t.Fatalf("unable to write to tempfile: %+v", err)
+		}
+
+		// open the original archive
+		sourceFile, err := os.Open(archivePath)
+		if err != nil {
+			t.Fatalf("unable to read source file: %+v", err)
+		}
+
+		// copy all contents from the archive to the temp file
+		if _, err := io.Copy(tmpFile, sourceFile); err != nil {
+			t.Fatalf("unable to copy source to dest: %+v", err)
+		}
+
+		sourceFile.Close()
+
+		// remove the original archive and replace it with the temp file
+		if err := os.Remove(archivePath); err != nil {
+			t.Fatalf("unable to remove original source archive")
+		}
+
+		if err := os.Rename(tmpFile.Name(), archivePath); err != nil {
+			t.Fatalf("unable to move new archive to old path")
+		}
+
+		return archivePath
+	}
+}
+
+func prepZipSourceFixture(t testing.TB) string {
+	t.Helper()
 	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
 	if err != nil {
 		t.Fatalf("unable to create tempfile: %+v", err)
 	}
-	defer os.Remove(archivePrefix.Name())
+
+	t.Cleanup(func() {
+		assert.NoError(t, os.Remove(archivePrefix.Name()))
+	})
+
 	// the zip utility will add ".zip" to the end of the given name
 	archivePath := archivePrefix.Name() + ".zip"
-	defer os.Remove(archivePath)
+
+	t.Cleanup(func() {
+		assert.NoError(t, os.Remove(archivePath))
+	})
+
 	t.Logf("archive path: %s", archivePath)
 
-	err = createZipArchive(t, "zip-source", archivePrefix.Name())
-	if err != nil {
-		t.Fatal(err)
+	createZipArchive(t, "zip-source", archivePrefix.Name())
+
+	return archivePath
+}
+
+func zipSourceFixtureExpectedContents() map[string]string {
+	return map[string]string{
+		filepath.Join("some-dir", "a-file.txt"): "A file! nice!",
+		filepath.Join("b-file.txt"):             "B file...",
 	}
+}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Errorf("unable to get cwd: %+v", err)
-	}
-
-	t.Logf("running from: %s", cwd)
-
-	aFilePath := filepath.Join("some-dir", "a-file.txt")
-	bFilePath := filepath.Join("b-file.txt")
-
-	expected := map[string]string{
-		aFilePath: "A file! nice!",
-		bFilePath: "B file...",
-	}
-
-	actual, err := ContentsFromZip(archivePath, aFilePath, bFilePath)
-	if err != nil {
-		t.Fatalf("unable to extract from unzip archive: %+v", err)
-	}
-
+func assertZipSourceFixtureContents(t testing.TB, actual map[string]string, expected map[string]string) {
+	t.Helper()
 	diffs := deep.Equal(actual, expected)
 	if len(diffs) > 0 {
 		for _, d := range diffs {
