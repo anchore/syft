@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/anchore/syft/syft/file"
 
@@ -20,7 +21,7 @@ var _ fileOwner = (*RpmdbMetadata)(nil)
 type RpmdbMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
-	Epoch     int               `json:"epoch"`
+	Epoch     *int              `json:"epoch"`
 	Arch      string            `json:"architecture"`
 	Release   string            `json:"release"`
 	SourceRpm string            `json:"sourceRpm"`
@@ -50,17 +51,30 @@ func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
 		return ""
 	}
 
+	qualifiers := packageurl.Qualifiers{
+		{
+			Key:   "arch",
+			Value: m.Arch,
+		},
+	}
+
+	if m.Epoch != nil {
+		qualifiers = append(qualifiers,
+			packageurl.Qualifier{
+				Key:   "epoch",
+				Value: strconv.Itoa(*m.Epoch),
+			},
+		)
+	}
+
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypeRPM,
 		d.Type.String(),
 		m.Name,
-		fmt.Sprintf("%d:%s-%s", m.Epoch, m.Version, m.Release),
-		packageurl.Qualifiers{
-			{
-				Key:   "arch",
-				Value: m.Arch,
-			},
-		},
+		// for purl the epoch is a qualifier, not part of the version
+		// see https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst under the RPM section
+		fmt.Sprintf("%s-%s", m.Version, m.Release),
+		qualifiers,
 		"")
 	return pURL.ToString()
 }

@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/syft/source"
@@ -70,7 +72,7 @@ func TestParseRpmDB(t *testing.T) {
 					MetadataType: pkg.RpmdbMetadataType,
 					Metadata: pkg.RpmdbMetadata{
 						Name:      "dive",
-						Epoch:     0,
+						Epoch:     nil,
 						Arch:      "x86_64",
 						Release:   "1",
 						Version:   "0.9.2",
@@ -97,7 +99,7 @@ func TestParseRpmDB(t *testing.T) {
 					MetadataType: pkg.RpmdbMetadataType,
 					Metadata: pkg.RpmdbMetadata{
 						Name:      "dive",
-						Epoch:     0,
+						Epoch:     nil,
 						Arch:      "x86_64",
 						Release:   "1",
 						Version:   "0.9.2",
@@ -156,4 +158,52 @@ func TestParseRpmDB(t *testing.T) {
 		})
 	}
 
+}
+
+func TestToElVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		entry    pkg.RpmdbMetadata
+		expected string
+	}{
+		{
+			name: "no epoch",
+			entry: pkg.RpmdbMetadata{
+				Version: "1.2.3-4",
+				Release: "el7",
+				Arch:    "x86-64",
+			},
+			expected: "1.2.3-4-el7",
+		},
+		{
+			name: "with 0 epoch",
+			entry: pkg.RpmdbMetadata{
+				Version: "1.2.3-4",
+				Release: "el7",
+				Arch:    "x86-64",
+				Epoch:   intRef(0),
+			},
+			expected: "0:1.2.3-4-el7",
+		},
+		{
+			name: "with non-zero epoch",
+			entry: pkg.RpmdbMetadata{
+				Version: "1.2.3-4",
+				Release: "el7",
+				Arch:    "x86-64",
+				Epoch:   intRef(12),
+			},
+			expected: "12:1.2.3-4-el7",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, toELVersion(test.entry))
+		})
+	}
+}
+
+func intRef(i int) *int {
+	return &i
 }
