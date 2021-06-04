@@ -62,7 +62,7 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 
 		p := pkg.Package{
 			Name:         entry.Name,
-			Version:      toElVersion(metadata),
+			Version:      toELVersion(metadata),
 			Locations:    []source.Location{dbLocation},
 			FoundBy:      catalogerName,
 			Type:         pkg.RpmPkg,
@@ -78,11 +78,11 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].
 // RPM version comparison depends on comparing at least the version and release fields together as a subset of the
-// naming scheme. This toElVersion function takes a RPM DB package information and converts it into a minimally comparable
+// naming scheme. This toELVersion function takes a RPM DB package information and converts it into a minimally comparable
 // version string, containing epoch (optional), version, and release information. Epoch is an optional field and can be
 // assumed to be 0 when not provided for comparison purposes, however, if the underlying RPM DB entry does not have
 // an epoch specified it would be slightly disingenuous to display a value of 0.
-func toElVersion(metadata pkg.RpmdbMetadata) string {
+func toELVersion(metadata pkg.RpmdbMetadata) string {
 	if metadata.Epoch != nil {
 		return fmt.Sprintf("%d:%s-%s", *metadata.Epoch, metadata.Version, metadata.Release)
 	}
