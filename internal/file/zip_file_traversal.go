@@ -47,7 +47,7 @@ func newZipTraverseRequest(paths ...string) zipTraversalRequest {
 func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths ...string) error {
 	request := newZipTraverseRequest(paths...)
 
-	zipReader, err := zip.OpenReader(archivePath)
+	zipReader, err := OpenZip(archivePath)
 	if err != nil {
 		return fmt.Errorf("unable to open zip archive (%s): %w", archivePath, err)
 	}

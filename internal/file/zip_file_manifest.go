@@ -1,23 +1,36 @@
 package file
 
 import (
-	"archive/zip"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/log"
 )
 
 // ZipFileManifest is a collection of paths and their file metadata.
 type ZipFileManifest map[string]os.FileInfo
 
-// newZipManifest creates an empty ZipFileManifest.
-func newZipManifest() ZipFileManifest {
-	return make(ZipFileManifest)
+// NewZipFileManifest creates and returns a new ZipFileManifest populated with path and metadata from the given zip archive path.
+func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
+	zipReader, err := OpenZip(archivePath)
+	manifest := make(ZipFileManifest)
+	if err != nil {
+		return manifest, fmt.Errorf("unable to open zip archive (%s): %w", archivePath, err)
+	}
+	defer func() {
+		err = zipReader.Close()
+		if err != nil {
+			log.Warnf("unable to close zip archive (%s): %+v", archivePath, err)
+		}
+	}()
+
+	for _, file := range zipReader.Reader.File {
+		manifest.Add(file.Name, file.FileInfo())
+	}
+	return manifest, nil
 }
 
 // Add a new path and it's file metadata to the collection.
@@ -45,26 +58,6 @@ func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 	sort.Strings(results)
 
 	return results
-}
-
-// NewZipFileManifest creates and returns a new ZipFileManifest populated with path and metadata from the given zip archive path.
-func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
-	zipReader, err := zip.OpenReader(archivePath)
-	manifest := newZipManifest()
-	if err != nil {
-		return manifest, fmt.Errorf("unable to open zip archive (%s): %w", archivePath, err)
-	}
-	defer func() {
-		err = zipReader.Close()
-		if err != nil {
-			log.Errorf("unable to close zip archive (%s): %+v", archivePath, err)
-		}
-	}()
-
-	for _, file := range zipReader.Reader.File {
-		manifest.Add(file.Name, file.FileInfo())
-	}
-	return manifest, nil
 }
 
 // normalizeZipEntryName takes the given path entry and ensures it is prefixed with "/".
