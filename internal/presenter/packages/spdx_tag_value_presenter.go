@@ -6,34 +6,31 @@ import (
 	"time"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/version"
-
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/internal/log"
-
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 	spdxLicense "github.com/mitchellh/go-spdx"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/tvsaver"
 )
 
-// SPDXPresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
-type SPDXPresenter struct {
+// SPDXTagValuePresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
+type SPDXTagValuePresenter struct {
 	catalog     *pkg.Catalog
 	srcMetadata source.Metadata
 }
 
 // NewJSONPresenter creates a new JSON presenter object for the given cataloging results.
-func NewSPDXPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *SPDXPresenter {
-	return &SPDXPresenter{
+func NewSPDXTagValuePresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *SPDXTagValuePresenter {
+	return &SPDXTagValuePresenter{
 		catalog:     catalog,
 		srcMetadata: srcMetadata,
 	}
 }
 
 // Present the catalog results to the given writer.
-func (pres *SPDXPresenter) Present(output io.Writer) error {
+func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 	doc := spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{
 			// 2.1: SPDX Version; should be in the format "SPDX-2.2"
@@ -90,7 +87,7 @@ func (pres *SPDXPresenter) Present(output io.Writer) error {
 
 			// 2.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
-			Created: time.Now().Format(time.RFC3339),
+			Created: time.Now().UTC().Format(time.RFC3339),
 
 			// 2.10: Creator Comment
 			// Cardinality: optional, one
@@ -112,7 +109,7 @@ func (pres *SPDXPresenter) Present(output io.Writer) error {
 }
 
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
-func (pres *SPDXPresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
+func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
 	results := make(map[spdx.ElementID]*spdx.Package2_2)
 
 	for p := range pres.catalog.Enumerate() {
@@ -298,7 +295,7 @@ func (pres *SPDXPresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
 	return results
 }
 
-func (pres *SPDXPresenter) packageFiles(p *pkg.Package) (bool, map[spdx.ElementID]*spdx.File2_2) {
+func (pres *SPDXTagValuePresenter) packageFiles(p *pkg.Package) (bool, map[spdx.ElementID]*spdx.File2_2) {
 	filesAnalyzed := false
 	files := make(map[spdx.ElementID]*spdx.File2_2)
 	if owner, ok := p.Metadata.(pkg.FileOwner); ok {
