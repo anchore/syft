@@ -20,7 +20,7 @@ func TestFindArchiveStartOffset(t *testing.T) {
 		},
 		{
 			name:        "zip with prepended bytes",
-			archivePrep: prepZipSourceFixtureWithPrependedBytes(t, "junk at the beginning of the file..."),
+			archivePrep: prependZipSourceFixtureWithString(t, "junk at the beginning of the file..."),
 			expected:    36,
 		},
 	}

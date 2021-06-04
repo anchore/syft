@@ -135,7 +135,7 @@ func TestContentsFromZip(t *testing.T) {
 		},
 		{
 			name:        "zip with prepended bytes",
-			archivePrep: prepZipSourceFixtureWithPrependedBytes(t, "junk at the beginning of the file..."),
+			archivePrep: prependZipSourceFixtureWithString(t, "junk at the beginning of the file..."),
 		},
 	}
 
@@ -159,7 +159,7 @@ func TestContentsFromZip(t *testing.T) {
 	}
 }
 
-func prepZipSourceFixtureWithPrependedBytes(tb testing.TB, value string) func(tb testing.TB) string {
+func prependZipSourceFixtureWithString(tb testing.TB, value string) func(tb testing.TB) string {
 	if len(value) == 0 {
 		tb.Fatalf("no bytes given to prefix")
 	}
@@ -167,13 +167,13 @@ func prepZipSourceFixtureWithPrependedBytes(tb testing.TB, value string) func(tb
 		archivePath := prepZipSourceFixture(t)
 
 		// create a temp file
-		tmpFile, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
+		tmpFile, err := ioutil.TempFile("", "syft-ziputil-prependZipSourceFixtureWithString-")
 		if err != nil {
 			t.Fatalf("unable to create tempfile: %+v", err)
 		}
 		defer tmpFile.Close()
 
-		// write junk to the temp file
+		// write value to the temp file
 		if _, err := tmpFile.WriteString(value); err != nil {
 			t.Fatalf("unable to write to tempfile: %+v", err)
 		}
@@ -193,11 +193,11 @@ func prepZipSourceFixtureWithPrependedBytes(tb testing.TB, value string) func(tb
 
 		// remove the original archive and replace it with the temp file
 		if err := os.Remove(archivePath); err != nil {
-			t.Fatalf("unable to remove original source archive")
+			t.Fatalf("unable to remove original source archive (%q): %+v", archivePath, err)
 		}
 
 		if err := os.Rename(tmpFile.Name(), archivePath); err != nil {
-			t.Fatalf("unable to move new archive to old path")
+			t.Fatalf("unable to move new archive to old path (%q): %+v", tmpFile.Name(), err)
 		}
 
 		return archivePath
@@ -206,7 +206,7 @@ func prepZipSourceFixtureWithPrependedBytes(tb testing.TB, value string) func(tb
 
 func prepZipSourceFixture(t testing.TB) string {
 	t.Helper()
-	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
+	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-prepZipSourceFixture-")
 	if err != nil {
 		t.Fatalf("unable to create tempfile: %+v", err)
 	}

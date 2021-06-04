@@ -23,7 +23,7 @@ func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
 	defer func() {
 		err = zipReader.Close()
 		if err != nil {
-			log.Errorf("unable to close zip archive (%s): %+v", archivePath, err)
+			log.Warnf("unable to close zip archive (%s): %+v", archivePath, err)
 		}
 	}()
 
