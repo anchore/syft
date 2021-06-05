@@ -14,7 +14,7 @@ import (
 type Location struct {
 	RealPath     string         `json:"path"`              // The path where all path ancestors have no hardlinks / symlinks
 	VirtualPath  string         `json:"-"`                 // The path to the file which may or may not have hardlinks / symlinks
-	FileSystemID string         `json:"layerID,omitempty"` // An ID representing the filesystem. For container images this is a layer digest, directories or root filesystem this is blank.
+	FileSystemID string         `json:"layerID,omitempty"` // An ID representing the filesystem. For container images this is a layer digest, directories or path filesystem this is blank.
 	ref          file.Reference // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
 }
 

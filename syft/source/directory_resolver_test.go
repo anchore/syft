@@ -2,6 +2,8 @@ package source
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDirectoryResolver_FilesByPath(t *testing.T) {
@@ -57,7 +59,7 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := directoryResolver{c.root}
+			resolver := newDirectoryResolver(c.root)
 
 			hasPath := resolver.HasPath(c.input)
 			if !c.forcePositiveHasPath {
@@ -112,7 +114,7 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := directoryResolver{"test-fixtures"}
+			resolver := newDirectoryResolver("./test-fixtures")
 
 			refs, err := resolver.FilesByPath(c.input...)
 			if err != nil {
@@ -128,50 +130,42 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 
 func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 	t.Run("finds multiple matching files", func(t *testing.T) {
-		resolver := directoryResolver{"test-fixtures"}
-		refs, err := resolver.FilesByGlob("image-symlinks/file*")
+		resolver := newDirectoryResolver("./test-fixtures")
+		refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
 
 		if err != nil {
 			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
 		}
 
-		expected := 2
-		if len(refs) != expected {
-			t.Errorf("unexpected number of refs: %d != %d", len(refs), expected)
-		}
+		assert.Len(t, refs, 2)
 
 	})
 }
 
 func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
 	t.Run("finds multiple matching files", func(t *testing.T) {
-		resolver := directoryResolver{"test-fixtures/image-symlinks"}
+		resolver := newDirectoryResolver("./test-fixtures/image-symlinks")
 		refs, err := resolver.FilesByGlob("**/*.txt")
 
 		if err != nil {
 			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
 		}
 
-		expected := 6
-		if len(refs) != expected {
-			t.Errorf("unexpected number of refs: %d != %d", len(refs), expected)
-		}
+		assert.Len(t, refs, 6)
 
 	})
 }
 
 func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
 	t.Run("finds multiple matching files", func(t *testing.T) {
-		resolver := directoryResolver{"test-fixtures"}
-		refs, err := resolver.FilesByGlob("image-symlinks/*1.txt")
+		resolver := newDirectoryResolver("./test-fixtures")
+		refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
 		if err != nil {
 			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
 		}
 
-		expected := 1
-		if len(refs) != expected {
-			t.Errorf("unexpected number of refs: %d != %d", len(refs), expected)
-		}
+		assert.Len(t, refs, 1)
+		assert.Equal(t, "test-fixtures/image-symlinks/file-1.txt", refs[0].RealPath)
 
 	})
 }

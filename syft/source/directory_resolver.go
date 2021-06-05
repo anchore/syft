@@ -1,41 +1,161 @@
 package source
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/filetree"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/bmatcuk/doublestar/v2"
 )
+
+var systemRuntimePrefixes = []string{
+	"/proc",
+	"/sys",
+	"/dev",
+}
 
 var _ FileResolver = (*directoryResolver)(nil)
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
-	path string
+	path     string
+	cwd      string
+	fileTree *filetree.FileTree
+	infos    map[file.ID]os.FileInfo
+	// TODO: wire up to report these paths in the json report
+	errPaths map[string]error
 }
 
-func newDirectoryResolver(path string) *directoryResolver {
-	return &directoryResolver{path: path}
-}
-
-func (r directoryResolver) requestPath(userPath string) string {
-	fullPath := userPath
-	if filepath.IsAbs(fullPath) {
-		// a path relative to root should be prefixed with the resolvers directory path, otherwise it should be left as is
-		fullPath = path.Join(r.path, fullPath)
+func newDirectoryResolver(root string) (*directoryResolver, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("could not create directory resolver: %w", err)
 	}
-	return fullPath
+
+	r := directoryResolver{
+		path:     root,
+		cwd:      cwd,
+		fileTree: filetree.NewFileTree(),
+		infos:    make(map[file.ID]os.FileInfo),
+		errPaths: make(map[string]error),
+	}
+
+	// why account for multiple roots? To cover cases when there is a symlink that references above the root path,
+	// in which case we need to additionally index where the link resolves to.
+	// it's for this reason why the filetree must be relative to root.
+	roots := []string{root}
+	for _, p := range roots {
+		additionalRoots, err := r.indexPath(p)
+		if err != nil {
+			return nil, fmt.Errorf("unable to index filesystem: %+w", err)
+		}
+		roots = append(roots, additionalRoots...)
+	}
+
+	return &r, nil
+}
+
+func (r *directoryResolver) indexPath(root string) ([]string, error) {
+	var err error
+	root, err = filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	var roots []string
+	return roots, filepath.Walk(root,
+		func(p string, info os.FileInfo, err error) error {
+			if isSystemRuntimePath(p) {
+				return nil
+			}
+
+			// permission denied, IO error, etc... we keep track of the paths we can't see, but continue with indexing
+			if err != nil {
+				r.errPaths[p] = err
+				return nil
+			}
+
+			// link cycles could cause a revisit --we should not allow this
+			if r.fileTree.HasPath(file.Path(p)) {
+				return nil
+			}
+
+			var ref *file.Reference
+			switch newFileTypeFromMode(info.Mode()) {
+			case SymbolicLink:
+				linkTarget, err := os.Readlink(p)
+				if err != nil {
+					if errors.Is(err, os.ErrPermission) {
+						// don't allow for permission errors to stop indexing, keep track of the paths and continue.
+						r.errPaths[p] = err
+						return nil
+					}
+					return fmt.Errorf("unable to readlink for path=%q: %+v", p, err)
+				}
+				ref, err = r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
+				if err != nil {
+					return err
+				}
+
+				targetAbsPath := linkTarget
+				if !filepath.IsAbs(targetAbsPath) {
+					targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
+				}
+
+				roots = append(roots, targetAbsPath)
+
+			case Directory:
+				ref, err = r.fileTree.AddDir(file.Path(p))
+				if err != nil {
+					return err
+				}
+			default:
+				ref, err = r.fileTree.AddFile(file.Path(p))
+				if err != nil {
+					return err
+				}
+			}
+
+			r.infos[ref.ID()] = info
+
+			return nil
+		})
+}
+
+func (r directoryResolver) requestPath(userPath string) (string, error) {
+	if filepath.IsAbs(userPath) {
+		// don't allow input to potentially hop above root path
+		userPath = path.Join(r.path, userPath)
+	}
+	var err error
+	userPath, err = filepath.Abs(userPath)
+	if err != nil {
+		return "", nil
+	}
+	return userPath, nil
+}
+
+func (r directoryResolver) responsePath(path string) string {
+	// always return references relative to the request path (not absolute path)
+	if filepath.IsAbs(path) {
+		return strings.TrimPrefix(path, r.cwd+string(filepath.Separator))
+	}
+	return path
 }
 
 // HasPath indicates if the given path exists in the underlying source.
 func (r *directoryResolver) HasPath(userPath string) bool {
-	_, err := os.Stat(r.requestPath(userPath))
-	return !os.IsNotExist(err)
+	requestPath, err := r.requestPath(userPath)
+	if err != nil {
+		return false
+	}
+	return r.fileTree.HasPath(file.Path(requestPath))
 }
 
 // Stringer to represent a directory path data source
@@ -48,12 +168,16 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 	var references = make([]Location, 0)
 
 	for _, userPath := range userPaths {
-		userStrPath := r.requestPath(userPath)
+		userStrPath, err := r.requestPath(userPath)
+		if err != nil {
+			log.Warnf("unable to get file by path=%q : %+v", userPath, err)
+			continue
+		}
 		fileMeta, err := os.Stat(userStrPath)
 		if os.IsNotExist(err) {
 			continue
 		} else if err != nil {
-			log.Errorf("path (%r) is not valid: %v", userStrPath, err)
+			log.Warnf("path (%r) is not valid: %+v", userStrPath, err)
 		}
 
 		// don't consider directories
@@ -61,7 +185,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
-		references = append(references, NewLocation(userStrPath))
+		references = append(references, NewLocation(r.responsePath(userStrPath)))
 	}
 
 	return references, nil
@@ -72,23 +196,12 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	result := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		pathPattern := path.Join(r.path, pattern)
-		pathMatches, err := doublestar.Glob(pathPattern)
+		globResults, err := r.fileTree.FilesByGlob(pattern)
 		if err != nil {
 			return nil, err
 		}
-		for _, matchedPath := range pathMatches {
-			fileMeta, err := os.Stat(matchedPath)
-			if err != nil {
-				continue
-			}
-
-			// don't consider directories
-			if fileMeta.IsDir() {
-				continue
-			}
-
-			result = append(result, NewLocation(matchedPath))
+		for _, globResult := range globResults {
+			result = append(result, NewLocation(r.responsePath(string(globResult.MatchPath))))
 		}
 	}
 
@@ -120,41 +233,31 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		err := filepath.Walk(r.path,
-			func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				results <- NewLocation(path)
-				return nil
-			})
-		if err != nil {
-			log.Errorf("unable to walk path=%q : %+v", r.path, err)
+		for _, ref := range r.fileTree.AllFiles() {
+			results <- NewLocation(r.responsePath(string(ref.RealPath)))
 		}
 	}()
 	return results
 }
 
 func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
-	fi, err := os.Stat(location.RealPath)
-	if err != nil {
-		return FileMetadata{}, err
-	}
-
-	// best effort
-	ty := UnknownFileType
-	switch {
-	case fi.Mode().IsDir():
-		ty = Directory
-	case fi.Mode().IsRegular():
-		ty = RegularFile
+	info, exists := r.infos[location.ref.ID()]
+	if !exists {
+		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrExist)
 	}
 
 	return FileMetadata{
-		Mode: fi.Mode(),
-		Type: ty,
+		Mode: info.Mode(),
+		Type: newFileTypeFromMode(info.Mode()),
 		// unsupported across platforms
 		UserID:  -1,
 		GroupID: -1,
 	}, nil
+}
+
+func isSystemRuntimePath(path string) bool {
+	if internal.HasAnyOfPrefixes(path, systemRuntimePrefixes...) {
+		return true
+	}
+	return false
 }

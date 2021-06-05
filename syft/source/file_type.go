@@ -1,6 +1,9 @@
 package source
 
-import "archive/tar"
+import (
+	"archive/tar"
+	"os"
+)
 
 const (
 	UnknownFileType FileType = "UnknownFileType"
@@ -33,4 +36,16 @@ func newFileTypeFromTarHeaderTypeFlag(flag byte) FileType {
 		return FIFONode
 	}
 	return UnknownFileType
+}
+
+// TODO: fill in more types from mod...
+func newFileTypeFromMode(mod os.FileMode) FileType {
+	switch {
+	case mod&os.ModeSymlink == os.ModeSymlink:
+		return SymbolicLink
+	case mod.IsDir():
+		return Directory
+	default:
+		return RegularFile
+	}
 }

@@ -15,7 +15,7 @@ type Scheme string
 const (
 	// UnknownScheme is the default scheme
 	UnknownScheme Scheme = "UnknownScheme"
-	// DirectoryScheme indicates the source being cataloged is a directory on the root filesystem
+	// DirectoryScheme indicates the source being cataloged is a directory on the path filesystem
 	DirectoryScheme Scheme = "DirectoryScheme"
 	// ImageScheme indicates the source being cataloged is a container image
 	ImageScheme Scheme = "ImageScheme"

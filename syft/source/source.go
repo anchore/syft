@@ -94,7 +94,7 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 func (s Source) FileResolver(scope Scope) (FileResolver, error) {
 	switch s.Metadata.Scheme {
 	case DirectoryScheme:
-		return newDirectoryResolver(s.Metadata.Path), nil
+		return newDirectoryResolver(s.Metadata.Path)
 	case ImageScheme:
 		switch scope {
 		case SquashedScope:
