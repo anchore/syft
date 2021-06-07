@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/wagoodman/go-progress"
@@ -303,7 +305,7 @@ func Test_directoryResolver_index(t *testing.T) {
 			if assert.NoError(t, err) {
 				return
 			}
-			assert.Equal(t, info, r.infos[ref.ID()])
+			assert.Equal(t, info, r.metadata[ref.ID()])
 		})
 	}
 }
@@ -426,6 +428,34 @@ func Test_indexAllRoots(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.NoError(t, indexAllRoots(test.root, test.mock.indexer))
+		})
+	}
+}
+
+func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
+
+	tests := []struct {
+		fixturePath   string
+		mimeType      string
+		expectedPaths *strset.Set
+	}{
+		{
+			fixturePath:   "./test-fixtures/image-simple",
+			mimeType:      "text/plain",
+			expectedPaths: strset.New("test-fixtures/image-simple/file-1.txt", "test-fixtures/image-simple/file-2.txt", "test-fixtures/image-simple/target/really/nested/file-3.txt", "test-fixtures/image-simple/Dockerfile"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.fixturePath, func(t *testing.T) {
+
+			resolver, err := newDirectoryResolver(test.fixturePath)
+			assert.NoError(t, err)
+			locations, err := resolver.FilesByMIMEType(test.mimeType)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedPaths.Size(), len(locations))
+			for _, l := range locations {
+				assert.True(t, test.expectedPaths.Has(l.RealPath), "does not have path %q", l.RealPath)
+			}
 		})
 	}
 }

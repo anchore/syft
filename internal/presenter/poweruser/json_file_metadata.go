@@ -22,6 +22,7 @@ type JSONFileMetadataEntry struct {
 	UserID          int             `json:"userID"`
 	GroupID         int             `json:"groupID"`
 	Digests         []file.Digest   `json:"digests,omitempty"`
+	MIMEType        string          `json:"mimeType"`
 }
 
 func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests map[source.Location][]file.Digest) ([]JSONFileMetadata, error) {
@@ -46,6 +47,7 @@ func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests m
 				UserID:          metadata.UserID,
 				GroupID:         metadata.GroupID,
 				Digests:         digestResults,
+				MIMEType:        metadata.MIMEType,
 			},
 		})
 	}

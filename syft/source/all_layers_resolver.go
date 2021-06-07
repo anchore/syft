@@ -188,6 +188,24 @@ func (r *allLayersResolver) FileContentsByLocation(location Location) (io.ReadCl
 	return r.img.FileContentsByRef(location.ref)
 }
 
+func (r *allLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+	var locations []Location
+	for _, layerIdx := range r.layers {
+		layer := r.img.Layers[layerIdx]
+
+		refs, err := layer.FilesByMIMEType(types...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			locations = append(locations, NewLocationFromReference(ref))
+		}
+	}
+
+	return locations, nil
+}
+
 func (r *allLayersResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
