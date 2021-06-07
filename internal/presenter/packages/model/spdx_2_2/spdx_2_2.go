@@ -19,7 +19,7 @@ func (e ElementID) String() string {
 
 // DocElementID represents an SPDX element identifier that could be defined
 // in a different SPDX document, and therefore could have a "DocumentRef-"
-// portion, such as Relationships and Annotations.
+// portion, such as Relationship and Annotations.
 // ElementID is used for attributes in which a "DocumentRef-" portion cannot
 // appear, such as a Package or File definition (since it is necessarily
 // being defined in the present document).
@@ -46,12 +46,12 @@ func (d DocElementID) String() string {
 type Element struct {
 	SPDXID string `json:"SPDXID"`
 	// Provide additional information about an SpdxElement.
-	Annotations []Annotation `json:"annotations"`
-	Comment     string       `json:"comment"`
+	Annotations []Annotation `json:"annotations,omitempty"`
+	Comment     string       `json:"comment,omitempty"`
 	// Identify name of this SpdxElement.
 	Name string `json:"name"`
 	// Relationships referenced in the SPDX document
-	Relationships []Relationships `json:"relationships"`
+	Relationships []Relationship `json:"relationships,omitempty"`
 }
 
 type Document struct {
@@ -79,13 +79,15 @@ type Document struct {
 	ExternalDocumentRefs []ExternalDocumentRef `json:"externalDocumentRefs,omitempty"`
 	// Indicates that a particular ExtractedLicensingInfo was defined in the subject SpdxDocument.
 	HasExtractedLicensingInfos []HasExtractedLicensingInfo `json:"hasExtractedLicensingInfos,omitempty"`
-	DocumentNamespace          string                      `json:"documentNamespace"`
-	DocumentDescribes          []string                    `json:"documentDescribes"`
-	Packages                   []Package                   `json:"packages"`
+	// note: found in example documents from SPDX, but not in the JSON schema. See https://spdx.github.io/spdx-spec/2-document-creation-information/#25-spdx-document-namespace
+	DocumentNamespace string `json:"documentNamespace"`
+	// note: found in example documents from SPDX, but not in the JSON schema
+	// DocumentDescribes []string  `json:"documentDescribes"`
+	Packages []Package `json:"packages"`
 	// Files referenced in the SPDX document
-	Files []Files `json:"files"`
+	Files []File `json:"files,omitempty"`
 	// Snippets referenced in the SPDX document
-	Snippets []Snippets `json:"snippets"`
+	Snippets []Snippet `json:"snippets,omitempty"`
 	Element
 }
 
@@ -111,7 +113,7 @@ type Item struct {
 }
 
 type CreationInfo struct {
-	Comment string `json:"comment"`
+	Comment string `json:"comment,omitempty"`
 	// Identify when the SPDX file was originally created. The date is to be specified according to combined date and
 	// time in UTC format as specified in ISO 8601 standard. This field is distinct from the fields in section 8,
 	// which involves the addition of information during a subsequent review.
@@ -123,7 +125,7 @@ type CreationInfo struct {
 	// name or organization name may be designated as “anonymous” if appropriate.
 	Creators []string `json:"creators"`
 	// An optional field for creators of the SPDX file to provide the version of the SPDX License List used when the SPDX file was created.
-	LicenseListVersion string `json:"licenseListVersion"`
+	LicenseListVersion string `json:"licenseListVersion,omitempty"`
 }
 type Checksum struct {
 	// Identifies the algorithm used to produce the subject Checksum. One of: "SHA256", "SHA1", "SHA384", "MD2", "MD4", "SHA512", "MD6", "MD5", "SHA224"
@@ -241,7 +243,7 @@ type Package struct {
 	// acceptable as values of this property. The values http://spdx.org/rdf/terms#none and http://spdx.org/rdf/terms#noassertion
 	// may be used to specify that the package is not downloadable or that no attempt was made to determine its
 	// download location, respectively.
-	DownloadLocation string `json:"downloadLocation"`
+	DownloadLocation string `json:"downloadLocation,omitempty"`
 	// An External Reference allows a Package to reference an external source of additional information, metadata,
 	// enumerations, asset identifiers, or downloadable content believed to be relevant to the Package.
 	ExternalRefs []ExternalRef `json:"externalRefs,omitempty"`
@@ -251,7 +253,7 @@ type Package struct {
 	FilesAnalyzed bool `json:"filesAnalyzed"`
 	// Indicates that a particular file belongs to a package (elements are SPDX ID for a File).
 	HasFiles        []string `json:"hasFiles,omitempty"`
-	Homepage        string   `json:"homepage"`
+	Homepage        string   `json:"homepage,omitempty"`
 	LicenseDeclared string   `json:"licenseDeclared"`
 	// The name and, optionally, contact information of the person or organization that originally created the package.
 	// Values of this property must conform to the agent and tool syntax.
@@ -262,7 +264,7 @@ type Package struct {
 	// SPDX Item. This allows consumers of this data and/or database to determine if an SPDX item they have in hand
 	// is identical to the SPDX item from which the data was produced. This algorithm works even if the SPDX document
 	// is included in the SPDX item.
-	PackageVerificationCode PackageVerificationCode `json:"packageVerificationCode,omitempty"`
+	PackageVerificationCode *PackageVerificationCode `json:"packageVerificationCode,omitempty"`
 	// Allows the producer(s) of the SPDX document to describe how the package was acquired and/or changed from the original source.
 	SourceInfo string `json:"sourceInfo,omitempty"`
 	// Provides a short description of the package.
@@ -292,7 +294,7 @@ const (
 	OtherFileType         FileType = "OTHER"
 )
 
-type Files struct {
+type File struct {
 	// (At least one is required.) The checksum property provides a mechanism that can be used to verify that the
 	// contents of a File or Package have not changed.
 	Checksums []Checksum `json:"checksums"`
@@ -335,7 +337,7 @@ type Range struct {
 	EndPointer   EndPointer   `json:"endPointer"`
 }
 
-type Snippets struct {
+type Snippet struct {
 	// Licensing information that was discovered directly in the subject snippet. This is also considered a declared
 	// license for the snippet. (elements are license expressions)
 	LicenseInfoInSnippets []string `json:"licenseInfoInSnippets"`
@@ -346,7 +348,7 @@ type Snippets struct {
 	Ranges []Range `json:"ranges"`
 	Item
 }
-type Relationships struct {
+type Relationship struct {
 	// SPDX ID for SpdxElement.  A related SpdxElement.
 	RelatedSpdxElement string `json:"relatedSpdxElement"`
 	// Describes the type of relationship between two SPDX elements.
