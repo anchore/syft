@@ -159,7 +159,11 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 		}
 	}
 
-	metadata := fileMetadataFromPath(p, info)
+	metadata, err := fileMetadataFromPath(p, info)
+	if err != nil {
+		return "", err
+	}
+
 	if ref != nil {
 		r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
 	}
