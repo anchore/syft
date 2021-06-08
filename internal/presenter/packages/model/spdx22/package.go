@@ -1,6 +1,7 @@
 package spdx22
 
 type Package struct {
+	Item
 	// The checksum property provides a mechanism that can be used to verify that the contents of a File or
 	// Package have not changed.
 	Checksums []Checksum `json:"checksums,omitempty"`
@@ -42,5 +43,4 @@ type Package struct {
 	Supplier string `json:"supplier,omitempty"`
 	// Provides an indication of the version of the package that is described by this SpdxDocument.
 	VersionInfo string `json:"versionInfo,omitempty"`
-	Item
 }

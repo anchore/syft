@@ -257,7 +257,7 @@ func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_
 
 			// 3.21: Package External Reference
 			// Cardinality: optional, one or many
-			PackageExternalReferences: nil,
+			PackageExternalReferences: formatSPDXExternalRefs(p),
 
 			// 3.22: Package External Reference Comment
 			// Cardinality: conditional (optional, one) for each External Reference
@@ -272,4 +272,16 @@ func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_
 		}
 	}
 	return results
+}
+
+func formatSPDXExternalRefs(p *pkg.Package) (refs []*spdx.PackageExternalReference2_2) {
+	for _, ref := range getSPDXExternalRefs(p) {
+		refs = append(refs, &spdx.PackageExternalReference2_2{
+			Category:           string(ref.ReferenceCategory),
+			RefType:            string(ref.ReferenceType),
+			Locator:            ref.ReferenceLocator,
+			ExternalRefComment: ref.Comment,
+		})
+	}
+	return refs
 }

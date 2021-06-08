@@ -1,6 +1,7 @@
 package spdx22
 
 type Item struct {
+	Element
 	// The licenseComments property allows the preparer of the SPDX document to describe why the licensing in
 	// spdx:licenseConcluded was chosen.
 	LicenseComments  string `json:"licenseComments,omitempty"`
@@ -18,5 +19,4 @@ type Item struct {
 	// The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from
 	// license texts, which may be necessary or desirable to reproduce.
 	AttributionTexts []string `json:"attributionTexts,omitempty"`
-	Element
 }

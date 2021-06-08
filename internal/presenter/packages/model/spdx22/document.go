@@ -6,6 +6,7 @@ package spdx22
 // - https://github.com/spdx/spdx-spec/tree/v2.2/ontology
 
 type Document struct {
+	Element
 	SPDXVersion string `json:"spdxVersion"`
 	// One instance is required for each SPDX file produced. It provides the necessary information for forward
 	// and backward compatibility for processing tools.
@@ -39,5 +40,4 @@ type Document struct {
 	Files []File `json:"files,omitempty"`
 	// Snippets referenced in the SPDX document
 	Snippets []Snippet `json:"snippets,omitempty"`
-	Element
 }

@@ -40,7 +40,20 @@ func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
 }
 
 func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
+	var name string
+	switch srcMetadata.Scheme {
+	case source.ImageScheme:
+		name = srcMetadata.ImageMetadata.UserInput
+	case source.DirectoryScheme:
+		name = srcMetadata.Path
+	}
+
 	return spdx22.Document{
+		Element: spdx22.Element{
+			// should this be unique to the user's input? or otherwise just say document?
+			SPDXID: spdx22.ElementID("DOCUMENT").String(),
+			Name:   name,
+		},
 		SPDXVersion: spdx22.Version,
 		CreationInfo: spdx22.CreationInfo{
 			Created: time.Now().UTC(),
@@ -54,11 +67,6 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
 		Packages:          newSPDXJsonPackages(catalog),
-		Element: spdx22.Element{
-			// should this be unique to the user's input? or otherwise just say document?
-			SPDXID: spdx22.ElementID("DOCUMENT").String(),
-			Name:   srcMetadata.ImageMetadata.UserInput,
-		},
 	}
 }
 

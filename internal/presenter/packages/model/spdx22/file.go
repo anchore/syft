@@ -17,6 +17,7 @@ const (
 )
 
 type File struct {
+	Item
 	// (At least one is required.) The checksum property provides a mechanism that can be used to verify that the
 	// contents of a File or Package have not changed.
 	Checksums []Checksum `json:"checksums"`
@@ -37,5 +38,4 @@ type File struct {
 	// properties of doap:Projects are not directly supported by SPDX and may be dropped when translating to or
 	// from some SPDX formats.
 	ArtifactOf []string `json:"artifactOf"`
-	Item
 }

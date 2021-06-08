@@ -20,6 +20,7 @@ type Range struct {
 }
 
 type Snippet struct {
+	Item
 	// Licensing information that was discovered directly in the subject snippet. This is also considered a declared
 	// license for the snippet. (elements are license expressions)
 	LicenseInfoInSnippets []string `json:"licenseInfoInSnippets"`
@@ -28,5 +29,4 @@ type Snippet struct {
 	// (At least 1 range is required). This field defines the byte range in the original host file (in X.2) that the
 	// snippet information applies to.
 	Ranges []Range `json:"ranges"`
-	Item
 }
