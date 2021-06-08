@@ -33,7 +33,7 @@ func TestDpkgCataloger(t *testing.T) {
 					Name:         "libpam-runtime",
 					Version:      "1.1.8-3.6",
 					FoundBy:      "dpkgdb-cataloger",
-					Licenses:     []string{"GPL-2", "LGPL-2.1"},
+					Licenses:     []string{"GPL-1", "GPL-2", "LGPL-2.1"},
 					Type:         pkg.DebPkg,
 					MetadataType: pkg.DpkgMetadataType,
 					Metadata: pkg.DpkgMetadata{

@@ -5,12 +5,12 @@ import (
 	"io"
 	"time"
 
+	"github.com/anchore/syft/internal/spdxlicense"
+
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	spdxLicense "github.com/mitchellh/go-spdx"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/tvsaver"
 )
@@ -30,6 +30,7 @@ func NewSPDXTagValuePresenter(catalog *pkg.Catalog, srcMetadata source.Metadata)
 }
 
 // Present the catalog results to the given writer.
+// nolint: funlen
 func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 	doc := spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{
@@ -41,8 +42,7 @@ func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 			// Cardinality: mandatory, one
 			DataLicense: "CC0-1.0",
 
-			// 2.3: SPDX Identifier; should be "DOCUMENT" to represent
-			//      mandatory identifier of SPDXRef-DOCUMENT
+			// 2.3: SPDX Identifier; should be "DOCUMENT" to represent mandatory identifier of SPDXRef-DOCUMENT
 			// Cardinality: mandatory, one
 			SPDXIdentifier: spdx.ElementID("DOCUMENT"),
 
@@ -76,7 +76,7 @@ func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 
 			// 2.7: License List Version
 			// Cardinality: optional, one
-			LicenseListVersion: "",
+			LicenseListVersion: spdxlicense.Version,
 
 			// 2.8: Creators: may have multiple keys for Person, Organization
 			//      and/or Tool
@@ -98,45 +98,24 @@ func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 			DocumentComment: "",
 		},
 		Packages: pres.packages(),
-		// TODO: consider adding the following fields
-		//UnpackagedFiles: nil,
-		//OtherLicenses:   nil,
-		//Relationships:   nil,
-		//Annotations:     nil,
 	}
 
 	return tvsaver.Save2_2(&doc, output)
 }
 
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
+// nolint: funlen
 func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
 	results := make(map[spdx.ElementID]*spdx.Package2_2)
 
 	for p := range pres.catalog.Enumerate() {
-		// TODO: name should be guaranteed to be unique, but semantically useful (and stable)
+		// name should be guaranteed to be unique, but semantically useful and stable
 		id := fmt.Sprintf("Package-%+v-%s", p.Type, p.Name)
 
-		// source: https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license
-		// The options to populate this field are limited to:
-		// A valid SPDX License Expression as defined in Appendix IV;
-		// NONE, if the SPDX file creator concludes there is no license available for this package; or
-		// NOASSERTION if:
-		//   (i) the SPDX file creator has attempted to but cannot reach a reasonable objective determination;
-		//   (ii) the SPDX file creator has made no attempt to determine this field; or
-		//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
-		license := "NONE"
-		if len(p.Licenses) > 0 {
-			// note: we are not supporting complex expressions at this time, only individual licenses
-			licenseInfo, err := spdxLicense.License(p.Licenses[0])
-			if err != nil {
-				log.Warnf("unable to parse SPDX license for package=%+v : %+v", p, err)
-				license = "NOASSERTION"
-			} else {
-				license = licenseInfo.ID
-			}
-		}
-
-		filesAnalyzed, files := pres.packageFiles(p)
+		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
+		// in the Comments on License field (section 3.16). With respect to NOASSERTION, a written explanation in
+		// the Comments on License field (section 3.16) is preferred.
+		license := getSPDXLicense(p)
 
 		results[spdx.ElementID(id)] = &spdx.Package2_2{
 
@@ -194,7 +173,7 @@ func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_
 
 			// Intent: A package can refer to a project, product, artifact, distribution or a component that is
 			// external to the SPDX document.
-			FilesAnalyzed: filesAnalyzed,
+			FilesAnalyzed: false,
 			// NOT PART OF SPEC: did FilesAnalyzed tag appear?
 			IsFilesAnalyzedTagPresent: true,
 
@@ -234,7 +213,7 @@ func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_
 			// Cardinality: mandatory, one
 			// Purpose: Contain the license the SPDX file creator has concluded as governing the
 			// package or alternative values, if the governing license cannot be determined.
-			PackageLicenseConcluded: "NOASSERTION",
+			PackageLicenseConcluded: license,
 
 			// 3.14: All Licenses Info from Files: SPDX License Expression, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one or many if filesAnalyzed is true / omitted;
@@ -289,92 +268,8 @@ func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_
 			PackageAttributionTexts: nil,
 
 			// Files contained in this Package
-			Files: files,
+			Files: nil,
 		}
 	}
 	return results
-}
-
-func (pres *SPDXTagValuePresenter) packageFiles(p *pkg.Package) (bool, map[spdx.ElementID]*spdx.File2_2) {
-	filesAnalyzed := false
-	files := make(map[spdx.ElementID]*spdx.File2_2)
-	if owner, ok := p.Metadata.(pkg.FileOwner); ok {
-		filesAnalyzed = true
-		for _, f := range owner.OwnedFiles() {
-			// TODO: should we include layer information in the element id?
-			id := spdx.ElementID(f)
-			files[id] = &spdx.File2_2{
-
-				// 4.1: File Name
-				// Cardinality: mandatory, one
-				FileName: f,
-
-				// 4.2: File SPDX Identifier: "SPDXRef-[idstring]"
-				// Cardinality: mandatory, one
-				FileSPDXIdentifier: id,
-
-				// 4.3: File Type
-				// Cardinality: optional, multiple
-				FileType: nil,
-
-				// 4.4: File Checksum: may have keys for SHA1, SHA256 and/or MD5
-				// Cardinality: mandatory, one SHA1, others may be optionally provided
-				// TODO: we don't have the resolvers at this point, but we could make that available?
-				FileChecksumSHA1:   "",
-				FileChecksumSHA256: "",
-				FileChecksumMD5:    "",
-
-				// 4.5: Concluded License: SPDX License Expression, "NONE" or "NOASSERTION"
-				// Cardinality: mandatory, one
-				LicenseConcluded: "NOASSERTION",
-
-				// 4.6: License Information in File: SPDX License Expression, "NONE" or "NOASSERTION"
-				// Cardinality: mandatory, one or many
-				// TODO: could use a license classifier here
-				LicenseInfoInFile: []string{"NOASSERTION"},
-
-				// 4.7: Comments on License
-				// Cardinality: optional, one
-				LicenseComments: "",
-
-				// 4.8: Copyright Text: copyright notice(s) text, "NONE" or "NOASSERTION"
-				// Cardinality: mandatory, one
-				FileCopyrightText: "NOASSERTION",
-
-				// DEPRECATED in version 2.1 of spec
-				// 4.9-4.11: Artifact of Project variables (defined below)
-				// Cardinality: optional, one or many
-				ArtifactOfProjects: nil,
-
-				// 4.12: File Comment
-				// Cardinality: optional, one
-				FileComment: "",
-
-				// 4.13: File Notice
-				// Cardinality: optional, one
-				FileNotice: "",
-
-				// 4.14: File Contributor
-				// Cardinality: optional, one or many
-				FileContributor: nil,
-
-				// 4.15: File Attribution Text
-				// Cardinality: optional, one or many
-				FileAttributionTexts: nil,
-
-				// DEPRECATED in version 2.0 of spec
-				// 4.16: File Dependencies
-				// Cardinality: optional, one or many
-				FileDependencies: nil,
-
-				// Snippets contained in this File
-				// Note that Snippets could be defined in a different Document! However,
-				// the only ones that _THIS_ document can contain are this ones that are
-				// defined here -- so this should just be an ElementID.
-				Snippets: nil,
-			}
-		}
-	}
-
-	return filesAnalyzed, files
 }
