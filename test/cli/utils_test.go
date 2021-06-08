@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -46,22 +48,19 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
 		binaryLocation = os.Getenv("SYFT_BINARY_LOCATION")
 	} else {
-		// note: there is a subtle - vs _ difference between these versions
-		//switch runtime.GOOS {
-		//case "darwin":
-		//	binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-macos_darwin_%s/syft", runtime.GOARCH))
-		//case "linux":
-		//	binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft_linux_%s/syft", runtime.GOARCH))
-		//default:
-		//	t.Fatalf("unsupported OS: %s", runtime.GOOS)
-		//}
+		//note: there is a subtle - vs _ difference between these versions
+		switch runtime.GOOS {
+		case "darwin":
+			binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-macos_darwin_%s/syft", runtime.GOARCH))
+		case "linux":
+			binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft_linux_%s/syft", runtime.GOARCH))
+		default:
+			t.Fatalf("unsupported OS: %s", runtime.GOOS)
+		}
 
-		// TMP TMP TMP
-		binaryLocation = "/Users/wagoodman/.gimme/versions/go1.15.2.darwin.amd64/bin/go"
-		args = append([]string{"run", "../../main.go"}, args...)
 	}
 
-	//t.Log(binaryLocation, args)
+	t.Log(binaryLocation, args)
 
 	return exec.Command(binaryLocation, args...)
 }
