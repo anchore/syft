@@ -69,7 +69,7 @@ func TestApkMetadata_fileOwner(t *testing.T) {
 		t.Run(strings.Join(test.expected, ","), func(t *testing.T) {
 			var i interface{}
 			i = test.metadata
-			actual := i.(FileOwner).OwnedFiles()
+			actual := i.(fileOwner).ownedFiles()
 			for _, d := range deep.Equal(test.expected, actual) {
 				t.Errorf("diff: %+v", d)
 			}

@@ -11,7 +11,7 @@ import (
 
 const ApkDbGlob = "**/lib/apk/db/installed"
 
-var _ FileOwner = (*ApkMetadata)(nil)
+var _ fileOwner = (*ApkMetadata)(nil)
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
 // See the following sources for more information:
@@ -63,7 +63,7 @@ func (m ApkMetadata) PackageURL() string {
 	return pURL.ToString()
 }
 
-func (m ApkMetadata) OwnedFiles() (result []string) {
+func (m ApkMetadata) ownedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {

@@ -6,7 +6,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-var _ FileOwner = (*PythonPackageMetadata)(nil)
+var _ fileOwner = (*PythonPackageMetadata)(nil)
 
 // PythonFileDigest represents the file metadata for a single file attributed to a python package.
 type PythonFileDigest struct {
@@ -34,7 +34,7 @@ type PythonPackageMetadata struct {
 	TopLevelPackages     []string           `json:"topLevelPackages,omitempty"`
 }
 
-func (m PythonPackageMetadata) OwnedFiles() (result []string) {
+func (m PythonPackageMetadata) ownedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {

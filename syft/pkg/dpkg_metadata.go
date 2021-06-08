@@ -12,7 +12,7 @@ import (
 
 const DpkgDbGlob = "**/var/lib/dpkg/{status,status.d/**}"
 
-var _ FileOwner = (*DpkgMetadata)(nil)
+var _ fileOwner = (*DpkgMetadata)(nil)
 
 // DpkgMetadata represents all captured data for a Debian package DB entry; available fields are described
 // at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section.
@@ -55,7 +55,7 @@ func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
 	return pURL.ToString()
 }
 
-func (m DpkgMetadata) OwnedFiles() (result []string) {
+func (m DpkgMetadata) ownedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {
