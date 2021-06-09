@@ -6,13 +6,14 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/syft/presenter/packages"
+
 	"github.com/spf13/viper"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/presenter/packages"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/distro"
