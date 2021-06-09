@@ -48,7 +48,7 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
 		binaryLocation = os.Getenv("SYFT_BINARY_LOCATION")
 	} else {
-		//note: there is a subtle - vs _ difference between these versions
+		// note: there is a subtle - vs _ difference between these versions
 		switch runtime.GOOS {
 		case "darwin":
 			binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-macos_darwin_%s/syft", runtime.GOARCH))
@@ -59,8 +59,6 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 		}
 
 	}
-
-	t.Log(binaryLocation, args)
 
 	return exec.Command(binaryLocation, args...)
 }

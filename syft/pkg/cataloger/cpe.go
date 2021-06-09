@@ -2,6 +2,7 @@ package cataloger
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -106,6 +107,10 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 
+	if len(products) == 0 {
+		return nil
+	}
+
 	keys := internal.NewStringSet()
 	cpes := make([]pkg.CPE, 0)
 	for _, product := range products {
@@ -145,6 +150,8 @@ func candidateTargetSoftwareAttrs(p pkg.Package) []string {
 		targetSw = append(targetSw, "ruby", "rails")
 	case pkg.Python:
 		targetSw = append(targetSw, "python")
+	case pkg.Go:
+		targetSw = append(targetSw, "go", "golang")
 	}
 
 	return targetSw
@@ -163,11 +170,20 @@ func candidateVendors(p pkg.Package) []string {
 	// TODO: Confirm whether using products as vendors is helpful to the matching process
 	vendors := candidateProducts(p)
 
-	if p.Language == pkg.Java {
+	switch p.Language {
+	case pkg.Java:
 		if p.MetadataType == pkg.JavaMetadataType {
 			vendors = append(vendors, candidateVendorsForJava(p)...)
 		}
+	case pkg.Go:
+		// replace all candidates with only the golang-specific helper
+		vendors = nil
+		vendor := candidateVendorForGo(p.Name)
+		if vendor != "" {
+			vendors = []string{vendor}
+		}
 	}
+
 	return vendors
 }
 
@@ -181,6 +197,13 @@ func candidateProducts(p pkg.Package) []string {
 		}
 	case pkg.Java:
 		products = append(products, candidateProductsForJava(p)...)
+	case pkg.Go:
+		// replace all candidates with only the golang-specific helper
+		products = nil
+		prod := candidateProductForGo(p.Name)
+		if prod != "" {
+			products = []string{prod}
+		}
 	}
 
 	for _, prod := range products {
@@ -191,6 +214,59 @@ func candidateProducts(p pkg.Package) []string {
 
 	// return any known product name swaps prepended to the results
 	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products...)
+}
+
+// candidateProductForGo attempts to find a single product name in a best-effort attempt. This implementation prefers
+// to return no vendor over returning potentially nonsensical results.
+func candidateProductForGo(name string) string {
+	// note: url.Parse requires a scheme for correct processing, which a golang module will not have, so one is provided.
+	u, err := url.Parse("http://" + name)
+	if err != nil {
+		return ""
+	}
+
+	cleanPath := strings.Trim(u.Path, "/")
+	pathElements := strings.Split(cleanPath, "/")
+
+	switch u.Host {
+	case "golang.org", "gopkg.in":
+		return cleanPath
+	case "google.golang.org":
+		return pathElements[0]
+	}
+
+	if len(pathElements) < 2 {
+		return ""
+	}
+
+	return pathElements[1]
+}
+
+// candidateVendorForGo attempts to find a single vendor name in a best-effort attempt. This implementation prefers
+// to return no vendor over returning potentially nonsensical results.
+func candidateVendorForGo(name string) string {
+	// note: url.Parse requires a scheme for correct processing, which a golang module will not have, so one is provided.
+	u, err := url.Parse("http://" + name)
+	if err != nil {
+		return ""
+	}
+
+	cleanPath := strings.Trim(u.Path, "/")
+
+	switch u.Host {
+	case "google.golang.org":
+		return "google"
+	case "golang.org":
+		return "golang"
+	case "gopkg.in":
+		return ""
+	}
+
+	pathElements := strings.Split(cleanPath, "/")
+	if len(pathElements) < 2 {
+		return ""
+	}
+	return pathElements[0]
 }
 
 func candidateProductsForJava(p pkg.Package) []string {
