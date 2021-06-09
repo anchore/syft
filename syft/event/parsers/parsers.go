@@ -6,9 +6,9 @@ package parsers
 import (
 	"fmt"
 
-	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/presenter"
 
-	"github.com/anchore/syft/internal/presenter"
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/wagoodman/go-progress"
 

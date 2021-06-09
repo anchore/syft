@@ -3,9 +3,10 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	exportedPackages "github.com/anchore/syft/syft/presenter/packages"
 	"testing"
 
-	"github.com/anchore/syft/internal/presenter/packages"
+	internalPackages "github.com/anchore/syft/internal/presenter/packages"
 )
 
 func TestPackageOwnershipRelationships(t *testing.T) {
@@ -23,7 +24,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			catalog, d, src := catalogFixtureImage(t, test.fixture)
 
-			p := packages.Presenter(packages.JSONPresenterOption, packages.PresenterConfig{
+			p := exportedPackages.Presenter(exportedPackages.JSONPresenterOption, exportedPackages.PresenterConfig{
 				SourceMetadata: src.Metadata,
 				Catalog:        catalog,
 				Distro:         d,
@@ -38,7 +39,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 				t.Fatalf("unable to present: %+v", err)
 			}
 
-			var doc packages.JSONDocument
+			var doc internalPackages.JSONDocument
 			decoder := json.NewDecoder(output)
 			if err := decoder.Decode(&doc); err != nil {
 				t.Fatalf("unable to decode json doc: %+v", err)
