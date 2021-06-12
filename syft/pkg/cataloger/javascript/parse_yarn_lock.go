@@ -16,7 +16,7 @@ import (
 var _ common.ParserFn = parseYarnLock
 
 var composedNameExp = regexp.MustCompile("^\"(@{1}[^@]+)")
-var simpleNameExp = regexp.MustCompile(`^[a-zA-Z\-]+@`)
+var simpleNameExp = regexp.MustCompile(`^\w[\w-_.]*@`)
 var versionExp = regexp.MustCompile(`^\W+(version)\W+`)
 
 func parseYarnLock(_ string, reader io.Reader) ([]pkg.Package, error) {
