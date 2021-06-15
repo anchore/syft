@@ -51,7 +51,20 @@ func TestParseYarnLock(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 		},
+		"asn1.js": {
+			Name:     "asn1.js",
+			Version:  "4.10.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"c0n-fab_u.laTION": {
+			Name:     "c0n-fab_u.laTION",
+			Version:  "7.7.7",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
 	}
+
 	fixture, err := os.Open("test-fixtures/yarn/yarn.lock")
 	if err != nil {
 		t.Fatalf("failed to open fixture: %+v", err)
@@ -63,5 +76,4 @@ func TestParseYarnLock(t *testing.T) {
 	}
 
 	assertPkgsEqual(t, actual, expected)
-
 }
