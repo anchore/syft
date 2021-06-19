@@ -13,9 +13,6 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Static analysis"
     runs-on: ubuntu-20.04
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -53,9 +50,6 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
     runs-on: ubuntu-20.04
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -108,9 +102,6 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
     runs-on: ubuntu-20.04
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -234,9 +225,6 @@ jobs:
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -277,9 +265,6 @@ jobs:
     name: "Acceptance tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/checkout@v2
 
@@ -296,9 +281,6 @@ jobs:
     name: "Acceptance tests (Mac)"
     needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/checkout@v2
 
@@ -322,9 +304,6 @@ jobs:
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
-    # run only on push event (internal PRs) or on a pull_request event that is from a fork (external PR)
-    # skip if this is a pull_request event on an internal PR (which is already covered by push events)
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/checkout@v2
 
