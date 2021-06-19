@@ -141,13 +141,13 @@ func TestFilesByGlob(t *testing.T) {
 		{
 			input:    "test-fixtures/path-detected",
 			desc:     "a single match",
-			glob:     "*vimrc",
+			glob:     "**/*vimrc",
 			expected: 1,
 		},
 		{
 			input:    "test-fixtures/path-detected",
 			desc:     "multiple matches",
-			glob:     "*",
+			glob:     "**",
 			expected: 2,
 		},
 	}

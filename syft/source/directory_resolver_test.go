@@ -1,6 +1,8 @@
 package source
 
 import (
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,7 +61,8 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := newDirectoryResolver(c.root)
+			resolver, err := newDirectoryResolver(c.root)
+			assert.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.input)
 			if !c.forcePositiveHasPath {
@@ -114,12 +117,10 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := newDirectoryResolver("./test-fixtures")
-
+			resolver, err := newDirectoryResolver("./test-fixtures")
+			assert.NoError(t, err)
 			refs, err := resolver.FilesByPath(c.input...)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v, %+v", err, refs)
-			}
+			assert.NoError(t, err)
 
 			if len(refs) != c.refCount {
 				t.Errorf("unexpected number of refs: %d != %d", len(refs), c.refCount)
@@ -129,43 +130,119 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
-	t.Run("finds multiple matching files", func(t *testing.T) {
-		resolver := newDirectoryResolver("./test-fixtures")
-		refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
+	resolver, err := newDirectoryResolver("./test-fixtures")
+	assert.NoError(t, err)
+	refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
+	assert.NoError(t, err)
 
-		if err != nil {
-			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
-		}
-
-		assert.Len(t, refs, 2)
-
-	})
+	assert.Len(t, refs, 2)
 }
 
 func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
-	t.Run("finds multiple matching files", func(t *testing.T) {
-		resolver := newDirectoryResolver("./test-fixtures/image-symlinks")
-		refs, err := resolver.FilesByGlob("**/*.txt")
-
-		if err != nil {
-			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
-		}
-
-		assert.Len(t, refs, 6)
-
-	})
+	resolver, err := newDirectoryResolver("./test-fixtures/image-symlinks")
+	assert.NoError(t, err)
+	refs, err := resolver.FilesByGlob("**/*.txt")
+	assert.NoError(t, err)
+	assert.Len(t, refs, 6)
 }
 
 func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
-	t.Run("finds multiple matching files", func(t *testing.T) {
-		resolver := newDirectoryResolver("./test-fixtures")
-		refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
-		if err != nil {
-			t.Fatalf("could not use resolver: %+v, %+v", err, refs)
-		}
+	resolver, err := newDirectoryResolver("./test-fixtures")
+	assert.NoError(t, err)
+	refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
+	assert.NoError(t, err)
 
-		assert.Len(t, refs, 1)
-		assert.Equal(t, "test-fixtures/image-symlinks/file-1.txt", refs[0].RealPath)
+	assert.Len(t, refs, 1)
+	assert.Equal(t, "test-fixtures/image-symlinks/file-1.txt", refs[0].RealPath)
+}
 
+func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
+	// let's make certain that "dev/place" is not ignored, since it is not "/dev/place"
+	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target")
+	assert.NoError(t, err)
+	// ensure the correct filter function is wired up by default
+	expectedFn := reflect.ValueOf(isSystemRuntimePath)
+	actualFn := reflect.ValueOf(resolver.pathFilterFns[0])
+	assert.Equal(t, expectedFn.Pointer(), actualFn.Pointer())
+
+	// all paths should be found (non filtering matches a path)
+	refs, err := resolver.FilesByGlob("**/place")
+	assert.NoError(t, err)
+	// 4: within target/
+	// 1: target/link --> relative path to "place"
+	// 1: outside_root/link_target/place
+	assert.Len(t, refs, 6)
+
+	// ensure that symlink indexing outside of root worked
+	assert.Contains(t, refs, Location{
+		RealPath: "test-fixtures/system_paths/outside_root/link_target/place",
 	})
+}
+
+func TestDirectoryResolverUsesPathFilterFunction(t *testing.T) {
+	// let's make certain that the index honors the filter function
+	filter := func(s string) bool {
+		// a dummy function that works for testing purposes
+		return strings.Contains(s, "dev/place") || strings.Contains(s, "proc/place") || strings.Contains(s, "sys/place")
+	}
+
+	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target", filter)
+	assert.NoError(t, err)
+
+	// ensure the correct filter function is wired up by default
+	expectedFn := reflect.ValueOf(filter)
+	actualFn := reflect.ValueOf(resolver.pathFilterFns[0])
+	assert.Equal(t, expectedFn.Pointer(), actualFn.Pointer())
+	assert.Len(t, resolver.pathFilterFns, 1)
+
+	refs, err := resolver.FilesByGlob("**/place")
+	assert.NoError(t, err)
+	// target/home/place + target/link/.../place + outside_root/.../place
+	assert.Len(t, refs, 3)
+}
+
+func TestIsSystemRuntimePath(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected bool
+	}{
+		{
+			path:     "proc/place",
+			expected: false,
+		},
+		{
+			path:     "/proc/place",
+			expected: true,
+		},
+		{
+			path:     "/proc",
+			expected: true,
+		},
+		{
+			path:     "/pro/c",
+			expected: false,
+		},
+		{
+			path:     "/pro",
+			expected: false,
+		},
+		{
+			path:     "/dev",
+			expected: true,
+		},
+		{
+			path:     "/sys",
+			expected: true,
+		},
+		{
+			path:     "/something/sys",
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			assert.Equal(t, test.expected, isSystemRuntimePath(test.path))
+		})
+	}
+
 }

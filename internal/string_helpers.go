@@ -14,7 +14,7 @@ func HasAnyOfPrefixes(input string, prefixes ...string) bool {
 }
 
 func TruncateMiddleEllipsis(input string, maxLen int) string {
-	if len(input) < maxLen {
+	if len(input) <= maxLen {
 		return input
 	}
 	return input[:maxLen/2] + "..." + input[len(input)-(maxLen/2):]

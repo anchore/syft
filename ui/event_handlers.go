@@ -418,7 +418,7 @@ func FileIndexingStartedHandler(ctx context.Context, fr *frame.Frame, event part
 	stream := progress.Stream(ctx, prog, interval)
 	title := tileFormat.Sprintf("Indexing %s", path)
 
-	formatFn := func(p progress.Progress) {
+	formatFn := func(_ progress.Progress) {
 		spin := color.Magenta.Sprint(spinner.Next())
 		if err != nil {
 			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
