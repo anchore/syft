@@ -88,6 +88,7 @@ func (r *directoryResolver) indexPath(root string) ([]string, error) {
 
 			// permission denied, IO error, etc... we keep track of the paths we can't see, but continue with indexing
 			if err != nil {
+				log.Warnf("unable to index path=%q: %+v", p, err)
 				r.errPaths[p] = err
 				return nil
 			}
@@ -104,6 +105,7 @@ func (r *directoryResolver) indexPath(root string) ([]string, error) {
 				if err != nil {
 					if errors.Is(err, os.ErrPermission) {
 						// don't allow for permission errors to stop indexing, keep track of the paths and continue.
+						log.Warnf("unable to index symlink=%q: %+v", p, err)
 						r.errPaths[p] = err
 						return nil
 					}
