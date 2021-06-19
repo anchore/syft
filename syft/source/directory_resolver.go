@@ -9,6 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/syft/event"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal"
@@ -54,7 +59,7 @@ func newDirectoryResolver(root string) (*directoryResolver, error) {
 	for _, p := range roots {
 		additionalRoots, err := r.indexPath(p)
 		if err != nil {
-			return nil, fmt.Errorf("unable to index filesystem: %+w", err)
+			return nil, fmt.Errorf("unable to index filesystem: %w", err)
 		}
 		roots = append(roots, additionalRoots...)
 	}
@@ -63,14 +68,20 @@ func newDirectoryResolver(root string) (*directoryResolver, error) {
 }
 
 func (r *directoryResolver) indexPath(root string) ([]string, error) {
+	log.Infof("indexing filesystem path=%q", root)
 	var err error
 	root, err = filepath.Abs(root)
 	if err != nil {
 		return nil, err
 	}
 	var roots []string
+	stager, prog := indexingProgress(root)
+	defer prog.SetCompleted()
+
 	return roots, filepath.Walk(root,
 		func(p string, info os.FileInfo, err error) error {
+			stager.Current = p
+
 			if isSystemRuntimePath(p) {
 				return nil
 			}
@@ -260,4 +271,25 @@ func isSystemRuntimePath(path string) bool {
 		return true
 	}
 	return false
+}
+
+func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
+	stage := &progress.Stage{}
+	prog := &progress.Manual{
+		Total: -1,
+	}
+
+	bus.Publish(partybus.Event{
+		Type:   event.FileIndexingStarted,
+		Source: path,
+		Value: struct {
+			progress.Stager
+			progress.Progressable
+		}{
+			Stager:       progress.Stager(stage),
+			Progressable: prog,
+		},
+	})
+
+	return stage, prog
 }

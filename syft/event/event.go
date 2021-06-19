@@ -23,6 +23,9 @@ const (
 	// FileDigestsCatalogerStarted is a partybus event that occurs when the file digests cataloging has begun
 	FileDigestsCatalogerStarted partybus.EventType = "syft-file-digests-cataloger-started-event"
 
+	// FileIndexingStarted is a partybus event that occurs when the directory resolver begins indexing a filesystem
+	FileIndexingStarted partybus.EventType = "syft-file-indexing-started-event"
+
 	// PresenterReady is a partybus event that occurs when an analysis result is ready for final presentation
 	PresenterReady partybus.EventType = "syft-presenter-ready-event"
 
