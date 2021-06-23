@@ -20,9 +20,13 @@ type Package struct {
 	// project, product, artifact, distribution or a component. If set to false, the package must not contain any files
 	FilesAnalyzed bool `json:"filesAnalyzed"`
 	// Indicates that a particular file belongs to a package (elements are SPDX ID for a File).
-	HasFiles        []string `json:"hasFiles,omitempty"`
-	Homepage        string   `json:"homepage,omitempty"`
-	LicenseDeclared string   `json:"licenseDeclared"`
+	HasFiles []string `json:"hasFiles,omitempty"`
+	// Provide a place for the SPDX file creator to record a web site that serves as the package's home page.
+	// This link can also be used to reference further information about the package referenced by the SPDX file creator.
+	Homepage string `json:"homepage,omitempty"`
+	// List the licenses that have been declared by the authors of the package. Any license information that does not
+	// originate from the package authors, e.g. license information from a third party repository, should not be included in this field.
+	LicenseDeclared string `json:"licenseDeclared"`
 	// The name and, optionally, contact information of the person or organization that originally created the package.
 	// Values of this property must conform to the agent and tool syntax.
 	Originator string `json:"originator,omitempty"`

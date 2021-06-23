@@ -13,7 +13,6 @@ func getSPDXExternalRefs(p *pkg.Package) (externalRefs []spdx22.ExternalRef) {
 	externalRefs = make([]spdx22.ExternalRef, 0)
 	for _, c := range p.CPEs {
 		externalRefs = append(externalRefs, spdx22.ExternalRef{
-			Comment:           "",
 			ReferenceCategory: spdx22.SecurityReferenceCategory,
 			ReferenceLocator:  c.BindToFmtString(),
 			ReferenceType:     spdx22.Cpe23ExternalRefType,
@@ -22,7 +21,6 @@ func getSPDXExternalRefs(p *pkg.Package) (externalRefs []spdx22.ExternalRef) {
 
 	if p.PURL != "" {
 		externalRefs = append(externalRefs, spdx22.ExternalRef{
-			Comment:           "",
 			ReferenceCategory: spdx22.PackageManagerReferenceCategory,
 			ReferenceLocator:  p.PURL,
 			ReferenceType:     spdx22.PurlExternalRefType,
@@ -61,7 +59,7 @@ func getSPDXLicense(p *pkg.Package) string {
 }
 
 func noneIfEmpty(value string) string {
-	if value == "" {
+	if strings.TrimSpace(value) == "" {
 		return "NONE"
 	}
 	return value
@@ -115,7 +113,7 @@ func getSPDXSourceInfo(p *pkg.Package) string {
 	case pkg.GemPkg:
 		answer = "acquired package info from installed gem metadata file"
 	case pkg.GoModulePkg:
-		answer = "acquired package info from go module metadata file"
+		answer = "acquired package info from go module information"
 	case pkg.RustPkg:
 		answer = "acquired package info from rust cargo manifest"
 	default:
