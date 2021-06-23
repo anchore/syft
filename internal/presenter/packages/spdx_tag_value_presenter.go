@@ -67,7 +67,6 @@ func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 			// In many cases, the URI will point to a web accessible document, but this should not be assumed
 			// to be the case.
 
-			// TODO: rethink this
 			DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", pres.srcMetadata.ImageMetadata.UserInput),
 
 			// 2.6: External Document References

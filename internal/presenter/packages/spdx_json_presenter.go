@@ -50,7 +50,6 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 
 	return spdx22.Document{
 		Element: spdx22.Element{
-			// should this be unique to the user's input? or otherwise just say document?
 			SPDXID: spdx22.ElementID("DOCUMENT").String(),
 			Name:   name,
 		},
