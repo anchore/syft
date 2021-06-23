@@ -33,7 +33,7 @@ func ParsePresenterOption(userStr string) PresenterOption {
 		return TablePresenterOption
 	case string(CycloneDxPresenterOption), "cyclone", "cyclone-dx":
 		return CycloneDxPresenterOption
-	case string(SPDXTagValuePresenterOption), "spdx-tagvalue", "spdxtagvalue", "spdx-tv":
+	case string(SPDXTagValuePresenterOption), "spdx", "spdx-tagvalue", "spdxtagvalue", "spdx-tv":
 		return SPDXTagValuePresenterOption
 	case string(SPDXJSONPresenterOption), "spdxjson":
 		return SPDXJSONPresenterOption
