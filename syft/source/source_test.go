@@ -3,6 +3,8 @@ package source
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
@@ -36,12 +38,13 @@ func TestNewFromDirectory(t *testing.T) {
 		expString  string
 		inputPaths []string
 		expRefs    int
+		expErr     bool
 	}{
 		{
 			desc:       "no paths exist",
 			input:      "foobar/",
 			inputPaths: []string{"/opt/", "/other"},
-			expRefs:    0,
+			expErr:     true,
 		},
 		{
 			desc:       "path detected",
@@ -73,8 +76,11 @@ func TestNewFromDirectory(t *testing.T) {
 				t.Errorf("mismatched stringer: '%s' != '%s'", src.Metadata.Path, test.input)
 			}
 			resolver, err := src.FileResolver(SquashedScope)
-			if err != nil {
-				t.Errorf("could not get resolver error: %+v", err)
+			if test.expErr {
+				assert.Error(t, err)
+				return
+			} else {
+				assert.NoError(t, err)
 			}
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			if err != nil {

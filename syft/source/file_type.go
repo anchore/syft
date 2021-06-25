@@ -39,11 +39,11 @@ func newFileTypeFromTarHeaderTypeFlag(flag byte) FileType {
 }
 
 // TODO: fill in more types from mod...
-func newFileTypeFromMode(mod os.FileMode) FileType {
+func newFileTypeFromMode(mode os.FileMode) FileType {
 	switch {
-	case mod&os.ModeSymlink == os.ModeSymlink:
+	case mode&os.ModeSymlink == os.ModeSymlink:
 		return SymbolicLink
-	case mod.IsDir():
+	case mode.IsDir():
 		return Directory
 	default:
 		return RegularFile

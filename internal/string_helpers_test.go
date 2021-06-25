@@ -82,6 +82,11 @@ func TestTruncateMiddleEllipsis(t *testing.T) {
 			expected: "nobody expects ...ish inquisition",
 		},
 		{
+			input:    "nobody expects the spanish inquisition",
+			len:      38,
+			expected: "nobody expects the spanish inquisition",
+		},
+		{
 			input:    "",
 			len:      30,
 			expected: "",

@@ -36,12 +36,12 @@ func TestRootCmdAliasesToPackagesSubcommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			aliasCmd, aliasStdout, aliasStderr := runSyftCommand(t, test.env, request)
+			aliasCmd, aliasStdout, aliasStderr := runSyft(t, test.env, request)
 			for _, traitFn := range test.assertions {
 				traitFn(t, aliasStdout, aliasStderr, aliasCmd.ProcessState.ExitCode())
 			}
 
-			pkgCmd, pkgsStdout, pkgsStderr := runSyftCommand(t, test.env, "packages", request)
+			pkgCmd, pkgsStdout, pkgsStderr := runSyft(t, test.env, "packages", request)
 			for _, traitFn := range test.assertions {
 				traitFn(t, pkgsStdout, pkgsStderr, pkgCmd.ProcessState.ExitCode())
 			}
@@ -102,7 +102,7 @@ func TestPersistentFlags(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd, stdout, stderr := runSyftCommand(t, test.env, test.args...)
+			cmd, stdout, stderr := runSyft(t, test.env, test.args...)
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}

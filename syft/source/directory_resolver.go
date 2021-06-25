@@ -9,18 +9,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/syft/event"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
-
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/event"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 )
 
-var systemRuntimePrefixes = []string{
+var unixSystemRuntimePrefixes = []string{
 	"/proc",
 	"/sys",
 	"/dev",
@@ -48,10 +47,10 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 	}
 
 	if pathFilters == nil {
-		pathFilters = []pathFilterFn{isSystemRuntimePath}
+		pathFilters = []pathFilterFn{isUnixSystemRuntimePath}
 	}
 
-	r := directoryResolver{
+	resolver := directoryResolver{
 		path:          root,
 		cwd:           cwd,
 		fileTree:      filetree.NewFileTree(),
@@ -60,30 +59,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		errPaths:      make(map[string]error),
 	}
 
-	// why account for multiple roots? To cover cases when there is a symlink that references above the root path,
-	// in which case we need to additionally index where the link resolves to. it's for this reason why the filetree
-	// must be relative to the root of the filesystem (and not just relative to the given path).
-	roots := []string{root}
-loop:
-	for {
-		var p string
-		switch len(roots) {
-		case 0:
-			break loop
-		case 1:
-			p, roots = roots[0], nil
-		default:
-			p, roots = roots[0], roots[1:]
-		}
-
-		additionalRoots, err := r.indexTree(p)
-		if err != nil {
-			return nil, fmt.Errorf("unable to index filesystem: %w", err)
-		}
-		roots = append(roots, additionalRoots...)
-	}
-
-	return &r, nil
+	return &resolver, indexAllRoots(root, resolver.indexTree)
 }
 
 func (r *directoryResolver) indexTree(root string) ([]string, error) {
@@ -102,17 +78,14 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 			stager.Current = p
 
 			// ignore any path which a filter function returns true
-			for _, fn := range r.pathFilterFns {
-				if fn(p) {
+			for _, filterFn := range r.pathFilterFns {
+				if filterFn(p) {
 					return nil
 				}
 			}
 
-			// permission denied, IO error, etc... we keep track of the paths we can't see, but continue with indexing
-			if err != nil {
-				log.Warnf("unable to index path=%q: %+v", p, err)
-				r.errPaths[p] = err
-				return nil
+			if err = r.handleFileAccessErr(p, err); err != nil {
+				return err
 			}
 
 			// link cycles could cause a revisit --we should not allow this
@@ -121,8 +94,8 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 			}
 
 			newRoot, err := r.addPathToIndex(p, info)
-			if err != nil {
-				return err
+			if err = r.handleFileAccessErr(p, err); err != nil {
+				return fmt.Errorf("unable to index path: %w", err)
 			}
 
 			if newRoot != "" {
@@ -131,6 +104,18 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 
 			return nil
 		})
+}
+
+func (r *directoryResolver) handleFileAccessErr(p string, err error) error {
+	if errors.Is(err, os.ErrPermission) {
+		// don't allow for permission errors to stop indexing, keep track of the paths and continue.
+		log.Warnf("unable to access path=%q: %+v", p, err)
+		r.errPaths[p] = err
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("unable to access path=%q: %w", p, err)
+	}
+	return nil
 }
 
 func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, error) {
@@ -142,13 +127,7 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 	case SymbolicLink:
 		linkTarget, err := os.Readlink(p)
 		if err != nil {
-			if errors.Is(err, os.ErrPermission) {
-				// don't allow for permission errors to stop indexing, keep track of the paths and continue.
-				log.Warnf("unable to index symlink=%q: %+v", p, err)
-				r.errPaths[p] = err
-				return "", nil
-			}
-			return "", fmt.Errorf("unable to readlink for path=%q: %+v", p, err)
+			return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
 		}
 		ref, err = r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
 		if err != nil {
@@ -305,8 +284,8 @@ func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetad
 	}, nil
 }
 
-func isSystemRuntimePath(path string) bool {
-	return internal.HasAnyOfPrefixes(path, systemRuntimePrefixes...)
+func isUnixSystemRuntimePath(path string) bool {
+	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
 }
 
 func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
@@ -328,4 +307,31 @@ func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
 	})
 
 	return stage, prog
+}
+
+func indexAllRoots(root string, indexer func(string) ([]string, error)) error {
+	// why account for multiple roots? To cover cases when there is a symlink that references above the root path,
+	// in which case we need to additionally index where the link resolves to. it's for this reason why the filetree
+	// must be relative to the root of the filesystem (and not just relative to the given path).
+	pathsToIndex := []string{root}
+loop:
+	for {
+		var currentPath string
+		switch len(pathsToIndex) {
+		case 0:
+			break loop
+		case 1:
+			currentPath, pathsToIndex = pathsToIndex[0], nil
+		default:
+			currentPath, pathsToIndex = pathsToIndex[0], pathsToIndex[1:]
+		}
+
+		additionalRoots, err := indexer(currentPath)
+		if err != nil {
+			return fmt.Errorf("unable to index filesystem path=%q: %w", currentPath, err)
+		}
+		pathsToIndex = append(pathsToIndex, additionalRoots...)
+	}
+
+	return nil
 }

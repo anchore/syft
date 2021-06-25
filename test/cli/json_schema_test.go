@@ -60,7 +60,7 @@ func TestJSONSchema(t *testing.T) {
 				args = append(args, a)
 			}
 
-			_, stdout, stderr := runSyftCommand(t, nil, args...)
+			_, stdout, stderr := runSyft(t, nil, args...)
 
 			if len(strings.Trim(stdout, "\n ")) < 100 {
 				t.Fatalf("bad syft run:\noutput: %q\n:error: %q", stdout, stderr)

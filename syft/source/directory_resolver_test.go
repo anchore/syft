@@ -1,10 +1,13 @@
 package source
 
 import (
+	"os"
+	"path"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -161,7 +164,7 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target")
 	assert.NoError(t, err)
 	// ensure the correct filter function is wired up by default
-	expectedFn := reflect.ValueOf(isSystemRuntimePath)
+	expectedFn := reflect.ValueOf(isUnixSystemRuntimePath)
 	actualFn := reflect.ValueOf(resolver.pathFilterFns[0])
 	assert.Equal(t, expectedFn.Pointer(), actualFn.Pointer())
 
@@ -201,7 +204,7 @@ func TestDirectoryResolverUsesPathFilterFunction(t *testing.T) {
 	assert.Len(t, refs, 3)
 }
 
-func TestIsSystemRuntimePath(t *testing.T) {
+func Test_isUnixSystemRuntimePath(t *testing.T) {
 	tests := []struct {
 		path     string
 		expected bool
@@ -241,8 +244,173 @@ func TestIsSystemRuntimePath(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			assert.Equal(t, test.expected, isSystemRuntimePath(test.path))
+			assert.Equal(t, test.expected, isUnixSystemRuntimePath(test.path))
 		})
 	}
+}
 
+func Test_directoryResolver_index(t *testing.T) {
+	// note: this test is testing the effects from newDirectoryResolver, indexTree, and addPathToIndex
+	r, err := newDirectoryResolver("test-fixtures/system_paths/target")
+	if err != nil {
+		t.Fatalf("unable to get indexed dir resolver: %+v", err)
+	}
+	tests := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "has dir",
+			path: "test-fixtures/system_paths/target/home",
+		},
+		{
+			name: "has path",
+			path: "test-fixtures/system_paths/target/home/place",
+		},
+		{
+			name: "has symlink",
+			path: "test-fixtures/system_paths/target/link/a-symlink",
+		},
+		{
+			name: "has symlink target",
+			path: "test-fixtures/system_paths/outside_root/link_target/place",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			info, err := os.Stat(test.path)
+			assert.NoError(t, err)
+
+			// note: the index uses absolute paths, so assertions MUST keep this in mind
+			cwd, err := os.Getwd()
+			if err != nil {
+				t.Fatalf("could not get working dir: %+v", err)
+			}
+
+			p := file.Path(path.Join(cwd, test.path))
+			assert.Equal(t, true, r.fileTree.HasPath(p))
+			exists, ref, err := r.fileTree.File(p)
+			assert.Equal(t, true, exists)
+			if assert.NoError(t, err) {
+				return
+			}
+			assert.Equal(t, info, r.infos[ref.ID()])
+		})
+	}
+}
+
+func Test_handleFileAccessErr(t *testing.T) {
+	tests := []struct {
+		name                string
+		input               error
+		expectedErr         error
+		expectedPathTracked bool
+	}{
+		{
+			name:                "permission error tracked",
+			input:               os.ErrPermission,
+			expectedPathTracked: true,
+			expectedErr:         nil,
+		},
+		{
+			name:                "non-permission errors propagate",
+			input:               os.ErrInvalid,
+			expectedPathTracked: false,
+			expectedErr:         os.ErrInvalid,
+		},
+		{
+			name:                "non-errors ignored",
+			input:               nil,
+			expectedPathTracked: false,
+			expectedErr:         nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r := directoryResolver{
+				errPaths: make(map[string]error),
+			}
+			p := "a/place"
+			assert.ErrorIs(t, r.handleFileAccessErr(p, test.input), test.expectedErr)
+			_, exists := r.errPaths[p]
+			assert.Equal(t, test.expectedPathTracked, exists)
+		})
+	}
+}
+
+type indexerMock struct {
+	observedRoots   []string
+	additionalRoots map[string][]string
+}
+
+func (m *indexerMock) indexer(s string) ([]string, error) {
+	m.observedRoots = append(m.observedRoots, s)
+	return m.additionalRoots[s], nil
+}
+
+func Test_indexAllRoots(t *testing.T) {
+	tests := []struct {
+		name          string
+		root          string
+		mock          indexerMock
+		expectedRoots []string
+	}{
+		{
+			name: "no additional roots",
+			root: "a/place",
+			mock: indexerMock{
+				additionalRoots: make(map[string][]string),
+			},
+			expectedRoots: []string{
+				"a/place",
+			},
+		},
+		{
+			name: "additional roots from a single call",
+			root: "a/place",
+			mock: indexerMock{
+				additionalRoots: map[string][]string{
+					"a/place": {
+						"another/place",
+						"yet-another/place",
+					},
+				},
+			},
+			expectedRoots: []string{
+				"a/place",
+				"another/place",
+				"yet-another/place",
+			},
+		},
+		{
+			name: "additional roots from a multiple calls",
+			root: "a/place",
+			mock: indexerMock{
+				additionalRoots: map[string][]string{
+					"a/place": {
+						"another/place",
+						"yet-another/place",
+					},
+					"yet-another/place": {
+						"a-quiet-place-2",
+						"a-final/place",
+					},
+				},
+			},
+			expectedRoots: []string{
+				"a/place",
+				"another/place",
+				"yet-another/place",
+				"a-quiet-place-2",
+				"a-final/place",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.NoError(t, indexAllRoots(test.root, test.mock.indexer))
+		})
+	}
 }
