@@ -74,27 +74,27 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 	defer prog.SetCompleted()
 
 	return roots, filepath.Walk(root,
-		func(p string, info os.FileInfo, err error) error {
-			stager.Current = p
+		func(path string, info os.FileInfo, err error) error {
+			stager.Current = path
 
 			// ignore any path which a filter function returns true
 			for _, filterFn := range r.pathFilterFns {
-				if filterFn(p) {
+				if filterFn(path) {
 					return nil
 				}
 			}
 
-			if err = r.handleFileAccessErr(p, err); err != nil {
+			if err = r.handleFileAccessErr(path, err); err != nil {
 				return err
 			}
 
 			// link cycles could cause a revisit --we should not allow this
-			if r.fileTree.HasPath(file.Path(p)) {
+			if r.fileTree.HasPath(file.Path(path)) {
 				return nil
 			}
 
-			newRoot, err := r.addPathToIndex(p, info)
-			if err = r.handleFileAccessErr(p, err); err != nil {
+			newRoot, err := r.addPathToIndex(path, info)
+			if err = r.handleFileAccessErr(path, err); err != nil {
 				return fmt.Errorf("unable to index path: %w", err)
 			}
 
@@ -106,14 +106,14 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 		})
 }
 
-func (r *directoryResolver) handleFileAccessErr(p string, err error) error {
+func (r *directoryResolver) handleFileAccessErr(path string, err error) error {
 	if errors.Is(err, os.ErrPermission) {
 		// don't allow for permission errors to stop indexing, keep track of the paths and continue.
-		log.Warnf("unable to access path=%q: %+v", p, err)
-		r.errPaths[p] = err
+		log.Warnf("unable to access path=%q: %+v", path, err)
+		r.errPaths[path] = err
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("unable to access path=%q: %w", p, err)
+		return fmt.Errorf("unable to access path=%q: %w", path, err)
 	}
 	return nil
 }
