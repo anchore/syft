@@ -19,11 +19,23 @@ func getFixtureImage(t testing.TB, fixtureImageName string) string {
 	return imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 }
 
+func pullDockerImage(t testing.TB, image string) {
+	cmd := exec.Command("docker", "pull", image)
+	stdout, stderr := runCommand(cmd, nil)
+	if cmd.ProcessState.ExitCode() != 0 {
+		t.Log("STDOUT", stdout)
+		t.Log("STDERR", stderr)
+		t.Fatalf("could not pull docker image")
+	}
+}
+
 func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...string) (*exec.Cmd, string, string) {
 	allArgs := append(
 		[]string{
 			"run",
 			"-t",
+			"-e",
+			"SYFT_CHECK_FOR_APP_UPDATE=false",
 			"-v",
 			fmt.Sprintf("%s:/syft", getSyftBinaryLocationByOS(t, "linux")),
 			image,

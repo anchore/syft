@@ -8,13 +8,17 @@ import (
 )
 
 func TestDirectoryScanCompletesWithinTimeout(t *testing.T) {
+	image := "alpine:latest"
+
+	// we want to pull the image ahead of the test as to not affect the timeout value
+	pullDockerImage(t, image)
 
 	var cmd *exec.Cmd
 	var stdout, stderr string
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		cmd, stdout, stderr = runSyftInDocker(t, nil, "alpine:latest", "dir:/", "-vv")
+		cmd, stdout, stderr = runSyftInDocker(t, nil, image, "dir:/", "-vv")
 	}()
 
 	select {
