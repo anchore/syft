@@ -1,0 +1,21 @@
+[Image]
+ Layer:		 0
+ Digest:	 sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59
+ Size:		 22
+ MediaType:	 application/vnd.docker.image.rootfs.diff.tar.gzip
+
+ Layer:		 1
+ Digest:	 sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec
+ Size:		 16
+ MediaType:	 application/vnd.docker.image.rootfs.diff.tar.gzip
+
+[package-1]
+ Version:	 1.0.1
+ Type:		 python
+ Found by:	 the-cataloger-1
+
+[package-2]
+ Version:	 2.0.1
+ Type:		 deb
+ Found by:	 the-cataloger-2
+

@@ -59,6 +59,7 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 		}
 
 	}
+
 	return exec.Command(binaryLocation, args...)
 }
 

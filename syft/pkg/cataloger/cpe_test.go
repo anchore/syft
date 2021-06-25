@@ -423,6 +423,35 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
 			},
 		},
+		{
+			name: "go product and vendor candidates are wired up",
+			p: pkg.Package{
+				Name:     "github.com/someone/something",
+				Version:  "3.2",
+				FoundBy:  "go-cataloger",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:*:something:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:*:something:3.2:*:*:*:*:go:*:*",
+				"cpe:2.3:a:*:something:3.2:*:*:*:*:golang:*:*",
+				"cpe:2.3:a:someone:something:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:someone:something:3.2:*:*:*:*:go:*:*",
+				"cpe:2.3:a:someone:something:3.2:*:*:*:*:golang:*:*",
+			},
+		},
+		{
+			name: "generate no CPEs for indeterminate golang package name",
+			p: pkg.Package{
+				Name:     "github.com/what",
+				Version:  "3.2",
+				FoundBy:  "go-cataloger",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+			},
+			expected: []string{},
+		},
 	}
 
 	for _, test := range tests {
@@ -574,6 +603,98 @@ func TestCandidateTargetSoftwareAttrs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actual := candidateTargetSoftwareAttrs(tc.p)
 			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestCandidateProductForGo(t *testing.T) {
+	tests := []struct {
+		pkg      string
+		expected string
+	}{
+		{
+			pkg:      "github.com/someone/something",
+			expected: "something",
+		},
+		{
+			pkg:      "golang.org/x/xerrors",
+			expected: "x/xerrors",
+		},
+		{
+			pkg:      "gopkg.in/yaml.v2",
+			expected: "yaml.v2",
+		},
+		{
+			pkg:      "place",
+			expected: "",
+		},
+		{
+			pkg:      "place.com/",
+			expected: "",
+		},
+		{
+			pkg:      "place.com/someone-or-thing",
+			expected: "",
+		},
+		{
+			pkg:      "google.golang.org/genproto/googleapis/rpc/status",
+			expected: "genproto",
+		},
+		{
+			pkg:      "github.com/someone/something/long/package/name",
+			expected: "something",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.pkg, func(t *testing.T) {
+			assert.Equal(t, test.expected, candidateProductForGo(test.pkg))
+		})
+	}
+}
+
+func TestCandidateVendorForGo(t *testing.T) {
+	tests := []struct {
+		pkg      string
+		expected string
+	}{
+		{
+			pkg:      "github.com/someone/something",
+			expected: "someone",
+		},
+		{
+			pkg:      "golang.org/x/xerrors",
+			expected: "golang",
+		},
+		{
+			pkg:      "gopkg.in/yaml.v2",
+			expected: "",
+		},
+		{
+			pkg:      "place",
+			expected: "",
+		},
+		{
+			pkg:      "place.com/",
+			expected: "",
+		},
+		{
+			pkg:      "place.com/someone-or-thing",
+			expected: "",
+		},
+		{
+			pkg:      "google.golang.org/genproto/googleapis/rpc/status",
+			expected: "google",
+		},
+		{
+			pkg:      "github.com/someone/something/long/package/name",
+			expected: "someone",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.pkg, func(t *testing.T) {
+			assert.Equal(t, test.expected, candidateVendorForGo(test.pkg))
 		})
 	}
 }

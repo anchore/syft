@@ -7,14 +7,13 @@ import (
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/internal"
 	"github.com/xeipuuv/gojsonschema"
 )
 
 // this is the path to the json schema directory relative to the root of the repo
-const jsonSchemaPath = "schema/json"
+const spdxJsonSchemaPath = "schema/spdx-json"
 
-func TestJSONSchema(t *testing.T) {
+func TestSPDXJSONSchema(t *testing.T) {
 
 	imageFixture := func(t *testing.T) string {
 		fixtureImageName := "image-pkg-coverage"
@@ -32,7 +31,7 @@ func TestJSONSchema(t *testing.T) {
 		{
 			name:       "packages:image:docker-archive:pkg-coverage",
 			subcommand: "packages",
-			args:       []string{"-o", "json"},
+			args:       []string{"-o", "spdx-json"},
 			fixture:    imageFixture,
 		},
 		{
@@ -43,7 +42,7 @@ func TestJSONSchema(t *testing.T) {
 		{
 			name:       "packages:dir:pkg-coverage",
 			subcommand: "packages",
-			args:       []string{"-o", "json"},
+			args:       []string{"-o", "spdx-json"},
 			fixture: func(t *testing.T) string {
 				return "dir:test-fixtures/image-pkg-coverage"
 			},
@@ -60,19 +59,19 @@ func TestJSONSchema(t *testing.T) {
 				args = append(args, a)
 			}
 
-			_, stdout, stderr := runSyftCommand(t, nil, args...)
+			_, stdout, _ := runSyftCommand(t, nil, args...)
 
 			if len(strings.Trim(stdout, "\n ")) < 100 {
-				t.Fatalf("bad syft run:\noutput: %q\n:error: %q", stdout, stderr)
+				t.Fatalf("bad syft output: %q", stdout)
 			}
 
-			validateJsonAgainstSchema(t, stdout)
+			validateSpdxJsonAgainstSchema(t, stdout)
 		})
 	}
 }
 
-func validateJsonAgainstSchema(t testing.TB, json string) {
-	fullSchemaPath := path.Join(repoRoot(t), jsonSchemaPath, fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
+func validateSpdxJsonAgainstSchema(t testing.TB, json string) {
+	fullSchemaPath := path.Join(repoRoot(t), spdxJsonSchemaPath, fmt.Sprintf("spdx-schema-2.2.json"))
 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
 	documentLoader := gojsonschema.NewStringLoader(json)
 
