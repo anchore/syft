@@ -186,9 +186,12 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 }
 
 func packagesExec(_ *cobra.Command, args []string) error {
-	errs := packagesExecWorker(args[0])
-	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)
-	return ux(errs, eventSubscription)
+	return eventLoop(
+		packagesExecWorker(args[0]),
+		setupSignals(),
+		eventSubscription,
+		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
+	)
 }
 
 func packagesExecWorker(userInput string) <-chan error {

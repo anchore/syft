@@ -63,9 +63,12 @@ func init() {
 }
 
 func powerUserExec(_ *cobra.Command, args []string) error {
-	errs := powerUserExecWorker(args[0])
-	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)
-	return ux(errs, eventSubscription)
+	return eventLoop(
+		powerUserExecWorker(args[0]),
+		setupSignals(),
+		eventSubscription,
+		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
+	)
 }
 
 func powerUserExecWorker(userInput string) <-chan error {

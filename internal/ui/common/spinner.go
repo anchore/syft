@@ -8,32 +8,8 @@ import (
 // TODO: move me to a common module (used in multiple repos)
 
 const (
-	SpinnerCircleOutlineSet = "◜◠◯◎◉●◉◎◯◡◞"
-	SpinnerCircleSet        = "◌◯◎◉●◉◎◯"
-	SpinnerDotSet           = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-	SpinnerHorizontalBarSet = "▉▊▋▌▍▎▏▎▍▌▋▊▉"
-	SpinnerVerticalBarSet   = "▁▃▄▅▆▇█▇▆▅▄▃▁"
-	SpinnerDoubleBarSet     = "▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▏▎▍▌▋▊▉█▇▆▅▄▃▂▁"
-	SpinnerArrowSet         = "←↖↑↗→↘↓↙"
+	SpinnerDotSet = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 )
-
-var SpinnerCircleDotSet = []string{
-	"⠈⠁",
-	"⠈⠑",
-	"⠈⠱",
-	"⠈⡱",
-	"⢀⡱",
-	"⢄⡱",
-	"⢄⡱",
-	"⢆⡱",
-	"⢎⡱",
-	"⢎⡰",
-	"⢎⡠",
-	"⢎⡀",
-	"⢎⠁",
-	"⠎⠁",
-	"⠊⠁",
-}
 
 type Spinner struct {
 	index   int
@@ -44,12 +20,6 @@ type Spinner struct {
 func NewSpinner(charset string) Spinner {
 	return Spinner{
 		charset: strings.Split(charset, ""),
-	}
-}
-
-func NewSpinnerFromSlice(charset []string) Spinner {
-	return Spinner{
-		charset: charset,
 	}
 }
 

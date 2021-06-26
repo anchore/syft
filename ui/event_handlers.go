@@ -8,11 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/anchore/syft/internal/ui/common"
+
 	"github.com/anchore/stereoscope/pkg/image/docker"
 	"github.com/dustin/go-humanize"
 
 	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
-	"github.com/anchore/syft/internal/ui/common"
 	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/gookit/color"
 	"github.com/wagoodman/go-partybus"
