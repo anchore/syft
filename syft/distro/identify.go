@@ -95,6 +95,12 @@ func assemble(name, version, like string) *Distro {
 		return nil
 	}
 
+	// If it's an unknown distro, try mapping the ID_LIKE
+	if !ok && len(like) != 0 {
+		name = like
+		distroType, ok = IDMapping[name]
+	}
+
 	if ok {
 		distro, err := NewDistro(distroType, version, like)
 		if err != nil {
