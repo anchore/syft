@@ -13,9 +13,12 @@ import (
 // eventLoop listens to worker errors (from execution path), worker events (from a partybus subscription), and
 // signal interrupts. Is responsible for handling each event relative to a given UI an to coordinate eventing until
 // an eventual graceful exit.
-func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *partybus.Subscription, ux ui.UI) error {
+// nolint:gocognit
+func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *partybus.Subscription, ux ui.UI, cleanupFn func()) error {
+	defer cleanupFn()
 	events := subscription.Events()
-	if err := setupUI(subscription.Unsubscribe, ux); err != nil {
+	var err error
+	if ux, err = setupUI(subscription.Unsubscribe, ux); err != nil {
 		return err
 	}
 
@@ -32,7 +35,11 @@ func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *
 				continue
 			}
 			if err != nil {
-				retErr = err
+				// capture the error from the worker and unsubscribe to complete a graceful shutdown
+				retErr = multierror.Append(retErr, err)
+				if err := subscription.Unsubscribe(); err != nil {
+					retErr = multierror.Append(retErr, err)
+				}
 			}
 		case e, isOpen := <-events:
 			if !isOpen {
@@ -50,10 +57,15 @@ func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *
 				}
 			}
 		case <-signals:
-			if err := subscription.Unsubscribe(); err != nil {
-				log.Warnf("unable to unsubscribe from the event bus: %+v", err)
-				events = nil
-			}
+			// ignore further results from any event source and exit ASAP, but ensure that all cache is cleaned up.
+			// we ignore further errors since cleaning up the tmp directories will affect running catalogers that are
+			// reading/writing from/to their nested temp dirs. This is acceptable since we are bailing without result.
+
+			// TODO: potential future improvement would be to pass context into workers with a cancel function that is
+			// to the event loop. In this way we can have a more controlled shutdown even at the most nested levels
+			// of processing.
+			events = nil
+			workerErrs = nil
 		}
 	}
 
@@ -64,14 +76,15 @@ func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *
 	return retErr
 }
 
-func setupUI(unsubscribe func() error, ux ui.UI) error {
+func setupUI(unsubscribe func() error, ux ui.UI) (ui.UI, error) {
 	if err := ux.Setup(unsubscribe); err != nil {
+		// replace the existing UI with a (simpler) logger UI
 		ux = ui.NewLoggerUI()
 		if err := ux.Setup(unsubscribe); err != nil {
 			// something is very wrong, bail.
-			return err
+			return ux, err
 		}
 		log.Errorf("unable to setup given UI, falling back to logger: %+v", err)
 	}
-	return nil
+	return ux, nil
 }

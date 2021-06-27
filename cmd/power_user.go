@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/anchore/syft/syft"
+
 	"github.com/anchore/syft/internal"
 
 	"github.com/anchore/syft/internal/bus"
@@ -68,6 +70,7 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 		setupSignals(),
 		eventSubscription,
 		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
+		syft.Cleanup,
 	)
 }
 
