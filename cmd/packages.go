@@ -189,6 +189,7 @@ func packagesExec(_ *cobra.Command, args []string) error {
 		setupSignals(),
 		eventSubscription,
 		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
+		syft.Cleanup,
 	)
 }
 
