@@ -226,7 +226,9 @@ func TestParseJar(t *testing.T) {
 			}
 
 			parser, cleanupFn, err := newJavaArchiveParser(fixture.Name(), fixture, false)
-			defer cleanupFn()
+			t.Cleanup(func() {
+				assert.NoError(t, cleanupFn())
+			})
 			if err != nil {
 				t.Fatalf("should not have filed... %+v", err)
 			}
@@ -845,9 +847,11 @@ func TestPackagesFromPomProperties(t *testing.T) {
 			assert.NoError(t, err)
 
 			// make the parser
-			parser, cleanup, err := newJavaArchiveParser(virtualPath, nop, false)
+			parser, cleanupFn, err := newJavaArchiveParser(virtualPath, nop, false)
 			assert.NoError(t, err)
-			t.Cleanup(cleanup)
+			t.Cleanup(func() {
+				assert.NoError(t, cleanupFn())
+			})
 
 			// get the test data
 			actualPackage := parser.newPackageFromPomProperties(*test.props, test.parent)

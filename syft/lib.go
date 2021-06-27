@@ -19,6 +19,9 @@ package syft
 import (
 	"fmt"
 
+	"github.com/anchore/stereoscope"
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/distro"
@@ -75,4 +78,12 @@ func SetLogger(logger logger.Logger) {
 // SetBus sets the event bus for all syft library bus publish events onto (in-library subscriptions are not allowed).
 func SetBus(b *partybus.Bus) {
 	bus.SetPublisher(b)
+}
+
+func Cleanup() {
+	stereoscope.Cleanup()
+
+	if err := internal.RootTempDirGenerator.Cleanup(); err != nil {
+		log.Errorf("failed to cleanup temp directories: %w", err)
+	}
 }

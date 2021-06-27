@@ -23,33 +23,33 @@ type Source struct {
 type sourceDetector func(string) (image.Source, string, error)
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(userInput string, registryOptions *image.RegistryOptions) (Source, func(), error) {
+func New(userInput string, registryOptions *image.RegistryOptions) (Source, func() error, error) {
 	fs := afero.NewOsFs()
+	noCleanupFn := func() error { return nil }
 	parsedScheme, imageSource, location, err := detectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
-		return Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
+		return Source{}, noCleanupFn, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
 	}
 
 	switch parsedScheme {
 	case DirectoryScheme:
 		fileMeta, err := fs.Stat(location)
 		if err != nil {
-			return Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+			return Source{}, noCleanupFn, fmt.Errorf("unable to stat dir=%q: %w", location, err)
 		}
 
 		if !fileMeta.IsDir() {
-			return Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+			return Source{}, noCleanupFn, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
 		}
 
 		s, err := NewFromDirectory(location)
 		if err != nil {
-			return Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+			return Source{}, noCleanupFn, fmt.Errorf("could not populate source from path=%q: %w", location, err)
 		}
-		return s, func() {}, nil
+		return s, noCleanupFn, nil
 
 	case ImageScheme:
-		img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
-		cleanup := stereoscope.Cleanup
+		img, cleanup, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
 
 		if err != nil || img == nil {
 			return Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
@@ -62,7 +62,7 @@ func New(userInput string, registryOptions *image.RegistryOptions) (Source, func
 		return s, cleanup, nil
 	}
 
-	return Source{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
+	return Source{}, noCleanupFn, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 }
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.

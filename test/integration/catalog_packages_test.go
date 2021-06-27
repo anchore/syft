@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/anchore/syft/syft/distro"
@@ -24,7 +25,9 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	for _, c := range cataloger.ImageCatalogers() {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil)
-		b.Cleanup(cleanupSource)
+		b.Cleanup(func() {
+			assert.NoError(b, cleanupSource())
+		})
 		if err != nil {
 			b.Fatalf("unable to get source: %+v", err)
 		}

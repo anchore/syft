@@ -6,10 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/anchore/syft/syft/presenter/packages"
-
-	"github.com/spf13/viper"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
@@ -19,10 +15,12 @@ import (
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/presenter/packages"
 	"github.com/anchore/syft/syft/source"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
 )
 
@@ -206,7 +204,11 @@ func packagesExecWorker(userInput string) <-chan error {
 			errs <- fmt.Errorf("failed to determine image source: %+v", err)
 			return
 		}
-		defer cleanup()
+		defer func() {
+			if err := cleanup(); err != nil {
+				log.Warnf("unable to cleanup source temp dir: %+v", err)
+			}
+		}()
 
 		catalog, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {

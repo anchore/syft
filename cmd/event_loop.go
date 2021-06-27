@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 
+	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/hashicorp/go-multierror"
@@ -50,10 +51,12 @@ func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *
 				}
 			}
 		case <-signals:
-			if err := subscription.Unsubscribe(); err != nil {
-				log.Warnf("unable to unsubscribe from the event bus: %+v", err)
-				events = nil
-			}
+			// ignore further results from any event source and exit ASAP, but ensure that all cache is cleaned up.
+			// we ignore further errors since cleaning up the tmp directories will affect running catalogers that are
+			// reading/writing from/to their nested temp dirs. This is acceptable since we are bailing without result.
+			events = nil
+			workerErrs = nil
+			syft.Cleanup()
 		}
 	}
 

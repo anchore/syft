@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft/event"
@@ -89,7 +89,11 @@ func powerUserExecWorker(userInput string) <-chan error {
 			errs <- err
 			return
 		}
-		defer cleanup()
+		defer func() {
+			if err := cleanup(); err != nil {
+				log.Warnf("unable to cleanup source temp dir: %+v", err)
+			}
+		}()
 
 		if src.Metadata.Scheme != source.ImageScheme {
 			errs <- fmt.Errorf("the power-user subcommand only allows for 'image' schemes, given %q", src.Metadata.Scheme)

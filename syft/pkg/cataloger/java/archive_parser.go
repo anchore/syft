@@ -36,7 +36,11 @@ type archiveParser struct {
 func parseJavaArchive(virtualPath string, reader io.Reader) ([]pkg.Package, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(virtualPath, reader, true)
 	// note: even on error, we should always run cleanup functions
-	defer cleanupFn()
+	defer func() {
+		if err := cleanupFn(); err != nil {
+			log.Warnf("unable to clean up java archive temp dir: %+v", err)
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +57,7 @@ func uniquePkgKey(p *pkg.Package) string {
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
-func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested bool) (*archiveParser, func(), error) {
+func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested bool) (*archiveParser, func() error, error) {
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
