@@ -19,8 +19,45 @@ func getFixtureImage(t testing.TB, fixtureImageName string) string {
 	return imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 }
 
-func runSyftCommand(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
+func pullDockerImage(t testing.TB, image string) {
+	cmd := exec.Command("docker", "pull", image)
+	stdout, stderr := runCommand(cmd, nil)
+	if cmd.ProcessState.ExitCode() != 0 {
+		t.Log("STDOUT", stdout)
+		t.Log("STDERR", stderr)
+		t.Fatalf("could not pull docker image")
+	}
+}
+
+func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...string) (*exec.Cmd, string, string) {
+	allArgs := append(
+		[]string{
+			"run",
+			"-t",
+			"-e",
+			"SYFT_CHECK_FOR_APP_UPDATE=false",
+			"-v",
+			fmt.Sprintf("%s:/syft", getSyftBinaryLocationByOS(t, "linux")),
+			image,
+			"/syft",
+		},
+		args...,
+	)
+	cmd := exec.Command("docker", allArgs...)
+	stdout, stderr := runCommand(cmd, env)
+	return cmd, stdout, stderr
+}
+
+func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
 	cmd := getSyftCommand(t, args...)
+	if env != nil {
+		env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
+	}
+	stdout, stderr := runCommand(cmd, env)
+	return cmd, stdout, stderr
+}
+
+func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
 	if env != nil {
 		var envList []string
 		for key, val := range env {
@@ -38,29 +75,32 @@ func runSyftCommand(t testing.TB, env map[string]string, args ...string) (*exec.
 	// ignore errors since this may be what the test expects
 	cmd.Run()
 
-	return cmd, stdout.String(), stderr.String()
+	return stdout.String(), stderr.String()
 }
 
 func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
+	return exec.Command(getSyftBinaryLocation(t), args...)
+}
 
-	var binaryLocation string
+func getSyftBinaryLocation(t testing.TB) string {
 	if os.Getenv("SYFT_BINARY_LOCATION") != "" {
 		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
-		binaryLocation = os.Getenv("SYFT_BINARY_LOCATION")
-	} else {
-		// note: there is a subtle - vs _ difference between these versions
-		switch runtime.GOOS {
-		case "darwin":
-			binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-macos_darwin_%s/syft", runtime.GOARCH))
-		case "linux":
-			binaryLocation = path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft_linux_%s/syft", runtime.GOARCH))
-		default:
-			t.Fatalf("unsupported OS: %s", runtime.GOOS)
-		}
-
+		return os.Getenv("SYFT_BINARY_LOCATION")
 	}
+	return getSyftBinaryLocationByOS(t, runtime.GOOS)
+}
 
-	return exec.Command(binaryLocation, args...)
+func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
+	// note: there is a subtle - vs _ difference between these versions
+	switch goOS {
+	case "darwin":
+		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-macos_darwin_%s/syft", runtime.GOARCH))
+	case "linux":
+		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft_linux_%s/syft", runtime.GOARCH))
+	default:
+		t.Fatalf("unsupported OS: %s", runtime.GOOS)
+	}
+	return ""
 }
 
 func repoRoot(t testing.TB) string {

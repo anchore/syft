@@ -125,7 +125,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd, stdout, stderr := runSyftCommand(t, test.env, test.args...)
+			cmd, stdout, stderr := runSyft(t, test.env, test.args...)
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
@@ -197,7 +197,7 @@ func TestRegistryAuth(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd, stdout, stderr := runSyftCommand(t, test.env, test.args...)
+			cmd, stdout, stderr := runSyft(t, test.env, test.args...)
 			for _, traitAssertionFn := range test.assertions {
 				traitAssertionFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}

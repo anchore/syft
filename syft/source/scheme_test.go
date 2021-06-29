@@ -83,7 +83,7 @@ func TestDetectScheme(t *testing.T) {
 				ref: "latest",
 			},
 			expectedScheme: ImageScheme,
-			// we want to be able to handle this case better, however, I don't see a way to do this
+			// we expected to be able to handle this case better, however, I don't see a way to do this
 			// the user will need to provide more explicit input (docker:docker:latest)
 			expectedLocation: "latest",
 		},
@@ -95,7 +95,7 @@ func TestDetectScheme(t *testing.T) {
 				ref: "docker:latest",
 			},
 			expectedScheme: ImageScheme,
-			// we want to be able to handle this case better, however, I don't see a way to do this
+			// we expected to be able to handle this case better, however, I don't see a way to do this
 			// the user will need to provide more explicit input (docker:docker:latest)
 			expectedLocation: "docker:latest",
 		},

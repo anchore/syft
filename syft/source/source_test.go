@@ -3,6 +3,8 @@ package source
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
@@ -41,7 +43,6 @@ func TestNewFromDirectory(t *testing.T) {
 			desc:       "no paths exist",
 			input:      "foobar/",
 			inputPaths: []string{"/opt/", "/other"},
-			expRefs:    0,
 		},
 		{
 			desc:       "path detected",
@@ -73,9 +74,8 @@ func TestNewFromDirectory(t *testing.T) {
 				t.Errorf("mismatched stringer: '%s' != '%s'", src.Metadata.Path, test.input)
 			}
 			resolver, err := src.FileResolver(SquashedScope)
-			if err != nil {
-				t.Errorf("could not get resolver error: %+v", err)
-			}
+			assert.NoError(t, err)
+
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)
@@ -141,13 +141,13 @@ func TestFilesByGlob(t *testing.T) {
 		{
 			input:    "test-fixtures/path-detected",
 			desc:     "a single match",
-			glob:     "*vimrc",
+			glob:     "**/*vimrc",
 			expected: 1,
 		},
 		{
 			input:    "test-fixtures/path-detected",
 			desc:     "multiple matches",
-			glob:     "*",
+			glob:     "**",
 			expected: 2,
 		},
 	}
