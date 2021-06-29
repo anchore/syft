@@ -63,8 +63,10 @@ func init() {
 }
 
 func powerUserExec(_ *cobra.Command, args []string) error {
+	// could be an image or a directory, with or without a scheme
+	userInput := args[0]
 	return eventLoop(
-		powerUserExecWorker(args[0]),
+		powerUserExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
 		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),

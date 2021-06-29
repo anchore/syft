@@ -23,8 +23,8 @@ import (
 )
 
 const maxBarWidth = 50
-const statusSet = components.SpinnerDotSet // SpinnerCircleOutlineSet
-const completedStatus = "✔"                // "●"
+const statusSet = components.SpinnerDotSet
+const completedStatus = "✔"
 const tileFormat = color.Bold
 const interval = 150 * time.Millisecond
 

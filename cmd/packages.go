@@ -185,8 +185,10 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 }
 
 func packagesExec(_ *cobra.Command, args []string) error {
+	// could be an image or a directory, with or without a scheme
+	userInput := args[0]
 	return eventLoop(
-		packagesExecWorker(args[0]),
+		packagesExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
 		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
