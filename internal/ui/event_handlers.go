@@ -1,4 +1,4 @@
-package common
+package ui
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-// CatalogerPresenterReady is a UI function for processing the CatalogerFinished bus event, displaying the catalog
+// handleCatalogerPresenterReady is a UI function for processing the CatalogerFinished bus event, displaying the catalog
 // via the given presenter to stdout.
-func CatalogerPresenterReady(event partybus.Event) error {
+func handleCatalogerPresenterReady(event partybus.Event) error {
 	// show the report to stdout
 	pres, err := syftEventParsers.ParsePresenterReady(event)
 	if err != nil {
@@ -30,8 +30,8 @@ func CatalogerPresenterReady(event partybus.Event) error {
 	return nil
 }
 
-// appUpdateAvailableHandler is a UI handler function to display a new application version to the top of the screen.
-func AppUpdateAvailableHandler(_ context.Context, fr *frame.Frame, event partybus.Event, _ *sync.WaitGroup) error {
+// handleAppUpdateAvailable is a UI handler function to display a new application version to the top of the screen.
+func handleAppUpdateAvailable(_ context.Context, fr *frame.Frame, event partybus.Event, _ *sync.WaitGroup) error {
 	newVersion, err := syftEventParsers.ParseAppUpdateAvailable(event)
 	if err != nil {
 		return fmt.Errorf("bad AppUpdateAvailable event: %w", err)

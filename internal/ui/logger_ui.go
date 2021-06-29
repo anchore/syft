@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/ui/common"
 	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 )
@@ -26,9 +25,8 @@ func (l loggerUI) Handle(event partybus.Event) error {
 		return nil
 	}
 
-	err := common.CatalogerPresenterReady(event)
-	if err != nil {
-		log.Errorf("unable to show catalog image finished event: %+v", err)
+	if err := handleCatalogerPresenterReady(event); err != nil {
+		log.Warnf("unable to show catalog image finished event: %+v", err)
 	}
 
 	// this is the last expected event, stop listening to events

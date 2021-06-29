@@ -9,7 +9,6 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
-	"github.com/anchore/syft/internal/ui/common"
 	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/ui"
 	"github.com/k0kubun/go-ansi"
@@ -71,7 +70,7 @@ func (h *ephemeralTerminalUI) Handle(event partybus.Event) error {
 		}
 
 	case event.Type == syftEvent.AppUpdateAvailable:
-		if err := common.AppUpdateAvailableHandler(ctx, h.frame, event, h.waitGroup); err != nil {
+		if err := handleAppUpdateAvailable(ctx, h.frame, event, h.waitGroup); err != nil {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
 		}
 
@@ -80,7 +79,7 @@ func (h *ephemeralTerminalUI) Handle(event partybus.Event) error {
 		// are about to write bytes to stdout, so we should reset the terminal state first
 		h.closeScreen()
 
-		if err := common.CatalogerPresenterReady(event); err != nil {
+		if err := handleCatalogerPresenterReady(event); err != nil {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
 		}
 

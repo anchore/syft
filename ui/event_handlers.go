@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anchore/syft/internal/ui/common"
+	"github.com/anchore/syft/internal/ui/components"
 
 	"github.com/anchore/stereoscope/pkg/image/docker"
 	"github.com/dustin/go-humanize"
@@ -23,8 +23,8 @@ import (
 )
 
 const maxBarWidth = 50
-const statusSet = common.SpinnerDotSet // SpinnerCircleOutlineSet
-const completedStatus = "✔"            // "●"
+const statusSet = components.SpinnerDotSet // SpinnerCircleOutlineSet
+const completedStatus = "✔"                // "●"
 const tileFormat = color.Bold
 const interval = 150 * time.Millisecond
 
@@ -42,14 +42,14 @@ var (
 
 // startProcess is a helper function for providing common elements for long-running UI elements (such as a
 // progress bar formatter and status spinner)
-func startProcess() (format.Simple, *common.Spinner) {
+func startProcess() (format.Simple, *components.Spinner) {
 	width, _ := frame.GetTerminalSize()
 	barWidth := int(0.25 * float64(width))
 	if barWidth > maxBarWidth {
 		barWidth = maxBarWidth
 	}
 	formatter := format.NewSimpleWithTheme(barWidth, format.HeavyNoBarTheme, format.ColorCompleted, format.ColorTodo)
-	spinner := common.NewSpinner(statusSet)
+	spinner := components.NewSpinner(statusSet)
 
 	return formatter, &spinner
 }
@@ -77,7 +77,7 @@ func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 
 // nolint:funlen
 // formatDockerImagePullStatus writes the docker image pull status summarized into a single line for the given state.
-func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *common.Spinner, line *frame.Line) {
+func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *components.Spinner, line *frame.Line) {
 	var size, current uint64
 
 	title := tileFormat.Sprint("Pulling image")
