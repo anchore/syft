@@ -33,6 +33,6 @@ func (l loggerUI) Handle(event partybus.Event) error {
 	return l.unsubscribe()
 }
 
-func (l loggerUI) Teardown() error {
+func (l loggerUI) Teardown(_ bool) error {
 	return nil
 }

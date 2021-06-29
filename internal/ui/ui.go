@@ -7,5 +7,5 @@ import (
 type UI interface {
 	Setup(unsubscribe func() error) error
 	partybus.Handler
-	Teardown() error
+	Teardown(force bool) error
 }

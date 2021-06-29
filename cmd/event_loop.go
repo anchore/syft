@@ -13,7 +13,7 @@ import (
 // eventLoop listens to worker errors (from execution path), worker events (from a partybus subscription), and
 // signal interrupts. Is responsible for handling each event relative to a given UI an to coordinate eventing until
 // an eventual graceful exit.
-// nolint:gocognit
+// nolint:gocognit,funlen
 func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *partybus.Subscription, ux ui.UI, cleanupFn func()) error {
 	defer cleanupFn()
 	events := subscription.Events()
@@ -23,6 +23,7 @@ func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *
 	}
 
 	var retErr error
+	var forceTeardown bool
 
 	for {
 		if workerErrs == nil && events == nil {
@@ -66,10 +67,11 @@ func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *
 			// of processing.
 			events = nil
 			workerErrs = nil
+			forceTeardown = true
 		}
 	}
 
-	if err := ux.Teardown(); err != nil {
+	if err := ux.Teardown(forceTeardown); err != nil {
 		retErr = multierror.Append(retErr, err)
 	}
 
