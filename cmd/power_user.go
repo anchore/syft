@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
@@ -63,9 +63,15 @@ func init() {
 }
 
 func powerUserExec(_ *cobra.Command, args []string) error {
-	errs := powerUserExecWorker(args[0])
-	ux := ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet)
-	return ux(errs, eventSubscription)
+	// could be an image or a directory, with or without a scheme
+	userInput := args[0]
+	return eventLoop(
+		powerUserExecWorker(userInput),
+		setupSignals(),
+		eventSubscription,
+		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
+		stereoscope.Cleanup,
+	)
 }
 
 func powerUserExecWorker(userInput string) <-chan error {

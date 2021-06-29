@@ -49,9 +49,7 @@ func New(userInput string, registryOptions *image.RegistryOptions) (Source, func
 
 	case ImageScheme:
 		img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
-		cleanup := func() {
-			stereoscope.Cleanup()
-		}
+		cleanup := stereoscope.Cleanup
 
 		if err != nil || img == nil {
 			return Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
