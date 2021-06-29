@@ -307,8 +307,14 @@ func Test_handleFileAccessErr(t *testing.T) {
 		expectedPathTracked bool
 	}{
 		{
-			name:                "permission error tracked",
+			name:                "permission error does not propagate",
 			input:               os.ErrPermission,
+			expectedPathTracked: true,
+			expectedErr:         nil,
+		},
+		{
+			name:                "file does not exist error does not propagate",
+			input:               os.ErrNotExist,
 			expectedPathTracked: true,
 			expectedErr:         nil,
 		},

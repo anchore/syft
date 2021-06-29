@@ -38,13 +38,11 @@ func TestNewFromDirectory(t *testing.T) {
 		expString  string
 		inputPaths []string
 		expRefs    int
-		expErr     bool
 	}{
 		{
 			desc:       "no paths exist",
 			input:      "foobar/",
 			inputPaths: []string{"/opt/", "/other"},
-			expErr:     true,
 		},
 		{
 			desc:       "path detected",
@@ -76,12 +74,8 @@ func TestNewFromDirectory(t *testing.T) {
 				t.Errorf("mismatched stringer: '%s' != '%s'", src.Metadata.Path, test.input)
 			}
 			resolver, err := src.FileResolver(SquashedScope)
-			if test.expErr {
-				assert.Error(t, err)
-				return
-			} else {
-				assert.NoError(t, err)
-			}
+			assert.NoError(t, err)
+
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)

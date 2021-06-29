@@ -93,6 +93,12 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 				return nil
 			}
 
+			if info == nil {
+				// walk may not be able to provide a FileInfo object, don't allow for this to stop indexing; keep track of the paths and continue.
+				r.errPaths[path] = fmt.Errorf("no file info observable at path=%q", path)
+				return nil
+			}
+
 			newRoot, err := r.addPathToIndex(path, info)
 			if err = r.handleFileAccessErr(path, err); err != nil {
 				return fmt.Errorf("unable to index path: %w", err)
@@ -107,7 +113,7 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 }
 
 func (r *directoryResolver) handleFileAccessErr(path string, err error) error {
-	if errors.Is(err, os.ErrPermission) {
+	if errors.Is(err, os.ErrPermission) || errors.Is(err, os.ErrNotExist) {
 		// don't allow for permission errors to stop indexing, keep track of the paths and continue.
 		log.Warnf("unable to access path=%q: %+v", path, err)
 		r.errPaths[path] = err
