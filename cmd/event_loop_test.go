@@ -37,7 +37,7 @@ func (u *uiMock) Handle(event partybus.Event) error {
 	return u.Called(event).Error(0)
 }
 
-func (u *uiMock) Teardown() error {
+func (u *uiMock) Teardown(_ bool) error {
 	u.t.Logf("UI Teardown called")
 	return u.Called().Error(0)
 }

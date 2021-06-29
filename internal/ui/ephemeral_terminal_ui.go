@@ -77,7 +77,7 @@ func (h *ephemeralTerminalUI) Handle(event partybus.Event) error {
 	case event.Type == syftEvent.PresenterReady:
 		// we need to close the screen now since signaling the the presenter is ready means that we
 		// are about to write bytes to stdout, so we should reset the terminal state first
-		h.closeScreen()
+		h.closeScreen(false)
 
 		if err := handleCatalogerPresenterReady(event); err != nil {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
@@ -105,11 +105,13 @@ func (h *ephemeralTerminalUI) openScreen() error {
 	return nil
 }
 
-func (h *ephemeralTerminalUI) closeScreen() {
+func (h *ephemeralTerminalUI) closeScreen(force bool) {
 	// we may have other background processes still displaying progress, wait for them to
 	// finish before discontinuing dynamic content and showing the final report
 	if !h.frame.IsClosed() {
-		h.waitGroup.Wait()
+		if !force {
+			h.waitGroup.Wait()
+		}
 		h.frame.Close()
 		// TODO: there is a race condition within frame.Close() that sometimes leads to an extra blank line being output
 		frame.Close()
@@ -130,8 +132,8 @@ func (h *ephemeralTerminalUI) flushLog() {
 	}
 }
 
-func (h *ephemeralTerminalUI) Teardown() error {
-	h.closeScreen()
+func (h *ephemeralTerminalUI) Teardown(force bool) error {
+	h.closeScreen(force)
 	ansi.CursorShow()
 	return nil
 }
