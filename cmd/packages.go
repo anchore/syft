@@ -203,14 +203,14 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions())
 		if err != nil {
-			errs <- fmt.Errorf("failed to determine image source: %+v", err)
+			errs <- fmt.Errorf("failed to determine image source: %w", err)
 			return
 		}
 		defer cleanup()
 
 		catalog, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {
-			errs <- fmt.Errorf("failed to catalog input: %+v", err)
+			errs <- fmt.Errorf("failed to catalog input: %w", err)
 			return
 		}
 
@@ -264,7 +264,7 @@ func runPackageSbomUpload(src source.Source, s source.Metadata, catalog *pkg.Cat
 		Password: appConfig.Anchore.Password,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create anchore client: %+v", err)
+		return fmt.Errorf("failed to create anchore client: %w", err)
 	}
 
 	importCfg := anchore.ImportConfig{
