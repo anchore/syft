@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/anchore/syft/syft"
-
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
@@ -70,7 +68,7 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 		setupSignals(),
 		eventSubscription,
 		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
-		syft.Cleanup,
+		stereoscope.Cleanup,
 	)
 }
 
