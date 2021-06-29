@@ -28,7 +28,9 @@ import (
 const (
 	packagesExample = `  {{.appName}} {{.command}} alpine:latest                a summary of discovered packages
   {{.appName}} {{.command}} alpine:latest -o json        show all possible cataloging details
-  {{.appName}} {{.command}} alpine:latest -o cyclonedx   show a CycloneDX SBOM
+  {{.appName}} {{.command}} alpine:latest -o cyclonedx   show a CycloneDX formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o spdx        show a SPDX 2.2 tag-value formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o spdx-json   show a SPDX 2.2 json formatted SBOM
   {{.appName}} {{.command}} alpine:latest -vv            show verbose debug information
 
   Supports the following image sources:
