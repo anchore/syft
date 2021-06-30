@@ -47,7 +47,7 @@ const (
 
 var (
 	packagesPresenterOpt packages.PresenterOption
-	packagesArgs         = cobra.MinimumNArgs(1)
+	packagesArgs         = cobra.MaximumNArgs(1)
 	packagesCmd          = &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
@@ -65,8 +65,7 @@ var (
 				if err != nil {
 					return err
 				}
-				// silently exit
-				return fmt.Errorf("")
+				return fmt.Errorf("an image/directory argument is required")
 			}
 
 			// set the presenter

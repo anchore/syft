@@ -17,6 +17,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 		assertions []traitAssertion
 	}{
 		{
+			name: "no-args-shows-help",
+			args: []string{"packages"},
+			assertions: []traitAssertion{
+				assertInOutput("an image/directory argument is required"),              // specific error that should be shown
+				assertInOutput("Generate a packaged-based Software Bill Of Materials"), // excerpt from help description
+				assertFailingReturnCode,
+			},
+		},
+		{
 			name: "json-output-flag",
 			args: []string{"packages", "-o", "json", request},
 			assertions: []traitAssertion{
