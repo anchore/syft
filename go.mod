@@ -21,7 +21,6 @@ require (
 	github.com/gookit/color v1.2.7
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
-	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/olekukonko/tablewriter v0.0.4
