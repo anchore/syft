@@ -13,6 +13,15 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		assertions []traitAssertion
 	}{
 		{
+			name: "no-args-shows-help",
+			args: []string{"power-user"},
+			assertions: []traitAssertion{
+				assertInOutput("an image/directory argument is required"), // specific error that should be shown
+				assertInOutput("Run bulk operations on container images"), // excerpt from help description
+				assertFailingReturnCode,
+			},
+		},
+		{
 			name: "json-output-flag-fails",
 			args: []string{"power-user", "-o", "json", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
 			assertions: []traitAssertion{
