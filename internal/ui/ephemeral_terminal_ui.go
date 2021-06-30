@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/anchore/syft/internal/logger"
 	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/ui"
-	"github.com/k0kubun/go-ansi"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/jotframe/pkg/frame"
 )
@@ -38,18 +38,20 @@ type ephemeralTerminalUI struct {
 	waitGroup   *sync.WaitGroup
 	frame       *frame.Frame
 	logBuffer   *bytes.Buffer
+	output      *os.File
 }
 
 func NewEphemeralTerminalUI() UI {
 	return &ephemeralTerminalUI{
 		handler:   ui.NewHandler(),
 		waitGroup: &sync.WaitGroup{},
+		output:    os.Stderr,
 	}
 }
 
 func (h *ephemeralTerminalUI) Setup(unsubscribe func() error) error {
 	h.unsubscribe = unsubscribe
-	ansi.CursorHide()
+	hideCursor(h.output)
 
 	// prep the logger to not clobber the screen from now on (logrus only)
 	h.logBuffer = bytes.NewBufferString("")
@@ -93,7 +95,7 @@ func (h *ephemeralTerminalUI) openScreen() error {
 	config := frame.Config{
 		PositionPolicy: frame.PolicyFloatForward,
 		// only report output to stderr, reserve report output for stdout
-		Output: os.Stderr,
+		Output: h.output,
 	}
 
 	fr, err := frame.New(config)
@@ -126,14 +128,22 @@ func (h *ephemeralTerminalUI) flushLog() {
 	logWrapper, ok := log.Log.(*logger.LogrusLogger)
 	if ok {
 		fmt.Fprint(logWrapper.Output, h.logBuffer.String())
-		logWrapper.Logger.SetOutput(os.Stderr)
+		logWrapper.Logger.SetOutput(h.output)
 	} else {
-		fmt.Fprint(os.Stderr, h.logBuffer.String())
+		fmt.Fprint(h.output, h.logBuffer.String())
 	}
 }
 
 func (h *ephemeralTerminalUI) Teardown(force bool) error {
 	h.closeScreen(force)
-	ansi.CursorShow()
+	showCursor(h.output)
 	return nil
+}
+
+func hideCursor(output io.Writer) {
+	fmt.Fprint(output, "\x1b[?25l")
+}
+
+func showCursor(output io.Writer) {
+	fmt.Fprint(output, "\x1b[?25h")
 }
