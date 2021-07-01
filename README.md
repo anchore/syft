@@ -85,7 +85,7 @@ Where the `format`s available are:
 - `text`: A row-oriented, human-and-machine-friendly output.
 - `cyclonedx`: A XML report conforming to the [CycloneDX 1.2 specification](https://cyclonedx.org/specification/overview/).
 - `spdx`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
-- `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json) .
+- `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `table`: A columnar summary (default).
 
 ## Installation
