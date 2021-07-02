@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/stretchr/testify/assert"
+	"github.com/wagoodman/go-progress"
 )
 
 func TestDirectoryResolver_FilesByPath(t *testing.T) {
@@ -350,7 +351,7 @@ type indexerMock struct {
 	additionalRoots map[string][]string
 }
 
-func (m *indexerMock) indexer(s string) ([]string, error) {
+func (m *indexerMock) indexer(s string, _ *progress.Stage) ([]string, error) {
 	m.observedRoots = append(m.observedRoots, s)
 	return m.additionalRoots[s], nil
 }

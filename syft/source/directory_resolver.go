@@ -62,7 +62,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 	return &resolver, indexAllRoots(root, resolver.indexTree)
 }
 
-func (r *directoryResolver) indexTree(root string) ([]string, error) {
+func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {
 	log.Infof("indexing filesystem path=%q", root)
 	var err error
 	root, err = filepath.Abs(root)
@@ -70,8 +70,6 @@ func (r *directoryResolver) indexTree(root string) ([]string, error) {
 		return nil, err
 	}
 	var roots []string
-	stager, prog := indexingProgress(root)
-	defer prog.SetCompleted()
 
 	return roots, filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
@@ -294,6 +292,35 @@ func isUnixSystemRuntimePath(path string) bool {
 	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
 }
 
+func indexAllRoots(root string, indexer func(string, *progress.Stage) ([]string, error)) error {
+	// why account for multiple roots? To cover cases when there is a symlink that references above the root path,
+	// in which case we need to additionally index where the link resolves to. it's for this reason why the filetree
+	// must be relative to the root of the filesystem (and not just relative to the given path).
+	pathsToIndex := []string{root}
+	stager, prog := indexingProgress(root)
+	defer prog.SetCompleted()
+loop:
+	for {
+		var currentPath string
+		switch len(pathsToIndex) {
+		case 0:
+			break loop
+		case 1:
+			currentPath, pathsToIndex = pathsToIndex[0], nil
+		default:
+			currentPath, pathsToIndex = pathsToIndex[0], pathsToIndex[1:]
+		}
+
+		additionalRoots, err := indexer(currentPath, stager)
+		if err != nil {
+			return fmt.Errorf("unable to index filesystem path=%q: %w", currentPath, err)
+		}
+		pathsToIndex = append(pathsToIndex, additionalRoots...)
+	}
+
+	return nil
+}
+
 func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
 	stage := &progress.Stage{}
 	prog := &progress.Manual{
@@ -313,31 +340,4 @@ func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
 	})
 
 	return stage, prog
-}
-
-func indexAllRoots(root string, indexer func(string) ([]string, error)) error {
-	// why account for multiple roots? To cover cases when there is a symlink that references above the root path,
-	// in which case we need to additionally index where the link resolves to. it's for this reason why the filetree
-	// must be relative to the root of the filesystem (and not just relative to the given path).
-	pathsToIndex := []string{root}
-loop:
-	for {
-		var currentPath string
-		switch len(pathsToIndex) {
-		case 0:
-			break loop
-		case 1:
-			currentPath, pathsToIndex = pathsToIndex[0], nil
-		default:
-			currentPath, pathsToIndex = pathsToIndex[0], pathsToIndex[1:]
-		}
-
-		additionalRoots, err := indexer(currentPath)
-		if err != nil {
-			return fmt.Errorf("unable to index filesystem path=%q: %w", currentPath, err)
-		}
-		pathsToIndex = append(pathsToIndex, additionalRoots...)
-	}
-
-	return nil
 }
