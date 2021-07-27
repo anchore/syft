@@ -171,7 +171,6 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 
 	// all paths should be found (non filtering matches a path)
 	refs, err := resolver.FilesByGlob("**/place")
-
 	assert.NoError(t, err)
 	// 4: within target/
 	// 1: target/link --> relative path to "place"
