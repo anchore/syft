@@ -118,11 +118,18 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 
 			loc := source.NewLocation(test.location)
 
-			if _, ok := actualResults[loc]; !ok {
+			ok := false
+			for actual_loc, actual_classification := range actualResults {
+				if loc.RealPath == actual_loc.RealPath {
+					ok = true
+					assert.Equal(t, test.expected, actual_classification)
+				}
+			}
+
+			if !ok {
 				t.Fatalf("could not find test location=%q", test.location)
 			}
 
-			assert.Equal(t, test.expected, actualResults[loc])
 		})
 	}
 }

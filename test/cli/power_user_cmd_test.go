@@ -71,6 +71,29 @@ func TestPowerUserCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
+		{
+			name: "default-dir-results-w-pkg-coverage",
+			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage"},
+			assertions: []traitAssertion{
+				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
+				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
+				assertInOutput(`"algorithm": "sha256"`),         // proof of file-metadata default digest algorithm of sha256
+				assertInOutput(`"metadataType": "ApkMetadata"`), // proof of package artifacts data
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "defaut-secrets-dir-results-w-reveal-values",
+			env: map[string]string{
+				"SYFT_SECRETS_REVEAL_VALUES": "true",
+			},
+			args: []string{"power-user", "dir:test-fixtures/image-secrets"},
+			assertions: []traitAssertion{
+				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
+				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {

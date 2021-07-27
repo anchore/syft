@@ -3,7 +3,6 @@ package file
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"io"
 
 	"github.com/anchore/syft/internal"
@@ -32,7 +31,6 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 	if err != nil {
 		return nil, err
 	}
-
 	for _, location := range locations {
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
@@ -44,6 +42,10 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 		}
 
 		result, err := i.catalogLocation(resolver, location)
+		if internal.IsErrObservePermission(err) {
+			log.Debugf("file contents cataloger skipping - %+v", err)
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +65,7 @@ func (i *ContentsCataloger) catalogLocation(resolver source.FileResolver, locati
 
 	buf := &bytes.Buffer{}
 	if _, err = io.Copy(base64.NewEncoder(base64.StdEncoding, buf), contentReader); err != nil {
-		return "", fmt.Errorf("unable to observe contents of %+v: %w", location.RealPath, err)
+		return "", internal.ErrObserve{Path: location.RealPath, Err: err}
 	}
 
 	return buf.String(), nil

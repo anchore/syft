@@ -102,11 +102,6 @@ func powerUserExecWorker(userInput string) <-chan error {
 		}
 		defer cleanup()
 
-		if src.Metadata.Scheme != source.ImageScheme {
-			errs <- fmt.Errorf("the power-user subcommand only allows for 'image' schemes, given %q", src.Metadata.Scheme)
-			return
-		}
-
 		analysisResults := poweruser.JSONDocumentConfig{
 			SourceMetadata:    src.Metadata,
 			ApplicationConfig: *appConfig,

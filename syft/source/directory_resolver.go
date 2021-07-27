@@ -234,7 +234,7 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 			return nil, err
 		}
 		for _, globResult := range globResults {
-			result = append(result, NewLocation(r.responsePath(string(globResult.MatchPath))))
+			result = append(result, NewLocationFromDirectory(r.responsePath(string(globResult.MatchPath)), globResult.Reference))
 		}
 	}
 
@@ -267,7 +267,7 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 	go func() {
 		defer close(results)
 		for _, ref := range r.fileTree.AllFiles() {
-			results <- NewLocation(r.responsePath(string(ref.RealPath)))
+			results <- NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
 		}
 	}()
 	return results
@@ -276,7 +276,7 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
 	info, exists := r.infos[location.ref.ID()]
 	if !exists {
-		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrExist)
+		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 	}
 
 	return FileMetadata{

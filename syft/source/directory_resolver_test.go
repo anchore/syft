@@ -171,6 +171,7 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 
 	// all paths should be found (non filtering matches a path)
 	refs, err := resolver.FilesByGlob("**/place")
+
 	assert.NoError(t, err)
 	// 4: within target/
 	// 1: target/link --> relative path to "place"
@@ -178,9 +179,17 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	assert.Len(t, refs, 6)
 
 	// ensure that symlink indexing outside of root worked
-	assert.Contains(t, refs, Location{
-		RealPath: "test-fixtures/system_paths/outside_root/link_target/place",
-	})
+	ok := false
+	test_location := "test-fixtures/system_paths/outside_root/link_target/place"
+	for _, actual_loc := range refs {
+		if test_location == actual_loc.RealPath {
+			ok = true
+		}
+	}
+
+	if !ok {
+		t.Fatalf("could not find test location=%q", test_location)
+	}
 }
 
 func TestDirectoryResolverUsesPathFilterFunction(t *testing.T) {
