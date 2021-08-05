@@ -7,8 +7,6 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
-const JiraPluginPomPropertiesGroupID = "com.atlassian.jira.plugins"
-
 var JenkinsPluginPomPropertiesGroupIDs = []string{
 	"io.jenkins.plugins",
 	"org.jenkins.plugins",

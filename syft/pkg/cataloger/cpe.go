@@ -38,6 +38,7 @@ var productCandidatesByPkgType = candidateStore{
 }
 
 var cpeFilters = []filterFn{
+	// filter to account for packages which are jira client packages but have a CPE that will match against jira
 	func(cpe pkg.CPE, p pkg.Package) bool {
 		// jira / atlassian should not apply to clients
 		if cpe.Product == "jira" && strings.Contains(strings.ToLower(p.Name), "client") {
@@ -47,13 +48,18 @@ var cpeFilters = []filterFn{
 		}
 		return false
 	},
-	// nolint: goconst
+	// filter to account that packages that are not for jenkins but have a CPE generated that will match against jenkins
 	func(cpe pkg.CPE, p pkg.Package) bool {
+		const jenkinsName = "jenkins"
 		// jenkins server should only match against a product with the name jenkins
-		if cpe.Product == "jenkins" && !strings.Contains(strings.ToLower(p.Name), "jenkins") {
-			if cpe.Vendor == wfn.Any || cpe.Vendor == "jenkins" || cpe.Vendor == "cloudbees" {
+		if cpe.Product == jenkinsName && !strings.Contains(strings.ToLower(p.Name), jenkinsName) {
+			if cpe.Vendor == wfn.Any || cpe.Vendor == jenkinsName || cpe.Vendor == "cloudbees" {
 				return true
 			}
+		}
+		// jenkins plugins should not match against jenkins
+		if p.Type == pkg.JenkinsPluginPkg && cpe.Product == jenkinsName {
+			return true
 		}
 		return false
 	},
@@ -295,7 +301,7 @@ func candidateVendorsForJava(p pkg.Package) []string {
 
 func productAndVendorFromPomPropertiesGroupID(p pkg.Package) (string, string) {
 	groupID := groupIDFromPomProperties(p)
-	if !shouldConsiderGroupID(groupID) {
+	if groupID == "" {
 		return "", ""
 	}
 
@@ -324,14 +330,4 @@ func groupIDFromPomProperties(p pkg.Package) string {
 	}
 
 	return metadata.PomProperties.GroupID
-}
-
-func shouldConsiderGroupID(groupID string) bool {
-	if groupID == "" {
-		return false
-	}
-
-	excludedGroupIDs := append([]string{pkg.JiraPluginPomPropertiesGroupID}, pkg.JenkinsPluginPomPropertiesGroupIDs...)
-
-	return !internal.HasAnyOfPrefixes(groupID, excludedGroupIDs...)
 }
