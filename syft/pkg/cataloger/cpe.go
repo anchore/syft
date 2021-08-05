@@ -164,7 +164,7 @@ func candidateTargetSoftwareAttrs(p pkg.Package) []string {
 	case pkg.JavaScript:
 		targetSw = append(targetSw, "node.js", "nodejs")
 	case pkg.Ruby:
-		targetSw = append(targetSw, "ruby", "rails")
+		targetSw = append(targetSw, "ruby", "rails", "ruby-lang")
 	case pkg.Python:
 		targetSw = append(targetSw, "python")
 	case pkg.Go:

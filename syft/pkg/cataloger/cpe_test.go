@@ -630,7 +630,7 @@ func TestCandidateTargetSoftwareAttrs(t *testing.T) {
 			p: pkg.Package{
 				Language: pkg.Ruby,
 			},
-			expected: []string{"ruby", "rails"},
+			expected: []string{"ruby", "rails", "ruby-lang"},
 		},
 		{
 			name: "Python",
