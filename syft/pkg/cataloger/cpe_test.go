@@ -158,6 +158,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:ruby:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:rails:*:*",
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:ruby-lang:*:*",
 			},
 		},
 		{
@@ -244,6 +245,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:jenkins:*:*",
 			},
 		},
 		{
@@ -425,9 +429,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:cloudbees-installation-manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees-installation-manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
 				"cpe:2.3:a:cloudbees-installation-manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:cloudbees-installation-manager:jenkins:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees-installation-manager:jenkins:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees-installation-manager:jenkins:2.89.0.33:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:cloudbees:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
 				"cpe:2.3:a:cloudbees:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
@@ -440,9 +441,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
 				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:jenkins:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:jenkins:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:jenkins:2.89.0.33:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
 				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
@@ -564,7 +562,7 @@ func TestCandidateProducts(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{"some-jenkins-plugin", "some_jenkins_plugin"},
+			expected: []string{"some-jenkins-plugin", "some_jenkins_plugin", "jenkins"},
 		},
 		{
 			p: pkg.Package{

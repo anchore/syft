@@ -48,36 +48,6 @@ var productCandidatesByPkgType = candidateStore{
 	},
 }
 
-var cpeFilters = []filterFn{
-	// filter to account for packages which are jira client packages but have a CPE that will match against jira
-	func(cpe pkg.CPE, p pkg.Package) bool {
-		// jira / atlassian should not apply to clients
-		if cpe.Product == "jira" && strings.Contains(strings.ToLower(p.Name), "client") {
-			if cpe.Vendor == wfn.Any || cpe.Vendor == "jira" || cpe.Vendor == "atlassian" {
-				return true
-			}
-		}
-		return false
-	},
-	// filter to account that packages that are not for jenkins but have a CPE generated that will match against jenkins
-	func(cpe pkg.CPE, p pkg.Package) bool {
-		const jenkinsName = "jenkins"
-		// jenkins server should only match against a product with the name jenkins
-		if cpe.Product == jenkinsName && !strings.Contains(strings.ToLower(p.Name), jenkinsName) {
-			if cpe.Vendor == wfn.Any || cpe.Vendor == jenkinsName || cpe.Vendor == "cloudbees" {
-				return true
-			}
-		}
-		// jenkins plugins should not match against jenkins
-		if p.Type == pkg.JenkinsPluginPkg && cpe.Product == jenkinsName {
-			return true
-		}
-		return false
-	},
-}
-
-type filterFn func(cpe pkg.CPE, p pkg.Package) bool
-
 // this is a static mapping of known package names (keys) to official cpe names for each package
 type candidateStore map[pkg.Type]map[string][]string
 
@@ -212,14 +182,14 @@ func candidateVendors(p pkg.Package) []string {
 func candidateProducts(p pkg.Package) []string {
 	products := strset.New(p.Name)
 
-	switch p.Language {
-	case pkg.Python:
+	switch {
+	case p.Language == pkg.Python:
 		if !strings.HasPrefix(p.Name, "python") {
 			products.Add("python-" + p.Name)
 		}
-	case pkg.Java:
+	case p.Language == pkg.Java || p.MetadataType == pkg.JavaMetadataType:
 		products.Add(candidateProductsForJava(p)...)
-	case pkg.Go:
+	case p.Language == pkg.Go:
 		// replace all candidates with only the golang-specific helper
 		products.Clear()
 
@@ -355,7 +325,6 @@ func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []str
 			if artifactID == "" || (couldBeProjectName && !isPlugin) {
 				products.Add(field)
 			}
-
 		}
 	}
 
@@ -373,12 +342,9 @@ func artifactIDFromJavaPackage(p pkg.Package) string {
 	}
 
 	artifactID := strings.TrimSpace(metadata.PomProperties.ArtifactID)
-	if startsWithDomain(artifactID) {
-		artifactIdFields := strings.Split(artifactID, ".")
-		if len(artifactIdFields) > 1 {
-			// there is a strong indication that the artifact ID is really a group ID, don't use it
-			return ""
-		}
+	if startsWithDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
+		// there is a strong indication that the artifact ID is really a group ID, don't use it
+		return ""
 	}
 	return artifactID
 }
@@ -389,27 +355,49 @@ func groupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 		return nil
 	}
 
-	if metadata.PomProperties != nil {
-		if startsWithDomain(metadata.PomProperties.GroupID) {
-			groupIDs = append(groupIDs, strings.TrimSpace(metadata.PomProperties.GroupID))
-		}
+	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
+	groupIDs = append(groupIDs, groupIDsFromJavaManifest(metadata.Manifest)...)
 
-		// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-		if startsWithDomain(metadata.PomProperties.ArtifactID) {
-			artifactIdFields := strings.Split(metadata.PomProperties.ArtifactID, ".")
-			if len(artifactIdFields) > 1 {
-				// there is a strong indication that the artifact ID is really a group ID
-				groupIDs = append(groupIDs, strings.TrimSpace(metadata.PomProperties.ArtifactID))
+	return groupIDs
+}
+
+func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string) {
+	if properties == nil {
+		return nil
+	}
+
+	if startsWithDomain(properties.GroupID) {
+		groupIDs = append(groupIDs, strings.TrimSpace(properties.GroupID))
+	}
+
+	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
+	if startsWithDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
+		// there is a strong indication that the artifact ID is really a group ID
+		groupIDs = append(groupIDs, strings.TrimSpace(properties.ArtifactID))
+	}
+
+	return groupIDs
+}
+
+func groupIDsFromJavaManifest(manifest *pkg.JavaManifest) (groupIDs []string) {
+	if manifest == nil {
+		return nil
+	}
+	// attempt to get group-id-like info from the MANIFEST.MF "Automatic-Module-Name" and "Extension-Name" field.
+	// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
+	// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
+	// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
+	for name, value := range manifest.Main {
+		value = strings.TrimSpace(value)
+		switch name {
+		case "Extension-Name", "Automatic-Module-Name":
+			if startsWithDomain(value) {
+				groupIDs = append(groupIDs, value)
 			}
 		}
 	}
-
-	if metadata.Manifest != nil {
-		// attempt to get group-id-like info from the MANIFEST.MF "Automatic-Module-Name" and "Extension-Name" field.
-		// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
-		// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
-		// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
-		for name, value := range metadata.Manifest.Main {
+	for _, section := range manifest.NamedSections {
+		for name, value := range section {
 			value = strings.TrimSpace(value)
 			switch name {
 			case "Extension-Name", "Automatic-Module-Name":
@@ -418,19 +406,7 @@ func groupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 				}
 			}
 		}
-		for _, section := range metadata.Manifest.NamedSections {
-			for name, value := range section {
-				value = strings.TrimSpace(value)
-				switch name {
-				case "Extension-Name", "Automatic-Module-Name":
-					if startsWithDomain(value) {
-						groupIDs = append(groupIDs, value)
-					}
-				}
-			}
-		}
 	}
-
 	return groupIDs
 }
 
