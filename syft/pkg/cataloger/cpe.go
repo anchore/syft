@@ -114,7 +114,7 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	keys := internal.NewStringSet()
 	cpes := make([]pkg.CPE, 0)
 	for _, product := range products {
-		for _, vendor := range append([]string{wfn.Any}, vendors...) {
+		for _, vendor := range vendors {
 			for _, targetSw := range append([]string{wfn.Any}, targetSws...) {
 				// prevent duplicate entries...
 				key := fmt.Sprintf("%s|%s|%s|%s", product, vendor, p.Version, targetSw)
