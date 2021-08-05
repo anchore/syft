@@ -104,7 +104,7 @@ func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	return cpe
 }
 
-func filterCpes(cpes []pkg.CPE, p pkg.Package, filters ...filterFn) (result []pkg.CPE) {
+func filterCPEs(cpes []pkg.CPE, p pkg.Package, filters ...filterFn) (result []pkg.CPE) {
 cpeLoop:
 	for _, cpe := range cpes {
 		for _, fn := range filters {
@@ -148,7 +148,7 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	}
 
 	// filter out any known combinations that don't accurately represent this package
-	cpes = filterCpes(cpes, p, cpeFilters...)
+	cpes = filterCPEs(cpes, p, cpeFilters...)
 
 	sort.Sort(ByCPESpecificity(cpes))
 
