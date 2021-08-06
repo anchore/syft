@@ -134,7 +134,7 @@ func candidateTargetSoftwareAttrs(p pkg.Package) []string {
 	case pkg.JavaScript:
 		targetSw = append(targetSw, "node.js", "nodejs")
 	case pkg.Ruby:
-		targetSw = append(targetSw, "ruby", "rails", "ruby-lang")
+		targetSw = append(targetSw, "ruby", "rails")
 	case pkg.Python:
 		targetSw = append(targetSw, "python")
 	case pkg.Go:
@@ -158,6 +158,8 @@ func candidateVendors(p pkg.Package) []string {
 	vendors := strset.New(candidateProducts(p)...)
 
 	switch p.Language {
+	case pkg.Ruby:
+		vendors.Add("ruby-lang")
 	case pkg.Java:
 		if p.MetadataType == pkg.JavaMetadataType {
 			vendors.Add(candidateVendorsForJava(p)...)

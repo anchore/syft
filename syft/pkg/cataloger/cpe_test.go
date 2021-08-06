@@ -158,7 +158,15 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:ruby:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:ruby-lang:*:*",
+				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:rails:*:*",
+				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:ruby:*:*",
+				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:rails:*:*",
+				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:ruby:*:*",
+				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:rails:*:*",
+				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:ruby:*:*",
 			},
 		},
 		{
@@ -628,7 +636,7 @@ func TestCandidateTargetSoftwareAttrs(t *testing.T) {
 			p: pkg.Package{
 				Language: pkg.Ruby,
 			},
-			expected: []string{"ruby", "rails", "ruby-lang"},
+			expected: []string{"ruby", "rails"},
 		},
 		{
 			name: "Python",
