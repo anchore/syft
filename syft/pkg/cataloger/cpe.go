@@ -22,6 +22,11 @@ var domains = []string{
 	"io",
 }
 
+var (
+	forbiddenProductGroupIDFields = strset.New("plugin", "plugins", "client")
+	forbiddenVendorGroupIDFields  = strset.New("plugin", "plugins")
+)
+
 var productCandidatesByPkgType = candidateStore{
 	pkg.JavaPkg: {
 		"springframework": []string{"spring_framework", "springsource_spring_framework"},
@@ -279,7 +284,7 @@ func vendorsFromGroupIDs(groupIDs []string) []string {
 				continue
 			}
 
-			if internal.ContainsString(strings.ToLower(field), []string{"plugin", "plugins"}) {
+			if forbiddenVendorGroupIDFields.Has(strings.ToLower(field)) {
 				continue
 			}
 
@@ -312,7 +317,7 @@ func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []str
 			}
 
 			// don't add this field as a name if the name is implying the package is a plugin or client
-			if internal.ContainsString(strings.ToLower(field), []string{"plugin", "plugins", "client"}) {
+			if forbiddenProductGroupIDFields.Has(strings.ToLower(field)) {
 				continue
 			}
 
@@ -435,6 +440,9 @@ func generateSubSelections(field string) (results []string) {
 			break
 		}
 
+		// trim any number of hyphen or underscore that is prefixed/suffixed on the given candidate. Since
+		// scanByHyphenOrUnderscore preserves delimiters (hyphens and underscores) they are guaranteed to be at least
+		// prefixed.
 		candidate := strings.TrimFunc(rawCandidate, trimHyphenOrUnderscore)
 
 		// capture the result (if there is content)
@@ -452,6 +460,7 @@ func generateSubSelections(field string) (results []string) {
 	return results
 }
 
+// trimHyphenOrUnderscore is a character filter function for use with strings.TrimFunc in order to remove any hyphen or underscores.
 func trimHyphenOrUnderscore(r rune) bool {
 	switch r {
 	case '-', '_':

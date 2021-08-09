@@ -65,40 +65,6 @@ func TestHasAnyOfPrefixes(t *testing.T) {
 	}
 }
 
-func TestContainsString(t *testing.T) {
-	tests := []struct {
-		name       string
-		input      string
-		collection []string
-		expected   bool
-	}{
-		{
-			name:  "go case",
-			input: "this has something",
-			collection: []string{
-				"this has something",
-				"that does not have",
-			},
-			expected: true,
-		},
-		{
-			name:  "no match",
-			input: "this has something",
-			collection: []string{
-				"this DOES NOT have",
-				"that does not have",
-			},
-			expected: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, ContainsString(test.input, test.collection))
-		})
-	}
-}
-
 func TestTruncateMiddleEllipsis(t *testing.T) {
 	tests := []struct {
 		input    string

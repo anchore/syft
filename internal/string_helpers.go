@@ -13,16 +13,6 @@ func HasAnyOfPrefixes(input string, prefixes ...string) bool {
 	return false
 }
 
-func ContainsString(input string, collection []string) bool {
-	for _, example := range collection {
-		if input == example {
-			return true
-		}
-	}
-
-	return false
-}
-
 func TruncateMiddleEllipsis(input string, maxLen int) string {
 	if len(input) <= maxLen {
 		return input
