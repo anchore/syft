@@ -29,5 +29,8 @@ func TestSPDXJSONImagePresenter(t *testing.T) {
 }
 
 func spdxJsonRedactor(s []byte) []byte {
-	return regexp.MustCompile(`"created": .*`).ReplaceAll(s, []byte("redacted"))
+	// each SBOM reports the time it was generated, which is not useful during snapshot testing
+	s = regexp.MustCompile(`"created": .*`).ReplaceAll(s, []byte("redacted"))
+	// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
+	return regexp.MustCompile(`"licenseListVersion": .*`).ReplaceAll(s, []byte("redacted"))
 }
