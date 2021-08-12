@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/internal"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/anchore/syft/syft/source"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIdentifyDistro(t *testing.T) {
@@ -84,6 +83,20 @@ func TestIdentifyDistro(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/arch",
 			Type:    ArchLinux,
+		},
+		{
+			fixture: "test-fixtures/partial-fields/missing-id",
+			Type:    Debian,
+			Version: "8.0.0",
+		},
+		{
+			fixture: "test-fixtures/partial-fields/unknown-id",
+			Type:    Debian,
+			Version: "8.0.0",
+		},
+		{
+			fixture: "test-fixtures/partial-fields/missing-version",
+			Type:    UnknownDistroType,
 		},
 	}
 

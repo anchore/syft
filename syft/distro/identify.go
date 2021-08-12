@@ -91,8 +91,13 @@ func assemble(name, version, like string) *Distro {
 	distroType, ok := IDMapping[name]
 
 	// Both distro and version must be present
-	if len(name) == 0 {
+	if len(name) == 0 && len(version) == 0 {
 		return nil
+	}
+
+	// If it's an unknown distro, try mapping the ID_LIKE
+	if !ok && len(like) != 0 {
+		distroType, ok = IDMapping[like]
 	}
 
 	if ok {
