@@ -119,6 +119,8 @@ github.com/anchore/packageurl-go v0.1.0-fixed h1:2QJUTALDF7m2WHPOS1NyHguSX4ciG0x
 github.com/anchore/packageurl-go v0.1.0-fixed/go.mod h1:C/ApiuWpmbpni4DIOECf6WCjFUZV7O1Fx7VAzrZHgBw=
 github.com/anchore/stereoscope v0.0.0-20210524175238-3b7662f3a66f h1:bFadyOLOkzME3BrZFZ5m8cf/b2hsn3aMSS9s+SKubRk=
 github.com/anchore/stereoscope v0.0.0-20210524175238-3b7662f3a66f/go.mod h1:vhh1M99rfWx5ejMvz1lkQiFZUrC5wu32V12R4JXH+ZI=
+github.com/anchore/stereoscope v0.0.0-20210813210859-86db235079c0 h1:n7kFClfP0Gbjp6dYMBG7+wTWAkIEIfTreTeMV1/35PI=
+github.com/anchore/stereoscope v0.0.0-20210813210859-86db235079c0/go.mod h1:165DfE5jApgEkHTWwu7Bijeml9fofudrgcpuWaD9+tk=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/antihax/optional v1.0.0 h1:xK2lYat7ZLaVVcIuj82J8kIro4V6kDe0AUDFboUCwcg=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
