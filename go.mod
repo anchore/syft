@@ -45,3 +45,5 @@ require (
 	golang.org/x/mod v0.3.0
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace github.com/package-url/packageurl-go v0.1.0 => github.com/anchore/packageurl-go v0.1.0-fixed
