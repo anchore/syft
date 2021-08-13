@@ -56,7 +56,6 @@ func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Type:     pkg.PythonPkg,
 			})
 		}
-
 	}
 
 	return packages, nil
