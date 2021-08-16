@@ -202,6 +202,16 @@ func TestRegistryAuth(t *testing.T) {
 				assertInOutput(`no registry credentials configured, using the default keychain`),
 			},
 		},
+		{
+			name: "allows insecure http flag",
+			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			env: map[string]string{
+				"SYFT_REGISTRY_INSECURE_USE_HTTP": "true",
+			},
+			assertions: []traitAssertion{
+				assertInOutput("insecure-use-http: true"),
+			},
+		},
 	}
 
 	for _, test := range tests {
