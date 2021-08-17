@@ -227,6 +227,7 @@
    },
    "registry": {
     "insecure-skip-tls-verify": false,
+    "insecure-use-http": false,
     "auth": null
    }
   }
