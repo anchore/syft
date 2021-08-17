@@ -20,11 +20,13 @@ type RegistryCredentials struct {
 
 type registry struct {
 	InsecureSkipTLSVerify bool                  `yaml:"insecure-skip-tls-verify" json:"insecure-skip-tls-verify" mapstructure:"insecure-skip-tls-verify"`
+	InsecureUseHTTP       bool                  `yaml:"insecure-use-http" json:"insecure-use-http" mapstructure:"insecure-use-http"`
 	Auth                  []RegistryCredentials `yaml:"auth" json:"auth" mapstructure:"auth"`
 }
 
 func (cfg registry) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("registry.insecure-skip-tls-verify", false)
+	v.SetDefault("registry.insecure-use-http", false)
 	v.SetDefault("registry.auth", []RegistryCredentials{})
 }
 
@@ -67,6 +69,7 @@ func (cfg *registry) ToOptions() *image.RegistryOptions {
 	}
 	return &image.RegistryOptions{
 		InsecureSkipTLSVerify: cfg.InsecureSkipTLSVerify,
+		InsecureUseHTTP:       cfg.InsecureUseHTTP,
 		Credentials:           auth,
 	}
 }
