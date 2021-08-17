@@ -51,7 +51,7 @@ func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 			version_ := pkgMeta.Version[2:len(pkgMeta.Version)]
 			packages = append(packages, pkg.Package{
 				Name:     name,
-				Version:  version_,
+				Version:  version,
 				Language: pkg.Python,
 				Type:     pkg.PythonPkg,
 			})
