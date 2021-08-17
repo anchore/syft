@@ -48,7 +48,7 @@ func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 			return nil, fmt.Errorf("failed to parse Pipfile.lock file: %w", err)
 		}
 		for name, pkgMeta := range lock.Default {
-			version_ := pkgMeta.Version[2:len(pkgMeta.Version)]
+			version := pkgMeta.Version[2:len(pkgMeta.Version)]
 			packages = append(packages, pkg.Package{
 				Name:     name,
 				Version:  version,
