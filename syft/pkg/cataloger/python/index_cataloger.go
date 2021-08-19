@@ -12,6 +12,7 @@ func NewPythonIndexCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/*requirements*.txt": parseRequirementsTxt,
 		"**/poetry.lock":        parsePoetryLock,
+		"**/Pipfile.lock":       parsePipfileLock,
 		"**/setup.py":           parseSetup,
 	}
 
