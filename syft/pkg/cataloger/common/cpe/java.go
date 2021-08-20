@@ -19,17 +19,19 @@ var (
 		"io",
 	}
 
-	javaManifestGroupIDFields = []string{
+	primaryJavaManifestGroupIDFields = []string{
 		"Extension-Name",
-		"Automatic-Module-Name",
 		"Specification-Vendor",
 		"Implementation-Vendor",
 		"Bundle-SymbolicName",
 		"Implementation-Vendor-Id",
-		"Package",
 		"Implementation-Title",
-		"Main-Class",
 		"Bundle-Activator",
+	}
+	secondaryJavaManifestGroupIDFields = []string{
+		"Automatic-Module-Name",
+		"Main-Class",
+		"Package",
 	}
 	javaManifestNameFields = []string{
 		"Specification-Vendor",
@@ -200,15 +202,32 @@ func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string
 	return groupIDs
 }
 
-func groupIDsFromJavaManifest(manifest *pkg.JavaManifest) (groupIDs []string) {
+func groupIDsFromJavaManifest(manifest *pkg.JavaManifest) []string {
 	if manifest == nil {
 		return nil
 	}
-	// attempt to get group-id-like info from the MANIFEST.MF "Automatic-Module-Name" and "Extension-Name" field.
-	// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
-	// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
-	// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
-	for _, name := range javaManifestGroupIDFields {
+
+	// try the common manifest fields first for a set of candidates
+	groupIDs := getManifestFieldGroupIDs(manifest, primaryJavaManifestGroupIDFields)
+
+	if len(groupIDs) == 0 {
+		// if we haven't found anything yet, let's try a last ditch effort:
+		// attempt to get group-id-like info from the MANIFEST.MF "Automatic-Module-Name" and "Extension-Name" field.
+		// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
+		// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
+		// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
+		groupIDs = getManifestFieldGroupIDs(manifest, secondaryJavaManifestGroupIDFields)
+	}
+
+	return groupIDs
+}
+
+func getManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (groupIDs []string) {
+	if manifest == nil {
+		return nil
+	}
+
+	for _, name := range fields {
 		if value, exists := manifest.Main[name]; exists {
 			if startsWithDomain(value) {
 				groupIDs = append(groupIDs, value)
