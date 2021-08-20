@@ -1,0 +1,56 @@
+package java
+
+import (
+	"encoding/xml"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"strings"
+
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/vifraa/gopom"
+)
+
+const pomXMLGlob = "*pom.xml"
+
+func parsePomXML(path string, reader io.Reader) (*pkg.PomProject, error) {
+	contents, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read pom.xml: %w", err)
+	}
+	var project gopom.Project
+	if err = xml.Unmarshal(contents, &project); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
+	}
+
+	var parent *pkg.PomParent
+	if project.Parent.ArtifactID != "" || project.Parent.GroupID != "" || project.Parent.Version != "" {
+		parent = &pkg.PomParent{
+			GroupID:    project.Parent.GroupID,
+			ArtifactID: project.Parent.ArtifactID,
+			Version:    project.Parent.Version,
+		}
+	}
+
+	var description string
+	descriptionLines := strings.Split(project.Description, "\n")
+	for _, line := range descriptionLines {
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		description += line + " "
+	}
+	description = strings.TrimSpace(description)
+
+	return &pkg.PomProject{
+		Path:        path,
+		Parent:      parent,
+		GroupID:     project.GroupID,
+		ArtifactID:  project.ArtifactID,
+		Version:     project.Version,
+		Name:        project.Name,
+		Description: description,
+		URL:         project.URL,
+	}, nil
+}

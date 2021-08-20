@@ -1,12 +1,11 @@
 package java
 
 import (
-	"encoding/json"
 	"os"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseJavaPomProperties(t *testing.T) {
@@ -67,28 +66,12 @@ func TestParseJavaPomProperties(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.expected.Path, func(t *testing.T) {
 			fixture, err := os.Open(test.expected.Path)
-			if err != nil {
-				t.Fatalf("could not open fixture: %+v", err)
-			}
+			assert.NoError(t, err)
 
 			actual, err := parsePomProperties(fixture.Name(), fixture)
-			if err != nil {
-				t.Fatalf("failed to parse manifest: %+v", err)
-			}
+			assert.NoError(t, err)
 
-			diffs := deep.Equal(actual, &test.expected)
-			if len(diffs) > 0 {
-				for _, d := range diffs {
-					t.Errorf("diff: %+v", d)
-				}
-
-				b, err := json.MarshalIndent(actual, "", "  ")
-				if err != nil {
-					t.Fatalf("can't show results: %+v", err)
-				}
-
-				t.Errorf("full result: %s", string(b))
-			}
+			assert.Equal(t, &test.expected, actual)
 		})
 	}
 }
