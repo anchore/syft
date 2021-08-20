@@ -25,6 +25,22 @@ var domains = []string{
 var (
 	forbiddenProductGroupIDFields = strset.New("plugin", "plugins", "client")
 	forbiddenVendorGroupIDFields  = strset.New("plugin", "plugins")
+	javaManifestGroupIDFields     = []string{
+		"Extension-Name",
+		"Automatic-Module-Name",
+		"Specification-Vendor",
+		"Implementation-Vendor",
+		"Bundle-SymbolicName",
+		"Implementation-Vendor-Id",
+		"Package",
+		"Implementation-Title",
+		"Main-Class",
+		"Bundle-Activator",
+	}
+	javaManifestNameFields = []string{
+		"Specification-Vendor",
+		"Implementation-Vendor",
+	}
 )
 
 var productCandidatesByPkgType = candidateStore{
@@ -159,16 +175,16 @@ func candidateTargetSoftwareAttrsForJava(p pkg.Package) []string {
 }
 
 func candidateVendors(p pkg.Package) []string {
-	// TODO: Confirm whether using products as vendors is helpful to the matching process
+	// in ecosystems where the packaging metadata does not have a clear field to indicate a vendor (or a field that
+	// could be interpreted indirectly as such) the project name tends to be a common stand in. Examples of this
+	// are the elasticsearch gem, xstream jar, and rack gem... all of these cases you can find vulnerabilities
+	// with CPEs where the vendor is the product name and doesn't appear to be derived from any available package
+	// metadata.
 	vendors := strset.New(candidateProducts(p)...)
 
 	switch p.Language {
 	case pkg.Ruby:
 		vendors.Add("ruby-lang")
-	case pkg.Java:
-		if p.MetadataType == pkg.JavaMetadataType {
-			vendors.Add(candidateVendorsForJava(p)...)
-		}
 	case pkg.Go:
 		// replace all candidates with only the golang-specific helper
 		vendors.Clear()
@@ -177,6 +193,24 @@ func candidateVendors(p pkg.Package) []string {
 		if vendor != "" {
 			vendors.Add(vendor)
 		}
+	}
+
+	// some ecosystems do not have enough metadata to determine the vendor accurately, in which case we selectively
+	// allow * as a candidate. Note: do NOT allow Java packages to have * vendors.
+	switch p.Language {
+	case pkg.Ruby, pkg.JavaScript:
+		vendors.Add("*")
+	}
+
+	switch p.MetadataType {
+	case pkg.RpmdbMetadataType:
+		vendors.Add(candidateVendorsForRPM(p)...)
+	case pkg.GemMetadataType:
+		vendors.Add(candidateVendorsForRuby(p)...)
+	case pkg.PythonPackageMetadataType:
+		vendors.Add(candidateVendorsForPython(p)...)
+	case pkg.JavaMetadataType:
+		vendors.Add(candidateVendorsForJava(p)...)
 	}
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
@@ -271,10 +305,42 @@ func candidateProductsForJava(p pkg.Package) []string {
 }
 
 func candidateVendorsForJava(p pkg.Package) []string {
-	return vendorsFromGroupIDs(groupIDsFromJavaPackage(p))
+	gidVendors := vendorsFromGroupIDs(groupIDsFromJavaPackage(p))
+	nameVendors := vendorsFromJavaManifestNames(p)
+	return strset.Union(gidVendors, nameVendors).List()
 }
 
-func vendorsFromGroupIDs(groupIDs []string) []string {
+func vendorsFromJavaManifestNames(p pkg.Package) *strset.Set {
+	vendors := strset.New()
+
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		return vendors
+	}
+
+	if metadata.Manifest == nil {
+		return vendors
+	}
+
+	for _, name := range javaManifestNameFields {
+		if value, exists := metadata.Manifest.Main[name]; exists {
+			if !startsWithDomain(value) {
+				vendors.Add(normalizeName(value))
+			}
+		}
+		for _, section := range metadata.Manifest.NamedSections {
+			if value, exists := section[name]; exists {
+				if !startsWithDomain(value) {
+					vendors.Add(normalizeName(value))
+				}
+			}
+		}
+	}
+
+	return vendors
+}
+
+func vendorsFromGroupIDs(groupIDs []string) *strset.Set {
 	vendors := strset.New()
 	for _, groupID := range groupIDs {
 		for i, field := range strings.Split(groupID, ".") {
@@ -297,7 +363,7 @@ func vendorsFromGroupIDs(groupIDs []string) []string {
 		}
 	}
 
-	return vendors.List()
+	return vendors
 }
 
 func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []string {
@@ -325,7 +391,7 @@ func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []str
 				continue
 			}
 
-			// umbrella projects tend to have sub components that either start or end with the project name. We want
+			// umbrella projects tend to have sub components that either start or end with the project name. We expect
 			// to identify fields that may represent the umbrella project, and not fields that indicate auxiliary
 			// information about the package.
 			couldBeProjectName := strings.HasPrefix(artifactID, field) || strings.HasSuffix(artifactID, field)
@@ -394,26 +460,21 @@ func groupIDsFromJavaManifest(manifest *pkg.JavaManifest) (groupIDs []string) {
 	// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
 	// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
 	// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
-	for name, value := range manifest.Main {
-		value = strings.TrimSpace(value)
-		switch name {
-		case "Extension-Name", "Automatic-Module-Name":
+	for _, name := range javaManifestGroupIDFields {
+		if value, exists := manifest.Main[name]; exists {
 			if startsWithDomain(value) {
 				groupIDs = append(groupIDs, value)
 			}
 		}
-	}
-	for _, section := range manifest.NamedSections {
-		for name, value := range section {
-			value = strings.TrimSpace(value)
-			switch name {
-			case "Extension-Name", "Automatic-Module-Name":
+		for _, section := range manifest.NamedSections {
+			if value, exists := section[name]; exists {
 				if startsWithDomain(value) {
 					groupIDs = append(groupIDs, value)
 				}
 			}
 		}
 	}
+
 	return groupIDs
 }
 
@@ -500,4 +561,69 @@ func addSeparatorVariations(fields *strset.Set) {
 			fields.Add(strings.ReplaceAll(field, "_", "-"))
 		}
 	}
+}
+
+func candidateVendorsForRPM(p pkg.Package) (candidates []string) {
+	metadata, ok := p.Metadata.(pkg.RpmdbMetadata)
+	if !ok {
+		return nil
+	}
+
+	if metadata.Vendor != "" {
+		candidates = append(candidates, normalizeTitle(metadata.Vendor))
+	}
+
+	return candidates
+}
+
+func candidateVendorsForPython(p pkg.Package) []string {
+	metadata, ok := p.Metadata.(pkg.PythonPackageMetadata)
+	if !ok {
+		return nil
+	}
+
+	candidates := strset.New()
+
+	if metadata.Author != "" {
+		candidates.Add(normalizeName(metadata.Author))
+	}
+
+	if metadata.AuthorEmail != "" {
+		candidates.Add(normalizeName(stripEmailSuffix(metadata.AuthorEmail)))
+	}
+
+	return candidates.List()
+}
+
+func candidateVendorsForRuby(p pkg.Package) []string {
+	metadata, ok := p.Metadata.(pkg.GemMetadata)
+	if !ok {
+		return nil
+	}
+
+	candidates := strset.New()
+
+	for _, author := range metadata.Authors {
+		// author could be a name or an email
+		candidates.Add(normalizeName(stripEmailSuffix(author)))
+	}
+	return candidates.List()
+}
+
+func stripEmailSuffix(email string) string {
+	return strings.Split(email, "@")[0]
+}
+
+func normalizeName(name string) string {
+	name = strings.TrimSpace(strings.ToLower(name))
+	for _, value := range []string{"-", " ", "."} {
+		name = strings.ReplaceAll(name, value, "_")
+	}
+	return name
+}
+
+func normalizeTitle(name string) string {
+	name = strings.Split(name, ",")[0]
+	name = strings.TrimSpace(strings.ToLower(name))
+	return strings.ReplaceAll(name, " ", "")
 }
