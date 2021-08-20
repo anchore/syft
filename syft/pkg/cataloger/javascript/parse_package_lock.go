@@ -3,10 +3,11 @@ package javascript
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 	"io"
 	"regexp"
+
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check

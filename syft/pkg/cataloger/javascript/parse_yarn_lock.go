@@ -3,11 +3,12 @@ package javascript
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"regexp"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"io"
-	"regexp"
 )
 
 // integrity check
