@@ -3,12 +3,11 @@ package javascript
 import (
 	"bufio"
 	"fmt"
-	"io"
-	"regexp"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"io"
+	"regexp"
 )
 
 // integrity check
@@ -34,8 +33,15 @@ const (
 	noVersion = ""
 )
 
-func parseYarnLock(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseYarnLock(path string, reader io.Reader) ([]pkg.Package, error) {
 	var packages []pkg.Package
+
+	// in the case we find yarn.lock files in the node_modules directories, skip those
+	// as the whole purpose of the lock file is for the specific dependencies of the project
+	isNodeModulesPath, err := regexp.MatchString("[\\/]node_modules[\\/]", path)
+	if err != nil || isNodeModulesPath {
+		return packages, err
+	}
 
 	scanner := bufio.NewScanner(reader)
 	parsedPackages := internal.NewStringSet()
