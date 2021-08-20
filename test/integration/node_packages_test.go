@@ -23,8 +23,9 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 	}
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
-	if len(foundPackages) != 6 {
-		t.Errorf("found the wrong set of npm package-lock.json packages %d != %d", len(foundPackages), 6)
+	const expectedPackageCount = 6
+	if len(foundPackages) != expectedPackageCount {
+		t.Errorf("found the wrong set of npm package-lock.json packages (expected: %d, actual: %d)", expectedPackageCount, len(foundPackages))
 	}
 }
 
@@ -43,7 +44,8 @@ func TestYarnPackageLockDirectory(t *testing.T) {
 	}
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
-	if len(foundPackages) != 5 {
-		t.Errorf("found the wrong set of yarn.lock packages %d != %d", len(foundPackages), 5)
+	const expectedPackageCount = 5
+	if len(foundPackages) != expectedPackageCount {
+		t.Errorf("found the wrong set of yarn.lock packages (expected: %d, actual: %d)", expectedPackageCount, len(foundPackages))
 	}
 }

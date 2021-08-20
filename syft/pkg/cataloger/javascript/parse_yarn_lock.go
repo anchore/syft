@@ -35,15 +35,13 @@ const (
 )
 
 func parseYarnLock(path string, reader io.Reader) ([]pkg.Package, error) {
-	var packages []pkg.Package
-
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
-	isNodeModulesPath, err := regexp.MatchString("[\\/]node_modules[\\/]", path)
-	if err != nil || isNodeModulesPath {
-		return packages, err
+	if pathContainsNodeModulesDirectory(path) {
+		return nil, nil
 	}
 
+	var packages []pkg.Package
 	scanner := bufio.NewScanner(reader)
 	parsedPackages := internal.NewStringSet()
 	currentPackage := noPackage
