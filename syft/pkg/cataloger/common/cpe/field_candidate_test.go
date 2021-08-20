@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import (
 	"testing"
@@ -9,13 +9,13 @@ import (
 func Test_cpeCandidateValues_filter(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   []cpeFieldCandidate
-		filters []filterCpeFieldCandidateFn
+		input   []fieldCandidate
+		filters []filterFieldCandidateFn
 		expect  []string
 	}{
 		{
 			name: "gocase",
-			input: []cpeFieldCandidate{
+			input: []fieldCandidate{
 				{
 					value: "allow anything",
 				},
@@ -42,7 +42,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 		},
 		{
 			name: "filter sub-selections",
-			input: []cpeFieldCandidate{
+			input: []fieldCandidate{
 				{
 					value: "allow anything",
 				},
@@ -60,8 +60,8 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterCpeFieldCandidateFn{
-				filterCandidatesBySubselection,
+			filters: []filterFieldCandidateFn{
+				filterFieldCandidatesBySubselection,
 			},
 			expect: []string{
 				"allow anything",
@@ -70,7 +70,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 		},
 		{
 			name: "filter delimiter-variations",
-			input: []cpeFieldCandidate{
+			input: []fieldCandidate{
 				{
 					value: "allow anything",
 				},
@@ -88,8 +88,8 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterCpeFieldCandidateFn{
-				filterCandidatesByDelimiterVariations,
+			filters: []filterFieldCandidateFn{
+				filterFieldCandidatesByDelimiterVariations,
 			},
 			expect: []string{
 				"allow anything",
@@ -98,7 +98,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 		},
 		{
 			name: "all filters",
-			input: []cpeFieldCandidate{
+			input: []fieldCandidate{
 				{
 					value: "allow anything",
 				},
@@ -116,9 +116,9 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterCpeFieldCandidateFn{
-				filterCandidatesByDelimiterVariations,
-				filterCandidatesBySubselection,
+			filters: []filterFieldCandidateFn{
+				filterFieldCandidatesByDelimiterVariations,
+				filterFieldCandidatesBySubselection,
 			},
 			expect: []string{
 				"allow anything",
@@ -149,17 +149,17 @@ func Test_cpeFieldCandidateSet_union(t *testing.T) {
 	assert.Len(t, s2.list(), 3)
 	s3 := newCPRFieldCandidateSet()
 	s3.add(
-		cpeFieldCandidate{
+		fieldCandidate{
 			value:                       "1",
 			disallowSubSelections:       true,
 			disallowDelimiterVariations: false,
 		},
-		cpeFieldCandidate{
+		fieldCandidate{
 			value:                       "4",
 			disallowSubSelections:       false,
 			disallowDelimiterVariations: true,
 		},
-		cpeFieldCandidate{
+		fieldCandidate{
 			value:                       "5",
 			disallowSubSelections:       true,
 			disallowDelimiterVariations: true,
@@ -172,7 +172,7 @@ func Test_cpeFieldCandidateSet_union(t *testing.T) {
 	// 1 & 4 have duplicate entries since there are candidate conditions set
 	assert.ElementsMatch(t, s1.values(), []string{"1", "1", "2", "3", "4", "4", "5"})
 
-	assert.ElementsMatch(t, s1.list(), []cpeFieldCandidate{
+	assert.ElementsMatch(t, s1.list(), []fieldCandidate{
 		{
 			value: "1",
 		},
@@ -215,7 +215,7 @@ func Test_cpeFieldCandidateSet_union_byValue(t *testing.T) {
 
 	assert.ElementsMatch(t, s1.values(), []string{"1", "2", "3", "4", "5"})
 
-	assert.ElementsMatch(t, s1.list(), []cpeFieldCandidate{
+	assert.ElementsMatch(t, s1.list(), []fieldCandidate{
 		{
 			value: "1",
 		},
@@ -237,21 +237,21 @@ func Test_cpeFieldCandidateSet_union_byValue(t *testing.T) {
 func Test_cpeFieldCandidateSet_uniqueValues(t *testing.T) {
 	set := newCPRFieldCandidateSet()
 	set.add(
-		cpeFieldCandidate{
+		fieldCandidate{
 			value: "1",
 		},
-		cpeFieldCandidate{
+		fieldCandidate{
 			value:                 "1",
 			disallowSubSelections: true,
 		},
-		cpeFieldCandidate{
+		fieldCandidate{
 			value:                       "2",
 			disallowDelimiterVariations: true,
 		},
-		cpeFieldCandidate{
+		fieldCandidate{
 			value: "2",
 		},
-		cpeFieldCandidate{
+		fieldCandidate{
 			value:                       "3",
 			disallowSubSelections:       true,
 			disallowDelimiterVariations: true,

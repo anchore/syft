@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import (
 	"strings"
@@ -15,6 +15,20 @@ var cpeFilters = []filterFn{
 	jiraClientPackageFilter,
 	jenkinsPackageNameFilter,
 	jenkinsPluginFilter,
+}
+
+func filter(cpes []pkg.CPE, p pkg.Package, filters ...filterFn) (result []pkg.CPE) {
+cpeLoop:
+	for _, cpe := range cpes {
+		for _, fn := range filters {
+			if fn(cpe, p) {
+				continue cpeLoop
+			}
+		}
+		// all filter functions passed on filtering this CPE
+		result = append(result, cpe)
+	}
+	return result
 }
 
 // jenkins plugins should not match against jenkins

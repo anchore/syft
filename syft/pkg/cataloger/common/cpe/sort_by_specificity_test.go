@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import (
 	"sort"
@@ -84,7 +84,7 @@ func TestCPESpecificity(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sort.Sort(ByCPESpecificity(test.input))
+			sort.Sort(BySpecificity(test.input))
 			assert.Equal(t, test.expected, test.input)
 		})
 	}

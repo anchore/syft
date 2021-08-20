@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 	"github.com/anchore/syft/syft/source"
 	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
@@ -59,7 +60,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 
 		for _, p := range packages {
 			// generate CPEs
-			p.CPEs = generatePackageCPEs(p)
+			p.CPEs = cpe.Generate(p)
 
 			// generate PURL
 			p.PURL = generatePackageURL(p, theDistro)
