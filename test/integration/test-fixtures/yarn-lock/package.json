@@ -1,0 +1,13 @@
+{
+  "name": "yarn-lock",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "collapse-white-space": "^2.0.0",
+    "semver": "^7.3.5"
+  },
+  "devDependencies": {
+    "merge-objects": "^1.0.5"
+  }
+}

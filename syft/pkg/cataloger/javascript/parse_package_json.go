@@ -206,3 +206,8 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 func (p PackageJSON) hasNameAndVersionValues() bool {
 	return p.Name != "" && p.Version != ""
 }
+
+func pathContainsNodeModulesDirectory(path string) bool {
+	isNodeModulesPath, _ := regexp.MatchString("[\\/]node_modules[\\/]", path)
+	return isNodeModulesPath
+}

@@ -27,9 +27,15 @@ type Dependency struct {
 	Requires  map[string]string
 }
 
-// parsePackageLock parses a package.lock and returns the discovered JavaScript packages.
-func parsePackageLock(_ string, reader io.Reader) ([]pkg.Package, error) {
-	packages := make([]pkg.Package, 0)
+// parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
+func parsePackageLock(path string, reader io.Reader) ([]pkg.Package, error) {
+	// in the case we find package-lock.json files in the node_modules directories, skip those
+	// as the whole purpose of the lock file is for the specific dependencies of the root project
+	if pathContainsNodeModulesDirectory(path) {
+		return nil, nil
+	}
+
+	var packages []pkg.Package
 	dec := json.NewDecoder(reader)
 
 	for {
