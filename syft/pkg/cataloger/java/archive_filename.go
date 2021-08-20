@@ -24,10 +24,10 @@ import (
 // and case-insensitive, respectively). "Ungreedy" is important so that the '*' that trails the package name
 // component doesn't consume the rest of the string.
 //
-// [[:alpha:]][[:word:]]*									...	Matches any word, and the word can include "word" characters (
-// which includes numbers and underscores), but the first character of the word MUST be a letter.
+// [[:alpha:]][[:word:].]*									...	Matches any word, and the word can include "word" characters (
+// which includes numbers and underscores), and periods, but the first character of the word MUST be a letter.
 //
-// (?:\.[[:alpha:]][[:word:]]*)* 							... This looks redundant, but it's not. It
+// (?:\.[[:alpha:]][[:word:].]*)* 							... This looks redundant, but it's not. It
 // extends the previous pattern such that the net effect of both components is
 // that words can also include a period and more words (thus, when combined, not
 // only is "something" matched, but so is "com.prefix.thing"
@@ -47,7 +47,7 @@ import (
 //		my-http2-server-5		-->	name="my-http2-server", version="5"
 //		jetpack-build235-rc5	-->	name="jetpack", version="build2.0-rc5"
 //		ironman-r4-2009			--> name="ironman", version="r4-2009"
-var nameAndVersionPattern = regexp.MustCompile(`(?Ui)^(?P<name>(?:[[:alpha:]][[:word:]]*(?:\.[[:alpha:]][[:word:]]*)*-?)+)(?:-(?P<version>(?:\d.*|(?:build\d*.*)|(?:rc?\d+(?:^[[:alpha:]].*)?))))?$`)
+var nameAndVersionPattern = regexp.MustCompile(`(?Ui)^(?P<name>(?:[[:alpha:]][[:word:].]*(?:\.[[:alpha:]][[:word:].]*)*-?)+)(?:-(?P<version>(?:\d.*|(?:build\d*.*)|(?:rc?\d+(?:^[[:alpha:]].*)?))))?$`)
 
 type archiveFilename struct {
 	raw     string

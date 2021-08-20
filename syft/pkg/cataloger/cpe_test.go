@@ -29,69 +29,37 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name-part:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name-part:name-part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python-name-part:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name-part:name-part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:name_part:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name_part:name_part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python_name_part:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name_part:name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name-part:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name-part:name_part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:name_part:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name_part:name-part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python-name-part:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name-part:name_part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python_name_part:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name_part:name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name-part:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name-part:python-name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name-part:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name-part:python_name_part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:name_part:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name_part:python-name-part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:name_part:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name_part:python_name_part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python-name-part:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name-part:python-name-part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python-name-part:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name-part:python_name_part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python_name_part:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name_part:python-name-part:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python_name_part:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name_part:python_name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:python-name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:python_name_part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:name_part:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name_part:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name_part:python-name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name_part:python_name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-name-part:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-name-part:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-name-part:python-name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-name-part:python_name_part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python-name:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python-name:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:python-name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python-name:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:python_name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python:name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python:name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python:python-name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python:python_name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python_name:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python_name:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:name_part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python_name:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:python-name-part:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python_name:python_name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:python_name_part:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python_name_part:name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name_part:name_part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name_part:python-name-part:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name_part:python_name_part:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -104,56 +72,32 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Type:         pkg.DebPkg,
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
-					//Author: "alex goodman",
-					AuthorEmail: "alex.goodman@anchore.com",
+					Author:      "alex goodman",
+					AuthorEmail: "william.goodman@anchore.com",
 				},
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python-name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python_name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:name:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:python-name:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:name:python_name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:python_name:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python-name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:python-name:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python-name:python_name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:python_name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python_name:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:python-name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:python_name:python_name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:python_name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex-goodman:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex-goodman:name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex-goodman:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex-goodman:python-name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex-goodman:python_name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex-goodman:python_name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex_goodman:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex_goodman:name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex_goodman:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex_goodman:python-name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex_goodman:python_name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex_goodman:python_name:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python:name:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python:python-name:3.2:*:*:*:*:python:*:*",
 				"cpe:2.3:a:python:python_name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python:python_name:3.2:*:*:*:*:python:*:*",
-				// note: a vendor of "alex" is not ideal, but we do not have mechanisms in place that are detailed
-				// enough to allow selection/deselection of different transforms in the candidate generation process
-				// yet to be able to get rid of this behavior.
-				"cpe:2.3:a:alex:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex:name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex:python-name:3.2:*:*:*:*:python:*:*",
-				"cpe:2.3:a:alex:python_name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:alex:python_name:3.2:*:*:*:*:python:*:*",
+				"cpe:2.3:a:python_name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_name:python_name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodman:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodman:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodman:python_name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william-goodman:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william-goodman:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william-goodman:python_name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodman:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodman:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodman:python_name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -167,11 +111,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:node.js:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:nodejs:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:node.js:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:nodejs:*:*",
 			},
 		},
 		{
@@ -191,45 +131,15 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:ruby:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:someones-name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someones-name:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:someones-name:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:someones_elses_name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someones_elses_name:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:someones_elses_name:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:someones_name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someones_name:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:someones_name:name:3.2:*:*:*:*:ruby:*:*",
-				// note: a vendor from a partial name is not ideal, but we do not have mechanisms in place that are detailed
-				// enough to allow selection/deselection of different transforms in the candidate generation process
-				// yet to be able to get rid of this behavior.
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:someones-elses-name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someones-elses-name:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:someones-elses-name:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:someones-elses:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someones-elses:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:someones-elses:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:someones:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someones:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:someones:name:3.2:*:*:*:*:ruby:*:*",
-				"cpe:2.3:a:someones_elses:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someones_elses:name:3.2:*:*:*:*:rails:*:*",
-				"cpe:2.3:a:someones_elses:name:3.2:*:*:*:*:ruby:*:*",
+				"cpe:2.3:a:someones-name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:someones_elses_name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:someones_name:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -243,8 +153,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:maven:*:*",
 			},
 		},
 		{
@@ -264,23 +172,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:name:nexus:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:nexus:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:name:nexus:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -294,8 +190,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 			},
 		},
 		{
@@ -314,10 +208,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:some_vendor:name:3.2:*:*:*:*:*:*:*",
-				// note: a vendor of "some" is not ideal, but we do not have mechanisms in place that are detailed
-				// enough to allow selection/deselection of different transforms in the candidate generation process
-				// yet to be able to get rid of this behavior.
-				"cpe:2.3:a:some:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -336,11 +226,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
-				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:jenkins:*:*",
 			},
 		},
 		{
@@ -359,17 +245,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:name:something:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:something:3.2:*:*:*:*:cloudbees_jenkins:*:*",
-				"cpe:2.3:a:name:something:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:something:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:something:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
-				"cpe:2.3:a:something:name:3.2:*:*:*:*:jenkins:*:*",
 				"cpe:2.3:a:something:something:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:something:something:3.2:*:*:*:*:cloudbees_jenkins:*:*",
-				"cpe:2.3:a:something:something:3.2:*:*:*:*:jenkins:*:*",
 			},
 		},
 		{
@@ -388,8 +266,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 			},
 		},
 		{
@@ -408,8 +284,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 			},
 		},
 		{
@@ -428,8 +302,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:jenkins:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:cloudbees_jenkins:*:*",
 			},
 		},
 		{
@@ -449,54 +321,22 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:jira:jira_client_core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira:jira_client_core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira:jira_client_core:3.2:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:atlassian:jira-client-core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:atlassian:jira-client-core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:atlassian:jira-client-core:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira-client-core:jira-client-core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira-client-core:jira-client-core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira-client-core:jira-client-core:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira-client-core:jira:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira-client-core:jira:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira-client-core:jira:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira-client-core:jira_client_core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira-client-core:jira_client_core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira-client-core:jira_client_core:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira-client:jira-client-core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira-client:jira-client-core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira-client:jira-client-core:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira-client:jira:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira-client:jira:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira-client:jira:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira-client:jira_client_core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira-client:jira_client_core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira-client:jira_client_core:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira:jira-client-core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira:jira-client-core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira:jira-client-core:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:jira:jira_client_core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira_client:jira-client-core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira_client:jira-client-core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira_client:jira-client-core:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira_client:jira:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira_client:jira:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira_client:jira:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira_client:jira_client_core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira_client:jira_client_core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira_client:jira_client_core:3.2:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:jira_client_core:jira-client-core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira_client_core:jira-client-core:3.2:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jira_client_core:jira-client-core:3.2:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -517,47 +357,19 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:cloudbees-installation-manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees-installation-manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees-installation-manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:cloudbees-installation-manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees-installation-manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees-installation-manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:cloudbees:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:cloudbees:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
-				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:cloudbees-installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees-installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees-installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:cloudbees-installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees-installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees-installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:cloudbees:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:cloudbees:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees_installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees_installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees_installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:cloudbees_installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees_installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:cloudbees_installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
+				"cpe:2.3:a:cloudbees_installation_manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:maven:*:*",
 				"cpe:2.3:a:modules:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:modules:cloudbees_installation_manager:2.89.0.33:*:*:*:*:java:*:*",
-				"cpe:2.3:a:modules:cloudbees_installation_manager:2.89.0.33:*:*:*:*:maven:*:*",
 			},
 		},
 		{
@@ -571,8 +383,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:someone:something:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:someone:something:3.2:*:*:*:*:go:*:*",
-				"cpe:2.3:a:someone:something:3.2:*:*:*:*:golang:*:*",
 			},
 		},
 		{
@@ -683,66 +493,6 @@ func TestCandidateProducts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, candidateProducts(test.p))
-		})
-	}
-}
-
-func TestCandidateTargetSoftwareAttrs(t *testing.T) {
-	cases := []struct {
-		name     string
-		p        pkg.Package
-		expected []string
-	}{
-		{
-			name: "Java",
-			p: pkg.Package{
-				Language: pkg.Java,
-				Type:     pkg.JavaPkg,
-			},
-			expected: []string{"java", "maven"},
-		},
-		{
-			name: "Jenkins plugin",
-			p: pkg.Package{
-				Language: pkg.Java,
-				Type:     pkg.JenkinsPluginPkg,
-			},
-			expected: []string{"jenkins", "cloudbees_jenkins"},
-		},
-		{
-			name: "JavaScript",
-			p: pkg.Package{
-				Language: pkg.JavaScript,
-			},
-			expected: []string{"node.js", "nodejs"},
-		},
-		{
-			name: "Ruby",
-			p: pkg.Package{
-				Language: pkg.Ruby,
-			},
-			expected: []string{"ruby", "rails"},
-		},
-		{
-			name: "Python",
-			p: pkg.Package{
-				Language: pkg.Python,
-			},
-			expected: []string{"python"},
-		},
-		{
-			name: "Other language",
-			p: pkg.Package{
-				Language: pkg.Rust,
-			},
-			expected: nil,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			actual := candidateTargetSoftwareAttrs(tc.p)
-			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }
@@ -865,6 +615,10 @@ func Test_normalizeAuthorName(t *testing.T) {
 			input:   "AlexGoodman",
 			expects: "alexgoodman",
 		},
+		{
+			input:   "The Apache Software Foundation",
+			expects: "apache_software_foundation",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
@@ -946,9 +700,9 @@ func Test_addSeparatorVariations(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(strings.Join(test.input, ","), func(t *testing.T) {
-			val := strset.New(test.input...)
-			addSeparatorVariations(val)
-			assert.ElementsMatch(t, test.expected, val.List())
+			val := newCPRFieldCandidateSet(test.input...)
+			addDelimiterVariations(val)
+			assert.ElementsMatch(t, test.expected, val.values())
 		})
 	}
 }
@@ -1098,7 +852,7 @@ func Test_vendorsFromGroupIDs(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(strings.Join(test.groupIDs, ","), func(t *testing.T) {
-			assert.ElementsMatch(t, test.expected, vendorsFromGroupIDs(test.groupIDs).List(), "different vendors")
+			assert.ElementsMatch(t, test.expected, vendorsFromGroupIDs(test.groupIDs).values(), "different vendors")
 		})
 	}
 }
@@ -1365,7 +1119,7 @@ func Test_vendorsFromJavaManifestNames(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.ElementsMatch(t, test.expects, vendorsFromJavaManifestNames(test.pkg).List())
+			assert.ElementsMatch(t, test.expects, vendorsFromJavaManifestNames(test.pkg).values())
 		})
 	}
 }

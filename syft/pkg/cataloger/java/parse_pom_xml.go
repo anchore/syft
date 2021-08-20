@@ -4,22 +4,23 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/vifraa/gopom"
+	"golang.org/x/net/html/charset"
 )
 
 const pomXMLGlob = "*pom.xml"
 
 func parsePomXML(path string, reader io.Reader) (*pkg.PomProject, error) {
-	contents, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read pom.xml: %w", err)
-	}
 	var project gopom.Project
-	if err = xml.Unmarshal(contents, &project); err != nil {
+
+	decoder := xml.NewDecoder(reader)
+	// prevent against warnings for "xml: encoding "iso-8859-1" declared but Decoder.CharsetReader is nil"
+	decoder.CharsetReader = charset.NewReaderLabel
+
+	if err := decoder.Decode(&project); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
 	}
 

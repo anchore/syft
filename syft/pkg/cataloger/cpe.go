@@ -43,7 +43,7 @@ var (
 	}
 )
 
-var productCandidatesByPkgType = candidateStore{
+var productCandidatesByPkgType = candidatesByPackageType{
 	pkg.JavaPkg: {
 		"springframework": []string{"spring_framework", "springsource_spring_framework"},
 		"spring-core":     []string{"spring_framework", "springsource_spring_framework"},
@@ -67,21 +67,6 @@ var productCandidatesByPkgType = candidateStore{
 	pkg.PythonPkg: {
 		"python-rrdtool": []string{"rrdtool"},
 	},
-}
-
-// this is a static mapping of known package names (keys) to official cpe names for each package
-type candidateStore map[pkg.Type]map[string][]string
-
-func (s candidateStore) getCandidates(t pkg.Type, key string) []string {
-	if _, ok := s[t]; !ok {
-		return nil
-	}
-	value, ok := s[t][key]
-	if !ok {
-		return nil
-	}
-
-	return value
 }
 
 func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
@@ -109,9 +94,10 @@ cpeLoop:
 	return result
 }
 
-// generatePackageCPEs Create a list of CPEs, trying to guess the vendor, product tuple and setting TargetSoftware if possible
+// generatePackageCPEs Create a list of CPEs, trying to guess the vendor, product tuple. We should be trying to
+// generate the minimal set of representative CPEs, which implies that optional fields should not be included
+// (such as target SW).
 func generatePackageCPEs(p pkg.Package) []pkg.CPE {
-	targetSws := candidateTargetSoftwareAttrs(p)
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 
@@ -123,18 +109,15 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	cpes := make([]pkg.CPE, 0)
 	for _, product := range products {
 		for _, vendor := range vendors {
-			for _, targetSw := range append([]string{wfn.Any}, targetSws...) {
-				// prevent duplicate entries...
-				key := fmt.Sprintf("%s|%s|%s|%s", product, vendor, p.Version, targetSw)
-				if keys.Contains(key) {
-					continue
-				}
-				keys.Add(key)
-
-				// add a new entry...
-				c := newCPE(product, vendor, p.Version, targetSw)
-				cpes = append(cpes, c)
+			// prevent duplicate entries...
+			key := fmt.Sprintf("%s|%s|%s", product, vendor, p.Version)
+			if keys.Contains(key) {
+				continue
 			}
+			keys.Add(key)
+
+			// add a new entry...
+			cpes = append(cpes, newCPE(product, vendor, p.Version, wfn.Any))
 		}
 	}
 
@@ -146,52 +129,24 @@ func generatePackageCPEs(p pkg.Package) []pkg.CPE {
 	return cpes
 }
 
-func candidateTargetSoftwareAttrs(p pkg.Package) []string {
-	// TODO: would be great to allow these to be overridden by user data/config
-	var targetSw []string
-	switch p.Language {
-	case pkg.Java:
-		targetSw = append(targetSw, candidateTargetSoftwareAttrsForJava(p)...)
-	case pkg.JavaScript:
-		targetSw = append(targetSw, "node.js", "nodejs")
-	case pkg.Ruby:
-		targetSw = append(targetSw, "ruby", "rails")
-	case pkg.Python:
-		targetSw = append(targetSw, "python")
-	case pkg.Go:
-		targetSw = append(targetSw, "go", "golang")
-	}
-
-	return targetSw
-}
-
-func candidateTargetSoftwareAttrsForJava(p pkg.Package) []string {
-	// Use the more specific indicator if available
-	if p.Type == pkg.JenkinsPluginPkg {
-		return []string{"jenkins", "cloudbees_jenkins"}
-	}
-
-	return []string{"java", "maven"}
-}
-
 func candidateVendors(p pkg.Package) []string {
 	// in ecosystems where the packaging metadata does not have a clear field to indicate a vendor (or a field that
 	// could be interpreted indirectly as such) the project name tends to be a common stand in. Examples of this
 	// are the elasticsearch gem, xstream jar, and rack gem... all of these cases you can find vulnerabilities
 	// with CPEs where the vendor is the product name and doesn't appear to be derived from any available package
 	// metadata.
-	vendors := strset.New(candidateProducts(p)...)
+	vendors := newCPRFieldCandidateSet(candidateProducts(p)...)
 
 	switch p.Language {
 	case pkg.Ruby:
-		vendors.Add("ruby-lang")
+		vendors.addValue("ruby-lang")
 	case pkg.Go:
 		// replace all candidates with only the golang-specific helper
-		vendors.Clear()
+		vendors.clear()
 
 		vendor := candidateVendorForGo(p.Name)
 		if vendor != "" {
-			vendors.Add(vendor)
+			vendors.addValue(vendor)
 		}
 	}
 
@@ -199,52 +154,54 @@ func candidateVendors(p pkg.Package) []string {
 	// allow * as a candidate. Note: do NOT allow Java packages to have * vendors.
 	switch p.Language {
 	case pkg.Ruby, pkg.JavaScript:
-		vendors.Add("*")
+		vendors.addValue("*")
 	}
 
 	switch p.MetadataType {
 	case pkg.RpmdbMetadataType:
-		vendors.Add(candidateVendorsForRPM(p)...)
+		vendors.union(candidateVendorsForRPM(p))
 	case pkg.GemMetadataType:
-		vendors.Add(candidateVendorsForRuby(p)...)
+		vendors.union(candidateVendorsForRuby(p))
 	case pkg.PythonPackageMetadataType:
-		vendors.Add(candidateVendorsForPython(p)...)
+		vendors.union(candidateVendorsForPython(p))
 	case pkg.JavaMetadataType:
-		vendors.Add(candidateVendorsForJava(p)...)
+		vendors.union(candidateVendorsForJava(p))
 	}
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
-	addSeparatorVariations(vendors)
+	addDelimiterVariations(vendors)
 
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
-	return generateAllSubSelections(vendors.List())
+	addAllSubSelections(vendors)
+
+	return vendors.uniqueValues()
 }
 
 func candidateProducts(p pkg.Package) []string {
-	products := strset.New(p.Name)
+	products := newCPRFieldCandidateSet(p.Name)
 
 	switch {
 	case p.Language == pkg.Python:
 		if !strings.HasPrefix(p.Name, "python") {
-			products.Add("python-" + p.Name)
+			products.addValue("python-" + p.Name)
 		}
 	case p.Language == pkg.Java || p.MetadataType == pkg.JavaMetadataType:
-		products.Add(candidateProductsForJava(p)...)
+		products.addValue(candidateProductsForJava(p)...)
 	case p.Language == pkg.Go:
 		// replace all candidates with only the golang-specific helper
-		products.Clear()
+		products.clear()
 
 		prod := candidateProductForGo(p.Name)
 		if prod != "" {
-			products.Add(prod)
+			products.addValue(prod)
 		}
 	}
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
-	addSeparatorVariations(products)
+	addDelimiterVariations(products)
 
-	// prepend any known product name swaps prepended to the results
-	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products.List()...)
+	// prepend any known product names for the given package type and name (note: this is not a replacement)
+	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products.uniqueValues()...)
 }
 
 // candidateProductForGo attempts to find a single product name in a best-effort attempt. This implementation prefers
@@ -304,14 +261,14 @@ func candidateProductsForJava(p pkg.Package) []string {
 	return productsFromArtifactAndGroupIDs(artifactIDFromJavaPackage(p), groupIDsFromJavaPackage(p))
 }
 
-func candidateVendorsForJava(p pkg.Package) []string {
+func candidateVendorsForJava(p pkg.Package) *cpeFieldCandidateSet {
 	gidVendors := vendorsFromGroupIDs(groupIDsFromJavaPackage(p))
 	nameVendors := vendorsFromJavaManifestNames(p)
-	return strset.Union(gidVendors, nameVendors).List()
+	return newCPRFieldCandidateFromSets(gidVendors, nameVendors)
 }
 
-func vendorsFromJavaManifestNames(p pkg.Package) *strset.Set {
-	vendors := strset.New()
+func vendorsFromJavaManifestNames(p pkg.Package) *cpeFieldCandidateSet {
+	vendors := newCPRFieldCandidateSet()
 
 	metadata, ok := p.Metadata.(pkg.JavaMetadata)
 	if !ok {
@@ -325,13 +282,19 @@ func vendorsFromJavaManifestNames(p pkg.Package) *strset.Set {
 	for _, name := range javaManifestNameFields {
 		if value, exists := metadata.Manifest.Main[name]; exists {
 			if !startsWithDomain(value) {
-				vendors.Add(normalizeName(value))
+				vendors.add(cpeFieldCandidate{
+					value:                 normalizeName(value),
+					disallowSubSelections: true,
+				})
 			}
 		}
 		for _, section := range metadata.Manifest.NamedSections {
 			if value, exists := section[name]; exists {
 				if !startsWithDomain(value) {
-					vendors.Add(normalizeName(value))
+					vendors.add(cpeFieldCandidate{
+						value:                 normalizeName(value),
+						disallowSubSelections: true,
+					})
 				}
 			}
 		}
@@ -340,8 +303,8 @@ func vendorsFromJavaManifestNames(p pkg.Package) *strset.Set {
 	return vendors
 }
 
-func vendorsFromGroupIDs(groupIDs []string) *strset.Set {
-	vendors := strset.New()
+func vendorsFromGroupIDs(groupIDs []string) *cpeFieldCandidateSet {
+	vendors := newCPRFieldCandidateSet()
 	for _, groupID := range groupIDs {
 		for i, field := range strings.Split(groupID, ".") {
 			field = strings.TrimSpace(field)
@@ -359,7 +322,12 @@ func vendorsFromGroupIDs(groupIDs []string) *strset.Set {
 			}
 
 			// e.g. jenkins-ci -> [jenkins-ci, jenkins]
-			vendors.Add(generateSubSelections(field)...)
+			for _, value := range generateSubSelections(field) {
+				vendors.add(cpeFieldCandidate{
+					value:                 value,
+					disallowSubSelections: true,
+				})
+			}
 		}
 	}
 
@@ -482,11 +450,10 @@ func startsWithDomain(value string) bool {
 	return internal.HasAnyOfPrefixes(value, domains...)
 }
 
-func generateAllSubSelections(fields []string) (results []string) {
-	for _, field := range fields {
-		results = append(results, generateSubSelections(field)...)
+func addAllSubSelections(set *cpeFieldCandidateSet) {
+	for _, candidate := range set.values(filterCandidatesBySubselection) {
+		set.addValue(generateSubSelections(candidate)...)
 	}
-	return results
 }
 
 // generateSubSelections attempts to split a field by hyphens and underscores and return a list of sensible sub-selections
@@ -546,68 +513,88 @@ func scanByHyphenOrUnderscore(data []byte, atEOF bool) (advance int, token []byt
 	return 0, nil, nil
 }
 
-func addSeparatorVariations(fields *strset.Set) {
-	for _, field := range fields.List() {
+func addDelimiterVariations(fields *cpeFieldCandidateSet) {
+	for _, candidate := range fields.list(filterCandidatesByDelimiterVariations) {
+		field := candidate.value
 		hasHyphen := strings.Contains(field, "-")
 		hasUnderscore := strings.Contains(field, "_")
 
 		if hasHyphen {
 			// provide variations of hyphen candidates with an underscore
-			fields.Add(strings.ReplaceAll(field, "-", "_"))
+			newValue := strings.ReplaceAll(field, "-", "_")
+			candidate.value = newValue
+			fields.add(candidate)
 		}
 
 		if hasUnderscore {
 			// provide variations of underscore candidates with a hyphen
-			fields.Add(strings.ReplaceAll(field, "_", "-"))
+			newValue := strings.ReplaceAll(field, "_", "-")
+			candidate.value = newValue
+			fields.add(candidate)
 		}
 	}
 }
 
-func candidateVendorsForRPM(p pkg.Package) (candidates []string) {
+func candidateVendorsForRPM(p pkg.Package) *cpeFieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.RpmdbMetadata)
 	if !ok {
 		return nil
 	}
 
+	vendors := newCPRFieldCandidateSet()
+
 	if metadata.Vendor != "" {
-		candidates = append(candidates, normalizeTitle(metadata.Vendor))
+		vendors.add(cpeFieldCandidate{
+			value:                 normalizeTitle(metadata.Vendor),
+			disallowSubSelections: true,
+		})
 	}
 
-	return candidates
+	return vendors
 }
 
-func candidateVendorsForPython(p pkg.Package) []string {
+func candidateVendorsForPython(p pkg.Package) *cpeFieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.PythonPackageMetadata)
 	if !ok {
 		return nil
 	}
 
-	candidates := strset.New()
+	vendors := newCPRFieldCandidateSet()
 
 	if metadata.Author != "" {
-		candidates.Add(normalizeName(metadata.Author))
+		vendors.add(cpeFieldCandidate{
+			value:                       normalizeName(metadata.Author),
+			disallowSubSelections:       true,
+			disallowDelimiterVariations: true,
+		})
 	}
 
 	if metadata.AuthorEmail != "" {
-		candidates.Add(normalizeName(stripEmailSuffix(metadata.AuthorEmail)))
+		vendors.add(cpeFieldCandidate{
+			value:                 normalizeName(stripEmailSuffix(metadata.AuthorEmail)),
+			disallowSubSelections: true,
+		})
 	}
 
-	return candidates.List()
+	return vendors
 }
 
-func candidateVendorsForRuby(p pkg.Package) []string {
+func candidateVendorsForRuby(p pkg.Package) *cpeFieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.GemMetadata)
 	if !ok {
 		return nil
 	}
 
-	candidates := strset.New()
+	vendors := newCPRFieldCandidateSet()
 
 	for _, author := range metadata.Authors {
 		// author could be a name or an email
-		candidates.Add(normalizeName(stripEmailSuffix(author)))
+		vendors.add(cpeFieldCandidate{
+			value:                 normalizeName(stripEmailSuffix(author)),
+			disallowSubSelections: true,
+		})
 	}
-	return candidates.List()
+	return vendors
 }
 
 func stripEmailSuffix(email string) string {
@@ -619,7 +606,7 @@ func normalizeName(name string) string {
 	for _, value := range []string{"-", " ", "."} {
 		name = strings.ReplaceAll(name, value, "_")
 	}
-	return name
+	return strings.TrimPrefix(name, "the_")
 }
 
 func normalizeTitle(name string) string {
