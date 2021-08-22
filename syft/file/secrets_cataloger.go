@@ -50,7 +50,7 @@ func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Loc
 	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
-		if internal.IsErrObservePermission(err) {
+		if internal.IsErrPathPermission(err) {
 			log.Debugf("secrets cataloger skipping - %+v", err)
 			continue
 		}
@@ -82,7 +82,7 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	// TODO: in the future we can swap out search strategies here
 	secrets, err := catalogLocationByLine(resolver, location, i.patterns)
 	if err != nil {
-		return nil, internal.ErrObserve{Path: location.RealPath, Err: err}
+		return nil, internal.ErrPath{Path: location.RealPath, Err: err}
 	}
 
 	if i.revealValues {

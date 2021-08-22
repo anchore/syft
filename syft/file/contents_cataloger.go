@@ -42,7 +42,7 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 		}
 
 		result, err := i.catalogLocation(resolver, location)
-		if internal.IsErrObservePermission(err) {
+		if internal.IsErrPathPermission(err) {
 			log.Debugf("file contents cataloger skipping - %+v", err)
 			continue
 		}
@@ -65,7 +65,7 @@ func (i *ContentsCataloger) catalogLocation(resolver source.FileResolver, locati
 
 	buf := &bytes.Buffer{}
 	if _, err = io.Copy(base64.NewEncoder(base64.StdEncoding, buf), contentReader); err != nil {
-		return "", internal.ErrObserve{Path: location.RealPath, Err: err}
+		return "", internal.ErrPath{Path: location.RealPath, Err: err}
 	}
 
 	return buf.String(), nil

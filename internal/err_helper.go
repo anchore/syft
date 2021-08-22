@@ -15,24 +15,24 @@ func CloseAndLogError(closer io.Closer, location string) {
 	}
 }
 
-type ErrObserve struct {
+type ErrPath struct {
 	Path string
 	Err  error
 }
 
-func (e ErrObserve) Error() string {
+func (e ErrPath) Error() string {
 	return fmt.Sprintf("unable to observe contents of %+v: %v", e.Path, e.Err)
 }
 
-func IsErrObserve(err error) bool {
-	_, ok := err.(ErrObserve)
+func IsErrPath(err error) bool {
+	_, ok := err.(ErrPath)
 	return ok
 }
 
-func IsErrObservePermission(err error) bool {
-	observe_err, ok := err.(ErrObserve)
+func IsErrPathPermission(err error) bool {
+	path_err, ok := err.(ErrPath)
 	if ok {
-		return os.IsPermission(observe_err.Err)
+		return os.IsPermission(path_err.Err)
 	}
 	return ok
 }
