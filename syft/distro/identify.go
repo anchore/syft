@@ -35,6 +35,16 @@ var identityFiles = []parseEntry{
 		path: "/bin/busybox",
 		fn:   parseBusyBox,
 	},
+	{
+		// check for centos:6
+		path: "/etc/system-release-cpe",
+		fn:   parseSystemReleaseCPE,
+	},
+	{
+		// last ditch effort for determining older centos version distro information
+		path: "/etc/redhat-release",
+		fn:   parseRedhatRelease,
+	},
 }
 
 // Identify parses distro-specific files to determine distro metadata like version and release.
@@ -139,6 +149,51 @@ func parseBusyBox(contents string) *Distro {
 		parts := strings.Split(match, " ")
 		version := strings.ReplaceAll(parts[1], "v", "")
 		distro := assemble("busybox", version, "")
+		if distro != nil {
+			return distro
+		}
+	}
+	return nil
+}
+
+// TODO: we should update parseSystemReleaseCPE to use the CPE struct, pkg.CPE, which requires a refactor to avoid a circular import:
+// TODO: pkg depends on distro to support pURLs. To avoid the circular import, either try to make pkg to not depend on distro (medium lift-ish)
+// TODO: or migrate the cpe code out of the pkg package (small lift).
+// example CPE: cpe:/o:centos:linux:6:GA
+var systemReleaseCpeMatcher = regexp.MustCompile(`cpe:\/o:(.*?):.*?:(.*?):.*?$`)
+
+// parseSystemReleaseCPE parses the older centos (6) file to determine distro metadata
+func parseSystemReleaseCPE(contents string) *Distro {
+	matches := systemReleaseCpeMatcher.FindAllStringSubmatch(contents, -1)
+	for _, match := range matches {
+		if len(match) < 3 {
+			log.Warnf("system release cpe does not match expected format")
+			return nil
+		}
+		// note: in SubMatches (capture groups), the 0th index is the full match string
+		// see https://pkg.go.dev/regexp#pkg-overview for more info
+		distro := assemble(match[1], match[2], "")
+		if distro != nil {
+			return distro
+		}
+	}
+	return nil
+}
+
+// example: "CentOS release 6.10 (Final)"
+var redhatReleaseMatcher = regexp.MustCompile(`(.*?)\srelease\s(\d\.\d+)`)
+
+// parseRedhatRelease is a fallback parsing method for determining distro information in older redhat versions
+func parseRedhatRelease(contents string) *Distro {
+	matches := redhatReleaseMatcher.FindAllStringSubmatch(contents, -1)
+	for _, match := range matches {
+		if len(match) < 3 {
+			log.Warnf("failed to parse redhat-release file, unexpected format")
+			return nil
+		}
+		// note: in SubMatches (capture groups), the 0th index is the full match string
+		// see https://pkg.go.dev/regexp#pkg-overview for more info
+		distro := assemble(strings.ToLower(match[1]), match[2], "")
 		if distro != nil {
 			return distro
 		}
