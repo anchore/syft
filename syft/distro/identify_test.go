@@ -2,6 +2,7 @@ package distro
 
 import (
 	"fmt"
+	hashiVer "github.com/hashicorp/go-version"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -102,6 +103,16 @@ func TestIdentifyDistro(t *testing.T) {
 		{
 			fixture: "test-fixtures/partial-fields/missing-version",
 			Type:    UnknownDistroType,
+		},
+		{
+			fixture: "test-fixtures/os/centos6",
+			Type:    CentOS,
+			Version: "6.0.0",
+		},
+		{
+			fixture: "test-fixtures/os/centos5",
+			Type:    CentOS,
+			Version: "5.7.0",
 		},
 	}
 
@@ -205,18 +216,7 @@ func TestParseOsRelease(t *testing.T) {
 
 	for _, test := range tests {
 		name := fmt.Sprintf("%s:%s", test.name, test.RawVersion)
-		fixture, err := os.Open(test.fixture)
-		if err != nil {
-			t.Fatalf("could not open test fixture=%s: %+v", test.fixture, err)
-		}
-		defer fixture.Close()
-
-		b, err := ioutil.ReadAll(fixture)
-		if err != nil {
-			t.Fatalf("unable to read fixture file: %+v", err)
-		}
-
-		contents := string(b)
+		contents := retrieveFixtureContentsAsString(test.fixture, t)
 
 		t.Run(name, func(t *testing.T) {
 			distro := parseOsRelease(contents)
@@ -245,18 +245,7 @@ func TestParseOsReleaseFailures(t *testing.T) {
 
 	for _, test := range tests {
 		name := fmt.Sprintf("%s:%s", test.name, test.fixture)
-		fixture, err := os.Open(test.fixture)
-		if err != nil {
-			t.Fatalf("could not open test fixture=%s: %+v", test.fixture, err)
-		}
-		defer fixture.Close()
-
-		b, err := ioutil.ReadAll(fixture)
-		if err != nil {
-			t.Fatalf("unable to read fixture file: %+v", err)
-		}
-
-		contents := string(b)
+		contents := retrieveFixtureContentsAsString(test.fixture, t)
 
 		t.Run(name, func(t *testing.T) {
 			distro := parseOsRelease(contents)
@@ -265,5 +254,101 @@ func TestParseOsReleaseFailures(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestParseSystemReleaseCPE(t *testing.T) {
+	centos6Version, _ := hashiVer.NewVersion("6")
+	tests := []struct {
+		fixture  string
+		name     string
+		expected *Distro
+	}{
+		{
+			fixture: "test-fixtures/os/centos6/etc/system-release-cpe",
+			name:    "Centos 6",
+			expected: &Distro{
+				Type:       CentOS,
+				Version:    centos6Version,
+				RawVersion: "6",
+			},
+		},
+		{
+			fixture:  "test-fixtures/bad-system-release-cpe",
+			name:     "Centos 6 Bad CPE",
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			contents := retrieveFixtureContentsAsString(test.fixture, t)
+			actual := parseSystemReleaseCPE(contents)
+
+			if test.expected == nil {
+				assert.Nil(t, actual)
+				return
+			}
+
+			// not comparing the full distro object because the hashiVer is a pointer
+			assert.Equal(t, test.expected.Type, actual.Type)
+			assert.Equal(t, &test.expected.Version, &actual.Version)
+			assert.Equal(t, test.expected.RawVersion, actual.RawVersion)
+		})
+	}
+}
+
+func TestParseRedhatRelease(t *testing.T) {
+	centos5Version, _ := hashiVer.NewVersion("5.7")
+	tests := []struct {
+		fixture  string
+		name     string
+		expected *Distro
+	}{
+		{
+			fixture: "test-fixtures/os/centos5/etc/redhat-release",
+			name:    "Centos 5",
+			expected: &Distro{
+				Type:       CentOS,
+				Version:    centos5Version,
+				RawVersion: "5.7",
+			},
+		},
+		{
+			fixture:  "test-fixtures/bad-redhat-release",
+			name:     "Centos 5 Bad Redhat Release",
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			contents := retrieveFixtureContentsAsString(test.fixture, t)
+			actual := parseRedhatRelease(contents)
+
+			if test.expected == nil {
+				assert.Nil(t, actual)
+				return
+			}
+
+			// not comparing the full distro object because the hashiVer is a pointer
+			assert.Equal(t, test.expected.Type, actual.Type)
+			assert.Equal(t, &test.expected.Version, &actual.Version)
+			assert.Equal(t, test.expected.RawVersion, actual.RawVersion)
+		})
+	}
+}
+
+func retrieveFixtureContentsAsString(fixturePath string, t *testing.T) string {
+	fixture, err := os.Open(fixturePath)
+	if err != nil {
+		t.Fatalf("could not open test fixture=%s: %+v", fixturePath, err)
+	}
+	defer fixture.Close()
+
+	b, err := ioutil.ReadAll(fixture)
+	if err != nil {
+		t.Fatalf("unable to read fixture file: %+v", err)
+	}
+
+	return string(b)
 }
