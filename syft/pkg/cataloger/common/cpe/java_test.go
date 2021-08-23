@@ -215,22 +215,24 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			expects: []string{"io.jenkins-ci.plugin.thing"},
 		},
 		{
-			name: "from main field",
+			name: "from main field - tier 1",
 			pkg: pkg.Package{
 				Metadata: pkg.JavaMetadata{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							// positive cases
-							"Automatic-Module-Name":    "io.jenkins-ci.plugin.1",
-							"Extension-Name":           "io.jenkins-ci.plugin.2",
-							"Specification-Vendor":     "io.jenkins-ci.plugin.3",
-							"Implementation-Vendor":    "io.jenkins-ci.plugin.4",
-							"Bundle-SymbolicName":      "io.jenkins-ci.plugin.5",
-							"Implementation-Vendor-Id": "io.jenkins-ci.plugin.6",
-							"Package":                  "io.jenkins-ci.plugin.7",
-							"Implementation-Title":     "io.jenkins-ci.plugin.8",
-							"Main-Class":               "io.jenkins-ci.plugin.9",
-							"Bundle-Activator":         "io.jenkins-ci.plugin.10",
+							// tier 1
+							"Extension-Name":           "io.jenkins-ci.plugin.1",
+							"Specification-Vendor":     "io.jenkins-ci.plugin.2",
+							"Implementation-Vendor":    "io.jenkins-ci.plugin.3",
+							"Bundle-SymbolicName":      "io.jenkins-ci.plugin.4",
+							"Implementation-Vendor-Id": "io.jenkins-ci.plugin.5",
+							"Implementation-Title":     "io.jenkins-ci.plugin.6",
+							"Bundle-Activator":         "io.jenkins-ci.plugin.7",
+							// tier 2
+							"Automatic-Module-Name": "io.jenkins-ci.plugin.8",
+							"Main-Class":            "io.jenkins-ci.plugin.9",
+							"Package":               "io.jenkins-ci.plugin.10",
 						},
 					},
 				},
@@ -243,6 +245,23 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 				"io.jenkins-ci.plugin.5",
 				"io.jenkins-ci.plugin.6",
 				"io.jenkins-ci.plugin.7",
+			},
+		},
+		{
+			name: "from main field - tier 2",
+			pkg: pkg.Package{
+				Metadata: pkg.JavaMetadata{
+					Manifest: &pkg.JavaManifest{
+						Main: map[string]string{
+							// positive cases
+							"Automatic-Module-Name": "io.jenkins-ci.plugin.8",
+							"Main-Class":            "io.jenkins-ci.plugin.9",
+							"Package":               "io.jenkins-ci.plugin.10",
+						},
+					},
+				},
+			},
+			expects: []string{
 				"io.jenkins-ci.plugin.8",
 				"io.jenkins-ci.plugin.9",
 				"io.jenkins-ci.plugin.10",
@@ -264,23 +283,25 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			expects: nil,
 		},
 		{
-			name: "from named section field",
+			name: "from named section field - tier 1",
 			pkg: pkg.Package{
 				Metadata: pkg.JavaMetadata{
 					Manifest: &pkg.JavaManifest{
 						NamedSections: map[string]map[string]string{
 							"section": {
 								// positive cases
-								"Automatic-Module-Name":    "io.jenkins-ci.plugin.1",
-								"Extension-Name":           "io.jenkins-ci.plugin.2",
-								"Specification-Vendor":     "io.jenkins-ci.plugin.3",
-								"Implementation-Vendor":    "io.jenkins-ci.plugin.4",
-								"Bundle-SymbolicName":      "io.jenkins-ci.plugin.5",
-								"Implementation-Vendor-Id": "io.jenkins-ci.plugin.6",
-								"Package":                  "io.jenkins-ci.plugin.7",
-								"Implementation-Title":     "io.jenkins-ci.plugin.8",
-								"Main-Class":               "io.jenkins-ci.plugin.9",
-								"Bundle-Activator":         "io.jenkins-ci.plugin.10",
+								// tier 1
+								"Extension-Name":           "io.jenkins-ci.plugin.1",
+								"Specification-Vendor":     "io.jenkins-ci.plugin.2",
+								"Implementation-Vendor":    "io.jenkins-ci.plugin.3",
+								"Bundle-SymbolicName":      "io.jenkins-ci.plugin.4",
+								"Implementation-Vendor-Id": "io.jenkins-ci.plugin.5",
+								"Implementation-Title":     "io.jenkins-ci.plugin.6",
+								"Bundle-Activator":         "io.jenkins-ci.plugin.7",
+								// tier 2
+								"Automatic-Module-Name": "io.jenkins-ci.plugin.8",
+								"Main-Class":            "io.jenkins-ci.plugin.9",
+								"Package":               "io.jenkins-ci.plugin.10",
 							},
 						},
 					},
@@ -294,9 +315,6 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 				"io.jenkins-ci.plugin.5",
 				"io.jenkins-ci.plugin.6",
 				"io.jenkins-ci.plugin.7",
-				"io.jenkins-ci.plugin.8",
-				"io.jenkins-ci.plugin.9",
-				"io.jenkins-ci.plugin.10",
 			},
 		},
 		{
