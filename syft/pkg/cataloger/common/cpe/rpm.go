@@ -8,7 +8,7 @@ func candidateVendorsForRPM(p pkg.Package) *fieldCandidateSet {
 		return nil
 	}
 
-	vendors := newCPRFieldCandidateSet()
+	vendors := newFieldCandidateSet()
 
 	if metadata.Vendor != "" {
 		vendors.add(fieldCandidate{

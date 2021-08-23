@@ -650,7 +650,7 @@ func Test_addSeparatorVariations(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(strings.Join(test.input, ","), func(t *testing.T) {
-			val := newCPRFieldCandidateSet(test.input...)
+			val := newFieldCandidateSet(test.input...)
 			addDelimiterVariations(val)
 			assert.ElementsMatch(t, test.expected, val.values())
 		})

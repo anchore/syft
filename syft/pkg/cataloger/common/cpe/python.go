@@ -8,7 +8,7 @@ func candidateVendorsForPython(p pkg.Package) *fieldCandidateSet {
 		return nil
 	}
 
-	vendors := newCPRFieldCandidateSet()
+	vendors := newFieldCandidateSet()
 
 	if metadata.Author != "" {
 		vendors.add(fieldCandidate{

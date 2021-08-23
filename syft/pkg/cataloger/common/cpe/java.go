@@ -46,11 +46,11 @@ func candidateProductsForJava(p pkg.Package) []string {
 func candidateVendorsForJava(p pkg.Package) *fieldCandidateSet {
 	gidVendors := vendorsFromGroupIDs(groupIDsFromJavaPackage(p))
 	nameVendors := vendorsFromJavaManifestNames(p)
-	return newCPRFieldCandidateFromSets(gidVendors, nameVendors)
+	return newFieldCandidateFromSets(gidVendors, nameVendors)
 }
 
 func vendorsFromJavaManifestNames(p pkg.Package) *fieldCandidateSet {
-	vendors := newCPRFieldCandidateSet()
+	vendors := newFieldCandidateSet()
 
 	metadata, ok := p.Metadata.(pkg.JavaMetadata)
 	if !ok {
@@ -86,7 +86,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) *fieldCandidateSet {
 }
 
 func vendorsFromGroupIDs(groupIDs []string) *fieldCandidateSet {
-	vendors := newCPRFieldCandidateSet()
+	vendors := newFieldCandidateSet()
 	for _, groupID := range groupIDs {
 		for i, field := range strings.Split(groupID, ".") {
 			field = strings.TrimSpace(field)

@@ -90,7 +90,7 @@ func candidateVendors(p pkg.Package) []string {
 	// are the elasticsearch gem, xstream jar, and rack gem... all of these cases you can find vulnerabilities
 	// with CPEs where the vendor is the product name and doesn't appear to be derived from any available package
 	// metadata.
-	vendors := newCPRFieldCandidateSet(candidateProducts(p)...)
+	vendors := newFieldCandidateSet(candidateProducts(p)...)
 
 	switch p.Language {
 	case pkg.Ruby:
@@ -133,7 +133,7 @@ func candidateVendors(p pkg.Package) []string {
 }
 
 func candidateProducts(p pkg.Package) []string {
-	products := newCPRFieldCandidateSet(p.Name)
+	products := newFieldCandidateSet(p.Name)
 
 	switch {
 	case p.Language == pkg.Python:

@@ -128,7 +128,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			set := newCPRFieldCandidateSet()
+			set := newFieldCandidateSet()
 			set.add(test.input...)
 			assert.ElementsMatch(t, test.expect, set.values(test.filters...))
 		})
@@ -136,18 +136,18 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 }
 
 func Test_cpeFieldCandidateSet_clear(t *testing.T) {
-	s := newCPRFieldCandidateSet("1", "2")
+	s := newFieldCandidateSet("1", "2")
 	assert.NotEmpty(t, s.values())
 	s.clear()
 	assert.Empty(t, s.values())
 }
 
 func Test_cpeFieldCandidateSet_union(t *testing.T) {
-	s1 := newCPRFieldCandidateSet("1", "2")
+	s1 := newFieldCandidateSet("1", "2")
 	assert.Len(t, s1.list(), 2)
-	s2 := newCPRFieldCandidateSet("2", "3", "4")
+	s2 := newFieldCandidateSet("2", "3", "4")
 	assert.Len(t, s2.list(), 3)
-	s3 := newCPRFieldCandidateSet()
+	s3 := newFieldCandidateSet()
 	s3.add(
 		fieldCandidate{
 			value:                       "1",
@@ -204,11 +204,11 @@ func Test_cpeFieldCandidateSet_union(t *testing.T) {
 }
 
 func Test_cpeFieldCandidateSet_union_byValue(t *testing.T) {
-	s1 := newCPRFieldCandidateSet("1", "2")
+	s1 := newFieldCandidateSet("1", "2")
 	assert.Len(t, s1.list(), 2)
-	s2 := newCPRFieldCandidateSet("2", "3", "4")
+	s2 := newFieldCandidateSet("2", "3", "4")
 	assert.Len(t, s2.list(), 3)
-	s3 := newCPRFieldCandidateSet("1", "4", "5")
+	s3 := newFieldCandidateSet("1", "4", "5")
 	assert.Len(t, s3.list(), 3)
 
 	s1.union(s2, s3)
@@ -235,7 +235,7 @@ func Test_cpeFieldCandidateSet_union_byValue(t *testing.T) {
 }
 
 func Test_cpeFieldCandidateSet_uniqueValues(t *testing.T) {
-	set := newCPRFieldCandidateSet()
+	set := newFieldCandidateSet()
 	set.add(
 		fieldCandidate{
 			value: "1",

@@ -14,15 +14,15 @@ type fieldCandidateSet struct {
 	candidates map[fieldCandidate]struct{}
 }
 
-func newCPRFieldCandidateFromSets(sets ...*fieldCandidateSet) *fieldCandidateSet {
-	s := newCPRFieldCandidateSet()
+func newFieldCandidateFromSets(sets ...*fieldCandidateSet) *fieldCandidateSet {
+	s := newFieldCandidateSet()
 	for _, set := range sets {
 		s.add(set.list()...)
 	}
 	return s
 }
 
-func newCPRFieldCandidateSet(values ...string) *fieldCandidateSet {
+func newFieldCandidateSet(values ...string) *fieldCandidateSet {
 	s := &fieldCandidateSet{
 		candidates: make(map[fieldCandidate]struct{}),
 	}

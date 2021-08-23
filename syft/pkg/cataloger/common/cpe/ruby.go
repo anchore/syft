@@ -8,7 +8,7 @@ func candidateVendorsForRuby(p pkg.Package) *fieldCandidateSet {
 		return nil
 	}
 
-	vendors := newCPRFieldCandidateSet()
+	vendors := newFieldCandidateSet()
 
 	for _, author := range metadata.Authors {
 		// author could be a name or an email
