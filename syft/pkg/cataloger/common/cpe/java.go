@@ -179,6 +179,7 @@ func groupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 	}
 
 	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
+	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
 	groupIDs = append(groupIDs, groupIDsFromJavaManifest(metadata.Manifest)...)
 
 	return groupIDs
@@ -197,6 +198,42 @@ func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string
 	if startsWithDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
 		groupIDs = append(groupIDs, strings.TrimSpace(properties.ArtifactID))
+	}
+
+	return groupIDs
+}
+
+func groupIDsFromPomProject(project *pkg.PomProject) (groupIDs []string) {
+	if project == nil {
+		return groupIDs
+	}
+
+	// extract the project info...
+
+	if startsWithDomain(project.GroupID) {
+		groupIDs = append(groupIDs, strings.TrimSpace(project.GroupID))
+	}
+
+	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
+	if startsWithDomain(project.ArtifactID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
+		// there is a strong indication that the artifact ID is really a group ID
+		groupIDs = append(groupIDs, strings.TrimSpace(project.ArtifactID))
+	}
+
+	if project.Parent == nil {
+		return groupIDs
+	}
+
+	// extract the parent project info...
+
+	if startsWithDomain(project.Parent.GroupID) {
+		groupIDs = append(groupIDs, strings.TrimSpace(project.Parent.GroupID))
+	}
+
+	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
+	if startsWithDomain(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
+		// there is a strong indication that the artifact ID is really a group ID
+		groupIDs = append(groupIDs, strings.TrimSpace(project.Parent.ArtifactID))
 	}
 
 	return groupIDs
