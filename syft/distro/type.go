@@ -17,6 +17,7 @@ const (
 	OracleLinux       Type = "oraclelinux"
 	ArchLinux         Type = "archlinux"
 	OpenSuseLeap      Type = "opensuseleap"
+	SLES              Type = "sles"
 	Photon            Type = "photon"
 	Windows           Type = "windows"
 )
@@ -34,6 +35,7 @@ var All = []Type{
 	OracleLinux,
 	ArchLinux,
 	OpenSuseLeap,
+	SLES,
 	Photon,
 	Windows,
 }
@@ -51,6 +53,7 @@ var IDMapping = map[string]Type{
 	"ol":            OracleLinux,
 	"arch":          ArchLinux,
 	"opensuse-leap": OpenSuseLeap,
+	"sles":          SLES,
 	"photon":        Photon,
 	"windows":       Windows,
 }
