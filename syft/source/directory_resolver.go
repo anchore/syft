@@ -41,17 +41,10 @@ type directoryResolver struct {
 	errPaths      map[string]error
 }
 
-func newDirectoryResolver(fileTree *filetree.FileTree, root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
+func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("could not create directory resolver: %w", err)
-	}
-
-	var resolverFileTree *filetree.FileTree
-	if fileTree == nil {
-		resolverFileTree = filetree.NewFileTree()
-	} else {
-		resolverFileTree = fileTree
 	}
 
 	if pathFilters == nil {
@@ -61,30 +54,13 @@ func newDirectoryResolver(fileTree *filetree.FileTree, root string, pathFilters 
 	resolver := directoryResolver{
 		path:          root,
 		cwd:           cwd,
-		fileTree:      resolverFileTree,
+		fileTree:      filetree.NewFileTree(),
 		infos:         make(map[file.ID]os.FileInfo),
 		pathFilterFns: pathFilters,
 		errPaths:      make(map[string]error),
 	}
 
-	if fileTree != nil {
-		resolver.CopyFromTree()
-	}
-
 	return &resolver, indexAllRoots(root, resolver.indexTree)
-}
-
-func (r *directoryResolver) CopyFromTree() {
-	for _, ref := range r.fileTree.AllFiles() {
-		if _, ok := r.infos[ref.ID()]; !ok {
-			info, err := os.Stat(string(ref.RealPath))
-			if err != nil {
-				log.Errorf("unable to copy path=%q: %+v", ref.RealPath, err)
-				continue
-			}
-			r.infos[ref.ID()] = info
-		}
-	}
 }
 
 func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {

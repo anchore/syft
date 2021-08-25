@@ -89,6 +89,68 @@ func TestNewFromDirectory(t *testing.T) {
 	}
 }
 
+func TestNewFromDirectoryShared(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		input      string
+		expString  string
+		notExist   string
+		inputPaths []string
+		expRefs    int
+	}{
+		{
+			desc:       "path detected",
+			input:      "test-fixtures",
+			notExist:   "foobar/",
+			inputPaths: []string{"test-fixtures/path-detected/.vimrc"},
+			expRefs:    1,
+		},
+		{
+			desc:       "directory ignored",
+			input:      "test-fixtures",
+			notExist:   "foobar/",
+			inputPaths: []string{"test-fixtures/path-detected"},
+			expRefs:    0,
+		},
+		{
+			desc:       "no files-by-path detected",
+			input:      "test-fixtures",
+			notExist:   "foobar/",
+			inputPaths: []string{"test-fixtures/no-path-detected"},
+			expRefs:    0,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, err := NewFromDirectory(test.input)
+
+			if err != nil {
+				t.Errorf("could not create NewDirScope: %+v", err)
+			}
+			if src.Metadata.Path != test.input {
+				t.Errorf("mismatched stringer: '%s' != '%s'", src.Metadata.Path, test.input)
+			}
+
+			_, err = src.FileResolver(SquashedScope)
+			assert.NoError(t, err)
+
+			src.Metadata.Path = test.notExist
+			resolver2, err := src.FileResolver(SquashedScope)
+			assert.NoError(t, err)
+
+			refs, err := resolver2.FilesByPath(test.inputPaths...)
+			if err != nil {
+				t.Errorf("FilesByPath call produced an error: %+v", err)
+			}
+			if len(refs) != test.expRefs {
+				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expRefs)
+
+			}
+
+		})
+	}
+}
+
 func TestFilesByPathDoesNotExist(t *testing.T) {
 	testCases := []struct {
 		desc     string

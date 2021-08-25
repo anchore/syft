@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/stretchr/testify/assert"
 	"github.com/wagoodman/go-progress"
 )
@@ -66,7 +65,7 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, err := newDirectoryResolver(nil, c.root)
+			resolver, err := newDirectoryResolver(c.root)
 			assert.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.input)
@@ -122,7 +121,7 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, err := newDirectoryResolver(nil, "./test-fixtures")
+			resolver, err := newDirectoryResolver("./test-fixtures")
 			assert.NoError(t, err)
 			refs, err := resolver.FilesByPath(c.input...)
 			assert.NoError(t, err)
@@ -134,59 +133,8 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 }
 
-func TestDirectoryResolver_SharedTreeMultipleFilesByPath(t *testing.T) {
-	cases := []struct {
-		name     string
-		input    []string
-		refCount int
-	}{
-		{
-			name:     "finds multiple files first resolver",
-			input:    []string{"test-fixtures/image-symlinks/file-1.txt", "test-fixtures/image-symlinks/file-2.txt"},
-			refCount: 2,
-		},
-		{
-			name:     "skips non-existing files",
-			input:    []string{"test-fixtures/image-symlinks/bogus.txt", "test-fixtures/image-symlinks/file-1.txt"},
-			refCount: 1,
-		},
-		{
-			name:     "does not return anything for non-existing directories",
-			input:    []string{"test-fixtures/non-existing/bogus.txt", "test-fixtures/non-existing/file-1.txt"},
-			refCount: 0,
-		},
-		{
-			name:     "find file second resolver",
-			input:    []string{"test-fixtures/path-detected/.vimrc"},
-			refCount: 1,
-		},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			fileTree := filetree.NewFileTree()
-			first_resolver, err := newDirectoryResolver(fileTree, "./test-fixtures/image-symlinks")
-			assert.NoError(t, err)
-			second_resolver, err := newDirectoryResolver(fileTree, "./test-fixtures/path-detected")
-			assert.NoError(t, err)
-
-			first_refs, err := first_resolver.FilesByPath(c.input...)
-			assert.NoError(t, err)
-			second_refs, err := second_resolver.FilesByPath(c.input...)
-			assert.NoError(t, err)
-
-			if len(first_refs) != len(second_refs) {
-				t.Errorf("unsynced number of refs: %d != %d", len(first_refs), len(second_refs))
-			}
-
-			if len(first_refs) != c.refCount {
-				t.Errorf("unexpected number of refs: %d != %d", len(first_refs), c.refCount)
-			}
-		})
-	}
-}
-
 func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
-	resolver, err := newDirectoryResolver(nil, "./test-fixtures")
+	resolver, err := newDirectoryResolver("./test-fixtures")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
 	assert.NoError(t, err)
@@ -195,7 +143,7 @@ func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
-	resolver, err := newDirectoryResolver(nil, "./test-fixtures/image-symlinks")
+	resolver, err := newDirectoryResolver("./test-fixtures/image-symlinks")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
@@ -203,7 +151,7 @@ func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
-	resolver, err := newDirectoryResolver(nil, "./test-fixtures")
+	resolver, err := newDirectoryResolver("./test-fixtures")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
 	assert.NoError(t, err)
@@ -214,7 +162,7 @@ func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
 
 func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// let's make certain that "dev/place" is not ignored, since it is not "/dev/place"
-	resolver, err := newDirectoryResolver(nil, "test-fixtures/system_paths/target")
+	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target")
 	assert.NoError(t, err)
 	// ensure the correct filter function is wired up by default
 	expectedFn := reflect.ValueOf(isUnixSystemRuntimePath)
@@ -250,7 +198,7 @@ func TestDirectoryResolverUsesPathFilterFunction(t *testing.T) {
 		return strings.Contains(s, "dev/place") || strings.Contains(s, "proc/place") || strings.Contains(s, "sys/place")
 	}
 
-	resolver, err := newDirectoryResolver(nil, "test-fixtures/system_paths/target", filter)
+	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target", filter)
 	assert.NoError(t, err)
 
 	// ensure the correct filter function is wired up by default
@@ -312,7 +260,7 @@ func Test_isUnixSystemRuntimePath(t *testing.T) {
 
 func Test_directoryResolver_index(t *testing.T) {
 	// note: this test is testing the effects from newDirectoryResolver, indexTree, and addPathToIndex
-	r, err := newDirectoryResolver(nil, "test-fixtures/system_paths/target")
+	r, err := newDirectoryResolver("test-fixtures/system_paths/target")
 	if err != nil {
 		t.Fatalf("unable to get indexed dir resolver: %+v", err)
 	}
