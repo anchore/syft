@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/vifraa/gopom"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
 )
@@ -39,6 +41,60 @@ func Test_parsePomXML(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, &test.expected, actual)
+		})
+	}
+}
+
+func Test_pomParent(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    gopom.Parent
+		expected *pkg.PomParent
+	}{
+		{
+			name: "only group ID",
+			input: gopom.Parent{
+				GroupID: "org.something",
+			},
+			expected: &pkg.PomParent{
+				GroupID: "org.something",
+			},
+		},
+		{
+			name: "only artifact ID",
+			input: gopom.Parent{
+				ArtifactID: "something",
+			},
+			expected: &pkg.PomParent{
+				ArtifactID: "something",
+			},
+		},
+		{
+			name: "only Version",
+			input: gopom.Parent{
+				Version: "something",
+			},
+			expected: &pkg.PomParent{
+				Version: "something",
+			},
+		},
+		{
+			name:     "empty",
+			input:    gopom.Parent{},
+			expected: nil,
+		},
+		{
+			name: "unused field",
+			input: gopom.Parent{
+				RelativePath: "something",
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, pomParent(test.input))
 		})
 	}
 }

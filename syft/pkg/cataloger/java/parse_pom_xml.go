@@ -24,18 +24,9 @@ func parsePomXML(path string, reader io.Reader) (*pkg.PomProject, error) {
 		return nil, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
 	}
 
-	var parent *pkg.PomParent
-	if project.Parent.ArtifactID != "" || project.Parent.GroupID != "" || project.Parent.Version != "" {
-		parent = &pkg.PomParent{
-			GroupID:    project.Parent.GroupID,
-			ArtifactID: project.Parent.ArtifactID,
-			Version:    project.Parent.Version,
-		}
-	}
-
 	return &pkg.PomProject{
 		Path:        path,
-		Parent:      parent,
+		Parent:      pomParent(project.Parent),
 		GroupID:     project.GroupID,
 		ArtifactID:  project.ArtifactID,
 		Version:     project.Version,
@@ -43,6 +34,17 @@ func parsePomXML(path string, reader io.Reader) (*pkg.PomProject, error) {
 		Description: cleanDescription(project.Description),
 		URL:         project.URL,
 	}, nil
+}
+
+func pomParent(parent gopom.Parent) (result *pkg.PomParent) {
+	if parent.ArtifactID != "" || parent.GroupID != "" || parent.Version != "" {
+		result = &pkg.PomParent{
+			GroupID:    parent.GroupID,
+			ArtifactID: parent.ArtifactID,
+			Version:    parent.Version,
+		}
+	}
+	return result
 }
 
 func cleanDescription(original string) (cleaned string) {
