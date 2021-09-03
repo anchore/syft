@@ -107,37 +107,37 @@ func Test_candidateProductsForJava(t *testing.T) {
 
 func Test_vendorsFromGroupIDs(t *testing.T) {
 	tests := []struct {
-		groupIDs []string
+		groupID  string
 		expected []string
 	}{
 		{
-			groupIDs: []string{"org.sonatype.nexus"},
+			groupID:  "org.sonatype.nexus",
 			expected: []string{"sonatype", "nexus"},
 		},
 		{
-			groupIDs: []string{"org.jenkins-ci.plugins"},
+			groupID:  "org.jenkins-ci.plugins",
 			expected: []string{"jenkins-ci"},
 		},
 		{
-			groupIDs: []string{"io.jenkins.plugins"},
+			groupID:  "io.jenkins.plugins",
 			expected: []string{"jenkins"},
 		},
 		{
-			groupIDs: []string{"com.cloudbees.jenkins.plugins"},
+			groupID:  "com.cloudbees.jenkins.plugins",
 			expected: []string{"cloudbees", "jenkins"},
 		},
 		{
-			groupIDs: []string{"com.atlassian.confluence.plugins"},
+			groupID:  "com.atlassian.confluence.plugins",
 			expected: []string{"atlassian", "confluence"},
 		},
 		{
-			groupIDs: []string{"com.google.guava"},
+			groupID:  "com.google.guava",
 			expected: []string{"google", "guava"},
 		},
 	}
 	for _, test := range tests {
-		t.Run(strings.Join(test.groupIDs, ","), func(t *testing.T) {
-			assert.ElementsMatch(t, test.expected, vendorsFromGroupIDs(test.groupIDs).values(), "different vendors")
+		t.Run(test.groupID, func(t *testing.T) {
+			assert.ElementsMatch(t, test.expected, vendorsFromGroupIDs([]string{test.groupID}).values(), "different vendors")
 		})
 	}
 }
