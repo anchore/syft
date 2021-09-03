@@ -231,15 +231,17 @@ func addDelimiterVariations(fields *fieldCandidateSet) {
 		if hasHyphen {
 			// provide variations of hyphen candidates with an underscore
 			newValue := strings.ReplaceAll(field, "-", "_")
-			candidate.value = newValue
-			fields.add(candidate)
+			underscoreCandidate := candidate
+			underscoreCandidate.value = newValue
+			fields.add(underscoreCandidate)
 		}
 
 		if hasUnderscore {
 			// provide variations of underscore candidates with a hyphen
 			newValue := strings.ReplaceAll(field, "_", "-")
-			candidate.value = newValue
-			fields.add(candidate)
+			hyphenCandidate := candidate
+			hyphenCandidate.value = newValue
+			fields.add(hyphenCandidate)
 		}
 	}
 }
