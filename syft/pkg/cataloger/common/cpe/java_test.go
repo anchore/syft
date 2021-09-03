@@ -115,20 +115,8 @@ func Test_vendorsFromGroupIDs(t *testing.T) {
 			expected: []string{"sonatype", "nexus"},
 		},
 		{
-			groupIDs: []string{"org.sonatype.nexus"},
-			expected: []string{"sonatype", "nexus"},
-		},
-		{
-			groupIDs: []string{"org.sonatype.nexus"},
-			expected: []string{"sonatype", "nexus"},
-		},
-		{
 			groupIDs: []string{"org.jenkins-ci.plugins"},
-			expected: []string{"jenkins-ci", "jenkins"},
-		},
-		{
-			groupIDs: []string{"org.jenkins-ci.plugins"},
-			expected: []string{"jenkins-ci", "jenkins"},
+			expected: []string{"jenkins-ci"},
 		},
 		{
 			groupIDs: []string{"io.jenkins.plugins"},
@@ -137,10 +125,6 @@ func Test_vendorsFromGroupIDs(t *testing.T) {
 		{
 			groupIDs: []string{"com.cloudbees.jenkins.plugins"},
 			expected: []string{"cloudbees", "jenkins"},
-		},
-		{
-			groupIDs: []string{"com.atlassian.confluence.plugins"},
-			expected: []string{"atlassian", "confluence"},
 		},
 		{
 			groupIDs: []string{"com.atlassian.confluence.plugins"},

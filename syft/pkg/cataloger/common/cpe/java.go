@@ -110,13 +110,7 @@ func vendorsFromGroupIDs(groupIDs []string) *fieldCandidateSet {
 				continue
 			}
 
-			// e.g. jenkins-ci -> [jenkins-ci, jenkins]
-			for _, value := range generateSubSelections(field) {
-				vendors.add(fieldCandidate{
-					value:                 value,
-					disallowSubSelections: true,
-				})
-			}
+			vendors.addValue(field)
 		}
 	}
 
