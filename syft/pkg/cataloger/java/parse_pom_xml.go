@@ -33,17 +33,6 @@ func parsePomXML(path string, reader io.Reader) (*pkg.PomProject, error) {
 		}
 	}
 
-	var description string
-	descriptionLines := strings.Split(project.Description, "\n")
-	for _, line := range descriptionLines {
-		line = strings.TrimSpace(line)
-		if len(line) == 0 {
-			continue
-		}
-		description += line + " "
-	}
-	description = strings.TrimSpace(description)
-
 	return &pkg.PomProject{
 		Path:        path,
 		Parent:      parent,
@@ -51,7 +40,19 @@ func parsePomXML(path string, reader io.Reader) (*pkg.PomProject, error) {
 		ArtifactID:  project.ArtifactID,
 		Version:     project.Version,
 		Name:        project.Name,
-		Description: description,
+		Description: cleanDescription(project.Description),
 		URL:         project.URL,
 	}, nil
+}
+
+func cleanDescription(original string) (cleaned string) {
+	descriptionLines := strings.Split(original, "\n")
+	for _, line := range descriptionLines {
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		cleaned += line + " "
+	}
+	return strings.TrimSpace(cleaned)
 }

@@ -42,3 +42,26 @@ func Test_parsePomXML(t *testing.T) {
 		})
 	}
 }
+
+func Test_cleanDescription(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name: "indent + multiline",
+			input: `        The Apache Commons Codec package contains simple encoder and decoders for
+        various formats such as Base64 and Hexadecimal.  In addition to these
+        widely used encoders and decoders, the codec package also maintains a
+        collection of phonetic encoding utilities.`,
+			expected: "The Apache Commons Codec package contains simple encoder and decoders for various formats such as Base64 and Hexadecimal.  In addition to these widely used encoders and decoders, the codec package also maintains a collection of phonetic encoding utilities.",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, cleanDescription(test.input))
+		})
+	}
+}
