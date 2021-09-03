@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import (
 	"sort"
@@ -6,15 +6,15 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-var _ sort.Interface = (*ByCPESpecificity)(nil)
+var _ sort.Interface = (*BySpecificity)(nil)
 
-type ByCPESpecificity []wfn.Attributes
+type BySpecificity []wfn.Attributes
 
-func (c ByCPESpecificity) Len() int { return len(c) }
+func (c BySpecificity) Len() int { return len(c) }
 
-func (c ByCPESpecificity) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
+func (c BySpecificity) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
 
-func (c ByCPESpecificity) Less(i, j int) bool {
+func (c BySpecificity) Less(i, j int) bool {
 	iScore := weightedCountForSpecifiedFields(c[i])
 	jScore := weightedCountForSpecifiedFields(c[j])
 

@@ -1,4 +1,4 @@
-package cataloger
+package cpe
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_jenkinsPluginFilter(t *testing.T) {
+func Test_disallowJenkinsServerCPEForPluginPackage(t *testing.T) {
 	tests := []struct {
 		name     string
 		cpe      pkg.CPE
@@ -41,12 +41,12 @@ func Test_jenkinsPluginFilter(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, jenkinsPluginFilter(test.cpe, test.pkg))
+			assert.Equal(t, test.expected, disallowJenkinsServerCPEForPluginPackage(test.cpe, test.pkg))
 		})
 	}
 }
 
-func Test_jenkinsPackageNameFilter(t *testing.T) {
+func Test_disallowJenkinsCPEsNotAssociatedWithJenkins(t *testing.T) {
 	tests := []struct {
 		name     string
 		cpe      pkg.CPE
@@ -101,12 +101,12 @@ func Test_jenkinsPackageNameFilter(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, jenkinsPackageNameFilter(test.cpe, test.pkg))
+			assert.Equal(t, test.expected, disallowJenkinsCPEsNotAssociatedWithJenkins(test.cpe, test.pkg))
 		})
 	}
 }
 
-func Test_jiraClientPackageFilter(t *testing.T) {
+func Test_disallowJiraClientServerMismatch(t *testing.T) {
 	tests := []struct {
 		name     string
 		cpe      pkg.CPE
@@ -161,7 +161,7 @@ func Test_jiraClientPackageFilter(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, jiraClientPackageFilter(test.cpe, test.pkg))
+			assert.Equal(t, test.expected, disallowJiraClientServerMismatch(test.cpe, test.pkg))
 		})
 	}
 }

@@ -20,10 +20,11 @@ type JavaMetadata struct {
 	VirtualPath   string         `json:"virtualPath"`
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty"`
+	PomProject    *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
 	Parent        *Package       `json:"-"`
 }
 
-// PomProperties represents the fields of interest extracted from a Java archive's pom.xml file.
+// PomProperties represents the fields of interest extracted from a Java archive's pom.properties file.
 type PomProperties struct {
 	Path       string            `mapstructure:"path" json:"path"`
 	Name       string            `mapstructure:"name" json:"name"`
@@ -31,6 +32,25 @@ type PomProperties struct {
 	ArtifactID string            `mapstructure:"artifactId" json:"artifactId"`
 	Version    string            `mapstructure:"version" json:"version"`
 	Extra      map[string]string `mapstructure:",remain" json:"extraFields"`
+}
+
+// PomProject represents fields of interest extracted from a Java archive's pom.xml file. See https://maven.apache.org/ref/3.6.3/maven-model/maven.html for more details.
+type PomProject struct {
+	Path        string     `json:"path"`
+	Parent      *PomParent `json:"parent,omitempty"`
+	GroupID     string     `json:"groupId"`
+	ArtifactID  string     `json:"artifactId"`
+	Version     string     `json:"version"`
+	Name        string     `json:"name"`
+	Description string     `json:"description,omitempty"`
+	URL         string     `json:"url,omitempty"`
+}
+
+// PomParent contains the fields within the <parent> tag in a pom.xml file
+type PomParent struct {
+	GroupID    string `json:"groupId"`
+	ArtifactID string `json:"artifactId"`
+	Version    string `json:"version"`
 }
 
 // PkgTypeIndicated returns the package Type indicated by the data contained in the PomProperties.

@@ -209,6 +209,15 @@ func TestParseJar(t *testing.T) {
 							Version:    "2.9.2",
 							Extra:      map[string]string{},
 						},
+						PomProject: &pkg.PomProject{
+							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",
+							GroupID:     "joda-time",
+							ArtifactID:  "joda-time",
+							Version:     "2.9.2",
+							Name:        "Joda-Time",
+							Description: "Date and time library to replace JDK date handling",
+							URL:         "http://www.joda.org/joda-time/",
+						},
 					},
 				},
 			},
@@ -281,7 +290,7 @@ func TestParseJar(t *testing.T) {
 				// write censored data back
 				a.Metadata = metadata
 
-				diffs := deep.Equal(a, e)
+				diffs := deep.Equal(e, a)
 				if len(diffs) > 0 {
 					t.Errorf("diffs found for %q", a.Name)
 					for _, d := range diffs {
@@ -561,18 +570,19 @@ func TestParseNestedJar(t *testing.T) {
 	}
 }
 
-func TestPackagesFromPomProperties(t *testing.T) {
+func Test_newPackageFromMavenData(t *testing.T) {
 	virtualPath := "given/virtual/path"
 	tests := []struct {
 		name            string
-		props           *pkg.PomProperties
+		props           pkg.PomProperties
+		project         *pkg.PomProject
 		parent          *pkg.Package
 		expectedParent  pkg.Package
 		expectedPackage *pkg.Package
 	}{
 		{
 			name: "go case: get a single package from pom properties",
-			props: &pkg.PomProperties{
+			props: pkg.PomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-artifact-id",
@@ -627,8 +637,90 @@ func TestPackagesFromPomProperties(t *testing.T) {
 			},
 		},
 		{
+			name: "get a single package from pom properties + project",
+			props: pkg.PomProperties{
+				Name:       "some-name",
+				GroupID:    "some-group-id",
+				ArtifactID: "some-artifact-id",
+				Version:    "1.0",
+			},
+			project: &pkg.PomProject{
+				Parent: &pkg.PomParent{
+					GroupID:    "some-parent-group-id",
+					ArtifactID: "some-parent-artifact-id",
+					Version:    "1.0-parent",
+				},
+				Name:        "some-name",
+				GroupID:     "some-group-id",
+				ArtifactID:  "some-artifact-id",
+				Version:     "1.0",
+				Description: "desc",
+				URL:         "aweso.me",
+			},
+			parent: &pkg.Package{
+				Name:    "some-parent-name",
+				Version: "2.0",
+				Metadata: pkg.JavaMetadata{
+					VirtualPath:   "some-parent-virtual-path",
+					Manifest:      nil,
+					PomProperties: nil,
+					Parent:        nil,
+				},
+			},
+			// note: the SAME as the original parent values
+			expectedParent: pkg.Package{
+				Name:    "some-parent-name",
+				Version: "2.0",
+				Metadata: pkg.JavaMetadata{
+					VirtualPath:   "some-parent-virtual-path",
+					Manifest:      nil,
+					PomProperties: nil,
+					Parent:        nil,
+				},
+			},
+			expectedPackage: &pkg.Package{
+				Name:         "some-artifact-id",
+				Version:      "1.0",
+				Language:     pkg.Java,
+				Type:         pkg.JavaPkg,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					PomProperties: &pkg.PomProperties{
+						Name:       "some-name",
+						GroupID:    "some-group-id",
+						ArtifactID: "some-artifact-id",
+						Version:    "1.0",
+					},
+					PomProject: &pkg.PomProject{
+						Parent: &pkg.PomParent{
+							GroupID:    "some-parent-group-id",
+							ArtifactID: "some-parent-artifact-id",
+							Version:    "1.0-parent",
+						},
+						Name:        "some-name",
+						GroupID:     "some-group-id",
+						ArtifactID:  "some-artifact-id",
+						Version:     "1.0",
+						Description: "desc",
+						URL:         "aweso.me",
+					},
+					Parent: &pkg.Package{
+						Name:    "some-parent-name",
+						Version: "2.0",
+						Metadata: pkg.JavaMetadata{
+							VirtualPath:   "some-parent-virtual-path",
+							Manifest:      nil,
+							PomProperties: nil,
+							Parent:        nil,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "single package from pom properties that's a Jenkins plugin",
-			props: &pkg.PomProperties{
+			props: pkg.PomProperties{
 				Name:       "some-name",
 				GroupID:    "com.cloudbees.jenkins.plugins",
 				ArtifactID: "some-artifact-id",
@@ -684,7 +776,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 		},
 		{
 			name: "child matches parent by key",
-			props: &pkg.PomProperties{
+			props: pkg.PomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-parent-name", // note: matches parent package
@@ -723,7 +815,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 		},
 		{
 			name: "child matches parent by key and is Jenkins plugin",
-			props: &pkg.PomProperties{
+			props: pkg.PomProperties{
 				Name:       "some-name",
 				GroupID:    "com.cloudbees.jenkins.plugins",
 				ArtifactID: "some-parent-name", // note: matches parent package
@@ -761,7 +853,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 		},
 		{
 			name: "child matches parent by virtual path -- override name and version",
-			props: &pkg.PomProperties{
+			props: pkg.PomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-parent-name", // note: DOES NOT match parent package
@@ -799,7 +891,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 		},
 		{
 			name: "child matches parent by artifact id",
-			props: &pkg.PomProperties{
+			props: pkg.PomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-parent-name",       // note: matches parent package
@@ -840,17 +932,7 @@ func TestPackagesFromPomProperties(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// note: this zip doesn't matter, as long as it is a zip
-			nop, err := os.Open("test-fixtures/java-builds/packages/spring-boot-0.0.1-SNAPSHOT.jar")
-			assert.NoError(t, err)
-
-			// make the parser
-			parser, cleanup, err := newJavaArchiveParser(virtualPath, nop, false)
-			assert.NoError(t, err)
-			t.Cleanup(cleanup)
-
-			// get the test data
-			actualPackage := parser.newPackageFromPomProperties(*test.props, test.parent)
+			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, virtualPath)
 			assert.Equal(t, test.expectedPackage, actualPackage, "new package doesn't match")
 			assert.Equal(t, test.expectedParent, *test.parent, "parent doesn't match")
 		})

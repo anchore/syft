@@ -3,6 +3,7 @@ package java
 import (
 	"fmt"
 	"io"
+	"path"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -88,8 +89,8 @@ func (j *archiveParser) parse() ([]pkg.Package, error) {
 		return nil, fmt.Errorf("could not generate package from %s: %w", j.virtualPath, err)
 	}
 
-	// find aux packages from pom.properties and potentially modify the existing parentPkg
-	auxPkgs, err := j.discoverPkgsFromAllPomProperties(parentPkg)
+	// find aux packages from pom.properties/pom.xml and potentially modify the existing parentPkg
+	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(parentPkg)
 	if err != nil {
 		return nil, err
 	}
@@ -150,78 +151,40 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}, nil
 }
 
-// discoverPkgsFromAllPomProperties parses Maven POM properties for a given
+// discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
 // parent package, returning all listed Java packages found for each pom
 // properties discovered and potentially updating the given parentPkg with new
 // data.
-func (j *archiveParser) discoverPkgsFromAllPomProperties(parentPkg *pkg.Package) ([]pkg.Package, error) {
+func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([]pkg.Package, error) {
 	if parentPkg == nil {
 		return nil, nil
 	}
 
 	var pkgs []pkg.Package
 
-	// search and parse pom.properties files & fetch the contents
-	contentsOfPomPropertiesFiles, err := file.ContentsFromZip(j.archivePath, j.fileManifest.GlobMatch(pomPropertiesGlob)...)
+	properties, err := pomPropertiesByParentPath(j.archivePath, j.fileManifest.GlobMatch(pomPropertiesGlob), j.virtualPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to extract pom.properties: %w", err)
+		return nil, err
 	}
 
-	for filePath, fileContents := range contentsOfPomPropertiesFiles {
-		// parse the pom properties file into a rich object
-		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
-		if err != nil {
-			log.Warnf("failed to parse pom.properties (%s): %+v", j.virtualPath, err)
-			continue
+	projects, err := pomProjectByParentPath(j.archivePath, j.fileManifest.GlobMatch(pomXMLGlob), j.virtualPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for parentPath, propertiesObj := range properties {
+		var pomProject *pkg.PomProject
+		if proj, exists := projects[parentPath]; exists {
+			pomProject = &proj
 		}
 
-		if pomProperties == nil {
-			continue
-		}
-
-		if pomProperties.Version == "" || pomProperties.ArtifactID == "" {
-			// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
-			continue
-		}
-
-		pkgFromPom := j.newPackageFromPomProperties(*pomProperties, parentPkg)
+		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.virtualPath)
 		if pkgFromPom != nil {
 			pkgs = append(pkgs, *pkgFromPom)
 		}
 	}
+
 	return pkgs, nil
-}
-
-// packagesFromPomProperties processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
-// associating each discovered package to the given parent package.
-func (j *archiveParser) newPackageFromPomProperties(pomProperties pkg.PomProperties, parentPkg *pkg.Package) *pkg.Package {
-	// keep the artifact name within the virtual path if this package does not match the parent package
-	vPathSuffix := ""
-	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
-		vPathSuffix += ":" + pomProperties.ArtifactID
-	}
-	virtualPath := j.virtualPath + vPathSuffix
-
-	// discovered props = new package
-	p := pkg.Package{
-		Name:         pomProperties.ArtifactID,
-		Version:      pomProperties.Version,
-		Language:     pkg.Java,
-		Type:         pomProperties.PkgTypeIndicated(),
-		MetadataType: pkg.JavaMetadataType,
-		Metadata: pkg.JavaMetadata{
-			VirtualPath:   virtualPath,
-			PomProperties: &pomProperties,
-			Parent:        parentPkg,
-		},
-	}
-
-	if packageIdentitiesMatch(p, parentPkg) {
-		updatePackage(p, parentPkg)
-		return nil
-	}
-
-	return &p
 }
 
 // discoverPkgsFromNestedArchives finds Java archives within Java archives, returning all listed Java packages found and
@@ -266,6 +229,95 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 	}
 
 	return pkgs, nil
+}
+
+func pomPropertiesByParentPath(archivePath string, extractPaths []string, virtualPath string) (map[string]pkg.PomProperties, error) {
+	contentsOfMavenPropertiesFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to extract maven files: %w", err)
+	}
+
+	propertiesByParentPath := make(map[string]pkg.PomProperties)
+	for filePath, fileContents := range contentsOfMavenPropertiesFiles {
+		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
+		if err != nil {
+			log.Warnf("failed to parse pom.properties virtualPath=%q path=%q: %+v", virtualPath, filePath, err)
+			continue
+		}
+
+		if pomProperties == nil {
+			continue
+		}
+
+		if pomProperties.Version == "" || pomProperties.ArtifactID == "" {
+			// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
+			continue
+		}
+
+		propertiesByParentPath[path.Dir(filePath)] = *pomProperties
+	}
+	return propertiesByParentPath, nil
+}
+
+func pomProjectByParentPath(archivePath string, extractPaths []string, virtualPath string) (map[string]pkg.PomProject, error) {
+	contentsOfMavenProjectFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to extract maven files: %w", err)
+	}
+
+	projectByParentPath := make(map[string]pkg.PomProject)
+	for filePath, fileContents := range contentsOfMavenProjectFiles {
+		pomProject, err := parsePomXML(filePath, strings.NewReader(fileContents))
+		if err != nil {
+			log.Warnf("failed to parse pom.xml virtualPath=%q path=%q: %+v", virtualPath, filePath, err)
+			continue
+		}
+
+		if pomProject == nil {
+			continue
+		}
+
+		if pomProject.Version == "" || pomProject.ArtifactID == "" {
+			// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
+			continue
+		}
+
+		projectByParentPath[path.Dir(filePath)] = *pomProject
+	}
+	return projectByParentPath, nil
+}
+
+// packagesFromPomProperties processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
+// associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
+func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, virtualPath string) *pkg.Package {
+	// keep the artifact name within the virtual path if this package does not match the parent package
+	vPathSuffix := ""
+	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
+		vPathSuffix += ":" + pomProperties.ArtifactID
+	}
+	virtualPath += vPathSuffix
+
+	// discovered props = new package
+	p := pkg.Package{
+		Name:         pomProperties.ArtifactID,
+		Version:      pomProperties.Version,
+		Language:     pkg.Java,
+		Type:         pomProperties.PkgTypeIndicated(),
+		MetadataType: pkg.JavaMetadataType,
+		Metadata: pkg.JavaMetadata{
+			VirtualPath:   virtualPath,
+			PomProperties: &pomProperties,
+			PomProject:    pomProject,
+			Parent:        parentPkg,
+		},
+	}
+
+	if packageIdentitiesMatch(p, parentPkg) {
+		updatePackage(p, parentPkg)
+		return nil
+	}
+
+	return &p
 }
 
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {

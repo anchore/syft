@@ -114,10 +114,20 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			ty:        pkg.JavaPkg,
 		},
 		{
-			filename:  "BOOT-INF/lib/spring-data-r2dbc-1.1.0.RELEASE.jar", // Regression: https://github.com/anchore/syft/issues/255
+			// regression: https://github.com/anchore/syft/issues/255
+			filename:  "BOOT-INF/lib/spring-data-r2dbc-1.1.0.RELEASE.jar",
 			version:   "1.1.0.RELEASE",
 			extension: "jar",
 			name:      "spring-data-r2dbc",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			// regression for artifact of the same name within jboss/keycloak:13.0.1 docker image
+			// which covers package name components with periods in them
+			filename:  "jboss-saaj-api_1.4_spec-1.0.2.Final.jar",
+			version:   "1.0.2.Final",
+			extension: "jar",
+			name:      "jboss-saaj-api_1.4_spec",
 			ty:        pkg.JavaPkg,
 		},
 	}
