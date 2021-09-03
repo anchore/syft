@@ -62,21 +62,28 @@ func vendorsFromJavaManifestNames(p pkg.Package) *fieldCandidateSet {
 	}
 
 	for _, name := range javaManifestNameFields {
-		if value, exists := metadata.Manifest.Main[name]; exists {
-			if !startsWithTopLevelDomain(value) {
-				vendors.add(fieldCandidate{
-					value:                 normalizeName(value),
-					disallowSubSelections: true,
-				})
-			}
-		}
-		for _, section := range metadata.Manifest.NamedSections {
-			if value, exists := section[name]; exists {
+		if metadata.Manifest.Main != nil {
+			if value, exists := metadata.Manifest.Main[name]; exists {
 				if !startsWithTopLevelDomain(value) {
 					vendors.add(fieldCandidate{
 						value:                 normalizeName(value),
 						disallowSubSelections: true,
 					})
+				}
+			}
+		}
+		if metadata.Manifest.NamedSections != nil {
+			for _, section := range metadata.Manifest.NamedSections {
+				if section == nil {
+					continue
+				}
+				if value, exists := section[name]; exists {
+					if !startsWithTopLevelDomain(value) {
+						vendors.add(fieldCandidate{
+							value:                 normalizeName(value),
+							disallowSubSelections: true,
+						})
+					}
 				}
 			}
 		}
