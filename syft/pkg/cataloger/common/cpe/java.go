@@ -63,7 +63,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) *fieldCandidateSet {
 
 	for _, name := range javaManifestNameFields {
 		if value, exists := metadata.Manifest.Main[name]; exists {
-			if !startsWithDomain(value) {
+			if !startsWithTopLevelDomain(value) {
 				vendors.add(fieldCandidate{
 					value:                 normalizeName(value),
 					disallowSubSelections: true,
@@ -72,7 +72,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) *fieldCandidateSet {
 		}
 		for _, section := range metadata.Manifest.NamedSections {
 			if value, exists := section[name]; exists {
-				if !startsWithDomain(value) {
+				if !startsWithTopLevelDomain(value) {
 					vendors.add(fieldCandidate{
 						value:                 normalizeName(value),
 						disallowSubSelections: true,
@@ -165,7 +165,7 @@ func artifactIDFromJavaPackage(p pkg.Package) string {
 	}
 
 	artifactID := strings.TrimSpace(metadata.PomProperties.ArtifactID)
-	if startsWithDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
+	if startsWithTopLevelDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID, don't use it
 		return ""
 	}
@@ -190,12 +190,12 @@ func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string
 		return nil
 	}
 
-	if startsWithDomain(properties.GroupID) {
+	if startsWithTopLevelDomain(properties.GroupID) {
 		groupIDs = append(groupIDs, strings.TrimSpace(properties.GroupID))
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
+	if startsWithTopLevelDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
 		groupIDs = append(groupIDs, strings.TrimSpace(properties.ArtifactID))
 	}
@@ -210,12 +210,12 @@ func groupIDsFromPomProject(project *pkg.PomProject) (groupIDs []string) {
 
 	// extract the project info...
 
-	if startsWithDomain(project.GroupID) {
+	if startsWithTopLevelDomain(project.GroupID) {
 		groupIDs = append(groupIDs, strings.TrimSpace(project.GroupID))
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithDomain(project.ArtifactID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
+	if startsWithTopLevelDomain(project.ArtifactID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
 		groupIDs = append(groupIDs, strings.TrimSpace(project.ArtifactID))
 	}
@@ -226,12 +226,12 @@ func groupIDsFromPomProject(project *pkg.PomProject) (groupIDs []string) {
 
 	// extract the parent project info...
 
-	if startsWithDomain(project.Parent.GroupID) {
+	if startsWithTopLevelDomain(project.Parent.GroupID) {
 		groupIDs = append(groupIDs, strings.TrimSpace(project.Parent.GroupID))
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithDomain(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
+	if startsWithTopLevelDomain(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
 		groupIDs = append(groupIDs, strings.TrimSpace(project.Parent.ArtifactID))
 	}
@@ -266,13 +266,13 @@ func getManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 
 	for _, name := range fields {
 		if value, exists := manifest.Main[name]; exists {
-			if startsWithDomain(value) {
+			if startsWithTopLevelDomain(value) {
 				groupIDs = append(groupIDs, value)
 			}
 		}
 		for _, section := range manifest.NamedSections {
 			if value, exists := section[name]; exists {
-				if startsWithDomain(value) {
+				if startsWithTopLevelDomain(value) {
 					groupIDs = append(groupIDs, value)
 				}
 			}
@@ -282,6 +282,6 @@ func getManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 	return groupIDs
 }
 
-func startsWithDomain(value string) bool {
+func startsWithTopLevelDomain(value string) bool {
 	return internal.HasAnyOfPrefixes(value, domains...)
 }
