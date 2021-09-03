@@ -206,37 +206,32 @@ func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string
 
 func groupIDsFromPomProject(project *pkg.PomProject) (groupIDs []string) {
 	if project == nil {
-		return groupIDs
+		return nil
 	}
 
 	// extract the project info...
-
-	if startsWithTopLevelDomain(project.GroupID) {
-		groupIDs = append(groupIDs, strings.TrimSpace(project.GroupID))
-	}
-
-	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithTopLevelDomain(project.ArtifactID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
-		// there is a strong indication that the artifact ID is really a group ID
-		groupIDs = append(groupIDs, strings.TrimSpace(project.ArtifactID))
-	}
+	groupIDs = addGroupIDsFromGroupIDsAndArtifactID(project.GroupID, project.ArtifactID)
 
 	if project.Parent == nil {
 		return groupIDs
 	}
 
 	// extract the parent project info...
+	groupIDs = append(groupIDs, addGroupIDsFromGroupIDsAndArtifactID(project.Parent.GroupID, project.Parent.ArtifactID)...)
 
-	if startsWithTopLevelDomain(project.Parent.GroupID) {
-		groupIDs = append(groupIDs, strings.TrimSpace(project.Parent.GroupID))
+	return groupIDs
+}
+
+func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs []string) {
+	if startsWithTopLevelDomain(groupID) {
+		groupIDs = append(groupIDs, strings.TrimSpace(groupID))
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithTopLevelDomain(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
+	if startsWithTopLevelDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
-		groupIDs = append(groupIDs, strings.TrimSpace(project.Parent.ArtifactID))
+		groupIDs = append(groupIDs, strings.TrimSpace(artifactID))
 	}
-
 	return groupIDs
 }
 
