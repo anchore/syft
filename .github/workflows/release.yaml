@@ -94,11 +94,15 @@ jobs:
     needs: [quality-gate]
     runs-on: macos-latest # Due to our code signing process, it's vital that we run our release steps on macOS.
     steps:
-      - uses: docker-practice/actions-setup-docker@v1
 
-      # note, it is important to always be auth'd into docker.io to prevent rate limiting issues
-      - name: Login to Docker Hub
-        run: echo ${{ secrets.TOOLBOX_DOCKER_PASS }} | docker login docker.io -u ${{ secrets.TOOLBOX_DOCKER_USER }} --password-stdin
+# we are having an infinite loop of installing docker https://github.com/anchore/syft/actions/runs/1199137004
+# we are still looking for a fix
+
+#      - uses: docker-practice/actions-setup-docker@v1
+#
+#      # note, it is important to always be auth'd into docker.io to prevent rate limiting issues
+#      - name: Login to Docker Hub
+#        run: echo ${{ secrets.TOOLBOX_DOCKER_PASS }} | docker login docker.io -u ${{ secrets.TOOLBOX_DOCKER_USER }} --password-stdin
 
       - uses: actions/setup-go@v2
         with:
