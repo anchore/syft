@@ -245,7 +245,6 @@ func groupIDsFromJavaManifest(manifest *pkg.JavaManifest) []string {
 
 	if len(groupIDs) != 0 {
 		return groupIDs
-
 	}
 
 	// if we haven't found anything yet, let's try a last ditch effort:
