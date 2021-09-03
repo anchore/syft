@@ -248,16 +248,17 @@ func groupIDsFromJavaManifest(manifest *pkg.JavaManifest) []string {
 	// try the common manifest fields first for a set of candidates
 	groupIDs := getManifestFieldGroupIDs(manifest, primaryJavaManifestGroupIDFields)
 
-	if len(groupIDs) == 0 {
-		// if we haven't found anything yet, let's try a last ditch effort:
-		// attempt to get group-id-like info from the MANIFEST.MF "Automatic-Module-Name" and "Extension-Name" field.
-		// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
-		// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
-		// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
-		groupIDs = getManifestFieldGroupIDs(manifest, secondaryJavaManifestGroupIDFields)
+	if len(groupIDs) != 0 {
+		return groupIDs
+
 	}
 
-	return groupIDs
+	// if we haven't found anything yet, let's try a last ditch effort:
+	// attempt to get group-id-like info from the MANIFEST.MF "Automatic-Module-Name" and "Extension-Name" field.
+	// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
+	// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
+	// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
+	return getManifestFieldGroupIDs(manifest, secondaryJavaManifestGroupIDFields)
 }
 
 func getManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (groupIDs []string) {
