@@ -160,7 +160,7 @@ func candidateProducts(p pkg.Package) []string {
 }
 
 func addAllSubSelections(set fieldCandidateSet) {
-	for _, candidate := range set.values(filterFieldCandidatesBySubselection) {
+	for _, candidate := range set.values(filterOutBySubselection) {
 		set.addValue(generateSubSelections(candidate)...)
 	}
 }
@@ -223,7 +223,7 @@ func scanByHyphenOrUnderscore(data []byte, atEOF bool) (advance int, token []byt
 }
 
 func addDelimiterVariations(fields fieldCandidateSet) {
-	for _, candidate := range fields.list(filterFieldCandidatesByDelimiterVariations) {
+	for _, candidate := range fields.list(filterOutByDelimiterVariations) {
 		field := candidate.value
 		hasHyphen := strings.Contains(field, "-")
 		hasUnderscore := strings.Contains(field, "_")

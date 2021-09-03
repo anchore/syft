@@ -41,7 +41,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 			},
 		},
 		{
-			name: "filter sub-selections",
+			name: "filter out sub-selections",
 			input: []fieldCandidate{
 				{
 					value: "allow anything",
@@ -61,7 +61,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 				},
 			},
 			filters: []filterFieldCandidateFn{
-				filterFieldCandidatesBySubselection,
+				filterOutBySubselection,
 			},
 			expect: []string{
 				"allow anything",
@@ -69,7 +69,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 			},
 		},
 		{
-			name: "filter delimiter-variations",
+			name: "filter out delimiter-variations",
 			input: []fieldCandidate{
 				{
 					value: "allow anything",
@@ -89,7 +89,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 				},
 			},
 			filters: []filterFieldCandidateFn{
-				filterFieldCandidatesByDelimiterVariations,
+				filterOutByDelimiterVariations,
 			},
 			expect: []string{
 				"allow anything",
@@ -117,8 +117,8 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 				},
 			},
 			filters: []filterFieldCandidateFn{
-				filterFieldCandidatesByDelimiterVariations,
-				filterFieldCandidatesBySubselection,
+				filterOutByDelimiterVariations,
+				filterOutBySubselection,
 			},
 			expect: []string{
 				"allow anything",

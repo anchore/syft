@@ -9,12 +9,13 @@ import (
 
 const jenkinsName = "jenkins"
 
+// filterFn instances should return true if the given CPE should be removed from a collection for the given package
 type filterFn func(cpe pkg.CPE, p pkg.Package) bool
 
 var cpeFilters = []filterFn{
-	jiraClientPackageFilter,
-	jenkinsPackageNameFilter,
-	jenkinsPluginFilter,
+	disallowJiraClientServerMismatch,
+	disallowJenkinsServerCPEForPluginPackage,
+	disallowJenkinsCPEsNotAssociatedWithJenkins,
 }
 
 func filter(cpes []pkg.CPE, p pkg.Package, filters ...filterFn) (result []pkg.CPE) {
@@ -32,7 +33,7 @@ cpeLoop:
 }
 
 // jenkins plugins should not match against jenkins
-func jenkinsPluginFilter(cpe pkg.CPE, p pkg.Package) bool {
+func disallowJenkinsServerCPEForPluginPackage(cpe pkg.CPE, p pkg.Package) bool {
 	if p.Type == pkg.JenkinsPluginPkg && cpe.Product == jenkinsName {
 		return true
 	}
@@ -40,7 +41,7 @@ func jenkinsPluginFilter(cpe pkg.CPE, p pkg.Package) bool {
 }
 
 // filter to account that packages that are not for jenkins but have a CPE generated that will match against jenkins
-func jenkinsPackageNameFilter(cpe pkg.CPE, p pkg.Package) bool {
+func disallowJenkinsCPEsNotAssociatedWithJenkins(cpe pkg.CPE, p pkg.Package) bool {
 	// jenkins server should only match against a product with the name jenkins
 	if cpe.Product == jenkinsName && !strings.Contains(strings.ToLower(p.Name), jenkinsName) {
 		if cpe.Vendor == wfn.Any || cpe.Vendor == jenkinsName || cpe.Vendor == "cloudbees" {
@@ -51,7 +52,7 @@ func jenkinsPackageNameFilter(cpe pkg.CPE, p pkg.Package) bool {
 }
 
 // filter to account for packages which are jira client packages but have a CPE that will match against jira
-func jiraClientPackageFilter(cpe pkg.CPE, p pkg.Package) bool {
+func disallowJiraClientServerMismatch(cpe pkg.CPE, p pkg.Package) bool {
 	// jira / atlassian should not apply to clients
 	if cpe.Product == "jira" && strings.Contains(strings.ToLower(p.Name), "client") {
 		if cpe.Vendor == wfn.Any || cpe.Vendor == "jira" || cpe.Vendor == "atlassian" {
