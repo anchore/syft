@@ -4,6 +4,10 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
+// fieldCandidate represents a single "guess" for a specific field in a future CPE (vendor, product, target SW, etc).
+// When generating these candidates depending on the field the value was sourced from there may be only a subset of
+// transforms that should be applied (downstream of extraction). Expressing candidates in this struct allows for this
+// flexibility such that downstream transforms can be elected into or skipped over.
 type fieldCandidate struct {
 	value                       string
 	disallowSubSelections       bool
