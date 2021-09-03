@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_normalizeTitle(t *testing.T) {
+func Test_normalizeName(t *testing.T) {
 	tests := []struct {
 		input   string
 		expects string
@@ -27,12 +27,12 @@ func Test_normalizeTitle(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			assert.Equal(t, test.expects, normalizeTitle(test.input))
+			assert.Equal(t, test.expects, normalizeName(test.input))
 		})
 	}
 }
 
-func Test_normalizeAuthorName(t *testing.T) {
+func Test_normalizePersonName(t *testing.T) {
 	tests := []struct {
 		input   string
 		expects string
@@ -65,7 +65,7 @@ func Test_normalizeAuthorName(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			assert.Equal(t, test.expects, normalizeName(test.input))
+			assert.Equal(t, test.expects, normalizePersonName(test.input))
 		})
 	}
 }

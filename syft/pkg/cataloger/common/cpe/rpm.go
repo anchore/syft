@@ -12,7 +12,7 @@ func candidateVendorsForRPM(p pkg.Package) *fieldCandidateSet {
 
 	if metadata.Vendor != "" {
 		vendors.add(fieldCandidate{
-			value:                 normalizeTitle(metadata.Vendor),
+			value:                 normalizeName(metadata.Vendor),
 			disallowSubSelections: true,
 		})
 	}

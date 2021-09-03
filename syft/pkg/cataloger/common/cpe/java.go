@@ -66,7 +66,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) *fieldCandidateSet {
 			if value, exists := metadata.Manifest.Main[name]; exists {
 				if !startsWithTopLevelDomain(value) {
 					vendors.add(fieldCandidate{
-						value:                 normalizeName(value),
+						value:                 normalizePersonName(value),
 						disallowSubSelections: true,
 					})
 				}
@@ -80,7 +80,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) *fieldCandidateSet {
 				if value, exists := section[name]; exists {
 					if !startsWithTopLevelDomain(value) {
 						vendors.add(fieldCandidate{
-							value:                 normalizeName(value),
+							value:                 normalizePersonName(value),
 							disallowSubSelections: true,
 						})
 					}

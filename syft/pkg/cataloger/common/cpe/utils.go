@@ -6,7 +6,7 @@ func stripEmailSuffix(email string) string {
 	return strings.Split(email, "@")[0]
 }
 
-func normalizeName(name string) string {
+func normalizePersonName(name string) string {
 	name = strings.TrimSpace(strings.ToLower(name))
 	for _, value := range []string{"-", " ", "."} {
 		name = strings.ReplaceAll(name, value, "_")
@@ -14,7 +14,7 @@ func normalizeName(name string) string {
 	return strings.TrimPrefix(name, "the_")
 }
 
-func normalizeTitle(name string) string {
+func normalizeName(name string) string {
 	name = strings.Split(name, ",")[0]
 	name = strings.TrimSpace(strings.ToLower(name))
 	return strings.ReplaceAll(name, " ", "")

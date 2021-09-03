@@ -12,7 +12,7 @@ func candidateVendorsForPython(p pkg.Package) *fieldCandidateSet {
 
 	if metadata.Author != "" {
 		vendors.add(fieldCandidate{
-			value:                       normalizeName(metadata.Author),
+			value:                       normalizePersonName(metadata.Author),
 			disallowSubSelections:       true,
 			disallowDelimiterVariations: true,
 		})
@@ -20,7 +20,7 @@ func candidateVendorsForPython(p pkg.Package) *fieldCandidateSet {
 
 	if metadata.AuthorEmail != "" {
 		vendors.add(fieldCandidate{
-			value:                 normalizeName(stripEmailSuffix(metadata.AuthorEmail)),
+			value:                 normalizePersonName(stripEmailSuffix(metadata.AuthorEmail)),
 			disallowSubSelections: true,
 		})
 	}

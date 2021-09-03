@@ -13,7 +13,7 @@ func candidateVendorsForRuby(p pkg.Package) *fieldCandidateSet {
 	for _, author := range metadata.Authors {
 		// author could be a name or an email
 		vendors.add(fieldCandidate{
-			value:                 normalizeName(stripEmailSuffix(author)),
+			value:                 normalizePersonName(stripEmailSuffix(author)),
 			disallowSubSelections: true,
 		})
 	}
