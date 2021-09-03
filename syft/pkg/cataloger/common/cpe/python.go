@@ -2,7 +2,7 @@ package cpe
 
 import "github.com/anchore/syft/syft/pkg"
 
-func candidateVendorsForPython(p pkg.Package) *fieldCandidateSet {
+func candidateVendorsForPython(p pkg.Package) fieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.PythonPackageMetadata)
 	if !ok {
 		return nil

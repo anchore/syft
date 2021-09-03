@@ -14,11 +14,9 @@ type fieldCandidate struct {
 	disallowDelimiterVariations bool
 }
 
-type fieldCandidateSet struct {
-	candidates map[fieldCandidate]struct{}
-}
+type fieldCandidateSet map[fieldCandidate]struct{}
 
-func newFieldCandidateFromSets(sets ...*fieldCandidateSet) *fieldCandidateSet {
+func newFieldCandidateFromSets(sets ...fieldCandidateSet) fieldCandidateSet {
 	s := newFieldCandidateSet()
 	for _, set := range sets {
 		s.add(set.list()...)
@@ -26,43 +24,43 @@ func newFieldCandidateFromSets(sets ...*fieldCandidateSet) *fieldCandidateSet {
 	return s
 }
 
-func newFieldCandidateSet(values ...string) *fieldCandidateSet {
-	s := &fieldCandidateSet{
-		candidates: make(map[fieldCandidate]struct{}),
-	}
+func newFieldCandidateSet(values ...string) fieldCandidateSet {
+	s := make(fieldCandidateSet)
 	s.addValue(values...)
 	return s
 }
 
-func (s *fieldCandidateSet) addValue(values ...string) {
+func (s fieldCandidateSet) addValue(values ...string) {
 	for _, value := range values {
 		// default candidate as an allow-all
 		candidate := fieldCandidate{
 			value: value,
 		}
-		s.candidates[candidate] = struct{}{}
+		s[candidate] = struct{}{}
 	}
 }
 
-func (s *fieldCandidateSet) add(candidates ...fieldCandidate) {
+func (s fieldCandidateSet) add(candidates ...fieldCandidate) {
 	for _, candidate := range candidates {
-		s.candidates[candidate] = struct{}{}
+		s[candidate] = struct{}{}
 	}
 }
 
-func (s *fieldCandidateSet) clear() {
-	s.candidates = make(map[fieldCandidate]struct{})
+func (s fieldCandidateSet) clear() {
+	for k := range s {
+		delete(s, k)
+	}
 }
 
-func (s *fieldCandidateSet) union(others ...*fieldCandidateSet) {
+func (s fieldCandidateSet) union(others ...fieldCandidateSet) {
 	for _, other := range others {
 		s.add(other.list()...)
 	}
 }
 
-func (s *fieldCandidateSet) list(filters ...filterFieldCandidateFn) (results []fieldCandidate) {
+func (s fieldCandidateSet) list(filters ...filterFieldCandidateFn) (results []fieldCandidate) {
 candidateLoop:
-	for c := range s.candidates {
+	for c := range s {
 		for _, fn := range filters {
 			if fn(c) {
 				continue candidateLoop
@@ -73,13 +71,13 @@ candidateLoop:
 	return results
 }
 
-func (s *fieldCandidateSet) values(filters ...filterFieldCandidateFn) (results []string) {
+func (s fieldCandidateSet) values(filters ...filterFieldCandidateFn) (results []string) {
 	for _, c := range s.list(filters...) {
 		results = append(results, c.value)
 	}
 	return results
 }
 
-func (s *fieldCandidateSet) uniqueValues(filters ...filterFieldCandidateFn) []string {
+func (s fieldCandidateSet) uniqueValues(filters ...filterFieldCandidateFn) []string {
 	return strset.New(s.values(filters...)...).List()
 }
