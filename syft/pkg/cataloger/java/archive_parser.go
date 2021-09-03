@@ -89,7 +89,7 @@ func (j *archiveParser) parse() ([]pkg.Package, error) {
 		return nil, fmt.Errorf("could not generate package from %s: %w", j.virtualPath, err)
 	}
 
-	// find aux packages from pom.properties and potentially modify the existing parentPkg
+	// find aux packages from pom.properties/pom.xml and potentially modify the existing parentPkg
 	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(parentPkg)
 	if err != nil {
 		return nil, err
