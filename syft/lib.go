@@ -32,7 +32,7 @@ import (
 // CatalogPackages takes an inventory of packages from the given image from a particular perspective
 // (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
 // distribution, and the source object used to wrap the data source.
-func CatalogPackages(src source.Source, scope source.Scope) (*pkg.Catalog, *distro.Distro, error) {
+func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, *distro.Distro, error) {
 	resolver, err := src.FileResolver(scope)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)

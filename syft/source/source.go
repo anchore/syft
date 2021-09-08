@@ -7,6 +7,7 @@ package source
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -16,58 +17,61 @@ import (
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
-	Image    *image.Image // the image object to be cataloged (image only)
-	Metadata Metadata
+	Image             *image.Image // the image object to be cataloged (image only)
+	DirectoryResolver *directoryResolver
+	Metadata          Metadata
+	Mutex             *sync.Mutex
 }
 
 type sourceDetector func(string) (image.Source, string, error)
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(userInput string, registryOptions *image.RegistryOptions) (Source, func(), error) {
+func New(userInput string, registryOptions *image.RegistryOptions) (*Source, func(), error) {
 	fs := afero.NewOsFs()
 	parsedScheme, imageSource, location, err := detectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
-		return Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
+		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
 	}
 
 	switch parsedScheme {
 	case DirectoryScheme:
 		fileMeta, err := fs.Stat(location)
 		if err != nil {
-			return Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+			return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
 		}
 
 		if !fileMeta.IsDir() {
-			return Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+			return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
 		}
 
 		s, err := NewFromDirectory(location)
 		if err != nil {
-			return Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+			return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
 		}
-		return s, func() {}, nil
+		return &s, func() {}, nil
 
 	case ImageScheme:
 		img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
 		cleanup := stereoscope.Cleanup
 
 		if err != nil || img == nil {
-			return Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
+			return &Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
 		}
 
 		s, err := NewFromImage(img, location)
 		if err != nil {
-			return Source{}, cleanup, fmt.Errorf("could not populate source with image: %w", err)
+			return &Source{}, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 		}
-		return s, cleanup, nil
+		return &s, cleanup, nil
 	}
 
-	return Source{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
+	return &Source{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 }
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
 func NewFromDirectory(path string) (Source, error) {
 	return Source{
+		Mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Scheme: DirectoryScheme,
 			Path:   path,
@@ -91,10 +95,19 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 	}, nil
 }
 
-func (s Source) FileResolver(scope Scope) (FileResolver, error) {
+func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 	switch s.Metadata.Scheme {
 	case DirectoryScheme:
-		return newDirectoryResolver(s.Metadata.Path)
+		s.Mutex.Lock()
+		defer s.Mutex.Unlock()
+		if s.DirectoryResolver == nil {
+			directoryResolver, err := newDirectoryResolver(s.Metadata.Path)
+			if err != nil {
+				return nil, err
+			}
+			s.DirectoryResolver = directoryResolver
+		}
+		return s.DirectoryResolver, nil
 	case ImageScheme:
 		switch scope {
 		case SquashedScope:

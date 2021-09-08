@@ -39,6 +39,11 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Loc
 	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
+		if internal.IsErrPathPermission(err) {
+			log.Debugf("file digests cataloger skipping - %+v", err)
+			continue
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +72,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 
 	size, err := io.Copy(io.MultiWriter(writers...), contentReader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to observe contents of %+v: %+v", location.RealPath, err)
+		return nil, internal.ErrPath{Path: location.RealPath, Err: err}
 	}
 
 	if size == 0 {

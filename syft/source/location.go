@@ -45,6 +45,14 @@ func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Ima
 	}
 }
 
+// NewLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory.
+func NewLocationFromDirectory(responsePath string, ref file.Reference) Location {
+	return Location{
+		RealPath: responsePath,
+		ref:      ref,
+	}
+}
+
 func NewLocationFromReference(ref file.Reference) Location {
 	return Location{
 		VirtualPath: string(ref.RealPath),

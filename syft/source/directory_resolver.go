@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -218,7 +219,12 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
-		references = append(references, NewLocation(r.responsePath(userStrPath)))
+		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
+		if err == nil && exists {
+			references = append(references, NewLocationFromDirectory(r.responsePath(userStrPath), *ref))
+		} else {
+			log.Warnf("path (%s) not found in file tree: Exists: %t Err:%+v", userStrPath, exists, err)
+		}
 	}
 
 	return references, nil
@@ -234,7 +240,7 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 			return nil, err
 		}
 		for _, globResult := range globResults {
-			result = append(result, NewLocation(r.responsePath(string(globResult.MatchPath))))
+			result = append(result, NewLocationFromDirectory(r.responsePath(string(globResult.MatchPath)), globResult.Reference))
 		}
 	}
 
@@ -267,7 +273,7 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 	go func() {
 		defer close(results)
 		for _, ref := range r.fileTree.AllFiles() {
-			results <- NewLocation(r.responsePath(string(ref.RealPath)))
+			results <- NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
 		}
 	}()
 	return results
@@ -276,15 +282,22 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
 	info, exists := r.infos[location.ref.ID()]
 	if !exists {
-		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrExist)
+		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
+	}
+
+	uid := -1
+	gid := -1
+	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
+		uid = int(stat.Uid)
+		gid = int(stat.Gid)
 	}
 
 	return FileMetadata{
 		Mode: info.Mode(),
 		Type: newFileTypeFromMode(info.Mode()),
 		// unsupported across platforms
-		UserID:  -1,
-		GroupID: -1,
+		UserID:  uid,
+		GroupID: gid,
 	}, nil
 }
 
@@ -297,6 +310,8 @@ func indexAllRoots(root string, indexer func(string, *progress.Stage) ([]string,
 	// in which case we need to additionally index where the link resolves to. it's for this reason why the filetree
 	// must be relative to the root of the filesystem (and not just relative to the given path).
 	pathsToIndex := []string{root}
+	fullPathsMap := map[string]struct{}{}
+
 	stager, prog := indexingProgress(root)
 	defer prog.SetCompleted()
 loop:
@@ -315,7 +330,13 @@ loop:
 		if err != nil {
 			return fmt.Errorf("unable to index filesystem path=%q: %w", currentPath, err)
 		}
-		pathsToIndex = append(pathsToIndex, additionalRoots...)
+
+		for _, newRoot := range additionalRoots {
+			if _, ok := fullPathsMap[newRoot]; !ok {
+				fullPathsMap[newRoot] = struct{}{}
+				pathsToIndex = append(pathsToIndex, newRoot)
+			}
+		}
 	}
 
 	return nil

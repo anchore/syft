@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func catalogFixtureImage(t *testing.T, fixtureImageName string) (*pkg.Catalog, *distro.Distro, source.Source) {
+func catalogFixtureImage(t *testing.T, fixtureImageName string) (*pkg.Catalog, *distro.Distro, *source.Source) {
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 
@@ -28,7 +28,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (*pkg.Catalog, *
 	return pkgCatalog, actualDistro, theSource
 }
 
-func catalogDirectory(t *testing.T, dir string) (*pkg.Catalog, *distro.Distro, source.Source) {
+func catalogDirectory(t *testing.T, dir string) (*pkg.Catalog, *distro.Distro, *source.Source) {
 	theSource, cleanupSource, err := source.New("dir:"+dir, nil)
 	t.Cleanup(cleanupSource)
 	if err != nil {
