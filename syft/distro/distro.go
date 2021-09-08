@@ -8,14 +8,14 @@ import (
 
 // Distro represents a Linux Distribution.
 type Distro struct {
-	Type       string
+	Type       Type
 	Version    *hashiVer.Version
 	RawVersion string
 	IDLike     string
 }
 
 // NewDistro creates a new Distro object populated with the given values.
-func NewDistro(t, ver, like string) (Distro, error) {
+func NewDistro(t Type, ver, like string) (Distro, error) {
 	if ver == "" {
 		return Distro{Type: t}, nil
 	}
@@ -41,7 +41,7 @@ func (d Distro) Name() string {
 // MajorVersion returns the major version value from the pseudo-semantically versioned distro version value.
 func (d Distro) MajorVersion() string {
 	if d.Version == nil {
-		return fmt.Sprint("(version unknown)")
+		return "(version unknown)"
 	}
 	return fmt.Sprintf("%d", d.Version.Segments()[0])
 }

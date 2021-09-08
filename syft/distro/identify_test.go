@@ -2,15 +2,18 @@ package distro
 
 import (
 	"fmt"
-	hashiVer "github.com/hashicorp/go-version"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	hashiVer "github.com/hashicorp/go-version"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
+
+const CustomDistro Type = "scientific"
 
 func TestIdentifyDistro(t *testing.T) {
 	tests := []struct {
@@ -68,8 +71,9 @@ func TestIdentifyDistro(t *testing.T) {
 			Type:    UnknownDistroType,
 		},
 		{
-			fixture: "test-fixtures/os/unmatchable",
-			Type:    UnknownDistroType,
+			fixture: "test-fixtures/os/custom",
+			Type:    CustomDistro,
+			Version: "8.0.0",
 		},
 		{
 			fixture: "test-fixtures/os/opensuse-leap",

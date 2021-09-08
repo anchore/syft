@@ -110,15 +110,17 @@ func assemble(name, version, like string) *Distro {
 		distroType, ok = IDMapping[like]
 	}
 
-	if ok {
-		distro, err := NewDistro(distroType, version, like)
-		if err != nil {
-			return nil
-		}
-		return &distro
+	// If we still can't match allow name to be used in constructor
+	if !ok {
+		distroType = Type(name)
 	}
 
-	return nil
+	distro, err := NewDistro(distroType, version, like)
+	if err != nil {
+		return nil
+	}
+
+	return &distro
 }
 
 func parseOsRelease(contents string) *Distro {
