@@ -8,21 +8,23 @@ import (
 
 // Distro represents a Linux Distribution.
 type Distro struct {
-	Type       Type
+	Type       string
 	Version    *hashiVer.Version
 	RawVersion string
 	IDLike     string
 }
 
 // NewDistro creates a new Distro object populated with the given values.
-func NewDistro(t Type, ver, like string) (Distro, error) {
+func NewDistro(t, ver, like string) (Distro, error) {
 	if ver == "" {
 		return Distro{Type: t}, nil
 	}
+
 	verObj, err := hashiVer.NewVersion(ver)
 	if err != nil {
 		return Distro{}, fmt.Errorf("could not create distro version: %w", err)
 	}
+
 	return Distro{
 		Type:       t,
 		Version:    verObj,
