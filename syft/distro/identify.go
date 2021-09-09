@@ -97,11 +97,11 @@ identifyLoop:
 	return distro
 }
 
-func assemble(name, version, like string) *Distro {
-	distroType, ok := IDMapping[name]
+func assemble(id, version, like string) *Distro {
+	distroType, ok := IDMapping[id]
 
 	// Both distro and version must be present
-	if len(name) == 0 && len(version) == 0 {
+	if len(id) == 0 && len(version) == 0 {
 		return nil
 	}
 
@@ -112,7 +112,7 @@ func assemble(name, version, like string) *Distro {
 
 	// If we still can't match allow name to be used in constructor
 	if !ok {
-		distroType = Type(name)
+		distroType = Type(id)
 	}
 
 	distro, err := NewDistro(distroType, version, like)
