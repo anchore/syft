@@ -19,10 +19,12 @@ func NewDistro(t Type, ver, like string) (Distro, error) {
 	if ver == "" {
 		return Distro{Type: t}, nil
 	}
+
 	verObj, err := hashiVer.NewVersion(ver)
 	if err != nil {
 		return Distro{}, fmt.Errorf("could not create distro version: %w", err)
 	}
+
 	return Distro{
 		Type:       t,
 		Version:    verObj,
@@ -39,7 +41,7 @@ func (d Distro) Name() string {
 // MajorVersion returns the major version value from the pseudo-semantically versioned distro version value.
 func (d Distro) MajorVersion() string {
 	if d.Version == nil {
-		return fmt.Sprint("(version unknown)")
+		return "(version unknown)"
 	}
 	return fmt.Sprintf("%d", d.Version.Segments()[0])
 }
