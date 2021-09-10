@@ -20,6 +20,10 @@ jobs:
 
       - uses: actions/checkout@v2
 
+      - run: |
+          pwd
+          ls -l .
+
       - uses: anchore/sbom-action@main
         with:
           artifact_name: syft.spdx
