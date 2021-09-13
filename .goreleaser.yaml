@@ -91,19 +91,16 @@ brews:
     homepage: *website
     description: *description
 
-# we are having an infinite loop of installing docker https://github.com/anchore/syft/actions/runs/1199137004
-# we are still looking for a fix
-
-#dockers:
-#  - dockerfile: Dockerfile
-#    image_templates:
-#      - "anchore/syft:latest"
-#      - "anchore/syft:{{ .Tag }}"
-#      - "anchore/syft:v{{ .Major }}"
-#      - "anchore/syft:v{{ .Major }}.{{ .Minor }}"
-#    build_flag_templates:
-#      - "--build-arg=BUILD_DATE={{.Date}}"
-#      - "--build-arg=BUILD_VERSION={{.Version}}"
-#      - "--build-arg=VCS_REF={{.FullCommit}}"
-#      - "--build-arg=VCS_URL={{.GitURL}}"
-#    use_buildx: true
+dockers:
+  - dockerfile: Dockerfile
+    image_templates:
+      - "anchore/syft:latest"
+      - "anchore/syft:{{ .Tag }}"
+      - "anchore/syft:v{{ .Major }}"
+      - "anchore/syft:v{{ .Major }}.{{ .Minor }}"
+    build_flag_templates:
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+    use_buildx: true
