@@ -87,9 +87,11 @@ This release process itself should be as automated as possible, and have only a 
 
 1. Tag the main branch with a full semantic-version, prefixed with a `v`. If there is a
    milestone with a partial version, the full version should be used for the git tag (e.g.
-   with a Milestone of `v0.1` the tag should be `v0.1.0`).
+   with a Milestone of `v0.1` the tag should be `v0.1.0`). You can determine the changes going
+   into a release by running `make changelog-unreleased`. After determining the release increment
+   (major, minor, patch), create the tag. Given the above example the command would be `git tag v0.1.0`.
 
-1. Push the tag.
+1. Push the tag. Given the above example the command would be `git push origin v0.1.0`.
    
 1. A release admin must approve the release on the GitHub Actions release pipeline run page.
    Once approved, the release pipeline will generate all assets and draft a GitHub Release.
