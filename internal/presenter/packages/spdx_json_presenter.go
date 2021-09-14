@@ -67,7 +67,13 @@ func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
 		Packages:          newSPDXJsonPackages(catalog),
+		Relationships:     newSPDXJsonRelationships(catalog),
 	}
+}
+
+func newSPDXJsonRelationships(catalog *pkg.Catalog) []spdx22.Relationship {
+	results := make([]spdx22.Relationship, 0)
+	return results
 }
 
 func newSPDXJsonPackages(catalog *pkg.Catalog) []spdx22.Package {
