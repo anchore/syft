@@ -50,7 +50,7 @@ func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	}
 
 	spdxDocumentID := spdx22.ElementID("DOCUMENT").String()
-	sortedCatalogPackages := catalog.Sorted()
+	packages, relationships := newSPDXJsonElements(spdxDocumentID, catalog)
 
 	return spdx22.Document{
 		Element: spdx22.Element{
@@ -69,32 +69,22 @@ func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		},
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
-		Packages:          newSPDXJsonPackages(sortedCatalogPackages),
-		Relationships:     newSPDXJsonRelationships(spdxDocumentID, sortedCatalogPackages),
+		Packages:          packages,
+		Relationships:     relationships,
 	}
 }
 
-func newSPDXJsonRelationships(spdxDocumentID string, packages []*pkg.Package) []spdx22.Relationship {
-	results := make([]spdx22.Relationship, 0)
-	for _, p := range packages {
-		// build relationships for all packages contained by document
-		results = append(results, spdx22.Relationship{
-			SpdxElementID:      spdxDocumentID,
-			RelatedSpdxElement: spdx22.ElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.Version)).String(),
-			RelationshipType:   spdx22.ContainsRelationship,
-		})
-	}
-	return results
-}
+func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.Relationship) {
+	packages := make([]spdx22.Package, 0)
+	relationships := make([]spdx22.Relationship, 0)
 
-func newSPDXJsonPackages(packages []*pkg.Package) []spdx22.Package {
-	results := make([]spdx22.Package, 0)
-	for _, p := range packages {
+	for _, p := range catalog.Sorted() {
 		license := getSPDXLicense(p)
+		packageSpdxID := spdx22.ElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.Version)).String()
 
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
-		results = append(results, spdx22.Package{
+		packages = append(packages, spdx22.Package{
 			Description:      getSPDXDescription(p),
 			DownloadLocation: getSPDXDownloadLocation(p),
 			ExternalRefs:     getSPDXExternalRefs(p),
@@ -107,11 +97,18 @@ func newSPDXJsonPackages(packages []*pkg.Package) []spdx22.Package {
 			Item: spdx22.Item{
 				LicenseConcluded: license, // The Concluded License field is the license the SPDX file creator believes governs the package
 				Element: spdx22.Element{
-					SPDXID: spdx22.ElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.Version)).String(),
+					SPDXID: packageSpdxID,
 					Name:   p.Name,
 				},
 			},
 		})
+
+		relationships = append(relationships, spdx22.Relationship{
+			SpdxElementID:      spdxDocumentID,
+			RelatedSpdxElement: packageSpdxID,
+			RelationshipType:   spdx22.ContainsRelationship,
+		})
 	}
-	return results
+
+	return packages, relationships
 }
