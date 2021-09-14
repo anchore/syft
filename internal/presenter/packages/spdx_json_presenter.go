@@ -30,7 +30,7 @@ func NewSPDXJSONPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *SP
 
 // Present the catalog results to the given writer.
 func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
-	doc := newSPDXJsonDocument(pres.catalog, pres.srcMetadata)
+	doc := NewSPDXJsonDocument(pres.catalog, pres.srcMetadata)
 
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload
@@ -39,7 +39,8 @@ func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
 	return enc.Encode(&doc)
 }
 
-func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
+// NewSPDXJsonDocument creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
+func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
 	var name string
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:

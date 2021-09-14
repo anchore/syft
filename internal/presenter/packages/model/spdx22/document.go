@@ -39,5 +39,6 @@ type Document struct {
 	// Files referenced in the SPDX document
 	Files []File `json:"files,omitempty"`
 	// Snippets referenced in the SPDX document
-	Snippets []Snippet `json:"snippets,omitempty"`
+	Snippets      []Snippet      `json:"snippets,omitempty"`
+	Relationships []Relationship `json:"relationships,omitempty"`
 }
