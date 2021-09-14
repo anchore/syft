@@ -9,7 +9,7 @@
    "locations": [
     {
      "path": "/somefile-1.txt",
-     "layerID": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"
+     "layerID": "sha256:ffb5e9eaa453a002110719d12c294960117ca2903953d1faa40f01dc3f77045c"
     }
    ],
    "licenses": [
@@ -40,7 +40,7 @@
    "locations": [
     {
      "path": "/somefile-2.txt",
-     "layerID": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec"
+     "layerID": "sha256:8463854829fc53d47b9dcdf7ee79fe7eb4ca7933c910f67f8521412f7a2f5c21"
     }
    ],
    "licenses": [],
@@ -67,7 +67,7 @@
   "type": "image",
   "target": {
    "userInput": "user-image-input",
-   "imageID": "sha256:5900c94a5bc1e083aa24ad1a223bf6eb9910dc8a6b01cb979ec306cb91709ea1",
+   "imageID": "sha256:112851310e48e604f7379e2a3acddab50e91ce926edacb598a532e60ff6b776a",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
    "tags": [
@@ -77,17 +77,17 @@
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59",
+     "digest": "sha256:ffb5e9eaa453a002110719d12c294960117ca2903953d1faa40f01dc3f77045c",
      "size": 22
     },
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec",
+     "digest": "sha256:8463854829fc53d47b9dcdf7ee79fe7eb4ca7933c910f67f8521412f7a2f5c21",
      "size": 16
     }
    ],
-   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NjUsImRpZ2VzdCI6InNoYTI1Njo1OTAwYzk0YTViYzFlMDgzYWEyNGFkMWEyMjNiZjZlYjk5MTBkYzhhNmIwMWNiOTc5ZWMzMDZjYjkxNzA5ZWExIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjpmYjZiZWVjYjc1YjM5ZjRiYjgxM2RiZjE3N2U1MDFlZGQ1ZGRiM2U2OWJiNDVjZWRlYjc4YzY3NmVlMWI3YTU5In0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OjMxOWI1ODhjZTY0MjUzYTg3YjUzM2M4ZWQwMWNmMDAyNWUwZWFjOThlN2I1MTZlMTI1MzI5NTdlMTI0NGZkZWMifV19",
-   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjEtMDQtMDZUMTk6MTM6NTIuNTI0Mzc4WiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIxLTA0LTA2VDE5OjEzOjUyLjQ1ODIwNjFaIiwiY3JlYXRlZF9ieSI6IkFERCBmaWxlLTEudHh0IC9zb21lZmlsZS0xLnR4dCAjIGJ1aWxka2l0IiwiY29tbWVudCI6ImJ1aWxka2l0LmRvY2tlcmZpbGUudjAifSx7ImNyZWF0ZWQiOiIyMDIxLTA0LTA2VDE5OjEzOjUyLjUyNDM3OFoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMi50eHQgL3NvbWVmaWxlLTIudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9XSwib3MiOiJsaW51eCIsInJvb3RmcyI6eyJ0eXBlIjoibGF5ZXJzIiwiZGlmZl9pZHMiOlsic2hhMjU2OmZiNmJlZWNiNzViMzlmNGJiODEzZGJmMTc3ZTUwMWVkZDVkZGIzZTY5YmI0NWNlZGViNzhjNjc2ZWUxYjdhNTkiLCJzaGEyNTY6MzE5YjU4OGNlNjQyNTNhODdiNTMzYzhlZDAxY2YwMDI1ZTBlYWM5OGU3YjUxNmUxMjUzMjk1N2UxMjQ0ZmRlYyJdfX0=",
+   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NzMsImRpZ2VzdCI6InNoYTI1NjoxMTI4NTEzMTBlNDhlNjA0ZjczNzllMmEzYWNkZGFiNTBlOTFjZTkyNmVkYWNiNTk4YTUzMmU2MGZmNmI3NzZhIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjpmZmI1ZTllYWE0NTNhMDAyMTEwNzE5ZDEyYzI5NDk2MDExN2NhMjkwMzk1M2QxZmFhNDBmMDFkYzNmNzcwNDVjIn0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2Ojg0NjM4NTQ4MjlmYzUzZDQ3YjlkY2RmN2VlNzlmZTdlYjRjYTc5MzNjOTEwZjY3Zjg1MjE0MTJmN2EyZjVjMjEifV19",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjEtMDktMDhUMTc6MjE6NTguODk2NTI5MTkyWiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIxLTA5LTA4VDE3OjIxOjU4Ljg3OTY5MDgyNFoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMS50eHQgL3NvbWVmaWxlLTEudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9LHsiY3JlYXRlZCI6IjIwMjEtMDktMDhUMTc6MjE6NTguODk2NTI5MTkyWiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6ZmZiNWU5ZWFhNDUzYTAwMjExMDcxOWQxMmMyOTQ5NjAxMTdjYTI5MDM5NTNkMWZhYTQwZjAxZGMzZjc3MDQ1YyIsInNoYTI1Njo4NDYzODU0ODI5ZmM1M2Q0N2I5ZGNkZjdlZTc5ZmU3ZWI0Y2E3OTMzYzkxMGY2N2Y4NTIxNDEyZjdhMmY1YzIxIl19fQ==",
    "repoDigests": [],
    "scope": "Squashed"
   }

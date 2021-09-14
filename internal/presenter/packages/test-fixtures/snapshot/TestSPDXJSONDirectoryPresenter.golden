@@ -3,12 +3,12 @@
  "name": "/some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-06-23T17:48:32.734847Z",
+  "created": "2021-09-14T19:09:40.951922Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
   ],
-  "licenseListVersion": "3.13"
+  "licenseListVersion": "3.14"
  },
  "dataLicense": "CC0-1.0",
  "documentNamespace": "https://anchore.com/syft/image/",
@@ -56,6 +56,18 @@
    "licenseDeclared": "NONE",
    "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
    "versionInfo": "2.0.1"
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-1.0.1"
+  },
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-2.0.1"
   }
  ]
 }
