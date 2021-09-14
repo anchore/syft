@@ -49,9 +49,12 @@ func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		name = srcMetadata.Path
 	}
 
+	spdxDocumentID := spdx22.ElementID("DOCUMENT").String()
+	sortedCatalogPackages := catalog.Sorted()
+
 	return spdx22.Document{
 		Element: spdx22.Element{
-			SPDXID: spdx22.ElementID("DOCUMENT").String(),
+			SPDXID: spdxDocumentID,
 			Name:   name,
 		},
 		SPDXVersion: spdx22.Version,
@@ -66,19 +69,27 @@ func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		},
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
-		Packages:          newSPDXJsonPackages(catalog),
-		Relationships:     newSPDXJsonRelationships(catalog),
+		Packages:          newSPDXJsonPackages(sortedCatalogPackages),
+		Relationships:     newSPDXJsonRelationships(spdxDocumentID, sortedCatalogPackages),
 	}
 }
 
-func newSPDXJsonRelationships(catalog *pkg.Catalog) []spdx22.Relationship {
+func newSPDXJsonRelationships(spdxDocumentID string, packages []*pkg.Package) []spdx22.Relationship {
 	results := make([]spdx22.Relationship, 0)
+	for _, p := range packages {
+		// build relationships for all packages contained by document
+		results = append(results, spdx22.Relationship{
+			SpdxElementID:      spdxDocumentID,
+			RelatedSpdxElement: spdx22.ElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.Version)).String(),
+			RelationshipType:   spdx22.ContainsRelationship,
+		})
+	}
 	return results
 }
 
-func newSPDXJsonPackages(catalog *pkg.Catalog) []spdx22.Package {
+func newSPDXJsonPackages(packages []*pkg.Package) []spdx22.Package {
 	results := make([]spdx22.Package, 0)
-	for _, p := range catalog.Sorted() {
+	for _, p := range packages {
 		license := getSPDXLicense(p)
 
 		// note: the license concluded and declared should be the same since we are collecting license information
