@@ -30,7 +30,7 @@ func NewSPDXJSONPresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *SP
 
 // Present the catalog results to the given writer.
 func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
-	doc := NewSPDXJsonDocument(pres.catalog, pres.srcMetadata)
+	doc := newSPDXJsonDocument(pres.catalog, pres.srcMetadata)
 
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload
@@ -39,8 +39,8 @@ func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
 	return enc.Encode(&doc)
 }
 
-// NewSPDXJsonDocument creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
+// newSPDXJsonDocument creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
+func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
 	var name string
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
@@ -50,7 +50,7 @@ func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	}
 
 	spdxDocumentID := spdx22.ElementID("DOCUMENT").String()
-	packages, relationships := newSPDXJsonElements(spdxDocumentID, catalog)
+	packages, files, relationships := newSPDXJsonElements(spdxDocumentID, catalog)
 
 	return spdx22.Document{
 		Element: spdx22.Element{
@@ -70,17 +70,22 @@ func NewSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
 		Packages:          packages,
+		Files:             files,
 		Relationships:     relationships,
 	}
 }
 
-func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.Relationship) {
+func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.File, []spdx22.Relationship) {
 	packages := make([]spdx22.Package, 0)
 	relationships := make([]spdx22.Relationship, 0)
+	files := make([]spdx22.File, 0)
 
 	for _, p := range catalog.Sorted() {
 		license := getSPDXLicense(p)
 		packageSpdxID := spdx22.ElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.Version)).String()
+
+		packageFiles, fileIDs := getSPDXFiles(p)
+		files = append(files, packageFiles...)
 
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
@@ -89,6 +94,7 @@ func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.
 			DownloadLocation: getSPDXDownloadLocation(p),
 			ExternalRefs:     getSPDXExternalRefs(p),
 			FilesAnalyzed:    false,
+			HasFiles:         fileIDs,
 			Homepage:         getSPDXHomepage(p),
 			LicenseDeclared:  license, // The Declared License is what the authors of a project believe govern the package
 			Originator:       getSPDXOriginator(p),
@@ -102,13 +108,7 @@ func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.
 				},
 			},
 		})
-
-		relationships = append(relationships, spdx22.Relationship{
-			SpdxElementID:      spdxDocumentID,
-			RelatedSpdxElement: packageSpdxID,
-			RelationshipType:   spdx22.ContainsRelationship,
-		})
 	}
 
-	return packages, relationships
+	return packages, files, relationships
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/go-test/deep"
 )
 
-func TestPythonMetadata_fileOwner(t *testing.T) {
+func TestPythonMetadata_FileOwner(t *testing.T) {
 	tests := []struct {
 		metadata PythonPackageMetadata
 		expected []string
@@ -41,7 +41,7 @@ func TestPythonMetadata_fileOwner(t *testing.T) {
 		t.Run(strings.Join(test.expected, ","), func(t *testing.T) {
 			var i interface{}
 			i = test.metadata
-			actual := i.(fileOwner).ownedFiles()
+			actual := i.(FileOwner).OwnedFiles()
 			for _, d := range deep.Equal(test.expected, actual) {
 				t.Errorf("diff: %+v", d)
 			}

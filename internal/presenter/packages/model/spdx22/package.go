@@ -20,7 +20,7 @@ type Package struct {
 	// project, product, artifact, distribution or a component. If set to false, the package must not contain any files
 	FilesAnalyzed bool `json:"filesAnalyzed"`
 	// Indicates that a particular file belongs to a package (elements are SPDX ID for a File).
-	HasFiles []string `json:"hasFiles,omitempty"`
+	HasFiles []ElementID `json:"hasFiles,omitempty"`
 	// Provide a place for the SPDX file creator to record a web site that serves as the package's home page.
 	// This link can also be used to reference further information about the package referenced by the SPDX file creator.
 	Homepage string `json:"homepage,omitempty"`

@@ -2,6 +2,7 @@ package packages
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal/presenter/packages/model/spdx22"
@@ -27,6 +28,44 @@ func getSPDXExternalRefs(p *pkg.Package) (externalRefs []spdx22.ExternalRef) {
 		})
 	}
 	return externalRefs
+}
+
+func getSPDXFiles(p *pkg.Package) (files []spdx22.File, fileIDs []spdx22.ElementID) {
+	files = make([]spdx22.File, 0)
+	fileIDs = make([]spdx22.ElementID, 0)
+
+	pkgFileOwner, ok := p.Metadata.(pkg.FileOwner)
+	if !ok {
+		return files, fileIDs
+	}
+
+	for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
+		baseFileName := filepath.Base(ownedFilePath)
+		fileSpdxID := spdx22.ElementID(fmt.Sprintf("File-%s-%s", p.Name, baseFileName))
+
+		fileIDs = append(fileIDs, fileSpdxID)
+
+		files = append(files, spdx22.File{
+			FileName:  ownedFilePath,
+			FileTypes: matchFileTypes(baseFileName),
+			Item: spdx22.Item{
+				Element: spdx22.Element{
+					SPDXID: fileSpdxID.String(),
+				},
+			},
+		})
+	}
+
+	return files, fileIDs
+}
+
+// TODO: since the spec is based partially on detection for MIME type
+// it might to use a matcher like https://github.com/gabriel-vasile/mimetype.
+// This would need to be implemented when we move into reading things from disk
+// rather than digesting package metadata from the different package managers.
+func matchFileTypes(baseFileName string) []string {
+	fileTypes := make([]string, 0)
+	return fileTypes
 }
 
 func getSPDXLicense(p *pkg.Package) string {
