@@ -30,9 +30,9 @@ func getSPDXExternalRefs(p *pkg.Package) (externalRefs []spdx22.ExternalRef) {
 	return externalRefs
 }
 
-func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fileIDs []spdx22.ElementID, relationships []spdx22.Relationship) {
+func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fileIDs []string, relationships []spdx22.Relationship) {
 	files = make([]spdx22.File, 0)
-	fileIDs = make([]spdx22.ElementID, 0)
+	fileIDs = make([]string, 0)
 	relationships = make([]spdx22.Relationship, 0)
 
 	pkgFileOwner, ok := p.Metadata.(pkg.FileOwner)
@@ -42,7 +42,7 @@ func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fi
 
 	for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
 		baseFileName := filepath.Base(ownedFilePath)
-		fileSpdxID := spdx22.ElementID(fmt.Sprintf("File-%s-%s", p.Name, baseFileName))
+		fileSpdxID := spdx22.ElementID(fmt.Sprintf("File-%s-%s", p.Name, baseFileName)).String()
 
 		fileIDs = append(fileIDs, fileSpdxID)
 
@@ -51,7 +51,7 @@ func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fi
 			FileTypes: matchFileTypes(baseFileName),
 			Item: spdx22.Item{
 				Element: spdx22.Element{
-					SPDXID: fileSpdxID.String(),
+					SPDXID: fileSpdxID,
 				},
 			},
 		})
@@ -59,7 +59,7 @@ func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fi
 		relationships = append(relationships, spdx22.Relationship{
 			SpdxElementID:      packageSpdxID,
 			RelationshipType:   spdx22.ContainsRelationship,
-			RelatedSpdxElement: fileSpdxID.String(),
+			RelatedSpdxElement: fileSpdxID,
 		})
 	}
 
