@@ -30,13 +30,14 @@ func getSPDXExternalRefs(p *pkg.Package) (externalRefs []spdx22.ExternalRef) {
 	return externalRefs
 }
 
-func getSPDXFiles(p *pkg.Package) (files []spdx22.File, fileIDs []spdx22.ElementID) {
+func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fileIDs []spdx22.ElementID, relationships []spdx22.Relationship) {
 	files = make([]spdx22.File, 0)
 	fileIDs = make([]spdx22.ElementID, 0)
+	relationships = make([]spdx22.Relationship, 0)
 
 	pkgFileOwner, ok := p.Metadata.(pkg.FileOwner)
 	if !ok {
-		return files, fileIDs
+		return files, fileIDs, relationships
 	}
 
 	for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
@@ -54,9 +55,15 @@ func getSPDXFiles(p *pkg.Package) (files []spdx22.File, fileIDs []spdx22.Element
 				},
 			},
 		})
+
+		relationships = append(relationships, spdx22.Relationship{
+			SpdxElementID:      packageSpdxID,
+			RelationshipType:   spdx22.ContainsRelationship,
+			RelatedSpdxElement: fileSpdxID.String(),
+		})
 	}
 
-	return files, fileIDs
+	return files, fileIDs, relationships
 }
 
 // TODO: since the spec is based partially on detection for MIME type

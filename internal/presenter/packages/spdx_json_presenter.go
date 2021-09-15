@@ -84,8 +84,10 @@ func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.
 		license := getSPDXLicense(p)
 		packageSpdxID := spdx22.ElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.Version)).String()
 
-		packageFiles, fileIDs := getSPDXFiles(p)
+		packageFiles, fileIDs, packageFileRelationships := getSPDXFiles(packageSpdxID, p)
 		files = append(files, packageFiles...)
+
+		relationships = append(relationships, packageFileRelationships...)
 
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
@@ -108,6 +110,7 @@ func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.
 				},
 			},
 		})
+
 	}
 
 	return packages, files, relationships
