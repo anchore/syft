@@ -3,7 +3,7 @@
  "name": "/some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-09-15T17:57:44.449689Z",
+  "created": "2021-09-15T18:42:29.181571Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
@@ -31,6 +31,9 @@
     }
    ],
    "filesAnalyzed": false,
+   "hasFiles": [
+    "SPDXRef-File-package-1-foo"
+   ],
    "licenseDeclared": "MIT",
    "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
    "versionInfo": "1.0.1"
@@ -56,6 +59,21 @@
    "licenseDeclared": "NONE",
    "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
    "versionInfo": "2.0.1"
+  }
+ ],
+ "files": [
+  {
+   "SPDXID": "SPDXRef-File-package-1-foo",
+   "name": "foo",
+   "licenseConcluded": "",
+   "fileName": "/some/path/pkg1/depedencies/foo"
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-1.0.1",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-File-package-1-foo"
   }
  ]
 }

@@ -52,6 +52,7 @@ func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fi
 			Item: spdx22.Item{
 				Element: spdx22.Element{
 					SPDXID: fileSpdxID,
+					Name:   baseFileName,
 				},
 			},
 		})
