@@ -50,7 +50,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	}
 
 	spdxDocumentID := spdx22.ElementID("DOCUMENT").String()
-	packages, files, relationships := newSPDXJsonElements(spdxDocumentID, catalog)
+	packages, files, relationships := newSPDXJsonElements(catalog)
 
 	return spdx22.Document{
 		Element: spdx22.Element{
@@ -75,7 +75,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	}
 }
 
-func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.File, []spdx22.Relationship) {
+func newSPDXJsonElements(catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.File, []spdx22.Relationship) {
 	packages := make([]spdx22.Package, 0)
 	relationships := make([]spdx22.Relationship, 0)
 	files := make([]spdx22.File, 0)
@@ -110,7 +110,6 @@ func newSPDXJsonElements(spdxDocumentID string, catalog *pkg.Catalog) ([]spdx22.
 				},
 			},
 		})
-
 	}
 
 	return packages, files, relationships
