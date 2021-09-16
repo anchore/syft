@@ -49,12 +49,11 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		name = srcMetadata.Path
 	}
 
-	spdxDocumentID := spdx22.ElementID("DOCUMENT").String()
 	packages, files, relationships := newSPDXJsonElements(catalog)
 
 	return spdx22.Document{
 		Element: spdx22.Element{
-			SPDXID: spdxDocumentID,
+			SPDXID: spdx22.ElementID("DOCUMENT").String()
 			Name:   name,
 		},
 		SPDXVersion: spdx22.Version,
