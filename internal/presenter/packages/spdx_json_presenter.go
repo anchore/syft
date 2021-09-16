@@ -53,7 +53,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 
 	return spdx22.Document{
 		Element: spdx22.Element{
-			SPDXID: spdx22.ElementID("DOCUMENT").String()
+			SPDXID: spdx22.ElementID("DOCUMENT").String(),
 			Name:   name,
 		},
 		SPDXVersion: spdx22.Version,

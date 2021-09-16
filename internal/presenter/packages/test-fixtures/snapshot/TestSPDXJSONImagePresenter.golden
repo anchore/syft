@@ -3,7 +3,7 @@
  "name": "user-image-input",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-09-15T17:57:05.70709Z",
+  "created": "2021-09-16T20:44:35.203911Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"

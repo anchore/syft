@@ -1,6 +1,7 @@
 package packages
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -42,13 +43,13 @@ func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fi
 
 	for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
 		baseFileName := filepath.Base(ownedFilePath)
-		fileSpdxID := spdx22.ElementID(fmt.Sprintf("File-%s-%s", p.Name, baseFileName)).String()
+		pathHash := sha256.Sum256([]byte(ownedFilePath))
+		fileSpdxID := spdx22.ElementID(fmt.Sprintf("File-%s-%x", p.Name, pathHash)).String()
 
 		fileIDs = append(fileIDs, fileSpdxID)
 
 		files = append(files, spdx22.File{
-			FileName:  ownedFilePath,
-			FileTypes: matchFileTypes(baseFileName),
+			FileName: ownedFilePath,
 			Item: spdx22.Item{
 				Element: spdx22.Element{
 					SPDXID: fileSpdxID,
@@ -65,15 +66,6 @@ func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fi
 	}
 
 	return files, fileIDs, relationships
-}
-
-// TODO: since the spec is based partially on detection for MIME type
-// it might to use a matcher like https://github.com/gabriel-vasile/mimetype.
-// This would need to be implemented when we move into reading things from disk
-// rather than digesting package metadata from the different package managers.
-func matchFileTypes(baseFileName string) []string {
-	fileTypes := make([]string, 0)
-	return fileTypes
 }
 
 func getSPDXLicense(p *pkg.Package) string {
