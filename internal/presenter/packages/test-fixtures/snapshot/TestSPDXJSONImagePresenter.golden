@@ -3,12 +3,12 @@
  "name": "user-image-input",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-06-23T17:48:32.7379Z",
+  "created": "2021-09-16T20:44:35.203911Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
   ],
-  "licenseListVersion": "3.13"
+  "licenseListVersion": "3.14"
  },
  "dataLicense": "CC0-1.0",
  "documentNamespace": "https://anchore.com/syft/image/user-image-input",

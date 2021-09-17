@@ -1,7 +1,9 @@
 package packages
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal/presenter/packages/model/spdx22"
@@ -27,6 +29,43 @@ func getSPDXExternalRefs(p *pkg.Package) (externalRefs []spdx22.ExternalRef) {
 		})
 	}
 	return externalRefs
+}
+
+func getSPDXFiles(packageSpdxID string, p *pkg.Package) (files []spdx22.File, fileIDs []string, relationships []spdx22.Relationship) {
+	files = make([]spdx22.File, 0)
+	fileIDs = make([]string, 0)
+	relationships = make([]spdx22.Relationship, 0)
+
+	pkgFileOwner, ok := p.Metadata.(pkg.FileOwner)
+	if !ok {
+		return files, fileIDs, relationships
+	}
+
+	for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
+		baseFileName := filepath.Base(ownedFilePath)
+		pathHash := sha256.Sum256([]byte(ownedFilePath))
+		fileSpdxID := spdx22.ElementID(fmt.Sprintf("File-%s-%x", p.Name, pathHash)).String()
+
+		fileIDs = append(fileIDs, fileSpdxID)
+
+		files = append(files, spdx22.File{
+			FileName: ownedFilePath,
+			Item: spdx22.Item{
+				Element: spdx22.Element{
+					SPDXID: fileSpdxID,
+					Name:   baseFileName,
+				},
+			},
+		})
+
+		relationships = append(relationships, spdx22.Relationship{
+			SpdxElementID:      packageSpdxID,
+			RelationshipType:   spdx22.ContainsRelationship,
+			RelatedSpdxElement: fileSpdxID,
+		})
+	}
+
+	return files, fileIDs, relationships
 }
 
 func getSPDXLicense(p *pkg.Package) string {

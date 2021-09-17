@@ -1,11 +1,13 @@
 package spdx22
 
 type Relationship struct {
-	// SPDX ID for SpdxElement. A related SpdxElement.
-	RelatedSpdxElement string `json:"relatedSpdxElement"`
+	// Id to which the SPDX element is related
+	SpdxElementID string `json:"spdxElementId"`
 	// Describes the type of relationship between two SPDX elements.
 	RelationshipType RelationshipType `json:"relationshipType"`
-	Comment          string           `json:"comment,omitempty"`
+	// SPDX ID for SpdxElement.  A related SpdxElement.
+	RelatedSpdxElement string `json:"relatedSpdxElement"`
+	Comment            string `json:"comment,omitempty"`
 }
 
 // source: https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/

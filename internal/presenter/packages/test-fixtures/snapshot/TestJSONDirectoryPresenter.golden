@@ -27,6 +27,11 @@
     "author": "",
     "authorEmail": "",
     "platform": "",
+    "files": [
+     {
+      "path": "/some/path/pkg1/depedencies/foo"
+     }
+    ],
     "sitePackagesRootPath": ""
    }
   },

@@ -40,4 +40,6 @@ type Document struct {
 	Files []File `json:"files,omitempty"`
 	// Snippets referenced in the SPDX document
 	Snippets []Snippet `json:"snippets,omitempty"`
+	// Relationships referenced in the SPDX document
+	Relationships []Relationship `json:"relationships,omitempty"`
 }

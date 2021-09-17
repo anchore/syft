@@ -55,11 +55,11 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.S
 		}
 
 		// check to see if this is a file owner
-		pkgFileOwner, ok := candidateOwnerPkg.Metadata.(fileOwner)
+		pkgFileOwner, ok := candidateOwnerPkg.Metadata.(FileOwner)
 		if !ok {
 			continue
 		}
-		for _, ownedFilePath := range pkgFileOwner.ownedFiles() {
+		for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
 			if matchesAny(ownedFilePath, globsForbiddenFromBeingOwned) {
 				// we skip over known exceptions to file ownership, such as the RPM package owning
 				// the RPM DB path, otherwise the RPM package would "own" all RPMs, which is not intended
