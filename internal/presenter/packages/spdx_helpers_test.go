@@ -95,6 +95,15 @@ func Test_getSPDXLicense(t *testing.T) {
 			},
 			expected: "GPL-3.0",
 		},
+		{
+			name: "debian to spdx conversion",
+			input: pkg.Package{
+				Licenses: []string{
+					"GPL-2",
+				},
+			},
+			expected: "GPL-2.0",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
