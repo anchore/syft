@@ -5,14 +5,14 @@ import (
 )
 
 var debianLicenseLabels = map[string]string{
-	"Artistic": "Artistic-1.0-Perl",
-	"BSD":      "BSD-1-Clause",
-	"GPL":      "GPL-1.0",
-	"GPL-1":    "GPL-1.0",
-	"GPL-2":    "GPL-2.0",
-	"GPL-3":    "GPL-3.0",
-	"LGPL-2":   "LGPL-2.0",
-	"LGPL-3":   "LGPL-3.0",
+	"artistic": "Artistic-1.0-Perl",
+	"bsd":      "BSD-1-Clause",
+	"gpl":      "GPL-1.0",
+	"gpl-1":    "GPL-1.0",
+	"gpl-2":    "GPL-2.0",
+	"gpl-3":    "GPL-3.0",
+	"lgpl-2":   "LGPL-2.0",
+	"lgpl-3":   "LGPL-3.0",
 }
 
 //go:generate go run generate_license_list.go
