@@ -87,6 +87,13 @@ func getSPDXLicense(p *pkg.Package) string {
 	for _, l := range p.Licenses {
 		if value, exists := spdxlicense.ID(l); exists {
 			parsedLicenses = append(parsedLicenses, value)
+			continue
+		}
+
+		// we did not find an explicit spdx license
+		// check congruent debian mappings
+		if value, exists := spdxlicense.DebianID(l); exists {
+			parsedLicenses = append(parsedLicenses, value)
 		}
 	}
 
