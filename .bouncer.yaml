@@ -6,7 +6,7 @@ permit:
   - ISC
 ignore-packages:
   # packageurl-go is released under the MIT license located in the root of the repo at /mit.LICENSE
-  - github.com/package-url/packageurl-go
+  - github.com/anchore/packageurl-go
 
   # from: https://github.com/spdx/tools-golang/blob/main/LICENSE.code
   # The tools-golang source code is provided and may be used, at your option,

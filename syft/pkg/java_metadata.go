@@ -3,8 +3,8 @@ package pkg
 import (
 	"strings"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
-	"github.com/package-url/packageurl-go"
 )
 
 var JenkinsPluginPomPropertiesGroupIDs = []string{
