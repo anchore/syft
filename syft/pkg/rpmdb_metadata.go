@@ -9,8 +9,8 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/distro"
-	"github.com/package-url/packageurl-go"
 )
 
 const RpmDbGlob = "**/var/lib/rpm/Packages"

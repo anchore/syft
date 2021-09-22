@@ -1,6 +1,6 @@
 package pkg
 
-import "github.com/package-url/packageurl-go"
+import "github.com/anchore/packageurl-go"
 
 // Type represents a Package Type for or within a language ecosystem (there may be multiple package types within a language ecosystem)
 type Type string

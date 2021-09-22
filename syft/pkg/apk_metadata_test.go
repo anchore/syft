@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/go-test/deep"
-	"github.com/package-url/packageurl-go"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
