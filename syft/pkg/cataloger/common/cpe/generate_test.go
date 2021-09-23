@@ -488,7 +488,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				actualCpeSet.Add(a.BindToFmtString())
 			}
 
-			extra := strset.Difference(expectedCpeSet, actualCpeSet).List()
+			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()
 			sort.Strings(extra)
 			if len(extra) > 0 {
 				t.Errorf("found extra CPEs:")
@@ -497,7 +497,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				fmt.Printf("   %q,\n", d)
 			}
 
-			missing := strset.Difference(actualCpeSet, expectedCpeSet).List()
+			missing := strset.Difference(expectedCpeSet, actualCpeSet).List()
 			sort.Strings(missing)
 			if len(missing) > 0 {
 				t.Errorf("missing CPEs:")
