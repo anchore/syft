@@ -9,10 +9,10 @@ import (
 
 func Test_cpeCandidateValues_filter(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   []fieldCandidate
-		filters []fieldCandidateCondition
-		expect  []string
+		name                string
+		input               []fieldCandidate
+		exclusionConditions []fieldCandidateCondition
+		expect              []string
 	}{
 		{
 			name: "gocase",
@@ -61,7 +61,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []fieldCandidateCondition{
+			exclusionConditions: []fieldCandidateCondition{
 				subSelectionsDisallowed,
 			},
 			expect: []string{
@@ -89,7 +89,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []fieldCandidateCondition{
+			exclusionConditions: []fieldCandidateCondition{
 				delimiterVariationsDisallowed,
 			},
 			expect: []string{
@@ -98,7 +98,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 			},
 		},
 		{
-			name: "all filters",
+			name: "all exclusionConditions",
 			input: []fieldCandidate{
 				{
 					value: "allow anything",
@@ -117,7 +117,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []fieldCandidateCondition{
+			exclusionConditions: []fieldCandidateCondition{
 				delimiterVariationsDisallowed,
 				subSelectionsDisallowed,
 			},
@@ -131,7 +131,12 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			set := newFieldCandidateSet()
 			set.add(test.input...)
-			assert.ElementsMatch(t, test.expect, set.values(test.filters...))
+
+			for _, condition := range test.exclusionConditions {
+				set.removeWhere(condition)
+			}
+
+			assert.ElementsMatch(t, test.expect, set.values())
 		})
 	}
 }

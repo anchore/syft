@@ -73,26 +73,29 @@ func (s fieldCandidateSet) union(others ...fieldCandidateSet) {
 	}
 }
 
-func (s fieldCandidateSet) list(filters ...fieldCandidateCondition) (results []fieldCandidate) {
-candidateLoop:
+func (s fieldCandidateSet) list() (results []fieldCandidate) {
 	for c := range s {
-		for _, fn := range filters {
-			if fn(c) {
-				continue candidateLoop
-			}
-		}
 		results = append(results, c)
 	}
+
 	return results
 }
 
-func (s fieldCandidateSet) values(filters ...fieldCandidateCondition) (results []string) {
-	for _, c := range s.list(filters...) {
+func (s fieldCandidateSet) values() (results []string) {
+	for _, c := range s.list() {
 		results = append(results, c.value)
 	}
+
 	return results
 }
 
-func (s fieldCandidateSet) uniqueValues(filters ...fieldCandidateCondition) []string {
-	return strset.New(s.values(filters...)...).List()
+func (s fieldCandidateSet) uniqueValues() []string {
+	return strset.New(s.values()...).List()
+}
+
+func (s fieldCandidateSet) copy() fieldCandidateSet {
+	newSet := newFieldCandidateSet()
+	newSet.add(s.list()...)
+
+	return newSet
 }
