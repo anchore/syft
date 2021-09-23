@@ -84,10 +84,6 @@ func Generate(p pkg.Package) []pkg.CPE {
 	return cpes
 }
 
-func invalidCPEValue(candidate fieldCandidate) bool {
-	return strings.Contains(candidate.value, ":")
-}
-
 func candidateVendors(p pkg.Package) []string {
 	// in ecosystems where the packaging metadata does not have a clear field to indicate a vendor (or a field that
 	// could be interpreted indirectly as such) the project name tends to be a common stand in. Examples of this
@@ -133,7 +129,7 @@ func candidateVendors(p pkg.Package) []string {
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
 
-	vendors.removeByCondition(invalidCPEValue)
+	vendors.removeWhere(invalidFieldValue)
 
 	return vendors.uniqueValues()
 }
@@ -164,14 +160,14 @@ func candidateProducts(p pkg.Package) []string {
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(products)
 
-	products.removeByCondition(invalidCPEValue)
+	products.removeWhere(invalidFieldValue)
 
 	// prepend any known product names for the given package type and name (note: this is not a replacement)
 	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products.uniqueValues()...)
 }
 
 func addAllSubSelections(set fieldCandidateSet) {
-	for _, candidate := range set.values(filterOutBySubselection) {
+	for _, candidate := range set.values(subSelectionsDisallowed) {
 		set.addValue(generateSubSelections(candidate)...)
 	}
 }
@@ -234,7 +230,7 @@ func scanByHyphenOrUnderscore(data []byte, atEOF bool) (advance int, token []byt
 }
 
 func addDelimiterVariations(fields fieldCandidateSet) {
-	for _, candidate := range fields.list(filterOutByDelimiterVariations) {
+	for _, candidate := range fields.list(delimiterVariationsDisallowed) {
 		field := candidate.value
 		hasHyphen := strings.Contains(field, "-")
 		hasUnderscore := strings.Contains(field, "_")

@@ -11,7 +11,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   []fieldCandidate
-		filters []filterFieldCandidateFn
+		filters []fieldCandidateCondition
 		expect  []string
 	}{
 		{
@@ -61,8 +61,8 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterFieldCandidateFn{
-				filterOutBySubselection,
+			filters: []fieldCandidateCondition{
+				subSelectionsDisallowed,
 			},
 			expect: []string{
 				"allow anything",
@@ -89,8 +89,8 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterFieldCandidateFn{
-				filterOutByDelimiterVariations,
+			filters: []fieldCandidateCondition{
+				delimiterVariationsDisallowed,
 			},
 			expect: []string{
 				"allow anything",
@@ -117,9 +117,9 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterFieldCandidateFn{
-				filterOutByDelimiterVariations,
-				filterOutBySubselection,
+			filters: []fieldCandidateCondition{
+				delimiterVariationsDisallowed,
+				subSelectionsDisallowed,
 			},
 			expect: []string{
 				"allow anything",
@@ -315,13 +315,13 @@ func Test_cpeFieldCandidateSet_removeByCondition(t *testing.T) {
 
 	assert.Len(t, s.values(), 3)
 
-	s.removeByCondition(func(candidate fieldCandidate) bool {
+	s.removeWhere(func(candidate fieldCandidate) bool {
 		return candidate.disallowSubSelections == true
 	})
 
 	assert.Len(t, s.values(), 2)
 
-	s.removeByCondition(func(candidate fieldCandidate) bool {
+	s.removeWhere(func(candidate fieldCandidate) bool {
 		return strings.Contains(candidate.value, "-")
 	})
 

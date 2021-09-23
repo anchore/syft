@@ -16,7 +16,7 @@ type fieldCandidate struct {
 
 type fieldCandidateSet map[fieldCandidate]struct{}
 
-func newFieldCandidateFromSets(sets ...fieldCandidateSet) fieldCandidateSet {
+func newFieldCandidateSetFromSets(sets ...fieldCandidateSet) fieldCandidateSet {
 	s := newFieldCandidateSet()
 	for _, set := range sets {
 		s.add(set.list()...)
@@ -48,16 +48,12 @@ func (s fieldCandidateSet) add(candidates ...fieldCandidate) {
 
 func (s fieldCandidateSet) removeByValue(values ...string) {
 	for _, value := range values {
-		for candidate := range s {
-			if candidate.value == value {
-				delete(s, candidate)
-			}
-		}
+		s.removeWhere(valueEquals(value))
 	}
 }
 
-// removeByCondition removes all entries from the fieldCandidateSet for which the condition function returns true.
-func (s fieldCandidateSet) removeByCondition(condition func(candidate fieldCandidate) bool) {
+// removeWhere removes all entries from the fieldCandidateSet for which the condition function returns true.
+func (s fieldCandidateSet) removeWhere(condition fieldCandidateCondition) {
 	for candidate := range s {
 		if condition(candidate) {
 			delete(s, candidate)
@@ -77,7 +73,7 @@ func (s fieldCandidateSet) union(others ...fieldCandidateSet) {
 	}
 }
 
-func (s fieldCandidateSet) list(filters ...filterFieldCandidateFn) (results []fieldCandidate) {
+func (s fieldCandidateSet) list(filters ...fieldCandidateCondition) (results []fieldCandidate) {
 candidateLoop:
 	for c := range s {
 		for _, fn := range filters {
@@ -90,13 +86,13 @@ candidateLoop:
 	return results
 }
 
-func (s fieldCandidateSet) values(filters ...filterFieldCandidateFn) (results []string) {
+func (s fieldCandidateSet) values(filters ...fieldCandidateCondition) (results []string) {
 	for _, c := range s.list(filters...) {
 		results = append(results, c.value)
 	}
 	return results
 }
 
-func (s fieldCandidateSet) uniqueValues(filters ...filterFieldCandidateFn) []string {
+func (s fieldCandidateSet) uniqueValues(filters ...fieldCandidateCondition) []string {
 	return strset.New(s.values(filters...)...).List()
 }

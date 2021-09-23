@@ -46,7 +46,7 @@ func candidateProductsForJava(p pkg.Package) []string {
 func candidateVendorsForJava(p pkg.Package) fieldCandidateSet {
 	gidVendors := vendorsFromGroupIDs(groupIDsFromJavaPackage(p))
 	nameVendors := vendorsFromJavaManifestNames(p)
-	return newFieldCandidateFromSets(gidVendors, nameVendors)
+	return newFieldCandidateSetFromSets(gidVendors, nameVendors)
 }
 
 func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
