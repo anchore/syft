@@ -129,8 +129,6 @@ func candidateVendors(p pkg.Package) []string {
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
 
-	vendors.removeWhere(invalidFieldValue)
-
 	return vendors.uniqueValues()
 }
 
@@ -159,8 +157,6 @@ func candidateProducts(p pkg.Package) []string {
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(products)
-
-	products.removeWhere(invalidFieldValue)
 
 	// prepend any known product names for the given package type and name (note: this is not a replacement)
 	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products.uniqueValues()...)

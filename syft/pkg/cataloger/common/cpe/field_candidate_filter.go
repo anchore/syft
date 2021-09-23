@@ -1,7 +1,5 @@
 package cpe
 
-import "strings"
-
 // A fieldCandidateCondition returns true if the condition is true for a given fieldCandidate.
 type fieldCandidateCondition func(fieldCandidate) bool
 
@@ -11,10 +9,6 @@ func subSelectionsDisallowed(c fieldCandidate) bool {
 
 func delimiterVariationsDisallowed(c fieldCandidate) bool {
 	return c.disallowDelimiterVariations
-}
-
-func invalidFieldValue(candidate fieldCandidate) bool {
-	return strings.Contains(candidate.value, ":")
 }
 
 func valueEquals(v string) fieldCandidateCondition {
