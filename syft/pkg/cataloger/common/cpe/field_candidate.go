@@ -56,6 +56,15 @@ func (s fieldCandidateSet) removeByValue(values ...string) {
 	}
 }
 
+// removeByCondition removes all entries from the fieldCandidateSet for which the condition function returns true.
+func (s fieldCandidateSet) removeByCondition(condition func(candidate fieldCandidate) bool) {
+	for candidate := range s {
+		if condition(candidate) {
+			delete(s, candidate)
+		}
+	}
+}
+
 func (s fieldCandidateSet) clear() {
 	for k := range s {
 		delete(s, k)

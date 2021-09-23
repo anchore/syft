@@ -1,6 +1,7 @@
 package cpe
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -264,6 +265,7 @@ func Test_cpeFieldCandidateSet_uniqueValues(t *testing.T) {
 
 func Test_cpeFieldCandidateSet_removeByValue(t *testing.T) {
 	s := newFieldCandidateSet()
+
 	// should be removed
 	s.add(fieldCandidate{
 		value:                       "1",
@@ -281,13 +283,47 @@ func Test_cpeFieldCandidateSet_removeByValue(t *testing.T) {
 	s.add(fieldCandidate{
 		value: "1",
 	})
+
 	// should not be removed
 	s.add(fieldCandidate{
 		value: "2",
 	})
+
 	assert.Len(t, s.values(), 5)
 
 	s.removeByValue("1")
+
+	assert.Len(t, s.values(), 1)
+}
+
+func Test_cpeFieldCandidateSet_removeByCondition(t *testing.T) {
+	s := newFieldCandidateSet()
+
+	// should be removed
+	s.add(fieldCandidate{
+		value:                 "1",
+		disallowSubSelections: true,
+	})
+	s.add(fieldCandidate{
+		value: "hello-world",
+	})
+
+	// should not be removed
+	s.add(fieldCandidate{
+		value: "2",
+	})
+
+	assert.Len(t, s.values(), 3)
+
+	s.removeByCondition(func(candidate fieldCandidate) bool {
+		return candidate.disallowSubSelections == true
+	})
+
+	assert.Len(t, s.values(), 2)
+
+	s.removeByCondition(func(candidate fieldCandidate) bool {
+		return strings.Contains(candidate.value, "-")
+	})
 
 	assert.Len(t, s.values(), 1)
 }
