@@ -511,10 +511,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 
 func TestCandidateProducts(t *testing.T) {
 	tests := []struct {
+		name     string
 		p        pkg.Package
 		expected []string
 	}{
 		{
+			name: "springframework",
 			p: pkg.Package{
 				Name: "springframework",
 				Type: pkg.JavaPkg,
@@ -522,6 +524,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"spring_framework", "springsource_spring_framework" /* <-- known good names | default guess --> */, "springframework"},
 		},
 		{
+			name: "java",
 			p: pkg.Package{
 				Name:     "some-java-package-with-group-id",
 				Type:     pkg.JavaPkg,
@@ -535,6 +538,21 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"itunes", "some-java-package-with-group-id", "some_java_package_with_group_id"},
 		},
 		{
+			name: "java-with-asterisk",
+			p: pkg.Package{
+				Name:     "some-java-package-with-group-id",
+				Type:     pkg.JavaPkg,
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.apple.itunes.*",
+					},
+				},
+			},
+			expected: []string{"itunes", "some-java-package-with-group-id", "some_java_package_with_group_id"},
+		},
+		{
+			name: "jenkins-plugin",
 			p: pkg.Package{
 				Name:     "some-jenkins-plugin",
 				Type:     pkg.JenkinsPluginPkg,
@@ -548,6 +566,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"some-jenkins-plugin", "some_jenkins_plugin", "jenkins"},
 		},
 		{
+			name: "javascript",
 			p: pkg.Package{
 				Name: "handlebars.js",
 				Type: pkg.NpmPkg,
@@ -555,6 +574,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"handlebars" /* <-- known good names | default guess --> */, "handlebars.js"},
 		},
 		{
+			name: "gem",
 			p: pkg.Package{
 				Name: "RedCloth",
 				Type: pkg.GemPkg,
@@ -562,6 +582,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"redcloth_library" /* <-- known good names | default guess --> */, "RedCloth"},
 		},
 		{
+			name: "python",
 			p: pkg.Package{
 				Name: "python-rrdtool",
 				Type: pkg.PythonPkg,

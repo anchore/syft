@@ -151,6 +151,9 @@ func candidateProducts(p pkg.Package) []string {
 			products.addValue(prod)
 		}
 	}
+	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
+	products.removeByValue("")
+	products.removeByValue("*")
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(products)

@@ -46,6 +46,16 @@ func (s fieldCandidateSet) add(candidates ...fieldCandidate) {
 	}
 }
 
+func (s fieldCandidateSet) removeByValue(values ...string) {
+	for _, value := range values {
+		for candidate := range s {
+			if candidate.value == value {
+				delete(s, candidate)
+			}
+		}
+	}
+}
+
 func (s fieldCandidateSet) clear() {
 	for k := range s {
 		delete(s, k)

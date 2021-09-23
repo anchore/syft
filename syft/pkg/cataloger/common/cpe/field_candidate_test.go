@@ -261,3 +261,33 @@ func Test_cpeFieldCandidateSet_uniqueValues(t *testing.T) {
 	assert.ElementsMatch(t, []string{"1", "2", "3"}, set.uniqueValues())
 
 }
+
+func Test_cpeFieldCandidateSet_removeByValue(t *testing.T) {
+	s := newFieldCandidateSet()
+	// should be removed
+	s.add(fieldCandidate{
+		value:                       "1",
+		disallowSubSelections:       true,
+		disallowDelimiterVariations: true,
+	})
+	s.add(fieldCandidate{
+		value:                 "1",
+		disallowSubSelections: true,
+	})
+	s.add(fieldCandidate{
+		value:                       "1",
+		disallowDelimiterVariations: true,
+	})
+	s.add(fieldCandidate{
+		value: "1",
+	})
+	// should not be removed
+	s.add(fieldCandidate{
+		value: "2",
+	})
+	assert.Len(t, s.values(), 5)
+
+	s.removeByValue("1")
+
+	assert.Len(t, s.values(), 1)
+}
