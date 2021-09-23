@@ -180,6 +180,43 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			name: "java with URL in metadata", // regression: https://github.com/anchore/grype/issues/417
+			p: pkg.Package{
+				Name:         "wstx-asl",
+				Version:      "3.2.7",
+				Type:         pkg.JavaPkg,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					Manifest: &pkg.JavaManifest{
+						Main: map[string]string{
+							"Ant-Version":            "Apache Ant 1.6.5",
+							"Built-By":               "tatu",
+							"Created-By":             "1.4.2_03-b02 (Sun Microsystems Inc.)",
+							"Implementation-Title":   "WoodSToX XML-processor",
+							"Implementation-Vendor":  "woodstox.codehaus.org",
+							"Implementation-Version": "3.2.7",
+							"Manifest-Version":       "1.0",
+							"Specification-Title":    "StAX 1.0 API",
+							"Specification-Vendor":   "http://jcp.org/en/jsr/detail?id=173",
+							"Specification-Version":  "1.0",
+						},
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:woodstox_codehaus_org:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:woodstox_codehaus_org:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:woodstox-codehaus-org:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:woodstox-codehaus-org:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx_asl:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx-asl:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx-asl:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx_asl:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "jenkins package identified via pkg type",
 			p: pkg.Package{
 				Name:     "name",
