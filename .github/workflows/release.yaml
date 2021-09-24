@@ -146,6 +146,10 @@ jobs:
           echo "name:        ${{ steps.import_gpg.outputs.name }}"
           echo "email:       ${{ steps.import_gpg.outputs.email }}"
 
+      - uses: kzantow-anchore/sbom-action@find-draft-releases
+        with:
+          artifact-name: sbom.spdx.json
+
       - name: Build & publish release artifacts
         run: make release
         env:
@@ -162,9 +166,8 @@ jobs:
           AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }} # Used during macOS notarization.
           AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }} # Used during macOS notarization.
 
-      - uses: anchore/sbom-action@main
-        with:
-          artifact_name: sbom.spdx
+
+      - uses: kzantow-anchore/sbom-action/publish-sbom@find-draft-releases
 
       - uses: 8398a7/action-slack@v3
         with:
