@@ -8,6 +8,14 @@
 
 A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. Exceptional for vulnerability detection when used with a scanner tool like [Grype](https://github.com/anchore/grype).
 
+## We'll be at KubeCon 2021!
+
+Attending KubeCon 2021 in person? Join us for a meetup on **Tuesday, October 12th**.
+
+We’ll have free swag, giveaways, snacks, and sips. Space will be limited, so make sure to [save your seat](https://get.anchore.com/2021-kubecon-na-opensource-happy-hour/)!
+
+---
+
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
 **Features**
