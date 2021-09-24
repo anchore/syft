@@ -1,12 +1,18 @@
 package cpe
 
-// filterFieldCandidateFn instances should return true if the given fieldCandidate should be removed from a collection
-type filterFieldCandidateFn func(fieldCandidate) bool
+// A fieldCandidateCondition returns true if the condition is true for a given fieldCandidate.
+type fieldCandidateCondition func(fieldCandidate) bool
 
-func filterOutBySubselection(c fieldCandidate) bool {
+func subSelectionsDisallowed(c fieldCandidate) bool {
 	return c.disallowSubSelections
 }
 
-func filterOutByDelimiterVariations(c fieldCandidate) bool {
+func delimiterVariationsDisallowed(c fieldCandidate) bool {
 	return c.disallowDelimiterVariations
+}
+
+func valueEquals(v string) fieldCandidateCondition {
+	return func(candidate fieldCandidate) bool {
+		return candidate.value == v
+	}
 }
