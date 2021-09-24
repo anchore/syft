@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/package-url/packageurl-go"
 )
 
 // generatePackageURL returns a package-URL representation of the given package (see https://github.com/package-url/purl-spec)

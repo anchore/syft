@@ -158,6 +158,11 @@ func presenterDirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *dist
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
+			Files: []pkg.PythonFileRecord{
+				{
+					Path: "/some/path/pkg1/depedencies/foo",
+				},
+			},
 		},
 		PURL: "a-purl-2",
 		CPEs: []pkg.CPE{

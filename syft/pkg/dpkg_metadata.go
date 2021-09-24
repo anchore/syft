@@ -5,14 +5,14 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/distro"
-	"github.com/package-url/packageurl-go"
 	"github.com/scylladb/go-set/strset"
 )
 
 const DpkgDbGlob = "**/var/lib/dpkg/{status,status.d/**}"
 
-var _ fileOwner = (*DpkgMetadata)(nil)
+var _ FileOwner = (*DpkgMetadata)(nil)
 
 // DpkgMetadata represents all captured data for a Debian package DB entry; available fields are described
 // at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section.
@@ -41,6 +41,7 @@ func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
 	}
 	pURL := packageurl.NewPackageURL(
 		// TODO: replace with `packageurl.TypeDebian` upon merge of https://github.com/package-url/packageurl-go/pull/21
+		// TODO: or, since we're now using an Anchore fork of this module, we could do this sooner.
 		"deb",
 		d.Type.String(),
 		m.Package,
@@ -55,7 +56,7 @@ func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
 	return pURL.ToString()
 }
 
-func (m DpkgMetadata) ownedFiles() (result []string) {
+func (m DpkgMetadata) OwnedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {

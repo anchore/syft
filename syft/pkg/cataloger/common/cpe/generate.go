@@ -151,6 +151,9 @@ func candidateProducts(p pkg.Package) []string {
 			products.addValue(prod)
 		}
 	}
+	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
+	products.removeByValue("")
+	products.removeByValue("*")
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(products)
@@ -159,9 +162,12 @@ func candidateProducts(p pkg.Package) []string {
 	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products.uniqueValues()...)
 }
 
-func addAllSubSelections(set fieldCandidateSet) {
-	for _, candidate := range set.values(filterOutBySubselection) {
-		set.addValue(generateSubSelections(candidate)...)
+func addAllSubSelections(fields fieldCandidateSet) {
+	candidatesForVariations := fields.copy()
+	candidatesForVariations.removeWhere(subSelectionsDisallowed)
+
+	for _, candidate := range candidatesForVariations.values() {
+		fields.addValue(generateSubSelections(candidate)...)
 	}
 }
 
@@ -223,7 +229,10 @@ func scanByHyphenOrUnderscore(data []byte, atEOF bool) (advance int, token []byt
 }
 
 func addDelimiterVariations(fields fieldCandidateSet) {
-	for _, candidate := range fields.list(filterOutByDelimiterVariations) {
+	candidatesForVariations := fields.copy()
+	candidatesForVariations.removeWhere(delimiterVariationsDisallowed)
+
+	for _, candidate := range candidatesForVariations.list() {
 		field := candidate.value
 		hasHyphen := strings.Contains(field, "-")
 		hasUnderscore := strings.Contains(field, "_")
