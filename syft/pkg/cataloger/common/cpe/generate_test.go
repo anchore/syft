@@ -553,6 +553,14 @@ func TestCandidateProducts(t *testing.T) {
 		expected []string
 	}{
 		{
+			name: "apache-cassandra",
+			p: pkg.Package{
+				Name: "apache-cassandra",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"cassandra" /* <-- known good names | default guess --> */, "apache-cassandra", "apache_cassandra"},
+		},
+		{
 			name: "springframework",
 			p: pkg.Package{
 				Name: "springframework",
@@ -631,6 +639,37 @@ func TestCandidateProducts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, candidateProducts(test.p))
+		})
+	}
+}
+
+func TestCandidateVendor(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        pkg.Package
+		expected []string
+	}{
+		{
+			name: "elasticsearch",
+			p: pkg.Package{
+				Name: "elasticsearch",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"elastic" /* <-- known good names | default guess --> */, "elasticsearch"},
+		},
+		{
+			name: "log4j",
+			p: pkg.Package{
+				Name: "log4j",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"apache" /* <-- known good names | default guess --> */, "log4j"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
+			assert.ElementsMatch(t, test.expected, candidateVendors(test.p))
 		})
 	}
 }

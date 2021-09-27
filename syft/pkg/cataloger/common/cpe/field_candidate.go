@@ -1,6 +1,8 @@
 package cpe
 
 import (
+	"strconv"
+
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -34,7 +36,7 @@ func (s fieldCandidateSet) addValue(values ...string) {
 	for _, value := range values {
 		// default candidate as an allow-all
 		candidate := fieldCandidate{
-			value: value,
+			value: cleanCandidateField(value),
 		}
 		s[candidate] = struct{}{}
 	}
@@ -42,6 +44,7 @@ func (s fieldCandidateSet) addValue(values ...string) {
 
 func (s fieldCandidateSet) add(candidates ...fieldCandidate) {
 	for _, candidate := range candidates {
+		candidate.value = cleanCandidateField(candidate.value)
 		s[candidate] = struct{}{}
 	}
 }
@@ -98,4 +101,12 @@ func (s fieldCandidateSet) copy() fieldCandidateSet {
 	newSet.add(s.list()...)
 
 	return newSet
+}
+
+func cleanCandidateField(field string) string {
+	cleanedValue, err := strconv.Unquote(field)
+	if err != nil {
+		return field
+	}
+	return cleanedValue
 }
