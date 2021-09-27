@@ -12,32 +12,6 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-var productCandidatesByPkgType = candidatesByPackageType{
-	pkg.JavaPkg: {
-		"springframework": []string{"spring_framework", "springsource_spring_framework"},
-		"spring-core":     []string{"spring_framework", "springsource_spring_framework"},
-	},
-	pkg.NpmPkg: {
-		"hapi":             []string{"hapi_server_framework"},
-		"handlebars.js":    []string{"handlebars"},
-		"is-my-json-valid": []string{"is_my_json_valid"},
-		"mustache":         []string{"mustache.js"},
-	},
-	pkg.GemPkg: {
-		"Arabic-Prawn":        []string{"arabic_prawn"},
-		"bio-basespace-sdk":   []string{"basespace_ruby_sdk"},
-		"cremefraiche":        []string{"creme_fraiche"},
-		"html-sanitizer":      []string{"html_sanitizer"},
-		"sentry-raven":        []string{"raven-ruby"},
-		"RedCloth":            []string{"redcloth_library"},
-		"VladTheEnterprising": []string{"vladtheenterprising"},
-		"yajl-ruby":           []string{"yajl-ruby_gem"},
-	},
-	pkg.PythonPkg: {
-		"python-rrdtool": []string{"rrdtool"},
-	},
-}
-
 func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	cpe := *(wfn.NewAttributesWithAny())
 	cpe.Part = "a"
