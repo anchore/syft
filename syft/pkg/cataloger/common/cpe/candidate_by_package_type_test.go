@@ -10,16 +10,16 @@ import (
 func Test_additionalProducts(t *testing.T) {
 	tests := []struct {
 		name         string
-		allAdditions map[pkg.Type]map[candidateAdditionKey]candidateAddition
+		allAdditions map[pkg.Type]map[candidateKey]candidateAddition
 		ty           pkg.Type
 		pkgName      string
 		expected     []string
 	}{
 		{
 			name: "product name addition",
-			allAdditions: map[pkg.Type]map[candidateAdditionKey]candidateAddition{
+			allAdditions: map[pkg.Type]map[candidateKey]candidateAddition{
 				pkg.JavaPkg: {
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "spring-core",
 					}: {
 						AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"},
@@ -32,9 +32,9 @@ func Test_additionalProducts(t *testing.T) {
 		},
 		{
 			name: "no addition found",
-			allAdditions: map[pkg.Type]map[candidateAdditionKey]candidateAddition{
+			allAdditions: map[pkg.Type]map[candidateKey]candidateAddition{
 				pkg.JavaPkg: {
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "spring-core",
 					}: {
 						AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"},
@@ -56,7 +56,7 @@ func Test_additionalProducts(t *testing.T) {
 func Test_additionalVendors(t *testing.T) {
 	tests := []struct {
 		name         string
-		allAdditions map[pkg.Type]map[candidateAdditionKey]candidateAddition
+		allAdditions map[pkg.Type]map[candidateKey]candidateAddition
 		ty           pkg.Type
 		pkgName      string
 		vendor       string
@@ -64,21 +64,21 @@ func Test_additionalVendors(t *testing.T) {
 	}{
 		{
 			name: "vendor addition by input vendor",
-			allAdditions: map[pkg.Type]map[candidateAdditionKey]candidateAddition{
+			allAdditions: map[pkg.Type]map[candidateKey]candidateAddition{
 				pkg.JavaPkg: {
-					candidateAdditionKey{
+					candidateKey{
 						Vendor: "my-vendor",
 					}: {
 						AdditionalVendors: []string{"awesome-vendor-addition"},
 					},
 					// note: the below keys should not be matched
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "my-package-name",
 						Vendor:  "my-vendor",
 					}: {
 						AdditionalVendors: []string{"bad-addition"},
 					},
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "my-package-name",
 					}: {
 						AdditionalVendors: []string{"bad-addition"},
@@ -92,21 +92,21 @@ func Test_additionalVendors(t *testing.T) {
 		},
 		{
 			name: "vendor addition by input package name",
-			allAdditions: map[pkg.Type]map[candidateAdditionKey]candidateAddition{
+			allAdditions: map[pkg.Type]map[candidateKey]candidateAddition{
 				pkg.JavaPkg: {
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "my-package-name",
 					}: {
 						AdditionalVendors: []string{"awesome-vendor-addition"},
 					},
 					// note: the below keys should not be matched
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "my-package-name",
 						Vendor:  "my-vendor",
 					}: {
 						AdditionalVendors: []string{"bad-addition"},
 					},
-					candidateAdditionKey{
+					candidateKey{
 						Vendor: "my-vendor",
 					}: {
 						AdditionalVendors: []string{"bad-addition"},
@@ -120,21 +120,21 @@ func Test_additionalVendors(t *testing.T) {
 		},
 		{
 			name: "vendor addition by input package name + vendor",
-			allAdditions: map[pkg.Type]map[candidateAdditionKey]candidateAddition{
+			allAdditions: map[pkg.Type]map[candidateKey]candidateAddition{
 				pkg.JavaPkg: {
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "my-package-name",
 						Vendor:  "my-vendor",
 					}: {
 						AdditionalVendors: []string{"awesome-vendor-addition"},
 					},
 					// note: the below keys should not be matched
-					candidateAdditionKey{
+					candidateKey{
 						PkgName: "my-package-name",
 					}: {
 						AdditionalVendors: []string{"one-good-addition"},
 					},
-					candidateAdditionKey{
+					candidateKey{
 						Vendor: "my-vendor",
 					}: {
 						AdditionalVendors: []string{"another-good-addition"},
