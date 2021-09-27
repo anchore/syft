@@ -141,6 +141,22 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 	}
 }
 
+func Test_cpeFieldCandidateSet_addValue(t *testing.T) {
+	s := newFieldCandidateSet()
+	// we should clean all values (unquote strings)
+	s.addValue(`"string!"`)
+	assert.ElementsMatch(t, []string{"string!"}, s.values())
+}
+
+func Test_cpeFieldCandidateSet_add(t *testing.T) {
+	s := newFieldCandidateSet()
+	// we should clean all values (unquote strings)
+	s.add(fieldCandidate{
+		value: `"string!"`,
+	})
+	assert.ElementsMatch(t, []string{"string!"}, s.values())
+}
+
 func Test_cpeFieldCandidateSet_clear(t *testing.T) {
 	s := newFieldCandidateSet("1", "2")
 	assert.NotEmpty(t, s.values())
