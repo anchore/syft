@@ -4,85 +4,109 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-var defaultCandidateAdditions = map[pkg.Type]map[candidateAdditionKey]candidateAddition{
-	pkg.JavaPkg: {
-		candidateAdditionKey{
-			PkgName: "springframework",
-		}: {
-			AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"},
-		},
-		candidateAdditionKey{
-			PkgName: "spring-core",
-		}: {
-			AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"},
-		},
+type candidateAdditions map[pkg.Type]map[candidateKey]candidateAddition
+
+type candidateComposite struct {
+	pkg.Type
+	candidateKey
+	candidateAddition
+}
+
+var candidateComposites = []candidateComposite{
+	{
+		pkg.JavaPkg,
+		candidateKey{PkgName: "springframework"},
+		candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}},
 	},
+	{
+		pkg.JavaPkg,
+		candidateKey{PkgName: "spring-core"},
+		candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}},
+	},
+}
+
+func init() {
+	defaultCandidateAdditions = buildCandidateLookup(candidateComposites)
+}
+
+func buildCandidateLookup(cc []candidateComposite) (ca candidateAdditions) {
+	ca = make(map[pkg.Type]map[candidateKey]candidateAddition)
+	for _, c := range cc {
+		ca[c.Type] = map[candidateKey]candidateAddition{
+			c.candidateKey: c.candidateAddition,
+		}
+	}
+
+	return ca
+}
+
+var defaultCandidateAdditions = map[pkg.Type]map[candidateKey]candidateAddition{
 	pkg.NpmPkg: {
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "hapi",
 		}: {
 			AdditionalProducts: []string{"hapi_server_framework"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "handlebars.js",
 		}: {
 			AdditionalProducts: []string{"handlebars"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "is-my-json-valid",
 		}: {
 			AdditionalProducts: []string{"is_my_json_valid"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "mustache",
 		}: {
 			AdditionalProducts: []string{"mustache.js"},
 		},
 	},
 	pkg.GemPkg: {
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "Arabic-Prawn",
 		}: {
 			AdditionalProducts: []string{"arabic_prawn"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "bio-basespace-sdk",
 		}: {
 			AdditionalProducts: []string{"basespace_ruby_sdk"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "cremefraiche",
 		}: {
 			AdditionalProducts: []string{"creme_fraiche"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "html-sanitizer",
 		}: {
 			AdditionalProducts: []string{"html_sanitizer"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "sentry-raven",
 		}: {
 			AdditionalProducts: []string{"raven-ruby"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "RedCloth",
 		}: {
 			AdditionalProducts: []string{"redcloth_library"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "VladTheEnterprising",
 		}: {
 			AdditionalProducts: []string{"vladtheenterprising"},
 		},
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "yajl-ruby",
 		}: {
 			AdditionalProducts: []string{"yajl-ruby_gem"},
 		},
 	},
 	pkg.PythonPkg: {
-		candidateAdditionKey{
+		candidateKey{
 			PkgName: "python-rrdtool",
 		}: {
 			AdditionalProducts: []string{"rrdtool"},
@@ -90,7 +114,7 @@ var defaultCandidateAdditions = map[pkg.Type]map[candidateAdditionKey]candidateA
 	},
 }
 
-type candidateAdditionKey struct {
+type candidateKey struct {
 	// The following fields are considered jointly
 	Vendor  string // empty value means no constraint
 	PkgName string // empty value means no constraint
@@ -103,27 +127,27 @@ type candidateAddition struct {
 }
 
 // AdditionalVendors(type, product, vendor)
-func findAdditionalVendors(allAdditions map[pkg.Type]map[candidateAdditionKey]candidateAddition, ty pkg.Type, pkgName, vendor string) (vendors []string) {
+func findAdditionalVendors(allAdditions map[pkg.Type]map[candidateKey]candidateAddition, ty pkg.Type, pkgName, vendor string) (vendors []string) {
 	// TODO: rename
 	typedAddition, ok := allAdditions[ty]
 	if !ok {
 		return nil
 	}
 
-	if additions, ok := typedAddition[candidateAdditionKey{
+	if additions, ok := typedAddition[candidateKey{
 		Vendor:  vendor,
 		PkgName: pkgName,
 	}]; ok {
 		vendors = append(vendors, additions.AdditionalVendors...)
 	}
 
-	if additions, ok := typedAddition[candidateAdditionKey{
+	if additions, ok := typedAddition[candidateKey{
 		PkgName: pkgName,
 	}]; ok {
 		vendors = append(vendors, additions.AdditionalVendors...)
 	}
 
-	if additions, ok := typedAddition[candidateAdditionKey{
+	if additions, ok := typedAddition[candidateKey{
 		Vendor: vendor,
 	}]; ok {
 		vendors = append(vendors, additions.AdditionalVendors...)
@@ -133,14 +157,14 @@ func findAdditionalVendors(allAdditions map[pkg.Type]map[candidateAdditionKey]ca
 }
 
 // findAdditionalProducts(type, product)
-func findAdditionalProducts(allAdditions map[pkg.Type]map[candidateAdditionKey]candidateAddition, ty pkg.Type, pkgName string) (products []string) {
+func findAdditionalProducts(allAdditions map[pkg.Type]map[candidateKey]candidateAddition, ty pkg.Type, pkgName string) (products []string) {
 	// TODO: rename
 	typedAddition, ok := allAdditions[ty]
 	if !ok {
 		return nil
 	}
 
-	if additions, ok := typedAddition[candidateAdditionKey{
+	if additions, ok := typedAddition[candidateKey{
 		PkgName: pkgName,
 	}]; ok {
 		products = append(products, additions.AdditionalProducts...)
