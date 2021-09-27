@@ -48,7 +48,7 @@ func Test_additionalProducts(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, additionalProducts(test.allAdditions, test.ty, test.pkgName))
+			assert.Equal(t, test.expected, findAdditionalProducts(test.allAdditions, test.ty, test.pkgName))
 		})
 	}
 }
@@ -71,10 +71,22 @@ func Test_additionalVendors(t *testing.T) {
 					}: {
 						AdditionalVendors: []string{"awesome-vendor-addition"},
 					},
+					// note: the below keys should not be matched
+					candidateAdditionKey{
+						PkgName: "my-package-name",
+						Vendor:  "my-vendor",
+					}: {
+						AdditionalVendors: []string{"bad-addition"},
+					},
+					candidateAdditionKey{
+						PkgName: "my-package-name",
+					}: {
+						AdditionalVendors: []string{"bad-addition"},
+					},
 				},
 			},
 			ty:       pkg.JavaPkg,
-			pkgName:  "spring-core",
+			pkgName:  "NOT-MY-PACKAGE",
 			vendor:   "my-vendor",
 			expected: []string{"awesome-vendor-addition"},
 		},
@@ -87,11 +99,23 @@ func Test_additionalVendors(t *testing.T) {
 					}: {
 						AdditionalVendors: []string{"awesome-vendor-addition"},
 					},
+					// note: the below keys should not be matched
+					candidateAdditionKey{
+						PkgName: "my-package-name",
+						Vendor:  "my-vendor",
+					}: {
+						AdditionalVendors: []string{"bad-addition"},
+					},
+					candidateAdditionKey{
+						Vendor: "my-vendor",
+					}: {
+						AdditionalVendors: []string{"bad-addition"},
+					},
 				},
 			},
 			ty:       pkg.JavaPkg,
 			pkgName:  "my-package-name",
-			vendor:   "my-vendor",
+			vendor:   "NOT-MY-VENDOR",
 			expected: []string{"awesome-vendor-addition"},
 		},
 		{
@@ -108,25 +132,24 @@ func Test_additionalVendors(t *testing.T) {
 					candidateAdditionKey{
 						PkgName: "my-package-name",
 					}: {
-						AdditionalVendors: []string{"bad-addition"},
+						AdditionalVendors: []string{"one-good-addition"},
 					},
-					// note: the below keys should not be matched
 					candidateAdditionKey{
 						Vendor: "my-vendor",
 					}: {
-						AdditionalVendors: []string{"bad-addition"},
+						AdditionalVendors: []string{"another-good-addition"},
 					},
 				},
 			},
 			ty:       pkg.JavaPkg,
 			pkgName:  "my-package-name",
 			vendor:   "my-vendor",
-			expected: []string{"awesome-vendor-addition"},
+			expected: []string{"awesome-vendor-addition", "one-good-addition", "another-good-addition"},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, additionalVendors(test.allAdditions, test.ty, test.pkgName, test.vendor))
+			assert.Equal(t, test.expected, findAdditionalVendors(test.allAdditions, test.ty, test.pkgName, test.vendor))
 		})
 	}
 }

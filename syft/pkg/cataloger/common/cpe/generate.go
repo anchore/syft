@@ -103,7 +103,14 @@ func candidateVendors(p pkg.Package) []string {
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
 
-	return vendors.uniqueValues()
+	// add more candidates for the package info for each vendor candidate
+	vendorCandidates := vendors.uniqueValues()
+	var additionalCandidates []string
+	for _, vendor := range vendorCandidates {
+		additionalCandidates = append(additionalCandidates, findAdditionalVendors(defaultCandidateAdditions, p.Type, p.Name, vendor)...)
+	}
+
+	return append(additionalCandidates, vendorCandidates...)
 }
 
 func candidateProducts(p pkg.Package) []string {
@@ -133,7 +140,7 @@ func candidateProducts(p pkg.Package) []string {
 	addDelimiterVariations(products)
 
 	// prepend any known product names for the given package type and name (note: this is not a replacement)
-	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products.uniqueValues()...)
+	return append(findAdditionalProducts(defaultCandidateAdditions, p.Type, p.Name), products.uniqueValues()...)
 }
 
 func addAllSubSelections(fields fieldCandidateSet) {
