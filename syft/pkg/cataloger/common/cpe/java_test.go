@@ -153,7 +153,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
-						GroupID: "io.jenkins-ci.plugin.thing",
+						GroupID: "io.jenkins-ci.plugin.thing;version='[2,3)'",
 					},
 				},
 			},
@@ -164,7 +164,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
-						ArtifactID: "io.jenkins-ci.plugin.thing",
+						ArtifactID: "io.jenkins-ci.plugin.thing; version='[2,3)' ; org.something.else",
 					},
 				},
 			},
