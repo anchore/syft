@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 package main
 
 import (
@@ -12,6 +9,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/scylladb/go-set/strset"
 )
 
 // This program generates license_list.go.
@@ -34,6 +33,8 @@ var licenseIDs = map[string]string{
 }
 `))
 
+var versionMatch = regexp.MustCompile(`-([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
+
 type LicenseList struct {
 	Version  string `json:"licenseListVersion"`
 	Licenses []struct {
@@ -45,8 +46,6 @@ type LicenseList struct {
 		SeeAlso     []string `json:"seeAlso"`
 	} `json:"licenses"`
 }
-
-var debianMatch = regexp.MustCompile(`^(.*-)([1-9])\.0(.*)`)
 
 func main() {
 	resp, err := http.Get(url)
@@ -72,17 +71,12 @@ func main() {
 	var licenseIDs = make(map[string]string)
 	for _, l := range result.Licenses {
 		cleanID := strings.ToLower(l.ID)
-		multipleID := []string{}
-		multipleID = append(multipleID, cleanID)
-		if debianMatch.Match([]byte(cleanID)) {
-			multipleID = append(multipleID, string(debianMatch.ReplaceAll([]byte(cleanID), []byte("${1}${2}${3}"))))
-			multipleID = append(multipleID, string(debianMatch.ReplaceAll([]byte(cleanID), []byte("${1}${2}.0.0${3}"))))
-		}
-		if _, exists := licenseIDs[cleanID]; exists {
-			log.Fatalf("duplicate license ID found: %q", cleanID)
-		}
+		licensePermutations := buildLicensePermutations(cleanID)
 
-		for _, id := range multipleID {
+		for _, id := range licensePermutations {
+			if _, exists := licenseIDs[id]; exists {
+				log.Fatalf("duplicate license ID found: %q", cleanID)
+			}
 			licenseIDs[id] = l.ID
 		}
 	}
@@ -102,4 +96,51 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to generate template: %+v", err)
 	}
+}
+
+func buildLicensePermutations(license string) (perms []string) {
+	lv := findLicenseVersion(license)
+	vp := versionPermutations(lv)
+
+	version := strings.Join(lv, ".")
+	for _, p := range vp {
+		perms = append(perms, strings.Replace(license, version, p, 1))
+	}
+
+	return perms
+}
+
+func findLicenseVersion(license string) (version []string) {
+	versionList := versionMatch.FindAllStringSubmatch(license, -1)
+
+	if len(versionList) == 0 {
+		return version
+	}
+
+	for i, v := range versionList[0] {
+		if v != "" && i != 0 {
+			version = append(version, v)
+		}
+	}
+
+	return version
+}
+
+func versionPermutations(version []string) []string {
+	ver := append([]string(nil), version...)
+	perms := strset.New()
+	for i := 1; i <= 3; i++ {
+		if len(ver) < i+1 {
+			ver = append(ver, "0")
+		}
+
+		perm := strings.Join(ver[:i], ".")
+		badCount := strings.Count(perm, "0") + strings.Count(perm, ".")
+
+		if badCount != len(perm) {
+			perms.Add(perm)
+		}
+	}
+
+	return perms.List()
 }
