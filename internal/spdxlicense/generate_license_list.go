@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -45,6 +46,8 @@ type LicenseList struct {
 	} `json:"licenses"`
 }
 
+var debianMatch = regexp.MustCompile(`^(.*-)([1-9])\.0(.*)`)
+
 func main() {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -69,10 +72,19 @@ func main() {
 	var licenseIDs = make(map[string]string)
 	for _, l := range result.Licenses {
 		cleanID := strings.ToLower(l.ID)
+		multipleID := []string{}
+		multipleID = append(multipleID, cleanID)
+		if debianMatch.Match([]byte(cleanID)) {
+			multipleID = append(multipleID, string(debianMatch.ReplaceAll([]byte(cleanID), []byte("${1}${2}${3}"))))
+			multipleID = append(multipleID, string(debianMatch.ReplaceAll([]byte(cleanID), []byte("${1}${2}.0.0${3}"))))
+		}
 		if _, exists := licenseIDs[cleanID]; exists {
 			log.Fatalf("duplicate license ID found: %q", cleanID)
 		}
-		licenseIDs[cleanID] = l.ID
+
+		for _, id := range multipleID {
+			licenseIDs[id] = l.ID
+		}
 	}
 
 	err = tmp.Execute(f, struct {
