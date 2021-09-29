@@ -11,7 +11,7 @@ import (
 // in the above link.
 var (
 	zero   = regexp.MustCompile(`^((.*).0)(.*)$`)
-	noZero = regexp.MustCompile(`^((.*).0)(.*)$`)
+	noZero = regexp.MustCompile(`^(.*-)([1-9])(.*)`)
 )
 
 //go:generate go run generate_license_list.go
@@ -24,8 +24,9 @@ func ID(id string) (string, bool) {
 		if zero.Match([]byte(id)) {
 			idBytes = zero.ReplaceAll([]byte(id), []byte("${2}${3}"))
 		} else {
-			idBytes = noZero.ReplaceAll([]byte(id), []byte("${1}.0${2}"))
+			idBytes = noZero.ReplaceAll([]byte(id), []byte("${1}${2}.0${3}"))
 		}
+
 		value, exists = licenseIDs[string(idBytes)]
 	}
 	return value, exists

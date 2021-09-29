@@ -222,8 +222,6 @@ var licenseIDs = map[string]string{
 	"glulxe":                               "Glulxe",
 	"glwtpl":                               "GLWTPL",
 	"gnuplot":                              "gnuplot",
-	"gpl-1.0":                              "GPL-1.0",
-	"gpl-1.0+":                             "GPL-1.0+",
 	"gpl-1.0-only":                         "GPL-1.0-only",
 	"gpl-1.0-or-later":                     "GPL-1.0-or-later",
 	"gpl-2.0":                              "GPL-2.0",
