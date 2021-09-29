@@ -23,6 +23,14 @@ func TestIDParse(t *testing.T) {
 			"gpl-3.0.0-or-later",
 			"GPL-3.0-or-later",
 		},
+		{
+			"gpl-3-with-autoconf-exception",
+			"gpl-3.0-with-autoconf-exception",
+		},
+		{
+			"cc-by-nc-3-de",
+			"CC-BY-NC-3.0-DE",
+		},
 	}
 
 	for _, test := range tests {

@@ -8,7 +8,8 @@ import (
 // https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-short-name
 // If a license generated in license_list.go is not found when looking up by ID,
 // then the ID function will use these regular expressions to help resolve cases where
-// x.0.0 and x are supplied as version numbers.
+// x.0.0 and x are supplied as version numbers. For SPDX compatibility, versions with trailing
+// dot-zeroes are considered to be equivalent to versions without (e.g., “2.0.0” is considered equal to “2.0” and “2”).
 // EX: gpl-2+ ---> GPL-2.0+
 // EX: gpl-2.0.0-only ---> GPL-2.0-only
 // See the debian link for more details on the spdx license differences
