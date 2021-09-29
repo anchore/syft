@@ -22,13 +22,14 @@ var (
 
 func ID(id string) (string, bool) {
 	var idBytes []byte
-	value, exists := licenseIDs[strings.ToLower(id)]
+	lowerId := strings.ToLower(id)
+	value, exists := licenseIDs[lowerId]
 	if !exists {
 		// check if the license was input with `.0.0`
-		if zero.Match([]byte(id)) {
-			idBytes = zero.ReplaceAll([]byte(id), []byte("${2}${3}"))
+		if zero.Match([]byte(lowerId)) {
+			idBytes = zero.ReplaceAll([]byte(lowerId), []byte("${2}${3}"))
 		} else {
-			idBytes = noZero.ReplaceAll([]byte(id), []byte("${1}${2}.0${3}"))
+			idBytes = noZero.ReplaceAll([]byte(lowerId), []byte("${1}${2}.0${3}"))
 		}
 
 		value, exists = licenseIDs[string(idBytes)]
