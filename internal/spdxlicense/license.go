@@ -14,25 +14,26 @@ import (
 // EX: gpl-2.0.0-only ---> GPL-2.0-only
 // See the debian link for more details on the spdx license differences
 var (
-	zero   = regexp.MustCompile(`^((.*).0)(.*)$`)
+	zero   = regexp.MustCompile(`^(.*\.0)\.0(.*)$`)
 	noZero = regexp.MustCompile(`^(.*-)([1-9])(.*)`)
 )
 
 //go:generate go run generate_license_list.go
 
 func ID(id string) (string, bool) {
-	var idBytes []byte
 	lowerID := strings.ToLower(id)
 	value, exists := licenseIDs[lowerID]
 	if !exists {
+		var idBytes []byte
 		// check if the license was input with `.0.0`
 		if zero.Match([]byte(lowerID)) {
-			idBytes = zero.ReplaceAll([]byte(lowerID), []byte("${2}${3}"))
+			idBytes = zero.ReplaceAll([]byte(lowerID), []byte("${1}${2}"))
 		} else {
 			idBytes = noZero.ReplaceAll([]byte(lowerID), []byte("${1}${2}.0${3}"))
 		}
 
 		value, exists = licenseIDs[string(idBytes)]
 	}
+
 	return value, exists
 }
