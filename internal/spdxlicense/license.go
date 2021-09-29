@@ -1,6 +1,7 @@
 package spdxlicense
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -8,25 +9,24 @@ import (
 // If a license generated in license_list.go is not found when looking up by ID,
 // then the ID function will check this map for short name exceptions as detailed
 // in the above link.
-var licenseShortNameExceptions = map[string]string{
-	"gpl":    "GPL-1.0",
-	"gpl-1":  "GPL-1.0",
-	"gpl-2":  "GPL-2.0",
-	"gpl-3":  "GPL-3.0",
-	"lgpl-2": "LGPL-2.0",
-	"lgpl-3": "LGPL-3.0",
-}
+var (
+	zero   = regexp.MustCompile(`^((.*).0)(.*)$`)
+	noZero = regexp.MustCompile(`^((.*).0)(.*)$`)
+)
 
 //go:generate go run generate_license_list.go
 
 func ID(id string) (string, bool) {
-	id = strings.ToLower(id)
-	// check if id can be found from open source license registry
-	if value, exists := licenseIDs[id]; exists {
-		return value, exists
+	var idBytes []byte
+	value, exists := licenseIDs[strings.ToLower(id)]
+	if !exists {
+		// check if the license was input with `.0.0`
+		if zero.Match([]byte(id)) {
+			idBytes = zero.ReplaceAll([]byte(id), []byte("${2}${3}"))
+		} else {
+			idBytes = noZero.ReplaceAll([]byte(id), []byte("${1}.0${2}"))
+		}
+		value, exists = licenseIDs[string(idBytes)]
 	}
-
-	// check known license short name exceptions
-	value, exits := licenseShortNameExceptions[id]
-	return value, exits
+	return value, exists
 }
