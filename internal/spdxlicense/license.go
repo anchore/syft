@@ -7,8 +7,11 @@ import (
 
 // https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-short-name
 // If a license generated in license_list.go is not found when looking up by ID,
-// then the ID function will check this map for short name exceptions as detailed
-// in the above link.
+// then the ID function will use these regular expressions to help resolve cases where
+// x.0.0 and x are supplied as version numbers.
+// EX: gpl-2+ ---> GPL-2.0+
+// EX: gpl-2.0.0-only ---> GPL-2.0-only
+// See the debian link for more details on the spdx license differences
 var (
 	zero   = regexp.MustCompile(`^((.*).0)(.*)$`)
 	noZero = regexp.MustCompile(`^(.*-)([1-9])(.*)`)
