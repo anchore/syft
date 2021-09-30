@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 	"time"
@@ -52,12 +53,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to get licenses list: %+v", err)
 	}
-	defer resp.Body.Close()
 
 	var result LicenseList
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Fatalf("unable to decode license list: %+v", err)
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Fatalf("unable to close body: %+v", err)
+		}
+	}()
 
 	f, err := os.Create(source)
 	if err != nil {
@@ -69,28 +74,7 @@ func main() {
 		}
 	}()
 
-	// first pass build map
-	var licenseIDs = make(map[string]string)
-	for _, l := range result.Licenses {
-		cleanID := strings.ToLower(l.ID)
-		if _, exists := licenseIDs[cleanID]; exists {
-			log.Fatalf("duplicate license ID found: %q", cleanID)
-		}
-		licenseIDs[cleanID] = l.ID
-	}
-
-	// second pass build exceptions
-	// do not overwrite if already exists
-	for _, l := range result.Licenses {
-		var multipleID []string
-		cleanID := strings.ToLower(l.ID)
-		multipleID = append(multipleID, buildLicensePermutations(cleanID)...)
-		for _, id := range multipleID {
-			if _, exists := licenseIDs[id]; !exists {
-				licenseIDs[id] = l.ID
-			}
-		}
-	}
+	licenseIDs := processSPDXLicense(result)
 
 	err = tmp.Execute(f, struct {
 		Timestamp  time.Time
@@ -107,6 +91,37 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to generate template: %+v", err)
 	}
+}
+
+func processSPDXLicense(result LicenseList) map[string]string {
+	// first pass build map
+	var licenseIDs = make(map[string]string)
+	for _, l := range result.Licenses {
+		cleanID := strings.ToLower(l.ID)
+		if _, exists := licenseIDs[cleanID]; exists {
+			log.Fatalf("duplicate license ID found: %q", cleanID)
+		}
+		licenseIDs[cleanID] = l.ID
+	}
+
+	sort.Slice(result.Licenses, func(i, j int) bool {
+		return result.Licenses[i].ID < result.Licenses[j].ID
+	})
+
+	// second pass build exceptions
+	// do not overwrite if already exists
+	for _, l := range result.Licenses {
+		var multipleID []string
+		cleanID := strings.ToLower(l.ID)
+		multipleID = append(multipleID, buildLicensePermutations(cleanID)...)
+		for _, id := range multipleID {
+			if _, exists := licenseIDs[id]; !exists {
+				licenseIDs[id] = l.ID
+			}
+		}
+	}
+
+	return licenseIDs
 }
 
 func buildLicensePermutations(license string) (perms []string) {
