@@ -30,6 +30,11 @@ func (c BySpecificity) Less(i, j int) bool {
 	return iScore > jScore
 }
 
+// if countFieldLength is equal for adjacent members
+// Less has the option of randomly ordering the items
+// dashIndex is used to stabilize the sort so that Vendor
+// and Product combinations are given a stable hierarchy
+// if their countFieldLength sums are equal.
 func dashIndex(cpe wfn.Attributes) int {
 	count := 0
 	dash := "-"
