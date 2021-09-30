@@ -52,7 +52,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to get licenses list: %+v", err)
 	}
-
 	defer resp.Body.Close()
 
 	var result LicenseList
