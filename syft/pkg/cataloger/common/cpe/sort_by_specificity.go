@@ -2,7 +2,6 @@ package cpe
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/facebookincubator/nvdtools/wfn"
 )
@@ -21,32 +20,14 @@ func (c BySpecificity) Less(i, j int) bool {
 
 	if iScore == jScore {
 		if countFieldLength(c[i]) == countFieldLength(c[j]) {
-			// lower index count preferred
-			return dashIndex(c[i]) > dashIndex(c[j])
+			// we want this to be < than since we want
+			// - to come before _ in vendor:product
+			return c[i].BindToFmtString() < c[j].BindToFmtString()
 		}
 
 		return countFieldLength(c[i]) > countFieldLength(c[j])
 	}
 	return iScore > jScore
-}
-
-// if countFieldLength is equal for adjacent members
-// Less has the option of randomly ordering the items
-// dashIndex is used to stabilize the sort so that Vendor
-// and Product combinations are given a stable hierarchy
-// if their countFieldLength sums are equal.
-func dashIndex(cpe wfn.Attributes) int {
-	count := 0
-	dash := "-"
-	if strings.Contains(cpe.Vendor, dash) {
-		count += 2
-	}
-
-	if strings.Contains(cpe.Product, dash) {
-		count++
-	}
-
-	return count
 }
 
 func countFieldLength(cpe wfn.Attributes) int {
