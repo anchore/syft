@@ -93,6 +93,15 @@ func main() {
 	}
 }
 
+// Parsing the provided SPDX license list necessitates a two pass approach.
+// The first pass is only related to what SPDX considers the truth. These K:V pairs will never be overwritten.
+// The second pass attempts to generate known short/long version listings for each key.
+// For info on some short name conventions see this document:
+// https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-short-name.
+// The short long listing generation attempts to build all license permutations for a given key.
+// The new keys are then also associated with their relative SPDX value. If a key has already been entered
+// we know to ignore it since it came from the first pass which is considered the SPDX source of truth.
+// We also sort the licenses for the second pass so that cases like `GPL-1` associate to `GPL-1.0` and not `GPL-1.1`.
 func processSPDXLicense(result LicenseList) map[string]string {
 	// first pass build map
 	var licenseIDs = make(map[string]string)
