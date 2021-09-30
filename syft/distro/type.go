@@ -20,6 +20,7 @@ const (
 	SLES              Type = "sles"
 	Photon            Type = "photon"
 	Windows           Type = "windows"
+	Mariner           Type = "mariner"
 )
 
 // All contains all Linux distribution options
@@ -38,6 +39,7 @@ var All = []Type{
 	SLES,
 	Photon,
 	Windows,
+	Mariner,
 }
 
 // IDMapping connects a distro ID like "ubuntu" to a Distro type
@@ -56,6 +58,7 @@ var IDMapping = map[string]Type{
 	"sles":          SLES,
 	"photon":        Photon,
 	"windows":       Windows,
+	"mariner":       Mariner,
 }
 
 // String returns the string representation of the given Linux distribution.

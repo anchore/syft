@@ -118,6 +118,11 @@ func TestIdentifyDistro(t *testing.T) {
 			Type:    CentOS,
 			Version: "5.7.0",
 		},
+		{
+			fixture: "test-fixtures/os/mariner",
+			Type:    Mariner,
+			Version: "1.0.0",
+		},
 	}
 
 	observedDistros := internal.NewStringSet()
