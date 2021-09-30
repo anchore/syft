@@ -53,6 +53,8 @@ func main() {
 		log.Fatalf("unable to get licenses list: %+v", err)
 	}
 
+	defer resp.Body.Close()
+
 	var result LicenseList
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Fatalf("unable to decode license list: %+v", err)
@@ -68,6 +70,7 @@ func main() {
 		}
 	}()
 
+	// first pass build map
 	var licenseIDs = make(map[string]string)
 	for _, l := range result.Licenses {
 		cleanID := strings.ToLower(l.ID)
@@ -75,6 +78,19 @@ func main() {
 			log.Fatalf("duplicate license ID found: %q", cleanID)
 		}
 		licenseIDs[cleanID] = l.ID
+	}
+
+	// second pass build exceptions
+	// do not overwrite if already exists
+	for _, l := range result.Licenses {
+		var multipleID []string
+		cleanID := strings.ToLower(l.ID)
+		multipleID = append(multipleID, buildLicensePermutations(cleanID)...)
+		for _, id := range multipleID {
+			if _, exists := licenseIDs[id]; !exists {
+				licenseIDs[id] = l.ID
+			}
+		}
 	}
 
 	err = tmp.Execute(f, struct {
