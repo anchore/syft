@@ -34,11 +34,11 @@ func dashIndex(cpe wfn.Attributes) int {
 	count := 0
 	dash := "-"
 	if strings.Contains(cpe.Vendor, dash) {
-		count = count + 2
+		count += 2
 	}
 
 	if strings.Contains(cpe.Product, dash) {
-		count = count + 1
+		count++
 	}
 
 	return count

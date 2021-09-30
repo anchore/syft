@@ -81,7 +81,7 @@ func TestCPESpecificity(t *testing.T) {
 			},
 		},
 		{
-			name: "sort by mix of field length, specificity, alpha",
+			name: "sort by mix of field length, specificity, dash",
 			input: []pkg.CPE{
 				mustCPE("cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 				mustCPE("cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
