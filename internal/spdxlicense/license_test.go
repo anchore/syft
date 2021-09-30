@@ -35,6 +35,7 @@ func TestIDParse(t *testing.T) {
 			"CC-by-nc-3-de",
 			"CC-BY-NC-3.0-DE",
 		},
+		// the below few cases are NOT expected, however, seem unavoidable given the current approach
 		{
 			"w3c-20150513.0.0",
 			"W3C-20150513",
