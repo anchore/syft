@@ -2,6 +2,7 @@ package cpe
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/facebookincubator/nvdtools/wfn"
 )
@@ -19,9 +20,28 @@ func (c BySpecificity) Less(i, j int) bool {
 	jScore := weightedCountForSpecifiedFields(c[j])
 
 	if iScore == jScore {
+		if countFieldLength(c[i]) == countFieldLength(c[j]) {
+			// lower index count prefered
+			return dashIndex(c[i]) > dashIndex(c[j])
+		}
+
 		return countFieldLength(c[i]) > countFieldLength(c[j])
 	}
 	return iScore > jScore
+}
+
+func dashIndex(cpe wfn.Attributes) int {
+	count := 0
+	dash := "-"
+	if strings.Contains(cpe.Vendor, dash) {
+		count += 2
+	}
+
+	if strings.Contains(cpe.Product, dash) {
+		count += 1
+	}
+
+	return count
 }
 
 func countFieldLength(cpe wfn.Attributes) int {

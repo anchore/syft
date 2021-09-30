@@ -35,7 +35,7 @@ const (
 
   Supports the following image sources:
     {{.appName}} {{.command}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
-    {{.appName}} {{.command}} path/to/a/file/or/dir      a Docker tar, OCI tar, OCI directory, or generic filesystem directory 
+    {{.appName}} {{.command}} path/to/a/file/or/dir      a Docker tar, OCI tar, OCI directory, or generic filesystem directory
 
   You can also explicitly specify the scheme to use:
     {{.appName}} {{.command}} docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
