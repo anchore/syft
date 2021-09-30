@@ -21,7 +21,7 @@ func (c BySpecificity) Less(i, j int) bool {
 
 	if iScore == jScore {
 		if countFieldLength(c[i]) == countFieldLength(c[j]) {
-			// lower index count prefered
+			// lower index count preferred
 			return dashIndex(c[i]) > dashIndex(c[j])
 		}
 
@@ -34,11 +34,11 @@ func dashIndex(cpe wfn.Attributes) int {
 	count := 0
 	dash := "-"
 	if strings.Contains(cpe.Vendor, dash) {
-		count += 2
+		count = count + 2
 	}
 
 	if strings.Contains(cpe.Product, dash) {
-		count += 1
+		count = count + 1
 	}
 
 	return count
