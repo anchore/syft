@@ -71,14 +71,10 @@ func main() {
 	var licenseIDs = make(map[string]string)
 	for _, l := range result.Licenses {
 		cleanID := strings.ToLower(l.ID)
-		licensePermutations := buildLicensePermutations(cleanID)
-
-		for _, id := range licensePermutations {
-			if _, exists := licenseIDs[id]; exists {
-				log.Fatalf("duplicate license ID found: %q", cleanID)
-			}
-			licenseIDs[id] = l.ID
+		if _, exists := licenseIDs[cleanID]; exists {
+			log.Fatalf("duplicate license ID found: %q", cleanID)
 		}
+		licenseIDs[cleanID] = l.ID
 	}
 
 	err = tmp.Execute(f, struct {

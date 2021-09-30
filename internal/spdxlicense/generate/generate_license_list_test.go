@@ -47,11 +47,11 @@ func TestLicensePermutations(t *testing.T) {
 		{
 			"oldap-2.0",
 			[]string{
-				"GPL-3-or-later",
-				"GPL-3.0-or-later",
-				"GPL-3.0.0-or-later",
+				"oldap-2",
+				"oldap-2.0",
+				"oldap-2.0.0",
 			},
-		}
+		},
 	}
 
 	for _, test := range tests {
