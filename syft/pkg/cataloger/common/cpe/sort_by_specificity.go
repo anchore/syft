@@ -18,16 +18,18 @@ func (c BySpecificity) Less(i, j int) bool {
 	iScore := weightedCountForSpecifiedFields(c[i])
 	jScore := weightedCountForSpecifiedFields(c[j])
 
-	if iScore == jScore {
-		if countFieldLength(c[i]) == countFieldLength(c[j]) {
-			// we want this to be < than since we want
-			// - to come before _ in vendor:product
-			return c[i].BindToFmtString() < c[j].BindToFmtString()
-		}
+	// check weighted sort first
+	if iScore != jScore {
+		return iScore > jScore
+	}
 
+	// sort longer fields to top
+	if countFieldLength(c[i]) != countFieldLength(c[j]) {
 		return countFieldLength(c[i]) > countFieldLength(c[j])
 	}
-	return iScore > jScore
+
+	// if score and length are equal then text sort
+	return c[i].BindToFmtString() < c[j].BindToFmtString()
 }
 
 func countFieldLength(cpe wfn.Attributes) int {
