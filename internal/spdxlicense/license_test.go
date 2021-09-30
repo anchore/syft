@@ -35,6 +35,18 @@ func TestIDParse(t *testing.T) {
 			"CC-by-nc-3-de",
 			"CC-BY-NC-3.0-DE",
 		},
+		{
+			"w3c-20150513.0.0",
+			"W3C-20150513",
+		},
+		{
+			"spencer-86.0.0",
+			"Spencer-86",
+		},
+		{
+			"unicode-dfs-2015.0.0",
+			"Unicode-DFS-2015",
+		},
 	}
 
 	for _, test := range tests {
