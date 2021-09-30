@@ -5,8 +5,8 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/distro"
-	"github.com/package-url/packageurl-go"
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -41,6 +41,7 @@ func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
 	}
 	pURL := packageurl.NewPackageURL(
 		// TODO: replace with `packageurl.TypeDebian` upon merge of https://github.com/package-url/packageurl-go/pull/21
+		// TODO: or, since we're now using an Anchore fork of this module, we could do this sooner.
 		"deb",
 		d.Type.String(),
 		m.Package,

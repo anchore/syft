@@ -180,6 +180,43 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			name: "java with URL in metadata", // regression: https://github.com/anchore/grype/issues/417
+			p: pkg.Package{
+				Name:         "wstx-asl",
+				Version:      "3.2.7",
+				Type:         pkg.JavaPkg,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					Manifest: &pkg.JavaManifest{
+						Main: map[string]string{
+							"Ant-Version":            "Apache Ant 1.6.5",
+							"Built-By":               "tatu",
+							"Created-By":             "1.4.2_03-b02 (Sun Microsystems Inc.)",
+							"Implementation-Title":   "WoodSToX XML-processor",
+							"Implementation-Vendor":  "woodstox.codehaus.org",
+							"Implementation-Version": "3.2.7",
+							"Manifest-Version":       "1.0",
+							"Specification-Title":    "StAX 1.0 API",
+							"Specification-Vendor":   "http://jcp.org/en/jsr/detail?id=173",
+							"Specification-Version":  "1.0",
+						},
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:woodstox_codehaus_org:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:woodstox_codehaus_org:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:woodstox-codehaus-org:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:woodstox-codehaus-org:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx_asl:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx-asl:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx-asl:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx_asl:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx:wstx_asl:3.2.7:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wstx:wstx-asl:3.2.7:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "jenkins package identified via pkg type",
 			p: pkg.Package{
 				Name:     "name",
@@ -488,7 +525,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				actualCpeSet.Add(a.BindToFmtString())
 			}
 
-			extra := strset.Difference(expectedCpeSet, actualCpeSet).List()
+			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()
 			sort.Strings(extra)
 			if len(extra) > 0 {
 				t.Errorf("found extra CPEs:")
@@ -497,7 +534,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				fmt.Printf("   %q,\n", d)
 			}
 
-			missing := strset.Difference(actualCpeSet, expectedCpeSet).List()
+			missing := strset.Difference(expectedCpeSet, actualCpeSet).List()
 			sort.Strings(missing)
 			if len(missing) > 0 {
 				t.Errorf("missing CPEs:")
@@ -511,10 +548,20 @@ func TestGeneratePackageCPEs(t *testing.T) {
 
 func TestCandidateProducts(t *testing.T) {
 	tests := []struct {
+		name     string
 		p        pkg.Package
 		expected []string
 	}{
 		{
+			name: "apache-cassandra",
+			p: pkg.Package{
+				Name: "apache-cassandra",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"cassandra" /* <-- known good names | default guess --> */, "apache-cassandra", "apache_cassandra"},
+		},
+		{
+			name: "springframework",
 			p: pkg.Package{
 				Name: "springframework",
 				Type: pkg.JavaPkg,
@@ -522,6 +569,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"spring_framework", "springsource_spring_framework" /* <-- known good names | default guess --> */, "springframework"},
 		},
 		{
+			name: "java",
 			p: pkg.Package{
 				Name:     "some-java-package-with-group-id",
 				Type:     pkg.JavaPkg,
@@ -535,6 +583,21 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"itunes", "some-java-package-with-group-id", "some_java_package_with_group_id"},
 		},
 		{
+			name: "java-with-asterisk",
+			p: pkg.Package{
+				Name:     "some-java-package-with-group-id",
+				Type:     pkg.JavaPkg,
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					PomProperties: &pkg.PomProperties{
+						GroupID: "com.apple.itunes.*",
+					},
+				},
+			},
+			expected: []string{"itunes", "some-java-package-with-group-id", "some_java_package_with_group_id"},
+		},
+		{
+			name: "jenkins-plugin",
 			p: pkg.Package{
 				Name:     "some-jenkins-plugin",
 				Type:     pkg.JenkinsPluginPkg,
@@ -548,6 +611,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"some-jenkins-plugin", "some_jenkins_plugin", "jenkins"},
 		},
 		{
+			name: "javascript",
 			p: pkg.Package{
 				Name: "handlebars.js",
 				Type: pkg.NpmPkg,
@@ -555,6 +619,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"handlebars" /* <-- known good names | default guess --> */, "handlebars.js"},
 		},
 		{
+			name: "gem",
 			p: pkg.Package{
 				Name: "RedCloth",
 				Type: pkg.GemPkg,
@@ -562,6 +627,7 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"redcloth_library" /* <-- known good names | default guess --> */, "RedCloth"},
 		},
 		{
+			name: "python",
 			p: pkg.Package{
 				Name: "python-rrdtool",
 				Type: pkg.PythonPkg,
@@ -573,6 +639,37 @@ func TestCandidateProducts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, candidateProducts(test.p))
+		})
+	}
+}
+
+func TestCandidateVendor(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        pkg.Package
+		expected []string
+	}{
+		{
+			name: "elasticsearch",
+			p: pkg.Package{
+				Name: "elasticsearch",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"elastic" /* <-- known good names | default guess --> */, "elasticsearch"},
+		},
+		{
+			name: "log4j",
+			p: pkg.Package{
+				Name: "log4j",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"apache" /* <-- known good names | default guess --> */, "log4j"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
+			assert.ElementsMatch(t, test.expected, candidateVendors(test.p))
 		})
 	}
 }

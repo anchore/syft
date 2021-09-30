@@ -16,6 +16,7 @@ var cpeFilters = []filterFn{
 	disallowJiraClientServerMismatch,
 	disallowJenkinsServerCPEForPluginPackage,
 	disallowJenkinsCPEsNotAssociatedWithJenkins,
+	disallowNonParseableCPEs,
 }
 
 func filter(cpes []pkg.CPE, p pkg.Package, filters ...filterFn) (result []pkg.CPE) {
@@ -30,6 +31,15 @@ cpeLoop:
 		result = append(result, cpe)
 	}
 	return result
+}
+
+func disallowNonParseableCPEs(cpe pkg.CPE, _ pkg.Package) bool {
+	v := cpe.BindToFmtString()
+	_, err := pkg.NewCPE(v)
+
+	cannotParse := err != nil
+
+	return cannotParse
 }
 
 // jenkins plugins should not match against jenkins

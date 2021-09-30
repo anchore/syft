@@ -1,6 +1,7 @@
 package cpe
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,10 +9,10 @@ import (
 
 func Test_cpeCandidateValues_filter(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   []fieldCandidate
-		filters []filterFieldCandidateFn
-		expect  []string
+		name                string
+		input               []fieldCandidate
+		exclusionConditions []fieldCandidateCondition
+		expect              []string
 	}{
 		{
 			name: "gocase",
@@ -60,8 +61,8 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterFieldCandidateFn{
-				filterOutBySubselection,
+			exclusionConditions: []fieldCandidateCondition{
+				subSelectionsDisallowed,
 			},
 			expect: []string{
 				"allow anything",
@@ -88,8 +89,8 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterFieldCandidateFn{
-				filterOutByDelimiterVariations,
+			exclusionConditions: []fieldCandidateCondition{
+				delimiterVariationsDisallowed,
 			},
 			expect: []string{
 				"allow anything",
@@ -97,7 +98,7 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 			},
 		},
 		{
-			name: "all filters",
+			name: "all exclusionConditions",
 			input: []fieldCandidate{
 				{
 					value: "allow anything",
@@ -116,9 +117,9 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 					disallowDelimiterVariations: true,
 				},
 			},
-			filters: []filterFieldCandidateFn{
-				filterOutByDelimiterVariations,
-				filterOutBySubselection,
+			exclusionConditions: []fieldCandidateCondition{
+				delimiterVariationsDisallowed,
+				subSelectionsDisallowed,
 			},
 			expect: []string{
 				"allow anything",
@@ -130,9 +131,30 @@ func Test_cpeCandidateValues_filter(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			set := newFieldCandidateSet()
 			set.add(test.input...)
-			assert.ElementsMatch(t, test.expect, set.values(test.filters...))
+
+			for _, condition := range test.exclusionConditions {
+				set.removeWhere(condition)
+			}
+
+			assert.ElementsMatch(t, test.expect, set.values())
 		})
 	}
+}
+
+func Test_cpeFieldCandidateSet_addValue(t *testing.T) {
+	s := newFieldCandidateSet()
+	// we should clean all values (unquote strings)
+	s.addValue(`"string!"`)
+	assert.ElementsMatch(t, []string{"string!"}, s.values())
+}
+
+func Test_cpeFieldCandidateSet_add(t *testing.T) {
+	s := newFieldCandidateSet()
+	// we should clean all values (unquote strings)
+	s.add(fieldCandidate{
+		value: `"string!"`,
+	})
+	assert.ElementsMatch(t, []string{"string!"}, s.values())
 }
 
 func Test_cpeFieldCandidateSet_clear(t *testing.T) {
@@ -260,4 +282,69 @@ func Test_cpeFieldCandidateSet_uniqueValues(t *testing.T) {
 
 	assert.ElementsMatch(t, []string{"1", "2", "3"}, set.uniqueValues())
 
+}
+
+func Test_cpeFieldCandidateSet_removeByValue(t *testing.T) {
+	s := newFieldCandidateSet()
+
+	// should be removed
+	s.add(fieldCandidate{
+		value:                       "1",
+		disallowSubSelections:       true,
+		disallowDelimiterVariations: true,
+	})
+	s.add(fieldCandidate{
+		value:                 "1",
+		disallowSubSelections: true,
+	})
+	s.add(fieldCandidate{
+		value:                       "1",
+		disallowDelimiterVariations: true,
+	})
+	s.add(fieldCandidate{
+		value: "1",
+	})
+
+	// should not be removed
+	s.add(fieldCandidate{
+		value: "2",
+	})
+
+	assert.Len(t, s.values(), 5)
+
+	s.removeByValue("1")
+
+	assert.Len(t, s.values(), 1)
+}
+
+func Test_cpeFieldCandidateSet_removeByCondition(t *testing.T) {
+	s := newFieldCandidateSet()
+
+	// should be removed
+	s.add(fieldCandidate{
+		value:                 "1",
+		disallowSubSelections: true,
+	})
+	s.add(fieldCandidate{
+		value: "hello-world",
+	})
+
+	// should not be removed
+	s.add(fieldCandidate{
+		value: "2",
+	})
+
+	assert.Len(t, s.values(), 3)
+
+	s.removeWhere(func(candidate fieldCandidate) bool {
+		return candidate.disallowSubSelections == true
+	})
+
+	assert.Len(t, s.values(), 2)
+
+	s.removeWhere(func(candidate fieldCandidate) bool {
+		return strings.Contains(candidate.value, "-")
+	})
+
+	assert.Len(t, s.values(), 1)
 }

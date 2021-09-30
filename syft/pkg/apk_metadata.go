@@ -5,7 +5,7 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 
-	"github.com/package-url/packageurl-go"
+	"github.com/anchore/packageurl-go"
 	"github.com/scylladb/go-set/strset"
 )
 

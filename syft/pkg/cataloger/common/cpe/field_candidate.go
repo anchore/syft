@@ -1,6 +1,8 @@
 package cpe
 
 import (
+	"strconv"
+
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -16,7 +18,7 @@ type fieldCandidate struct {
 
 type fieldCandidateSet map[fieldCandidate]struct{}
 
-func newFieldCandidateFromSets(sets ...fieldCandidateSet) fieldCandidateSet {
+func newFieldCandidateSetFromSets(sets ...fieldCandidateSet) fieldCandidateSet {
 	s := newFieldCandidateSet()
 	for _, set := range sets {
 		s.add(set.list()...)
@@ -34,7 +36,7 @@ func (s fieldCandidateSet) addValue(values ...string) {
 	for _, value := range values {
 		// default candidate as an allow-all
 		candidate := fieldCandidate{
-			value: value,
+			value: cleanCandidateField(value),
 		}
 		s[candidate] = struct{}{}
 	}
@@ -42,7 +44,23 @@ func (s fieldCandidateSet) addValue(values ...string) {
 
 func (s fieldCandidateSet) add(candidates ...fieldCandidate) {
 	for _, candidate := range candidates {
+		candidate.value = cleanCandidateField(candidate.value)
 		s[candidate] = struct{}{}
+	}
+}
+
+func (s fieldCandidateSet) removeByValue(values ...string) {
+	for _, value := range values {
+		s.removeWhere(valueEquals(value))
+	}
+}
+
+// removeWhere removes all entries from the fieldCandidateSet for which the condition function returns true.
+func (s fieldCandidateSet) removeWhere(condition fieldCandidateCondition) {
+	for candidate := range s {
+		if condition(candidate) {
+			delete(s, candidate)
+		}
 	}
 }
 
@@ -58,26 +76,37 @@ func (s fieldCandidateSet) union(others ...fieldCandidateSet) {
 	}
 }
 
-func (s fieldCandidateSet) list(filters ...filterFieldCandidateFn) (results []fieldCandidate) {
-candidateLoop:
+func (s fieldCandidateSet) list() (results []fieldCandidate) {
 	for c := range s {
-		for _, fn := range filters {
-			if fn(c) {
-				continue candidateLoop
-			}
-		}
 		results = append(results, c)
 	}
+
 	return results
 }
 
-func (s fieldCandidateSet) values(filters ...filterFieldCandidateFn) (results []string) {
-	for _, c := range s.list(filters...) {
+func (s fieldCandidateSet) values() (results []string) {
+	for _, c := range s.list() {
 		results = append(results, c.value)
 	}
+
 	return results
 }
 
-func (s fieldCandidateSet) uniqueValues(filters ...filterFieldCandidateFn) []string {
-	return strset.New(s.values(filters...)...).List()
+func (s fieldCandidateSet) uniqueValues() []string {
+	return strset.New(s.values()...).List()
+}
+
+func (s fieldCandidateSet) copy() fieldCandidateSet {
+	newSet := newFieldCandidateSet()
+	newSet.add(s.list()...)
+
+	return newSet
+}
+
+func cleanCandidateField(field string) string {
+	cleanedValue, err := strconv.Unquote(field)
+	if err != nil {
+		return field
+	}
+	return cleanedValue
 }

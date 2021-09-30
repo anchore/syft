@@ -12,32 +12,6 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-var productCandidatesByPkgType = candidatesByPackageType{
-	pkg.JavaPkg: {
-		"springframework": []string{"spring_framework", "springsource_spring_framework"},
-		"spring-core":     []string{"spring_framework", "springsource_spring_framework"},
-	},
-	pkg.NpmPkg: {
-		"hapi":             []string{"hapi_server_framework"},
-		"handlebars.js":    []string{"handlebars"},
-		"is-my-json-valid": []string{"is_my_json_valid"},
-		"mustache":         []string{"mustache.js"},
-	},
-	pkg.GemPkg: {
-		"Arabic-Prawn":        []string{"arabic_prawn"},
-		"bio-basespace-sdk":   []string{"basespace_ruby_sdk"},
-		"cremefraiche":        []string{"creme_fraiche"},
-		"html-sanitizer":      []string{"html_sanitizer"},
-		"sentry-raven":        []string{"raven-ruby"},
-		"RedCloth":            []string{"redcloth_library"},
-		"VladTheEnterprising": []string{"vladtheenterprising"},
-		"yajl-ruby":           []string{"yajl-ruby_gem"},
-	},
-	pkg.PythonPkg: {
-		"python-rrdtool": []string{"rrdtool"},
-	},
-}
-
 func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	cpe := *(wfn.NewAttributesWithAny())
 	cpe.Part = "a"
@@ -129,6 +103,11 @@ func candidateVendors(p pkg.Package) []string {
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
 
+	// add more candidates based on the package info for each vendor candidate
+	for _, vendor := range vendors.uniqueValues() {
+		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, p.Type, p.Name, vendor)...)
+	}
+
 	return vendors.uniqueValues()
 }
 
@@ -151,17 +130,25 @@ func candidateProducts(p pkg.Package) []string {
 			products.addValue(prod)
 		}
 	}
+	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
+	products.removeByValue("")
+	products.removeByValue("*")
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(products)
 
-	// prepend any known product names for the given package type and name (note: this is not a replacement)
-	return append(productCandidatesByPkgType.getCandidates(p.Type, p.Name), products.uniqueValues()...)
+	// add known candidate additions
+	products.addValue(findAdditionalProducts(defaultCandidateAdditions, p.Type, p.Name)...)
+
+	return products.uniqueValues()
 }
 
-func addAllSubSelections(set fieldCandidateSet) {
-	for _, candidate := range set.values(filterOutBySubselection) {
-		set.addValue(generateSubSelections(candidate)...)
+func addAllSubSelections(fields fieldCandidateSet) {
+	candidatesForVariations := fields.copy()
+	candidatesForVariations.removeWhere(subSelectionsDisallowed)
+
+	for _, candidate := range candidatesForVariations.values() {
+		fields.addValue(generateSubSelections(candidate)...)
 	}
 }
 
@@ -223,7 +210,10 @@ func scanByHyphenOrUnderscore(data []byte, atEOF bool) (advance int, token []byt
 }
 
 func addDelimiterVariations(fields fieldCandidateSet) {
-	for _, candidate := range fields.list(filterOutByDelimiterVariations) {
+	candidatesForVariations := fields.copy()
+	candidatesForVariations.removeWhere(delimiterVariationsDisallowed)
+
+	for _, candidate := range candidatesForVariations.list() {
 		field := candidate.value
 		hasHyphen := strings.Contains(field, "-")
 		hasUnderscore := strings.Contains(field, "_")

@@ -46,7 +46,7 @@ func candidateProductsForJava(p pkg.Package) []string {
 func candidateVendorsForJava(p pkg.Package) fieldCandidateSet {
 	gidVendors := vendorsFromGroupIDs(groupIDsFromJavaPackage(p))
 	nameVendors := vendorsFromJavaManifestNames(p)
-	return newFieldCandidateFromSets(gidVendors, nameVendors)
+	return newFieldCandidateSetFromSets(gidVendors, nameVendors)
 }
 
 func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
@@ -192,13 +192,13 @@ func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string
 	}
 
 	if startsWithTopLevelDomain(properties.GroupID) {
-		groupIDs = append(groupIDs, strings.TrimSpace(properties.GroupID))
+		groupIDs = append(groupIDs, cleanGroupID(properties.GroupID))
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
 	if startsWithTopLevelDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
-		groupIDs = append(groupIDs, strings.TrimSpace(properties.ArtifactID))
+		groupIDs = append(groupIDs, cleanGroupID(properties.ArtifactID))
 	}
 
 	return groupIDs
@@ -224,13 +224,13 @@ func groupIDsFromPomProject(project *pkg.PomProject) (groupIDs []string) {
 
 func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs []string) {
 	if startsWithTopLevelDomain(groupID) {
-		groupIDs = append(groupIDs, strings.TrimSpace(groupID))
+		groupIDs = append(groupIDs, cleanGroupID(groupID))
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
 	if startsWithTopLevelDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
-		groupIDs = append(groupIDs, strings.TrimSpace(artifactID))
+		groupIDs = append(groupIDs, cleanGroupID(artifactID))
 	}
 	return groupIDs
 }
@@ -263,19 +263,30 @@ func getManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 	for _, name := range fields {
 		if value, exists := manifest.Main[name]; exists {
 			if startsWithTopLevelDomain(value) {
-				groupIDs = append(groupIDs, value)
+				groupIDs = append(groupIDs, cleanGroupID(value))
 			}
 		}
 		for _, section := range manifest.NamedSections {
 			if value, exists := section[name]; exists {
 				if startsWithTopLevelDomain(value) {
-					groupIDs = append(groupIDs, value)
+					groupIDs = append(groupIDs, cleanGroupID(value))
 				}
 			}
 		}
 	}
 
 	return groupIDs
+}
+
+func cleanGroupID(groupID string) string {
+	return strings.TrimSpace(removeOSCIDirectives(groupID))
+}
+
+func removeOSCIDirectives(groupID string) string {
+	// for example:
+	// 		org.bar;uses:=“org.foo”		-> 	org.bar
+	// more about OSGI directives see https://spring.io/blog/2008/10/20/understanding-the-osgi-uses-directive/
+	return strings.Split(groupID, ";")[0]
 }
 
 func startsWithTopLevelDomain(value string) bool {
