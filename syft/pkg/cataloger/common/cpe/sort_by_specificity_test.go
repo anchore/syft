@@ -80,6 +80,25 @@ func TestCPESpecificity(t *testing.T) {
 				mustCPE("cpe:2.3:a:1:*:333:*:*:*:*:*:*:*"),
 			},
 		},
+		{
+			name: "sort by mix of field length, specificity, dash",
+			input: []pkg.CPE{
+				mustCPE("cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine_keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine_keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+			},
+			expected: []pkg.CPE{
+				mustCPE("cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine_keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine_keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustCPE("cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+			},
+		},
 	}
 
 	for _, test := range tests {
