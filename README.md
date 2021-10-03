@@ -68,7 +68,10 @@ To include software from all image layers in the SBOM, regardless of its presenc
 syft packages <image> --scope all-layers
 ```
 
+### Supported sources
+
 Syft can generate a SBOM from a variety of sources:
+
 ```
 # catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
 syft packages path/to/image.tar
@@ -78,6 +81,7 @@ syft packages path/to/dir
 ```
 
 Sources can be explicitly provided with a scheme:
+
 ```
 docker:yourrepo/yourimage:tag          use images from the Docker daemon
 docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
@@ -87,7 +91,10 @@ dir:path/to/yourproject                read directly from a path on disk (any di
 registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 ```
 
+### Output formats
+
 The output format for Syft is configurable as well:
+
 ```
 syft packages <image> -o <format>
 ```
