@@ -28,6 +28,27 @@ We’ll have free swag, giveaways, snacks, and sips. Space will be limited, so m
 
 If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
 
+## Installation
+
+### Recommended
+```bash
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+```
+
+...or, you can specify a release version and destination directory for the installation:
+
+```
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
+```
+
+### Homebrew
+```bash
+brew tap anchore/syft
+brew install syft
+```
+
+**Note**: Currently, Syft is built only for macOS and Linux.
+
 ## Getting started
 
 To generate an SBOM for a Docker or OCI image:
@@ -78,23 +99,6 @@ Where the `format`s available are:
 - `spdx`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `table`: A columnar summary (default).
-
-## Installation
-
-**Recommended (macOS and Linux)**
-```bash
-# install the latest version to /usr/local/bin
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-
-# install a specific version into a specific dir
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <SOME_BIN_PATH> <RELEASE_VERSION>
-```
-
-**Homebrew (macOS)**
-```bash
-brew tap anchore/syft
-brew install syft
-```
 
 ## Configuration
 
