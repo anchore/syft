@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var anchoreNamespace = "https://anchore.com/syft/image"
+const anchoreNamespace = "https://anchore.com/syft/image"
 
 // SPDXJsonPresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
 type SPDXJsonPresenter struct {
