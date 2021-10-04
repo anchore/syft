@@ -40,6 +40,7 @@ func ImageCatalogers() []Cataloger {
 		java.NewJavaCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModCataloger(),
+		golang.NewGolangCataloger(),
 		rust.NewCargoLockCataloger(),
 	}
 }
