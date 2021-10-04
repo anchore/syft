@@ -16,6 +16,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var anchoreNamespace = "https://anchore.com/syft/image"
+
 // SPDXJsonPresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
 type SPDXJsonPresenter struct {
 	catalog     *pkg.Catalog
@@ -43,18 +45,19 @@ func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
 
 // newSPDXJsonDocument creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
 func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
-	uID := uuid.Must(uuid.NewRandom())
+	uniqueID := uuid.Must(uuid.NewRandom())
 
-	var name, namespace string
+	var name, identifier string
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		name = srcMetadata.ImageMetadata.UserInput
-		namespace = strings.Trim(fmt.Sprintf("%s-%s", name, uID.String()), "-")
+		identifier = strings.Trim(fmt.Sprintf("%s-%s", name, uniqueID.String()), "-")
 	case source.DirectoryScheme:
 		name = srcMetadata.Path
-		namespace = uID.String()
+		identifier = uniqueID.String()
 	}
 
+	namespace := fmt.Sprintf("%s/%s", anchoreNamespace, identifier)
 	packages, files, relationships := newSPDXJsonElements(catalog)
 
 	return spdx22.Document{
@@ -73,7 +76,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 			LicenseListVersion: spdxlicense.Version,
 		},
 		DataLicense:       "CC0-1.0",
-		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", namespace),
+		DocumentNamespace: namespace,
 		Packages:          packages,
 		Files:             files,
 		Relationships:     relationships,
