@@ -11,6 +11,7 @@ import (
 func NewGoModCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/go.mod": parseGoMod,
+		"**/syft":   parseGoBin,
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "go-cataloger")
