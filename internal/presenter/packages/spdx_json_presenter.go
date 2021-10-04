@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	"github.com/google/uuid"
 )
 
 // SPDXJsonPresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
@@ -50,6 +51,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	}
 
 	packages, files, relationships := newSPDXJsonElements(catalog)
+	uuid := uuid.Must(uuid.NewRandom())
 
 	return spdx22.Document{
 		Element: spdx22.Element{
@@ -67,7 +69,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 			LicenseListVersion: spdxlicense.Version,
 		},
 		DataLicense:       "CC0-1.0",
-		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
+		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s-%s", srcMetadata.ImageMetadata.UserInput, uuid.String()),
 		Packages:          packages,
 		Files:             files,
 		Relationships:     relationships,
