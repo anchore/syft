@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/anchore/syft/internal"
@@ -16,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const anchoreNamespace = "https://anchore.com/syft/image"
+const anchoreNamespace = "https://anchore.com/syft"
 
 // SPDXJsonPresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
 type SPDXJsonPresenter struct {
@@ -51,10 +50,10 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		name = srcMetadata.ImageMetadata.UserInput
-		identifier = strings.Trim(fmt.Sprintf("%s-%s", name, uniqueID.String()), "-")
+		identifier = fmt.Sprintf("image/%s", uniqueID.String())
 	case source.DirectoryScheme:
 		name = srcMetadata.Path
-		identifier = uniqueID.String()
+		identifier = fmt.Sprintf("dir/%s", uniqueID.String())
 	}
 
 	namespace := fmt.Sprintf("%s/%s", anchoreNamespace, identifier)
