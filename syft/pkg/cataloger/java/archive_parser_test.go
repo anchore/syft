@@ -90,6 +90,7 @@ func TestParseJar(t *testing.T) {
 			fixture: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 			ignoreExtras: []string{
 				"Plugin-Version", // has dynamic date
+				"Built-By", // podman returns the real UID
 				"Build-Jdk",      // can't guarantee the JDK used at build time
 			},
 			expected: map[string]pkg.Package{
@@ -112,7 +113,7 @@ func TestParseJar(t *testing.T) {
 								"Plugin-License-Url":  "https://opensource.org/licenses/MIT",
 								"Plugin-License-Name": "MIT License",
 								"Created-By":          "Apache Maven",
-								"Built-By":            "?",
+								//"Built-By":            "?",
 								//"Build-Jdk":            "14.0.1",
 								"Jenkins-Version":      "2.164.3",
 								"Minimum-Java-Version": "1.8",
@@ -162,6 +163,7 @@ func TestParseJar(t *testing.T) {
 			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 			ignoreExtras: []string{
 				"Build-Jdk", // can't guarantee the JDK used at build time
+				"Built-By", // podman returns the real UID
 			},
 			expected: map[string]pkg.Package{
 				"example-java-app-maven": {
@@ -178,7 +180,7 @@ func TestParseJar(t *testing.T) {
 								// extra fields...
 								"Archiver-Version": "Plexus Archiver",
 								"Created-By":       "Apache Maven 3.6.3",
-								"Built-By":         "?",
+								//"Built-By":         "?",
 								//"Build-Jdk":        "14.0.1",
 								"Main-Class": "hello.HelloWorld",
 							},
