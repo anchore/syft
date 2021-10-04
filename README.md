@@ -3,8 +3,9 @@
 [![Validations](https://github.com/anchore/syft/actions/workflows/validations.yaml/badge.svg)](https://github.com/anchore/syft/actions/workflows/validations.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/anchore/syft)](https://goreportcard.com/report/github.com/anchore/syft)
 [![GitHub release](https://img.shields.io/github/release/anchore/syft.svg)](https://github.com/anchore/syft/releases/latest)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/anchore/syft/blob/main/LICENSE)
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/anchore/syft.svg)](https://github.com/anchore/syft)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/anchore/syft/blob/main/LICENSE)
+[![Slack Invite](https://img.shields.io/badge/Slack-Join-blue?logo=slack)](https://anchore.com/slack)
 
 A CLI tool and go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. Exceptional for vulnerability detection when used with a scanner tool like [Grype](https://github.com/anchore/grype).
 
@@ -28,6 +29,27 @@ We’ll have free swag, giveaways, snacks, and sips. Space will be limited, so m
 
 If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
 
+## Installation
+
+### Recommended
+```bash
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+```
+
+...or, you can specify a release version and destination directory for the installation:
+
+```
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
+```
+
+### Homebrew
+```bash
+brew tap anchore/syft
+brew install syft
+```
+
+**Note**: Currently, Syft is built only for macOS and Linux.
+
 ## Getting started
 
 To generate an SBOM for a Docker or OCI image:
@@ -47,7 +69,10 @@ To include software from all image layers in the SBOM, regardless of its presenc
 syft packages <image> --scope all-layers
 ```
 
+### Supported sources
+
 Syft can generate a SBOM from a variety of sources:
+
 ```
 # catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
 syft packages path/to/image.tar
@@ -57,6 +82,7 @@ syft packages path/to/dir
 ```
 
 Sources can be explicitly provided with a scheme:
+
 ```
 docker:yourrepo/yourimage:tag          use images from the Docker daemon
 docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
@@ -66,7 +92,10 @@ dir:path/to/yourproject                read directly from a path on disk (any di
 registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 ```
 
+### Output formats
+
 The output format for Syft is configurable as well:
+
 ```
 syft packages <image> -o <format>
 ```
@@ -78,23 +107,6 @@ Where the `format`s available are:
 - `spdx`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `table`: A columnar summary (default).
-
-## Installation
-
-**Recommended (macOS and Linux)**
-```bash
-# install the latest version to /usr/local/bin
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-
-# install a specific version into a specific dir
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <SOME_BIN_PATH> <RELEASE_VERSION>
-```
-
-**Homebrew (macOS)**
-```bash
-brew tap anchore/syft
-brew install syft
-```
 
 ## Configuration
 
