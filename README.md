@@ -128,6 +128,9 @@ output: "table"
 # same as -q ; SYFT_QUIET env var
 quiet: false
 
+# same as --file; write output report to a file (default is to write to stdout)
+file: ""
+
 # enable/disable checking for application updates on startup
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
