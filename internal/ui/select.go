@@ -16,7 +16,6 @@ import (
 // are environmental problems (e.g. cannot write to the terminal). A writer is provided to capture the output of
 // the final SBOM report.
 func Select(verbose, quiet bool, reportWriter io.Writer) (uis []UI) {
-
 	isStdoutATty := terminal.IsTerminal(int(os.Stdout.Fd()))
 	isStderrATty := terminal.IsTerminal(int(os.Stderr.Fd()))
 	notATerminal := !isStderrATty && !isStdoutATty
