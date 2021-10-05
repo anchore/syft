@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft/event"
@@ -73,12 +74,24 @@ func init() {
 func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
+
+	reporter, closer, err := reportWriter()
+	defer func() {
+		if err := closer(); err != nil {
+			log.Warnf("unable to write to report destination: %+v", err)
+		}
+	}()
+
+	if err != nil {
+		return err
+	}
+
 	return eventLoop(
 		powerUserExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
-		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
 		stereoscope.Cleanup,
+		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet, reporter)...,
 	)
 }
 

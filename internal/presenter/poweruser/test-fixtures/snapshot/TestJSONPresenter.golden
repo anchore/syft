@@ -168,6 +168,7 @@
   "configuration": {
    "configPath": "",
    "output": "",
+   "file": "",
    "quiet": false,
    "check-for-app-update": false,
    "anchore": {

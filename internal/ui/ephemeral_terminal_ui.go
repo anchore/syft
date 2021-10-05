@@ -33,25 +33,28 @@ import (
 // or in the shared ui package as a function on the main handler object. All handler functions should be completed
 // processing an event before the ETUI exits (coordinated with a sync.WaitGroup)
 type ephemeralTerminalUI struct {
-	unsubscribe func() error
-	handler     *ui.Handler
-	waitGroup   *sync.WaitGroup
-	frame       *frame.Frame
-	logBuffer   *bytes.Buffer
-	output      *os.File
+	unsubscribe  func() error
+	handler      *ui.Handler
+	waitGroup    *sync.WaitGroup
+	frame        *frame.Frame
+	logBuffer    *bytes.Buffer
+	uiOutput     *os.File
+	reportOutput io.Writer
 }
 
-func NewEphemeralTerminalUI() UI {
+// NewEphemeralTerminalUI writes all events to a TUI and writes the final report to the given writer.
+func NewEphemeralTerminalUI(reportWriter io.Writer) UI {
 	return &ephemeralTerminalUI{
-		handler:   ui.NewHandler(),
-		waitGroup: &sync.WaitGroup{},
-		output:    os.Stderr,
+		handler:      ui.NewHandler(),
+		waitGroup:    &sync.WaitGroup{},
+		uiOutput:     os.Stderr,
+		reportOutput: reportWriter,
 	}
 }
 
 func (h *ephemeralTerminalUI) Setup(unsubscribe func() error) error {
 	h.unsubscribe = unsubscribe
-	hideCursor(h.output)
+	hideCursor(h.uiOutput)
 
 	// prep the logger to not clobber the screen from now on (logrus only)
 	h.logBuffer = bytes.NewBufferString("")
@@ -81,7 +84,7 @@ func (h *ephemeralTerminalUI) Handle(event partybus.Event) error {
 		// are about to write bytes to stdout, so we should reset the terminal state first
 		h.closeScreen(false)
 
-		if err := handleCatalogerPresenterReady(event); err != nil {
+		if err := handleCatalogerPresenterReady(event, h.reportOutput); err != nil {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
 		}
 
@@ -95,7 +98,7 @@ func (h *ephemeralTerminalUI) openScreen() error {
 	config := frame.Config{
 		PositionPolicy: frame.PolicyFloatForward,
 		// only report output to stderr, reserve report output for stdout
-		Output: h.output,
+		Output: h.uiOutput,
 	}
 
 	fr, err := frame.New(config)
@@ -128,15 +131,15 @@ func (h *ephemeralTerminalUI) flushLog() {
 	logWrapper, ok := log.Log.(*logger.LogrusLogger)
 	if ok {
 		fmt.Fprint(logWrapper.Output, h.logBuffer.String())
-		logWrapper.Logger.SetOutput(h.output)
+		logWrapper.Logger.SetOutput(h.uiOutput)
 	} else {
-		fmt.Fprint(h.output, h.logBuffer.String())
+		fmt.Fprint(h.uiOutput, h.logBuffer.String())
 	}
 }
 
 func (h *ephemeralTerminalUI) Teardown(force bool) error {
 	h.closeScreen(force)
-	showCursor(h.output)
+	showCursor(h.uiOutput)
 	return nil
 }
 
