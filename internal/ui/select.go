@@ -11,7 +11,8 @@ import (
 // TODO: build tags to exclude options from windows
 
 // Select is responsible for determining the specific UI function given select user option, the current platform
-// config values, and environment status (such as a TTY being present).
+// config values, and environment status (such as a TTY being present). A writer is provided to capture the output
+// of the final SBOM report.
 func Select(verbose, quiet bool, reportWriter io.Writer) UI {
 	var ui UI
 

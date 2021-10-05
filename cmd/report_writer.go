@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 func reportWriter() (io.Writer, func() error, error) {
@@ -21,7 +23,10 @@ func reportWriter() (io.Writer, func() error, error) {
 		}
 		return reportFile, func() error {
 			if !appConfig.Quiet {
-				_, _ = fmt.Fprintf(os.Stderr, "Report written to %q\n", path)
+				_, err = fmt.Fprintf(os.Stderr, "Report written to %q\n", path)
+				if err != nil {
+					log.Warnf("unable to write out to stderr the report location: %+v", err)
+				}
 			}
 			return reportFile.Close()
 		}, nil
