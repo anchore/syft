@@ -51,8 +51,8 @@ func (r *rpmdbTestFileResolverMock) RelativeFileByPath(source.Location, string) 
 	return nil
 }
 
-func (r rpmdbTestFileResolverMock) FilesByMIMEType(types ...string) ([]source.Location, error) {
-	panic("implement me")
+func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]source.Location, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 func TestParseRpmDB(t *testing.T) {

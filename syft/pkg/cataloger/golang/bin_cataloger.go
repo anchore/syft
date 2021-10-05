@@ -36,19 +36,19 @@ func (c *Cataloger) Name() string {
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
 	fileMatches, err := resolver.FilesByMIMEType(mimeTypes...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find rpmdb's by glob: %w", err)
+		return nil, fmt.Errorf("failed to find bin by mime types: %w", err)
 	}
 
 	var pkgs []pkg.Package
 	for _, location := range fileMatches {
 		r, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			//TODO
+			return nil, fmt.Errorf("failed to resolve file contents by location: %w", err)
 		}
 
 		goPkgs, err := parseGoBin(location.RealPath, r)
 		if err != nil {
-			//TODO
+			// TODO: Log on type of error
 		}
 
 		pkgs = append(pkgs, goPkgs...)

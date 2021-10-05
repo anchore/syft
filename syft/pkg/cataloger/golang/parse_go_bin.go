@@ -3,17 +3,17 @@ package golang
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
+	"sort"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
 
+const packageIdentifier = "dep"
+
 func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
-	packages := make(map[string]pkg.Package)
-	pkgsSlice := make([]pkg.Package, len(packages))
+	pkgsSlice := make([]pkg.Package, 0)
 
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
@@ -21,14 +21,35 @@ func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 		return pkgsSlice, err
 	}
 
-	ver, mod := findVers(x)
-	if mod != "" {
-		fmt.Printf("\t%s\n", strings.ReplaceAll(mod[:len(mod)-1], "\n", "\n\t"))
+	_, mod := findVers(x)
+	fields := strings.Fields(mod)
+
+	// slice off root pacakge info
+	var separator int
+	for x, field := range fields {
+		if field == packageIdentifier {
+			separator = x - 1
+			break
+		}
 	}
 
-	log.Info(ver)
+	fields = fields[separator:]
 
-	// Use go tools to parse packages/mod if go bin
+	// filter deps: [dep, name, version, sha]
+	for x, field := range fields {
+		if field == packageIdentifier {
+			pkgsSlice = append(pkgsSlice, pkg.Package{
+				Name:     fields[x+1],
+				Version:  fields[x+2],
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+			})
+		}
+	}
+
+	sort.SliceStable(pkgsSlice, func(i, j int) bool {
+		return pkgsSlice[i].Name < pkgsSlice[j].Name
+	})
 
 	return pkgsSlice, nil
 }
