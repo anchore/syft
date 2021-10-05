@@ -55,7 +55,11 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		identifier = path.Join("image", fmt.Sprintf("%s-%s", name, uniqueID.String()))
 	case source.DirectoryScheme:
 		name = cleanSPDXName(srcMetadata.Path)
-		identifier = path.Join("dir", fmt.Sprintf("%s-%s", name, uniqueID.String()))
+		if name != "." {
+			identifier = path.Join("dir", fmt.Sprintf("%s-%s", name, uniqueID.String()))
+		} else {
+			identifier = path.Join("dir", fmt.Sprintf("%s", uniqueID.String()))
+		}
 	}
 
 	namespace := path.Join(anchoreNamespace, identifier)
