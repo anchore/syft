@@ -58,7 +58,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 		if name != "." {
 			identifier = path.Join("dir", fmt.Sprintf("%s-%s", name, uniqueID.String()))
 		} else {
-			identifier = path.Join("dir", fmt.Sprintf("%s", uniqueID.String()))
+			identifier = path.Join("dir", uniqueID.String())
 		}
 	}
 
