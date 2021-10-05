@@ -38,7 +38,7 @@ func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, 
 	}, nil
 }
 
-func fileMetadataFromPath(path string, info os.FileInfo) (FileMetadata, error) {
+func fileMetadataFromPath(path string, info os.FileInfo) FileMetadata {
 	uid := -1
 	gid := -1
 	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
@@ -65,5 +65,5 @@ func fileMetadataFromPath(path string, info os.FileInfo) (FileMetadata, error) {
 		UserID:   uid,
 		GroupID:  gid,
 		MIMEType: file.MIMEType(f),
-	}, nil
+	}
 }

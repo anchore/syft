@@ -16,7 +16,8 @@
     "mode": 775,
     "type": "directory",
     "userID": 0,
-    "groupID": 0
+    "groupID": 0,
+    "mimeType": ""
    }
   },
   {
@@ -33,7 +34,8 @@
       "algorithm": "sha256",
       "value": "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703"
      }
-    ]
+    ],
+    "mimeType": ""
    }
   },
   {
@@ -45,7 +47,8 @@
     "type": "symbolicLink",
     "linkDestination": "/c",
     "userID": 0,
-    "groupID": 0
+    "groupID": 0,
+    "mimeType": ""
    }
   },
   {
@@ -62,7 +65,8 @@
       "algorithm": "sha256",
       "value": "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c"
      }
-    ]
+    ],
+    "mimeType": ""
    }
   }
  ],
