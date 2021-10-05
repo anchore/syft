@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft/event"
@@ -75,7 +76,11 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	userInput := args[0]
 
 	reporter, closer, err := reportWriter()
-	defer closer()
+	defer func() {
+		if err := closer(); err != nil {
+			log.Warnf("unable to write to report destination: %+v", err)
+		}
+	}()
 
 	if err != nil {
 		return err

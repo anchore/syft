@@ -199,7 +199,11 @@ func packagesExec(_ *cobra.Command, args []string) error {
 	userInput := args[0]
 
 	reporter, closer, err := reportWriter()
-	defer closer()
+	defer func() {
+		if err := closer(); err != nil {
+			log.Warnf("unable to write to report destination: %+v", err)
+		}
+	}()
 
 	if err != nil {
 		return err
