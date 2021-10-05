@@ -1,6 +1,6 @@
 {
  "SPDXID": "SPDXRef-DOCUMENT",
- "name": "/some/path",
+ "name": "some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
   "created": "2021-09-16T20:44:35.198887Z",
