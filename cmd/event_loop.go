@@ -81,7 +81,7 @@ func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *
 func setupUI(unsubscribe func() error, ux ui.UI) (ui.UI, error) {
 	if err := ux.Setup(unsubscribe); err != nil {
 		// replace the existing UI with a (simpler) logger UI
-		ux = ui.NewLoggerUI()
+		ux = ui.NewLoggerUI(os.Stdout)
 		if err := ux.Setup(unsubscribe); err != nil {
 			// something is very wrong, bail.
 			return ux, err

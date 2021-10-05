@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"io"
 	"os"
 	"runtime"
 
@@ -11,7 +12,7 @@ import (
 
 // Select is responsible for determining the specific UI function given select user option, the current platform
 // config values, and environment status (such as a TTY being present).
-func Select(verbose, quiet bool) UI {
+func Select(verbose, quiet bool, reportWriter io.Writer) UI {
 	var ui UI
 
 	isStdoutATty := terminal.IsTerminal(int(os.Stdout.Fd()))
@@ -20,9 +21,9 @@ func Select(verbose, quiet bool) UI {
 
 	switch {
 	case runtime.GOOS == "windows" || verbose || quiet || notATerminal || !isStderrATty:
-		ui = NewLoggerUI()
+		ui = NewLoggerUI(reportWriter)
 	default:
-		ui = NewEphemeralTerminalUI()
+		ui = NewEphemeralTerminalUI(reportWriter)
 	}
 
 	return ui

@@ -113,6 +113,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		fmt.Sprintf("report output formatter, options=%v", packages.AllPresenters),
 	)
 
+	flags.StringP(
+		"file", "", "",
+		"file to write the report output to (default is STDOUT)",
+	)
+
 	///////// Upload options //////////////////////////////////////////////////////////
 	flags.StringP(
 		"host", "H", "",
@@ -156,6 +161,10 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 		return err
 	}
 
+	if err := viper.BindPFlag("file", flags.Lookup("file")); err != nil {
+		return err
+	}
+
 	///////// Upload options //////////////////////////////////////////////////////////
 
 	if err := viper.BindPFlag("anchore.host", flags.Lookup("host")); err != nil {
@@ -188,11 +197,19 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 func packagesExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
+
+	reporter, closer, err := reportWriter()
+	defer closer()
+
+	if err != nil {
+		return err
+	}
+
 	return eventLoop(
 		packagesExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
-		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
+		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet, reporter),
 		stereoscope.Cleanup,
 	)
 }

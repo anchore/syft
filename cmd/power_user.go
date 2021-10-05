@@ -73,11 +73,19 @@ func init() {
 func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
+
+	reporter, closer, err := reportWriter()
+	defer closer()
+
+	if err != nil {
+		return err
+	}
+
 	return eventLoop(
 		powerUserExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
-		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet),
+		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet, reporter),
 		stereoscope.Cleanup,
 	)
 }
