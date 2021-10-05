@@ -50,10 +50,10 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		name = srcMetadata.ImageMetadata.UserInput
-		identifier = fmt.Sprintf("image/%s", uniqueID.String())
+		identifier = fmt.Sprintf("image/%s-%s", name, uniqueID.String())
 	case source.DirectoryScheme:
 		name = srcMetadata.Path
-		identifier = fmt.Sprintf("dir/%s", uniqueID.String())
+		identifier = fmt.Sprintf("dir/%s-%s", name, uniqueID.String())
 	}
 
 	namespace := fmt.Sprintf("%s/%s", anchoreNamespace, identifier)
