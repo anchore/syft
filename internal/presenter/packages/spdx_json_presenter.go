@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/anchore/syft/internal"
@@ -12,7 +14,10 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	"github.com/google/uuid"
 )
+
+const anchoreNamespace = "https://anchore.com/syft"
 
 // SPDXJsonPresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
 type SPDXJsonPresenter struct {
@@ -41,14 +46,25 @@ func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
 
 // newSPDXJsonDocument creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
 func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
-	var name string
+	uniqueID := uuid.Must(uuid.NewRandom())
+
+	var name, input, identifier string
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		name = srcMetadata.ImageMetadata.UserInput
+		name = cleanSPDXName(srcMetadata.ImageMetadata.UserInput)
+		input = "image"
 	case source.DirectoryScheme:
-		name = srcMetadata.Path
+		name = cleanSPDXName(srcMetadata.Path)
+		input = "dir"
 	}
 
+	if name != "." {
+		identifier = path.Join(input, fmt.Sprintf("%s-%s", name, uniqueID.String()))
+	} else {
+		identifier = path.Join(input, uniqueID.String())
+	}
+
+	namespace := path.Join(anchoreNamespace, identifier)
 	packages, files, relationships := newSPDXJsonElements(catalog)
 
 	return spdx22.Document{
@@ -67,7 +83,7 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 			LicenseListVersion: spdxlicense.Version,
 		},
 		DataLicense:       "CC0-1.0",
-		DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
+		DocumentNamespace: namespace,
 		Packages:          packages,
 		Files:             files,
 		Relationships:     relationships,
@@ -112,4 +128,15 @@ func newSPDXJsonElements(catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.File,
 	}
 
 	return packages, files, relationships
+}
+
+func cleanSPDXName(name string) string {
+	// remove # according to specification
+	name = strings.Replace(name, "#", "-", -1)
+
+	// remove : for url construction
+	name = strings.Replace(name, ":", "-", -1)
+
+	// clean relative pathing
+	return path.Clean(name)
 }
