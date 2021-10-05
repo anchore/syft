@@ -128,7 +128,7 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 				log.Warnf("checksum field with no parent record: %q", value)
 				continue
 			}
-			fileRecord.Digest = file.Digest{
+			fileRecord.Digest = &file.Digest{
 				Algorithm: "sha1",
 				Value:     value,
 			}

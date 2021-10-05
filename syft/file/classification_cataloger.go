@@ -31,7 +31,7 @@ func (i *ClassificationCataloger) Catalog(resolver source.FileResolver) (map[sou
 			}
 		}
 	}
-	log.Debugf("classification cataloger discovered %d results", numResults)
+	log.Debugf("file classifier discovered %d results", numResults)
 
 	return results, nil
 }
