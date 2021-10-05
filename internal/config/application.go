@@ -89,10 +89,43 @@ func (cfg Application) loadDefaultValues(v *viper.Viper) {
 	}
 }
 
-// build inflates simple config values into syft native objects (or other complex objects) after the config is fully read in.
 func (cfg *Application) parseConfigValues() error {
+	// parse application config options
+	for _, optionFn := range []func() error{
+		cfg.parseUploadOptions,
+		cfg.parseLogLevelOption,
+	} {
+		if err := optionFn(); err != nil {
+			return err
+		}
+	}
+
+	// parse nested config options
+	// for each field in the configuration struct, see if the field implements the parser interface
+	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
+	value := reflect.ValueOf(cfg).Elem()
+	for i := 0; i < value.NumField(); i++ {
+		// note: since the interface method of parser is a pointer receiver we need to get the value of the field as a pointer.
+		if parsable, ok := value.Field(i).Addr().Interface().(parser); ok {
+			// the field implements parser, call it
+			if err := parsable.parseConfigValues(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (cfg *Application) parseUploadOptions() error {
+	if cfg.Anchore.Host == "" && cfg.Anchore.Dockerfile != "" {
+		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
+	}
+	return nil
+}
+
+func (cfg *Application) parseLogLevelOption() error {
 	if cfg.Quiet {
-		// TODO: this is bad: quiet option trumps all other logging options
+		// TODO: this is bad: quiet option trumps all other logging options (such as to a file on disk)
 		// we should be able to quiet the console logging and leave file logging alone...
 		// ... this will be an enhancement for later
 		cfg.Log.LevelOpt = logrus.PanicLevel
@@ -116,28 +149,10 @@ func (cfg *Application) parseConfigValues() error {
 			case v >= 2:
 				cfg.Log.LevelOpt = logrus.DebugLevel
 			default:
-				cfg.Log.LevelOpt = logrus.WarnLevel
+				cfg.Log.LevelOpt = logrus.ErrorLevel
 			}
 		}
 	}
-
-	if cfg.Anchore.Host == "" && cfg.Anchore.Dockerfile != "" {
-		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
-	}
-
-	// for each field in the configuration struct, see if the field implements the parser interface
-	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
-	value := reflect.ValueOf(cfg).Elem()
-	for i := 0; i < value.NumField(); i++ {
-		// note: since the interface method of parser is a pointer receiver we need to get the value of the field as a pointer.
-		if parsable, ok := value.Field(i).Addr().Interface().(parser); ok {
-			// the field implements parser, call it
-			if err := parsable.parseConfigValues(); err != nil {
-				return err
-			}
-		}
-	}
-
 	return nil
 }
 
