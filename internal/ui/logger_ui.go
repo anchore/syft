@@ -13,6 +13,7 @@ type loggerUI struct {
 	reportOutput io.Writer
 }
 
+// NewLoggerUI writes all events to the common application logger and writes the final report to the given writer.
 func NewLoggerUI(reportWriter io.Writer) UI {
 	return &loggerUI{
 		reportOutput: reportWriter,

@@ -22,12 +22,7 @@ func reportWriter() (io.Writer, func() error, error) {
 			return nil, nop, fmt.Errorf("unable to create report file: %w", err)
 		}
 		return reportFile, func() error {
-			if !appConfig.Quiet {
-				_, err = fmt.Fprintf(os.Stderr, "Report written to %q\n", path)
-				if err != nil {
-					log.Warnf("unable to write out to stderr the report location: %+v", err)
-				}
-			}
+			log.Infof("report written to file=%q", path)
 			return reportFile.Close()
 		}, nil
 	}

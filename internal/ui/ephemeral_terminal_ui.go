@@ -42,6 +42,7 @@ type ephemeralTerminalUI struct {
 	reportOutput io.Writer
 }
 
+// NewEphemeralTerminalUI writes all events to a TUI and writes the final report to the given writer.
 func NewEphemeralTerminalUI(reportWriter io.Writer) UI {
 	return &ephemeralTerminalUI{
 		handler:      ui.NewHandler(),

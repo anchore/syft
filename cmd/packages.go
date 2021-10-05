@@ -213,8 +213,8 @@ func packagesExec(_ *cobra.Command, args []string) error {
 		packagesExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
-		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet, reporter),
 		stereoscope.Cleanup,
+		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet, reporter)...,
 	)
 }
 

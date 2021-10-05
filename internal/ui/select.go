@@ -11,10 +11,11 @@ import (
 // TODO: build tags to exclude options from windows
 
 // Select is responsible for determining the specific UI function given select user option, the current platform
-// config values, and environment status (such as a TTY being present). A writer is provided to capture the output
-// of the final SBOM report.
-func Select(verbose, quiet bool, reportWriter io.Writer) UI {
-	var ui UI
+// config values, and environment status (such as a TTY being present). The first UI in the returned slice of UIs
+// is intended to be used and the UIs that follow are meant to be attempted only in a fallback posture when there
+// are environmental problems (e.g. cannot write to the terminal). A writer is provided to capture the output of
+// the final SBOM report.
+func Select(verbose, quiet bool, reportWriter io.Writer) (uis []UI) {
 
 	isStdoutATty := terminal.IsTerminal(int(os.Stdout.Fd()))
 	isStderrATty := terminal.IsTerminal(int(os.Stderr.Fd()))
@@ -22,10 +23,10 @@ func Select(verbose, quiet bool, reportWriter io.Writer) UI {
 
 	switch {
 	case runtime.GOOS == "windows" || verbose || quiet || notATerminal || !isStderrATty:
-		ui = NewLoggerUI(reportWriter)
+		uis = append(uis, NewLoggerUI(reportWriter))
 	default:
-		ui = NewEphemeralTerminalUI(reportWriter)
+		uis = append(uis, NewEphemeralTerminalUI(reportWriter), NewLoggerUI(reportWriter))
 	}
 
-	return ui
+	return uis
 }
