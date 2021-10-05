@@ -40,17 +40,6 @@ func init() {
 
 	rootCmd.PersistentFlags().CountVarP(&persistentOpts.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
 
-	rootCmd.PersistentFlags().StringP(
-		"file", "f", "",
-		"file to write the report output to (default is STDOUT)",
-	)
-
-	flag = "file"
-	if err := viper.BindPFlag(flag, rootCmd.PersistentFlags().Lookup(flag)); err != nil {
-		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
-		os.Exit(1)
-	}
-
 	// set common options that are not universal (package subcommand-alias specific)
 	setPackageFlags(rootCmd.Flags())
 }
