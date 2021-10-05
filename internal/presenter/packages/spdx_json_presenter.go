@@ -48,18 +48,20 @@ func (pres *SPDXJsonPresenter) Present(output io.Writer) error {
 func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx22.Document {
 	uniqueID := uuid.Must(uuid.NewRandom())
 
-	var name, identifier string
+	var name, input, identifier string
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		name = cleanSPDXName(srcMetadata.ImageMetadata.UserInput)
-		identifier = path.Join("image", fmt.Sprintf("%s-%s", name, uniqueID.String()))
+		input = "image"
 	case source.DirectoryScheme:
 		name = cleanSPDXName(srcMetadata.Path)
-		if name != "." {
-			identifier = path.Join("dir", fmt.Sprintf("%s-%s", name, uniqueID.String()))
-		} else {
-			identifier = path.Join("dir", uniqueID.String())
-		}
+		input = "dir"
+	}
+
+	if name != "." {
+		identifier = path.Join(input, fmt.Sprintf("%s-%s", name, uniqueID.String()))
+	} else {
+		identifier = path.Join(input, uniqueID.String())
 	}
 
 	namespace := path.Join(anchoreNamespace, identifier)
