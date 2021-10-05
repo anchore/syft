@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/anchore/syft/internal"
@@ -49,14 +51,14 @@ func newSPDXJsonDocument(catalog *pkg.Catalog, srcMetadata source.Metadata) spdx
 	var name, identifier string
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		name = srcMetadata.ImageMetadata.UserInput
-		identifier = fmt.Sprintf("image/%s-%s", name, uniqueID.String())
+		name = cleanSPDXName(srcMetadata.ImageMetadata.UserInput)
+		identifier = path.Join("image", fmt.Sprintf("%s-%s", name, uniqueID.String()))
 	case source.DirectoryScheme:
-		name = srcMetadata.Path
-		identifier = fmt.Sprintf("dir/%s-%s", name, uniqueID.String())
+		name = cleanSPDXName(srcMetadata.Path)
+		identifier = path.Join("dir", fmt.Sprintf("%s-%s", name, uniqueID.String()))
 	}
 
-	namespace := fmt.Sprintf("%s/%s", anchoreNamespace, identifier)
+	namespace := path.Join(anchoreNamespace, identifier)
 	packages, files, relationships := newSPDXJsonElements(catalog)
 
 	return spdx22.Document{
@@ -120,4 +122,15 @@ func newSPDXJsonElements(catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.File,
 	}
 
 	return packages, files, relationships
+}
+
+func cleanSPDXName(name string) string {
+	// remove # according to specification
+	name = strings.Replace(name, "#", "-", -1)
+
+	// remove : for url construction
+	name = strings.Replace(name, ":", "-", -1)
+
+	// clean relative pathing
+	return path.Clean(name)
 }
