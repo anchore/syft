@@ -1,8 +1,6 @@
 package golang
 
 import (
-	"bytes"
-	"encoding/binary"
 	"io"
 	"sort"
 	"strings"
@@ -12,7 +10,8 @@ import (
 
 const packageIdentifier = "dep"
 
-func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
+// TODO: do we want to include path from the signature in any metadata
+func parseGoBin(_ string, reader io.ReadCloser) ([]pkg.Package, error) {
 	pkgsSlice := make([]pkg.Package, 0)
 
 	// Identify if bin was compiled by go
@@ -24,7 +23,7 @@ func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 	_, mod := findVers(x)
 	fields := strings.Fields(mod)
 
-	// slice off root pacakge info
+	// slice off root package info
 	var separator int
 	for x, field := range fields {
 		if field == packageIdentifier {

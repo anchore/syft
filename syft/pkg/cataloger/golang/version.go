@@ -206,7 +206,7 @@ func findVers(x exe) (vers, mod string) {
 	} else {
 		mod = ""
 	}
-	return
+	return vers, mod
 }
 
 // readString returns the string at address addr in the executable x.

@@ -6,6 +6,7 @@ package golang
 import (
 	"fmt"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -48,7 +49,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 
 		goPkgs, err := parseGoBin(location.RealPath, r)
 		if err != nil {
-			// TODO: Log on type of error
+			log.Infof("could not parse go bin for: %w", err)
 		}
 
 		pkgs = append(pkgs, goPkgs...)

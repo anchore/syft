@@ -162,15 +162,15 @@ func (x *peExe) ReadData(addr, size uint64) ([]byte, error) {
 func (x *peExe) DataStart() uint64 {
 	// Assume data is first writable section.
 	const (
-		IMAGE_SCN_CNT_CODE               = 0x00000020
-		IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040
-		IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080
-		IMAGE_SCN_MEM_EXECUTE            = 0x20000000
-		IMAGE_SCN_MEM_READ               = 0x40000000
-		IMAGE_SCN_MEM_WRITE              = 0x80000000
-		IMAGE_SCN_MEM_DISCARDABLE        = 0x2000000
-		IMAGE_SCN_LNK_NRELOC_OVFL        = 0x1000000
-		IMAGE_SCN_ALIGN_32BYTES          = 0x600000
+		IMAGE_SCN_CNT_CODE               = 0x00000020 //nolint
+		IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040 //nolint
+		IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080 //nolint
+		IMAGE_SCN_MEM_EXECUTE            = 0x20000000 //nolint
+		IMAGE_SCN_MEM_READ               = 0x40000000 //nolint
+		IMAGE_SCN_MEM_WRITE              = 0x80000000 //nolint
+		IMAGE_SCN_MEM_DISCARDABLE        = 0x2000000  //nolint
+		IMAGE_SCN_LNK_NRELOC_OVFL        = 0x1000000  //nolint
+		IMAGE_SCN_ALIGN_32BYTES          = 0x600000   //nolint
 	)
 	for _, sect := range x.f.Sections {
 		if sect.VirtualAddress != 0 && sect.Size != 0 &&
