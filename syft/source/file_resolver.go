@@ -29,6 +29,8 @@ type FilePathResolver interface {
 	FilesByPath(paths ...string) ([]Location, error)
 	// FilesByGlob fetches a set of file references which the given glob matches
 	FilesByGlob(patterns ...string) ([]Location, error)
+	// FilesByGlob fetches a set of file references which the contents have been classified as one of the given MIME Types
+	FilesByMIMEType(types ...string) ([]Location, error)
 	// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 	// This is helpful when attempting to find a file that is in the same layer or lower as another file.
 	RelativeFileByPath(_ Location, path string) *Location

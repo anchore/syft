@@ -151,6 +151,20 @@ func (r *imageSquashResolver) AllLocations() <-chan Location {
 	return results
 }
 
+func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+	refs, err := r.img.FilesByMIMETypeFromSquash(types...)
+	if err != nil {
+		return nil, err
+	}
+
+	var locations []Location
+	for _, ref := range refs {
+		locations = append(locations, NewLocationFromReference(ref))
+	}
+
+	return locations, nil
+}
+
 func (r *imageSquashResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
 	return fileMetadataByLocation(r.img, location)
 }

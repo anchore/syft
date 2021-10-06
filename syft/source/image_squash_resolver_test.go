@@ -3,6 +3,9 @@ package source
 import (
 	"testing"
 
+	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
@@ -221,6 +224,37 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 
 			if entry.Layer.Metadata.Index != c.resolveLayer {
 				t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, c.resolveLayer)
+			}
+		})
+	}
+}
+
+func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
+
+	tests := []struct {
+		fixtureName   string
+		mimeType      string
+		expectedPaths *strset.Set
+	}{
+		{
+			fixtureName:   "image-simple",
+			mimeType:      "text/plain",
+			expectedPaths: strset.New("/somefile-1.txt", "/somefile-2.txt", "/really/nested/file-3.txt"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.fixtureName, func(t *testing.T) {
+			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
+
+			resolver, err := newImageSquashResolver(img)
+			assert.NoError(t, err)
+
+			locations, err := resolver.FilesByMIMEType(test.mimeType)
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.expectedPaths.Size(), len(locations))
+			for _, l := range locations {
+				assert.True(t, test.expectedPaths.Has(l.RealPath), "does not have path %q", l.RealPath)
 			}
 		})
 	}

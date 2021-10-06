@@ -3,6 +3,8 @@ package source
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
@@ -235,6 +237,37 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 				if entry.Layer.Metadata.Index != expected.layer {
 					t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, expected.layer)
 				}
+			}
+		})
+	}
+}
+
+func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
+
+	tests := []struct {
+		fixtureName   string
+		mimeType      string
+		expectedPaths []string
+	}{
+		{
+			fixtureName:   "image-duplicate-path",
+			mimeType:      "text/plain",
+			expectedPaths: []string{"/somefile-1.txt", "/somefile-1.txt"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.fixtureName, func(t *testing.T) {
+			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
+
+			resolver, err := newAllLayersResolver(img)
+			assert.NoError(t, err)
+
+			locations, err := resolver.FilesByMIMEType(test.mimeType)
+			assert.NoError(t, err)
+
+			assert.Len(t, test.expectedPaths, len(locations))
+			for idx, l := range locations {
+				assert.Equal(t, test.expectedPaths[idx], l.RealPath, "does not have path %q", l.RealPath)
 			}
 		})
 	}

@@ -8,7 +8,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -35,10 +34,11 @@ type directoryResolver struct {
 	path     string
 	cwd      string
 	fileTree *filetree.FileTree
-	infos    map[file.ID]os.FileInfo
+	metadata map[file.ID]FileMetadata
 	// TODO: wire up to report these paths in the json report
-	pathFilterFns []pathFilterFn
-	errPaths      map[string]error
+	pathFilterFns  []pathFilterFn
+	refsByMIMEType map[string][]file.Reference
+	errPaths       map[string]error
 }
 
 func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
@@ -52,12 +52,13 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 	}
 
 	resolver := directoryResolver{
-		path:          root,
-		cwd:           cwd,
-		fileTree:      filetree.NewFileTree(),
-		infos:         make(map[file.ID]os.FileInfo),
-		pathFilterFns: pathFilters,
-		errPaths:      make(map[string]error),
+		path:           root,
+		cwd:            cwd,
+		fileTree:       filetree.NewFileTree(),
+		metadata:       make(map[file.ID]FileMetadata),
+		pathFilterFns:  pathFilters,
+		refsByMIMEType: make(map[string][]file.Reference),
+		errPaths:       make(map[string]error),
 	}
 
 	return &resolver, indexAllRoots(root, resolver.indexTree)
@@ -158,7 +159,11 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 		}
 	}
 
-	r.infos[ref.ID()] = info
+	metadata := fileMetadataFromPath(p, info)
+	if ref != nil {
+		r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
+	}
+	r.metadata[ref.ID()] = metadata
 	return newRoot, nil
 }
 
@@ -207,6 +212,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			log.Warnf("unable to get file by path=%q : %+v", userPath, err)
 			continue
 		}
+		// TODO: why not use stored metadata?
 		fileMeta, err := os.Stat(userStrPath)
 		if os.IsNotExist(err) {
 			continue
@@ -280,25 +286,24 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 }
 
 func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
-	info, exists := r.infos[location.ref.ID()]
+	metadata, exists := r.metadata[location.ref.ID()]
 	if !exists {
 		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 	}
 
-	uid := -1
-	gid := -1
-	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
-		uid = int(stat.Uid)
-		gid = int(stat.Gid)
-	}
+	return metadata, nil
+}
 
-	return FileMetadata{
-		Mode: info.Mode(),
-		Type: newFileTypeFromMode(info.Mode()),
-		// unsupported across platforms
-		UserID:  uid,
-		GroupID: gid,
-	}, nil
+func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+	var locations []Location
+	for _, ty := range types {
+		if refs, ok := r.refsByMIMEType[ty]; ok {
+			for _, ref := range refs {
+				locations = append(locations, NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref))
+			}
+		}
+	}
+	return locations, nil
 }
 
 func isUnixSystemRuntimePath(path string) bool {
