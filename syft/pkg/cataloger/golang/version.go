@@ -1,4 +1,5 @@
 // This code was copied from the Go std library.
+// https://github.com/golang/go/blob/master/src/cmd/go/internal/version/version.go
 // Copyright 2011 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.

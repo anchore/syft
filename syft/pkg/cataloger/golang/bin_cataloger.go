@@ -53,6 +53,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 			log.Infof("could not parse go bin for: %w", err)
 		}
 
+		r.Close()
 		pkgs = append(pkgs, goPkgs...)
 	}
 

@@ -16,7 +16,6 @@ func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
 	if err != nil {
-		reader.Close()
 		return nil, err
 	}
 
@@ -24,7 +23,6 @@ func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 
 	pkgs := buildGoPkgInfo(path, mod)
 
-	reader.Close()
 	return pkgs, nil
 }
 
