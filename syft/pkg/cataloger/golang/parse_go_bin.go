@@ -12,16 +12,24 @@ const packageIdentifier = "dep"
 
 // TODO: do we want to include path from the signature in any metadata
 func parseGoBin(_ string, reader io.ReadCloser) ([]pkg.Package, error) {
-	pkgsSlice := make([]pkg.Package, 0)
 
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
 	if err != nil {
 		reader.Close()
-		return pkgsSlice, err
+		return nil, err
 	}
 
 	_, mod := findVers(x)
+
+	pkgs := buildGoPkgInfo(mod)
+
+	reader.Close()
+	return pkgs, nil
+}
+
+func buildGoPkgInfo(mod string) []pkg.Package {
+	pkgsSlice := make([]pkg.Package, 0)
 	fields := strings.Fields(mod)
 
 	// slice off root package info
@@ -51,6 +59,5 @@ func parseGoBin(_ string, reader io.ReadCloser) ([]pkg.Package, error) {
 		return pkgsSlice[i].Name < pkgsSlice[j].Name
 	})
 
-	reader.Close()
-	return pkgsSlice, nil
+	return pkgsSlice
 }
