@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	expectedELFPkg   = 2
-	expectedWINPkg   = 2
-	expectedMACOSPkg = 2
+	expectedELFPkg   = 3
+	expectedWINPkg   = 3
+	expectedMACOSPkg = 3
 )
 
 func TestRegressionGoArchDiscovery(t *testing.T) {

@@ -1,6 +1,6 @@
 FROM golang:latest as builder
 WORKDIR /app
-COPY go.sum go.mod app.go .
+COPY go.sum go.mod app.go ./
 
 RUN GOOS=linux go build -o elf .
 RUN GOOS=windows go build -o win .
