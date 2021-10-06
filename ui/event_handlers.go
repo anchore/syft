@@ -184,7 +184,6 @@ func PullDockerImageHandler(ctx context.Context, fr *frame.Frame, event partybus
 }
 
 // FetchImageHandler periodically writes a the image save and write-to-disk process in the form of a progress bar.
-
 func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseFetchImage(event)
 	if err != nil {
@@ -313,7 +312,6 @@ func PackageCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 }
 
 // SecretsCatalogerStartedHandler shows the intermittent secrets searching progress.
-
 func SecretsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	prog, err := syftEventParsers.ParseSecretsCatalogingStarted(event)
 	if err != nil {
@@ -401,7 +399,6 @@ func FileMetadataCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, e
 }
 
 // FileIndexingStartedHandler shows the intermittent indexing progress from a directory resolver.
-
 func FileIndexingStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	path, prog, err := syftEventParsers.ParseFileIndexingStarted(event)
 	if err != nil {
@@ -487,7 +484,6 @@ func FileDigestsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, ev
 }
 
 // ImportStartedHandler shows the intermittent upload progress to Anchore Enterprise.
-
 func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	host, prog, err := syftEventParsers.ParseImportStarted(event)
 	if err != nil {
