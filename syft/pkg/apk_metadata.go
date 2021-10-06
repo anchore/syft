@@ -9,7 +9,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-const ApkDbGlob = "**/lib/apk/db/installed"
+const ApkDBGlob = "**/lib/apk/db/installed"
 
 var _ FileOwner = (*ApkMetadata)(nil)
 

@@ -10,7 +10,7 @@ type CreationInfo struct {
 	Created time.Time `json:"created"`
 	// Identify who (or what, in the case of a tool) created the SPDX file. If the SPDX file was created by an
 	// individual, indicate the person's name. If the SPDX file was created on behalf of a company or organization,
-	//indicate the entity name. If the SPDX file was created using a software tool, indicate the name and version
+	// indicate the entity name. If the SPDX file was created using a software tool, indicate the name and version
 	// for that tool. If multiple participants or tools were involved, use multiple instances of this field. Person
 	// name or organization name may be designated as “anonymous” if appropriate.
 	Creators []string `json:"creators"`

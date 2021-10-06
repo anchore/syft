@@ -36,9 +36,8 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
-// nolint:funlen
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
-	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDbGlob)
+	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDBGlob)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find dpkg status files's by glob: %w", err)
 	}
@@ -80,15 +79,13 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 	// get license information from the copyright file
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, p)
 
-	if copyrightReader != nil {
+	if copyrightReader != nil && copyrightLocation != nil {
 		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.VirtualPath)
 		// attach the licenses
 		p.Licenses = parseLicensesFromCopyright(copyrightReader)
 
 		// keep a record of the file where this was discovered
-		if copyrightLocation != nil {
-			p.Locations = append(p.Locations, *copyrightLocation)
-		}
+		p.Locations = append(p.Locations, *copyrightLocation)
 	}
 }
 
@@ -127,28 +124,24 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 
 	md5Reader, md5Location := fetchMd5Contents(resolver, dbLocation, p)
 
-	if md5Reader != nil {
+	if md5Reader != nil && md5Location != nil {
 		defer internal.CloseAndLogError(md5Reader, md5Location.VirtualPath)
 		// attach the file list
 		files = append(files, parseDpkgMD5Info(md5Reader)...)
 
 		// keep a record of the file where this was discovered
-		if md5Location != nil {
-			locations = append(locations, *md5Location)
-		}
+		locations = append(locations, *md5Location)
 	}
 
 	conffilesReader, conffilesLocation := fetchConffileContents(resolver, dbLocation, p)
 
-	if conffilesReader != nil {
+	if conffilesReader != nil && conffilesLocation != nil {
 		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.VirtualPath)
 		// attach the file list
 		files = append(files, parseDpkgConffileInfo(md5Reader)...)
 
 		// keep a record of the file where this was discovered
-		if conffilesLocation != nil {
-			locations = append(locations, *conffilesLocation)
-		}
+		locations = append(locations, *conffilesLocation)
 	}
 
 	return files, locations

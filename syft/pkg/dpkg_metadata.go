@@ -10,7 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-const DpkgDbGlob = "**/var/lib/dpkg/{status,status.d/**}"
+const DpkgDBGlob = "**/var/lib/dpkg/{status,status.d/**}"
 
 var _ FileOwner = (*DpkgMetadata)(nil)
 
