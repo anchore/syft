@@ -1,3 +1,8 @@
+// This code was copied from the Go std library.
+// Copyright 2019 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package golang
 
 import (
@@ -10,8 +15,10 @@ import (
 )
 
 // An exe is a generic interface to an OS executable (ELF, Mach-O, PE, XCOFF).
-// TODO: add back close method since we have a closer
 type exe interface {
+	// Close closes the underlying file.
+	Close() error
+
 	// ReadData reads and returns up to size byte starting at virtual address addr.
 	ReadData(addr, size uint64) ([]byte, error)
 
@@ -20,7 +27,21 @@ type exe interface {
 }
 
 // openExe opens file and returns it as an exe.
+// we changed this signature from accpeting a string
+// to a ReadCloser so we could adapt the code to the
+// stereoscope api. We removed the file open methods.
 func openExe(file io.ReadCloser) (exe, error) {
+	/*
+		f, err := os.Open(file)
+		if err != nil {
+			return nil, err
+		}
+		data := make([]byte, 16)
+		if _, err := io.ReadFull(f, data); err != nil {
+			return nil, err
+		}
+		f.Seek(0, 0)
+	*/
 	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
@@ -34,7 +55,7 @@ func openExe(file io.ReadCloser) (exe, error) {
 			return nil, err
 		}
 
-		return &elfExe{e}, nil
+		return &elfExe{file, e}, nil
 	}
 
 	if bytes.HasPrefix(data, []byte("MZ")) {
@@ -42,7 +63,7 @@ func openExe(file io.ReadCloser) (exe, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &peExe{e}, nil
+		return &peExe{file, e}, nil
 	}
 
 	if bytes.HasPrefix(data, []byte("\xFE\xED\xFA")) || bytes.HasPrefix(data[1:], []byte("\xFA\xED\xFE")) {
@@ -50,15 +71,21 @@ func openExe(file io.ReadCloser) (exe, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &machoExe{e}, nil
+		return &machoExe{file, e}, nil
 	}
 
 	return nil, fmt.Errorf("unrecognized executable format")
 }
 
 // elfExe is the ELF implementation of the exe interface.
+// updated os to be io.ReadCloser to interopt with stereoscope
 type elfExe struct {
-	f *elf.File
+	os io.ReadCloser
+	f  *elf.File
+}
+
+func (x *elfExe) Close() error {
+	return x.os.Close()
 }
 
 func (x *elfExe) ReadData(addr, size uint64) ([]byte, error) {
@@ -95,7 +122,12 @@ func (x *elfExe) DataStart() uint64 {
 
 // peExe is the PE (Windows Portable Executable) implementation of the exe interface.
 type peExe struct {
-	f *pe.File
+	os io.ReadCloser
+	f  *pe.File
+}
+
+func (x *peExe) Close() error {
+	return x.os.Close()
 }
 
 func (x *peExe) imageBase() uint64 {
@@ -151,7 +183,12 @@ func (x *peExe) DataStart() uint64 {
 
 // machoExe is the Mach-O (Apple macOS/iOS) implementation of the exe interface.
 type machoExe struct {
-	f *macho.File
+	os io.ReadCloser
+	f  *macho.File
+}
+
+func (x *machoExe) Close() error {
+	return x.os.Close()
 }
 
 func (x *machoExe) ReadData(addr, size uint64) ([]byte, error) {
@@ -196,3 +233,37 @@ func (x *machoExe) DataStart() uint64 {
 	}
 	return 0
 }
+
+/*
+// xcoffExe is the XCOFF (AIX eXtended COFF) implementation of the exe interface.
+type xcoffExe struct {
+	os *os.File
+	f  *xcoff.File
+}
+
+func (x *xcoffExe) Close() error {
+	return x.os.Close()
+}
+
+func (x *xcoffExe) ReadData(addr, size uint64) ([]byte, error) {
+	for _, sect := range x.f.Sections {
+		if uint64(sect.VirtualAddress) <= addr && addr <= uint64(sect.VirtualAddress+sect.Size-1) {
+			n := uint64(sect.VirtualAddress+sect.Size) - addr
+			if n > size {
+				n = size
+			}
+			data := make([]byte, n)
+			_, err := sect.ReadAt(data, int64(addr-uint64(sect.VirtualAddress)))
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
+		}
+	}
+	return nil, fmt.Errorf("address not mapped")
+}
+
+func (x *xcoffExe) DataStart() uint64 {
+	return x.f.SectionByType(xcoff.STYP_DATA).VirtualAddress
+}
+*/
