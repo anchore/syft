@@ -29,20 +29,20 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		{
 			// example image: docker.io/nuxeo:latest
 			pkg.JavaPkg,
-			candidateKey{PkgName: "elasticsearch"}, //, Vendor: "elasticsearch"},
+			candidateKey{PkgName: "elasticsearch"}, // , Vendor: "elasticsearch"},
 			candidateAddition{AdditionalVendors: []string{"elastic"}},
 		},
 		{
 			// example image: docker.io/kaazing-gateway:latest
 			pkg.JavaPkg,
-			candidateKey{PkgName: "log4j"}, //, Vendor: "apache-software-foundation"},
+			candidateKey{PkgName: "log4j"}, // , Vendor: "apache-software-foundation"},
 			candidateAddition{AdditionalVendors: []string{"apache"}},
 		},
 
 		{
 			// example image: cassandra:latest
 			pkg.JavaPkg,
-			candidateKey{PkgName: "apache-cassandra"}, //, Vendor: "apache"},
+			candidateKey{PkgName: "apache-cassandra"}, // , Vendor: "apache"},
 			candidateAddition{AdditionalProducts: []string{"cassandra"}},
 		},
 

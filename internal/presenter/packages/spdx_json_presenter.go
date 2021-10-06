@@ -132,10 +132,10 @@ func newSPDXJsonElements(catalog *pkg.Catalog) ([]spdx22.Package, []spdx22.File,
 
 func cleanSPDXName(name string) string {
 	// remove # according to specification
-	name = strings.Replace(name, "#", "-", -1)
+	name = strings.ReplaceAll(name, "#", "-")
 
 	// remove : for url construction
-	name = strings.Replace(name, ":", "-", -1)
+	name = strings.ReplaceAll(name, ":", "-")
 
 	// clean relative pathing
 	return path.Clean(name)

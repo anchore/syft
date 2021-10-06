@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -49,14 +50,21 @@ type LicenseList struct {
 }
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatalf("unable to get licenses list: %+v", err)
+		return fmt.Errorf("unable to get licenses list: %+v", err)
 	}
 
 	var result LicenseList
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Fatalf("unable to decode license list: %+v", err)
+		return fmt.Errorf("unable to decode license list: %+v", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -66,7 +74,7 @@ func main() {
 
 	f, err := os.Create(source)
 	if err != nil {
-		log.Fatalf("unable to create %q: %+v", source, err)
+		return fmt.Errorf("unable to create %q: %+v", source, err)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -89,8 +97,9 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("unable to generate template: %+v", err)
+		return fmt.Errorf("unable to generate template: %+v", err)
 	}
+	return nil
 }
 
 // Parsing the provided SPDX license list necessitates a two pass approach.

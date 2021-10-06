@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/distro"
 )
 
-const RpmDbGlob = "**/var/lib/rpm/Packages"
+const RpmDBGlob = "**/var/lib/rpm/Packages"
 
 var _ FileOwner = (*RpmdbMetadata)(nil)
 

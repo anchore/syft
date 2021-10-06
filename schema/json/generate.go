@@ -45,11 +45,7 @@ func build() *jsonschema.Schema {
 	reflector := &jsonschema.Reflector{
 		AllowAdditionalProperties: true,
 		TypeNamer: func(r reflect.Type) string {
-			name := r.Name()
-			if strings.HasPrefix(name, "JSON") {
-				name = strings.TrimPrefix(name, "JSON")
-			}
-			return name
+			return strings.TrimPrefix(r.Name(), "JSON")
 		},
 	}
 	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&poweruser.JSONDocument{}))

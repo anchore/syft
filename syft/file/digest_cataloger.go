@@ -99,7 +99,7 @@ func DigestAlgorithmName(hash crypto.Hash) string {
 
 func CleanDigestAlgorithmName(name string) string {
 	lower := strings.ToLower(name)
-	return strings.Replace(lower, "-", "", -1)
+	return strings.ReplaceAll(lower, "-", "")
 }
 
 func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {

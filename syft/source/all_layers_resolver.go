@@ -120,7 +120,7 @@ func (r *allLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-// nolint:gocognit
+
 func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
