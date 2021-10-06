@@ -35,16 +35,16 @@ func (c *Cataloger) Name() string {
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
+	pkgs := make([]pkg.Package, 0)
 	fileMatches, err := resolver.FilesByMIMEType(mimeTypes...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find bin by mime types: %w", err)
+		return pkgs, fmt.Errorf("failed to find bin by mime types: %w", err)
 	}
 
-	var pkgs []pkg.Package
 	for _, location := range fileMatches {
 		r, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve file contents by location: %w", err)
+			return pkgs, fmt.Errorf("failed to resolve file contents by location: %w", err)
 		}
 
 		goPkgs, err := parseGoBin(location.RealPath, r)

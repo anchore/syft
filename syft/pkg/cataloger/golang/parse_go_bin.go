@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 const packageIdentifier = "dep"
 
 // TODO: do we want to include path from the signature in any metadata
-func parseGoBin(_ string, reader io.ReadCloser) ([]pkg.Package, error) {
-
+func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
 	if err != nil {
@@ -22,13 +22,13 @@ func parseGoBin(_ string, reader io.ReadCloser) ([]pkg.Package, error) {
 
 	_, mod := findVers(x)
 
-	pkgs := buildGoPkgInfo(mod)
+	pkgs := buildGoPkgInfo(path, mod)
 
 	reader.Close()
 	return pkgs, nil
 }
 
-func buildGoPkgInfo(mod string) []pkg.Package {
+func buildGoPkgInfo(path, mod string) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
 	fields := strings.Fields(mod)
 
@@ -51,6 +51,11 @@ func buildGoPkgInfo(mod string) []pkg.Package {
 				Version:  fields[x+2],
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
+				Locations: []source.Location{
+					{
+						RealPath: path,
+					},
+				},
 			})
 		}
 	}

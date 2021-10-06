@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,12 +30,18 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
+					Locations: []source.Location{
+						{},
+					},
 				},
 				{
 					Name:     "github.com/anchore/client-go",
 					Version:  "v0.0.0-20210222170800-9c70f9b80bcf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
+					Locations: []source.Location{
+						{},
+					},
 				},
 			},
 		},
@@ -43,7 +50,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			pkgs := buildGoPkgInfo(tt.mod)
+			pkgs := buildGoPkgInfo("", tt.mod)
 			assert.Equal(t, tt.expected, pkgs)
 		})
 	}
