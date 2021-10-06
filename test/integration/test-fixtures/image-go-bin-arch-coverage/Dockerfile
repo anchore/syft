@@ -11,5 +11,6 @@ FROM scratch
 WORKDIR /tmp
 COPY --from=builder /app/elf /
 COPY --from=builder /app/win /
+COPY --from=builder /app/macos /
 
 ENTRYPOINT ["/elf"]

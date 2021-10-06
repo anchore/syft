@@ -13,6 +13,7 @@ import (
 
 const catalogerName = "go-bin-cataloger"
 
+// current mime types to search by to discover go binaries
 var mimeTypes = []string{
 	"application/x-executable",
 	"application/x-mach-binary",
