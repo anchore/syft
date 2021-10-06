@@ -4,35 +4,59 @@
 #  include:
 #    - EXC0002 # disable excluding of issues about comments from golint
 
+linters-settings:
+
+  cyclop:
+    # the maximal code complexity to report
+    max-complexity: 15
+
 linters:
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
   enable:
     - asciicheck
     - bodyclose
+    - cyclop
     - deadcode
     - depguard
     - dogsled
     - dupl
+    - durationcheck
     - errcheck
+    - errname
+    - errorlint
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
     - funlen
+    - gci
     - gocognit
     - goconst
     - gocritic
     - gocyclo
     - gofmt
+    - gofumpt
     - goimports
-    - golint
+    - gomoddirectives
+    - gomodguard
     - goprintffuncname
     - gosec
     - gosimple
     - govet
+    - ifshort
+    - importas
     - ineffassign
+#    - ireturn   # will be added in 1.43.0 (accept interfaces, return structs)
+    - makezero
     - misspell
     - nakedret
+    - nilerr
+#    - nilnil   # will be added in 1.43.0
     - nolintlint
+    - paralleltest
+    - predeclared
+    - revive
     - rowserrcheck
-    - scopelint
     - staticcheck
     - structcheck
     - stylecheck
@@ -41,19 +65,29 @@ linters:
     - unparam
     - unused
     - varcheck
+    - wastedassign
     - whitespace
+#    - wrapcheck
+
 
 # do not enable...
+#    - exhaustive        # makes to many assumptions about enums and if a switch case should contain all enum instances
+#    - exhaustivestruct  # we like to depend on zero values
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
 #    - godot
 #    - godox
-#    - goerr113
+#    - goerr113    # does not allow use of dynamic errors
+#    - golint      # replaced by revive
 #    - gomnd       # this is too aggressive
 #    - interfacer  # this is a good idea, but is no longer supported and is prone to false positives
 #    - lll         # without a way to specify per-line exception cases, this is not usable
 #    - maligned    # this is an excellent linter, but tricky to optimize and we are not sensitive to memory layout optimizations
-#    - nestif
+#    - nestif      # other complexity linters already cover this well
+#    - nlreturn    # no robust auto-fixers supported
+#    - noctx       # we don't use context a lot
 #    - prealloc    # following this rule isn't consistently a good idea, as it sometimes forces unnecessary allocations that result in less idiomatic code
+#    - scopelint   # replaced by exportloopref
+#    - tagliatelle # too presumptive at which struct tag conventions should be used
 #    - testpackage
-#    - wsl
+#    - wsl         # very verbose and there is no auto-fixer for this project yet https://github.com/bombsimon/wsl/issues/90
