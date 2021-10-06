@@ -204,7 +204,7 @@ func (r directoryResolver) String() string {
 
 // FilesByPath returns all file.References that match the given paths from the directory.
 func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) {
-	var references = make([]Location, 0)
+	references := make([]Location, 0)
 
 	for _, userPath := range userPaths {
 		userStrPath, err := r.requestPath(userPath)

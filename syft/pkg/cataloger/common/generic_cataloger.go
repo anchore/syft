@@ -66,7 +66,7 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
 func (c *GenericCataloger) selectFiles(resolver source.FilePathResolver) map[source.Location]ParserFn {
-	var parserByLocation = make(map[source.Location]ParserFn)
+	parserByLocation := make(map[source.Location]ParserFn)
 
 	// select by exact path
 	for path, parser := range c.pathParsers {

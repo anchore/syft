@@ -6,11 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/anchore/syft/syft/file"
-
 	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -90,10 +89,10 @@ func toELVersion(metadata pkg.RpmdbMetadata) string {
 }
 
 func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
-	var records = make([]pkg.RpmdbFileRecord, 0)
+	records := make([]pkg.RpmdbFileRecord, 0)
 
 	for _, record := range entry.Files {
-		//only persist RPMDB file records which exist in the image/directory, otherwise ignore them
+		// only persist RPMDB file records which exist in the image/directory, otherwise ignore them
 		if resolver.HasPath(record.Path) {
 			records = append(records, pkg.RpmdbFileRecord{
 				Path: record.Path,

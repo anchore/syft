@@ -16,8 +16,7 @@ import (
 )
 
 // Handler is an aggregated event handler for the set of supported events (PullDockerImage, ReadImage, FetchImage, PackageCatalogerStarted)
-type Handler struct {
-}
+type Handler struct{}
 
 // NewHandler returns an empty Handler
 func NewHandler() *Handler {

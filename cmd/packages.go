@@ -102,7 +102,7 @@ func init() {
 }
 
 func setPackageFlags(flags *pflag.FlagSet) {
-	///////// Formatting & Input options //////////////////////////////////////////////
+	// Formatting & Input options //////////////////////////////////////////////
 
 	flags.StringP(
 		"scope", "s", source.SquashedScope.String(),
@@ -118,7 +118,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"file to write the report output to (default is STDOUT)",
 	)
 
-	///////// Upload options //////////////////////////////////////////////////////////
+	// Upload options //////////////////////////////////////////////////////////
 	flags.StringP(
 		"host", "H", "",
 		"the hostname or URL of the Anchore Enterprise instance to upload to",
@@ -151,7 +151,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 }
 
 func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
-	///////// Formatting & Input options //////////////////////////////////////////////
+	// Formatting & Input options //////////////////////////////////////////////
 
 	if err := viper.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
 		return err
@@ -165,7 +165,7 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 		return err
 	}
 
-	///////// Upload options //////////////////////////////////////////////////////////
+	// Upload options //////////////////////////////////////////////////////////
 
 	if err := viper.BindPFlag("anchore.host", flags.Lookup("host")); err != nil {
 		return err
@@ -303,7 +303,7 @@ func runPackageSbomUpload(src *source.Source, s source.Metadata, catalog *pkg.Ca
 	}
 
 	if err := c.Import(context.Background(), importCfg); err != nil {
-		return fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
+		return fmt.Errorf("failed to upload results to host=%s: %w", appConfig.Anchore.Host, err)
 	}
 	return nil
 }

@@ -5,9 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/anchore/syft/internal/spdxlicense"
-
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"

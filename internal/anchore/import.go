@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/antihax/optional"
-
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/bus"
@@ -15,6 +13,7 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	"github.com/antihax/optional"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
@@ -64,7 +63,7 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 	stage.Current = "starting session"
 	startOperation, _, err := c.client.ImportsApi.CreateOperation(authedCtx)
 	if err != nil {
-		var detail = "no details given"
+		detail := "no details given"
 		var openAPIErr external.GenericOpenAPIError
 		if errors.As(err, &openAPIErr) {
 			detail = string(openAPIErr.Body())
@@ -106,7 +105,7 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 
 	_, _, err = c.client.ImagesApi.AddImage(authedCtx, imageModel, &opts)
 	if err != nil {
-		var detail = "no details given"
+		detail := "no details given"
 		var openAPIErr external.GenericOpenAPIError
 		if errors.As(err, &openAPIErr) {
 			detail = string(openAPIErr.Body())
@@ -122,7 +121,7 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 }
 
 func addImageModel(imageMetadata image.Metadata, packageDigest, manifestDigest, dockerfileDigest, configDigest, sessionID string) external.ImageAnalysisRequest {
-	var tags = make([]string, len(imageMetadata.Tags))
+	tags := make([]string, len(imageMetadata.Tags))
 	for i, t := range imageMetadata.Tags {
 		tags[i] = t.String()
 	}

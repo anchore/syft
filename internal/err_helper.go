@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -15,24 +16,23 @@ func CloseAndLogError(closer io.Closer, location string) {
 	}
 }
 
-type ErrPath struct {
+type PathError struct {
 	Path string
 	Err  error
 }
 
-func (e ErrPath) Error() string {
+func (e PathError) Error() string {
 	return fmt.Sprintf("unable to observe contents of %+v: %v", e.Path, e.Err)
 }
 
-func IsErrPath(err error) bool {
-	_, ok := err.(ErrPath)
-	return ok
+func IsPathError(err error) bool {
+	return errors.As(err, &PathError{})
 }
 
 func IsErrPathPermission(err error) bool {
-	pathErr, ok := err.(ErrPath)
-	if ok {
+	var pathErr *PathError
+	if errors.As(err, pathErr) {
 		return os.IsPermission(pathErr.Err)
 	}
-	return ok
+	return false
 }

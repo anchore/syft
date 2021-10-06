@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/anchore/syft/syft/file"
-
 	"github.com/anchore/syft/syft/source"
 )
 

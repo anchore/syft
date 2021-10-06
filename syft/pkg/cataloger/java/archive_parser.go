@@ -6,9 +6,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -81,7 +80,7 @@ func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested boo
 
 // parse the loaded archive and return all packages found.
 func (j *archiveParser) parse() ([]pkg.Package, error) {
-	var pkgs = make([]pkg.Package, 0)
+	pkgs := make([]pkg.Package, 0)
 
 	// find the parent package from the java manifest
 	parentPkg, err := j.discoverMainPackage()
@@ -190,7 +189,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 // discoverPkgsFromNestedArchives finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, error) {
-	var pkgs = make([]pkg.Package, 0)
+	pkgs := make([]pkg.Package, 0)
 
 	// search and parse pom.properties files & fetch the contents
 	openers, err := file.ExtractFromZipToUniqueTempFile(j.archivePath, j.contentPath, j.fileManifest.GlobMatch(archiveFormatGlobs...)...)
@@ -326,7 +325,10 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 		return true
 	}
 
-	metadata := p.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		log.Warnf("unable to get java metadata while determining package identities")
+	}
 
 	// the virtual path matches...
 	if parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == metadata.VirtualPath {

@@ -11,7 +11,7 @@ import (
 // NewApkdbCataloger returns a new Alpine DB cataloger object.
 func NewApkdbCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
-		pkg.ApkDbGlob: parseApkDB,
+		pkg.ApkDBGlob: parseApkDB,
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "apkdb-cataloger")

@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
 	"github.com/anchore/syft/syft"
 	"github.com/gookit/color"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
 )
@@ -67,6 +66,7 @@ func initCmdAliasBindings() {
 	}
 }
 
+// nolint:forbidigo
 func initAppConfig() {
 	cfg, err := config.LoadApplicationConfig(viper.GetViper(), persistentOpts)
 	if err != nil {

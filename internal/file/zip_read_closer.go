@@ -3,6 +3,7 @@ package file
 import (
 	"archive/zip"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -91,7 +92,7 @@ func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, e
 			bLen = size
 		}
 		buf = make([]byte, int(bLen))
-		if _, err := r.ReadAt(buf, size-bLen); err != nil && err != io.EOF {
+		if _, err := r.ReadAt(buf, size-bLen); err != nil && !errors.Is(err, io.EOF) {
 			return 0, err
 		}
 		if p := findSignatureInBlock(buf); p >= 0 {

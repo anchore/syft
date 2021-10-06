@@ -8,16 +8,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/anchore/syft/internal/presenter/packages"
-
-	"github.com/wagoodman/go-progress"
-
-	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/presenter/packages"
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
+	"github.com/wagoodman/go-progress"
 )
 
 type packageSBOMImportAPI interface {

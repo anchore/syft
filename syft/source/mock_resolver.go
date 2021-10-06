@@ -35,7 +35,7 @@ func NewMockResolverForPaths(paths ...string) *MockResolver {
 
 func NewMockResolverForPathsWithMetadata(metadata map[Location]FileMetadata) *MockResolver {
 	var locations []Location
-	var mimeTypeIndex = make(map[string][]Location)
+	mimeTypeIndex := make(map[string][]Location)
 	for l, m := range metadata {
 		locations = append(locations, l)
 		mimeTypeIndex[m.MIMEType] = append(mimeTypeIndex[m.MIMEType], l)

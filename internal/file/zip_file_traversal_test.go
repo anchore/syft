@@ -299,7 +299,7 @@ func TestSafeJoin(t *testing.T) {
 				"../../../etc/passwd",
 			},
 			expected:     "",
-			errAssertion: assertErrorAs(&errZipSlipDetected{}),
+			errAssertion: assertErrorAs(&zipSlipDetectedError{}),
 		},
 		{
 			prefix: "/a/place",
@@ -308,7 +308,7 @@ func TestSafeJoin(t *testing.T) {
 				"../",
 			},
 			expected:     "",
-			errAssertion: assertErrorAs(&errZipSlipDetected{}),
+			errAssertion: assertErrorAs(&zipSlipDetectedError{}),
 		},
 		{
 			prefix: "/a/place",
@@ -316,7 +316,7 @@ func TestSafeJoin(t *testing.T) {
 				"../",
 			},
 			expected:     "",
-			errAssertion: assertErrorAs(&errZipSlipDetected{}),
+			errAssertion: assertErrorAs(&zipSlipDetectedError{}),
 		},
 	}
 

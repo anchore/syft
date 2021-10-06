@@ -24,6 +24,7 @@ var rootCmd = &cobra.Command{
 	ValidArgsFunction: packagesCmd.ValidArgsFunction,
 }
 
+// nolint:forbidigo
 func init() {
 	// set universal flags
 	rootCmd.PersistentFlags().StringVarP(&persistentOpts.ConfigPath, "config", "c", "", "application config file")

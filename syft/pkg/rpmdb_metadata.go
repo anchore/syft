@@ -5,15 +5,13 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/anchore/syft/syft/file"
-
-	"github.com/scylladb/go-set/strset"
-
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/file"
+	"github.com/scylladb/go-set/strset"
 )
 
-const RpmDbGlob = "**/var/lib/rpm/Packages"
+const RpmDBGlob = "**/var/lib/rpm/Packages"
 
 var _ FileOwner = (*RpmdbMetadata)(nil)
 

@@ -26,7 +26,7 @@ func saveArchiveToTmp(reader io.Reader) (string, string, func(), error) {
 	archivePath := filepath.Join(tempDir, "archive")
 	contentDir := filepath.Join(tempDir, "contents")
 
-	err = os.Mkdir(contentDir, 0755)
+	err = os.Mkdir(contentDir, 0o755)
 	if err != nil {
 		return contentDir, "", cleanupFn, fmt.Errorf("unable to create processing tempdir: %w", err)
 	}

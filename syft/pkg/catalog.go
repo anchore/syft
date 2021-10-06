@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -67,8 +66,7 @@ func (c *Catalog) Add(p Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	_, exists := c.byID[p.ID]
-	if exists {
+	if _, exists := c.byID[p.ID]; exists {
 		log.Errorf("package ID already exists in the catalog : id=%+v %+v", p.ID, p)
 		return
 	}

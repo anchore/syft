@@ -9,9 +9,9 @@ import (
 var globsForbiddenFromBeingOwned = []string{
 	// any OS DBs should automatically be ignored to prevent cyclic issues (e.g. the "rpm" RPM owns the path to the
 	// RPM DB, so if not ignored that package would own all other packages on the system).
-	ApkDbGlob,
-	DpkgDbGlob,
-	RpmDbGlob,
+	ApkDBGlob,
+	DpkgDBGlob,
+	RpmDBGlob,
 	// DEB packages share common copyright info between, this does not mean that sharing these paths implies ownership.
 	"/usr/share/doc/**/copyright",
 }
@@ -21,7 +21,7 @@ type ownershipByFilesMetadata struct {
 }
 
 func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
-	var relationships = findOwnershipByFilesRelationships(catalog)
+	relationships := findOwnershipByFilesRelationships(catalog)
 
 	var edges []Relationship
 	for parent, children := range relationships {
@@ -43,7 +43,7 @@ func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
 // findOwnershipByFilesRelationships find overlaps in file ownership with a file that defines another package. Specifically, a .Location.Path of
 // a package is found to be owned by another (from the owner's .Metadata.Files[]).
 func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.Set {
-	var relationships = make(map[ID]map[ID]*strset.Set)
+	relationships := make(map[ID]map[ID]*strset.Set)
 
 	if catalog == nil {
 		return relationships

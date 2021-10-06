@@ -3,10 +3,9 @@ package source
 import (
 	"fmt"
 
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 )
 
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key

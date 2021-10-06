@@ -15,8 +15,10 @@ package bus
 
 import "github.com/wagoodman/go-partybus"
 
-var publisher partybus.Publisher
-var active bool
+var (
+	publisher partybus.Publisher
+	active    bool
+)
 
 // SetPublisher sets the singleton event bus publisher. This is optional; if no bus is provided, the library will
 // behave no differently than if a bus had been provided.

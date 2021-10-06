@@ -24,12 +24,12 @@ const (
 
 const perFileReadLimit = 2 * GB
 
-type errZipSlipDetected struct {
+type zipSlipDetectedError struct {
 	Prefix   string
 	JoinArgs []string
 }
 
-func (e *errZipSlipDetected) Error() string {
+func (e *zipSlipDetectedError) Error() string {
 	return fmt.Sprintf("paths are not allowed to resolve outside of the root prefix (%q). Destination: %q", e.Prefix, e.JoinArgs)
 }
 
@@ -197,7 +197,7 @@ func safeJoin(prefix string, dest ...string) (string, error) {
 	joinResult := filepath.Join(append([]string{prefix}, dest...)...)
 	cleanJoinResult := filepath.Clean(joinResult)
 	if !strings.HasPrefix(cleanJoinResult, filepath.Clean(prefix)) {
-		return "", &errZipSlipDetected{
+		return "", &zipSlipDetectedError{
 			Prefix:   prefix,
 			JoinArgs: dest,
 		}

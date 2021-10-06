@@ -8,15 +8,12 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/source"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
-
-	"github.com/anchore/syft/syft/source"
 )
 
 type DigestsCataloger struct {
@@ -72,7 +69,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 
 	size, err := io.Copy(io.MultiWriter(writers...), contentReader)
 	if err != nil {
-		return nil, internal.ErrPath{Path: location.RealPath, Err: err}
+		return nil, internal.PathError{Path: location.RealPath, Err: err}
 	}
 
 	if size == 0 {
@@ -99,7 +96,7 @@ func DigestAlgorithmName(hash crypto.Hash) string {
 
 func CleanDigestAlgorithmName(name string) string {
 	lower := strings.ToLower(name)
-	return strings.Replace(lower, "-", "", -1)
+	return strings.ReplaceAll(lower, "-", "")
 }
 
 func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {

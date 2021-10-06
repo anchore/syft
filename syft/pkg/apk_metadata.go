@@ -3,13 +3,12 @@ package pkg
 import (
 	"sort"
 
-	"github.com/anchore/syft/syft/file"
-
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/scylladb/go-set/strset"
 )
 
-const ApkDbGlob = "**/lib/apk/db/installed"
+const ApkDBGlob = "**/lib/apk/db/installed"
 
 var _ FileOwner = (*ApkMetadata)(nil)
 

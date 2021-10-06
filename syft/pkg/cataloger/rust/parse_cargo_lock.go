@@ -16,13 +16,13 @@ var _ common.ParserFn = parseCargoLock
 func parseCargoLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load Cargo.lock for parsing: %v", err)
+		return nil, fmt.Errorf("unable to load Cargo.lock for parsing: %w", err)
 	}
 
 	metadata := CargoMetadata{}
 	err = tree.Unmarshal(&metadata)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse Cargo.lock: %v", err)
+		return nil, fmt.Errorf("unable to parse Cargo.lock: %w", err)
 	}
 
 	return metadata.Pkgs(), nil

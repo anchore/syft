@@ -135,7 +135,7 @@ func getSPDXHomepage(p *pkg.Package) string {
 }
 
 func getSPDXSourceInfo(p *pkg.Package) string {
-	answer := ""
+	var answer string
 	switch p.Type {
 	case pkg.RpmPkg:
 		answer = "acquired package info from RPM DB"

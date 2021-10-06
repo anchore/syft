@@ -7,14 +7,11 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/internal"
-
-	"github.com/mitchellh/mapstructure"
-
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/mitchellh/mapstructure"
 )
 
 // integrity check
@@ -168,7 +165,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 
 	for {
 		var p PackageJSON
-		if err := dec.Decode(&p); err == io.EOF {
+		if err := dec.Decode(&p); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, fmt.Errorf("failed to parse package.json file: %w", err)

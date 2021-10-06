@@ -2,7 +2,6 @@ package packages
 
 import (
 	"fmt"
-
 	"io"
 	"text/tabwriter"
 
@@ -32,7 +31,7 @@ func (pres *TextPresenter) Present(output io.Writer) error {
 
 	switch pres.srcMetadata.Scheme {
 	case source.DirectoryScheme:
-		fmt.Fprintln(w, fmt.Sprintf("[Path: %s]", pres.srcMetadata.Path))
+		fmt.Fprintf(w, "[Path: %s]\n", pres.srcMetadata.Path)
 	case source.ImageScheme:
 		fmt.Fprintln(w, "[Image]")
 
@@ -51,7 +50,7 @@ func (pres *TextPresenter) Present(output io.Writer) error {
 	// populate artifacts...
 	rows := 0
 	for _, p := range pres.catalog.Sorted() {
-		fmt.Fprintln(w, fmt.Sprintf("[%s]", p.Name))
+		fmt.Fprintf(w, "[%s]\n", p.Name)
 		fmt.Fprintln(w, " Version:\t", p.Version)
 		fmt.Fprintln(w, " Type:\t", string(p.Type))
 		fmt.Fprintln(w, " Found by:\t", p.FoundBy)

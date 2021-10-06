@@ -4,11 +4,9 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/stereoscope/pkg/file"
-
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 )
 
 type FileMetadata struct {

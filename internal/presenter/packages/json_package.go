@@ -38,18 +38,18 @@ func NewJSONPackages(catalog *pkg.Catalog) ([]JSONPackage, error) {
 
 // NewJSONPackage crates a new JSONPackage from the given pkg.Package.
 func NewJSONPackage(p *pkg.Package) (JSONPackage, error) {
-	var cpes = make([]string, len(p.CPEs))
+	cpes := make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
 		cpes[i] = c.BindToFmtString()
 	}
 
 	// ensure collections are never nil for presentation reasons
-	var locations = make([]source.Location, 0)
+	locations := make([]source.Location, 0)
 	if p.Locations != nil {
 		locations = p.Locations
 	}
 
-	var licenses = make([]string, 0)
+	licenses := make([]string, 0)
 	if p.Licenses != nil {
 		licenses = p.Licenses
 	}

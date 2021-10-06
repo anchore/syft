@@ -1,3 +1,4 @@
+// nolint:forbidigo
 package main
 
 import (
@@ -45,11 +46,7 @@ func build() *jsonschema.Schema {
 	reflector := &jsonschema.Reflector{
 		AllowAdditionalProperties: true,
 		TypeNamer: func(r reflect.Type) string {
-			name := r.Name()
-			if strings.HasPrefix(name, "JSON") {
-				name = strings.TrimPrefix(name, "JSON")
-			}
-			return name
+			return strings.TrimPrefix(r.Name(), "JSON")
 		},
 	}
 	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&poweruser.JSONDocument{}))
@@ -74,7 +71,7 @@ func build() *jsonschema.Schema {
 	// ensure the generated list of names is stable between runs
 	sort.Strings(metadataNames)
 
-	var metadataTypes = []map[string]string{
+	metadataTypes := []map[string]string{
 		// allow for no metadata to be provided
 		{"type": "null"},
 	}
@@ -93,13 +90,13 @@ func build() *jsonschema.Schema {
 }
 
 func encode(schema *jsonschema.Schema) []byte {
-	var newSchemaBuffer = new(bytes.Buffer)
+	newSchemaBuffer := new(bytes.Buffer)
 	enc := json.NewEncoder(newSchemaBuffer)
 	// prevent > and < from being escaped in the payload
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "  ")
-	err := enc.Encode(&schema)
-	if err != nil {
+
+	if err := enc.Encode(&schema); err != nil {
 		panic(err)
 	}
 

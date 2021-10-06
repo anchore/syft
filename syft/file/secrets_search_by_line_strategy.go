@@ -9,7 +9,6 @@ import (
 	"regexp"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -20,7 +19,7 @@ func catalogLocationByLine(resolver source.FileResolver, location source.Locatio
 	}
 	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
 
-	var scanner = bufio.NewReader(readCloser)
+	scanner := bufio.NewReader(readCloser)
 	var position int64
 	var allSecrets []SearchResult
 	var lineNo int64
@@ -30,7 +29,7 @@ func catalogLocationByLine(resolver source.FileResolver, location source.Locatio
 		var line []byte
 		// TODO: we're at risk of large memory usage for very long lines
 		line, readErr = scanner.ReadBytes('\n')
-		if readErr != nil && readErr != io.EOF {
+		if readErr != nil && !errors.Is(readErr, io.EOF) {
 			return nil, readErr
 		}
 
@@ -119,9 +118,9 @@ func extractSecretFromPosition(readCloser io.ReadCloser, name string, pattern *r
 	}
 
 	// lineNoOfSecret are the number of lines which occur before the start of the secret value
-	var lineNoOfSecret = lineNo + int64(reader.newlinesBefore(start))
+	lineNoOfSecret := lineNo + int64(reader.newlinesBefore(start))
 	// lineOffsetOfSecret are the number of bytes that occur after the last newline but before the secret value.
-	var lineOffsetOfSecret = start - reader.newlinePositionBefore(start)
+	lineOffsetOfSecret := start - reader.newlinePositionBefore(start)
 	if lineNoOfSecret == lineNo {
 		// the secret value starts in the same line as the overall match, so we must consider that line offset
 		lineOffsetOfSecret += lineOffset

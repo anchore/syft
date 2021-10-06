@@ -11,7 +11,7 @@ import (
 // GenerateSearchPatterns takes a set of named base patterns, a set of additional named patterns and an name exclusion list and generates a final
 // set of regular expressions (indexed by name). The sets are aggregated roughly as such: (base - excluded) + additional.
 func GenerateSearchPatterns(basePatterns map[string]string, additionalPatterns map[string]string, excludePatternNames []string) (map[string]*regexp.Regexp, error) {
-	var regexObjs = make(map[string]*regexp.Regexp)
+	regexObjs := make(map[string]*regexp.Regexp)
 	var errs error
 
 	addFn := func(name, pattern string) {

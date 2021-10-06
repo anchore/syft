@@ -20,9 +20,9 @@ func generatePackageURL(p pkg.Package, d *distro.Distro) string {
 		}
 	}
 
-	var purlType = p.Type.PackageURLType()
-	var name = p.Name
-	var namespace = ""
+	purlType := p.Type.PackageURLType()
+	name := p.Name
+	namespace := ""
 
 	switch {
 	case purlType == "":

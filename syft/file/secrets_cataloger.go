@@ -9,7 +9,6 @@ import (
 	"sort"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
@@ -82,7 +81,7 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	// TODO: in the future we can swap out search strategies here
 	secrets, err := catalogLocationByLine(resolver, location, i.patterns)
 	if err != nil {
-		return nil, internal.ErrPath{Path: location.RealPath, Err: err}
+		return nil, internal.PathError{Path: location.RealPath, Err: err}
 	}
 
 	if i.revealValues {

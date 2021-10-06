@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/anchore/stereoscope/pkg/image"
-
 	"github.com/spf13/viper"
 )
 
@@ -58,7 +57,7 @@ func hasNonEmptyCredentials(username, password, token string) bool {
 }
 
 func (cfg *registry) ToOptions() *image.RegistryOptions {
-	var auth = make([]image.RegistryCredentials, len(cfg.Auth))
+	auth := make([]image.RegistryCredentials, len(cfg.Auth))
 	for i, a := range cfg.Auth {
 		auth[i] = image.RegistryCredentials{
 			Authority: a.Authority,

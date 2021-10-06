@@ -6,9 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/syft/pkg"
-
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -149,7 +147,7 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, m
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
 func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation source.Location) (*pkg.PythonPackageMetadata, []source.Location, error) {
-	var sources = []source.Location{metadataLocation}
+	sources := []source.Location{metadataLocation}
 
 	metadataContents, err := resolver.FileContentsByLocation(metadataLocation)
 	if err != nil {

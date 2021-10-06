@@ -2,6 +2,7 @@ package python
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -17,7 +18,7 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 
 	for {
 		recordList, err := r.Read()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

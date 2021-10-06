@@ -46,6 +46,7 @@ func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (
 
 		fileMeta, err := fs.Stat(dirLocation)
 		if err != nil {
+			// nolint: nilerr
 			return UnknownScheme, source, "", nil
 		}
 

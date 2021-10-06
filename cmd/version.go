@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +23,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 
+// nolint:forbidigo
 func printVersion(_ *cobra.Command, _ []string) {
 	versionInfo := version.FromBuild()
 

@@ -7,11 +7,10 @@ import (
 	"sync"
 
 	"github.com/anchore/syft/internal"
-	"github.com/gookit/color"
-	"github.com/wagoodman/jotframe/pkg/frame"
-
 	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
+	"github.com/gookit/color"
 	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/jotframe/pkg/frame"
 )
 
 // handleCatalogerPresenterReady is a UI function for processing the CatalogerFinished bus event, displaying the catalog

@@ -9,8 +9,7 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
-type MetadataCataloger struct {
-}
+type MetadataCataloger struct{}
 
 func NewMetadataCataloger() *MetadataCataloger {
 	return &MetadataCataloger{}

@@ -144,7 +144,6 @@ func (cfg *Application) parseConfigValues() error {
 func (cfg Application) String() string {
 	// yaml is pretty human friendly (at least when compared to json)
 	appCfgStr, err := yaml.Marshal(&cfg)
-
 	if err != nil {
 		return err.Error()
 	}

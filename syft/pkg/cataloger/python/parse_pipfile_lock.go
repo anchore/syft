@@ -2,6 +2,7 @@ package python
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -43,7 +44,7 @@ func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 
 	for {
 		var lock PipfileLock
-		if err := dec.Decode(&lock); err == io.EOF {
+		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, fmt.Errorf("failed to parse Pipfile.lock file: %w", err)

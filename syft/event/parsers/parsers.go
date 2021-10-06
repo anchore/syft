@@ -6,29 +6,26 @@ package parsers
 import (
 	"fmt"
 
-	"github.com/anchore/syft/syft/presenter"
-
-	"github.com/anchore/syft/syft/file"
-
-	"github.com/wagoodman/go-progress"
-
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg/cataloger"
+	"github.com/anchore/syft/syft/presenter"
 	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 )
 
-type ErrBadPayload struct {
+type badPayloadError struct {
 	Type  partybus.EventType
 	Field string
 	Value interface{}
 }
 
-func (e *ErrBadPayload) Error() string {
+func (e *badPayloadError) Error() string {
 	return fmt.Sprintf("event='%s' has bad event payload field='%v': '%+v'", string(e.Type), e.Field, e.Value)
 }
 
 func newPayloadErr(t partybus.EventType, field string, value interface{}) error {
-	return &ErrBadPayload{
+	return &badPayloadError{
 		Type:  t,
 		Field: field,
 		Value: value,

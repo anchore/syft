@@ -2,6 +2,7 @@ package javascript
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -40,7 +41,7 @@ func parsePackageLock(path string, reader io.Reader) ([]pkg.Package, error) {
 
 	for {
 		var lock PackageLock
-		if err := dec.Decode(&lock); err == io.EOF {
+		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)

@@ -6,9 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/olekukonko/tablewriter"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/olekukonko/tablewriter"
 )
 
 type TablePresenter struct {

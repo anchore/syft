@@ -9,11 +9,9 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/mitchellh/mapstructure"
 )
 
 // integrity check
@@ -62,7 +60,7 @@ func processList(s string) []string {
 
 func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 	var pkgs []pkg.Package
-	var fields = make(map[string]interface{})
+	fields := make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {

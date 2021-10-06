@@ -11,7 +11,7 @@ import (
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
-const defaultLogFilePermissions fs.FileMode = 0644
+const defaultLogFilePermissions fs.FileMode = 0o644
 
 // LogrusConfig contains all configurable values for the Logrus logger
 type LogrusConfig struct {
