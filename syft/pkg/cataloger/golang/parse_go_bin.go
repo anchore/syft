@@ -11,7 +11,6 @@ import (
 
 const (
 	packageIdentifier = "dep"
-	modIdentifier     = "mod"
 	replaceIdentifier = "=>"
 )
 
