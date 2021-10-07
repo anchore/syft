@@ -18,6 +18,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/facebookincubator/nvdtools v0.1.4
 	github.com/go-test/deep v1.0.7
+	github.com/google/go-cmp v0.4.1
 	github.com/google/uuid v1.2.0
 	github.com/gookit/color v1.2.7
 	github.com/hashicorp/go-multierror v1.1.0

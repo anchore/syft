@@ -131,24 +131,6 @@ var dirOnlyTestCases = []testCase{
 			"someotherpkg": "3.19.0",
 		},
 	},
-	{
-		name:        "find golang modules",
-		pkgType:     pkg.GoModulePkg,
-		pkgLanguage: pkg.Go,
-		pkgInfo: map[string]string{
-			"github.com/bmatcuk/doublestar": "v1.3.1",
-		},
-	},
-	{
-		name:        "find rust crates",
-		pkgType:     pkg.RustPkg,
-		pkgLanguage: pkg.Rust,
-		pkgInfo: map[string]string{
-			"memchr":        "2.3.3",
-			"nom":           "4.2.3",
-			"version_check": "0.1.5",
-		},
-	},
 }
 
 var commonTestCases = []testCase{
@@ -193,6 +175,24 @@ var commonTestCases = []testCase{
 		pkgInfo: map[string]string{
 			"musl-utils": "1.1.24-r2",
 			"libc-utils": "0.7.2-r0",
+		},
+	},
+	{
+		name:        "find golang modules",
+		pkgType:     pkg.GoModulePkg,
+		pkgLanguage: pkg.Go,
+		pkgInfo: map[string]string{
+			"github.com/bmatcuk/doublestar": "v1.3.1",
+		},
+	},
+	{
+		name:        "find rust crates",
+		pkgType:     pkg.RustPkg,
+		pkgLanguage: pkg.Rust,
+		pkgInfo: map[string]string{
+			"memchr":        "2.3.3",
+			"nom":           "4.2.3",
+			"version_check": "0.1.5",
 		},
 	},
 }
