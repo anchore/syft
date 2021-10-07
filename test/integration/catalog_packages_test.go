@@ -5,11 +5,10 @@ import (
 
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg/cataloger"
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/source"
-
-	"github.com/go-test/deep"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
@@ -58,12 +57,20 @@ func TestPkgCoverageImage(t *testing.T) {
 		definedLanguages.Add(l.String())
 	}
 
+	// for image we remove the go mod and rust support by default
+	definedLanguages.Remove(pkg.Go.String())
+	definedLanguages.Remove(pkg.Rust.String())
+
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
+
+	// for image we remove the go-module and rust-crate support by default
 	definedPkgs.Remove(string(pkg.KbPkg))
+	definedPkgs.Remove(string(pkg.GoModulePkg))
+	definedPkgs.Remove(string(pkg.RustPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -75,9 +82,11 @@ func TestPkgCoverageImage(t *testing.T) {
 
 			for a := range catalog.Enumerate(c.pkgType) {
 
-				observedLanguages.Add(a.Language.String())
-				observedPkgs.Add(string(a.Type))
+				if a.Language.String() != "" {
+					observedLanguages.Add(a.Language.String())
+				}
 
+				observedPkgs.Add(string(a.Type))
 				expectedVersion, ok := c.pkgInfo[a.Name]
 				if !ok {
 					t.Errorf("unexpected package found: %s", a.Name)
@@ -114,18 +123,14 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// ensure that integration test cases stay in sync with the available catalogers
-	if len(observedLanguages) < len(definedLanguages) {
+	if diff := cmp.Diff(definedLanguages, observedLanguages); diff != "" {
 		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", len(definedLanguages), len(observedLanguages))
-		for _, d := range deep.Equal(observedLanguages, definedLanguages) {
-			t.Errorf("diff: %+v", d)
-		}
+		t.Errorf("definedLanguages mismatch observedLanguages (-want +got):\n%s", diff)
 	}
 
-	if len(observedPkgs) < len(definedPkgs) {
+	if diff := cmp.Diff(definedPkgs, observedPkgs); diff != "" {
 		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", len(definedPkgs), len(observedPkgs))
-		for _, d := range deep.Equal(observedPkgs, definedPkgs) {
-			t.Errorf("diff: %+v", d)
-		}
+		t.Errorf("definedPkgs mismatch observedPkgs (-want +got):\n%s", diff)
 	}
 }
 
