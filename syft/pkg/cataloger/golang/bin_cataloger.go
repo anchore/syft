@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const catalogerName = "go-bin-cataloger"
+const catalogerName = "go-module-binary-cataloger"
 
 // current mime types to search by to discover go binaries
 var mimeTypes = []string{
@@ -24,8 +24,8 @@ var mimeTypes = []string{
 
 type Cataloger struct{}
 
-// NewGolangCataloger returns a new Golang cataloger object.
-func NewGolangCataloger() *Cataloger {
+// NewGoModuleBinaryCataloger returns a new Golang cataloger object.
+func NewGoModuleBinaryCataloger() *Cataloger {
 	return &Cataloger{}
 }
 

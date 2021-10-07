@@ -7,11 +7,11 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
-// NewGoModCataloger returns a new Go module cataloger object.
-func NewGoModCataloger() *common.GenericCataloger {
+// NewGoModFileCataloger returns a new Go module cataloger object.
+func NewGoModFileCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/go.mod": parseGoMod,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "go-mod-cataloger")
+	return common.NewGenericCataloger(nil, globParsers, "go-mod-file-cataloger")
 }

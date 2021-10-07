@@ -11,7 +11,6 @@ import (
 
 const packageIdentifier = "dep"
 
-// TODO: do we want to include path from the signature in any metadata
 func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
