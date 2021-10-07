@@ -1,8 +1,8 @@
 package golang
 
 import (
+	"bufio"
 	"io"
-	"sort"
 	"strings"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -30,26 +30,16 @@ func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 
 func buildGoPkgInfo(path, mod string) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
-	fields := strings.Fields(mod)
+	scanner := bufio.NewScanner(strings.NewReader(mod))
 
-	// slice off root package info
-	var separator int
-	for x, field := range fields {
-		if field == packageIdentifier {
-			separator = x - 1
-			break
-		}
-	}
-
-	fields = fields[separator:]
-
-	// filter deps: [dep, name, version, sha]
-	for x, field := range fields {
-		switch field {
+	// filter mod dependencies: [dep, name, version, sha]
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		switch fields[0] {
 		case packageIdentifier:
 			pkgsSlice = append(pkgsSlice, pkg.Package{
-				Name:     fields[x+1],
-				Version:  fields[x+2],
+				Name:     fields[1],
+				Version:  fields[2],
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
 				Locations: []source.Location{
@@ -60,8 +50,8 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 			})
 		case replaceIdentifier:
 			pkgsSlice = append(pkgsSlice, pkg.Package{
-				Name:     fields[x+1],
-				Version:  fields[x+2],
+				Name:     fields[1],
+				Version:  fields[2],
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
 				Locations: []source.Location{
@@ -72,10 +62,6 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 			})
 		}
 	}
-
-	sort.SliceStable(pkgsSlice, func(i, j int) bool {
-		return pkgsSlice[i].Name < pkgsSlice[j].Name
-	})
 
 	return pkgsSlice
 }
