@@ -39,6 +39,7 @@ func ImageCatalogers() []Cataloger {
 		rpmdb.NewRpmdbCataloger(),
 		java.NewJavaCataloger(),
 		apkdb.NewApkdbCataloger(),
+		golang.NewGoModuleBinaryCataloger(),
 	}
 }
 
@@ -53,7 +54,8 @@ func DirectoryCatalogers() []Cataloger {
 		rpmdb.NewRpmdbCataloger(),
 		java.NewJavaCataloger(),
 		apkdb.NewApkdbCataloger(),
-		golang.NewGoModCataloger(),
+		golang.NewGoModFileCataloger(),
+		golang.NewGoModuleBinaryCataloger(),
 		rust.NewCargoLockCataloger(),
 	}
 }
