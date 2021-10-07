@@ -45,6 +45,53 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "buildGoPkgInfo parses a populated mod string and returns packages when a replace directive exists",
+			mod: `path    github.com/anchore/test
+			      mod     github.com/anchore/test (devel)
+				  dep     golang.org/x/net        v0.0.0-20211006190231-62292e806868      h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=
+				  dep     golang.org/x/sys        v0.0.0-20211006194710-c8a6f5223071      h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=
+				  dep     golang.org/x/term       v0.0.0-20210927222741-03fcf44c2211
+				  =>      golang.org/x/term       v0.0.0-20210916214954-140adaaadfaf      h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=`,
+			expected: []pkg.Package{
+				{
+					Name:     "golang.org/x/net",
+					Version:  "v0.0.0-20211006190231-62292e806868",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: []source.Location{
+						{},
+					},
+				},
+				{
+					Name:     "golang.org/x/sys",
+					Version:  "v0.0.0-20211006194710-c8a6f5223071",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: []source.Location{
+						{},
+					},
+				},
+				{
+					Name:     "golang.org/x/term",
+					Version:  "v0.0.0-20210927222741-03fcf44c2211",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: []source.Location{
+						{},
+					},
+				},
+				{
+					Name:     "golang.org/x/term",
+					Version:  "v0.0.0-20210916214954-140adaaadfaf",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: []source.Location{
+						{},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -9,7 +9,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const packageIdentifier = "dep"
+const (
+	packageIdentifier = "dep"
+	modIdentifier     = "mod"
+	replaceIdentifier = "=>"
+)
 
 func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 	// Identify if bin was compiled by go
@@ -42,7 +46,8 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 
 	// filter deps: [dep, name, version, sha]
 	for x, field := range fields {
-		if field == packageIdentifier {
+		switch field {
+		case packageIdentifier:
 			pkgsSlice = append(pkgsSlice, pkg.Package{
 				Name:     fields[x+1],
 				Version:  fields[x+2],
@@ -54,6 +59,20 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 					},
 				},
 			})
+		case replaceIdentifier:
+			pkgsSlice = append(pkgsSlice, pkg.Package{
+				Name:     fields[x+1],
+				Version:  fields[x+2],
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+				Locations: []source.Location{
+					{
+						RealPath: path,
+					},
+				},
+			})
+		case modIdentifier:
+		default:
 		}
 	}
 
