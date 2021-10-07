@@ -57,12 +57,20 @@ func TestPkgCoverageImage(t *testing.T) {
 		definedLanguages.Add(l.String())
 	}
 
+	// for image we remove the go mod and rust support by default
+	definedLanguages.Remove(pkg.Go.String())
+	definedLanguages.Remove(pkg.Rust.String())
+
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
+
+	// for image we remove the go-module and rust-crate support by default
 	definedPkgs.Remove(string(pkg.KbPkg))
+	definedPkgs.Remove(string(pkg.GoModulePkg))
+	definedPkgs.Remove(string(pkg.RustPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -74,9 +82,11 @@ func TestPkgCoverageImage(t *testing.T) {
 
 			for a := range catalog.Enumerate(c.pkgType) {
 
-				observedLanguages.Add(a.Language.String())
-				observedPkgs.Add(string(a.Type))
+				if a.Language.String() != "" {
+					observedLanguages.Add(a.Language.String())
+				}
 
+				observedPkgs.Add(string(a.Type))
 				expectedVersion, ok := c.pkgInfo[a.Name]
 				if !ok {
 					t.Errorf("unexpected package found: %s", a.Name)
