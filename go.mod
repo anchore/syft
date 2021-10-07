@@ -18,18 +18,18 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/facebookincubator/nvdtools v0.1.4
 	github.com/go-test/deep v1.0.7
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.2.0
 	github.com/gookit/color v1.2.7
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/pelletier/go-toml v1.8.0
+	github.com/pelletier/go-toml v1.8.1
 	github.com/pkg/profile v1.5.0
 	github.com/scylladb/go-set v1.0.2
 	github.com/sergi/go-diff v1.1.0
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spdx/tools-golang v0.1.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.1-0.20200909172742-8a63648dd905
@@ -42,8 +42,8 @@ require (
 	github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/mod v0.3.0
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
-	gopkg.in/yaml.v2 v2.3.0
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+	gopkg.in/yaml.v2 v2.4.0
 )
