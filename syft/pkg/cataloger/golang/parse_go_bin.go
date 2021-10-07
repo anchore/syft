@@ -49,17 +49,9 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 				},
 			})
 		case replaceIdentifier:
-			pkgsSlice = append(pkgsSlice, pkg.Package{
-				Name:     fields[1],
-				Version:  fields[2],
-				Language: pkg.Go,
-				Type:     pkg.GoModulePkg,
-				Locations: []source.Location{
-					{
-						RealPath: path,
-					},
-				},
-			})
+			pkg := &pkgsSlice[len(pkgsSlice)-1]
+			pkg.Name = fields[1]
+			pkg.Version = fields[2]
 		}
 	}
 

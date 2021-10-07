@@ -74,15 +74,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 				{
 					Name:     "golang.org/x/term",
-					Version:  "v0.0.0-20210927222741-03fcf44c2211",
-					Language: pkg.Go,
-					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{},
-					},
-				},
-				{
-					Name:     "golang.org/x/term",
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
