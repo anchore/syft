@@ -71,8 +71,6 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 					},
 				},
 			})
-		case modIdentifier:
-		default:
 		}
 	}
 
