@@ -35,6 +35,10 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 	// filter mod dependencies: [dep, name, version, sha]
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
+		// must have dep, name, version
+		if len(fields) < 3 {
+			continue
+		}
 		switch fields[0] {
 		case packageIdentifier:
 			pkgsSlice = append(pkgsSlice, pkg.Package{
