@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type PresenterConfig struct {
+type Config struct {
 	SourceMetadata source.Metadata
 	Catalog        *pkg.Catalog
 	Distro         *distro.Distro

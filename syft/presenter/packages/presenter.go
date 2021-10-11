@@ -5,26 +5,30 @@ a specific Presenter implementation given user configuration.
 package packages
 
 import (
+	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/presenter/packages"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/presenter"
 )
 
 // Presenter returns a presenter for images or directories
-func Presenter(option PresenterOption, config PresenterConfig) presenter.Presenter {
-	switch option {
-	case JSONPresenterOption:
-		return packages.NewJSONPresenter(config.Catalog, config.SourceMetadata, config.Distro, config.Scope)
-	case TextPresenterOption:
+func Presenter(o format.Option, config Config) presenter.Presenter {
+	// TODO: This function will be removed in the future
+	switch o {
+	case format.TextOption:
 		return packages.NewTextPresenter(config.Catalog, config.SourceMetadata)
-	case TablePresenterOption:
+	case format.TableOption:
 		return packages.NewTablePresenter(config.Catalog)
-	case CycloneDxPresenterOption:
+	case format.CycloneDxOption:
 		return packages.NewCycloneDxPresenter(config.Catalog, config.SourceMetadata)
-	case SPDXTagValuePresenterOption:
+	case format.SPDXTagValueOption:
 		return packages.NewSPDXTagValuePresenter(config.Catalog, config.SourceMetadata)
-	case SPDXJSONPresenterOption:
-		return packages.NewSPDXJSONPresenter(config.Catalog, config.SourceMetadata)
 	default:
-		return nil
+		// TODO: this is the new way of getting presenters from formats
+		f := formats.ByOption(o)
+		if f == nil {
+			return nil
+		}
+		return f.Presenter(config.Catalog, &config.SourceMetadata, config.Distro)
 	}
 }

@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/syft/format"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -48,7 +50,7 @@ const (
 )
 
 var (
-	packagesPresenterOpt packages.PresenterOption
+	packagesPresenterOpt format.Option
 	packagesArgs         = cobra.MaximumNArgs(1)
 	packagesCmd          = &cobra.Command{
 		Use:   "packages [SOURCE]",
@@ -71,8 +73,8 @@ var (
 			}
 
 			// set the presenter
-			presenterOption := packages.ParsePresenterOption(appConfig.Output)
-			if presenterOption == packages.UnknownPresenterOption {
+			presenterOption := format.ParseOption(appConfig.Output)
+			if presenterOption == format.UnknownOption {
 				return fmt.Errorf("bad --output value '%s'", appConfig.Output)
 			}
 			packagesPresenterOpt = presenterOption
@@ -109,8 +111,8 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringP(
-		"output", "o", string(packages.TablePresenterOption),
-		fmt.Sprintf("report output formatter, options=%v", packages.AllPresenters),
+		"output", "o", string(format.TableOption),
+		fmt.Sprintf("report output formatter, options=%v", format.AllOptions),
 	)
 
 	flags.StringP(
@@ -247,7 +249,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type: event.PresenterReady,
-			Value: packages.Presenter(packagesPresenterOpt, packages.PresenterConfig{
+			Value: packages.Presenter(packagesPresenterOpt, packages.Config{
 				SourceMetadata: src.Metadata,
 				Catalog:        catalog,
 				Distro:         d,

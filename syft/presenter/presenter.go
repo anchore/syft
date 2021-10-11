@@ -1,6 +1,8 @@
 package presenter
 
-import "io"
+import (
+	"io"
+)
 
 // Presenter defines the expected behavior for an object responsible for displaying arbitrary input and processed data
 // to a given io.Writer.
