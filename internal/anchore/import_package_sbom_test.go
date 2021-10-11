@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	model2 "github.com/anchore/syft/internal/formats/syftjson/model"
+
 	"github.com/anchore/syft/internal/presenter/packages"
 
 	"github.com/wagoodman/go-progress"
@@ -94,13 +96,13 @@ func TestPackageSbomToModel(t *testing.T) {
 	}
 
 	// unmarshal expected result
-	var expectedDoc packages.JSONDocument
+	var expectedDoc model2.Document
 	if err := json.Unmarshal(buf.Bytes(), &expectedDoc); err != nil {
 		t.Fatalf("unable to parse json doc: %+v", err)
 	}
 
 	// unmarshal actual result
-	var actualDoc packages.JSONDocument
+	var actualDoc model2.Document
 	if err := json.Unmarshal(modelJSON, &actualDoc); err != nil {
 		t.Fatalf("unable to parse json doc: %+v", err)
 	}

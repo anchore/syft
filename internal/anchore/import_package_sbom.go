@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/anchore/syft/internal/presenter/packages"
+	"github.com/anchore/syft/internal/formats"
+	"github.com/anchore/syft/syft/format"
 
 	"github.com/wagoodman/go-progress"
 
@@ -26,7 +27,7 @@ type packageSBOMImportAPI interface {
 
 func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope) (*external.ImagePackageManifest, error) {
 	var buf bytes.Buffer
-	pres := packages.NewJSONPresenter(catalog, s, d, scope)
+	pres := formats.ByOption(format.JSONOption).Presenter(catalog, &s, d)
 	err := pres.Present(&buf)
 	if err != nil {
 		return nil, fmt.Errorf("unable to serialize results: %w", err)
