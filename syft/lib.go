@@ -17,11 +17,15 @@ Similar to the cataloging process, Linux distribution identification is also per
 package syft
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/logger"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -65,6 +69,35 @@ func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, *dis
 	}
 
 	return catalog, theDistro, nil
+}
+
+// TODO: encapsulate input data into common sbom document object
+func Encode(catalog *pkg.Catalog, metadata *source.Metadata, dist *distro.Distro, option format.Option) ([]byte, error) {
+	f := formats.ByOption(option)
+	if f == nil {
+		return nil, nil
+	}
+	buff := bytes.Buffer{}
+
+	return buff.Bytes(), f.Encode(&buff, catalog, dist, metadata)
+}
+
+// TODO: encapsulate return data into common sbom document object
+func Decode(reader io.Reader) (*pkg.Catalog, *source.Metadata, *distro.Distro, format.Option, error) {
+	by, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, nil, nil, format.UnknownOption, fmt.Errorf("unable to read sbom: %w", err)
+	}
+
+	f, err := formats.Identify(by)
+	if err != nil {
+		return nil, nil, nil, format.UnknownOption, fmt.Errorf("unable to detect format: %w", err)
+	}
+	if f == nil {
+		return nil, nil, nil, format.UnknownOption, fmt.Errorf("unable to identify format")
+	}
+	c, m, d, err := f.Decode(bytes.NewReader(by))
+	return c, m, d, f.Option, err
 }
 
 // SetLogger sets the logger object used for all syft logging calls.
