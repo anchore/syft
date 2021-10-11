@@ -3,15 +3,36 @@
  "name": "/some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-09-16T20:44:35.198887Z",
+  "created": "2021-10-11T01:54:40.609143Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
   ],
   "licenseListVersion": "3.14"
  },
+ "syftSourceData": {
+  "Scheme": "DirectoryScheme",
+  "ImageMetadata": {
+   "userInput": "",
+   "imageID": "",
+   "manifestDigest": "",
+   "mediaType": "",
+   "tags": null,
+   "imageSize": 0,
+   "layers": null,
+   "manifest": null,
+   "config": null,
+   "repoDigests": null
+  },
+  "Path": "/some/path"
+ },
+ "syftDistroData": {
+  "name": "debian",
+  "version": "1.2.3",
+  "idLike": "like!"
+ },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/image/",
+ "documentNamespace": "https:/anchore.com/syft/dir/some/path-e94d6e43-5de5-4849-8e21-983ada9103c5",
  "packages": [
   {
    "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",
@@ -36,7 +57,35 @@
    ],
    "licenseDeclared": "MIT",
    "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
-   "versionInfo": "1.0.1"
+   "versionInfo": "1.0.1",
+   "syftPackageData": {
+    "type": "python",
+    "foundBy": "the-cataloger-1",
+    "locations": [
+     {
+      "path": "/some/path/pkg1"
+     }
+    ],
+    "licenses": [
+     "MIT"
+    ],
+    "language": "python",
+    "metadataType": "PythonPackageMetadata",
+    "metadata": {
+     "name": "package-1",
+     "version": "1.0.1",
+     "license": "",
+     "author": "",
+     "authorEmail": "",
+     "platform": "",
+     "files": [
+      {
+       "path": "/some/path/pkg1/depedencies/foo"
+      }
+     ],
+     "sitePackagesRootPath": ""
+    }
+   }
   },
   {
    "SPDXID": "SPDXRef-Package-deb-package-2-2.0.1",
@@ -58,7 +107,27 @@
    "filesAnalyzed": false,
    "licenseDeclared": "NONE",
    "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
-   "versionInfo": "2.0.1"
+   "versionInfo": "2.0.1",
+   "syftPackageData": {
+    "type": "deb",
+    "foundBy": "the-cataloger-2",
+    "locations": [
+     {
+      "path": "/some/path/pkg1"
+     }
+    ],
+    "metadataType": "DpkgMetadata",
+    "metadata": {
+     "package": "package-2",
+     "source": "",
+     "version": "2.0.1",
+     "sourceVersion": "",
+     "architecture": "",
+     "maintainer": "",
+     "installedSize": 0,
+     "files": null
+    }
+   }
   }
  ],
  "files": [

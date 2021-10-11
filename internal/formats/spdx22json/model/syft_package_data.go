@@ -15,16 +15,16 @@ type SyftPackageData struct {
 }
 
 type SyftPackageCustomData struct {
-	MetadataType pkg.MetadataType `json:"metadataType"`
-	Metadata     interface{}      `json:"metadata"`
+	MetadataType pkg.MetadataType `json:"metadataType,omitempty"`
+	Metadata     interface{}      `json:"metadata,omitempty"`
 }
 
 type SyftPackageBasicData struct {
-	PackageType pkg.Type          `json:"type"`
-	FoundBy     string            `json:"foundBy"`
-	Locations   []source.Location `json:"locations"`
-	Licenses    []string          `json:"licenses"`
-	Language    pkg.Language      `json:"language"`
+	PackageType pkg.Type          `json:"type,omitempty"`
+	FoundBy     string            `json:"foundBy,omitempty"`
+	Locations   []source.Location `json:"locations,omitempty"`
+	Licenses    []string          `json:"licenses,omitempty"`
+	Language    pkg.Language      `json:"language,omitempty"`
 }
 
 // syftPackageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
