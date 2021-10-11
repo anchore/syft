@@ -24,13 +24,8 @@ func ToFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro
 		log.Warnf("unable to create syft-json source object: %+v", err)
 	}
 
-	artifacts, err := toPackageModels(catalog)
-	if err != nil {
-		return model.Document{}
-	}
-
 	return model.Document{
-		Artifacts:             artifacts,
+		Artifacts:             toPackageModels(catalog),
 		ArtifactRelationships: toRelationshipModel(pkg.NewRelationships(catalog)),
 		Source:                src,
 		Distro:                toDistroModel(d),
@@ -46,23 +41,19 @@ func ToFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro
 	}
 }
 
-func toPackageModels(catalog *pkg.Catalog) ([]model.Package, error) {
+func toPackageModels(catalog *pkg.Catalog) []model.Package {
 	artifacts := make([]model.Package, 0)
 	if catalog == nil {
-		return artifacts, nil
+		return artifacts
 	}
 	for _, p := range catalog.Sorted() {
-		art, err := toPackageModel(p)
-		if err != nil {
-			return nil, err
-		}
-		artifacts = append(artifacts, art)
+		artifacts = append(artifacts, toPackageModel(p))
 	}
-	return artifacts, nil
+	return artifacts
 }
 
 // toPackageModel crates a new Package from the given pkg.Package.
-func toPackageModel(p *pkg.Package) (model.Package, error) {
+func toPackageModel(p *pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
 		cpes[i] = c.BindToFmtString()
@@ -96,7 +87,7 @@ func toPackageModel(p *pkg.Package) (model.Package, error) {
 			MetadataType: p.MetadataType,
 			Metadata:     p.Metadata,
 		},
-	}, nil
+	}
 }
 
 func toRelationshipModel(relationships []pkg.Relationship) []model.Relationship {

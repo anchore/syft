@@ -1,7 +1,6 @@
 package anchore
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,20 +8,16 @@ import (
 	"strings"
 	"testing"
 
-	model2 "github.com/anchore/syft/internal/formats/syftjson/model"
-
-	"github.com/anchore/syft/internal/presenter/packages"
-
-	"github.com/wagoodman/go-progress"
-
-	"github.com/anchore/syft/syft/distro"
-
-	"github.com/docker/docker/pkg/ioutils"
-
 	"github.com/anchore/client-go/pkg/external"
+	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	"github.com/docker/docker/pkg/ioutils"
 	"github.com/go-test/deep"
+	"github.com/wagoodman/go-progress"
 )
 
 func must(c pkg.CPE, e error) pkg.CPE {
@@ -89,20 +84,19 @@ func TestPackageSbomToModel(t *testing.T) {
 		t.Fatalf("unable to marshal model: %+v", err)
 	}
 
-	var buf bytes.Buffer
-	pres := packages.NewJSONPresenter(c, m, &d, source.AllLayersScope)
-	if err := pres.Present(&buf); err != nil {
+	by, err := syft.Encode(c, &m, &d, format.JSONOption)
+	if err != nil {
 		t.Fatalf("unable to get expected json: %+v", err)
 	}
 
 	// unmarshal expected result
-	var expectedDoc model2.Document
-	if err := json.Unmarshal(buf.Bytes(), &expectedDoc); err != nil {
+	var expectedDoc syftjsonModel.Document
+	if err := json.Unmarshal(by, &expectedDoc); err != nil {
 		t.Fatalf("unable to parse json doc: %+v", err)
 	}
 
 	// unmarshal actual result
-	var actualDoc model2.Document
+	var actualDoc syftjsonModel.Document
 	if err := json.Unmarshal(modelJSON, &actualDoc); err != nil {
 		t.Fatalf("unable to parse json doc: %+v", err)
 	}

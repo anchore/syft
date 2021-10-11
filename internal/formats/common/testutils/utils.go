@@ -168,7 +168,7 @@ func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro
 			Version: "1.0.1",
 			Files: []pkg.PythonFileRecord{
 				{
-					Path: "/some/path/pkg1/depedencies/foo",
+					Path: "/some/path/pkg1/dependencies/foo",
 				},
 			},
 		},

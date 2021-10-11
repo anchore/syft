@@ -46,6 +46,7 @@ func (p *packageMetadataUnpacker) String() string {
 }
 
 // UnmarshalJSON is a custom unmarshaller for handling basic values and values with ambiguous types.
+// nolint:funlen
 func (p *Package) UnmarshalJSON(b []byte) error {
 	var basic PackageBasicData
 	if err := json.Unmarshal(b, &basic); err != nil {

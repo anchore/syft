@@ -38,6 +38,7 @@ func (p *syftPackageMetadataUnpacker) String() string {
 }
 
 // UnmarshalJSON is a custom unmarshaller for handling basic values and values with ambiguous types.
+// nolint:funlen
 func (p *SyftPackageData) UnmarshalJSON(b []byte) error {
 	var basic SyftPackageBasicData
 	if err := json.Unmarshal(b, &basic); err != nil {

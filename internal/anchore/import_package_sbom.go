@@ -25,7 +25,7 @@ type packageSBOMImportAPI interface {
 	ImportImagePackages(context.Context, string, external.ImagePackageManifest) (external.ImageImportContentResponse, *http.Response, error)
 }
 
-func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope) (*external.ImagePackageManifest, error) {
+func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, _ source.Scope) (*external.ImagePackageManifest, error) {
 	var buf bytes.Buffer
 	pres := formats.ByOption(format.JSONOption).Presenter(catalog, &s, d)
 	err := pres.Present(&buf)

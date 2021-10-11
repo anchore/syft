@@ -75,7 +75,7 @@ func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, *dis
 func Encode(catalog *pkg.Catalog, metadata *source.Metadata, dist *distro.Distro, option format.Option) ([]byte, error) {
 	f := formats.ByOption(option)
 	if f == nil {
-		return nil, nil
+		return nil, fmt.Errorf("unsupported format: %+v", option)
 	}
 	buff := bytes.Buffer{}
 

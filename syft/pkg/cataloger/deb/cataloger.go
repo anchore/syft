@@ -36,7 +36,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
-// nolint:funlen
+
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
 	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDbGlob)
 	if err != nil {
