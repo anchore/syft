@@ -16,7 +16,7 @@ const (
 	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
 	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
 	GolangBinMetadataType        MetadataType = "GolangBinMetadata"
-	GolangModMetadataType        MetadataType = "GolangModMetadataType"
+	GolangModMetadataType        MetadataType = "GolangModMetadata"
 )
 
 var AllMetadataTypes = []MetadataType{
