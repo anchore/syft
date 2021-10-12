@@ -8,25 +8,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const goCompiledVersion = "1.17"
+
 func TestBuildGoPkgInfo(t *testing.T) {
 	tests := []struct {
-		name      string
-		mod       string
-		goVersion string
-		expected  []pkg.Package
+		name     string
+		mod      string
+		expected []pkg.Package
 	}{
 		{
-			name:      "buildGoPkgInfo parses a blank mod string and returns no packages",
-			mod:       "",
-			goVersion: "",
-			expected:  make([]pkg.Package, 0),
+			name:     "buildGoPkgInfo parses a blank mod string and returns no packages",
+			mod:      "",
+			expected: make([]pkg.Package, 0),
 		},
 		{
 			name: "buildGoPkgInfo parses a populated mod string and returns packages but no source info",
 			mod: `path    github.com/anchore/syft mod     github.com/anchore/syft (devel)
 				  dep     github.com/adrg/xdg     v0.2.1  h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=
 				  dep     github.com/anchore/client-go    v0.0.0-20210222170800-9c70f9b80bcf      h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=`,
-			goVersion: "",
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/adrg/xdg",
@@ -36,6 +35,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Locations: []source.Location{
 						{},
 					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+					},
 				},
 				{
 					Name:     "github.com/anchore/client-go",
@@ -44,6 +48,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{},
+					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
 					},
 				},
 			},
@@ -56,7 +65,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				  dep     golang.org/x/sys        v0.0.0-20211006194710-c8a6f5223071      h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=
 				  dep     golang.org/x/term       v0.0.0-20210927222741-03fcf44c2211
 				  =>      golang.org/x/term       v0.0.0-20210916214954-140adaaadfaf      h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=`,
-			goVersion: "",
 			expected: []pkg.Package{
 				{
 					Name:     "golang.org/x/net",
@@ -65,6 +73,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{},
+					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
 					},
 				},
 				{
@@ -75,6 +88,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Locations: []source.Location{
 						{},
 					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
+					},
 				},
 				{
 					Name:     "golang.org/x/term",
@@ -84,6 +102,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Locations: []source.Location{
 						{},
 					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
+					},
 				},
 			},
 		},
@@ -92,7 +115,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			pkgs := buildGoPkgInfo("", tt.mod, tt.goVersion)
+			pkgs := buildGoPkgInfo("", tt.mod, goCompiledVersion)
 			assert.Equal(t, tt.expected, pkgs)
 		})
 	}

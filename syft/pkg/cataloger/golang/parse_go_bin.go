@@ -41,8 +41,7 @@ func buildGoPkgInfo(path, mod, goVersion string) []pkg.Package {
 			continue
 		}
 
-		switch fields[0] {
-		case packageIdentifier:
+		if fields[0] == packageIdentifier || fields[0] == replaceIdentifier {
 			pkgsSlice = append(pkgsSlice, pkg.Package{
 				Name:     fields[1],
 				Version:  fields[2],
@@ -59,14 +58,6 @@ func buildGoPkgInfo(path, mod, goVersion string) []pkg.Package {
 					H1Digest:          fields[3],
 				},
 			})
-		case replaceIdentifier:
-			p := &pkgsSlice[len(pkgsSlice)-1]
-			p.Name = fields[1]
-			p.Version = fields[2]
-			p.Metadata = pkg.GolangBinMetadata{
-				GoCompiledVersion: goVersion,
-				H1Digest:          fields[3],
-			}
 		}
 	}
 
