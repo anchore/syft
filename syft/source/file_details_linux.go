@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-// GetXid ...
+// GetXid is the UID GID system info for unix
 func GetXid(info os.FileInfo) (uid, gid int) {
 	uid = -1
 	gid = -1
