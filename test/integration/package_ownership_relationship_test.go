@@ -3,8 +3,11 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
-	exportedPackages "github.com/anchore/syft/syft/presenter/packages"
 	"testing"
+
+	"github.com/anchore/syft/syft/format"
+
+	exportedPackages "github.com/anchore/syft/syft/presenter/packages"
 
 	internalPackages "github.com/anchore/syft/internal/presenter/packages"
 )
@@ -24,7 +27,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			catalog, d, src := catalogFixtureImage(t, test.fixture)
 
-			p := exportedPackages.Presenter(exportedPackages.JSONPresenterOption, exportedPackages.PresenterConfig{
+			p := exportedPackages.Presenter(format.JSONOption, exportedPackages.PresenterConfig{
 				SourceMetadata: src.Metadata,
 				Catalog:        catalog,
 				Distro:         d,
