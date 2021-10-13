@@ -1,5 +1,5 @@
 //go:build linux || darwin
-// +build linux darwi
+// +build linux darwin
 
 package ui
 
