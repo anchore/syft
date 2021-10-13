@@ -1,3 +1,6 @@
+//go:build linux || darwin
+// +build linux darwi
+
 package ui
 
 import (
