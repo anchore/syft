@@ -21,26 +21,27 @@ func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 		return nil, err
 	}
 
-	_, mod := findVers(x)
+	goVersion, mod := findVers(x)
 
-	pkgs := buildGoPkgInfo(path, mod)
+	pkgs := buildGoPkgInfo(path, mod, goVersion)
 
 	return pkgs, nil
 }
 
-func buildGoPkgInfo(path, mod string) []pkg.Package {
+func buildGoPkgInfo(path, mod, goVersion string) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(strings.NewReader(mod))
 
 	// filter mod dependencies: [dep, name, version, sha]
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
-		// must have dep, name, version
-		if len(fields) < 3 {
+
+		// must have dep, name, version, sha
+		if len(fields) < 4 {
 			continue
 		}
-		switch fields[0] {
-		case packageIdentifier:
+
+		if fields[0] == packageIdentifier || fields[0] == replaceIdentifier {
 			pkgsSlice = append(pkgsSlice, pkg.Package{
 				Name:     fields[1],
 				Version:  fields[2],
@@ -51,11 +52,12 @@ func buildGoPkgInfo(path, mod string) []pkg.Package {
 						RealPath: path,
 					},
 				},
+				MetadataType: pkg.GolangBinMetadataType,
+				Metadata: pkg.GolangBinMetadata{
+					GoCompiledVersion: goVersion,
+					H1Digest:          fields[3],
+				},
 			})
-		case replaceIdentifier:
-			pkg := &pkgsSlice[len(pkgsSlice)-1]
-			pkg.Name = fields[1]
-			pkg.Version = fields[2]
 		}
 	}
 
