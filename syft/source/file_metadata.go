@@ -2,7 +2,6 @@ package source
 
 import (
 	"os"
-	"syscall"
 
 	"github.com/anchore/syft/internal/log"
 
@@ -39,12 +38,7 @@ func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, 
 }
 
 func fileMetadataFromPath(path string, info os.FileInfo) FileMetadata {
-	uid := -1
-	gid := -1
-	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
-		uid = int(stat.Uid)
-		gid = int(stat.Gid)
-	}
+	uid, gid := GetXid(info)
 
 	f, err := os.Open(path)
 	if err != nil {
