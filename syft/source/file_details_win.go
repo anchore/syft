@@ -1,4 +1,6 @@
+//go:build windows
 // +build windows
+
 package source
 
 import (
