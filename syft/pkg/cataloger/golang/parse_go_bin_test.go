@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const goCompiledVersion = "1.17"
+
 func TestBuildGoPkgInfo(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -33,6 +35,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Locations: []source.Location{
 						{},
 					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+					},
 				},
 				{
 					Name:     "github.com/anchore/client-go",
@@ -41,6 +48,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{},
+					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
 					},
 				},
 			},
@@ -62,6 +74,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Locations: []source.Location{
 						{},
 					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
+					},
 				},
 				{
 					Name:     "golang.org/x/sys",
@@ -70,6 +87,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{},
+					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
 					},
 				},
 				{
@@ -80,6 +102,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Locations: []source.Location{
 						{},
 					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
+					},
 				},
 			},
 		},
@@ -88,7 +115,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			pkgs := buildGoPkgInfo("", tt.mod)
+			pkgs := buildGoPkgInfo("", tt.mod, goCompiledVersion)
 			assert.Equal(t, tt.expected, pkgs)
 		})
 	}

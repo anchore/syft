@@ -15,6 +15,7 @@ const (
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
 	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
 	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
+	GolangBinMetadataType        MetadataType = "GolangBinMetadata"
 )
 
 var AllMetadataTypes = []MetadataType{
@@ -27,4 +28,5 @@ var AllMetadataTypes = []MetadataType{
 	PythonPackageMetadataType,
 	RustCargoPackageMetadataType,
 	KbPackageMetadataType,
+	GolangBinMetadataType,
 }
