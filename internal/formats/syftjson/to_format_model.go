@@ -12,11 +12,6 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-//// NewJSONDocument creates and populates a new JSON document struct from the given cataloging results.
-//func NewJSONDocument(catalog *pkg.Catalog, srcMetadata source.Metadata, d *distro.Distro, scope source.Scope, configuration interface{}) (Document, error) {
-//
-//}
-
 // TODO: this is export4ed for the use of the power-user command (temp)
 func ToFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro.Distro, scope source.Scope, applicationConfig interface{}) model.Document {
 	src, err := toSourceModel(srcMetadata, scope)

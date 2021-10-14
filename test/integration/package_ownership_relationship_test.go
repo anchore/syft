@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/syft/format"
-
 	exportedPackages "github.com/anchore/syft/syft/presenter/packages"
-
-	internalPackages "github.com/anchore/syft/internal/presenter/packages"
 )
 
 func TestPackageOwnershipRelationships(t *testing.T) {
@@ -42,7 +40,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 				t.Fatalf("unable to present: %+v", err)
 			}
 
-			var doc internalPackages.JSONDocument
+			var doc syftjsonModel.Document
 			decoder := json.NewDecoder(output)
 			if err := decoder.Decode(&doc); err != nil {
 				t.Fatalf("unable to decode json doc: %+v", err)
