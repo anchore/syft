@@ -38,10 +38,10 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 				if item == "" {
 					continue
 				}
-				fields := strings.Split(item, "=")
-
+				fields := strings.SplitN(item, "=", 2)
 				if len(fields) != 2 {
-					return nil, fmt.Errorf("unexpected python record digest: %q", item)
+					log.Warnf("unexpected python record digest: %q", item)
+					continue
 				}
 
 				record.Digest = &pkg.PythonFileDigest{
