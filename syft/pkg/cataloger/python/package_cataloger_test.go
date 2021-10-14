@@ -78,6 +78,8 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 						{Path: "Pygments-2.6.1.dist-info/RECORD"},
 						{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
 						{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
+
+						{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
 					},
 					TopLevelPackages: []string{"pygments", "something_else"},
 				},
