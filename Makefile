@@ -103,7 +103,7 @@ bootstrap-tools: $(TEMPDIR)
 	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.42.1
 	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0
-	.github/scripts/goreleaser-install.sh -b $(TEMPDIR)/ v0.182.1
+	.github/scripts/goreleaser-install.sh -b $(TEMPDIR)/ v0.177.0
 
 .PHONY: bootstrap-go
 bootstrap-go:
