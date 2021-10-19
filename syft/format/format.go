@@ -1,7 +1,6 @@
 package format
 
 import (
-	"bytes"
 	"errors"
 	"io"
 
@@ -46,12 +45,12 @@ func (f Format) Decode(reader io.Reader) (*pkg.Catalog, *source.Metadata, *distr
 	return f.decoder(reader)
 }
 
-func (f Format) Detect(b []byte) bool {
+func (f Format) Detect(reader io.Reader) bool {
 	if f.validator == nil {
 		return false
 	}
 
-	if err := f.validator(bytes.NewReader(b)); err != nil {
+	if err := f.validator(reader); err != nil {
 		return false
 	}
 	return true

@@ -1,6 +1,8 @@
 package formats
 
 import (
+	"bytes"
+
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/syft/format"
 )
@@ -14,7 +16,7 @@ func All() []format.Format {
 
 func Identify(by []byte) (*format.Format, error) {
 	for _, f := range All() {
-		if f.Detect(by) {
+		if f.Detect(bytes.NewReader(by)) {
 			return &f, nil
 		}
 	}
