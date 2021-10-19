@@ -62,7 +62,6 @@ execute() {
 }
 get_binaries() {
 	case "$PLATFORM" in
-	darwin/all) BINARIES="goreleaser" ;;
 	darwin/386) BINARIES="goreleaser" ;;
 	darwin/amd64) BINARIES="goreleaser" ;;
 	darwin/arm64) BINARIES="goreleaser" ;;
@@ -204,10 +203,6 @@ uname_arch() {
 	armv6*) arch="armv6" ;;
 	armv7*) arch="armv7" ;;
 	esac
-	os=$(uname_os)
-	case "$os" in
-	darwin) arch="all" ;;
-	esac
 	echo ${arch}
 }
 uname_os_check() {
@@ -224,7 +219,6 @@ uname_os_check() {
 	plan9) return 0 ;;
 	solaris) return 0 ;;
 	windows) return 0 ;;
-	all) return 0 ;;
 	esac
 	log_crit "uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value. Please file bug at https://github.com/client9/shlib"
 	return 1
@@ -233,7 +227,6 @@ uname_arch_check() {
 	arch=$(uname_arch)
 	case "$arch" in
 	386) return 0 ;;
-	all) return 0 ;;
 	amd64) return 0 ;;
 	arm64) return 0 ;;
 	armv5) return 0 ;;
