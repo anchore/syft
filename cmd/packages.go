@@ -49,7 +49,7 @@ const (
 
 var (
 	packagesPresenterOpt packages.PresenterOption
-	packagesArgs         = cobra.MaximumNArgs(1)
+	packagesArgs         = validatePackagesArgs
 	packagesCmd          = &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
@@ -192,6 +192,17 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	}
 
 	return nil
+}
+
+func validatePackagesArgs(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		if err := cmd.Help(); err != nil {
+			return fmt.Errorf("unable to display help: %w", err)
+		}
+		return fmt.Errorf("")
+	}
+
+	return cobra.MaximumNArgs(1)(cmd, args)
 }
 
 func packagesExec(_ *cobra.Command, args []string) error {
