@@ -50,23 +50,20 @@ func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...
 
 func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
 	cmd := getSyftCommand(t, args...)
-	if env != nil {
-		env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
+	if env == nil {
+		env = make(map[string]string)
 	}
+
+	// we should not have tests reaching out for app update checks
+	env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
+
 	stdout, stderr := runCommand(cmd, env)
 	return cmd, stdout, stderr
 }
 
 func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
 	if env != nil {
-		var envList []string
-		for key, val := range env {
-			if key == "" {
-				continue
-			}
-			envList = append(envList, fmt.Sprintf("%s=%s", key, val))
-		}
-		cmd.Env = envList
+		cmd.Env = append(os.Environ(), envMapToSlice(env)...)
 	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -76,6 +73,16 @@ func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
 	cmd.Run()
 
 	return stdout.String(), stderr.String()
+}
+
+func envMapToSlice(env map[string]string) (envList []string) {
+	for key, val := range env {
+		if key == "" {
+			continue
+		}
+		envList = append(envList, fmt.Sprintf("%s=%s", key, val))
+	}
+	return
 }
 
 func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
