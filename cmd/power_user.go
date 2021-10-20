@@ -35,19 +35,11 @@ var powerUserCmd = &cobra.Command{
 		"appName": internal.ApplicationName,
 		"command": "power-user",
 	}),
-	Args:          cobra.MaximumNArgs(1),
+	Args:          validateInputArgs,
 	Hidden:        true,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			err := cmd.Help()
-			if err != nil {
-				return err
-			}
-			return fmt.Errorf("an image/directory argument is required")
-		}
-
 		if appConfig.Dev.ProfileCPU && appConfig.Dev.ProfileMem {
 			return fmt.Errorf("cannot profile CPU and memory simultaneously")
 		}
