@@ -3,7 +3,7 @@
  "name": "/some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-09-16T20:44:35.198887Z",
+  "created": "2021-10-12T18:40:22.948394Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
@@ -11,7 +11,7 @@
   "licenseListVersion": "3.14"
  },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/image/",
+ "documentNamespace": "https:/anchore.com/syft/dir/some/path-98ae71fb-f276-4c5c-acf7-25770bf7bca2",
  "packages": [
   {
    "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",
@@ -32,7 +32,7 @@
    ],
    "filesAnalyzed": false,
    "hasFiles": [
-    "SPDXRef-File-package-1-04cd22424378dcd6c77fce08beb52493b5494a60ea5e1f9bdf9b16dc0cacffe9"
+    "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a"
    ],
    "licenseDeclared": "MIT",
    "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
@@ -63,17 +63,17 @@
  ],
  "files": [
   {
-   "SPDXID": "SPDXRef-File-package-1-04cd22424378dcd6c77fce08beb52493b5494a60ea5e1f9bdf9b16dc0cacffe9",
+   "SPDXID": "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a",
    "name": "foo",
    "licenseConcluded": "",
-   "fileName": "/some/path/pkg1/depedencies/foo"
+   "fileName": "/some/path/pkg1/dependencies/foo"
   }
  ],
  "relationships": [
   {
    "spdxElementId": "SPDXRef-Package-python-package-1-1.0.1",
    "relationshipType": "CONTAINS",
-   "relatedSpdxElement": "SPDXRef-File-package-1-04cd22424378dcd6c77fce08beb52493b5494a60ea5e1f9bdf9b16dc0cacffe9"
+   "relatedSpdxElement": "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a"
   }
  ]
 }

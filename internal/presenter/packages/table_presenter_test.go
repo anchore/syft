@@ -4,6 +4,8 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/anchore/syft/internal/formats/common/testutils"
+
 	"github.com/go-test/deep"
 )
 
@@ -11,8 +13,8 @@ var updateTablePresenterGoldenFiles = flag.Bool("update-table", false, "update t
 
 func TestTablePresenter(t *testing.T) {
 	testImage := "image-simple"
-	catalog, _, _ := presenterImageInput(t, testImage)
-	assertPresenterAgainstGoldenImageSnapshot(t,
+	catalog, _, _ := testutils.ImageInput(t, testImage)
+	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
 		NewTablePresenter(catalog),
 		testImage,
 		*updateTablePresenterGoldenFiles,

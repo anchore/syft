@@ -3,7 +3,7 @@
  "name": "user-image-input",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-09-16T20:44:35.203911Z",
+  "created": "2021-10-12T18:40:22.953633Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
@@ -11,7 +11,7 @@
   "licenseListVersion": "3.14"
  },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input",
+ "documentNamespace": "https:/anchore.com/syft/image/user-image-input-149edbad-3c01-4ee0-b3a0-75232312bf51",
  "packages": [
   {
    "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",

@@ -1,15 +1,16 @@
-package packages
+package testutils
 
 import (
 	"bytes"
 	"testing"
+
+	"github.com/anchore/syft/syft/presenter"
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/presenter"
 	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ import (
 
 type redactor func(s []byte) []byte
 
-func assertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Presenter, testImage string, updateSnapshot bool, redactors ...redactor) {
+func AssertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Presenter, testImage string, updateSnapshot bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	// grab the latest image contents and persist
@@ -50,7 +51,7 @@ func assertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Pres
 	}
 }
 
-func assertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter, updateSnapshot bool, redactors ...redactor) {
+func AssertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter, updateSnapshot bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	err := pres.Present(&buffer)
@@ -77,7 +78,7 @@ func assertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter
 	}
 }
 
-func presenterImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+func ImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.Metadata, *distro.Distro) {
 	t.Helper()
 	catalog := pkg.NewCatalog()
 	img := imagetest.GetGoldenFixtureImage(t, testImage)
@@ -104,7 +105,7 @@ func presenterImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.M
 		},
 		PURL: "a-purl-1",
 		CPEs: []pkg.CPE{
-			must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
+			pkg.MustCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -123,7 +124,7 @@ func presenterImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.M
 		},
 		PURL: "a-purl-2",
 		CPEs: []pkg.CPE{
-			must(pkg.NewCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*")),
+			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 
@@ -139,7 +140,7 @@ func presenterImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.M
 	return catalog, src.Metadata, &dist
 }
 
-func presenterDirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro) {
 	catalog := pkg.NewCatalog()
 
 	// populate catalog with test data
@@ -160,13 +161,13 @@ func presenterDirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *dist
 			Version: "1.0.1",
 			Files: []pkg.PythonFileRecord{
 				{
-					Path: "/some/path/pkg1/depedencies/foo",
+					Path: "/some/path/pkg1/dependencies/foo",
 				},
 			},
 		},
 		PURL: "a-purl-2",
 		CPEs: []pkg.CPE{
-			must(pkg.NewCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*")),
+			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -185,7 +186,7 @@ func presenterDirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *dist
 		},
 		PURL: "a-purl-2",
 		CPEs: []pkg.CPE{
-			must(pkg.NewCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*")),
+			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 

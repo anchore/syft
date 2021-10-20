@@ -1,7 +1,8 @@
 package poweruser
 
 import (
-	"github.com/anchore/syft/internal/presenter/packages"
+	"github.com/anchore/syft/internal/formats/syftjson"
+	"github.com/anchore/syft/internal/formats/syftjson/model"
 )
 
 type JSONDocument struct {
@@ -13,16 +14,11 @@ type JSONDocument struct {
 	FileContents        []JSONFileContents        `json:"fileContents,omitempty"`        // note: must have omitempty
 	FileMetadata        []JSONFileMetadata        `json:"fileMetadata,omitempty"`        // note: must have omitempty
 	Secrets             []JSONSecrets             `json:"secrets,omitempty"`             // note: must have omitempty
-	packages.JSONDocument
+	model.Document
 }
 
 // NewJSONDocument creates and populates a new JSON document struct from the given cataloging results.
 func NewJSONDocument(config JSONDocumentConfig) (JSONDocument, error) {
-	pkgsDoc, err := packages.NewJSONDocument(config.PackageCatalog, config.SourceMetadata, config.Distro, config.ApplicationConfig.Package.Cataloger.ScopeOpt, config.ApplicationConfig)
-	if err != nil {
-		return JSONDocument{}, err
-	}
-
 	fileMetadata, err := NewJSONFileMetadata(config.FileMetadata, config.FileDigests)
 	if err != nil {
 		return JSONDocument{}, err
@@ -33,6 +29,6 @@ func NewJSONDocument(config JSONDocumentConfig) (JSONDocument, error) {
 		FileContents:        NewJSONFileContents(config.FileContents),
 		FileMetadata:        fileMetadata,
 		Secrets:             NewJSONSecrets(config.Secrets),
-		JSONDocument:        pkgsDoc,
+		Document:            syftjson.ToFormatModel(config.PackageCatalog, &config.SourceMetadata, config.Distro, config.ApplicationConfig.Package.Cataloger.ScopeOpt, config.ApplicationConfig),
 	}, nil
 }
