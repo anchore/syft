@@ -49,7 +49,6 @@ const (
 
 var (
 	packagesPresenterOpt packages.PresenterOption
-	packagesArgs         = validatePackagesArgs
 	packagesCmd          = &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
@@ -58,18 +57,10 @@ var (
 			"appName": internal.ApplicationName,
 			"command": "packages",
 		}),
-		Args:          packagesArgs,
+		Args:          validateInputArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				err := cmd.Help()
-				if err != nil {
-					return err
-				}
-				return fmt.Errorf("an image/directory argument is required")
-			}
-
 			// set the presenter
 			presenterOption := packages.ParsePresenterOption(appConfig.Output)
 			if presenterOption == packages.UnknownPresenterOption {
@@ -194,12 +185,13 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	return nil
 }
 
-func validatePackagesArgs(cmd *cobra.Command, args []string) error {
+func validateInputArgs(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
+		// in the case that no arguments are given we want to show the help text and return with a non-0 return code.
 		if err := cmd.Help(); err != nil {
 			return fmt.Errorf("unable to display help: %w", err)
 		}
-		return fmt.Errorf("")
+		return fmt.Errorf("an image/directory argument is required")
 	}
 
 	return cobra.MaximumNArgs(1)(cmd, args)

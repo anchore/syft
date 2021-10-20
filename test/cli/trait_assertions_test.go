@@ -14,6 +14,7 @@ import (
 type traitAssertion func(tb testing.TB, stdout, stderr string, rc int)
 
 func assertJsonReport(tb testing.TB, stdout, _ string, _ int) {
+	tb.Helper()
 	var data interface{}
 
 	if err := json.Unmarshal([]byte(stdout), &data); err != nil {
@@ -22,6 +23,7 @@ func assertJsonReport(tb testing.TB, stdout, _ string, _ int) {
 }
 
 func assertTableReport(tb testing.TB, stdout, _ string, _ int) {
+	tb.Helper()
 	if !strings.Contains(stdout, "NAME") || !strings.Contains(stdout, "VERSION") || !strings.Contains(stdout, "TYPE") {
 		tb.Errorf("expected to find a table report, but did not")
 	}
@@ -29,6 +31,7 @@ func assertTableReport(tb testing.TB, stdout, _ string, _ int) {
 
 func assertScope(scope source.Scope) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, rc int) {
+		tb.Helper()
 		// we can only verify source with the json report
 		assertJsonReport(tb, stdout, stderr, rc)
 
@@ -44,6 +47,7 @@ func assertLoggingLevel(level string) traitAssertion {
 	//  "[0012] DEBUG"
 	logPattern := regexp.MustCompile(`(?m)^\[\d\d\d\d\]\s+` + strings.ToUpper(level))
 	return func(tb testing.TB, _, stderr string, _ int) {
+		tb.Helper()
 		if !logPattern.MatchString(stripansi.Strip(stderr)) {
 			tb.Errorf("output did not indicate the %q logging level", level)
 		}
@@ -52,6 +56,7 @@ func assertLoggingLevel(level string) traitAssertion {
 
 func assertNotInOutput(data string) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, _ int) {
+		tb.Helper()
 		if strings.Contains(stripansi.Strip(stderr), data) {
 			tb.Errorf("data=%q was found in stderr, but should not have been there", data)
 		}
@@ -63,6 +68,7 @@ func assertNotInOutput(data string) traitAssertion {
 
 func assertInOutput(data string) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, _ int) {
+		tb.Helper()
 		if !strings.Contains(stripansi.Strip(stderr), data) && !strings.Contains(stripansi.Strip(stdout), data) {
 			tb.Errorf("data=%q was NOT found in any output, but should have been there", data)
 		}
@@ -70,12 +76,14 @@ func assertInOutput(data string) traitAssertion {
 }
 
 func assertFailingReturnCode(tb testing.TB, _, _ string, rc int) {
+	tb.Helper()
 	if rc == 0 {
 		tb.Errorf("expected a failure but got rc=%d", rc)
 	}
 }
 
 func assertSuccessfulReturnCode(tb testing.TB, _, _ string, rc int) {
+	tb.Helper()
 	if rc != 0 {
 		tb.Errorf("expected no failure but got rc=%d", rc)
 	}
