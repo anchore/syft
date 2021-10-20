@@ -217,8 +217,19 @@ func packagesExec(_ *cobra.Command, args []string) error {
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
-		ui.Select(appConfig.CliOptions.Verbosity > 0, appConfig.Quiet, reporter)...,
+		ui.Select(isVerbose(), appConfig.Quiet, reporter)...,
 	)
+}
+
+func isVerbose() (result bool) {
+	isPipedInput, err := internal.IsPipedInput()
+	if err != nil {
+		// since we can't tell if there was piped input we assume that there could be to disable the ETUI
+		log.Warnf("unable to determine if there is piped input: %+v", err)
+		return true
+	}
+	// verbosity should consider if there is piped input (in which case we should not show the ETUI)
+	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
 func packagesExecWorker(userInput string) <-chan error {
