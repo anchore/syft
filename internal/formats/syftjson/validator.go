@@ -22,7 +22,7 @@ func validator(reader io.Reader) error {
 		return fmt.Errorf("unable to decode: %w", err)
 	}
 
-	// note: we accept al schema versions
+	// note: we accept all schema versions
 	// TODO: add per-schema version parsing
 	if strings.Contains(doc.Schema.URL, "anchore/syft") {
 		return nil

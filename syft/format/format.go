@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	ErrEncodingNotSupported = errors.New("encoding not supported")
-	ErrDecodingNotSupported = errors.New("decoding not supported")
+	ErrEncodingNotSupported   = errors.New("encoding not supported")
+	ErrDecodingNotSupported   = errors.New("decoding not supported")
+	ErrValidationNotSupported = errors.New("validation not supported")
 )
 
 type Format struct {
@@ -45,15 +46,12 @@ func (f Format) Decode(reader io.Reader) (*pkg.Catalog, *source.Metadata, *distr
 	return f.decoder(reader)
 }
 
-func (f Format) Detect(reader io.Reader) bool {
+func (f Format) Validate(reader io.Reader) error {
 	if f.validator == nil {
-		return false
+		return ErrValidationNotSupported
 	}
 
-	if err := f.validator(reader); err != nil {
-		return false
-	}
-	return true
+	return f.validator(reader)
 }
 
 func (f Format) Presenter(catalog *pkg.Catalog, metadata *source.Metadata, d *distro.Distro, scope source.Scope) *Presenter {

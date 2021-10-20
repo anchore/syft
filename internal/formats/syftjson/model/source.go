@@ -48,6 +48,7 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		s.Target = payload
+
 	default:
 		return fmt.Errorf("unsupported package metadata type: %+v", s.Type)
 	}

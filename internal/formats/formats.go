@@ -16,9 +16,10 @@ func All() []format.Format {
 
 func Identify(by []byte) (*format.Format, error) {
 	for _, f := range All() {
-		if f.Detect(bytes.NewReader(by)) {
-			return &f, nil
+		if err := f.Validate(bytes.NewReader(by)); err != nil {
+			continue
 		}
+		return &f, nil
 	}
 	return nil, nil
 }

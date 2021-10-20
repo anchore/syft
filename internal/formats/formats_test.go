@@ -10,7 +10,6 @@ import (
 )
 
 func TestIdentify(t *testing.T) {
-
 	tests := []struct {
 		fixture  string
 		expected format.Option
