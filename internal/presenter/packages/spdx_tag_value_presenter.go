@@ -5,6 +5,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
+
 	"github.com/anchore/syft/internal/spdxlicense"
 
 	"github.com/anchore/syft/internal"
@@ -114,7 +116,7 @@ func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 3.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 3.16) is preferred.
-		license := getSPDXLicense(p)
+		license := spdxhelpers.License(p)
 
 		results[spdx.ElementID(id)] = &spdx.Package2_2{
 
@@ -274,7 +276,7 @@ func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_
 }
 
 func formatSPDXExternalRefs(p *pkg.Package) (refs []*spdx.PackageExternalReference2_2) {
-	for _, ref := range getSPDXExternalRefs(p) {
+	for _, ref := range spdxhelpers.ExternalRefs(p) {
 		refs = append(refs, &spdx.PackageExternalReference2_2{
 			Category:           string(ref.ReferenceCategory),
 			RefType:            string(ref.ReferenceType),
