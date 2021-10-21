@@ -12,7 +12,6 @@ builds:
     env:
       - CGO_ENABLED=0
     goos:
-      # windows not supported yet (due to jotframe)
       - windows
       - linux
     goarch:
