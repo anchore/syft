@@ -333,6 +333,7 @@ jobs:
         with:
           name: artifacts
           path: snapshot
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Run CLI Tests (Linux)
         run: make cli
