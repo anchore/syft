@@ -12,8 +12,7 @@ builds:
     env:
       - CGO_ENABLED=0
     goos:
-      # windows not supported yet (due to jotframe)
-      # - windows
+      - windows
       - linux
     goarch:
       - amd64
@@ -27,7 +26,7 @@ builds:
       -X github.com/anchore/syft/internal/version.gitCommit={{.Commit}}
       -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
       -X github.com/anchore/syft/internal/version.gitTreeState={{.Env.BUILD_GIT_TREE_STATE}}
-  # For more info on this macOS build, see: https://github.com/mitchellh/gon#usage-with-goreleaser
+    # For more info on this macOS build, see: https://github.com/mitchellh/gon#usage-with-goreleaser
   - binary: syft
     id: syft-macos
     env:

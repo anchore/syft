@@ -33,6 +33,7 @@ func init() {
 		flag, "q", false,
 		"suppress all logging output",
 	)
+
 	if err := viper.BindPFlag(flag, rootCmd.PersistentFlags().Lookup(flag)); err != nil {
 		fmt.Printf("unable to bind flag '%s': %+v", flag, err)
 		os.Exit(1)
