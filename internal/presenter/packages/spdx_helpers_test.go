@@ -12,7 +12,7 @@ import (
 )
 
 func Test_getSPDXExternalRefs(t *testing.T) {
-	testCPE := must(pkg.NewCPE("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*"))
+	testCPE := pkg.MustCPE("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
 	tests := []struct {
 		name     string
 		input    pkg.Package

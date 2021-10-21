@@ -35,6 +35,14 @@ func NewCPE(cpeStr string) (CPE, error) {
 	return *value, nil
 }
 
+func MustCPE(cpeStr string) CPE {
+	c, err := NewCPE(cpeStr)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
 func normalizeCpeField(field string) string {
 	// keep dashes and forward slashes unescaped
 	return strings.ReplaceAll(wfn.StripSlashes(field), `\/`, "/")

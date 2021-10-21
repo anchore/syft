@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/syft/format"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -48,7 +50,7 @@ const (
 )
 
 var (
-	packagesPresenterOpt packages.PresenterOption
+	packagesPresenterOpt format.Option
 	packagesCmd          = &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
@@ -62,8 +64,8 @@ var (
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// set the presenter
-			presenterOption := packages.ParsePresenterOption(appConfig.Output)
-			if presenterOption == packages.UnknownPresenterOption {
+			presenterOption := format.ParseOption(appConfig.Output)
+			if presenterOption == format.UnknownFormatOption {
 				return fmt.Errorf("bad --output value '%s'", appConfig.Output)
 			}
 			packagesPresenterOpt = presenterOption
@@ -100,8 +102,8 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringP(
-		"output", "o", string(packages.TablePresenterOption),
-		fmt.Sprintf("report output formatter, options=%v", packages.AllPresenters),
+		"output", "o", string(format.TableOption),
+		fmt.Sprintf("report output formatter, options=%v", format.AllPresenters),
 	)
 
 	flags.StringP(
