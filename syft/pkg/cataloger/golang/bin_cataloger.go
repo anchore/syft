@@ -50,7 +50,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 
 		goPkgs, err := parseGoBin(location.RealPath, r)
 		if err != nil {
-			log.Infof("could not parse go bin for: %w", err)
+			log.Warnf("could not parse possible go binary: %+v", err)
 		}
 
 		r.Close()
