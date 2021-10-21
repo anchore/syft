@@ -1,0 +1,148 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "/some/path",
+ "spdxVersion": "SPDX-2.2",
+ "creationInfo": {
+  "created": "2021-10-21T14:23:51.664982Z",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-[not provided]"
+  ],
+  "licenseListVersion": "3.14"
+ },
+ "syftSourceData": {
+  "Scheme": "DirectoryScheme",
+  "ImageMetadata": {
+   "userInput": "",
+   "imageID": "",
+   "manifestDigest": "",
+   "mediaType": "",
+   "tags": null,
+   "imageSize": 0,
+   "layers": null,
+   "manifest": null,
+   "config": null,
+   "repoDigests": null
+  },
+  "Path": "/some/path"
+ },
+ "syftDistroData": {
+  "name": "debian",
+  "version": "1.2.3",
+  "idLike": "like!"
+ },
+ "dataLicense": "CC0-1.0",
+ "documentNamespace": "https:/anchore.com/syft/dir/some/path-df32db3e-c495-4f3b-9304-a84e1cc22fc7",
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",
+   "name": "package-1",
+   "licenseConcluded": "MIT",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "a-purl-2",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "hasFiles": [
+    "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a"
+   ],
+   "licenseDeclared": "MIT",
+   "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
+   "versionInfo": "1.0.1",
+   "syftPackageData": {
+    "type": "python",
+    "foundBy": "the-cataloger-1",
+    "locations": [
+     {
+      "path": "/some/path/pkg1"
+     }
+    ],
+    "licenses": [
+     "MIT"
+    ],
+    "language": "python",
+    "metadataType": "PythonPackageMetadata",
+    "metadata": {
+     "name": "package-1",
+     "version": "1.0.1",
+     "license": "",
+     "author": "",
+     "authorEmail": "",
+     "platform": "",
+     "files": [
+      {
+       "path": "/some/path/pkg1/dependencies/foo"
+      }
+     ],
+     "sitePackagesRootPath": ""
+    }
+   }
+  },
+  {
+   "SPDXID": "SPDXRef-Package-deb-package-2-2.0.1",
+   "name": "package-2",
+   "licenseConcluded": "NONE",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "a-purl-2",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "NONE",
+   "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
+   "versionInfo": "2.0.1",
+   "syftPackageData": {
+    "type": "deb",
+    "foundBy": "the-cataloger-2",
+    "locations": [
+     {
+      "path": "/some/path/pkg1"
+     }
+    ],
+    "metadataType": "DpkgMetadata",
+    "metadata": {
+     "package": "package-2",
+     "source": "",
+     "version": "2.0.1",
+     "sourceVersion": "",
+     "architecture": "",
+     "maintainer": "",
+     "installedSize": 0,
+     "files": null
+    }
+   }
+  }
+ ],
+ "files": [
+  {
+   "SPDXID": "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a",
+   "name": "foo",
+   "licenseConcluded": "",
+   "fileName": "/some/path/pkg1/dependencies/foo"
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-1.0.1",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a"
+  }
+ ]
+}
