@@ -250,7 +250,7 @@ cli: $(SNAPSHOTDIR) ## Run CLI tests
 	SYFT_BINARY_LOCATION='$(SNAPSHOT_CMD)' \
 		go test -count=1 -v ./test/cli
 
-.PHONY: changlog-release
+.PHONY: changelog-release
 changelog-release:
 	$(TEMPDIR)/chronicle --since-tag $(SECOND_TO_LAST_TAG) --until-tag $(LAST_TAG) -vv > CHANGELOG.md
 
