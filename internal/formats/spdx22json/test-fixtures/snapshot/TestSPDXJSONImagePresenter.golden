@@ -3,7 +3,7 @@
  "name": "user-image-input",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-10-21T14:23:51.669903Z",
+  "created": "2021-10-22T19:25:38.341582Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
@@ -39,13 +39,8 @@
   },
   "Path": ""
  },
- "syftDistroData": {
-  "name": "debian",
-  "version": "1.2.3",
-  "idLike": "like!"
- },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https:/anchore.com/syft/image/user-image-input-a5c175cf-bfd5-47fb-9604-f6106415d5bb",
+ "documentNamespace": "https:/anchore.com/syft/image/user-image-input-7c996682-9cdf-45cd-b70b-e771d740c9ed",
  "packages": [
   {
    "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",
@@ -67,31 +62,7 @@
    "filesAnalyzed": false,
    "licenseDeclared": "MIT",
    "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
-   "versionInfo": "1.0.1",
-   "syftPackageData": {
-    "type": "python",
-    "foundBy": "the-cataloger-1",
-    "locations": [
-     {
-      "path": "/somefile-1.txt",
-      "layerID": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"
-     }
-    ],
-    "licenses": [
-     "MIT"
-    ],
-    "language": "python",
-    "metadataType": "PythonPackageMetadata",
-    "metadata": {
-     "name": "package-1",
-     "version": "1.0.1",
-     "license": "",
-     "author": "",
-     "authorEmail": "",
-     "platform": "",
-     "sitePackagesRootPath": ""
-    }
-   }
+   "versionInfo": "1.0.1"
   },
   {
    "SPDXID": "SPDXRef-Package-deb-package-2-2.0.1",
@@ -113,28 +84,7 @@
    "filesAnalyzed": false,
    "licenseDeclared": "NONE",
    "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
-   "versionInfo": "2.0.1",
-   "syftPackageData": {
-    "type": "deb",
-    "foundBy": "the-cataloger-2",
-    "locations": [
-     {
-      "path": "/somefile-2.txt",
-      "layerID": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec"
-     }
-    ],
-    "metadataType": "DpkgMetadata",
-    "metadata": {
-     "package": "package-2",
-     "source": "",
-     "version": "2.0.1",
-     "sourceVersion": "",
-     "architecture": "",
-     "maintainer": "",
-     "installedSize": 0,
-     "files": null
-    }
-   }
+   "versionInfo": "2.0.1"
   }
  ]
 }

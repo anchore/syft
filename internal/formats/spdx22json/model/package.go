@@ -47,7 +47,4 @@ type Package struct {
 	Supplier string `json:"supplier,omitempty"`
 	// Provides an indication of the version of the package that is described by this SpdxDocument.
 	VersionInfo string `json:"versionInfo,omitempty"`
-	// SyftPackageData provides a spot to add syft-specific data that is not available in-spec or is not easily decodable from
-	// other SPDX fields.
-	SyftPackageData *SyftPackageData `json:"syftPackageData,omitempty"`
 }

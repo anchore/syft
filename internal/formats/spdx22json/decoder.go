@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// note: this format is LOSSY relative to the syftjson formation, which means that decoding may not provide full syft native models
 func decoder(reader io.Reader) (*pkg.Catalog, *source.Metadata, *distro.Distro, source.Scope, error) {
 	dec := json.NewDecoder(reader)
 

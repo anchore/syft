@@ -15,8 +15,6 @@ type Document struct {
 	CreationInfo CreationInfo `json:"creationInfo"`
 	// SyftSourceData contains information about what is being described in this SPDX document (e.g. a container image, a directory, etc)
 	SyftSourceData *source.Metadata `json:"syftSourceData,omitempty"`
-	// SyftDistroData contains information about the linux distribution discovered
-	SyftDistroData *SyftDistroData `json:"syftDistroData,omitempty"`
 	// 2.2: Data License; should be "CC0-1.0"
 	// Cardinality: mandatory, one
 	// License expression for dataLicense.  Compliance with the SPDX specification includes populating the SPDX

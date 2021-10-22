@@ -19,7 +19,7 @@ import (
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro.Distro, _ source.Scope) model.Document {
+func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro.Distro, _ source.Scope) model.Document {
 	name := documentName(srcMetadata)
 	packages, files, relationships := extractFromCatalog(catalog)
 
@@ -45,18 +45,6 @@ func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro
 		Relationships:     relationships,
 		// TODO: add scope
 		SyftSourceData: srcMetadata,
-		SyftDistroData: toSyftDistroData(d),
-	}
-}
-
-func toSyftDistroData(d *distro.Distro) *model.SyftDistroData {
-	if d == nil {
-		return nil
-	}
-	return &model.SyftDistroData{
-		Name:    d.Name(),
-		Version: d.FullVersion(),
-		IDLike:  d.IDLike,
 	}
 }
 
@@ -127,30 +115,10 @@ func extractFromCatalog(catalog *pkg.Catalog) ([]model.Package, []model.File, []
 					Name:   p.Name,
 				},
 			},
-			SyftPackageData: toSyftPackageData(p),
 		})
 	}
 
 	return packages, files, relationships
-}
-
-func toSyftPackageData(p *pkg.Package) *model.SyftPackageData {
-	if p == nil {
-		return nil
-	}
-	return &model.SyftPackageData{
-		SyftPackageBasicData: model.SyftPackageBasicData{
-			PackageType: p.Type,
-			FoundBy:     p.FoundBy,
-			Locations:   p.Locations,
-			Language:    p.Language,
-			Licenses:    p.Licenses,
-		},
-		SyftPackageCustomData: model.SyftPackageCustomData{
-			MetadataType: p.MetadataType,
-			Metadata:     p.Metadata,
-		},
-	}
 }
 
 func cleanSPDXName(name string) string {
