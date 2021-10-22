@@ -18,10 +18,6 @@ func TestIdentify(t *testing.T) {
 			fixture:  "test-fixtures/alpine-syft.json",
 			expected: format.JSONOption,
 		},
-		{
-			fixture:  "test-fixtures/alpine-spdx.json",
-			expected: format.SPDXJSONOption,
-		},
 	}
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
