@@ -3,6 +3,8 @@ package formats
 import (
 	"bytes"
 
+	"github.com/anchore/syft/internal/formats/table"
+
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/syft/format"
 )
@@ -11,6 +13,7 @@ import (
 func All() []format.Format {
 	return []format.Format{
 		syftjson.Format(),
+		table.Format(),
 	}
 }
 

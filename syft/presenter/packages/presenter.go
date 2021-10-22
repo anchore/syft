@@ -16,8 +16,6 @@ func Presenter(option format.Option, config PresenterConfig) presenter.Presenter
 	switch option {
 	case format.TextOption:
 		return packages.NewTextPresenter(config.Catalog, config.SourceMetadata)
-	case format.TableOption:
-		return packages.NewTablePresenter(config.Catalog)
 	case format.CycloneDxOption:
 		return packages.NewCycloneDxPresenter(config.Catalog, config.SourceMetadata)
 	case format.SPDXTagValueOption:
