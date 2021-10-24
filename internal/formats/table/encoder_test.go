@@ -1,23 +1,22 @@
-package packages
+package table
 
 import (
 	"flag"
 	"testing"
 
 	"github.com/anchore/syft/internal/formats/common/testutils"
-
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
-var updateTablePresenterGoldenFiles = flag.Bool("update-table", false, "update the *.golden files for table presenters")
+var updateTableGoldenFiles = flag.Bool("update-table", false, "update the *.golden files for table format")
 
 func TestTablePresenter(t *testing.T) {
-	testImage := "image-simple"
-	catalog, _, _ := testutils.ImageInput(t, testImage)
-	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		NewTablePresenter(catalog),
-		testImage,
-		*updateTablePresenterGoldenFiles,
+	catalog, metadata, distro := testutils.DirectoryInput(t)
+	testutils.AssertPresenterAgainstGoldenSnapshot(t,
+		format.NewPresenter(encoder, catalog, &metadata, distro, source.SquashedScope),
+		*updateTableGoldenFiles,
 	)
 }
 

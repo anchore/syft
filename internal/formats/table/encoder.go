@@ -1,4 +1,4 @@
-package packages
+package table
 
 import (
 	"fmt"
@@ -8,24 +8,16 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
-type TablePresenter struct {
-	catalog *pkg.Catalog
-}
-
-func NewTablePresenter(catalog *pkg.Catalog) *TablePresenter {
-	return &TablePresenter{
-		catalog: catalog,
-	}
-}
-
-func (pres *TablePresenter) Present(output io.Writer) error {
-	rows := make([][]string, 0)
+func encoder(output io.Writer, catalog *pkg.Catalog, _ *source.Metadata, _ *distro.Distro, _ source.Scope) error {
+	var rows [][]string
 
 	columns := []string{"Name", "Version", "Type"}
-	for _, p := range pres.catalog.Sorted() {
+	for _, p := range catalog.Sorted() {
 		row := []string{
 			p.Name,
 			p.Version,
@@ -35,8 +27,8 @@ func (pres *TablePresenter) Present(output io.Writer) error {
 	}
 
 	if len(rows) == 0 {
-		fmt.Fprintln(output, "No packages discovered")
-		return nil
+		_, err := fmt.Fprintln(output, "No packages discovered")
+		return err
 	}
 
 	// sort by name, version, then type
