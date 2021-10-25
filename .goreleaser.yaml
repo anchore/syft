@@ -132,6 +132,7 @@ dockers:
       - "anchore/syft:v{{ .Major }}-arm64v8"
       - "anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8"
     goarch: arm64
+    dockerfile: Dockerfile
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64/v8"
