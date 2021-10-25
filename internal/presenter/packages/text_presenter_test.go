@@ -19,7 +19,7 @@ func TestTextDirectoryPresenter(t *testing.T) {
 
 func TestTextImagePresenter(t *testing.T) {
 	testImage := "image-simple"
-	catalog, metadata, _ := testutils.ImageInput(t, testImage)
+	catalog, metadata, _ := testutils.ImageInput(t, testImage, testutils.FromSnapshot())
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
 		NewTextPresenter(catalog, metadata),
 		testImage,

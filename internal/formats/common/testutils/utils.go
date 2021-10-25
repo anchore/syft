@@ -106,6 +106,21 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) (*pkg.Ca
 		img = imagetest.GetFixtureImage(t, "docker-archive", testImage)
 	}
 
+	populateImageCatalog(catalog, img)
+
+	// this is a hard coded value that is not given by the fixture helper and must be provided manually
+	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+
+	src, err := source.NewFromImage(img, "user-image-input")
+	assert.NoError(t, err)
+
+	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
+	assert.NoError(t, err)
+
+	return catalog, src.Metadata, &dist
+}
+
+func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
@@ -150,20 +165,21 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) (*pkg.Ca
 			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
+}
 
-	// this is a hard coded value that is not given by the fixture helper and must be provided manually
-	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
-
-	src, err := source.NewFromImage(img, "user-image-input")
-	assert.NoError(t, err)
+func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+	catalog := newDirectoryCatalog()
 
 	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
+	assert.NoError(t, err)
+
+	src, err := source.NewFromDirectory("/some/path")
 	assert.NoError(t, err)
 
 	return catalog, src.Metadata, &dist
 }
 
-func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+func newDirectoryCatalog() *pkg.Catalog {
 	catalog := pkg.NewCatalog()
 
 	// populate catalog with test data
@@ -213,11 +229,5 @@ func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro
 		},
 	})
 
-	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
-	assert.NoError(t, err)
-
-	src, err := source.NewFromDirectory("/some/path")
-	assert.NoError(t, err)
-
-	return catalog, src.Metadata, &dist
+	return catalog
 }
