@@ -103,7 +103,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 
 	flags.StringP(
 		"output", "o", string(format.TableOption),
-		fmt.Sprintf("report output formatter, options=%v", format.AllPresenters),
+		fmt.Sprintf("report output formatter, options=%v", format.AllOptions),
 	)
 
 	flags.StringP(
