@@ -232,6 +232,9 @@ jobs:
 
       - uses: actions/checkout@v2
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
       - name: Restore tool cache
         id: tool-cache
         uses: actions/cache@v2.1.3

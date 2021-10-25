@@ -205,6 +205,7 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 
 	# build release snapshots
 	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
+	DOCKER_CLI_EXPERIMENTAL=enabled \
 	$(TEMPDIR)/goreleaser release --skip-publish --skip-sign --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
@@ -288,6 +289,7 @@ release: clean-dist changelog-release ## Build and publish final binaries and pa
 	bash -c "\
 		BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
 		VERSION=$(VERSION:v%=%) \
+		DOCKER_CLI_EXPERIMENTAL=enabled \
 		$(TEMPDIR)/goreleaser \
 			--rm-dist \
 			--config $(TEMPDIR)/goreleaser.yaml \
