@@ -1,14 +1,10 @@
 package anchore
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/anchore/syft/internal/formats/syftjson"
 
 	"github.com/wagoodman/go-progress"
 
@@ -25,20 +21,24 @@ type packageSBOMImportAPI interface {
 }
 
 func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope) (*external.ImagePackageManifest, error) {
-	var buf bytes.Buffer
+	//var buf bytes.Buffer
 
-	err := syftjson.Format().Presenter(catalog, &s, d, scope).Present(&buf)
-	if err != nil {
-		return nil, fmt.Errorf("unable to serialize results: %w", err)
-	}
+	// TODO: this isn't backwards compatable... must preserve
+	//
+	//err := syftjson.Format().Presenter(catalog, &s, d, scope).Present(&buf)
+	//if err != nil {
+	//	return nil, fmt.Errorf("unable to serialize results: %w", err)
+	//}
+	//
+	//// the model is 1:1 the JSON output of today. As the schema changes, this will need to be converted into individual mappings.
+	//var model external.ImagePackageManifest
+	//if err = json.Unmarshal(buf.Bytes(), &model); err != nil {
+	//	return nil, fmt.Errorf("unable to convert JSON presenter output to import model: %w", err)
+	//}
+	//
+	//return &model, nil
 
-	// the model is 1:1 the JSON output of today. As the schema changes, this will need to be converted into individual mappings.
-	var model external.ImagePackageManifest
-	if err = json.Unmarshal(buf.Bytes(), &model); err != nil {
-		return nil, fmt.Errorf("unable to convert JSON presenter output to import model: %w", err)
-	}
-
-	return &model, nil
+	panic("not implemented")
 }
 
 func importPackageSBOM(ctx context.Context, api packageSBOMImportAPI, sessionID string, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope, stage *progress.Stage) (string, error) {

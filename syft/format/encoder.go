@@ -3,10 +3,8 @@ package format
 import (
 	"io"
 
-	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 // Encoder is a function that can transform Syft native objects into an SBOM document of a specific format written to the given writer.
-type Encoder func(io.Writer, *pkg.Catalog, *source.Metadata, *distro.Distro, source.Scope) error
+type Encoder func(io.Writer, sbom.SBOM) error

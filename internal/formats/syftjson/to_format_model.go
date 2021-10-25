@@ -3,6 +3,8 @@ package syftjson
 import (
 	"fmt"
 
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
@@ -13,17 +15,17 @@ import (
 )
 
 // TODO: this is export4ed for the use of the power-user command (temp)
-func ToFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro.Distro, scope source.Scope, applicationConfig interface{}) model.Document {
-	src, err := toSourceModel(srcMetadata, scope)
+func ToFormatModel(s sbom.SBOM, applicationConfig interface{}) model.Document {
+	src, err := toSourceModel(s.Source)
 	if err != nil {
 		log.Warnf("unable to create syft-json source object: %+v", err)
 	}
 
 	return model.Document{
-		Artifacts:             toPackageModels(catalog),
-		ArtifactRelationships: toRelationshipModel(pkg.NewRelationships(catalog)),
+		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
+		ArtifactRelationships: toRelationshipModel(pkg.NewRelationships(s.Artifacts.PackageCatalog)),
 		Source:                src,
-		Distro:                toDistroModel(d),
+		Distro:                toDistroModel(s.Artifacts.Distro),
 		Descriptor: model.Descriptor{
 			Name:          internal.ApplicationName,
 			Version:       version.FromBuild().Version,
@@ -99,15 +101,12 @@ func toRelationshipModel(relationships []pkg.Relationship) []model.Relationship 
 }
 
 // toSourceModel creates a new source object to be represented into JSON.
-func toSourceModel(src *source.Metadata, scope source.Scope) (model.Source, error) {
+func toSourceModel(src source.Metadata) (model.Source, error) {
 	switch src.Scheme {
 	case source.ImageScheme:
 		return model.Source{
-			Type: "image",
-			Target: model.ImageSource{
-				ImageMetadata: src.ImageMetadata,
-				Scope:         scope,
-			},
+			Type:   "image",
+			Target: src.ImageMetadata,
 		}, nil
 	case source.DirectoryScheme:
 		return model.Source{

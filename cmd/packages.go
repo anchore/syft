@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
@@ -266,9 +267,17 @@ func packagesExecWorker(userInput string) <-chan error {
 			}
 		}
 
+		sbomResult := sbom.SBOM{
+			Artifacts: sbom.Artifacts{
+				PackageCatalog: catalog,
+				Distro:         d,
+			},
+			Source: src.Metadata,
+		}
+
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: f.Presenter(catalog, &src.Metadata, d, appConfig.Package.Cataloger.ScopeOpt),
+			Value: f.Presenter(sbomResult),
 		})
 	}()
 	return errs

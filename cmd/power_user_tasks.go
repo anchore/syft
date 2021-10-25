@@ -4,13 +4,14 @@ import (
 	"crypto"
 	"fmt"
 
-	"github.com/anchore/syft/internal/presenter/poweruser"
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
 
-type powerUserTask func(*poweruser.JSONDocumentConfig, *source.Source) error
+type powerUserTask func(*sbom.Artifacts, *source.Source) error
 
 func powerUserTasks() ([]powerUserTask, error) {
 	var tasks []powerUserTask
@@ -42,7 +43,7 @@ func catalogPackagesTask() (powerUserTask, error) {
 		return nil, nil
 	}
 
-	task := func(results *poweruser.JSONDocumentConfig, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) error {
 		packageCatalog, theDistro, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
@@ -64,7 +65,7 @@ func catalogFileMetadataTask() (powerUserTask, error) {
 
 	metadataCataloger := file.NewMetadataCataloger()
 
-	task := func(results *poweruser.JSONDocumentConfig, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) error {
 		resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
@@ -110,7 +111,7 @@ func catalogFileDigestsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *poweruser.JSONDocumentConfig, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) error {
 		resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
@@ -142,7 +143,7 @@ func catalogSecretsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *poweruser.JSONDocumentConfig, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) error {
 		resolver, err := src.FileResolver(appConfig.Secrets.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
@@ -170,7 +171,7 @@ func catalogFileClassificationsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *poweruser.JSONDocumentConfig, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) error {
 		resolver, err := src.FileResolver(appConfig.FileClassification.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
@@ -197,7 +198,7 @@ func catalogContentsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *poweruser.JSONDocumentConfig, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) error {
 		resolver, err := src.FileResolver(appConfig.FileContents.Cataloger.ScopeOpt)
 		if err != nil {
 			return err
