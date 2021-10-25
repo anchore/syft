@@ -116,7 +116,7 @@ dockers:
   - image_templates:
       - "anchore/syft:latest"
       - "anchore/syft:{{ .Tag }}-amd64"
-      - "anchore/syft:v{{ .Major }}-amd54"
+      - "anchore/syft:v{{ .Major }}-amd64"
       - "anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64"
     dockerfile: Dockerfile
     use: buildx
