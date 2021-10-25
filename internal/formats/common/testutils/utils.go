@@ -81,7 +81,7 @@ func AssertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter
 func ImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.Metadata, *distro.Distro) {
 	t.Helper()
 	catalog := pkg.NewCatalog()
-	img := imagetest.GetGoldenFixtureImage(t, testImage)
+	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
