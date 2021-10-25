@@ -3,7 +3,7 @@ package formats
 import (
 	"bytes"
 
-	"github.com/anchore/syft/internal/formats/cyclonedx"
+	"github.com/anchore/syft/internal/formats/cyclonedx12xml"
 
 	"github.com/anchore/syft/internal/formats/table"
 
@@ -16,7 +16,7 @@ func All() []format.Format {
 	return []format.Format{
 		syftjson.Format(),
 		table.Format(),
-		cyclonedx.Format(),
+		cyclonedx12xml.Format(),
 	}
 }
 

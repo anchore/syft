@@ -1,4 +1,4 @@
-package cyclonedx
+package cyclonedx12xml
 
 import (
 	"flag"

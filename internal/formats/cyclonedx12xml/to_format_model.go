@@ -1,11 +1,11 @@
-package cyclonedx
+package cyclonedx12xml
 
 import (
 	"encoding/xml"
 	"time"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/formats/cyclonedx/model"
+	"github.com/anchore/syft/internal/formats/cyclonedx12xml/model"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
