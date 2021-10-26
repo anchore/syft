@@ -74,7 +74,7 @@ func (c *Catalog) Add(p Package) {
 	}
 
 	if p.ID == "" {
-		p.ID = newID()
+		p.ID = newID(p)
 	}
 
 	// store by package ID

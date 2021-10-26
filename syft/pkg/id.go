@@ -1,12 +1,19 @@
 package pkg
 
 import (
-	"github.com/google/uuid"
+	"fmt"
+
+	"github.com/mitchellh/hashstructure"
 )
 
 // ID represents a unique value for each package added to a package catalog.
 type ID string
 
-func newID() ID {
-	return ID(uuid.New().String())
+func newID(p Package) ID {
+	hash, err := hashstructure.Hash(p, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	return ID(fmt.Sprint(hash))
 }
