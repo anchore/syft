@@ -12,7 +12,7 @@ type ID string
 func newID(p Package) ID {
 	hash, err := hashstructure.Hash(p, nil)
 	if err != nil {
-		panic(err)
+		// TODO: error case
 	}
 
 	return ID(fmt.Sprint(hash))

@@ -67,14 +67,14 @@ func (c *Catalog) Add(p Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
+	if p.ID == "" {
+		p.ID = newID(p)
+	}
+
 	_, exists := c.byID[p.ID]
 	if exists {
 		log.Errorf("package ID already exists in the catalog : id=%+v %+v", p.ID, p)
 		return
-	}
-
-	if p.ID == "" {
-		p.ID = newID(p)
 	}
 
 	// store by package ID
