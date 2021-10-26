@@ -12,8 +12,27 @@ builds:
     env:
       - CGO_ENABLED=0
     goos:
-      - windows
       - linux
+    goarch:
+      - amd64
+      - arm64
+    # Set the modified timestamp on the output binary to the git timestamp (to ensure a reproducible build)
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    ldflags: |
+      -w
+      -s
+      -extldflags '-static'
+      -X github.com/anchore/syft/internal/version.version={{.Version}}
+      -X github.com/anchore/syft/internal/version.gitCommit={{.Commit}}
+      -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
+      -X github.com/anchore/syft/internal/version.gitTreeState={{.Env.BUILD_GIT_TREE_STATE}}
+
+  - binary: syft
+    id: syft-win
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
     goarch:
       - amd64
     # Set the modified timestamp on the output binary to the git timestamp (to ensure a reproducible build)
@@ -26,6 +45,7 @@ builds:
       -X github.com/anchore/syft/internal/version.gitCommit={{.Commit}}
       -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
       -X github.com/anchore/syft/internal/version.gitTreeState={{.Env.BUILD_GIT_TREE_STATE}}
+
     # For more info on this macOS build, see: https://github.com/mitchellh/gon#usage-with-goreleaser
   - binary: syft
     id: syft-macos
@@ -35,6 +55,7 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
     # Set the modified timestamp on the output binary to the git timestamp (to ensure a reproducible build)
     mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags: |
@@ -50,10 +71,11 @@ archives:
   - format: tar.gz
     builds:
       - syft # i.e. Linux only
-  - format: zip # This is a hack! We don't actually intend to use _this_ ZIP file, we just need goreleaser to consider the ZIP file produced by gon (which will have the same file name) to be an artifact so we can use it downstream in publishing (e.g. to a homebrew tap)
+  - format: zip # This is a hack for syft-macos! We don't actually intend to use _this_ ZIP file, we just need goreleaser to consider the ZIP file produced by gon (which will have the same file name) to be an artifact so we can use it downstream in publishing (e.g. to a homebrew tap)
     id: syft-zip
     builds:
       - syft-macos
+      - syft-win
 
 signs:
   - artifacts: checksum
@@ -91,15 +113,48 @@ brews:
     description: *description
 
 dockers:
-  - dockerfile: Dockerfile
-    image_templates:
+  - image_templates:
       - "anchore/syft:latest"
-      - "anchore/syft:{{ .Tag }}"
-      - "anchore/syft:v{{ .Major }}"
-      - "anchore/syft:v{{ .Major }}.{{ .Minor }}"
+      - "anchore/syft:{{ .Tag }}-amd64"
+      - "anchore/syft:v{{ .Major }}-amd64"
+      - "anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64"
+    dockerfile: Dockerfile
+    use: buildx
     build_flag_templates:
+      - "--platform=linux/amd64"
       - "--build-arg=BUILD_DATE={{.Date}}"
       - "--build-arg=BUILD_VERSION={{.Version}}"
       - "--build-arg=VCS_REF={{.FullCommit}}"
       - "--build-arg=VCS_URL={{.GitURL}}"
-    use_buildx: true
+
+  - image_templates:
+      - "anchore/syft:{{ .Tag }}-arm64v8"
+      - "anchore/syft:v{{ .Major }}-arm64v8"
+      - "anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8"
+    goarch: arm64
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+docker_manifests:
+  - name_template: anchore/syft:{{ .Version }}
+    image_templates:
+      - anchore/syft:{{ .Version }}-amd64
+      - anchore/syft:v{{ .Major }}-amd64
+      - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
+      - anchore/syft:{{ .Version }}-arm64v8
+      - anchore/syft:v{{ .Major }}-arm64v8
+      - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
+  - name_template: anchore/syft:latest
+    image_templates:
+      - anchore/syft:{{ .Version }}-amd64
+      - anchore/syft:v{{ .Major }}-amd64
+      - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
+      - anchore/syft:{{ .Version }}-arm64v8
+      - anchore/syft:v{{ .Major }}-arm64v8
+      - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
