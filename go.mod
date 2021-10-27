@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/hashstructure v1.1.0 // indirect
+	github.com/mitchellh/hashstructure v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pelletier/go-toml v1.8.1
