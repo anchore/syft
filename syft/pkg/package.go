@@ -45,8 +45,7 @@ func (p Package) Fingerprint() string {
 		// TODO: track packages that don't get hashed for report?
 		backup := uuid.Must(uuid.NewRandom()).String()
 
-		return strings.Replace(backup, "-", "", -1)
-
+		return strings.ReplaceAll(backup, "-", "")
 	}
 
 	return fmt.Sprint(f)
