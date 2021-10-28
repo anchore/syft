@@ -155,6 +155,6 @@ docker_manifests:
       - anchore/syft:{{ .Tag }}-amd64
       - anchore/syft:v{{ .Major }}-amd64
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
-      - anchore/syft:{{ .Version }}-arm64v8
+      - anchore/syft:{{ .Tag }}-arm64v8
       - anchore/syft:v{{ .Major }}-arm64v8
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
