@@ -142,7 +142,7 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
 docker_manifests:
-  - name_template: anchore/syft:{{ .Version }}
+  - name_template: anchore/syft:{{ .Tag }}
     image_templates:
       - anchore/syft:{{ .Tag }}-amd64
       - anchore/syft:v{{ .Major }}-amd64
