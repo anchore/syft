@@ -6,6 +6,8 @@ package common
 import (
 	"fmt"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -35,18 +37,18 @@ func (c *GenericCataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
+func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
-	parserByLocation := c.selectFiles(resolver)
+	var relationships []artifact.Relationship
 
-	for location, parser := range parserByLocation {
+	for location, parser := range c.selectFiles(resolver) {
 		contentReader, err := resolver.FileContentsByLocation(location)
 		if err != nil {
 			// TODO: fail or log?
-			return nil, fmt.Errorf("unable to fetch contents for location=%v : %w", location, err)
+			return nil, nil, fmt.Errorf("unable to fetch contents for location=%v : %w", location, err)
 		}
 
-		entries, err := parser(location.RealPath, contentReader)
+		discoveredPackages, discoveredRelationships, err := parser(location.RealPath, contentReader)
 		internal.CloseAndLogError(contentReader, location.VirtualPath)
 		if err != nil {
 			// TODO: should we fail? or only log?
@@ -54,14 +56,16 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 			continue
 		}
 
-		for _, entry := range entries {
-			entry.FoundBy = c.upstreamCataloger
-			entry.Locations = []source.Location{location}
+		for _, p := range discoveredPackages {
+			p.FoundBy = c.upstreamCataloger
+			p.Locations = append(p.Locations, location)
 
-			packages = append(packages, entry)
+			packages = append(packages, p)
 		}
+
+		relationships = append(relationships, discoveredRelationships...)
 	}
-	return packages, nil
+	return packages, relationships, nil
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging

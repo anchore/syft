@@ -255,7 +255,7 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 		defer cleanup()
 
-		catalog, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
+		catalog, relationships, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {
 			errs <- fmt.Errorf("failed to catalog input: %w", err)
 			return
@@ -273,7 +273,8 @@ func packagesExecWorker(userInput string) <-chan error {
 				PackageCatalog: catalog,
 				Distro:         d,
 			},
-			Source: src.Metadata,
+			Relationships: relationships,
+			Source:        src.Metadata,
 		}
 
 		bus.Publish(partybus.Event{

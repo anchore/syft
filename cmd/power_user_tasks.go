@@ -4,6 +4,8 @@ import (
 	"crypto"
 	"fmt"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/syft/syft"
@@ -11,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type powerUserTask func(*sbom.Artifacts, *source.Source) error
+type powerUserTask func(*sbom.Artifacts, *source.Source) ([]artifact.Relationship, error)
 
 func powerUserTasks() ([]powerUserTask, error) {
 	var tasks []powerUserTask
@@ -43,16 +45,16 @@ func catalogPackagesTask() (powerUserTask, error) {
 		return nil, nil
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) error {
-		packageCatalog, theDistro, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
+	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
+		packageCatalog, relationships, theDistro, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		results.PackageCatalog = packageCatalog
 		results.Distro = theDistro
 
-		return nil
+		return relationships, nil
 	}
 
 	return task, nil
@@ -65,18 +67,18 @@ func catalogFileMetadataTask() (powerUserTask, error) {
 
 	metadataCataloger := file.NewMetadataCataloger()
 
-	task := func(results *sbom.Artifacts, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 		resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		result, err := metadataCataloger.Catalog(resolver)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		results.FileMetadata = result
-		return nil
+		return nil, nil
 	}
 
 	return task, nil
@@ -111,18 +113,18 @@ func catalogFileDigestsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 		resolver, err := src.FileResolver(appConfig.FileMetadata.Cataloger.ScopeOpt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		result, err := digestsCataloger.Catalog(resolver)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		results.FileDigests = result
-		return nil
+		return nil, nil
 	}
 
 	return task, nil
@@ -143,18 +145,18 @@ func catalogSecretsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 		resolver, err := src.FileResolver(appConfig.Secrets.Cataloger.ScopeOpt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		result, err := secretsCataloger.Catalog(resolver)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		results.Secrets = result
-		return nil
+		return nil, nil
 	}
 
 	return task, nil
@@ -171,18 +173,18 @@ func catalogFileClassificationsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 		resolver, err := src.FileResolver(appConfig.FileClassification.Cataloger.ScopeOpt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		result, err := classifierCataloger.Catalog(resolver)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		results.FileClassifications = result
-		return nil
+		return nil, nil
 	}
 
 	return task, nil
@@ -198,18 +200,18 @@ func catalogContentsTask() (powerUserTask, error) {
 		return nil, err
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) error {
+	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 		resolver, err := src.FileResolver(appConfig.FileContents.Cataloger.ScopeOpt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		result, err := contentsCataloger.Catalog(resolver)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		results.FileContents = result
-		return nil
+		return nil, nil
 	}
 
 	return task, nil

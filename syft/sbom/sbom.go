@@ -1,6 +1,7 @@
 package sbom
 
 import (
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -8,8 +9,9 @@ import (
 )
 
 type SBOM struct {
-	Artifacts Artifacts
-	Source    source.Metadata
+	Artifacts     Artifacts
+	Relationships []artifact.Relationship
+	Source        source.Metadata
 }
 
 type Artifacts struct {
