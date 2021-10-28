@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/internal/log"
@@ -21,7 +23,7 @@ var _ common.ParserFn = parseApkDB
 
 // parseApkDb parses individual packages from a given Alpine DB file. For more information on specific fields
 // see https://wiki.alpinelinux.org/wiki/Apk_spec .
-func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	// larger capacity for the scanner.
 	const maxScannerCapacity = 1024 * 1024
 	// a new larger buffer for the scanner
@@ -47,7 +49,7 @@ func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	for scanner.Scan() {
 		metadata, err := parseApkDBEntry(strings.NewReader(scanner.Text()))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if metadata != nil {
 			packages = append(packages, pkg.Package{
@@ -62,10 +64,10 @@ func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to parse APK DB file: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse APK DB file: %w", err)
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }
 
 // nolint:funlen

@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 
 	"github.com/anchore/syft/syft/source"
@@ -31,13 +32,13 @@ func (c *PackageCataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
-func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
+func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var fileMatches []source.Location
 
 	for _, glob := range []string{eggMetadataGlob, wheelMetadataGlob, eggFileMetadataGlob} {
 		matches, err := resolver.FilesByGlob(glob)
 		if err != nil {
-			return nil, fmt.Errorf("failed to find files by glob: %s", glob)
+			return nil, nil, fmt.Errorf("failed to find files by glob: %s", glob)
 		}
 		fileMatches = append(fileMatches, matches...)
 	}
@@ -46,13 +47,13 @@ func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 	for _, location := range fileMatches {
 		p, err := c.catalogEggOrWheel(resolver, location)
 		if err != nil {
-			return nil, fmt.Errorf("unable to catalog python package=%+v: %w", location.RealPath, err)
+			return nil, nil, fmt.Errorf("unable to catalog python package=%+v: %w", location.RealPath, err)
 		}
 		if p != nil {
 			pkgs = append(pkgs, *p)
 		}
 	}
-	return pkgs, nil
+	return pkgs, nil, nil
 }
 
 // catalogEggOrWheel takes the primary metadata file reference and returns the python package it represents.

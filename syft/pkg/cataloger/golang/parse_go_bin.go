@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -14,18 +15,16 @@ const (
 	replaceIdentifier = "=>"
 )
 
-func parseGoBin(location source.Location, reader io.ReadCloser) ([]pkg.Package, error) {
+func parseGoBin(location source.Location, reader io.ReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	goVersion, mod := findVers(x)
 
-	pkgs := buildGoPkgInfo(location, mod, goVersion)
-
-	return pkgs, nil
+	return buildGoPkgInfo(location, mod, goVersion), nil, nil
 }
 
 func buildGoPkgInfo(location source.Location, mod, goVersion string) []pkg.Package {

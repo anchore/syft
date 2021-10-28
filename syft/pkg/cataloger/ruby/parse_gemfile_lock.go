@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -16,7 +17,7 @@ var _ common.ParserFn = parseGemFileLockEntries
 var sectionsOfInterest = internal.NewStringSetFromSlice([]string{"GEM"})
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
-func parseGemFileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseGemFileLockEntries(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	pkgs := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(reader)
 
@@ -49,9 +50,9 @@ func parseGemFileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) 
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return pkgs, nil
+	return pkgs, nil, nil
 }
 
 func isDependencyLine(line string) bool {

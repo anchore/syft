@@ -3,6 +3,7 @@ package cataloger
 import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg"
@@ -38,8 +39,9 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
 // request.
-func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers ...Cataloger) (*pkg.Catalog, error) {
+func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers ...Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
+	var allRelationships []artifact.Relationship
 
 	filesProcessed, packagesDiscovered := newMonitor()
 
@@ -47,7 +49,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 	var errs error
 	for _, theCataloger := range catalogers {
 		// find packages from the underlying raw data
-		packages, err := theCataloger.Catalog(resolver)
+		packages, relationships, err := theCataloger.Catalog(resolver)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 			continue
@@ -68,14 +70,16 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 			// add to catalog
 			catalog.Add(p)
 		}
+
+		allRelationships = append(allRelationships, relationships...)
 	}
 
 	if errs != nil {
-		return nil, errs
+		return nil, nil, errs
 	}
 
 	filesProcessed.SetCompleted()
 	packagesDiscovered.SetCompleted()
 
-	return catalog, nil
+	return catalog, allRelationships, nil
 }

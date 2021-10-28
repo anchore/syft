@@ -8,8 +8,8 @@ const (
 type RelationshipType string
 
 type Relationship struct {
-	From ID
-	To   ID
-	Type RelationshipType
-	Data interface{}
+	From ID               `json:"from"`
+	To   ID               `json:"to"`
+	Type RelationshipType `json:"type"`
+	Data interface{}      `json:"data,omitempty"`
 }
