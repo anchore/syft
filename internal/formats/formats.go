@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/table"
+	"github.com/anchore/syft/internal/formats/text"
 	"github.com/anchore/syft/syft/format"
 )
 
@@ -17,6 +18,7 @@ func All() []format.Format {
 		table.Format(),
 		cyclonedx12xml.Format(),
 		spdx22json.Format(),
+		text.Format(),
 	}
 }
 

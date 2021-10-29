@@ -14,8 +14,6 @@ import (
 // Presenter returns a presenter for images or directories
 func Presenter(option format.Option, config PresenterConfig) presenter.Presenter {
 	switch option {
-	case format.TextOption:
-		return packages.NewTextPresenter(config.Catalog, config.SourceMetadata)
 	case format.SPDXTagValueOption:
 		return packages.NewSPDXTagValuePresenter(config.Catalog, config.SourceMetadata)
 	default:
