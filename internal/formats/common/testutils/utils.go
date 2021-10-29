@@ -4,19 +4,31 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/anchore/syft/syft/presenter"
-
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/presenter"
 	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
 )
 
 type redactor func(s []byte) []byte
+
+type imageCfg struct {
+	fromSnapshot bool
+}
+
+type ImageOption func(cfg *imageCfg)
+
+func FromSnapshot() ImageOption {
+	return func(cfg *imageCfg) {
+		cfg.fromSnapshot = true
+	}
+}
 
 func AssertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Presenter, testImage string, updateSnapshot bool, redactors ...redactor) {
 	var buffer bytes.Buffer
@@ -78,11 +90,37 @@ func AssertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter
 	}
 }
 
-func ImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+func ImageInput(t testing.TB, testImage string, options ...ImageOption) (*pkg.Catalog, source.Metadata, *distro.Distro) {
 	t.Helper()
 	catalog := pkg.NewCatalog()
-	img := imagetest.GetGoldenFixtureImage(t, testImage)
+	var cfg imageCfg
+	var img *image.Image
+	for _, opt := range options {
+		opt(&cfg)
+	}
 
+	switch cfg.fromSnapshot {
+	case true:
+		img = imagetest.GetGoldenFixtureImage(t, testImage)
+	default:
+		img = imagetest.GetFixtureImage(t, "docker-archive", testImage)
+	}
+
+	populateImageCatalog(catalog, img)
+
+	// this is a hard coded value that is not given by the fixture helper and must be provided manually
+	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+
+	src, err := source.NewFromImage(img, "user-image-input")
+	assert.NoError(t, err)
+
+	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
+	assert.NoError(t, err)
+
+	return catalog, src.Metadata, &dist
+}
+
+func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
@@ -127,20 +165,21 @@ func ImageInput(t testing.TB, testImage string) (*pkg.Catalog, source.Metadata, 
 			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
+}
 
-	// this is a hard coded value that is not given by the fixture helper and must be provided manually
-	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
-
-	src, err := source.NewFromImage(img, "user-image-input")
-	assert.NoError(t, err)
+func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+	catalog := newDirectoryCatalog()
 
 	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
+	assert.NoError(t, err)
+
+	src, err := source.NewFromDirectory("/some/path")
 	assert.NoError(t, err)
 
 	return catalog, src.Metadata, &dist
 }
 
-func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+func newDirectoryCatalog() *pkg.Catalog {
 	catalog := pkg.NewCatalog()
 
 	// populate catalog with test data
@@ -190,11 +229,5 @@ func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro
 		},
 	})
 
-	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
-	assert.NoError(t, err)
-
-	src, err := source.NewFromDirectory("/some/path")
-	assert.NoError(t, err)
-
-	return catalog, src.Metadata, &dist
+	return catalog
 }

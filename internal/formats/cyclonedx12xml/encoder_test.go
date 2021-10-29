@@ -1,9 +1,11 @@
-package packages
+package cyclonedx12xml
 
 import (
 	"flag"
 	"regexp"
 	"testing"
+
+	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
@@ -13,7 +15,7 @@ var updateCycloneDx = flag.Bool("update-cyclonedx", false, "update the *.golden 
 func TestCycloneDxDirectoryPresenter(t *testing.T) {
 	catalog, metadata, _ := testutils.DirectoryInput(t)
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		NewCycloneDxPresenter(catalog, metadata),
+		Format().Presenter(catalog, &metadata, nil, source.SquashedScope),
 		*updateCycloneDx,
 		cycloneDxRedactor,
 	)
@@ -23,7 +25,7 @@ func TestCycloneDxImagePresenter(t *testing.T) {
 	testImage := "image-simple"
 	catalog, metadata, _ := testutils.ImageInput(t, testImage)
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		NewCycloneDxPresenter(catalog, metadata),
+		Format().Presenter(catalog, &metadata, nil, source.SquashedScope),
 		testImage,
 		*updateCycloneDx,
 		cycloneDxRedactor,
