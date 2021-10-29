@@ -7,6 +7,10 @@ import (
 )
 
 func SourceInfo(p *pkg.Package) string {
+	if !packageExists(p) {
+		return ""
+	}
+
 	answer := ""
 	switch p.Type {
 	case pkg.RpmPkg:

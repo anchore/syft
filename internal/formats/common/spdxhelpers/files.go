@@ -14,6 +14,10 @@ func Files(packageSpdxID string, p *pkg.Package) (files []model.File, fileIDs []
 	fileIDs = make([]string, 0)
 	relationships = make([]model.Relationship, 0)
 
+	if !hasMetadata(p) {
+		return files, fileIDs, relationships
+	}
+
 	pkgFileOwner, ok := p.Metadata.(pkg.FileOwner)
 	if !ok {
 		return files, fileIDs, relationships

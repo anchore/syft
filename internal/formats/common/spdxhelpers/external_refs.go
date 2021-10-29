@@ -8,6 +8,11 @@ import (
 
 func ExternalRefs(p *pkg.Package) (externalRefs []model.ExternalRef) {
 	externalRefs = make([]model.ExternalRef, 0)
+
+	if !packageExists(p) {
+		return externalRefs
+	}
+
 	for _, c := range p.CPEs {
 		externalRefs = append(externalRefs, model.ExternalRef{
 			ReferenceCategory: model.SecurityReferenceCategory,

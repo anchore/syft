@@ -17,7 +17,7 @@ func License(p *pkg.Package) string {
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
-	if len(p.Licenses) == 0 {
+	if !packageExists(p) || len(p.Licenses) == 0 {
 		return "NONE"
 	}
 

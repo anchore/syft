@@ -11,12 +11,13 @@ func DownloadLocation(p *pkg.Package) string {
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
-	switch metadata := p.Metadata.(type) {
-	case pkg.ApkMetadata:
-		return NoneIfEmpty(metadata.URL)
-	case pkg.NpmPackageJSONMetadata:
-		return NoneIfEmpty(metadata.URL)
-	default:
-		return "NOASSERTION"
+	if hasMetadata(p) {
+		switch metadata := p.Metadata.(type) {
+		case pkg.ApkMetadata:
+			return NoneIfEmpty(metadata.URL)
+		case pkg.NpmPackageJSONMetadata:
+			return NoneIfEmpty(metadata.URL)
+		}
 	}
+	return "NOASSERTION"
 }
