@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/source"
 )
@@ -121,61 +120,6 @@ func TestCatalogRemove(t *testing.T) {
 				t.Errorf("expected count to be affected but was not")
 			}
 
-		})
-	}
-}
-
-func TestCatalog_MergeRecords(t *testing.T) {
-	var tests = []struct {
-		name    string
-		pkgs    []Package
-		expectd []source.Location
-	}{
-		{
-			name: "multiple Locations with shared path",
-			pkgs: []Package{
-				{
-					Locations: []source.Location{
-						{
-							RealPath:     "/b/path",
-							VirtualPath:  "/another/path",
-							FileSystemID: "a",
-						},
-					},
-					Type: RpmPkg,
-				},
-				{
-					Locations: []source.Location{
-						{
-							RealPath:     "/b/path",
-							VirtualPath:  "/another/path",
-							FileSystemID: "b",
-						},
-					},
-					Type: RpmPkg,
-				},
-			},
-			expectd: []source.Location{
-				{
-					RealPath:     "/b/path",
-					VirtualPath:  "/another/path",
-					FileSystemID: "a",
-				},
-				{
-					RealPath:     "/b/path",
-					VirtualPath:  "/another/path",
-					FileSystemID: "b",
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			actual := NewCatalog(tt.pkgs...).PackagesByPath("/b/path")
-			assert.Len(t, actual, 1)
-			assert.Equal(t, tt.expectd, actual[0].Locations)
 		})
 	}
 }

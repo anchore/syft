@@ -57,20 +57,6 @@ func TestFingerprint(t *testing.T) {
 			expectIdentical: true,
 		},
 		{
-			name: "location is ignored",
-			transform: func(pkg Package) Package {
-				pkg.Locations = []source.Location{
-					{
-						RealPath:     "/not-a-place",
-						VirtualPath:  "/really-not-a-place",
-						FileSystemID: "/Mars?",
-					},
-				}
-				return pkg
-			},
-			expectIdentical: true,
-		},
-		{
 			name: "same metadata is ignored",
 			transform: func(pkg Package) Package {
 				// note: this is the same as the original values, just a new allocation
@@ -164,12 +150,12 @@ func TestFingerprint(t *testing.T) {
 			expectIdentical: false,
 		},
 		{
-			name: "foundBy is reflected but ignored",
+			name: "foundBy is reflected",
 			transform: func(pkg Package) Package {
 				pkg.FoundBy = "new!"
 				return pkg
 			},
-			expectIdentical: true,
+			expectIdentical: false,
 		},
 		{
 			name: "metadata mutation is reflected",
@@ -204,8 +190,10 @@ func TestFingerprint(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			transformedPkg := test.transform(originalPkg)
-			originalFingerprint := originalPkg.Fingerprint()
-			transformedFingerprint := transformedPkg.Fingerprint()
+			originalFingerprint, err := originalPkg.Fingerprint()
+			assert.NoError(t, err, "expected no error on package fingerprint")
+			transformedFingerprint, err := transformedPkg.Fingerprint()
+			assert.NoError(t, err, "expected no error on package fingerprint")
 
 			if test.expectIdentical {
 				assert.Equal(t, originalFingerprint, transformedFingerprint)

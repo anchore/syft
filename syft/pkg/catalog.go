@@ -68,14 +68,12 @@ func (c *Catalog) Add(p Package) {
 	defer c.lock.Unlock()
 
 	if p.ID == "" {
-		p.ID = ID(p.Fingerprint())
-	}
+		fingerprint, err := p.Fingerprint()
+		if err != nil {
+			log.Warnf("failed to add package to catalog: %w", err)
+		}
 
-	if other, exists := c.byID[p.ID]; exists {
-		// there is already a package with this fingerprint
-		// merge the existing record with the new one
-		other.Merge(p)
-		return
+		p.ID = ID(fingerprint)
 	}
 
 	// store by package ID
