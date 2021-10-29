@@ -60,7 +60,6 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *model.B
 }
 
 func toBomDescriptorComponent(srcMetadata source.Metadata) *model.BomDescriptorComponent {
-
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		return &model.BomDescriptorComponent{
