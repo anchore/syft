@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
@@ -90,7 +91,7 @@ func AssertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter
 	}
 }
 
-func ImageInput(t testing.TB, testImage string, options ...ImageOption) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
 	t.Helper()
 	catalog := pkg.NewCatalog()
 	var cfg imageCfg
@@ -117,7 +118,13 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) (*pkg.Ca
 	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
 	assert.NoError(t, err)
 
-	return catalog, src.Metadata, &dist
+	return sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog: catalog,
+			Distro:         &dist,
+		},
+		Source: src.Metadata,
+	}
 }
 
 func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
@@ -167,7 +174,7 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 	})
 }
 
-func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro) {
+func DirectoryInput(t testing.TB) sbom.SBOM {
 	catalog := newDirectoryCatalog()
 
 	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
@@ -176,7 +183,13 @@ func DirectoryInput(t testing.TB) (*pkg.Catalog, source.Metadata, *distro.Distro
 	src, err := source.NewFromDirectory("/some/path")
 	assert.NoError(t, err)
 
-	return catalog, src.Metadata, &dist
+	return sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog: catalog,
+			Distro:         &dist,
+		},
+		Source: src.Metadata,
+	}
 }
 
 func newDirectoryCatalog() *pkg.Catalog {

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
@@ -84,8 +86,16 @@ func TestPackageSbomToModel(t *testing.T) {
 		t.Fatalf("unable to marshal model: %+v", err)
 	}
 
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog: c,
+			Distro:         &d,
+		},
+		Source: m,
+	}
+
 	var buf bytes.Buffer
-	pres := syftjson.Format().Presenter(c, &m, &d, source.AllLayersScope)
+	pres := syftjson.Format().Presenter(s)
 	if err := pres.Present(&buf); err != nil {
 		t.Fatalf("unable to get expected json: %+v", err)
 	}
