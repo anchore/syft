@@ -1,0 +1,36 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: user-image-input
+DocumentNamespace: https://anchore.com/syft/image/user-image-input
+LicenseListVersion: 3.13
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-[not provided]
+Created: 2021-06-23T17:49:25Z
+
+##### Package: package-2
+
+PackageName: package-2
+SPDXID: SPDXRef-Package-deb-package-2
+PackageVersion: 2.0.1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
+ExternalRef: PACKAGE_MANAGER purl a-purl-2
+
+##### Package: package-1
+
+PackageName: package-1
+SPDXID: SPDXRef-Package-python-package-1
+PackageVersion: 1.0.1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: MIT
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:1:*:*:*:*:*:*:*
+ExternalRef: PACKAGE_MANAGER purl a-purl-1
+
