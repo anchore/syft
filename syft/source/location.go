@@ -78,9 +78,3 @@ func (l Location) String() string {
 	}
 	return fmt.Sprintf("Location<%s>", str)
 }
-
-func (l Location) Equals(other Location) bool {
-	return l.RealPath == other.RealPath &&
-		l.VirtualPath == other.VirtualPath &&
-		l.FileSystemID == other.FileSystemID
-}
