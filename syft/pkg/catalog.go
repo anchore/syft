@@ -71,6 +71,7 @@ func (c *Catalog) Add(p Package) {
 		fingerprint, err := p.Fingerprint()
 		if err != nil {
 			log.Warnf("failed to add package to catalog: %w", err)
+			return
 		}
 
 		p.ID = ID(fingerprint)
