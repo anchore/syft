@@ -31,8 +31,6 @@ func Originator(p *pkg.Package) string {
 			return metadata.Vendor
 		case pkg.DpkgMetadata:
 			return metadata.Maintainer
-		default:
-
 		}
 	}
 	return ""
