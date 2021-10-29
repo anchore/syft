@@ -24,7 +24,7 @@ func TestSPDXJSONDirectoryPresenter(t *testing.T) {
 
 func TestSPDXJSONImagePresenter(t *testing.T) {
 	testImage := "image-simple"
-	catalog, metadata, distro := testutils.ImageInput(t, testImage)
+	catalog, metadata, distro := testutils.ImageInput(t, testImage, testutils.FromSnapshot())
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
 		format.NewPresenter(encoder, catalog, &metadata, distro, source.SquashedScope),
 		testImage,
