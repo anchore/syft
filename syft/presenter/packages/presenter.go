@@ -18,8 +18,6 @@ func Presenter(option format.Option, config PresenterConfig) presenter.Presenter
 		return packages.NewTextPresenter(config.Catalog, config.SourceMetadata)
 	case format.SPDXTagValueOption:
 		return packages.NewSPDXTagValuePresenter(config.Catalog, config.SourceMetadata)
-	case format.SPDXJSONOption:
-		return packages.NewSPDXJSONPresenter(config.Catalog, config.SourceMetadata)
 	default:
 		// TODO: the final state is that all other cases would be replaced by formats.ByOption (wed remove this function entirely)
 		f := formats.ByOption(option)
