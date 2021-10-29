@@ -15,6 +15,7 @@ import (
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
+// nolint:funlen
 func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro.Distro, _ source.Scope) spdx.Document2_2 {
 	return spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{
