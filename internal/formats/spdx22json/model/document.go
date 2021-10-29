@@ -1,7 +1,5 @@
 package model
 
-import "github.com/anchore/syft/syft/source"
-
 // derived from:
 // - https://spdx.github.io/spdx-spec/appendix-III-RDF-data-model-implementation-and-identifier-syntax/
 // - https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json
@@ -13,8 +11,6 @@ type Document struct {
 	// One instance is required for each SPDX file produced. It provides the necessary information for forward
 	// and backward compatibility for processing tools.
 	CreationInfo CreationInfo `json:"creationInfo"`
-	// SyftSourceData contains information about what is being described in this SPDX document (e.g. a container image, a directory, etc)
-	SyftSourceData *source.Metadata `json:"syftSourceData,omitempty"`
 	// 2.2: Data License; should be "CC0-1.0"
 	// Cardinality: mandatory, one
 	// License expression for dataLicense.  Compliance with the SPDX specification includes populating the SPDX

@@ -3,31 +3,15 @@
  "name": "/some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-10-22T19:25:38.33537Z",
+  "created": "2021-10-29T16:26:08.995826Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
   ],
   "licenseListVersion": "3.14"
  },
- "syftSourceData": {
-  "Scheme": "DirectoryScheme",
-  "ImageMetadata": {
-   "userInput": "",
-   "imageID": "",
-   "manifestDigest": "",
-   "mediaType": "",
-   "tags": null,
-   "imageSize": 0,
-   "layers": null,
-   "manifest": null,
-   "config": null,
-   "repoDigests": null
-  },
-  "Path": "/some/path"
- },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https:/anchore.com/syft/dir/some/path-a868c45f-e62b-473f-9dd3-b72994be6294",
+ "documentNamespace": "https:/anchore.com/syft/dir/some/path-5362d380-914a-458f-b059-d8d27899574c",
  "packages": [
   {
    "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",

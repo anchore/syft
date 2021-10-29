@@ -4,13 +4,10 @@ import (
 	"encoding/xml"
 	"io"
 
-	"github.com/anchore/syft/syft/distro"
-
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/sbom"
 )
 
-func encoder(output io.Writer, catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro.Distro, scope source.Scope) error {
+func encoder(output io.Writer, s sbom.SBOM) error {
 	enc := xml.NewEncoder(output)
 	enc.Indent("", "  ")
 
@@ -19,7 +16,7 @@ func encoder(output io.Writer, catalog *pkg.Catalog, srcMetadata *source.Metadat
 		return err
 	}
 
-	err = enc.Encode(toFormatModel(catalog, srcMetadata, d, scope))
+	err = enc.Encode(toFormatModel(s))
 	if err != nil {
 		return err
 	}

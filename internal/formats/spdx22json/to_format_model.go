@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
@@ -19,9 +19,9 @@ import (
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro.Distro, _ source.Scope) model.Document {
-	name := documentName(srcMetadata)
-	packages, files, relationships := extractFromCatalog(catalog)
+func toFormatModel(s sbom.SBOM) model.Document {
+	name := documentName(s.Source)
+	packages, files, relationships := extractFromCatalog(s.Artifacts.PackageCatalog)
 
 	return model.Document{
 		Element: model.Element{
@@ -39,37 +39,32 @@ func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro
 			LicenseListVersion: spdxlicense.Version,
 		},
 		DataLicense:       "CC0-1.0",
-		DocumentNamespace: documentNamespace(name, srcMetadata),
+		DocumentNamespace: documentNamespace(name, s.Source),
 		Packages:          packages,
 		Files:             files,
 		Relationships:     relationships,
-		// TODO: add scope
-		SyftSourceData: srcMetadata,
 	}
 }
 
-func documentName(srcMetadata *source.Metadata) string {
-	if srcMetadata != nil {
-		switch srcMetadata.Scheme {
-		case source.ImageScheme:
-			return cleanSPDXName(srcMetadata.ImageMetadata.UserInput)
-		case source.DirectoryScheme:
-			return cleanSPDXName(srcMetadata.Path)
-		}
+func documentName(srcMetadata source.Metadata) string {
+	switch srcMetadata.Scheme {
+	case source.ImageScheme:
+		return cleanSPDXName(srcMetadata.ImageMetadata.UserInput)
+	case source.DirectoryScheme:
+		return cleanSPDXName(srcMetadata.Path)
 	}
+
 	// TODO: is this alright?
 	return uuid.Must(uuid.NewRandom()).String()
 }
 
-func documentNamespace(name string, srcMetadata *source.Metadata) string {
+func documentNamespace(name string, srcMetadata source.Metadata) string {
 	input := "unknown-source-type"
-	if srcMetadata != nil {
-		switch srcMetadata.Scheme {
-		case source.ImageScheme:
-			input = "image"
-		case source.DirectoryScheme:
-			input = "dir"
-		}
+	switch srcMetadata.Scheme {
+	case source.ImageScheme:
+		input = "image"
+	case source.DirectoryScheme:
+		input = "dir"
 	}
 
 	uniqueID := uuid.Must(uuid.NewRandom())
