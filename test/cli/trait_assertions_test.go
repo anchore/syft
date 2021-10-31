@@ -2,13 +2,11 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/acarl005/stripansi"
-	"github.com/anchore/syft/syft/source"
 )
 
 type traitAssertion func(tb testing.TB, stdout, stderr string, rc int)
@@ -29,17 +27,17 @@ func assertTableReport(tb testing.TB, stdout, _ string, _ int) {
 	}
 }
 
-func assertScope(scope source.Scope) traitAssertion {
-	return func(tb testing.TB, stdout, stderr string, rc int) {
-		tb.Helper()
-		// we can only verify source with the json report
-		assertJsonReport(tb, stdout, stderr, rc)
-
-		if !strings.Contains(stdout, fmt.Sprintf(`"scope": "%s"`, scope.String())) {
-			tb.Errorf("JSON report did not indicate the %q scope", scope)
-		}
-	}
-}
+//func assertScope(scope source.Scope) traitAssertion {
+//	return func(tb testing.TB, stdout, stderr string, rc int) {
+//		tb.Helper()
+//		// we can only verify source with the json report
+//		assertJsonReport(tb, stdout, stderr, rc)
+//
+//		if !strings.Contains(stdout, fmt.Sprintf(`"scope": "%s"`, scope.String())) {
+//			tb.Errorf("JSON report did not indicate the %q scope", scope)
+//		}
+//	}
+//}
 
 func assertLoggingLevel(level string) traitAssertion {
 	// match examples:

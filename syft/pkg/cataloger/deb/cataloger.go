@@ -44,14 +44,13 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	}
 
 	var allPackages []pkg.Package
-	var allRelationships []artifact.Relationship
 	for _, dbLocation := range dbFileMatches {
 		dbContents, err := resolver.FileContentsByLocation(dbLocation)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		pkgs, relationships, err := parseDpkgStatus(dbContents)
+		pkgs, err := parseDpkgStatus(dbContents)
 		internal.CloseAndLogError(dbContents, dbLocation.VirtualPath)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.RealPath, err)
@@ -72,9 +71,8 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		}
 
 		allPackages = append(allPackages, pkgs...)
-		allRelationships = append(allRelationships, relationships...)
 	}
-	return allPackages, allRelationships, nil
+	return allPackages, nil, nil
 }
 
 func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {

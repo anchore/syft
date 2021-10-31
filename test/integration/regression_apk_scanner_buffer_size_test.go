@@ -9,7 +9,7 @@ import (
 func TestRegression212ApkBufferSize(t *testing.T) {
 	// This is a regression test for issue #212 (https://github.com/anchore/syft/issues/212) in which the apk db could
 	// not be processed due to a scanner buffer that was too small
-	catalog, _, _ := catalogFixtureImage(t, "image-large-apk-data")
+	catalog, _, _, _ := catalogFixtureImage(t, "image-large-apk-data")
 
 	expectedPkgs := 58
 	actualPkgs := 0

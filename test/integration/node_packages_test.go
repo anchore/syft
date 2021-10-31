@@ -9,7 +9,7 @@ import (
 )
 
 func TestNpmPackageLockDirectory(t *testing.T) {
-	catalog, _, _ := catalogDirectory(t, "test-fixtures/npm-lock")
+	catalog, _, _, _ := catalogDirectory(t, "test-fixtures/npm-lock")
 
 	foundPackages := internal.NewStringSet()
 
@@ -30,7 +30,7 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 }
 
 func TestYarnPackageLockDirectory(t *testing.T) {
-	catalog, _, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
+	catalog, _, _, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
 
 	foundPackages := internal.NewStringSet()
 

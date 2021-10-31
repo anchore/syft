@@ -16,6 +16,7 @@ const (
 )
 
 func parseGoBin(location source.Location, reader io.ReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
 	if err != nil {

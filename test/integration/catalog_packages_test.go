@@ -37,7 +37,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 
 		b.Run(c.Name(), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				pc, err = cataloger.Catalog(resolver, theDistro, c)
+				pc, _, err = cataloger.Catalog(resolver, theDistro, c)
 				if err != nil {
 					b.Fatalf("failure during benchmark: %+v", err)
 				}
@@ -49,7 +49,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	catalog, _, _ := catalogFixtureImage(t, "image-pkg-coverage")
+	catalog, _, _, _ := catalogFixtureImage(t, "image-pkg-coverage")
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -135,7 +135,7 @@ func TestPkgCoverageImage(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
-	catalog, _, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
+	catalog, _, _, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()

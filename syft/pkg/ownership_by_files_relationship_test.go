@@ -3,10 +3,11 @@ package pkg
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/artifact"
 
 	"github.com/anchore/syft/syft/source"
-	"github.com/go-test/deep"
 )
 
 func TestOwnershipByFilesRelationship(t *testing.T) {
@@ -169,8 +170,13 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			c := NewCatalog(test.pkgs...)
 			relationships := ownershipByFilesRelationships(c)
 
-			for _, d := range deep.Equal(test.expectedRelations, relationships) {
-				t.Errorf("diff: %+v", d)
+			assert.Len(t, relationships, len(test.expectedRelations))
+			for idx, expectedRelationship := range test.expectedRelations {
+				actualRelationship := relationships[idx]
+				assert.Equal(t, expectedRelationship.From.Identity(), actualRelationship.From.Identity())
+				assert.Equal(t, expectedRelationship.To.Identity(), actualRelationship.To.Identity())
+				assert.Equal(t, expectedRelationship.Type, actualRelationship.Type)
+				assert.Equal(t, expectedRelationship.Data, actualRelationship.Data)
 			}
 		})
 	}

@@ -144,7 +144,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 
 			test.expectedPackage.Locations = locations
 
-			actual, err := NewPythonPackageCataloger().Catalog(resolver)
+			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
 			if err != nil {
 				t.Fatalf("failed to catalog python package: %+v", err)
 			}
@@ -173,7 +173,7 @@ func TestIgnorePackage(t *testing.T) {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
 			resolver := source.NewMockResolverForPaths(test.MetadataFixture)
 
-			actual, err := NewPythonPackageCataloger().Catalog(resolver)
+			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
 			if err != nil {
 				t.Fatalf("failed to catalog python package: %+v", err)
 			}

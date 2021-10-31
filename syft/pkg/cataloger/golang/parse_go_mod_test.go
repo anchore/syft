@@ -70,7 +70,7 @@ func TestParseGoMod(t *testing.T) {
 				t.Fatalf(err.Error())
 			}
 
-			actual, err := parseGoMod(test.fixture, f)
+			actual, _, err := parseGoMod(test.fixture, f)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
