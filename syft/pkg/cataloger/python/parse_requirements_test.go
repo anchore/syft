@@ -50,7 +50,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseRequirementsTxt(fixture.Name(), fixture)
+	actual, _, err := parseRequirementsTxt(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}

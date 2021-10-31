@@ -23,7 +23,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			catalog, d, src := catalogFixtureImage(t, test.fixture)
+			catalog, _, d, src := catalogFixtureImage(t, test.fixture)
 
 			p := syftjson.Format().Presenter(sbom.SBOM{
 				Artifacts: sbom.Artifacts{

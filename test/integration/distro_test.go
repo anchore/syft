@@ -8,7 +8,7 @@ import (
 )
 
 func TestDistroImage(t *testing.T) {
-	_, actualDistro, _ := catalogFixtureImage(t, "image-distro-id")
+	_, _, actualDistro, _ := catalogFixtureImage(t, "image-distro-id")
 
 	expected, err := distro.NewDistro(distro.Busybox, "1.31.1", "")
 	if err != nil {

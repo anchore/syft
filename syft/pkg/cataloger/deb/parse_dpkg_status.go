@@ -11,7 +11,6 @@ import (
 
 	"github.com/anchore/syft/internal"
 
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
 )
@@ -22,7 +21,7 @@ var (
 )
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
-func parseDpkgStatus(reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
 	var packages []pkg.Package
 
@@ -33,7 +32,7 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, []artifact.Relationship, 
 			if errors.Is(err, errEndOfPackages) {
 				continueProcessing = false
 			} else {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 
@@ -48,7 +47,7 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, []artifact.Relationship, 
 		}
 	}
 
-	return packages, nil, nil
+	return packages, nil
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.

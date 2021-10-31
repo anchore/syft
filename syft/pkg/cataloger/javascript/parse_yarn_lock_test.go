@@ -70,7 +70,7 @@ func TestParseYarnLock(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseYarnLock(fixture.Name(), fixture)
+	actual, _, err := parseYarnLock(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse yarn.lock: %+v", err)
 	}

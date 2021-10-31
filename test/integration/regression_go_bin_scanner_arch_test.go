@@ -15,7 +15,7 @@ func TestRegressionGoArchDiscovery(t *testing.T) {
 	)
 	// This is a regression test to make sure the way we detect go binary packages
 	// stays consistent and reproducible as the tool chain evolves
-	catalog, _, _ := catalogFixtureImage(t, "image-go-bin-arch-coverage")
+	catalog, _, _, _ := catalogFixtureImage(t, "image-go-bin-arch-coverage")
 
 	var actualELF, actualWIN, actualMACOS int
 
