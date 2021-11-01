@@ -66,50 +66,74 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 
 func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {
 	log.Infof("indexing filesystem path=%q", root)
+
+	var roots []string
 	var err error
+
 	root, err = filepath.Abs(root)
 	if err != nil {
 		return nil, err
 	}
-	var roots []string
+
+	// we want to be able to index single files with the directory resolver. However, we should also allow for attempting
+	// to index paths that do not exist (that is, a root that does not exist is not an error case that should stop indexing).
+	// For this reason we look for an opportunity to discover if the given root is a file, and if so add a single root,
+	// but continue forth with index regardless if the given root path exists or not.
+	fi, err := os.Stat(root)
+	if err != nil && fi != nil && !fi.IsDir() {
+		newRoot, err := r.addPathToIndex(root, fi)
+		if err = r.handleFileAccessErr(root, err); err != nil {
+			return nil, fmt.Errorf("unable to index path: %w", err)
+		}
+
+		if newRoot != "" {
+			roots = append(roots, newRoot)
+		}
+		return roots, nil
+	}
 
 	return roots, filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
-			// ignore any path which a filter function returns true
-			for _, filterFn := range r.pathFilterFns {
-				if filterFn(path) {
-					return nil
-				}
-			}
-
-			if err = r.handleFileAccessErr(path, err); err != nil {
-				return err
-			}
-
-			// link cycles could cause a revisit --we should not allow this
-			if r.fileTree.HasPath(file.Path(path)) {
-				return nil
-			}
-
-			if info == nil {
-				// walk may not be able to provide a FileInfo object, don't allow for this to stop indexing; keep track of the paths and continue.
-				r.errPaths[path] = fmt.Errorf("no file info observable at path=%q", path)
-				return nil
-			}
-
-			newRoot, err := r.addPathToIndex(path, info)
-			if err = r.handleFileAccessErr(path, err); err != nil {
-				return fmt.Errorf("unable to index path: %w", err)
-			}
-
+			newRoot, indexErr := r.indexPath(path, info, err)
 			if newRoot != "" {
 				roots = append(roots, newRoot)
 			}
 
-			return nil
+			return indexErr
 		})
+}
+
+func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {
+	// ignore any path which a filter function returns true
+	for _, filterFn := range r.pathFilterFns {
+		if filterFn(path) {
+			return "", nil
+		}
+	}
+
+	if err = r.handleFileAccessErr(path, err); err != nil {
+		return "", err
+	}
+
+	// link cycles could cause a revisit --we should not allow this
+	if r.fileTree.HasPath(file.Path(path)) {
+		return "", nil
+	}
+
+	if info == nil {
+		// walk may not be able to provide a FileInfo object, don't allow for this to stop indexing; keep track of the paths and continue.
+		r.errPaths[path] = fmt.Errorf("no file info observable at path=%q", path)
+		return "", nil
+	}
+
+	newRoot, err := r.addPathToIndex(path, info)
+	if err = r.handleFileAccessErr(path, err); err != nil {
+		return "", fmt.Errorf("unable to index path: %w", err)
+	}
+
+	return newRoot, nil
 }
 
 func (r *directoryResolver) handleFileAccessErr(path string, err error) error {
@@ -213,12 +237,22 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			log.Warnf("unable to get file by path=%q : %+v", userPath, err)
 			continue
 		}
+
 		// TODO: why not use stored metadata?
 		fileMeta, err := os.Stat(userStrPath)
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
+			// note: there are other kinds of errors other than os.ErrNotExist that may be given that is platform
+			// specific, but essentially hints at the same overall problem (that the path does not exist). Such an
+			// error could be syscall.ENOTDIR (see https://github.com/golang/go/issues/18974).
 			continue
 		} else if err != nil {
-			log.Warnf("path (%r) is not valid: %+v", userStrPath, err)
+			// we don't want to consider any other syscalls that may hint at non-existence of the file/dir as
+			// invalid paths. This logging statement is meant to raise IO or permissions related problems.
+			var pathErr *os.PathError
+			if !errors.As(err, &pathErr) {
+				log.Warnf("path is not valid (%s): %+v", userStrPath, err)
+			}
+			continue
 		}
 
 		// don't consider directories

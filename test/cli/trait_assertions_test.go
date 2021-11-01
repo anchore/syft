@@ -75,6 +75,16 @@ func assertInOutput(data string) traitAssertion {
 	}
 }
 
+func assertStdoutLengthGreaterThan(length uint) traitAssertion {
+	return func(tb testing.TB, stdout, _ string, _ int) {
+		tb.Helper()
+		if uint(len(stdout)) < length {
+			tb.Errorf("not enough output (expected at least %d, got %d)", length, len(stdout))
+
+		}
+	}
+}
+
 func assertFailingReturnCode(tb testing.TB, _, _ string, rc int) {
 	tb.Helper()
 	if rc == 0 {

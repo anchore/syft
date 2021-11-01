@@ -21,6 +21,7 @@ func TestDetectScheme(t *testing.T) {
 		name             string
 		userInput        string
 		dirs             []string
+		files            []string
 		detection        detectorResult
 		expectedScheme   Scheme
 		expectedLocation string
@@ -153,6 +154,28 @@ func TestDetectScheme(t *testing.T) {
 			expectedLocation: "some/path-to-dir",
 		},
 		{
+			name:      "explicit-file",
+			userInput: "file:some/path-to-file",
+			detection: detectorResult{
+				src: image.UnknownSource,
+				ref: "",
+			},
+			files:            []string{"some/path-to-file"},
+			expectedScheme:   FileScheme,
+			expectedLocation: "some/path-to-file",
+		},
+		{
+			name:      "implicit-file",
+			userInput: "some/path-to-file",
+			detection: detectorResult{
+				src: image.UnknownSource,
+				ref: "",
+			},
+			files:            []string{"some/path-to-file"},
+			expectedScheme:   FileScheme,
+			expectedLocation: "some/path-to-file",
+		},
+		{
 			name:      "explicit-current-dir",
 			userInput: "dir:.",
 			detection: detectorResult{
@@ -225,7 +248,18 @@ func TestDetectScheme(t *testing.T) {
 				}
 				err = fs.Mkdir(expandedExpectedLocation, os.ModePerm)
 				if err != nil {
-					t.Fatalf("failed to create dummy tar: %+v", err)
+					t.Fatalf("failed to create dummy dir: %+v", err)
+				}
+			}
+
+			for _, p := range test.files {
+				expandedExpectedLocation, err := homedir.Expand(p)
+				if err != nil {
+					t.Fatalf("unable to expand path=%q: %+v", p, err)
+				}
+				_, err = fs.Create(expandedExpectedLocation)
+				if err != nil {
+					t.Fatalf("failed to create dummy file: %+v", err)
 				}
 			}
 

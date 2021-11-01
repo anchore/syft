@@ -130,6 +130,16 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertFailingReturnCode, // upload can't go anywhere, so if this passes that would be surprising
 			},
 		},
+		{
+			// we want to make certain that syft can catalog a single go binary and get a SBOM report that is not empty
+			name: "catalog-single-go-binary",
+			args: []string{"packages", "-o", "json", getSyftBinaryLocation(t)},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertStdoutLengthGreaterThan(1000),
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {
