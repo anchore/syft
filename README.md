@@ -171,6 +171,10 @@ spec:
       secretName: registry-config
 ```
 
+`kubectl apply -f pod.yaml`
+
+3. The user can now run `kubectl logs syft-private-registry-demo`. The logs should show the syft analysis for the `<private_image>` provided in the pod configuration.
+
 Using the above information, users should be able to configure private registry access without having to interface or shim into the `grype` or `syft` configuration files OR be dependent on a docker daemon, (or some other runtime software) for registry configuration and access.
 
 ## Configuration
