@@ -123,13 +123,13 @@ An example `config.json` looks something like this:
 }
 ```
 
-You can run the following command as an example which details the mount/environment configuration a container needs to access a private registry:
+You can run the following command as an example. It details the mount/environment configuration a container needs to access a private registry:
 
 `docker run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>`
 
 
 ### Docker Credentials in Kubernetes
-The below section shows a simple workflow on how to mount this config as a secret into a container on kubernetes.
+The below section shows a simple workflow on how to mount this config file as a secret into a container on kubernetes.
 1. Create a secret. The value of `config.json` is important. It refers to the specification detailed [here](https://github.com/google/go-containerregistry/tree/main/pkg/authn#the-config-file). 
 Below this section is the `secret.yaml` file that the pod configuration will consume as a volume. 
 The key `config.json` is important. It will end up being the name of the file when mounted into the pod.
