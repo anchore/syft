@@ -106,10 +106,11 @@ Where the `formats` available are:
 
 ### Local Docker Credentials
 When a container runtime is not present, Syft can still utilize credentials configured in common credential sources (such as `~/.docker/config.json`). 
-It will pull images from private registries using these credentials. For more information see the `go-containerregistry` [docs](https://github.com/google/go-containerregistry/tree/main/pkg/authn).
-The config file detailed above is where your credentials are stored when authenticating with private registries via some command like `docker login`.
+It will pull images from private registries using these credentials. The config file is where your credentials are stored when authenticating with private registries via some command like `docker login`. 
+For more information see the `go-containerregistry` [documentation](https://github.com/google/go-containerregistry/tree/main/pkg/authn).
 
-An example plain text `config.json` looks something like this:
+
+An example `config.json` looks something like this:
 ```
 // config.json
 {
@@ -122,9 +123,9 @@ An example plain text `config.json` looks something like this:
 }
 ```
 
-If you want to see an example detailed simply via podman, you can run this command which details the mount/environment configuration for a container:
+You can run the following command as an example which details the mount/environment configuration a container needs to access a private registry:
 
-`podman run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>`
+`docker run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>`
 
 
 ### Docker Credentials in Kubernetes
