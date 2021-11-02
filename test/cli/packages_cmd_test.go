@@ -3,8 +3,6 @@ package cli
 import (
 	"strings"
 	"testing"
-
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestPackagesCmdFlags(t *testing.T) {
@@ -30,7 +28,6 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", request},
 			assertions: []traitAssertion{
 				assertJsonReport,
-				assertScope(source.SquashedScope),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -65,7 +62,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", request},
 			assertions: []traitAssertion{
-				assertScope(source.SquashedScope),
+				assertPackageCount(17),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -73,18 +70,18 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "all-layers-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "all-layers", request},
 			assertions: []traitAssertion{
-				assertScope(source.AllLayersScope),
+				assertPackageCount(19),
 				assertSuccessfulReturnCode,
 			},
 		},
 		{
-			name: "packages-scope-env-binding",
+			name: "all-layers-scope-flag-by-env",
+			args: []string{"packages", "-o", "json", request},
 			env: map[string]string{
 				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
 			},
-			args: []string{"packages", "-o", "json", request},
 			assertions: []traitAssertion{
-				assertScope(source.AllLayersScope),
+				assertPackageCount(19),
 				assertSuccessfulReturnCode,
 			},
 		},
