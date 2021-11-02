@@ -124,7 +124,7 @@ An example plain text `config.json` looks something like this:
 
 If you want to see the example detailed simply via podman you can use this command to verify a single run:
 
-`podman run -v ./config.json:/tmp/config.json -e "DOCKER_CONFIG=/tmp" anchore/syft:latest  <private_image>`
+`podman run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>`
 
 The below section shows a simple workflow on how to mount this config as a secret into a container on kubernetes.
 1. Create a secret. The value of `config.json` is important and it refers to the specification outlined [here](https://github.com/google/go-containerregistry/tree/main/pkg/authn#the-config-file).
