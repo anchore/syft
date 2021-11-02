@@ -10,10 +10,10 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/presenter"
 	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
+	"github.com/wagoodman/go-presenter"
 )
 
 type redactor func(s []byte) []byte

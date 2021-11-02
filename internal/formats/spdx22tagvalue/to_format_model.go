@@ -1,40 +1,23 @@
-package packages
+package spdx22tagvalue
 
 import (
 	"fmt"
-	"io"
 	"time"
 
-	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
-
-	"github.com/anchore/syft/internal/spdxlicense"
-
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/spdx/tools-golang/spdx"
-	"github.com/spdx/tools-golang/tvsaver"
 )
 
-// SPDXTagValuePresenter is a SPDX presentation object for the syft results (see https://github.com/spdx/spdx-spec)
-type SPDXTagValuePresenter struct {
-	catalog     *pkg.Catalog
-	srcMetadata source.Metadata
-}
-
-// NewJSONPresenter creates a new JSON presenter object for the given cataloging results.
-func NewSPDXTagValuePresenter(catalog *pkg.Catalog, srcMetadata source.Metadata) *SPDXTagValuePresenter {
-	return &SPDXTagValuePresenter{
-		catalog:     catalog,
-		srcMetadata: srcMetadata,
-	}
-}
-
-// Present the catalog results to the given writer.
-// nolint: funlen
-func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
-	doc := spdx.Document2_2{
+// toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
+// nolint:funlen
+func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro.Distro, _ source.Scope) spdx.Document2_2 {
+	return spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{
 			// 2.1: SPDX Version; should be in the format "SPDX-2.2"
 			// Cardinality: mandatory, one
@@ -50,7 +33,7 @@ func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 
 			// 2.4: Document Name
 			// Cardinality: mandatory, one
-			DocumentName: pres.srcMetadata.ImageMetadata.UserInput,
+			DocumentName: srcMetadata.ImageMetadata.UserInput,
 
 			// 2.5: Document Namespace
 			// Cardinality: mandatory, one
@@ -69,7 +52,7 @@ func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 			// In many cases, the URI will point to a web accessible document, but this should not be assumed
 			// to be the case.
 
-			DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", pres.srcMetadata.ImageMetadata.UserInput),
+			DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
 
 			// 2.6: External Document References
 			// Cardinality: optional, one or many
@@ -98,18 +81,16 @@ func (pres *SPDXTagValuePresenter) Present(output io.Writer) error {
 			// Cardinality: optional, one
 			DocumentComment: "",
 		},
-		Packages: pres.packages(),
+		Packages: toFormatPackages(catalog),
 	}
-
-	return tvsaver.Save2_2(&doc, output)
 }
 
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
 // nolint: funlen
-func (pres *SPDXTagValuePresenter) packages() map[spdx.ElementID]*spdx.Package2_2 {
+func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 {
 	results := make(map[spdx.ElementID]*spdx.Package2_2)
 
-	for p := range pres.catalog.Enumerate() {
+	for p := range catalog.Enumerate() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := fmt.Sprintf("Package-%+v-%s", p.Type, p.Name)
 

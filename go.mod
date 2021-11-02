@@ -40,6 +40,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/vifraa/gopom v0.1.0
 	github.com/wagoodman/go-partybus v0.0.0-20210627031916-db1f5573bbc5
+	github.com/wagoodman/go-presenter v0.0.0-20211015174752-f9c01afc824b
 	github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240
 	github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
