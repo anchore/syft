@@ -9,6 +9,7 @@ const (
 	Java            Language = "java"
 	JavaScript      Language = "javascript"
 	Python          Language = "python"
+	PHP             Language = "php"
 	Ruby            Language = "ruby"
 	Go              Language = "go"
 	Rust            Language = "rust"
@@ -19,6 +20,7 @@ var AllLanguages = []Language{
 	Java,
 	JavaScript,
 	Python,
+	PHP,
 	Ruby,
 	Go,
 	Rust,
