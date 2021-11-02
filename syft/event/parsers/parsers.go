@@ -6,11 +6,11 @@ package parsers
 import (
 	"fmt"
 
+	"github.com/anchore/go-presenter"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-presenter"
 	"github.com/wagoodman/go-progress"
 )
 

@@ -108,6 +108,8 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=
 github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf/go.mod h1:FaODhIA06mxO1E6R32JE0TL1JWZZkmjRIAd4ULvHUKk=
+github.com/anchore/go-presenter v0.0.0-20211102174526-0dbf20f6c7fa h1:mDLUAkgXsV5Z8D0EEj8eS6FBekolV/A+Xxbs9054bPw=
+github.com/anchore/go-presenter v0.0.0-20211102174526-0dbf20f6c7fa/go.mod h1:29jwxTSAS6pBcrmuwf1U3r1Tqp1o1XpuiOJ0NT9NoGg=
 github.com/anchore/go-rpmdb v0.0.0-20210914181456-a9c52348da63 h1:C9W/LAydEz/qdUhx1MdjO9l8NEcFKYknkxDVyo9LAoM=
 github.com/anchore/go-rpmdb v0.0.0-20210914181456-a9c52348da63/go.mod h1:6qH8c6U/3CBVvDDDBZnPSTbTINq3cIdADUYTaVf75EM=
 github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04 h1:VzprUTpc0vW0nnNKJfJieyH/TZ9UYAnTZs5/gHTdAe8=
@@ -757,8 +759,6 @@ github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59b
 github.com/wagoodman/go-partybus v0.0.0-20200526224238-eb215533f07d/go.mod h1:JPirS5jde/CF5qIjcK4WX+eQmKXdPc6vcZkJ/P0hfPw=
 github.com/wagoodman/go-partybus v0.0.0-20210627031916-db1f5573bbc5 h1:phTLPgMRDYTizrBSKsNSOa2zthoC2KsJsaY/8sg3rD8=
 github.com/wagoodman/go-partybus v0.0.0-20210627031916-db1f5573bbc5/go.mod h1:JPirS5jde/CF5qIjcK4WX+eQmKXdPc6vcZkJ/P0hfPw=
-github.com/wagoodman/go-presenter v0.0.0-20211015174752-f9c01afc824b h1:uWNQ0khA6RdFzODOMwKo9XXu7fuewnnkHykUtuKru8s=
-github.com/wagoodman/go-presenter v0.0.0-20211015174752-f9c01afc824b/go.mod h1:ewlIKbKV8l+jCj8rkdXIs361ocR5x3qGyoCSca47Gx8=
 github.com/wagoodman/go-progress v0.0.0-20200621122631-1a2120f0695a/go.mod h1:jLXFoL31zFaHKAAyZUh+sxiTDFe1L1ZHrcK2T1itVKA=
 github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240 h1:r6BlIP7CVZtMlxUQhT40h1IE1TzEgKVqwmsVGuscvdk=
 github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240/go.mod h1:jLXFoL31zFaHKAAyZUh+sxiTDFe1L1ZHrcK2T1itVKA=

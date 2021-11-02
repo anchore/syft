@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/anchore/go-presenter"
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -13,7 +14,6 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
-	"github.com/wagoodman/go-presenter"
 )
 
 type redactor func(s []byte) []byte

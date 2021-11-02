@@ -7,6 +7,7 @@ require (
 	github.com/adrg/xdg v0.2.1
 	github.com/alecthomas/jsonschema v0.0.0-20210301060011-54c507b6f074
 	github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf
+	github.com/anchore/go-presenter v0.0.0-20211102174526-0dbf20f6c7fa
 	github.com/anchore/go-rpmdb v0.0.0-20210914181456-a9c52348da63
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
@@ -40,7 +41,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/vifraa/gopom v0.1.0
 	github.com/wagoodman/go-partybus v0.0.0-20210627031916-db1f5573bbc5
-	github.com/wagoodman/go-presenter v0.0.0-20211015174752-f9c01afc824b
 	github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240
 	github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
