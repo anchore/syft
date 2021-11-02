@@ -104,9 +104,9 @@ Where the `format`s available are:
 
 ## Private Registry Authentication
 
-Syft uses the [authn](https://github.com/google/go-containerregistry/tree/main/pkg/authn) library to solve for private registry access. 
+Syft uses the [authn](https://github.com/google/go-containerregistry/tree/main/pkg/authn) package to solve for private registry access. 
 
-The config file listed in the linked authn library is where your credentials are stored when authenticating with private registries via some command like `docker login`.
+The config file listed in the linked authn package is where your credentials are stored when authenticating with private registries via some command like `docker login`.
 
 An example plain text `config.json` looks something like this:
 ```
@@ -127,9 +127,9 @@ If you want to see the example detailed simply via podman you can use this comma
 `podman run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>`
 
 The below section shows a simple workflow on how to mount this config as a secret into a container on kubernetes.
-1. Create a secret. The value of `config.json` is important and it refers to the specification outlined [here](https://github.com/google/go-containerregistry/tree/main/pkg/authn#the-config-file).
+1. Create a secret. The value of `config.json` is important. It refers to the specification outlined [here](https://github.com/google/go-containerregistry/tree/main/pkg/authn#the-config-file).
 
-Here is the `secret.yaml` file that the pod configuration will consume as a volume.
+Here is and example of the `secret.yaml` file that the pod configuration will consume as a volume. The key value `config.json` is important. That will be the name of the file on mount into the running pod.
 ```
 # secret.yaml
 
@@ -144,9 +144,9 @@ data:
 
 `kubectl apply -f secret.yaml`
 
-2. Create your pod running syft. The env `DOCKER_CONFIG` is important because it advertises to the `authn` library where to look for the credential file. In the below example, setting `DOCKER_CONFIG=/config` informs the library that credentials can be found at `/config/config.json`. This is why we used `config.json` as the key for our secret. When mounted into containers the secrets' key is used as the filename.
+2. Create your pod running syft. The env `DOCKER_CONFIG` is important because it advertises to the `authn` package where to look for the credential file. In the below example, setting `DOCKER_CONFIG=/config` informs the package that credentials can be found at `/config/config.json`. This is why we used `config.json` as the key for our secret. When mounted into containers the secrets' key is used as the filename.
 
-The `voluemMounts` section mounts our secret to `/config`. The `volumes` section names our volume and sources the secret we created in step one as the file we will be mounting.
+The `volumeMounts` section mounts our secret to `/config`. The `volumes` section names our volume and sources the secret we created in step one as the file we will be mounting.
 ```
 # pod.yaml
 
@@ -171,7 +171,7 @@ spec:
       secretName: registry-config
 ```
 
-Using the above information - users should be able to configure private registry access without having to interface or shim into the `grype` or `syft` configuration files OR be dependent on a docker daemon, (or some other runtime software) for registry configuration and access.
+Using the above information, users should be able to configure private registry access without having to interface or shim into the `grype` or `syft` configuration files OR be dependent on a docker daemon, (or some other runtime software) for registry configuration and access.
 
 ## Configuration
 
