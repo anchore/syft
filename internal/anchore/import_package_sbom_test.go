@@ -74,7 +74,7 @@ func TestPackageSbomToModel(t *testing.T) {
 
 	c := pkg.NewCatalog(p)
 
-	model, err := packageSbomModel(m, c, &d, source.AllLayersScope)
+	model, err := packageSbomModel(m, c, &d)
 	if err != nil {
 		t.Fatalf("unable to generate model from source material: %+v", err)
 	}
@@ -197,7 +197,7 @@ func TestPackageSbomImport(t *testing.T) {
 
 	d, _ := distro.NewDistro(distro.CentOS, "8.0", "")
 
-	theModel, err := packageSbomModel(m, catalog, &d, source.AllLayersScope)
+	theModel, err := packageSbomModel(m, catalog, &d)
 	if err != nil {
 		t.Fatalf("could not get sbom model: %+v", err)
 	}
@@ -236,7 +236,7 @@ func TestPackageSbomImport(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			digest, err := importPackageSBOM(context.TODO(), test.api, sessionID, m, catalog, &d, source.AllLayersScope, &progress.Stage{})
+			digest, err := importPackageSBOM(context.TODO(), test.api, sessionID, m, catalog, &d, &progress.Stage{})
 
 			// validate error handling
 			if err != nil && !test.expectsError {
