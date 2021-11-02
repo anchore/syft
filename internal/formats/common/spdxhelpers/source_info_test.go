@@ -124,6 +124,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from rust cargo manifest",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.PhpComposerPkg,
+			},
+			expected: []string{
+				"from PHP composer manifest",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {
