@@ -34,6 +34,22 @@ func New(userInput string, registryOptions *image.RegistryOptions) (*Source, fun
 	}
 
 	switch parsedScheme {
+	case FileScheme:
+		fileMeta, err := fs.Stat(location)
+		if err != nil {
+			return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+		}
+
+		if fileMeta.IsDir() {
+			return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		}
+
+		s, err := NewFromFile(location)
+		if err != nil {
+			return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+		}
+		return &s, func() {}, nil
+
 	case DirectoryScheme:
 		fileMeta, err := fs.Stat(location)
 		if err != nil {
@@ -79,6 +95,17 @@ func NewFromDirectory(path string) (Source, error) {
 	}, nil
 }
 
+// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
+func NewFromFile(path string) (Source, error) {
+	return Source{
+		Mutex: &sync.Mutex{},
+		Metadata: Metadata{
+			Scheme: FileScheme,
+			Path:   path,
+		},
+	}, nil
+}
+
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the
 // option given (e.g. all-layers, squashed, etc)
 func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
@@ -97,15 +124,15 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 
 func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 	switch s.Metadata.Scheme {
-	case DirectoryScheme:
+	case DirectoryScheme, FileScheme:
 		s.Mutex.Lock()
 		defer s.Mutex.Unlock()
 		if s.DirectoryResolver == nil {
-			directoryResolver, err := newDirectoryResolver(s.Metadata.Path)
+			resolver, err := newDirectoryResolver(s.Metadata.Path)
 			if err != nil {
 				return nil, err
 			}
-			s.DirectoryResolver = directoryResolver
+			s.DirectoryResolver = resolver
 		}
 		return s.DirectoryResolver, nil
 	case ImageScheme:

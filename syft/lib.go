@@ -52,6 +52,9 @@ func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, *dis
 	case source.ImageScheme:
 		log.Info("cataloging image")
 		catalogers = cataloger.ImageCatalogers()
+	case source.FileScheme:
+		log.Info("cataloging file")
+		catalogers = cataloger.AllCatalogers()
 	case source.DirectoryScheme:
 		log.Info("cataloging directory")
 		catalogers = cataloger.DirectoryCatalogers()
