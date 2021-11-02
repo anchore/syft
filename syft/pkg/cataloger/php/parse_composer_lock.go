@@ -41,7 +41,7 @@ func parseComposerLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Name:     name,
 				Version:  version,
 				Language: pkg.PHP,
-				Type:     pkg.PhpPkg,
+				Type:     pkg.PhpComposerPkg,
 			})
 		}
 	}

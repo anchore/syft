@@ -14,13 +14,13 @@ func TestParseComposerFileLock(t *testing.T) {
 			Name:     "adoy/fastcgi-client",
 			Version:  "1.0.2",
 			Language: pkg.PHP,
-			Type:     pkg.PhpPkg,
+			Type:     pkg.PhpComposerPkg,
 		},
 		{
 			Name:     "alcaeus/mongo-php-adapter",
 			Version:  "1.1.11",
 			Language: pkg.PHP,
-			Type:     pkg.PhpPkg,
+			Type:     pkg.PhpComposerPkg,
 		},
 	}
 	fixture, err := os.Open("test-fixtures/composer.lock")
