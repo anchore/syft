@@ -94,7 +94,7 @@ The output format for Syft is configurable as well:
 syft packages <image> -o <format>
 ```
 
-Where the `format`s available are:
+Where the `formats` available are:
 - `json`: Use this to get as much information out of Syft as possible!
 - `text`: A row-oriented, human-and-machine-friendly output.
 - `cyclonedx`: A XML report conforming to the [CycloneDX 1.2 specification](https://cyclonedx.org/specification/overview/).
