@@ -102,6 +102,14 @@ Where the `format`s available are:
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `table`: A columnar summary (default).
 
+## Private Registry Authentication
+
+Syft uses the [authn](https://github.com/google/go-containerregistry/tree/main/pkg/authn) library to solve for private registry access. 
+
+The config file listed in the linked README is where your credentials are stored when authenticating with private registries via some command like `docker login`.
+
+For more information regarding configuration for private registry access outside the `syft.yaml` configuration detailed below see this [comment](https://github.com/anchore/syft/issues/502#issuecomment-957017480). It details a novel Kubernetes configuration where a secret is mounted to a syft container which then allows the process access to private registry contents.
+
 ## Configuration
 
 Configuration search paths:
