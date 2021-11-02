@@ -127,7 +127,7 @@ If you want to see an example detailed simply via podman, you can run this comma
 `podman run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>`
 
 
-### Docker credentials in Kubernetes
+### Docker Credentials in Kubernetes
 The below section shows a simple workflow on how to mount this config as a secret into a container on kubernetes.
 1. Create a secret. The value of `config.json` is important. It refers to the specification detailed [here](https://github.com/google/go-containerregistry/tree/main/pkg/authn#the-config-file). 
 Below this section is the `secret.yaml` file that the pod configuration will consume as a volume. 
