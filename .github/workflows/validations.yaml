@@ -138,12 +138,6 @@ jobs:
       - name: Build key for tar cache
         run: make integration-fingerprint
 
-      - name: Restore integration test cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/test/integration/test-fixtures/cache
-          key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('test/integration/test-fixtures/cache.fingerprint') }}
-
       - name: Run integration tests
         run: make integration
 
@@ -326,15 +320,6 @@ jobs:
       - name: (cache-miss) Bootstrap go dependencies
         if: steps.go-cache.outputs.cache-hit != 'true'
         run: make bootstrap-go
-
-      - name: Build key for tar cache
-        run: make cli-fingerprint
-
-      - name: Restore CLI test cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/test/cli/test-fixtures/cache
-          key: ${{ runner.os }}-cli-test-cache-${{ hashFiles('test/cli/test-fixtures/cache.fingerprint') }}
 
       - uses: actions/download-artifact@v2
         with:
