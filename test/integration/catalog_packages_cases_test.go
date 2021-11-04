@@ -41,6 +41,15 @@ var imageOnlyTestCases = []testCase{
 			"someotherpkg": "3.19.0",
 		},
 	},
+	{
+		// When the image is build lib overwrites pkgs/lib causing there to only be two packages
+		name:    "find apkdb packages",
+		pkgType: pkg.ApkPkg,
+		pkgInfo: map[string]string{
+			"musl-utils": "1.1.24-r2",
+			"libc-utils": "0.7.2-r0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -149,6 +158,15 @@ var dirOnlyTestCases = []testCase{
 			"version_check": "0.1.5",
 		},
 	},
+	{
+		name:       "find apkdb packages",
+		pkgType:    pkg.ApkPkg,
+		duplicates: 2, // when the directory is cataloged we have duplicates between lib/ and pkgs/lib
+		pkgInfo: map[string]string{
+			"musl-utils": "1.1.24-r2",
+			"libc-utils": "0.7.2-r0",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
@@ -184,15 +202,6 @@ var commonTestCases = []testCase{
 		duplicates:  1, // there is a "example-jenkins-plugin" HPI, and nested within that a JAR of the same name
 		pkgInfo: map[string]string{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
-		},
-	},
-	{
-
-		name:    "find apkdb packages",
-		pkgType: pkg.ApkPkg,
-		pkgInfo: map[string]string{
-			"musl-utils": "1.1.24-r2",
-			"libc-utils": "0.7.2-r0",
 		},
 	},
 }
