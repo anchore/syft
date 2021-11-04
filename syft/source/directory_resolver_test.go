@@ -483,5 +483,8 @@ func Test_ignoreIrregularFiles(t *testing.T) {
 
 	resolver, err := newDirectoryResolver(dir)
 	assert.NoError(t, err)
-	assert.Len(t, resolver.fileTree.AllFiles(), 1) // only readme is indexed
+
+	assert.Len(t, resolver.fileTree.AllFiles(), 1)
+	rp := resolver.fileTree.AllFiles()[0].RealPath
+	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
 }
