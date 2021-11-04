@@ -1,10 +1,13 @@
 package source
 
 import (
+	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
@@ -458,4 +461,27 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_ignoreIrregularFiles(t *testing.T) {
+	// NOTE: craeting a pipe/fifo file on demand since git doesn't let me
+	// commit one. It is meant to demonstrate that the director resolver
+	// will ignore it (and any other irregular file) when indexing a directory
+	dir := "./test-fixtures/irregular-files"
+	f := "f.fifo"
+
+	err := syscall.Mknod(filepath.Join(dir, f), syscall.S_IFIFO|0666, 0)
+	assert.NoError(t, err)
+	defer func() {
+		err := os.Remove(filepath.Join(dir, f))
+		assert.NoError(t, err)
+	}()
+
+	fileRefs, err := ioutil.ReadDir(dir)
+	assert.NoError(t, err)
+	assert.Len(t, fileRefs, 1) // there is an irregular file there
+
+	resolver, err := newDirectoryResolver(dir)
+	assert.NoError(t, err)
+	assert.Len(t, resolver.fileTree.AllFiles(), 0) // but it won't be indexed :)
 }

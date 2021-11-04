@@ -8,6 +8,7 @@ import (
 const (
 	UnknownFileType FileType = "UnknownFileType"
 	RegularFile     FileType = "RegularFile"
+	IrregularFile   FileType = "IrregularFile"
 	HardLink        FileType = "HardLink"
 	SymbolicLink    FileType = "SymbolicLink"
 	CharacterDevice FileType = "CharacterDevice"
@@ -45,6 +46,8 @@ func newFileTypeFromMode(mode os.FileMode) FileType {
 		return SymbolicLink
 	case mode.IsDir():
 		return Directory
+	case !mode.IsRegular():
+		return IrregularFile
 	default:
 		return RegularFile
 	}
