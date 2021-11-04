@@ -59,3 +59,22 @@ func DirectoryCatalogers() []Cataloger {
 		rust.NewCargoLockCataloger(),
 	}
 }
+
+// AllCatalogers returns all implemented catalogers
+func AllCatalogers() []Cataloger {
+	return []Cataloger{
+		ruby.NewGemFileLockCataloger(),
+		ruby.NewGemSpecCataloger(),
+		python.NewPythonIndexCataloger(),
+		python.NewPythonPackageCataloger(),
+		javascript.NewJavascriptLockCataloger(),
+		javascript.NewJavascriptPackageCataloger(),
+		deb.NewDpkgdbCataloger(),
+		rpmdb.NewRpmdbCataloger(),
+		java.NewJavaCataloger(),
+		apkdb.NewApkdbCataloger(),
+		golang.NewGoModuleBinaryCataloger(),
+		golang.NewGoModFileCataloger(),
+		rust.NewCargoLockCataloger(),
+	}
+}

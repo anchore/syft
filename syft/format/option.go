@@ -12,7 +12,7 @@ const (
 	SPDXJSONOption      Option = "spdx-json"
 )
 
-var AllPresenters = []Option{
+var AllOptions = []Option{
 	JSONOption,
 	TextOption,
 	TableOption,

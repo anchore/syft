@@ -15,7 +15,7 @@ RESET := $(shell tput -T linux sgr0)
 TITLE := $(BOLD)$(PURPLE)
 SUCCESS := $(BOLD)$(GREEN)
 # the quality gate lower threshold for unit test total % coverage (by function statements)
-COVERAGE_THRESHOLD := 65
+COVERAGE_THRESHOLD := 62
 # CI cache busting values; change these if you want CI to not use previous stored cache
 INTEGRATION_CACHE_BUSTER="88738d2f"
 CLI_CACHE_BUSTER="789bacdf"

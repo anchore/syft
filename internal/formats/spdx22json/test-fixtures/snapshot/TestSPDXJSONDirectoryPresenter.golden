@@ -1,0 +1,95 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "/some/path",
+ "spdxVersion": "SPDX-2.2",
+ "creationInfo": {
+  "created": "2021-10-22T19:25:38.33537Z",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-[not provided]"
+  ],
+  "licenseListVersion": "3.14"
+ },
+ "syftSourceData": {
+  "Scheme": "DirectoryScheme",
+  "ImageMetadata": {
+   "userInput": "",
+   "imageID": "",
+   "manifestDigest": "",
+   "mediaType": "",
+   "tags": null,
+   "imageSize": 0,
+   "layers": null,
+   "manifest": null,
+   "config": null,
+   "repoDigests": null
+  },
+  "Path": "/some/path"
+ },
+ "dataLicense": "CC0-1.0",
+ "documentNamespace": "https:/anchore.com/syft/dir/some/path-a868c45f-e62b-473f-9dd3-b72994be6294",
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",
+   "name": "package-1",
+   "licenseConcluded": "MIT",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "a-purl-2",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "hasFiles": [
+    "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a"
+   ],
+   "licenseDeclared": "MIT",
+   "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
+   "versionInfo": "1.0.1"
+  },
+  {
+   "SPDXID": "SPDXRef-Package-deb-package-2-2.0.1",
+   "name": "package-2",
+   "licenseConcluded": "NONE",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "a-purl-2",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "NONE",
+   "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
+   "versionInfo": "2.0.1"
+  }
+ ],
+ "files": [
+  {
+   "SPDXID": "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a",
+   "name": "foo",
+   "licenseConcluded": "",
+   "fileName": "/some/path/pkg1/dependencies/foo"
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-1.0.1",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-File-package-1-efae7fecc76ca25da40f79d7ef5b8933510434914835832c7976f3e866aa756a"
+  }
+ ]
+}

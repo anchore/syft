@@ -6,19 +6,18 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/anchore/syft/syft/format"
-
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/presenter/packages"
 	"github.com/anchore/syft/syft/source"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
@@ -45,6 +44,7 @@ const (
     {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
     {{.appName}} {{.command}} oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
     {{.appName}} {{.command}} dir:path/to/yourproject                read directly from a path on disk (any directory)
+    {{.appName}} {{.command}} file:path/to/yourproject/file          read directly from a path on disk (any single file)
     {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 `
 )
@@ -103,7 +103,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 
 	flags.StringP(
 		"output", "o", string(format.TableOption),
-		fmt.Sprintf("report output formatter, options=%v", format.AllPresenters),
+		fmt.Sprintf("report output formatter, options=%v", format.AllOptions),
 	)
 
 	flags.StringP(
@@ -239,6 +239,12 @@ func packagesExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
+		f := formats.ByOption(packagesPresenterOpt)
+		if f == nil {
+			errs <- fmt.Errorf("unknown format: %s", packagesPresenterOpt)
+			return
+		}
+
 		checkForApplicationUpdate()
 
 		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions())
@@ -262,13 +268,8 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 
 		bus.Publish(partybus.Event{
-			Type: event.PresenterReady,
-			Value: packages.Presenter(packagesPresenterOpt, packages.PresenterConfig{
-				SourceMetadata: src.Metadata,
-				Catalog:        catalog,
-				Distro:         d,
-				Scope:          appConfig.Package.Cataloger.ScopeOpt,
-			}),
+			Type:  event.PresenterReady,
+			Value: f.Presenter(catalog, &src.Metadata, d, appConfig.Package.Cataloger.ScopeOpt),
 		})
 	}()
 	return errs

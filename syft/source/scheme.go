@@ -19,41 +19,49 @@ const (
 	DirectoryScheme Scheme = "DirectoryScheme"
 	// ImageScheme indicates the source being cataloged is a container image
 	ImageScheme Scheme = "ImageScheme"
+	// FileScheme indicates the source being cataloged is a single file
+	FileScheme Scheme = "FileScheme"
 )
 
 func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (Scheme, image.Source, string, error) {
-	if strings.HasPrefix(userInput, "dir:") {
-		// blindly trust the user's scheme
+	switch {
+	case strings.HasPrefix(userInput, "dir:"):
 		dirLocation, err := homedir.Expand(strings.TrimPrefix(userInput, "dir:"))
 		if err != nil {
 			return UnknownScheme, image.UnknownSource, "", fmt.Errorf("unable to expand directory path: %w", err)
 		}
 		return DirectoryScheme, image.UnknownSource, dirLocation, nil
+
+	case strings.HasPrefix(userInput, "file:"):
+		fileLocation, err := homedir.Expand(strings.TrimPrefix(userInput, "file:"))
+		if err != nil {
+			return UnknownScheme, image.UnknownSource, "", fmt.Errorf("unable to expand directory path: %w", err)
+		}
+		return FileScheme, image.UnknownSource, fileLocation, nil
 	}
 
-	// we should attempt to let stereoscope determine what the source is first --but, just because the source is a valid directory
-	// doesn't mean we yet know if it is an OCI layout directory (to be treated as an image) or if it is a generic filesystem directory.
+	// try the most specific sources first and move out towards more generic sources.
+
+	// first: let's try the image detector, which has more scheme parsing internal to stereoscope
 	source, imageSpec, err := imageDetector(userInput)
-	if err != nil {
-		return UnknownScheme, image.UnknownSource, "", fmt.Errorf("unable to detect the scheme from %q: %w", userInput, err)
+	if err == nil && source != image.UnknownSource {
+		return ImageScheme, source, imageSpec, nil
 	}
 
-	if source == image.UnknownSource {
-		dirLocation, err := homedir.Expand(userInput)
-		if err != nil {
-			return UnknownScheme, image.UnknownSource, "", fmt.Errorf("unable to expand potential directory path: %w", err)
-		}
+	// next: let's try more generic sources (dir, file, etc.)
 
-		fileMeta, err := fs.Stat(dirLocation)
-		if err != nil {
-			return UnknownScheme, source, "", nil
-		}
+	location, err := homedir.Expand(userInput)
+	if err != nil {
+		return UnknownScheme, image.UnknownSource, "", fmt.Errorf("unable to expand potential directory path: %w", err)
+	}
 
-		if fileMeta.IsDir() {
-			return DirectoryScheme, source, dirLocation, nil
-		}
+	fileMeta, err := fs.Stat(location)
+	if err != nil {
 		return UnknownScheme, source, "", nil
 	}
 
-	return ImageScheme, source, imageSpec, nil
+	if fileMeta.IsDir() {
+		return DirectoryScheme, source, location, nil
+	}
+	return FileScheme, source, location, nil
 }
