@@ -25,6 +25,8 @@ var unixSystemRuntimePrefixes = []string{
 	"/dev",
 }
 
+var ErrIgnoreIrregularFile = errors.New("ignoring irregular file type")
+
 var _ FileResolver = (*directoryResolver)(nil)
 
 type pathFilterFn func(string) bool
@@ -137,7 +139,7 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 }
 
 func (r *directoryResolver) handleFileAccessErr(path string, err error) error {
-	if errors.Is(err, os.ErrPermission) || errors.Is(err, os.ErrNotExist) {
+	if errors.Is(err, os.ErrPermission) || errors.Is(err, os.ErrNotExist) || errors.Is(err, ErrIgnoreIrregularFile) {
 		// don't allow for permission errors to stop indexing, keep track of the paths and continue.
 		log.Warnf("unable to access path=%q: %+v", path, err)
 		r.errPaths[path] = err
@@ -176,6 +178,8 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 		if err != nil {
 			return "", err
 		}
+	case IrregularFile:
+		return "", ErrIgnoreIrregularFile
 	default:
 		ref, err = r.fileTree.AddFile(file.Path(p))
 		if err != nil {
