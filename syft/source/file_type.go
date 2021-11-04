@@ -8,6 +8,9 @@ import (
 const (
 	UnknownFileType FileType = "UnknownFileType"
 	RegularFile     FileType = "RegularFile"
+	// IrregularFile is how syft defines files that are neither regular, symbolic or directory.
+	// For ref: the seven standard Unix file types are regular, directory, symbolic link,
+	// FIFO special, block special, character special, and socket as defined by POSIX.
 	IrregularFile   FileType = "IrregularFile"
 	HardLink        FileType = "HardLink"
 	SymbolicLink    FileType = "SymbolicLink"

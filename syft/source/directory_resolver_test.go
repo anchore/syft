@@ -465,8 +465,8 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 
 func Test_ignoreIrregularFiles(t *testing.T) {
 	// NOTE: craeting a pipe/fifo file on demand since git doesn't let me
-	// commit one. It is meant to demonstrate that the director resolver
-	// will ignore it (and any other irregular file) when indexing a directory
+	// commit one. The directory resolver should ignore it (and any other
+	// file that is neither regular, a symlink or directory) when indexing a directory
 	dir := "./test-fixtures/irregular-files"
 	f := "f.fifo"
 
@@ -479,9 +479,9 @@ func Test_ignoreIrregularFiles(t *testing.T) {
 
 	fileRefs, err := ioutil.ReadDir(dir)
 	assert.NoError(t, err)
-	assert.Len(t, fileRefs, 2) // there is an irregular file there
+	assert.Len(t, fileRefs, 2) // two files (f.fifo and readme)
 
 	resolver, err := newDirectoryResolver(dir)
 	assert.NoError(t, err)
-	assert.Len(t, resolver.fileTree.AllFiles(), 1) // but it won't be indexed :)
+	assert.Len(t, resolver.fileTree.AllFiles(), 1) // only readme is indexed
 }
