@@ -479,9 +479,9 @@ func Test_ignoreIrregularFiles(t *testing.T) {
 
 	fileRefs, err := ioutil.ReadDir(dir)
 	assert.NoError(t, err)
-	assert.Len(t, fileRefs, 1) // there is an irregular file there
+	assert.Len(t, fileRefs, 2) // there is an irregular file there
 
 	resolver, err := newDirectoryResolver(dir)
 	assert.NoError(t, err)
-	assert.Len(t, resolver.fileTree.AllFiles(), 0) // but it won't be indexed :)
+	assert.Len(t, resolver.fileTree.AllFiles(), 1) // but it won't be indexed :)
 }
