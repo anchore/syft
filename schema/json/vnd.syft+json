@@ -1,0 +1,87 @@
+(registered 2021-11-05, last updated 2021-11-05)
+
+Media type name: application
+
+Media subtype name: vnd.syft+json
+
+Required parameters: N/A
+
+Optional parameters:
+
+   version
+
+      The version parameter refers to the Syft specification
+      version in use.
+
+      version = 1*DIGIT "." 1*DIGIT "." 1*DIGIT
+
+Encoding considerations: binary
+
+   This media type has all of the same encoding considerations of
+   application/json as described in [RFC8259].
+
+Security considerations: This media type has all of the same security
+   considerations of application/json as described in [RFC8259].
+
+   Additional care should be taken when processing additionalProperties,
+   digest, files, fileClassifications <>..... <----------------------------TODO Let's get this complete
+   Although the contents should be text, an application processing
+   them should not assume the encoded content is text. Especially if
+   using an external application or system to view or further process
+   the contents of these elements.
+
+   Depending on the operational context of the device or software
+   being described by the SBOM there may be additional security
+   requirements. These may include, but are not limited to,
+   encryption at rest, encryption in transit and restrictions on the
+   transmission of the SBOM to 3rd parties. These additional
+   requirements are considered out of scope for the specification.
+   And will typically be enforced by contract or copyright terms.
+
+Interoperability considerations: This media type has the same
+   interoperability considerations of application/json as described
+   in [RFC8259].
+
+Published specification: The specification can be found on the
+   Syft github under the schema directory https://github.com/anchore/syft/blob/main/schema/json
+
+   The current JSON schema version, 1.1.0, can be found at
+   https://github.com/anchore/syft/blob/main/schema/json/schema-1.1.0.json
+
+Applications that use this media: This media type is used to specify
+   a software bill of materials.
+
+   It will be used by tools that produce SBOMs either during the
+   software build process or as a result of software composition
+   analysis.
+
+   It will also be used by tools that consume SBOMs for software
+   supply chain, component, supplier, license and vulnerability
+   analysis.
+
+Fragment identifier considerations: N/A
+
+Restrictions on usage: N/A
+
+Additional information:
+
+   1. Deprecated alias names for this type: N/A
+   2. Magic number(s): N/A
+   3. File extension(s): .json
+   4. Macintosh file type code: N/A
+   5. Object Identifiers: N/A
+
+General Comments:
+
+Person to contact for further information:
+
+   1. Name: Christopher Phillips
+   2. Email: christopher.phillips@anchore.com
+
+Intended usage: Common
+
+   The Syft SBOM format is an open source software bill of materials
+   specification. It is intended to be exchanged between different
+   parties of the software supply chain.
+
+Author/Change controller: Christopher Phillips, on behalf of Anchore
