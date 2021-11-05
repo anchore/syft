@@ -4,10 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/anchore/syft/syft/distro"
-
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 var (
@@ -32,16 +29,16 @@ func NewFormat(option Option, encoder Encoder, decoder Decoder, validator Valida
 	}
 }
 
-func (f Format) Encode(output io.Writer, catalog *pkg.Catalog, d *distro.Distro, metadata *source.Metadata, scope source.Scope) error {
+func (f Format) Encode(output io.Writer, s sbom.SBOM) error {
 	if f.encoder == nil {
 		return ErrEncodingNotSupported
 	}
-	return f.encoder(output, catalog, metadata, d, scope)
+	return f.encoder(output, s)
 }
 
-func (f Format) Decode(reader io.Reader) (*pkg.Catalog, *source.Metadata, *distro.Distro, source.Scope, error) {
+func (f Format) Decode(reader io.Reader) (*sbom.SBOM, error) {
 	if f.decoder == nil {
-		return nil, nil, nil, source.UnknownScope, ErrDecodingNotSupported
+		return nil, ErrDecodingNotSupported
 	}
 	return f.decoder(reader)
 }
@@ -54,9 +51,9 @@ func (f Format) Validate(reader io.Reader) error {
 	return f.validator(reader)
 }
 
-func (f Format) Presenter(catalog *pkg.Catalog, metadata *source.Metadata, d *distro.Distro, scope source.Scope) *Presenter {
+func (f Format) Presenter(s sbom.SBOM) *Presenter {
 	if f.encoder == nil {
 		return nil
 	}
-	return NewPresenter(f.encoder, catalog, metadata, d, scope)
+	return NewPresenter(f.encoder, s)
 }

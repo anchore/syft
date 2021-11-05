@@ -3,6 +3,7 @@ package poweruser
 import (
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/syftjson/model"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 type JSONDocument struct {
@@ -18,17 +19,17 @@ type JSONDocument struct {
 }
 
 // NewJSONDocument creates and populates a new JSON document struct from the given cataloging results.
-func NewJSONDocument(config JSONDocumentConfig) (JSONDocument, error) {
-	fileMetadata, err := NewJSONFileMetadata(config.FileMetadata, config.FileDigests)
+func NewJSONDocument(s sbom.SBOM, appConfig interface{}) (JSONDocument, error) {
+	fileMetadata, err := NewJSONFileMetadata(s.Artifacts.FileMetadata, s.Artifacts.FileDigests)
 	if err != nil {
 		return JSONDocument{}, err
 	}
 
 	return JSONDocument{
-		FileClassifications: NewJSONFileClassifications(config.FileClassifications),
-		FileContents:        NewJSONFileContents(config.FileContents),
+		FileClassifications: NewJSONFileClassifications(s.Artifacts.FileClassifications),
+		FileContents:        NewJSONFileContents(s.Artifacts.FileContents),
 		FileMetadata:        fileMetadata,
-		Secrets:             NewJSONSecrets(config.Secrets),
-		Document:            syftjson.ToFormatModel(config.PackageCatalog, &config.SourceMetadata, config.Distro, config.ApplicationConfig.Package.Cataloger.ScopeOpt, config.ApplicationConfig),
+		Secrets:             NewJSONSecrets(s.Artifacts.Secrets),
+		Document:            syftjson.ToFormatModel(s, appConfig),
 	}, nil
 }

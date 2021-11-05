@@ -80,6 +80,24 @@ func assertStdoutLengthGreaterThan(length uint) traitAssertion {
 		tb.Helper()
 		if uint(len(stdout)) < length {
 			tb.Errorf("not enough output (expected at least %d, got %d)", length, len(stdout))
+		}
+	}
+}
+
+func assertPackageCount(length uint) traitAssertion {
+	return func(tb testing.TB, stdout, _ string, _ int) {
+		tb.Helper()
+		type partial struct {
+			Artifacts []interface{} `json:"artifacts"`
+		}
+		var data partial
+
+		if err := json.Unmarshal([]byte(stdout), &data); err != nil {
+			tb.Errorf("expected to find a JSON report, but was unmarshalable: %+v", err)
+		}
+
+		if uint(len(data.Artifacts)) != length {
+			tb.Errorf("expected package count of %d, but found %d", length, len(data.Artifacts))
 
 		}
 	}

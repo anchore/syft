@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/go-test/deep"
 
 	"github.com/anchore/syft/syft/format"
@@ -35,14 +37,22 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			}
 			originalCatalog, d, err := CatalogPackages(&src, source.SquashedScope)
 
-			by1, err := Encode(originalCatalog, &src.Metadata, d, source.SquashedScope, test.format)
+			originalSBOM := sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					PackageCatalog: originalCatalog,
+					Distro:         d,
+				},
+				Source: src.Metadata,
+			}
+
+			by1, err := Encode(originalSBOM, test.format)
 			assert.NoError(t, err)
 
-			newCatalog, newMetadata, newDistro, newScope, newFormat, err := Decode(bytes.NewReader(by1))
+			newSBOM, newFormat, err := Decode(bytes.NewReader(by1))
 			assert.NoError(t, err)
 			assert.Equal(t, test.format, newFormat)
 
-			by2, err := Encode(newCatalog, newMetadata, newDistro, newScope, test.format)
+			by2, err := Encode(*newSBOM, test.format)
 			assert.NoError(t, err)
 			for _, diff := range deep.Equal(by1, by2) {
 				t.Errorf(diff)

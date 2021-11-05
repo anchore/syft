@@ -20,11 +20,6 @@ type sourceUnpacker struct {
 	Target json.RawMessage `json:"target"`
 }
 
-type ImageSource struct {
-	source.ImageMetadata
-	Scope source.Scope `json:"scope"`
-}
-
 // UnmarshalJSON populates a source object from JSON bytes.
 func (s *Source) UnmarshalJSON(b []byte) error {
 	var unpacker sourceUnpacker
@@ -43,7 +38,7 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 		}
 
 	case "image":
-		var payload ImageSource
+		var payload source.ImageMetadata
 		if err := json.Unmarshal(unpacker.Target, &payload); err != nil {
 			return err
 		}

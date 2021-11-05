@@ -5,17 +5,14 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/internal/formats/common/testutils"
-	"github.com/anchore/syft/syft/format"
-	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
 var updateTableGoldenFiles = flag.Bool("update-table", false, "update the *.golden files for table format")
 
 func TestTablePresenter(t *testing.T) {
-	catalog, metadata, distro := testutils.DirectoryInput(t)
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		format.NewPresenter(encoder, catalog, &metadata, distro, source.SquashedScope),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateTableGoldenFiles,
 	)
 }

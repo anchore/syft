@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
@@ -261,21 +262,29 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 
 		if appConfig.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, src.Metadata, catalog, d, appConfig.Package.Cataloger.ScopeOpt); err != nil {
+			if err := runPackageSbomUpload(src, src.Metadata, catalog, d); err != nil {
 				errs <- err
 				return
 			}
 		}
 
+		sbomResult := sbom.SBOM{
+			Artifacts: sbom.Artifacts{
+				PackageCatalog: catalog,
+				Distro:         d,
+			},
+			Source: src.Metadata,
+		}
+
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: f.Presenter(catalog, &src.Metadata, d, appConfig.Package.Cataloger.ScopeOpt),
+			Value: f.Presenter(sbomResult),
 		})
 	}()
 	return errs
 }
 
-func runPackageSbomUpload(src *source.Source, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope) error {
+func runPackageSbomUpload(src *source.Source, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro) error {
 	log.Infof("uploading results to %s", appConfig.Anchore.Host)
 
 	if src.Metadata.Scheme != source.ImageScheme {
@@ -315,7 +324,6 @@ func runPackageSbomUpload(src *source.Source, s source.Metadata, catalog *pkg.Ca
 		Distro:                  d,
 		Dockerfile:              dockerfileContents,
 		OverwriteExistingUpload: appConfig.Anchore.OverwriteExistingImage,
-		Scope:                   scope,
 		Timeout:                 appConfig.Anchore.ImportTimeout,
 	}
 

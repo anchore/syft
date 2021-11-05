@@ -5,18 +5,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/internal/formats/common/testutils"
-	"github.com/anchore/syft/syft/format"
 )
 
 var updateSpdxJson = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json presenters")
 
 func TestSPDXJSONDirectoryPresenter(t *testing.T) {
-	catalog, metadata, distro := testutils.DirectoryInput(t)
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		format.NewPresenter(encoder, catalog, &metadata, distro, source.UnknownScope),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateSpdxJson,
 		spdxJsonRedactor,
 	)
@@ -24,9 +20,8 @@ func TestSPDXJSONDirectoryPresenter(t *testing.T) {
 
 func TestSPDXJSONImagePresenter(t *testing.T) {
 	testImage := "image-simple"
-	catalog, metadata, distro := testutils.ImageInput(t, testImage, testutils.FromSnapshot())
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		format.NewPresenter(encoder, catalog, &metadata, distro, source.SquashedScope),
+		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
 		testImage,
 		*updateSpdxJson,
 		spdxJsonRedactor,

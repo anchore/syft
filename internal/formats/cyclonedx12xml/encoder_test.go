@@ -5,17 +5,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
 
 var updateCycloneDx = flag.Bool("update-cyclonedx", false, "update the *.golden files for cyclone-dx presenters")
 
 func TestCycloneDxDirectoryPresenter(t *testing.T) {
-	catalog, metadata, _ := testutils.DirectoryInput(t)
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(catalog, &metadata, nil, source.SquashedScope),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateCycloneDx,
 		cycloneDxRedactor,
 	)
@@ -23,9 +20,8 @@ func TestCycloneDxDirectoryPresenter(t *testing.T) {
 
 func TestCycloneDxImagePresenter(t *testing.T) {
 	testImage := "image-simple"
-	catalog, metadata, _ := testutils.ImageInput(t, testImage)
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(catalog, &metadata, nil, source.SquashedScope),
+		Format().Presenter(testutils.ImageInput(t, testImage)),
 		testImage,
 		*updateCycloneDx,
 		cycloneDxRedactor,

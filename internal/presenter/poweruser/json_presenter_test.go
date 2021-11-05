@@ -5,6 +5,8 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/sergi/go-diff/diffmatchpatch"
 
 	"github.com/anchore/syft/syft/file"
@@ -77,63 +79,66 @@ func TestJSONPresenter(t *testing.T) {
 		},
 	})
 
-	cfg := JSONDocumentConfig{
-		ApplicationConfig: config.Application{
-			FileMetadata: config.FileMetadata{
-				Digests: []string{"sha256"},
-			},
+	appConfig := config.Application{
+		FileMetadata: config.FileMetadata{
+			Digests: []string{"sha256"},
 		},
-		PackageCatalog: catalog,
-		FileMetadata: map[source.Location]source.FileMetadata{
-			source.NewLocation("/a/place"): {
-				Mode:    0775,
-				Type:    "directory",
-				UserID:  0,
-				GroupID: 0,
-			},
-			source.NewLocation("/a/place/a"): {
-				Mode:    0775,
-				Type:    "regularFile",
-				UserID:  0,
-				GroupID: 0,
-			},
-			source.NewLocation("/b"): {
-				Mode:            0775,
-				Type:            "symbolicLink",
-				LinkDestination: "/c",
-				UserID:          0,
-				GroupID:         0,
-			},
-			source.NewLocation("/b/place/b"): {
-				Mode:    0644,
-				Type:    "regularFile",
-				UserID:  1,
-				GroupID: 2,
-			},
-		},
-		FileDigests: map[source.Location][]file.Digest{
-			source.NewLocation("/a/place/a"): {
-				{
-					Algorithm: "sha256",
-					Value:     "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
+	}
+
+	cfg := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog: catalog,
+			FileMetadata: map[source.Location]source.FileMetadata{
+				source.NewLocation("/a/place"): {
+					Mode:    0775,
+					Type:    "directory",
+					UserID:  0,
+					GroupID: 0,
+				},
+				source.NewLocation("/a/place/a"): {
+					Mode:    0775,
+					Type:    "regularFile",
+					UserID:  0,
+					GroupID: 0,
+				},
+				source.NewLocation("/b"): {
+					Mode:            0775,
+					Type:            "symbolicLink",
+					LinkDestination: "/c",
+					UserID:          0,
+					GroupID:         0,
+				},
+				source.NewLocation("/b/place/b"): {
+					Mode:    0644,
+					Type:    "regularFile",
+					UserID:  1,
+					GroupID: 2,
 				},
 			},
-			source.NewLocation("/b/place/b"): {
-				{
-					Algorithm: "sha256",
-					Value:     "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c",
+			FileDigests: map[source.Location][]file.Digest{
+				source.NewLocation("/a/place/a"): {
+					{
+						Algorithm: "sha256",
+						Value:     "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
+					},
+				},
+				source.NewLocation("/b/place/b"): {
+					{
+						Algorithm: "sha256",
+						Value:     "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c",
+					},
 				},
 			},
+			FileContents: map[source.Location]string{
+				source.NewLocation("/a/place/a"): "the-contents",
+			},
+			Distro: &distro.Distro{
+				Type:       distro.RedHat,
+				RawVersion: "7",
+				IDLike:     "rhel",
+			},
 		},
-		FileContents: map[source.Location]string{
-			source.NewLocation("/a/place/a"): "the-contents",
-		},
-		Distro: &distro.Distro{
-			Type:       distro.RedHat,
-			RawVersion: "7",
-			IDLike:     "rhel",
-		},
-		SourceMetadata: source.Metadata{
+		Source: source.Metadata{
 			Scheme: source.ImageScheme,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      "user-image-input",
@@ -163,7 +168,7 @@ func TestJSONPresenter(t *testing.T) {
 		},
 	}
 
-	if err := NewJSONPresenter(cfg).Present(&buffer); err != nil {
+	if err := NewJSONPresenter(cfg, appConfig).Present(&buffer); err != nil {
 		t.Fatal(err)
 	}
 	actual := buffer.Bytes()

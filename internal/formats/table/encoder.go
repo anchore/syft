@@ -6,18 +6,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/olekukonko/tablewriter"
+	"github.com/anchore/syft/syft/sbom"
 
-	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
+	"github.com/olekukonko/tablewriter"
 )
 
-func encoder(output io.Writer, catalog *pkg.Catalog, _ *source.Metadata, _ *distro.Distro, _ source.Scope) error {
+func encoder(output io.Writer, s sbom.SBOM) error {
 	var rows [][]string
 
 	columns := []string{"Name", "Version", "Type"}
-	for _, p := range catalog.Sorted() {
+	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
 		row := []string{
 			p.Name,
 			p.Version,

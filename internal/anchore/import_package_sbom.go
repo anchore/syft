@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/anchore/syft/internal/formats/syftjson"
 
 	"github.com/wagoodman/go-progress"
@@ -24,10 +26,19 @@ type packageSBOMImportAPI interface {
 	ImportImagePackages(context.Context, string, external.ImagePackageManifest) (external.ImageImportContentResponse, *http.Response, error)
 }
 
-func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope) (*external.ImagePackageManifest, error) {
+func packageSbomModel(srcMetadata source.Metadata, catalog *pkg.Catalog, d *distro.Distro) (*external.ImagePackageManifest, error) {
 	var buf bytes.Buffer
 
-	err := syftjson.Format().Presenter(catalog, &s, d, scope).Present(&buf)
+	// TODO: once the top-level API is refactored and SBOMs are the unit of work, then this function will be passed an SBOM and there would be no more need to create an SBOM object here.
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog: catalog,
+			Distro:         d,
+		},
+		Source: srcMetadata,
+	}
+
+	err := syftjson.Format().Presenter(s).Present(&buf)
 	if err != nil {
 		return nil, fmt.Errorf("unable to serialize results: %w", err)
 	}
@@ -41,11 +52,11 @@ func packageSbomModel(s source.Metadata, catalog *pkg.Catalog, d *distro.Distro,
 	return &model, nil
 }
 
-func importPackageSBOM(ctx context.Context, api packageSBOMImportAPI, sessionID string, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, scope source.Scope, stage *progress.Stage) (string, error) {
+func importPackageSBOM(ctx context.Context, api packageSBOMImportAPI, sessionID string, s source.Metadata, catalog *pkg.Catalog, d *distro.Distro, stage *progress.Stage) (string, error) {
 	log.Debug("importing package SBOM")
 	stage.Current = "package SBOM"
 
-	model, err := packageSbomModel(s, catalog, d, scope)
+	model, err := packageSbomModel(s, catalog, d)
 	if err != nil {
 		return "", fmt.Errorf("unable to create PackageSBOM model: %w", err)
 	}

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
@@ -107,9 +109,8 @@ func powerUserExecWorker(userInput string) <-chan error {
 		}
 		defer cleanup()
 
-		analysisResults := poweruser.JSONDocumentConfig{
-			SourceMetadata:    src.Metadata,
-			ApplicationConfig: *appConfig,
+		analysisResults := sbom.SBOM{
+			Source: src.Metadata,
 		}
 
 		wg := &sync.WaitGroup{}
@@ -117,7 +118,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 			wg.Add(1)
 			go func(task powerUserTask) {
 				defer wg.Done()
-				if err = task(&analysisResults, src); err != nil {
+				if err = task(&analysisResults.Artifacts, src); err != nil {
 					errs <- err
 					return
 				}
@@ -128,7 +129,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: poweruser.NewJSONPresenter(analysisResults),
+			Value: poweruser.NewJSONPresenter(analysisResults, *appConfig),
 		})
 	}()
 	return errs

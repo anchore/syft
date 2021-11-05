@@ -3,23 +3,27 @@ package poweruser
 import (
 	"encoding/json"
 	"io"
+
+	"github.com/anchore/syft/syft/sbom"
 )
 
 // JSONPresenter is a JSON presentation object for the syft results
 type JSONPresenter struct {
-	config JSONDocumentConfig
+	sbom   sbom.SBOM
+	config interface{}
 }
 
 // NewJSONPresenter creates a new JSON presenter object for the given cataloging results.
-func NewJSONPresenter(config JSONDocumentConfig) *JSONPresenter {
+func NewJSONPresenter(s sbom.SBOM, appConfig interface{}) *JSONPresenter {
 	return &JSONPresenter{
-		config: config,
+		sbom:   s,
+		config: appConfig,
 	}
 }
 
 // Present the PackageCatalog results to the given writer.
 func (p *JSONPresenter) Present(output io.Writer) error {
-	doc, err := NewJSONDocument(p.config)
+	doc, err := NewJSONDocument(p.sbom, p.config)
 	if err != nil {
 		return err
 	}

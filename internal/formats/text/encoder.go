@@ -5,23 +5,23 @@ import (
 	"io"
 	"text/tabwriter"
 
-	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/anchore/syft/syft/source"
 )
 
-func encoder(output io.Writer, catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro.Distro, _ source.Scope) error {
+func encoder(output io.Writer, s sbom.SBOM) error {
 	// init the tabular writer
 	w := new(tabwriter.Writer)
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
 
-	switch srcMetadata.Scheme {
+	switch s.Source.Scheme {
 	case source.DirectoryScheme:
-		fmt.Fprintf(w, "[Path: %s]\n", srcMetadata.Path)
+		fmt.Fprintf(w, "[Path: %s]\n", s.Source.Path)
 	case source.ImageScheme:
 		fmt.Fprintln(w, "[Image]")
 
-		for idx, l := range srcMetadata.ImageMetadata.Layers {
+		for idx, l := range s.Source.ImageMetadata.Layers {
 			fmt.Fprintln(w, " Layer:\t", idx)
 			fmt.Fprintln(w, " Digest:\t", l.Digest)
 			fmt.Fprintln(w, " Size:\t", l.Size)
@@ -30,12 +30,12 @@ func encoder(output io.Writer, catalog *pkg.Catalog, srcMetadata *source.Metadat
 			w.Flush()
 		}
 	default:
-		return fmt.Errorf("unsupported source: %T", srcMetadata.Scheme)
+		return fmt.Errorf("unsupported source: %T", s.Source.Scheme)
 	}
 
 	// populate artifacts...
 	rows := 0
-	for _, p := range catalog.Sorted() {
+	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
 		fmt.Fprintf(w, "[%s]\n", p.Name)
 		fmt.Fprintln(w, " Version:\t", p.Version)
 		fmt.Fprintln(w, " Type:\t", string(p.Type))

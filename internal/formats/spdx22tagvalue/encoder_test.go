@@ -5,18 +5,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/internal/formats/common/testutils"
-	"github.com/anchore/syft/syft/format"
 )
 
 var updateSpdxTagValue = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv presenters")
 
 func TestSPDXTagValueDirectoryPresenter(t *testing.T) {
-	catalog, metadata, d := testutils.DirectoryInput(t)
+
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		format.NewPresenter(encoder, catalog, &metadata, d, source.UnknownScope),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateSpdxTagValue,
 		spdxTagValueRedactor,
 	)
@@ -24,9 +21,8 @@ func TestSPDXTagValueDirectoryPresenter(t *testing.T) {
 
 func TestSPDXTagValueImagePresenter(t *testing.T) {
 	testImage := "image-simple"
-	catalog, metadata, d := testutils.ImageInput(t, testImage, testutils.FromSnapshot())
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		format.NewPresenter(encoder, catalog, &metadata, d, source.SquashedScope),
+		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
 		testImage,
 		*updateSpdxTagValue,
 		spdxTagValueRedactor,

@@ -5,35 +5,39 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-func toSyftModel(doc model.Document) (*pkg.Catalog, *source.Metadata, *distro.Distro, source.Scope, error) {
+func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 	dist, err := distro.NewDistro(distro.Type(doc.Distro.Name), doc.Distro.Version, doc.Distro.IDLike)
 	if err != nil {
-		return nil, nil, nil, source.UnknownScope, err
+		return nil, err
 	}
 
-	srcMetadata, scope := toSyftSourceData(doc.Source)
-
-	return toSyftCatalog(doc.Artifacts), srcMetadata, &dist, scope, nil
+	return &sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog: toSyftCatalog(doc.Artifacts),
+			Distro:         &dist,
+		},
+		Source: *toSyftSourceData(doc.Source),
+	}, nil
 }
 
-func toSyftSourceData(s model.Source) (*source.Metadata, source.Scope) {
+func toSyftSourceData(s model.Source) *source.Metadata {
 	switch s.Type {
 	case "directory":
 		return &source.Metadata{
 			Scheme: source.DirectoryScheme,
 			Path:   s.Target.(string),
-		}, source.UnknownScope
+		}
 	case "image":
-		parsedSource := s.Target.(model.ImageSource)
 		return &source.Metadata{
 			Scheme:        source.ImageScheme,
-			ImageMetadata: parsedSource.ImageMetadata,
-		}, parsedSource.Scope
+			ImageMetadata: s.Target.(source.ImageMetadata),
+		}
 	}
-	return nil, source.UnknownScope
+	return nil
 }
 
 func toSyftCatalog(pkgs []model.Package) *pkg.Catalog {

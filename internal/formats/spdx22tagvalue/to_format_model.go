@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 	"github.com/spdx/tools-golang/spdx"
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
 // nolint:funlen
-func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro.Distro, _ source.Scope) spdx.Document2_2 {
+func toFormatModel(s sbom.SBOM) spdx.Document2_2 {
 	return spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{
 			// 2.1: SPDX Version; should be in the format "SPDX-2.2"
@@ -33,7 +33,7 @@ func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro
 
 			// 2.4: Document Name
 			// Cardinality: mandatory, one
-			DocumentName: srcMetadata.ImageMetadata.UserInput,
+			DocumentName: s.Source.ImageMetadata.UserInput,
 
 			// 2.5: Document Namespace
 			// Cardinality: mandatory, one
@@ -52,7 +52,7 @@ func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro
 			// In many cases, the URI will point to a web accessible document, but this should not be assumed
 			// to be the case.
 
-			DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", srcMetadata.ImageMetadata.UserInput),
+			DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", s.Source.ImageMetadata.UserInput),
 
 			// 2.6: External Document References
 			// Cardinality: optional, one or many
@@ -81,7 +81,7 @@ func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro
 			// Cardinality: optional, one
 			DocumentComment: "",
 		},
-		Packages: toFormatPackages(catalog),
+		Packages: toFormatPackages(s.Artifacts.PackageCatalog),
 	}
 }
 

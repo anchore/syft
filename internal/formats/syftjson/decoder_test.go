@@ -5,8 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/internal/formats/common/testutils"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
@@ -14,20 +12,20 @@ import (
 
 func TestEncodeDecodeCycle(t *testing.T) {
 	testImage := "image-simple"
-	originalCatalog, originalMetadata, _ := testutils.ImageInput(t, testImage)
+	originalSBOM := testutils.ImageInput(t, testImage)
 
 	var buf bytes.Buffer
-	assert.NoError(t, encoder(&buf, originalCatalog, &originalMetadata, nil, source.SquashedScope))
+	assert.NoError(t, encoder(&buf, originalSBOM))
 
-	actualCatalog, actualMetadata, _, _, err := decoder(bytes.NewReader(buf.Bytes()))
+	actualSBOM, err := decoder(bytes.NewReader(buf.Bytes()))
 	assert.NoError(t, err)
 
-	for _, d := range deep.Equal(originalMetadata, *actualMetadata) {
+	for _, d := range deep.Equal(originalSBOM.Source, actualSBOM.Source) {
 		t.Errorf("metadata difference: %+v", d)
 	}
 
-	actualPackages := actualCatalog.Sorted()
-	for idx, p := range originalCatalog.Sorted() {
+	actualPackages := actualSBOM.Artifacts.PackageCatalog.Sorted()
+	for idx, p := range originalSBOM.Artifacts.PackageCatalog.Sorted() {
 		if !assert.Equal(t, p.Name, actualPackages[idx].Name) {
 			t.Errorf("different package at idx=%d: %s vs %s", idx, p.Name, actualPackages[idx].Name)
 			continue

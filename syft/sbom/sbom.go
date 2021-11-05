@@ -1,15 +1,18 @@
-package poweruser
+package sbom
 
 import (
-	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-type JSONDocumentConfig struct {
-	ApplicationConfig   config.Application
+type SBOM struct {
+	Artifacts Artifacts
+	Source    source.Metadata
+}
+
+type Artifacts struct {
 	PackageCatalog      *pkg.Catalog
 	FileMetadata        map[source.Location]source.FileMetadata
 	FileDigests         map[source.Location][]file.Digest
@@ -17,5 +20,4 @@ type JSONDocumentConfig struct {
 	FileContents        map[source.Location]string
 	Secrets             map[source.Location][]file.SearchResult
 	Distro              *distro.Distro
-	SourceMetadata      source.Metadata
 }
