@@ -42,11 +42,9 @@ Interoperability considerations: This media type has the same
    interoperability considerations of application/json as described
    in [RFC8259].
 
-Published specification: The specification can be found on the
-   Syft github under the schema directory https://github.com/anchore/syft/blob/main/schema/json
-
-   The current JSON schema version, 1.1.0, can be found at
-   https://github.com/anchore/syft/blob/main/schema/json/schema-1.1.0.json
+Published specification: The specification can be found on the main
+   Syft github repository under the schema directory
+   https://github.com/anchore/syft/blob/main/schema/json
 
 Applications that use this media: This media type is used to specify
    a software bill of materials.
@@ -75,8 +73,8 @@ General Comments:
 
 Person to contact for further information:
 
-   1. Name: Christopher Phillips
-   2. Email: christopher.phillips@anchore.com
+   1. Name: Dan Luhring
+   2. Email: dan.luhring@anhore.com
 
 Intended usage: Common
 
@@ -84,4 +82,4 @@ Intended usage: Common
    specification. It is intended to be exchanged between different
    parties of the software supply chain.
 
-Author/Change controller: Christopher Phillips, on behalf of Anchore
+Author/Change controller: Dan Luhring, on behalf of Anchore
