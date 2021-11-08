@@ -159,7 +159,7 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 
 	var locations []Location
 	for _, ref := range refs {
-		locations = append(locations, NewLocationFromReference(ref))
+		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
 	}
 
 	return locations, nil

@@ -33,7 +33,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
-						{},
+						{
+							RealPath:     "/a-path",
+							FileSystemID: "layer-id",
+						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -47,7 +50,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
-						{},
+						{
+							RealPath:     "/a-path",
+							FileSystemID: "layer-id",
+						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -72,7 +78,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
-						{},
+						{
+							RealPath:     "/a-path",
+							FileSystemID: "layer-id",
+						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -86,7 +95,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
-						{},
+						{
+							RealPath:     "/a-path",
+							FileSystemID: "layer-id",
+						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -100,7 +112,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
-						{},
+						{
+							RealPath:     "/a-path",
+							FileSystemID: "layer-id",
+						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -115,7 +130,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			pkgs := buildGoPkgInfo("", tt.mod, goCompiledVersion)
+			location := source.Location{RealPath: "/a-path", FileSystemID: "layer-id"}
+			pkgs := buildGoPkgInfo(location, tt.mod, goCompiledVersion)
 			assert.Equal(t, tt.expected, pkgs)
 		})
 	}

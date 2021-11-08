@@ -14,7 +14,7 @@ const (
 	replaceIdentifier = "=>"
 )
 
-func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
+func parseGoBin(location source.Location, reader io.ReadCloser) ([]pkg.Package, error) {
 	// Identify if bin was compiled by go
 	x, err := openExe(reader)
 	if err != nil {
@@ -23,12 +23,12 @@ func parseGoBin(path string, reader io.ReadCloser) ([]pkg.Package, error) {
 
 	goVersion, mod := findVers(x)
 
-	pkgs := buildGoPkgInfo(path, mod, goVersion)
+	pkgs := buildGoPkgInfo(location, mod, goVersion)
 
 	return pkgs, nil
 }
 
-func buildGoPkgInfo(path, mod, goVersion string) []pkg.Package {
+func buildGoPkgInfo(location source.Location, mod, goVersion string) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(strings.NewReader(mod))
 
@@ -48,9 +48,7 @@ func buildGoPkgInfo(path, mod, goVersion string) []pkg.Package {
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
 				Locations: []source.Location{
-					{
-						RealPath: path,
-					},
+					location,
 				},
 				MetadataType: pkg.GolangBinMetadataType,
 				Metadata: pkg.GolangBinMetadata{

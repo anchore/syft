@@ -259,3 +259,32 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 		})
 	}
 }
+
+func Test_imageSquashResolver_hasFilesystemIDInLocation(t *testing.T) {
+	img := imagetest.GetFixtureImage(t, "docker-archive", "image-duplicate-path")
+
+	resolver, err := newImageSquashResolver(img)
+	assert.NoError(t, err)
+
+	locations, err := resolver.FilesByMIMEType("text/plain")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+	for _, location := range locations {
+		assert.NotEmpty(t, location.FileSystemID)
+	}
+
+	locations, err = resolver.FilesByGlob("*.txt")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+	for _, location := range locations {
+		assert.NotEmpty(t, location.FileSystemID)
+	}
+
+	locations, err = resolver.FilesByPath("/somefile-1.txt")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, locations)
+	for _, location := range locations {
+		assert.NotEmpty(t, location.FileSystemID)
+	}
+
+}

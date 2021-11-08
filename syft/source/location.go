@@ -53,14 +53,6 @@ func NewLocationFromDirectory(responsePath string, ref file.Reference) Location 
 	}
 }
 
-func NewLocationFromReference(ref file.Reference) Location {
-	return Location{
-		VirtualPath: string(ref.RealPath),
-		RealPath:    string(ref.RealPath),
-		ref:         ref,
-	}
-}
-
 func (l Location) String() string {
 	str := ""
 	if l.ref.ID() != 0 {
