@@ -10,7 +10,16 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+type node struct {
+	id string
+}
+
+func (n node) Identity() artifact.ID {
+	return artifact.ID(n.id)
+}
+
 func TestOwnershipByFilesRelationship(t *testing.T) {
+
 	tests := []struct {
 		name              string
 		pkgs              []Package
@@ -58,8 +67,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			},
 			expectedRelations: []artifact.Relationship{
 				{
-					From: "parent",
-					To:   "child",
+					From: node{"parent"},
+					To:   node{"child"},
 					Type: artifact.OwnershipByFileOverlapRelationship,
 					Data: ownershipByFilesMetadata{
 						Files: []string{
@@ -111,8 +120,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			},
 			expectedRelations: []artifact.Relationship{
 				{
-					From: "parent",
-					To:   "child",
+					From: node{"parent"},
+					To:   node{"child"},
 					Type: artifact.OwnershipByFileOverlapRelationship,
 					Data: ownershipByFilesMetadata{
 						Files: []string{

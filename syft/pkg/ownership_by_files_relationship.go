@@ -28,8 +28,8 @@ func ownershipByFilesRelationships(catalog *Catalog) []artifact.Relationship {
 	for parent, children := range relationships {
 		for child, files := range children {
 			edges = append(edges, artifact.Relationship{
-				From: parent,
-				To:   child,
+				From: catalog.byID[parent],
+				To:   catalog.byID[child],
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				Data: ownershipByFilesMetadata{
 					Files: files.List(),
