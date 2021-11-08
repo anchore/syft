@@ -115,7 +115,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			pkgs := buildGoPkgInfo("", tt.mod, goCompiledVersion)
+			location := source.Location{RealPath: "", FileSystemID: ""}
+			pkgs := buildGoPkgInfo(location, tt.mod, goCompiledVersion)
 			assert.Equal(t, tt.expected, pkgs)
 		})
 	}
