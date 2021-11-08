@@ -198,7 +198,7 @@ func (r *allLayersResolver) FilesByMIMEType(types ...string) ([]Location, error)
 		}
 
 		for _, ref := range refs {
-			locations = append(locations, NewLocationFromReference(ref))
+			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
 		}
 	}
 
