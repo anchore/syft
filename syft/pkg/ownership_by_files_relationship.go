@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/scylladb/go-set/strset"
 )
@@ -20,17 +21,17 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
-func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
+func ownershipByFilesRelationships(catalog *Catalog) []artifact.Relationship {
 	var relationships = findOwnershipByFilesRelationships(catalog)
 
-	var edges []Relationship
+	var edges []artifact.Relationship
 	for parent, children := range relationships {
 		for child, files := range children {
-			edges = append(edges, Relationship{
-				Parent: parent,
-				Child:  child,
-				Type:   OwnershipByFileOverlapRelationship,
-				Metadata: ownershipByFilesMetadata{
+			edges = append(edges, artifact.Relationship{
+				From: parent,
+				To:   child,
+				Type: artifact.OwnershipByFileOverlapRelationship,
+				Data: ownershipByFilesMetadata{
 					Files: files.List(),
 				},
 			})
@@ -42,8 +43,8 @@ func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
 
 // findOwnershipByFilesRelationships find overlaps in file ownership with a file that defines another package. Specifically, a .Location.Path of
 // a package is found to be owned by another (from the owner's .Metadata.Files[]).
-func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.Set {
-	var relationships = make(map[ID]map[ID]*strset.Set)
+func findOwnershipByFilesRelationships(catalog *Catalog) map[artifact.ID]map[artifact.ID]*strset.Set {
+	var relationships = make(map[artifact.ID]map[artifact.ID]*strset.Set)
 
 	if catalog == nil {
 		return relationships
@@ -72,7 +73,7 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.S
 					continue
 				}
 				if _, exists := relationships[candidateOwnerPkg.ID]; !exists {
-					relationships[candidateOwnerPkg.ID] = make(map[ID]*strset.Set)
+					relationships[candidateOwnerPkg.ID] = make(map[artifact.ID]*strset.Set)
 				}
 
 				if _, exists := relationships[candidateOwnerPkg.ID][subPackage.ID]; !exists {
