@@ -3,6 +3,8 @@ package pkg
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/source"
@@ -84,7 +86,7 @@ func TestCatalogRemove(t *testing.T) {
 	tests := []struct {
 		name            string
 		pkgs            []Package
-		removeId        ID
+		removeId        artifact.ID
 		expectedIndexes expectedIndexes
 	}{
 		{

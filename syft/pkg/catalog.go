@@ -4,6 +4,8 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/internal"
 
 	"github.com/anchore/syft/internal/log"
@@ -11,18 +13,18 @@ import (
 
 // Catalog represents a collection of Packages.
 type Catalog struct {
-	byID      map[ID]*Package
-	idsByType map[Type][]ID
-	idsByPath map[string][]ID // note: this is real path or virtual path
+	byID      map[artifact.ID]*Package
+	idsByType map[Type][]artifact.ID
+	idsByPath map[string][]artifact.ID // note: this is real path or virtual path
 	lock      sync.RWMutex
 }
 
 // NewCatalog returns a new empty Catalog
 func NewCatalog(pkgs ...Package) *Catalog {
 	catalog := Catalog{
-		byID:      make(map[ID]*Package),
-		idsByType: make(map[Type][]ID),
-		idsByPath: make(map[string][]ID),
+		byID:      make(map[artifact.ID]*Package),
+		idsByType: make(map[Type][]artifact.ID),
+		idsByPath: make(map[string][]artifact.ID),
 	}
 
 	for _, p := range pkgs {
@@ -38,7 +40,7 @@ func (c *Catalog) PackageCount() int {
 }
 
 // Package returns the package with the given ID.
-func (c *Catalog) Package(id ID) *Package {
+func (c *Catalog) Package(id artifact.ID) *Package {
 	v, exists := c.byID[id]
 	if !exists {
 		return nil
@@ -52,7 +54,7 @@ func (c *Catalog) PackagesByPath(path string) []*Package {
 }
 
 // Packages returns all packages for the given ID.
-func (c *Catalog) Packages(ids []ID) (result []*Package) {
+func (c *Catalog) Packages(ids []artifact.ID) (result []*Package) {
 	for _, i := range ids {
 		p, exists := c.byID[i]
 		if exists {
@@ -74,7 +76,7 @@ func (c *Catalog) Add(p Package) {
 			return
 		}
 
-		p.ID = ID(fingerprint)
+		p.ID = artifact.ID(fingerprint)
 	}
 
 	// store by package ID
@@ -97,7 +99,7 @@ func (c *Catalog) Add(p Package) {
 	}
 }
 
-func (c *Catalog) Remove(id ID) {
+func (c *Catalog) Remove(id artifact.ID) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -177,7 +179,7 @@ func (c *Catalog) Sorted(types ...Type) []*Package {
 	return pkgs
 }
 
-func removeID(id ID, target []ID) (result []ID) {
+func removeID(id artifact.ID, target []artifact.ID) (result []artifact.ID) {
 	for _, value := range target {
 		if value != id {
 			result = append(result, value)

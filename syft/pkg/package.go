@@ -6,6 +6,8 @@ package pkg
 import (
 	"fmt"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/syft/source"
 	"github.com/mitchellh/hashstructure"
 )
@@ -13,7 +15,7 @@ import (
 // Package represents an application or library that has been bundled into a distributable format.
 // TODO: if we ignore FoundBy for ID generation should we merge the field to show it was found in two places?
 type Package struct {
-	ID        ID                `hash:"ignore"` // uniquely identifies a package, set by the cataloger
+	ID        artifact.ID       `hash:"ignore"` // uniquely identifies a package, set by the cataloger
 	Name      string            // the package name
 	Version   string            // the version of the package
 	FoundBy   string            // the specific cataloger that discovered this package

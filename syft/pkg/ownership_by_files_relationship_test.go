@@ -3,6 +3,8 @@ package pkg
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
@@ -11,7 +13,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 	tests := []struct {
 		name              string
 		pkgs              []Package
-		expectedRelations []Relationship
+		expectedRelations []artifact.Relationship
 	}{
 		{
 			name: "owns-by-real-path",
@@ -53,12 +55,12 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					Type: NpmPkg,
 				},
 			},
-			expectedRelations: []Relationship{
+			expectedRelations: []artifact.Relationship{
 				{
-					Parent: "parent",
-					Child:  "child",
-					Type:   OwnershipByFileOverlapRelationship,
-					Metadata: ownershipByFilesMetadata{
+					From: "parent",
+					To:   "child",
+					Type: artifact.OwnershipByFileOverlapRelationship,
+					Data: ownershipByFilesMetadata{
 						Files: []string{
 							"/d/path",
 						},
@@ -106,12 +108,12 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					Type: NpmPkg,
 				},
 			},
-			expectedRelations: []Relationship{
+			expectedRelations: []artifact.Relationship{
 				{
-					Parent: "parent",
-					Child:  "child",
-					Type:   OwnershipByFileOverlapRelationship,
-					Metadata: ownershipByFilesMetadata{
+					From: "parent",
+					To:   "child",
+					Type: artifact.OwnershipByFileOverlapRelationship,
+					Data: ownershipByFilesMetadata{
 						Files: []string{
 							"/another/path",
 						},

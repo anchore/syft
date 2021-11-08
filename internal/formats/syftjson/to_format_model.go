@@ -3,6 +3,8 @@ package syftjson
 import (
 	"fmt"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/syft/internal"
@@ -87,14 +89,14 @@ func toPackageModel(p *pkg.Package) model.Package {
 	}
 }
 
-func toRelationshipModel(relationships []pkg.Relationship) []model.Relationship {
+func toRelationshipModel(relationships []artifact.Relationship) []model.Relationship {
 	result := make([]model.Relationship, len(relationships))
 	for i, r := range relationships {
 		result[i] = model.Relationship{
-			Parent:   string(r.Parent),
-			Child:    string(r.Child),
+			Parent:   string(r.From),
+			Child:    string(r.To),
 			Type:     string(r.Type),
-			Metadata: r.Metadata,
+			Metadata: r.Data,
 		}
 	}
 	return result
