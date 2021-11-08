@@ -48,7 +48,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 			return pkgs, fmt.Errorf("failed to resolve file contents by location: %w", err)
 		}
 
-		goPkgs, err := parseGoBin(location.RealPath, r)
+		goPkgs, err := parseGoBin(location, r)
 		if err != nil {
 			log.Warnf("could not parse possible go binary: %+v", err)
 		}
