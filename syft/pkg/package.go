@@ -30,6 +30,11 @@ type Package struct {
 	Metadata     interface{}  // additional data found while parsing the package source
 }
 
+func (p Package) Identity() artifact.ID {
+	// TODO: tie this into the fingerprint system on rebase
+	return p.ID
+}
+
 // Stringer to represent a package.
 func (p Package) String() string {
 	return fmt.Sprintf("Pkg(type=%s, name=%s, version=%s)", p.Type, p.Name, p.Version)
