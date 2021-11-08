@@ -43,7 +43,7 @@ Interoperability considerations: This media type has the same
    in [RFC8259].
 
 Published specification: The specification can be found on the main
-   Syft github repository under the schema directory
+   Syft Github repository under the schema directory
    https://github.com/anchore/syft/blob/main/schema/json
 
 Applications that use this media: This media type is used to specify
@@ -65,7 +65,7 @@ Additional information:
 
    1. Deprecated alias names for this type: N/A
    2. Magic number(s): N/A
-   3. File extension(s): .json
+   3. File extension(s): syft.json
    4. Macintosh file type code: N/A
    5. Object Identifiers: N/A
 
@@ -74,7 +74,7 @@ General Comments:
 Person to contact for further information:
 
    1. Name: Dan Luhring
-   2. Email: dan.luhring@anhore.com
+   2. Email: dan.luhring@anchore.com
 
 Intended usage: Common
 
