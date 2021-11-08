@@ -40,7 +40,6 @@ func (c *Cataloger) Name() string {
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
-	var relationships []artifact.Relationship
 
 	fileMatches, err := resolver.FilesByMIMEType(mimeTypes...)
 	if err != nil {
@@ -53,15 +52,14 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 			return pkgs, nil, fmt.Errorf("failed to resolve file contents by location: %w", err)
 		}
 
-		goPkgs, goRelationships, err := parseGoBin(location, r)
+		goPkgs, err := parseGoBin(location, r)
 		if err != nil {
 			log.Warnf("could not parse possible go binary: %+v", err)
 		}
 
 		internal.CloseAndLogError(r, location.RealPath)
 		pkgs = append(pkgs, goPkgs...)
-		relationships = append(relationships, goRelationships...)
 	}
 
-	return pkgs, relationships, nil
+	return pkgs, nil, nil
 }
