@@ -52,7 +52,7 @@ func toPackageModels(catalog *pkg.Catalog) []model.Package {
 }
 
 // toPackageModel crates a new Package from the given pkg.Package.
-func toPackageModel(p *pkg.Package) model.Package {
+func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
 		cpes[i] = c.BindToFmtString()
