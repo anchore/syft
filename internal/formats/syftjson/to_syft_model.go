@@ -3,7 +3,6 @@ package syftjson
 import (
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -62,7 +61,6 @@ func toSyftPackage(p model.Package) pkg.Package {
 	}
 
 	return pkg.Package{
-		ID:           artifact.ID(p.ID),
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,

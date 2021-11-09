@@ -71,7 +71,7 @@ func toPackageModel(p *pkg.Package) model.Package {
 
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
-			ID:        string(p.ID),
+			ID:        string(p.Identity()),
 			Name:      p.Name,
 			Version:   p.Version,
 			Type:      p.Type,

@@ -3,33 +3,21 @@ package pkg
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/syft/source"
+	"github.com/stretchr/testify/assert"
 )
-
-type node struct {
-	id string
-}
-
-func (n node) Identity() artifact.ID {
-	return artifact.ID(n.id)
-}
 
 func TestOwnershipByFilesRelationship(t *testing.T) {
 
 	tests := []struct {
-		name              string
-		pkgs              []Package
-		expectedRelations []artifact.Relationship
+		name  string
+		setup func(t testing.TB) ([]Package, []artifact.Relationship)
 	}{
 		{
 			name: "owns-by-real-path",
-			pkgs: []Package{
-				{
-					ID: "parent",
+			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
+				parent := Package{
 					Locations: []source.Location{
 						{
 							RealPath:    "/a/path",
@@ -49,9 +37,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 							{Path: "/d/path"},
 						},
 					},
-				},
-				{
-					ID: "child",
+				}
+
+				child := Package{
 					Locations: []source.Location{
 						{
 							RealPath:    "/c/path",
@@ -63,26 +51,26 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						},
 					},
 					Type: NpmPkg,
-				},
-			},
-			expectedRelations: []artifact.Relationship{
-				{
-					From: node{"parent"},
-					To:   node{"child"},
+				}
+
+				relationship := artifact.Relationship{
+					From: parent,
+					To:   child,
 					Type: artifact.OwnershipByFileOverlapRelationship,
 					Data: ownershipByFilesMetadata{
 						Files: []string{
 							"/d/path",
 						},
 					},
-				},
+				}
+
+				return []Package{parent, child}, []artifact.Relationship{relationship}
 			},
 		},
 		{
 			name: "owns-by-virtual-path",
-			pkgs: []Package{
-				{
-					ID: "parent",
+			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
+				parent := Package{
 					Locations: []source.Location{
 						{
 							RealPath:    "/a/path",
@@ -102,9 +90,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 							{Path: "/another/path"},
 						},
 					},
-				},
-				{
-					ID: "child",
+				}
+
+				child := Package{
 					Locations: []source.Location{
 						{
 							RealPath:    "/c/path",
@@ -116,26 +104,25 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						},
 					},
 					Type: NpmPkg,
-				},
-			},
-			expectedRelations: []artifact.Relationship{
-				{
-					From: node{"parent"},
-					To:   node{"child"},
+				}
+
+				relationship := artifact.Relationship{
+					From: parent,
+					To:   child,
 					Type: artifact.OwnershipByFileOverlapRelationship,
 					Data: ownershipByFilesMetadata{
 						Files: []string{
 							"/another/path",
 						},
 					},
-				},
+				}
+				return []Package{parent, child}, []artifact.Relationship{relationship}
 			},
 		},
 		{
 			name: "ignore-empty-path",
-			pkgs: []Package{
-				{
-					ID: "parent",
+			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
+				parent := Package{
 					Locations: []source.Location{
 						{
 							RealPath:    "/a/path",
@@ -155,9 +142,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 							{Path: ""},
 						},
 					},
-				},
-				{
-					ID: "child",
+				}
+
+				child := Package{
 					Locations: []source.Location{
 						{
 							RealPath:    "/c/path",
@@ -169,18 +156,21 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						},
 					},
 					Type: NpmPkg,
-				},
+				}
+
+				return []Package{parent, child}, nil
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCatalog(test.pkgs...)
+			pkgs, expectedRelations := test.setup(t)
+			c := NewCatalog(pkgs...)
 			relationships := ownershipByFilesRelationships(c)
 
-			assert.Len(t, relationships, len(test.expectedRelations))
-			for idx, expectedRelationship := range test.expectedRelations {
+			assert.Len(t, relationships, len(expectedRelations))
+			for idx, expectedRelationship := range expectedRelations {
 				actualRelationship := relationships[idx]
 				assert.Equal(t, expectedRelationship.From.Identity(), actualRelationship.From.Identity())
 				assert.Equal(t, expectedRelationship.To.Identity(), actualRelationship.To.Identity())

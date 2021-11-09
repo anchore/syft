@@ -51,6 +51,7 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[artifact.ID]map[art
 	}
 
 	for _, candidateOwnerPkg := range catalog.Sorted() {
+		id := candidateOwnerPkg.Identity()
 		if candidateOwnerPkg.Metadata == nil {
 			continue
 		}
@@ -69,17 +70,18 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[artifact.ID]map[art
 
 			// look for package(s) in the catalog that may be owned by this package and mark the relationship
 			for _, subPackage := range catalog.PackagesByPath(ownedFilePath) {
-				if subPackage.ID == candidateOwnerPkg.ID {
+				subID := subPackage.Identity()
+				if subID == id {
 					continue
 				}
-				if _, exists := relationships[candidateOwnerPkg.ID]; !exists {
-					relationships[candidateOwnerPkg.ID] = make(map[artifact.ID]*strset.Set)
+				if _, exists := relationships[id]; !exists {
+					relationships[id] = make(map[artifact.ID]*strset.Set)
 				}
 
-				if _, exists := relationships[candidateOwnerPkg.ID][subPackage.ID]; !exists {
-					relationships[candidateOwnerPkg.ID][subPackage.ID] = strset.New()
+				if _, exists := relationships[id][subID]; !exists {
+					relationships[id][subID] = strset.New()
 				}
-				relationships[candidateOwnerPkg.ID][subPackage.ID].Add(ownedFilePath)
+				relationships[id][subID].Add(ownedFilePath)
 			}
 		}
 	}
