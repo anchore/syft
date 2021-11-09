@@ -2,7 +2,7 @@ package spdxhelpers
 
 import "github.com/anchore/syft/syft/pkg"
 
-func DownloadLocation(p *pkg.Package) string {
+func DownloadLocation(p pkg.Package) string {
 	// 3.7: Package Download Location
 	// Cardinality: mandatory, one
 	// NONE if there is no download location whatsoever.

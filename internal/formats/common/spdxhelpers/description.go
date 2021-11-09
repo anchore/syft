@@ -2,7 +2,7 @@ package spdxhelpers
 
 import "github.com/anchore/syft/syft/pkg"
 
-func Description(p *pkg.Package) string {
+func Description(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
@@ -14,10 +14,6 @@ func Description(p *pkg.Package) string {
 	return ""
 }
 
-func packageExists(p *pkg.Package) bool {
-	return p != nil
-}
-
-func hasMetadata(p *pkg.Package) bool {
-	return packageExists(p) && p.Metadata != nil
+func hasMetadata(p pkg.Package) bool {
+	return p.Metadata != nil
 }
