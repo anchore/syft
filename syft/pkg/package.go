@@ -29,7 +29,7 @@ type Package struct {
 	Metadata     interface{}  // additional data found while parsing the package source
 }
 
-func (p Package) Identity() artifact.ID {
+func (p Package) ID() artifact.ID {
 	f, err := p.Fingerprint()
 	if err != nil {
 		// TODO: what to do in this case?
