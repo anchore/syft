@@ -45,7 +45,7 @@ type expectedIndexes struct {
 func TestCatalogAddPopulatesIndex(t *testing.T) {
 
 	fixtureID := func(i int) string {
-		return string(catalogAddAndRemoveTestPkgs[i].Identity())
+		return string(catalogAddAndRemoveTestPkgs[i].ID())
 	}
 
 	tests := []struct {
@@ -91,7 +91,7 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 	for path, expectedIds := range expectedIndexes.byPath {
 		actualIds := strset.New()
 		for _, p := range c.PackagesByPath(path) {
-			actualIds.Add(string(p.Identity()))
+			actualIds.Add(string(p.ID()))
 		}
 
 		if !expectedIds.IsEqual(actualIds) {
@@ -106,7 +106,7 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 	for ty, expectedIds := range expectedIndexes.byType {
 		actualIds := strset.New()
 		for p := range c.Enumerate(ty) {
-			actualIds.Add(string(p.Identity()))
+			actualIds.Add(string(p.ID()))
 		}
 
 		if !expectedIds.IsEqual(actualIds) {

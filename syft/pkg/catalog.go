@@ -76,7 +76,7 @@ func (c *Catalog) Add(p Package) {
 	defer c.lock.Unlock()
 
 	// note: since we are capturing the ID, we cannot modify the package being added from this point forward
-	id := p.Identity()
+	id := p.ID()
 
 	// store by package ID
 	c.byID[id] = p

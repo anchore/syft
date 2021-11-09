@@ -4,5 +4,5 @@ package artifact
 type ID string
 
 type Identifiable interface {
-	Identity() ID
+	ID() ID
 }

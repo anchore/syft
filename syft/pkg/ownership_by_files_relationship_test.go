@@ -172,8 +172,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			assert.Len(t, relationships, len(expectedRelations))
 			for idx, expectedRelationship := range expectedRelations {
 				actualRelationship := relationships[idx]
-				assert.Equal(t, expectedRelationship.From.Identity(), actualRelationship.From.Identity())
-				assert.Equal(t, expectedRelationship.To.Identity(), actualRelationship.To.Identity())
+				assert.Equal(t, expectedRelationship.From.ID(), actualRelationship.From.ID())
+				assert.Equal(t, expectedRelationship.To.ID(), actualRelationship.To.ID())
 				assert.Equal(t, expectedRelationship.Type, actualRelationship.Type)
 				assert.Equal(t, expectedRelationship.Data, actualRelationship.Data)
 			}
