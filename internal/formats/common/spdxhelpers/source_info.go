@@ -6,11 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func SourceInfo(p *pkg.Package) string {
-	if !packageExists(p) {
-		return ""
-	}
-
+func SourceInfo(p pkg.Package) string {
 	answer := ""
 	switch p.Type {
 	case pkg.RpmPkg:

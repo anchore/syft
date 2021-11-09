@@ -50,7 +50,7 @@ func Test_Description(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Description(&test.input))
+			assert.Equal(t, test.expected, Description(test.input))
 		})
 	}
 }

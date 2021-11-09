@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Files(packageSpdxID string, p *pkg.Package) (files []model.File, fileIDs []string, relationships []model.Relationship) {
+func Files(packageSpdxID string, p pkg.Package) (files []model.File, fileIDs []string, relationships []model.Relationship) {
 	files = make([]model.File, 0)
 	fileIDs = make([]string, 0)
 	relationships = make([]model.Relationship, 0)

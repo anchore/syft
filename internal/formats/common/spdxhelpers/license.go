@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func License(p *pkg.Package) string {
+func License(p pkg.Package) string {
 	// source: https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license
 	// The options to populate this field are limited to:
 	// A valid SPDX License Expression as defined in Appendix IV;
@@ -17,7 +17,7 @@ func License(p *pkg.Package) string {
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
-	if !packageExists(p) || len(p.Licenses) == 0 {
+	if len(p.Licenses) == 0 {
 		return "NONE"
 	}
 
