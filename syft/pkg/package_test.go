@@ -9,7 +9,6 @@ import (
 
 func TestFingerprint(t *testing.T) {
 	originalPkg := Package{
-		ID:      "π",
 		Name:    "pi",
 		Version: "3.14",
 		FoundBy: "Archimedes",

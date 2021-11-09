@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/jinzhu/copier"
 
 	"github.com/anchore/syft/internal"
 
@@ -13,7 +14,7 @@ import (
 
 // Catalog represents a collection of Packages.
 type Catalog struct {
-	byID      map[artifact.ID]*Package
+	byID      map[artifact.ID]Package
 	idsByType map[Type][]artifact.ID
 	idsByPath map[string][]artifact.ID // note: this is real path or virtual path
 	lock      sync.RWMutex
@@ -22,7 +23,7 @@ type Catalog struct {
 // NewCatalog returns a new empty Catalog
 func NewCatalog(pkgs ...Package) *Catalog {
 	catalog := Catalog{
-		byID:      make(map[artifact.ID]*Package),
+		byID:      make(map[artifact.ID]Package),
 		idsByType: make(map[Type][]artifact.ID),
 		idsByPath: make(map[string][]artifact.ID),
 	}
@@ -45,16 +46,21 @@ func (c *Catalog) Package(id artifact.ID) *Package {
 	if !exists {
 		return nil
 	}
-	return v
+	var p Package
+	if err := copier.Copy(&p, &v); err != nil {
+		log.Warnf("unable to copy package id=%q name=%q: %+v", id, v.Name, err)
+		return nil
+	}
+	return &p
 }
 
 // PackagesByPath returns all packages that were discovered from the given path.
-func (c *Catalog) PackagesByPath(path string) []*Package {
+func (c *Catalog) PackagesByPath(path string) []Package {
 	return c.Packages(c.idsByPath[path])
 }
 
 // Packages returns all packages for the given ID.
-func (c *Catalog) Packages(ids []artifact.ID) (result []*Package) {
+func (c *Catalog) Packages(ids []artifact.ID) (result []Package) {
 	for _, i := range ids {
 		p, exists := c.byID[i]
 		if exists {
@@ -69,68 +75,32 @@ func (c *Catalog) Add(p Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if p.ID == "" {
-		fingerprint, err := p.Fingerprint()
-		if err != nil {
-			log.Warnf("failed to add package to catalog: %w", err)
-			return
-		}
-
-		p.ID = artifact.ID(fingerprint)
-	}
+	// note: since we are capturing the ID, we cannot modify the package being added from this point forward
+	id := p.Identity()
 
 	// store by package ID
-	c.byID[p.ID] = &p
+	c.byID[id] = p
 
 	// store by package type
-	c.idsByType[p.Type] = append(c.idsByType[p.Type], p.ID)
+	c.idsByType[p.Type] = append(c.idsByType[p.Type], id)
 
 	// store by file location paths
 	observedPaths := internal.NewStringSet()
 	for _, l := range p.Locations {
 		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
-			c.idsByPath[l.RealPath] = append(c.idsByPath[l.RealPath], p.ID)
+			c.idsByPath[l.RealPath] = append(c.idsByPath[l.RealPath], id)
 			observedPaths.Add(l.RealPath)
 		}
 		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Contains(l.VirtualPath) {
-			c.idsByPath[l.VirtualPath] = append(c.idsByPath[l.VirtualPath], p.ID)
+			c.idsByPath[l.VirtualPath] = append(c.idsByPath[l.VirtualPath], id)
 			observedPaths.Add(l.VirtualPath)
 		}
 	}
 }
 
-func (c *Catalog) Remove(id artifact.ID) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	_, exists := c.byID[id]
-	if !exists {
-		log.Errorf("package ID does not exist in the catalog : id=%+v", id)
-		return
-	}
-
-	// Remove all index references to this package ID
-	for t, ids := range c.idsByType {
-		c.idsByType[t] = removeID(id, ids)
-		if len(c.idsByType[t]) == 0 {
-			delete(c.idsByType, t)
-		}
-	}
-
-	for p, ids := range c.idsByPath {
-		c.idsByPath[p] = removeID(id, ids)
-		if len(c.idsByPath[p]) == 0 {
-			delete(c.idsByPath, p)
-		}
-	}
-
-	// Remove package
-	delete(c.byID, id)
-}
-
 // Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
-func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
-	channel := make(chan *Package)
+func (c *Catalog) Enumerate(types ...Type) <-chan Package {
+	channel := make(chan Package)
 	go func() {
 		defer close(channel)
 		for ty, ids := range c.idsByType {
@@ -148,7 +118,10 @@ func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
 				}
 			}
 			for _, id := range ids {
-				channel <- c.Package(id)
+				p := c.Package(id)
+				if p != nil {
+					channel <- *p
+				}
 			}
 		}
 	}()
@@ -157,8 +130,7 @@ func (c *Catalog) Enumerate(types ...Type) <-chan *Package {
 
 // Sorted enumerates all packages for the given types sorted by package name. Enumerates all packages if no type
 // is specified.
-func (c *Catalog) Sorted(types ...Type) []*Package {
-	pkgs := make([]*Package, 0)
+func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 	for p := range c.Enumerate(types...) {
 		pkgs = append(pkgs, p)
 	}
@@ -177,13 +149,4 @@ func (c *Catalog) Sorted(types ...Type) []*Package {
 	})
 
 	return pkgs
-}
-
-func removeID(id artifact.ID, target []artifact.ID) (result []artifact.ID) {
-	for _, value := range target {
-		if value != id {
-			result = append(result, value)
-		}
-	}
-	return result
 }
