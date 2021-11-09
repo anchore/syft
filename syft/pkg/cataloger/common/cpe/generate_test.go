@@ -637,7 +637,7 @@ func TestCandidateProducts(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, candidateProducts(test.p))
 		})
 	}

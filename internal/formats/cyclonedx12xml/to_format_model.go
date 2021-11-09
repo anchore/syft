@@ -33,7 +33,7 @@ func toFormatModel(s sbom.SBOM) model.Document {
 	return doc
 }
 
-func toComponent(p *pkg.Package) model.Component {
+func toComponent(p pkg.Package) model.Component {
 	return model.Component{
 		Type:       "library", // TODO: this is not accurate
 		Name:       p.Name,

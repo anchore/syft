@@ -33,7 +33,6 @@ func TestJSONPresenter(t *testing.T) {
 	catalog := pkg.NewCatalog()
 
 	catalog.Add(pkg.Package{
-		ID:      "package-1-id",
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: []source.Location{
@@ -57,7 +56,6 @@ func TestJSONPresenter(t *testing.T) {
 		},
 	})
 	catalog.Add(pkg.Package{
-		ID:      "package-2-id",
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: []source.Location{

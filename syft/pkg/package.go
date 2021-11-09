@@ -7,11 +7,9 @@ import (
 	"fmt"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/syft/source"
-	"github.com/mitchellh/hashstructure"
+	"github.com/mitchellh/hashstructure/v2"
 )
 
 // Package represents an application or library that has been bundled into a distributable format.
@@ -48,8 +46,8 @@ func (p Package) String() string {
 }
 
 func (p Package) Fingerprint() (string, error) {
-	f, err := hashstructure.Hash(p, &hashstructure.HashOptions{
-		ZeroNil:      true,
+	f, err := hashstructure.Hash(p, hashstructure.FormatV2, &hashstructure.HashOptions{
+		//ZeroNil:      true,
 		SlicesAsSets: true,
 	})
 	if err != nil {
