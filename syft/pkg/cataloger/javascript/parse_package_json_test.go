@@ -150,6 +150,7 @@ func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anch
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
+	// TODO: no relationships are under test yet
 	actual, _, err := parsePackageJSON("", fixture)
 	if err != nil {
 		t.Fatalf("failed to parse package-lock.json: %+v", err)
