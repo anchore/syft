@@ -31,6 +31,8 @@ func SourceInfo(p *pkg.Package) string {
 		answer = "acquired package info from go module information"
 	case pkg.RustPkg:
 		answer = "acquired package info from rust cargo manifest"
+	case pkg.PhpComposerPkg:
+		answer = "acquired package info from PHP composer manifest"
 	default:
 		answer = "acquired package info from the following paths"
 	}

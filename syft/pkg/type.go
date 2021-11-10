@@ -14,6 +14,7 @@ const (
 	RpmPkg           Type = "rpm"
 	NpmPkg           Type = "npm"
 	PythonPkg        Type = "python"
+	PhpComposerPkg   Type = "php-composer"
 	JavaPkg          Type = "java-archive"
 	JenkinsPluginPkg Type = "jenkins-plugin"
 	GoModulePkg      Type = "go-module"
@@ -29,6 +30,7 @@ var AllPkgs = []Type{
 	RpmPkg,
 	NpmPkg,
 	PythonPkg,
+	PhpComposerPkg,
 	JavaPkg,
 	JenkinsPluginPkg,
 	GoModulePkg,
@@ -47,6 +49,8 @@ func (t Type) PackageURLType() string {
 		return "deb"
 	case PythonPkg:
 		return packageurl.TypePyPi
+	case PhpComposerPkg:
+		return packageurl.TypeComposer
 	case NpmPkg:
 		return packageurl.TypeNPM
 	case JavaPkg, JenkinsPluginPkg:
