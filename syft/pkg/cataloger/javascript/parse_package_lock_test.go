@@ -109,6 +109,7 @@ func TestParsePackageLock(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
+	// TODO: no relationships are under test yet
 	actual, _, err := parsePackageLock(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse package-lock.json: %+v", err)
