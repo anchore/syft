@@ -58,15 +58,14 @@ func toPackageModel(p pkg.Package) model.Package {
 		cpes[i] = c.BindToFmtString()
 	}
 
-	// ensure collections are never nil for presentation reasons
-	var locations = make([]source.Location, 0)
-	if p.Locations != nil {
-		locations = p.Locations
-	}
-
 	var licenses = make([]string, 0)
 	if p.Licenses != nil {
 		licenses = p.Licenses
+	}
+
+	var coordinates = make([]source.Coordinates, len(p.Locations))
+	for i, l := range p.Locations {
+		coordinates[i] = l.Coordinates
 	}
 
 	return model.Package{
@@ -76,7 +75,7 @@ func toPackageModel(p pkg.Package) model.Package {
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-			Locations: locations,
+			Locations: coordinates,
 			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,

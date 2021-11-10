@@ -3,6 +3,8 @@ package source
 import (
 	"fmt"
 
+	"github.com/mitchellh/hashstructure/v2"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
@@ -10,21 +12,40 @@ import (
 )
 
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
-// in content fetching to uniquely identify a file relative to a request (the VirtualPath). Note that the VirtualPath
-// and ref are ignored fields when using github.com/mitchellh/hashstructure. The reason for this is to ensure that
-// only the minimally expressible fields of a location are baked into the uniqueness of a Location. Since VirutalPath
-// and ref are not captured in JSON output they cannot be included in this minimal definition.
+// in content fetching to uniquely identify a file relative to a request (the VirtualPath).
 type Location struct {
-	RealPath     string         `json:"path"`              // The path where all path ancestors have no hardlinks / symlinks
-	VirtualPath  string         `hash:"ignore" json:"-"`   // The path to the file which may or may not have hardlinks / symlinks
-	FileSystemID string         `json:"layerID,omitempty"` // An ID representing the filesystem. For container images this is a layer digest, directories or root filesystem this is blank.
-	ref          file.Reference `hash:"ignore"`            // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
+	Coordinates
+	VirtualPath string         // The path to the file which may or may not have hardlinks / symlinks
+	ref         file.Reference // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
+}
+
+// Coordinates contains the minimal information needed to describe how to find a file within any possible source object (e.g. image and directory sources)
+type Coordinates struct {
+	RealPath     string `json:"path"`              // The path where all path ancestors have no hardlinks / symlinks
+	FileSystemID string `json:"layerID,omitempty"` // An ID representing the filesystem. For container images this is a layer digest, directories or root filesystem this is blank.
 }
 
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
-func NewLocation(path string) Location {
+func NewLocation(realPath string) Location {
 	return Location{
-		RealPath: path,
+		Coordinates: Coordinates{
+			RealPath: realPath,
+		},
+	}
+}
+
+func NewVirtualLocation(realPath, virtualPath string) Location {
+	return Location{
+		Coordinates: Coordinates{
+			RealPath: realPath,
+		},
+		VirtualPath: virtualPath,
+	}
+}
+
+func NewLocationFromCoordinates(coordinates Coordinates) Location {
+	return Location{
+		Coordinates: coordinates,
 	}
 }
 
@@ -34,25 +55,31 @@ func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Ima
 	if err != nil {
 		log.Warnf("unable to find file catalog entry for ref=%+v", ref)
 		return Location{
+			Coordinates: Coordinates{
+				RealPath: string(ref.RealPath),
+			},
 			VirtualPath: virtualPath,
-			RealPath:    string(ref.RealPath),
 			ref:         ref,
 		}
 	}
 
 	return Location{
-		VirtualPath:  virtualPath,
-		RealPath:     string(ref.RealPath),
-		FileSystemID: entry.Layer.Metadata.Digest,
-		ref:          ref,
+		Coordinates: Coordinates{
+			RealPath:     string(ref.RealPath),
+			FileSystemID: entry.Layer.Metadata.Digest,
+		},
+		VirtualPath: virtualPath,
+		ref:         ref,
 	}
 }
 
 // NewLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory.
 func NewLocationFromDirectory(responsePath string, ref file.Reference) Location {
 	return Location{
-		RealPath: responsePath,
-		ref:      ref,
+		Coordinates: Coordinates{
+			RealPath: responsePath,
+		},
+		ref: ref,
 	}
 }
 
@@ -74,13 +101,27 @@ func (l Location) String() string {
 	return fmt.Sprintf("Location<%s>", str)
 }
 
-func (l Location) ID() artifact.ID {
-	f, err := artifact.IDFromHash(l)
+func (l Location) Hash() (uint64, error) {
+	// Location hash should be a pass-through for the coordinates and not include ref or VirtualPath.
+	return hashstructure.Hash(l.ID(), hashstructure.FormatV2, nil)
+}
+
+func (c Coordinates) ID() artifact.ID {
+	f, err := artifact.IDFromHash(c)
 	if err != nil {
 		// TODO: what to do in this case?
-		log.Warnf("unable to get fingerprint of location=%+v: %+v", l, err)
+		log.Warnf("unable to get fingerprint of location coordinate=%+v: %+v", c, err)
 		return ""
 	}
 
 	return f
+}
+
+func (c Coordinates) String() string {
+	str := fmt.Sprintf("RealPath=%q", c.RealPath)
+
+	if c.FileSystemID != "" {
+		str += fmt.Sprintf(" Layer=%q", c.FileSystemID)
+	}
+	return fmt.Sprintf("Location<%s>", str)
 }

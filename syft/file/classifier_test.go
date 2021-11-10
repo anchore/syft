@@ -19,7 +19,9 @@ func TestFilepathMatches(t *testing.T) {
 		{
 			name: "simple-filename-match",
 			location: source.Location{
-				RealPath: "python2.7",
+				Coordinates: source.Coordinates{
+					RealPath: "python2.7",
+				},
 			},
 			patterns: []string{
 				`python([0-9]+\.[0-9]+)$`,
@@ -29,7 +31,9 @@ func TestFilepathMatches(t *testing.T) {
 		{
 			name: "filepath-match",
 			location: source.Location{
-				RealPath: "/usr/bin/python2.7",
+				Coordinates: source.Coordinates{
+					RealPath: "/usr/bin/python2.7",
+				},
 			},
 			patterns: []string{
 				`python([0-9]+\.[0-9]+)$`,
@@ -59,7 +63,9 @@ func TestFilepathMatches(t *testing.T) {
 		{
 			name: "anchored-filename-match-FAILS",
 			location: source.Location{
-				RealPath: "/usr/bin/python2.7",
+				Coordinates: source.Coordinates{
+					RealPath: "/usr/bin/python2.7",
+				},
 			},
 			patterns: []string{
 				`^python([0-9]+\.[0-9]+)$`,

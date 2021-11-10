@@ -8,16 +8,16 @@ import (
 )
 
 type JSONFileClassifications struct {
-	Location       source.Location     `json:"location"`
+	Location       source.Coordinates  `json:"location"`
 	Classification file.Classification `json:"classification"`
 }
 
-func NewJSONFileClassifications(data map[source.Location][]file.Classification) []JSONFileClassifications {
+func NewJSONFileClassifications(data map[source.Coordinates][]file.Classification) []JSONFileClassifications {
 	results := make([]JSONFileClassifications, 0)
-	for location, classifications := range data {
+	for coordinates, classifications := range data {
 		for _, classification := range classifications {
 			results = append(results, JSONFileClassifications{
-				Location:       location,
+				Location:       coordinates,
 				Classification: classification,
 			})
 		}
@@ -25,9 +25,6 @@ func NewJSONFileClassifications(data map[source.Location][]file.Classification) 
 
 	// sort by real path then virtual path to ensure the result is stable across multiple runs
 	sort.SliceStable(results, func(i, j int) bool {
-		if results[i].Location.RealPath == results[j].Location.RealPath {
-			return results[i].Location.VirtualPath < results[j].Location.VirtualPath
-		}
 		return results[i].Location.RealPath < results[j].Location.RealPath
 	})
 	return results

@@ -8,25 +8,22 @@ import (
 )
 
 type JSONSecrets struct {
-	Location source.Location     `json:"location"`
+	Location source.Coordinates  `json:"location"`
 	Secrets  []file.SearchResult `json:"secrets"`
 }
 
-func NewJSONSecrets(data map[source.Location][]file.SearchResult) []JSONSecrets {
+func NewJSONSecrets(data map[source.Coordinates][]file.SearchResult) []JSONSecrets {
 	results := make([]JSONSecrets, 0)
-	for location, secrets := range data {
+	for coordinates, secrets := range data {
 		results = append(results, JSONSecrets{
-			Location: location,
+			Location: coordinates,
 			Secrets:  secrets,
 		})
 	}
 
 	// sort by real path then virtual path to ensure the result is stable across multiple runs
 	sort.SliceStable(results, func(i, j int) bool {
-		if results[i].Location.RealPath != results[j].Location.RealPath {
-			return results[i].Location.VirtualPath < results[j].Location.VirtualPath
-		}
-		return false
+		return results[i].Location.RealPath < results[j].Location.RealPath
 	})
 	return results
 }
