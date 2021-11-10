@@ -25,7 +25,7 @@ func ToFormatModel(s sbom.SBOM, applicationConfig interface{}) model.Document {
 
 	return model.Document{
 		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
-		ArtifactRelationships: toRelationshipModel(pkg.NewRelationships(s.Artifacts.PackageCatalog)),
+		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Source:                src,
 		Distro:                toDistroModel(s.Artifacts.Distro),
 		Descriptor: model.Descriptor{

@@ -21,7 +21,9 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
-func ownershipByFilesRelationships(catalog *Catalog) []artifact.Relationship {
+// RelationshipsByFileOwnership creates a package-to-package relationship based on discovering which packages have
+// evidence locations that overlap with ownership claim from another package's package manager metadata.
+func RelationshipsByFileOwnership(catalog *Catalog) []artifact.Relationship {
 	var relationships = findOwnershipByFilesRelationships(catalog)
 
 	var edges []artifact.Relationship

@@ -28,7 +28,7 @@ type Package struct {
 }
 
 func (p Package) ID() artifact.ID {
-	f, err := artifact.DeriveID(p)
+	f, err := artifact.IDFromHash(p)
 	if err != nil {
 		// TODO: what to do in this case?
 		log.Warnf("unable to get fingerprint of package=%s@%s: %+v", p.Name, p.Version, err)

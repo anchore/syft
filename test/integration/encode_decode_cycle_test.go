@@ -8,8 +8,6 @@ import (
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 
-	"github.com/anchore/syft/syft/sbom"
-
 	"github.com/anchore/syft/syft/format"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,15 +29,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	for _, test := range tests {
 		t.Run(string(test.format), func(t *testing.T) {
 
-			originalCatalog, _, d, src := catalogFixtureImage(t, "image-pkg-coverage")
-
-			originalSBOM := sbom.SBOM{
-				Artifacts: sbom.Artifacts{
-					PackageCatalog: originalCatalog,
-					Distro:         d,
-				},
-				Source: src.Metadata,
-			}
+			originalSBOM, _ := catalogFixtureImage(t, "image-pkg-coverage")
 
 			by1, err := syft.Encode(originalSBOM, test.format)
 			assert.NoError(t, err)

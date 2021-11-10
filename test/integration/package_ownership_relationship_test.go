@@ -7,7 +7,6 @@ import (
 
 	"github.com/anchore/syft/internal/formats/syftjson"
 	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
-	"github.com/anchore/syft/syft/sbom"
 )
 
 func TestPackageOwnershipRelationships(t *testing.T) {
@@ -23,15 +22,9 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			catalog, _, d, src := catalogFixtureImage(t, test.fixture)
+			sbom, _ := catalogFixtureImage(t, test.fixture)
 
-			p := syftjson.Format().Presenter(sbom.SBOM{
-				Artifacts: sbom.Artifacts{
-					PackageCatalog: catalog,
-					Distro:         d,
-				},
-				Source: src.Metadata,
-			})
+			p := syftjson.Format().Presenter(sbom)
 			if p == nil {
 				t.Fatal("unable to get presenter")
 			}

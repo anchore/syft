@@ -49,7 +49,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	catalog, _, _, _ := catalogFixtureImage(t, "image-pkg-coverage")
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage")
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -82,7 +82,7 @@ func TestPkgCoverageImage(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			pkgCount := 0
 
-			for a := range catalog.Enumerate(c.pkgType) {
+			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
 
 				if a.Language.String() != "" {
 					observedLanguages.Add(a.Language.String())
@@ -110,7 +110,7 @@ func TestPkgCoverageImage(t *testing.T) {
 
 			if pkgCount != len(c.pkgInfo)+c.duplicates {
 				t.Logf("Discovered packages of type %+v", c.pkgType)
-				for a := range catalog.Enumerate(c.pkgType) {
+				for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
 					t.Log("   ", a)
 				}
 				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
@@ -137,7 +137,7 @@ func TestPkgCoverageImage(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
-	catalog, _, _, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
+	sbom, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -159,7 +159,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actualPkgCount := 0
 
-			for actualPkg := range catalog.Enumerate(test.pkgType) {
+			for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
 
 				observedLanguages.Add(actualPkg.Language.String())
 				observedPkgs.Add(string(actualPkg.Type))
@@ -184,7 +184,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 			}
 
 			if actualPkgCount != len(test.pkgInfo)+test.duplicates {
-				for actualPkg := range catalog.Enumerate(test.pkgType) {
+				for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
 					t.Log("   ", actualPkg)
 				}
 				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
