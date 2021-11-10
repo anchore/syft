@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
-	"github.com/mitchellh/hashstructure/v2"
 )
 
 // Package represents an application or library that has been bundled into a distributable format.
@@ -29,29 +28,17 @@ type Package struct {
 }
 
 func (p Package) ID() artifact.ID {
-	f, err := p.Fingerprint()
+	f, err := artifact.DeriveID(p)
 	if err != nil {
 		// TODO: what to do in this case?
 		log.Warnf("unable to get fingerprint of package=%s@%s: %+v", p.Name, p.Version, err)
 		return ""
 	}
 
-	return artifact.ID(f)
+	return f
 }
 
 // Stringer to represent a package.
 func (p Package) String() string {
 	return fmt.Sprintf("Pkg(type=%s, name=%s, version=%s)", p.Type, p.Name, p.Version)
-}
-
-func (p Package) Fingerprint() (string, error) {
-	f, err := hashstructure.Hash(p, hashstructure.FormatV2, &hashstructure.HashOptions{
-		ZeroNil:      true,
-		SlicesAsSets: true,
-	})
-	if err != nil {
-		return "", fmt.Errorf("could not build package fingerprint for: %s version: %s", p.Name, p.Version)
-	}
-
-	return fmt.Sprint(f), nil
 }

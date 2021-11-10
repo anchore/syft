@@ -3,10 +3,10 @@ package source
 import (
 	"fmt"
 
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
@@ -72,4 +72,15 @@ func (l Location) String() string {
 		str += fmt.Sprintf(" Layer=%q", l.FileSystemID)
 	}
 	return fmt.Sprintf("Location<%s>", str)
+}
+
+func (l Location) ID() artifact.ID {
+	f, err := artifact.DeriveID(l)
+	if err != nil {
+		// TODO: what to do in this case?
+		log.Warnf("unable to get fingerprint of location=%+v: %+v", l, err)
+		return ""
+	}
+
+	return f
 }
