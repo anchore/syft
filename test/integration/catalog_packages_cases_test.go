@@ -167,6 +167,15 @@ var dirOnlyTestCases = []testCase{
 			"libc-utils": "0.7.2-r0",
 		},
 	},
+	{
+		name:        "find php composer package",
+		pkgType:     pkg.PhpComposerPkg,
+		pkgLanguage: pkg.PHP,
+		pkgInfo: map[string]string{
+			"adoy/fastcgi-client":       "1.0.2",
+			"alcaeus/mongo-php-adapter": "1.1.11",
+		},
+	},
 }
 
 var commonTestCases = []testCase{

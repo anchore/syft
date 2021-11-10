@@ -57,9 +57,10 @@ func TestPkgCoverageImage(t *testing.T) {
 		definedLanguages.Add(l.String())
 	}
 
-	// for image we remove the go mod and rust support by default
+	// for image scans we should not expect to see any of the following package types
 	definedLanguages.Remove(pkg.Go.String())
 	definedLanguages.Remove(pkg.Rust.String())
+	definedLanguages.Remove(pkg.PHP.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -67,10 +68,11 @@ func TestPkgCoverageImage(t *testing.T) {
 		definedPkgs.Add(string(p))
 	}
 
-	// for image we remove the go-module and rust-crate support by default
+	// for image scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))
 	definedPkgs.Remove(string(pkg.GoModulePkg))
 	definedPkgs.Remove(string(pkg.RustPkg))
+	definedPkgs.Remove(string(pkg.PhpComposerPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -195,6 +197,8 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
+
+	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
