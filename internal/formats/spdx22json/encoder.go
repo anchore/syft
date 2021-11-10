@@ -7,8 +7,6 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const anchoreNamespace = "https://anchore.com/syft"
-
 func encoder(output io.Writer, s sbom.SBOM) error {
 	doc := toFormatModel(s)
 
