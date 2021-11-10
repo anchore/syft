@@ -75,7 +75,7 @@ func (l Location) String() string {
 }
 
 func (l Location) ID() artifact.ID {
-	f, err := artifact.DeriveID(l)
+	f, err := artifact.IDFromHash(l)
 	if err != nil {
 		// TODO: what to do in this case?
 		log.Warnf("unable to get fingerprint of location=%+v: %+v", l, err)

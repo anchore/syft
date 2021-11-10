@@ -74,6 +74,8 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 		allRelationships = append(allRelationships, relationships...)
 	}
 
+	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
+
 	if errs != nil {
 		return nil, nil, errs
 	}
