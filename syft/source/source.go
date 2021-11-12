@@ -36,59 +36,73 @@ func New(userInput string, registryOptions *image.RegistryOptions) (*Source, fun
 
 	switch parsedScheme {
 	case FileScheme:
-		fileMeta, err := fs.Stat(location)
-		if err != nil {
-			return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
-		}
-
-		if fileMeta.IsDir() {
-			return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
-		}
-
-		s, err := NewFromFile(location)
-		if err != nil {
-			return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
-		}
-		return &s, func() {}, nil
-
+		return generateFileSource(fs, location)
 	case DirectoryScheme:
-		fileMeta, err := fs.Stat(location)
-		if err != nil {
-			return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
-		}
-
-		if !fileMeta.IsDir() {
-			return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
-		}
-
-		s, err := NewFromDirectory(location)
-		if err != nil {
-			return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
-		}
-		return &s, func() {}, nil
-
+		return generateDirectorySource(fs, location)
 	case ImageScheme:
-		img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
-		if err != nil {
-			log.Debugf("error parsing location: %s after detecting scheme; pulling image: %s", location, userInput)
-			// we may have been to aggresive reading the source hint
-			// try the input as supplied by the user if our inital parse failed
-			img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
-		}
-		cleanup := stereoscope.Cleanup
-
-		if err != nil || img == nil {
-			return &Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
-		}
-
-		s, err := NewFromImage(img, location)
-		if err != nil {
-			return &Source{}, cleanup, fmt.Errorf("could not populate source with image: %w", err)
-		}
-		return &s, cleanup, nil
+		return generateImageSource(location, userInput, imageSource, registryOptions)
 	}
 
 	return &Source{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
+}
+
+func generateImageSource(location, userInput string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source, func(), error) {
+	img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
+	if err != nil {
+		log.Debugf("error parsing location: %s after detecting scheme; pulling image: %s", location, userInput)
+		// we may have been to aggressive reading the source hint
+		// try the input as supplied by the user if our initial parse failed
+		img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
+	}
+
+	cleanup := stereoscope.Cleanup
+
+	if err != nil || img == nil {
+		return &Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
+	}
+
+	s, err := NewFromImage(img, location)
+	if err != nil {
+		return &Source{}, cleanup, fmt.Errorf("could not populate source with image: %w", err)
+	}
+
+	return &s, cleanup, nil
+}
+
+func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {
+	fileMeta, err := fs.Stat(location)
+	if err != nil {
+		return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+	}
+
+	if !fileMeta.IsDir() {
+		return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+	}
+
+	s, err := NewFromDirectory(location)
+	if err != nil {
+		return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+	}
+
+	return &s, func() {}, nil
+}
+
+func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
+	fileMeta, err := fs.Stat(location)
+	if err != nil {
+		return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+	}
+
+	if fileMeta.IsDir() {
+		return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+	}
+
+	s, err := NewFromFile(location)
+	if err != nil {
+		return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+	}
+
+	return &s, func() {}, nil
 }
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
