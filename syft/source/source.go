@@ -11,6 +11,7 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 	"github.com/spf13/afero"
 )
 
@@ -68,6 +69,12 @@ func New(userInput string, registryOptions *image.RegistryOptions) (*Source, fun
 
 	case ImageScheme:
 		img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
+		if err != nil {
+			log.Debugf("error parsing location: %s after detecting scheme; pulling image: %s", location, userInput)
+			// we may have been to aggresive reading the source hint
+			// try the input as supplied by the user if our inital parse failed
+			img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
+		}
 		cleanup := stereoscope.Cleanup
 
 		if err != nil || img == nil {
