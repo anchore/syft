@@ -123,6 +123,11 @@ func TestIdentifyDistro(t *testing.T) {
 			Type:    Mariner,
 			Version: "1.0.0",
 		},
+		{
+			fixture: "test-fixtures/os/rockylinux",
+			Type:    RockyLinux,
+			Version: "8.4.0",
+		},
 	}
 
 	observedDistros := internal.NewStringSet()
