@@ -37,10 +37,6 @@ ifeq "$(strip $(VERSION))" ""
  override VERSION = $(shell git describe --always --tags --dirty)
 endif
 
-# used to generate the changelog from the second to last tag to the current tag (used in the release pipeline when the release tag is in place)
-LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --max-count=1))
-SECOND_TO_LAST_TAG := $(shell git describe --abbrev=0 --tags $(shell git rev-list --tags --skip=1 --max-count=1))
-
 ## Variable assertions
 
 ifndef TEMPDIR
@@ -103,7 +99,7 @@ bootstrap-tools: $(TEMPDIR)
 	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.42.1
 	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0
-	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0-beta
+	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	.github/scripts/goreleaser-install.sh -b $(TEMPDIR)/ v0.177.0
 
 .PHONY: bootstrap-go
@@ -252,27 +248,19 @@ cli: $(SNAPSHOTDIR) ## Run CLI tests
 	SYFT_BINARY_LOCATION='$(SNAPSHOT_CMD)' \
 		go test -count=1 -v ./test/cli
 
-.PHONY: changelog-release
-changelog-release:
-	$(TEMPDIR)/chronicle --since-tag $(SECOND_TO_LAST_TAG) --until-tag $(LAST_TAG) -vv > CHANGELOG.md
-
-	@printf '\n$(BOLD)$(CYAN)Release $(VERSION) Changelog$(RESET)\n\n'
-	@cat CHANGELOG.md
-
-.PHONY: changelog-unreleased
-changelog-unreleased: ## show the current changelog that will be produced on the next release (note: requires GITHUB_TOKEN set)
-	$(TEMPDIR)/chronicle --since-tag $(LAST_TAG) -vv > CHANGELOG.md
-
-	@printf '\n$(BOLD)$(CYAN)Unreleased Changes (closed PRs and issues will not be in the final changelog)$(RESET)\n'
-
+.PHONY: changelog
+changelog: clean-changelog CHANGELOG.md
 	@docker run -it --rm \
 		-v $(shell pwd)/CHANGELOG.md:/CHANGELOG.md \
 		rawkode/mdv \
 			-t 748.5989 \
 			/CHANGELOG.md
 
+CHANGELOG.md:
+	$(TEMPDIR)/chronicle -vv > CHANGELOG.md
+
 .PHONY: release
-release: clean-dist changelog-release ## Build and publish final binaries and packages. Intended to be run only on macOS.
+release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packages. Intended to be run only on macOS.
 	$(call title,Publishing release artifacts)
 
 	# Prepare for macOS-specific signing process
@@ -313,8 +301,12 @@ clean-snapshot:
 	rm -rf $(SNAPSHOTDIR) $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: clean-dist
-clean-dist:
+clean-dist: clean-changelog
 	rm -rf $(DISTDIR) $(TEMPDIR)/goreleaser.yaml
+
+.PHONY: clean-changelog
+clean-changelog:
+	rm -f CHANGELOG.md
 
 clean-test-image-cache: clean-test-image-tar-cache clean-test-image-docker-cache
 
