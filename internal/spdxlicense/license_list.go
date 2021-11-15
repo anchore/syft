@@ -3,7 +3,7 @@
 // using data from https://spdx.org/licenses/licenses.json
 package spdxlicense
 
-const Version = "3.14"
+const Version = "3.15"
 
 var licenseIDs = map[string]string{
 	"0bsd":                                   "0BSD",
