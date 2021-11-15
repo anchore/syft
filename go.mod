@@ -15,7 +15,7 @@ require (
 	github.com/anchore/stereoscope v0.0.0-20211024152658-003132a67c10
 	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar/v2 v2.0.4
-	github.com/docker/docker v17.12.0-ce-rc1.0.20200309214505-aa6a9891b09c+incompatible
+	github.com/docker/docker v20.10.10+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/facebookincubator/nvdtools v0.1.4
 	github.com/go-test/deep v1.0.7
