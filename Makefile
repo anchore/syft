@@ -190,6 +190,11 @@ fixtures:
 generate-json-schema:  ## Generate a new json schema
 	cd schema/json && go run generate.go
 
+.PHONY: generate-license-list
+generate-license-list: ## Generate an updated spdx license list
+	go generate ./internal/spdxlicense/...
+	gofmt -s -w ./internal/spdxlicense
+
 .PHONY: build
 build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
 
