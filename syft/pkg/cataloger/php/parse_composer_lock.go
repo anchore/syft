@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -23,7 +25,7 @@ type Dependency struct {
 var _ common.ParserFn = parseComposerLock
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseComposerLock(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseComposerLock(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
@@ -32,7 +34,7 @@ func parseComposerLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 		if err := dec.Decode(&lock); err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("failed to parse composer.lock file: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse composer.lock file: %w", err)
 		}
 		for _, pkgMeta := range lock.Packages {
 			version := pkgMeta.Version
@@ -46,5 +48,5 @@ func parseComposerLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }

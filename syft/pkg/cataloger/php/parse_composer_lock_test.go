@@ -28,7 +28,8 @@ func TestParseComposerFileLock(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseComposerLock(fixture.Name(), fixture)
+	// TODO: no relationships are under test yet
+	actual, _, err := parseComposerLock(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}
