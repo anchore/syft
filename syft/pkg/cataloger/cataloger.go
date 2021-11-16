@@ -6,6 +6,7 @@ catalogers defined in child packages as well as the interface definition to impl
 package cataloger
 
 import (
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
@@ -27,7 +28,7 @@ type Cataloger interface {
 	// Name returns a string that uniquely describes a cataloger
 	Name() string
 	// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-	Catalog(resolver source.FileResolver) ([]pkg.Package, error)
+	Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error)
 }
 
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.

@@ -70,7 +70,8 @@ func TestParseGoMod(t *testing.T) {
 				t.Fatalf(err.Error())
 			}
 
-			actual, err := parseGoMod(test.fixture, f)
+			// TODO: no relationships are under test yet
+			actual, _, err := parseGoMod(test.fixture, f)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}

@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/scylladb/go-set/strset"
 )
@@ -20,17 +21,19 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
-func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
+// RelationshipsByFileOwnership creates a package-to-package relationship based on discovering which packages have
+// evidence locations that overlap with ownership claim from another package's package manager metadata.
+func RelationshipsByFileOwnership(catalog *Catalog) []artifact.Relationship {
 	var relationships = findOwnershipByFilesRelationships(catalog)
 
-	var edges []Relationship
+	var edges []artifact.Relationship
 	for parent, children := range relationships {
 		for child, files := range children {
-			edges = append(edges, Relationship{
-				Parent: parent,
-				Child:  child,
-				Type:   OwnershipByFileOverlapRelationship,
-				Metadata: ownershipByFilesMetadata{
+			edges = append(edges, artifact.Relationship{
+				From: catalog.byID[parent],
+				To:   catalog.byID[child],
+				Type: artifact.OwnershipByFileOverlapRelationship,
+				Data: ownershipByFilesMetadata{
 					Files: files.List(),
 				},
 			})
@@ -42,14 +45,15 @@ func ownershipByFilesRelationships(catalog *Catalog) []Relationship {
 
 // findOwnershipByFilesRelationships find overlaps in file ownership with a file that defines another package. Specifically, a .Location.Path of
 // a package is found to be owned by another (from the owner's .Metadata.Files[]).
-func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.Set {
-	var relationships = make(map[ID]map[ID]*strset.Set)
+func findOwnershipByFilesRelationships(catalog *Catalog) map[artifact.ID]map[artifact.ID]*strset.Set {
+	var relationships = make(map[artifact.ID]map[artifact.ID]*strset.Set)
 
 	if catalog == nil {
 		return relationships
 	}
 
 	for _, candidateOwnerPkg := range catalog.Sorted() {
+		id := candidateOwnerPkg.ID()
 		if candidateOwnerPkg.Metadata == nil {
 			continue
 		}
@@ -68,17 +72,18 @@ func findOwnershipByFilesRelationships(catalog *Catalog) map[ID]map[ID]*strset.S
 
 			// look for package(s) in the catalog that may be owned by this package and mark the relationship
 			for _, subPackage := range catalog.PackagesByPath(ownedFilePath) {
-				if subPackage.ID == candidateOwnerPkg.ID {
+				subID := subPackage.ID()
+				if subID == id {
 					continue
 				}
-				if _, exists := relationships[candidateOwnerPkg.ID]; !exists {
-					relationships[candidateOwnerPkg.ID] = make(map[ID]*strset.Set)
+				if _, exists := relationships[id]; !exists {
+					relationships[id] = make(map[artifact.ID]*strset.Set)
 				}
 
-				if _, exists := relationships[candidateOwnerPkg.ID][subPackage.ID]; !exists {
-					relationships[candidateOwnerPkg.ID][subPackage.ID] = strset.New()
+				if _, exists := relationships[id][subID]; !exists {
+					relationships[id][subID] = strset.New()
 				}
-				relationships[candidateOwnerPkg.ID][subPackage.ID].Add(ownedFilePath)
+				relationships[id][subID].Add(ownedFilePath)
 			}
 		}
 	}

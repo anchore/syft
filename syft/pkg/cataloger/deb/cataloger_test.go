@@ -100,7 +100,7 @@ func TestDpkgCataloger(t *testing.T) {
 				t.Errorf("could not get resolver error: %+v", err)
 			}
 
-			actual, err := c.Catalog(resolver)
+			actual, _, err := c.Catalog(resolver)
 			if err != nil {
 				t.Fatalf("failed to catalog: %+v", err)
 			}

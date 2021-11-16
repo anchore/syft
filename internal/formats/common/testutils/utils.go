@@ -133,7 +133,6 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
-		ID:      "package-1-id",
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: []source.Location{
@@ -154,7 +153,6 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 		},
 	})
 	catalog.Add(pkg.Package{
-		ID:      "package-2-id",
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: []source.Location{
@@ -197,7 +195,6 @@ func newDirectoryCatalog() *pkg.Catalog {
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
-		ID:      "package-1-id",
 		Name:    "package-1",
 		Version: "1.0.1",
 		Type:    pkg.PythonPkg,
@@ -223,7 +220,6 @@ func newDirectoryCatalog() *pkg.Catalog {
 		},
 	})
 	catalog.Add(pkg.Package{
-		ID:      "package-2-id",
 		Name:    "package-2",
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,

@@ -10,7 +10,6 @@ import (
 
 var catalogAddAndRemoveTestPkgs = []Package{
 	{
-		ID: "my-id",
 		Locations: []source.Location{
 			{
 				RealPath:    "/a/path",
@@ -24,7 +23,6 @@ var catalogAddAndRemoveTestPkgs = []Package{
 		Type: RpmPkg,
 	},
 	{
-		ID: "my-other-id",
 		Locations: []source.Location{
 			{
 				RealPath:    "/c/path",
@@ -45,6 +43,11 @@ type expectedIndexes struct {
 }
 
 func TestCatalogAddPopulatesIndex(t *testing.T) {
+
+	fixtureID := func(i int) string {
+		return string(catalogAddAndRemoveTestPkgs[i].ID())
+	}
+
 	tests := []struct {
 		name            string
 		pkgs            []Package
@@ -55,16 +58,16 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 			pkgs: catalogAddAndRemoveTestPkgs,
 			expectedIndexes: expectedIndexes{
 				byType: map[Type]*strset.Set{
-					RpmPkg: strset.New("my-id"),
-					NpmPkg: strset.New("my-other-id"),
+					RpmPkg: strset.New(fixtureID(0)),
+					NpmPkg: strset.New(fixtureID(1)),
 				},
 				byPath: map[string]*strset.Set{
-					"/another/path": strset.New("my-id", "my-other-id"),
-					"/a/path":       strset.New("my-id"),
-					"/b/path":       strset.New("my-id"),
-					"/bee/path":     strset.New("my-id"),
-					"/c/path":       strset.New("my-other-id"),
-					"/d/path":       strset.New("my-other-id"),
+					"/another/path": strset.New(fixtureID(0), fixtureID(1)),
+					"/a/path":       strset.New(fixtureID(0)),
+					"/b/path":       strset.New(fixtureID(0)),
+					"/bee/path":     strset.New(fixtureID(0)),
+					"/c/path":       strset.New(fixtureID(1)),
+					"/d/path":       strset.New(fixtureID(1)),
 				},
 			},
 		},
@@ -75,50 +78,6 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 			c := NewCatalog(test.pkgs...)
 
 			assertIndexes(t, c, test.expectedIndexes)
-
-		})
-	}
-}
-
-func TestCatalogRemove(t *testing.T) {
-	tests := []struct {
-		name            string
-		pkgs            []Package
-		removeId        ID
-		expectedIndexes expectedIndexes
-	}{
-		{
-			name:     "vanilla-add",
-			removeId: "my-other-id",
-			pkgs:     catalogAddAndRemoveTestPkgs,
-			expectedIndexes: expectedIndexes{
-				byType: map[Type]*strset.Set{
-					RpmPkg: strset.New("my-id"),
-				},
-				byPath: map[string]*strset.Set{
-					"/another/path": strset.New("my-id"),
-					"/a/path":       strset.New("my-id"),
-					"/b/path":       strset.New("my-id"),
-					"/bee/path":     strset.New("my-id"),
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			c := NewCatalog(test.pkgs...)
-			c.Remove(test.removeId)
-
-			assertIndexes(t, c, test.expectedIndexes)
-
-			if c.Package(test.removeId) != nil {
-				t.Errorf("expected package to be removed, but was found!")
-			}
-
-			if c.PackageCount() != len(test.pkgs)-1 {
-				t.Errorf("expected count to be affected but was not")
-			}
 
 		})
 	}
@@ -132,7 +91,7 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 	for path, expectedIds := range expectedIndexes.byPath {
 		actualIds := strset.New()
 		for _, p := range c.PackagesByPath(path) {
-			actualIds.Add(string(p.ID))
+			actualIds.Add(string(p.ID()))
 		}
 
 		if !expectedIds.IsEqual(actualIds) {
@@ -147,7 +106,7 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 	for ty, expectedIds := range expectedIndexes.byType {
 		actualIds := strset.New()
 		for p := range c.Enumerate(ty) {
-			actualIds.Add(string(p.ID))
+			actualIds.Add(string(p.ID()))
 		}
 
 		if !expectedIds.IsEqual(actualIds) {
@@ -157,39 +116,42 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 }
 
 func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
+	p1 := Package{
+		Locations: []source.Location{
+			{
+				RealPath:    "/b/path",
+				VirtualPath: "/another/path",
+			},
+			{
+				RealPath:    "/b/path",
+				VirtualPath: "/b/path",
+			},
+		},
+		Type: RpmPkg,
+		Name: "Package-1",
+	}
+
+	p2 := Package{
+		Locations: []source.Location{
+			{
+				RealPath:    "/b/path",
+				VirtualPath: "/b/path",
+			},
+		},
+		Type: RpmPkg,
+		Name: "Package-2",
+	}
 	tests := []struct {
 		name string
 		pkg  Package
 	}{
 		{
 			name: "multiple locations with shared path",
-			pkg: Package{
-				ID: "my-id",
-				Locations: []source.Location{
-					{
-						RealPath:    "/b/path",
-						VirtualPath: "/another/path",
-					},
-					{
-						RealPath:    "/b/path",
-						VirtualPath: "/b/path",
-					},
-				},
-				Type: RpmPkg,
-			},
+			pkg:  p1,
 		},
 		{
 			name: "one location with shared path",
-			pkg: Package{
-				ID: "my-id",
-				Locations: []source.Location{
-					{
-						RealPath:    "/b/path",
-						VirtualPath: "/b/path",
-					},
-				},
-				Type: RpmPkg,
-			},
+			pkg:  p2,
 		},
 	}
 

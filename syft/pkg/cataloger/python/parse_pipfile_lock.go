@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -37,7 +38,7 @@ type Dependency struct {
 var _ common.ParserFn = parsePipfileLock
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
-func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
@@ -46,7 +47,7 @@ func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 		if err := dec.Decode(&lock); err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("failed to parse Pipfile.lock file: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse Pipfile.lock file: %w", err)
 		}
 		for name, pkgMeta := range lock.Default {
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
@@ -59,5 +60,5 @@ func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }

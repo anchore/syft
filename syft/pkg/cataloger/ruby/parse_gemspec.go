@@ -12,6 +12,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -60,7 +61,7 @@ func processList(s string) []string {
 	return results
 }
 
-func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
@@ -93,7 +94,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 	if fields["name"] != "" && fields["version"] != "" {
 		var metadata pkg.GemMetadata
 		if err := mapstructure.Decode(fields, &metadata); err != nil {
-			return nil, fmt.Errorf("unable to decode gem metadata: %w", err)
+			return nil, nil, fmt.Errorf("unable to decode gem metadata: %w", err)
 		}
 
 		pkgs = append(pkgs, pkg.Package{
@@ -107,7 +108,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 		})
 	}
 
-	return pkgs, nil
+	return pkgs, nil, nil
 }
 
 // renderUtf8 takes any string escaped string sub-sections from the ruby string and replaces those sections with the UTF8 runes.

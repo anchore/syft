@@ -83,7 +83,7 @@ func candidateVendors(p pkg.Package) []string {
 	// allow * as a candidate. Note: do NOT allow Java packages to have * vendors.
 	switch p.Language {
 	case pkg.Ruby, pkg.JavaScript:
-		vendors.addValue("*")
+		vendors.addValue(wfn.Any)
 	}
 
 	switch p.MetadataType {

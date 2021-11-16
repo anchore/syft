@@ -45,7 +45,7 @@ func TestParseSetup(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseSetup(fixture.Name(), fixture)
+	actual, _, err := parseSetup(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -162,8 +163,8 @@ func licensesFromJSON(p PackageJSON) ([]string, error) {
 }
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
-	packages := make([]pkg.Package, 0)
+func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
 	dec := json.NewDecoder(reader)
 
 	for {
@@ -171,17 +172,17 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 		if err := dec.Decode(&p); err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
 		if !p.hasNameAndVersionValues() {
 			log.Debug("encountered package.json file without a name and/or version field, ignoring this file")
-			return nil, nil
+			return nil, nil, nil
 		}
 
 		licenses, err := licensesFromJSON(p)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse package.json file: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
 		packages = append(packages, pkg.Package{
@@ -200,7 +201,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 		})
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }
 
 func (p PackageJSON) hasNameAndVersionValues() bool {

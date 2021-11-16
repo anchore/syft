@@ -6,22 +6,23 @@ import (
 	"io/ioutil"
 	"sort"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"golang.org/x/mod/modfile"
 )
 
 // parseGoMod takes a go.mod and lists all packages discovered.
-func parseGoMod(path string, reader io.Reader) ([]pkg.Package, error) {
+func parseGoMod(path string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
 	contents, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read go module: %w", err)
+		return nil, nil, fmt.Errorf("failed to read go module: %w", err)
 	}
 
 	file, err := modfile.Parse(path, contents, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse go module: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse go module: %w", err)
 	}
 
 	for _, m := range file.Require {
@@ -59,5 +60,5 @@ func parseGoMod(path string, reader io.Reader) ([]pkg.Package, error) {
 		return pkgsSlice[i].Name < pkgsSlice[j].Name
 	})
 
-	return pkgsSlice, nil
+	return pkgsSlice, nil, nil
 }

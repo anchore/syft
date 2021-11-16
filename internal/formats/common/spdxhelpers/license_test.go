@@ -67,7 +67,7 @@ func Test_License(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, License(&test.input))
+			assert.Equal(t, test.expected, License(test.input))
 		})
 	}
 }

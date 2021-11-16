@@ -31,11 +31,7 @@ func TestEncodeDecodeCycle(t *testing.T) {
 			continue
 		}
 
-		// ids will never be equal
-		p.ID = ""
-		actualPackages[idx].ID = ""
-
-		for _, d := range deep.Equal(*p, *actualPackages[idx]) {
+		for _, d := range deep.Equal(p, actualPackages[idx]) {
 			if strings.Contains(d, ".VirtualPath: ") {
 				// location.Virtual path is not exposed in the json output
 				continue

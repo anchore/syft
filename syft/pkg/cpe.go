@@ -45,5 +45,8 @@ func MustCPE(cpeStr string) CPE {
 
 func normalizeCpeField(field string) string {
 	// keep dashes and forward slashes unescaped
+	if field == "*" {
+		return wfn.Any
+	}
 	return strings.ReplaceAll(wfn.StripSlashes(field), `\/`, "/")
 }

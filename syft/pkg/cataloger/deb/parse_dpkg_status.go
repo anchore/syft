@@ -23,7 +23,7 @@ var (
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
 func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
-	var packages = make([]pkg.Package, 0)
+	var packages []pkg.Package
 
 	continueProcessing := true
 	for continueProcessing {

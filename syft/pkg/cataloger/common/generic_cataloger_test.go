@@ -8,11 +8,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-func parser(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parser(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	contents, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic(err)
@@ -21,7 +22,7 @@ func parser(_ string, reader io.Reader) ([]pkg.Package, error) {
 		{
 			Name: string(contents),
 		},
-	}, nil
+	}, nil, nil
 }
 
 func TestGenericCataloger(t *testing.T) {
@@ -47,7 +48,7 @@ func TestGenericCataloger(t *testing.T) {
 		}
 	}
 
-	actualPkgs, err := cataloger.Catalog(resolver)
+	actualPkgs, _, err := cataloger.Catalog(resolver)
 	assert.NoError(t, err)
 	assert.Len(t, actualPkgs, len(expectedPkgs))
 

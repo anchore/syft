@@ -1,6 +1,10 @@
 package pkg
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func must(c CPE, e error) CPE {
 	if e != nil {
@@ -43,6 +47,36 @@ func TestNewCPE(t *testing.T) {
 				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", test.expected.BindToFmtString(), actual.BindToFmtString())
 			}
 
+		})
+	}
+}
+
+func Test_normalizeCpeField(t *testing.T) {
+
+	tests := []struct {
+		field    string
+		expected string
+	}{
+		{
+			field:    "something",
+			expected: "something",
+		},
+		{
+			field:    "some\\thing",
+			expected: `some\thing`,
+		},
+		{
+			field:    "*",
+			expected: "",
+		},
+		{
+			field:    "",
+			expected: "",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.field, func(t *testing.T) {
+			assert.Equal(t, test.expected, normalizeCpeField(test.field))
 		})
 	}
 }

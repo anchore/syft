@@ -1,15 +1,14 @@
-package syft
+package integration
 
 import (
 	"bytes"
 	"testing"
 
-	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft"
 
-	"github.com/go-test/deep"
+	"github.com/sergi/go-diff/diffmatchpatch"
 
 	"github.com/anchore/syft/syft/format"
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +19,6 @@ import (
 // to do an object-to-object comparison. For this reason this test focuses on a bytes-to-bytes comparison after an
 // encode-decode-encode loop which will detect lossy behavior in both directions.
 func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
-	testImage := "image-simple"
 	tests := []struct {
 		format format.Option
 	}{
@@ -29,35 +27,25 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(testImage, func(t *testing.T) {
+		t.Run(string(test.format), func(t *testing.T) {
 
-			src, err := source.NewFromDirectory("./test-fixtures/pkgs")
-			if err != nil {
-				t.Fatalf("cant get dir")
-			}
-			originalCatalog, d, err := CatalogPackages(&src, source.SquashedScope)
+			originalSBOM, _ := catalogFixtureImage(t, "image-pkg-coverage")
 
-			originalSBOM := sbom.SBOM{
-				Artifacts: sbom.Artifacts{
-					PackageCatalog: originalCatalog,
-					Distro:         d,
-				},
-				Source: src.Metadata,
-			}
-
-			by1, err := Encode(originalSBOM, test.format)
+			by1, err := syft.Encode(originalSBOM, test.format)
 			assert.NoError(t, err)
 
-			newSBOM, newFormat, err := Decode(bytes.NewReader(by1))
+			newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
 			assert.NoError(t, err)
 			assert.Equal(t, test.format, newFormat)
 
-			by2, err := Encode(*newSBOM, test.format)
+			by2, err := syft.Encode(*newSBOM, test.format)
 			assert.NoError(t, err)
-			for _, diff := range deep.Equal(by1, by2) {
-				t.Errorf(diff)
+
+			if !assert.True(t, bytes.Equal(by1, by2)) {
+				dmp := diffmatchpatch.New()
+				diffs := dmp.DiffMain(string(by1), string(by2), true)
+				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 			}
-			assert.True(t, bytes.Equal(by1, by2))
 		})
 	}
 }

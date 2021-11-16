@@ -775,7 +775,8 @@ func TestMultiplePackages(t *testing.T) {
 				}
 			}()
 
-			pkgs, err := parseApkDB(file.Name(), file)
+			// TODO: no relationships are under test yet
+			pkgs, _, err := parseApkDB(file.Name(), file)
 			if err != nil {
 				t.Fatal("Unable to read file contents: ", err)
 			}

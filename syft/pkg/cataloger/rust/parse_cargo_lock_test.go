@@ -177,7 +177,8 @@ func TestParseCargoLock(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parseCargoLock(fixture.Name(), fixture)
+	// TODO: no relationships are under test yet
+	actual, _, err := parseCargoLock(fixture.Name(), fixture)
 	if err != nil {
 		t.Error(err)
 	}
