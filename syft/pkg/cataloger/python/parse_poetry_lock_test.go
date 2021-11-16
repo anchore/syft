@@ -45,7 +45,8 @@ func TestParsePoetryLock(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	actual, err := parsePoetryLock(fixture.Name(), fixture)
+	// TODO: no relationships are under test yet
+	actual, _, err := parsePoetryLock(fixture.Name(), fixture)
 	if err != nil {
 		t.Error(err)
 	}

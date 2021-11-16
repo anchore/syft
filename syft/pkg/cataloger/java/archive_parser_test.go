@@ -242,7 +242,7 @@ func TestParseJar(t *testing.T) {
 				t.Fatalf("should not have filed... %+v", err)
 			}
 
-			actual, err := parser.parse()
+			actual, _, err := parser.parse()
 			if err != nil {
 				t.Fatalf("failed to parse java archive: %+v", err)
 			}
@@ -507,7 +507,7 @@ func TestParseNestedJar(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseJavaArchive(fixture.Name(), fixture)
+			actual, _, err := parseJavaArchive(fixture.Name(), fixture)
 			if err != nil {
 				t.Fatalf("failed to parse java archive: %+v", err)
 			}

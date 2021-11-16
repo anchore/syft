@@ -9,7 +9,6 @@ import (
 
 func TestFingerprint(t *testing.T) {
 	originalPkg := Package{
-		ID:      "π",
 		Name:    "pi",
 		Version: "3.14",
 		FoundBy: "Archimedes",
@@ -190,10 +189,10 @@ func TestFingerprint(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			transformedPkg := test.transform(originalPkg)
-			originalFingerprint, err := originalPkg.Fingerprint()
-			assert.NoError(t, err, "expected no error on package fingerprint")
-			transformedFingerprint, err := transformedPkg.Fingerprint()
-			assert.NoError(t, err, "expected no error on package fingerprint")
+			originalFingerprint := originalPkg.ID()
+			assert.NotEmpty(t, originalFingerprint)
+			transformedFingerprint := transformedPkg.ID()
+			assert.NotEmpty(t, transformedFingerprint)
 
 			if test.expectIdentical {
 				assert.Equal(t, originalFingerprint, transformedFingerprint)

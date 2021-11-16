@@ -256,7 +256,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 	return results
 }
 
-func formatSPDXExternalRefs(p *pkg.Package) (refs []*spdx.PackageExternalReference2_2) {
+func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReference2_2) {
 	for _, ref := range spdxhelpers.ExternalRefs(p) {
 		refs = append(refs, &spdx.PackageExternalReference2_2{
 			Category:           string(ref.ReferenceCategory),

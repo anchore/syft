@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -15,7 +16,7 @@ var _ common.ParserFn = parseRequirementsTxt
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make([]pkg.Package, 0)
 
 	scanner := bufio.NewScanner(reader)
@@ -55,10 +56,10 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to parse python requirements file: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse python requirements file: %w", err)
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }
 
 // removeTrailingComment takes a requirements.txt line and strips off comment strings.

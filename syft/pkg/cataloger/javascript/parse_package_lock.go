@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -28,11 +29,11 @@ type Dependency struct {
 }
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
-func parsePackageLock(path string, reader io.Reader) ([]pkg.Package, error) {
+func parsePackageLock(path string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the root project
 	if pathContainsNodeModulesDirectory(path) {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var packages []pkg.Package
@@ -43,7 +44,7 @@ func parsePackageLock(path string, reader io.Reader) ([]pkg.Package, error) {
 		if err := dec.Decode(&lock); err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)
 		}
 		for name, pkgMeta := range lock.Dependencies {
 			packages = append(packages, pkg.Package{
@@ -55,5 +56,5 @@ func parsePackageLock(path string, reader io.Reader) ([]pkg.Package, error) {
 		}
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }

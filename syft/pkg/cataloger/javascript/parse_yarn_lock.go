@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -34,11 +35,11 @@ const (
 	noVersion = ""
 )
 
-func parseYarnLock(path string, reader io.Reader) ([]pkg.Package, error) {
+func parseYarnLock(path string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
 	if pathContainsNodeModulesDirectory(path) {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var packages []pkg.Package
@@ -79,10 +80,10 @@ func parseYarnLock(path string, reader io.Reader) ([]pkg.Package, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }
 
 func findPackageName(line string) string {

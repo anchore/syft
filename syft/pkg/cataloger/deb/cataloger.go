@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -36,24 +37,23 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
+func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDBGlob)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find dpkg status files's by glob: %w", err)
+		return nil, nil, fmt.Errorf("failed to find dpkg status files's by glob: %w", err)
 	}
 
-	var results []pkg.Package
-	var pkgs []pkg.Package
+	var allPackages []pkg.Package
 	for _, dbLocation := range dbFileMatches {
 		dbContents, err := resolver.FileContentsByLocation(dbLocation)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		pkgs, err = parseDpkgStatus(dbContents)
+		pkgs, err := parseDpkgStatus(dbContents)
 		internal.CloseAndLogError(dbContents, dbLocation.VirtualPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.RealPath, err)
+			return nil, nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.RealPath, err)
 		}
 
 		for i := range pkgs {
@@ -70,9 +70,9 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 			addLicenses(resolver, dbLocation, p)
 		}
 
-		results = append(results, pkgs...)
+		allPackages = append(allPackages, pkgs...)
 	}
-	return results, nil
+	return allPackages, nil, nil
 }
 
 func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {

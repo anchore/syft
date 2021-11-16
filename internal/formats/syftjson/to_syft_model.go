@@ -61,7 +61,6 @@ func toSyftPackage(p model.Package) pkg.Package {
 	}
 
 	return pkg.Package{
-		ID:           pkg.ID(p.ID),
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,

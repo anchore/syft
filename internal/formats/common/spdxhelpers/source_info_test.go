@@ -139,7 +139,7 @@ func Test_SourceInfo(t *testing.T) {
 			if test.input.Type != "" {
 				pkgTypes = append(pkgTypes, test.input.Type)
 			}
-			actual := SourceInfo(&test.input)
+			actual := SourceInfo(test.input)
 			for _, expected := range test.expected {
 				assert.Contains(t, actual, expected)
 			}

@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -19,7 +20,7 @@ var _ common.ParserFn = parseSetup
 //		" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
 var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w\.]*)`)
 
-func parseSetup(_ string, reader io.Reader) ([]pkg.Package, error) {
+func parseSetup(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make([]pkg.Package, 0)
 
 	scanner := bufio.NewScanner(reader)
@@ -46,5 +47,5 @@ func parseSetup(_ string, reader io.Reader) ([]pkg.Package, error) {
 		}
 	}
 
-	return packages, nil
+	return packages, nil, nil
 }

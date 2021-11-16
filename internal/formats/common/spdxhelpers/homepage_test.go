@@ -50,7 +50,7 @@ func Test_Homepage(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Homepage(&test.input))
+			assert.Equal(t, test.expected, Homepage(test.input))
 		})
 	}
 }

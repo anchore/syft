@@ -21,7 +21,7 @@ type JavaMetadata struct {
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty"`
 	PomProject    *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
-	Parent        *Package       `json:"-"`
+	Parent        *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
 
 // PomProperties represents the fields of interest extracted from a Java archive's pom.properties file.

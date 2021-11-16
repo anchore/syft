@@ -9,11 +9,11 @@ import (
 )
 
 func TestNpmPackageLockDirectory(t *testing.T) {
-	catalog, _, _ := catalogDirectory(t, "test-fixtures/npm-lock")
+	sbom, _ := catalogDirectory(t, "test-fixtures/npm-lock")
 
 	foundPackages := internal.NewStringSet()
 
-	for actualPkg := range catalog.Enumerate(pkg.NpmPkg) {
+	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.NpmPkg) {
 		for _, actualLocation := range actualPkg.Locations {
 			if strings.Contains(actualLocation.RealPath, "node_modules") {
 				t.Errorf("found packages from package-lock.json in node_modules: %s", actualLocation)
@@ -30,11 +30,11 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 }
 
 func TestYarnPackageLockDirectory(t *testing.T) {
-	catalog, _, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
+	sbom, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
 
 	foundPackages := internal.NewStringSet()
 
-	for actualPkg := range catalog.Enumerate(pkg.NpmPkg) {
+	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.NpmPkg) {
 		for _, actualLocation := range actualPkg.Locations {
 			if strings.Contains(actualLocation.RealPath, "node_modules") {
 				t.Errorf("found packages from yarn.lock in node_modules: %s", actualLocation)

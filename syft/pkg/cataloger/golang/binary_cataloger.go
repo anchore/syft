@@ -6,7 +6,10 @@ package golang
 import (
 	"fmt"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -35,17 +38,18 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error) {
-	pkgs := make([]pkg.Package, 0)
+func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
+
 	fileMatches, err := resolver.FilesByMIMEType(mimeTypes...)
 	if err != nil {
-		return pkgs, fmt.Errorf("failed to find bin by mime types: %w", err)
+		return pkgs, nil, fmt.Errorf("failed to find bin by mime types: %w", err)
 	}
 
 	for _, location := range fileMatches {
 		r, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			return pkgs, fmt.Errorf("failed to resolve file contents by location: %w", err)
+			return pkgs, nil, fmt.Errorf("failed to resolve file contents by location: %w", err)
 		}
 
 		goPkgs, err := parseGoBin(location, r)
@@ -53,9 +57,9 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, error)
 			log.Warnf("could not parse possible go binary: %+v", err)
 		}
 
-		r.Close()
+		internal.CloseAndLogError(r, location.RealPath)
 		pkgs = append(pkgs, goPkgs...)
 	}
 
-	return pkgs, nil
+	return pkgs, nil, nil
 }

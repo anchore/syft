@@ -23,9 +23,7 @@ func parseGoBin(location source.Location, reader io.ReadCloser) ([]pkg.Package, 
 
 	goVersion, mod := findVers(x)
 
-	pkgs := buildGoPkgInfo(location, mod, goVersion)
-
-	return pkgs, nil
+	return buildGoPkgInfo(location, mod, goVersion), nil
 }
 
 func buildGoPkgInfo(location source.Location, mod, goVersion string) []pkg.Package {

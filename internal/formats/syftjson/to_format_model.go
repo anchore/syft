@@ -3,6 +3,8 @@ package syftjson
 import (
 	"fmt"
 
+	"github.com/anchore/syft/syft/artifact"
+
 	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/syft/internal"
@@ -23,7 +25,7 @@ func ToFormatModel(s sbom.SBOM, applicationConfig interface{}) model.Document {
 
 	return model.Document{
 		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
-		ArtifactRelationships: toRelationshipModel(pkg.NewRelationships(s.Artifacts.PackageCatalog)),
+		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Source:                src,
 		Distro:                toDistroModel(s.Artifacts.Distro),
 		Descriptor: model.Descriptor{
@@ -50,7 +52,7 @@ func toPackageModels(catalog *pkg.Catalog) []model.Package {
 }
 
 // toPackageModel crates a new Package from the given pkg.Package.
-func toPackageModel(p *pkg.Package) model.Package {
+func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
 		cpes[i] = c.BindToFmtString()
@@ -69,7 +71,7 @@ func toPackageModel(p *pkg.Package) model.Package {
 
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
-			ID:        string(p.ID),
+			ID:        string(p.ID()),
 			Name:      p.Name,
 			Version:   p.Version,
 			Type:      p.Type,
@@ -87,14 +89,14 @@ func toPackageModel(p *pkg.Package) model.Package {
 	}
 }
 
-func toRelationshipModel(relationships []pkg.Relationship) []model.Relationship {
+func toRelationshipModel(relationships []artifact.Relationship) []model.Relationship {
 	result := make([]model.Relationship, len(relationships))
 	for i, r := range relationships {
 		result[i] = model.Relationship{
-			Parent:   string(r.Parent),
-			Child:    string(r.Child),
+			Parent:   string(r.From.ID()),
+			Child:    string(r.To.ID()),
 			Type:     string(r.Type),
-			Metadata: r.Metadata,
+			Metadata: r.Data,
 		}
 	}
 	return result
