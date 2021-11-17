@@ -8,8 +8,9 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
 )
+
+var _ hashstructure.Hashable = (*Location)(nil)
 
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
 // in content fetching to uniquely identify a file relative to a request (the VirtualPath).
@@ -17,12 +18,6 @@ type Location struct {
 	Coordinates
 	VirtualPath string         // The path to the file which may or may not have hardlinks / symlinks
 	ref         file.Reference // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
-}
-
-// Coordinates contains the minimal information needed to describe how to find a file within any possible source object (e.g. image and directory sources)
-type Coordinates struct {
-	RealPath     string `json:"path"`              // The path where all path ancestors have no hardlinks / symlinks
-	FileSystemID string `json:"layerID,omitempty"` // An ID representing the filesystem. For container images this is a layer digest, directories or root filesystem this is blank.
 }
 
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
@@ -102,26 +97,7 @@ func (l Location) String() string {
 }
 
 func (l Location) Hash() (uint64, error) {
-	// Location hash should be a pass-through for the coordinates and not include ref or VirtualPath.
+	// since location is part of the package definition it is important that only coordinates are used during object
+	// hashing. (Location hash should be a pass-through for the coordinates and not include ref or VirtualPath.)
 	return hashstructure.Hash(l.ID(), hashstructure.FormatV2, nil)
-}
-
-func (c Coordinates) ID() artifact.ID {
-	f, err := artifact.IDFromHash(c)
-	if err != nil {
-		// TODO: what to do in this case?
-		log.Warnf("unable to get fingerprint of location coordinate=%+v: %+v", c, err)
-		return ""
-	}
-
-	return f
-}
-
-func (c Coordinates) String() string {
-	str := fmt.Sprintf("RealPath=%q", c.RealPath)
-
-	if c.FileSystemID != "" {
-		str += fmt.Sprintf(" Layer=%q", c.FileSystemID)
-	}
-	return fmt.Sprintf("Location<%s>", str)
 }
