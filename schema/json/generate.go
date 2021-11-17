@@ -12,7 +12,7 @@ import (
 
 	"github.com/alecthomas/jsonschema"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/presenter/poweruser"
+	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -48,7 +48,7 @@ func build() *jsonschema.Schema {
 			return strings.TrimPrefix(r.Name(), "JSON")
 		},
 	}
-	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&poweruser.JSONDocument{}))
+	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftjsonModel.Document{}))
 	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&artifactMetadataContainer{}))
 
 	// TODO: inject source definitions
