@@ -133,8 +133,16 @@ func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationsh
 			continue
 		}
 
-		if string(relationship.To.ID()) == packageSpdxID {
-			fileIDs = append(fileIDs, string(relationship.From.ID()))
+		if _, ok := relationship.From.(pkg.Package); !ok {
+			continue
+		}
+
+		if _, ok := relationship.To.(source.Coordinates); !ok {
+			continue
+		}
+
+		if string(relationship.From.ID()) == packageSpdxID {
+			fileIDs = append(fileIDs, string(relationship.To.ID()))
 		}
 	}
 	return fileIDs
