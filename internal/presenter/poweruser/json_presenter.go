@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/anchore/syft/internal/formats/syftjson"
+
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -23,11 +25,7 @@ func NewJSONPresenter(s sbom.SBOM, appConfig interface{}) *JSONPresenter {
 
 // Present the PackageCatalog results to the given writer.
 func (p *JSONPresenter) Present(output io.Writer) error {
-	doc, err := NewJSONDocument(p.sbom, p.config)
-	if err != nil {
-		return err
-	}
-
+	doc := syftjson.ToFormatModel(p.sbom, p.config)
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload
 	enc.SetEscapeHTML(false)
