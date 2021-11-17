@@ -129,7 +129,7 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 
 func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationship) (fileIDs []string) {
 	for _, relationship := range relationships {
-		if relationship.Type != artifact.PackageOfRelationship {
+		if relationship.Type != artifact.ContainsRelationship {
 			continue
 		}
 
@@ -252,8 +252,8 @@ func toRelationships(relationships []artifact.Relationship) (result []model.Rela
 
 func lookupRelationship(ty artifact.RelationshipType) (bool, model.RelationshipType, string) {
 	switch ty {
-	case artifact.PackageOfRelationship:
-		return true, model.PackageOfRelationship, ""
+	case artifact.ContainsRelationship:
+		return true, model.ContainsRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, model.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
 	}

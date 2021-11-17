@@ -119,9 +119,9 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathRe
 
 		for _, l := range locations {
 			relationships = append(relationships, artifact.Relationship{
-				From: l.Coordinates,
-				To:   p,
-				Type: artifact.PackageOfRelationship,
+				From: p,
+				To:   l.Coordinates,
+				Type: artifact.ContainsRelationship,
 			})
 		}
 	}

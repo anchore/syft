@@ -7,9 +7,8 @@ const (
 	// has been completed.
 	OwnershipByFileOverlapRelationship RelationshipType = "ownership-by-file-overlap"
 
-	// PackageOfRelationship (supports any-to-package linkages) is a proxy for the SPDX 2.2 PACKAGE_OF
-	// relationship which is defined as: "to be used when artifact X is used as a package as part of package Y"
-	PackageOfRelationship RelationshipType = "package-of"
+	// ContainsRelationship (supports any-to-any linkages) is a proxy for the SPDX 2.2 CONTAINS relationship.
+	ContainsRelationship RelationshipType = "contains"
 )
 
 type RelationshipType string
