@@ -24,7 +24,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, test.fixture)
 
-			p := syftjson.Format().Presenter(sbom)
+			p := syftjson.Format().Presenter(sbom, nil)
 			if p == nil {
 				t.Fatal("unable to get presenter")
 			}

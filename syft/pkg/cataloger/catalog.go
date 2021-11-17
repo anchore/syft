@@ -113,9 +113,9 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathRe
 			return nil, fmt.Errorf("unable to find path for path=%q: %w", path, err)
 		}
 
-		//if len(locations) == 0 {
+		// if len(locations) == 0 {
 		//	// TODO: this is notable, we should at least log it(?)... however, ideally there is something in the SBOM about this
-		//}
+		// }
 
 		for _, l := range locations {
 			relationships = append(relationships, artifact.Relationship{

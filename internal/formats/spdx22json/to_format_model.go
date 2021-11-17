@@ -155,16 +155,7 @@ func toFiles(s sbom.SBOM) []model.File {
 			digests = digestsForLocation
 		}
 
-		// TODO: these could make it into the document
-		//var classifications []file.Classification
-		//if classificationsForLocation, exists := artifacts.FileClassifications[coordinates]; exists {
-		//	classifications = classificationsForLocation
-		//}
-		//
-		//var contents string
-		//if contentsForLocation, exists := artifacts.FileContents[coordinates]; exists {
-		//	contents = contentsForLocation
-		//}
+		// TODO: add file classifications (?) and content as a snippet
 
 		var comment string
 		if coordinates.FileSystemID != "" {
