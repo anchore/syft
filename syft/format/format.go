@@ -29,11 +29,11 @@ func NewFormat(option Option, encoder Encoder, decoder Decoder, validator Valida
 	}
 }
 
-func (f Format) Encode(output io.Writer, s sbom.SBOM) error {
+func (f Format) Encode(output io.Writer, s sbom.SBOM, appConfig interface{}) error {
 	if f.encoder == nil {
 		return ErrEncodingNotSupported
 	}
-	return f.encoder(output, s)
+	return f.encoder(output, s, appConfig)
 }
 
 func (f Format) Decode(reader io.Reader) (*sbom.SBOM, error) {
@@ -51,9 +51,9 @@ func (f Format) Validate(reader io.Reader) error {
 	return f.validator(reader)
 }
 
-func (f Format) Presenter(s sbom.SBOM) *Presenter {
+func (f Format) Presenter(s sbom.SBOM, appConfig interface{}) *Presenter {
 	if f.encoder == nil {
 		return nil
 	}
-	return NewPresenter(f.encoder, s)
+	return NewPresenter(f.encoder, s, appConfig)
 }

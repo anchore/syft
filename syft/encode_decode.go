@@ -12,14 +12,14 @@ import (
 )
 
 // Encode takes all SBOM elements and a format option and encodes an SBOM document.
-func Encode(s sbom.SBOM, option format.Option) ([]byte, error) {
+func Encode(s sbom.SBOM, appConfig interface{}, option format.Option) ([]byte, error) {
 	f := formats.ByOption(option)
 	if f == nil {
 		return nil, fmt.Errorf("unsupported format: %+v", option)
 	}
 	buff := bytes.Buffer{}
 
-	if err := f.Encode(&buff, s); err != nil {
+	if err := f.Encode(&buff, s, appConfig); err != nil {
 		return nil, fmt.Errorf("unable to encode sbom: %w", err)
 	}
 

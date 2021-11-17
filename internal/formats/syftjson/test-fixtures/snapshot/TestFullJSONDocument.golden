@@ -1,0 +1,185 @@
+{
+ "artifacts": [
+  {
+   "id": "962403cfb7be50d7",
+   "name": "package-1",
+   "version": "1.0.1",
+   "type": "python",
+   "foundBy": "the-cataloger-1",
+   "locations": [
+    {
+     "path": "/a/place/a"
+    }
+   ],
+   "licenses": [
+    "MIT"
+   ],
+   "language": "python",
+   "cpes": [
+    "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
+   ],
+   "purl": "a-purl-1",
+   "metadataType": "PythonPackageMetadata",
+   "metadata": {
+    "name": "package-1",
+    "version": "1.0.1",
+    "license": "",
+    "author": "",
+    "authorEmail": "",
+    "platform": "",
+    "sitePackagesRootPath": ""
+   }
+  },
+  {
+   "id": "b11f44847bba0ed1",
+   "name": "package-2",
+   "version": "2.0.1",
+   "type": "deb",
+   "foundBy": "the-cataloger-2",
+   "locations": [
+    {
+     "path": "/b/place/b"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+   ],
+   "purl": "a-purl-2",
+   "metadataType": "DpkgMetadata",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "sourceVersion": "",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": []
+   }
+  }
+ ],
+ "artifactRelationships": [
+  {
+   "parent": "962403cfb7be50d7",
+   "child": "b11f44847bba0ed1",
+   "type": "ownership-by-file-overlap",
+   "metadata": {
+    "file": "path"
+   }
+  }
+ ],
+ "files": [
+  {
+   "id": "913b4592e2c2ebdf",
+   "location": {
+    "path": "/a/place"
+   },
+   "metadata": {
+    "mode": 775,
+    "type": "directory",
+    "userID": 0,
+    "groupID": 0,
+    "mimeType": ""
+   }
+  },
+  {
+   "id": "e7c88bd18e11b0b",
+   "location": {
+    "path": "/a/place/a"
+   },
+   "metadata": {
+    "mode": 775,
+    "type": "regularFile",
+    "userID": 0,
+    "groupID": 0,
+    "mimeType": ""
+   },
+   "contents": "the-contents",
+   "digests": [
+    {
+     "algorithm": "sha256",
+     "value": "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703"
+    }
+   ]
+  },
+  {
+   "id": "5c3dc6885f48b5a1",
+   "location": {
+    "path": "/b"
+   },
+   "metadata": {
+    "mode": 775,
+    "type": "symbolicLink",
+    "linkDestination": "/c",
+    "userID": 0,
+    "groupID": 0,
+    "mimeType": ""
+   }
+  },
+  {
+   "id": "799d2f12da0bcec4",
+   "location": {
+    "path": "/b/place/b"
+   },
+   "metadata": {
+    "mode": 644,
+    "type": "regularFile",
+    "userID": 1,
+    "groupID": 2,
+    "mimeType": ""
+   },
+   "digests": [
+    {
+     "algorithm": "sha256",
+     "value": "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c"
+    }
+   ]
+  }
+ ],
+ "source": {
+  "type": "image",
+  "target": {
+   "userInput": "user-image-input",
+   "imageID": "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+   "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+   "tags": [
+    "stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b"
+   ],
+   "imageSize": 38,
+   "layers": [
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",
+     "size": 22
+    },
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
+     "size": 16
+    }
+   ],
+   "manifest": "ZXlKelkyaGxiV0ZXWlhKemFXOXVJam95TENKdFpXUnBZVlI1Y0dVaU9pSmguLi4=",
+   "config": "ZXlKaGNtTm9hWFJsWTNSMWNtVWlPaUpoYldRMk5DSXNJbU52Ym1acC4uLg==",
+   "repoDigests": []
+  }
+ },
+ "distro": {
+  "name": "redhat",
+  "version": "7",
+  "idLike": "rhel"
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "[not provided]",
+  "configuration": {
+   "app": "config"
+  }
+ },
+ "schema": {
+  "version": "2.0.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.0.json"
+ }
+}

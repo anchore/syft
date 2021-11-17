@@ -1,6 +1,8 @@
 package cataloger
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -43,6 +45,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 
+	// TODO: update to show relationships
 	filesProcessed, packagesDiscovered := newMonitor()
 
 	// perform analysis, accumulating errors for each failed analysis
@@ -57,6 +60,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 
 		catalogedPackages := len(packages)
 
+		// TODO: update to show relationships and files
 		log.Debugf("package cataloger %q discovered %d packages", theCataloger.Name(), catalogedPackages)
 		packagesDiscovered.N += int64(catalogedPackages)
 
@@ -66,6 +70,15 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 
 			// generate PURL
 			p.PURL = generatePackageURL(p, theDistro)
+
+			// TODO: break out into another function (refactor this function)
+			// create file-to-package relationships for files owned by the package
+			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
+			if err != nil {
+				log.Warnf("unable to create any package-file relationships for package name=%q: %w", p.Name, err)
+			} else {
+				allRelationships = append(allRelationships, owningRelationships...)
+			}
 
 			// add to catalog
 			catalog.Add(p)
@@ -84,4 +97,34 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 	packagesDiscovered.SetCompleted()
 
 	return catalog, allRelationships, nil
+}
+
+func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathResolver) ([]artifact.Relationship, error) {
+	fileOwner, ok := p.Metadata.(pkg.FileOwner)
+	if !ok {
+		return nil, nil
+	}
+
+	var relationships []artifact.Relationship
+
+	for _, path := range fileOwner.OwnedFiles() {
+		locations, err := resolver.FilesByPath(path)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find path for path=%q: %w", path, err)
+		}
+
+		//if len(locations) == 0 {
+		//	// TODO: this is notable, we should at least log it(?)... however, ideally there is something in the SBOM about this
+		//}
+
+		for _, l := range locations {
+			relationships = append(relationships, artifact.Relationship{
+				From: l.Coordinates,
+				To:   p,
+				Type: artifact.PackageOfRelationship,
+			})
+		}
+	}
+
+	return relationships, nil
 }

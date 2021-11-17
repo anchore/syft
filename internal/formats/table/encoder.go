@@ -11,7 +11,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func encoder(output io.Writer, s sbom.SBOM) error {
+func encoder(output io.Writer, s sbom.SBOM, _ interface{}) error {
 	var rows [][]string
 
 	columns := []string{"Name", "Version", "Type"}

@@ -31,14 +31,18 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 
 			originalSBOM, _ := catalogFixtureImage(t, "image-pkg-coverage")
 
-			by1, err := syft.Encode(originalSBOM, test.format)
+			appConfig := map[string]string{
+				"config": "value",
+			}
+
+			by1, err := syft.Encode(originalSBOM, appConfig, test.format)
 			assert.NoError(t, err)
 
 			newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
 			assert.NoError(t, err)
 			assert.Equal(t, test.format, newFormat)
 
-			by2, err := syft.Encode(*newSBOM, test.format)
+			by2, err := syft.Encode(*newSBOM, appConfig, test.format)
 			assert.NoError(t, err)
 
 			if !assert.True(t, bytes.Equal(by1, by2)) {

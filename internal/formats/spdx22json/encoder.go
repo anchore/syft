@@ -9,7 +9,7 @@ import (
 
 const anchoreNamespace = "https://anchore.com/syft"
 
-func encoder(output io.Writer, s sbom.SBOM) error {
+func encoder(output io.Writer, s sbom.SBOM, _ interface{}) error {
 	doc := toFormatModel(s)
 
 	enc := json.NewEncoder(output)

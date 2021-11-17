@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/anchore/syft/internal/formats/syftjson"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/gookit/color"
 
@@ -13,7 +15,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
@@ -139,7 +140,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: poweruser.NewJSONPresenter(s, *appConfig),
+			Value: syftjson.Format().Presenter(s, *appConfig),
 		})
 	}()
 

@@ -7,9 +7,9 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func encoder(output io.Writer, s sbom.SBOM) error {
+func encoder(output io.Writer, s sbom.SBOM, appConfig interface{}) error {
 	// TODO: application config not available yet
-	doc := ToFormatModel(s, nil)
+	doc := ToFormatModel(s, appConfig)
 
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload

@@ -12,7 +12,7 @@ var updateCycloneDx = flag.Bool("update-cyclonedx", false, "update the *.golden 
 
 func TestCycloneDxDirectoryPresenter(t *testing.T) {
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t)),
+		Format().Presenter(testutils.DirectoryInput(t), nil),
 		*updateCycloneDx,
 		cycloneDxRedactor,
 	)
@@ -21,7 +21,7 @@ func TestCycloneDxDirectoryPresenter(t *testing.T) {
 func TestCycloneDxImagePresenter(t *testing.T) {
 	testImage := "image-simple"
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage)),
+		Format().Presenter(testutils.ImageInput(t, testImage), nil),
 		testImage,
 		*updateCycloneDx,
 		cycloneDxRedactor,
