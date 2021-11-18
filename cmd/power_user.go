@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/gookit/color"
 
 	"github.com/anchore/syft/syft/sbom"
 
@@ -71,9 +70,6 @@ func init() {
 
 func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
-	color.Style{color.Red, color.OpBold}.Println("DEPRECATED: power-user command will be removed in v1.0.0")
-	// io.WriteString(os.Stdout, fmt.Sprintln(deprecated))
-
 	userInput := args[0]
 
 	reporter, closer, err := reportWriter()
@@ -100,6 +96,10 @@ func powerUserExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
+		appConfig.Secrets.Cataloger.Enabled = true
+		appConfig.FileMetadata.Cataloger.Enabled = true
+		appConfig.FileContents.Cataloger.Enabled = true
+		appConfig.FileClassification.Cataloger.Enabled = true
 		tasks, err := tasks()
 		if err != nil {
 			errs <- err
