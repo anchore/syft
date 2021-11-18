@@ -4,28 +4,43 @@ import (
 	"crypto"
 	"fmt"
 
-	"github.com/anchore/syft/syft/artifact"
-
-	"github.com/anchore/syft/syft/sbom"
-
+	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-type task func(*sbom.Artifacts, *source.Source) error
+type task func(*sbom.Artifacts, *source.Source) ([]artifact.Relationship, error)
 
-func defaultTasks() ([]task, error) {
+func tasks(appConfig *config.Application) ([]task, error) {
 	var tasks []task
 
 	generators := []func() (task, error){
 		catalogPackagesTask,
-		catalogFileMetadataTask,
-		catalogFileDigestsTask,
-		catalogSecretsTask,
-		catalogFileClassificationsTask,
-		catalogContentsTask,
+		// catalogFileMetadataTask,
+		// catalogFileDigestsTask,
+		// catalogSecretsTask,
+		// catalogFileClassificationsTask,
+		// catalogContentsTask,
+	}
+
+	if appConfig.FileClassification.Cataloger.Enabled {
+		generators = append(generators, catalogFileClassificationsTask)
+	}
+
+	if appConfig.FileMetadata.Cataloger.Enabled {
+		generators = append(generators, catalogFileMetadataTask)
+		generators = append(generators, catalogFileDigestsTask)
+	}
+
+	if appConfig.FileContents.Cataloger.Enabled {
+		generators = append(generators, catalogContentsTask)
+	}
+
+	if appConfig.Secrets.Cataloger.Enabled {
+		generators = append(generators, catalogSecretsTask)
 	}
 
 	for _, generator := range generators {

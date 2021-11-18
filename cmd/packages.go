@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
@@ -238,7 +239,7 @@ func packagesExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
-		tasks, err := defaultTasks()
+		tasks, err := tasks(appConfig)
 		if err != nil {
 			errs <- err
 			return
@@ -263,19 +264,17 @@ func packagesExecWorker(userInput string) <-chan error {
 			Source: src.Metadata,
 		}
 
-		wg := &sync.WaitGroup{}
-		for _, t := range tasks {
-			wg.Add(1)
-			go func(t task) {
-				defer wg.Done()
-				if err = t(&s.Artifacts, src); err != nil {
-					errs <- err
-					return
-				}
-			}(t)
+		var results []<-chan artifact.Relationship
+		for _, task := range tasks {
+			c := make(chan artifact.Relationship)
+			results = append(results, c)
+
+			go runTask(task, &s.Artifacts, src, c, errs)
 		}
 
-		wg.Wait()
+		for relationship := range mergeResults(results...) {
+			s.Relationships = append(s.Relationships, relationship)
+		}
 
 		if appConfig.Anchore.Host != "" {
 			if err := runPackageSbomUpload(src, s); err != nil {
@@ -290,6 +289,41 @@ func packagesExecWorker(userInput string) <-chan error {
 		})
 	}()
 	return errs
+}
+
+func runTask(t task, a *sbom.Artifacts, src *source.Source, c chan<- artifact.Relationship, errs chan<- error) {
+	defer close(c)
+
+	relationships, err := t(a, src)
+	if err != nil {
+		errs <- err
+		return
+	}
+
+	for _, relationship := range relationships {
+		c <- relationship
+	}
+}
+
+func mergeResults(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
+	var wg sync.WaitGroup
+	var results = make(chan artifact.Relationship)
+
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go func(c <-chan artifact.Relationship) {
+			for n := range c {
+				results <- n
+			}
+			wg.Done()
+		}(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+	return results
 }
 
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {
