@@ -11,27 +11,15 @@ import (
 var catalogAddAndRemoveTestPkgs = []Package{
 	{
 		Locations: []source.Location{
-			{
-				RealPath:    "/a/path",
-				VirtualPath: "/another/path",
-			},
-			{
-				RealPath:    "/b/path",
-				VirtualPath: "/bee/path",
-			},
+			source.NewVirtualLocation("/a/path", "/another/path"),
+			source.NewVirtualLocation("/b/path", "/bee/path"),
 		},
 		Type: RpmPkg,
 	},
 	{
 		Locations: []source.Location{
-			{
-				RealPath:    "/c/path",
-				VirtualPath: "/another/path",
-			},
-			{
-				RealPath:    "/d/path",
-				VirtualPath: "/another/path",
-			},
+			source.NewVirtualLocation("/c/path", "/another/path"),
+			source.NewVirtualLocation("/d/path", "/another/path"),
 		},
 		Type: NpmPkg,
 	},
@@ -118,14 +106,8 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 	p1 := Package{
 		Locations: []source.Location{
-			{
-				RealPath:    "/b/path",
-				VirtualPath: "/another/path",
-			},
-			{
-				RealPath:    "/b/path",
-				VirtualPath: "/b/path",
-			},
+			source.NewVirtualLocation("/b/path", "/another/path"),
+			source.NewVirtualLocation("/b/path", "/b/path"),
 		},
 		Type: RpmPkg,
 		Name: "Package-1",
@@ -133,10 +115,7 @@ func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 
 	p2 := Package{
 		Locations: []source.Location{
-			{
-				RealPath:    "/b/path",
-				VirtualPath: "/b/path",
-			},
+			source.NewVirtualLocation("/b/path", "/b/path"),
 		},
 		Type: RpmPkg,
 		Name: "Package-2",

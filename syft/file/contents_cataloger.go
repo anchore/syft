@@ -23,8 +23,8 @@ func NewContentsCataloger(globs []string, skipFilesAboveSize int64) (*ContentsCa
 	}, nil
 }
 
-func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Location]string, error) {
-	results := make(map[source.Location]string)
+func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates]string, error) {
+	results := make(map[source.Coordinates]string)
 	var locations []source.Location
 
 	locations, err := resolver.FilesByGlob(i.globs...)
@@ -49,7 +49,7 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 		if err != nil {
 			return nil, err
 		}
-		results[location] = result
+		results[location.Coordinates] = result
 	}
 	log.Debugf("file contents cataloger processed %d files", len(results))
 

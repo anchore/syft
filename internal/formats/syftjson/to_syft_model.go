@@ -60,11 +60,16 @@ func toSyftPackage(p model.Package) pkg.Package {
 		cpes = append(cpes, value)
 	}
 
+	var locations = make([]source.Location, len(p.Locations))
+	for i, c := range p.Locations {
+		locations[i] = source.NewLocationFromCoordinates(c)
+	}
+
 	return pkg.Package{
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
-		Locations:    p.Locations,
+		Locations:    locations,
 		Licenses:     p.Licenses,
 		Language:     p.Language,
 		Type:         p.Type,

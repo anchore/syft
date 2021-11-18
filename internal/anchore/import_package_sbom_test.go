@@ -59,8 +59,10 @@ func TestPackageSbomToModel(t *testing.T) {
 		FoundBy: "foundBy",
 		Locations: []source.Location{
 			{
-				RealPath:     "path",
-				FileSystemID: "layerID",
+				Coordinates: source.Coordinates{
+					RealPath:     "path",
+					FileSystemID: "layerID",
+				},
 			},
 		},
 		Licenses: []string{"license"},
@@ -157,8 +159,10 @@ func TestPackageSbomImport(t *testing.T) {
 		FoundBy: "foundBy",
 		Locations: []source.Location{
 			{
-				RealPath:     "path",
-				FileSystemID: "layerID",
+				Coordinates: source.Coordinates{
+					RealPath:     "path",
+					FileSystemID: "layerID",
+				},
 			},
 		},
 		Licenses: []string{"license"},

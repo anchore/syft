@@ -19,14 +19,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
 				parent := Package{
 					Locations: []source.Location{
-						{
-							RealPath:    "/a/path",
-							VirtualPath: "/another/path",
-						},
-						{
-							RealPath:    "/b/path",
-							VirtualPath: "/bee/path",
-						},
+						source.NewVirtualLocation("/a/path", "/another/path"),
+						source.NewVirtualLocation("/b/path", "/bee/path"),
 					},
 					Type:         RpmPkg,
 					MetadataType: RpmdbMetadataType,
@@ -41,14 +35,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 
 				child := Package{
 					Locations: []source.Location{
-						{
-							RealPath:    "/c/path",
-							VirtualPath: "/another/path",
-						},
-						{
-							RealPath:    "/d/path",
-							VirtualPath: "/another/path",
-						},
+						source.NewVirtualLocation("/c/path", "/another/path"),
+						source.NewVirtualLocation("/d/path", "/another/path"),
 					},
 					Type: NpmPkg,
 				}
@@ -72,14 +60,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
 				parent := Package{
 					Locations: []source.Location{
-						{
-							RealPath:    "/a/path",
-							VirtualPath: "/some/other/path",
-						},
-						{
-							RealPath:    "/b/path",
-							VirtualPath: "/bee/path",
-						},
+						source.NewVirtualLocation("/a/path", "/some/other/path"),
+						source.NewVirtualLocation("/b/path", "/bee/path"),
 					},
 					Type:         RpmPkg,
 					MetadataType: RpmdbMetadataType,
@@ -94,14 +76,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 
 				child := Package{
 					Locations: []source.Location{
-						{
-							RealPath:    "/c/path",
-							VirtualPath: "/another/path",
-						},
-						{
-							RealPath:    "/d/path",
-							VirtualPath: "",
-						},
+						source.NewVirtualLocation("/c/path", "/another/path"),
+						source.NewLocation("/d/path"),
 					},
 					Type: NpmPkg,
 				}
@@ -124,14 +100,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
 				parent := Package{
 					Locations: []source.Location{
-						{
-							RealPath:    "/a/path",
-							VirtualPath: "/some/other/path",
-						},
-						{
-							RealPath:    "/b/path",
-							VirtualPath: "/bee/path",
-						},
+						source.NewVirtualLocation("/a/path", "/some/other/path"),
+						source.NewVirtualLocation("/b/path", "/bee/path"),
 					},
 					Type:         RpmPkg,
 					MetadataType: RpmdbMetadataType,
@@ -146,14 +116,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 
 				child := Package{
 					Locations: []source.Location{
-						{
-							RealPath:    "/c/path",
-							VirtualPath: "/another/path",
-						},
-						{
-							RealPath:    "/d/path",
-							VirtualPath: "",
-						},
+						source.NewVirtualLocation("/c/path", "/another/path"),
+						source.NewLocation("/d/path"),
 					},
 					Type: NpmPkg,
 				}

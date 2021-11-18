@@ -29,8 +29,8 @@ func NewDigestsCataloger(hashes []crypto.Hash) (*DigestsCataloger, error) {
 	}, nil
 }
 
-func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Location][]Digest, error) {
-	results := make(map[source.Location][]Digest)
+func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]Digest, error) {
+	results := make(map[source.Coordinates][]Digest)
 	var locations []source.Location
 	for location := range resolver.AllLocations() {
 		locations = append(locations, location)
@@ -48,7 +48,7 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Loc
 			return nil, err
 		}
 		prog.N++
-		results[location] = result
+		results[location.Coordinates] = result
 	}
 	log.Debugf("file digests cataloger processed %d files", prog.N)
 	prog.SetCompleted()

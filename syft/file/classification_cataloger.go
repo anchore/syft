@@ -15,8 +15,8 @@ func NewClassificationCataloger(classifiers []Classifier) (*ClassificationCatalo
 	}, nil
 }
 
-func (i *ClassificationCataloger) Catalog(resolver source.FileResolver) (map[source.Location][]Classification, error) {
-	results := make(map[source.Location][]Classification)
+func (i *ClassificationCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]Classification, error) {
+	results := make(map[source.Coordinates][]Classification)
 
 	numResults := 0
 	for location := range resolver.AllLocations() {
@@ -26,7 +26,7 @@ func (i *ClassificationCataloger) Catalog(resolver source.FileResolver) (map[sou
 				return nil, err
 			}
 			if result != nil {
-				results[location] = append(results[location], *result)
+				results[location.Coordinates] = append(results[location.Coordinates], *result)
 				numResults++
 			}
 		}

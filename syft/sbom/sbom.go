@@ -16,10 +16,10 @@ type SBOM struct {
 
 type Artifacts struct {
 	PackageCatalog      *pkg.Catalog
-	FileMetadata        map[source.Location]source.FileMetadata
-	FileDigests         map[source.Location][]file.Digest
-	FileClassifications map[source.Location][]file.Classification
-	FileContents        map[source.Location]string
-	Secrets             map[source.Location][]file.SearchResult
+	FileMetadata        map[source.Coordinates]source.FileMetadata
+	FileDigests         map[source.Coordinates][]file.Digest
+	FileClassifications map[source.Coordinates][]file.Classification
+	FileContents        map[source.Coordinates]string
+	Secrets             map[source.Coordinates][]file.SearchResult
 	Distro              *distro.Distro
 }
