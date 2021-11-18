@@ -198,11 +198,11 @@ func TestSecretsCataloger(t *testing.T) {
 			}
 
 			loc := source.NewLocation(test.fixture)
-			if _, exists := actualResults[loc]; !exists {
+			if _, exists := actualResults[loc.Coordinates]; !exists {
 				t.Fatalf("could not find location=%q in results", loc)
 			}
 
-			assert.Equal(t, test.expected, actualResults[loc], "mismatched secrets")
+			assert.Equal(t, test.expected, actualResults[loc.Coordinates], "mismatched secrets")
 		})
 	}
 }
@@ -432,13 +432,13 @@ j4f668YfhUbKdRF6S6734856
 			}
 
 			loc := source.NewLocation(test.fixture)
-			if _, exists := actualResults[loc]; !exists && test.expected != nil {
+			if _, exists := actualResults[loc.Coordinates]; !exists && test.expected != nil {
 				t.Fatalf("could not find location=%q in results", loc)
 			} else if !exists && test.expected == nil {
 				return
 			}
 
-			assert.Equal(t, test.expected, actualResults[loc], "mismatched secrets")
+			assert.Equal(t, test.expected, actualResults[loc.Coordinates], "mismatched secrets")
 		})
 	}
 }

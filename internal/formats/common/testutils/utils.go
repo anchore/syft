@@ -200,7 +200,7 @@ func newDirectoryCatalog() *pkg.Catalog {
 		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
 		Locations: []source.Location{
-			{RealPath: "/some/path/pkg1"},
+			source.NewLocation("/some/path/pkg1"),
 		},
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
@@ -225,7 +225,7 @@ func newDirectoryCatalog() *pkg.Catalog {
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
 		Locations: []source.Location{
-			{RealPath: "/some/path/pkg1"},
+			source.NewLocation("/some/path/pkg1"),
 		},
 		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{

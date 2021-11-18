@@ -37,7 +37,9 @@ func TestJSONPresenter(t *testing.T) {
 		Version: "1.0.1",
 		Locations: []source.Location{
 			{
-				RealPath: "/a/place/a",
+				Coordinates: source.Coordinates{
+					RealPath: "/a/place/a",
+				},
 			},
 		},
 		Type:         pkg.PythonPkg,
@@ -60,7 +62,9 @@ func TestJSONPresenter(t *testing.T) {
 		Version: "2.0.1",
 		Locations: []source.Location{
 			{
-				RealPath: "/b/place/b",
+				Coordinates: source.Coordinates{
+					RealPath: "/b/place/b",
+				},
 			},
 		},
 		Type:         pkg.DebPkg,
@@ -86,49 +90,49 @@ func TestJSONPresenter(t *testing.T) {
 	cfg := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			FileMetadata: map[source.Location]source.FileMetadata{
-				source.NewLocation("/a/place"): {
+			FileMetadata: map[source.Coordinates]source.FileMetadata{
+				source.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
 					Type:    "directory",
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/a/place/a"): {
+				source.NewLocation("/a/place/a").Coordinates: {
 					Mode:    0775,
 					Type:    "regularFile",
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/b"): {
+				source.NewLocation("/b").Coordinates: {
 					Mode:            0775,
 					Type:            "symbolicLink",
 					LinkDestination: "/c",
 					UserID:          0,
 					GroupID:         0,
 				},
-				source.NewLocation("/b/place/b"): {
+				source.NewLocation("/b/place/b").Coordinates: {
 					Mode:    0644,
 					Type:    "regularFile",
 					UserID:  1,
 					GroupID: 2,
 				},
 			},
-			FileDigests: map[source.Location][]file.Digest{
-				source.NewLocation("/a/place/a"): {
+			FileDigests: map[source.Coordinates][]file.Digest{
+				source.NewLocation("/a/place/a").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
 					},
 				},
-				source.NewLocation("/b/place/b"): {
+				source.NewLocation("/b/place/b").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c",
 					},
 				},
 			},
-			FileContents: map[source.Location]string{
-				source.NewLocation("/a/place/a"): "the-contents",
+			FileContents: map[source.Coordinates]string{
+				source.NewLocation("/a/place/a").Coordinates: "the-contents",
 			},
 			Distro: &distro.Distro{
 				Type:       distro.RedHat,

@@ -19,14 +19,8 @@ func Test_SourceInfo(t *testing.T) {
 			input: pkg.Package{
 				// note: no type given
 				Locations: []source.Location{
-					{
-						RealPath:    "/a-place",
-						VirtualPath: "/b-place",
-					},
-					{
-						RealPath:    "/c-place",
-						VirtualPath: "/d-place",
-					},
+					source.NewVirtualLocation("/a-place", "/b-place"),
+					source.NewVirtualLocation("/c-place", "/d-place"),
 				},
 			},
 			expected: []string{

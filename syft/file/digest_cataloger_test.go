@@ -16,8 +16,8 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func testDigests(t testing.TB, files []string, hashes ...crypto.Hash) map[source.Location][]Digest {
-	digests := make(map[source.Location][]Digest)
+func testDigests(t testing.TB, files []string, hashes ...crypto.Hash) map[source.Coordinates][]Digest {
+	digests := make(map[source.Coordinates][]Digest)
 
 	for _, f := range files {
 		fh, err := os.Open(f)
@@ -32,7 +32,7 @@ func testDigests(t testing.TB, files []string, hashes ...crypto.Hash) map[source
 		for _, hash := range hashes {
 			h := hash.New()
 			h.Write(b)
-			digests[source.NewLocation(f)] = append(digests[source.NewLocation(f)], Digest{
+			digests[source.NewLocation(f).Coordinates] = append(digests[source.NewLocation(f).Coordinates], Digest{
 				Algorithm: CleanDigestAlgorithmName(hash.String()),
 				Value:     fmt.Sprintf("%x", h.Sum(nil)),
 			})
@@ -49,7 +49,7 @@ func TestDigestsCataloger_SimpleContents(t *testing.T) {
 		name       string
 		digests    []crypto.Hash
 		files      []string
-		expected   map[source.Location][]Digest
+		expected   map[source.Coordinates][]Digest
 		catalogErr bool
 	}{
 		{
@@ -160,13 +160,13 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 			}
 			l := source.NewLocationFromImage(test.path, *ref, img)
 
-			if len(actual[l]) == 0 {
+			if len(actual[l.Coordinates]) == 0 {
 				if test.expected != "" {
 					t.Fatalf("no digest found, but expected one")
 				}
 
 			} else {
-				assert.Equal(t, actual[l][0].Value, test.expected, "mismatched digests")
+				assert.Equal(t, actual[l.Coordinates][0].Value, test.expected, "mismatched digests")
 			}
 		})
 	}

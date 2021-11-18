@@ -40,8 +40,8 @@ func NewSecretsCataloger(patterns map[string]*regexp.Regexp, revealValues bool, 
 	}, nil
 }
 
-func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Location][]SearchResult, error) {
-	results := make(map[source.Location][]SearchResult)
+func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]SearchResult, error) {
+	results := make(map[source.Coordinates][]SearchResult)
 	var locations []source.Location
 	for location := range resolver.AllLocations() {
 		locations = append(locations, location)
@@ -60,7 +60,7 @@ func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Loc
 		}
 		if len(result) > 0 {
 			secretsDiscovered.N += int64(len(result))
-			results[location] = result
+			results[location.Coordinates] = result
 		}
 		prog.N++
 	}

@@ -16,8 +16,8 @@ func NewMetadataCataloger() *MetadataCataloger {
 	return &MetadataCataloger{}
 }
 
-func (i *MetadataCataloger) Catalog(resolver source.FileResolver) (map[source.Location]source.FileMetadata, error) {
-	results := make(map[source.Location]source.FileMetadata)
+func (i *MetadataCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates]source.FileMetadata, error) {
+	results := make(map[source.Coordinates]source.FileMetadata)
 	var locations []source.Location
 	for location := range resolver.AllLocations() {
 		locations = append(locations, location)
@@ -30,7 +30,7 @@ func (i *MetadataCataloger) Catalog(resolver source.FileResolver) (map[source.Lo
 			return nil, err
 		}
 
-		results[location] = metadata
+		results[location.Coordinates] = metadata
 		prog.N++
 	}
 	log.Debugf("file metadata cataloger processed %d files", prog.N)

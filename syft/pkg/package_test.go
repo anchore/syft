@@ -14,9 +14,11 @@ func TestFingerprint(t *testing.T) {
 		FoundBy: "Archimedes",
 		Locations: []source.Location{
 			{
-				RealPath:     "39.0742° N, 21.8243° E",
-				VirtualPath:  "/Ancient-Greece",
-				FileSystemID: "Earth",
+				Coordinates: source.Coordinates{
+					RealPath:     "39.0742° N, 21.8243° E",
+					FileSystemID: "Earth",
+				},
+				VirtualPath: "/Ancient-Greece",
 			},
 		},
 		Licenses: []string{
