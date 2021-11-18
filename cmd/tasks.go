@@ -19,28 +19,11 @@ func tasks(appConfig *config.Application) ([]task, error) {
 
 	generators := []func() (task, error){
 		catalogPackagesTask,
-		// catalogFileMetadataTask,
-		// catalogFileDigestsTask,
-		// catalogSecretsTask,
-		// catalogFileClassificationsTask,
-		// catalogContentsTask,
-	}
-
-	if appConfig.FileClassification.Cataloger.Enabled {
-		generators = append(generators, catalogFileClassificationsTask)
-	}
-
-	if appConfig.FileMetadata.Cataloger.Enabled {
-		generators = append(generators, catalogFileMetadataTask)
-		generators = append(generators, catalogFileDigestsTask)
-	}
-
-	if appConfig.FileContents.Cataloger.Enabled {
-		generators = append(generators, catalogContentsTask)
-	}
-
-	if appConfig.Secrets.Cataloger.Enabled {
-		generators = append(generators, catalogSecretsTask)
+		catalogFileMetadataTask,
+		catalogFileDigestsTask,
+		catalogSecretsTask,
+		catalogFileClassificationsTask,
+		catalogContentsTask,
 	}
 
 	for _, generator := range generators {
