@@ -100,6 +100,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
+		appConfig.EnablePowerUser()
 		tasks, err := tasks()
 		if err != nil {
 			errs <- err
