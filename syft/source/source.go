@@ -198,7 +198,7 @@ func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func()
 
 	cleanupFn := func() {
 		if err := os.RemoveAll(tempDir); err != nil {
-			log.Errorf("unable to cleanup archive tempdir: %+v", err)
+			log.Warnf("unable to cleanup archive tempdir: %+v", err)
 		}
 	}
 
