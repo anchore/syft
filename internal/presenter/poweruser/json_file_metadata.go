@@ -11,7 +11,7 @@ import (
 )
 
 type JSONFileMetadata struct {
-	Location source.Location       `json:"location"`
+	Location source.Coordinates    `json:"location"`
 	Metadata JSONFileMetadataEntry `json:"metadata"`
 }
 
@@ -25,21 +25,21 @@ type JSONFileMetadataEntry struct {
 	MIMEType        string          `json:"mimeType"`
 }
 
-func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests map[source.Location][]file.Digest) ([]JSONFileMetadata, error) {
+func NewJSONFileMetadata(data map[source.Coordinates]source.FileMetadata, digests map[source.Coordinates][]file.Digest) ([]JSONFileMetadata, error) {
 	results := make([]JSONFileMetadata, 0)
-	for location, metadata := range data {
+	for coordinates, metadata := range data {
 		mode, err := strconv.Atoi(fmt.Sprintf("%o", metadata.Mode))
 		if err != nil {
-			return nil, fmt.Errorf("invalid mode found in file catalog @ location=%+v mode=%q: %w", location, metadata.Mode, err)
+			return nil, fmt.Errorf("invalid mode found in file catalog @ location=%+v mode=%q: %w", coordinates, metadata.Mode, err)
 		}
 
 		var digestResults []file.Digest
-		if digestsForLocation, exists := digests[location]; exists {
+		if digestsForLocation, exists := digests[coordinates]; exists {
 			digestResults = digestsForLocation
 		}
 
 		results = append(results, JSONFileMetadata{
-			Location: location,
+			Location: coordinates,
 			Metadata: JSONFileMetadataEntry{
 				Mode:            mode,
 				Type:            metadata.Type,
@@ -54,9 +54,6 @@ func NewJSONFileMetadata(data map[source.Location]source.FileMetadata, digests m
 
 	// sort by real path then virtual path to ensure the result is stable across multiple runs
 	sort.SliceStable(results, func(i, j int) bool {
-		if results[i].Location.RealPath == results[j].Location.RealPath {
-			return results[i].Location.VirtualPath < results[j].Location.VirtualPath
-		}
 		return results[i].Location.RealPath < results[j].Location.RealPath
 	})
 	return results, nil
