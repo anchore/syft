@@ -8,6 +8,7 @@ const (
 	TextOption          Option = "text"
 	TableOption         Option = "table"
 	CycloneDxOption     Option = "cyclonedx"
+	CycloneDxJSONOption Option = "cyclonedx-json"
 	SPDXTagValueOption  Option = "spdx-tag-value"
 	SPDXJSONOption      Option = "spdx-json"
 )
@@ -17,6 +18,7 @@ var AllOptions = []Option{
 	TextOption,
 	TableOption,
 	CycloneDxOption,
+	CycloneDxJSONOption,
 	SPDXTagValueOption,
 	SPDXJSONOption,
 }
@@ -33,6 +35,8 @@ func ParseOption(userStr string) Option {
 		return TableOption
 	case string(CycloneDxOption), "cyclone", "cyclone-dx":
 		return CycloneDxOption
+	case string(CycloneDxJSONOption), "cyclone-json", "cyclone-dx-json":
+		return CycloneDxJSONOption
 	case string(SPDXTagValueOption), "spdx", "spdx-tagvalue", "spdxtagvalue", "spdx-tv", "spdxtv":
 		return SPDXTagValueOption
 	case string(SPDXJSONOption), "spdxjson":
