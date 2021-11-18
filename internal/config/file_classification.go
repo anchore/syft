@@ -10,7 +10,7 @@ type fileClassification struct {
 }
 
 func (cfg fileClassification) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("file-classification.cataloger.enabled", true)
+	v.SetDefault("file-classification.cataloger.enabled", false)
 	v.SetDefault("file-classification.cataloger.scope", source.SquashedScope)
 }
 

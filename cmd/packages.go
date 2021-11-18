@@ -239,7 +239,7 @@ func packagesExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
-		tasks, err := tasks(appConfig)
+		tasks, err := tasks()
 		if err != nil {
 			errs <- err
 			return
@@ -264,15 +264,15 @@ func packagesExecWorker(userInput string) <-chan error {
 			Source: src.Metadata,
 		}
 
-		var results []<-chan artifact.Relationship
+		var relationships []<-chan artifact.Relationship
 		for _, task := range tasks {
 			c := make(chan artifact.Relationship)
-			results = append(results, c)
+			relationships = append(relationships, c)
 
 			go runTask(task, &s.Artifacts, src, c, errs)
 		}
 
-		for relationship := range mergeResults(results...) {
+		for relationship := range mergeRelationships(relationships...) {
 			s.Relationships = append(s.Relationships, relationship)
 		}
 
@@ -305,15 +305,15 @@ func runTask(t task, a *sbom.Artifacts, src *source.Source, c chan<- artifact.Re
 	}
 }
 
-func mergeResults(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
+func mergeRelationships(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
 	var wg sync.WaitGroup
-	var results = make(chan artifact.Relationship)
+	var relationships = make(chan artifact.Relationship)
 
 	wg.Add(len(cs))
 	for _, c := range cs {
 		go func(c <-chan artifact.Relationship) {
 			for n := range c {
-				results <- n
+				relationships <- n
 			}
 			wg.Done()
 		}(c)
@@ -321,9 +321,9 @@ func mergeResults(cs ...<-chan artifact.Relationship) <-chan artifact.Relationsh
 
 	go func() {
 		wg.Wait()
-		close(results)
+		close(relationships)
 	}()
-	return results
+	return relationships
 }
 
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {

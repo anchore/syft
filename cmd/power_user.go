@@ -100,7 +100,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
-		tasks, err := tasks(appConfig)
+		tasks, err := tasks()
 		if err != nil {
 			errs <- err
 			return
@@ -119,15 +119,15 @@ func powerUserExecWorker(userInput string) <-chan error {
 			Source: src.Metadata,
 		}
 
-		var results []<-chan artifact.Relationship
+		var relationships []<-chan artifact.Relationship
 		for _, task := range tasks {
 			c := make(chan artifact.Relationship)
-			results = append(results, c)
+			relationships = append(relationships, c)
 
 			go runTask(task, &s.Artifacts, src, c, errs)
 		}
 
-		for relationship := range mergeResults(results...) {
+		for relationship := range mergeRelationships(relationships...) {
 			s.Relationships = append(s.Relationships, relationship)
 		}
 
