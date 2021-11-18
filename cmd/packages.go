@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
@@ -13,7 +14,6 @@ import (
 	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
-	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
@@ -238,6 +238,12 @@ func packagesExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
+		tasks, err := defaultTasks()
+		if err != nil {
+			errs <- err
+			return
+		}
+
 		f := formats.ByOption(packagesPresenterOpt)
 		if f == nil {
 			errs <- fmt.Errorf("unknown format: %s", packagesPresenterOpt)
@@ -253,23 +259,26 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 		defer cleanup()
 
-		catalog, relationships, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
-		if err != nil {
-			errs <- fmt.Errorf("failed to catalog input: %w", err)
-			return
+		s := sbom.SBOM{
+			Source: src.Metadata,
 		}
 
-		sbomResult := sbom.SBOM{
-			Artifacts: sbom.Artifacts{
-				PackageCatalog: catalog,
-				Distro:         d,
-			},
-			Relationships: relationships,
-			Source:        src.Metadata,
+		wg := &sync.WaitGroup{}
+		for _, t := range tasks {
+			wg.Add(1)
+			go func(t task) {
+				defer wg.Done()
+				if err = t(&s.Artifacts, src); err != nil {
+					errs <- err
+					return
+				}
+			}(t)
 		}
+
+		wg.Wait()
 
 		if appConfig.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, sbomResult); err != nil {
+			if err := runPackageSbomUpload(src, s); err != nil {
 				errs <- err
 				return
 			}
@@ -277,7 +286,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: f.Presenter(sbomResult),
+			Value: f.Presenter(s),
 		})
 	}()
 	return errs

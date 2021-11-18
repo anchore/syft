@@ -10,15 +10,16 @@ import (
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-type powerUserTask func(*sbom.Artifacts, *source.Source) ([]artifact.Relationship, error)
+type task func(*sbom.Artifacts, *source.Source) error
 
-func powerUserTasks() ([]powerUserTask, error) {
-	var tasks []powerUserTask
+func defaultTasks() ([]task, error) {
+	var tasks []task
 
-	generators := []func() (powerUserTask, error){
+	generators := []func() (task, error){
 		catalogPackagesTask,
 		catalogFileMetadataTask,
 		catalogFileDigestsTask,
@@ -32,6 +33,7 @@ func powerUserTasks() ([]powerUserTask, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if task != nil {
 			tasks = append(tasks, task)
 		}
@@ -40,7 +42,7 @@ func powerUserTasks() ([]powerUserTask, error) {
 	return tasks, nil
 }
 
-func catalogPackagesTask() (powerUserTask, error) {
+func catalogPackagesTask() (task, error) {
 	if !appConfig.Package.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -60,7 +62,7 @@ func catalogPackagesTask() (powerUserTask, error) {
 	return task, nil
 }
 
-func catalogFileMetadataTask() (powerUserTask, error) {
+func catalogFileMetadataTask() (task, error) {
 	if !appConfig.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -84,7 +86,7 @@ func catalogFileMetadataTask() (powerUserTask, error) {
 	return task, nil
 }
 
-func catalogFileDigestsTask() (powerUserTask, error) {
+func catalogFileDigestsTask() (task, error) {
 	if !appConfig.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -130,7 +132,7 @@ func catalogFileDigestsTask() (powerUserTask, error) {
 	return task, nil
 }
 
-func catalogSecretsTask() (powerUserTask, error) {
+func catalogSecretsTask() (task, error) {
 	if !appConfig.Secrets.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -162,7 +164,7 @@ func catalogSecretsTask() (powerUserTask, error) {
 	return task, nil
 }
 
-func catalogFileClassificationsTask() (powerUserTask, error) {
+func catalogFileClassificationsTask() (task, error) {
 	if !appConfig.FileClassification.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -190,7 +192,7 @@ func catalogFileClassificationsTask() (powerUserTask, error) {
 	return task, nil
 }
 
-func catalogContentsTask() (powerUserTask, error) {
+func catalogContentsTask() (task, error) {
 	if !appConfig.FileContents.Cataloger.Enabled {
 		return nil, nil
 	}
