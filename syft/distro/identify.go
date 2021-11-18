@@ -60,7 +60,7 @@ identifyLoop:
 		}
 
 		if len(locations) == 0 {
-			log.Debugf("No Refs found from path: %s", entry.path)
+			log.Debugf("path not found: %s", entry.path)
 			continue
 		}
 

@@ -13,6 +13,9 @@ require (
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.0.0-20210922164639-b3fa992ebd29
 	github.com/anchore/stereoscope v0.0.0-20211116152349-7e4e1b56a15d
+	// we are hinting brotli to latest due to warning when installing archiver v3:
+	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar/v2 v2.0.4
 	github.com/docker/docker v20.10.10+incompatible
@@ -26,6 +29,7 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+	github.com/mholt/archiver/v3 v3.5.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/mitchellh/mapstructure v1.4.1
