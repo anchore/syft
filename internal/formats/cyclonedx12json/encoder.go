@@ -8,18 +8,18 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/cyclonedx12json/model"
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
 )
 
-func encoder(output io.Writer, catalog *pkg.Catalog, srcMetadata *source.Metadata, d *distro.Distro, scope source.Scope) error {
+func encoder(output io.Writer, s sbom.SBOM) error {
 	enc := json.NewEncoder(output)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	err := enc.Encode(toFormatModel(catalog, srcMetadata, d, scope))
+	err := enc.Encode(toFormatModel(s))
 	if err != nil {
 		return err
 	}
@@ -28,17 +28,17 @@ func encoder(output io.Writer, catalog *pkg.Catalog, srcMetadata *source.Metadat
 	return err
 }
 
-func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro.Distro, _ source.Scope) model.Document {
+func toFormatModel(s sbom.SBOM) model.Document {
 	versionInfo := version.FromBuild()
 
 	doc := model.Document{
 		Version:       1,
 		SerialNumber:  uuid.New().URN(),
-		BomDescriptor: toBomDescriptor(internal.ApplicationName, versionInfo.Version, srcMetadata),
+		BomDescriptor: toBomDescriptor(internal.ApplicationName, versionInfo.Version, s.Source),
 	}
 
 	// attach components
-	for _, p := range catalog.Sorted() {
+	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
 		doc.Components = append(doc.Components, toComponent(p))
 	}
 
@@ -46,7 +46,7 @@ func toFormatModel(catalog *pkg.Catalog, srcMetadata *source.Metadata, _ *distro
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func toBomDescriptor(name, version string, srcMetadata *source.Metadata) *model.BomDescriptor {
+func toBomDescriptor(name, version string, srcMetadata source.Metadata) *model.BomDescriptor {
 	return &model.BomDescriptor{
 		Timestamp: time.Now().Format(time.RFC3339),
 		Tools: []model.BomDescriptorTool{
@@ -60,7 +60,7 @@ func toBomDescriptor(name, version string, srcMetadata *source.Metadata) *model.
 	}
 }
 
-func toComponent(p *pkg.Package) model.Component {
+func toComponent(p pkg.Package) model.Component {
 	return model.Component{
 		Type:       "library", // TODO: this is not accurate
 		Name:       p.Name,
@@ -70,10 +70,7 @@ func toComponent(p *pkg.Package) model.Component {
 	}
 }
 
-func toBomDescriptorComponent(srcMetadata *source.Metadata) *model.BomDescriptorComponent {
-	if srcMetadata == nil {
-		return nil
-	}
+func toBomDescriptorComponent(srcMetadata source.Metadata) *model.BomDescriptorComponent {
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		return &model.BomDescriptorComponent{
