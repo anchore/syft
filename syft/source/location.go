@@ -29,6 +29,7 @@ func NewLocation(realPath string) Location {
 	}
 }
 
+// NewVirtualLocation creates a new location for a path accessed by a virtual path (a path with a symlink or hardlink somewhere in the path)
 func NewVirtualLocation(realPath, virtualPath string) Location {
 	return Location{
 		Coordinates: Coordinates{
@@ -38,6 +39,7 @@ func NewVirtualLocation(realPath, virtualPath string) Location {
 	}
 }
 
+// NewLocationFromCoordinates creates a new location for the given Coordinates.
 func NewLocationFromCoordinates(coordinates Coordinates) Location {
 	return Location{
 		Coordinates: coordinates,
