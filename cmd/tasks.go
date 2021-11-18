@@ -215,3 +215,17 @@ func generateCatalogContentsTask() (task, error) {
 
 	return task, nil
 }
+
+func runTask(t task, a *sbom.Artifacts, src *source.Source, c chan<- artifact.Relationship, errs chan<- error) {
+	defer close(c)
+
+	relationships, err := t(a, src)
+	if err != nil {
+		errs <- err
+		return
+	}
+
+	for _, relationship := range relationships {
+		c <- relationship
+	}
+}

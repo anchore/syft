@@ -291,20 +291,6 @@ func packagesExecWorker(userInput string) <-chan error {
 	return errs
 }
 
-func runTask(t task, a *sbom.Artifacts, src *source.Source, c chan<- artifact.Relationship, errs chan<- error) {
-	defer close(c)
-
-	relationships, err := t(a, src)
-	if err != nil {
-		errs <- err
-		return
-	}
-
-	for _, relationship := range relationships {
-		c <- relationship
-	}
-}
-
 func mergeRelationships(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
 	var wg sync.WaitGroup
 	var relationships = make(chan artifact.Relationship)

@@ -159,15 +159,6 @@ func (cfg *Application) parseLogLevelOption() error {
 	return nil
 }
 
-// EnablePowerUser flips the default application configuration
-// to enable all possible cataloger when run
-func (cfg Application) EnablePowerUser() {
-	cfg.FileClassification.Cataloger.Enabled = true
-	cfg.FileContents.Cataloger.Enabled = true
-	cfg.Secrets.Cataloger.Enabled = true
-	cfg.FileMetadata.Cataloger.Enabled = true
-}
-
 func (cfg Application) String() string {
 	// yaml is pretty human friendly (at least when compared to json)
 	appCfgStr, err := yaml.Marshal(&cfg)
