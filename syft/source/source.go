@@ -101,10 +101,7 @@ func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
 		return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
 	}
 
-	s, cleanupFn, err := NewFromFile(location)
-	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
-	}
+	s, cleanupFn := NewFromFile(location)
 
 	return &s, cleanupFn, nil
 }
@@ -122,9 +119,9 @@ func NewFromDirectory(path string) (Source, error) {
 }
 
 // NewFromFile creates a new source object tailored to catalog a file.
-func NewFromFile(path string) (Source, func(), error) {
+func NewFromFile(path string) (Source, func()) {
 	var analysisPath = path
-	var cleanupFn func()
+	var cleanupFn = func() {}
 
 	// if the given file is an archive (as indicated by the file extension and not MIME type) then unarchive it and
 	// use the contents as the source. Note: this does NOT recursively unarchive contents, only the given path is
@@ -148,7 +145,7 @@ func NewFromFile(path string) (Source, func(), error) {
 			Path:   path,
 		},
 		path: analysisPath,
-	}, cleanupFn, nil
+	}, cleanupFn
 }
 
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the

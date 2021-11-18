@@ -108,7 +108,9 @@ func powerUserExecWorker(userInput string) <-chan error {
 			errs <- err
 			return
 		}
-		defer cleanup()
+		if cleanup != nil {
+			defer cleanup()
+		}
 
 		s := sbom.SBOM{
 			Source: src.Metadata,

@@ -114,8 +114,7 @@ func TestNewFromFile(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, cleanup, err := NewFromFile(test.input)
-			require.NoError(t, err)
+			src, cleanup := NewFromFile(test.input)
 			if cleanup != nil {
 				t.Cleanup(cleanup)
 			}
@@ -153,8 +152,7 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			archivePath := setupArchiveTest(t, test.input)
 
-			src, cleanup, err := NewFromFile(archivePath)
-			require.NoError(t, err)
+			src, cleanup := NewFromFile(archivePath)
 			if cleanup != nil {
 				t.Cleanup(cleanup)
 			}
