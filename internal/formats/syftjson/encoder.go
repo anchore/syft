@@ -8,7 +8,6 @@ import (
 )
 
 func encoder(output io.Writer, s sbom.SBOM, appConfig interface{}) error {
-	// TODO: application config not available yet
 	doc := ToFormatModel(s, appConfig)
 
 	enc := json.NewEncoder(output)

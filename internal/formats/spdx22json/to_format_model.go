@@ -8,18 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anchore/syft/syft/file"
-
-	"github.com/anchore/syft/syft/artifact"
-
-	"github.com/anchore/syft/syft/sbom"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
 	"github.com/anchore/syft/internal/formats/spdx22json/model"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
 )
@@ -173,8 +171,7 @@ func toFiles(s sbom.SBOM) []model.File {
 		results = append(results, model.File{
 			Item: model.Item{
 				Element: model.Element{
-					SPDXID: string(coordinates.ID()),
-					// TODO: this is encoding layer id... is there a better way?
+					SPDXID:  string(coordinates.ID()),
 					Name:    filepath.Base(coordinates.RealPath),
 					Comment: comment,
 				},
@@ -231,7 +228,7 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 		ty = append(ty, string(model.ArchiveFileType))
 	}
 
-	// TODO: source, spdx, and documentation
+	// TODO: add support for source, spdx, and documentation file types
 	if len(ty) == 0 {
 		ty = append(ty, string(model.OtherFileType))
 	}
@@ -244,7 +241,7 @@ func toRelationships(relationships []artifact.Relationship) (result []model.Rela
 		exists, relationshipType, comment := lookupRelationship(r.Type)
 
 		if !exists {
-			// TODO: should we warn about lossyness here?
+			log.Warnf("unable to convert relationship from SPDX 2.2 JSON, dropping: %+v", r)
 			continue
 		}
 

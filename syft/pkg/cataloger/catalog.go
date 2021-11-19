@@ -45,7 +45,6 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 
-	// TODO: update to show relationships
 	filesProcessed, packagesDiscovered := newMonitor()
 
 	// perform analysis, accumulating errors for each failed analysis
@@ -60,7 +59,6 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 
 		catalogedPackages := len(packages)
 
-		// TODO: update to show relationships and files
 		log.Debugf("package cataloger %q discovered %d packages", theCataloger.Name(), catalogedPackages)
 		packagesDiscovered.N += int64(catalogedPackages)
 
@@ -71,7 +69,6 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 			// generate PURL
 			p.PURL = generatePackageURL(p, theDistro)
 
-			// TODO: break out into another function (refactor this function)
 			// create file-to-package relationships for files owned by the package
 			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
 			if err != nil {
@@ -113,9 +110,11 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathRe
 			return nil, fmt.Errorf("unable to find path for path=%q: %w", path, err)
 		}
 
-		// if len(locations) == 0 {
-		//	// TODO: this is notable, we should at least log it(?)... however, ideally there is something in the SBOM about this
-		// }
+		if len(locations) == 0 {
+			// TODO: this is a known-unknown that could later be persisted in the SBOM (or as a validation failure)
+			log.Warnf("unable to find location which a package claims ownership of: %s", path)
+			continue
+		}
 
 		for _, l := range locations {
 			relationships = append(relationships, artifact.Relationship{

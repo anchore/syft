@@ -4,20 +4,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/syft/internal/formats/syftjson"
-
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/gookit/color"
-
-	"github.com/anchore/syft/syft/sbom"
-
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/gookit/color"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
