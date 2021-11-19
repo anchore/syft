@@ -11,8 +11,6 @@ import (
 	"golang.org/x/term"
 )
 
-// TODO: build tags to exclude options from windows
-
 // Select is responsible for determining the specific UI function given select user option, the current platform
 // config values, and environment status (such as a TTY being present). The first UI in the returned slice of UIs
 // is intended to be used and the UIs that follow are meant to be attempted only in a fallback posture when there
