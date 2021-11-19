@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
@@ -13,7 +14,7 @@ import (
 	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
@@ -238,6 +239,12 @@ func packagesExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
+		tasks, err := tasks()
+		if err != nil {
+			errs <- err
+			return
+		}
+
 		f := formats.ByOption(packagesPresenterOpt)
 		if f == nil {
 			errs <- fmt.Errorf("unknown format: %s", packagesPresenterOpt)
@@ -255,23 +262,24 @@ func packagesExecWorker(userInput string) <-chan error {
 			defer cleanup()
 		}
 
-		catalog, relationships, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
-		if err != nil {
-			errs <- fmt.Errorf("failed to catalog input: %w", err)
-			return
+		s := sbom.SBOM{
+			Source: src.Metadata,
 		}
 
-		sbomResult := sbom.SBOM{
-			Artifacts: sbom.Artifacts{
-				PackageCatalog: catalog,
-				Distro:         d,
-			},
-			Relationships: relationships,
-			Source:        src.Metadata,
+		var relationships []<-chan artifact.Relationship
+		for _, task := range tasks {
+			c := make(chan artifact.Relationship)
+			relationships = append(relationships, c)
+
+			go runTask(task, &s.Artifacts, src, c, errs)
+		}
+
+		for relationship := range mergeRelationships(relationships...) {
+			s.Relationships = append(s.Relationships, relationship)
 		}
 
 		if appConfig.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, sbomResult); err != nil {
+			if err := runPackageSbomUpload(src, s); err != nil {
 				errs <- err
 				return
 			}
@@ -279,10 +287,31 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: f.Presenter(sbomResult),
+			Value: f.Presenter(s),
 		})
 	}()
 	return errs
+}
+
+func mergeRelationships(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
+	var wg sync.WaitGroup
+	var relationships = make(chan artifact.Relationship)
+
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go func(c <-chan artifact.Relationship) {
+			for n := range c {
+				relationships <- n
+			}
+			wg.Done()
+		}(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(relationships)
+	}()
+	return relationships
 }
 
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {

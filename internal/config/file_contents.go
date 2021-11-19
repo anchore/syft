@@ -13,7 +13,7 @@ type fileContents struct {
 }
 
 func (cfg fileContents) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("file-contents.cataloger.enabled", true)
+	v.SetDefault("file-contents.cataloger.enabled", catalogerEnabledDefault)
 	v.SetDefault("file-contents.cataloger.scope", source.SquashedScope)
 	v.SetDefault("file-contents.skip-files-above-size", 1*file.MB)
 	v.SetDefault("file-contents.globs", []string{})
