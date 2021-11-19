@@ -120,6 +120,21 @@ func NewFromDirectory(path string) (Source, error) {
 
 // NewFromFile creates a new source object tailored to catalog a file.
 func NewFromFile(path string) (Source, func()) {
+	analysisPath, cleanupFn := fileAnalysisPath(path)
+
+	return Source{
+		mutex: &sync.Mutex{},
+		Metadata: Metadata{
+			Scheme: FileScheme,
+			Path:   path,
+		},
+		path: analysisPath,
+	}, cleanupFn
+}
+
+// fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
+// contents have been made available. A cleanup function is provided for any temp files created (if any).
+func fileAnalysisPath(path string) (string, func()) {
 	var analysisPath = path
 	var cleanupFn = func() {}
 
@@ -134,18 +149,13 @@ func NewFromFile(path string) (Source, func()) {
 		} else {
 			log.Debugf("source path is an archive")
 			analysisPath = unarchivedPath
-			cleanupFn = tmpCleanup
+			if tmpCleanup != nil {
+				cleanupFn = tmpCleanup
+			}
 		}
 	}
 
-	return Source{
-		mutex: &sync.Mutex{},
-		Metadata: Metadata{
-			Scheme: FileScheme,
-			Path:   path,
-		},
-		path: analysisPath,
-	}, cleanupFn
+	return analysisPath, cleanupFn
 }
 
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the
