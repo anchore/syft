@@ -7,11 +7,14 @@ package source
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
+	"github.com/mholt/archiver/v3"
 	"github.com/spf13/afero"
 )
 
@@ -19,9 +22,10 @@ import (
 // in cataloging (based on the data source and configuration)
 type Source struct {
 	Image             *image.Image // the image object to be cataloged (image only)
-	DirectoryResolver *directoryResolver
 	Metadata          Metadata
-	Mutex             *sync.Mutex
+	directoryResolver *directoryResolver
+	path              string
+	mutex             *sync.Mutex
 }
 
 type sourceDetector func(string) (image.Source, string, error)
@@ -97,34 +101,61 @@ func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
 		return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
 	}
 
-	s, err := NewFromFile(location)
-	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
-	}
+	s, cleanupFn := NewFromFile(location)
 
-	return &s, func() {}, nil
+	return &s, cleanupFn, nil
 }
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
 func NewFromDirectory(path string) (Source, error) {
 	return Source{
-		Mutex: &sync.Mutex{},
+		mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Scheme: DirectoryScheme,
 			Path:   path,
 		},
+		path: path,
 	}, nil
 }
 
-// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
-func NewFromFile(path string) (Source, error) {
+// NewFromFile creates a new source object tailored to catalog a file.
+func NewFromFile(path string) (Source, func()) {
+	analysisPath, cleanupFn := fileAnalysisPath(path)
+
 	return Source{
-		Mutex: &sync.Mutex{},
+		mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Scheme: FileScheme,
 			Path:   path,
 		},
-	}, nil
+		path: analysisPath,
+	}, cleanupFn
+}
+
+// fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
+// contents have been made available. A cleanup function is provided for any temp files created (if any).
+func fileAnalysisPath(path string) (string, func()) {
+	var analysisPath = path
+	var cleanupFn = func() {}
+
+	// if the given file is an archive (as indicated by the file extension and not MIME type) then unarchive it and
+	// use the contents as the source. Note: this does NOT recursively unarchive contents, only the given path is
+	// unarchived.
+	envelopedUnarchiver, err := archiver.ByExtension(path)
+	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
+		unarchivedPath, tmpCleanup, err := unarchiveToTmp(path, unarchiver)
+		if err != nil {
+			log.Warnf("file could not be unarchived: %+v", err)
+		} else {
+			log.Debugf("source path is an archive")
+			analysisPath = unarchivedPath
+		}
+		if tmpCleanup != nil {
+			cleanupFn = tmpCleanup
+		}
+	}
+
+	return analysisPath, cleanupFn
 }
 
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the
@@ -146,16 +177,16 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 	switch s.Metadata.Scheme {
 	case DirectoryScheme, FileScheme:
-		s.Mutex.Lock()
-		defer s.Mutex.Unlock()
-		if s.DirectoryResolver == nil {
-			resolver, err := newDirectoryResolver(s.Metadata.Path)
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+		if s.directoryResolver == nil {
+			resolver, err := newDirectoryResolver(s.path)
 			if err != nil {
 				return nil, err
 			}
-			s.DirectoryResolver = resolver
+			s.directoryResolver = resolver
 		}
-		return s.DirectoryResolver, nil
+		return s.directoryResolver, nil
 	case ImageScheme:
 		switch scope {
 		case SquashedScope:
@@ -167,4 +198,19 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 	}
 	return nil, fmt.Errorf("unable to determine FilePathResolver with current scheme=%q", s.Metadata.Scheme)
+}
+
+func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func(), error) {
+	tempDir, err := ioutil.TempDir("", "syft-archive-contents-")
+	if err != nil {
+		return "", func() {}, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
+	}
+
+	cleanupFn := func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			log.Warnf("unable to cleanup archive tempdir: %+v", err)
+		}
+	}
+
+	return tempDir, cleanupFn, unarchiver.Unarchive(path, tempDir)
 }
