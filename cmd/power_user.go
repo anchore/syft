@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/anchore/syft/syft/artifact"
 
@@ -124,9 +123,9 @@ func powerUserExecWorker(userInput string) <-chan error {
 			go runTask(task, &s.Artifacts, src, c, errs)
 		}
 
-		for relationship := range mergeResults(results...) {
-			s.Relationships = append(s.Relationships, relationship)
-		}
+		relationships := mergeResults(results...)
+
+		s.Relationships = append(s.Relationships, relationships...)
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
@@ -150,23 +149,12 @@ func runTask(t powerUserTask, a *sbom.Artifacts, src *source.Source, c chan<- ar
 	}
 }
 
-func mergeResults(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
-	var wg sync.WaitGroup
-	var results = make(chan artifact.Relationship)
-
-	wg.Add(len(cs))
+func mergeResults(cs ...<-chan artifact.Relationship) (results []artifact.Relationship) {
 	for _, c := range cs {
-		go func(c <-chan artifact.Relationship) {
-			for n := range c {
-				results <- n
-			}
-			wg.Done()
-		}(c)
+		for n := range c {
+			results = append(results, n)
+		}
 	}
 
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
 	return results
 }
