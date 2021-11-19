@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
@@ -238,6 +238,12 @@ func packagesExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
+		tasks, err := tasks()
+		if err != nil {
+			errs <- err
+			return
+		}
+
 		f := formats.ByOption(packagesPresenterOpt)
 		if f == nil {
 			errs <- fmt.Errorf("unknown format: %s", packagesPresenterOpt)
@@ -255,23 +261,21 @@ func packagesExecWorker(userInput string) <-chan error {
 			defer cleanup()
 		}
 
-		catalog, relationships, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
-		if err != nil {
-			errs <- fmt.Errorf("failed to catalog input: %w", err)
-			return
+		s := sbom.SBOM{
+			Source: src.Metadata,
 		}
 
-		sbomResult := sbom.SBOM{
-			Artifacts: sbom.Artifacts{
-				PackageCatalog: catalog,
-				Distro:         d,
-			},
-			Relationships: relationships,
-			Source:        src.Metadata,
+		var relationships []<-chan artifact.Relationship
+		for _, task := range tasks {
+			c := make(chan artifact.Relationship)
+			relationships = append(relationships, c)
+
+			go runTask(task, &s.Artifacts, src, c, errs)
 		}
+		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		if appConfig.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, sbomResult); err != nil {
+			if err := runPackageSbomUpload(src, s); err != nil {
 				errs <- err
 				return
 			}
@@ -279,10 +283,20 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: f.Presenter(sbomResult),
+			Value: f.Presenter(s),
 		})
 	}()
 	return errs
+}
+
+func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
+	for _, c := range cs {
+		for n := range c {
+			relationships = append(relationships, n)
+		}
+	}
+
+	return relationships
 }
 
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {
@@ -329,5 +343,6 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {
 	if err := c.Import(context.Background(), importCfg); err != nil {
 		return fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
 	}
+
 	return nil
 }

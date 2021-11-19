@@ -48,7 +48,13 @@ func initCmdAliasBindings() {
 		panic(err)
 	}
 
-	if activeCmd == packagesCmd || activeCmd == rootCmd {
+	// enable all cataloger by default if power-user command is run
+	if activeCmd == powerUserCmd {
+		config.PowerUserCatalogerEnabledDefault()
+	}
+
+	switch activeCmd {
+	case packagesCmd, rootCmd:
 		// note: we need to lazily bind config options since they are shared between both the root command
 		// and the packages command. Otherwise there will be global viper state that is in contention.
 		// See for more details: https://github.com/spf13/viper/issues/233 . Additionally, the bindings must occur BEFORE
@@ -58,7 +64,7 @@ func initCmdAliasBindings() {
 		if err = bindPackagesConfigOptions(activeCmd.Flags()); err != nil {
 			panic(err)
 		}
-	} else {
+	default:
 		// even though the root command or packages command is NOT being run, we still need default bindings
 		// such that application config parsing passes.
 		if err = bindPackagesConfigOptions(packagesCmd.Flags()); err != nil {

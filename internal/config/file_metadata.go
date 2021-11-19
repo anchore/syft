@@ -11,7 +11,7 @@ type FileMetadata struct {
 }
 
 func (cfg FileMetadata) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("file-metadata.cataloger.enabled", true)
+	v.SetDefault("file-metadata.cataloger.enabled", catalogerEnabledDefault)
 	v.SetDefault("file-metadata.cataloger.scope", source.SquashedScope)
 	v.SetDefault("file-metadata.digests", []string{"sha256"})
 }
