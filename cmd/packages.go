@@ -251,7 +251,9 @@ func packagesExecWorker(userInput string) <-chan error {
 			errs <- fmt.Errorf("failed to determine image source: %w", err)
 			return
 		}
-		defer cleanup()
+		if cleanup != nil {
+			defer cleanup()
+		}
 
 		catalog, relationships, d, err := syft.CatalogPackages(src, appConfig.Package.Cataloger.ScopeOpt)
 		if err != nil {
