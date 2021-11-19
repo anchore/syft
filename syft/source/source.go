@@ -149,9 +149,9 @@ func fileAnalysisPath(path string) (string, func()) {
 		} else {
 			log.Debugf("source path is an archive")
 			analysisPath = unarchivedPath
-			if tmpCleanup != nil {
-				cleanupFn = tmpCleanup
-			}
+		}
+		if tmpCleanup != nil {
+			cleanupFn = tmpCleanup
 		}
 	}
 
