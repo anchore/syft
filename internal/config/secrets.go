@@ -15,7 +15,7 @@ type secrets struct {
 }
 
 func (cfg secrets) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("secrets.cataloger.enabled", false)
+	v.SetDefault("secrets.cataloger.enabled", catalogerEnabledDefault)
 	v.SetDefault("secrets.cataloger.scope", source.AllLayersScope)
 	v.SetDefault("secrets.reveal-values", false)
 	v.SetDefault("secrets.skip-files-above-size", 1*file.MB)

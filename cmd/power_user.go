@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/gookit/color"
 
 	"github.com/anchore/syft/syft/sbom"
 
@@ -77,6 +79,10 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 		if err := closer(); err != nil {
 			log.Warnf("unable to write to report destination: %+v", err)
 		}
+
+		// inform user at end of run that command will be removed
+		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
+		fmt.Fprintln(os.Stderr, deprecated)
 	}()
 
 	if err != nil {
