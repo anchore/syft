@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"sync"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
@@ -273,10 +272,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 			go runTask(task, &s.Artifacts, src, c, errs)
 		}
-
-		for relationship := range mergeRelationships(relationships...) {
-			s.Relationships = append(s.Relationships, relationship)
-		}
+		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		if appConfig.Anchore.Host != "" {
 			if err := runPackageSbomUpload(src, s); err != nil {
@@ -293,24 +289,13 @@ func packagesExecWorker(userInput string) <-chan error {
 	return errs
 }
 
-func mergeRelationships(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
-	var wg sync.WaitGroup
-	var relationships = make(chan artifact.Relationship)
-
-	wg.Add(len(cs))
+func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
 	for _, c := range cs {
-		go func(c <-chan artifact.Relationship) {
-			for n := range c {
-				relationships <- n
-			}
-			wg.Done()
-		}(c)
+		for n := range c {
+			relationships = append(relationships, n)
+		}
 	}
 
-	go func() {
-		wg.Wait()
-		close(relationships)
-	}()
 	return relationships
 }
 
@@ -358,5 +343,6 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {
 	if err := c.Import(context.Background(), importCfg); err != nil {
 		return fmt.Errorf("failed to upload results to host=%s: %+v", appConfig.Anchore.Host, err)
 	}
+
 	return nil
 }
