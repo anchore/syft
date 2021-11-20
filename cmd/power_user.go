@@ -135,9 +135,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 			go runTask(task, &s.Artifacts, src, c, errs)
 		}
 
-		for relationship := range mergeRelationships(relationships...) {
-			s.Relationships = append(s.Relationships, relationship)
-		}
+		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
