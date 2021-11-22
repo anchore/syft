@@ -71,7 +71,7 @@ func parseInstalledJson(_ string, reader io.Reader) ([]pkg.Package, []artifact.R
 				Name:     name,
 				Version:  version,
 				Language: pkg.PHP,
-				Type:     pkg.PhpComposerPkg,
+				Type:     pkg.PhpInstalledPkg,
 			})
 		}
 	}

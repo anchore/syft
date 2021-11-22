@@ -36,6 +36,7 @@ func ImageCatalogers() []Cataloger {
 	return []Cataloger{
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
+		php.NewPhPInstalledCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
