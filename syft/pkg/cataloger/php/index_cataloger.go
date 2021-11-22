@@ -1,5 +1,5 @@
 /*
-Package python provides a concrete Cataloger implementation for Python ecosystem files (egg, wheel, requirements.txt).
+Package php provides a concrete Cataloger implementation for PHP ecosystem files.
 */
 package php
 
@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
-// NewPythonIndexCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
+// NewPHPIndexCataloger returns a new cataloger for PHP composer.lock files.
 func NewPHPIndexCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/composer.lock": parseComposerLock,
