@@ -10,7 +10,10 @@ import (
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 )
 
-func decoder(reader io.Reader) (*sbom.SBOM, error) {
+type decoder struct {
+}
+
+func (d decoder) Decode(reader io.Reader) (*sbom.SBOM, error) {
 	dec := json.NewDecoder(reader)
 
 	var doc model.Document

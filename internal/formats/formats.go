@@ -15,7 +15,7 @@ import (
 // TODO: eventually this is the source of truth for all formatters
 func All() []format.Format {
 	return []format.Format{
-		syftjson.Format(),
+		syftjson.Format( /*...now there is a requirement for app config here...*/ ),
 		table.Format(),
 		cyclonedx12xml.Format(),
 		spdx22json.Format(),

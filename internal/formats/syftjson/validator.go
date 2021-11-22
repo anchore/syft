@@ -9,7 +9,10 @@ import (
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 )
 
-func validator(reader io.Reader) error {
+type validator struct {
+}
+
+func (v validator) Validate(reader io.Reader) error {
 	type Document struct {
 		Schema model.Schema `json:"schema"`
 	}

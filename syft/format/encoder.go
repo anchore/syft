@@ -6,5 +6,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-// Encoder is a function that can transform Syft native objects into an SBOM document of a specific format written to the given writer.
-type Encoder func(io.Writer, sbom.SBOM, interface{}) error
+// Encoder is a function that can transform Syft native objects from an SBOM document of a specific format written to the given writer.
+type Encoder interface {
+	Encode(io.Writer, sbom.SBOM) error
+}

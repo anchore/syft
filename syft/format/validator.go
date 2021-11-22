@@ -9,4 +9,6 @@ import "io"
 // assertions protect against "simple" format decoding validations that may lead to false positives (e.g. I decoded
 // json successfully therefore this must be the target format, however, all values are their default zero-value and
 // really represent a different format that also uses json)
-type Validator func(reader io.Reader) error
+type Validator interface {
+	Validate(reader io.Reader) error
+}

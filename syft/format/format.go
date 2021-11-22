@@ -14,46 +14,46 @@ var (
 )
 
 type Format struct {
-	Option    Option
-	encoder   Encoder
-	decoder   Decoder
-	validator Validator
+	Option Option
+	Encoder
+	Decoder
+	Validator
 }
 
 func NewFormat(option Option, encoder Encoder, decoder Decoder, validator Validator) Format {
 	return Format{
 		Option:    option,
-		encoder:   encoder,
-		decoder:   decoder,
-		validator: validator,
+		Encoder:   encoder,
+		Decoder:   decoder,
+		Validator: validator,
 	}
 }
 
-func (f Format) Encode(output io.Writer, s sbom.SBOM, appConfig interface{}) error {
-	if f.encoder == nil {
+func (f Format) Encode(output io.Writer, s sbom.SBOM) error {
+	if f.Encoder == nil {
 		return ErrEncodingNotSupported
 	}
-	return f.encoder(output, s, appConfig)
+	return f.Encoder.Encode(output, s)
 }
 
 func (f Format) Decode(reader io.Reader) (*sbom.SBOM, error) {
-	if f.decoder == nil {
+	if f.Decoder == nil {
 		return nil, ErrDecodingNotSupported
 	}
-	return f.decoder(reader)
+	return f.Decoder.Decode(reader)
 }
 
 func (f Format) Validate(reader io.Reader) error {
-	if f.validator == nil {
+	if f.Validator == nil {
 		return ErrValidationNotSupported
 	}
 
-	return f.validator(reader)
+	return f.Validator.Validate(reader)
 }
 
-func (f Format) Presenter(s sbom.SBOM, appConfig interface{}) *Presenter {
-	if f.encoder == nil {
+func (f Format) Presenter(s sbom.SBOM) *Presenter {
+	if f.Encoder == nil {
 		return nil
 	}
-	return NewPresenter(f.encoder, s, appConfig)
+	return NewPresenter(f.Encoder, s)
 }

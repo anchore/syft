@@ -7,19 +7,17 @@ import (
 )
 
 type Presenter struct {
-	sbom      sbom.SBOM
-	appConfig interface{}
-	encoder   Encoder
+	sbom    sbom.SBOM
+	encoder Encoder
 }
 
-func NewPresenter(encoder Encoder, s sbom.SBOM, appConfig interface{}) *Presenter {
+func NewPresenter(encoder Encoder, s sbom.SBOM) *Presenter {
 	return &Presenter{
-		sbom:      s,
-		appConfig: appConfig,
-		encoder:   encoder,
+		sbom:    s,
+		encoder: encoder,
 	}
 }
 
 func (pres *Presenter) Present(output io.Writer) error {
-	return pres.encoder(output, pres.sbom, pres.appConfig)
+	return pres.encoder.Encode(output, pres.sbom)
 }

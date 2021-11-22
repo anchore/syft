@@ -7,8 +7,12 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func encoder(output io.Writer, s sbom.SBOM, appConfig interface{}) error {
-	doc := ToFormatModel(s, appConfig)
+type encoder struct {
+	appConfig interface{}
+}
+
+func (e encoder) Encode(output io.Writer, s sbom.SBOM) error {
+	doc := ToFormatModel(s, e.appConfig)
 
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload
