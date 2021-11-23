@@ -12,7 +12,7 @@ var updateSpdxJson = flag.Bool("update-spdx-json", false, "update the *.golden f
 
 func TestSPDXJSONDirectoryPresenter(t *testing.T) {
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t), nil),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateSpdxJson,
 		spdxJsonRedactor,
 	)
@@ -21,7 +21,7 @@ func TestSPDXJSONDirectoryPresenter(t *testing.T) {
 func TestSPDXJSONImagePresenter(t *testing.T) {
 	testImage := "image-simple"
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot()), nil),
+		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
 		testImage,
 		*updateSpdxJson,
 		spdxJsonRedactor,

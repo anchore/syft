@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func encoder(output io.Writer, s sbom.SBOM, _ interface{}) error {
+func encoder(output io.Writer, s sbom.SBOM) error {
 	// init the tabular writer
 	w := new(tabwriter.Writer)
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)

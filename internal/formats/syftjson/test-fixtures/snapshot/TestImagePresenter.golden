@@ -98,7 +98,10 @@
  },
  "descriptor": {
   "name": "syft",
-  "version": "[not provided]"
+  "version": "v0.42.0-bogus",
+  "configuration": {
+   "config-key": "config-value"
+  }
  },
  "schema": {
   "version": "2.0.0",

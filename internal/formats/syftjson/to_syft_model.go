@@ -20,8 +20,17 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 			PackageCatalog: toSyftCatalog(doc.Artifacts),
 			Distro:         &dist,
 		},
-		Source: *toSyftSourceData(doc.Source),
+		Source:     *toSyftSourceData(doc.Source),
+		Descriptor: toSyftDescriptor(doc.Descriptor),
 	}, nil
+}
+
+func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
+	return sbom.Descriptor{
+		Name:          d.Name,
+		Version:       d.Version,
+		Configuration: d.Configuration,
+	}
 }
 
 func toSyftSourceData(s model.Source) *source.Metadata {

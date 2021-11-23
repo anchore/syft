@@ -12,7 +12,7 @@ var updateTableGoldenFiles = flag.Bool("update-table", false, "update the *.gold
 
 func TestTablePresenter(t *testing.T) {
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t), nil),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateTableGoldenFiles,
 	)
 }

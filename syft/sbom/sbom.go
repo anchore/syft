@@ -12,6 +12,7 @@ type SBOM struct {
 	Artifacts     Artifacts
 	Relationships []artifact.Relationship
 	Source        source.Metadata
+	Descriptor    Descriptor
 }
 
 type Artifacts struct {
@@ -22,6 +23,12 @@ type Artifacts struct {
 	FileContents        map[source.Coordinates]string
 	Secrets             map[source.Coordinates][]file.SearchResult
 	Distro              *distro.Distro
+}
+
+type Descriptor struct {
+	Name          string
+	Version       string
+	Configuration interface{}
 }
 
 func AllCoordinates(sbom SBOM) []source.Coordinates {

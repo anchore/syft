@@ -11,7 +11,7 @@ var updateTextPresenterGoldenFiles = flag.Bool("update-text", false, "update the
 
 func TestTextDirectoryPresenter(t *testing.T) {
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t), nil),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateTextPresenterGoldenFiles,
 	)
 }
@@ -19,7 +19,7 @@ func TestTextDirectoryPresenter(t *testing.T) {
 func TestTextImagePresenter(t *testing.T) {
 	testImage := "image-simple"
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot()), nil),
+		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
 		testImage,
 		*updateTextPresenterGoldenFiles,
 	)

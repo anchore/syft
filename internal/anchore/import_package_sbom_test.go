@@ -105,7 +105,7 @@ func TestPackageSbomToModel(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	pres := syftjson.Format().Presenter(s, nil)
+	pres := syftjson.Format().Presenter(s)
 	if err := pres.Present(&buf); err != nil {
 		t.Fatalf("unable to get expected json: %+v", err)
 	}

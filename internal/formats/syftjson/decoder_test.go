@@ -15,7 +15,7 @@ func TestEncodeDecodeCycle(t *testing.T) {
 	originalSBOM := testutils.ImageInput(t, testImage)
 
 	var buf bytes.Buffer
-	assert.NoError(t, encoder(&buf, originalSBOM, map[string]string{"config": "value"}))
+	assert.NoError(t, encoder(&buf, originalSBOM))
 
 	actualSBOM, err := decoder(bytes.NewReader(buf.Bytes()))
 	assert.NoError(t, err)

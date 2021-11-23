@@ -7,7 +7,7 @@ import (
 	"github.com/spdx/tools-golang/tvsaver"
 )
 
-func encoder(output io.Writer, s sbom.SBOM, _ interface{}) error {
+func encoder(output io.Writer, s sbom.SBOM) error {
 	model := toFormatModel(s)
 	return tvsaver.Save2_2(&model, output)
 }

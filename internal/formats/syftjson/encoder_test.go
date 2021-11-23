@@ -4,10 +4,11 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/syft/artifact"
 
 	"github.com/anchore/syft/syft/distro"
-	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -19,7 +20,7 @@ var updateJson = flag.Bool("update-json", false, "update the *.golden files for 
 
 func TestDirectoryPresenter(t *testing.T) {
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t), nil),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateJson,
 	)
 }
@@ -27,13 +28,13 @@ func TestDirectoryPresenter(t *testing.T) {
 func TestImagePresenter(t *testing.T) {
 	testImage := "image-simple"
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot()), nil),
+		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
 		testImage,
 		*updateJson,
 	)
 }
 
-func TestFullJSONDocument(t *testing.T) {
+func TestEncodeFullJSONDocument(t *testing.T) {
 	catalog := pkg.NewCatalog()
 
 	p1 := pkg.Package{
@@ -180,12 +181,19 @@ func TestFullJSONDocument(t *testing.T) {
 				RepoDigests: []string{},
 			},
 		},
+		Descriptor: sbom.Descriptor{
+			Name:    "syft",
+			Version: "v0.42.0-bogus",
+			// the application configuration should be persisted here, however, we do not want to import
+			// the application configuration in this package (it's reserved only for ingestion by the cmd package)
+			Configuration: map[string]string{
+				"config-key": "config-value",
+			},
+		},
 	}
 
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(s, map[string]string{
-			"app": "config",
-		}),
+		Format().Presenter(s),
 		*updateJson,
 	)
 }

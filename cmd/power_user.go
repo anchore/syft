@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/sbom"
@@ -123,6 +124,11 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		s := sbom.SBOM{
 			Source: src.Metadata,
+			Descriptor: sbom.Descriptor{
+				Name:          internal.ApplicationName,
+				Version:       version.FromBuild().Version,
+				Configuration: appConfig,
+			},
 		}
 
 		var relationships []<-chan artifact.Relationship
@@ -137,7 +143,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: syftjson.Format().Presenter(s, *appConfig),
+			Value: syftjson.Format().Presenter(s),
 		})
 	}()
 

@@ -13,7 +13,7 @@ var updateSpdxTagValue = flag.Bool("update-spdx-tv", false, "update the *.golden
 func TestSPDXTagValueDirectoryPresenter(t *testing.T) {
 
 	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t), nil),
+		Format().Presenter(testutils.DirectoryInput(t)),
 		*updateSpdxTagValue,
 		spdxTagValueRedactor,
 	)
@@ -22,7 +22,7 @@ func TestSPDXTagValueDirectoryPresenter(t *testing.T) {
 func TestSPDXTagValueImagePresenter(t *testing.T) {
 	testImage := "image-simple"
 	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot()), nil),
+		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
 		testImage,
 		*updateSpdxTagValue,
 		spdxTagValueRedactor,

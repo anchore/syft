@@ -14,14 +14,13 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
 // TODO: this is exported for the use of the power-user command (temp)
-func ToFormatModel(s sbom.SBOM, applicationConfig interface{}) model.Document {
+func ToFormatModel(s sbom.SBOM) model.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil {
 		log.Warnf("unable to create syft-json source object: %+v", err)
@@ -34,15 +33,19 @@ func ToFormatModel(s sbom.SBOM, applicationConfig interface{}) model.Document {
 		Secrets:               toSecrets(s.Artifacts.Secrets),
 		Source:                src,
 		Distro:                toDistroModel(s.Artifacts.Distro),
-		Descriptor: model.Descriptor{
-			Name:          internal.ApplicationName,
-			Version:       version.FromBuild().Version,
-			Configuration: applicationConfig,
-		},
+		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
 		},
+	}
+}
+
+func toDescriptor(d sbom.Descriptor) model.Descriptor {
+	return model.Descriptor{
+		Name:          d.Name,
+		Version:       d.Version,
+		Configuration: d.Configuration,
 	}
 }
 

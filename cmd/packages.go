@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
@@ -263,6 +264,11 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		s := sbom.SBOM{
 			Source: src.Metadata,
+			Descriptor: sbom.Descriptor{
+				Name:          internal.ApplicationName,
+				Version:       version.FromBuild().Version,
+				Configuration: appConfig,
+			},
 		}
 
 		var relationships []<-chan artifact.Relationship
@@ -283,7 +289,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: f.Presenter(s, appConfig),
+			Value: f.Presenter(s),
 		})
 	}()
 	return errs
