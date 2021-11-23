@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-// Package represents a pkg.Package object specialized for JSON marshaling and unmarshaling.
+// Package represents a pkg.Package object specialized for JSON marshaling and unmarshalling.
 type Package struct {
 	PackageBasicData
 	PackageCustomData

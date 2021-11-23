@@ -8,8 +8,7 @@ import (
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {
-	// TODO: application config not available yet
-	doc := ToFormatModel(s, nil)
+	doc := ToFormatModel(s)
 
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload

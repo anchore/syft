@@ -163,6 +163,10 @@ func (cfg *Application) parseLogLevelOption() error {
 		}
 	}
 
+	if cfg.Log.Level == "" {
+		cfg.Log.Level = cfg.Log.LevelOpt.String()
+	}
+
 	return nil
 }
 

@@ -3,18 +3,18 @@
  "name": "user-image-input",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-10-29T16:26:09.001799Z",
+  "created": "2021-11-17T19:35:57.761372Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
   ],
-  "licenseListVersion": "3.14"
+  "licenseListVersion": "3.15"
  },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https:/anchore.com/syft/image/user-image-input-3ad8571c-513f-4fce-944e-5125353c3186",
+ "documentNamespace": "https:/anchore.com/syft/image/user-image-input-5383918f-ec96-4aa9-b756-ad16e1ada31e",
  "packages": [
   {
-   "SPDXID": "SPDXRef-Package-python-package-1-1.0.1",
+   "SPDXID": "SPDXRef-888661d4f0362f02",
    "name": "package-1",
    "licenseConcluded": "MIT",
    "downloadLocation": "NOASSERTION",
@@ -36,7 +36,7 @@
    "versionInfo": "1.0.1"
   },
   {
-   "SPDXID": "SPDXRef-Package-deb-package-2-2.0.1",
+   "SPDXID": "SPDXRef-4068ff5e8926b305",
    "name": "package-2",
    "licenseConcluded": "NONE",
    "downloadLocation": "NOASSERTION",
