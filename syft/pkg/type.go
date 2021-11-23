@@ -15,7 +15,6 @@ const (
 	NpmPkg           Type = "npm"
 	PythonPkg        Type = "python"
 	PhpComposerPkg   Type = "php-composer"
-	PhpInstalledPkg  Type = "php-installed"
 	JavaPkg          Type = "java-archive"
 	JenkinsPluginPkg Type = "jenkins-plugin"
 	GoModulePkg      Type = "go-module"

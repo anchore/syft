@@ -13,39 +13,31 @@ import (
 
 // Note: composer version 2 introduced a new structure for the installed.json file, so we support both
 type InstalledJsonComposerV2 struct {
-	Packages   []Dependency `json:"packages"`
+	Packages []Dependency `json:"packages"`
 }
 
 type InstalledJsonComposerV1 struct {
 	Packages []Dependency
 }
 
-//
-//type Dependency struct {
-//	Name    string `json:"name"`
-//	Version string `json:"version"`
-//}
-
 func (w *InstalledJsonComposerV2) UnmarshalJSON(data []byte) error {
-	if data[0] == '{' { //we're dealing with composer 2
-		type compv2 struct {
-			Packages []Dependency `json:"packages"`
-		}
-		compv2er := new(compv2)
-		err := json.Unmarshal(data, &compv2er)
-		if(err != nil) {
+	type compv2 struct {
+		Packages []Dependency `json:"packages"`
+	}
+	compv2er := new(compv2)
+	err := json.Unmarshal(data, &compv2er)
+	if err != nil {
+		// If we had an err	or, we may be dealing with a composer v.1 installed.json
+		// which should be all arrays
+		var packages []Dependency
+		err := json.Unmarshal(data, &packages)
+		if err != nil {
 			return err
 		}
-		w.Packages = compv2er.Packages
+		w.Packages = packages
 		return nil
 	}
-	//we're falling back on composer 1, which should be all arrays
-	var packages []Dependency
-	err := json.Unmarshal(data, &packages)
-	if err != nil {
-		return err
-	}
-	w.Packages = packages
+	w.Packages = compv2er.Packages
 	return nil
 }
 
@@ -71,7 +63,7 @@ func parseInstalledJson(_ string, reader io.Reader) ([]pkg.Package, []artifact.R
 				Name:     name,
 				Version:  version,
 				Language: pkg.PHP,
-				Type:     pkg.PhpInstalledPkg,
+				Type:     pkg.PhpComposerPkg,
 			})
 		}
 	}
