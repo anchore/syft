@@ -1,4 +1,4 @@
-package cyclonedx12json
+package cyclonedx13json
 
 import (
 	"io"
