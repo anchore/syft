@@ -1,12 +1,11 @@
 package cyclonedx12json
 
 import (
-	"encoding/json"
 	"io"
 	"time"
 
+	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/formats/cyclonedx12json/model"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -15,41 +14,36 @@ import (
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {
-	enc := json.NewEncoder(output)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", " ")
+	bom := toFormatModel(s)
+	enc := cyclonedx.NewBOMEncoder(output, cyclonedx.BOMFileFormatJSON)
+	enc.SetPretty(true)
 
-	err := enc.Encode(toFormatModel(s))
-	if err != nil {
-		return err
-	}
-
-	_, err = output.Write([]byte("\n"))
+	err := enc.Encode(bom)
 	return err
 }
 
-func toFormatModel(s sbom.SBOM) model.Document {
+func toFormatModel(s sbom.SBOM) *cyclonedx.BOM {
+	cdxBOM := cyclonedx.NewBOM()
 	versionInfo := version.FromBuild()
 
-	doc := model.Document{
-		Version:       1,
-		SerialNumber:  uuid.New().URN(),
-		BomDescriptor: toBomDescriptor(internal.ApplicationName, versionInfo.Version, s.Source),
-	}
+	cdxBOM.SerialNumber = uuid.New().String()
+	cdxBOM.Metadata = toBomDescriptor(internal.ApplicationName, versionInfo.Version, s.Source)
 
-	// attach components
-	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
-		doc.Components = append(doc.Components, toComponent(p))
+	packages := s.Artifacts.PackageCatalog.Sorted()
+	components := make([]cyclonedx.Component, len(packages))
+	for i, p := range packages {
+		components[i] = toComponent(p)
 	}
+	cdxBOM.Components = &components
 
-	return doc
+	return cdxBOM
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func toBomDescriptor(name, version string, srcMetadata source.Metadata) *model.BomDescriptor {
-	return &model.BomDescriptor{
+func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclonedx.Metadata {
+	return &cyclonedx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
-		Tools: []model.BomDescriptorTool{
+		Tools: &[]cyclonedx.Tool{
 			{
 				Vendor:  "anchore",
 				Name:    name,
@@ -58,11 +52,12 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *model.B
 		},
 		Component: toBomDescriptorComponent(srcMetadata),
 	}
+
 }
 
-func toComponent(p pkg.Package) model.Component {
-	return model.Component{
-		Type:       "library", // TODO: this is not accurate
+func toComponent(p pkg.Package) cyclonedx.Component {
+	return cyclonedx.Component{
+		Type:       cyclonedx.ComponentTypeLibrary,
 		Name:       p.Name,
 		Version:    p.Version,
 		PackageURL: p.PURL,
@@ -70,37 +65,38 @@ func toComponent(p pkg.Package) model.Component {
 	}
 }
 
-func toBomDescriptorComponent(srcMetadata source.Metadata) *model.BomDescriptorComponent {
+func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component {
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		return &model.BomDescriptorComponent{
-			Component: model.Component{
-				Type:    "container",
-				Name:    srcMetadata.ImageMetadata.UserInput,
-				Version: srcMetadata.ImageMetadata.ManifestDigest,
-			},
+		return &cyclonedx.Component{
+			Type:    cyclonedx.ComponentTypeContainer,
+			Name:    srcMetadata.ImageMetadata.UserInput,
+			Version: srcMetadata.ImageMetadata.ManifestDigest,
 		}
 	case source.DirectoryScheme:
-		return &model.BomDescriptorComponent{
-			Component: model.Component{
-				Type: "file",
-				Name: srcMetadata.Path,
-			},
+		return &cyclonedx.Component{
+			Type: cyclonedx.ComponentTypeFile,
+			Name: srcMetadata.Path,
 		}
 	}
+
 	return nil
 }
 
-func toLicenses(licenses []string) *[]model.License {
-	if len(licenses) == 0 {
+func toLicenses(ls []string) *cyclonedx.Licenses {
+	if len(ls) == 0 {
 		return nil
 	}
 
-	var result []model.License
-	for _, licenseName := range licenses {
-		result = append(result, model.License{
-			Name: licenseName,
-		})
+	lc := make(cyclonedx.Licenses, len(ls))
+	for i, licenseName := range ls {
+		lc[i] = cyclonedx.LicenseChoice{
+			License: &cyclonedx.License{
+				Name: licenseName,
+			},
+		}
 	}
-	return &result
+
+	licenses := cyclonedx.Licenses(lc)
+	return &licenses
 }
