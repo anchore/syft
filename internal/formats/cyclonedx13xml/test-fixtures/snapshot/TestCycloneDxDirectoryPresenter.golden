@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="eee892c2-a904-49ac-8f90-b16136d0d3b1" version="1">
+  <metadata>
+    <timestamp>2021-11-24T15:52:44-08:00</timestamp>
+    <tools>
+      <tool>
+        <vendor>anchore</vendor>
+        <name>syft</name>
+        <version>[not provided]</version>
+      </tool>
+    </tools>
+    <component type="file">
+      <name>/some/path</name>
+      <version></version>
+    </component>
+  </metadata>
+  <components>
+    <component type="library">
+      <name>package-1</name>
+      <version>1.0.1</version>
+      <licenses>
+        <license>
+          <name>MIT</name>
+        </license>
+      </licenses>
+      <purl>a-purl-2</purl>
+    </component>
+    <component type="library">
+      <name>package-2</name>
+      <version>2.0.1</version>
+      <purl>a-purl-2</purl>
+    </component>
+  </components>
+</bom>

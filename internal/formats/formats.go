@@ -3,8 +3,9 @@ package formats
 import (
 	"bytes"
 
-	"github.com/anchore/syft/internal/formats/cyclonedx12json"
 	"github.com/anchore/syft/internal/formats/cyclonedx12xml"
+	"github.com/anchore/syft/internal/formats/cyclonedx13json"
+	"github.com/anchore/syft/internal/formats/cyclonedx13xml"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
@@ -19,7 +20,8 @@ func All() []format.Format {
 		syftjson.Format(),
 		table.Format(),
 		cyclonedx12xml.Format(),
-		cyclonedx12json.Format(),
+		cyclonedx13xml.Format(),
+		cyclonedx13json.Format(),
 		spdx22json.Format(),
 		spdx22tagvalue.Format(),
 		text.Format(),
