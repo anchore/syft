@@ -52,7 +52,6 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 		},
 		Component: toBomDescriptorComponent(srcMetadata),
 	}
-
 }
 
 func toComponent(p pkg.Package) cyclonedx.Component {
@@ -97,6 +96,5 @@ func toLicenses(ls []string) *cyclonedx.Licenses {
 		}
 	}
 
-	licenses := cyclonedx.Licenses(lc)
-	return &licenses
+	return &lc
 }
