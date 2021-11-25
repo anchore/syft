@@ -24,7 +24,7 @@ limitations under the License.
            vc:maxVersion="1.1"
            version="1.3">
 
-    <xs:import namespace="http://cyclonedx.org/schema/spdx" schemaLocation="http://cyclonedx.org/schema/spdx"/>
+    <xs:import namespace="http://cyclonedx.org/schema/spdx" schemaLocation="spdx.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
