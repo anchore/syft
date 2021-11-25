@@ -1,7 +1,6 @@
 package cyclonedx13xml
 
 import (
-	"encoding/xml"
 	"io"
 	"time"
 
@@ -15,20 +14,11 @@ import (
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {
-	enc := xml.NewEncoder(output)
-	enc.Indent("", "  ")
+	bom := toFormatModel(s)
+	enc := cyclonedx.NewBOMEncoder(output, cyclonedx.BOMFileFormatXML)
+	enc.SetPretty(true)
 
-	_, err := output.Write([]byte(xml.Header))
-	if err != nil {
-		return err
-	}
-
-	err = enc.Encode(toFormatModel(s))
-	if err != nil {
-		return err
-	}
-
-	_, err = output.Write([]byte("\n"))
+	err := enc.Encode(bom)
 	return err
 }
 
@@ -62,7 +52,6 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 		},
 		Component: toBomDescriptorComponent(srcMetadata),
 	}
-
 }
 
 func toComponent(p pkg.Package) cyclonedx.Component {
@@ -107,6 +96,5 @@ func toLicenses(ls []string) *cyclonedx.Licenses {
 		}
 	}
 
-	licenses := cyclonedx.Licenses(lc)
-	return &licenses
+	return &lc
 }
