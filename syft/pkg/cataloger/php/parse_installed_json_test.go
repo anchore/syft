@@ -29,7 +29,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 	}
 
 	// TODO: no relationships are under test yet
-	actual, _, err := parseInstalledJson(fixture.Name(), fixture)
+	actual, _, err := parseInstalledJSON(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}
@@ -61,7 +61,7 @@ func TestParseInstalledJsonComposerV2(t *testing.T) {
 	}
 
 	// TODO: no relationships are under test yet
-	actual, _, err := parseInstalledJson(fixture.Name(), fixture)
+	actual, _, err := parseInstalledJSON(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}

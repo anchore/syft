@@ -10,7 +10,7 @@ import (
 // NewPHPComposerInstalledCataloger returns a new cataloger for PHP installed.json files.
 func NewPHPComposerInstalledCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
-		"**/installed.json": parseInstalledJson,
+		"**/installed.json": parseInstalledJSON,
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "php-composer-installed-cataloger")

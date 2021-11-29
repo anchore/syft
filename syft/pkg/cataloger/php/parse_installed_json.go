@@ -6,21 +6,16 @@ import (
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // Note: composer version 2 introduced a new structure for the installed.json file, so we support both
-type InstalledJsonComposerV2 struct {
+type installedJSONComposerV2 struct {
 	Packages []Dependency `json:"packages"`
 }
 
-type InstalledJsonComposerV1 struct {
-	Packages []Dependency
-}
-
-func (w *InstalledJsonComposerV2) UnmarshalJSON(data []byte) error {
+func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 	type compv2 struct {
 		Packages []Dependency `json:"packages"`
 	}
@@ -45,12 +40,12 @@ func (w *InstalledJsonComposerV2) UnmarshalJSON(data []byte) error {
 var _ common.ParserFn = parseComposerLock
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseInstalledJson(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+func parseInstalledJSON(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
 	for {
-		var lock InstalledJsonComposerV2
+		var lock installedJSONComposerV2
 		if err := dec.Decode(&lock); err == io.EOF {
 			break
 		} else if err != nil {
