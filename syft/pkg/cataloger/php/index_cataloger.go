@@ -7,20 +7,20 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
-// NewPhPInstalledCataloger returns a new cataloger for PHP installed.json files.
-func NewPhPInstalledCataloger() *common.GenericCataloger {
+// NewPHPComposerInstalledCataloger returns a new cataloger for PHP installed.json files.
+func NewPHPComposerInstalledCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/installed.json": parseInstalledJson,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "php-installed-cataloger")
+	return common.NewGenericCataloger(nil, globParsers, "php-composer-installed-cataloger")
 }
 
-// NewPHPIndexCataloger returns a new cataloger for PHP composer.lock files.
-func NewPHPIndexCataloger() *common.GenericCataloger {
+// NewPHPComposerLockCataloger returns a new cataloger for PHP composer.lock files.
+func NewPHPComposerLockCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/composer.lock": parseComposerLock,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "php-index-cataloger")
+	return common.NewGenericCataloger(nil, globParsers, "php-composer-lock-cataloger")
 }

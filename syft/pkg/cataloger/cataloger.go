@@ -36,7 +36,7 @@ func ImageCatalogers() []Cataloger {
 	return []Cataloger{
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
-		php.NewPhPInstalledCataloger(),
+		php.NewPHPComposerInstalledCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
@@ -52,7 +52,7 @@ func DirectoryCatalogers() []Cataloger {
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
-		php.NewPHPIndexCataloger(),
+		php.NewPHPComposerLockCataloger(),
 		javascript.NewJavascriptLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
