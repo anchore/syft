@@ -33,10 +33,11 @@ type pathFilterFn func(string) bool
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
-	path     string
-	cwd      string
-	fileTree *filetree.FileTree
-	metadata map[file.ID]FileMetadata
+	path              string
+	cwdRelativeToRoot string
+	cwd               string
+	fileTree          *filetree.FileTree
+	metadata          map[file.ID]FileMetadata
 	// TODO: wire up to report these paths in the json report
 	pathFilterFns  []pathFilterFn
 	refsByMIMEType map[string][]file.Reference
@@ -49,18 +50,27 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		return nil, fmt.Errorf("could not create directory resolver: %w", err)
 	}
 
+	var cwdRelRoot string
+	if path.IsAbs(root) {
+		cwdRelRoot, err = filepath.Rel(cwd, root)
+		if err != nil {
+			return nil, fmt.Errorf("could not create directory resolver: %w", err)
+		}
+	}
+
 	if pathFilters == nil {
 		pathFilters = []pathFilterFn{isUnixSystemRuntimePath}
 	}
 
 	resolver := directoryResolver{
-		path:           root,
-		cwd:            cwd,
-		fileTree:       filetree.NewFileTree(),
-		metadata:       make(map[file.ID]FileMetadata),
-		pathFilterFns:  pathFilters,
-		refsByMIMEType: make(map[string][]file.Reference),
-		errPaths:       make(map[string]error),
+		path:              root,
+		cwd:               cwd,
+		cwdRelativeToRoot: cwdRelRoot,
+		fileTree:          filetree.NewFileTree(),
+		metadata:          make(map[file.ID]FileMetadata),
+		pathFilterFns:     pathFilters,
+		refsByMIMEType:    make(map[string][]file.Reference),
+		errPaths:          make(map[string]error),
 	}
 
 	return &resolver, indexAllRoots(root, resolver.indexTree)
@@ -200,7 +210,11 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 	if filepath.IsAbs(userPath) {
 		// don't allow input to potentially hop above root path
 		userPath = path.Join(r.path, userPath)
+	} else {
+		// ensure we take into account any relative difference between the root path and the CWD for relative requests
+		userPath = path.Join(r.cwdRelativeToRoot, userPath)
 	}
+
 	var err error
 	userPath, err = filepath.Abs(userPath)
 	if err != nil {
@@ -212,7 +226,9 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 func (r directoryResolver) responsePath(path string) string {
 	// always return references relative to the request path (not absolute path)
 	if filepath.IsAbs(path) {
-		return strings.TrimPrefix(path, r.cwd+string(filepath.Separator))
+		// we need to account for the cwd relative to the running process and the given root for the directory resolver
+		prefix := filepath.Clean(filepath.Join(r.cwd, r.cwdRelativeToRoot))
+		return strings.TrimPrefix(path, prefix+string(filepath.Separator))
 	}
 	return path
 }
