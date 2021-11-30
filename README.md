@@ -201,6 +201,8 @@ Configuration search paths:
 
 - `.syft.yaml`
 - `.syft/config.yaml`
+- `<git repo root>/.syft.yaml`
+- `<git repo root>/.syft/config.yaml`
 - `~/.syft.yaml`
 - `<XDG_CONFIG_HOME>/syft/config.yaml`
 

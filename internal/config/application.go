@@ -3,7 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -206,44 +209,80 @@ func readConfig(v *viper.Viper, configPath string) error {
 	// 1. look for .<appname>.yaml (in the current directory)
 	v.AddConfigPath(".")
 	v.SetConfigName("." + internal.ApplicationName)
-	if err = v.ReadInConfig(); err == nil {
-		return nil
-	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+	if exists, err := readViperConfig(v); exists || err != nil {
+		return err
 	}
 
 	// 2. look for .<appname>/config.yaml (in the current directory)
 	v.AddConfigPath("." + internal.ApplicationName)
 	v.SetConfigName("config")
-	if err = v.ReadInConfig(); err == nil {
-		return nil
-	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+	if exists, err := readViperConfig(v); exists || err != nil {
+		return err
 	}
 
-	// 3. look for ~/.<appname>.yaml
+	if root := gitRepoRoot(); root != "" {
+		// 3. look for <git repo root>/.<appname>.yaml, where the repo root is defined by "git rev-parse --show-toplevel"
+		v.AddConfigPath(root)
+		v.SetConfigName("." + internal.ApplicationName)
+		if exists, err := readViperConfig(v); exists {
+			if err != nil {
+				return err
+			}
+			return os.Chdir(root)
+		}
+
+		// 4. look for <git repo root>/.<appname>/config.yaml, where the repo root is defined by "git rev-parse --show-toplevel"
+		v.AddConfigPath(filepath.Join(root, "."+internal.ApplicationName))
+		v.SetConfigName("config")
+		if exists, err := readViperConfig(v); exists {
+			if err != nil {
+				return err
+			}
+			return os.Chdir(root)
+		}
+	}
+
+	// 5. look for ~/.<appname>.yaml
 	home, err := homedir.Dir()
 	if err == nil {
 		v.AddConfigPath(home)
 		v.SetConfigName("." + internal.ApplicationName)
-		if err = v.ReadInConfig(); err == nil {
-			return nil
-		} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-			return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+		if exists, err := readViperConfig(v); exists || err != nil {
+			return err
 		}
 	}
 
-	// 4. look for <appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
+	// 6. look for <appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
 	v.AddConfigPath(path.Join(xdg.ConfigHome, internal.ApplicationName))
 	for _, dir := range xdg.ConfigDirs {
 		v.AddConfigPath(path.Join(dir, internal.ApplicationName))
 	}
 	v.SetConfigName("config")
-	if err = v.ReadInConfig(); err == nil {
-		return nil
-	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+	if exists, err := readViperConfig(v); exists || err != nil {
+		return err
 	}
 
 	return ErrApplicationConfigNotFound
+}
+
+func readViperConfig(v *viper.Viper) (bool, error) {
+	err := v.ReadInConfig()
+	if err == nil {
+		return true, nil
+	} else if errors.As(err, &viper.ConfigFileNotFoundError{}) {
+		return false, nil
+	}
+	return true, fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+}
+
+func gitRepoRoot() string {
+	root, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+	if err != nil {
+		return ""
+	}
+	absRepoRoot, err := filepath.Abs(strings.TrimSpace(string(root)))
+	if err != nil {
+		return ""
+	}
+	return absRepoRoot
 }
