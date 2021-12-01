@@ -42,6 +42,16 @@ var imageOnlyTestCases = []testCase{
 		},
 	},
 	{
+		name:        "find PHP composer installed.json packages",
+		pkgType:     pkg.PhpComposerPkg,
+		pkgLanguage: pkg.PHP,
+		pkgInfo: map[string]string{
+			"nikic/fast-route": "v1.3.0",
+			"psr/container":    "2.0.2",
+			"psr/http-factory": "1.0.1",
+		},
+	},
+	{
 		// When the image is build lib overwrites pkgs/lib causing there to only be two packages
 		name:    "find apkdb packages",
 		pkgType: pkg.ApkPkg,

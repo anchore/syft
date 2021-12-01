@@ -14,6 +14,9 @@ require (
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.0.0-20210922164639-b3fa992ebd29
 	github.com/anchore/stereoscope v0.0.0-20211116152349-7e4e1b56a15d
+	// we are hinting brotli to latest due to warning when installing archiver v3:
+	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar/v2 v2.0.4
 	github.com/docker/docker v20.10.10+incompatible
@@ -27,6 +30,7 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+	github.com/mholt/archiver/v3 v3.5.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/mitchellh/mapstructure v1.4.1
@@ -46,11 +50,11 @@ require (
 	github.com/vifraa/gopom v0.1.0
 	github.com/wagoodman/go-partybus v0.0.0-20210627031916-db1f5573bbc5
 	github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240
-	github.com/wagoodman/jotframe v0.0.0-20200730190914-3517092dd163
+	github.com/wagoodman/jotframe v0.0.0-20211129225309-56b0d0a4aebb
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20211111160137-58aab5ef257a
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 	gopkg.in/yaml.v2 v2.4.0
 )

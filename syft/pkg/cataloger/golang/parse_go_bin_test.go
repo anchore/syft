@@ -34,8 +34,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{
-							RealPath:     "/a-path",
-							FileSystemID: "layer-id",
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
 						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
@@ -51,8 +53,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{
-							RealPath:     "/a-path",
-							FileSystemID: "layer-id",
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
 						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
@@ -79,8 +83,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{
-							RealPath:     "/a-path",
-							FileSystemID: "layer-id",
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
 						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
@@ -96,8 +102,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{
-							RealPath:     "/a-path",
-							FileSystemID: "layer-id",
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
 						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
@@ -113,8 +121,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: []source.Location{
 						{
-							RealPath:     "/a-path",
-							FileSystemID: "layer-id",
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
 						},
 					},
 					MetadataType: pkg.GolangBinMetadataType,
@@ -130,7 +140,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			location := source.Location{RealPath: "/a-path", FileSystemID: "layer-id"}
+			location := source.Location{
+				Coordinates: source.Coordinates{
+					RealPath:     "/a-path",
+					FileSystemID: "layer-id",
+				},
+			}
 			pkgs := buildGoPkgInfo(location, tt.mod, goCompiledVersion)
 			assert.Equal(t, tt.expected, pkgs)
 		})

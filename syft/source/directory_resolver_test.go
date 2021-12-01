@@ -10,12 +10,68 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/wagoodman/go-progress"
 )
+
+func TestDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
+	cases := []struct {
+		name         string
+		relativeRoot string
+		input        string
+		expected     []string
+	}{
+		{
+			name:         "should find a file from an absolute input",
+			relativeRoot: "./test-fixtures/",
+			input:        "/image-symlinks/file-1.txt",
+			expected: []string{
+				"image-symlinks/file-1.txt",
+			},
+		},
+		{
+			name:         "should find a file from a relative path",
+			relativeRoot: "./test-fixtures/",
+			input:        "image-symlinks/file-1.txt",
+			expected: []string{
+				"image-symlinks/file-1.txt",
+			},
+		},
+		{
+			name:         "should find a file from a relative path (root above cwd)",
+			relativeRoot: "../",
+			input:        "sbom/sbom.go",
+			expected: []string{
+				"sbom/sbom.go",
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// note: this test is all about asserting correct functionality when the given analysis path
+			// is an absolute path
+			absRoot, err := filepath.Abs(c.relativeRoot)
+			require.NoError(t, err)
+
+			resolver, err := newDirectoryResolver(absRoot)
+			assert.NoError(t, err)
+
+			refs, err := resolver.FilesByPath(c.input)
+			require.NoError(t, err)
+			assert.Len(t, refs, len(c.expected))
+			s := strset.New()
+			for _, actual := range refs {
+				s.Add(actual.RealPath)
+			}
+			assert.ElementsMatch(t, c.expected, s.List())
+		})
+	}
+}
 
 func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	cases := []struct {
@@ -85,18 +141,10 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 			}
 
 			refs, err := resolver.FilesByPath(c.input)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v, %+v", err, refs)
-			}
-
-			if len(refs) != c.refCount {
-				t.Errorf("unexpected number of refs: %d != %d", len(refs), c.refCount)
-			}
-
+			require.NoError(t, err)
+			assert.Len(t, refs, c.refCount)
 			for _, actual := range refs {
-				if actual.RealPath != c.expected {
-					t.Errorf("bad resolve path: '%s'!='%s'", actual.RealPath, c.expected)
-				}
+				assert.Equal(t, c.expected, actual.RealPath)
 			}
 		})
 	}

@@ -17,6 +17,8 @@ import (
 
 var ErrApplicationConfigNotFound = fmt.Errorf("application config not found")
 
+var catalogerEnabledDefault = false
+
 type defaultValueLoader interface {
 	loadDefaultValues(*viper.Viper)
 }
@@ -42,6 +44,11 @@ type Application struct {
 	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
 	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
 	Registry           registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
+}
+
+// PowerUserCatalogerEnabledDefault switches all catalogers to be enabled when running power-user command
+func PowerUserCatalogerEnabledDefault() {
+	catalogerEnabledDefault = true
 }
 
 func newApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) *Application {
@@ -154,6 +161,10 @@ func (cfg *Application) parseLogLevelOption() error {
 		default:
 			cfg.Log.LevelOpt = logrus.ErrorLevel
 		}
+	}
+
+	if cfg.Log.Level == "" {
+		cfg.Log.Level = cfg.Log.LevelOpt.String()
 	}
 
 	return nil

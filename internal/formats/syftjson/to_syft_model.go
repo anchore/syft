@@ -20,8 +20,17 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 			PackageCatalog: toSyftCatalog(doc.Artifacts),
 			Distro:         &dist,
 		},
-		Source: *toSyftSourceData(doc.Source),
+		Source:     *toSyftSourceData(doc.Source),
+		Descriptor: toSyftDescriptor(doc.Descriptor),
 	}, nil
+}
+
+func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
+	return sbom.Descriptor{
+		Name:          d.Name,
+		Version:       d.Version,
+		Configuration: d.Configuration,
+	}
 }
 
 func toSyftSourceData(s model.Source) *source.Metadata {
@@ -60,11 +69,16 @@ func toSyftPackage(p model.Package) pkg.Package {
 		cpes = append(cpes, value)
 	}
 
+	var locations = make([]source.Location, len(p.Locations))
+	for i, c := range p.Locations {
+		locations[i] = source.NewLocationFromCoordinates(c)
+	}
+
 	return pkg.Package{
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
-		Locations:    p.Locations,
+		Locations:    locations,
 		Licenses:     p.Licenses,
 		Language:     p.Language,
 		Type:         p.Type,

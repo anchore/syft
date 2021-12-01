@@ -2,6 +2,10 @@ package syftjson
 
 import (
 	"fmt"
+	"sort"
+	"strconv"
+
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/syft/artifact"
 
@@ -10,14 +14,13 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-// TODO: this is export4ed for the use of the power-user command (temp)
-func ToFormatModel(s sbom.SBOM, applicationConfig interface{}) model.Document {
+// TODO: this is exported for the use of the power-user command (temp)
+func ToFormatModel(s sbom.SBOM) model.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil {
 		log.Warnf("unable to create syft-json source object: %+v", err)
@@ -26,17 +29,102 @@ func ToFormatModel(s sbom.SBOM, applicationConfig interface{}) model.Document {
 	return model.Document{
 		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
+		Files:                 toFile(s),
+		Secrets:               toSecrets(s.Artifacts.Secrets),
 		Source:                src,
 		Distro:                toDistroModel(s.Artifacts.Distro),
-		Descriptor: model.Descriptor{
-			Name:          internal.ApplicationName,
-			Version:       version.FromBuild().Version,
-			Configuration: applicationConfig,
-		},
+		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
 		},
+	}
+}
+
+func toDescriptor(d sbom.Descriptor) model.Descriptor {
+	return model.Descriptor{
+		Name:          d.Name,
+		Version:       d.Version,
+		Configuration: d.Configuration,
+	}
+}
+
+func toSecrets(data map[source.Coordinates][]file.SearchResult) []model.Secrets {
+	results := make([]model.Secrets, 0)
+	for coordinates, secrets := range data {
+		results = append(results, model.Secrets{
+			Location: coordinates,
+			Secrets:  secrets,
+		})
+	}
+
+	// sort by real path then virtual path to ensure the result is stable across multiple runs
+	sort.SliceStable(results, func(i, j int) bool {
+		return results[i].Location.RealPath < results[j].Location.RealPath
+	})
+	return results
+}
+
+func toFile(s sbom.SBOM) []model.File {
+	results := make([]model.File, 0)
+	artifacts := s.Artifacts
+
+	for _, coordinates := range sbom.AllCoordinates(s) {
+		var metadata *source.FileMetadata
+		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
+			metadata = &metadataForLocation
+		}
+
+		var digests []file.Digest
+		if digestsForLocation, exists := artifacts.FileDigests[coordinates]; exists {
+			digests = digestsForLocation
+		}
+
+		var classifications []file.Classification
+		if classificationsForLocation, exists := artifacts.FileClassifications[coordinates]; exists {
+			classifications = classificationsForLocation
+		}
+
+		var contents string
+		if contentsForLocation, exists := artifacts.FileContents[coordinates]; exists {
+			contents = contentsForLocation
+		}
+
+		results = append(results, model.File{
+			ID:              string(coordinates.ID()),
+			Location:        coordinates,
+			Metadata:        toFileMetadataEntry(coordinates, metadata),
+			Digests:         digests,
+			Classifications: classifications,
+			Contents:        contents,
+		})
+	}
+
+	// sort by real path then virtual path to ensure the result is stable across multiple runs
+	sort.SliceStable(results, func(i, j int) bool {
+		return results[i].Location.RealPath < results[j].Location.RealPath
+	})
+	return results
+}
+
+func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMetadata) *model.FileMetadataEntry {
+	if metadata == nil {
+		return nil
+	}
+
+	mode, err := strconv.Atoi(fmt.Sprintf("%o", metadata.Mode))
+	if err != nil {
+		log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
+		mode = 0
+	}
+
+	return &model.FileMetadataEntry{
+		Mode:            mode,
+		Type:            metadata.Type,
+		LinkDestination: metadata.LinkDestination,
+		UserID:          metadata.UserID,
+		GroupID:         metadata.GroupID,
+		MIMEType:        metadata.MIMEType,
 	}
 }
 
@@ -58,15 +146,14 @@ func toPackageModel(p pkg.Package) model.Package {
 		cpes[i] = c.BindToFmtString()
 	}
 
-	// ensure collections are never nil for presentation reasons
-	var locations = make([]source.Location, 0)
-	if p.Locations != nil {
-		locations = p.Locations
-	}
-
 	var licenses = make([]string, 0)
 	if p.Licenses != nil {
 		licenses = p.Licenses
+	}
+
+	var coordinates = make([]source.Coordinates, len(p.Locations))
+	for i, l := range p.Locations {
+		coordinates[i] = l.Coordinates
 	}
 
 	return model.Package{
@@ -76,7 +163,7 @@ func toPackageModel(p pkg.Package) model.Package {
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-			Locations: locations,
+			Locations: coordinates,
 			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,

@@ -2,26 +2,28 @@ package cmd
 
 import (
 	"fmt"
-	"sync"
-
-	"github.com/anchore/syft/syft/artifact"
-
-	"github.com/anchore/syft/syft/sbom"
+	"os"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/presenter/poweruser"
 	"github.com/anchore/syft/internal/ui"
+	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/gookit/color"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
 )
 
 const powerUserExample = `  {{.appName}} {{.command}} <image>
+
+  DEPRECATED - THIS COMMAND WILL BE REMOVED in v1.0.0
 
   Only image sources are supported (e.g. docker: , docker-archive: , oci: , etc.), the directory source (dir:) is not supported.
 
@@ -76,6 +78,10 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 		if err := closer(); err != nil {
 			log.Warnf("unable to write to report destination: %+v", err)
 		}
+
+		// inform user at end of run that command will be removed
+		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
+		fmt.Fprintln(os.Stderr, deprecated)
 	}()
 
 	if err != nil {
@@ -95,7 +101,11 @@ func powerUserExecWorker(userInput string) <-chan error {
 	go func() {
 		defer close(errs)
 
-		tasks, err := powerUserTasks()
+		appConfig.Secrets.Cataloger.Enabled = true
+		appConfig.FileMetadata.Cataloger.Enabled = true
+		appConfig.FileContents.Cataloger.Enabled = true
+		appConfig.FileClassification.Cataloger.Enabled = true
+		tasks, err := tasks()
 		if err != nil {
 			errs <- err
 			return
@@ -108,63 +118,34 @@ func powerUserExecWorker(userInput string) <-chan error {
 			errs <- err
 			return
 		}
-		defer cleanup()
+		if cleanup != nil {
+			defer cleanup()
+		}
 
 		s := sbom.SBOM{
 			Source: src.Metadata,
+			Descriptor: sbom.Descriptor{
+				Name:          internal.ApplicationName,
+				Version:       version.FromBuild().Version,
+				Configuration: appConfig,
+			},
 		}
 
-		var results []<-chan artifact.Relationship
+		var relationships []<-chan artifact.Relationship
 		for _, task := range tasks {
 			c := make(chan artifact.Relationship)
-			results = append(results, c)
+			relationships = append(relationships, c)
 
 			go runTask(task, &s.Artifacts, src, c, errs)
 		}
 
-		for relationship := range mergeResults(results...) {
-			s.Relationships = append(s.Relationships, relationship)
-		}
+		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: poweruser.NewJSONPresenter(s, *appConfig),
+			Value: syftjson.Format().Presenter(s),
 		})
 	}()
+
 	return errs
-}
-
-func runTask(t powerUserTask, a *sbom.Artifacts, src *source.Source, c chan<- artifact.Relationship, errs chan<- error) {
-	defer close(c)
-
-	relationships, err := t(a, src)
-	if err != nil {
-		errs <- err
-		return
-	}
-
-	for _, relationship := range relationships {
-		c <- relationship
-	}
-}
-
-func mergeResults(cs ...<-chan artifact.Relationship) <-chan artifact.Relationship {
-	var wg sync.WaitGroup
-	var results = make(chan artifact.Relationship)
-
-	wg.Add(len(cs))
-	for _, c := range cs {
-		go func(c <-chan artifact.Relationship) {
-			for n := range c {
-				results <- n
-			}
-			wg.Done()
-		}(c)
-	}
-
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-	return results
 }

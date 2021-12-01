@@ -16,15 +16,6 @@ import (
 
 const catalogerName = "go-module-binary-cataloger"
 
-// current mime types to search by to discover go binaries
-var mimeTypes = []string{
-	"application/x-executable",
-	"application/x-mach-binary",
-	"application/x-elf",
-	"application/x-sharedlib",
-	"application/vnd.microsoft.portable-executable",
-}
-
 type Cataloger struct{}
 
 // NewGoModuleBinaryCataloger returns a new Golang cataloger object.
@@ -41,7 +32,7 @@ func (c *Cataloger) Name() string {
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
-	fileMatches, err := resolver.FilesByMIMEType(mimeTypes...)
+	fileMatches, err := resolver.FilesByMIMEType(internal.ExecutableMIMETypeSet.List()...)
 	if err != nil {
 		return pkgs, nil, fmt.Errorf("failed to find bin by mime types: %w", err)
 	}
