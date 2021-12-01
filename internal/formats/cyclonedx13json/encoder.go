@@ -26,7 +26,7 @@ func toFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM := cyclonedx.NewBOM()
 	versionInfo := version.FromBuild()
 
-	cdxBOM.SerialNumber = uuid.New().String()
+	cdxBOM.SerialNumber = uuid.New().URN()
 	cdxBOM.Metadata = toBomDescriptor(internal.ApplicationName, versionInfo.Version, s.Source)
 
 	packages := s.Artifacts.PackageCatalog.Sorted()

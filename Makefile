@@ -82,7 +82,7 @@ help:
 
 .PHONY: ci-bootstrap
 ci-bootstrap:
-	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils
+	DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y bc jq libxml2-utils && go install github.com/neilpa/yajsv
 
 .PHONY:
 ci-bootstrap-mac:
