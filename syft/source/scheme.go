@@ -23,6 +23,12 @@ const (
 	FileScheme Scheme = "FileScheme"
 )
 
+var AllSchemes = []Scheme{
+	DirectoryScheme,
+	ImageScheme,
+	FileScheme,
+}
+
 func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (Scheme, image.Source, string, error) {
 	switch {
 	case strings.HasPrefix(userInput, "dir:"):

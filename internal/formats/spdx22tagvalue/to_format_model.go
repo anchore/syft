@@ -17,6 +17,7 @@ import (
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
 // nolint:funlen
 func toFormatModel(s sbom.SBOM) spdx.Document2_2 {
+	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 	return spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{
 			// 2.1: SPDX Version; should be in the format "SPDX-2.2"
@@ -33,7 +34,7 @@ func toFormatModel(s sbom.SBOM) spdx.Document2_2 {
 
 			// 2.4: Document Name
 			// Cardinality: mandatory, one
-			DocumentName: s.Source.ImageMetadata.UserInput,
+			DocumentName: name,
 
 			// 2.5: Document Namespace
 			// Cardinality: mandatory, one
@@ -52,7 +53,7 @@ func toFormatModel(s sbom.SBOM) spdx.Document2_2 {
 			// In many cases, the URI will point to a web accessible document, but this should not be assumed
 			// to be the case.
 
-			DocumentNamespace: fmt.Sprintf("https://anchore.com/syft/image/%s", s.Source.ImageMetadata.UserInput),
+			DocumentNamespace: namespace,
 
 			// 2.6: External Document References
 			// Cardinality: optional, one or many

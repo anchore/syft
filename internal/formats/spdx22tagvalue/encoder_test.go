@@ -32,6 +32,10 @@ func TestSPDXTagValueImagePresenter(t *testing.T) {
 func spdxTagValueRedactor(s []byte) []byte {
 	// each SBOM reports the time it was generated, which is not useful during snapshot testing
 	s = regexp.MustCompile(`Created: .*`).ReplaceAll(s, []byte("redacted"))
+
+	// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
+	s = regexp.MustCompile(`DocumentNamespace: https://anchore.com/syft/.*`).ReplaceAll(s, []byte("redacted"))
+
 	// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
 	return regexp.MustCompile(`LicenseListVersion: .*`).ReplaceAll(s, []byte("redacted"))
 }
