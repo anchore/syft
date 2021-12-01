@@ -11,16 +11,6 @@
 
 A CLI tool and Go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. Exceptional for vulnerability detection when used with a scanner tool like [Grype](https://github.com/anchore/grype).
 
-### Join us at the virtual OSS meetup!
-
-When: December 1, 2021 @ 11am-noon PT (2-3pm ET)
-
-We’ve got security experts from VMware and Anchore who will share their tips, tricks, and lessons learned on securing containers using [Syft](https://github.com/anchore/syft), [Grype](https://github.com/anchore/grype), and [Cartographer](https://github.com/vmware-tanzu/cartographer).
-
-Register now: https://get.anchore.com/anchore-oss-meetup-dec-1-2021/
-
----
-
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
 ## Features
