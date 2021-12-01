@@ -10,9 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
-func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string) {
-	name := DocumentName(srcMetadata)
-	return name, DocumentNamespace(name, srcMetadata)
+func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string, error) {
+	name, err := DocumentName(srcMetadata)
+	if err != nil {
+		return "", "", err
+	}
+	return name, DocumentNamespace(name, srcMetadata), nil
 }
 
 func DocumentNamespace(name string, srcMetadata source.Metadata) string {

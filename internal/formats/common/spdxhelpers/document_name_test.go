@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/source"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +59,8 @@ func Test_DocumentName(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := DocumentName(test.srcMetadata)
+			actual, err := DocumentName(test.srcMetadata)
+			require.NoError(t, err)
 			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("actual name %q", actual))
 
 			// track each scheme tested (passed or not)

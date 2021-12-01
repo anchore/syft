@@ -1,23 +1,22 @@
 package spdxhelpers
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
 	"github.com/anchore/syft/syft/source"
-	"github.com/google/uuid"
 )
 
-func DocumentName(srcMetadata source.Metadata) string {
+func DocumentName(srcMetadata source.Metadata) (string, error) {
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		return cleanName(srcMetadata.ImageMetadata.UserInput)
+		return cleanName(srcMetadata.ImageMetadata.UserInput), nil
 	case source.DirectoryScheme, source.FileScheme:
-		return cleanName(srcMetadata.Path)
+		return cleanName(srcMetadata.Path), nil
 	}
 
-	// TODO: is this alright?
-	return uuid.Must(uuid.NewRandom()).String()
+	return "", fmt.Errorf("unable to determine document name from scheme=%q", srcMetadata.Scheme)
 }
 
 func cleanName(name string) string {

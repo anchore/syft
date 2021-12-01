@@ -8,12 +8,15 @@ import (
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {
-	doc := toFormatModel(s)
+	doc, err := toFormatModel(s)
+	if err != nil {
+		return err
+	}
 
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	return enc.Encode(&doc)
+	return enc.Encode(doc)
 }

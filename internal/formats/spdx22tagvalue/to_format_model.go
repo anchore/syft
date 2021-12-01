@@ -16,9 +16,12 @@ import (
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
 // nolint:funlen
-func toFormatModel(s sbom.SBOM) spdx.Document2_2 {
-	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
-	return spdx.Document2_2{
+func toFormatModel(s sbom.SBOM) (*spdx.Document2_2, error) {
+	name, namespace, err := spdxhelpers.DocumentNameAndNamespace(s.Source)
+	if err != nil {
+		return nil, err
+	}
+	return &spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{
 			// 2.1: SPDX Version; should be in the format "SPDX-2.2"
 			// Cardinality: mandatory, one
@@ -83,7 +86,7 @@ func toFormatModel(s sbom.SBOM) spdx.Document2_2 {
 			DocumentComment: "",
 		},
 		Packages: toFormatPackages(s.Artifacts.PackageCatalog),
-	}
+	}, nil
 }
 
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
