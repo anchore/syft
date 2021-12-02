@@ -69,7 +69,7 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *model.BomDescriptorC
 				Version: srcMetadata.ImageMetadata.ManifestDigest,
 			},
 		}
-	case source.DirectoryScheme:
+	case source.DirectoryScheme, source.FileScheme:
 		return &model.BomDescriptorComponent{
 			Component: model.Component{
 				Type: "file",

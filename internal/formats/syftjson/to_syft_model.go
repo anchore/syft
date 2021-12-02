@@ -40,6 +40,11 @@ func toSyftSourceData(s model.Source) *source.Metadata {
 			Scheme: source.DirectoryScheme,
 			Path:   s.Target.(string),
 		}
+	case "file":
+		return &source.Metadata{
+			Scheme: source.FileScheme,
+			Path:   s.Target.(string),
+		}
 	case "image":
 		return &source.Metadata{
 			Scheme:        source.ImageScheme,
