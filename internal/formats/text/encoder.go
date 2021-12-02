@@ -16,7 +16,7 @@ func encoder(output io.Writer, s sbom.SBOM) error {
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
 
 	switch s.Source.Scheme {
-	case source.DirectoryScheme:
+	case source.DirectoryScheme, source.FileScheme:
 		fmt.Fprintf(w, "[Path: %s]\n", s.Source.Path)
 	case source.ImageScheme:
 		fmt.Fprintln(w, "[Image]")

@@ -202,6 +202,11 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 			Type:   "directory",
 			Target: src.Path,
 		}, nil
+	case source.FileScheme:
+		return model.Source{
+			Type:   "file",
+			Target: src.Path,
+		}, nil
 	default:
 		return model.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
 	}
