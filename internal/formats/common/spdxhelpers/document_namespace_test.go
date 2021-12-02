@@ -58,6 +58,7 @@ func Test_documentNamespace(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := DocumentNamespace(test.inputName, test.srcMetadata)
+			// note: since the namespace ends with a UUID we check the prefix
 			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("actual namespace %q", actual))
 
 			// track each scheme tested (passed or not)
