@@ -22,6 +22,7 @@ const (
 	Windows           Type = "windows"
 	Mariner           Type = "mariner"
 	RockyLinux        Type = "rockylinux"
+	AlmaLinux         Type = "almalinux"
 )
 
 // All contains all Linux distribution options
@@ -42,6 +43,7 @@ var All = []Type{
 	Windows,
 	Mariner,
 	RockyLinux,
+	AlmaLinux,
 }
 
 // IDMapping connects a distro ID like "ubuntu" to a Distro type
@@ -62,6 +64,7 @@ var IDMapping = map[string]Type{
 	"windows":       Windows,
 	"mariner":       Mariner,
 	"rocky":         RockyLinux,
+	"almalinux":     AlmaLinux,
 }
 
 // String returns the string representation of the given Linux distribution.

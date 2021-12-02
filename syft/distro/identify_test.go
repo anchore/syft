@@ -128,6 +128,12 @@ func TestIdentifyDistro(t *testing.T) {
 			Type:    RockyLinux,
 			Version: "8.4.0",
 		},
+		{
+			fixture: "test-fixtures/os/almalinux",
+			Type:    AlmaLinux,
+			Version: "8.4.0",
+		},
+	}
 	}
 
 	observedDistros := internal.NewStringSet()
