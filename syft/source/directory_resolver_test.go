@@ -536,3 +536,45 @@ func Test_ignoreIrregularFiles(t *testing.T) {
 	rp := resolver.fileTree.AllFiles()[0].RealPath
 	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
 }
+
+func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
+	tests := []struct {
+		name     string
+		location Location
+		expects  string
+		err      bool
+	}{
+		{
+			name: "use file reference for content requests",
+			location: NewLocationFromDirectory("some/place", file.Reference{
+				RealPath: "test-fixtures/image-simple/file-1.txt",
+			}),
+			expects: "this file has contents",
+		},
+		{
+			name:     "error on empty file reference",
+			location: NewLocationFromDirectory("doesn't matter", file.Reference{}),
+			err:      true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r, err := newDirectoryResolver(".")
+			require.NoError(t, err)
+
+			actual, err := r.FileContentsByLocation(test.location)
+			if test.err {
+				require.Error(t, err)
+				return
+			} else {
+				require.NoError(t, err)
+			}
+
+			if test.expects != "" {
+				b, err := ioutil.ReadAll(actual)
+				require.NoError(t, err)
+				assert.Equal(t, test.expects, string(b))
+			}
+		})
+	}
+}
