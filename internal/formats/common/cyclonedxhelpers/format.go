@@ -62,7 +62,7 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 			Name:    srcMetadata.ImageMetadata.UserInput,
 			Version: srcMetadata.ImageMetadata.ManifestDigest,
 		}
-	case source.DirectoryScheme:
+	case source.DirectoryScheme, source.FileScheme:
 		return &cyclonedx.Component{
 			Type: cyclonedx.ComponentTypeFile,
 			Name: srcMetadata.Path,
