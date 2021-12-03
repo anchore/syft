@@ -111,8 +111,9 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathRe
 		}
 
 		if len(locations) == 0 {
-			// TODO: this is a known-unknown that could later be persisted in the SBOM (or as a validation failure)
-			log.Warnf("unable to find location which a package claims ownership of: %s", path)
+			// ideally we want to warn users about missing files from a package, however, it is very common for
+			// container image authors to delete files that are not needed in order to keep image sizes small. Adding
+			// a warning here would be needlessly noisy (even for popular base images).
 			continue
 		}
 

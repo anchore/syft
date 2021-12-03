@@ -326,7 +326,10 @@ func (r *directoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 // FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
 func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
-	return file.NewLazyReadCloser(location.RealPath), nil
+	if location.ref.RealPath == "" {
+		return nil, errors.New("empty path given")
+	}
+	return file.NewLazyReadCloser(string(location.ref.RealPath)), nil
 }
 
 func (r *directoryResolver) AllLocations() <-chan Location {

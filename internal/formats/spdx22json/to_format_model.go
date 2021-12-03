@@ -2,7 +2,6 @@ package spdx22json
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -19,14 +18,16 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/google/uuid"
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-func toFormatModel(s sbom.SBOM) model.Document {
-	name := documentName(s.Source)
+func toFormatModel(s sbom.SBOM) (*model.Document, error) {
+	name, namespace, err := spdxhelpers.DocumentNameAndNamespace(s.Source)
+	if err != nil {
+		return nil, err
+	}
 
-	return model.Document{
+	return &model.Document{
 		Element: model.Element{
 			SPDXID: model.ElementID("DOCUMENT").String(),
 			Name:   name,
@@ -42,52 +43,11 @@ func toFormatModel(s sbom.SBOM) model.Document {
 			LicenseListVersion: spdxlicense.Version,
 		},
 		DataLicense:       "CC0-1.0",
-		DocumentNamespace: documentNamespace(name, s.Source),
+		DocumentNamespace: namespace,
 		Packages:          toPackages(s.Artifacts.PackageCatalog, s.Relationships),
 		Files:             toFiles(s),
 		Relationships:     toRelationships(s.Relationships),
-	}
-}
-
-func documentName(srcMetadata source.Metadata) string {
-	switch srcMetadata.Scheme {
-	case source.ImageScheme:
-		return cleanSPDXName(srcMetadata.ImageMetadata.UserInput)
-	case source.DirectoryScheme:
-		return cleanSPDXName(srcMetadata.Path)
-	}
-
-	// TODO: is this alright?
-	return uuid.Must(uuid.NewRandom()).String()
-}
-
-func cleanSPDXName(name string) string {
-	// remove # according to specification
-	name = strings.ReplaceAll(name, "#", "-")
-
-	// remove : for url construction
-	name = strings.ReplaceAll(name, ":", "-")
-
-	// clean relative pathing
-	return path.Clean(name)
-}
-
-func documentNamespace(name string, srcMetadata source.Metadata) string {
-	input := "unknown-source-type"
-	switch srcMetadata.Scheme {
-	case source.ImageScheme:
-		input = "image"
-	case source.DirectoryScheme:
-		input = "dir"
-	}
-
-	uniqueID := uuid.Must(uuid.NewRandom())
-	identifier := path.Join(input, uniqueID.String())
-	if name != "." {
-		identifier = path.Join(input, fmt.Sprintf("%s-%s", name, uniqueID.String()))
-	}
-
-	return path.Join(anchoreNamespace, identifier)
+	}, nil
 }
 
 func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []model.Package {
