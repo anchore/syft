@@ -3,6 +3,7 @@ module github.com/anchore/syft
 go 1.16
 
 require (
+	github.com/CycloneDX/cyclonedx-go v0.4.0
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/adrg/xdg v0.2.1
 	github.com/alecthomas/jsonschema v0.0.0-20210301060011-54c507b6f074

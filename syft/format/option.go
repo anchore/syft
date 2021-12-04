@@ -7,7 +7,8 @@ const (
 	JSONOption          Option = "json"
 	TextOption          Option = "text"
 	TableOption         Option = "table"
-	CycloneDxOption     Option = "cyclonedx"
+	CycloneDxXMLOption  Option = "cyclonedx"
+	CycloneDxJSONOption Option = "cyclonedx-json"
 	SPDXTagValueOption  Option = "spdx-tag-value"
 	SPDXJSONOption      Option = "spdx-json"
 )
@@ -16,7 +17,8 @@ var AllOptions = []Option{
 	JSONOption,
 	TextOption,
 	TableOption,
-	CycloneDxOption,
+	CycloneDxXMLOption,
+	CycloneDxJSONOption,
 	SPDXTagValueOption,
 	SPDXJSONOption,
 }
@@ -31,8 +33,12 @@ func ParseOption(userStr string) Option {
 		return TextOption
 	case string(TableOption):
 		return TableOption
-	case string(CycloneDxOption), "cyclone", "cyclone-dx":
-		return CycloneDxOption
+	case string(CycloneDxXMLOption), "cyclone", "cyclone-dx", "cyclone-dx-xml", "cyclone-xml":
+		// NOTE(jonasagx): setting "cyclone" to XML by default for retro-compatibility.
+		// If we want to show no preference between XML and JSON please remove it.
+		return CycloneDxXMLOption
+	case string(CycloneDxJSONOption), "cyclone-json", "cyclone-dx-json":
+		return CycloneDxJSONOption
 	case string(SPDXTagValueOption), "spdx", "spdx-tagvalue", "spdxtagvalue", "spdx-tv", "spdxtv":
 		return SPDXTagValueOption
 	case string(SPDXJSONOption), "spdxjson":

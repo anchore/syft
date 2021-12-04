@@ -1,0 +1,42 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.3",
+  "serialNumber": "urn:uuid:a81dc685-cf22-48e0-bda5-65ea1a8bca5b",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2021-12-03T13:17:26-08:00",
+    "tools": [
+      {
+        "vendor": "anchore",
+        "name": "syft",
+        "version": "[not provided]"
+      }
+    ],
+    "component": {
+      "type": "file",
+      "name": "/some/path",
+      "version": ""
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "package-1",
+      "version": "1.0.1",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "purl": "a-purl-2"
+    },
+    {
+      "type": "library",
+      "name": "package-2",
+      "version": "2.0.1",
+      "purl": "a-purl-2"
+    }
+  ]
+}
