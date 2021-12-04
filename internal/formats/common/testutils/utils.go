@@ -60,6 +60,8 @@ func AssertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Pres
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(string(expected), string(actual), true)
+		t.Logf("len: %d\nexpected: %v", len(expected), expected)
+		t.Logf("len: %d\nactual: %v", len(actual), actual)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }
@@ -87,6 +89,8 @@ func AssertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter
 	if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(string(expected), string(actual), true)
+		t.Logf("len: %d\nexpected: %s", len(expected), expected)
+		t.Logf("len: %d\nactual: %s", len(actual), actual)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }
