@@ -6,10 +6,9 @@ import (
 	"os"
 	"testing"
 
-	hashiVer "github.com/hashicorp/go-version"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/source"
+	hashiVer "github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -126,6 +125,11 @@ func TestIdentifyDistro(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/rockylinux",
 			Type:    RockyLinux,
+			Version: "8.4.0",
+		},
+		{
+			fixture: "test-fixtures/os/almalinux",
+			Type:    AlmaLinux,
 			Version: "8.4.0",
 		},
 	}
