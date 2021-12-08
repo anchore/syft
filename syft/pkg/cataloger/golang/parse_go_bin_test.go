@@ -8,9 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const goCompiledVersion = "1.17"
-
 func TestBuildGoPkgInfo(t *testing.T) {
+	const (
+		goCompiledVersion = "1.17"
+		archDetails       = "amd64"
+	)
 	tests := []struct {
 		name     string
 		mod      string
@@ -43,6 +45,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
 					},
 				},
@@ -62,6 +65,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
 						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
 					},
 				},
@@ -92,6 +96,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
 						H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
 					},
 				},
@@ -111,6 +116,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
 						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
 					},
 				},
@@ -130,6 +136,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
 						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
 					},
 				},
@@ -146,7 +153,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					FileSystemID: "layer-id",
 				},
 			}
-			pkgs := buildGoPkgInfo(location, tt.mod, goCompiledVersion)
+			pkgs := buildGoPkgInfo(location, tt.mod, goCompiledVersion, archDetails)
 			assert.Equal(t, tt.expected, pkgs)
 		})
 	}
