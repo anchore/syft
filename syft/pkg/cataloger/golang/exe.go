@@ -25,6 +25,7 @@ type exe interface {
 	// ReadData reads and returns up to size byte starting at virtual address addr.
 	ReadData(addr, size uint64) ([]byte, error)
 
+	// ArchName returns a string that represents the CPU architecture of the executable.
 	ArchName() string
 
 	// DataStart returns the writable data segment start address.
@@ -79,7 +80,8 @@ func openExe(file io.ReadCloser) ([]exe, error) {
 		return []exe{&machoExe{file, e}}, nil
 	}
 
-	if bytes.HasPrefix(data, []byte("\xCA\xFE\xBA\xBE")) || bytes.HasPrefix(data[1:], []byte("\xCA\xFE\xBA\xBF")) {
+	// adding macho multi-architecture support (both for 64bit and 32 bit)... this case is not in the stdlib yet
+	if bytes.HasPrefix(data, []byte("\xCA\xFE\xBA\xBE")) || bytes.HasPrefix(data, []byte("\xCA\xFE\xBA\xBF")) {
 		fatExe, err := macho.NewFatFile(f)
 		if err != nil {
 			return nil, err
