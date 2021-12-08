@@ -16,17 +16,20 @@ const (
 
 func parseGoBin(location source.Location, reader io.ReadCloser) ([]pkg.Package, error) {
 	// Identify if bin was compiled by go
-	x, err := openExe(reader)
+	exes, err := openExe(reader)
 	if err != nil {
 		return nil, err
 	}
 
-	goVersion, mod := findVers(x)
-
-	return buildGoPkgInfo(location, mod, goVersion), nil
+	var pkgs []pkg.Package
+	for _, x := range exes {
+		goVersion, mod := findVers(x)
+		pkgs = append(pkgs, buildGoPkgInfo(location, mod, goVersion, x.ArchName())...)
+	}
+	return pkgs, nil
 }
 
-func buildGoPkgInfo(location source.Location, mod, goVersion string) []pkg.Package {
+func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(strings.NewReader(mod))
 
@@ -52,6 +55,7 @@ func buildGoPkgInfo(location source.Location, mod, goVersion string) []pkg.Packa
 				Metadata: pkg.GolangBinMetadata{
 					GoCompiledVersion: goVersion,
 					H1Digest:          fields[3],
+					Architecture:      arch,
 				},
 			})
 		}

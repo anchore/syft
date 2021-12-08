@@ -14,6 +14,7 @@ import (
 	"debug/pe"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // An exe is a generic interface to an OS executable (ELF, Mach-O, PE, XCOFF).
@@ -24,6 +25,8 @@ type exe interface {
 	// ReadData reads and returns up to size byte starting at virtual address addr.
 	ReadData(addr, size uint64) ([]byte, error)
 
+	ArchName() string
+
 	// DataStart returns the writable data segment start address.
 	DataStart() uint64
 }
@@ -32,7 +35,7 @@ type exe interface {
 // we changed this signature from accpeting a string
 // to a ReadCloser so we could adapt the code to the
 // stereoscope api. We removed the file open methods.
-func openExe(file io.ReadCloser) (exe, error) {
+func openExe(file io.ReadCloser) ([]exe, error) {
 	/*
 		f, err := os.Open(file)
 		if err != nil {
@@ -57,7 +60,7 @@ func openExe(file io.ReadCloser) (exe, error) {
 			return nil, err
 		}
 
-		return &elfExe{file, e}, nil
+		return []exe{&elfExe{file, e}}, nil
 	}
 
 	if bytes.HasPrefix(data, []byte("MZ")) {
@@ -65,7 +68,7 @@ func openExe(file io.ReadCloser) (exe, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &peExe{file, e}, nil
+		return []exe{&peExe{file, e}}, nil
 	}
 
 	if bytes.HasPrefix(data, []byte("\xFE\xED\xFA")) || bytes.HasPrefix(data[1:], []byte("\xFA\xED\xFE")) {
@@ -73,7 +76,19 @@ func openExe(file io.ReadCloser) (exe, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &machoExe{file, e}, nil
+		return []exe{&machoExe{file, e}}, nil
+	}
+
+	if bytes.HasPrefix(data, []byte("\xCA\xFE\xBA\xBE")) || bytes.HasPrefix(data[1:], []byte("\xCA\xFE\xBA\xBF")) {
+		fatExe, err := macho.NewFatFile(f)
+		if err != nil {
+			return nil, err
+		}
+		var exes []exe
+		for _, arch := range fatExe.Arches {
+			exes = append(exes, &machoExe{file, arch.File})
+		}
+		return exes, nil
 	}
 
 	return nil, fmt.Errorf("unrecognized executable format")
@@ -88,6 +103,14 @@ type elfExe struct {
 
 func (x *elfExe) Close() error {
 	return x.os.Close()
+}
+
+func (x *elfExe) ArchName() string {
+	return cleanElfArch(x.f.Machine)
+}
+
+func cleanElfArch(machine elf.Machine) string {
+	return strings.TrimPrefix(strings.ToLower(machine.String()), "em_")
 }
 
 func (x *elfExe) ReadData(addr, size uint64) ([]byte, error) {
@@ -130,6 +153,56 @@ type peExe struct {
 
 func (x *peExe) Close() error {
 	return x.os.Close()
+}
+
+func (x *peExe) ArchName() string {
+	// from: debug/pe/pe.go
+	switch x.f.Machine {
+	case pe.IMAGE_FILE_MACHINE_AM33:
+		return "amd33"
+	case pe.IMAGE_FILE_MACHINE_AMD64:
+		return "amd64"
+	case pe.IMAGE_FILE_MACHINE_ARM:
+		return "arm"
+	case pe.IMAGE_FILE_MACHINE_ARMNT:
+		return "armnt"
+	case pe.IMAGE_FILE_MACHINE_ARM64:
+		return "arm64"
+	case pe.IMAGE_FILE_MACHINE_EBC:
+		return "ebc"
+	case pe.IMAGE_FILE_MACHINE_I386:
+		return "i386"
+	case pe.IMAGE_FILE_MACHINE_IA64:
+		return "ia64"
+	case pe.IMAGE_FILE_MACHINE_M32R:
+		return "m32r"
+	case pe.IMAGE_FILE_MACHINE_MIPS16:
+		return "mips16"
+	case pe.IMAGE_FILE_MACHINE_MIPSFPU:
+		return "mipsfpu"
+	case pe.IMAGE_FILE_MACHINE_MIPSFPU16:
+		return "mipsfpu16"
+	case pe.IMAGE_FILE_MACHINE_POWERPC:
+		return "ppc"
+	case pe.IMAGE_FILE_MACHINE_POWERPCFP:
+		return "ppcfp"
+	case pe.IMAGE_FILE_MACHINE_R4000:
+		return "r4000"
+	case pe.IMAGE_FILE_MACHINE_SH3:
+		return "sh3"
+	case pe.IMAGE_FILE_MACHINE_SH3DSP:
+		return "sh3dsp"
+	case pe.IMAGE_FILE_MACHINE_SH4:
+		return "sh4"
+	case pe.IMAGE_FILE_MACHINE_SH5:
+		return "sh5"
+	case pe.IMAGE_FILE_MACHINE_THUMB:
+		return "thumb"
+	case pe.IMAGE_FILE_MACHINE_WCEMIPSV2:
+		return "wcemipsv2"
+	default:
+		return fmt.Sprintf("unknown-pe-machine-%d", x.f.Machine)
+	}
 }
 
 func (x *peExe) imageBase() uint64 {
@@ -191,6 +264,14 @@ type machoExe struct {
 
 func (x *machoExe) Close() error {
 	return x.os.Close()
+}
+
+func (x *machoExe) ArchName() string {
+	return cleanMachoArch(x.f.Cpu)
+}
+
+func cleanMachoArch(cpu macho.Cpu) string {
+	return strings.TrimPrefix(strings.ToLower(cpu.String()), "cpu")
 }
 
 func (x *machoExe) ReadData(addr, size uint64) ([]byte, error) {

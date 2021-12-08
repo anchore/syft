@@ -35,6 +35,7 @@ type artifactMetadataContainer struct {
 	Python pkg.PythonPackageMetadata
 	Rpm    pkg.RpmdbMetadata
 	Cargo  pkg.CargoPackageMetadata
+	Go     pkg.GolangBinMetadata
 }
 
 func main() {
