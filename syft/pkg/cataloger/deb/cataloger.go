@@ -138,7 +138,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 	if conffilesReader != nil && conffilesLocation != nil {
 		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.VirtualPath)
 		// attach the file list
-		files = append(files, parseDpkgConffileInfo(md5Reader)...)
+		files = append(files, parseDpkgConffileInfo(conffilesReader)...)
 
 		// keep a record of the file where this was discovered
 		locations = append(locations, *conffilesLocation)
