@@ -15,6 +15,7 @@ import (
 )
 
 func getFixtureImage(t testing.TB, fixtureImageName string) string {
+	t.Logf("obtaining fixture image for %s", fixtureImageName)
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	return imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 }
