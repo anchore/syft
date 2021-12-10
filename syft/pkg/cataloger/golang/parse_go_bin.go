@@ -23,7 +23,7 @@ func parseGoBin(location source.Location, reader io.ReadCloser, opener exeOpener
 	// bubbling up and halting execution. For this reason we try to recover from any panic and return an error.
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("recovered panic while parse go binary at %q: %+v", location.RealPath, r)
+			err = fmt.Errorf("recovered from panic while parse go binary at %q: %+v", location.RealPath, r)
 		}
 	}()
 
