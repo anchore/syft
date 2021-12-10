@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"io"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -144,17 +145,38 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 			location := source.Location{
 				Coordinates: source.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
 			}
-			pkgs := buildGoPkgInfo(location, tt.mod, goCompiledVersion, archDetails)
-			assert.Equal(t, tt.expected, pkgs)
+			pkgs := buildGoPkgInfo(location, test.mod, goCompiledVersion, archDetails)
+			assert.Equal(t, test.expected, pkgs)
+		})
+	}
+}
+
+func Test_parseGoBin_recoversFromPanic(t *testing.T) {
+	freakOut := func(file io.ReadCloser) ([]exe, error) {
+		panic("baaahhh!")
+	}
+	tests := []struct {
+		name     string
+		wantPkgs []pkg.Package
+		wantErr  assert.ErrorAssertionFunc
+	}{
+		{
+			name: "recovers from panic",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgs, err := parseGoBin(source.NewLocation("some/path"), nil, freakOut)
+			assert.Error(t, err)
+			assert.Nil(t, pkgs)
 		})
 	}
 }
