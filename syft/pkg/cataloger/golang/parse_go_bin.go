@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strings"
 
@@ -14,19 +15,29 @@ const (
 	replaceIdentifier = "=>"
 )
 
-func parseGoBin(location source.Location, reader io.ReadCloser) ([]pkg.Package, error) {
+type exeOpener func(file io.ReadCloser) ([]exe, error)
+
+func parseGoBin(location source.Location, reader io.ReadCloser, opener exeOpener) (pkgs []pkg.Package, err error) {
+	var exes []exe
+	// it has been found that there are stdlib paths within openExe that can panic. We want to prevent this behavior
+	// bubbling up and halting execution. For this reason we try to recover from any panic and return an error.
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("recovered from panic while parse go binary at %q: %+v", location.RealPath, r)
+		}
+	}()
+
 	// Identify if bin was compiled by go
-	exes, err := openExe(reader)
+	exes, err = opener(reader)
 	if err != nil {
-		return nil, err
+		return pkgs, err
 	}
 
-	var pkgs []pkg.Package
 	for _, x := range exes {
 		goVersion, mod := findVers(x)
 		pkgs = append(pkgs, buildGoPkgInfo(location, mod, goVersion, x.ArchName())...)
 	}
-	return pkgs, nil
+	return pkgs, err
 }
 
 func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg.Package {

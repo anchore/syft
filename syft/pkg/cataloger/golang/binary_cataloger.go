@@ -40,12 +40,12 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	for _, location := range fileMatches {
 		r, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			return pkgs, nil, fmt.Errorf("failed to resolve file contents by location: %w", err)
+			return pkgs, nil, fmt.Errorf("failed to resolve file contents by location=%q: %w", location.RealPath, err)
 		}
 
-		goPkgs, err := parseGoBin(location, r)
+		goPkgs, err := parseGoBin(location, r, openExe)
 		if err != nil {
-			log.Warnf("could not parse possible go binary: %+v", err)
+			log.Warnf("could not parse possible go binary at %q: %+v", location.RealPath, err)
 		}
 
 		internal.CloseAndLogError(r, location.RealPath)

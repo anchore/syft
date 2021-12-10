@@ -6,7 +6,8 @@ import (
 )
 
 func TestPackagesCmdFlags(t *testing.T) {
-	request := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+	badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
 
 	tests := []struct {
 		name       string
@@ -25,9 +26,23 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "json-output-flag",
-			args: []string{"packages", "-o", "json", request},
+			args: []string{"packages", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "regression-survive-bad-binaries",
+			// this image has all sorts of rich binaries from the clang-13 test suite that should do pretty bad things
+			// to the go cataloger binary path. We should NEVER let a panic stop the cataloging process for these
+			// specific cases.
+
+			// this is more of an integration test, however, to assert the output we want to see from the application
+			// a CLI test is much easier.
+			args: []string{"packages", "-vv", badBinariesImage},
+			assertions: []traitAssertion{
+				assertInOutput("recovered from panic while parse go binary"),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -36,7 +51,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			env: map[string]string{
 				"SYFT_OUTPUT": "json",
 			},
-			args: []string{"packages", request},
+			args: []string{"packages", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertSuccessfulReturnCode,
@@ -44,7 +59,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "table-output-flag",
-			args: []string{"packages", "-o", "table", request},
+			args: []string{"packages", "-o", "table", coverageImage},
 			assertions: []traitAssertion{
 				assertTableReport,
 				assertSuccessfulReturnCode,
@@ -52,7 +67,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-output-flag",
-			args: []string{"packages", request},
+			args: []string{"packages", coverageImage},
 			assertions: []traitAssertion{
 				assertTableReport,
 				assertSuccessfulReturnCode,
@@ -60,7 +75,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "squashed-scope-flag",
-			args: []string{"packages", "-o", "json", "-s", "squashed", request},
+			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(20),
 				assertSuccessfulReturnCode,
@@ -68,7 +83,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "all-layers-scope-flag",
-			args: []string{"packages", "-o", "json", "-s", "all-layers", request},
+			args: []string{"packages", "-o", "json", "-s", "all-layers", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(22),
 				assertSuccessfulReturnCode,
@@ -76,7 +91,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "all-layers-scope-flag-by-env",
-			args: []string{"packages", "-o", "json", request},
+			args: []string{"packages", "-o", "json", coverageImage},
 			env: map[string]string{
 				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
 			},
@@ -87,7 +102,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "attempt-upload-on-cli-switches",
-			args: []string{"packages", "-vv", "-H", "localhost:8080", "-u", "the-username", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", "--overwrite-existing-image", request},
+			args: []string{"packages", "-vv", "-H", "localhost:8080", "-u", "the-username", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", "--overwrite-existing-image", coverageImage},
 			env: map[string]string{
 				"SYFT_ANCHORE_PATH":     "path/to/api",
 				"SYFT_ANCHORE_PASSWORD": "the-password",
@@ -108,7 +123,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "dockerfile-without-upload-is-invalid",
-			args: []string{"packages", "-vv", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", request},
+			args: []string{"packages", "-vv", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", coverageImage},
 			assertions: []traitAssertion{
 
 				assertNotInOutput("uploading results to localhost:8080"),
@@ -118,7 +133,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "attempt-upload-with-env-host-set",
-			args: []string{"packages", "-vv", request},
+			args: []string{"packages", "-vv", coverageImage},
 			env: map[string]string{
 				"SYFT_ANCHORE_HOST": "localhost:8080",
 			},
