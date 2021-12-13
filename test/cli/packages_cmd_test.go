@@ -42,7 +42,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			// a CLI test is much easier.
 			args: []string{"packages", "-vv", badBinariesImage},
 			assertions: []traitAssertion{
-				assertInOutput("recovered from panic while parse go binary"),
+				assertInOutput("could not parse possible go binary"),
 				assertSuccessfulReturnCode,
 			},
 		},
