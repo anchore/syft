@@ -29,15 +29,7 @@ func printVersion(_ *cobra.Command, _ []string) {
 
 	switch outputFormat {
 	case "text":
-		fmt.Println("Application:  ", internal.ApplicationName)
-		fmt.Println("Version:      ", versionInfo.Version)
-		fmt.Println("BuildDate:    ", versionInfo.BuildDate)
-		fmt.Println("GitCommit:    ", versionInfo.GitCommit)
-		fmt.Println("GitTreeState: ", versionInfo.GitTreeState)
-		fmt.Println("Platform:     ", versionInfo.Platform)
-		fmt.Println("GoVersion:    ", versionInfo.GoVersion)
-		fmt.Println("Compiler:     ", versionInfo.Compiler)
-
+		fmt.Printf("%s\n", versionInfo.AsText())
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetEscapeHTML(false)

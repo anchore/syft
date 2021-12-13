@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/gookit/color"
 	"github.com/spf13/viper"
@@ -27,6 +28,7 @@ func init() {
 		initCmdAliasBindings,
 		initAppConfig,
 		initLogging,
+		logAppVersion,
 		logAppConfig,
 		initEventBus,
 	)
@@ -97,6 +99,12 @@ func initLogging() {
 	stereoscope.SetLogger(&logger.LogrusNestedLogger{
 		Logger: logWrapper.Logger.WithField("from-lib", "stereoscope"),
 	})
+}
+
+func logAppVersion() {
+	versionInfo := version.FromBuild()
+	log.Infof("syft version: %s", versionInfo.Version)
+	log.Debugf("syft version: \n%s\n", versionInfo.AsText())
 }
 
 func logAppConfig() {

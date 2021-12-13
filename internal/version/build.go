@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+
+	"github.com/anchore/syft/internal"
 )
 
 const valueNotProvided = "[not provided]"
@@ -34,6 +36,25 @@ func (v Version) IsProductionBuild() bool {
 		return false
 	}
 	return true
+}
+
+// AsText returns a formatted aligned list of version info.
+func (v Version) AsText() string {
+	return fmt.Sprintf(`Application:   %s
+Version:       %s
+BuildDate:     %s
+GitCommit:     %s
+GitTreeState:  %s
+Platform:      %s
+GoVersion:     %s
+Compiler:      %s`, internal.ApplicationName,
+		v.Version,
+		v.BuildDate,
+		v.GitCommit,
+		v.GitTreeState,
+		v.Platform,
+		v.GoVersion,
+		v.Compiler)
 }
 
 // FromBuild provides all version details
