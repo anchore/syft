@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 )
@@ -145,5 +147,78 @@ func TestSelectName(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestSelectVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		manifest pkg.JavaManifest
+		archive  archiveFilename
+		expected string
+	}{
+		{
+			name:    "Get name from Implementation-Version",
+			archive: archiveFilename{},
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Implementation-Version": "1.8.2",
+				},
+			},
+			expected: "1.8.2",
+		},
+		{
+			name: "Implementation-Version takes precedence over Specification-Version",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Implementation-Version": "1.8.2",
+					"Specification-Version":  "1.0",
+				},
+			},
+			expected: "1.8.2",
+		},
+		{
+			name: "Implementation-Version found outside the main section",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Manifest-Version": "1.0",
+					"Ant-Version":      "Apache Ant 1.8.2",
+					"Created-By":       "1.5.0_22-b03 (Sun Microsystems Inc.)",
+				},
+				NamedSections: map[string]map[string]string{
+					"org/apache/tools/ant/taskdefs/optional/": {
+						"Implementation-Version": "1.8.2",
+					},
+				},
+			},
+			expected: "1.8.2",
+		},
+		{
+			name: "Implementation-Version takes precedence over Specification-Version in subsequent section",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Manifest-Version":      "1.0",
+					"Ant-Version":           "Apache Ant 1.8.2",
+					"Created-By":            "1.5.0_22-b03 (Sun Microsystems Inc.)",
+					"Specification-Version": "2.0",
+				},
+				NamedSections: map[string]map[string]string{
+					"org/apache/tools/ant/taskdefs/optional/": {
+						"Specification-Version": "1.8",
+					},
+					"some-other-section": {
+						"Implementation-Version": "1.8.2",
+					},
+				},
+			},
+			expected: "1.8.2",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := selectVersion(&test.manifest, test.archive)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
 }
