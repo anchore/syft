@@ -400,7 +400,7 @@ func Test_handleFileAccessErr(t *testing.T) {
 				errPaths: make(map[string]error),
 			}
 			p := "a/place"
-			assert.ErrorIs(t, r.handleFileAccessErr(p, test.input), test.expectedErr)
+			assert.ErrorIs(t, r.isFileAccessErr(p, test.input), test.expectedErr)
 			_, exists := r.errPaths[p]
 			assert.Equal(t, test.expectedPathTracked, exists)
 		})
