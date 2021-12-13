@@ -103,6 +103,10 @@ func (c *Catalog) Enumerate(types ...Type) <-chan Package {
 	channel := make(chan Package)
 	go func() {
 		defer close(channel)
+		if c == nil {
+			// we should allow enumerating from a catalog that was never created (which will result in no packages enumerated)
+			return
+		}
 		for ty, ids := range c.idsByType {
 			if len(types) != 0 {
 				found := false
