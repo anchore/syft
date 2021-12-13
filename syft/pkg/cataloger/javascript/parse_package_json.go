@@ -208,7 +208,14 @@ func (p PackageJSON) hasNameAndVersionValues() bool {
 	return p.Name != "" && p.Version != ""
 }
 
-func pathContainsNodeModulesDirectory(path string) bool {
-	isNodeModulesPath, _ := regexp.MatchString("[\\/]node_modules[\\/]", path)
-	return isNodeModulesPath
+// this supports both windows and unix paths
+var filepathSeparator = regexp.MustCompile(`[\\/]`)
+
+func pathContainsNodeModulesDirectory(p string) bool {
+	for _, subPath := range filepathSeparator.Split(p, -1) {
+		if subPath == "node_modules" {
+			return true
+		}
+	}
+	return false
 }

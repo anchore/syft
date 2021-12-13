@@ -18,7 +18,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-libpython3.7.so",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "test-fixtures/classifiers/positive/libpython3.7.so",
+			location:   "libpython3.7.so",
 			expected: []Classification{
 				{
 					Class: "python-binary",
@@ -32,7 +32,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-python3.6",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "test-fixtures/classifiers/positive/python3.6",
+			location:   "python3.6",
 			expected: []Classification{
 				{
 					Class: "python-binary",
@@ -46,7 +46,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-patchlevel.h",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "test-fixtures/classifiers/positive/patchlevel.h",
+			location:   "patchlevel.h",
 			expected: []Classification{
 				{
 					Class: "cpython-source",
@@ -60,7 +60,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-go",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "test-fixtures/classifiers/positive/go",
+			location:   "go",
 			expected: []Classification{
 				{
 					Class: "go-binary",
@@ -74,7 +74,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-go-hint",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "test-fixtures/classifiers/positive/VERSION",
+			location:   "VERSION",
 			expected: []Classification{
 				{
 					Class: "go-binary-hint",
@@ -88,7 +88,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-busybox",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "test-fixtures/classifiers/positive/busybox",
+			location:   "busybox",
 			expected: []Classification{
 				{
 					Class: "busybox-binary",

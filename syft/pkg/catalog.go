@@ -4,12 +4,10 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/jinzhu/copier"
-
-	"github.com/anchore/syft/internal"
-
-	"github.com/anchore/syft/internal/log"
 )
 
 // Catalog represents a collection of Packages.
@@ -103,6 +101,10 @@ func (c *Catalog) Enumerate(types ...Type) <-chan Package {
 	channel := make(chan Package)
 	go func() {
 		defer close(channel)
+		if c == nil {
+			// we should allow enumerating from a catalog that was never created (which will result in no packages enumerated)
+			return
+		}
 		for ty, ids := range c.idsByType {
 			if len(types) != 0 {
 				found := false

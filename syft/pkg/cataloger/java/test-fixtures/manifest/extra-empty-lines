@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Archiver-Version: Plexus Archiver
+Created-By: Apache Maven 3.6.3
+
+
+Name: thing-1
+Built-By: ?
+
+.
+
+Name: thing-2
+Built-By: someone!
+
+
+ :
+
+Other: things
+junk
+
+:
+
+Last: item

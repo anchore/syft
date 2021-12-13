@@ -6,8 +6,7 @@ import (
 )
 
 const (
-	UnknownFileType FileType = "UnknownFileType"
-	RegularFile     FileType = "RegularFile"
+	RegularFile FileType = "RegularFile"
 	// IrregularFile is how syft defines files that are neither regular, symbolic or directory.
 	// For ref: the seven standard Unix file types are regular, directory, symbolic link,
 	// FIFO special, block special, character special, and socket as defined by POSIX.
@@ -18,6 +17,7 @@ const (
 	BlockDevice     FileType = "BlockDevice"
 	Directory       FileType = "Directory"
 	FIFONode        FileType = "FIFONode"
+	Socket          FileType = "Socket"
 )
 
 type FileType string
@@ -39,19 +39,32 @@ func newFileTypeFromTarHeaderTypeFlag(flag byte) FileType {
 	case tar.TypeFifo:
 		return FIFONode
 	}
-	return UnknownFileType
+	return IrregularFile
 }
 
-// TODO: fill in more types from mod...
 func newFileTypeFromMode(mode os.FileMode) FileType {
 	switch {
-	case mode&os.ModeSymlink == os.ModeSymlink:
+	case isSet(mode, os.ModeSymlink):
 		return SymbolicLink
+	case isSet(mode, os.ModeIrregular):
+		return IrregularFile
+	case isSet(mode, os.ModeCharDevice):
+		return CharacterDevice
+	case isSet(mode, os.ModeDevice):
+		return BlockDevice
+	case isSet(mode, os.ModeNamedPipe):
+		return FIFONode
+	case isSet(mode, os.ModeSocket):
+		return Socket
 	case mode.IsDir():
 		return Directory
-	case !mode.IsRegular():
-		return IrregularFile
-	default:
+	case mode.IsRegular():
 		return RegularFile
+	default:
+		return IrregularFile
 	}
+}
+
+func isSet(mode, field os.FileMode) bool {
+	return mode&field != 0
 }
