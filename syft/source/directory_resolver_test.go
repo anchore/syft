@@ -695,3 +695,48 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 		})
 	}
 }
+
+func Test_isUnixSystemRuntimePath(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected bool
+	}{
+		{
+			path:     "proc/place",
+			expected: false,
+		},
+		{
+			path:     "/proc/place",
+			expected: true,
+		},
+		{
+			path:     "/proc",
+			expected: true,
+		},
+		{
+			path:     "/pro/c",
+			expected: false,
+		},
+		{
+			path:     "/pro",
+			expected: false,
+		},
+		{
+			path:     "/dev",
+			expected: true,
+		},
+		{
+			path:     "/sys",
+			expected: true,
+		},
+		{
+			path:     "/something/sys",
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			assert.Equal(t, test.expected, isUnixSystemRuntimePath(test.path, nil))
+		})
+	}
+}

@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/anchore/syft/internal"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/bus"
@@ -17,6 +19,13 @@ import (
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
+
+var unixSystemRuntimePrefixes = []string{
+	"/proc",
+	"/dev",
+	//"/sys",
+	//"/run",
+}
 
 var _ FileResolver = (*directoryResolver)(nil)
 
@@ -52,7 +61,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 	}
 
 	if pathFilters == nil {
-		pathFilters = []pathFilterFn{isUnallowableFileType}
+		pathFilters = []pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}
 	}
 
 	resolver := directoryResolver{
@@ -70,7 +79,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 }
 
 func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {
-	log.Infof("indexing filesystem path=%q", root)
+	log.Debugf("indexing filesystem path=%q", root)
 
 	var roots []string
 	var err error
@@ -394,6 +403,10 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 		}
 	}
 	return locations, nil
+}
+
+func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
+	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
 }
 
 func isUnallowableFileType(_ string, info os.FileInfo) bool {
