@@ -115,16 +115,39 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 }
 
 func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
-	var version string
-	switch {
-	case filenameObj.version != "":
-		version = filenameObj.version
-	case manifest.Main["Implementation-Version"] != "":
-		version = manifest.Main["Implementation-Version"]
-	case manifest.Main["Specification-Version"] != "":
-		version = manifest.Main["Specification-Version"]
-	case manifest.Main["Plugin-Version"] != "":
-		version = manifest.Main["Plugin-Version"]
+	if v := filenameObj.version; v != "" {
+		return v
 	}
-	return version
+
+	if manifest == nil {
+		return ""
+	}
+
+	fieldNames := []string{
+		"Implementation-Version",
+		"Specification-Version",
+		"Plugin-Version",
+	}
+
+	for _, fieldName := range fieldNames {
+		if v := fieldValueFromManifest(*manifest, fieldName); v != "" {
+			return v
+		}
+	}
+
+	return ""
+}
+
+func fieldValueFromManifest(manifest pkg.JavaManifest, fieldName string) string {
+	if value := manifest.Main[fieldName]; value != "" {
+		return value
+	}
+
+	for _, section := range manifest.NamedSections {
+		if value := section[fieldName]; value != "" {
+			return value
+		}
+	}
+
+	return ""
 }
