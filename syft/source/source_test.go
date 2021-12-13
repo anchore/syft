@@ -55,19 +55,19 @@ func TestNewFromDirectory(t *testing.T) {
 		{
 			desc:       "path detected",
 			input:      "test-fixtures",
-			inputPaths: []string{"test-fixtures/path-detected/.vimrc"},
+			inputPaths: []string{"path-detected/.vimrc"},
 			expRefs:    1,
 		},
 		{
 			desc:       "directory ignored",
 			input:      "test-fixtures",
-			inputPaths: []string{"test-fixtures/path-detected"},
+			inputPaths: []string{"path-detected"},
 			expRefs:    0,
 		},
 		{
 			desc:       "no files-by-path detected",
 			input:      "test-fixtures",
-			inputPaths: []string{"test-fixtures/no-path-detected"},
+			inputPaths: []string{"no-path-detected"},
 			expRefs:    0,
 		},
 	}
@@ -184,21 +184,21 @@ func TestNewFromDirectoryShared(t *testing.T) {
 			desc:       "path detected",
 			input:      "test-fixtures",
 			notExist:   "foobar/",
-			inputPaths: []string{"test-fixtures/path-detected/.vimrc"},
+			inputPaths: []string{"path-detected/.vimrc"},
 			expRefs:    1,
 		},
 		{
 			desc:       "directory ignored",
 			input:      "test-fixtures",
 			notExist:   "foobar/",
-			inputPaths: []string{"test-fixtures/path-detected"},
+			inputPaths: []string{"path-detected"},
 			expRefs:    0,
 		},
 		{
 			desc:       "no files-by-path detected",
 			input:      "test-fixtures",
 			notExist:   "foobar/",
-			inputPaths: []string{"test-fixtures/no-path-detected"},
+			inputPaths: []string{"no-path-detected"},
 			expRefs:    0,
 		},
 	}

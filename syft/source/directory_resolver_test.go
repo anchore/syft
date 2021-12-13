@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -20,6 +19,55 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/wagoodman/go-progress"
 )
+
+func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
+	cases := []struct {
+		name         string
+		relativeRoot string
+		input        string
+		expected     []string
+	}{
+		{
+			name:         "should find a file from an absolute input",
+			relativeRoot: "./test-fixtures/",
+			input:        "/image-symlinks/file-1.txt",
+			expected: []string{
+				"image-symlinks/file-1.txt",
+			},
+		},
+		{
+			name:         "should find a file from a relative path",
+			relativeRoot: "./test-fixtures/",
+			input:        "image-symlinks/file-1.txt",
+			expected: []string{
+				"image-symlinks/file-1.txt",
+			},
+		},
+		{
+			name:         "should find a file from a relative path (root above cwd)",
+			relativeRoot: "../",
+			input:        "sbom/sbom.go",
+			expected: []string{
+				"sbom/sbom.go",
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			resolver, err := newDirectoryResolver(c.relativeRoot)
+			assert.NoError(t, err)
+
+			refs, err := resolver.FilesByPath(c.input)
+			require.NoError(t, err)
+			assert.Len(t, refs, len(c.expected))
+			s := strset.New()
+			for _, actual := range refs {
+				s.Add(actual.RealPath)
+			}
+			assert.ElementsMatch(t, c.expected, s.List())
+		})
+	}
+}
 
 func TestDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 	cases := []struct {
@@ -87,23 +135,16 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 		{
 			name:     "finds a file (relative)",
 			root:     "./test-fixtures/",
-			input:    "test-fixtures/image-symlinks/file-1.txt",
-			expected: "test-fixtures/image-symlinks/file-1.txt",
+			input:    "image-symlinks/file-1.txt",
+			expected: "image-symlinks/file-1.txt",
 			refCount: 1,
 		},
 		{
 			name:     "finds a file with relative indirection",
 			root:     "./test-fixtures/../test-fixtures",
-			input:    "test-fixtures/image-symlinks/file-1.txt",
-			expected: "test-fixtures/image-symlinks/file-1.txt",
-			refCount: 1,
-		},
-		{
-			// note: this is asserting the old behavior is not supported
-			name:     "relative lookup with wrong path fails",
-			root:     "./test-fixtures/",
 			input:    "image-symlinks/file-1.txt",
-			refCount: 0,
+			expected: "image-symlinks/file-1.txt",
+			refCount: 1,
 		},
 		{
 			name:     "managed non-existing files (relative)",
@@ -115,7 +156,7 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 			name:     "finds a file (absolute)",
 			root:     "./test-fixtures/",
 			input:    "/image-symlinks/file-1.txt",
-			expected: "test-fixtures/image-symlinks/file-1.txt",
+			expected: "image-symlinks/file-1.txt",
 			refCount: 1,
 		},
 		{
@@ -160,17 +201,17 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}{
 		{
 			name:     "finds multiple files",
-			input:    []string{"test-fixtures/image-symlinks/file-1.txt", "test-fixtures/image-symlinks/file-2.txt"},
+			input:    []string{"image-symlinks/file-1.txt", "image-symlinks/file-2.txt"},
 			refCount: 2,
 		},
 		{
 			name:     "skips non-existing files",
-			input:    []string{"test-fixtures/image-symlinks/bogus.txt", "test-fixtures/image-symlinks/file-1.txt"},
+			input:    []string{"image-symlinks/bogus.txt", "image-symlinks/file-1.txt"},
 			refCount: 1,
 		},
 		{
 			name:     "does not return anything for non-existing directories",
-			input:    []string{"test-fixtures/non-existing/bogus.txt", "test-fixtures/non-existing/file-1.txt"},
+			input:    []string{"non-existing/bogus.txt", "non-existing/file-1.txt"},
 			refCount: 0,
 		},
 	}
@@ -212,7 +253,7 @@ func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Len(t, refs, 1)
-	assert.Equal(t, "test-fixtures/image-symlinks/file-1.txt", refs[0].RealPath)
+	assert.Equal(t, "image-symlinks/file-1.txt", refs[0].RealPath)
 }
 
 func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
@@ -225,24 +266,24 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	assert.Equal(t, expectedFn.Pointer(), actualFn.Pointer())
 
 	// all paths should be found (non filtering matches a path)
-	refs, err := resolver.FilesByGlob("**/place")
+	locations, err := resolver.FilesByGlob("**/place")
 	assert.NoError(t, err)
 	// 4: within target/
 	// 1: target/link --> relative path to "place"
 	// 1: outside_root/link_target/place
-	assert.Len(t, refs, 6)
+	assert.Len(t, locations, 6)
 
 	// ensure that symlink indexing outside of root worked
+	testLocation := "test-fixtures/system_paths/outside_root/link_target/place"
 	ok := false
-	test_location := "test-fixtures/system_paths/outside_root/link_target/place"
-	for _, actual_loc := range refs {
-		if test_location == actual_loc.RealPath {
+	for _, location := range locations {
+		if strings.HasSuffix(location.RealPath, testLocation) {
 			ok = true
 		}
 	}
 
 	if !ok {
-		t.Fatalf("could not find test location=%q", test_location)
+		t.Fatalf("could not find test location=%q", testLocation)
 	}
 }
 
@@ -521,7 +562,7 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 		{
 			fixturePath:   "./test-fixtures/image-simple",
 			mimeType:      "text/plain",
-			expectedPaths: strset.New("test-fixtures/image-simple/file-1.txt", "test-fixtures/image-simple/file-2.txt", "test-fixtures/image-simple/target/really/nested/file-3.txt", "test-fixtures/image-simple/Dockerfile"),
+			expectedPaths: strset.New("file-1.txt", "file-2.txt", "target/really/nested/file-3.txt", "Dockerfile"),
 		},
 	}
 	for _, test := range tests {
@@ -539,86 +580,81 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 	}
 }
 
-func Test_ignoreIrregularFiles(t *testing.T) {
-	// NOTE: craeting a pipe/fifo file on demand since git doesn't let me
-	// commit one. The directory resolver should ignore it (and any other
-	// file that is neither regular, a symlink or directory) when indexing a directory
-	dir := "./test-fixtures/irregular-files"
-	f := "f.fifo"
-
-	err := syscall.Mknod(filepath.Join(dir, f), syscall.S_IFIFO|0666, 0)
-	assert.NoError(t, err)
-	defer func() {
-		err := os.Remove(filepath.Join(dir, f))
-		assert.NoError(t, err)
-	}()
-
-	fileRefs, err := ioutil.ReadDir(dir)
-	assert.NoError(t, err)
-	assert.Len(t, fileRefs, 2) // two files (f.fifo and readme)
-
-	resolver, err := newDirectoryResolver(dir)
+func Test_IndexingNestedSymLinks(t *testing.T) {
+	resolver, err := newDirectoryResolver("./test-fixtures/irregular-files")
 	assert.NoError(t, err)
 
-	assert.Len(t, resolver.fileTree.AllFiles(), 1)
-	rp := resolver.fileTree.AllFiles()[0].RealPath
-	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
+	// check that we can get the real path
+	locations, err := resolver.FilesByPath("./readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+
+	// check that we can access the same file via 1 symlink
+	locations, err = resolver.FilesByPath("./link_to_new_readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+
+	// check that we can access the same file via 2 symlinks
+	locations, err = resolver.FilesByPath("./link_to_link_to_new_readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
 }
 
-func Test_SymLinkResolution(t *testing.T) {
-	dir := "./test-fixtures/irregular-files"
-	realFile := "readme"
-	sl := "new_readme"
+func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
+	filterFn := func(path string, _ os.FileInfo) bool {
+		return strings.HasSuffix(path, string(filepath.Separator)+"readme")
+	}
 
-	err := os.Symlink(filepath.Join(dir, realFile), filepath.Join(dir, sl))
-	assert.NoError(t, err)
-	defer func() {
-		err := os.Remove(filepath.Join(dir, sl))
-		assert.NoError(t, err)
-	}()
-
-	fileRefs, err := ioutil.ReadDir(dir)
-	assert.NoError(t, err)
-	assert.Len(t, fileRefs, 2) // two files (f.fifo and readme)
-
-	resolver, err := newDirectoryResolver(dir)
+	resolver, err := newDirectoryResolver("./test-fixtures/irregular-files", filterFn)
 	assert.NoError(t, err)
 
-	assert.Len(t, resolver.fileTree.AllFiles(), 1)
-	rp := resolver.fileTree.AllFiles()[0].RealPath
-	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
+	var testingLocations []Location
+
+	// the path to the real file is PRUNED from the index, so we should NOT expect a location returned
+	locations, err := resolver.FilesByPath("./readme")
+	require.NoError(t, err)
+	assert.Empty(t, locations)
+
+	// check that we can access the same file via 1 symlink
+	locations, err = resolver.FilesByPath("./link_to_new_readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+	testingLocations = append(testingLocations, locations...)
+
+	// check that we can access the same file via 2 symlinks
+	locations, err = resolver.FilesByPath("./link_to_link_to_new_readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+	testingLocations = append(testingLocations, locations...)
+
+	// check that we CANNOT get contents from any of the link locations
+	for _, location := range testingLocations {
+		contentReader, err := resolver.FileContentsByLocation(location)
+		assert.Errorf(t, err, "expected an error for getting content from a location not in the index")
+		assert.Nil(t, contentReader)
+	}
 }
 
-func Test_SymLinkNestedResolution(t *testing.T) {
-	dir := "./test-fixtures/irregular-files"
-	realFile := "readme"
-	sl := "link_to_new_readme"
-	sl1 := "link_to_link_to_new_readme"
-
-	err := os.Symlink(filepath.Join(dir, realFile), filepath.Join(dir, sl))
-	assert.NoError(t, err)
-	err = os.Symlink(filepath.Join(dir, sl), filepath.Join(dir, sl1))
-	assert.NoError(t, err)
-	defer func() {
-		err := os.Remove(filepath.Join(dir, sl))
-		assert.NoError(t, err)
-		err = os.Remove(filepath.Join(dir, sl1))
-		assert.NoError(t, err)
-	}()
-
-	fileRefs, err := ioutil.ReadDir(dir)
-	assert.NoError(t, err)
-	assert.Len(t, fileRefs, 3)
-
-	resolver, err := newDirectoryResolver(dir)
+func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
+	resolver, err := newDirectoryResolver("./test-fixtures/symlink-roots/root")
 	assert.NoError(t, err)
 
-	assert.Len(t, resolver.fileTree.AllFiles(), 1)
-	rp := resolver.fileTree.AllFiles()[0].RealPath
-	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
+	// check that we can get the real path
+	locations, err := resolver.FilesByPath("./readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+
+	// check that we can access the same file via 2 symlinks (link_to_link_to_readme -> link_to_readme -> readme)
+	locations, err = resolver.FilesByPath("./link_to_link_to_readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+
 }
 
 func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+
 	tests := []struct {
 		name     string
 		location Location
@@ -628,7 +664,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 		{
 			name: "use file reference for content requests",
 			location: NewLocationFromDirectory("some/place", file.Reference{
-				RealPath: "test-fixtures/image-simple/file-1.txt",
+				RealPath: file.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")),
 			}),
 			expects: "this file has contents",
 		},

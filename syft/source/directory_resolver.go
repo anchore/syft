@@ -24,11 +24,11 @@ type pathFilterFn func(string, os.FileInfo) bool
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
-	path              string
-	cwdRelativeToRoot string
-	cwd               string
-	fileTree          *filetree.FileTree
-	metadata          map[file.ID]FileMetadata
+	path                    string
+	currentWdRelativeToRoot string
+	currentWd               string
+	fileTree                *filetree.FileTree
+	metadata                map[file.ID]FileMetadata
 	// TODO: wire up to report these paths in the json report
 	pathFilterFns  []pathFilterFn
 	refsByMIMEType map[string][]file.Reference
@@ -36,17 +36,19 @@ type directoryResolver struct {
 }
 
 func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
-	cwd, err := os.Getwd()
+	currentWd, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("could not create directory resolver: %w", err)
 	}
 
-	var cwdRelRoot string
+	var currentWdRelRoot string
 	if path.IsAbs(root) {
-		cwdRelRoot, err = filepath.Rel(cwd, root)
+		currentWdRelRoot, err = filepath.Rel(currentWd, root)
 		if err != nil {
 			return nil, fmt.Errorf("could not create directory resolver: %w", err)
 		}
+	} else {
+		currentWdRelRoot = filepath.Clean(root)
 	}
 
 	if pathFilters == nil {
@@ -54,14 +56,14 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 	}
 
 	resolver := directoryResolver{
-		path:              root,
-		cwd:               cwd,
-		cwdRelativeToRoot: cwdRelRoot,
-		fileTree:          filetree.NewFileTree(),
-		metadata:          make(map[file.ID]FileMetadata),
-		pathFilterFns:     pathFilters,
-		refsByMIMEType:    make(map[string][]file.Reference),
-		errPaths:          make(map[string]error),
+		path:                    root,
+		currentWd:               currentWd,
+		currentWdRelativeToRoot: currentWdRelRoot,
+		fileTree:                filetree.NewFileTree(),
+		metadata:                make(map[file.ID]FileMetadata),
+		pathFilterFns:           pathFilters,
+		refsByMIMEType:          make(map[string][]file.Reference),
+		errPaths:                make(map[string]error),
 	}
 
 	return &resolver, indexAllRoots(root, resolver.indexTree)
@@ -164,7 +166,11 @@ func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error
 	if err != nil {
 		return err
 	}
-	r.addFileMetadataToIndex(p, info, ref)
+
+	location := NewLocationFromDirectory(p, *ref)
+	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
+	r.addFileMetadataToIndex(ref, metadata)
+
 	return nil
 }
 
@@ -173,7 +179,11 @@ func (r directoryResolver) addFileToIndex(p string, info os.FileInfo) error {
 	if err != nil {
 		return err
 	}
-	r.addFileMetadataToIndex(p, info, ref)
+
+	location := NewLocationFromDirectory(p, *ref)
+	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
+	r.addFileMetadataToIndex(ref, metadata)
+
 	return nil
 }
 
@@ -191,18 +201,6 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 		linkTarget = filepath.Join(filepath.Dir(p), linkTarget)
 	}
 
-	linkStat, err := os.Lstat(linkTarget)
-	if err == nil && linkStat != nil {
-		usedInfo = linkStat
-	}
-
-	// filter based on the resolved link path
-	for _, filterFn := range r.pathFilterFns {
-		if filterFn(linkTarget, usedInfo) {
-			return "", nil
-		}
-	}
-
 	ref, err := r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
 	if err != nil {
 		return "", err
@@ -213,15 +211,18 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 		targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
 	}
 
-	r.addFileMetadataToIndex(p, usedInfo, ref)
+	location := NewLocationFromDirectory(p, *ref)
+	metadata := fileMetadataFromPath(p, usedInfo, r.isInIndex(location))
+	r.addFileMetadataToIndex(ref, metadata)
 
 	return targetAbsPath, nil
 }
 
-func (r directoryResolver) addFileMetadataToIndex(p string, info os.FileInfo, ref *file.Reference) {
+func (r directoryResolver) addFileMetadataToIndex(ref *file.Reference, metadata FileMetadata) {
 	if ref != nil {
-		metadata := fileMetadataFromPath(p, info)
-		r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
+		if metadata.MIMEType != "" {
+			r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
+		}
 		r.metadata[ref.ID()] = metadata
 	}
 }
@@ -232,7 +233,7 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 		userPath = path.Join(r.path, userPath)
 	} else {
 		// ensure we take into account any relative difference between the root path and the CWD for relative requests
-		userPath = path.Join(r.cwdRelativeToRoot, userPath)
+		userPath = path.Join(r.currentWdRelativeToRoot, userPath)
 	}
 
 	var err error
@@ -247,7 +248,7 @@ func (r directoryResolver) responsePath(path string) string {
 	// always return references relative to the request path (not absolute path)
 	if filepath.IsAbs(path) {
 		// we need to account for the cwd relative to the running process and the given root for the directory resolver
-		prefix := filepath.Clean(filepath.Join(r.cwd, r.cwdRelativeToRoot))
+		prefix := filepath.Clean(filepath.Join(r.currentWd, r.currentWdRelativeToRoot))
 		return strings.TrimPrefix(path, prefix+string(filepath.Separator))
 	}
 	return path
@@ -303,8 +304,6 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
 		if err == nil && exists {
 			references = append(references, NewLocationFromDirectory(r.responsePath(userStrPath), *ref))
-		} else {
-			log.Warnf("path (%s) not found in file tree: Exists: %t Err:%+v", userStrPath, exists, err)
 		}
 	}
 
@@ -349,7 +348,20 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 	if location.ref.RealPath == "" {
 		return nil, errors.New("empty path given")
 	}
+	if !r.isInIndex(location) {
+		// this is in cases where paths have been explicitly excluded from the tree index. In which case
+		// we should DENY all content requests. Why? These paths have been indicated to be inaccessible (either
+		// by preference or these files are not readable by the current user).
+		return nil, fmt.Errorf("file content is inaccessible path=%q", location.ref.RealPath)
+	}
 	return file.NewLazyReadCloser(string(location.ref.RealPath)), nil
+}
+
+func (r directoryResolver) isInIndex(location Location) bool {
+	if location.ref.RealPath == "" {
+		return false
+	}
+	return r.fileTree.HasPath(location.ref.RealPath, filetree.FollowBasenameLinks)
 }
 
 func (r *directoryResolver) AllLocations() <-chan Location {
@@ -384,7 +396,7 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
-func isUnallowableFileType(path string, info os.FileInfo) bool {
+func isUnallowableFileType(_ string, info os.FileInfo) bool {
 	if info == nil {
 		// we can't filter out by filetype for non-existent files
 		return false
