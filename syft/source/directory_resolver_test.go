@@ -537,6 +537,59 @@ func Test_ignoreIrregularFiles(t *testing.T) {
 	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
 }
 
+func Test_SymLinkResolution(t *testing.T) {
+	dir := "./test-fixtures/irregular-files"
+	realFile := "readme"
+	sl := "new_readme"
+
+	err := os.Symlink(filepath.Join(dir, realFile), filepath.Join(dir, sl))
+	assert.NoError(t, err)
+	defer func() {
+		err := os.Remove(filepath.Join(dir, sl))
+		assert.NoError(t, err)
+	}()
+
+	fileRefs, err := ioutil.ReadDir(dir)
+	assert.NoError(t, err)
+	assert.Len(t, fileRefs, 2) // two files (f.fifo and readme)
+
+	resolver, err := newDirectoryResolver(dir)
+	assert.NoError(t, err)
+
+	assert.Len(t, resolver.fileTree.AllFiles(), 1)
+	rp := resolver.fileTree.AllFiles()[0].RealPath
+	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
+}
+
+func Test_SymLinkNestedResolution(t *testing.T) {
+	dir := "./test-fixtures/irregular-files"
+	realFile := "readme"
+	sl := "link_to_new_readme"
+	sl1 := "link_to_link_to_new_readme"
+
+	err := os.Symlink(filepath.Join(dir, realFile), filepath.Join(dir, sl))
+	assert.NoError(t, err)
+	err = os.Symlink(filepath.Join(dir, sl), filepath.Join(dir, sl1))
+	assert.NoError(t, err)
+	defer func() {
+		err := os.Remove(filepath.Join(dir, sl))
+		assert.NoError(t, err)
+		err = os.Remove(filepath.Join(dir, sl1))
+		assert.NoError(t, err)
+	}()
+
+	fileRefs, err := ioutil.ReadDir(dir)
+	assert.NoError(t, err)
+	assert.Len(t, fileRefs, 3)
+
+	resolver, err := newDirectoryResolver(dir)
+	assert.NoError(t, err)
+
+	assert.Len(t, resolver.fileTree.AllFiles(), 1)
+	rp := resolver.fileTree.AllFiles()[0].RealPath
+	assert.True(t, strings.Contains(string(rp), filepath.Join(dir, "readme")))
+}
+
 func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	tests := []struct {
 		name     string

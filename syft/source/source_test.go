@@ -306,7 +306,9 @@ func TestFilesByGlob(t *testing.T) {
 				t.Errorf("could not get resolver error: %+v", err)
 			}
 			contents, err := resolver.FilesByGlob(test.glob)
-
+			if err != nil {
+				t.Errorf("could not get files by blog: %s+v", err)
+			}
 			if len(contents) != test.expected {
 				t.Errorf("unexpected number of files found by glob (%s): %d != %d", test.glob, len(contents), test.expected)
 			}

@@ -171,6 +171,13 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 		if err != nil {
 			return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
 		}
+
+		for _, filterFn := range r.pathFilterFns {
+			if filterFn(linkTarget) {
+				return "", nil
+			}
+		}
+
 		ref, err = r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
 		if err != nil {
 			return "", err
@@ -202,6 +209,7 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 		r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
 	}
 
+	log.Infof("indexed filesystem path=%q", p)
 	r.metadata[ref.ID()] = metadata
 	return newRoot, nil
 }
