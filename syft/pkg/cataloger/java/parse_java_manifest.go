@@ -127,6 +127,7 @@ func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) stri
 		"Implementation-Version",
 		"Specification-Version",
 		"Plugin-Version",
+		"Bundle-Version",
 	}
 
 	for _, fieldName := range fieldNames {

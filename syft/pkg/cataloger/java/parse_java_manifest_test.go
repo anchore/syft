@@ -212,6 +212,22 @@ func TestSelectVersion(t *testing.T) {
 			},
 			expected: "1.8.2",
 		},
+		{
+			name: "Implementation-Version takes precedence over Specification-Version in subsequent section",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Manifest-Version": "1.0",
+					"Ant-Version":      "Apache Ant 1.8.2",
+					"Created-By":       "1.5.0_22-b03 (Sun Microsystems Inc.)",
+				},
+				NamedSections: map[string]map[string]string{
+					"some-other-section": {
+						"Bundle-Version": "1.11.28",
+					},
+				},
+			},
+			expected: "1.11.28",
+		},
 	}
 
 	for _, test := range tests {
