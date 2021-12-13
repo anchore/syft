@@ -1,6 +1,7 @@
 package source
 
 import (
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -218,7 +220,7 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target")
 	assert.NoError(t, err)
 	// ensure the correct filter function is wired up by default
-	expectedFn := reflect.ValueOf(isUnixSystemRuntimePath)
+	expectedFn := reflect.ValueOf(isUnallowableFileType)
 	actualFn := reflect.ValueOf(resolver.pathFilterFns[0])
 	assert.Equal(t, expectedFn.Pointer(), actualFn.Pointer())
 
@@ -244,69 +246,102 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	}
 }
 
-func TestDirectoryResolverUsesPathFilterFunction(t *testing.T) {
-	// let's make certain that the index honors the filter function
-	filter := func(s string) bool {
-		// a dummy function that works for testing purposes
-		return strings.Contains(s, "dev/place") || strings.Contains(s, "proc/place") || strings.Contains(s, "sys/place")
-	}
+var _ fs.FileInfo = (*testFileInfo)(nil)
 
-	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target", filter)
-	assert.NoError(t, err)
-
-	// ensure the correct filter function is wired up by default
-	expectedFn := reflect.ValueOf(filter)
-	actualFn := reflect.ValueOf(resolver.pathFilterFns[0])
-	assert.Equal(t, expectedFn.Pointer(), actualFn.Pointer())
-	assert.Len(t, resolver.pathFilterFns, 1)
-
-	refs, err := resolver.FilesByGlob("**/place")
-	assert.NoError(t, err)
-	// target/home/place + target/link/.../place + outside_root/.../place
-	assert.Len(t, refs, 3)
+type testFileInfo struct {
+	mode os.FileMode
 }
 
-func Test_isUnixSystemRuntimePath(t *testing.T) {
+func (t testFileInfo) Name() string {
+	panic("implement me")
+}
+
+func (t testFileInfo) Size() int64 {
+	panic("implement me")
+}
+
+func (t testFileInfo) Mode() fs.FileMode {
+	return t.mode
+}
+
+func (t testFileInfo) ModTime() time.Time {
+	panic("implement me")
+}
+
+func (t testFileInfo) IsDir() bool {
+	panic("implement me")
+}
+
+func (t testFileInfo) Sys() interface{} {
+	panic("implement me")
+}
+
+func Test_isUnallowableFileType(t *testing.T) {
 	tests := []struct {
-		path     string
+		name     string
+		info     os.FileInfo
 		expected bool
 	}{
 		{
-			path:     "proc/place",
+			name: "regular file",
+			info: testFileInfo{
+				mode: 0,
+			},
 			expected: false,
 		},
 		{
-			path:     "/proc/place",
-			expected: true,
-		},
-		{
-			path:     "/proc",
-			expected: true,
-		},
-		{
-			path:     "/pro/c",
+			name: "dir",
+			info: testFileInfo{
+				mode: os.ModeDir,
+			},
 			expected: false,
 		},
 		{
-			path:     "/pro",
+			name: "symlink",
+			info: testFileInfo{
+				mode: os.ModeSymlink,
+			},
 			expected: false,
 		},
 		{
-			path:     "/dev",
+			name: "socket",
+			info: testFileInfo{
+				mode: os.ModeSocket,
+			},
 			expected: true,
 		},
 		{
-			path:     "/sys",
+			name: "named pipe",
+			info: testFileInfo{
+				mode: os.ModeNamedPipe,
+			},
 			expected: true,
 		},
 		{
-			path:     "/something/sys",
-			expected: false,
+			name: "char device",
+			info: testFileInfo{
+				mode: os.ModeCharDevice,
+			},
+			expected: true,
+		},
+		{
+			name: "block device",
+			info: testFileInfo{
+				mode: os.ModeDevice,
+			},
+			expected: true,
+		},
+		{
+			name: "irregular",
+			info: testFileInfo{
+				mode: os.ModeIrregular,
+			},
+			expected: true,
 		},
 	}
 	for _, test := range tests {
-		t.Run(test.path, func(t *testing.T) {
-			assert.Equal(t, test.expected, isUnixSystemRuntimePath(test.path))
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, isUnallowableFileType("dont/care", test.info))
 		})
 	}
 }
@@ -345,9 +380,7 @@ func Test_directoryResolver_index(t *testing.T) {
 
 			// note: the index uses absolute paths, so assertions MUST keep this in mind
 			cwd, err := os.Getwd()
-			if err != nil {
-				t.Fatalf("could not get working dir: %+v", err)
-			}
+			require.NoError(t, err)
 
 			p := file.Path(path.Join(cwd, test.path))
 			assert.Equal(t, true, r.fileTree.HasPath(p))
@@ -365,32 +398,27 @@ func Test_handleFileAccessErr(t *testing.T) {
 	tests := []struct {
 		name                string
 		input               error
-		expectedErr         error
 		expectedPathTracked bool
 	}{
 		{
 			name:                "permission error does not propagate",
 			input:               os.ErrPermission,
 			expectedPathTracked: true,
-			expectedErr:         nil,
 		},
 		{
 			name:                "file does not exist error does not propagate",
 			input:               os.ErrNotExist,
 			expectedPathTracked: true,
-			expectedErr:         nil,
 		},
 		{
-			name:                "non-permission errors propagate",
+			name:                "non-permission errors are tracked",
 			input:               os.ErrInvalid,
-			expectedPathTracked: false,
-			expectedErr:         os.ErrInvalid,
+			expectedPathTracked: true,
 		},
 		{
 			name:                "non-errors ignored",
 			input:               nil,
 			expectedPathTracked: false,
-			expectedErr:         nil,
 		},
 	}
 
@@ -400,7 +428,7 @@ func Test_handleFileAccessErr(t *testing.T) {
 				errPaths: make(map[string]error),
 			}
 			p := "a/place"
-			assert.ErrorIs(t, r.isFileAccessErr(p, test.input), test.expectedErr)
+			assert.Equal(t, r.isFileAccessErr(p, test.input), test.expectedPathTracked)
 			_, exists := r.errPaths[p]
 			assert.Equal(t, test.expectedPathTracked, exists)
 		})

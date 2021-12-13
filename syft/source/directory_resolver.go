@@ -20,7 +20,7 @@ import (
 
 var _ FileResolver = (*directoryResolver)(nil)
 
-type pathFilterFn func(string, os.FileInfo, error) bool
+type pathFilterFn func(string, os.FileInfo) bool
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
@@ -84,8 +84,9 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 	// but continue forth with index regardless if the given root path exists or not.
 	fi, err := os.Stat(root)
 	if err != nil && fi != nil && !fi.IsDir() {
-		newRoot, err := r.indexPath(root, fi, err)
-		if !r.isFileAccessErr(root, err) && newRoot != "" {
+		// note: we want to index the path regardless of an error stat-ing the path
+		newRoot := r.indexPath(root, fi, nil)
+		if newRoot != "" {
 			roots = append(roots, newRoot)
 		}
 		return roots, nil
@@ -95,44 +96,44 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
-			newRoot, indexErr := r.indexPath(path, info, err)
+			newRoot := r.indexPath(path, info, err)
 			if newRoot != "" {
 				roots = append(roots, newRoot)
 			}
 
-			return indexErr
+			return nil
 		})
 }
 
-func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {
+func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) string {
 	// ignore any path which a filter function returns true
 	for _, filterFn := range r.pathFilterFns {
-		if filterFn(path, info, err) {
-			return "", nil
+		if filterFn(path, info) {
+			return ""
 		}
 	}
 
 	if r.isFileAccessErr(path, err) {
-		return "", nil
+		return ""
 	}
 
 	// link cycles could cause a revisit --we should not allow this
 	if r.fileTree.HasPath(file.Path(path)) {
-		return "", nil
+		return ""
 	}
 
 	if info == nil {
 		// walk may not be able to provide a FileInfo object, don't allow for this to stop indexing; keep track of the paths and continue.
 		r.errPaths[path] = fmt.Errorf("no file info observable at path=%q", path)
-		return "", nil
+		return ""
 	}
 
 	newRoot, err := r.addPathToIndex(path, info)
 	if r.isFileAccessErr(path, err) {
-		return "", nil
+		return ""
 	}
 
-	return newRoot, nil
+	return newRoot
 }
 
 func (r *directoryResolver) isFileAccessErr(path string, err error) bool {
@@ -146,55 +147,83 @@ func (r *directoryResolver) isFileAccessErr(path string, err error) bool {
 }
 
 func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, error) {
-	var ref *file.Reference
-	var err error
-	var newRoot string
-
-	switch newFileTypeFromMode(info.Mode()) {
+	switch t := newFileTypeFromMode(info.Mode()); t {
 	case SymbolicLink:
-		linkTarget, err := os.Readlink(p)
-		if err != nil {
-			return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
-		}
-
-		linkStat, err := os.Lstat(linkTarget)
-		for _, filterFn := range r.pathFilterFns {
-			if filterFn(linkTarget, linkStat, err) {
-				return "", nil
-			}
-		}
-
-		ref, err = r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
-		if err != nil {
-			return "", err
-		}
-
-		targetAbsPath := linkTarget
-		if !filepath.IsAbs(targetAbsPath) {
-			targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
-		}
-
-		newRoot = targetAbsPath
-
+		return r.addSymlinkToIndex(p, info)
 	case Directory:
-		ref, err = r.fileTree.AddDir(file.Path(p))
-		if err != nil {
-			return "", err
-		}
+		return "", r.addDirectoryToIndex(p, info)
+	case RegularFile:
+		return "", r.addFileToIndex(p, info)
 	default:
-		ref, err = r.fileTree.AddFile(file.Path(p))
-		if err != nil {
-			return "", err
+		return "", fmt.Errorf("unsupported file type: %s", t)
+	}
+}
+
+func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error {
+	ref, err := r.fileTree.AddDir(file.Path(p))
+	if err != nil {
+		return err
+	}
+	r.addFileMetadataToIndex(p, info, ref)
+	return nil
+}
+
+func (r directoryResolver) addFileToIndex(p string, info os.FileInfo) error {
+	ref, err := r.fileTree.AddFile(file.Path(p))
+	if err != nil {
+		return err
+	}
+	r.addFileMetadataToIndex(p, info, ref)
+	return nil
+}
+
+func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string, error) {
+	var usedInfo = info
+
+	linkTarget, err := os.Readlink(p)
+	if err != nil {
+		return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
+	}
+
+	// note: if the link is not absolute (e.g, /dev/stderr -> fd/2 ) we need to resolve it relative to the directory
+	// in question (e.g. resolve to /dev/fd/2)
+	if !filepath.IsAbs(linkTarget) {
+		linkTarget = filepath.Join(filepath.Dir(p), linkTarget)
+	}
+
+	linkStat, err := os.Lstat(linkTarget)
+	if err == nil && linkStat != nil {
+		usedInfo = linkStat
+	}
+
+	// filter based on the resolved link path
+	for _, filterFn := range r.pathFilterFns {
+		if filterFn(linkTarget, usedInfo) {
+			return "", nil
 		}
 	}
 
-	metadata := fileMetadataFromPath(p, info)
-	if ref != nil {
-		r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
+	ref, err := r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
+	if err != nil {
+		return "", err
 	}
 
-	r.metadata[ref.ID()] = metadata
-	return newRoot, nil
+	targetAbsPath := linkTarget
+	if !filepath.IsAbs(targetAbsPath) {
+		targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
+	}
+
+	r.addFileMetadataToIndex(p, usedInfo, ref)
+
+	return targetAbsPath, nil
+}
+
+func (r directoryResolver) addFileMetadataToIndex(p string, info os.FileInfo, ref *file.Reference) {
+	if ref != nil {
+		metadata := fileMetadataFromPath(p, info)
+		r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
+		r.metadata[ref.ID()] = metadata
+	}
 }
 
 func (r directoryResolver) requestPath(userPath string) (string, error) {
@@ -355,16 +384,12 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
-func isUnallowableFileType(path string, info os.FileInfo, err error) bool {
-	if err != nil {
-		return true
-	}
+func isUnallowableFileType(path string, info os.FileInfo) bool {
 	if info == nil {
-		log.Warnf("no info for path=%q", path)
-		return true
+		// we can't filter out by filetype for non-existent files
+		return false
 	}
-	t := newFileTypeFromMode(info.Mode())
-	switch t {
+	switch newFileTypeFromMode(info.Mode()) {
 	case CharacterDevice, Socket, BlockDevice, FIFONode, IrregularFile:
 		return true
 		// note: symlinks that point to these files may still get by. We handle this later in processing to help prevent
