@@ -2,8 +2,9 @@ package python
 
 import (
 	"bufio"
-	"errors"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
@@ -149,8 +150,38 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, m
 	return pkgs, sources, nil
 }
 
-func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Location) (*pkg.DirectURLOrigin, []source.Location, error) {
-	return nil, nil, errors.New("unimplemented")
+func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Location) (d *pkg.PythonDirectURLOriginInfo, sources []source.Location, err error) {
+	parentDir := filepath.Dir(metadataLocation.RealPath)
+	directURLPath := filepath.Join(parentDir, "direct_url.json")
+	directURLLocation := resolver.RelativeFileByPath(metadataLocation, directURLPath)
+
+	if directURLLocation == nil {
+		return nil, nil, nil
+	}
+
+	sources = append(sources, *directURLLocation)
+
+	directURLContents, err := resolver.FileContentsByLocation(*directURLLocation)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer internal.CloseAndLogError(directURLContents, directURLLocation.VirtualPath)
+
+	buffer, err := ioutil.ReadAll(directURLContents)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var directURLJson pkg.DirectURLOrigin
+	if err := json.Unmarshal(buffer, &directURLJson); err != nil {
+		return nil, nil, err
+	}
+
+	return &pkg.PythonDirectURLOriginInfo{
+		URL:      directURLJson.URL,
+		CommitID: directURLJson.VCSInfo.CommitID,
+		VCS:      directURLJson.VCSInfo.VCS,
+	}, sources, nil
 }
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
@@ -187,7 +218,7 @@ func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolv
 	// attach any direct-url package data found for the given wheel/egg installation
 	d, s, err := c.fetchDirectURLData(resolver, metadataLocation)
 	if err != nil {
-		// TODO log error
+		return nil, nil, err
 	}
 	sources = append(sources, s...)
 	metadata.DirectURLOrigin = d
