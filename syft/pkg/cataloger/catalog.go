@@ -51,6 +51,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 	var errs error
 	for _, theCataloger := range catalogers {
 		// find packages from the underlying raw data
+		log.Debugf("cataloging with %q", theCataloger.Name())
 		packages, relationships, err := theCataloger.Catalog(resolver)
 		if err != nil {
 			errs = multierror.Append(errs, err)
@@ -59,7 +60,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 
 		catalogedPackages := len(packages)
 
-		log.Debugf("package cataloger %q discovered %d packages", theCataloger.Name(), catalogedPackages)
+		log.Debugf("discovered %d packages", catalogedPackages)
 		packagesDiscovered.N += int64(catalogedPackages)
 
 		for _, p := range packages {

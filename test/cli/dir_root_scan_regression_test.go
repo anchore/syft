@@ -24,7 +24,7 @@ func TestDirectoryScanCompletesWithinTimeout(t *testing.T) {
 	select {
 	case <-done:
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatalf("directory scan is taking too long")
 	}
 
