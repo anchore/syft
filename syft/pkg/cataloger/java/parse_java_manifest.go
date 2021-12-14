@@ -46,7 +46,8 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 			// this is a continuation
 
 			if lastKey == "" {
-				return nil, fmt.Errorf("found continuation with no previous key (%s)", line)
+				log.Warnf("java manifest %q: found continuation with no previous key: %q", path, line)
+				continue
 			}
 
 			sections[currentSection()][lastKey] += strings.TrimSpace(line)
@@ -54,20 +55,25 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 			continue
 		}
 
-		if lastKey == "" {
-			// we're entering a new section
-
-			sections = append(sections, make(map[string]string))
-		}
-
 		// this is a new key-value pair
 		idx := strings.Index(line, ":")
 		if idx == -1 {
-			return nil, fmt.Errorf("unable to split java manifest key-value pairs: %q", line)
+			log.Warnf("java manifest %q: unable to split java manifest key-value pairs: %q", path, line)
+			continue
 		}
 
 		key := strings.TrimSpace(line[0:idx])
 		value := strings.TrimSpace(line[idx+1:])
+
+		if key == "" {
+			// don't attempt to add new keys or sections unless there is a non-empty key
+			continue
+		}
+
+		if lastKey == "" {
+			// we're entering a new section
+			sections = append(sections, make(map[string]string))
+		}
 
 		sections[currentSection()][key] = value
 
