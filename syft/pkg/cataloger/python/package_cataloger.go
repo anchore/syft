@@ -2,6 +2,7 @@ package python
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -148,6 +149,10 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, m
 	return pkgs, sources, nil
 }
 
+func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Location) (*pkg.DirectURLOrigin, []source.Location, error) {
+	return nil, nil, errors.New("unimplemented")
+}
+
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
 func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation source.Location) (*pkg.PythonPackageMetadata, []source.Location, error) {
 	var sources = []source.Location{metadataLocation}
@@ -178,6 +183,14 @@ func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolv
 	}
 	sources = append(sources, s...)
 	metadata.TopLevelPackages = p
+
+	// attach any direct-url package data found for the given wheel/egg installation
+	d, s, err := c.fetchDirectURLData(resolver, metadataLocation)
+	if err != nil {
+		// TODO log error
+	}
+	sources = append(sources, s...)
+	metadata.DirectURLOrigin = d
 
 	return &metadata, sources, nil
 }

@@ -32,10 +32,10 @@ type PythonPackageMetadata struct {
 	Files                []PythonFileRecord `json:"files,omitempty"`
 	SitePackagesRootPath string             `json:"sitePackagesRootPath"`
 	TopLevelPackages     []string           `json:"topLevelPackages,omitempty"`
-	DirectURL            DirectURL          `json:"directUrl,omitempty"`
+	DirectURLOrigin      *DirectURLOrigin   `json:"directUrlOrigin,omitempty"`
 }
 
-type DirectURL struct {
+type DirectURLOrigin struct {
 	URL     string `json:"url"`
 	VCSInfo `json:"vcsInfo"`
 }
