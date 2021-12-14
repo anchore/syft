@@ -581,7 +581,7 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinks(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/irregular-files")
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple")
 	assert.NoError(t, err)
 
 	// check that we can get the real path
@@ -605,7 +605,7 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 		return strings.HasSuffix(path, string(filepath.Separator)+"readme")
 	}
 
-	resolver, err := newDirectoryResolver("./test-fixtures/irregular-files", filterFn)
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", filterFn)
 	assert.NoError(t, err)
 
 	var testingLocations []Location
@@ -636,7 +636,7 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/symlink-roots/root")
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-roots/root")
 	assert.NoError(t, err)
 
 	// check that we can get the real path
@@ -738,5 +738,36 @@ func Test_isUnixSystemRuntimePath(t *testing.T) {
 		t.Run(test.path, func(t *testing.T) {
 			assert.Equal(t, test.expected, isUnixSystemRuntimePath(test.path, nil))
 		})
+	}
+}
+
+func Test_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
+	test := func(t *testing.T) {
+		resolver, err := newDirectoryResolver("./test-fixtures/symlinks-loop")
+		require.NoError(t, err)
+
+		locations, err := resolver.FilesByGlob("**/file.target")
+		require.NoError(t, err)
+		// Note: I'm not certain that this behavior is correct, but it is not an infinite loop (which is the point of the test)
+		// - block/loop0/file.target
+		// - devices/loop0/file.target
+		// - devices/loop0/subsystem/loop0/file.target
+		assert.Len(t, locations, 3)
+	}
+
+	testWithTimeout(t, 5*time.Second, test)
+}
+
+func testWithTimeout(t *testing.T, timeout time.Duration, test func(*testing.T)) {
+	done := make(chan bool)
+	go func() {
+		test(t)
+		done <- true
+	}()
+
+	select {
+	case <-time.After(timeout):
+		t.Fatal("test timed out")
+	case <-done:
 	}
 }

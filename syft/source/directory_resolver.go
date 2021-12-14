@@ -23,8 +23,7 @@ import (
 var unixSystemRuntimePrefixes = []string{
 	"/proc",
 	"/dev",
-	//"/sys",
-	//"/run",
+	"/sys",
 }
 
 var _ FileResolver = (*directoryResolver)(nil)
