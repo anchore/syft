@@ -3,6 +3,8 @@ package pkg
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/source"
@@ -143,4 +145,9 @@ func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 		})
 	}
 
+}
+
+func TestCatalog_EnumerateNilCatalog(t *testing.T) {
+	var c *Catalog
+	assert.Empty(t, c.Enumerate())
 }

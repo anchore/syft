@@ -6,6 +6,7 @@ import (
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParsePackageJSON(t *testing.T) {
@@ -158,5 +159,52 @@ func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anch
 
 	if actualCount := len(actual); actualCount != 0 {
 		t.Errorf("no packages should've been returned (but got %d packages)", actualCount)
+	}
+}
+
+func Test_pathContainsNodeModulesDirectory(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected bool
+	}{
+		// positive
+		{
+			path:     "something/node_modules/package",
+			expected: true,
+		},
+		{
+			path:     "node_modules/package",
+			expected: true,
+		},
+		{
+			path:     "something/node_modules",
+			expected: true,
+		},
+		{
+			path:     "\\something\\node_modules\\",
+			expected: true,
+		},
+		{
+			path:     "\\something\\node_modules",
+			expected: true,
+		},
+		// negative
+		{
+			path:     "something/node_bogus_modules",
+			expected: false,
+		},
+		{
+			path:     "something/node_modules_bogus",
+			expected: false,
+		},
+		{
+			path:     "something/node_bogus_modules/package",
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			assert.Equal(t, test.expected, pathContainsNodeModulesDirectory(test.path))
+		})
 	}
 }
