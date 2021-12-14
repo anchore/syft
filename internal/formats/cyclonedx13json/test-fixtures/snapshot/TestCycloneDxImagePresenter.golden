@@ -16,7 +16,17 @@
       "type": "container",
       "name": "user-image-input",
       "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
-    }
+    },
+    "properties": [
+      {
+        "name": "distroName",
+        "value": "debian"
+      },
+      {
+        "name": "distroVersion",
+        "value": "1.2.3"
+      }
+    ]
   },
   "components": [
     {
@@ -30,13 +40,37 @@
           }
         }
       ],
-      "purl": "a-purl-1"
+      "purl": "a-purl-1",
+      "properties": [
+        {
+          "name": "path",
+          "value": "/somefile-1.txt"
+        },
+        {
+          "name": "layerID",
+          "value": "sha256:d8fa3ce64b8228215c105c9a307ef852b27bf6075cec407ad54509f0a6121c1a"
+        }
+      ]
     },
     {
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
-      "purl": "a-purl-2"
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "source",
+          "value": ""
+        },
+        {
+          "name": "path",
+          "value": "/somefile-2.txt"
+        },
+        {
+          "name": "layerID",
+          "value": "sha256:a2f67dceefd26123b36e015c60bb458d624a72f752801e9999d5b604764afecd"
+        }
+      ]
     }
   ]
 }

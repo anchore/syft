@@ -13,6 +13,10 @@
       <name>/some/path</name>
       <version></version>
     </component>
+    <properties>
+      <property name="distroName">debian</property>
+      <property name="distroVersion">1.2.3</property>
+    </properties>
   </metadata>
   <components>
     <component type="library">
@@ -24,11 +28,20 @@
         </license>
       </licenses>
       <purl>a-purl-2</purl>
+      <properties>
+        <property name="path">/some/path/pkg1</property>
+        <property name="layerID"></property>
+      </properties>
     </component>
     <component type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <purl>a-purl-2</purl>
+      <properties>
+        <property name="source"></property>
+        <property name="path">/some/path/pkg1</property>
+        <property name="layerID"></property>
+      </properties>
     </component>
   </components>
 </bom>

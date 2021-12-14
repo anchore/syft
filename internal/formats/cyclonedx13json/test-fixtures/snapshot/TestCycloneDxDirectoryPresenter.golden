@@ -16,7 +16,17 @@
       "type": "file",
       "name": "/some/path",
       "version": ""
-    }
+    },
+    "properties": [
+      {
+        "name": "distroName",
+        "value": "debian"
+      },
+      {
+        "name": "distroVersion",
+        "value": "1.2.3"
+      }
+    ]
   },
   "components": [
     {
@@ -30,13 +40,37 @@
           }
         }
       ],
-      "purl": "a-purl-2"
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "path",
+          "value": "/some/path/pkg1"
+        },
+        {
+          "name": "layerID",
+          "value": ""
+        }
+      ]
     },
     {
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
-      "purl": "a-purl-2"
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "source",
+          "value": ""
+        },
+        {
+          "name": "path",
+          "value": "/some/path/pkg1"
+        },
+        {
+          "name": "layerID",
+          "value": ""
+        }
+      ]
     }
   ]
 }
