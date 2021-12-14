@@ -59,6 +59,21 @@ func TestParseJavaManifest(t *testing.T) {
 			},
 		},
 		{
+			fixture: "test-fixtures/manifest/extra-empty-lines",
+			expected: pkg.JavaManifest{
+				Main: map[string]string{
+					"Manifest-Version": "1.0",
+					"Archiver-Version": "Plexus Archiver",
+					"Created-By":       "Apache Maven 3.6.3",
+				},
+				NamedSections: map[string]map[string]string{
+					"thing-1": {
+						"Built-By": "?",
+					},
+				},
+			},
+		},
+		{
 			fixture: "test-fixtures/manifest/continuation",
 			expected: pkg.JavaManifest{
 				Main: map[string]string{
