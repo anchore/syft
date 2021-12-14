@@ -70,6 +70,15 @@ func TestParseJavaManifest(t *testing.T) {
 					"thing-1": {
 						"Built-By": "?",
 					},
+					"thing-2": {
+						"Built-By": "someone!",
+					},
+					"2": {
+						"Other": "things",
+					},
+					"3": {
+						"Last": "item",
+					},
 				},
 			},
 		},
