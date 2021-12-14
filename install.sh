@@ -65,6 +65,7 @@ execute() {
 }
 get_binaries() {
   case "$PLATFORM" in
+    darwin/arm64) BINARIES="syft" ;;
     darwin/amd64) BINARIES="syft" ;;
     linux/amd64) BINARIES="syft" ;;
     windows/amd64) BINARIES="syft" ;;
