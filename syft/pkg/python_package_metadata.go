@@ -32,6 +32,17 @@ type PythonPackageMetadata struct {
 	Files                []PythonFileRecord `json:"files,omitempty"`
 	SitePackagesRootPath string             `json:"sitePackagesRootPath"`
 	TopLevelPackages     []string           `json:"topLevelPackages,omitempty"`
+	DirectURL            DirectURL          `json:"directUrl,omitempty"`
+}
+
+type DirectURL struct {
+	URL     string `json:"url"`
+	VCSInfo `json:"vcsInfo"`
+}
+
+type VCSInfo struct {
+	CommitID string `json:"commitId"`
+	VCS      string `json:"vcs"`
 }
 
 func (m PythonPackageMetadata) OwnedFiles() (result []string) {
