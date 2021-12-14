@@ -1,0 +1,6 @@
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.15.0_alpha20210804
+PRETTY_NAME="Alpine Linux edge"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://bugs.alpinelinux.org/"

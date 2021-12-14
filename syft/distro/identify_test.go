@@ -26,6 +26,11 @@ func TestIdentifyDistro(t *testing.T) {
 			Version: "3.11.6",
 		},
 		{
+			fixture: "test-fixtures/os/alpine-edge",
+			Type:    Alpine,
+			Version: "3.15.0_alpha20210804",
+		},
+		{
 			fixture: "test-fixtures/os/amazon",
 			Type:    AmazonLinux,
 			Version: "2.0.0",
