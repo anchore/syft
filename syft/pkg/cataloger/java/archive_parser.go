@@ -26,7 +26,7 @@ var archiveFormatGlobs = []string{
 	"**/*.lpkg", // Zip-compressed package used to deploy applications
 	// (aka plugins) to Liferay users that can be installed on their
 	// websites, contains .JAR files and a .PROPERTIES file, the latter
-	//  has information about the application and installation requirements.
+	// has information about the application and installation requirements.
 }
 
 type archiveParser struct {
