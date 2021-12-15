@@ -26,7 +26,8 @@ func NewCoordinateSet(start ...Coordinates) CoordinateSet {
 }
 
 func (c Coordinates) ID() artifact.ID {
-	return artifact.ID(c.RealPath)
+	id, _ := artifact.IDFromHash(c.RealPath)
+	return artifact.ID(id)
 }
 
 func (c Coordinates) String() string {
