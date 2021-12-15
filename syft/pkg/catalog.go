@@ -51,6 +51,7 @@ func (c *Catalog) Package(id artifact.ID) *Package {
 		log.Warnf("unable to copy package id=%q name=%q: %+v", id, v.Name, err)
 		return nil
 	}
+	p.id = v.id
 	return &p
 }
 
@@ -75,8 +76,12 @@ func (c *Catalog) Add(p Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	// note: since we are capturing the ID, we cannot modify the package being added from this point forward
 	id := p.ID()
+
+	if id == "" {
+		log.Warnf("found package with empty ID while adding to the catalog: %+v", p)
+		p.SetID()
+	}
 
 	// store by package ID
 	c.byID[id] = p
