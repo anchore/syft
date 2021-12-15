@@ -227,7 +227,7 @@ func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func()
 }
 
 func getExclusionFunction(exclusions []string) pathFilterFn {
-	if exclusions == nil || len(exclusions) == 0 {
+	if len(exclusions) == 0 {
 		return nil
 	}
 	return func(path string, _ os.FileInfo) bool {
