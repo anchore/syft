@@ -283,9 +283,7 @@ func TestParseJar(t *testing.T) {
 				// ignore select fields (only works for the main section)
 				for _, field := range test.ignoreExtras {
 					if metadata.Manifest != nil && metadata.Manifest.Main != nil {
-						if _, ok := metadata.Manifest.Main[field]; ok {
-							delete(metadata.Manifest.Main, field)
-						}
+						delete(metadata.Manifest.Main, field)
 					}
 				}
 
