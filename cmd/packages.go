@@ -19,7 +19,6 @@ import (
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/bmatcuk/doublestar/v2"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -263,7 +262,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		checkForApplicationUpdate()
 
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), getExclusionFunction(appConfig.Exclusions))
+		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions...)
 		if err != nil {
 			errs <- fmt.Errorf("failed to determine image source: %w", err)
 			return
@@ -361,22 +360,4 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {
 	}
 
 	return nil
-}
-
-func getExclusionFunction(exclusions []string) func(string) bool {
-	if exclusions == nil || len(exclusions) == 0 {
-		return nil
-	}
-	return func(path string) bool {
-		for _, exclusion := range exclusions {
-			matches, err := doublestar.Match(exclusion, path)
-			if err != nil {
-				return false
-			}
-			if matches {
-				return true
-			}
-		}
-		return false
-	}
 }

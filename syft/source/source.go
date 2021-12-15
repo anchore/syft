@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
+	"github.com/bmatcuk/doublestar/v2"
 	"github.com/mholt/archiver/v3"
 	"github.com/spf13/afero"
 )
@@ -26,38 +27,47 @@ type Source struct {
 	directoryResolver *directoryResolver
 	path              string
 	mutex             *sync.Mutex
-	exclude           func(string) bool
+	Exclude           func(string, os.FileInfo) bool
 }
 
 type sourceDetector func(string) (image.Source, string, error)
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(userInput string, registryOptions *image.RegistryOptions, exclude func(string) bool) (*Source, func(), error) {
+func New(userInput string, registryOptions *image.RegistryOptions, excludes ...string) (*Source, func(), error) {
 	fs := afero.NewOsFs()
 	parsedScheme, imageSource, location, err := detectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
 		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
 	}
 
+	source := &Source{}
+	fn := func() {}
+
 	switch parsedScheme {
 	case FileScheme:
-		return generateFileSource(fs, location, exclude)
+		source, fn, err = generateFileSource(fs, location)
 	case DirectoryScheme:
-		return generateDirectorySource(fs, location, exclude)
+		source, fn, err = generateDirectorySource(fs, location)
 	case ImageScheme:
-		return generateImageSource(location, userInput, imageSource, registryOptions, exclude)
+		source, fn, err = generateImageSource(location, userInput, imageSource, registryOptions)
+	default:
+		err = fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 	}
 
-	return &Source{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
+	if err == nil {
+		source.Exclude = getExclusionFunction(excludes)
+	}
+
+	return source, fn, err
 }
 
-func generateImageSource(location, userInput string, imageSource image.Source, registryOptions *image.RegistryOptions, exclude func(string) bool) (*Source, func(), error) {
-	img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions, exclude)
+func generateImageSource(location, userInput string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source, func(), error) {
+	img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
 	if err != nil {
 		log.Debugf("error parsing location: %s after detecting scheme; pulling image: %s", location, userInput)
 		// we may have been to aggressive reading the source hint
 		// try the input as supplied by the user if our initial parse failed
-		img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions, exclude)
+		img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
 	}
 
 	cleanup := stereoscope.Cleanup
@@ -74,7 +84,7 @@ func generateImageSource(location, userInput string, imageSource image.Source, r
 	return &s, cleanup, nil
 }
 
-func generateDirectorySource(fs afero.Fs, location string, exclude func(string) bool) (*Source, func(), error) {
+func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {
 	fileMeta, err := fs.Stat(location)
 	if err != nil {
 		return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
@@ -89,12 +99,10 @@ func generateDirectorySource(fs afero.Fs, location string, exclude func(string) 
 		return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
 	}
 
-	s.exclude = exclude
-
 	return &s, func() {}, nil
 }
 
-func generateFileSource(fs afero.Fs, location string, exclude func(string) bool) (*Source, func(), error) {
+func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
 	fileMeta, err := fs.Stat(location)
 	if err != nil {
 		return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
@@ -105,8 +113,6 @@ func generateFileSource(fs afero.Fs, location string, exclude func(string) bool)
 	}
 
 	s, cleanupFn := NewFromFile(location)
-
-	s.exclude = exclude
 
 	return &s, cleanupFn, nil
 }
@@ -185,11 +191,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 		if s.directoryResolver == nil {
-			var exclude pathFilterFn
-			if s.exclude != nil {
-				exclude = func(path string, _ os.FileInfo) bool { return s.exclude(path) }
-			}
-			resolver, err := newDirectoryResolver(s.path, exclude)
+			resolver, err := newDirectoryResolver(s.path, s.Exclude)
 			if err != nil {
 				return nil, err
 			}
@@ -222,4 +224,22 @@ func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func()
 	}
 
 	return tempDir, cleanupFn, unarchiver.Unarchive(path, tempDir)
+}
+
+func getExclusionFunction(exclusions []string) pathFilterFn {
+	if exclusions == nil || len(exclusions) == 0 {
+		return nil
+	}
+	return func(path string, _ os.FileInfo) bool {
+		for _, exclusion := range exclusions {
+			matches, err := doublestar.Match(exclusion, path)
+			if err != nil {
+				return false
+			}
+			if matches {
+				return true
+			}
+		}
+		return false
+	}
 }
