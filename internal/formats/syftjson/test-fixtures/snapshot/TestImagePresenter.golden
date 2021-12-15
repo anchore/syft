@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "888661d4f0362f02",
+   "id": "b8995af4e6171091",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -32,7 +32,7 @@
    }
   },
   {
-   "id": "4068ff5e8926b305",
+   "id": "73f796c846875b9e",
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",

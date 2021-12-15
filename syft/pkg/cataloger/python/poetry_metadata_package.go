@@ -11,8 +11,8 @@ type PoetryMetadataPackage struct {
 }
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the poetry.lock metadata.
-func (p PoetryMetadataPackage) Pkg() pkg.Package {
-	return pkg.Package{
+func (p PoetryMetadataPackage) Pkg() *pkg.Package {
+	return &pkg.Package{
 		Name:     p.Name,
 		Version:  p.Version,
 		Language: pkg.Python,

@@ -45,22 +45,23 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 		contentReader, err := resolver.FileContentsByLocation(location)
 		if err != nil {
 			// TODO: fail or log?
-			return nil, nil, fmt.Errorf("unable to fetch contents for location=%v : %w", location, err)
+			return nil, nil, fmt.Errorf("unable to fetch contents at location=%v: %w", location, err)
 		}
 
 		discoveredPackages, discoveredRelationships, err := parser(location.RealPath, contentReader)
 		internal.CloseAndLogError(contentReader, location.VirtualPath)
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Warnf("cataloger '%s' failed to parse entries (location=%+v): %+v", c.upstreamCataloger, location, err)
+			log.Warnf("cataloger '%s' failed to parse entries at location=%+v: %+v", c.upstreamCataloger, location, err)
 			continue
 		}
 
 		for _, p := range discoveredPackages {
 			p.FoundBy = c.upstreamCataloger
 			p.Locations = append(p.Locations, location)
+			p.SetID()
 
-			packages = append(packages, p)
+			packages = append(packages, *p)
 		}
 
 		relationships = append(relationships, discoveredRelationships...)

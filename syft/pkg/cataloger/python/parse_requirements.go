@@ -16,8 +16,8 @@ var _ common.ParserFn = parseRequirementsTxt
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	packages := make([]pkg.Package, 0)
+func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	packages := make([]*pkg.Package, 0)
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
@@ -44,7 +44,7 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, []artifact
 			parts := strings.Split(uncommented, "==")
 			name := strings.TrimSpace(parts[0])
 			version := strings.TrimSpace(parts[1])
-			packages = append(packages, pkg.Package{
+			packages = append(packages, &pkg.Package{
 				Name:     name,
 				Version:  version,
 				Language: pkg.Python,

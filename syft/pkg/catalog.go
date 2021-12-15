@@ -77,10 +77,10 @@ func (c *Catalog) Add(p Package) {
 	defer c.lock.Unlock()
 
 	id := p.ID()
-
 	if id == "" {
 		log.Warnf("found package with empty ID while adding to the catalog: %+v", p)
 		p.SetID()
+		id = p.ID()
 	}
 
 	// store by package ID
@@ -147,7 +147,7 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
 			if pkgs[i].Version == pkgs[j].Version {
-				if pkgs[i].Type == pkgs[j].Type {
+				if pkgs[i].Type == pkgs[j].Type && len(pkgs[i].Locations) > 0 && len(pkgs[j].Locations) > 0 {
 					return pkgs[i].Locations[0].String() < pkgs[j].Locations[0].String()
 				}
 				return pkgs[i].Type < pkgs[j].Type
