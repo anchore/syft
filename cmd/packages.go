@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/bmatcuk/doublestar/v2"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -132,6 +133,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"include dockerfile for upload to Anchore Enterprise",
 	)
 
+	flags.StringArrayP(
+		"exclude", "", nil,
+		"exclude paths using a glob expression",
+	)
+
 	flags.Bool(
 		"overwrite-existing-image", false,
 		"overwrite an existing image during the upload to Anchore Enterprise",
@@ -155,6 +161,10 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	}
 
 	if err := viper.BindPFlag("file", flags.Lookup("file")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
 		return err
 	}
 
@@ -253,7 +263,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		checkForApplicationUpdate()
 
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions())
+		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), getExclusionFunction(appConfig.Exclusions))
 		if err != nil {
 			errs <- fmt.Errorf("failed to determine image source: %w", err)
 			return
@@ -351,4 +361,22 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {
 	}
 
 	return nil
+}
+
+func getExclusionFunction(exclusions []string) func(string) bool {
+	if exclusions == nil || len(exclusions) == 0 {
+		return nil
+	}
+	return func(path string) bool {
+		for _, exclusion := range exclusions {
+			matches, err := doublestar.Match(exclusion, path)
+			if err != nil {
+				return false
+			}
+			if matches {
+				return true
+			}
+		}
+		return false
+	}
 }

@@ -59,17 +59,13 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		currentWdRelRoot = filepath.Clean(root)
 	}
 
-	if pathFilters == nil {
-		pathFilters = []pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}
-	}
-
 	resolver := directoryResolver{
 		path:                    root,
 		currentWd:               currentWd,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
 		metadata:                make(map[file.ID]FileMetadata),
-		pathFilterFns:           pathFilters,
+		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
 		refsByMIMEType:          make(map[string][]file.Reference),
 		errPaths:                make(map[string]error),
 	}
@@ -118,7 +114,7 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) string {
 	// ignore any path which a filter function returns true
 	for _, filterFn := range r.pathFilterFns {
-		if filterFn(path, info) {
+		if filterFn != nil && filterFn(path, info) {
 			return ""
 		}
 	}
