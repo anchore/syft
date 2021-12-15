@@ -17,14 +17,14 @@ type Package struct {
 	Name         string            // the package name
 	Version      string            // the version of the package
 	FoundBy      string            // the specific cataloger that discovered this package
-	Locations    []source.Location // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
+	Locations    []source.Location `hash:"ignore"` // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
 	Licenses     []string          // licenses discovered with the package metadata
 	Language     Language          // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
 	Type         Type              // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
-	CPEs         []CPE             // all possible Common Platform Enumerators
+	CPEs         []CPE             `hash:"ignore"` // all possible Common Platform Enumerators
 	PURL         string            // the Package URL (see https://github.com/package-url/purl-spec)
 	MetadataType MetadataType      // the shape of the additional data in the "metadata" field
-	Metadata     interface{}       // additional data found while parsing the package source
+	Metadata     interface{}       `hash:"ignore"` // additional data found while parsing the package source
 }
 
 func (p Package) ID() artifact.ID {
