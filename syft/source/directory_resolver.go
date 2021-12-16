@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -41,6 +42,7 @@ type directoryResolver struct {
 	pathFilterFns  []pathFilterFn
 	refsByMIMEType map[string][]file.Reference
 	errPaths       map[string]error
+	isWindows      bool
 }
 
 func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
@@ -72,6 +74,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		pathFilterFns:           pathFilters,
 		refsByMIMEType:          make(map[string][]file.Reference),
 		errPaths:                make(map[string]error),
+		isWindows:               runtime.GOOS == "windows",
 	}
 
 	return &resolver, indexAllRoots(root, resolver.indexTree)
@@ -138,8 +141,10 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 		return ""
 	}
 
-	newRoot, err := r.addPathToIndex(path, info)
-	if r.isFileAccessErr(path, err) {
+	normalizedPath := r.windowsToPosix(path)
+
+	newRoot, err := r.addPathToIndex(normalizedPath, info)
+	if r.isFileAccessErr(normalizedPath, err) {
 		return ""
 	}
 
@@ -236,6 +241,7 @@ func (r directoryResolver) addFileMetadataToIndex(ref *file.Reference, metadata 
 }
 
 func (r directoryResolver) requestPath(userPath string) (string, error) {
+	userPath = r.windowsToPosix(userPath)
 	if filepath.IsAbs(userPath) {
 		// don't allow input to potentially hop above root path
 		userPath = path.Join(r.path, userPath)
@@ -253,6 +259,7 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 }
 
 func (r directoryResolver) responsePath(path string) string {
+	path = r.posixToWindows(path)
 	// always return references relative to the request path (not absolute path)
 	if filepath.IsAbs(path) {
 		// we need to account for the cwd relative to the running process and the given root for the directory resolver
@@ -362,7 +369,8 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 		// by preference or these files are not readable by the current user).
 		return nil, fmt.Errorf("file content is inaccessible path=%q", location.ref.RealPath)
 	}
-	return file.NewLazyReadCloser(string(location.ref.RealPath)), nil
+	realPath := r.posixToWindows(string(location.ref.RealPath))
+	return file.NewLazyReadCloser(realPath), nil
 }
 
 func (r directoryResolver) isInIndex(location Location) bool {
@@ -458,6 +466,49 @@ loop:
 	}
 
 	return nil
+}
+
+// unsupported:
+// - network shares (do we return errors?)
+// - using posix paths as input on a per-request (needs a lot more thought)
+//
+// TODO: tests with crazy cases (including posix input on windows?)
+
+func (r directoryResolver) windowsToPosix(userPath string) string {
+	if !r.isWindows {
+		return userPath
+	}
+
+	// volume should be encoded at the start (e.g. /c/<path>)
+	volumeName := filepath.VolumeName(userPath)
+	volumeLetter := strings.ToLower(strings.TrimSuffix(volumeName, ":"))
+	pathWithoutVolume := strings.TrimPrefix(userPath, volumeName)
+
+	// translate non-escaped backslashes to forwardslashes
+	translatedPath := strings.ReplaceAll(pathWithoutVolume, "\\", "/")
+
+	// always have / as a start... join all the components, e.g.:
+	// convert:  C:\\some\path\To\PLACE
+	// into:     /c/some/path/To/PLACE
+	return path.Clean("/" + strings.Join([]string{volumeLetter, translatedPath}, "/"))
+}
+
+// TODO: tests with crazy cases (including posix input on windows?)
+func (r directoryResolver) posixToWindows(userPath string) string {
+	if !r.isWindows {
+		return userPath
+	}
+	// decode the volume (e.g. /c/<path> --> C:\\)
+	// TODO: question: will there ALWAYS be a volume name?? (I think yes)
+
+	pathFields := strings.Split(userPath, "/")
+	volumeName := strings.ToUpper(pathFields[1])
+
+	// translate non-escaped forward slashes into backslashes
+	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
+
+	// combine all of the parts (note, no path cleaning is occuring here, which may be alright)
+	return volumeName + ":\\" + remainingTranslatedPath
 }
 
 func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
