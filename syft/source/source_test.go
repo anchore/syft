@@ -317,6 +317,81 @@ func TestFilesByGlob(t *testing.T) {
 	}
 }
 
+func TestDirectoryExclusions(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    string
+		glob     string
+		expected int
+		excludes []string
+	}{
+		{
+			input:    "test-fixtures/system_paths",
+			desc:     "exclude everything",
+			glob:     "**",
+			expected: 0,
+			excludes: []string{"/**"},
+		},
+		{
+			input:    "test-fixtures/image-simple",
+			desc:     "a single path excluded",
+			glob:     "**",
+			expected: 3,
+			excludes: []string{"**/target/**"},
+		},
+		{
+			input:    "test-fixtures/image-simple",
+			desc:     "skip files deeper",
+			glob:     "**",
+			expected: 3,
+			excludes: []string{"**/really/**"},
+		},
+		{
+			input:    "test-fixtures/image-simple",
+			desc:     "file excluded with extension",
+			glob:     "**",
+			expected: 1,
+			excludes: []string{"**/*.txt"},
+		},
+		{
+			input:    "test-fixtures/image-simple",
+			desc:     "keep files with different extensions",
+			glob:     "**",
+			expected: 4,
+			excludes: []string{"**/target/**/*.jar"},
+		},
+		{
+			input:    "test-fixtures/path-detected",
+			desc:     "multiple matches",
+			glob:     "**",
+			expected: 1,
+			excludes: []string{"**/empty"},
+		},
+	}
+	registryOpts := &image.RegistryOptions{}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, fn, err := New("dir:"+test.input, registryOpts, test.excludes...)
+			defer fn()
+
+			if err != nil {
+				t.Errorf("could not create NewDirScope: %+v", err)
+			}
+			resolver, err := src.FileResolver(SquashedScope)
+			if err != nil {
+				t.Errorf("could not get resolver error: %+v", err)
+			}
+			contents, err := resolver.FilesByGlob(test.glob)
+			if err != nil {
+				t.Errorf("could not get files by glob: %s+v", err)
+			}
+			if len(contents) != test.expected {
+				t.Errorf("wrong number of files after exclusions (%s): %d != %d", test.glob, len(contents), test.expected)
+			}
+		})
+	}
+}
+
 // createArchive creates a new archive file at destinationArchivePath based on the directory found at sourceDirPath.
 func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
 	t.Helper()
