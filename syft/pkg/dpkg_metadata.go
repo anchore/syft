@@ -1,29 +1,33 @@
 package pkg
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/scylladb/go-set/strset"
 )
 
 const DpkgDBGlob = "**/var/lib/dpkg/{status,status.d/**}"
 
-var _ FileOwner = (*DpkgMetadata)(nil)
+var (
+	_ FileOwner     = (*DpkgMetadata)(nil)
+	_ urlIdentifier = (*DpkgMetadata)(nil)
+)
 
 // DpkgMetadata represents all captured data for a Debian package DB entry; available fields are described
 // at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section.
 type DpkgMetadata struct {
 	Package       string           `mapstructure:"Package" json:"package"`
-	Source        string           `mapstructure:"Source" json:"source"`
+	Source        string           `mapstructure:"Source" json:"source" cyclonedx:"source"`
 	Version       string           `mapstructure:"Version" json:"version"`
-	SourceVersion string           `mapstructure:"SourceVersion" json:"sourceVersion"`
+	SourceVersion string           `mapstructure:"SourceVersion" json:"sourceVersion" cyclonedx:"sourceVersion"`
 	Architecture  string           `mapstructure:"Architecture" json:"architecture"`
 	Maintainer    string           `mapstructure:"Maintainer" json:"maintainer"`
-	InstalledSize int              `mapstructure:"InstalledSize" json:"installedSize"`
+	InstalledSize int              `mapstructure:"InstalledSize" json:"installedSize" cyclonedx:"installedSize"`
 	Files         []DpkgFileRecord `json:"files"`
 }
 
@@ -35,25 +39,37 @@ type DpkgFileRecord struct {
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)
-func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
-	if d == nil {
-		return ""
+func (m DpkgMetadata) PackageURL(distro *linux.Release) string {
+	var namespace string
+	if distro != nil {
+		namespace = distro.ID
 	}
-	pURL := packageurl.NewPackageURL(
+
+	qualifiers := map[string]string{
+		purlArchQualifier: m.Architecture,
+	}
+
+	if m.Source != "" {
+		if m.SourceVersion != "" {
+			qualifiers[purlUpstreamQualifier] = fmt.Sprintf("%s@%s", m.Source, m.SourceVersion)
+		} else {
+			qualifiers[purlUpstreamQualifier] = m.Source
+		}
+	}
+
+	return packageurl.NewPackageURL(
 		// TODO: replace with `packageurl.TypeDebian` upon merge of https://github.com/package-url/packageurl-go/pull/21
 		// TODO: or, since we're now using an Anchore fork of this module, we could do this sooner.
 		"deb",
-		d.Type.String(),
+		namespace,
 		m.Package,
 		m.Version,
-		packageurl.Qualifiers{
-			{
-				Key:   "arch",
-				Value: m.Architecture,
-			},
-		},
-		"")
-	return pURL.ToString()
+		purlQualifiers(
+			qualifiers,
+			distro,
+		),
+		"",
+	).ToString()
 }
 
 func (m DpkgMetadata) OwnedFiles() (result []string) {

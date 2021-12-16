@@ -136,7 +136,7 @@ func TestParsePackageJSON(t *testing.T) {
 				t.Fatalf("unexpected package count: %d!=1", len(actual))
 			}
 
-			for _, d := range deep.Equal(actual[0], test.ExpectedPkg) {
+			for _, d := range deep.Equal(actual[0], &test.ExpectedPkg) {
 
 				t.Errorf("diff: %+v", d)
 			}

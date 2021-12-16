@@ -3,7 +3,7 @@ package integration
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/google/go-cmp/cmp"
 
@@ -20,9 +20,9 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
 	var pc *pkg.Catalog
-	for _, c := range cataloger.ImageCatalogers() {
+	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
-		theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil)
+		theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil, nil)
 		b.Cleanup(cleanupSource)
 		if err != nil {
 			b.Fatalf("unable to get source: %+v", err)
@@ -33,7 +33,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 			b.Fatalf("unable to get resolver: %+v", err)
 		}
 
-		theDistro := distro.Identify(resolver)
+		theDistro := linux.IdentifyRelease(resolver)
 
 		b.Run(c.Name(), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {

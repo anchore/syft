@@ -8,7 +8,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -16,19 +16,21 @@ import (
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
 
-var updateJson = flag.Bool("update-json", false, "update the *.golden files for json presenters")
+var updateJson = flag.Bool("update-json", false, "update the *.golden files for json encoders")
 
-func TestDirectoryPresenter(t *testing.T) {
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t)),
+func TestDirectoryEncoder(t *testing.T) {
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		testutils.DirectoryInput(t),
 		*updateJson,
 	)
 }
 
-func TestImagePresenter(t *testing.T) {
+func TestImageEncoder(t *testing.T) {
 	testImage := "image-simple"
-	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
+	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
+		Format(),
+		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateJson,
 	)
@@ -137,10 +139,13 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			FileContents: map[source.Coordinates]string{
 				source.NewLocation("/a/place/a").Coordinates: "the-contents",
 			},
-			Distro: &distro.Distro{
-				Type:       distro.RedHat,
-				RawVersion: "7",
-				IDLike:     "rhel",
+			LinuxDistribution: &linux.Release{
+				ID:        "redhat",
+				Version:   "7",
+				VersionID: "7",
+				IDLike: []string{
+					"rhel",
+				},
 			},
 		},
 		Relationships: []artifact.Relationship{
@@ -192,8 +197,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 	}
 
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(s),
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		s,
 		*updateJson,
 	)
 }

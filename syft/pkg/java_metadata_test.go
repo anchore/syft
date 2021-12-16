@@ -136,7 +136,7 @@ func TestJavaMetadata_pURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.expected, func(t *testing.T) {
-			actual := test.metadata.PackageURL()
+			actual := test.metadata.PackageURL(nil)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

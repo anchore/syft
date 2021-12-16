@@ -70,6 +70,8 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 			Metadata:     metadata,
 		}
 
+		p.SetID()
+
 		allPkgs = append(allPkgs, p)
 	}
 

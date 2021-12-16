@@ -6,31 +6,21 @@ import (
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
-type ComposerLock struct {
-	Packages   []Dependency `json:"packages"`
-	PackageDev []Dependency `json:"packages-dev"`
+type composerLock struct {
+	Packages   []pkg.PhpComposerJSONMetadata `json:"packages"`
+	PackageDev []pkg.PhpComposerJSONMetadata `json:"packages-dev"`
 }
-
-type Dependency struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-}
-
-// integrity check
-var _ common.ParserFn = parseComposerLock
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseComposerLock(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	packages := make([]pkg.Package, 0)
+func parseComposerLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	packages := make([]*pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
 	for {
-		var lock ComposerLock
+		var lock composerLock
 		if err := dec.Decode(&lock); err == io.EOF {
 			break
 		} else if err != nil {
@@ -39,11 +29,13 @@ func parseComposerLock(_ string, reader io.Reader) ([]pkg.Package, []artifact.Re
 		for _, pkgMeta := range lock.Packages {
 			version := pkgMeta.Version
 			name := pkgMeta.Name
-			packages = append(packages, pkg.Package{
-				Name:     name,
-				Version:  version,
-				Language: pkg.PHP,
-				Type:     pkg.PhpComposerPkg,
+			packages = append(packages, &pkg.Package{
+				Name:         name,
+				Version:      version,
+				Language:     pkg.PHP,
+				Type:         pkg.PhpComposerPkg,
+				MetadataType: pkg.PhpComposerJSONMetadataType,
+				Metadata:     pkgMeta,
 			})
 		}
 	}

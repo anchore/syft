@@ -20,8 +20,8 @@ var _ common.ParserFn = parseSetup
 //		" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
 var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w\.]*)`)
 
-func parseSetup(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	packages := make([]pkg.Package, 0)
+func parseSetup(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	packages := make([]*pkg.Package, 0)
 
 	scanner := bufio.NewScanner(reader)
 
@@ -38,7 +38,7 @@ func parseSetup(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relations
 			name = strings.TrimSpace(name)
 
 			version := strings.TrimSpace(parts[len(parts)-1])
-			packages = append(packages, pkg.Package{
+			packages = append(packages, &pkg.Package{
 				Name:     strings.Trim(name, "'\""),
 				Version:  strings.Trim(version, "'\""),
 				Language: pkg.Python,

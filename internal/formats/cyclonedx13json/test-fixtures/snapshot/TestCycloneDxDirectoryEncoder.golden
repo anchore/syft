@@ -1,0 +1,103 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.3",
+  "serialNumber": "urn:uuid:258d2616-5b1f-48cd-82a3-d6c95e262950",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-01-14T22:47:00Z",
+    "tools": [
+      {
+        "vendor": "anchore",
+        "name": "syft",
+        "version": "[not provided]"
+      }
+    ],
+    "component": {
+      "type": "file",
+      "name": "/some/path",
+      "version": ""
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "package-1",
+      "version": "1.0.1",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "foundBy",
+          "value": "the-cataloger-1"
+        },
+        {
+          "name": "language",
+          "value": "python"
+        },
+        {
+          "name": "type",
+          "value": "python"
+        },
+        {
+          "name": "metadataType",
+          "value": "PythonPackageMetadata"
+        },
+        {
+          "name": "path",
+          "value": "/some/path/pkg1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "package-2",
+      "version": "2.0.1",
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "foundBy",
+          "value": "the-cataloger-2"
+        },
+        {
+          "name": "type",
+          "value": "deb"
+        },
+        {
+          "name": "metadataType",
+          "value": "DpkgMetadata"
+        },
+        {
+          "name": "path",
+          "value": "/some/path/pkg1"
+        }
+      ]
+    },
+    {
+      "type": "operating-system",
+      "name": "debian",
+      "version": "1.2.3",
+      "properties": [
+        {
+          "name": "prettyName",
+          "value": "debian"
+        },
+        {
+          "name": "id",
+          "value": "debian"
+        },
+        {
+          "name": "versionID",
+          "value": "1.2.3"
+        }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,9 @@ package python
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
@@ -74,7 +76,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 		licenses = []string{metadata.License}
 	}
 
-	return &pkg.Package{
+	p := &pkg.Package{
 		Name:         metadata.Name,
 		Version:      metadata.Version,
 		FoundBy:      c.Name(),
@@ -84,7 +86,11 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,
 		Metadata:     *metadata,
-	}, nil
+	}
+
+	p.SetID()
+
+	return p, nil
 }
 
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.
@@ -148,6 +154,40 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, m
 	return pkgs, sources, nil
 }
 
+func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Location) (d *pkg.PythonDirectURLOriginInfo, sources []source.Location, err error) {
+	parentDir := filepath.Dir(metadataLocation.RealPath)
+	directURLPath := filepath.Join(parentDir, "direct_url.json")
+	directURLLocation := resolver.RelativeFileByPath(metadataLocation, directURLPath)
+
+	if directURLLocation == nil {
+		return nil, nil, nil
+	}
+
+	sources = append(sources, *directURLLocation)
+
+	directURLContents, err := resolver.FileContentsByLocation(*directURLLocation)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer internal.CloseAndLogError(directURLContents, directURLLocation.VirtualPath)
+
+	buffer, err := ioutil.ReadAll(directURLContents)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var directURLJson pkg.DirectURLOrigin
+	if err := json.Unmarshal(buffer, &directURLJson); err != nil {
+		return nil, nil, err
+	}
+
+	return &pkg.PythonDirectURLOriginInfo{
+		URL:      directURLJson.URL,
+		CommitID: directURLJson.VCSInfo.CommitID,
+		VCS:      directURLJson.VCSInfo.VCS,
+	}, sources, nil
+}
+
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
 func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation source.Location) (*pkg.PythonPackageMetadata, []source.Location, error) {
 	var sources = []source.Location{metadataLocation}
@@ -178,6 +218,14 @@ func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolv
 	}
 	sources = append(sources, s...)
 	metadata.TopLevelPackages = p
+
+	// attach any direct-url package data found for the given wheel/egg installation
+	d, s, err := c.fetchDirectURLData(resolver, metadataLocation)
+	if err != nil {
+		return nil, nil, err
+	}
+	sources = append(sources, s...)
+	metadata.DirectURLOrigin = d
 
 	return &metadata, sources, nil
 }

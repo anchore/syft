@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseCargoLock(t *testing.T) {
-	expected := []pkg.Package{
+	expected := []*pkg.Package{
 		{
 			Name:         "ansi_term",
 			Version:      "0.12.1",

@@ -32,6 +32,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						},
 					},
 				}
+				parent.SetID()
 
 				child := Package{
 					Locations: []source.Location{
@@ -40,6 +41,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					},
 					Type: NpmPkg,
 				}
+				child.SetID()
 
 				relationship := artifact.Relationship{
 					From: parent,
@@ -73,6 +75,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						},
 					},
 				}
+				parent.SetID()
 
 				child := Package{
 					Locations: []source.Location{
@@ -81,6 +84,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					},
 					Type: NpmPkg,
 				}
+				child.SetID()
 
 				relationship := artifact.Relationship{
 					From: parent,
@@ -114,6 +118,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					},
 				}
 
+				parent.SetID()
+
 				child := Package{
 					Locations: []source.Location{
 						source.NewVirtualLocation("/c/path", "/another/path"),
@@ -121,6 +127,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					},
 					Type: NpmPkg,
 				}
+
+				child.SetID()
 
 				return []Package{parent, child}, nil
 			},

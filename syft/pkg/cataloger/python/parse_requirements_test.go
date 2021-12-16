@@ -4,12 +4,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/go-test/deep"
 
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func assertPackagesEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg.Package) {
+func assertPackagesEqual(t *testing.T, actual []*pkg.Package, expected map[string]pkg.Package) {
 	t.Helper()
 	if len(actual) != len(expected) {
 		for _, a := range actual {
@@ -20,11 +22,9 @@ func assertPackagesEqual(t *testing.T, actual []pkg.Package, expected map[string
 
 	for _, a := range actual {
 		expectedPkg, ok := expected[a.Name]
-		if !ok {
-			t.Errorf("unexpected package found: '%s'", a.Name)
-		}
+		assert.True(t, ok)
 
-		for _, d := range deep.Equal(a, expectedPkg) {
+		for _, d := range deep.Equal(a, &expectedPkg) {
 			t.Errorf("diff: %+v", d)
 		}
 	}
