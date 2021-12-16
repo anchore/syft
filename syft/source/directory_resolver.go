@@ -507,7 +507,7 @@ func (r directoryResolver) posixToWindows(userPath string) string {
 	// translate non-escaped forward slashes into backslashes
 	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
 
-	// combine all of the parts (note, no path cleaning is occuring here, which may be alright)
+	// combine all of the parts (note, no path cleaning is occurring here, which may be alright)
 	return volumeName + ":\\" + remainingTranslatedPath
 }
 
