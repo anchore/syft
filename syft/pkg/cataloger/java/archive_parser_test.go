@@ -257,7 +257,7 @@ func TestParseJar(t *testing.T) {
 			var parent *pkg.Package
 			for _, a := range actual {
 				if strings.Contains(a.Name, "example-") {
-					parent = &a
+					parent = a
 				}
 			}
 
@@ -292,7 +292,7 @@ func TestParseJar(t *testing.T) {
 				// write censored data back
 				a.Metadata = metadata
 
-				diffs := deep.Equal(e, a)
+				diffs := deep.Equal(&e, a)
 				if len(diffs) > 0 {
 					t.Errorf("diffs found for %q", a.Name)
 					for _, d := range diffs {
@@ -527,7 +527,7 @@ func TestParseNestedJar(t *testing.T) {
 
 			actualNameVersionPairSet := internal.NewStringSet()
 			for _, a := range actual {
-				key := makeKey(&a)
+				key := makeKey(a)
 				actualNameVersionPairSet.Add(key)
 				if !expectedNameVersionPairSet.Contains(key) {
 					t.Errorf("extra package: %s", a)
@@ -545,7 +545,7 @@ func TestParseNestedJar(t *testing.T) {
 			}
 
 			for _, a := range actual {
-				actualKey := makeKey(&a)
+				actualKey := makeKey(a)
 
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				if actualKey == "spring-boot|0.0.1-SNAPSHOT" {

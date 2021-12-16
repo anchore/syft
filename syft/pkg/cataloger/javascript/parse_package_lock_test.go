@@ -4,10 +4,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func assertPkgsEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg.Package) {
+func assertPkgsEqual(t *testing.T, actual []*pkg.Package, expected map[string]pkg.Package) {
 	t.Helper()
 	if len(actual) != len(expected) {
 		for _, a := range actual {
@@ -18,26 +20,11 @@ func assertPkgsEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg
 
 	for _, a := range actual {
 		expectedPkg, ok := expected[a.Name]
-		if !ok {
-			t.Errorf("unexpected package found: '%s'", a.Name)
-		}
-
-		if expectedPkg.Version != a.Version {
-			t.Errorf("%s : unexpected package version: '%s', expected: '%s'", a.Name, a.Version, expectedPkg.Version)
-		}
-
-		if a.Language != expectedPkg.Language {
-			t.Errorf("%s : bad language: '%+v', expected: '%+v'", a.Name, a.Language, expectedPkg.Language)
-		}
-
-		if a.Type != expectedPkg.Type {
-			t.Errorf("%s : bad package type: %+v, expected: %+v", a.Name, a.Type, expectedPkg.Type)
-		}
-
-		if len(a.Licenses) < len(expectedPkg.Licenses) {
-			t.Errorf("%s : bad package licenses count: '%+v'", a.Name, a.Licenses)
-		}
-
+		assert.True(t, ok)
+		assert.Equal(t, expectedPkg.Version, a.Version, "bad version")
+		assert.Equal(t, expectedPkg.Language, a.Language, "bad language")
+		assert.Equal(t, expectedPkg.Type, a.Type, "bad type")
+		assert.Equal(t, expectedPkg.Licenses, a.Licenses, "bad license count")
 	}
 }
 

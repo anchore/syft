@@ -7,8 +7,8 @@ type CargoMetadata struct {
 }
 
 // Pkgs returns all of the packages referenced within the Cargo.lock metadata.
-func (m CargoMetadata) Pkgs() []pkg.Package {
-	pkgs := make([]pkg.Package, 0)
+func (m CargoMetadata) Pkgs() []*pkg.Package {
+	pkgs := make([]*pkg.Package, 0)
 
 	for _, p := range m.Packages {
 		if p.Dependencies == nil {

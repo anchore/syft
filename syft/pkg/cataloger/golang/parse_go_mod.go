@@ -12,8 +12,8 @@ import (
 )
 
 // parseGoMod takes a go.mod and lists all packages discovered.
-func parseGoMod(path string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	packages := make(map[string]pkg.Package)
+func parseGoMod(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	packages := make(map[string]*pkg.Package)
 
 	contents, err := ioutil.ReadAll(reader)
 	if err != nil {
@@ -26,7 +26,7 @@ func parseGoMod(path string, reader io.Reader) ([]pkg.Package, []artifact.Relati
 	}
 
 	for _, m := range file.Require {
-		packages[m.Mod.Path] = pkg.Package{
+		packages[m.Mod.Path] = &pkg.Package{
 			Name:     m.Mod.Path,
 			Version:  m.Mod.Version,
 			Language: pkg.Go,
@@ -36,7 +36,7 @@ func parseGoMod(path string, reader io.Reader) ([]pkg.Package, []artifact.Relati
 
 	// remove any old packages and replace with new ones...
 	for _, m := range file.Replace {
-		packages[m.New.Path] = pkg.Package{
+		packages[m.New.Path] = &pkg.Package{
 			Name:     m.New.Path,
 			Version:  m.New.Version,
 			Language: pkg.Go,
@@ -49,7 +49,7 @@ func parseGoMod(path string, reader io.Reader) ([]pkg.Package, []artifact.Relati
 		delete(packages, m.Mod.Path)
 	}
 
-	pkgsSlice := make([]pkg.Package, len(packages))
+	pkgsSlice := make([]*pkg.Package, len(packages))
 	idx := 0
 	for _, p := range packages {
 		pkgsSlice[idx] = p

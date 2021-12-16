@@ -147,6 +147,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			for i := range test.expected {
+				p := &test.expected[i]
+				p.SetID()
+			}
 			location := source.Location{
 				Coordinates: source.Coordinates{
 					RealPath:     "/a-path",

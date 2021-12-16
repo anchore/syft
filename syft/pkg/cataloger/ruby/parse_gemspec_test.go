@@ -44,7 +44,7 @@ func TestParseGemspec(t *testing.T) {
 		t.Fatalf("unexpected package count: %d!=1", len(actual))
 	}
 
-	for _, d := range deep.Equal(actual[0], expectedPkg) {
+	for _, d := range deep.Equal(actual[0], &expectedPkg) {
 		t.Errorf("diff: %+v", d)
 	}
 }

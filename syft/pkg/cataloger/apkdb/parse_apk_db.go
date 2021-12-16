@@ -21,14 +21,25 @@ import (
 // integrity check
 var _ common.ParserFn = parseApkDB
 
+func newApkDBPackage(d *pkg.ApkMetadata) *pkg.Package {
+	return &pkg.Package{
+		Name:         d.Package,
+		Version:      d.Version,
+		Licenses:     strings.Split(d.License, " "),
+		Type:         pkg.ApkPkg,
+		MetadataType: pkg.ApkMetadataType,
+		Metadata:     *d,
+	}
+}
+
 // parseApkDb parses individual packages from a given Alpine DB file. For more information on specific fields
 // see https://wiki.alpinelinux.org/wiki/Apk_spec .
-func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	// larger capacity for the scanner.
 	const maxScannerCapacity = 1024 * 1024
 	// a new larger buffer for the scanner
 	bufScan := make([]byte, maxScannerCapacity)
-	packages := make([]pkg.Package, 0)
+	packages := make([]*pkg.Package, 0)
 
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(bufScan, maxScannerCapacity)
@@ -52,14 +63,7 @@ func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relations
 			return nil, nil, err
 		}
 		if metadata != nil {
-			packages = append(packages, pkg.Package{
-				Name:         metadata.Package,
-				Version:      metadata.Version,
-				Licenses:     strings.Split(metadata.License, " "),
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
-				Metadata:     *metadata,
-			})
+			packages = append(packages, newApkDBPackage(metadata))
 		}
 	}
 
