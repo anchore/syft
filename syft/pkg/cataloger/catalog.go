@@ -49,10 +49,10 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
-	for _, theCataloger := range catalogers {
+	for _, c := range catalogers {
 		// find packages from the underlying raw data
-		log.Debugf("cataloging with %q", theCataloger.Name())
-		packages, relationships, err := theCataloger.Catalog(resolver)
+		log.Debugf("cataloging with %q", c.Name())
+		packages, relationships, err := c.Catalog(resolver)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 			continue
@@ -64,10 +64,10 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 		packagesDiscovered.N += int64(catalogedPackages)
 
 		for _, p := range packages {
-			// generate CPEs
+			// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
 			p.CPEs = cpe.Generate(p)
 
-			// generate PURL
+			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
 			p.PURL = generatePackageURL(p, theDistro)
 
 			// create file-to-package relationships for files owned by the package

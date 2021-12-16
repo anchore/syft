@@ -9,8 +9,8 @@ type CargoPackageMetadata struct {
 }
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func (p CargoPackageMetadata) Pkg() Package {
-	return Package{
+func (p CargoPackageMetadata) Pkg() *Package {
+	return &Package{
 		Name:         p.Name,
 		Version:      p.Version,
 		Language:     Rust,

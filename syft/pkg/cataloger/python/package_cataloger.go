@@ -74,7 +74,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 		licenses = []string{metadata.License}
 	}
 
-	return &pkg.Package{
+	p := &pkg.Package{
 		Name:         metadata.Name,
 		Version:      metadata.Version,
 		FoundBy:      c.Name(),
@@ -84,7 +84,11 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,
 		Metadata:     *metadata,
-	}, nil
+	}
+
+	p.SetID()
+
+	return p, nil
 }
 
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.

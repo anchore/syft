@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/anchore/syft/syft/source"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Package represents a pkg.Package object specialized for JSON marshaling and unmarshalling.

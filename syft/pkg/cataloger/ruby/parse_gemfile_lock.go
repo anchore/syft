@@ -17,8 +17,8 @@ var _ common.ParserFn = parseGemFileLockEntries
 var sectionsOfInterest = internal.NewStringSetFromSlice([]string{"GEM"})
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
-func parseGemFileLockEntries(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	pkgs := make([]pkg.Package, 0)
+func parseGemFileLockEntries(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	pkgs := make([]*pkg.Package, 0)
 	scanner := bufio.NewScanner(reader)
 
 	var currentSection string
@@ -41,7 +41,7 @@ func parseGemFileLockEntries(_ string, reader io.Reader) ([]pkg.Package, []artif
 			if len(candidate) != 2 {
 				continue
 			}
-			pkgs = append(pkgs, pkg.Package{
+			pkgs = append(pkgs, &pkg.Package{
 				Name:     candidate[0],
 				Version:  strings.Trim(candidate[1], "()"),
 				Language: pkg.Ruby,

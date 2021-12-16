@@ -61,8 +61,8 @@ func processList(s string) []string {
 	return results
 }
 
-func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	var pkgs []pkg.Package
+func parseGemSpecEntries(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	var pkgs []*pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
 
@@ -97,7 +97,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, []artifact.
 			return nil, nil, fmt.Errorf("unable to decode gem metadata: %w", err)
 		}
 
-		pkgs = append(pkgs, pkg.Package{
+		pkgs = append(pkgs, &pkg.Package{
 			Name:         metadata.Name,
 			Version:      metadata.Version,
 			Licenses:     metadata.Licenses,

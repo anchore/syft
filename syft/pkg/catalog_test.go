@@ -10,23 +10,6 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var catalogAddAndRemoveTestPkgs = []Package{
-	{
-		Locations: []source.Location{
-			source.NewVirtualLocation("/a/path", "/another/path"),
-			source.NewVirtualLocation("/b/path", "/bee/path"),
-		},
-		Type: RpmPkg,
-	},
-	{
-		Locations: []source.Location{
-			source.NewVirtualLocation("/c/path", "/another/path"),
-			source.NewVirtualLocation("/d/path", "/another/path"),
-		},
-		Type: NpmPkg,
-	},
-}
-
 type expectedIndexes struct {
 	byType map[Type]*strset.Set
 	byPath map[string]*strset.Set
@@ -34,18 +17,38 @@ type expectedIndexes struct {
 
 func TestCatalogAddPopulatesIndex(t *testing.T) {
 
+	var pkgs = []Package{
+		{
+			Locations: []source.Location{
+				source.NewVirtualLocation("/a/path", "/another/path"),
+				source.NewVirtualLocation("/b/path", "/bee/path"),
+			},
+			Type: RpmPkg,
+		},
+		{
+			Locations: []source.Location{
+				source.NewVirtualLocation("/c/path", "/another/path"),
+				source.NewVirtualLocation("/d/path", "/another/path"),
+			},
+			Type: NpmPkg,
+		},
+	}
+
+	for i := range pkgs {
+		p := &pkgs[i]
+		p.SetID()
+	}
+
 	fixtureID := func(i int) string {
-		return string(catalogAddAndRemoveTestPkgs[i].ID())
+		return string(pkgs[i].ID())
 	}
 
 	tests := []struct {
 		name            string
-		pkgs            []Package
 		expectedIndexes expectedIndexes
 	}{
 		{
 			name: "vanilla-add",
-			pkgs: catalogAddAndRemoveTestPkgs,
 			expectedIndexes: expectedIndexes{
 				byType: map[Type]*strset.Set{
 					RpmPkg: strset.New(fixtureID(0)),
@@ -65,7 +68,7 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCatalog(test.pkgs...)
+			c := NewCatalog(pkgs...)
 
 			assertIndexes(t, c, test.expectedIndexes)
 
@@ -75,9 +78,7 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 
 func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 	// assert path index
-	if len(c.idsByPath) != len(expectedIndexes.byPath) {
-		t.Errorf("unexpected path index length: %d != %d", len(c.idsByPath), len(expectedIndexes.byPath))
-	}
+	assert.Len(t, c.idsByPath, len(expectedIndexes.byPath), "unexpected path index length")
 	for path, expectedIds := range expectedIndexes.byPath {
 		actualIds := strset.New()
 		for _, p := range c.PackagesByPath(path) {
@@ -90,9 +91,7 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 	}
 
 	// assert type index
-	if len(c.idsByType) != len(expectedIndexes.byType) {
-		t.Errorf("unexpected type index length: %d != %d", len(c.idsByType), len(expectedIndexes.byType))
-	}
+	assert.Len(t, c.idsByType, len(expectedIndexes.byType), "unexpected type index length")
 	for ty, expectedIds := range expectedIndexes.byType {
 		actualIds := strset.New()
 		for p := range c.Enumerate(ty) {
