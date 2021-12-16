@@ -1,4 +1,4 @@
-<p align="center">
+<p style="text-align: center">
     <img src="https://user-images.githubusercontent.com/5199289/136844524-1527b09f-c5cb-4aa9-be54-5aa92a6086c1.png" width="271" alt="Cute pink owl syft logo">
 </p>
 
@@ -91,6 +91,12 @@ oci-dir:path/to/yourimage              read directly from a path on disk for OCI
 dir:path/to/yourproject                read directly from a path on disk (any directory)
 file:path/to/yourproject/file          read directly from a path on disk (any single file)
 registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
+```
+
+Syft can exclude files and paths from being scanned within a source by using
+one or more `--exclude` parameters:
+```
+syft packages path/to/dir --exclude **/*.png --exclude **/generated/**
 ```
 
 ### Output formats
@@ -218,6 +224,12 @@ file: ""
 # enable/disable checking for application updates on startup
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
+
+# a list of globs to exclude. same as --exclude ; for example:
+# exclude:
+#   - '/etc/**'
+#   - '/tmp/**/*.png'
+exclude:
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
