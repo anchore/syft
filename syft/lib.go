@@ -54,10 +54,6 @@ func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, []ar
 	case source.ImageScheme:
 		log.Info("cataloging image")
 		catalogers = cataloger.ImageCatalogers()
-		// image tree contains all paths, so we filter out the excluded entries afterwards
-		if src.Exclude != nil {
-			resolver = source.NewExcludingResolver(resolver, src.Exclude)
-		}
 	case source.FileScheme:
 		log.Info("cataloging file")
 		catalogers = cataloger.AllCatalogers()

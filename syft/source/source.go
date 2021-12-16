@@ -199,14 +199,24 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 		return s.directoryResolver, nil
 	case ImageScheme:
+		var resolver FileResolver
+		var err error
 		switch scope {
 		case SquashedScope:
-			return newImageSquashResolver(s.Image)
+			resolver, err = newImageSquashResolver(s.Image)
 		case AllLayersScope:
-			return newAllLayersResolver(s.Image)
+			resolver, err = newAllLayersResolver(s.Image)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}
+		if err != nil {
+			return nil, err
+		}
+		// image tree contains all paths, so we filter out the excluded entries afterwards
+		if s.Exclude != nil {
+			resolver = NewExcludingResolver(resolver, s.Exclude)
+		}
+		return resolver, nil
 	}
 	return nil, fmt.Errorf("unable to determine FilePathResolver with current scheme=%q", s.Metadata.Scheme)
 }

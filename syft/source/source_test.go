@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/imagetest"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
@@ -372,6 +374,75 @@ func TestDirectoryExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			src, fn, err := New("dir:"+test.input, registryOpts, test.excludes...)
+			defer fn()
+
+			if err != nil {
+				t.Errorf("could not create NewDirScope: %+v", err)
+			}
+			resolver, err := src.FileResolver(SquashedScope)
+			if err != nil {
+				t.Errorf("could not get resolver error: %+v", err)
+			}
+			contents, err := resolver.FilesByGlob(test.glob)
+			if err != nil {
+				t.Errorf("could not get files by glob: %s+v", err)
+			}
+			if len(contents) != test.expected {
+				t.Errorf("wrong number of files after exclusions (%s): %d != %d", test.glob, len(contents), test.expected)
+			}
+		})
+	}
+}
+
+func TestImageExclusions(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    string
+		glob     string
+		expected int
+		excludes []string
+	}{
+		{
+			input:    "image-simple",
+			desc:     "a single path excluded",
+			glob:     "**",
+			expected: 2,
+			excludes: []string{"/really/**"}, // /target moved to / in Dockerfile
+		},
+		{
+			input:    "image-simple",
+			desc:     "exclude files deeper",
+			glob:     "**",
+			expected: 2,
+			excludes: []string{"**/nested/**"},
+		},
+		{
+			input:    "image-simple",
+			desc:     "files excluded with extension",
+			glob:     "**",
+			expected: 2,
+			excludes: []string{"**/*1.txt"},
+		},
+		{
+			input:    "image-simple",
+			desc:     "keep files with different extensions",
+			glob:     "**",
+			expected: 3,
+			excludes: []string{"**/target/**/*.jar"},
+		},
+		{
+			input:    "image-simple",
+			desc:     "file directly excluded",
+			glob:     "**",
+			expected: 2,
+			excludes: []string{"**/somefile-1.txt"}, // file-1 renamed to somefile-1 in Dockerfile
+		},
+	}
+	registryOpts := &image.RegistryOptions{}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
+			src, fn, err := New(archiveLocation, registryOpts, test.excludes...)
 			defer fn()
 
 			if err != nil {
