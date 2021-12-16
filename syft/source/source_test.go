@@ -341,14 +341,14 @@ func TestDirectoryExclusions(t *testing.T) {
 		},
 		{
 			input:    "test-fixtures/image-simple",
-			desc:     "skip files deeper",
+			desc:     "exclude files deeper",
 			glob:     "**",
 			expected: 3,
 			excludes: []string{"**/really/**"},
 		},
 		{
 			input:    "test-fixtures/image-simple",
-			desc:     "file excluded with extension",
+			desc:     "files excluded with extension",
 			glob:     "**",
 			expected: 1,
 			excludes: []string{"**/*.txt"},
@@ -362,7 +362,7 @@ func TestDirectoryExclusions(t *testing.T) {
 		},
 		{
 			input:    "test-fixtures/path-detected",
-			desc:     "multiple matches",
+			desc:     "file directly excluded",
 			glob:     "**",
 			expected: 1,
 			excludes: []string{"**/empty"},
