@@ -17,6 +17,7 @@ var cpeFilters = []filterFn{
 	disallowJenkinsServerCPEForPluginPackage,
 	disallowJenkinsCPEsNotAssociatedWithJenkins,
 	disallowNonParseableCPEs,
+	disallowLog4JCVE202144228FalsePositives,
 }
 
 func filter(cpes []pkg.CPE, p pkg.Package, filters ...filterFn) (result []pkg.CPE) {
@@ -66,6 +67,16 @@ func disallowJiraClientServerMismatch(cpe pkg.CPE, p pkg.Package) bool {
 	// jira / atlassian should not apply to clients
 	if cpe.Product == "jira" && strings.Contains(strings.ToLower(p.Name), "client") {
 		if cpe.Vendor == wfn.Any || cpe.Vendor == "jira" || cpe.Vendor == "atlassian" {
+			return true
+		}
+	}
+	return false
+}
+
+// known false positives for CVE-2021-44228 (https://github.com/anchore/grype/issues/552)
+func disallowLog4JCVE202144228FalsePositives(cpe pkg.CPE, p pkg.Package) bool {
+	if cpe.Vendor == "apache" && cpe.Product == "log4j" && p.Type == pkg.JavaPkg {
+		if p.Name == "log4j-api" || p.Name == "log4j-slf4j-impl" {
 			return true
 		}
 	}

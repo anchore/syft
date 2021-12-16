@@ -165,3 +165,101 @@ func Test_disallowJiraClientServerMismatch(t *testing.T) {
 		})
 	}
 }
+
+func Test_disallowLog4JCVE202144228FalsePositives(t *testing.T) {
+	tests := []struct {
+		name     string
+		cpe      pkg.CPE
+		pkg      pkg.Package
+		expected bool
+	}{
+		// filter out
+		{
+			name: "filter out log4j-api java packages",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-api",
+				Type: pkg.JavaPkg,
+			},
+			expected: true,
+		},
+		{
+			name: "filter out log4j-slf4j-impl java packages",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-slf4j-impl",
+				Type: pkg.JavaPkg,
+			},
+			expected: true,
+		},
+		/// keep
+		{
+			name: "keep log4j-slf4j-impl for non-java packages",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-slf4j-impl",
+				Type: pkg.JenkinsPluginPkg,
+			},
+			expected: false,
+		},
+		{
+			name: "keep log4j-api non-java packages",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-api",
+				Type: pkg.JenkinsPluginPkg,
+			},
+			expected: false,
+		},
+		{
+			name: "keep log4j-slf4j-impl java packages with wrong vendor",
+			cpe:  mustCPE("cpe:2.3:a:NOT-apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-slf4j-impl",
+				Type: pkg.JavaPkg,
+			},
+			expected: false,
+		},
+		{
+			name: "keep log4j-api java packages with wrong vendor",
+			cpe:  mustCPE("cpe:2.3:a:NOT-apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-api",
+				Type: pkg.JavaPkg,
+			},
+			expected: false,
+		},
+		{
+			name: "keep log4j-slf4j-impl java packages with wrong product",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j-diff:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-slf4j-impl",
+				Type: pkg.JavaPkg,
+			},
+			expected: false,
+		},
+		{
+			name: "keep log4j-api java packages with wrong product",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j-diff:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-api",
+				Type: pkg.JavaPkg,
+			},
+			expected: false,
+		},
+		{
+			name: "keep log4j java packages",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j",
+				Type: pkg.JavaPkg,
+			},
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, disallowLog4JCVE202144228FalsePositives(test.cpe, test.pkg))
+		})
+	}
+}
