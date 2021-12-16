@@ -35,14 +35,14 @@ const (
 	noVersion = ""
 )
 
-func parseYarnLock(path string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+func parseYarnLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
 	if pathContainsNodeModulesDirectory(path) {
 		return nil, nil, nil
 	}
 
-	var packages []pkg.Package
+	var packages []*pkg.Package
 	scanner := bufio.NewScanner(reader)
 	parsedPackages := internal.NewStringSet()
 	currentPackage := noPackage
@@ -106,8 +106,8 @@ func findPackageVersion(line string) string {
 	return noVersion
 }
 
-func newYarnLockPackage(name, version string) pkg.Package {
-	return pkg.Package{
+func newYarnLockPackage(name, version string) *pkg.Package {
+	return &pkg.Package{
 		Name:     name,
 		Version:  version,
 		Language: pkg.JavaScript,

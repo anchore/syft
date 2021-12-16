@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseInstalledJsonComposerV1(t *testing.T) {
-	expected := []pkg.Package{
+	expected := []*pkg.Package{
 		{
 			Name:     "asm89/stack-cors",
 			Version:  "1.3.0",
@@ -41,7 +41,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 }
 
 func TestParseInstalledJsonComposerV2(t *testing.T) {
-	expected := []pkg.Package{
+	expected := []*pkg.Package{
 		{
 			Name:     "asm89/stack-cors",
 			Version:  "1.3.0",

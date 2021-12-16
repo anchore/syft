@@ -13,12 +13,12 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func parser(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+func parser(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	contents, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic(err)
 	}
-	return []pkg.Package{
+	return []*pkg.Package{
 		{
 			Name: string(contents),
 		},

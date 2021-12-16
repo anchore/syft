@@ -35,7 +35,7 @@ type archiveParser struct {
 }
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
-func parseJavaArchive(virtualPath string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+func parseJavaArchive(virtualPath string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(virtualPath, reader, true)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
@@ -81,8 +81,8 @@ func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested boo
 }
 
 // parse the loaded archive and return all packages found.
-func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) {
-	var pkgs []pkg.Package
+func (j *archiveParser) parse() ([]*pkg.Package, []artifact.Relationship, error) {
+	var pkgs []*pkg.Package
 	var relationships []artifact.Relationship
 
 	// find the parent package from the java manifest
@@ -110,7 +110,7 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 
 	// lastly, add the parent package to the list (assuming the parent exists)
 	if parentPkg != nil {
-		pkgs = append([]pkg.Package{*parentPkg}, pkgs...)
+		pkgs = append([]*pkg.Package{parentPkg}, pkgs...)
 	}
 
 	return pkgs, relationships, nil
@@ -158,12 +158,12 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 // parent package, returning all listed Java packages found for each pom
 // properties discovered and potentially updating the given parentPkg with new
 // data.
-func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([]pkg.Package, error) {
+func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([]*pkg.Package, error) {
 	if parentPkg == nil {
 		return nil, nil
 	}
 
-	var pkgs []pkg.Package
+	var pkgs []*pkg.Package
 
 	properties, err := pomPropertiesByParentPath(j.archivePath, j.fileManifest.GlobMatch(pomPropertiesGlob), j.virtualPath)
 	if err != nil {
@@ -183,7 +183,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 
 		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.virtualPath)
 		if pkgFromPom != nil {
-			pkgs = append(pkgs, *pkgFromPom)
+			pkgs = append(pkgs, pkgFromPom)
 		}
 	}
 
@@ -192,8 +192,8 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 
 // discoverPkgsFromNestedArchives finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
-	var pkgs []pkg.Package
+func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
+	var pkgs []*pkg.Package
 	var relationships []artifact.Relationship
 
 	// search and parse pom.properties files & fetch the contents

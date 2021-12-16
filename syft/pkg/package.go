@@ -14,6 +14,7 @@ import (
 // Package represents an application or library that has been bundled into a distributable format.
 // TODO: if we ignore FoundBy for ID generation should we merge the field to show it was found in two places?
 type Package struct {
+	id           artifact.ID       `hash:"ignore"`
 	Name         string            // the package name
 	Version      string            // the version of the package
 	FoundBy      string            // the specific cataloger that discovered this package
@@ -21,24 +22,27 @@ type Package struct {
 	Licenses     []string          // licenses discovered with the package metadata
 	Language     Language          // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
 	Type         Type              // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
-	CPEs         []CPE             // all possible Common Platform Enumerators
-	PURL         string            // the Package URL (see https://github.com/package-url/purl-spec)
+	CPEs         []CPE             `hash:"ignore"` // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
+	PURL         string            `hash:"ignore"` // the Package URL (see https://github.com/package-url/purl-spec) (note: this is NOT included in the definition of the ID since all fields on a pURL are derived from other fields)
 	MetadataType MetadataType      // the shape of the additional data in the "metadata" field
 	Metadata     interface{}       // additional data found while parsing the package source
 }
 
-func (p Package) ID() artifact.ID {
-	f, err := artifact.IDFromHash(p)
+func (p *Package) SetID() {
+	id, err := artifact.IDByHash(p)
 	if err != nil {
 		// TODO: what to do in this case?
 		log.Warnf("unable to get fingerprint of package=%s@%s: %+v", p.Name, p.Version, err)
-		return ""
+		return
 	}
+	p.id = id
+}
 
-	return f
+func (p Package) ID() artifact.ID {
+	return p.id
 }
 
 // Stringer to represent a package.
 func (p Package) String() string {
-	return fmt.Sprintf("Pkg(type=%s, name=%s, version=%s)", p.Type, p.Name, p.Version)
+	return fmt.Sprintf("Pkg(name=%q version=%q type=%q id=%q)", p.Name, p.Version, p.Type, p.id)
 }

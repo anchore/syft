@@ -40,8 +40,8 @@ func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 var _ common.ParserFn = parseComposerLock
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseInstalledJSON(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	packages := make([]pkg.Package, 0)
+func parseInstalledJSON(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	packages := make([]*pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
 	for {
@@ -54,7 +54,7 @@ func parseInstalledJSON(_ string, reader io.Reader) ([]pkg.Package, []artifact.R
 		for _, pkgMeta := range lock.Packages {
 			version := pkgMeta.Version
 			name := pkgMeta.Name
-			packages = append(packages, pkg.Package{
+			packages = append(packages, &pkg.Package{
 				Name:     name,
 				Version:  version,
 				Language: pkg.PHP,

@@ -1,5 +1,5 @@
 /*
-Package bundler provides a concrete Cataloger implementation for Ruby Gemfile.lock bundler files.
+Package ruby bundler provides a concrete Cataloger implementation for Ruby Gemfile.lock bundler files.
 */
 package ruby
 
