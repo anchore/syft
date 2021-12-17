@@ -76,7 +76,7 @@ func disallowJiraClientServerMismatch(cpe pkg.CPE, p pkg.Package) bool {
 // known false positives for CVE-2021-44228 (https://github.com/anchore/grype/issues/552)
 func disallowLog4JCVE202144228FalsePositives(cpe pkg.CPE, p pkg.Package) bool {
 	if cpe.Vendor == "apache" && cpe.Product == "log4j" && p.Type == pkg.JavaPkg {
-		if p.Name == "log4j-api" || p.Name == "log4j-slf4j-impl" {
+		if p.Name == "log4j-api" || p.Name == "log4j-to-slf4j" || p.Name == "log4j-slf4j-impl" {
 			return true
 		}
 	}

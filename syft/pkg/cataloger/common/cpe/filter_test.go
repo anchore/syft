@@ -192,6 +192,15 @@ func Test_disallowLog4JCVE202144228FalsePositives(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name: "filter out log4j-to-slf4j java packages",
+			cpe:  mustCPE("cpe:2.3:a:apache:log4j:3.2:*:*:*:*:*:*:*"),
+			pkg: pkg.Package{
+				Name: "log4j-to-slf4j",
+				Type: pkg.JavaPkg,
+			},
+			expected: true,
+		},
 		/// keep
 		{
 			name: "keep log4j-slf4j-impl for non-java packages",
