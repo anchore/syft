@@ -43,15 +43,15 @@ func New(userInput string, registryOptions *image.RegistryOptions, exclusions ..
 	}
 
 	source := &Source{}
-	fn := func() {}
+	cleanupFn := func() {}
 
 	switch parsedScheme {
 	case FileScheme:
-		source, fn, err = generateFileSource(fs, location)
+		source, cleanupFn, err = generateFileSource(fs, location)
 	case DirectoryScheme:
-		source, fn, err = generateDirectorySource(fs, location)
+		source, cleanupFn, err = generateDirectorySource(fs, location)
 	case ImageScheme:
-		source, fn, err = generateImageSource(location, userInput, imageSource, registryOptions)
+		source, cleanupFn, err = generateImageSource(location, userInput, imageSource, registryOptions)
 	default:
 		err = fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 	}
@@ -60,7 +60,7 @@ func New(userInput string, registryOptions *image.RegistryOptions, exclusions ..
 		source.Exclusions = exclusions
 	}
 
-	return source, fn, err
+	return source, cleanupFn, err
 }
 
 func generateImageSource(location, userInput string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source, func(), error) {
