@@ -59,13 +59,13 @@ func TestExcludingResolver(t *testing.T) {
 			excludingResolver := NewExcludingResolver(resolver, test.excludeFn)
 
 			fc, _ := excludingResolver.FilesByPath()
-			assert.Equal(t, test.expectedLength, len(fc))
+			assert.Len(t, fc, test.expectedLength)
 
 			fc, _ = excludingResolver.FilesByGlob()
-			assert.Equal(t, test.expectedLength, len(fc))
+			assert.Len(t, fc, test.expectedLength)
 
 			fc, _ = excludingResolver.FilesByMIMEType()
-			assert.Equal(t, test.expectedLength, len(fc))
+			assert.Len(t, fc, test.expectedLength)
 		})
 	}
 }
