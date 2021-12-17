@@ -123,9 +123,8 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 		if filterFn != nil && filterFn(path, info) {
 			if info.IsDir() {
 				return "", fs.SkipDir
-			} else {
-				return "", nil
 			}
+			return "", nil
 		}
 	}
 

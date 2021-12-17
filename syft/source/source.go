@@ -276,16 +276,14 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 	}
 
 	if !strings.HasSuffix(root, "/") {
-		root = root + "/"
+		root += "/"
 	}
 
 	var errors []string
 	for idx, exclusion := range exclusions {
 		// check exclusions for supported paths, these are all relative to the "scan root"
 		if strings.HasPrefix(exclusion, "./") || strings.HasPrefix(exclusion, "*/") || strings.HasPrefix(exclusion, "**/") {
-			if strings.HasPrefix(exclusion, "./") {
-				exclusion = exclusion[2:]
-			}
+			exclusion = strings.TrimPrefix(exclusion, "./")
 			exclusions[idx] = root + exclusion
 		} else {
 			errors = append(errors, exclusion)
