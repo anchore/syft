@@ -3,10 +3,9 @@ package source
 import (
 	"fmt"
 	"io"
-	"os"
 )
 
-type excludeFn func(string, os.FileInfo) bool
+type excludeFn func(string) bool
 
 // excludingResolver decorates a resolver with an exclusion function that is used to
 // filter out entries in the delegate resolver
@@ -39,7 +38,7 @@ func (r *excludingResolver) FileMetadataByLocation(location Location) (FileMetad
 }
 
 func (r *excludingResolver) HasPath(path string) bool {
-	if r.excludeFn(path, nil) {
+	if r.excludeFn(path) {
 		return false
 	}
 	return r.delegate.HasPath(path)
@@ -82,7 +81,7 @@ func (r *excludingResolver) AllLocations() <-chan Location {
 }
 
 func locationMatches(location *Location, exclusionFn excludeFn) bool {
-	return exclusionFn(location.RealPath, nil) || exclusionFn(location.VirtualPath, nil)
+	return exclusionFn(location.RealPath) || exclusionFn(location.VirtualPath)
 }
 
 func filterLocations(locations []Location, err error, exclusionFn excludeFn) ([]Location, error) {

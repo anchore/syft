@@ -2,7 +2,6 @@ package source
 
 import (
 	"io"
-	"os"
 	"strings"
 	"testing"
 
@@ -16,13 +15,13 @@ func TestExcludingResolver(t *testing.T) {
 	tests := []struct {
 		name      string
 		locations []string
-		excludeFn func(string, os.FileInfo) bool
+		excludeFn excludeFn
 		expected  []string
 	}{
 		{
 			name:      "keeps locations",
 			locations: []string{"a", "b", "c"},
-			excludeFn: func(s string, info os.FileInfo) bool {
+			excludeFn: func(s string) bool {
 				return false
 			},
 			expected: []string{"a", "b", "c"},
@@ -30,7 +29,7 @@ func TestExcludingResolver(t *testing.T) {
 		{
 			name:      "removes locations",
 			locations: []string{"d", "e", "f"},
-			excludeFn: func(s string, info os.FileInfo) bool {
+			excludeFn: func(s string) bool {
 				return true
 			},
 			expected: []string{},
@@ -38,7 +37,7 @@ func TestExcludingResolver(t *testing.T) {
 		{
 			name:      "removes first match",
 			locations: []string{"g", "h", "i"},
-			excludeFn: func(s string, info os.FileInfo) bool {
+			excludeFn: func(s string) bool {
 				return s == "g"
 			},
 			expected: []string{"h", "i"},
@@ -46,7 +45,7 @@ func TestExcludingResolver(t *testing.T) {
 		{
 			name:      "removes last match",
 			locations: []string{"j", "k", "l"},
-			excludeFn: func(s string, info os.FileInfo) bool {
+			excludeFn: func(s string) bool {
 				return s == "l"
 			},
 			expected: []string{"j", "k"},
