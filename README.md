@@ -1,4 +1,4 @@
-<p style="text-align: center">
+<p align="center">
     <img src="https://user-images.githubusercontent.com/5199289/136844524-1527b09f-c5cb-4aa9-be54-5aa92a6086c1.png" width="271" alt="Cute pink owl syft logo">
 </p>
 
@@ -93,8 +93,10 @@ file:path/to/yourproject/file          read directly from a path on disk (any si
 registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 ```
 
-Syft can exclude files and paths from being scanned within a source by using
-one or more `--exclude` parameters:
+#### Excluding file paths
+
+Syft can exclude files and paths from being scanned within a source by using glob expressions
+with one or more `--exclude` parameters:
 ```
 syft packages path/to/dir --exclude **/*.png --exclude **/generated/**
 ```
@@ -225,7 +227,7 @@ file: ""
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
 
-# a list of globs to exclude. same as --exclude ; for example:
+# a list of globs to exclude from scanning. same as --exclude ; for example:
 # exclude:
 #   - '/etc/**'
 #   - '/tmp/**/*.png'
