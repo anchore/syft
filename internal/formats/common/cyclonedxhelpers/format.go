@@ -5,7 +5,9 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -29,6 +31,11 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 	cdxBOM.Components = &components
 
+	dependencies := toDependencies(s.Relationships)
+	if len(dependencies) > 0 {
+		cdxBOM.Dependencies = &dependencies
+	}
+
 	return cdxBOM
 }
 
@@ -49,6 +56,7 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 
 func toComponent(p pkg.Package) cyclonedx.Component {
 	return cyclonedx.Component{
+		BOMRef:     string(p.ID()),
 		Type:       cyclonedx.ComponentTypeLibrary,
 		Name:       p.Name,
 		Version:    p.Version,
@@ -57,18 +65,56 @@ func toComponent(p pkg.Package) cyclonedx.Component {
 	}
 }
 
+func lookupRelationship(ty artifact.RelationshipType) bool {
+	switch ty {
+	case artifact.OwnershipByFileOverlapRelationship:
+		return true
+	}
+	return false
+}
+
+func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
+	result := make([]cyclonedx.Dependency, 0)
+	for _, r := range relationships {
+		exists := lookupRelationship(r.Type)
+
+		if !exists {
+			log.Warnf("unable to convert relationship from CycloneDX 1.3 JSON, dropping: %+v", r)
+			continue
+		}
+
+		innerDeps := []cyclonedx.Dependency{}
+		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: string(r.From.ID())})
+		result = append(result, cyclonedx.Dependency{
+			Ref:          string(r.To.ID()),
+			Dependencies: &innerDeps,
+		})
+	}
+	return result
+}
+
 func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component {
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
+		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
+		if err != nil {
+			log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
+		}
 		return &cyclonedx.Component{
+			BOMRef:  string(bomRef),
 			Type:    cyclonedx.ComponentTypeContainer,
 			Name:    srcMetadata.ImageMetadata.UserInput,
 			Version: srcMetadata.ImageMetadata.ManifestDigest,
 		}
 	case source.DirectoryScheme, source.FileScheme:
+		bomRef, err := artifact.IDByHash(srcMetadata.Path)
+		if err != nil {
+			log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)
+		}
 		return &cyclonedx.Component{
-			Type: cyclonedx.ComponentTypeFile,
-			Name: srcMetadata.Path,
+			BOMRef: string(bomRef),
+			Type:   cyclonedx.ComponentTypeFile,
+			Name:   srcMetadata.Path,
 		}
 	}
 
