@@ -3,6 +3,7 @@ package source
 import (
 	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -13,10 +14,10 @@ import (
 func TestExcludingResolver(t *testing.T) {
 
 	tests := []struct {
-		name           string
-		locations      []string
-		excludeFn      func(string, os.FileInfo) bool
-		expectedLength int
+		name      string
+		locations []string
+		excludeFn func(string, os.FileInfo) bool
+		expected  []string
 	}{
 		{
 			name:      "keeps locations",
@@ -24,7 +25,7 @@ func TestExcludingResolver(t *testing.T) {
 			excludeFn: func(s string, info os.FileInfo) bool {
 				return false
 			},
-			expectedLength: 3,
+			expected: []string{"a", "b", "c"},
 		},
 		{
 			name:      "removes locations",
@@ -32,7 +33,7 @@ func TestExcludingResolver(t *testing.T) {
 			excludeFn: func(s string, info os.FileInfo) bool {
 				return true
 			},
-			expectedLength: 0,
+			expected: []string{},
 		},
 		{
 			name:      "removes first match",
@@ -40,7 +41,7 @@ func TestExcludingResolver(t *testing.T) {
 			excludeFn: func(s string, info os.FileInfo) bool {
 				return s == "g"
 			},
-			expectedLength: 2,
+			expected: []string{"h", "i"},
 		},
 		{
 			name:      "removes last match",
@@ -48,7 +49,7 @@ func TestExcludingResolver(t *testing.T) {
 			excludeFn: func(s string, info os.FileInfo) bool {
 				return s == "l"
 			},
-			expectedLength: 2,
+			expected: []string{"j", "k"},
 		},
 	}
 	for _, test := range tests {
@@ -58,16 +59,84 @@ func TestExcludingResolver(t *testing.T) {
 			}
 			excludingResolver := NewExcludingResolver(resolver, test.excludeFn)
 
-			fc, _ := excludingResolver.FilesByPath()
-			assert.Len(t, fc, test.expectedLength)
+			locations, _ := excludingResolver.FilesByPath()
+			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
-			fc, _ = excludingResolver.FilesByGlob()
-			assert.Len(t, fc, test.expectedLength)
+			locations, _ = excludingResolver.FilesByGlob()
+			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
-			fc, _ = excludingResolver.FilesByMIMEType()
-			assert.Len(t, fc, test.expectedLength)
+			locations, _ = excludingResolver.FilesByMIMEType()
+			assert.ElementsMatch(t, locationPaths(locations), test.expected)
+
+			locations = []Location{}
+
+			channel := excludingResolver.AllLocations()
+			for location := range channel {
+				locations = append(locations, location)
+			}
+			assert.ElementsMatch(t, locationPaths(locations), test.expected)
+
+			diff := difference(test.locations, test.expected)
+
+			for _, path := range diff {
+				assert.False(t, excludingResolver.HasPath(path))
+				c, err := excludingResolver.FileContentsByLocation(makeLocation(path))
+				assert.Nil(t, c)
+				assert.Error(t, err)
+				m, err := excludingResolver.FileMetadataByLocation(makeLocation(path))
+				assert.Empty(t, m.LinkDestination)
+				assert.Error(t, err)
+				l := excludingResolver.RelativeFileByPath(makeLocation(""), path)
+				assert.Nil(t, l)
+			}
+
+			for _, path := range test.expected {
+				assert.True(t, excludingResolver.HasPath(path))
+				c, err := excludingResolver.FileContentsByLocation(makeLocation(path))
+				assert.NotNil(t, c)
+				assert.Nil(t, err)
+				m, err := excludingResolver.FileMetadataByLocation(makeLocation(path))
+				assert.NotEmpty(t, m.LinkDestination)
+				assert.Nil(t, err)
+				l := excludingResolver.RelativeFileByPath(makeLocation(""), path)
+				assert.NotNil(t, l)
+			}
 		})
 	}
+}
+
+// difference returns the elements in `a` that aren't in `b`.
+func difference(a, b []string) []string {
+	mb := make(map[string]struct{}, len(b))
+	for _, x := range b {
+		mb[x] = struct{}{}
+	}
+	var diff []string
+	for _, x := range a {
+		if _, found := mb[x]; !found {
+			diff = append(diff, x)
+		}
+	}
+	return diff
+}
+
+func makeLocation(path string) Location {
+	return Location{
+		Coordinates: Coordinates{
+			RealPath:     path,
+			FileSystemID: "",
+		},
+		VirtualPath: "",
+		ref:         file.Reference{},
+	}
+}
+
+func locationPaths(locations []Location) []string {
+	paths := []string{}
+	for _, l := range locations {
+		paths = append(paths, l.RealPath)
+	}
+	return paths
 }
 
 type mockResolver struct {
@@ -76,29 +145,24 @@ type mockResolver struct {
 
 func (r *mockResolver) getLocations() ([]Location, error) {
 	out := []Location{}
-	for _, l := range r.locations {
-		out = append(out, Location{
-			Coordinates: Coordinates{
-				RealPath:     l,
-				FileSystemID: "",
-			},
-			VirtualPath: l,
-			ref:         file.Reference{},
-		})
+	for _, path := range r.locations {
+		out = append(out, makeLocation(path))
 	}
 	return out, nil
 }
 
 func (r *mockResolver) FileContentsByLocation(_ Location) (io.ReadCloser, error) {
-	return nil, nil
+	return io.NopCloser(strings.NewReader("Hello, world!")), nil
 }
 
 func (r *mockResolver) FileMetadataByLocation(_ Location) (FileMetadata, error) {
-	return FileMetadata{}, nil
+	return FileMetadata{
+		LinkDestination: "MOCK",
+	}, nil
 }
 
 func (r *mockResolver) HasPath(_ string) bool {
-	return false
+	return true
 }
 
 func (r *mockResolver) FilesByPath(_ ...string) ([]Location, error) {
@@ -113,10 +177,22 @@ func (r *mockResolver) FilesByMIMEType(_ ...string) ([]Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) RelativeFileByPath(_ Location, _ string) *Location {
-	return &Location{}
+func (r *mockResolver) RelativeFileByPath(_ Location, path string) *Location {
+	return &Location{
+		Coordinates: Coordinates{
+			RealPath: path,
+		},
+	}
 }
 
 func (r *mockResolver) AllLocations() <-chan Location {
-	return nil
+	c := make(chan Location)
+	go func() {
+		defer close(c)
+		locations, _ := r.getLocations()
+		for _, location := range locations {
+			c <- location
+		}
+	}()
+	return c
 }
