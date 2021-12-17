@@ -134,7 +134,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 
 	flags.StringArrayP(
 		"exclude", "", nil,
-		"exclude paths using a glob expression",
+		"exclude paths from being scanned using a glob expression",
 	)
 
 	flags.Bool(
