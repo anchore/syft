@@ -150,7 +150,7 @@ MAINLOOP:
 				packages = append(packages, pkg.Package{
 					Name:         name,
 					Version:      version,
-					FoundBy:      "java-gradle-cataloger"
+					FoundBy:      "java-gradle-cataloger",
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 				})
