@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -24,7 +23,7 @@ var archiveFormatGlobs = []string{
 	"**/*.jpi",
 	"**/*.hpi",
 	"**/*.lpkg", // Zip-compressed package used to deploy applications
-	// (aka plugins) to Liferay Portal server. Those files contais .JAR(s) and a .PROPERTIES file, the latter
+	// (aka plugins) to Liferay Portal server. Those files contains .JAR(s) and a .PROPERTIES file, the latter
 	// has information about the application and installation requirements.
 	// NOTE(jonasagx): If you would like to test it with lpkg file,
 	// use: https://web.liferay.com/marketplace/-/mp/download/25019275/7403
