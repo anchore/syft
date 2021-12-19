@@ -41,6 +41,7 @@ func ImageCatalogers() []Cataloger {
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
 		java.NewJavaCataloger(),
+		java.NewJavaGradleCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 	}
@@ -57,6 +58,7 @@ func DirectoryCatalogers() []Cataloger {
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
 		java.NewJavaCataloger(),
+		java.NewJavaGradleCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),
@@ -76,6 +78,7 @@ func AllCatalogers() []Cataloger {
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
 		java.NewJavaCataloger(),
+		java.NewJavaGradleCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),

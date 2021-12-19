@@ -234,7 +234,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			p: pkg.Package{
 				Name:         "cxf-rt-bindings-xml",
 				Version:      "3.3.10",
-				FoundBy:      "java-cataloger",
+				FoundBy:      "java-archive-cataloger",
 				Language:     pkg.Java,
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,

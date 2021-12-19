@@ -14,5 +14,14 @@ func NewJavaCataloger() *common.GenericCataloger {
 		globParsers[pattern] = parseJavaArchive
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "java-cataloger")
+	return common.NewGenericCataloger(nil, globParsers, "java-archive-cataloger")
+}
+
+// NewJavaGradleCataloger returns a new Java gradle cataloger object.
+func NewJavaGradleCataloger() *common.GenericCataloger {
+	globParsers := map[string]common.ParserFn{
+                "**/build.gradle": parseJavaGradle,
+        }
+
+	return common.NewGenericCataloger(nil, globParsers, "java-gradle-cataloger")
 }
