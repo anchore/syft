@@ -51,7 +51,7 @@ func New(userInput string, registryOptions *image.RegistryOptions, exclusions ..
 	case DirectoryScheme:
 		source, cleanupFn, err = generateDirectorySource(fs, location)
 	case ImageScheme:
-		source, cleanupFn, err = generateImageSource(location, userInput, imageSource, registryOptions)
+		source, cleanupFn, err = generateImageSource(location, imageSource, registryOptions)
 	default:
 		err = fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 	}
@@ -63,13 +63,11 @@ func New(userInput string, registryOptions *image.RegistryOptions, exclusions ..
 	return source, cleanupFn, err
 }
 
-func generateImageSource(location, userInput string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source, func(), error) {
+func generateImageSource(location string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source,
+	func(), error) {
 	img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
 	if err != nil {
-		log.Debugf("error parsing location: %s after detecting scheme; pulling image: %s", location, userInput)
-		// we may have been to aggressive reading the source hint
-		// try the input as supplied by the user if our initial parse failed
-		img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
+		return nil, nil, err
 	}
 
 	cleanup := stereoscope.Cleanup
