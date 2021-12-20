@@ -132,6 +132,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"include dockerfile for upload to Anchore Enterprise",
 	)
 
+	flags.StringArrayP(
+		"exclude", "", nil,
+		"exclude paths from being scanned using a glob expression",
+	)
+
 	flags.Bool(
 		"overwrite-existing-image", false,
 		"overwrite an existing image during the upload to Anchore Enterprise",
@@ -155,6 +160,10 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	}
 
 	if err := viper.BindPFlag("file", flags.Lookup("file")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
 		return err
 	}
 
@@ -253,7 +262,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		checkForApplicationUpdate()
 
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions())
+		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions...)
 		if err != nil {
 			errs <- fmt.Errorf("failed to determine image source: %w", err)
 			return

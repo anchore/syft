@@ -9,11 +9,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
+	"github.com/bmatcuk/doublestar/v2"
 	"github.com/mholt/archiver/v3"
 	"github.com/spf13/afero"
 )
@@ -26,28 +29,38 @@ type Source struct {
 	directoryResolver *directoryResolver
 	path              string
 	mutex             *sync.Mutex
+	Exclusions        []string
 }
 
 type sourceDetector func(string) (image.Source, string, error)
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(userInput string, registryOptions *image.RegistryOptions) (*Source, func(), error) {
+func New(userInput string, registryOptions *image.RegistryOptions, exclusions ...string) (*Source, func(), error) {
 	fs := afero.NewOsFs()
 	parsedScheme, imageSource, location, err := detectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
 		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
 	}
 
+	source := &Source{}
+	cleanupFn := func() {}
+
 	switch parsedScheme {
 	case FileScheme:
-		return generateFileSource(fs, location)
+		source, cleanupFn, err = generateFileSource(fs, location)
 	case DirectoryScheme:
-		return generateDirectorySource(fs, location)
+		source, cleanupFn, err = generateDirectorySource(fs, location)
 	case ImageScheme:
-		return generateImageSource(location, userInput, imageSource, registryOptions)
+		source, cleanupFn, err = generateImageSource(location, userInput, imageSource, registryOptions)
+	default:
+		err = fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 	}
 
-	return &Source{}, func() {}, fmt.Errorf("unable to process input for scanning: '%s'", userInput)
+	if err == nil {
+		source.Exclusions = exclusions
+	}
+
+	return source, cleanupFn, err
 }
 
 func generateImageSource(location, userInput string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source, func(), error) {
@@ -180,7 +193,11 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 		if s.directoryResolver == nil {
-			resolver, err := newDirectoryResolver(s.path)
+			exclusionFunctions, err := getDirectoryExclusionFunctions(s.path, s.Exclusions)
+			if err != nil {
+				return nil, err
+			}
+			resolver, err := newDirectoryResolver(s.path, exclusionFunctions...)
 			if err != nil {
 				return nil, err
 			}
@@ -188,14 +205,24 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 		return s.directoryResolver, nil
 	case ImageScheme:
+		var resolver FileResolver
+		var err error
 		switch scope {
 		case SquashedScope:
-			return newImageSquashResolver(s.Image)
+			resolver, err = newImageSquashResolver(s.Image)
 		case AllLayersScope:
-			return newAllLayersResolver(s.Image)
+			resolver, err = newAllLayersResolver(s.Image)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}
+		if err != nil {
+			return nil, err
+		}
+		// image tree contains all paths, so we filter out the excluded entries afterwards
+		if len(s.Exclusions) > 0 {
+			resolver = NewExcludingResolver(resolver, getImageExclusionFunction(s.Exclusions))
+		}
+		return resolver, nil
 	}
 	return nil, fmt.Errorf("unable to determine FilePathResolver with current scheme=%q", s.Metadata.Scheme)
 }
@@ -213,4 +240,72 @@ func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func()
 	}
 
 	return tempDir, cleanupFn, unarchiver.Unarchive(path, tempDir)
+}
+
+func getImageExclusionFunction(exclusions []string) func(string) bool {
+	if len(exclusions) == 0 {
+		return nil
+	}
+	// add subpath exclusions
+	for _, exclusion := range exclusions {
+		exclusions = append(exclusions, exclusion+"/**")
+	}
+	return func(path string) bool {
+		for _, exclusion := range exclusions {
+			matches, err := doublestar.Match(exclusion, path)
+			if err != nil {
+				return false
+			}
+			if matches {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFilterFn, error) {
+	if len(exclusions) == 0 {
+		return nil, nil
+	}
+
+	// this is what directoryResolver.indexTree is doing to get the absolute path:
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.HasSuffix(root, "/") {
+		root += "/"
+	}
+
+	var errors []string
+	for idx, exclusion := range exclusions {
+		// check exclusions for supported paths, these are all relative to the "scan root"
+		if strings.HasPrefix(exclusion, "./") || strings.HasPrefix(exclusion, "*/") || strings.HasPrefix(exclusion, "**/") {
+			exclusion = strings.TrimPrefix(exclusion, "./")
+			exclusions[idx] = root + exclusion
+		} else {
+			errors = append(errors, exclusion)
+		}
+	}
+
+	if errors != nil {
+		return nil, fmt.Errorf("invalid exclusion pattern(s): '%s' (must start with one of: './', '*/', or '**/')", strings.Join(errors, "', '"))
+	}
+
+	return []pathFilterFn{
+		func(path string, _ os.FileInfo) bool {
+			for _, exclusion := range exclusions {
+				matches, err := doublestar.Match(exclusion, path)
+				if err != nil {
+					return false
+				}
+				if matches {
+					return true
+				}
+			}
+			return false
+		},
+	}, nil
 }
