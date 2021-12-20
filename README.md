@@ -93,6 +93,23 @@ file:path/to/yourproject/file          read directly from a path on disk (any si
 registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 ```
 
+### Excluding file paths
+
+Syft can exclude files and paths from being scanned within a source by using glob expressions
+with one or more `--exclude` parameters:
+```
+syft <source> --exclude './out/**/*.json' --exclude /etc
+```
+**Note:** in the case of _image scanning_, since the entire filesystem is scanned it is
+possible to use absolute paths like `/etc` or `/usr/**/*.txt` whereas _directory scans_
+exclude files _relative to the specified directory_. For example: scanning `/usr/foo` with
+`--exclude ./package.json` would exclude `/usr/foo/package.json` and `--exclude '**/package.json'`
+would exclude all `package.json` files under `/usr/foo`. For _directory scans_,
+it is required to begin path expressions with `./`, `*/`, or `**/`, all of which
+will be resolved _relative to the specified scan directory_. Keep in mind, your shell
+may attempt to expand wildcards, so put those parameters in single quotes, like:
+`'**/*.json'`.
+
 ### Output formats
 
 The output format for Syft is configurable as well:
@@ -218,6 +235,12 @@ file: ""
 # enable/disable checking for application updates on startup
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
+
+# a list of globs to exclude from scanning. same as --exclude ; for example:
+# exclude:
+#   - '/etc/**'
+#   - './out/**/*.json'
+exclude:
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
