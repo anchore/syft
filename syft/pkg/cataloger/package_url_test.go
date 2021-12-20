@@ -24,9 +24,30 @@ func TestPackageURL(t *testing.T) {
 		},
 		{
 			pkg: pkg.Package{
-				Name:    "name",
-				Version: "v0.1.0",
+				Name:    "bad-name",
+				Version: "bad-v0.1.0",
 				Type:    pkg.PythonPkg,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:    "name",
+					Version: "v0.1.0",
+					DirectURLOrigin: &pkg.PythonDirectURLOriginInfo{
+						VCS:      "git",
+						URL:      "https://github.com/test/test.git",
+						CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					},
+				},
+			},
+			expected: "pkg:pypi/name@v0.1.0?vcs_url=git+https:%2F%2Fgithub.com%2Ftest%2Ftest.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		},
+		{
+			pkg: pkg.Package{
+				Name:    "bad-name",
+				Version: "bad-v0.1.0",
+				Type:    pkg.PythonPkg,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:    "name",
+					Version: "v0.1.0",
+				},
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
