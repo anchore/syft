@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -61,17 +62,13 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		currentWdRelRoot = filepath.Clean(root)
 	}
 
-	if pathFilters == nil {
-		pathFilters = []pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}
-	}
-
 	resolver := directoryResolver{
 		path:                    root,
 		currentWd:               currentWd,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
 		metadata:                make(map[file.ID]FileMetadata),
-		pathFilterFns:           pathFilters,
+		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
 		refsByMIMEType:          make(map[string][]file.Reference),
 		errPaths:                make(map[string]error),
 		isWindows:               runtime.GOOS == "windows",
@@ -98,7 +95,7 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 	fi, err := os.Stat(root)
 	if err != nil && fi != nil && !fi.IsDir() {
 		// note: we want to index the path regardless of an error stat-ing the path
-		newRoot := r.indexPath(root, fi, nil)
+		newRoot, _ := r.indexPath(root, fi, nil)
 		if newRoot != "" {
 			roots = append(roots, newRoot)
 		}
@@ -109,7 +106,12 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
-			newRoot := r.indexPath(path, info, err)
+			newRoot, err := r.indexPath(path, info, err)
+
+			if err != nil {
+				return err
+			}
+
 			if newRoot != "" {
 				roots = append(roots, newRoot)
 			}
@@ -118,37 +120,39 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		})
 }
 
-func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) string {
+func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {
 	// ignore any path which a filter function returns true
 	for _, filterFn := range r.pathFilterFns {
-		if filterFn(path, info) {
-			return ""
+		if filterFn != nil && filterFn(path, info) {
+			if info.IsDir() {
+				return "", fs.SkipDir
+			}
+			return "", nil
 		}
 	}
 
 	if r.isFileAccessErr(path, err) {
-		return ""
+		return "", nil
 	}
 
 	// link cycles could cause a revisit --we should not allow this
 	if r.fileTree.HasPath(file.Path(path)) {
-		return ""
+		return "", nil
 	}
 
 	if info == nil {
 		// walk may not be able to provide a FileInfo object, don't allow for this to stop indexing; keep track of the paths and continue.
 		r.errPaths[path] = fmt.Errorf("no file info observable at path=%q", path)
-		return ""
+		return "", nil
 	}
 
 	normalizedPath := r.windowsToPosix(path)
-
 	newRoot, err := r.addPathToIndex(normalizedPath, info)
 	if r.isFileAccessErr(normalizedPath, err) {
-		return ""
+		return "", nil
 	}
 
-	return newRoot
+	return newRoot, nil
 }
 
 func (r *directoryResolver) isFileAccessErr(path string, err error) bool {
