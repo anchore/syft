@@ -3,7 +3,7 @@
  "name": "user-image-input",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-12-15T23:56:14.468453Z",
+  "created": "2021-12-20T19:13:07.647486Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
@@ -11,10 +11,10 @@
   "licenseListVersion": "3.15"
  },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-f7c12e3a-8390-4f0d-a4a9-7d756e7e8d7d",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-174da656-1824-4bd3-8604-28919f8a65bc",
  "packages": [
   {
-   "SPDXID": "SPDXRef-b8995af4e6171091",
+   "SPDXID": "SPDXRef-d16127444133b5c1",
    "name": "package-1",
    "licenseConcluded": "MIT",
    "downloadLocation": "NOASSERTION",
@@ -36,7 +36,7 @@
    "versionInfo": "1.0.1"
   },
   {
-   "SPDXID": "SPDXRef-73f796c846875b9e",
+   "SPDXID": "SPDXRef-24907357f3705420",
    "name": "package-2",
    "licenseConcluded": "NONE",
    "downloadLocation": "NOASSERTION",
