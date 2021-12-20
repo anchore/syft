@@ -10,11 +10,13 @@ import (
 
 func TestPackageURL(t *testing.T) {
 	tests := []struct {
+		name     string
 		pkg      pkg.Package
 		distro   *distro.Distro
 		expected string
 	}{
 		{
+			name: "golang",
 			pkg: pkg.Package{
 				Name:    "github.com/anchore/syft",
 				Version: "v0.1.0",
@@ -23,6 +25,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
 		},
 		{
+			name: "pip with vcs url",
 			pkg: pkg.Package{
 				Name:    "bad-name",
 				Version: "bad-v0.1.0",
@@ -40,6 +43,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:pypi/name@v0.1.0?vcs_url=git+https:%2F%2Fgithub.com%2Ftest%2Ftest.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		},
 		{
+			name: "pip without vcs url",
 			pkg: pkg.Package{
 				Name:    "bad-name",
 				Version: "bad-v0.1.0",
@@ -52,6 +56,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:pypi/name@v0.1.0",
 		},
 		{
+			name: "gem",
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
@@ -60,6 +65,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:gem/name@v0.1.0",
 		},
 		{
+			name: "npm",
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
@@ -68,6 +74,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:npm/name@v0.1.0",
 		},
 		{
+			name: "deb with arch",
 			distro: &distro.Distro{
 				Type: distro.Ubuntu,
 			},
@@ -84,6 +91,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:deb/ubuntu/name@v0.1.0?arch=amd64",
 		},
 		{
+			name: "deb with epoch",
 			distro: &distro.Distro{
 				Type: distro.CentOS,
 			},
@@ -102,6 +110,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64&epoch=2",
 		},
 		{
+			name: "deb with nil epoch",
 			distro: &distro.Distro{
 				Type: distro.CentOS,
 			},
@@ -120,6 +129,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64",
 		},
 		{
+			name: "deb with unknown distro",
 			distro: &distro.Distro{
 				Type: distro.UnknownDistroType,
 			},
@@ -131,6 +141,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:deb/name@v0.1.0",
 		},
 		{
+			name: "cargo",
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
@@ -141,7 +152,7 @@ func TestPackageURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(string(test.pkg.Type)+"|"+test.expected, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			actual := generatePackageURL(test.pkg, test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
