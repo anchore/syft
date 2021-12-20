@@ -55,6 +55,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 				"test-fixtures/dist-info/METADATA",
 				"test-fixtures/dist-info/RECORD",
 				"test-fixtures/dist-info/top_level.txt",
+				"test-fixtures/dist-info/direct_url.json",
 			},
 			expectedPackage: pkg.Package{
 				Name:         "Pygments",
@@ -82,6 +83,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 						{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
 					},
 					TopLevelPackages: []string{"pygments", "something_else"},
+					DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
 				},
 			},
 		},
