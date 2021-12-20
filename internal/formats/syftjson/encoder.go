@@ -8,7 +8,7 @@ import (
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {
-	doc := ToFormatModel(s)
+	doc := toFormatModel(s)
 
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload

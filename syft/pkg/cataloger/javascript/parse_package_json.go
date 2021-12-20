@@ -50,7 +50,6 @@ type Repository struct {
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
-// Exports Author.UnmarshalJSON interface to help normalize the json structure.
 func (a *Author) UnmarshalJSON(b []byte) error {
 	var authorStr string
 	var fields map[string]string
@@ -135,7 +134,7 @@ func licenseFromJSON(b []byte) (string, error) {
 	return "", errors.New("unable to unmarshal license field as either string or object")
 }
 
-func licensesFromJSON(p PackageJSON) ([]string, error) {
+func (p PackageJSON) licensesFromJSON() ([]string, error) {
 	if p.License == nil && p.Licenses == nil {
 		// This package.json doesn't specify any licenses whatsoever
 		return []string{}, nil
@@ -163,8 +162,8 @@ func licensesFromJSON(p PackageJSON) ([]string, error) {
 }
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	var packages []pkg.Package
+func parsePackageJSON(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	var packages []*pkg.Package
 	dec := json.NewDecoder(reader)
 
 	for {
@@ -180,28 +179,32 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, []artifact.Rel
 			return nil, nil, nil
 		}
 
-		licenses, err := licensesFromJSON(p)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
-		}
-
-		packages = append(packages, pkg.Package{
-			Name:         p.Name,
-			Version:      p.Version,
-			Licenses:     licenses,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageJSONMetadataType,
-			Metadata: pkg.NpmPackageJSONMetadata{
-				Author:   p.Author.AuthorString(),
-				Homepage: p.Homepage,
-				URL:      p.Repository.URL,
-				Licenses: licenses,
-			},
-		})
+		packages = append(packages, newPackageJSONPackage(p))
 	}
 
 	return packages, nil, nil
+}
+
+func newPackageJSONPackage(p PackageJSON) *pkg.Package {
+	licenses, err := p.licensesFromJSON()
+	if err != nil {
+		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
+	}
+
+	return &pkg.Package{
+		Name:         p.Name,
+		Version:      p.Version,
+		Licenses:     licenses,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageJSONMetadataType,
+		Metadata: pkg.NpmPackageJSONMetadata{
+			Author:   p.Author.AuthorString(),
+			Homepage: p.Homepage,
+			URL:      p.Repository.URL,
+			Licenses: licenses,
+		},
+	}
 }
 
 func (p PackageJSON) hasNameAndVersionValues() bool {

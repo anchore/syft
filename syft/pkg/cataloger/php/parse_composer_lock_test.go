@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseComposerFileLock(t *testing.T) {
-	expected := []pkg.Package{
+	expected := []*pkg.Package{
 		{
 			Name:     "adoy/fastcgi-client",
 			Version:  "1.0.2",

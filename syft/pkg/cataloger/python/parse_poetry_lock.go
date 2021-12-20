@@ -14,7 +14,7 @@ import (
 var _ common.ParserFn = parsePoetryLock
 
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
-func parsePoetryLock(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePoetryLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to load poetry.lock for parsing: %v", err)

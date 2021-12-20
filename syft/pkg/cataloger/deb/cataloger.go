@@ -68,6 +68,8 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 
 			// fetch additional data from the copyright file to derive the license information
 			addLicenses(resolver, dbLocation, p)
+
+			p.SetID()
 		}
 
 		allPackages = append(allPackages, pkgs...)

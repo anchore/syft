@@ -19,8 +19,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-// TODO: this is exported for the use of the power-user command (temp)
-func ToFormatModel(s sbom.SBOM) model.Document {
+func toFormatModel(s sbom.SBOM) model.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil {
 		log.Warnf("unable to create syft-json source object: %+v", err)

@@ -87,7 +87,7 @@ func TestParseGoMod(t *testing.T) {
 					continue
 				}
 
-				diffs := deep.Equal(a, e)
+				diffs := deep.Equal(a, &e)
 				if len(diffs) > 0 {
 					t.Errorf("diffs found for %q", a.Name)
 					for _, d := range diffs {
