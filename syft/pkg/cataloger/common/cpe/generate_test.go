@@ -340,9 +340,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:some_vendor:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name:name:1\\:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:some-vendor:name:1\\:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:some_vendor:name:1\\:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -356,7 +356,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Metadata:     pkg.DpkgMetadata{},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:name:name:1\\:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -554,7 +554,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
 			for _, a := range actual {
-				actualCpeSet.Add(a.BindToFmtString())
+				actualCpeSet.Add(pkg.CPEString(a))
 			}
 
 			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()

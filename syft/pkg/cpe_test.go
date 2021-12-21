@@ -43,8 +43,8 @@ func TestNewCPE(t *testing.T) {
 				t.Fatalf("got an error while creating CPE: %+v", err)
 			}
 
-			if actual.BindToFmtString() != test.expected.BindToFmtString() {
-				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", test.expected.BindToFmtString(), actual.BindToFmtString())
+			if CPEString(actual) != CPEString(test.expected) {
+				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", CPEString(test.expected), CPEString(actual))
 			}
 
 		})

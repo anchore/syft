@@ -66,3 +66,35 @@ func normalizeCpeField(field string) string {
 	}
 	return strings.ReplaceAll(wfn.StripSlashes(field), `\/`, "/")
 }
+
+func CPEString(c CPE) string {
+	output := CPE{}
+	output.Vendor = WFNize(c.Vendor)
+	output.Product = WFNize(c.Product)
+	output.Language = WFNize(c.Language)
+	output.Version = WFNize(c.Version)
+	output.TargetSW = WFNize(c.TargetSW)
+	output.Part = WFNize(c.Part)
+	output.Edition = WFNize(c.Edition)
+	output.Other = WFNize(c.Other)
+	output.SWEdition = WFNize(c.SWEdition)
+	output.TargetHW = WFNize(c.TargetHW)
+	output.Update = WFNize(c.Update)
+	return output.BindToFmtString()
+}
+
+func WFNize(s string) string {
+	const allowedPunct = "-!\"#$%&'()+,./:;<=>@[]^`{|}!~"
+	// replace spaces with underscores
+	in := strings.ReplaceAll(s, " ", "_")
+	buf := make([]byte, 0, 2*len(in))
+	for _, c := range in {
+		c := byte(c)
+		if strings.IndexByte(allowedPunct, c) != -1 {
+			buf = append(buf, '\\', c)
+		} else {
+			buf = append(buf, c)
+		}
+	}
+	return string(buf)
+}

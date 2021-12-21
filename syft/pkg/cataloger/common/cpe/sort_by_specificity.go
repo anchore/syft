@@ -29,6 +29,9 @@ func (c BySpecificity) Less(i, j int) bool {
 	}
 
 	// if score and length are equal then text sort
+	// note that we are not using CPEString from the syft pkg
+	// as we are not encoding/decoding this CPE string so we don't
+	// need the proper quoted version of the CPE.
 	return c[i].BindToFmtString() < c[j].BindToFmtString()
 }
 
