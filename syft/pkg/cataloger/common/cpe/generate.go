@@ -12,35 +12,14 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-func newCPE(product, vendor, version, targetSW string) (wfn.Attributes, error) {
-	var err error
+func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	cpe := *(wfn.NewAttributesWithAny())
 	cpe.Part = "a"
-	if cpe.Product, err = sanitize(product); err != nil {
-		return *(wfn.NewAttributesWithAny()), err
-	}
-	if cpe.Vendor, err = sanitize(vendor); err != nil {
-		return *(wfn.NewAttributesWithAny()), err
-	}
-	if cpe.Version, err = sanitize(version); err != nil {
-		return *(wfn.NewAttributesWithAny()), err
-	}
-	if cpe.TargetSW, err = sanitize(targetSW); err != nil {
-		return *(wfn.NewAttributesWithAny()), err
-	}
-	return cpe, nil
-}
-
-func sanitize(input string) (string, error) {
-	// WFNize from thw nvdtools package has a bug where if it encounters
-	// ':' in the input strings, it will truncate all output in the string after ':'
-	// instead of correctly quoting it. For now, let's just throw and error and prevent generation
-	// of invalid CPEs with incorrect/truncated data.
-	// This is similar to how we filter CPEs in the filter handler
-	if strings.Contains(input, ":") {
-		return "", fmt.Errorf("unable to sanitize strings that contain ':' correctly")
-	}
-	return wfn.WFNize(input)
+	cpe.Product = product
+	cpe.Vendor = vendor
+	cpe.Version = version
+	cpe.TargetSW = targetSW
+	return cpe
 }
 
 // Generate Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
@@ -64,11 +43,8 @@ func Generate(p pkg.Package) []pkg.CPE {
 				continue
 			}
 			keys.Add(key)
-
 			// add a new entry...
-			if cpe, err := newCPE(product, vendor, version, wfn.Any); err == nil {
-				cpes = append(cpes, cpe)
-			}
+			cpes = append(cpes, newCPE(product, vendor, version, wfn.Any))
 		}
 	}
 
