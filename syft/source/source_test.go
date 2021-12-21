@@ -420,7 +420,7 @@ func TestDirectoryExclusions(t *testing.T) {
 	registryOpts := &image.RegistryOptions{}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, fn, err := New("dir:"+test.input, registryOpts, test.exclusions...)
+			src, fn, err := New("dir:"+test.input, registryOpts, test.exclusions)
 			defer fn()
 
 			if test.err {
@@ -512,7 +512,7 @@ func TestImageExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
-			src, fn, err := New(archiveLocation, registryOpts, test.exclusions...)
+			src, fn, err := New(archiveLocation, registryOpts, test.exclusions)
 			defer fn()
 
 			if err != nil {
