@@ -14,7 +14,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 
-	theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil)
+	theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil, nil)
 	t.Cleanup(cleanupSource)
 	if err != nil {
 		t.Fatalf("unable to get source: %+v", err)
@@ -45,7 +45,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 }
 
 func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
-	theSource, cleanupSource, err := source.New("dir:"+dir, nil)
+	theSource, cleanupSource, err := source.New("dir:"+dir, nil, nil)
 	t.Cleanup(cleanupSource)
 	if err != nil {
 		t.Fatalf("unable to get source: %+v", err)
