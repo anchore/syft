@@ -51,7 +51,7 @@ func New(userInput string, registryOptions *image.RegistryOptions, exclusions ..
 	case DirectoryScheme:
 		source, cleanupFn, err = generateDirectorySource(fs, location)
 	case ImageScheme:
-		source, cleanupFn, err = generateImageSource(location, imageSource, registryOptions)
+		source, cleanupFn, err = generateImageSource(userInput, location, imageSource, registryOptions)
 	default:
 		err = fmt.Errorf("unable to process input for scanning: '%s'", userInput)
 	}
@@ -63,15 +63,8 @@ func New(userInput string, registryOptions *image.RegistryOptions, exclusions ..
 	return source, cleanupFn, err
 }
 
-func generateImageSource(location string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source,
-	func(), error) {
-	img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cleanup := stereoscope.Cleanup
-
+func generateImageSource(userInput, location string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source, func(), error) {
+	img, cleanup, err := getImageWithRetryStrategy(userInput, location, imageSource, registryOptions)
 	if err != nil || img == nil {
 		return &Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
 	}
@@ -82,6 +75,51 @@ func generateImageSource(location string, imageSource image.Source, registryOpti
 	}
 
 	return &s, cleanup, nil
+}
+
+func parseScheme(userInput string) string {
+	parts := strings.SplitN(userInput, ":", 2)
+	if len(parts) < 2 {
+		return ""
+	}
+
+	return parts[0]
+}
+
+func getImageWithRetryStrategy(userInput, location string, imageSource image.Source, registryOptions *image.RegistryOptions) (*image.Image, func(), error) {
+	img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
+	if err == nil {
+		// Success on the first try!
+		return img, stereoscope.Cleanup, nil
+	}
+
+	scheme := parseScheme(userInput)
+	if !(scheme == "docker" || scheme == "registry") {
+		// Image retrieval failed, and we shouldn't retry it. It's most likely that the
+		// user _did_ intend the parsed scheme, but there was a legitimate failure with
+		// using the scheme to load the image. Alert the user to this failure, so they
+		// can fix the problem.
+		return nil, nil, err
+	}
+
+	// Maybe the user wanted "docker" or "registry" to refer to an _image name_
+	// (e.g. "docker:latest"), not a scheme. We'll retry image retrieval with this
+	// alternative interpretation, in an attempt to avoid unnecessary user friction.
+
+	log.Warnf(
+		"scheme %q specified, but it coincides with a common image name; re-examining user input %q"+
+			" without scheme parsing because image retrieval using scheme parsing was unsuccessful: %v",
+		scheme,
+		userInput,
+		err,
+	)
+
+	img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return img, stereoscope.Cleanup, nil
 }
 
 func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {
