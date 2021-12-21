@@ -142,7 +142,7 @@ func toPackageModels(catalog *pkg.Catalog) []model.Package {
 func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = c.BindToFmtString()
+		cpes[i] = pkg.CPEString(c)
 	}
 
 	var licenses = make([]string, 0)

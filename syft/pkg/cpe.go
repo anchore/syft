@@ -66,3 +66,47 @@ func normalizeCpeField(field string) string {
 	}
 	return strings.ReplaceAll(wfn.StripSlashes(field), `\/`, "/")
 }
+
+func CPEString(c CPE) string {
+	output := CPE{}
+	output.Vendor = sanitize(c.Vendor)
+	output.Product = sanitize(c.Product)
+	output.Language = sanitize(c.Language)
+	output.Version = sanitize(c.Version)
+	output.TargetSW = sanitize(c.TargetSW)
+	output.Part = sanitize(c.Part)
+	output.Edition = sanitize(c.Edition)
+	output.Other = sanitize(c.Other)
+	output.SWEdition = sanitize(c.SWEdition)
+	output.TargetHW = sanitize(c.TargetHW)
+	output.Update = sanitize(c.Update)
+	return output.BindToFmtString()
+}
+
+// sanitize is a modified version of WFNize function from nvdtools
+// that quotes all the allowed punctation chars with a slash and replaces
+// spaces with underscores. It differs from the upstream implmentation as
+// it does not use the buggy nvdtools implementation, specifically the "addSlashesAt" part of the
+// function which stops the loop as soon as it encounters ":" a valid
+// character for a WFN attribute after quoting, but the way nvdtools
+// handles it causes it to truncate strings that container ":". As a result
+// strings like "prefix:1.2" which would have been quoted as "prefix\:1.2"
+// end up becoming "prefix" instead causing loss of information and
+// incorrect CPEs being generated.
+func sanitize(s string) string {
+	const allowedPunct = "-!\"#$%&'()+,./:;<=>@[]^`{|}!~"
+	// replace spaces with underscores
+	in := strings.ReplaceAll(s, " ", "_")
+	// we allocate 2x the input to the buffer assuming
+	// we have to quote every character in the input
+	buf := make([]byte, 0, 2*len(in))
+	for _, c := range in {
+		c := byte(c)
+		if strings.IndexByte(allowedPunct, c) != -1 {
+			buf = append(buf, '\\', c)
+		} else {
+			buf = append(buf, c)
+		}
+	}
+	return string(buf)
+}

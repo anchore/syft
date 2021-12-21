@@ -28,7 +28,6 @@ func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 func Generate(p pkg.Package) []pkg.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
-	version := sanitizeVersion(p)
 	if len(products) == 0 {
 		return nil
 	}
@@ -38,13 +37,13 @@ func Generate(p pkg.Package) []pkg.CPE {
 	for _, product := range products {
 		for _, vendor := range vendors {
 			// prevent duplicate entries...
-			key := fmt.Sprintf("%s|%s|%s", product, vendor, version)
+			key := fmt.Sprintf("%s|%s|%s", product, vendor, p.Version)
 			if keys.Contains(key) {
 				continue
 			}
 			keys.Add(key)
 			// add a new entry...
-			cpes = append(cpes, newCPE(product, vendor, version, wfn.Any))
+			cpes = append(cpes, newCPE(product, vendor, p.Version, wfn.Any))
 		}
 	}
 
@@ -54,21 +53,6 @@ func Generate(p pkg.Package) []pkg.CPE {
 	sort.Sort(BySpecificity(cpes))
 
 	return cpes
-}
-
-func sanitizeVersion(p pkg.Package) string {
-	v := p.Version
-	switch p.MetadataType {
-	case pkg.DpkgMetadataType, pkg.RpmdbMetadataType:
-		o := strings.SplitN(p.Version, ":", 2)
-		// If the version contains ":", it means the version
-		// contains an epoch and is of the form "{epoch}:{actualVersion}"
-		// in this case we extract out the actual version for further usage
-		if len(o) > 1 {
-			v = o[1]
-		}
-	}
-	return v
 }
 
 func candidateVendors(p pkg.Package) []string {
