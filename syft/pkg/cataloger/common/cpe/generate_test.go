@@ -328,6 +328,38 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			name: "rpm with epoch",
+			p: pkg.Package{
+				Name:         "name",
+				Version:      "1:3.2",
+				FoundBy:      "some-analyzer",
+				Type:         pkg.RpmPkg,
+				MetadataType: pkg.RpmdbMetadataType,
+				Metadata: pkg.RpmdbMetadata{
+					Vendor: "some-vendor",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:some_vendor:name:3.2:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "deb with epoch",
+			p: pkg.Package{
+				Name:         "name",
+				Version:      "1:3.2",
+				FoundBy:      "some-analyzer",
+				Type:         pkg.DebPkg,
+				MetadataType: pkg.DpkgMetadataType,
+				Metadata:     pkg.DpkgMetadata{},
+			},
+			expected: []string{
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "cloudbees jenkins package identified via groupId",
 			p: pkg.Package{
 				Name:     "name",

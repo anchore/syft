@@ -32,7 +32,7 @@ func TestNewCPE(t *testing.T) {
 		{
 			name:     "URL escape characters",
 			input:    `cpe:/a:%240.99_kindle_books_project:%240.99_kindle_books:6::~~~android~~`,
-			expected: must(NewCPE(`cpe:2.3:a:$0.99_kindle_books_project:$0.99_kindle_books:6:*:*:*:*:android:*:*`)),
+			expected: must(NewCPE(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`)),
 		},
 	}
 

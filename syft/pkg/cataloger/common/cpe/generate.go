@@ -12,15 +12,35 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
+func newCPE(product, vendor, version, targetSW string) (wfn.Attributes, error) {
+	var err error
 	cpe := *(wfn.NewAttributesWithAny())
 	cpe.Part = "a"
-	cpe.Product = product
-	cpe.Vendor = vendor
-	cpe.Version = version
-	cpe.TargetSW = targetSW
+	if cpe.Product, err = sanitize(product); err != nil {
+		return *(wfn.NewAttributesWithAny()), err
+	}
+	if cpe.Vendor, err = sanitize(vendor); err != nil {
+		return *(wfn.NewAttributesWithAny()), err
+	}
+	if cpe.Version, err = sanitize(version); err != nil {
+		return *(wfn.NewAttributesWithAny()), err
+	}
+	if cpe.TargetSW, err = sanitize(targetSW); err != nil {
+		return *(wfn.NewAttributesWithAny()), err
+	}
+	return cpe, nil
+}
 
-	return cpe
+func sanitize(input string) (string, error) {
+	// WFNize from thw nvdtools package has a bug where if it encounters
+	// ':' in the input strings, it will truncate all output in the string after ':'
+	// instead of correctly quoting it. For now, let's just throw and error and prevent generation
+	// of invalid CPEs with incorrect/truncated data.
+	// This is similar to how we filter CPEs in the filter handler
+	if strings.Contains(input, ":") {
+		return "", fmt.Errorf("unable to sanitize strings that contain ':' correctly")
+	}
+	return wfn.WFNize(input)
 }
 
 // Generate Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
@@ -29,7 +49,7 @@ func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 func Generate(p pkg.Package) []pkg.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
-
+	version := sanitizeVersion(p)
 	if len(products) == 0 {
 		return nil
 	}
@@ -39,14 +59,16 @@ func Generate(p pkg.Package) []pkg.CPE {
 	for _, product := range products {
 		for _, vendor := range vendors {
 			// prevent duplicate entries...
-			key := fmt.Sprintf("%s|%s|%s", product, vendor, p.Version)
+			key := fmt.Sprintf("%s|%s|%s", product, vendor, version)
 			if keys.Contains(key) {
 				continue
 			}
 			keys.Add(key)
 
 			// add a new entry...
-			cpes = append(cpes, newCPE(product, vendor, p.Version, wfn.Any))
+			if cpe, err := newCPE(product, vendor, version, wfn.Any); err == nil {
+				cpes = append(cpes, cpe)
+			}
 		}
 	}
 
@@ -56,6 +78,21 @@ func Generate(p pkg.Package) []pkg.CPE {
 	sort.Sort(BySpecificity(cpes))
 
 	return cpes
+}
+
+func sanitizeVersion(p pkg.Package) string {
+	v := p.Version
+	switch p.MetadataType {
+	case pkg.DpkgMetadataType, pkg.RpmdbMetadataType:
+		o := strings.SplitN(p.Version, ":", 2)
+		// If the version contains ":", it means the version
+		// contains an epoch and is of the form "{epoch}:{actualVersion}"
+		// in this case we extract out the actual version for further usage
+		if len(o) > 1 {
+			v = o[1]
+		}
+	}
+	return v
 }
 
 func candidateVendors(p pkg.Package) []string {
