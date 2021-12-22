@@ -11,6 +11,7 @@ import (
 
 func checkForApplicationUpdate() {
 	if appConfig.CheckForAppUpdate {
+		log.Debugf("checking if new vesion of %s is available", internal.ApplicationName)
 		isAvailable, newVersion, err := version.IsUpdateAvailable()
 		if err != nil {
 			// this should never stop the application
