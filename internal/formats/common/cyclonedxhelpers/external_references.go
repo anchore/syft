@@ -18,6 +18,14 @@ func ExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 					Type: cyclonedx.ERTypeDistribution,
 				})
 			}
+		case pkg.CargoPackageMetadata:
+			if metadata.Source != "" {
+				refs = append(refs, cyclonedx.ExternalReference{
+					URL:  metadata.Source,
+					Type: cyclonedx.ERTypeDistribution,
+				})
+
+			}
 		case pkg.NpmPackageJSONMetadata:
 			if metadata.URL != "" {
 				refs = append(refs, cyclonedx.ExternalReference{
@@ -40,11 +48,14 @@ func ExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 			}
 		case pkg.PythonPackageMetadata:
 			if metadata.DirectURLOrigin != nil && metadata.DirectURLOrigin.URL != "" {
-				refs = append(refs, cyclonedx.ExternalReference{
-					URL:     metadata.DirectURLOrigin.URL,
-					Type:    cyclonedx.ERTypeVCS,
-					Comment: fmt.Sprintf("commit: %s", metadata.DirectURLOrigin.CommitID),
-				})
+				ref := cyclonedx.ExternalReference{
+					URL:  metadata.DirectURLOrigin.URL,
+					Type: cyclonedx.ERTypeVCS,
+				}
+				if metadata.DirectURLOrigin.CommitID != "" {
+					ref.Comment = fmt.Sprintf("commit: %s", metadata.DirectURLOrigin.CommitID)
+				}
+				refs = append(refs, ref)
 			}
 		}
 	}

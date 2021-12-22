@@ -44,5 +44,11 @@ func getCycloneDXPropertyValue(field reflect.Value) string {
 	if field.IsZero() {
 		return ""
 	}
-	return fmt.Sprint(field.Interface())
+	switch field.Kind() {
+	case reflect.String, reflect.Bool, reflect.Int, reflect.Float32, reflect.Float64, reflect.Complex128, reflect.Complex64:
+		return fmt.Sprint(field.Interface())
+	case reflect.Ptr:
+		return getCycloneDXPropertyValue(reflect.Indirect(field))
+	}
+	return ""
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:3313340e-51ba-48a4-883a-f5990226d703" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:e63c17e1-cfa6-4d8b-a44a-0eacb32c8dc9" version="1">
   <metadata>
-    <timestamp>2021-12-21T11:37:00Z</timestamp>
+    <timestamp>2021-12-22T17:43:39Z</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -20,7 +20,7 @@
       <version>1.0.1</version>
       <licenses>
         <license>
-          <name>MIT</name>
+          <id>MIT</id>
         </license>
       </licenses>
       <cpe>cpe:2.3:*:some:package:1:*:*:*:*:*:*:*</cpe>

@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.3",
-  "serialNumber": "urn:uuid:9c652af0-4967-4268-a9fd-ac965e41ae1a",
+  "serialNumber": "urn:uuid:a56797f7-20ec-4861-b6c9-33557082cdef",
   "version": 1,
   "metadata": {
-    "timestamp": "2021-12-21T11:36:14Z",
+    "timestamp": "2021-12-22T17:43:26Z",
     "tools": [
       {
         "vendor": "anchore",
@@ -26,7 +26,7 @@
       "licenses": [
         {
           "license": {
-            "name": "MIT"
+            "id": "MIT"
           }
         }
       ],

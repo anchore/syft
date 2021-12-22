@@ -18,6 +18,7 @@ func Component(p pkg.Package) cyclonedx.Component {
 		Description:        Description(p),
 		ExternalReferences: ExternalReferences(p),
 		Properties:         Properties(p),
+		Hashes:             Hashes(p),
 	}
 }
 
