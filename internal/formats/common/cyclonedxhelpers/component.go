@@ -17,6 +17,7 @@ func Component(p pkg.Package) cyclonedx.Component {
 		Publisher:          Publisher(p),
 		Description:        Description(p),
 		ExternalReferences: ExternalReferences(p),
+		Properties:         Properties(p),
 	}
 }
 
