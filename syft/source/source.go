@@ -114,6 +114,7 @@ func getImageWithRetryStrategy(userInput, location string, imageSource image.Sou
 		err,
 	)
 
+	imageSource = image.DetermineImagePullSource(userInput)
 	img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
 	if err != nil {
 		return nil, nil, err
