@@ -64,7 +64,24 @@ func normalizeCpeField(field string) string {
 	if field == "*" {
 		return wfn.Any
 	}
-	return strings.ReplaceAll(wfn.StripSlashes(field), `\/`, "/")
+	return stripSlashes(field)
+}
+
+// stripSlashes is a reverse of the sanitize function below.
+// It correctly removes slashes that are followed by allowed puncts.
+// This is to allow for a correct round trip parsing of cpes with quoted characters.
+func stripSlashes(s string) string {
+	const allowedPunct = "-!\"#$%&'()+,./:;<=>@[]^`{|}!~"
+	buf := make([]byte, 0, len(s))
+	for i, c := range s {
+		c := byte(c)
+		if c == '\\' && i+1 < len(s) && strings.IndexByte(allowedPunct, s[i+1]) != -1 {
+			continue
+		} else {
+			buf = append(buf, c)
+		}
+	}
+	return string(buf)
 }
 
 func CPEString(c CPE) string {

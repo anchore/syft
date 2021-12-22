@@ -80,3 +80,55 @@ func Test_normalizeCpeField(t *testing.T) {
 		})
 	}
 }
+
+func Test_RoundTrip(t *testing.T) {
+	tests := []struct {
+		name      string
+		cpe       string
+		parsedCPE CPE
+	}{
+		{
+			name: "normal",
+			cpe:  "cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
+			parsedCPE: CPE{
+				Part:    "a",
+				Vendor:  "some-vendor",
+				Product: "name",
+				Version: "3.2",
+			},
+		},
+		{
+			name: "escaped colon",
+			cpe:  "cpe:2.3:a:some-vendor:name:1\\:3.2:*:*:*:*:*:*:*",
+			parsedCPE: CPE{
+				Part:    "a",
+				Vendor:  "some-vendor",
+				Product: "name",
+				Version: "1:3.2",
+			},
+		},
+		{
+			name: "escaped forward slash",
+			cpe:  "cpe:2.3:a:test\\/some-vendor:name:3.2:*:*:*:*:*:*:*",
+			parsedCPE: CPE{
+				Part:    "a",
+				Vendor:  "test/some-vendor",
+				Product: "name",
+				Version: "3.2",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// CPE string must be preserved through a round trip
+			assert.Equal(t, test.cpe, CPEString(MustCPE(test.cpe)))
+			// The parsed CPE must be the same after a round trip
+			assert.Equal(t, MustCPE(test.cpe), MustCPE(CPEString(MustCPE(test.cpe))))
+			// The test case parsed CPE must be the same after parsing the input string
+			assert.Equal(t, test.parsedCPE, MustCPE(test.cpe))
+			// The test case parsed CPE must produce the same string as the input cpe
+			assert.Equal(t, CPEString(test.parsedCPE), test.cpe)
+		})
+	}
+}
