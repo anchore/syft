@@ -114,6 +114,8 @@ func getImageWithRetryStrategy(userInput, location string, imageSource image.Sou
 		err,
 	)
 
+	// We need to determine the image source again, such that this determination
+	// doesn't take scheme parsing into account.
 	imageSource = image.DetermineImagePullSource(userInput)
 	img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
 	if err != nil {
