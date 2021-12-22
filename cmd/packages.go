@@ -262,7 +262,7 @@ func packagesExecWorker(userInput string) <-chan error {
 
 		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 		if err != nil {
-			errs <- fmt.Errorf("failed to determine image source: %w", err)
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 			return
 		}
 		if cleanup != nil {
