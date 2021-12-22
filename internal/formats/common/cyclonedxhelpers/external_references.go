@@ -24,7 +24,6 @@ func ExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 					URL:  metadata.Source,
 					Type: cyclonedx.ERTypeDistribution,
 				})
-
 			}
 		case pkg.NpmPackageJSONMetadata:
 			if metadata.URL != "" {

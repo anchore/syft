@@ -49,30 +49,6 @@ func Test_Properties(t *testing.T) {
 			},
 		},
 		{
-			name: "from cargo",
-			input: pkg.Package{
-				Name:         "ansi_term",
-				Version:      "0.12.1",
-				Language:     pkg.Rust,
-				Type:         pkg.RustPkg,
-				MetadataType: pkg.RustCargoPackageMetadataType,
-				Licenses:     nil,
-				Metadata: pkg.CargoPackageMetadata{
-					Name:     "ansi_term",
-					Version:  "0.12.1",
-					Source:   "registry+https://github.com/rust-lang/crates.io-index",
-					Checksum: "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2",
-					Dependencies: []string{
-						"winapi",
-					},
-				},
-			},
-			expected: &[]cyclonedx.Property{
-				{Name: "source", Value: "registry+https://github.com/rust-lang/crates.io-index"},
-				{Name: "checksum", Value: "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"},
-			},
-		},
-		{
 			name: "from dpkg",
 			input: pkg.Package{
 				MetadataType: pkg.DpkgMetadataType,
