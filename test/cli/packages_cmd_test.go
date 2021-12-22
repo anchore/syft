@@ -7,7 +7,7 @@ import (
 
 func TestPackagesCmdFlags(t *testing.T) {
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
-	badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
+	//badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
 
 	tests := []struct {
 		name       string
@@ -32,20 +32,26 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
-		{
-			name: "regression-survive-bad-binaries",
-			// this image has all sorts of rich binaries from the clang-13 test suite that should do pretty bad things
-			// to the go cataloger binary path. We should NEVER let a panic stop the cataloging process for these
-			// specific cases.
-
-			// this is more of an integration test, however, to assert the output we want to see from the application
-			// a CLI test is much easier.
-			args: []string{"packages", "-vv", badBinariesImage},
-			assertions: []traitAssertion{
-				assertInOutput("could not parse possible go binary"),
-				assertSuccessfulReturnCode,
-			},
-		},
+		// I haven't been able to reproduce locally yet, but in CI this has proven to be unstable:
+		// For the same commit:
+		//   pass: https://github.com/anchore/syft/runs/4611344142?check_suite_focus=true
+		//   fail: https://github.com/anchore/syft/runs/4611343586?check_suite_focus=true
+		// For the meantime this test will be commented out, but should be added back in as soon as possible.
+		//
+		//{
+		//	name: "regression-survive-bad-binaries",
+		//	// this image has all sorts of rich binaries from the clang-13 test suite that should do pretty bad things
+		//	// to the go cataloger binary path. We should NEVER let a panic stop the cataloging process for these
+		//	// specific cases.
+		//
+		//	// this is more of an integration test, however, to assert the output we want to see from the application
+		//	// a CLI test is much easier.
+		//	args: []string{"packages", "-vv", badBinariesImage},
+		//	assertions: []traitAssertion{
+		//		assertInOutput("could not parse possible go binary"),
+		//		assertSuccessfulReturnCode,
+		//	},
+		//},
 		{
 			name: "output-env-binding",
 			env: map[string]string{
