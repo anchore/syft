@@ -1,17 +1,19 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/spf13/cobra"
+	"sort"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/logger"
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/gookit/color"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
 )
@@ -28,6 +30,8 @@ func init() {
 		initAppConfig,
 		initLogging,
 		logAppConfig,
+		checkForApplicationUpdate,
+		logAppVersion,
 		initEventBus,
 	)
 }
@@ -109,4 +113,34 @@ func initEventBus() {
 
 	stereoscope.SetBus(eventBus)
 	syft.SetBus(eventBus)
+}
+
+func logAppVersion() {
+	versionInfo := version.FromBuild()
+	log.Infof("syft version: %s", versionInfo.Version)
+
+	var fields map[string]interface{}
+	bytes, err := json.Marshal(versionInfo)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(bytes, &fields)
+	if err != nil {
+		return
+	}
+
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for idx, field := range keys {
+		value := fields[field]
+		branch := "├──"
+		if idx == len(fields)-1 {
+			branch = "└──"
+		}
+		log.Debugf("  %s %s: %s", branch, field, value)
+	}
 }
