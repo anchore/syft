@@ -5,6 +5,7 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,6 +24,10 @@ func Test_Properties(t *testing.T) {
 		{
 			name: "from apk",
 			input: pkg.Package{
+				FoundBy: "cataloger",
+				Locations: []source.Location{
+					{Coordinates: source.Coordinates{RealPath: "test"}},
+				},
 				Metadata: pkg.ApkMetadata{
 					Package:          "libc-utils",
 					OriginPackage:    "libc-dev",
@@ -41,6 +46,8 @@ func Test_Properties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
+				{Name: "foundBy", Value: "cataloger"},
+				{Name: "path", Value: "test"},
 				{Name: "originPackage", Value: "libc-dev"},
 				{Name: "installedSize", Value: "4096"},
 				{Name: "pullDependencies", Value: "musl-utils"},
@@ -64,6 +71,7 @@ func Test_Properties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
+				{Name: "metadataType", Value: "DpkgMetadata"},
 				{Name: "source", Value: "tzdata-dev"},
 				{Name: "sourceVersion", Value: "1.0"},
 				{Name: "installedSize", Value: "3036"},
@@ -84,6 +92,9 @@ func Test_Properties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
+				{Name: "language", Value: pkg.Go.String()},
+				{Name: "type", Value: "go-module"},
+				{Name: "metadataType", Value: "GolangBinMetadata"},
 				{Name: "goCompiledVersion", Value: "1.17"},
 				{Name: "architecture", Value: "amd64"},
 				{Name: "h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
@@ -110,6 +121,8 @@ func Test_Properties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
+				{Name: "type", Value: "rpm"},
+				{Name: "metadataType", Value: "RpmdbMetadata"},
 				{Name: "epoch", Value: "2"},
 				{Name: "release", Value: "1"},
 				{Name: "sourceRpm", Value: "dive-0.9.2-1.src.rpm"},

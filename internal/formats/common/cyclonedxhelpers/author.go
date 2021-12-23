@@ -1,6 +1,9 @@
 package cyclonedxhelpers
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -11,13 +14,16 @@ func Author(p pkg.Package) string {
 			return metadata.Author
 		case pkg.PythonPackageMetadata:
 			author := metadata.Author
-			if author == "" {
-				return metadata.AuthorEmail
+			if metadata.AuthorEmail != "" {
+				if author == "" {
+					return metadata.AuthorEmail
+				}
+				author += fmt.Sprintf(" <%s>", metadata.AuthorEmail)
 			}
 			return author
 		case pkg.GemMetadata:
 			if len(metadata.Authors) > 0 {
-				return metadata.Authors[0]
+				return strings.Join(metadata.Authors, ",")
 			}
 			return ""
 		}

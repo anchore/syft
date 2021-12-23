@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.3",
-  "serialNumber": "urn:uuid:5d7c461c-a541-4184-bf61-ff12ab62a2e8",
+  "serialNumber": "urn:uuid:34bcb4d1-f9b2-45d3-86fb-b1de69793365",
   "version": 1,
   "metadata": {
-    "timestamp": "2021-12-22T17:43:25Z",
+    "timestamp": "2022-01-06T21:48:04Z",
     "tools": [
       {
         "vendor": "anchore",
@@ -31,14 +31,65 @@
         }
       ],
       "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-      "purl": "a-purl-2"
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "foundBy",
+          "value": "the-cataloger-1"
+        },
+        {
+          "name": "language",
+          "value": "python"
+        },
+        {
+          "name": "type",
+          "value": "python"
+        },
+        {
+          "name": "metadataType",
+          "value": "PythonPackageMetadata"
+        },
+        {
+          "name": "path",
+          "value": "/some/path/pkg1"
+        }
+      ]
     },
     {
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
       "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-      "purl": "a-purl-2"
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "foundBy",
+          "value": "the-cataloger-2"
+        },
+        {
+          "name": "type",
+          "value": "deb"
+        },
+        {
+          "name": "metadataType",
+          "value": "DpkgMetadata"
+        },
+        {
+          "name": "path",
+          "value": "/some/path/pkg1"
+        }
+      ]
+    },
+    {
+      "type": "operating-system",
+      "name": "debian",
+      "version": "1.2.3",
+      "properties": [
+        {
+          "name": "idLike",
+          "value": "like!"
+        }
+      ]
     }
   ]
 }

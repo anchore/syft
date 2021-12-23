@@ -29,7 +29,7 @@ func Test_Author(t *testing.T) {
 					},
 				},
 			},
-			expected: "auth1",
+			expected: "auth1,auth2",
 		},
 		{
 			name: "from npm",
@@ -66,7 +66,7 @@ func Test_Author(t *testing.T) {
 					AuthorEmail: "auth@auth.gov",
 				},
 			},
-			expected: "auth",
+			expected: "auth <auth@auth.gov>",
 		},
 		{
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION

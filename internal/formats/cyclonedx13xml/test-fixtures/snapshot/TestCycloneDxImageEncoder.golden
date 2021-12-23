@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:e63c17e1-cfa6-4d8b-a44a-0eacb32c8dc9" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:1977436d-0c29-45e8-88c1-a956f74bb07d" version="1">
   <metadata>
-    <timestamp>2021-12-22T17:43:39Z</timestamp>
+    <timestamp>2022-01-06T21:47:52Z</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -25,12 +25,34 @@
       </licenses>
       <cpe>cpe:2.3:*:some:package:1:*:*:*:*:*:*:*</cpe>
       <purl>a-purl-1</purl>
+      <properties>
+        <property name="foundBy">the-cataloger-1</property>
+        <property name="language">python</property>
+        <property name="type">python</property>
+        <property name="metadataType">PythonPackageMetadata</property>
+        <property name="path">/somefile-1.txt</property>
+        <property name="layerID">sha256:16e64541f2ddf59a90391ce7bb8af90313f7d373f2105d88f3d3267b72e0ebab</property>
+      </properties>
     </component>
     <component type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
       <purl>a-purl-2</purl>
+      <properties>
+        <property name="foundBy">the-cataloger-2</property>
+        <property name="type">deb</property>
+        <property name="metadataType">DpkgMetadata</property>
+        <property name="path">/somefile-2.txt</property>
+        <property name="layerID">sha256:de6c235f76ea24c8503ec08891445b5d6a8bdf8249117ed8d8b0b6fb3ebe4f67</property>
+      </properties>
+    </component>
+    <component type="operating-system">
+      <name>debian</name>
+      <version>1.2.3</version>
+      <properties>
+        <property name="idLike">like!</property>
+      </properties>
     </component>
   </components>
 </bom>
