@@ -1,6 +1,9 @@
 package pkg
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -77,6 +80,49 @@ func Test_normalizeCpeField(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.field, func(t *testing.T) {
 			assert.Equal(t, test.expected, normalizeCpeField(test.field))
+		})
+	}
+}
+
+func Test_CPEParser(t *testing.T) {
+	testCases := []struct {
+		CPEString string `json:"cpe-string"`
+		CPEUrl    string `json:"cpe-url"`
+		WFN       CPE    `json:"wfn"`
+	}{}
+	out, err := ioutil.ReadFile("test-fixtures/cpe-data.json")
+	if err != nil {
+		t.Fatal("Unable to read test-fixtures/cpe-data.json: ", err)
+	}
+	json.Unmarshal(out, &testCases)
+	for _, test := range testCases {
+		t.Run(test.CPEString, func(t *testing.T) {
+			c1, err := NewCPE(test.CPEString)
+			assert.NoError(t, err)
+			c2, err := NewCPE(test.CPEUrl)
+			assert.NoError(t, err)
+			assert.Equal(t, c1, c2)
+			assert.Equal(t, c1, test.WFN)
+			assert.Equal(t, c2, test.WFN)
+			assert.Equal(t, CPEString(test.WFN), test.CPEString)
+		})
+	}
+}
+
+func Test_InvalidCPE(t *testing.T) {
+
+	testCases := []string{
+		"cpe:2.3:a:some-vendor:name:1:3.2:*:*:*:*:*:*:*",
+		"cpe:2.3:a:some-vendor:name:1^:*:*:*:*:*:*:*",
+		"cpe:2.3:a:some-vendor:name:**:*:*:*:*:*:*:*",
+		"cpe:2.3:a:some-vendor:name:*\\:*:*:*:*:*:*:*",
+	}
+
+	for _, test := range testCases {
+		t.Run(test, func(t *testing.T) {
+			_, err := NewCPE(test)
+			assert.Error(t, err)
+			assert.Contains(t, fmt.Sprint(err), "regex")
 		})
 	}
 }
