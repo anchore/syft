@@ -37,6 +37,13 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			ty:        pkg.JavaPkg,
 		},
 		{
+			filename:  "liferay-package.lpkg",
+			version:   "",
+			extension: "lpkg",
+			name:      "liferay-package",
+			ty:        pkg.JavaPkg,
+		},
+		{
 			filename:  "pkg-extra-field-maven-4.3.2-rc1.ear",
 			version:   "4.3.2-rc1",
 			extension: "ear",
