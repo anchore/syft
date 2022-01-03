@@ -22,6 +22,7 @@ func Select(verbose, quiet bool) (uis []UI) {
 
 	switch {
 	case runtime.GOOS == "windows" || verbose || quiet || notATerminal || !isStderrATty:
+		uis = append(uis, NewLoggerUI())
 	default:
 		uis = append(uis, NewEphemeralTerminalUI())
 	}

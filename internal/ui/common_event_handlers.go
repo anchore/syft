@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+
 	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/wagoodman/go-partybus"
 )
@@ -16,7 +17,7 @@ func handleCatalogerPresenterReady(event partybus.Event) error {
 	}
 
 	if err := writer.Write(); err != nil {
-		return fmt.Errorf("unable to show package catalog report: %w", err)
+		return fmt.Errorf("unable to show package catalog report: %v", err)
 	}
 	return nil
 }

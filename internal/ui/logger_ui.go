@@ -1,23 +1,18 @@
 package ui
 
 import (
-	"io"
-
 	"github.com/anchore/syft/internal/log"
 	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 )
 
 type loggerUI struct {
-	unsubscribe  func() error
-	reportOutput io.Writer
+	unsubscribe func() error
 }
 
 // NewLoggerUI writes all events to the common application logger and writes the final report to the given writer.
-func NewLoggerUI(reportWriter io.Writer) UI {
-	return &loggerUI{
-		reportOutput: reportWriter,
-	}
+func NewLoggerUI() UI {
+	return &loggerUI{}
 }
 
 func (l *loggerUI) Setup(unsubscribe func() error) error {
