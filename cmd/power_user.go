@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/anchore/syft/internal/formats"
+	"github.com/anchore/syft/syft/format"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
@@ -73,27 +75,16 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	reporter, closer, err := reportWriter()
-	defer func() {
-		if err := closer(); err != nil {
-			log.Warnf("unable to write to report destination: %+v", err)
-		}
-
-		// inform user at end of run that command will be removed
-		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
-		fmt.Fprintln(os.Stderr, deprecated)
-	}()
-
-	if err != nil {
-		return err
-	}
+	// inform user at end of run that command will be removed
+	deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
+	_, _ = fmt.Fprintln(os.Stderr, deprecated)
 
 	return eventLoop(
 		powerUserExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
-		ui.Select(isVerbose(), appConfig.Quiet, reporter)...,
+		ui.Select(isVerbose(), appConfig.Quiet)...,
 	)
 }
 func powerUserExecWorker(userInput string) <-chan error {
@@ -139,9 +130,24 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
+		writers, err = formats.MakeWriters(formats.ParseOptions(nil, format.JSONOption, appConfig.File))
+		if err != nil {
+			errs <- err
+			return
+		}
+
+		defer func() {
+			if err := writers.Close(); err != nil {
+				log.Warnf("unable to write to report destination: %+v", err)
+			}
+		}()
+
 		bus.Publish(partybus.Event{
-			Type:  event.PresenterReady,
-			Value: syftjson.Format().Presenter(s),
+			Type: event.PresenterReady,
+			Value: formats.SBOMWriter{
+				Writers: writers,
+				SBOM:    s,
+			},
 		})
 	}()
 

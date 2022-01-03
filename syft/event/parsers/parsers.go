@@ -6,7 +6,8 @@ package parsers
 import (
 	"fmt"
 
-	"github.com/anchore/go-presenter"
+	"github.com/anchore/syft/internal/formats"
+
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -109,17 +110,17 @@ func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgress
 	return path, prog, nil
 }
 
-func ParsePresenterReady(e partybus.Event) (presenter.Presenter, error) {
+func ParsePresenterReady(e partybus.Event) (*formats.SBOMWriter, error) {
 	if err := checkEventType(e.Type, event.PresenterReady); err != nil {
 		return nil, err
 	}
 
-	pres, ok := e.Value.(presenter.Presenter)
+	writer, ok := e.Value.(formats.SBOMWriter)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Value", e.Value)
 	}
 
-	return pres, nil
+	return &writer, nil
 }
 
 func ParseAppUpdateAvailable(e partybus.Event) (string, error) {

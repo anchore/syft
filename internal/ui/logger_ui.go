@@ -31,7 +31,7 @@ func (l loggerUI) Handle(event partybus.Event) error {
 		return nil
 	}
 
-	if err := handleCatalogerPresenterReady(event, l.reportOutput); err != nil {
+	if err := handleCatalogerPresenterReady(event); err != nil {
 		log.Warnf("unable to show catalog image finished event: %+v", err)
 	}
 

@@ -6,11 +6,12 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/internal/formats"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
@@ -50,8 +51,8 @@ const (
 )
 
 var (
-	packagesPresenterOpt format.Option
-	packagesCmd          = &cobra.Command{
+	writers     *formats.ReportWriters
+	packagesCmd = &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
@@ -62,13 +63,11 @@ var (
 		Args:          validateInputArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// set the presenter
-			presenterOption := format.ParseOption(appConfig.Output)
-			if presenterOption == format.UnknownFormatOption {
-				return fmt.Errorf("bad --output value '%s'", appConfig.Output)
+		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
+			writers, err = formats.MakeWriters(formats.ParseOptions(appConfig.Output, format.TableOption, appConfig.File))
+			if err != nil {
+				return err
 			}
-			packagesPresenterOpt = presenterOption
 
 			if appConfig.Dev.ProfileCPU && appConfig.Dev.ProfileMem {
 				return fmt.Errorf("cannot profile CPU and memory simultaneously")
@@ -101,14 +100,14 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"scope", "s", source.SquashedScope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
-	flags.StringP(
-		"output", "o", string(format.TableOption),
-		fmt.Sprintf("report output formatter, options=%v", format.AllOptions),
+	flags.StringArrayP(
+		"output", "o", []string{string(format.TableOption)},
+		fmt.Sprintf("report output format, options=%v", format.AllOptions),
 	)
 
 	flags.StringP(
 		"file", "", "",
-		"file to write the report output to (default is STDOUT)",
+		"file to write the default report output to (default is STDOUT)",
 	)
 
 	// Upload options //////////////////////////////////////////////////////////
@@ -212,23 +211,18 @@ func packagesExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	reporter, closer, err := reportWriter()
 	defer func() {
-		if err := closer(); err != nil {
+		if err := writers.Close(); err != nil {
 			log.Warnf("unable to write to report destination: %+v", err)
 		}
 	}()
-
-	if err != nil {
-		return err
-	}
 
 	return eventLoop(
 		packagesExecWorker(userInput),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
-		ui.Select(isVerbose(), appConfig.Quiet, reporter)...,
+		ui.Select(isVerbose(), appConfig.Quiet)...,
 	)
 }
 
@@ -251,12 +245,6 @@ func packagesExecWorker(userInput string) <-chan error {
 		tasks, err := tasks()
 		if err != nil {
 			errs <- err
-			return
-		}
-
-		f := formats.ByOption(packagesPresenterOpt)
-		if f == nil {
-			errs <- fmt.Errorf("unknown format: %s", packagesPresenterOpt)
 			return
 		}
 
@@ -295,8 +283,11 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 
 		bus.Publish(partybus.Event{
-			Type:  event.PresenterReady,
-			Value: f.Presenter(s),
+			Type: event.PresenterReady,
+			Value: formats.SBOMWriter{
+				Writers: writers,
+				SBOM:    s,
+			},
 		})
 	}()
 	return errs
