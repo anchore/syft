@@ -5,25 +5,27 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/anchore/syft/internal/log"
 )
 
-func saveArchiveToTmp(reader io.Reader) (string, string, func(), error) {
-	tempDir, err := ioutil.TempDir("", "syft-jar-contents-")
+func saveArchiveToTmp(archiveVirtualPath string, reader io.Reader) (string, string, func(), error) {
+	name := path.Base(archiveVirtualPath)
+	tempDir, err := ioutil.TempDir("", "syft-archive-contents-")
 	if err != nil {
-		return "", "", func() {}, fmt.Errorf("unable to create tempdir for jar processing: %w", err)
+		return "", "", func() {}, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
 	}
 
 	cleanupFn := func() {
 		err = os.RemoveAll(tempDir)
 		if err != nil {
-			log.Errorf("unable to cleanup jar tempdir: %+v", err)
+			log.Errorf("unable to cleanup archive tempdir: %+v", err)
 		}
 	}
 
-	archivePath := filepath.Join(tempDir, "archive")
+	archivePath := filepath.Join(tempDir, "archive-"+name)
 	contentDir := filepath.Join(tempDir, "contents")
 
 	err = os.Mkdir(contentDir, 0755)

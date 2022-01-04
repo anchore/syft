@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/bmatcuk/doublestar/v2"
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 var _ FileResolver = (*MockResolver)(nil)

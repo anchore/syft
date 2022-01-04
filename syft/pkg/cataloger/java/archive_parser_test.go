@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -227,7 +228,7 @@ func TestParseJar(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.fixture, func(t *testing.T) {
+		t.Run(path.Base(test.fixture), func(t *testing.T) {
 
 			generateJavaBuildFixture(t, test.fixture)
 
