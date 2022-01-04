@@ -131,7 +131,7 @@ Where the `formats` available are:
 #### Multiple outputs
 
 Syft can also output _multiple_ files in differing formats by appending
-`=<file>` to the option, for example to putput Syft JSON and SPDX JSON:
+`=<file>` to the option, for example to output Syft JSON and SPDX JSON:
 
 ```shell
 syft packages <image> -o json=sbom.syft.json -o spdx-json=sbom.spdx.json
