@@ -148,13 +148,13 @@ func powerUserExecWorker(userInput string) <-chan error {
 	return errs
 }
 
-func makeSBOMWriter(sbom sbom.SBOM) (*formats.SBOMWriter, func(), error) {
+func makeSBOMWriter(sbom sbom.SBOM) (formats.SBOMWriter, func(), error) {
 	writers, err := formats.MakeWriters(formats.ParseOptions(nil, format.JSONOption, appConfig.File))
 	if err != nil {
-		return nil, nil, err
+		return formats.SBOMWriter{}, nil, err
 	}
 
-	writer := &formats.SBOMWriter{
+	writer := formats.SBOMWriter{
 		Writers: writers,
 		SBOM:    sbom,
 	}

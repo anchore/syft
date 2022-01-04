@@ -112,7 +112,8 @@ may attempt to expand wildcards, so put those parameters in single quotes, like:
 
 ### Output formats
 
-The output format for Syft is configurable as well:
+The output format for Syft is configurable as well using the
+`-o` (or `--output`) option:
 
 ```
 syft packages <image> -o <format>
@@ -126,6 +127,15 @@ Where the `formats` available are:
 - `spdx`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `table`: A columnar summary (default).
+
+#### Multiple outputs
+
+Syft can also output _multiple_ files in differing formats by appending
+`=<file>` to the option, for example to putput Syft JSON and SPDX JSON:
+
+```shell
+syft packages <image> -o json=sbom.syft.json -o spdx-json=sbom.spdx.json
+```
 
 ## Private Registry Authentication
 
@@ -221,8 +231,12 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# the output format of the SBOM report (options: table, text, json)
-# same as -o ; SYFT_OUTPUT env var
+# the output format(s) of the SBOM report (options: table, text, json, spdx, ...)
+# same as -o, --output, and SYFT_OUTPUT env var
+# to specify multiple output files in differing formats, use a list:
+# output:
+#   - "json=<syft-json-output-file>"
+#   - "spdx-json=<spdx-json-output-file>"
 output: "table"
 
 # suppress all output (except for the SBOM report)
@@ -238,8 +252,8 @@ check-for-app-update: true
 
 # a list of globs to exclude from scanning. same as --exclude ; for example:
 # exclude:
-#   - '/etc/**'
-#   - './out/**/*.json'
+#   - "/etc/**"
+#   - "./out/**/*.json"
 exclude:
 
 # cataloging packages is exposed through the packages and power-user subcommands
