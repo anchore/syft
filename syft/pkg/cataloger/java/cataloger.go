@@ -1,5 +1,5 @@
 /*
-Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, jpi, hpi formats).
+Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, par, jpi, hpi formats).
 */
 package java
 
