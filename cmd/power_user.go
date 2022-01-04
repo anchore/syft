@@ -130,7 +130,7 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
-		writers, cleanup, err = MakeWriters()
+		writer, cleanup, err := makeSBOMWriter(s)
 
 		if err != nil {
 			errs <- err
@@ -140,24 +140,26 @@ func powerUserExecWorker(userInput string) <-chan error {
 		defer cleanup()
 
 		bus.Publish(partybus.Event{
-			Type: event.PresenterReady,
-			Value: formats.SBOMWriter{
-				Writers: writers,
-				SBOM:    s,
-			},
+			Type:  event.PresenterReady,
+			Value: writer,
 		})
 	}()
 
 	return errs
 }
 
-func MakeWriters() (*formats.ReportWriters, func(), error) {
+func makeSBOMWriter(sbom sbom.SBOM) (*formats.SBOMWriter, func(), error) {
 	writers, err := formats.MakeWriters(formats.ParseOptions(nil, format.JSONOption, appConfig.File))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return writers, func() {
+	writer := &formats.SBOMWriter{
+		Writers: writers,
+		SBOM:    sbom,
+	}
+
+	return writer, func() {
 		if err := writers.Close(); err != nil {
 			log.Warnf("unable to write to report destination: %+v", err)
 		}
