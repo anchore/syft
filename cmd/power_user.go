@@ -140,8 +140,11 @@ func powerUserExecWorker(userInput string) <-chan error {
 		defer cleanup()
 
 		bus.Publish(partybus.Event{
-			Type:  event.PresenterReady,
-			Value: formats.SBOMWriter{writers, s},
+			Type: event.PresenterReady,
+			Value: formats.SBOMWriter{
+				Writers: writers,
+				SBOM:    s,
+			},
 		})
 	}()
 
