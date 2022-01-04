@@ -35,3 +35,10 @@ func License(p pkg.Package) string {
 
 	return strings.Join(parsedLicenses, " AND ")
 }
+
+func ParseLicense(l string) []string {
+	if l == "NOASSERTION" || l == "NONE" {
+		return nil
+	}
+	return strings.Split(l, " AND ")
+}
