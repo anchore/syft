@@ -20,6 +20,7 @@ var archiveFormatGlobs = []string{
 	"**/*.jar",
 	"**/*.war",
 	"**/*.ear",
+	"**/*.par",
 	"**/*.jpi",
 	"**/*.hpi",
 	"**/*.lpkg", // Zip-compressed package used to deploy applications

@@ -113,7 +113,7 @@ func (a archiveFilename) extension() string {
 
 func (a archiveFilename) pkgType() pkg.Type {
 	switch strings.ToLower(a.extension()) {
-	case "jar", "war", "ear", "lpkg":
+	case "jar", "war", "ear", "lpkg", "par":
 		return pkg.JavaPkg
 	case "jpi", "hpi":
 		return pkg.JenkinsPluginPkg
