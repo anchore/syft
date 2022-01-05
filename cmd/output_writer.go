@@ -13,12 +13,12 @@ import (
 
 // makeWriter creates an sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
-func makeWriter(defaultFormat format.Option) (sbom.Writer, error) {
-	outputOptions, err := parseOptions(appConfig.Output, defaultFormat, appConfig.File)
+func makeWriter() (sbom.Writer, error) {
+	outputOptions, err := parseOptions()
 	if err != nil {
 		return nil, err
 	}
-	writer, err := output.MakeWriter(outputOptions)
+	writer, err := output.MakeWriter(outputOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -27,51 +27,46 @@ func makeWriter(defaultFormat format.Option) (sbom.Writer, error) {
 }
 
 // parseOptions utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseOptions(options []string, defaultFormat format.Option, file string) (out []output.WriterOption, errs error) {
-	if len(options) > 0 {
-		for _, option := range options {
-			option = strings.TrimSpace(option)
-			if strings.Contains(option, "=") {
-				parts := strings.SplitN(option, "=", 2)
-				opt, err := newWriterOption(parts[0], parts[1])
-				if err != nil {
-					errs = multierror.Append(errs, err)
-					continue
-				}
-				out = append(out, opt)
-			} else {
-				opt, err := newWriterOption(option, strings.TrimSpace(file))
-				if err != nil {
-					errs = multierror.Append(errs, err)
-					continue
-				}
-				out = append(out, opt)
-			}
+func parseOptions() (out []output.WriterOption, errs error) {
+	outputs := appConfig.Output
+	// always should have one option -- we generally get the default of "table", but just make sure
+	if len(outputs) == 0 {
+		outputs = append(outputs, string(format.TableOption))
+	}
+
+	for _, name := range outputs {
+		name = strings.TrimSpace(name)
+
+		// split to at most two parts for <format>=<file>
+		parts := strings.SplitN(name, "=", 2)
+
+		// the format option is the first part
+		name = parts[0]
+
+		// default to the --file or empty string if not specified
+		file := appConfig.File
+
+		// If a file is specified as part of the output option, use that
+		if len(parts) > 1 {
+			file = parts[1]
 		}
-	} else {
-		opt, err := newWriterOption(string(defaultFormat), strings.TrimSpace(file))
-		if err != nil {
-			errs = multierror.Append(errs, err)
+
+		option := format.ParseOption(name)
+		if option == format.UnknownFormatOption {
+			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
+			continue
 		}
-		out = append(out, opt)
+
+		encoder := formats.ByOption(option)
+		if encoder == nil {
+			errs = multierror.Append(errs, fmt.Errorf("unknown format: %s", outputFormat))
+			continue
+		}
+
+		out = append(out, output.WriterOption{
+			Format: *encoder,
+			Path:   file,
+		})
 	}
 	return out, errs
-}
-
-// newWriterOption validates and parses the format and returns a new writer option with the given format and path
-func newWriterOption(outputFormat string, path string) (output.WriterOption, error) {
-	formatOption := format.ParseOption(outputFormat)
-	if formatOption == format.UnknownFormatOption {
-		return output.WriterOption{}, fmt.Errorf("bad --output format value '%s'", outputFormat)
-	}
-
-	outputFormatRef := formats.ByOption(formatOption)
-	if outputFormatRef == nil {
-		return output.WriterOption{}, fmt.Errorf("unknown format: %s", outputFormat)
-	}
-
-	return output.WriterOption{
-		Format: outputFormatRef,
-		Path:   path,
-	}, nil
 }

@@ -7,12 +7,13 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/output"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/gookit/color"
@@ -73,7 +74,10 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	writer, err := makeWriter(format.JSONOption)
+	writer, err := output.MakeWriter(output.WriterOption{
+		Format: syftjson.Format(),
+		Path:   appConfig.File,
+	})
 	if err != nil {
 		return err
 	}

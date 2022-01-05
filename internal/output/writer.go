@@ -11,7 +11,7 @@ import (
 )
 
 type StreamWriter struct {
-	format *format.Format
+	format format.Format
 	out    io.Writer
 	close  func() error
 }
@@ -58,13 +58,12 @@ func (m *MultiWriter) Close() (errs error) {
 
 // WriterOption format and path strings used to create sbom.Writer
 type WriterOption struct {
-	Format *format.Format
+	Format format.Format
 	Path   string
 }
 
-// MakeWriter create all report writers from input options, accepts options of the form:
-// <format> --or-- <format>=<file>, either a writer or an error is returned, never both
-func MakeWriter(options []WriterOption) (sbom.Writer, error) {
+// MakeWriter create all report writers from input options; if a file is not specified, os.Stdout is used
+func MakeWriter(options ...WriterOption) (sbom.Writer, error) {
 	if len(options) == 0 {
 		return nil, fmt.Errorf("no output options provided")
 	}
