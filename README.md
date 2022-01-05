@@ -252,7 +252,7 @@ package:
   # search within archives that do not contain a file index to search against (tar, tar.gz, tar.bz2, etc)
   # note: enabling this may result in a performance impact since all discovered compressed tars will be decompressed.
   # same as -s ; SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES env var
-  search-unindexed-archives: true
+  search-unindexed-archives: false
    
   cataloger:
     # enable/disable cataloging of packages
