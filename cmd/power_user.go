@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/gookit/color"
@@ -72,19 +73,19 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	writer, err := makeWriter()
+	writer, err := makeWriter(format.JSONOption)
 	if err != nil {
 		return err
 	}
 
 	defer func() {
 		if err := writer.Close(); err != nil {
-			log.Warnf("unable to write to report destination: %w", err)
+			log.Warnf("unable to write to report destination: %+v", err)
 		}
 
 		// inform user at end of run that command will be removed
 		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
-		_, _ = fmt.Fprintln(os.Stderr, deprecated)
+		fmt.Fprintln(os.Stderr, deprecated)
 	}()
 
 	return eventLoop(

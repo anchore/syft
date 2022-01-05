@@ -13,8 +13,8 @@ import (
 
 // makeWriter creates an sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
-func makeWriter() (sbom.Writer, error) {
-	outputOptions, err := parseOptions(appConfig.Output, format.TableOption, appConfig.File)
+func makeWriter(defaultFormat format.Option) (sbom.Writer, error) {
+	outputOptions, err := parseOptions(appConfig.Output, defaultFormat, appConfig.File)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func makeWriter() (sbom.Writer, error) {
 }
 
 // parseOptions utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseOptions(options []string, format format.Option, file string) (out []output.WriterOption, errs error) {
+func parseOptions(options []string, defaultFormat format.Option, file string) (out []output.WriterOption, errs error) {
 	if len(options) > 0 {
 		for _, option := range options {
 			option = strings.TrimSpace(option)
@@ -49,7 +49,7 @@ func parseOptions(options []string, format format.Option, file string) (out []ou
 			}
 		}
 	} else {
-		opt, err := newWriterOption(string(format), strings.TrimSpace(file))
+		opt, err := newWriterOption(string(defaultFormat), strings.TrimSpace(file))
 		if err != nil {
 			errs = multierror.Append(errs, err)
 		}
