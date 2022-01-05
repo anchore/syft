@@ -1,5 +1,7 @@
 package source
 
+import "testing"
+
 func Test_windowsToPosix(t *testing.T) {
 	type args struct {
 		windowsPath string
