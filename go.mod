@@ -8,7 +8,6 @@ require (
 	github.com/adrg/xdg v0.2.1
 	github.com/alecthomas/jsonschema v0.0.0-20210301060011-54c507b6f074
 	github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf
-	github.com/anchore/go-presenter v0.0.0-20211102174526-0dbf20f6c7fa
 	github.com/anchore/go-rpmdb v0.0.0-20210914181456-a9c52348da63
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b

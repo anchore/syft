@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/anchore/go-presenter"
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -31,7 +31,7 @@ func FromSnapshot() ImageOption {
 	}
 }
 
-func AssertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Presenter, testImage string, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format format.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	// grab the latest image contents and persist
@@ -39,11 +39,11 @@ func AssertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Pres
 		imagetest.UpdateGoldenFixtureImage(t, testImage)
 	}
 
-	err := pres.Present(&buffer)
+	err := format.Encode(&buffer, sbom)
 	assert.NoError(t, err)
 	actual := buffer.Bytes()
 
-	// replace the expected snapshot contents with the current presenter contents
+	// replace the expected snapshot contents with the current encoder contents
 	if updateSnapshot {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
@@ -64,14 +64,14 @@ func AssertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Pres
 	}
 }
 
-func AssertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format format.Format, sbom sbom.SBOM, updateSnapshot bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
-	err := pres.Present(&buffer)
+	err := format.Encode(&buffer, sbom)
 	assert.NoError(t, err)
 	actual := buffer.Bytes()
 
-	// replace the expected snapshot contents with the current presenter contents
+	// replace the expected snapshot contents with the current encoder contents
 	if updateSnapshot {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}

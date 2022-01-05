@@ -33,7 +33,7 @@ func packageSbomModel(s sbom.SBOM) (*external.ImagePackageManifest, error) {
 	// the model is 1:1 the JSON output of today. As the schema changes, this will need to be converted into individual mappings.
 	var model external.ImagePackageManifest
 	if err = json.Unmarshal(buf.Bytes(), &model); err != nil {
-		return nil, fmt.Errorf("unable to convert JSON presenter output to import model: %w", err)
+		return nil, fmt.Errorf("unable to convert JSON output to import model: %w", err)
 	}
 
 	return &model, nil

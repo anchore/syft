@@ -7,8 +7,8 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-// handleSBOMReady is a UI function for processing the CatalogerFinished bus event, displaying the catalog
-// via the given presenter to stdout.
+// handleSBOMReady is a UI function for processing the SBOMReady bus event,
+// and calling the given function to output the contents.
 func handleSBOMReady(event partybus.Event) error {
 	// show the report to stdout
 	fn, err := syftEventParsers.ParseSBOMReady(event)

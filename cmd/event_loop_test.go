@@ -252,7 +252,7 @@ func Test_eventLoop_handlerError(t *testing.T) {
 
 		finalEvent := partybus.Event{
 			Type:  event.SBOMReady,
-			Error: fmt.Errorf("unable to create presenter"),
+			Error: fmt.Errorf("unable to create encoder"),
 		}
 
 		worker := func() <-chan error {

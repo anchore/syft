@@ -8,20 +8,22 @@ import (
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
 
-var updateCycloneDx = flag.Bool("update-cyclonedx", false, "update the *.golden files for cyclone-dx presenters")
+var updateCycloneDx = flag.Bool("update-cyclonedx", false, "update the *.golden files for cyclone-dx encoders")
 
-func TestCycloneDxDirectoryPresenter(t *testing.T) {
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t)),
+func TestCycloneDxDirectoryEncoder(t *testing.T) {
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		testutils.DirectoryInput(t),
 		*updateCycloneDx,
 		cycloneDxRedactor,
 	)
 }
 
-func TestCycloneDxImagePresenter(t *testing.T) {
+func TestCycloneDxImageEncoder(t *testing.T) {
 	testImage := "image-simple"
-	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage)),
+	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
+		Format(),
+		testutils.ImageInput(t, testImage),
 		testImage,
 		*updateCycloneDx,
 		cycloneDxRedactor,
