@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/syft/pkg/cataloger"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -98,7 +100,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 	// Formatting & Input options //////////////////////////////////////////////
 
 	flags.StringP(
-		"scope", "s", source.SquashedScope.String(),
+		"scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringP(
