@@ -72,16 +72,15 @@ func normalizeCpeField(field string) string {
 // This is to allow for a correct round trip parsing of cpes with quoted characters.
 func stripSlashes(s string) string {
 	const allowedPunct = "-!\"#$%&'()+,./:;<=>@[]^`{|}!~"
-	buf := make([]byte, 0, len(s))
+	sb := strings.Builder{}
 	for i, c := range s {
-		c := byte(c)
-		if c == '\\' && i+1 < len(s) && strings.IndexByte(allowedPunct, s[i+1]) != -1 {
+		if c == '\\' && i+1 < len(s) && strings.ContainsRune(allowedPunct, rune(s[i+1])) {
 			continue
 		} else {
-			buf = append(buf, c)
+			sb.WriteRune(c)
 		}
 	}
-	return string(buf)
+	return sb.String()
 }
 
 func CPEString(c CPE) string {
@@ -114,16 +113,12 @@ func sanitize(s string) string {
 	const allowedPunct = "-!\"#$%&'()+,./:;<=>@[]^`{|}!~"
 	// replace spaces with underscores
 	in := strings.ReplaceAll(s, " ", "_")
-	// we allocate 2x the input to the buffer assuming
-	// we have to quote every character in the input
-	buf := make([]byte, 0, 2*len(in))
+	sb := strings.Builder{}
 	for _, c := range in {
-		c := byte(c)
-		if strings.IndexByte(allowedPunct, c) != -1 {
-			buf = append(buf, '\\', c)
-		} else {
-			buf = append(buf, c)
+		if strings.ContainsRune(allowedPunct, c) {
+			sb.WriteRune('\\')
 		}
+		sb.WriteRune(c)
 	}
-	return string(buf)
+	return sb.String()
 }
