@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
@@ -50,7 +49,6 @@ const (
 )
 
 var (
-	writers     *formats.ReportWriters
 	packagesCmd = &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
@@ -63,11 +61,6 @@ var (
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			writers, err = formats.MakeWriters(formats.ParseOptions(appConfig.Output, format.TableOption, appConfig.File))
-			if err != nil {
-				return err
-			}
-
 			if appConfig.Dev.ProfileCPU && appConfig.Dev.ProfileMem {
 				return fmt.Errorf("cannot profile CPU and memory simultaneously")
 			}
@@ -207,17 +200,22 @@ func validateInputArgs(cmd *cobra.Command, args []string) error {
 }
 
 func packagesExec(_ *cobra.Command, args []string) error {
-	// could be an image or a directory, with or without a scheme
-	userInput := args[0]
+	writer, err := makeWriter()
+	if err != nil {
+		return err
+	}
 
 	defer func() {
-		if err := writers.Close(); err != nil {
-			log.Warnf("unable to write to report destination: %+v", err)
+		if err := writer.Close(); err != nil {
+			log.Warnf("unable to write to report destination: %w", err)
 		}
 	}()
 
+	// could be an image or a directory, with or without a scheme
+	userInput := args[0]
+
 	return eventLoop(
-		packagesExecWorker(userInput),
+		packagesExecWorker(userInput, writer),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -236,7 +234,7 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-func packagesExecWorker(userInput string) <-chan error {
+func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -282,11 +280,8 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 
 		bus.Publish(partybus.Event{
-			Type: event.PresenterReady,
-			Value: formats.SBOMWriter{
-				Writers: writers,
-				SBOM:    s,
-			},
+			Type:  event.PresenterReady,
+			Value: func() error { return writer.Write(s) },
 		})
 	}()
 	return errs

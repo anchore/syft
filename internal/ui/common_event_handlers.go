@@ -11,12 +11,12 @@ import (
 // via the given presenter to stdout.
 func handleCatalogerPresenterReady(event partybus.Event) error {
 	// show the report to stdout
-	writer, err := syftEventParsers.ParsePresenterReady(event)
+	fn, err := syftEventParsers.ParsePresenterReady(event)
 	if err != nil {
 		return fmt.Errorf("bad CatalogerFinished event: %w", err)
 	}
 
-	if err := writer.Write(); err != nil {
+	if err := fn(); err != nil {
 		return fmt.Errorf("unable to show package catalog report: %v", err)
 	}
 	return nil

@@ -7,13 +7,11 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/gookit/color"
@@ -74,19 +72,30 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	// inform user at end of run that command will be removed
-	deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
-	_, _ = fmt.Fprintln(os.Stderr, deprecated)
+	writer, err := makeWriter()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := writer.Close(); err != nil {
+			log.Warnf("unable to write to report destination: %w", err)
+		}
+
+		// inform user at end of run that command will be removed
+		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
+		_, _ = fmt.Fprintln(os.Stderr, deprecated)
+	}()
 
 	return eventLoop(
-		powerUserExecWorker(userInput),
+		powerUserExecWorker(userInput, writer),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
 		ui.Select(isVerbose(), appConfig.Quiet)...,
 	)
 }
-func powerUserExecWorker(userInput string) <-chan error {
+func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -129,38 +138,11 @@ func powerUserExecWorker(userInput string) <-chan error {
 
 		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
-		writer, cleanup, err := makeSBOMWriter(s)
-
-		if err != nil {
-			errs <- err
-			return
-		}
-
-		defer cleanup()
-
 		bus.Publish(partybus.Event{
 			Type:  event.PresenterReady,
-			Value: writer,
+			Value: func() error { return writer.Write(s) },
 		})
 	}()
 
 	return errs
-}
-
-func makeSBOMWriter(sbom sbom.SBOM) (formats.SBOMWriter, func(), error) {
-	writers, err := formats.MakeWriters(formats.ParseOptions(nil, format.JSONOption, appConfig.File))
-	if err != nil {
-		return formats.SBOMWriter{}, nil, err
-	}
-
-	writer := formats.SBOMWriter{
-		Writers: writers,
-		SBOM:    sbom,
-	}
-
-	return writer, func() {
-		if err := writers.Close(); err != nil {
-			log.Warnf("unable to write to report destination: %+v", err)
-		}
-	}, nil
 }
