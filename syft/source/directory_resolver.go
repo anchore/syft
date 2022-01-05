@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -143,6 +144,11 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 		return "", nil
 	}
 
+	// here we check to see if we need to normalize paths to posix on the way in coming from windows
+	if runtime.GOOS == "windows" {
+		path = windowsToPosix(path)
+	}
+
 	newRoot, err := r.addPathToIndex(path, info)
 	if r.isFileAccessErr(path, err) {
 		return "", nil
@@ -258,6 +264,11 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 }
 
 func (r directoryResolver) responsePath(path string) string {
+	// check to see if we need to encode back to Windows from posix
+	if runtime.GOOS == "windows" {
+		path = posixToWindows(path)
+	}
+
 	// always return references relative to the request path (not absolute path)
 	if filepath.IsAbs(path) {
 		// we need to account for the cwd relative to the running process and the given root for the directory resolver
@@ -424,6 +435,18 @@ func windowsToPosix(windowsPath string) (posixPath string) {
 	return path.Clean("/" + strings.Join([]string{volumeLetter, translatedPath}, "/"))
 }
 
+func posixToWindows(posixPath string) (windowsPath string) {
+	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
+	pathFields := strings.Split(posixPath, "/")
+	volumeName := strings.ToUpper(pathFields[1])
+
+	// translate non-escaped forward slashes into backslashes
+	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
+
+	// combine volume name and backslash components
+	return filepath.Join(volumeName, remainingTranslatedPath)
+}
+
 func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
 	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
 }
@@ -436,8 +459,8 @@ func isUnallowableFileType(_ string, info os.FileInfo) bool {
 	switch newFileTypeFromMode(info.Mode()) {
 	case CharacterDevice, Socket, BlockDevice, FIFONode, IrregularFile:
 		return true
-		// note: symlinks that point to these files may still get by. We handle this later in processing to help prevent
-		// against infinite links traversal.
+		// note: symlinks that point to these files may still get by.
+		// We handle this later in processing to help prevent against infinite links traversal.
 	}
 
 	return false
