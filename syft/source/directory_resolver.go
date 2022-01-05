@@ -409,6 +409,10 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
+func windowsToPosix(windowsPath string) (posixPath string, err error) {
+	return windowsPath, err
+}
+
 func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
 	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
 }
