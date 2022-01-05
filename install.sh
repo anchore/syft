@@ -68,6 +68,7 @@ get_binaries() {
     darwin/arm64) BINARIES="syft" ;;
     darwin/amd64) BINARIES="syft" ;;
     linux/amd64) BINARIES="syft" ;;
+    linux/arm64) BINARIES="syft" ;;
     windows/amd64) BINARIES="syft" ;;
     *)
       log_crit "platform $PLATFORM is not supported.  Make sure this script is up-to-date and file request at https://github.com/${PREFIX}/issues/new"
