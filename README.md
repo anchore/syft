@@ -244,6 +244,16 @@ exclude:
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
+
+  # search within archives that do contain a file index to search against (zip)
+  # same as -s ; SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES env var
+  search-indexed-archives: true
+
+  # search within archives that do not contain a file index to search against (tar, tar.gz, tar.bz2, etc)
+  # note: enabling this may result in a performance impact since all discovered compressed tars will be decompressed.
+  # same as -s ; SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES env var
+  search-unindexed-archives: true
+   
   cataloger:
     # enable/disable cataloging of packages
     # SYFT_PACKAGE_CATALOGER_ENABLED env var
