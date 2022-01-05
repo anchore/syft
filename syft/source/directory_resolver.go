@@ -409,8 +409,19 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
-func windowsToPosix(windowsPath string) (posixPath string, err error) {
-	return windowsPath, err
+func windowsToPosix(windowsPath string) (posixPath string) {
+	// volume should be encoded at the start (e.g /c/<path>) where c is the volume
+	volumeName := filepath.VolumeName(windowsPath)
+	pathWithoutVolume := strings.TrimPrefix(windowsPath, volumeName)
+	volumeLetter := strings.ToLower(strings.TrimSuffix(volumeName, ":"))
+
+	// translate non-escaped backslash to forwardslash
+	translatedPath := strings.ReplaceAll(pathWithoutVolume, "\\", "/")
+
+	// always have `/` as the root... join all components, e.g.:
+	// convert: C:\\some\windows\Place
+	// into: /c/some/windows/Place
+	return path.Clean("/" + strings.Join([]string{volumeLetter, translatedPath}, "/"))
 }
 
 func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {

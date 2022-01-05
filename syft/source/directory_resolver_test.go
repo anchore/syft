@@ -694,25 +694,6 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	}
 }
 
-func Test_windowsToPosix(t *testing.T) {
-	tests := []struct {
-		windowsPath   string
-		expectedPosix string
-	}{
-		{
-			windowsPath:   `C:\\Users\my-package`,
-			expectedPosix: "/Users/my-package",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.windowsPath, func(t *testing.T) {
-			posixPath, err := windowsToPosix(test.windowsPath)
-			require.NoError(t, err)
-			assert.Equal(t, test.expectedPosix, posixPath)
-		})
-	}
-}
-
 func Test_isUnixSystemRuntimePath(t *testing.T) {
 	tests := []struct {
 		path     string
