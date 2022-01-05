@@ -25,7 +25,7 @@ type packageSBOMImportAPI interface {
 func packageSbomModel(s sbom.SBOM) (*external.ImagePackageManifest, error) {
 	var buf bytes.Buffer
 
-	err := syftjson.Format().Presenter(s).Present(&buf)
+	err := syftjson.Format().Encode(&buf, s)
 	if err != nil {
 		return nil, fmt.Errorf("unable to serialize results: %w", err)
 	}

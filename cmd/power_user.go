@@ -139,7 +139,7 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		bus.Publish(partybus.Event{
-			Type:  event.PresenterReady,
+			Type:  event.SBOMReady,
 			Value: func() error { return writer.Write(s) },
 		})
 	}()

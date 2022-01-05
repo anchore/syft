@@ -108,8 +108,8 @@ func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgress
 	return path, prog, nil
 }
 
-func ParsePresenterReady(e partybus.Event) (func() error, error) {
-	if err := checkEventType(e.Type, event.PresenterReady); err != nil {
+func ParseSBOMReady(e partybus.Event) (func() error, error) {
+	if err := checkEventType(e.Type, event.SBOMReady); err != nil {
 		return nil, err
 	}
 

@@ -7,11 +7,11 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-// handleCatalogerPresenterReady is a UI function for processing the CatalogerFinished bus event, displaying the catalog
+// handleSBOMReady is a UI function for processing the CatalogerFinished bus event, displaying the catalog
 // via the given presenter to stdout.
-func handleCatalogerPresenterReady(event partybus.Event) error {
+func handleSBOMReady(event partybus.Event) error {
 	// show the report to stdout
-	fn, err := syftEventParsers.ParsePresenterReady(event)
+	fn, err := syftEventParsers.ParseSBOMReady(event)
 	if err != nil {
 		return fmt.Errorf("bad CatalogerFinished event: %w", err)
 	}
