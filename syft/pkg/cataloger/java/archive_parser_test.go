@@ -12,13 +12,11 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 	"github.com/gookit/color"
+	"github.com/stretchr/testify/assert"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {

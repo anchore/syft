@@ -198,13 +198,13 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	return pkgs, nil
 }
 
-// discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
-// associating each discovered package to the given parent package.
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
 	// we know that all java archives are zip formatted files, so we can use the shared zip helper
 	return discoverPkgsFromZip(j.virtualPath, j.archivePath, j.contentPath, j.fileManifest, parentPkg)
 }
 
+// discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
+// associating each discovered package to the given parent package.
 func discoverPkgsFromZip(virtualPath, archivePath, contentPath string, fileManifest file.ZipFileManifest, parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
 	openers, err := file.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
@@ -215,6 +215,7 @@ func discoverPkgsFromZip(virtualPath, archivePath, contentPath string, fileManif
 	return discoverPkgsFromOpeners(virtualPath, openers, parentPkg)
 }
 
+// discoverPkgsFromOpeners finds Java archives within the given files and associates them with the given parent package.
 func discoverPkgsFromOpeners(virtualPath string, openers map[string]file.Opener, parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
 	var pkgs []*pkg.Package
 	var relationships []artifact.Relationship
@@ -243,22 +244,24 @@ func discoverPkgsFromOpeners(virtualPath string, openers map[string]file.Opener,
 	return pkgs, relationships, nil
 }
 
+// discoverPkgsFromOpener finds Java archives within the given file.
 func discoverPkgsFromOpener(virtualPath, pathWithinArchive string, archiveOpener file.Opener) ([]*pkg.Package, []artifact.Relationship, error) {
 	archiveReadCloser, err := archiveOpener.Open()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
 	}
-	nestedPath := fmt.Sprintf("%s:%s", virtualPath, pathWithinArchive)
-	nestedPkgs, nestedRelationships, err := parseJavaArchive(nestedPath, archiveReadCloser)
-	if err != nil {
+	defer func() {
 		if closeErr := archiveReadCloser.Close(); closeErr != nil {
 			log.Warnf("unable to close archived file from tempdir: %+v", closeErr)
 		}
+	}()
+
+	nestedPath := fmt.Sprintf("%s:%s", virtualPath, pathWithinArchive)
+	nestedPkgs, nestedRelationships, err := parseJavaArchive(nestedPath, archiveReadCloser)
+	if err != nil {
 		return nil, nil, fmt.Errorf("unable to process nested java archive (%s): %w", pathWithinArchive, err)
 	}
-	if err = archiveReadCloser.Close(); err != nil {
-		return nil, nil, fmt.Errorf("unable to close archived file from tempdir: %w", err)
-	}
+
 	return nestedPkgs, nestedRelationships, nil
 }
 

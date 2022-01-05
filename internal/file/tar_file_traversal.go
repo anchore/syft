@@ -1,9 +1,7 @@
 package file
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"path/filepath"
 
@@ -44,19 +42,8 @@ func ExtractGlobsFromTarToUniqueTempFile(archivePath, dir string, globs ...strin
 		// provides a ReadCloser. It is up to the caller to handle closing the file explicitly.
 		defer tempFile.Close()
 
-		// limit the zip reader on each file read to prevent decompression bomb attacks
-		numBytes, err := io.Copy(tempFile, io.LimitReader(file.ReadCloser, perFileReadLimit))
-		if numBytes >= perFileReadLimit || errors.Is(err, io.EOF) {
-			return fmt.Errorf("zip read limit hit (potential decompression bomb attack)")
-		}
-		if err != nil {
-			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.Name(), archivePath, err)
-		}
-
-		// the file pointer is at the end due to the copy operation, reset back to the beginning
-		_, err = tempFile.Seek(0, io.SeekStart)
-		if err != nil {
-			return fmt.Errorf("unable to reset file pointer (%s): %w", tempFile.Name(), err)
+		if err := safeCopy(tempFile, file.ReadCloser); err != nil {
+			return fmt.Errorf("unable to copy source=%q for tar=%q: %w", file.Name(), archivePath, err)
 		}
 
 		results[file.Name()] = Opener{path: tempFile.Name()}
