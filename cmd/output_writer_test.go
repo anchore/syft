@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -10,8 +9,7 @@ import (
 )
 
 func TestOutputWriterConfig(t *testing.T) {
-	dir, err := ioutil.TempDir("", "output-writer-config-test-")
-	assert.NoError(t, err)
+	tmp := t.TempDir() + "/"
 
 	tests := []struct {
 		outputs  []string
@@ -49,12 +47,12 @@ func TestOutputWriterConfig(t *testing.T) {
 		t.Run(fmt.Sprintf("%s/%s", test.outputs, test.file), func(t *testing.T) {
 			outputs := test.outputs
 			for i, val := range outputs {
-				outputs[i] = strings.Replace(val, "=", "="+dir+"/", 1)
+				outputs[i] = strings.Replace(val, "=", "="+tmp, 1)
 			}
 
 			file := test.file
 			if file != "" {
-				file = dir + "/" + file
+				file = tmp + file
 			}
 
 			_, err := makeWriter(test.outputs, file)
@@ -68,7 +66,7 @@ func TestOutputWriterConfig(t *testing.T) {
 
 			for _, expected := range test.expected {
 				if expected != "" {
-					assert.FileExists(t, dir+"/"+expected)
+					assert.FileExists(t, tmp+expected)
 				} else if file != "" {
 					assert.FileExists(t, file)
 				} else {
