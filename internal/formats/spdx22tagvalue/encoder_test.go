@@ -8,21 +8,23 @@ import (
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
 
-var updateSpdxTagValue = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv presenters")
+var updateSpdxTagValue = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv encoders")
 
-func TestSPDXTagValueDirectoryPresenter(t *testing.T) {
+func TestSPDXTagValueDirectoryEncoder(t *testing.T) {
 
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t)),
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		testutils.DirectoryInput(t),
 		*updateSpdxTagValue,
 		spdxTagValueRedactor,
 	)
 }
 
-func TestSPDXTagValueImagePresenter(t *testing.T) {
+func TestSPDXTagValueImageEncoder(t *testing.T) {
 	testImage := "image-simple"
-	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
+	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
+		Format(),
+		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateSpdxTagValue,
 		spdxTagValueRedactor,

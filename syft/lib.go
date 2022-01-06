@@ -5,7 +5,7 @@ Here is what the main execution path for syft does:
 
 	1. Parse a user image string to get a stereoscope image.Source object
 	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
-	3. Invoke a single presenter to show the contents of the catalog
+	3. Invoke one or more encoders to output contents of the catalog
 
 A Source object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
 providing a way to inspect paths and file content within the image. The Source object, not the image object, is used
