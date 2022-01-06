@@ -7,83 +7,41 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/anchore/syft/internal/output"
 )
 
-type writerConfig struct {
-	format string
-	file   string
-}
-
 func TestOutputWriterConfig(t *testing.T) {
-	dir, err := ioutil.TempDir("", "output-writers-test-")
+	dir, err := ioutil.TempDir("", "output-writer-config-test-")
 	assert.NoError(t, err)
 
 	tests := []struct {
 		outputs  []string
 		file     string
 		err      bool
-		expected []writerConfig
+		expected []string
 	}{
 		{
-			file: "test-1.json",
-			expected: []writerConfig{
-				{
-					format: "table",
-					file:   "test-1.json",
-				},
-			},
+			outputs:  []string{},
+			expected: []string{""},
 		},
 		{
-			outputs: []string{},
-			expected: []writerConfig{
-				{
-					format: "table",
-				},
-			},
+			outputs:  []string{"json"},
+			expected: []string{""},
 		},
 		{
-			outputs: []string{"json"},
-			expected: []writerConfig{
-				{
-					format: "json",
-				},
-			},
+			file:     "test-1.json",
+			expected: []string{"test-1.json"},
 		},
 		{
-			outputs: []string{"json=test-2.json"},
-			expected: []writerConfig{
-				{
-					format: "json",
-					file:   "test-2.json",
-				},
-			},
+			outputs:  []string{"json=test-2.json"},
+			expected: []string{"test-2.json"},
 		},
 		{
-			outputs: []string{"json=test-3-1.json", "spdx-json=test-3-2.json"},
-			expected: []writerConfig{
-				{
-					format: "json",
-					file:   "test-3-1.json",
-				},
-				{
-					format: "spdx-json",
-					file:   "test-3-2.json",
-				},
-			},
+			outputs:  []string{"json=test-3-1.json", "spdx-json=test-3-2.json"},
+			expected: []string{"test-3-1.json", "test-3-2.json"},
 		},
 		{
-			outputs: []string{"text", "json=test-4.json"},
-			expected: []writerConfig{
-				{
-					format: "text",
-				},
-				{
-					format: "json",
-					file:   "test-4.json",
-				},
-			},
+			outputs:  []string{"text", "json=test-4.json"},
+			expected: []string{"", "test-4.json"},
 		},
 	}
 
@@ -98,7 +56,8 @@ func TestOutputWriterConfig(t *testing.T) {
 			if file != "" {
 				file = dir + "/" + file
 			}
-			writer, err := makeWriter(test.outputs, file)
+
+			_, err := makeWriter(test.outputs, file)
 
 			if test.err {
 				assert.Error(t, err)
@@ -107,21 +66,13 @@ func TestOutputWriterConfig(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			mw := writer.(*output.MultiWriter)
-
-			assert.Len(t, mw.Writers, len(test.expected))
-
-			for i, e := range test.expected {
-				w := mw.Writers[i].(*output.StreamWriter)
-
-				assert.Equal(t, string(w.Format.Option), e.format)
-
-				if e.file != "" {
-					assert.NotNil(t, w.Out)
-					assert.NotNil(t, w.Closer)
-					assert.FileExists(t, dir+"/"+e.file)
+			for _, expected := range test.expected {
+				if expected != "" {
+					assert.FileExists(t, dir+"/"+expected)
+				} else if file != "" {
+					assert.FileExists(t, file)
 				} else {
-					assert.Nil(t, w.Closer)
+					assert.NoFileExists(t, expected)
 				}
 			}
 		})
