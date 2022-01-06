@@ -33,7 +33,6 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 
 			by1, err := syft.Encode(originalSBOM, test.format)
 			assert.NoError(t, err)
-
 			newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
 			assert.NoError(t, err)
 			assert.Equal(t, test.format, newFormat)
