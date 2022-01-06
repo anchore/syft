@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -112,5 +113,14 @@ func assertSuccessfulReturnCode(tb testing.TB, _, _ string, rc int) {
 	tb.Helper()
 	if rc != 0 {
 		tb.Errorf("expected no failure but got rc=%d", rc)
+	}
+}
+
+func assertFileExists(file string) traitAssertion {
+	return func(tb testing.TB, _, _ string, _ int) {
+		tb.Helper()
+		if _, err := os.Stat(file); err != nil {
+			tb.Errorf("expected file to exist %s", file)
+		}
 	}
 }

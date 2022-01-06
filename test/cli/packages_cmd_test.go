@@ -8,6 +8,7 @@ import (
 func TestPackagesCmdFlags(t *testing.T) {
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
 	//badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
+	tmp := t.TempDir() + "/"
 
 	tests := []struct {
 		name       string
@@ -29,6 +30,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "multiple-output-flags",
+			args: []string{"packages", "-o", "table", "-o", "json=" + tmp + ".tmp/multiple-output-flag-test.json", coverageImage},
+			assertions: []traitAssertion{
+				assertTableReport,
+				assertFileExists(tmp + ".tmp/multiple-output-flag-test.json"),
 				assertSuccessfulReturnCode,
 			},
 		},
