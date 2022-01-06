@@ -3,6 +3,8 @@ package integration
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/pkg/cataloger"
+
 	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -20,7 +22,10 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 		t.Fatalf("unable to get source: %+v", err)
 	}
 
-	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, source.SquashedScope)
+	// TODO: this would be better with functional options (after/during API refactor)
+	c := cataloger.DefaultConfig()
+	c.Search.Scope = source.SquashedScope
+	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -51,7 +56,10 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 		t.Fatalf("unable to get source: %+v", err)
 	}
 
-	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, source.AllLayersScope)
+	// TODO: this would be better with functional options (after/during API refactor)
+	c := cataloger.DefaultConfig()
+	c.Search.Scope = source.AllLayersScope
+	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
