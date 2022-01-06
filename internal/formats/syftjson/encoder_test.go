@@ -16,19 +16,21 @@ import (
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
 
-var updateJson = flag.Bool("update-json", false, "update the *.golden files for json presenters")
+var updateJson = flag.Bool("update-json", false, "update the *.golden files for json encoders")
 
-func TestDirectoryPresenter(t *testing.T) {
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t)),
+func TestDirectoryEncoder(t *testing.T) {
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		testutils.DirectoryInput(t),
 		*updateJson,
 	)
 }
 
-func TestImagePresenter(t *testing.T) {
+func TestImageEncoder(t *testing.T) {
 	testImage := "image-simple"
-	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
+	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
+		Format(),
+		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateJson,
 	)
@@ -192,8 +194,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 	}
 
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(s),
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		s,
 		*updateJson,
 	)
 }

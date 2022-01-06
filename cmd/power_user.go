@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/output"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
@@ -73,9 +74,16 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	reporter, closer, err := reportWriter()
+	writer, err := output.MakeWriter(output.WriterOption{
+		Format: syftjson.Format(),
+		Path:   appConfig.File,
+	})
+	if err != nil {
+		return err
+	}
+
 	defer func() {
-		if err := closer(); err != nil {
+		if err := writer.Close(); err != nil {
 			log.Warnf("unable to write to report destination: %+v", err)
 		}
 
@@ -84,19 +92,15 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr, deprecated)
 	}()
 
-	if err != nil {
-		return err
-	}
-
 	return eventLoop(
-		powerUserExecWorker(userInput),
+		powerUserExecWorker(userInput, writer),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
-		ui.Select(isVerbose(), appConfig.Quiet, reporter)...,
+		ui.Select(isVerbose(), appConfig.Quiet)...,
 	)
 }
-func powerUserExecWorker(userInput string) <-chan error {
+func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -140,8 +144,8 @@ func powerUserExecWorker(userInput string) <-chan error {
 		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		bus.Publish(partybus.Event{
-			Type:  event.PresenterReady,
-			Value: syftjson.Format().Presenter(s),
+			Type:  event.Exit,
+			Value: func() error { return writer.Write(s) },
 		})
 	}()
 

@@ -10,9 +10,10 @@ import (
 
 var updateTableGoldenFiles = flag.Bool("update-table", false, "update the *.golden files for table format")
 
-func TestTablePresenter(t *testing.T) {
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t)),
+func TestTableEncoder(t *testing.T) {
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		testutils.DirectoryInput(t),
 		*updateTableGoldenFiles,
 	)
 }
