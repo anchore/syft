@@ -158,6 +158,21 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
+		{
+			name: "responds-to-package-cataloger-search-options",
+			args: []string{"packages", "-vv"},
+			env: map[string]string{
+				"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
+				"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
+			},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured. Note:
+				// we are not testing further wiring of this option, only that the config responds to
+				// package-cataloger-level options.
+				assertInOutput("search-unindexed-archives: true"),
+				assertInOutput("search-indexed-archives: false"),
+			},
+		},
 	}
 
 	for _, test := range tests {

@@ -162,7 +162,7 @@ func (p packageJSON) licensesFromJSON() ([]string, error) {
 }
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parsePackageJSON(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	var packages []*pkg.Package
 	dec := json.NewDecoder(reader)
 
@@ -175,7 +175,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 		}
 
 		if !p.hasNameAndVersionValues() {
-			log.Debug("encountered package.json file without a name and/or version field, ignoring this file")
+			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", path)
 			return nil, nil, nil
 		}
 

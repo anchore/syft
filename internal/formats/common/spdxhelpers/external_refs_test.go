@@ -26,7 +26,7 @@ func Test_ExternalRefs(t *testing.T) {
 			expected: []model.ExternalRef{
 				{
 					ReferenceCategory: model.SecurityReferenceCategory,
-					ReferenceLocator:  testCPE.BindToFmtString(),
+					ReferenceLocator:  pkg.CPEString(testCPE),
 					ReferenceType:     model.Cpe23ExternalRefType,
 				},
 				{
