@@ -280,7 +280,7 @@ func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 		}
 
 		bus.Publish(partybus.Event{
-			Type:  event.SBOMReady,
+			Type:  event.Exit,
 			Value: func() error { return writer.Write(s) },
 		})
 	}()

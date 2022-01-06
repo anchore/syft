@@ -7,11 +7,11 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-// handleSBOMReady is a UI function for processing the SBOMReady bus event,
+// handleExit is a UI function for processing the Exit bus event,
 // and calling the given function to output the contents.
-func handleSBOMReady(event partybus.Event) error {
+func handleExit(event partybus.Event) error {
 	// show the report to stdout
-	fn, err := syftEventParsers.ParseSBOMReady(event)
+	fn, err := syftEventParsers.ParseExit(event)
 	if err != nil {
 		return fmt.Errorf("bad CatalogerFinished event: %w", err)
 	}

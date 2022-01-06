@@ -80,12 +80,12 @@ func (h *ephemeralTerminalUI) Handle(event partybus.Event) error {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
 		}
 
-	case event.Type == syftEvent.SBOMReady:
+	case event.Type == syftEvent.Exit:
 		// we need to close the screen now since signaling the sbom is ready means that we
 		// are about to write bytes to stdout, so we should reset the terminal state first
 		h.closeScreen(false)
 
-		if err := handleSBOMReady(event); err != nil {
+		if err := handleExit(event); err != nil {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
 		}
 

@@ -26,8 +26,8 @@ const (
 	// FileIndexingStarted is a partybus event that occurs when the directory resolver begins indexing a filesystem
 	FileIndexingStarted partybus.EventType = "syft-file-indexing-started-event"
 
-	// SBOMReady is a partybus event that occurs when an analysis result is ready for final presentation
-	SBOMReady partybus.EventType = "syft-sbom-ready-event"
+	// Exit is a partybus event that occurs when an analysis result is ready for final presentation
+	Exit partybus.EventType = "syft-exit-event"
 
 	// ImportStarted is a partybus event that occurs when an SBOM upload process has begun
 	ImportStarted partybus.EventType = "syft-import-started-event"

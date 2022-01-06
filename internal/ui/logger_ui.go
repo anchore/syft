@@ -22,11 +22,11 @@ func (l *loggerUI) Setup(unsubscribe func() error) error {
 
 func (l loggerUI) Handle(event partybus.Event) error {
 	// ignore all events except for the final event
-	if event.Type != syftEvent.SBOMReady {
+	if event.Type != syftEvent.Exit {
 		return nil
 	}
 
-	if err := handleSBOMReady(event); err != nil {
+	if err := handleExit(event); err != nil {
 		log.Warnf("unable to show catalog image finished event: %+v", err)
 	}
 
