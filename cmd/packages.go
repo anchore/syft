@@ -200,7 +200,7 @@ func validateInputArgs(cmd *cobra.Command, args []string) error {
 }
 
 func packagesExec(_ *cobra.Command, args []string) error {
-	writer, err := makeWriter()
+	writer, err := makeWriter(appConfig.Output, appConfig.File)
 	if err != nil {
 		return err
 	}
