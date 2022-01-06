@@ -3,9 +3,7 @@ package file
 import (
 	"archive/zip"
 	"bytes"
-	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -21,8 +19,6 @@ const (
 	MB
 	GB
 )
-
-const perFileReadLimit = 2 * GB
 
 type errZipSlipDetected struct {
 	Prefix   string
@@ -110,19 +106,8 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 			return fmt.Errorf("unable to extract directories, only files: %s", file.Name)
 		}
 
-		// limit the zip reader on each file read to prevent decompression bomb attacks
-		numBytes, err := io.Copy(tempFile, io.LimitReader(zippedFile, perFileReadLimit))
-		if numBytes >= perFileReadLimit || errors.Is(err, io.EOF) {
-			return fmt.Errorf("zip read limit hit (potential decompression bomb attack)")
-		}
-		if err != nil {
+		if err := safeCopy(tempFile, zippedFile); err != nil {
 			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.Name, archivePath, err)
-		}
-
-		// the file pointer is at the end due to the copy operation, reset back to the beginning
-		_, err = tempFile.Seek(0, io.SeekStart)
-		if err != nil {
-			return fmt.Errorf("unable to reset file pointer (%s): %w", tempFile.Name(), err)
 		}
 
 		results[file.Name] = Opener{path: tempFile.Name()}
@@ -153,13 +138,7 @@ func ContentsFromZip(archivePath string, paths ...string) (map[string]string, er
 		}
 
 		var buffer bytes.Buffer
-
-		// limit the zip reader on each file read to prevent decompression bomb attacks
-		numBytes, err := io.Copy(&buffer, io.LimitReader(zippedFile, perFileReadLimit))
-		if numBytes >= perFileReadLimit || errors.Is(err, io.EOF) {
-			return fmt.Errorf("zip read limit hit (potential decompression bomb attack)")
-		}
-		if err != nil {
+		if err := safeCopy(&buffer, zippedFile); err != nil {
 			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.Name, archivePath, err)
 		}
 
@@ -228,12 +207,7 @@ func extractSingleFile(file *zip.File, expandedFilePath, archivePath string) err
 			return fmt.Errorf("unable to create dest file=%q from zip=%q: %w", expandedFilePath, archivePath, err)
 		}
 
-		// limit the zip reader on each file read to prevent decompression bomb attacks
-		numBytes, err := io.Copy(outputFile, io.LimitReader(zippedFile, perFileReadLimit))
-		if numBytes >= perFileReadLimit || errors.Is(err, io.EOF) {
-			return fmt.Errorf("zip read limit hit (potential decompression bomb attack)")
-		}
-		if err != nil {
+		if err := safeCopy(outputFile, zippedFile); err != nil {
 			return fmt.Errorf("unable to copy source=%q to dest=%q for zip=%q: %w", file.Name, outputFile.Name(), archivePath, err)
 		}
 
