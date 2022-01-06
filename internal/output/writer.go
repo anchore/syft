@@ -11,32 +11,32 @@ import (
 )
 
 type StreamWriter struct {
-	format format.Format
-	out    io.Writer
-	close  func() error
+	Format format.Format
+	Out    io.Writer
+	Closer func() error
 }
 
 // Write the provided SBOM to the data stream
 func (w *StreamWriter) Write(s sbom.SBOM) error {
-	return w.format.Encode(w.out, s)
+	return w.Format.Encode(w.Out, s)
 }
 
 // Close any resources, such as open files
 func (w *StreamWriter) Close() error {
-	if w.close != nil {
-		return w.close()
+	if w.Closer != nil {
+		return w.Closer()
 	}
 	return nil
 }
 
-// MultiWriter holds a list of child writers to apply all Write and Close operations to
+// MultiWriter holds a list of child Writers to apply all Write and Close operations to
 type MultiWriter struct {
-	writers []sbom.Writer
+	Writers []sbom.Writer
 }
 
-// Write writes the SBOM to all writers
+// Write writes the SBOM to all Writers
 func (m *MultiWriter) Write(s sbom.SBOM) (errs error) {
-	for _, w := range m.writers {
+	for _, w := range m.Writers {
 		err := w.Write(s)
 		if err != nil {
 			errs = multierror.Append(errs, err)
@@ -45,9 +45,9 @@ func (m *MultiWriter) Write(s sbom.SBOM) (errs error) {
 	return errs
 }
 
-// Close closes all writers
+// Close closes all Writers
 func (m *MultiWriter) Close() (errs error) {
-	for _, w := range m.writers {
+	for _, w := range m.Writers {
 		err := w.Close()
 		if err != nil {
 			errs = multierror.Append(errs, err)
@@ -56,13 +56,13 @@ func (m *MultiWriter) Close() (errs error) {
 	return errs
 }
 
-// WriterOption format and path strings used to create sbom.Writer
+// WriterOption Format and path strings used to create sbom.Writer
 type WriterOption struct {
 	Format format.Format
 	Path   string
 }
 
-// MakeWriter create all report writers from input options; if a file is not specified, os.Stdout is used
+// MakeWriter create all report Writers from input options; if a file is not specified, os.Stdout is used
 func MakeWriter(options ...WriterOption) (sbom.Writer, error) {
 	if len(options) == 0 {
 		return nil, fmt.Errorf("no output options provided")
@@ -73,34 +73,24 @@ func MakeWriter(options ...WriterOption) (sbom.Writer, error) {
 	for _, option := range options {
 		switch len(option.Path) {
 		case 0:
-			out.writers = append(out.writers, &StreamWriter{
-				format: option.Format,
-				out:    os.Stdout,
+			out.Writers = append(out.Writers, &StreamWriter{
+				Format: option.Format,
+				Out:    os.Stdout,
 			})
 		default:
-			fileOut, err := fileOutput(option.Path)
+			fileOut, err := os.OpenFile(option.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 			if err != nil {
-				// close any previously opened files; we can't really recover from any errors
+				// Closer any previously opened files; we can't really recover from any errors
 				_ = out.Close()
-				return nil, err
+				return nil, fmt.Errorf("unable to create report file: %w", err)
 			}
-			out.writers = append(out.writers, &StreamWriter{
-				format: option.Format,
-				out:    fileOut,
-				close:  fileOut.Close,
+			out.Writers = append(out.Writers, &StreamWriter{
+				Format: option.Format,
+				Out:    fileOut,
+				Closer: fileOut.Close,
 			})
 		}
 	}
 
 	return out, nil
-}
-
-func fileOutput(path string) (*os.File, error) {
-	reportFile, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-
-	if err != nil {
-		return nil, fmt.Errorf("unable to create report file: %w", err)
-	}
-
-	return reportFile, nil
 }
