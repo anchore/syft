@@ -325,6 +325,10 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
+		if runtime.GOOS == "windows" {
+			userStrPath = windowsToPosix(userStrPath)
+		}
+
 		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
 		if err == nil && exists {
 			references = append(references, NewLocationFromDirectory(r.responsePath(userStrPath), *ref))
@@ -378,7 +382,13 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 		// by preference or these files are not readable by the current user).
 		return nil, fmt.Errorf("file content is inaccessible path=%q", location.ref.RealPath)
 	}
-	return file.NewLazyReadCloser(string(location.ref.RealPath)), nil
+	// RealPath is posix so for windows directory resolver we need to translate
+	// to its true on disk path.
+	filePath := string(location.ref.RealPath)
+	if runtime.GOOS == "windows" {
+		filePath = posixToWindows(filePath)
+	}
+	return file.NewLazyReadCloser(filePath), nil
 }
 
 func (r directoryResolver) isInIndex(location Location) bool {
@@ -438,7 +448,7 @@ func windowsToPosix(windowsPath string) (posixPath string) {
 func posixToWindows(posixPath string) (windowsPath string) {
 	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
 	pathFields := strings.Split(posixPath, "/")
-	volumeName := strings.ToUpper(pathFields[1])
+	volumeName := strings.ToUpper(pathFields[1]) + ":\\"
 
 	// translate non-escaped forward slashes into backslashes
 	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
