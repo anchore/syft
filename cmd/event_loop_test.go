@@ -252,7 +252,7 @@ func Test_eventLoop_handlerError(t *testing.T) {
 
 		finalEvent := partybus.Event{
 			Type:  event.Exit,
-			Error: fmt.Errorf("unable to create encoder"),
+			Error: fmt.Errorf("an exit error occured"),
 		}
 
 		worker := func() <-chan error {
