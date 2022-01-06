@@ -14,7 +14,7 @@ func Test_windowsToPosix(t *testing.T) {
 		{
 			name: "basic case",
 			args: args{
-				windowsPath: `C:\\some\windows\place`,
+				windowsPath: `C:\some\windows\place`,
 			},
 			wantPosixPath: "/c/some/windows/place",
 		},
@@ -42,7 +42,7 @@ func Test_posixToWindows(t *testing.T) {
 			args: args{
 				posixPath: "/c/some/windows/place",
 			},
-			wantWindowsPath: `C:\\some\windows\place`,
+			wantWindowsPath: `C:\some\windows\place`,
 		},
 	}
 	for _, tt := range tests {

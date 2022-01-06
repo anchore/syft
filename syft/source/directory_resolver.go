@@ -448,13 +448,13 @@ func windowsToPosix(windowsPath string) (posixPath string) {
 func posixToWindows(posixPath string) (windowsPath string) {
 	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
 	pathFields := strings.Split(posixPath, "/")
-	volumeName := strings.ToUpper(pathFields[1]) + ":\\"
+	volumeName := strings.ToUpper(pathFields[1]) + `:\\`
 
 	// translate non-escaped forward slashes into backslashes
 	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
 
 	// combine volume name and backslash components
-	return filepath.Join(volumeName, remainingTranslatedPath)
+	return filepath.Clean(volumeName + remainingTranslatedPath)
 }
 
 func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
