@@ -1,6 +1,5 @@
 /*
-Package syft
-A "one-stop-shop" for helper utilities for all major functionality provided by child packages of the syft library.
+Package syft is a "one-stop-shop" for helper utilities for all major functionality provided by child packages of the syft library.
 
 Here is what the main execution path for syft does:
 
@@ -35,8 +34,8 @@ import (
 // CatalogPackages takes an inventory of packages from the given image from a particular perspective
 // (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
 // distribution, and the source object used to wrap the data source.
-func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, []artifact.Relationship, *distro.Distro, error) {
-	resolver, err := src.FileResolver(scope)
+func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []artifact.Relationship, *distro.Distro, error) {
+	resolver, err := src.FileResolver(cfg.Search.Scope)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
 	}
@@ -54,13 +53,13 @@ func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, []ar
 	switch src.Metadata.Scheme {
 	case source.ImageScheme:
 		log.Info("cataloging image")
-		catalogers = cataloger.ImageCatalogers()
+		catalogers = cataloger.ImageCatalogers(cfg)
 	case source.FileScheme:
 		log.Info("cataloging file")
-		catalogers = cataloger.AllCatalogers()
+		catalogers = cataloger.AllCatalogers(cfg)
 	case source.DirectoryScheme:
 		log.Info("cataloging directory")
-		catalogers = cataloger.DirectoryCatalogers()
+		catalogers = cataloger.DirectoryCatalogers(cfg)
 	default:
 		return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
 	}

@@ -4,14 +4,29 @@ ifndef PKGSDIR
     $(error PKGSDIR is not set)
 endif
 
-all: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar
+all: jars archives
 
 clean: clean-examples
 	rm -f $(PKGSDIR)/*
 
 clean-examples: clean-gradle clean-maven clean-jenkins clean-nestedjar
 
-.PHONY: maven gradle clean clean-gradle clean-maven clean-jenkins clean-examples clean-nestedjar
+.PHONY: maven gradle clean clean-gradle clean-maven clean-jenkins clean-examples clean-nestedjar jars archives
+
+jars: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar
+
+archives: $(PKGSDIR)/example-java-app-maven-0.1.0.zip $(PKGSDIR)/example-java-app-maven-0.1.0.tar $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz
+
+# jars within archives...
+
+$(PKGSDIR)/example-java-app-maven-0.1.0.zip: $(PKGSDIR)/example-java-app-maven-0.1.0.jar
+	zip $(PKGSDIR)/example-java-app-maven-0.1.0.zip $(PKGSDIR)/example-java-app-maven-0.1.0.jar
+
+$(PKGSDIR)/example-java-app-maven-0.1.0.tar: $(PKGSDIR)/example-java-app-maven-0.1.0.jar
+	tar -cvf $(PKGSDIR)/example-java-app-maven-0.1.0.tar $(PKGSDIR)/example-java-app-maven-0.1.0.jar
+
+$(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz: $(PKGSDIR)/example-java-app-maven-0.1.0.jar
+	tar -czvf $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz $(PKGSDIR)/example-java-app-maven-0.1.0.jar
 
 # Nested jar...
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -20,6 +21,8 @@ import (
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
+
+const WindowsOS = "windows"
 
 var unixSystemRuntimePrefixes = []string{
 	"/proc",
@@ -143,6 +146,11 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 		return "", nil
 	}
 
+	// here we check to see if we need to normalize paths to posix on the way in coming from windows
+	if runtime.GOOS == WindowsOS {
+		path = windowsToPosix(path)
+	}
+
 	newRoot, err := r.addPathToIndex(path, info)
 	if r.isFileAccessErr(path, err) {
 		return "", nil
@@ -258,6 +266,11 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 }
 
 func (r directoryResolver) responsePath(path string) string {
+	// check to see if we need to encode back to Windows from posix
+	if runtime.GOOS == WindowsOS {
+		path = posixToWindows(path)
+	}
+
 	// always return references relative to the request path (not absolute path)
 	if filepath.IsAbs(path) {
 		// we need to account for the cwd relative to the running process and the given root for the directory resolver
@@ -314,6 +327,10 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
+		if runtime.GOOS == WindowsOS {
+			userStrPath = windowsToPosix(userStrPath)
+		}
+
 		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
 		if err == nil && exists {
 			references = append(references, NewLocationFromDirectory(r.responsePath(userStrPath), *ref))
@@ -367,7 +384,13 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 		// by preference or these files are not readable by the current user).
 		return nil, fmt.Errorf("file content is inaccessible path=%q", location.ref.RealPath)
 	}
-	return file.NewLazyReadCloser(string(location.ref.RealPath)), nil
+	// RealPath is posix so for windows directory resolver we need to translate
+	// to its true on disk path.
+	filePath := string(location.ref.RealPath)
+	if runtime.GOOS == WindowsOS {
+		filePath = posixToWindows(filePath)
+	}
+	return file.NewLazyReadCloser(filePath), nil
 }
 
 func (r directoryResolver) isInIndex(location Location) bool {
@@ -409,6 +432,33 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
+func windowsToPosix(windowsPath string) (posixPath string) {
+	// volume should be encoded at the start (e.g /c/<path>) where c is the volume
+	volumeName := filepath.VolumeName(windowsPath)
+	pathWithoutVolume := strings.TrimPrefix(windowsPath, volumeName)
+	volumeLetter := strings.ToLower(strings.TrimSuffix(volumeName, ":"))
+
+	// translate non-escaped backslash to forwardslash
+	translatedPath := strings.ReplaceAll(pathWithoutVolume, "\\", "/")
+
+	// always have `/` as the root... join all components, e.g.:
+	// convert: C:\\some\windows\Place
+	// into: /c/some/windows/Place
+	return path.Clean("/" + strings.Join([]string{volumeLetter, translatedPath}, "/"))
+}
+
+func posixToWindows(posixPath string) (windowsPath string) {
+	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
+	pathFields := strings.Split(posixPath, "/")
+	volumeName := strings.ToUpper(pathFields[1]) + `:\\`
+
+	// translate non-escaped forward slashes into backslashes
+	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
+
+	// combine volume name and backslash components
+	return filepath.Clean(volumeName + remainingTranslatedPath)
+}
+
 func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
 	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
 }
@@ -421,8 +471,8 @@ func isUnallowableFileType(_ string, info os.FileInfo) bool {
 	switch newFileTypeFromMode(info.Mode()) {
 	case CharacterDevice, Socket, BlockDevice, FIFONode, IrregularFile:
 		return true
-		// note: symlinks that point to these files may still get by. We handle this later in processing to help prevent
-		// against infinite links traversal.
+		// note: symlinks that point to these files may still get by.
+		// We handle this later in processing to help prevent against infinite links traversal.
 	}
 
 	return false
