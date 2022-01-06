@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
@@ -64,12 +65,19 @@ type WriterOption struct {
 }
 
 // MakeWriter create all report writers from input options; if a file is not specified, os.Stdout is used
-func MakeWriter(options ...WriterOption) (sbom.Writer, error) {
+func MakeWriter(options ...WriterOption) (_ sbom.Writer, errs error) {
 	if len(options) == 0 {
 		return nil, fmt.Errorf("no output options provided")
 	}
 
 	out := &multiWriter{}
+
+	defer func() {
+		if errs != nil {
+			// close any previously opened files; we can't really recover from any errors
+			_ = out.Close()
+		}
+	}()
 
 	for _, option := range options {
 		switch len(option.Path) {
@@ -79,10 +87,21 @@ func MakeWriter(options ...WriterOption) (sbom.Writer, error) {
 				out:    os.Stdout,
 			})
 		default:
+			// create any missing subdirectories
+			dir := path.Dir(option.Path)
+			if dir != "" {
+				s, err := os.Stat(dir)
+				if err != nil {
+					err = os.MkdirAll(dir, 0755) // maybe should be os.ModePerm ?
+					if err != nil {
+						return nil, err
+					}
+				} else if !s.IsDir() {
+					return nil, fmt.Errorf("output path does not contain a valid directory: %s", option.Path)
+				}
+			}
 			fileOut, err := os.OpenFile(option.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 			if err != nil {
-				// close any previously opened files; we can't really recover from any errors
-				_ = out.Close()
 				return nil, fmt.Errorf("unable to create report file: %w", err)
 			}
 			out.writers = append(out.writers, &streamWriter{

@@ -1,7 +1,6 @@
 package output
 
 import (
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -19,8 +18,7 @@ type writerConfig struct {
 }
 
 func TestOutputWriter(t *testing.T) {
-	dir, err := ioutil.TempDir("", "output-writers-test-")
-	assert.NoError(t, err)
+	tmp := t.TempDir()
 
 	testName := func(options []WriterOption, err bool) string {
 		var out []string
@@ -86,21 +84,21 @@ func TestOutputWriter(t *testing.T) {
 			outputs: []WriterOption{
 				{
 					Format: syftjson.Format(),
-					Path:   "test-3-1.json",
+					Path:   "test-3/1.json",
 				},
 				{
 					Format: spdx22json.Format(),
-					Path:   "test-3-2.json",
+					Path:   "test-3/2.json",
 				},
 			},
 			expected: []writerConfig{
 				{
 					format: "json",
-					file:   "test-3-1.json",
+					file:   "test-3/1.json",
 				},
 				{
 					format: "spdx-json",
-					file:   "test-3-2.json",
+					file:   "test-3/2.json",
 				},
 			},
 		},
@@ -131,7 +129,7 @@ func TestOutputWriter(t *testing.T) {
 			outputs := test.outputs
 			for i := range outputs {
 				if outputs[i].Path != "" {
-					outputs[i].Path = dir + "/" + outputs[i].Path
+					outputs[i].Path = tmp + outputs[i].Path
 				}
 			}
 
@@ -154,7 +152,7 @@ func TestOutputWriter(t *testing.T) {
 				assert.Equal(t, string(w.format.Option), e.format)
 
 				if e.file != "" {
-					assert.FileExists(t, dir+"/"+e.file)
+					assert.FileExists(t, tmp+e.file)
 				}
 
 				if e.file != "" {
