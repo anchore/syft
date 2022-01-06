@@ -19,7 +19,6 @@ func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 	cpe.Vendor = vendor
 	cpe.Version = version
 	cpe.TargetSW = targetSW
-
 	return cpe
 }
 
@@ -29,7 +28,6 @@ func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
 func Generate(p pkg.Package) []pkg.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
-
 	if len(products) == 0 {
 		return nil
 	}
@@ -44,7 +42,6 @@ func Generate(p pkg.Package) []pkg.CPE {
 				continue
 			}
 			keys.Add(key)
-
 			// add a new entry...
 			cpes = append(cpes, newCPE(product, vendor, p.Version, wfn.Any))
 		}
