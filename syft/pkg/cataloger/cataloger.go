@@ -32,7 +32,7 @@ type Cataloger interface {
 }
 
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
-func ImageCatalogers() []Cataloger {
+func ImageCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
@@ -40,14 +40,14 @@ func ImageCatalogers() []Cataloger {
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
-		java.NewJavaCataloger(),
+		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 	}
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
-func DirectoryCatalogers() []Cataloger {
+func DirectoryCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
@@ -56,7 +56,7 @@ func DirectoryCatalogers() []Cataloger {
 		javascript.NewJavascriptLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
-		java.NewJavaCataloger(),
+		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),
@@ -65,7 +65,7 @@ func DirectoryCatalogers() []Cataloger {
 }
 
 // AllCatalogers returns all implemented catalogers
-func AllCatalogers() []Cataloger {
+func AllCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
@@ -75,7 +75,7 @@ func AllCatalogers() []Cataloger {
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
-		java.NewJavaCataloger(),
+		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),

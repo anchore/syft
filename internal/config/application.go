@@ -38,7 +38,7 @@ type Application struct {
 	CliOptions         CliOnlyOptions     `yaml:"-" json:"-"`                                                                           // all options only available through the CLI (not via env vars or config)
 	Dev                development        `yaml:"dev" json:"dev" mapstructure:"dev"`
 	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
-	Package            packages           `yaml:"package" json:"package" mapstructure:"package"`
+	Package            pkg                `yaml:"package" json:"package" mapstructure:"package"`
 	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
 	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`

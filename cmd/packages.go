@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/pkg/profile"
@@ -98,7 +99,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 	// Formatting & Input options //////////////////////////////////////////////
 
 	flags.StringP(
-		"scope", "s", source.SquashedScope.String(),
+		"scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringP(

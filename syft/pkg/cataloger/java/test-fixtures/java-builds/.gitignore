@@ -1,4 +1,4 @@
-/packages/sb
+/packages/*
 *.fingerprint
 # maven when running in a volume may spit out directories like this
 **/\?/

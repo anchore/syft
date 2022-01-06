@@ -20,7 +20,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
 	var pc *pkg.Catalog
-	for _, c := range cataloger.ImageCatalogers() {
+	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil, nil)
 		b.Cleanup(cleanupSource)
