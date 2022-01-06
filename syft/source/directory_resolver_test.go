@@ -649,7 +649,6 @@ func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
 	locations, err = resolver.FilesByPath("./link_to_link_to_readme")
 	require.NoError(t, err)
 	assert.Len(t, locations, 1)
-
 }
 
 func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
@@ -684,10 +683,9 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 			if test.err {
 				require.Error(t, err)
 				return
-			} else {
-				require.NoError(t, err)
 			}
 
+			require.NoError(t, err)
 			if test.expects != "" {
 				b, err := ioutil.ReadAll(actual)
 				require.NoError(t, err)

@@ -22,6 +22,8 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
+const WindowsOS = "windows"
+
 var unixSystemRuntimePrefixes = []string{
 	"/proc",
 	"/dev",
@@ -145,7 +147,7 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 	}
 
 	// here we check to see if we need to normalize paths to posix on the way in coming from windows
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == WindowsOS {
 		path = windowsToPosix(path)
 	}
 
@@ -265,7 +267,7 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 
 func (r directoryResolver) responsePath(path string) string {
 	// check to see if we need to encode back to Windows from posix
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == WindowsOS {
 		path = posixToWindows(path)
 	}
 
@@ -325,7 +327,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
-		if runtime.GOOS == "windows" {
+		if runtime.GOOS == WindowsOS {
 			userStrPath = windowsToPosix(userStrPath)
 		}
 
@@ -385,7 +387,7 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 	// RealPath is posix so for windows directory resolver we need to translate
 	// to its true on disk path.
 	filePath := string(location.ref.RealPath)
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == WindowsOS {
 		filePath = posixToWindows(filePath)
 	}
 	return file.NewLazyReadCloser(filePath), nil
