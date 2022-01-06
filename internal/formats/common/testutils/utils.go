@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/anchore/go-presenter"
@@ -51,6 +52,7 @@ func AssertPresenterAgainstGoldenImageSnapshot(t *testing.T, pres presenter.Pres
 	var expected = testutils.GetGoldenFileContents(t)
 
 	// remove dynamic values, which should be tested independently
+	redactors = append(redactors, carriageRedactor)
 	for _, r := range redactors {
 		actual = r(actual)
 		expected = r(expected)
@@ -79,6 +81,7 @@ func AssertPresenterAgainstGoldenSnapshot(t *testing.T, pres presenter.Presenter
 	var expected = testutils.GetGoldenFileContents(t)
 
 	// remove dynamic values, which should be tested independently
+	redactors = append(redactors, carriageRedactor)
 	for _, r := range redactors {
 		actual = r(actual)
 		expected = r(expected)
@@ -136,6 +139,11 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 			},
 		},
 	}
+}
+
+func carriageRedactor(s []byte) []byte {
+	msg := strings.ReplaceAll(string(s), "\r\n", "\n")
+	return []byte(msg)
 }
 
 func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
