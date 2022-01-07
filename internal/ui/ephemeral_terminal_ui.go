@@ -36,22 +36,20 @@ import (
 // or in the shared ui package as a function on the main handler object. All handler functions should be completed
 // processing an event before the ETUI exits (coordinated with a sync.WaitGroup)
 type ephemeralTerminalUI struct {
-	unsubscribe  func() error
-	handler      *ui.Handler
-	waitGroup    *sync.WaitGroup
-	frame        *frame.Frame
-	logBuffer    *bytes.Buffer
-	uiOutput     *os.File
-	reportOutput io.Writer
+	unsubscribe func() error
+	handler     *ui.Handler
+	waitGroup   *sync.WaitGroup
+	frame       *frame.Frame
+	logBuffer   *bytes.Buffer
+	uiOutput    *os.File
 }
 
 // NewEphemeralTerminalUI writes all events to a TUI and writes the final report to the given writer.
-func NewEphemeralTerminalUI(reportWriter io.Writer) UI {
+func NewEphemeralTerminalUI() UI {
 	return &ephemeralTerminalUI{
-		handler:      ui.NewHandler(),
-		waitGroup:    &sync.WaitGroup{},
-		uiOutput:     os.Stderr,
-		reportOutput: reportWriter,
+		handler:   ui.NewHandler(),
+		waitGroup: &sync.WaitGroup{},
+		uiOutput:  os.Stderr,
 	}
 }
 
@@ -82,12 +80,12 @@ func (h *ephemeralTerminalUI) Handle(event partybus.Event) error {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
 		}
 
-	case event.Type == syftEvent.PresenterReady:
-		// we need to close the screen now since signaling the the presenter is ready means that we
+	case event.Type == syftEvent.Exit:
+		// we need to close the screen now since signaling the sbom is ready means that we
 		// are about to write bytes to stdout, so we should reset the terminal state first
 		h.closeScreen(false)
 
-		if err := handleCatalogerPresenterReady(event, h.reportOutput); err != nil {
+		if err := handleExit(event); err != nil {
 			log.Errorf("unable to show %s event: %+v", event.Type, err)
 		}
 
