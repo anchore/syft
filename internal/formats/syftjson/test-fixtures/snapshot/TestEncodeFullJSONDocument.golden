@@ -167,9 +167,12 @@
   }
  },
  "distro": {
-  "name": "redhat",
+  "id": "redhat",
+  "idLike": [
+   "rhel"
+  ],
   "version": "7",
-  "idLike": "rhel"
+  "versionID": "7"
  },
  "descriptor": {
   "name": "syft",

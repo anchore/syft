@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/docker/docker/pkg/ioutils"
@@ -51,8 +51,6 @@ func TestPackageSbomToModel(t *testing.T) {
 		},
 	}
 
-	d, _ := distro.NewDistro(distro.CentOS, "8.0", "")
-
 	p := pkg.Package{
 		Name:    "name",
 		Version: "version",
@@ -76,10 +74,16 @@ func TestPackageSbomToModel(t *testing.T) {
 
 	c := pkg.NewCatalog(p)
 
+	distro := linux.Release{
+		ID:        "centos",
+		Version:   "8.0",
+		VersionID: "8.0",
+	}
+
 	sbomResult := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: c,
-			Distro:         &d,
+			PackageCatalog:    c,
+			LinuxDistribution: &distro,
 		},
 		Source: m,
 	}
@@ -98,8 +102,8 @@ func TestPackageSbomToModel(t *testing.T) {
 
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: c,
-			Distro:         &d,
+			PackageCatalog:    c,
+			LinuxDistribution: &distro,
 		},
 		Source: m,
 	}
@@ -206,12 +210,14 @@ func TestPackageSbomImport(t *testing.T) {
 		},
 	}
 
-	d, _ := distro.NewDistro(distro.CentOS, "8.0", "")
-
 	sbomResult := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			Distro:         &d,
+			LinuxDistribution: &linux.Release{
+				ID:        "centos",
+				Version:   "8.0",
+				VersionID: "8.0",
+			},
 		},
 		Source: m,
 	}

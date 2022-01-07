@@ -71,9 +71,14 @@
   "target": "/some/path"
  },
  "distro": {
+  "prettyName": "debian",
   "name": "debian",
+  "id": "debian",
+  "idLike": [
+   "like!"
+  ],
   "version": "1.2.3",
-  "idLike": "like!"
+  "versionID": "1.2.3"
  },
  "descriptor": {
   "name": "syft",

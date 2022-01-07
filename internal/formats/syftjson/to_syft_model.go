@@ -3,22 +3,16 @@ package syftjson
 import (
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
 func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
-	dist, err := distro.NewDistro(distro.Type(doc.Distro.Name), doc.Distro.Version, doc.Distro.IDLike)
-	if err != nil {
-		return nil, err
-	}
-
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: toSyftCatalog(doc.Artifacts),
-			Distro:         &dist,
+			PackageCatalog:    toSyftCatalog(doc.Artifacts),
+			LinuxDistribution: &doc.Distro,
 		},
 		Source:     *toSyftSourceData(doc.Source),
 		Descriptor: toSyftDescriptor(doc.Descriptor),

@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/anchore/syft/syft/linux"
+
 	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -14,7 +16,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -25,13 +26,18 @@ func toFormatModel(s sbom.SBOM) model.Document {
 		log.Warnf("unable to create syft-json source object: %+v", err)
 	}
 
+	var release linux.Release
+	if s.Artifacts.LinuxDistribution != nil {
+		release = *s.Artifacts.LinuxDistribution
+	}
+
 	return model.Document{
 		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
 		Source:                src,
-		Distro:                toDistroModel(s.Artifacts.Distro),
+		Distro:                release,
 		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
@@ -208,18 +214,5 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 		}, nil
 	default:
 		return model.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
-	}
-}
-
-// toDistroModel creates a struct with the Linux distribution to be represented in JSON.
-func toDistroModel(d *distro.Distro) model.Distro {
-	if d == nil {
-		return model.Distro{}
-	}
-
-	return model.Distro{
-		Name:    d.Name(),
-		Version: d.FullVersion(),
-		IDLike:  d.IDLike,
 	}
 }

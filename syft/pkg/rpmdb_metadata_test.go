@@ -6,19 +6,19 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestRpmMetadata_pURL(t *testing.T) {
 	tests := []struct {
-		distro   distro.Distro
+		distro   linux.Release
 		metadata RpmdbMetadata
 		expected string
 	}{
 		{
-			distro: distro.Distro{
-				Type: distro.CentOS,
+			distro: linux.Release{
+				ID: "centos",
 			},
 			metadata: RpmdbMetadata{
 				Name:    "p",
@@ -30,8 +30,8 @@ func TestRpmMetadata_pURL(t *testing.T) {
 			expected: "pkg:rpm/centos/p@v-r?arch=a&epoch=1",
 		},
 		{
-			distro: distro.Distro{
-				Type: distro.RedHat,
+			distro: linux.Release{
+				ID: "rhel",
 			},
 			metadata: RpmdbMetadata{
 				Name:    "p",
@@ -40,7 +40,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				Release: "r",
 				Epoch:   nil,
 			},
-			expected: "pkg:rpm/redhat/p@v-r?arch=a",
+			expected: "pkg:rpm/rhel/p@v-r?arch=a",
 		},
 	}
 
