@@ -183,9 +183,11 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 			// note: based on the purpose above no discovered checksums should be provided, but instead, only
 			// tool-derived checksums.
-			PackageChecksumSHA1:   "",
-			PackageChecksumSHA256: "",
-			PackageChecksumMD5:    "",
+			//FIXME: this got removed between 0.1.0 and 0.2.0, is this right? it looks like
+			// it wasn't being used anyway
+			//PackageChecksumSHA1:   "",
+			//PackageChecksumSHA256: "",
+			//PackageChecksumMD5:    "",
 
 			// 3.11: Package Home Page
 			// Cardinality: optional, one
