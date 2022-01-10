@@ -20,7 +20,10 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func toFormatModel(s sbom.SBOM) model.Document {
+// ToFormatModel transforms the sbom import a format-specific model.
+// note: this is needed for anchore import functionality
+// TODO: unexport this when/if anchore import functionality is removed
+func ToFormatModel(s sbom.SBOM) model.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil {
 		log.Warnf("unable to create syft-json source object: %+v", err)
