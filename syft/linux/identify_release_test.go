@@ -448,12 +448,13 @@ func TestParseSystemReleaseCPE(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/centos6/etc/system-release-cpe",
 			release: &Release{
-				Name:      "centos",
-				ID:        "centos",
-				IDLike:    []string{"centos"},
-				Version:   "6",
-				VersionID: "6",
-				CPEName:   "cpe:/o:centos:linux:6:GA",
+				PrettyName: "centos",
+				Name:       "centos",
+				ID:         "centos",
+				IDLike:     []string{"centos"},
+				Version:    "6",
+				VersionID:  "6",
+				CPEName:    "cpe:/o:centos:linux:6:GA",
 			},
 		},
 		{
@@ -487,11 +488,12 @@ func TestParseRedhatRelease(t *testing.T) {
 			fixture: "test-fixtures/os/centos5/etc/redhat-release",
 			name:    "Centos 5",
 			release: &Release{
-				Name:      "CentOS",
-				ID:        "CentOS",
-				IDLike:    []string{"CentOS"},
-				Version:   "5.7",
-				VersionID: "5.7",
+				PrettyName: "CentOS",
+				Name:       "centos",
+				ID:         "centos",
+				IDLike:     []string{"centos"},
+				Version:    "5.7",
+				VersionID:  "5.7",
 			},
 		},
 		{
