@@ -54,8 +54,7 @@ archives:
     id: syft
     replacements:
       windows: Windows
-      386: i386
-      amd54: x86_64
+      amd64: x86_64
     format_overrides:
     - goos: windows
       format: zip
