@@ -151,7 +151,7 @@ func parseSystemReleaseCPE(contents string) (*Release, error) {
 		if len(match) < 3 {
 			continue
 		}
-		return simpleRelease("", match[1], match[2], match[0]), nil
+		return simpleRelease(match[1], strings.ToLower(match[1]), match[2], match[0]), nil
 	}
 	return nil, nil
 }
@@ -166,7 +166,7 @@ func parseRedhatRelease(contents string) (*Release, error) {
 		if len(match) < 3 {
 			continue
 		}
-		return simpleRelease("", match[1], match[2], ""), nil
+		return simpleRelease(match[1], strings.ToLower(match[1]), match[2], ""), nil
 	}
 	return nil, nil
 }
