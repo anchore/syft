@@ -53,7 +53,6 @@ archives:
   - name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     id: syft
     replacements:
-      linux: Linux
       windows: Windows
       386: i386
       amd54: x86_64
