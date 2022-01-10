@@ -29,23 +29,39 @@ func ToFormatModel(s sbom.SBOM) model.Document {
 		log.Warnf("unable to create syft-json source object: %+v", err)
 	}
 
-	var release linux.Release
-	if s.Artifacts.LinuxDistribution != nil {
-		release = *s.Artifacts.LinuxDistribution
-	}
-
 	return model.Document{
 		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
 		Source:                src,
-		Distro:                release,
+		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
 		},
+	}
+}
+
+func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
+	if d == nil {
+		return model.LinuxRelease{}
+	}
+	return model.LinuxRelease{
+		PrettyName:       d.PrettyName,
+		Name:             d.Name,
+		ID:               d.ID,
+		IDLike:           d.IDLike,
+		Version:          d.Version,
+		VersionID:        d.VersionID,
+		Variant:          d.Variant,
+		VariantID:        d.VariantID,
+		HomeURL:          d.HomeURL,
+		SupportURL:       d.SupportURL,
+		BugReportURL:     d.BugReportURL,
+		PrivacyPolicyURL: d.PrivacyPolicyURL,
+		CPEName:          d.CPEName,
 	}
 }
 
