@@ -42,14 +42,14 @@ var identityFiles = []parseEntry{
 		path: "/etc/redhat-release",
 		fn:   parseRedhatRelease,
 	},
-	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////////////////////////////////////////////////////
 	// IMPORTANT! checking busybox must be last since other distros contain the busybox binary
 	{
 		// check for busybox
 		path: "/bin/busybox",
 		fn:   parseBusyBox,
 	},
-	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 // IdentifyRelease parses distro-specific files to discover and raise linux distribution release details.
@@ -137,7 +137,6 @@ func parseBusyBox(contents string) (*Release, error) {
 		version := strings.ReplaceAll(parts[1], "v", "")
 
 		return simpleRelease(match, "busybox", version, ""), nil
-
 	}
 	return nil, nil
 }
@@ -150,7 +149,7 @@ func parseSystemReleaseCPE(contents string) (*Release, error) {
 	matches := systemReleaseCpeMatcher.FindAllStringSubmatch(contents, -1)
 	for _, match := range matches {
 		if len(match) < 3 {
-			return nil, fmt.Errorf("system release cpe does not match expected format")
+			continue
 		}
 		return simpleRelease("", match[1], match[2], match[0]), nil
 	}
@@ -165,7 +164,7 @@ func parseRedhatRelease(contents string) (*Release, error) {
 	matches := redhatReleaseMatcher.FindAllStringSubmatch(contents, -1)
 	for _, match := range matches {
 		if len(match) < 3 {
-			return nil, fmt.Errorf("failed to parse redhat-release file, unexpected format")
+			continue
 		}
 		return simpleRelease("", match[1], match[2], ""), nil
 	}
