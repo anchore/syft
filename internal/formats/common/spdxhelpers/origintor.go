@@ -1,36 +1,39 @@
 package spdxhelpers
 
 import (
-	"fmt"
-
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// Originator needs to conform to the SPDX spec here:
+// https://spdx.github.io/spdx-spec/package-information/#76-package-originator-field
+// Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
 func Originator(p pkg.Package) string {
 	if hasMetadata(p) {
+		author := ""
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
-			return metadata.Maintainer
+			author = metadata.Maintainer
 		case pkg.NpmPackageJSONMetadata:
-			return metadata.Author
+			author = metadata.Author
 		case pkg.PythonPackageMetadata:
-			author := metadata.Author
+			author = metadata.Author
 			if author == "" {
-				return metadata.AuthorEmail
+				author = metadata.AuthorEmail
 			}
 			if metadata.AuthorEmail != "" {
-				author += fmt.Sprintf(" <%s>", metadata.AuthorEmail)
+				author += " " + metadata.AuthorEmail
 			}
-			return author
 		case pkg.GemMetadata:
 			if len(metadata.Authors) > 0 {
-				return metadata.Authors[0]
+				author = metadata.Authors[0]
 			}
-			return ""
 		case pkg.RpmdbMetadata:
-			return metadata.Vendor
+			return "Organization: " + metadata.Vendor
 		case pkg.DpkgMetadata:
-			return metadata.Maintainer
+			author = metadata.Maintainer
+		}
+		if author != "" {
+			return "Person: " + author
 		}
 	}
 	return ""

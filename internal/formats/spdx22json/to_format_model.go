@@ -2,7 +2,6 @@ package spdx22json
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -131,8 +130,8 @@ func toFiles(s sbom.SBOM) []model.File {
 		results = append(results, model.File{
 			Item: model.Item{
 				Element: model.Element{
-					SPDXID:  string(coordinates.ID()),
-					Name:    filepath.Base(coordinates.RealPath),
+					SPDXID: model.ElementID(coordinates.ID()).String(),
+					// Name:    filepath.Base(coordinates.RealPath),
 					Comment: comment,
 				},
 				// required, no attempt made to determine license information
@@ -206,9 +205,9 @@ func toRelationships(relationships []artifact.Relationship) (result []model.Rela
 		}
 
 		result = append(result, model.Relationship{
-			SpdxElementID:      string(r.From.ID()),
+			SpdxElementID:      model.ElementID(r.From.ID()).String(),
 			RelationshipType:   relationshipType,
-			RelatedSpdxElement: string(r.To.ID()),
+			RelatedSpdxElement: model.ElementID(r.To.ID()).String(),
 			Comment:            comment,
 		})
 	}
