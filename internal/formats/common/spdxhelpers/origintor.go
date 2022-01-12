@@ -1,6 +1,8 @@
 package spdxhelpers
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -19,9 +21,8 @@ func Originator(p pkg.Package) string {
 			author = metadata.Author
 			if author == "" {
 				author = metadata.AuthorEmail
-			}
-			if metadata.AuthorEmail != "" {
-				author += " " + metadata.AuthorEmail
+			} else if metadata.AuthorEmail != "" {
+				author = fmt.Sprintf("%s <%s>", author, metadata.AuthorEmail)
 			}
 		case pkg.GemMetadata:
 			if len(metadata.Authors) > 0 {
