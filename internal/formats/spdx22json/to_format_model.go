@@ -130,8 +130,7 @@ func toFiles(s sbom.SBOM) []model.File {
 		results = append(results, model.File{
 			Item: model.Item{
 				Element: model.Element{
-					SPDXID: model.ElementID(coordinates.ID()).String(),
-					// Name:    filepath.Base(coordinates.RealPath),
+					SPDXID:  model.ElementID(coordinates.ID()).String(),
 					Comment: comment,
 				},
 				// required, no attempt made to determine license information
