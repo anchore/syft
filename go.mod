@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/CycloneDX/cyclonedx-go v0.4.0
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.2.1
 	github.com/alecthomas/jsonschema v0.0.0-20210301060011-54c507b6f074
 	github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf
@@ -26,7 +27,6 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/gookit/color v1.2.7
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/hashicorp/go-version v1.2.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/archiver/v3 v3.5.1

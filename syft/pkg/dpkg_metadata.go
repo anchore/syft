@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -35,15 +35,15 @@ type DpkgFileRecord struct {
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)
-func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
-	if d == nil {
+func (m DpkgMetadata) PackageURL(distro *linux.Release) string {
+	if distro == nil {
 		return ""
 	}
 	pURL := packageurl.NewPackageURL(
 		// TODO: replace with `packageurl.TypeDebian` upon merge of https://github.com/package-url/packageurl-go/pull/21
 		// TODO: or, since we're now using an Anchore fork of this module, we could do this sooner.
 		"deb",
-		d.Type.String(),
+		distro.ID,
 		m.Package,
 		m.Version,
 		packageurl.Qualifiers{

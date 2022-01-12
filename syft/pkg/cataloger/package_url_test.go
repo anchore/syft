@@ -3,7 +3,7 @@ package cataloger
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -12,7 +12,7 @@ func TestPackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
 		pkg      pkg.Package
-		distro   *distro.Distro
+		distro   *linux.Release
 		expected string
 	}{
 		{
@@ -75,8 +75,8 @@ func TestPackageURL(t *testing.T) {
 		},
 		{
 			name: "deb with arch",
-			distro: &distro.Distro{
-				Type: distro.Ubuntu,
+			distro: &linux.Release{
+				ID: "ubuntu",
 			},
 			pkg: pkg.Package{
 				Name:    "bad-name",
@@ -92,8 +92,8 @@ func TestPackageURL(t *testing.T) {
 		},
 		{
 			name: "deb with epoch",
-			distro: &distro.Distro{
-				Type: distro.CentOS,
+			distro: &linux.Release{
+				ID: "centos",
 			},
 			pkg: pkg.Package{
 				Name:    "bad-name",
@@ -111,8 +111,8 @@ func TestPackageURL(t *testing.T) {
 		},
 		{
 			name: "deb with nil epoch",
-			distro: &distro.Distro{
-				Type: distro.CentOS,
+			distro: &linux.Release{
+				ID: "centos",
 			},
 			pkg: pkg.Package{
 				Name:    "bad-name",
@@ -129,10 +129,8 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64",
 		},
 		{
-			name: "deb with unknown distro",
-			distro: &distro.Distro{
-				Type: distro.UnknownDistroType,
-			},
+			name:   "deb with unknown distro",
+			distro: nil,
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",

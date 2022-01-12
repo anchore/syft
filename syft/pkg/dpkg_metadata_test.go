@@ -6,19 +6,19 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestDpkgMetadata_pURL(t *testing.T) {
 	tests := []struct {
-		distro   distro.Distro
+		distro   linux.Release
 		metadata DpkgMetadata
 		expected string
 	}{
 		{
-			distro: distro.Distro{
-				Type: distro.Debian,
+			distro: linux.Release{
+				ID: "debian",
 			},
 			metadata: DpkgMetadata{
 				Package:      "p",
@@ -29,8 +29,8 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 			expected: "pkg:deb/debian/p@v?arch=a",
 		},
 		{
-			distro: distro.Distro{
-				Type: distro.Ubuntu,
+			distro: linux.Release{
+				ID: "ubuntu",
 			},
 			metadata: DpkgMetadata{
 				Package:      "p",
