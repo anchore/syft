@@ -7,7 +7,7 @@ type Document struct {
 	Files                 []File         `json:"files,omitempty"`   // note: must have omitempty
 	Secrets               []Secrets      `json:"secrets,omitempty"` // note: must have omitempty
 	Source                Source         `json:"source"`            // Source represents the original object that was cataloged
-	Distro                Distro         `json:"distro"`            // Distro represents the Linux distribution that was detected from the source
+	Distro                LinuxRelease   `json:"distro"`            // Distro represents the Linux distribution that was detected from the source
 	Descriptor            Descriptor     `json:"descriptor"`        // Descriptor is a block containing self-describing information about syft
 	Schema                Schema         `json:"schema"`            // Schema is a block reserved for defining the version for the shape of this JSON document and where to find the schema document to validate the shape
 }
