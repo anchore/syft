@@ -75,7 +75,7 @@ func Test_Originator(t *testing.T) {
 					AuthorEmail: "auth@auth.gov",
 				},
 			},
-			expected: "Person: auth <auth@auth.gov>",
+			expected: "Person: auth (auth@auth.gov)",
 		},
 		{
 			name: "from rpm",
