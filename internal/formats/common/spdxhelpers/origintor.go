@@ -22,7 +22,7 @@ func Originator(p pkg.Package) string {
 			if author == "" {
 				author = metadata.AuthorEmail
 			} else if metadata.AuthorEmail != "" {
-				author = fmt.Sprintf("%s <%s>", author, metadata.AuthorEmail)
+				author = fmt.Sprintf("%s (%s)", author, metadata.AuthorEmail)
 			}
 		case pkg.GemMetadata:
 			if len(metadata.Authors) > 0 {
