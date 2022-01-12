@@ -29,7 +29,7 @@ func Test_Originator(t *testing.T) {
 					},
 				},
 			},
-			expected: "auth1",
+			expected: "Person: auth1",
 		},
 		{
 			name: "from npm",
@@ -38,7 +38,7 @@ func Test_Originator(t *testing.T) {
 					Author: "auth",
 				},
 			},
-			expected: "auth",
+			expected: "Person: auth",
 		},
 		{
 			name: "from apk",
@@ -47,7 +47,7 @@ func Test_Originator(t *testing.T) {
 					Maintainer: "auth",
 				},
 			},
-			expected: "auth",
+			expected: "Person: auth",
 		},
 		{
 			name: "from python - just name",
@@ -56,7 +56,7 @@ func Test_Originator(t *testing.T) {
 					Author: "auth",
 				},
 			},
-			expected: "auth",
+			expected: "Person: auth",
 		},
 		{
 			name: "from python - just email",
@@ -65,7 +65,7 @@ func Test_Originator(t *testing.T) {
 					AuthorEmail: "auth@auth.gov",
 				},
 			},
-			expected: "auth@auth.gov",
+			expected: "Person: auth@auth.gov",
 		},
 		{
 			name: "from python - both name and email",
@@ -75,7 +75,7 @@ func Test_Originator(t *testing.T) {
 					AuthorEmail: "auth@auth.gov",
 				},
 			},
-			expected: "auth <auth@auth.gov>",
+			expected: "Person: auth <auth@auth.gov>",
 		},
 		{
 			name: "from rpm",
@@ -84,7 +84,7 @@ func Test_Originator(t *testing.T) {
 					Vendor: "auth",
 				},
 			},
-			expected: "auth",
+			expected: "Organization: auth",
 		},
 		{
 			name: "from dpkg",
@@ -93,7 +93,7 @@ func Test_Originator(t *testing.T) {
 					Maintainer: "auth",
 				},
 			},
-			expected: "auth",
+			expected: "Person: auth",
 		},
 		{
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
