@@ -9,8 +9,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -120,13 +120,17 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	src, err := source.NewFromImage(img, "user-image-input")
 	assert.NoError(t, err)
 
-	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
-	assert.NoError(t, err)
-
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			Distro:         &dist,
+			LinuxDistribution: &linux.Release{
+				PrettyName: "debian",
+				Name:       "debian",
+				ID:         "debian",
+				IDLike:     []string{"like!"},
+				Version:    "1.2.3",
+				VersionID:  "1.2.3",
+			},
 		},
 		Source: src.Metadata,
 		Descriptor: sbom.Descriptor{
@@ -194,16 +198,20 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 func DirectoryInput(t testing.TB) sbom.SBOM {
 	catalog := newDirectoryCatalog()
 
-	dist, err := distro.NewDistro(distro.Debian, "1.2.3", "like!")
-	assert.NoError(t, err)
-
 	src, err := source.NewFromDirectory("/some/path")
 	assert.NoError(t, err)
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			Distro:         &dist,
+			LinuxDistribution: &linux.Release{
+				PrettyName: "debian",
+				Name:       "debian",
+				ID:         "debian",
+				IDLike:     []string{"like!"},
+				Version:    "1.2.3",
+				VersionID:  "1.2.3",
+			},
 		},
 		Source: src.Metadata,
 		Descriptor: sbom.Descriptor{

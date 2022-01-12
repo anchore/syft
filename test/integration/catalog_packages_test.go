@@ -3,7 +3,7 @@ package integration
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/google/go-cmp/cmp"
 
@@ -33,7 +33,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 			b.Fatalf("unable to get resolver: %+v", err)
 		}
 
-		theDistro := distro.Identify(resolver)
+		theDistro := linux.IdentifyRelease(resolver)
 
 		b.Run(c.Name(), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
