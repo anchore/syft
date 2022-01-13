@@ -14,7 +14,7 @@ Checkout `make help` to see what other actions you can take.
 
 The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
 
-### Levels of Testing
+## Levels of Testing
 
 - `unit`: The default level of test which is distributed throughout the repo are unit tests. Any `_test.go` file that 
   does not reside somewhere within the `/test` directory is a unit test. Other forms of testing should be organized in 
@@ -38,7 +38,7 @@ The main make tasks for common static analysis and testing are `lint`, `lint-fix
   of a syft invocation matches canned expected output. New acceptance tests should be added for each release artifact
   and architecture supported (when possible).
 
-#### Data diversity and freshness assertions
+### Data diversity and freshness assertions
 
 It is important that tests against the codebase are flexible enough to begin failing when they do not cover "enough"
 of the objects under test. "Cover" in this case does not mean that some percentage of the code has been executed 
@@ -145,7 +145,7 @@ action needed to update it.
 
 **_The key takeaway is to try and write tests that fail when data assumptions change and not just when code changes.**_
 
-#### Snapshot tests
+### Snapshot tests
 
 The format objects make a lot of use of "snapshot" testing, where you save the expected output bytes from a call into the
 git repository and during testing make a comparison of the actual bytes from the subject under test with the golden
