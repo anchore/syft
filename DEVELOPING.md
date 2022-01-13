@@ -2,6 +2,10 @@
 
 ## Getting started
 
+In order to test and develop in this repo you will need the following dependencies installed:
+- docker
+- make
+
 After cloning do the following:
 1. run `make bootstrap` to download go mod dependencies, create the `/.tmp` dir, and download helper utilities.
 2. run `make` to run linting, tests, and other verifications to make certain everything is working alright.
