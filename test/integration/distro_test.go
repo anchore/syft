@@ -3,20 +3,22 @@ package integration
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/distro"
-	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/linux"
 )
 
 func TestDistroImage(t *testing.T) {
 	sbom, _ := catalogFixtureImage(t, "image-distro-id")
 
-	expected, err := distro.NewDistro(distro.Busybox, "1.31.1", "")
-	if err != nil {
-		t.Fatalf("could not create distro: %+v", err)
+	expected := &linux.Release{
+		PrettyName: "BusyBox v1.31.1",
+		Name:       "busybox",
+		ID:         "busybox",
+		IDLike:     []string{"busybox"},
+		Version:    "1.31.1",
+		VersionID:  "1.31.1",
 	}
 
-	for _, d := range deep.Equal(sbom.Artifacts.Distro, &expected) {
-		t.Errorf("found distro difference: %+v", d)
-	}
-
+	assert.Equal(t, expected, sbom.Artifacts.LinuxDistribution)
 }

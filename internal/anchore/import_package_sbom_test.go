@@ -1,7 +1,6 @@
 package anchore
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,16 +8,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/sbom"
-
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/internal/formats/syftjson"
-	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/wagoodman/go-progress"
 )
 
@@ -27,107 +27,6 @@ func must(c pkg.CPE, e error) pkg.CPE {
 		panic(e)
 	}
 	return c
-}
-
-// this test is tailored towards the assumption that the import doc shape and the syft json shape are the same.
-// TODO: replace this as the document shapes diverge.
-func TestPackageSbomToModel(t *testing.T) {
-
-	m := source.Metadata{
-		Scheme: source.ImageScheme,
-		ImageMetadata: source.ImageMetadata{
-			UserInput: "user-in",
-			Layers: []source.LayerMetadata{
-				{
-					MediaType: "layer-metadata-type!",
-					Digest:    "layer-digest",
-					Size:      20,
-				},
-			},
-			Size:           10,
-			ManifestDigest: "sha256:digest!",
-			MediaType:      "mediatype!",
-			Tags:           nil,
-		},
-	}
-
-	d, _ := distro.NewDistro(distro.CentOS, "8.0", "")
-
-	p := pkg.Package{
-		Name:    "name",
-		Version: "version",
-		FoundBy: "foundBy",
-		Locations: []source.Location{
-			{
-				Coordinates: source.Coordinates{
-					RealPath:     "path",
-					FileSystemID: "layerID",
-				},
-			},
-		},
-		Licenses: []string{"license"},
-		Language: pkg.Python,
-		Type:     pkg.PythonPkg,
-		CPEs: []pkg.CPE{
-			must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
-		},
-		PURL: "purl",
-	}
-
-	c := pkg.NewCatalog(p)
-
-	sbomResult := sbom.SBOM{
-		Artifacts: sbom.Artifacts{
-			PackageCatalog: c,
-			Distro:         &d,
-		},
-		Source: m,
-	}
-
-	model, err := packageSbomModel(sbomResult)
-	if err != nil {
-		t.Fatalf("unable to generate model from source material: %+v", err)
-	}
-
-	var modelJSON []byte
-
-	modelJSON, err = json.Marshal(&model)
-	if err != nil {
-		t.Fatalf("unable to marshal model: %+v", err)
-	}
-
-	s := sbom.SBOM{
-		Artifacts: sbom.Artifacts{
-			PackageCatalog: c,
-			Distro:         &d,
-		},
-		Source: m,
-	}
-
-	var buf bytes.Buffer
-	if err := syftjson.Format().Encode(&buf, s); err != nil {
-		t.Fatalf("unable to get expected json: %+v", err)
-	}
-
-	// unmarshal expected result
-	var expectedDoc syftjsonModel.Document
-	if err := json.Unmarshal(buf.Bytes(), &expectedDoc); err != nil {
-		t.Fatalf("unable to parse json doc: %+v", err)
-	}
-
-	// unmarshal actual result
-	var actualDoc syftjsonModel.Document
-	if err := json.Unmarshal(modelJSON, &actualDoc); err != nil {
-		t.Fatalf("unable to parse json doc: %+v", err)
-	}
-
-	for _, d := range deep.Equal(actualDoc, expectedDoc) {
-		if strings.HasSuffix(d, "<nil slice> != []") {
-			// do not consider nil vs empty collection semantics as a "difference"
-			continue
-		}
-		t.Errorf("diff: %+v", d)
-	}
 }
 
 type mockPackageSBOMImportAPI struct {
@@ -150,72 +49,81 @@ func (m *mockPackageSBOMImportAPI) ImportImagePackages(ctx context.Context, sess
 	return external.ImageImportContentResponse{Digest: m.responseDigest}, m.httpResponse, m.err
 }
 
-func TestPackageSbomImport(t *testing.T) {
-
-	catalog := pkg.NewCatalog(pkg.Package{
-		Name:    "name",
-		Version: "version",
-		FoundBy: "foundBy",
-		Locations: []source.Location{
-			{
-				Coordinates: source.Coordinates{
-					RealPath:     "path",
-					FileSystemID: "layerID",
-				},
-			},
-		},
-		Licenses: []string{"license"},
-		Language: pkg.Python,
-		Type:     pkg.PythonPkg,
-		CPEs: []pkg.CPE{
-			must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
-		},
-		PURL:         "purl",
-		MetadataType: pkg.PythonPackageMetadataType,
-		Metadata: pkg.PythonPackageMetadata{
-			Name:        "p-name",
-			Version:     "p-version",
-			License:     "p-license",
-			Author:      "p-author",
-			AuthorEmail: "p-email",
-			Platform:    "p-platform",
-			Files: []pkg.PythonFileRecord{
-				{
-					Path: "p-path",
-					Digest: &pkg.PythonFileDigest{
-						Algorithm: "p-alg",
-						Value:     "p-digest",
-					},
-					Size: "p-size",
-				},
-			},
-			SitePackagesRootPath: "p-site-packages-root",
-			TopLevelPackages:     []string{"top-level"},
-		},
-	})
-
-	m := source.Metadata{
-		Scheme: source.ImageScheme,
-		ImageMetadata: source.ImageMetadata{
-			UserInput:      "user-in",
-			Layers:         nil,
-			Size:           10,
-			ManifestDigest: "sha256:digest!",
-			MediaType:      "mediatype!",
-			Tags:           nil,
-		},
-	}
-
-	d, _ := distro.NewDistro(distro.CentOS, "8.0", "")
-
-	sbomResult := sbom.SBOM{
+func sbomFixture() sbom.SBOM {
+	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
-			Distro:         &d,
+			PackageCatalog: pkg.NewCatalog(pkg.Package{
+				Name:    "name",
+				Version: "version",
+				FoundBy: "foundBy",
+				Locations: []source.Location{
+					{
+						Coordinates: source.Coordinates{
+							RealPath:     "path",
+							FileSystemID: "layerID",
+						},
+					},
+				},
+				Licenses: []string{"license"},
+				Language: pkg.Python,
+				Type:     pkg.PythonPkg,
+				CPEs: []pkg.CPE{
+					must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
+				},
+				PURL:         "purl",
+				MetadataType: pkg.PythonPackageMetadataType,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:        "p-name",
+					Version:     "p-version",
+					License:     "p-license",
+					Author:      "p-author",
+					AuthorEmail: "p-email",
+					Platform:    "p-platform",
+					Files: []pkg.PythonFileRecord{
+						{
+							Path: "p-path",
+							Digest: &pkg.PythonFileDigest{
+								Algorithm: "p-alg",
+								Value:     "p-digest",
+							},
+							Size: "p-size",
+						},
+					},
+					SitePackagesRootPath: "p-site-packages-root",
+					TopLevelPackages:     []string{"top-level"},
+				},
+			}),
+			LinuxDistribution: &linux.Release{
+				ID:        "centos",
+				Version:   "8.0",
+				VersionID: "8.0",
+				IDLike:    []string{"rhel"},
+			},
 		},
-		Source: m,
+		Relationships: []artifact.Relationship{
+			{
+				From: source.NewLocation("/place1"),
+				To:   source.NewLocation("/place2"),
+				Type: artifact.ContainsRelationship,
+			},
+		},
+		Source: source.Metadata{
+			Scheme: source.ImageScheme,
+			ImageMetadata: source.ImageMetadata{
+				UserInput:      "user-in",
+				Layers:         nil,
+				Size:           10,
+				ManifestDigest: "sha256:digest!",
+				MediaType:      "mediatype!",
+				Tags:           nil,
+			},
+		},
 	}
 
+}
+
+func TestPackageSbomImport(t *testing.T) {
+	sbomResult := sbomFixture()
 	theModel, err := packageSbomModel(sbomResult)
 	if err != nil {
 		t.Fatalf("could not get sbom model: %+v", err)
@@ -278,5 +186,212 @@ func TestPackageSbomImport(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+type modelAssertion func(t *testing.T, model *external.ImagePackageManifest)
+
+func Test_packageSbomModel(t *testing.T) {
+	fix := sbomFixture()
+
+	tests := []struct {
+		name   string
+		sbom   sbom.SBOM
+		traits []modelAssertion
+	}{
+		{
+			name: "distro: has single distro id-like",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					LinuxDistribution: &linux.Release{
+						Name: "centos-name",
+						ID:   "centos-id",
+						IDLike: []string{
+							"centos-id-like-1",
+						},
+						Version:   "version",
+						VersionID: "version-id",
+					},
+				},
+			},
+			traits: []modelAssertion{
+				hasDistroInfo("centos-id", "version-id", "centos-id-like-1"),
+			},
+		},
+		{
+			name: "distro: has multiple distro id-like",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					LinuxDistribution: &linux.Release{
+						Name: "centos-name",
+						ID:   "centos-id",
+						IDLike: []string{
+							"centos-id-like-1",
+							"centos-id-like-2",
+						},
+						Version:   "version",
+						VersionID: "version-id",
+					},
+				},
+			},
+			traits: []modelAssertion{
+				hasDistroInfo("centos-id", "version-id", "centos-id-like-1"),
+			},
+		},
+		{
+			name: "distro: has no distro id-like",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					LinuxDistribution: &linux.Release{
+						Name:      "centos-name",
+						ID:        "centos-id",
+						IDLike:    []string{},
+						Version:   "version",
+						VersionID: "version-id",
+					},
+				},
+			},
+			traits: []modelAssertion{
+				hasDistroInfo("centos-id", "version-id", ""),
+			},
+		},
+		{
+			name: "distro: has no version-id",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					LinuxDistribution: &linux.Release{
+						Name:      "centos-name",
+						ID:        "centos-id",
+						IDLike:    []string{},
+						Version:   "version",
+						VersionID: "",
+					},
+				},
+			},
+			traits: []modelAssertion{
+				hasDistroInfo("centos-id", "version", ""),
+			},
+		},
+		{
+			name: "distro: has no id",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					LinuxDistribution: &linux.Release{
+						Name:      "centos-name",
+						ID:        "",
+						IDLike:    []string{},
+						Version:   "version",
+						VersionID: "version-id",
+					},
+				},
+			},
+			traits: []modelAssertion{
+				hasDistroInfo("centos-name", "version-id", ""),
+			},
+		},
+		{
+			name: "should have expected packages",
+			sbom: fix,
+			traits: []modelAssertion{
+				func(t *testing.T, model *external.ImagePackageManifest) {
+					require.Len(t, model.Artifacts, 1)
+
+					modelPkg := model.Artifacts
+					modelBytes, err := json.Marshal(&modelPkg)
+					require.NoError(t, err)
+
+					fixPkg := syftjson.ToFormatModel(fix).Artifacts
+					fixBytes, err := json.Marshal(&fixPkg)
+					require.NoError(t, err)
+
+					assert.JSONEq(t, string(fixBytes), string(modelBytes))
+				},
+			},
+		},
+		{
+			name: "should have expected relationships",
+			sbom: fix,
+			traits: []modelAssertion{
+				func(t *testing.T, model *external.ImagePackageManifest) {
+					modelPkg := model.ArtifactRelationships
+					modelBytes, err := json.Marshal(&modelPkg)
+					require.NoError(t, err)
+
+					fixPkg := syftjson.ToFormatModel(fix).ArtifactRelationships
+					fixBytes, err := json.Marshal(&fixPkg)
+					require.NoError(t, err)
+
+					assert.JSONEq(t, string(fixBytes), string(modelBytes))
+				},
+			},
+		},
+		{
+			name: "should have expected schema",
+			sbom: fix,
+			traits: []modelAssertion{
+				func(t *testing.T, model *external.ImagePackageManifest) {
+					modelPkg := model.Schema
+					modelBytes, err := json.Marshal(&modelPkg)
+					require.NoError(t, err)
+
+					fixPkg := syftjson.ToFormatModel(fix).Schema
+					fixBytes, err := json.Marshal(&fixPkg)
+					require.NoError(t, err)
+
+					assert.JSONEq(t, string(fixBytes), string(modelBytes))
+				},
+			},
+		},
+		{
+			name: "should have expected descriptor",
+			sbom: fix,
+			traits: []modelAssertion{
+				func(t *testing.T, model *external.ImagePackageManifest) {
+					modelPkg := model.Descriptor
+					modelBytes, err := json.Marshal(&modelPkg)
+					require.NoError(t, err)
+
+					fixPkg := syftjson.ToFormatModel(fix).Descriptor
+					fixBytes, err := json.Marshal(&fixPkg)
+					require.NoError(t, err)
+
+					assert.JSONEq(t, string(fixBytes), string(modelBytes))
+				},
+			},
+		},
+		{
+			name: "should have expected source",
+			sbom: fix,
+			traits: []modelAssertion{
+				func(t *testing.T, model *external.ImagePackageManifest) {
+					modelPkg := model.Source
+					modelBytes, err := json.Marshal(&modelPkg)
+					require.NoError(t, err)
+
+					fixPkg := syftjson.ToFormatModel(fix).Source
+					fixBytes, err := json.Marshal(&fixPkg)
+					require.NoError(t, err)
+
+					assert.JSONEq(t, string(fixBytes), string(modelBytes))
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := packageSbomModel(tt.sbom)
+			require.NoError(t, err)
+			for _, fn := range tt.traits {
+				fn(t, got)
+			}
+		})
+	}
+}
+
+func hasDistroInfo(name, version, idLike string) modelAssertion {
+	return func(t *testing.T, model *external.ImagePackageManifest) {
+		assert.Equal(t, name, model.Distro.Name)
+		assert.Equal(t, version, model.Distro.Version)
+		assert.Equal(t, idLike, model.Distro.IdLike)
 	}
 }

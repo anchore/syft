@@ -51,7 +51,7 @@ func generateCatalogPackagesTask() (task, error) {
 		}
 
 		results.PackageCatalog = packageCatalog
-		results.Distro = theDistro
+		results.LinuxDistribution = theDistro
 
 		return relationships, nil
 	}
