@@ -72,7 +72,7 @@ func TestCatalogPackages(t *testing.T) {
 
 Where each test case has a `inputFixturePath` that would result with packages from each language. This test is
 brittle since it does not assert that all languages were exercised directly and future modifications (such as 
-adding a new language) won't be coverd by any test cases.
+adding a new language) won't be covered by any test cases.
 
 To address this the enum-like object should have a definition of all objects that can be used in testing:
 
@@ -139,22 +139,22 @@ An integration test has been written to grabs the latest license list version ex
 with the version generated in the codebase. If they differ, the test fails, indicating to someone that there is an
 action needed to update it.
 
-The key takeaway is to write tests that fail when data assumptions change.
+**_The key takeaway is to try and write tests that fail when data assumptions change and not just when code changes.**_
 
 #### Snapshot tests
 
-The presenters make a lot of use of "snapshot" testing, where you save the expected output bytes from a call into the
+The format objects make a lot of use of "snapshot" testing, where you save the expected output bytes from a call into the
 git repository and during testing make a comparison of the actual bytes from the subject under test with the golden
 copy saved in the repo. The "golden" files are stored in the `test-fixtures/snapshot` directory relative to the go 
 package under test and should always be updated by invoking `go test` on the specific test file with a specific CLI 
 update flag provided.
 
-Many of the `Presenter` tests make use of this approach, where the raw SBOM report is saved in the repo and the test 
+Many of the `Format` tests make use of this approach, where the raw SBOM report is saved in the repo and the test 
 compares that SBOM with what is generated from the latest presenter code. For instance, at the time of this writing 
 the CycloneDX presenter snapshots can be updated by running:
 
 ```bash
-go test ./internal/presenter/packages -update-cyclonedx
+go test ./internal/formats -update-cyclonedx
 ```
 
 These flags are defined at the top of the test files that have tests that use the snapshot files.
@@ -164,11 +164,12 @@ and diligent when updating these files.
 
 ## Architecture
 
-pkg.Catalogers
-source.Source
-file.Resolvers
-presenter
-
-logger abstraction
-
-events / bus abstraction 
+TODO: outline:
+- analysis creates a static SBOM which can be encoded and decoded.
+- format objects, should strive to not add or enrich data in encoding that could otherwise be done during analysis
+- pkg.Catalogers
+- file catalogers
+- source.Source
+- file.Resolvers
+- logger abstraction 
+- events / bus abstraction 
