@@ -14,7 +14,7 @@ Checkout `make help` to see what other actions you can take.
 
 The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
 
-## Levels of Testing
+## Levels of testing
 
 - `unit`: The default level of test which is distributed throughout the repo are unit tests. Any `_test.go` file that 
   does not reside somewhere within the `/test` directory is a unit test. Other forms of testing should be organized in 
