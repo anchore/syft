@@ -6,7 +6,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
@@ -27,23 +27,57 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	for i, p := range packages {
 		components[i] = Component(p)
 	}
-	components = append(components, toDistroComponent(s.Artifacts.Distro)...)
+	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
 	return cdxBOM
 }
 
-func toDistroComponent(distro *distro.Distro) []cyclonedx.Component {
+func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 	if distro == nil {
 		return []cyclonedx.Component{}
 	}
+	eRefs := &[]cyclonedx.ExternalReference{}
+	if distro.BugReportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.BugReportURL,
+			Type: cyclonedx.ERTypeIssueTracker,
+		})
+	}
+	if distro.HomeURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.HomeURL,
+			Type: cyclonedx.ERTypeWebsite,
+		})
+	}
+	if distro.SupportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.SupportURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "support",
+		})
+	}
+	if distro.PrivacyPolicyURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.PrivacyPolicyURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "privacyPolicy",
+		})
+	}
+	if len(*eRefs) == 0 {
+		eRefs = nil
+	}
+	props := getCycloneDXProperties(*distro)
+	if len(*props) == 0 {
+		props = nil
+	}
 	return []cyclonedx.Component{
 		{
-			Type:    cyclonedx.ComponentTypeOS,
-			Name:    distro.Name(),
-			Version: distro.FullVersion(),
-			Properties: &[]cyclonedx.Property{
-				{Name: "idLike", Value: distro.IDLike},
-			},
+			Type:               cyclonedx.ComponentTypeOS,
+			Name:               distro.Name,
+			Version:            distro.Version,
+			CPE:                distro.CPEName,
+			ExternalReferences: eRefs,
+			Properties:         props,
 		},
 	}
 }
