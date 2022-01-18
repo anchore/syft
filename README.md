@@ -21,7 +21,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 
 ## Features
 - Catalog container images and filesystems to discover packages and libraries.
-- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
+- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR/PAR/SAR, Jenkins plugins JPI/HPI, Go modules)
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
 - Supports Docker and OCI image formats
 - Direct support for [Grype](https://github.com/anchore/grype), a fast and powerful vulnerability matcher.
