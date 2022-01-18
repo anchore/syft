@@ -108,6 +108,17 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			},
 			errAssertion: assert.NoError,
 		},
+		{
+			name: "unknown source type",
+			input: []byte(`{
+				"type": "unknown-thing",
+				"target":"/var/lib/foo"
+			}`),
+			expectedSource: &Source{
+				Type: "unknown-thing",
+			},
+			errAssertion: assert.Error,
+		},
 	}
 
 	for _, testCase := range cases {
