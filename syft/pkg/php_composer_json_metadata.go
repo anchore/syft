@@ -4,7 +4,10 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/linux"
 )
+
+var _ urlIdentifier = (*PhpComposerJSONMetadata)(nil)
 
 // PhpComposerJSONMetadata represents information found from composer v1/v2 "installed.json" files as well as composer.lock files
 type PhpComposerJSONMetadata struct {
@@ -40,7 +43,7 @@ type PhpComposerAuthors struct {
 	Homepage string `json:"homepage,omitempty"`
 }
 
-func (m PhpComposerJSONMetadata) PackageURL() string {
+func (m PhpComposerJSONMetadata) PackageURL(_ *linux.Release) string {
 	var name, vendor string
 	fields := strings.Split(m.Name, "/")
 	switch len(fields) {
