@@ -31,4 +31,5 @@ var AllMetadataTypes = []MetadataType{
 	RustCargoPackageMetadataType,
 	KbPackageMetadataType,
 	GolangBinMetadataType,
+	PhpComposerJSONMetadataType,
 }
