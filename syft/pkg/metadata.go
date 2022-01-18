@@ -5,6 +5,7 @@ type MetadataType string
 
 const (
 	// this is the full set of data shapes that can be represented within the pkg.Package.Metadata field
+
 	UnknownMetadataType          MetadataType = "UnknownMetadata"
 	ApkMetadataType              MetadataType = "ApkMetadata"
 	DpkgMetadataType             MetadataType = "DpkgMetadata"
@@ -16,6 +17,7 @@ const (
 	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
 	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
 	GolangBinMetadataType        MetadataType = "GolangBinMetadata"
+	PhpComposerJSONMetadataType  MetadataType = "PhpComposerJsonMetadata"
 )
 
 var AllMetadataTypes = []MetadataType{
