@@ -69,6 +69,16 @@ func lookupRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true
+	case artifact.ContainsRelationship:
+		return true
+	case artifact.RuntimeDependencyOfRelationship:
+		return true
+	case artifact.DevDependencyOfRelationship:
+		return true
+	case artifact.BuildDependencyOfRelationship:
+		return true
+	case artifact.DependencyOfRelationship:
+		return true
 	}
 	return false
 }
