@@ -32,8 +32,8 @@ type PackageBasicData struct {
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.
 type PackageCustomData struct {
-	MetadataType pkg.MetadataType `json:"metadataType"`
-	Metadata     interface{}      `json:"metadata"`
+	MetadataType pkg.MetadataType `json:"metadataType,omitempty"`
+	Metadata     interface{}      `json:"metadata,omitempty"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
