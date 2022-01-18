@@ -30,7 +30,7 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 	s.Type = unpacker.Type
 
 	switch s.Type {
-	case "directory":
+	case "directory", "file":
 		if target, err := strconv.Unquote(string(unpacker.Target)); err == nil {
 			s.Target = target
 		} else {
