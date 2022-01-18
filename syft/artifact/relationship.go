@@ -16,7 +16,7 @@ const (
 	// DevDependencyOfRelationship is a proxy for the SPDX 2.2.1 DEV_DEPENDENCY_OF relationship.
 	DevDependencyOfRelationship RelationshipType = "dev-dependency-of"
 
-	//BuildDependencyOfRelationship is a proxy for the SPDX 2.2.1 BUILD_DEPENDENCY_OF relationship.
+	// BuildDependencyOfRelationship is a proxy for the SPDX 2.2.1 BUILD_DEPENDENCY_OF relationship.
 	BuildDependencyOfRelationship RelationshipType = "build-dependency-of"
 
 	// DependencyOfRelationship is a proxy for the SPDX 2.2.1 DEPENDENCY_OF	relationship.
