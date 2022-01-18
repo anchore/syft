@@ -96,6 +96,18 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			},
 			errAssertion: assert.NoError,
 		},
+		{
+			name: "file",
+			input: []byte(`{
+				"type": "file",
+				"target":"/var/lib/foo/go.mod"
+			}`),
+			expectedSource: &Source{
+				Type:   "file",
+				Target: "/var/lib/foo/go.mod",
+			},
+			errAssertion: assert.NoError,
+		},
 	}
 
 	for _, testCase := range cases {
