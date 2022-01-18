@@ -3,15 +3,18 @@ package pkg
 import (
 	"sort"
 
-	"github.com/anchore/syft/syft/file"
-
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/scylladb/go-set/strset"
 )
 
 const ApkDBGlob = "**/lib/apk/db/installed"
 
-var _ FileOwner = (*ApkMetadata)(nil)
+var (
+	_ FileOwner     = (*ApkMetadata)(nil)
+	_ urlIdentifier = (*ApkMetadata)(nil)
+)
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
 // See the following sources for more information:
@@ -45,22 +48,22 @@ type ApkFileRecord struct {
 }
 
 // PackageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
-func (m ApkMetadata) PackageURL() string {
-	pURL := packageurl.NewPackageURL(
+func (m ApkMetadata) PackageURL(distro *linux.Release) string {
+	return packageurl.NewPackageURL(
 		// note: this is currently a candidate and not technically within spec
 		// see https://github.com/package-url/purl-spec#other-candidate-types-to-define
 		"alpine",
 		"",
 		m.Package,
 		m.Version,
-		packageurl.Qualifiers{
-			{
-				Key:   "arch",
-				Value: m.Architecture,
+		purlQualifiers(
+			map[string]string{
+				purlArchQualifier: m.Architecture,
 			},
-		},
-		"")
-	return pURL.ToString()
+			distro,
+		),
+		"",
+	).ToString()
 }
 
 func (m ApkMetadata) OwnedFiles() (result []string) {
