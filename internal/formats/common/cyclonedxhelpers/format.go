@@ -69,8 +69,6 @@ func lookupRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true
-	case artifact.ContainsRelationship:
-		return true
 	case artifact.RuntimeDependencyOfRelationship:
 		return true
 	case artifact.DevDependencyOfRelationship:
@@ -87,7 +85,6 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 	result := make([]cyclonedx.Dependency, 0)
 	for _, r := range relationships {
 		exists := lookupRelationship(r.Type)
-
 		if !exists {
 			log.Warnf("unable to convert relationship from CycloneDX 1.3 JSON, dropping: %+v", r)
 			continue
