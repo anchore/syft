@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -29,6 +30,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	for i, p := range packages {
 		components[i] = toComponent(p)
 	}
+	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
 
 	dependencies := toDependencies(s.Relationships)
@@ -37,6 +39,56 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 
 	return cdxBOM
+}
+
+func toOSComponent(distro *linux.Release) []cyclonedx.Component {
+	if distro == nil {
+		return []cyclonedx.Component{}
+	}
+	eRefs := &[]cyclonedx.ExternalReference{}
+	if distro.BugReportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.BugReportURL,
+			Type: cyclonedx.ERTypeIssueTracker,
+		})
+	}
+	if distro.HomeURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.HomeURL,
+			Type: cyclonedx.ERTypeWebsite,
+		})
+	}
+	if distro.SupportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.SupportURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "support",
+		})
+	}
+	if distro.PrivacyPolicyURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.PrivacyPolicyURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "privacyPolicy",
+		})
+	}
+	if len(*eRefs) == 0 {
+		eRefs = nil
+	}
+	props := getCycloneDXProperties(*distro)
+	if len(*props) == 0 {
+		props = nil
+	}
+	return []cyclonedx.Component{
+		{
+			Type:               cyclonedx.ComponentTypeOS,
+			Name:               distro.Name,
+			Version:            distro.Version,
+			CPE:                distro.CPEName,
+			ExternalReferences: eRefs,
+			Properties:         props,
+		},
+	}
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
