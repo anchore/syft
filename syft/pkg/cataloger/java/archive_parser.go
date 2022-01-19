@@ -6,9 +6,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
@@ -21,8 +20,18 @@ var archiveFormatGlobs = []string{
 	"**/*.jar",
 	"**/*.war",
 	"**/*.ear",
+	"**/*.par",
+	"**/*.sar",
 	"**/*.jpi",
 	"**/*.hpi",
+	"**/*.lpkg", // Zip-compressed package used to deploy applications
+	// (aka plugins) to Liferay Portal server. Those files contains .JAR(s) and a .PROPERTIES file, the latter
+	// has information about the application and installation requirements.
+	// NOTE(jonasagx): If you would like to test it with lpkg file,
+	// use: https://web.liferay.com/marketplace/-/mp/download/25019275/7403
+	// LifeRay makes it pretty cumbersome to make a such plugins; their docs are
+	// out of date, and they charge for their IDE. If you find an example
+	// project that we can build in CI feel free to include it
 }
 
 type archiveParser struct {
@@ -56,7 +65,11 @@ func uniquePkgKey(p *pkg.Package) string {
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
 func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested bool) (*archiveParser, func(), error) {
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader)
+	// fetch the last element of the virtual path
+	virtualElements := strings.Split(virtualPath, ":")
+	currentFilepath := virtualElements[len(virtualElements)-1]
+
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(currentFilepath, reader)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
 	}
@@ -65,10 +78,6 @@ func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested boo
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to read files from java archive: %w", err)
 	}
-
-	// fetch the last element of the virtual path
-	virtualElements := strings.Split(virtualPath, ":")
-	currentFilepath := virtualElements[len(virtualElements)-1]
 
 	return &archiveParser{
 		fileManifest: fileManifest,
@@ -190,34 +199,33 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	return pkgs, nil
 }
 
-// discoverPkgsFromNestedArchives finds Java archives within Java archives, returning all listed Java packages found and
-// associating each discovered package to the given parent package.
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
-	var pkgs []*pkg.Package
-	var relationships []artifact.Relationship
+	// we know that all java archives are zip formatted files, so we can use the shared zip helper
+	return discoverPkgsFromZip(j.virtualPath, j.archivePath, j.contentPath, j.fileManifest, parentPkg)
+}
 
+// discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
+// associating each discovered package to the given parent package.
+func discoverPkgsFromZip(virtualPath, archivePath, contentPath string, fileManifest file.ZipFileManifest, parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := file.ExtractFromZipToUniqueTempFile(j.archivePath, j.contentPath, j.fileManifest.GlobMatch(archiveFormatGlobs...)...)
+	openers, err := file.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
 
-	// discover nested artifacts
-	for archivePath, archiveOpener := range openers {
-		archiveReadCloser, err := archiveOpener.Open()
+	return discoverPkgsFromOpeners(virtualPath, openers, parentPkg)
+}
+
+// discoverPkgsFromOpeners finds Java archives within the given files and associates them with the given parent package.
+func discoverPkgsFromOpeners(virtualPath string, openers map[string]file.Opener, parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
+	var pkgs []*pkg.Package
+	var relationships []artifact.Relationship
+
+	for pathWithinArchive, archiveOpener := range openers {
+		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(virtualPath, pathWithinArchive, archiveOpener)
 		if err != nil {
-			return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
-		}
-		nestedPath := fmt.Sprintf("%s:%s", j.virtualPath, archivePath)
-		nestedPkgs, nestedRelationships, err := parseJavaArchive(nestedPath, archiveReadCloser)
-		if err != nil {
-			if closeErr := archiveReadCloser.Close(); closeErr != nil {
-				log.Warnf("unable to close archived file from tempdir: %+v", closeErr)
-			}
-			return nil, nil, fmt.Errorf("unable to process nested java archive (%s): %w", archivePath, err)
-		}
-		if err = archiveReadCloser.Close(); err != nil {
-			return nil, nil, fmt.Errorf("unable to close archived file from tempdir: %w", err)
+			log.Warnf("unable to discover java packages from opener (%s): %+v", virtualPath, err)
+			continue
 		}
 
 		// attach the parent package to all discovered packages that are not already associated with a java archive
@@ -235,6 +243,27 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 	}
 
 	return pkgs, relationships, nil
+}
+
+// discoverPkgsFromOpener finds Java archives within the given file.
+func discoverPkgsFromOpener(virtualPath, pathWithinArchive string, archiveOpener file.Opener) ([]*pkg.Package, []artifact.Relationship, error) {
+	archiveReadCloser, err := archiveOpener.Open()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
+	}
+	defer func() {
+		if closeErr := archiveReadCloser.Close(); closeErr != nil {
+			log.Warnf("unable to close archived file from tempdir: %+v", closeErr)
+		}
+	}()
+
+	nestedPath := fmt.Sprintf("%s:%s", virtualPath, pathWithinArchive)
+	nestedPkgs, nestedRelationships, err := parseJavaArchive(nestedPath, archiveReadCloser)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to process nested java archive (%s): %w", pathWithinArchive, err)
+	}
+
+	return nestedPkgs, nestedRelationships, nil
 }
 
 func pomPropertiesByParentPath(archivePath string, extractPaths []string, virtualPath string) (map[string]pkg.PomProperties, error) {

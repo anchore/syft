@@ -1,0 +1,115 @@
+{
+ "artifacts": [
+  {
+   "id": "3a6c7061f86ac3f7",
+   "name": "package-1",
+   "version": "1.0.1",
+   "type": "python",
+   "foundBy": "the-cataloger-1",
+   "locations": [
+    {
+     "path": "/somefile-1.txt",
+     "layerID": "sha256:135c16aca35f76c25a18cb6650c621a46b8b79864ad6f2834167de2679bb587d"
+    }
+   ],
+   "licenses": [
+    "MIT"
+   ],
+   "language": "python",
+   "cpes": [
+    "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
+   ],
+   "purl": "a-purl-1",
+   "metadataType": "PythonPackageMetadata",
+   "metadata": {
+    "name": "package-1",
+    "version": "1.0.1",
+    "license": "",
+    "author": "",
+    "authorEmail": "",
+    "platform": "",
+    "sitePackagesRootPath": ""
+   }
+  },
+  {
+   "id": "4e916af2d387ce9",
+   "name": "package-2",
+   "version": "2.0.1",
+   "type": "deb",
+   "foundBy": "the-cataloger-2",
+   "locations": [
+    {
+     "path": "/somefile-2.txt",
+     "layerID": "sha256:c751a2f31455b3049bcab3e3af5861c9431116c9f4a46213e44dbeff8ab36985"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+   ],
+   "purl": "a-purl-2",
+   "metadataType": "DpkgMetadata",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "sourceVersion": "",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": null
+   }
+  }
+ ],
+ "artifactRelationships": [],
+ "source": {
+  "type": "image",
+  "target": {
+   "userInput": "user-image-input",
+   "imageID": "sha256:9998e833a66442934ad948e5cbe898630773c369ef16517623254fa46edd171b",
+   "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+   "tags": [
+    "stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b"
+   ],
+   "imageSize": 38,
+   "layers": [
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:135c16aca35f76c25a18cb6650c621a46b8b79864ad6f2834167de2679bb587d",
+     "size": 22
+    },
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:c751a2f31455b3049bcab3e3af5861c9431116c9f4a46213e44dbeff8ab36985",
+     "size": 16
+    }
+   ],
+   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NzMsImRpZ2VzdCI6InNoYTI1Njo5OTk4ZTgzM2E2NjQ0MjkzNGFkOTQ4ZTVjYmU4OTg2MzA3NzNjMzY5ZWYxNjUxNzYyMzI1NGZhNDZlZGQxNzFiIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjoxMzVjMTZhY2EzNWY3NmMyNWExOGNiNjY1MGM2MjFhNDZiOGI3OTg2NGFkNmYyODM0MTY3ZGUyNjc5YmI1ODdkIn0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OmM3NTFhMmYzMTQ1NWIzMDQ5YmNhYjNlM2FmNTg2MWM5NDMxMTE2YzlmNGE0NjIxM2U0NGRiZWZmOGFiMzY5ODUifV19",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjItMDEtMThUMjA6MzA6MTMuMDQ0Njg1NTg5WiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIyLTAxLTE4VDIwOjMwOjEyLjE5OTA3MjQxOVoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMS50eHQgL3NvbWVmaWxlLTEudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9LHsiY3JlYXRlZCI6IjIwMjItMDEtMThUMjA6MzA6MTMuMDQ0Njg1NTg5WiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6MTM1YzE2YWNhMzVmNzZjMjVhMThjYjY2NTBjNjIxYTQ2YjhiNzk4NjRhZDZmMjgzNDE2N2RlMjY3OWJiNTg3ZCIsInNoYTI1NjpjNzUxYTJmMzE0NTViMzA0OWJjYWIzZTNhZjU4NjFjOTQzMTExNmM5ZjRhNDYyMTNlNDRkYmVmZjhhYjM2OTg1Il19fQ==",
+   "repoDigests": []
+  }
+ },
+ "distro": {
+  "prettyName": "debian",
+  "name": "debian",
+  "id": "debian",
+  "idLike": [
+   "like!"
+  ],
+  "version": "1.2.3",
+  "versionID": "1.2.3"
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "v0.42.0-bogus",
+  "configuration": {
+   "config-key": "config-value"
+  }
+ },
+ "schema": {
+  "version": "3.0.1",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.0.1.json"
+ }
+}

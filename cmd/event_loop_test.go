@@ -50,7 +50,7 @@ func Test_eventLoop_gracefulExit(t *testing.T) {
 		t.Cleanup(testBus.Close)
 
 		finalEvent := partybus.Event{
-			Type: event.PresenterReady,
+			Type: event.Exit,
 		}
 
 		worker := func() <-chan error {
@@ -182,7 +182,7 @@ func Test_eventLoop_unsubscribeError(t *testing.T) {
 		t.Cleanup(testBus.Close)
 
 		finalEvent := partybus.Event{
-			Type: event.PresenterReady,
+			Type: event.Exit,
 		}
 
 		worker := func() <-chan error {
@@ -251,8 +251,8 @@ func Test_eventLoop_handlerError(t *testing.T) {
 		t.Cleanup(testBus.Close)
 
 		finalEvent := partybus.Event{
-			Type:  event.PresenterReady,
-			Error: fmt.Errorf("unable to create presenter"),
+			Type:  event.Exit,
+			Error: fmt.Errorf("an exit error occured"),
 		}
 
 		worker := func() <-chan error {
@@ -376,7 +376,7 @@ func Test_eventLoop_uiTeardownError(t *testing.T) {
 		t.Cleanup(testBus.Close)
 
 		finalEvent := partybus.Event{
-			Type: event.PresenterReady,
+			Type: event.Exit,
 		}
 
 		worker := func() <-chan error {

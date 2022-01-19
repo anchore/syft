@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 package source
 
 import (
@@ -6,8 +9,11 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
 
 	"github.com/stretchr/testify/require"
 
@@ -313,6 +319,219 @@ func TestFilesByGlob(t *testing.T) {
 				t.Errorf("unexpected number of files found by glob (%s): %d != %d", test.glob, len(contents), test.expected)
 			}
 
+		})
+	}
+}
+
+func TestDirectoryExclusions(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		input      string
+		glob       string
+		expected   int
+		exclusions []string
+		err        bool
+	}{
+		{
+			input:      "test-fixtures/system_paths",
+			desc:       "exclude everything",
+			glob:       "**",
+			expected:   0,
+			exclusions: []string{"**/*"},
+		},
+		{
+			input:      "test-fixtures/image-simple",
+			desc:       "a single path excluded",
+			glob:       "**",
+			expected:   3,
+			exclusions: []string{"**/target/**"},
+		},
+		{
+			input:      "test-fixtures/image-simple",
+			desc:       "exclude explicit directory relative to the root",
+			glob:       "**",
+			expected:   3,
+			exclusions: []string{"./target"},
+		},
+		{
+			input:      "test-fixtures/image-simple",
+			desc:       "exclude explicit file relative to the root",
+			glob:       "**",
+			expected:   3,
+			exclusions: []string{"./file-1.txt"},
+		},
+		{
+			input:      "test-fixtures/image-simple",
+			desc:       "exclude wildcard relative to the root",
+			glob:       "**",
+			expected:   2,
+			exclusions: []string{"./*.txt"},
+		},
+		{
+			input:      "test-fixtures/image-simple",
+			desc:       "exclude files deeper",
+			glob:       "**",
+			expected:   3,
+			exclusions: []string{"**/really/**"},
+		},
+		{
+			input:      "test-fixtures/image-simple",
+			desc:       "files excluded with extension",
+			glob:       "**",
+			expected:   1,
+			exclusions: []string{"**/*.txt"},
+		},
+		{
+			input:      "test-fixtures/image-simple",
+			desc:       "keep files with different extensions",
+			glob:       "**",
+			expected:   4,
+			exclusions: []string{"**/target/**/*.jar"},
+		},
+		{
+			input:      "test-fixtures/path-detected",
+			desc:       "file directly excluded",
+			glob:       "**",
+			expected:   1,
+			exclusions: []string{"**/empty"},
+		},
+		{
+			input:      "test-fixtures/path-detected",
+			desc:       "pattern error containing **/",
+			glob:       "**",
+			expected:   1,
+			exclusions: []string{"/**/empty"},
+			err:        true,
+		},
+		{
+			input:      "test-fixtures/path-detected",
+			desc:       "pattern error incorrect start",
+			glob:       "**",
+			expected:   1,
+			exclusions: []string{"empty"},
+			err:        true,
+		},
+		{
+			input:      "test-fixtures/path-detected",
+			desc:       "pattern error starting with /",
+			glob:       "**",
+			expected:   1,
+			exclusions: []string{"/empty"},
+			err:        true,
+		},
+	}
+	registryOpts := &image.RegistryOptions{}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, fn, err := New("dir:"+test.input, registryOpts, test.exclusions)
+			defer fn()
+
+			if test.err {
+				_, err = src.FileResolver(SquashedScope)
+				if err == nil {
+					t.Errorf("expected an error for patterns: %s", strings.Join(test.exclusions, " or "))
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("could not create NewDirScope: %+v", err)
+			}
+			resolver, err := src.FileResolver(SquashedScope)
+			if err != nil {
+				t.Errorf("could not get resolver error: %+v", err)
+			}
+			contents, err := resolver.FilesByGlob(test.glob)
+			if err != nil {
+				t.Errorf("could not get files by glob: %s+v", err)
+			}
+			if len(contents) != test.expected {
+				t.Errorf("wrong number of files after exclusions (%s): %d != %d", test.glob, len(contents), test.expected)
+			}
+		})
+	}
+}
+
+func TestImageExclusions(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		input      string
+		glob       string
+		expected   int
+		exclusions []string
+	}{
+		// NOTE: in the Dockerfile, /target is moved to /, which makes /really a top-level dir
+		{
+			input:      "image-simple",
+			desc:       "a single path excluded",
+			glob:       "**",
+			expected:   2,
+			exclusions: []string{"/really/**"},
+		},
+		{
+			input:      "image-simple",
+			desc:       "a directly referenced directory is excluded",
+			glob:       "**",
+			expected:   2,
+			exclusions: []string{"/really"},
+		},
+		{
+			input:      "image-simple",
+			desc:       "a partial directory is not excluded",
+			glob:       "**",
+			expected:   3,
+			exclusions: []string{"/reall"},
+		},
+		{
+			input:      "image-simple",
+			desc:       "exclude files deeper",
+			glob:       "**",
+			expected:   2,
+			exclusions: []string{"**/nested/**"},
+		},
+		{
+			input:      "image-simple",
+			desc:       "files excluded with extension",
+			glob:       "**",
+			expected:   2,
+			exclusions: []string{"**/*1.txt"},
+		},
+		{
+			input:      "image-simple",
+			desc:       "keep files with different extensions",
+			glob:       "**",
+			expected:   3,
+			exclusions: []string{"**/target/**/*.jar"},
+		},
+		{
+			input:      "image-simple",
+			desc:       "file directly excluded",
+			glob:       "**",
+			expected:   2,
+			exclusions: []string{"**/somefile-1.txt"}, // file-1 renamed to somefile-1 in Dockerfile
+		},
+	}
+	registryOpts := &image.RegistryOptions{}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
+			src, fn, err := New(archiveLocation, registryOpts, test.exclusions)
+			defer fn()
+
+			if err != nil {
+				t.Errorf("could not create NewDirScope: %+v", err)
+			}
+			resolver, err := src.FileResolver(SquashedScope)
+			if err != nil {
+				t.Errorf("could not get resolver error: %+v", err)
+			}
+			contents, err := resolver.FilesByGlob(test.glob)
+			if err != nil {
+				t.Errorf("could not get files by glob: %s+v", err)
+			}
+			if len(contents) != test.expected {
+				t.Errorf("wrong number of files after exclusions (%s): %d != %d", test.glob, len(contents), test.expected)
+			}
 		})
 	}
 }

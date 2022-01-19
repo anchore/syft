@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:16a426e7-fcc7-4b94-abd2-66c67569cc44" version="1">
+  <metadata>
+    <timestamp>2022-01-14T22:46:49Z</timestamp>
+    <tools>
+      <tool>
+        <vendor>anchore</vendor>
+        <name>syft</name>
+        <version>[not provided]</version>
+      </tool>
+    </tools>
+    <component type="file">
+      <name>/some/path</name>
+      <version></version>
+    </component>
+  </metadata>
+  <components>
+    <component type="library">
+      <name>package-1</name>
+      <version>1.0.1</version>
+      <licenses>
+        <license>
+          <id>MIT</id>
+        </license>
+      </licenses>
+      <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
+      <purl>a-purl-2</purl>
+      <properties>
+        <property name="foundBy">the-cataloger-1</property>
+        <property name="language">python</property>
+        <property name="type">python</property>
+        <property name="metadataType">PythonPackageMetadata</property>
+        <property name="path">/some/path/pkg1</property>
+      </properties>
+    </component>
+    <component type="library">
+      <name>package-2</name>
+      <version>2.0.1</version>
+      <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
+      <purl>a-purl-2</purl>
+      <properties>
+        <property name="foundBy">the-cataloger-2</property>
+        <property name="type">deb</property>
+        <property name="metadataType">DpkgMetadata</property>
+        <property name="path">/some/path/pkg1</property>
+      </properties>
+    </component>
+    <component type="operating-system">
+      <name>debian</name>
+      <version>1.2.3</version>
+      <properties>
+        <property name="prettyName">debian</property>
+        <property name="id">debian</property>
+        <property name="versionID">1.2.3</property>
+      </properties>
+    </component>
+  </components>
+</bom>

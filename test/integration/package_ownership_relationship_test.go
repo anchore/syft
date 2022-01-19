@@ -11,7 +11,7 @@ import (
 
 func TestPackageOwnershipRelationships(t *testing.T) {
 
-	// ensure that the json presenter is applying artifact ownership with an image that has expected ownership relationships
+	// ensure that the json encoder is applying artifact ownership with an image that has expected ownership relationships
 	tests := []struct {
 		fixture string
 	}{
@@ -24,13 +24,8 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, test.fixture)
 
-			p := syftjson.Format().Presenter(sbom)
-			if p == nil {
-				t.Fatal("unable to get presenter")
-			}
-
 			output := bytes.NewBufferString("")
-			err := p.Present(output)
+			err := syftjson.Format().Encode(output, sbom)
 			if err != nil {
 				t.Fatalf("unable to present: %+v", err)
 			}

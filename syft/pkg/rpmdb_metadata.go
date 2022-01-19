@@ -10,7 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 )
 
 const RpmDBGlob = "**/var/lib/rpm/Packages"
@@ -21,11 +21,11 @@ var _ FileOwner = (*RpmdbMetadata)(nil)
 type RpmdbMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
-	Epoch     *int              `json:"epoch"`
+	Epoch     *int              `json:"epoch"  cyclonedx:"epoch"`
 	Arch      string            `json:"architecture"`
-	Release   string            `json:"release"`
-	SourceRpm string            `json:"sourceRpm"`
-	Size      int               `json:"size"`
+	Release   string            `json:"release" cyclonedx:"release"`
+	SourceRpm string            `json:"sourceRpm" cyclonedx:"sourceRpm"`
+	Size      int               `json:"size" cyclonedx:"size"`
 	License   string            `json:"license"`
 	Vendor    string            `json:"vendor"`
 	Files     []RpmdbFileRecord `json:"files"`
@@ -46,8 +46,8 @@ type RpmdbFileRecord struct {
 type RpmdbFileMode uint16
 
 // PackageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
-func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
-	if d == nil {
+func (m RpmdbMetadata) PackageURL(distro *linux.Release) string {
+	if distro == nil {
 		return ""
 	}
 
@@ -69,7 +69,7 @@ func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
 
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypeRPM,
-		d.Type.String(),
+		distro.ID,
 		m.Name,
 		// for purl the epoch is a qualifier, not part of the version
 		// see https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst under the RPM section

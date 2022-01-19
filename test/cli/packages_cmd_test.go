@@ -7,7 +7,8 @@ import (
 
 func TestPackagesCmdFlags(t *testing.T) {
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
-	badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
+	//badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
+	tmp := t.TempDir() + "/"
 
 	tests := []struct {
 		name       string
@@ -33,19 +34,34 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
-			name: "regression-survive-bad-binaries",
-			// this image has all sorts of rich binaries from the clang-13 test suite that should do pretty bad things
-			// to the go cataloger binary path. We should NEVER let a panic stop the cataloging process for these
-			// specific cases.
-
-			// this is more of an integration test, however, to assert the output we want to see from the application
-			// a CLI test is much easier.
-			args: []string{"packages", "-vv", badBinariesImage},
+			name: "multiple-output-flags",
+			args: []string{"packages", "-o", "table", "-o", "json=" + tmp + ".tmp/multiple-output-flag-test.json", coverageImage},
 			assertions: []traitAssertion{
-				assertInOutput("could not parse possible go binary"),
+				assertTableReport,
+				assertFileExists(tmp + ".tmp/multiple-output-flag-test.json"),
 				assertSuccessfulReturnCode,
 			},
 		},
+		// I haven't been able to reproduce locally yet, but in CI this has proven to be unstable:
+		// For the same commit:
+		//   pass: https://github.com/anchore/syft/runs/4611344142?check_suite_focus=true
+		//   fail: https://github.com/anchore/syft/runs/4611343586?check_suite_focus=true
+		// For the meantime this test will be commented out, but should be added back in as soon as possible.
+		//
+		//{
+		//	name: "regression-survive-bad-binaries",
+		//	// this image has all sorts of rich binaries from the clang-13 test suite that should do pretty bad things
+		//	// to the go cataloger binary path. We should NEVER let a panic stop the cataloging process for these
+		//	// specific cases.
+		//
+		//	// this is more of an integration test, however, to assert the output we want to see from the application
+		//	// a CLI test is much easier.
+		//	args: []string{"packages", "-vv", badBinariesImage},
+		//	assertions: []traitAssertion{
+		//		assertInOutput("could not parse possible go binary"),
+		//		assertSuccessfulReturnCode,
+		//	},
+		//},
 		{
 			name: "output-env-binding",
 			env: map[string]string{
@@ -150,6 +166,21 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertJsonReport,
 				assertStdoutLengthGreaterThan(1000),
 				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "responds-to-package-cataloger-search-options",
+			args: []string{"packages", "-vv"},
+			env: map[string]string{
+				"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
+				"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
+			},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured. Note:
+				// we are not testing further wiring of this option, only that the config responds to
+				// package-cataloger-level options.
+				assertInOutput("search-unindexed-archives: true"),
+				assertInOutput("search-indexed-archives: false"),
 			},
 		},
 	}
