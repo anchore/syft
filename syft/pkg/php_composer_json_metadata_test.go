@@ -20,7 +20,8 @@ func TestPhpComposerJsonMetadata_pURL(t *testing.T) {
 				Version: "1.0.1",
 			},
 			expected: "pkg:composer/ven/name@1.0.1",
-		}, {
+		},
+		{
 			name: "name with slashes (invalid)",
 			metadata: PhpComposerJSONMetadata{
 				Name:    "ven/name/component",
@@ -36,11 +37,23 @@ func TestPhpComposerJsonMetadata_pURL(t *testing.T) {
 			},
 			expected: "pkg:composer/name@1.0.1",
 		},
+		{
+			name: "ignores distro",
+			distro: &linux.Release{
+				ID:        "rhel",
+				VersionID: "8.4",
+			},
+			metadata: PhpComposerJSONMetadata{
+				Name:    "ven/name",
+				Version: "1.0.1",
+			},
+			expected: "pkg:composer/ven/name@1.0.1",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := test.metadata.PackageURL()
+			actual := test.metadata.PackageURL(test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

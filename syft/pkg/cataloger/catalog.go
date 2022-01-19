@@ -68,7 +68,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 			p.CPEs = cpe.Generate(p)
 
 			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
-			p.PURL = generatePackageURL(p, release)
+			p.PURL = pkg.URL(p, release)
 
 			// create file-to-package relationships for files owned by the package
 			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
