@@ -663,12 +663,153 @@
               "$ref": "#/definitions/NpmPackageJSONMetadata"
             },
             {
+              "$ref": "#/definitions/PhpComposerJSONMetadata"
+            },
+            {
               "$ref": "#/definitions/PythonPackageMetadata"
             },
             {
               "$ref": "#/definitions/RpmdbMetadata"
             }
           ]
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PhpComposerAuthors": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PhpComposerExternalReference": {
+      "required": [
+        "type",
+        "url",
+        "reference"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "shasum": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PhpComposerJSONMetadata": {
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PhpComposerExternalReference"
+        },
+        "dist": {
+          "$ref": "#/definitions/PhpComposerExternalReference"
+        },
+        "require": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "provide": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "require-dev": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "suggest": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "type": "string"
+        },
+        "notification-url": {
+          "type": "string"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/PhpComposerAuthors"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
+          "type": "string"
         }
       },
       "additionalProperties": true,
