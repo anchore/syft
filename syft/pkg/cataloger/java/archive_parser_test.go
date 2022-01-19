@@ -6,18 +6,17 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 	"github.com/gookit/color"
+	"github.com/stretchr/testify/assert"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {
@@ -227,7 +226,7 @@ func TestParseJar(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.fixture, func(t *testing.T) {
+		t.Run(path.Base(test.fixture), func(t *testing.T) {
 
 			generateJavaBuildFixture(t, test.fixture)
 
@@ -257,7 +256,7 @@ func TestParseJar(t *testing.T) {
 			var parent *pkg.Package
 			for _, a := range actual {
 				if strings.Contains(a.Name, "example-") {
-					parent = &a
+					parent = a
 				}
 			}
 
@@ -283,16 +282,14 @@ func TestParseJar(t *testing.T) {
 				// ignore select fields (only works for the main section)
 				for _, field := range test.ignoreExtras {
 					if metadata.Manifest != nil && metadata.Manifest.Main != nil {
-						if _, ok := metadata.Manifest.Main[field]; ok {
-							delete(metadata.Manifest.Main, field)
-						}
+						delete(metadata.Manifest.Main, field)
 					}
 				}
 
 				// write censored data back
 				a.Metadata = metadata
 
-				diffs := deep.Equal(e, a)
+				diffs := deep.Equal(&e, a)
 				if len(diffs) > 0 {
 					t.Errorf("diffs found for %q", a.Name)
 					for _, d := range diffs {
@@ -527,7 +524,7 @@ func TestParseNestedJar(t *testing.T) {
 
 			actualNameVersionPairSet := internal.NewStringSet()
 			for _, a := range actual {
-				key := makeKey(&a)
+				key := makeKey(a)
 				actualNameVersionPairSet.Add(key)
 				if !expectedNameVersionPairSet.Contains(key) {
 					t.Errorf("extra package: %s", a)
@@ -545,7 +542,7 @@ func TestParseNestedJar(t *testing.T) {
 			}
 
 			for _, a := range actual {
-				actualKey := makeKey(&a)
+				actualKey := makeKey(a)
 
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				if actualKey == "spring-boot|0.0.1-SNAPSHOT" {

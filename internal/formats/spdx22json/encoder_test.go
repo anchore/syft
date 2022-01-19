@@ -8,20 +8,22 @@ import (
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
 
-var updateSpdxJson = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json presenters")
+var updateSpdxJson = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json encoders")
 
-func TestSPDXJSONDirectoryPresenter(t *testing.T) {
-	testutils.AssertPresenterAgainstGoldenSnapshot(t,
-		Format().Presenter(testutils.DirectoryInput(t)),
+func TestSPDXJSONDirectoryEncoder(t *testing.T) {
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		testutils.DirectoryInput(t),
 		*updateSpdxJson,
 		spdxJsonRedactor,
 	)
 }
 
-func TestSPDXJSONImagePresenter(t *testing.T) {
+func TestSPDXJSONImageEncoder(t *testing.T) {
 	testImage := "image-simple"
-	testutils.AssertPresenterAgainstGoldenImageSnapshot(t,
-		Format().Presenter(testutils.ImageInput(t, testImage, testutils.FromSnapshot())),
+	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
+		Format(),
+		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateSpdxJson,
 		spdxJsonRedactor,

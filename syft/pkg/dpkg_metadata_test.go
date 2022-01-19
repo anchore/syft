@@ -6,19 +6,19 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestDpkgMetadata_pURL(t *testing.T) {
 	tests := []struct {
-		distro   distro.Distro
+		distro   linux.Release
 		metadata DpkgMetadata
 		expected string
 	}{
 		{
-			distro: distro.Distro{
-				Type: distro.Debian,
+			distro: linux.Release{
+				ID: "debian",
 			},
 			metadata: DpkgMetadata{
 				Package:      "p",
@@ -29,8 +29,8 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 			expected: "pkg:deb/debian/p@v?arch=a",
 		},
 		{
-			distro: distro.Distro{
-				Type: distro.Ubuntu,
+			distro: linux.Release{
+				ID: "ubuntu",
 			},
 			metadata: DpkgMetadata{
 				Package:      "p",
@@ -86,9 +86,7 @@ func TestDpkgMetadata_FileOwner(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(strings.Join(test.expected, ","), func(t *testing.T) {
-			var i interface{}
-			i = test.metadata
-			actual := i.(FileOwner).OwnedFiles()
+			actual := test.metadata.OwnedFiles()
 			for _, d := range deep.Equal(test.expected, actual) {
 				t.Errorf("diff: %+v", d)
 			}

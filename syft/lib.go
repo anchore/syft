@@ -1,11 +1,11 @@
 /*
-A "one-stop-shop" for helper utilities for all major functionality provided by child packages of the syft library.
+Package syft is a "one-stop-shop" for helper utilities for all major functionality provided by child packages of the syft library.
 
 Here is what the main execution path for syft does:
 
 	1. Parse a user image string to get a stereoscope image.Source object
 	2. Invoke all catalogers to catalog the image, adding discovered packages to a single catalog object
-	3. Invoke a single presenter to show the contents of the catalog
+	3. Invoke one or more encoders to output contents of the catalog
 
 A Source object encapsulates the image object to be cataloged and the user options (catalog all layers vs. squashed layer),
 providing a way to inspect paths and file content within the image. The Source object, not the image object, is used
@@ -23,7 +23,7 @@ import (
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/logger"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -34,16 +34,16 @@ import (
 // CatalogPackages takes an inventory of packages from the given image from a particular perspective
 // (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
 // distribution, and the source object used to wrap the data source.
-func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, []artifact.Relationship, *distro.Distro, error) {
-	resolver, err := src.FileResolver(scope)
+func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []artifact.Relationship, *linux.Release, error) {
+	resolver, err := src.FileResolver(cfg.Search.Scope)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
 	}
 
 	// find the distro
-	theDistro := distro.Identify(resolver)
-	if theDistro != nil {
-		log.Infof("identified distro: %s", theDistro.String())
+	release := linux.IdentifyRelease(resolver)
+	if release != nil {
+		log.Infof("identified distro: %s", release.String())
 	} else {
 		log.Info("could not identify distro")
 	}
@@ -53,23 +53,23 @@ func CatalogPackages(src *source.Source, scope source.Scope) (*pkg.Catalog, []ar
 	switch src.Metadata.Scheme {
 	case source.ImageScheme:
 		log.Info("cataloging image")
-		catalogers = cataloger.ImageCatalogers()
+		catalogers = cataloger.ImageCatalogers(cfg)
 	case source.FileScheme:
 		log.Info("cataloging file")
-		catalogers = cataloger.AllCatalogers()
+		catalogers = cataloger.AllCatalogers(cfg)
 	case source.DirectoryScheme:
 		log.Info("cataloging directory")
-		catalogers = cataloger.DirectoryCatalogers()
+		catalogers = cataloger.DirectoryCatalogers(cfg)
 	default:
 		return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
 	}
 
-	catalog, relationships, err := cataloger.Catalog(resolver, theDistro, catalogers...)
+	catalog, relationships, err := cataloger.Catalog(resolver, release, catalogers...)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	return catalog, relationships, theDistro, nil
+	return catalog, relationships, release, nil
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

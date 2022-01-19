@@ -127,20 +127,20 @@ func TestFingerprint(t *testing.T) {
 			expectIdentical: false,
 		},
 		{
-			name: "CPEs is reflected",
+			name: "CPEs is ignored",
 			transform: func(pkg Package) Package {
 				pkg.CPEs = []CPE{}
 				return pkg
 			},
-			expectIdentical: false,
+			expectIdentical: true,
 		},
 		{
-			name: "pURL is reflected",
+			name: "pURL is ignored",
 			transform: func(pkg Package) Package {
 				pkg.PURL = "new!"
 				return pkg
 			},
-			expectIdentical: false,
+			expectIdentical: true,
 		},
 		{
 			name: "language is reflected",
@@ -190,7 +190,10 @@ func TestFingerprint(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			originalPkg.SetID()
 			transformedPkg := test.transform(originalPkg)
+			transformedPkg.SetID()
+
 			originalFingerprint := originalPkg.ID()
 			assert.NotEmpty(t, originalFingerprint)
 			transformedFingerprint := transformedPkg.ID()

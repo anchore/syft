@@ -17,6 +17,28 @@ const (
 
 type exeOpener func(file io.ReadCloser) ([]exe, error)
 
+func newGoBinaryPackage(name, version, h1Digest, goVersion, architecture string, location source.Location) pkg.Package {
+	p := pkg.Package{
+		Name:     name,
+		Version:  version,
+		Language: pkg.Go,
+		Type:     pkg.GoModulePkg,
+		Locations: []source.Location{
+			location,
+		},
+		MetadataType: pkg.GolangBinMetadataType,
+		Metadata: pkg.GolangBinMetadata{
+			GoCompiledVersion: goVersion,
+			H1Digest:          h1Digest,
+			Architecture:      architecture,
+		},
+	}
+
+	p.SetID()
+
+	return p
+}
+
 func parseGoBin(location source.Location, reader io.ReadCloser, opener exeOpener) (pkgs []pkg.Package, err error) {
 	var exes []exe
 	// it has been found that there are stdlib paths within openExe that can panic. We want to prevent this behavior
@@ -54,21 +76,10 @@ func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg
 		}
 
 		if fields[0] == packageIdentifier || fields[0] == replaceIdentifier {
-			pkgsSlice = append(pkgsSlice, pkg.Package{
-				Name:     fields[1],
-				Version:  fields[2],
-				Language: pkg.Go,
-				Type:     pkg.GoModulePkg,
-				Locations: []source.Location{
-					location,
-				},
-				MetadataType: pkg.GolangBinMetadataType,
-				Metadata: pkg.GolangBinMetadata{
-					GoCompiledVersion: goVersion,
-					H1Digest:          fields[3],
-					Architecture:      arch,
-				},
-			})
+			name := fields[1]
+			version := fields[2]
+			h1Digest := fields[3]
+			pkgsSlice = append(pkgsSlice, newGoBinaryPackage(name, version, h1Digest, goVersion, arch, location))
 		}
 	}
 

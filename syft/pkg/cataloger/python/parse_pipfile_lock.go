@@ -38,8 +38,8 @@ type Dependency struct {
 var _ common.ParserFn = parsePipfileLock
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
-func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, []artifact.Relationship, error) {
-	packages := make([]pkg.Package, 0)
+func parsePipfileLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	packages := make([]*pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
 	for {
@@ -51,7 +51,7 @@ func parsePipfileLock(_ string, reader io.Reader) ([]pkg.Package, []artifact.Rel
 		}
 		for name, pkgMeta := range lock.Default {
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			packages = append(packages, pkg.Package{
+			packages = append(packages, &pkg.Package{
 				Name:     name,
 				Version:  version,
 				Language: pkg.Python,

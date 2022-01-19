@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -19,6 +21,8 @@ import (
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
+
+const WindowsOS = "windows"
 
 var unixSystemRuntimePrefixes = []string{
 	"/proc",
@@ -59,17 +63,13 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		currentWdRelRoot = filepath.Clean(root)
 	}
 
-	if pathFilters == nil {
-		pathFilters = []pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}
-	}
-
 	resolver := directoryResolver{
 		path:                    root,
 		currentWd:               currentWd,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
 		metadata:                make(map[file.ID]FileMetadata),
-		pathFilterFns:           pathFilters,
+		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
 		refsByMIMEType:          make(map[string][]file.Reference),
 		errPaths:                make(map[string]error),
 	}
@@ -95,7 +95,7 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 	fi, err := os.Stat(root)
 	if err != nil && fi != nil && !fi.IsDir() {
 		// note: we want to index the path regardless of an error stat-ing the path
-		newRoot := r.indexPath(root, fi, nil)
+		newRoot, _ := r.indexPath(root, fi, nil)
 		if newRoot != "" {
 			roots = append(roots, newRoot)
 		}
@@ -106,7 +106,12 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
-			newRoot := r.indexPath(path, info, err)
+			newRoot, err := r.indexPath(path, info, err)
+
+			if err != nil {
+				return err
+			}
+
 			if newRoot != "" {
 				roots = append(roots, newRoot)
 			}
@@ -115,35 +120,43 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		})
 }
 
-func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) string {
+func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {
 	// ignore any path which a filter function returns true
 	for _, filterFn := range r.pathFilterFns {
-		if filterFn(path, info) {
-			return ""
+		if filterFn != nil && filterFn(path, info) {
+			if info.IsDir() {
+				return "", fs.SkipDir
+			}
+			return "", nil
 		}
 	}
 
 	if r.isFileAccessErr(path, err) {
-		return ""
+		return "", nil
 	}
 
 	// link cycles could cause a revisit --we should not allow this
 	if r.fileTree.HasPath(file.Path(path)) {
-		return ""
+		return "", nil
 	}
 
 	if info == nil {
 		// walk may not be able to provide a FileInfo object, don't allow for this to stop indexing; keep track of the paths and continue.
 		r.errPaths[path] = fmt.Errorf("no file info observable at path=%q", path)
-		return ""
+		return "", nil
+	}
+
+	// here we check to see if we need to normalize paths to posix on the way in coming from windows
+	if runtime.GOOS == WindowsOS {
+		path = windowsToPosix(path)
 	}
 
 	newRoot, err := r.addPathToIndex(path, info)
 	if r.isFileAccessErr(path, err) {
-		return ""
+		return "", nil
 	}
 
-	return newRoot
+	return newRoot, nil
 }
 
 func (r *directoryResolver) isFileAccessErr(path string, err error) bool {
@@ -253,6 +266,11 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 }
 
 func (r directoryResolver) responsePath(path string) string {
+	// check to see if we need to encode back to Windows from posix
+	if runtime.GOOS == WindowsOS {
+		path = posixToWindows(path)
+	}
+
 	// always return references relative to the request path (not absolute path)
 	if filepath.IsAbs(path) {
 		// we need to account for the cwd relative to the running process and the given root for the directory resolver
@@ -309,6 +327,10 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
+		if runtime.GOOS == WindowsOS {
+			userStrPath = windowsToPosix(userStrPath)
+		}
+
 		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
 		if err == nil && exists {
 			references = append(references, NewLocationFromDirectory(r.responsePath(userStrPath), *ref))
@@ -362,7 +384,13 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 		// by preference or these files are not readable by the current user).
 		return nil, fmt.Errorf("file content is inaccessible path=%q", location.ref.RealPath)
 	}
-	return file.NewLazyReadCloser(string(location.ref.RealPath)), nil
+	// RealPath is posix so for windows directory resolver we need to translate
+	// to its true on disk path.
+	filePath := string(location.ref.RealPath)
+	if runtime.GOOS == WindowsOS {
+		filePath = posixToWindows(filePath)
+	}
+	return file.NewLazyReadCloser(filePath), nil
 }
 
 func (r directoryResolver) isInIndex(location Location) bool {
@@ -404,6 +432,33 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
+func windowsToPosix(windowsPath string) (posixPath string) {
+	// volume should be encoded at the start (e.g /c/<path>) where c is the volume
+	volumeName := filepath.VolumeName(windowsPath)
+	pathWithoutVolume := strings.TrimPrefix(windowsPath, volumeName)
+	volumeLetter := strings.ToLower(strings.TrimSuffix(volumeName, ":"))
+
+	// translate non-escaped backslash to forwardslash
+	translatedPath := strings.ReplaceAll(pathWithoutVolume, "\\", "/")
+
+	// always have `/` as the root... join all components, e.g.:
+	// convert: C:\\some\windows\Place
+	// into: /c/some/windows/Place
+	return path.Clean("/" + strings.Join([]string{volumeLetter, translatedPath}, "/"))
+}
+
+func posixToWindows(posixPath string) (windowsPath string) {
+	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
+	pathFields := strings.Split(posixPath, "/")
+	volumeName := strings.ToUpper(pathFields[1]) + `:\\`
+
+	// translate non-escaped forward slashes into backslashes
+	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
+
+	// combine volume name and backslash components
+	return filepath.Clean(volumeName + remainingTranslatedPath)
+}
+
 func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
 	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
 }
@@ -416,8 +471,8 @@ func isUnallowableFileType(_ string, info os.FileInfo) bool {
 	switch newFileTypeFromMode(info.Mode()) {
 	case CharacterDevice, Socket, BlockDevice, FIFONode, IrregularFile:
 		return true
-		// note: symlinks that point to these files may still get by. We handle this later in processing to help prevent
-		// against infinite links traversal.
+		// note: symlinks that point to these files may still get by.
+		// We handle this later in processing to help prevent against infinite links traversal.
 	}
 
 	return false

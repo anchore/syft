@@ -4,12 +4,10 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/jinzhu/copier"
-
-	"github.com/anchore/syft/internal"
-
-	"github.com/anchore/syft/internal/log"
 )
 
 // Catalog represents a collection of Packages.
@@ -51,6 +49,7 @@ func (c *Catalog) Package(id artifact.ID) *Package {
 		log.Warnf("unable to copy package id=%q name=%q: %+v", id, v.Name, err)
 		return nil
 	}
+	p.id = v.id
 	return &p
 }
 
@@ -75,8 +74,12 @@ func (c *Catalog) Add(p Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	// note: since we are capturing the ID, we cannot modify the package being added from this point forward
 	id := p.ID()
+	if id == "" {
+		log.Warnf("found package with empty ID while adding to the catalog: %+v", p)
+		p.SetID()
+		id = p.ID()
+	}
 
 	// store by package ID
 	c.byID[id] = p
@@ -142,7 +145,7 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
 			if pkgs[i].Version == pkgs[j].Version {
-				if pkgs[i].Type == pkgs[j].Type {
+				if pkgs[i].Type == pkgs[j].Type && len(pkgs[i].Locations) > 0 && len(pkgs[j].Locations) > 0 {
 					return pkgs[i].Locations[0].String() < pkgs[j].Locations[0].String()
 				}
 				return pkgs[i].Type < pkgs[j].Type

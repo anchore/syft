@@ -3,18 +3,20 @@ package cataloger
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestPackageURL(t *testing.T) {
 	tests := []struct {
+		name     string
 		pkg      pkg.Package
-		distro   *distro.Distro
+		distro   *linux.Release
 		expected string
 	}{
 		{
+			name: "golang",
 			pkg: pkg.Package{
 				Name:    "github.com/anchore/syft",
 				Version: "v0.1.0",
@@ -23,14 +25,38 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
 		},
 		{
+			name: "pip with vcs url",
 			pkg: pkg.Package{
-				Name:    "name",
-				Version: "v0.1.0",
+				Name:    "bad-name",
+				Version: "bad-v0.1.0",
 				Type:    pkg.PythonPkg,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:    "name",
+					Version: "v0.1.0",
+					DirectURLOrigin: &pkg.PythonDirectURLOriginInfo{
+						VCS:      "git",
+						URL:      "https://github.com/test/test.git",
+						CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					},
+				},
+			},
+			expected: "pkg:pypi/name@v0.1.0?vcs_url=git+https:%2F%2Fgithub.com%2Ftest%2Ftest.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		},
+		{
+			name: "pip without vcs url",
+			pkg: pkg.Package{
+				Name:    "bad-name",
+				Version: "bad-v0.1.0",
+				Type:    pkg.PythonPkg,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:    "name",
+					Version: "v0.1.0",
+				},
 			},
 			expected: "pkg:pypi/name@v0.1.0",
 		},
 		{
+			name: "gem",
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
@@ -39,6 +65,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:gem/name@v0.1.0",
 		},
 		{
+			name: "npm",
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
@@ -47,8 +74,9 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:npm/name@v0.1.0",
 		},
 		{
-			distro: &distro.Distro{
-				Type: distro.Ubuntu,
+			name: "deb with arch",
+			distro: &linux.Release{
+				ID: "ubuntu",
 			},
 			pkg: pkg.Package{
 				Name:    "bad-name",
@@ -63,8 +91,9 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:deb/ubuntu/name@v0.1.0?arch=amd64",
 		},
 		{
-			distro: &distro.Distro{
-				Type: distro.CentOS,
+			name: "deb with epoch",
+			distro: &linux.Release{
+				ID: "centos",
 			},
 			pkg: pkg.Package{
 				Name:    "bad-name",
@@ -81,8 +110,9 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64&epoch=2",
 		},
 		{
-			distro: &distro.Distro{
-				Type: distro.CentOS,
+			name: "deb with nil epoch",
+			distro: &linux.Release{
+				ID: "centos",
 			},
 			pkg: pkg.Package{
 				Name:    "bad-name",
@@ -99,9 +129,8 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64",
 		},
 		{
-			distro: &distro.Distro{
-				Type: distro.UnknownDistroType,
-			},
+			name:   "deb with unknown distro",
+			distro: nil,
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
@@ -110,6 +139,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:deb/name@v0.1.0",
 		},
 		{
+			name: "cargo",
 			pkg: pkg.Package{
 				Name:    "name",
 				Version: "v0.1.0",
@@ -120,7 +150,7 @@ func TestPackageURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(string(test.pkg.Type)+"|"+test.expected, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			actual := generatePackageURL(test.pkg, test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()

@@ -21,7 +21,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 
 ## Features
 - Catalog container images and filesystems to discover packages and libraries.
-- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
+- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR/PAR/SAR, Jenkins plugins JPI/HPI, Go modules)
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
 - Supports Docker and OCI image formats
 - Direct support for [Grype](https://github.com/anchore/grype), a fast and powerful vulnerability matcher.
@@ -93,9 +93,27 @@ file:path/to/yourproject/file          read directly from a path on disk (any si
 registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 ```
 
+### Excluding file paths
+
+Syft can exclude files and paths from being scanned within a source by using glob expressions
+with one or more `--exclude` parameters:
+```
+syft <source> --exclude './out/**/*.json' --exclude /etc
+```
+**Note:** in the case of _image scanning_, since the entire filesystem is scanned it is
+possible to use absolute paths like `/etc` or `/usr/**/*.txt` whereas _directory scans_
+exclude files _relative to the specified directory_. For example: scanning `/usr/foo` with
+`--exclude ./package.json` would exclude `/usr/foo/package.json` and `--exclude '**/package.json'`
+would exclude all `package.json` files under `/usr/foo`. For _directory scans_,
+it is required to begin path expressions with `./`, `*/`, or `**/`, all of which
+will be resolved _relative to the specified scan directory_. Keep in mind, your shell
+may attempt to expand wildcards, so put those parameters in single quotes, like:
+`'**/*.json'`.
+
 ### Output formats
 
-The output format for Syft is configurable as well:
+The output format for Syft is configurable as well using the
+`-o` (or `--output`) option:
 
 ```
 syft packages <image> -o <format>
@@ -109,6 +127,15 @@ Where the `formats` available are:
 - `spdx`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `table`: A columnar summary (default).
+
+#### Multiple outputs
+
+Syft can also output _multiple_ files in differing formats by appending
+`=<file>` to the option, for example to output Syft JSON and SPDX JSON:
+
+```shell
+syft packages <image> -o json=sbom.syft.json -o spdx-json=sbom.spdx.json
+```
 
 ## Private Registry Authentication
 
@@ -204,8 +231,12 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# the output format of the SBOM report (options: table, text, json)
-# same as -o ; SYFT_OUTPUT env var
+# the output format(s) of the SBOM report (options: table, text, json, spdx, ...)
+# same as -o, --output, and SYFT_OUTPUT env var
+# to specify multiple output files in differing formats, use a list:
+# output:
+#   - "json=<syft-json-output-file>"
+#   - "spdx-json=<spdx-json-output-file>"
 output: "table"
 
 # suppress all output (except for the SBOM report)
@@ -219,8 +250,26 @@ file: ""
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
 
+# a list of globs to exclude from scanning. same as --exclude ; for example:
+# exclude:
+#   - "/etc/**"
+#   - "./out/**/*.json"
+exclude:
+
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
+
+  # search within archives that do contain a file index to search against (zip)
+  # note: for now this only applies to the java package cataloger
+  # SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES env var
+  search-indexed-archives: true
+
+  # search within archives that do not contain a file index to search against (tar, tar.gz, tar.bz2, etc)
+  # note: enabling this may result in a performance impact since all discovered compressed tars will be decompressed
+  # note: for now this only applies to the java package cataloger
+  # SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES env var
+  search-unindexed-archives: false
+   
   cataloger:
     # enable/disable cataloging of packages
     # SYFT_PACKAGE_CATALOGER_ENABLED env var

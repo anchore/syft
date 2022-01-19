@@ -50,10 +50,3 @@ func (f Format) Validate(reader io.Reader) error {
 
 	return f.validator(reader)
 }
-
-func (f Format) Presenter(s sbom.SBOM) *Presenter {
-	if f.encoder == nil {
-		return nil
-	}
-	return NewPresenter(f.encoder, s)
-}

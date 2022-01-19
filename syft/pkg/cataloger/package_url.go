@@ -5,18 +5,18 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 // generatePackageURL returns a package-URL representation of the given package (see https://github.com/package-url/purl-spec)
-func generatePackageURL(p pkg.Package, d *distro.Distro) string {
+func generatePackageURL(p pkg.Package, release *linux.Release) string {
 	// default to pURLs on the metadata
 	if p.Metadata != nil {
 		if i, ok := p.Metadata.(interface{ PackageURL() string }); ok {
 			return i.PackageURL()
-		} else if i, ok := p.Metadata.(interface{ PackageURL(*distro.Distro) string }); ok {
-			return i.PackageURL(d)
+		} else if i, ok := p.Metadata.(interface{ PackageURL(*linux.Release) string }); ok {
+			return i.PackageURL(release)
 		}
 	}
 

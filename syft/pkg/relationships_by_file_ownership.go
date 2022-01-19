@@ -3,7 +3,7 @@ package pkg
 import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/bmatcuk/doublestar/v2"
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -27,11 +27,11 @@ func RelationshipsByFileOwnership(catalog *Catalog) []artifact.Relationship {
 	var relationships = findOwnershipByFilesRelationships(catalog)
 
 	var edges []artifact.Relationship
-	for parent, children := range relationships {
-		for child, files := range children {
+	for parentID, children := range relationships {
+		for childID, files := range children {
 			edges = append(edges, artifact.Relationship{
-				From: catalog.byID[parent],
-				To:   catalog.byID[child],
+				From: catalog.byID[parentID],
+				To:   catalog.byID[childID],
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				Data: ownershipByFilesMetadata{
 					Files: files.List(),

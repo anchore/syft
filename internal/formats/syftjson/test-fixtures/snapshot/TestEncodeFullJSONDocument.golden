@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "962403cfb7be50d7",
+   "id": "d9a7c58726ab4bef",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -31,7 +31,7 @@
    }
   },
   {
-   "id": "b11f44847bba0ed1",
+   "id": "ac462e450060da2c",
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
@@ -62,8 +62,8 @@
  ],
  "artifactRelationships": [
   {
-   "parent": "962403cfb7be50d7",
-   "child": "b11f44847bba0ed1",
+   "parent": "",
+   "child": "",
    "type": "ownership-by-file-overlap",
    "metadata": {
     "file": "path"
@@ -167,9 +167,12 @@
   }
  },
  "distro": {
-  "name": "redhat",
+  "id": "redhat",
+  "idLike": [
+   "rhel"
+  ],
   "version": "7",
-  "idLike": "rhel"
+  "versionID": "7"
  },
  "descriptor": {
   "name": "syft",
@@ -179,7 +182,7 @@
   }
  },
  "schema": {
-  "version": "2.0.1",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.1.json"
+  "version": "3.0.1",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.0.1.json"
  }
 }

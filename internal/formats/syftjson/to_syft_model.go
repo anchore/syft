@@ -3,26 +3,43 @@ package syftjson
 import (
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/google/go-cmp/cmp"
 )
 
 func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
-	dist, err := distro.NewDistro(distro.Type(doc.Distro.Name), doc.Distro.Version, doc.Distro.IDLike)
-	if err != nil {
-		return nil, err
-	}
-
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: toSyftCatalog(doc.Artifacts),
-			Distro:         &dist,
+			PackageCatalog:    toSyftCatalog(doc.Artifacts),
+			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
 		},
 		Source:     *toSyftSourceData(doc.Source),
 		Descriptor: toSyftDescriptor(doc.Descriptor),
 	}, nil
+}
+
+func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
+	if cmp.Equal(d, model.LinuxRelease{}) {
+		return nil
+	}
+	return &linux.Release{
+		PrettyName:       d.PrettyName,
+		Name:             d.Name,
+		ID:               d.ID,
+		IDLike:           d.IDLike,
+		Version:          d.Version,
+		VersionID:        d.VersionID,
+		Variant:          d.Variant,
+		VariantID:        d.VariantID,
+		HomeURL:          d.HomeURL,
+		SupportURL:       d.SupportURL,
+		BugReportURL:     d.BugReportURL,
+		PrivacyPolicyURL: d.PrivacyPolicyURL,
+		CPEName:          d.CPEName,
+	}
 }
 
 func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {

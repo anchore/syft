@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 package source
 
 import (
@@ -175,12 +178,12 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 			hasPath := resolver.HasPath(c.input)
 			if !c.forcePositiveHasPath {
 				if c.refCount != 0 && !hasPath {
-					t.Errorf("expected HasPath() to indicate existance, but did not")
+					t.Errorf("expected HasPath() to indicate existence, but did not")
 				} else if c.refCount == 0 && hasPath {
-					t.Errorf("expeced HasPath() to NOT indicate existance, but does")
+					t.Errorf("expected HasPath() to NOT indicate existence, but does")
 				}
 			} else if !hasPath {
-				t.Errorf("expected HasPath() to indicate existance, but did not (force path)")
+				t.Errorf("expected HasPath() to indicate existence, but did not (force path)")
 			}
 
 			refs, err := resolver.FilesByPath(c.input)
@@ -553,7 +556,6 @@ func Test_indexAllRoots(t *testing.T) {
 }
 
 func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
-
 	tests := []struct {
 		fixturePath   string
 		mimeType      string
@@ -567,7 +569,6 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.fixturePath, func(t *testing.T) {
-
 			resolver, err := newDirectoryResolver(test.fixturePath)
 			assert.NoError(t, err)
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
@@ -648,7 +649,6 @@ func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
 	locations, err = resolver.FilesByPath("./link_to_link_to_readme")
 	require.NoError(t, err)
 	assert.Len(t, locations, 1)
-
 }
 
 func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
@@ -683,10 +683,9 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 			if test.err {
 				require.Error(t, err)
 				return
-			} else {
-				require.NoError(t, err)
 			}
 
+			require.NoError(t, err)
 			if test.expects != "" {
 				b, err := ioutil.ReadAll(actual)
 				require.NoError(t, err)

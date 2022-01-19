@@ -3,6 +3,8 @@ package integration
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/pkg/cataloger"
+
 	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -14,21 +16,24 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 
-	theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil)
+	theSource, cleanupSource, err := source.New("docker-archive:"+tarPath, nil, nil)
 	t.Cleanup(cleanupSource)
 	if err != nil {
 		t.Fatalf("unable to get source: %+v", err)
 	}
 
-	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, source.SquashedScope)
+	// TODO: this would be better with functional options (after/during API refactor)
+	c := cataloger.DefaultConfig()
+	c.Search.Scope = source.SquashedScope
+	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: pkgCatalog,
-			Distro:         actualDistro,
+			PackageCatalog:    pkgCatalog,
+			LinuxDistribution: actualDistro,
 		},
 		Relationships: relationships,
 		Source:        theSource.Metadata,
@@ -45,21 +50,24 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 }
 
 func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
-	theSource, cleanupSource, err := source.New("dir:"+dir, nil)
+	theSource, cleanupSource, err := source.New("dir:"+dir, nil, nil)
 	t.Cleanup(cleanupSource)
 	if err != nil {
 		t.Fatalf("unable to get source: %+v", err)
 	}
 
-	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, source.AllLayersScope)
+	// TODO: this would be better with functional options (after/during API refactor)
+	c := cataloger.DefaultConfig()
+	c.Search.Scope = source.AllLayersScope
+	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: pkgCatalog,
-			Distro:         actualDistro,
+			PackageCatalog:    pkgCatalog,
+			LinuxDistribution: actualDistro,
 		},
 		Relationships: relationships,
 		Source:        theSource.Metadata,

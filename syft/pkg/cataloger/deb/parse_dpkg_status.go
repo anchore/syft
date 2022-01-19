@@ -20,6 +20,16 @@ var (
 	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 )
 
+func newDpkgPackage(d pkg.DpkgMetadata) pkg.Package {
+	return pkg.Package{
+		Name:         d.Package,
+		Version:      d.Version,
+		Type:         pkg.DebPkg,
+		MetadataType: pkg.DpkgMetadataType,
+		Metadata:     d,
+	}
+}
+
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
 func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
@@ -37,13 +47,7 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 		}
 
 		if entry.Package != "" {
-			packages = append(packages, pkg.Package{
-				Name:         entry.Package,
-				Version:      entry.Version,
-				Type:         pkg.DebPkg,
-				MetadataType: pkg.DpkgMetadataType,
-				Metadata:     entry,
-			})
+			packages = append(packages, newDpkgPackage(entry))
 		}
 	}
 

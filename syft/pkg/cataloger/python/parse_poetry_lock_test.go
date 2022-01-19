@@ -9,7 +9,7 @@ import (
 )
 
 func TestParsePoetryLock(t *testing.T) {
-	expected := []pkg.Package{
+	expected := []*pkg.Package{
 		{
 			Name:     "added-value",
 			Version:  "0.14.2",

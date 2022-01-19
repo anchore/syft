@@ -10,13 +10,13 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/formats"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/pkg/profile"
@@ -50,8 +50,7 @@ const (
 )
 
 var (
-	packagesPresenterOpt format.Option
-	packagesCmd          = &cobra.Command{
+	packagesCmd = &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
@@ -62,14 +61,7 @@ var (
 		Args:          validateInputArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// set the presenter
-			presenterOption := format.ParseOption(appConfig.Output)
-			if presenterOption == format.UnknownFormatOption {
-				return fmt.Errorf("bad --output value '%s'", appConfig.Output)
-			}
-			packagesPresenterOpt = presenterOption
-
+		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			if appConfig.Dev.ProfileCPU && appConfig.Dev.ProfileMem {
 				return fmt.Errorf("cannot profile CPU and memory simultaneously")
 			}
@@ -98,17 +90,17 @@ func setPackageFlags(flags *pflag.FlagSet) {
 	// Formatting & Input options //////////////////////////////////////////////
 
 	flags.StringP(
-		"scope", "s", source.SquashedScope.String(),
+		"scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
-	flags.StringP(
-		"output", "o", string(format.TableOption),
-		fmt.Sprintf("report output formatter, options=%v", format.AllOptions),
+	flags.StringArrayP(
+		"output", "o", []string{string(format.TableOption)},
+		fmt.Sprintf("report output format, options=%v", format.AllOptions),
 	)
 
 	flags.StringP(
 		"file", "", "",
-		"file to write the report output to (default is STDOUT)",
+		"file to write the default report output to (default is STDOUT)",
 	)
 
 	// Upload options //////////////////////////////////////////////////////////
@@ -130,6 +122,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 	flags.StringP(
 		"dockerfile", "d", "",
 		"include dockerfile for upload to Anchore Enterprise",
+	)
+
+	flags.StringArrayP(
+		"exclude", "", nil,
+		"exclude paths from being scanned using a glob expression",
 	)
 
 	flags.Bool(
@@ -155,6 +152,10 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	}
 
 	if err := viper.BindPFlag("file", flags.Lookup("file")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
 		return err
 	}
 
@@ -200,26 +201,26 @@ func validateInputArgs(cmd *cobra.Command, args []string) error {
 }
 
 func packagesExec(_ *cobra.Command, args []string) error {
-	// could be an image or a directory, with or without a scheme
-	userInput := args[0]
-
-	reporter, closer, err := reportWriter()
-	defer func() {
-		if err := closer(); err != nil {
-			log.Warnf("unable to write to report destination: %+v", err)
-		}
-	}()
-
+	writer, err := makeWriter(appConfig.Output, appConfig.File)
 	if err != nil {
 		return err
 	}
 
+	defer func() {
+		if err := writer.Close(); err != nil {
+			log.Warnf("unable to write to report destination: %w", err)
+		}
+	}()
+
+	// could be an image or a directory, with or without a scheme
+	userInput := args[0]
+
 	return eventLoop(
-		packagesExecWorker(userInput),
+		packagesExecWorker(userInput, writer),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
-		ui.Select(isVerbose(), appConfig.Quiet, reporter)...,
+		ui.Select(isVerbose(), appConfig.Quiet)...,
 	)
 }
 
@@ -234,7 +235,7 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-func packagesExecWorker(userInput string) <-chan error {
+func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -245,17 +246,9 @@ func packagesExecWorker(userInput string) <-chan error {
 			return
 		}
 
-		f := formats.ByOption(packagesPresenterOpt)
-		if f == nil {
-			errs <- fmt.Errorf("unknown format: %s", packagesPresenterOpt)
-			return
-		}
-
-		checkForApplicationUpdate()
-
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions())
+		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 		if err != nil {
-			errs <- fmt.Errorf("failed to determine image source: %w", err)
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 			return
 		}
 		if cleanup != nil {
@@ -288,8 +281,8 @@ func packagesExecWorker(userInput string) <-chan error {
 		}
 
 		bus.Publish(partybus.Event{
-			Type:  event.PresenterReady,
-			Value: f.Presenter(s),
+			Type:  event.Exit,
+			Value: func() error { return writer.Write(s) },
 		})
 	}()
 	return errs

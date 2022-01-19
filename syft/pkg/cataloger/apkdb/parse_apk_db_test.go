@@ -647,11 +647,11 @@ func TestSinglePackageDetails(t *testing.T) {
 func TestMultiplePackages(t *testing.T) {
 	tests := []struct {
 		fixture  string
-		expected []pkg.Package
+		expected []*pkg.Package
 	}{
 		{
 			fixture: "test-fixtures/multiple",
-			expected: []pkg.Package{
+			expected: []*pkg.Package{
 				{
 					Name:         "libc-utils",
 					Version:      "0.7.2-r0",

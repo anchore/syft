@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/anchore/syft/syft/source"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Package represents a pkg.Package object specialized for JSON marshaling and unmarshalling.
@@ -31,8 +32,8 @@ type PackageBasicData struct {
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.
 type PackageCustomData struct {
-	MetadataType pkg.MetadataType `json:"metadataType"`
-	Metadata     interface{}      `json:"metadata"`
+	MetadataType pkg.MetadataType `json:"metadataType,omitempty"`
+	Metadata     interface{}      `json:"metadata,omitempty"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
@@ -117,6 +118,14 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		p.Metadata = payload
+	case pkg.PhpComposerJSONMetadataType:
+		var payload pkg.PhpComposerJSONMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
+	default:
+		log.Warnf("unknown package metadata type=%q for packageID=%q", p.MetadataType, p.ID)
 	}
 
 	return nil

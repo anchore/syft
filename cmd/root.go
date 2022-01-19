@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -22,12 +24,14 @@ var rootCmd = &cobra.Command{
 	PreRunE:           packagesCmd.PreRunE,
 	RunE:              packagesCmd.RunE,
 	ValidArgsFunction: packagesCmd.ValidArgsFunction,
+	Version:           version.FromBuild().Version,
 }
 
 func init() {
 	// set universal flags
 	rootCmd.PersistentFlags().StringVarP(&persistentOpts.ConfigPath, "config", "c", "", "application config file")
-
+	// setting the version template to just print out the string since we already have a templatized version string
+	rootCmd.SetVersionTemplate(fmt.Sprintf("%s {{.Version}}\n", internal.ApplicationName))
 	flag := "quiet"
 	rootCmd.PersistentFlags().BoolP(
 		flag, "q", false,
