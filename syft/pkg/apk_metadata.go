@@ -20,18 +20,18 @@ var _ FileOwner = (*ApkMetadata)(nil)
 // - https://git.alpinelinux.org/apk-tools/tree/src/database.c
 type ApkMetadata struct {
 	Package          string          `mapstructure:"P" json:"package"`
-	OriginPackage    string          `mapstructure:"o" json:"originPackage"`
+	OriginPackage    string          `mapstructure:"o" json:"originPackage" cyclonedx:"originPackage"`
 	Maintainer       string          `mapstructure:"m" json:"maintainer"`
 	Version          string          `mapstructure:"V" json:"version"`
 	License          string          `mapstructure:"L" json:"license"`
 	Architecture     string          `mapstructure:"A" json:"architecture"`
 	URL              string          `mapstructure:"U" json:"url"`
 	Description      string          `mapstructure:"T" json:"description"`
-	Size             int             `mapstructure:"S" json:"size"`
-	InstalledSize    int             `mapstructure:"I" json:"installedSize"`
-	PullDependencies string          `mapstructure:"D" json:"pullDependencies"`
-	PullChecksum     string          `mapstructure:"C" json:"pullChecksum"`
-	GitCommitOfAport string          `mapstructure:"c" json:"gitCommitOfApkPort"`
+	Size             int             `mapstructure:"S" json:"size" cyclonedx:"size"`
+	InstalledSize    int             `mapstructure:"I" json:"installedSize" cyclonedx:"installedSize"`
+	PullDependencies string          `mapstructure:"D" json:"pullDependencies" cyclonedx:"pullDependencies"`
+	PullChecksum     string          `mapstructure:"C" json:"pullChecksum" cyclonedx:"pullChecksum"`
+	GitCommitOfAport string          `mapstructure:"c" json:"gitCommitOfApkPort" cyclonedx:"gitCommitOfApkPort"`
 	Files            []ApkFileRecord `json:"files"`
 }
 

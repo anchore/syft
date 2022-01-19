@@ -21,11 +21,11 @@ var _ FileOwner = (*RpmdbMetadata)(nil)
 type RpmdbMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
-	Epoch     *int              `json:"epoch"`
+	Epoch     *int              `json:"epoch"  cyclonedx:"epoch"`
 	Arch      string            `json:"architecture"`
-	Release   string            `json:"release"`
-	SourceRpm string            `json:"sourceRpm"`
-	Size      int               `json:"size"`
+	Release   string            `json:"release" cyclonedx:"release"`
+	SourceRpm string            `json:"sourceRpm" cyclonedx:"sourceRpm"`
+	Size      int               `json:"size" cyclonedx:"size"`
 	License   string            `json:"license"`
 	Vendor    string            `json:"vendor"`
 	Files     []RpmdbFileRecord `json:"files"`

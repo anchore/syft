@@ -18,12 +18,12 @@ var _ FileOwner = (*DpkgMetadata)(nil)
 // at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section.
 type DpkgMetadata struct {
 	Package       string           `mapstructure:"Package" json:"package"`
-	Source        string           `mapstructure:"Source" json:"source"`
+	Source        string           `mapstructure:"Source" json:"source" cyclonedx:"source"`
 	Version       string           `mapstructure:"Version" json:"version"`
-	SourceVersion string           `mapstructure:"SourceVersion" json:"sourceVersion"`
+	SourceVersion string           `mapstructure:"SourceVersion" json:"sourceVersion" cyclonedx:"sourceVersion"`
 	Architecture  string           `mapstructure:"Architecture" json:"architecture"`
 	Maintainer    string           `mapstructure:"Maintainer" json:"maintainer"`
-	InstalledSize int              `mapstructure:"InstalledSize" json:"installedSize"`
+	InstalledSize int              `mapstructure:"InstalledSize" json:"installedSize" cyclonedx:"installedSize"`
 	Files         []DpkgFileRecord `json:"files"`
 }
 
