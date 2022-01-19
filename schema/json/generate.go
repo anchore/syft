@@ -36,6 +36,7 @@ type artifactMetadataContainer struct {
 	Rpm    pkg.RpmdbMetadata
 	Cargo  pkg.CargoPackageMetadata
 	Go     pkg.GolangBinMetadata
+	Php    pkg.PhpComposerJSONMetadata
 }
 
 func main() {
