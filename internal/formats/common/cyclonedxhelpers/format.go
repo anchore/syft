@@ -6,7 +6,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
@@ -25,11 +25,61 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	packages := s.Artifacts.PackageCatalog.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = toComponent(p)
+		components[i] = Component(p)
 	}
+	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
-
 	return cdxBOM
+}
+
+func toOSComponent(distro *linux.Release) []cyclonedx.Component {
+	if distro == nil {
+		return []cyclonedx.Component{}
+	}
+	eRefs := &[]cyclonedx.ExternalReference{}
+	if distro.BugReportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.BugReportURL,
+			Type: cyclonedx.ERTypeIssueTracker,
+		})
+	}
+	if distro.HomeURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.HomeURL,
+			Type: cyclonedx.ERTypeWebsite,
+		})
+	}
+	if distro.SupportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.SupportURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "support",
+		})
+	}
+	if distro.PrivacyPolicyURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.PrivacyPolicyURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "privacyPolicy",
+		})
+	}
+	if len(*eRefs) == 0 {
+		eRefs = nil
+	}
+	props := getCycloneDXProperties(*distro)
+	if len(*props) == 0 {
+		props = nil
+	}
+	return []cyclonedx.Component{
+		{
+			Type:               cyclonedx.ComponentTypeOS,
+			Name:               distro.Name,
+			Version:            distro.Version,
+			CPE:                distro.CPEName,
+			ExternalReferences: eRefs,
+			Properties:         props,
+		},
+	}
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
@@ -44,16 +94,6 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 			},
 		},
 		Component: toBomDescriptorComponent(srcMetadata),
-	}
-}
-
-func toComponent(p pkg.Package) cyclonedx.Component {
-	return cyclonedx.Component{
-		Type:       cyclonedx.ComponentTypeLibrary,
-		Name:       p.Name,
-		Version:    p.Version,
-		PackageURL: p.PURL,
-		Licenses:   toLicenses(p.Licenses),
 	}
 }
 
@@ -73,21 +113,4 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 	}
 
 	return nil
-}
-
-func toLicenses(ls []string) *cyclonedx.Licenses {
-	if len(ls) == 0 {
-		return nil
-	}
-
-	lc := make(cyclonedx.Licenses, len(ls))
-	for i, licenseName := range ls {
-		lc[i] = cyclonedx.LicenseChoice{
-			License: &cyclonedx.License{
-				Name: licenseName,
-			},
-		}
-	}
-
-	return &lc
 }
