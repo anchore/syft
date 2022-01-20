@@ -3,9 +3,13 @@ package pkg
 import (
 	"strings"
 
+	"github.com/anchore/syft/syft/linux"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 )
+
+var _ urlIdentifier = (*JavaMetadata)(nil)
 
 var JenkinsPluginPomPropertiesGroupIDs = []string{
 	"io.jenkins.plugins",
@@ -69,7 +73,7 @@ type JavaManifest struct {
 }
 
 // PackageURL returns the PURL for the specific Maven package (see https://github.com/package-url/purl-spec)
-func (m JavaMetadata) PackageURL() string {
+func (m JavaMetadata) PackageURL(_ *linux.Release) string {
 	if m.PomProperties != nil {
 		pURL := packageurl.NewPackageURL(
 			packageurl.TypeMaven,

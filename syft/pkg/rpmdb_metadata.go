@@ -15,17 +15,20 @@ import (
 
 const RpmDBGlob = "**/var/lib/rpm/Packages"
 
-var _ FileOwner = (*RpmdbMetadata)(nil)
+var (
+	_ FileOwner     = (*RpmdbMetadata)(nil)
+	_ urlIdentifier = (*RpmdbMetadata)(nil)
+)
 
 // RpmdbMetadata represents all captured data for a RPM DB package entry.
 type RpmdbMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
-	Epoch     *int              `json:"epoch"`
+	Epoch     *int              `json:"epoch"  cyclonedx:"epoch"`
 	Arch      string            `json:"architecture"`
-	Release   string            `json:"release"`
-	SourceRpm string            `json:"sourceRpm"`
-	Size      int               `json:"size"`
+	Release   string            `json:"release" cyclonedx:"release"`
+	SourceRpm string            `json:"sourceRpm" cyclonedx:"sourceRpm"`
+	Size      int               `json:"size" cyclonedx:"size"`
 	License   string            `json:"license"`
 	Vendor    string            `json:"vendor"`
 	Files     []RpmdbFileRecord `json:"files"`
@@ -47,36 +50,32 @@ type RpmdbFileMode uint16
 
 // PackageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
 func (m RpmdbMetadata) PackageURL(distro *linux.Release) string {
-	if distro == nil {
-		return ""
+	var namespace string
+	if distro != nil {
+		namespace = distro.ID
 	}
 
-	qualifiers := packageurl.Qualifiers{
-		{
-			Key:   "arch",
-			Value: m.Arch,
-		},
+	qualifiers := map[string]string{
+		purlArchQualifier: m.Arch,
 	}
 
 	if m.Epoch != nil {
-		qualifiers = append(qualifiers,
-			packageurl.Qualifier{
-				Key:   "epoch",
-				Value: strconv.Itoa(*m.Epoch),
-			},
-		)
+		qualifiers[purlEpochQualifier] = strconv.Itoa(*m.Epoch)
 	}
 
-	pURL := packageurl.NewPackageURL(
+	return packageurl.NewPackageURL(
 		packageurl.TypeRPM,
-		distro.ID,
+		namespace,
 		m.Name,
 		// for purl the epoch is a qualifier, not part of the version
 		// see https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst under the RPM section
 		fmt.Sprintf("%s-%s", m.Version, m.Release),
-		qualifiers,
-		"")
-	return pURL.ToString()
+		purlQualifiers(
+			qualifiers,
+			distro,
+		),
+		"",
+	).ToString()
 }
 
 func (m RpmdbMetadata) OwnedFiles() (result []string) {
