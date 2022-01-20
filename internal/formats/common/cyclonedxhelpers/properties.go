@@ -28,17 +28,22 @@ func Properties(p pkg.Package) *[]cyclonedx.Property {
 func getCycloneDXProperties(m interface{}) *[]cyclonedx.Property {
 	props := []cyclonedx.Property{}
 	structValue := reflect.ValueOf(m)
-	// we can only handle top level structs as interfaces for now
 	if structValue.Kind() != reflect.Struct {
 		return &props
 	}
 	structType := structValue.Type()
 	for i := 0; i < structValue.NumField(); i++ {
 		if name, value := getCycloneDXPropertyName(structType.Field(i)), getCycloneDXPropertyValue(structValue.Field(i)); name != "" && value != "" {
-			props = append(props, cyclonedx.Property{
-				Name:  name,
-				Value: value,
-			})
+			// n the case of the value is a struct and has cyclonedx tag with name "-"
+			//
+			if name == "-" && reflect.ValueOf(value).Kind() == reflect.Struct {
+				props = append(props, *getCycloneDXProperties(value)...)
+			} else {
+				props = append(props, cyclonedx.Property{
+					Name:  name,
+					Value: fmt.Sprintf("%s", value),
+				})
+			}
 		}
 	}
 	return &props
@@ -51,7 +56,7 @@ func getCycloneDXPropertyName(field reflect.StructField) string {
 	return ""
 }
 
-func getCycloneDXPropertyValue(field reflect.Value) string {
+func getCycloneDXPropertyValue(field reflect.Value) interface{} {
 	if field.IsZero() {
 		return ""
 	}
@@ -63,6 +68,8 @@ func getCycloneDXPropertyValue(field reflect.Value) string {
 		return ""
 	case reflect.Ptr:
 		return getCycloneDXPropertyValue(reflect.Indirect(field))
+	case reflect.Struct:
+		return field.Interface()
 	}
 	return ""
 }
