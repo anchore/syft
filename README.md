@@ -423,8 +423,8 @@ tool to generate an attestation that is attached to a signed image.
 
 #### Example attest
 
-Note for the following example replace `test/image:latest` with an image you own with push access. Replace
-$MY_PRIVATE_KEY with a private key you own or have generated with cosign.
+Note for the following example replace `test/image:latest` with an image you own. You should also have push access to 
+its remote reference. Replace $MY_PRIVATE_KEY with a private key you own or have generated with cosign.
 
 ```bash
 cosign sign -key $MY_PRIVATE_KEY test/image:latest
@@ -432,7 +432,7 @@ syft test/image:latest -o json > test_latest_sbom.json
 cosign attest -predicate test_latest_sbom.json -key $MY_PRIVATE_KEY
 ```
 
-Verify the new attestation
+Verify the new attestation exists on your image
 ```bash
 cosign verify-attestation -key $MY_PUBLIC_KEY test/image:latest | jq '.payload |= @base64d | .payload | fromjson | .predicate.Data | fromjson | .'
 ```
@@ -445,3 +445,5 @@ The following checks were performed on each of these signatures:
   - The signatures were verified against the specified public key
   - Any certificates were verified against the Fulcio roots.
 ```
+
+Consumers of your image can now trust that the SBOM attached to your image is correct and from a trusted source.
