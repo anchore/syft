@@ -34,8 +34,8 @@ func getCycloneDXProperties(m interface{}) *[]cyclonedx.Property {
 	structType := structValue.Type()
 	for i := 0; i < structValue.NumField(); i++ {
 		if name, value := getCycloneDXPropertyName(structType.Field(i)), getCycloneDXPropertyValue(structValue.Field(i)); name != "" && value != "" {
-			// n the case of the value is a struct and has cyclonedx tag with name "-"
-			//
+			// In the case of the value is a struct and has cyclonedx tag with name "-"
+			// call the getCycloneDXProperties recursively.
 			if name == "-" && reflect.ValueOf(value).Kind() == reflect.Struct {
 				props = append(props, *getCycloneDXProperties(value)...)
 			} else {
