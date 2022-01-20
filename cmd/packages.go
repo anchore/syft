@@ -88,7 +88,6 @@ func init() {
 
 func setPackageFlags(flags *pflag.FlagSet) {
 	// Formatting & Input options //////////////////////////////////////////////
-
 	flags.StringP(
 		"scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
