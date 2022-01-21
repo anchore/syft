@@ -38,10 +38,10 @@ func getCycloneDXProperties(m interface{}) *[]cyclonedx.Property {
 			// call the getCycloneDXProperties recursively.
 			if name == "-" && reflect.ValueOf(value).Kind() == reflect.Struct {
 				props = append(props, *getCycloneDXProperties(value)...)
-			} else {
+			} else if reflect.ValueOf(value).Kind() == reflect.String {
 				props = append(props, cyclonedx.Property{
 					Name:  name,
-					Value: fmt.Sprintf("%s", value),
+					Value: fmt.Sprint(value),
 				})
 			}
 		}
@@ -66,10 +66,13 @@ func getCycloneDXPropertyValue(field reflect.Value) interface{} {
 			return fmt.Sprint(field.Interface())
 		}
 		return ""
+	case reflect.Struct:
+		if field.CanInterface() {
+			return field.Interface()
+		}
+		return ""
 	case reflect.Ptr:
 		return getCycloneDXPropertyValue(reflect.Indirect(field))
-	case reflect.Struct:
-		return field.Interface()
 	}
 	return ""
 }
