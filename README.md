@@ -269,7 +269,7 @@ package:
   # note: for now this only applies to the java package cataloger
   # SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES env var
   search-unindexed-archives: false
-   
+
   cataloger:
     # enable/disable cataloging of packages
     # SYFT_PACKAGE_CATALOGER_ENABLED env var
@@ -366,9 +366,9 @@ registry:
 
   # credentials for specific registries
   auth:
-    - # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
+      # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
       # SYFT_REGISTRY_AUTH_AUTHORITY env var
-      authority: ""
+    - authority: ""
       # SYFT_REGISTRY_AUTH_USERNAME env var
       username: ""
       # SYFT_REGISTRY_AUTH_PASSWORD env var
@@ -376,7 +376,7 @@ registry:
       # note: token and username/password are mutually exclusive
       # SYFT_REGISTRY_AUTH_TOKEN env var
       token: ""
-    - ... # note, more credentials can be provided via config file only
+      # - ... # note, more credentials can be provided via config file only
 
 log:
   # use structured logging
@@ -412,5 +412,4 @@ anchore:
   # (feature-preview) path to dockerfile to be uploaded with the syft results to Anchore Enterprise (supported on Enterprise 3.0+)
   # same as -d ; SYFT_ANCHORE_DOCKERFILE env var
   dockerfile: ""
-
 ```
