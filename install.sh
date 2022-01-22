@@ -471,7 +471,6 @@ get_format_name() (
   log_trace "get_format_name(os=${os}, arch=${arch}, format=${format})"
 
   case ${os} in
-    darwin) format=dmg ;;
     windows) format=zip ;;
   esac
   case "${os}/${arch}" in
@@ -513,10 +512,7 @@ download_asset() (
   asset_filepath="${destination}/${asset_filename}"
   http_download "${asset_filepath}" "${asset_url}"
 
-  # macOS has its own secure verification mechanism, and checksums.txt is not used.
-  if [ "$os" != "darwin" ]; then
-    hash_sha256_verify "${asset_filepath}" "${checksums_filepath}"
-  fi
+  hash_sha256_verify "${asset_filepath}" "${checksums_filepath}"
 
   log_trace "download_asset() returned '${asset_filepath}'"
 
@@ -566,11 +562,18 @@ main() (
   # parse arguments
 
   install_dir=${install_dir:-./bin}
-  while getopts "b:dth?x" arg; do
+  while getopts "b:dh?x" arg; do
     case "$arg" in
       b) install_dir="$OPTARG" ;;
-      d) log_set_priority $log_debug_priority ;;
-      t) log_set_priority 10 ;;
+      d)
+        if [ "$_logp" = "$log_info_priority" ]; then
+          # -d == debug
+          log_set_priority $log_debug_priority
+        else
+          # -dd (or -ddd...) == trace
+          log_set_priority $log_trace_priority
+        fi
+        ;;
       h | \?) usage "$0" ;;
       x) set -x ;;
     esac
