@@ -21,6 +21,8 @@ test_helper_positive_install_asset() {
 
   download_and_install_asset "${github_download}" "${download_dir}" "${install_dir}" "${name}" "${os}" "${arch}" "${version}" "${format}" "${binary}"
 
+  assertEquals "0" "$?" "download/install did not succeed"
+
   expected_path="${install_dir}/${binary}"
   assertFileExists "${expected_path}" "install_asset os=${os} arch=${arch} format=${format}"
 

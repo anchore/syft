@@ -355,9 +355,7 @@ search_for_asset() (
   log_trace "search_for_asset(checksum-path=${checksum_path}, name=${name}, os=${os}, arch=${arch}, format=${format})"
 
   asset_glob="${name}_.*_${os}_${arch}.${format}"
-  set +e
-  output_path=$(grep -o "${asset_glob}" "${checksum_path}")
-  set -e
+  output_path=$(grep -o "${asset_glob}" "${checksum_path}" || true)
 
   log_trace "search_for_asset() returned '${output_path}'"
 
@@ -499,12 +497,13 @@ download_asset() (
   log_trace "download_asset(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
 
   checksums_filepath=$(download_github_release_checksums "${download_url}" "${name}" "${version}" "${destination}")
+
+  log_trace "checksums content:\n$(cat ${checksums_filepath})"
+
   asset_filename=$(search_for_asset "${checksums_filepath}" "${name}" "${os}" "${arch}" "${format}")
 
   # don't continue if we couldn't find a matching asset from the checksums file
   if [ -z "${asset_filename}" ]; then
-      log_err "could not find release asset for os='${os}' arch='${arch}' format='${format}' "
-      log_trace "checksums content:\n$(cat ${checksums_filepath})"
       return 1
   fi
 
@@ -555,6 +554,13 @@ download_and_install_asset() (
     binary="$9"
 
     asset_filepath=$(download_asset "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
+
+    # don't continue if we couldn't download an asset
+    if [ -z "${asset_filepath}" ]; then
+        log_err "could not find release asset for os='${os}' arch='${arch}' format='${format}' "
+        return 1
+    fi
+
     install_asset "${asset_filepath}" "${install_path}" "${binary}"
 )
 
