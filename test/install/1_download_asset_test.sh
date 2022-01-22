@@ -11,15 +11,15 @@ test_helper_positive_download_asset() {
   # for troubleshooting
   # log_set_priority 10
 
-  name=syft
+  name=${PROJECT_NAME}
   github_download=$(snapshot_download_url)
   version=$(snapshot_version)
 
   tmpdir=$(mktemp -d)
 
-  actual_filepath=$(download_asset "${github_download}" "${name}" "${os}" "${arch}" "${version}" "${format}" "${tmpdir}")
+  actual_filepath=$(download_asset "${github_download}" "${tmpdir}" "${name}" "${os}" "${arch}" "${version}" "${format}" )
 
-  assertFilesExists "${actual_filepath}" "download_asset os=${os} arch=${arch} format=${format}"
+  assertFileExists "${actual_filepath}" "download_asset os=${os} arch=${arch} format=${format}"
 
   assertFilesEqual \
     "$(snapshot_dir)/${name}_${version}_${os}_${arch}.${format}" \
@@ -47,13 +47,13 @@ test_helper_negative_download_asset() {
   # for troubleshooting
   # log_set_priority 10
 
-  name=syft
+  name=${PROJECT_NAME}
   github_download=$(snapshot_download_url)
   version=$(snapshot_version)
 
   tmpdir=$(mktemp -d)
 
-  actual_filepath=$(download_asset "${github_download}" "${name}" "${os}" "${arch}" "${version}" "${format}" "${tmpdir}")
+  actual_filepath=$(download_asset "${github_download}" "${tmpdir}" "${name}" "${os}" "${arch}" "${version}" "${format}")
 
   assertEquals ""  "${actual_filepath}" "unable to download os=${os} arch=${arch} format=${format}"
 
@@ -66,24 +66,24 @@ worker_pid=$(setup_snapshot_server)
 trap 'teardown_snapshot_server ${worker_pid}' EXIT
 
 # exercise all possible assets
-test_case test_helper_positive_download_asset "linux" "amd64" "tar.gz"
-test_case test_helper_positive_download_asset "linux" "amd64" "rpm"
-test_case test_helper_positive_download_asset "linux" "amd64" "deb"
-test_case test_helper_positive_download_asset "linux" "arm64" "tar.gz"
-test_case test_helper_positive_download_asset "linux" "arm64" "rpm"
-test_case test_helper_positive_download_asset "linux" "arm64" "deb"
-test_case test_helper_positive_download_asset "darwin" "amd64" "tar.gz"
-test_case test_helper_positive_download_asset "darwin" "amd64" "zip"
-test_case test_helper_positive_download_asset "darwin" "arm64" "tar.gz"
-test_case test_helper_positive_download_asset "darwin" "arm64" "zip"
-test_case test_helper_positive_download_asset "windows" "amd64" "zip"
+run_test_case test_helper_positive_download_asset "linux" "amd64" "tar.gz"
+run_test_case test_helper_positive_download_asset "linux" "amd64" "rpm"
+run_test_case test_helper_positive_download_asset "linux" "amd64" "deb"
+run_test_case test_helper_positive_download_asset "linux" "arm64" "tar.gz"
+run_test_case test_helper_positive_download_asset "linux" "arm64" "rpm"
+run_test_case test_helper_positive_download_asset "linux" "arm64" "deb"
+run_test_case test_helper_positive_download_asset "darwin" "amd64" "tar.gz"
+run_test_case test_helper_positive_download_asset "darwin" "amd64" "zip"
+run_test_case test_helper_positive_download_asset "darwin" "arm64" "tar.gz"
+run_test_case test_helper_positive_download_asset "darwin" "arm64" "zip"
+run_test_case test_helper_positive_download_asset "windows" "amd64" "zip"
 # note: the mac signing process produces a dmg which is not part of the snapshot process (thus is not exercised here)
 
 # let's make certain we covered all assets that were expected
-test_case test_download_asset_exercised_all_assets
+run_test_case test_download_asset_exercised_all_assets
 
 # make certain we handle missing assets alright
-test_case test_helper_negative_download_asset "bogus" "amd64" "zip"
+run_test_case test_helper_negative_download_asset "bogus" "amd64" "zip"
 
 trap - EXIT
 teardown_snapshot_server "${worker_pid}"

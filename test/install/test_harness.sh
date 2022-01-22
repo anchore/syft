@@ -1,3 +1,7 @@
+# disable using the install.sh entrypoint such that we can unit test
+# script functions without invoking main()
+TEST_INSTALL_SH=true
+
 . ../../install.sh
 set -u
 
@@ -34,11 +38,11 @@ assertFilesDoesNotExist() {
   fi
 }
 
-assertFilesExists() {
+assertFileExists() {
   path="$1"
   msg=$2
   if [ ! -f "${path}" ]; then
-    echo "assertFilesExists failed: path does not exists '$path': $msg"
+    echo "assertFileExists failed: path does not exist '$path': $msg"
     exit 2
   fi
 }
@@ -70,7 +74,7 @@ log_test_case() {
   echo "  running $@"
 }
 
-test_case_with_snapshot_release() {
+run_test_case_with_snapshot_release() {
   log_test_case ${@:1}
 
   worker_pid=$(setup_snapshot_server)
@@ -138,7 +142,23 @@ snapshot_assets_count() {
   echo "$(find ../../snapshot  -type f -maxdepth 1 | grep 'syft_' | grep -v checksums | wc -l | tr -d '[:space:]')"
 }
 
-test_case() {
+
+snapshot_assets_archive_count() {
+  # example output before wc -l:
+
+  #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_linux_arm64.tar.gz
+  #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_darwin_arm64.tar.gz
+  #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_darwin_amd64.zip
+  #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_windows_amd64.zip
+  #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_darwin_arm64.zip
+  #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_linux_amd64.tar.gz
+  #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_darwin_amd64.tar.gz
+
+  echo "$(find ../../snapshot  -type f -maxdepth 1 | grep 'syft_' | grep 'tar\|zip' | wc -l | tr -d '[:space:]')"
+}
+
+
+run_test_case() {
   log_test_case ${@:1}
   ${@:1}
 }

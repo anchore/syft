@@ -3,10 +3,8 @@ set -eu
 
 PROJECT_NAME="syft"
 OWNER=anchore
-REPO="syft"
-BINARY=syft
-FORMAT=tar.gz
-GITHUB_DOWNLOAD=https://github.com/${OWNER}/${REPO}/releases/download
+REPO="${PROJECT_NAME}"
+GITHUB_DOWNLOAD_PREFIX=https://github.com/${OWNER}/${REPO}/releases/download
 
 #
 # usage [script-name]
@@ -56,44 +54,56 @@ log_priority() (
   [ "$1" -le "$_logp" ]
 )
 
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+BOLD=$(tput bold)
+RESET='\033[0m'
+
 log_tag() (
   case $1 in
-    0) echo "error" ;;
-    1) echo "warn" ;;
-    2) echo "info" ;;
-    3) echo "debug" ;;
-    4) echo "trace" ;;
-    *) echo "$1" ;;
+    0) echo "${RED}${BOLD}[error]${RESET}" ;;
+    1) echo "${RED}[warn]${RESET}" ;;
+    2) echo "[info]${RESET}" ;;
+    3) echo "${BLUE}[debug]${RESET}" ;;
+    4) echo "${PURPLE}[trace]${RESET}" ;;
+    *) echo "[$1]" ;;
   esac
 )
 
+log_entry() (
+  priority=$1
+  log_priority "$priority" || return 0
+  echo_stderr "$(log_tag $priority)" "${@:2}" "${RESET}"
+)
+
+log_trace_priority=4
 log_trace() (
-  log_priority 4 || return 0
-  echo_stderr "$(log_tag 4)" "$@"
+  log_entry $log_trace_priority "$@"
 )
 
+log_debug_priority=3
 log_debug() (
-  log_priority 3 || return 0
-  echo_stderr "$(log_tag 3)" "$@"
+  log_entry $log_debug_priority "$@"
 )
 
+log_info_priority=2
 log_info() (
-  log_priority 2 || return 0
-  echo_stderr "$(log_tag 2)" "$@"
+  log_entry $log_info_priority "$@"
 )
 
+log_warn_priority=1
 log_warn() (
-  log_priority 1 || return 0
-  echo_stderr "$(log_tag 1)" "$@"
+  log_entry $log_warn_priority "$@"
 )
 
+log_err_priority=0
 log_err() (
-  log_priority 0 || return 0
-  echo_stderr "$(log_tag 0)" "$@"
+  log_entry $log_err_priority "$@"
 )
 
 uname_os_check() (
-  os=$(uname_os)
+  os=$1
   case "$os" in
     darwin) return 0 ;;
     dragonfly) return 0 ;;
@@ -112,7 +122,7 @@ uname_os_check() (
 )
 
 uname_arch_check() (
-  arch=$(uname_arch)
+  arch=$1
   case "$arch" in
     386) return 0 ;;
     amd64) return 0 ;;
@@ -138,10 +148,10 @@ unpack() (
   case "${archive}" in
     *.tar.gz | *.tgz) tar --no-same-owner -xzf "${archive}" ;;
     *.tar) tar --no-same-owner -xf "${archive}" ;;
-    *.zip) unzip "${archive}" ;;
+    *.zip) unzip -q "${archive}" ;;
     *.dmg) extract_from_dmg "${archive}" ;;
     *)
-      log_warn "unpack unknown archive format for ${archive}"
+      log_err "unpack unknown archive format for ${archive}"
       return 1
       ;;
   esac
@@ -167,7 +177,7 @@ http_download_curl() (
   fi
   set -u
   if [ "$code" != "200" ]; then
-    log_debug "http_download_curl received HTTP status $code"
+    log_err "received HTTP status=$code for url='$source_url'"
     return 1
   fi
   return 0
@@ -229,18 +239,18 @@ hash_sha256_verify() (
   TARGET=$1
   checksums=$2
   if [ -z "$checksums" ]; then
-    log_warn "hash_sha256_verify checksum file not specified in arg2"
+    log_err "hash_sha256_verify checksum file not specified in arg2"
     return 1
   fi
   BASENAME=${TARGET##*/}
   want=$(grep "${BASENAME}" "${checksums}" 2>/dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
   if [ -z "$want" ]; then
-    log_warn "hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
+    log_err "hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
     return 1
   fi
   got=$(hash_sha256 "$TARGET")
   if [ "$want" != "$got" ]; then
-    log_warn "hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
+    log_err "hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
     return 1
   fi
 )
@@ -257,7 +267,6 @@ asset_file_exists() (
 )
 
 
-#
 # github_release_json [owner] [repo] [version]
 #
 # outputs release json string
@@ -273,7 +282,6 @@ github_release_json() (
   echo "${json}"
 )
 
-#
 # extract_value [key-value-pair]
 #
 # outputs value from a colon delimited key-value pair
@@ -286,7 +294,6 @@ EOF
   echo "$value"
 )
 
-#
 # extract_json_value [json] [key]
 #
 # outputs value of the key from the given json string
@@ -299,7 +306,6 @@ extract_json_value() (
   extract_value "$key_value"
 )
 
-#
 # github_release_tag [release-json]
 #
 # outputs release tag string
@@ -311,7 +317,6 @@ github_release_tag() (
   echo "$tag"
 )
 
-#
 # download_github_release_checksums [release-url-prefix] [name] [version] [output-dir]
 #
 # outputs path to the downloaded checksums file
@@ -322,6 +327,8 @@ download_github_release_checksums() (
   version="$3"
   output_dir="$4"
 
+  log_trace "download_github_release_checksums(url=${download_url}, name=${name}, version=${version}, output_dir=${output_dir})"
+
   checksum_filename=${name}_${version}_checksums.txt
   checksum_url=${download_url}/${checksum_filename}
   output_path="${output_dir}/${checksum_filename}"
@@ -329,10 +336,11 @@ download_github_release_checksums() (
   http_download "${output_path}" "${checksum_url}"
   asset_file_exists "${output_path}"
 
+  log_trace "download_github_release_checksums() returned '${output_path}'"
+
   echo "${output_path}"
 )
 
-#
 # search_for_asset [checksums-file-path] [name] [os] [arch] [format]
 #
 # outputs name of the asset to download
@@ -347,7 +355,9 @@ search_for_asset() (
   log_trace "search_for_asset(checksum-path=${checksum_path}, name=${name}, os=${os}, arch=${arch}, format=${format})"
 
   asset_glob="${name}_.*_${os}_${arch}.${format}"
+  set +e
   output_path=$(grep -o "${asset_glob}" "${checksum_path}")
+  set -e
 
   log_trace "search_for_asset() returned '${output_path}'"
 
@@ -356,17 +366,25 @@ search_for_asset() (
 
 
 uname_os() (
+  log_trace "uname_os()"
+
   os=$(uname -s | tr '[:upper:]' '[:lower:]')
   case "$os" in
     cygwin_nt*) os="windows" ;;
     mingw*) os="windows" ;;
     msys_nt*) os="windows" ;;
   esac
+
   uname_os_check "$os"
+
+  log_trace "uname_os() returned '${os}'"
+
   echo "$os"
 )
 
 uname_arch() (
+  log_trace "uname_arch()"
+
   arch=$(uname -m)
   case $arch in
     x86_64) arch="amd64" ;;
@@ -378,11 +396,14 @@ uname_arch() (
     armv6*) arch="armv6" ;;
     armv7*) arch="armv7" ;;
   esac
+
   uname_arch_check "${arch}"
+
+  log_trace "uname_arch() returned '${arch}'"
+
   echo "${arch}"
 )
 
-#
 # get_release_tag [owner] [repo] [tag]
 #
 # outputs tag string
@@ -394,28 +415,31 @@ get_release_tag() (
 
   log_trace "get_release_tag(owner=${owner}, repo=${repo}, tag=${tag})"
 
-  real_tag=$(github_release "${owner}/${repo}" "${tag}") && true
+  json=$(github_release_json "${owner}" "${repo}" "${tag}")
+  real_tag=$(github_release_tag "${json}")
   if test -z "${real_tag}"; then
     log_err "unable to find '${tag}' - use 'latest' or see https://github.com/${owner}/${repo}/releases for details"
     exit 1
   fi
+
+  log_trace "get_release_tag() returned '${real_tag}'"
+
   echo "${real_tag}"
 )
 
-#
 # tag_to_version [tag]
 #
 # outputs version string
 #
 tag_to_version() (
   tag="$1"
+  value="${tag#v}"
 
-  log_trace "tag_to_version(tag=${tag})"
+  log_trace "tag_to_version(tag=${tag}) returned '${value}'"
 
-  echo "${tag#v}"
+  echo "$value"
 )
 
-#
 # get_binary_name [os] [arch] [default-name]
 #
 # outputs a the binary string name
@@ -430,11 +454,13 @@ get_binary_name() (
   case "${os}" in
     windows) binary="${binary}.exe" ;;
   esac
+
+  log_trace "get_binary_name() returned '${binary}'"
+
   echo "${binary}"
 )
 
 
-#
 # get_format_name [os] [arch] [default-format]
 #
 get_format_name() (
@@ -451,32 +477,36 @@ get_format_name() (
   case "${os}/${arch}" in
     darwin/arm64) format=zip ;;
   esac
+
+  log_trace "get_format_name() returned '${format}'"
+
   echo "${format}"
 )
 
 
-#
 # download_release [release-url-prefix] [name] [os] [arch] [version] [format]
 #
 # output the filepath to the verified raw asset
 #
 download_asset() (
   download_url="$1"
-  name="$2"
-  os="$3"
-  arch="$4"
-  version="$5"
-  format="$6"
-  destination="$7"
+  destination="$2"
+  name="$3"
+  os="$4"
+  arch="$5"
+  version="$6"
+  format="$7"
 
-  log_trace "download_asset(url=${download_url}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format}, destination=${destination})"
+  log_trace "download_asset(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
 
   checksums_filepath=$(download_github_release_checksums "${download_url}" "${name}" "${version}" "${destination}")
   asset_filename=$(search_for_asset "${checksums_filepath}" "${name}" "${os}" "${arch}" "${format}")
 
   # don't continue if we couldn't find a matching asset from the checksums file
   if [ -z "${asset_filename}" ]; then
-      return
+      log_err "could not find release asset for os='${os}' arch='${arch}' format='${format}' "
+      log_trace "checksums content:\n$(cat ${checksums_filepath})"
+      return 1
   fi
 
   asset_url="${download_url}/${asset_filename}"
@@ -493,7 +523,6 @@ download_asset() (
   echo "${asset_filepath}"
 )
 
-#
 # install_asset [asset-path] [destination-path] [binary]
 #
 install_asset() (
@@ -518,46 +547,73 @@ install_asset() (
   install "${archive_dir}/${binary}" "${destination}/"
 )
 
+download_and_install_asset() (
+    download_url="$1"
+    download_path="$2"
+    install_path="$3"
+    name="$4"
+    os="$5"
+    arch="$6"
+    version="$7"
+    format="$8"
+    binary="$9"
 
+    asset_filepath=$(download_asset "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
+    install_asset "${asset_filepath}" "${install_path}" "${binary}"
+)
 
 main() (
   # parse arguments
 
-  bin_dir=${bin_dir:-./bin}
-  while getopts "b:dh?x" arg; do
+  install_dir=${install_dir:-./bin}
+  while getopts "b:dth?x" arg; do
     case "$arg" in
-      b) bin_dir="$OPTARG" ;;
-      d) log_set_priority 10 ;;
+      b) install_dir="$OPTARG" ;;
+      d) log_set_priority $log_debug_priority ;;
+      t) log_set_priority 10 ;;
       h | \?) usage "$0" ;;
       x) set -x ;;
     esac
   done
   shift $((OPTIND - 1))
+  set +u
   tag=$1
 
   if [ -z "${tag}" ]; then
-    log_info "checking GitHub for latest tag"
+    log_info "checking github for the current release tag"
+    tag=""
   else
-    log_info "checking GitHub for tag '${tag}'"
+    log_info "checking github for release tag='${tag}'"
   fi
+  set -u
 
-  tmpdir=$(mktemp -d)
-  trap 'rm -rf -- "$tmpdir"' EXIT
+  tag=$(get_release_tag "${OWNER}" "${REPO}" "${tag}")
+  version=$(tag_to_version "${tag}")
+
+  download_dir=$(mktemp -d)
+  trap 'rm -rf -- "$download_dir"' EXIT
 
   # run the application
 
   os=$(uname_os)
   arch=$(uname_arch)
-  binary=$(get_binary_name "${os}" "${arch}" "${BINARY}")
-  tag=$(get_release_tag "${OWNER}" "${REPO}" "${tag}")
-  version=$(tag_to_version "${tag}")
-  format=$(get_format_name "${os}" "${arch}" "${FORMAT}")
+  format=$(get_format_name "${os}" "${arch}" "tar.gz")
+  binary=$(get_binary_name "${os}" "${arch}" "${PROJECT_NAME}")
+  download_url="${GITHUB_DOWNLOAD_PREFIX}/${tag}"
 
-  log_info "found version: ${version} for ${tag}/${os}/${arch}"
-  log_debug "downloading files into ${tmpdir}"
+  log_info "using release tag='${tag}' version='${version}' os='${os}' arch='${arch}'"
+  log_debug "downloading files into ${download_dir}"
 
-  asset_filepath=$(download_asset "${GITHUB_DOWNLOAD}" "${PROJECT_NAME}" "${os}" "${arch}" "${version}" "${tmpdir}")
-  install_asset "${asset_filepath}" "${bin_dir}" "${binary}"
+  download_and_install_asset "${download_url}" "${download_dir}" "${install_dir}" "${PROJECT_NAME}" "${os}" "${arch}" "${version}" "${format}" "${binary}"
 
-  log_info "installed ${bin_dir}/${binary}"
+  log_info "installed ${install_dir}/${binary}"
 )
+
+# entrypoint
+
+set +u
+if [ -z "${TEST_INSTALL_SH}" ]; then
+  set -u
+  main "$@"
+fi
+set -u

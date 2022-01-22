@@ -19,7 +19,7 @@ test_search_for_asset_release() {
 
 }
 
-test_case test_search_for_asset_release
+run_test_case test_search_for_asset_release
 
 
 # search for an asset in a snapshot checksums file
@@ -37,4 +37,4 @@ test_search_for_asset_snapshot() {
   assertEquals "" "${actual}" "found a snapshot asset but did not expect to (format)"
 }
 
-test_case test_search_for_asset_snapshot
+run_test_case test_search_for_asset_snapshot
