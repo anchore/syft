@@ -53,12 +53,9 @@ test_helper_negative_download_asset() {
 
   tmpdir=$(mktemp -d)
 
-  # since we're expecting an error, lets not exit on errors
-  set +e
   actual_filepath=$(download_asset "${github_download}" "${tmpdir}" "${name}" "${os}" "${arch}" "${version}" "${format}")
 
   assertNotEquals "0" "$?" "download did not indicate a failure"
-  set -e
 
   assertEquals ""  "${actual_filepath}" "unable to download os=${os} arch=${arch} format=${format}"
 

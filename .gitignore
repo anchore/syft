@@ -18,6 +18,7 @@ CHANGELOG.md
 .images
 .tmp/
 coverage.txt
+bin/
 
 # Binaries for programs and plugins
 *.exe

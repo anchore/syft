@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -u
 
 PROJECT_NAME="syft"
 OWNER=anchore
@@ -469,6 +469,10 @@ get_format_name() (
   log_trace "get_format_name(os=${os}, arch=${arch}, format=${format})"
 
   case ${os} in
+    # why override darwin to DMG? two reasons:
+    # 1. the tar.gz does not contain a signed binary
+    # 2. the zip is removed from the checksums file (since the signing process changes the content)
+    darwin) format=dmg ;;
     windows) format=zip ;;
   esac
   case "${os}/${arch}" in
@@ -614,6 +618,12 @@ main() (
   log_debug "downloading files into ${download_dir}"
 
   download_and_install_asset "${download_url}" "${download_dir}" "${install_dir}" "${PROJECT_NAME}" "${os}" "${arch}" "${version}" "${format}" "${binary}"
+
+  # don't continue if we couldn't install the asset
+  if [ "$?" != "0" ]; then
+      log_err "failed to install ${PROJECT_NAME}"
+      return 1
+  fi
 
   log_info "installed ${install_dir}/${binary}"
 )
