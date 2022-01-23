@@ -276,8 +276,11 @@ jobs:
           name: artifacts
           path: snapshot
 
-      - name: Run Acceptance Tests (Linux)
-        run: make acceptance-linux
+      - name: Run comparison tests (Linux)
+        run: make compare-linux
+
+      - name: Run install.sh tests (Linux)
+        run: make install-test
 
   Acceptance-Mac:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
@@ -292,15 +295,18 @@ jobs:
           name: artifacts
           path: snapshot
 
-      - name: Restore docker image cache
+      - name: Restore docker image cache for compare testing
         id: go-cache
         uses: actions/cache@v2.1.3
         with:
           path: image.tar
-          key: ${{ runner.os }}-${{ hashFiles('test/acceptance/mac.sh') }}
+          key: ${{ runner.os }}-${{ hashFiles('test/compare/mac.sh') }}
 
-      - name: Run Acceptance Tests (Mac)
-        run: make acceptance-mac
+      - name: Run comparison tests (Mac)
+        run: make compare-mac
+
+      - name: Run install.sh tests (Mac)
+        run: make install-test-ci-mac
 
   Cli-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
