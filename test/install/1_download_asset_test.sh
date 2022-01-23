@@ -2,8 +2,8 @@
 
 DOWNLOAD_POSITIVE_CASES=0
 
-# helper for asserting download_asset positive cases
-test_helper_positive_download_asset() {
+# helper for asserting download_asset_by_checksums_file positive cases
+test_helper_positive_download_asset_by_checksums_file() {
   os="$1"
   arch="$2"
   format="$3"
@@ -17,9 +17,9 @@ test_helper_positive_download_asset() {
 
   tmpdir=$(mktemp -d)
 
-  actual_filepath=$(download_asset "${github_download}" "${tmpdir}" "${name}" "${os}" "${arch}" "${version}" "${format}" )
+  actual_filepath=$(download_asset_by_checksums_file "${github_download}" "${tmpdir}" "${name}" "${os}" "${arch}" "${version}" "${format}" )
 
-  assertFileExists "${actual_filepath}" "download_asset os=${os} arch=${arch} format=${format}"
+  assertFileExists "${actual_filepath}" "download_asset_by_checksums_file os=${os} arch=${arch} format=${format}"
 
   assertFilesEqual \
     "$(snapshot_dir)/${name}_${version}_${os}_${arch}.${format}" \
@@ -32,14 +32,14 @@ test_helper_positive_download_asset() {
 }
 
 
-test_download_asset_exercised_all_assets() {
+test_download_asset_by_checksums_file_exercised_all_assets() {
   expected=$(snapshot_assets_count)
 
   assertEquals "${expected}" "${DOWNLOAD_POSITIVE_CASES}" "did not download all possible assets (missing an os/arch/format variant?)"
 }
 
-# helper for asserting download_asset negative cases
-test_helper_negative_download_asset() {
+# helper for asserting download_asset_by_checksums_file negative cases
+test_helper_negative_download_asset_by_checksums_file() {
   os="$1"
   arch="$2"
   format="$3"
@@ -53,7 +53,7 @@ test_helper_negative_download_asset() {
 
   tmpdir=$(mktemp -d)
 
-  actual_filepath=$(download_asset "${github_download}" "${tmpdir}" "${name}" "${os}" "${arch}" "${version}" "${format}")
+  actual_filepath=$(download_asset_by_checksums_file "${github_download}" "${tmpdir}" "${name}" "${os}" "${arch}" "${version}" "${format}")
 
   assertNotEquals "0" "$?" "download did not indicate a failure"
 
@@ -67,24 +67,24 @@ worker_pid=$(setup_snapshot_server)
 trap 'teardown_snapshot_server ${worker_pid}' EXIT
 
 # exercise all possible assets
-run_test_case test_helper_positive_download_asset "linux" "amd64" "tar.gz"
-run_test_case test_helper_positive_download_asset "linux" "amd64" "rpm"
-run_test_case test_helper_positive_download_asset "linux" "amd64" "deb"
-run_test_case test_helper_positive_download_asset "linux" "arm64" "tar.gz"
-run_test_case test_helper_positive_download_asset "linux" "arm64" "rpm"
-run_test_case test_helper_positive_download_asset "linux" "arm64" "deb"
-run_test_case test_helper_positive_download_asset "darwin" "amd64" "tar.gz"
-run_test_case test_helper_positive_download_asset "darwin" "amd64" "zip"
-run_test_case test_helper_positive_download_asset "darwin" "arm64" "tar.gz"
-run_test_case test_helper_positive_download_asset "darwin" "arm64" "zip"
-run_test_case test_helper_positive_download_asset "windows" "amd64" "zip"
+run_test_case test_helper_positive_download_asset_by_checksums_file "linux" "amd64" "tar.gz"
+run_test_case test_helper_positive_download_asset_by_checksums_file "linux" "amd64" "rpm"
+run_test_case test_helper_positive_download_asset_by_checksums_file "linux" "amd64" "deb"
+run_test_case test_helper_positive_download_asset_by_checksums_file "linux" "arm64" "tar.gz"
+run_test_case test_helper_positive_download_asset_by_checksums_file "linux" "arm64" "rpm"
+run_test_case test_helper_positive_download_asset_by_checksums_file "linux" "arm64" "deb"
+run_test_case test_helper_positive_download_asset_by_checksums_file "darwin" "amd64" "tar.gz"
+run_test_case test_helper_positive_download_asset_by_checksums_file "darwin" "amd64" "zip"
+run_test_case test_helper_positive_download_asset_by_checksums_file "darwin" "arm64" "tar.gz"
+run_test_case test_helper_positive_download_asset_by_checksums_file "darwin" "arm64" "zip"
+run_test_case test_helper_positive_download_asset_by_checksums_file "windows" "amd64" "zip"
 # note: the mac signing process produces a dmg which is not part of the snapshot process (thus is not exercised here)
 
 # let's make certain we covered all assets that were expected
-run_test_case test_download_asset_exercised_all_assets
+run_test_case test_download_asset_by_checksums_file_exercised_all_assets
 
 # make certain we handle missing assets alright
-run_test_case test_helper_negative_download_asset "bogus" "amd64" "zip"
+run_test_case test_helper_negative_download_asset_by_checksums_file "bogus" "amd64" "zip"
 
 trap - EXIT
 teardown_snapshot_server "${worker_pid}"

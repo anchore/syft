@@ -146,6 +146,9 @@ uname_arch_check() (
 
 unpack() (
   archive=$1
+
+  log_trace "unpack(archive=${archive})"
+
   case "${archive}" in
     *.tar.gz | *.tgz) tar --no-same-owner -xzf "${archive}" ;;
     *.tar) tar --no-same-owner -xf "${archive}" ;;
@@ -160,6 +163,7 @@ unpack() (
 
 extract_from_dmg() (
   dmg_file=$1
+
   mount_point="/Volumes/tmp-dmg"
   hdiutil attach -quiet -nobrowse -mountpoint "${mount_point}" "${dmg_file}"
   cp -fR "${mount_point}/." ./
@@ -260,6 +264,10 @@ hash_sha256_verify() (
 # End of functions from https://github.com/client9/shlib
 # ------------------------------------------------------------------------
 
+# asset_file_exists [path]
+#
+# returns 1 if the given file does not exist
+#
 asset_file_exists() (
   path="$1"
   if [ ! -f "${path}" ]; then
@@ -363,10 +371,11 @@ search_for_asset() (
   echo "${output_path}"
 )
 
-
+# uname_os
+#
+# outputs an adjusted os value
+#
 uname_os() (
-  log_trace "uname_os()"
-
   os=$(uname -s | tr '[:upper:]' '[:lower:]')
   case "$os" in
     cygwin_nt*) os="windows" ;;
@@ -381,9 +390,11 @@ uname_os() (
   echo "$os"
 )
 
+# uname_arch
+#
+# outputs an adjusted architecture value
+#
 uname_arch() (
-  log_trace "uname_arch()"
-
   arch=$(uname -m)
   case $arch in
     x86_64) arch="amd64" ;;
@@ -447,14 +458,13 @@ get_binary_name() (
   os="$1"
   arch="$2"
   binary="$3"
-
-  log_trace "get_binary_name(os=${os}, arch=${arch}, binary=${binary})"
+  original_binary="${binary}"
 
   case "${os}" in
     windows) binary="${binary}.exe" ;;
   esac
 
-  log_trace "get_binary_name() returned '${binary}'"
+  log_trace "get_binary_name(os=${os}, arch=${arch}, binary=${original_binary}) returned '${binary}'"
 
   echo "${binary}"
 )
@@ -462,12 +472,13 @@ get_binary_name() (
 
 # get_format_name [os] [arch] [default-format]
 #
+# outputs an adjusted file format
+#
 get_format_name() (
   os="$1"
   arch="$2"
   format="$3"
-
-  log_trace "get_format_name(os=${os}, arch=${arch}, format=${format})"
+  original_format="${format}"
 
   case ${os} in
     # why override darwin to DMG? two reasons:
@@ -480,17 +491,49 @@ get_format_name() (
     darwin/arm64) format=zip ;;
   esac
 
-  log_trace "get_format_name() returned '${format}'"
+  log_trace "get_format_name(os=${os}, arch=${arch}, format=${original_format}) returned '${format}'"
 
   echo "${format}"
 )
 
+# download_and_install_asset [release-url-prefix] [download-path] [install-path] [name] [os] [arch] [version] [format] [binary]
+#
+# attempts to download the archive and install it to the given path.
+#
+download_and_install_asset() (
+  download_url="$1"
+  download_path="$2"
+  install_path="$3"
+  name="$4"
+  os="$5"
+  arch="$6"
+  version="$7"
+  format="$8"
+  binary="$9"
 
-# download_release [release-url-prefix] [name] [os] [arch] [version] [format]
+  if [ "$format" = "dmg" ]; then
+    asset_filename="${name}_${version}_${os}_${arch}.${format}"
+    asset_url="${download_url}/${asset_filename}"
+    asset_filepath="${download_path}/${asset_filename}"
+    http_download "${asset_filepath}" "${asset_url}"
+  else
+    asset_filepath=$(download_asset_by_checksums_file "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
+  fi
+
+  # don't continue if we couldn't download an asset
+  if [ -z "${asset_filepath}" ]; then
+      log_err "could not find release asset for os='${os}' arch='${arch}' format='${format}' "
+      return 1
+  fi
+
+  install_asset "${asset_filepath}" "${install_path}" "${binary}"
+)
+
+# download_asset_by_checksums_file [release-url-prefix] [name] [os] [arch] [version] [format]
 #
-# output the filepath to the verified raw asset
+# outputs the filepath to the verified raw asset
 #
-download_asset() (
+download_asset_by_checksums_file() (
   download_url="$1"
   destination="$2"
   name="$3"
@@ -499,7 +542,7 @@ download_asset() (
   version="$6"
   format="$7"
 
-  log_trace "download_asset(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
+  log_trace "download_asset_by_checksums_file(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
 
   checksums_filepath=$(download_github_release_checksums "${download_url}" "${name}" "${version}" "${destination}")
 
@@ -518,7 +561,7 @@ download_asset() (
 
   hash_sha256_verify "${asset_filepath}" "${checksums_filepath}"
 
-  log_trace "download_asset() returned '${asset_filepath}'"
+  log_trace "download_asset_by_checksums_file() returned '${asset_filepath}'"
 
   echo "${asset_filepath}"
 )
@@ -529,6 +572,8 @@ install_asset() (
   asset_filepath="$1"
   destination="$2"
   binary="$3"
+
+  log_trace "install_asset(asset=${asset_filepath}, destination=${destination}, binary=${binary})"
 
   # don't continue if we don't have anything to install
   if [ -z "${asset_filepath}" ]; then
@@ -545,28 +590,6 @@ install_asset() (
 
   # install the binary to the destination dir
   install "${archive_dir}/${binary}" "${destination}/"
-)
-
-download_and_install_asset() (
-    download_url="$1"
-    download_path="$2"
-    install_path="$3"
-    name="$4"
-    os="$5"
-    arch="$6"
-    version="$7"
-    format="$8"
-    binary="$9"
-
-    asset_filepath=$(download_asset "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
-
-    # don't continue if we couldn't download an asset
-    if [ -z "${asset_filepath}" ]; then
-        log_err "could not find release asset for os='${os}' arch='${arch}' format='${format}' "
-        return 1
-    fi
-
-    install_asset "${asset_filepath}" "${install_path}" "${binary}"
 )
 
 main() (
