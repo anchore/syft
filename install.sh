@@ -73,6 +73,8 @@ init_colors() {
   fi
 }
 
+init_colors
+
 log_tag() (
   case $1 in
     0) echo "${RED}${BOLD}[error]${RESET}" ;;
@@ -617,7 +619,6 @@ install_asset() (
 )
 
 main() (
-  init_colors
   # parse arguments
 
   install_dir=${install_dir:-./bin}
