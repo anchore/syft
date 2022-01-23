@@ -176,6 +176,14 @@ install-test: $(SNAPSHOTDIR)
 	cd test/install && \
 		make
 
+install-test-cache-save: $(SNAPSHOTDIR)
+	cd test/install && \
+		make save
+
+install-test-cache-load: $(SNAPSHOTDIR)
+	cd test/install && \
+		make load
+
 install-test-ci-mac: $(SNAPSHOTDIR)
 	cd test/install && \
 		make ci-test-mac
