@@ -15,13 +15,11 @@ usage() (
   cat <<EOF
 $this: download go binaries for anchore/syft
 
-Usage: $this [-b] bindir [-d] [tag]
-  -b sets bindir or installation directory, Defaults to ./bin
-  -d turns on debug logging
-   [tag] is a tag from
-
-   https://github.com/anchore/syft/releases
-   If tag is missing, then the latest will be used.
+Usage: $this [-b] dir [-d] [tag]
+  -b  the installation directory (dDefaults to ./bin)
+  -d  turns on debug logging
+  -dd turns on trace logging
+  [tag] the specific release to use (if missing, then the latest will be used)
 EOF
   exit 2
 )
@@ -55,11 +53,25 @@ log_priority() (
   [ "$1" -le "$_logp" ]
 )
 
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-BOLD=$(tput bold)
-RESET='\033[0m'
+init_colors() {
+  RED=''
+  BLUE=''
+  PURPLE=''
+  BOLD=''
+  RESET=''
+  # check if stdout is a terminal
+  if test -t 1 && is_command tput; then
+      # see if it supports colors
+      ncolors=$(tput colors)
+      if test -n "$ncolors" && test $ncolors -ge 8; then
+        RED='\033[0;31m'
+        BLUE='\033[0;34m'
+        PURPLE='\033[0;35m'
+        BOLD='\033[1m'
+        RESET='\033[0m'
+      fi
+  fi
+}
 
 log_tag() (
   case $1 in
@@ -72,35 +84,40 @@ log_tag() (
   esac
 )
 
-log_entry() (
-  priority=$1
-  log_priority "$priority" || return 0
-  echo_stderr "$(log_tag $priority)" "${@:2}" "${RESET}"
-)
 
 log_trace_priority=4
 log_trace() (
-  log_entry $log_trace_priority "$@"
+  priority=$log_trace_priority
+  log_priority "$priority" || return 0
+  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
 )
 
 log_debug_priority=3
 log_debug() (
-  log_entry $log_debug_priority "$@"
+  priority=$log_debug_priority
+  log_priority "$priority" || return 0
+  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
 )
 
 log_info_priority=2
 log_info() (
-  log_entry $log_info_priority "$@"
+  priority=$log_info_priority
+  log_priority "$priority" || return 0
+  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
 )
 
 log_warn_priority=1
 log_warn() (
-  log_entry $log_warn_priority "$@"
+  priority=$log_warn_priority
+  log_priority "$priority" || return 0
+  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
 )
 
 log_err_priority=0
 log_err() (
-  log_entry $log_err_priority "$@"
+  priority=$log_err_priority
+  log_priority "$priority" || return 0
+  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
 )
 
 uname_os_check() (
@@ -173,14 +190,16 @@ extract_from_dmg() (
 http_download_curl() (
   local_file=$1
   source_url=$2
-  set +u
   header=$3
+
+  log_trace "http_download_curl(local_file=$local_file, source_url=$source_url, header=$header)"
+
   if [ -z "$header" ]; then
     code=$(curl -w '%{http_code}' -sL -o "$local_file" "$source_url")
   else
     code=$(curl -w '%{http_code}' -sL -H "$header" -o "$local_file" "$source_url")
   fi
-  set -u
+
   if [ "$code" != "200" ]; then
     log_err "received HTTP status=$code for url='$source_url'"
     return 1
@@ -192,6 +211,9 @@ http_download_wget() (
   local_file=$1
   source_url=$2
   header=$3
+
+  log_trace "http_download_wget(local_file=$local_file, source_url=$source_url, header=$header)"
+
   if [ -z "$header" ]; then
     wget -q -O "$local_file" "$source_url"
   else
@@ -200,7 +222,7 @@ http_download_wget() (
 )
 
 http_download() (
-  log_debug "http_download $2"
+  log_debug "http_download(url=$2)"
   if is_command curl; then
     http_download_curl "$@"
     return
@@ -287,6 +309,9 @@ github_release_json() (
   test -z "$version" && version="latest"
   giturl="https://github.com/${owner}/${repo}/releases/${version}"
   json=$(http_copy "$giturl" "Accept:application/json")
+
+  log_trace "github_release_json(owner=${owner}, repo=${repo}, version=${version}) returned '${json}'"
+
   test -z "$json" && return 1
   echo "${json}"
 )
@@ -342,7 +367,7 @@ download_github_release_checksums() (
   checksum_url=${download_url}/${checksum_filename}
   output_path="${output_dir}/${checksum_filename}"
 
-  http_download "${output_path}" "${checksum_url}"
+  http_download "${output_path}" "${checksum_url}" ""
   asset_file_exists "${output_path}"
 
   log_trace "download_github_release_checksums() returned '${output_path}'"
@@ -428,8 +453,7 @@ get_release_tag() (
   json=$(github_release_json "${owner}" "${repo}" "${tag}")
   real_tag=$(github_release_tag "${json}")
   if test -z "${real_tag}"; then
-    log_err "unable to find '${tag}' - use 'latest' or see https://github.com/${owner}/${repo}/releases for details"
-    exit 1
+    return 1
   fi
 
   log_trace "get_release_tag() returned '${real_tag}'"
@@ -515,7 +539,7 @@ download_and_install_asset() (
     asset_filename="${name}_${version}_${os}_${arch}.${format}"
     asset_url="${download_url}/${asset_filename}"
     asset_filepath="${download_path}/${asset_filename}"
-    http_download "${asset_filepath}" "${asset_url}"
+    http_download "${asset_filepath}" "${asset_url}" ""
   else
     asset_filepath=$(download_asset_by_checksums_file "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
   fi
@@ -557,7 +581,7 @@ download_asset_by_checksums_file() (
 
   asset_url="${download_url}/${asset_filename}"
   asset_filepath="${destination}/${asset_filename}"
-  http_download "${asset_filepath}" "${asset_url}"
+  http_download "${asset_filepath}" "${asset_url}" ""
 
   hash_sha256_verify "${asset_filepath}" "${checksums_filepath}"
 
@@ -593,6 +617,7 @@ install_asset() (
 )
 
 main() (
+  init_colors
   # parse arguments
 
   install_dir=${install_dir:-./bin}
@@ -625,6 +650,13 @@ main() (
   set -u
 
   tag=$(get_release_tag "${OWNER}" "${REPO}" "${tag}")
+
+  if [ "$?" != "0" ]; then
+      log_err "unable to find tag='${tag}'"
+      log_err "do not specify a version or select a valid version from https://github.com/${OWNER}/${REPO}/releases"
+      return 1
+  fi
+
   version=$(tag_to_version "${tag}")
 
   download_dir=$(mktemp -d)

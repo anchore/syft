@@ -138,7 +138,7 @@ snapshot_assets_count() {
   #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_linux_amd64.tar.gz
   #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_darwin_amd64.tar.gz
 
-  echo "$(find ../../snapshot  -type f -maxdepth 1 | grep 'syft_' | grep -v checksums | wc -l | tr -d '[:space:]')"
+  echo "$(find ../../snapshot -maxdepth 1 -type f | grep 'syft_' | grep -v checksums | wc -l | tr -d '[:space:]')"
 }
 
 
@@ -153,7 +153,7 @@ snapshot_assets_archive_count() {
   #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_linux_amd64.tar.gz
   #  ../../snapshot/syft_0.36.0-SNAPSHOT-e5e847a_darwin_amd64.tar.gz
 
-  echo "$(find ../../snapshot  -type f -maxdepth 1 | grep 'syft_' | grep 'tar\|zip' | wc -l | tr -d '[:space:]')"
+  echo "$(find ../../snapshot -maxdepth 1  -type f | grep 'syft_' | grep 'tar\|zip' | wc -l | tr -d '[:space:]')"
 }
 
 
