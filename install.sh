@@ -1,4 +1,5 @@
 #!/bin/sh
+# note: we require errors to propagate (don't set -e)
 set -u
 
 PROJECT_NAME="syft"

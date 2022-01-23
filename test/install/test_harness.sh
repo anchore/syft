@@ -51,13 +51,12 @@ assertFilesEqual() {
   want=$1
   got=$2
   msg=$3
-  set +e
+
   diff "$1" "$2"
   if [ $? -ne 0 ]; then
     echo "assertFilesEqual failed: $msg"
     exit 2
   fi
-  set -e
 }
 
 assertNotEquals() {
