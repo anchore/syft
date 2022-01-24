@@ -269,7 +269,7 @@ package:
   # note: for now this only applies to the java package cataloger
   # SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES env var
   search-unindexed-archives: false
-   
+
   cataloger:
     # enable/disable cataloging of packages
     # SYFT_PACKAGE_CATALOGER_ENABLED env var
@@ -366,9 +366,9 @@ registry:
 
   # credentials for specific registries
   auth:
-    - # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
+      # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
       # SYFT_REGISTRY_AUTH_AUTHORITY env var
-      authority: ""
+    - authority: ""
       # SYFT_REGISTRY_AUTH_USERNAME env var
       username: ""
       # SYFT_REGISTRY_AUTH_PASSWORD env var
@@ -376,7 +376,7 @@ registry:
       # note: token and username/password are mutually exclusive
       # SYFT_REGISTRY_AUTH_TOKEN env var
       token: ""
-    - ... # note, more credentials can be provided via config file only
+      # - ... # note, more credentials can be provided via config file only
 
 log:
   # use structured logging
@@ -444,4 +444,4 @@ The following checks were performed on each of these signatures:
   - Any certificates were verified against the Fulcio roots.
 ```
 
-Consumers of your image can now trust that the SBOM attached to your image is correct and from a trusted source.
+Consumers of your image can now trust that the SBOM associated with your image is correct and from a trusted source.
