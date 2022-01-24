@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/anchore/syft/syft/file"
@@ -43,6 +44,19 @@ func (m DpkgMetadata) PackageURL(distro *linux.Release) string {
 	if distro != nil {
 		namespace = distro.ID
 	}
+
+	qualifiers := map[string]string{
+		purlArchQualifier: m.Architecture,
+	}
+
+	if m.Source != "" {
+		if m.SourceVersion != "" {
+			qualifiers[purlUpstreamQualifier] = fmt.Sprintf("%s@%s", m.Source, m.SourceVersion)
+		} else {
+			qualifiers[purlUpstreamQualifier] = m.Source
+		}
+	}
+
 	return packageurl.NewPackageURL(
 		// TODO: replace with `packageurl.TypeDebian` upon merge of https://github.com/package-url/packageurl-go/pull/21
 		// TODO: or, since we're now using an Anchore fork of this module, we could do this sooner.
@@ -51,9 +65,7 @@ func (m DpkgMetadata) PackageURL(distro *linux.Release) string {
 		m.Package,
 		m.Version,
 		purlQualifiers(
-			map[string]string{
-				purlArchQualifier: m.Architecture,
-			},
+			qualifiers,
 			distro,
 		),
 		"",

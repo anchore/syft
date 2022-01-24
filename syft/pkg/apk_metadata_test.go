@@ -31,7 +31,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 			expected: "pkg:alpine/p@v?arch=a&distro=alpine-3.4.6",
 		},
 		{
-			name: "missing architecure",
+			name: "missing architecture",
 			metadata: ApkMetadata{
 				Package: "p",
 				Version: "v",
@@ -66,6 +66,20 @@ func TestApkMetadata_pURL(t *testing.T) {
 				VersionID: "3.15.0",
 			},
 			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
+		},
+		{
+			name: "add source information as qualifier",
+			metadata: ApkMetadata{
+				Package:       "p",
+				Version:       "v",
+				Architecture:  "a",
+				OriginPackage: "origin",
+			},
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
 		},
 	}
 

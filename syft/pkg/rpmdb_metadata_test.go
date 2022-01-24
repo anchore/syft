@@ -18,6 +18,20 @@ func TestRpmMetadata_pURL(t *testing.T) {
 		expected string
 	}{
 		{
+			name: "go case",
+			distro: &linux.Release{
+				ID:        "rhel",
+				VersionID: "8.4",
+			},
+			metadata: RpmdbMetadata{
+				Name:    "p",
+				Version: "v",
+				Release: "r",
+				Epoch:   nil,
+			},
+			expected: "pkg:rpm/rhel/p@v-r?distro=rhel-8.4",
+		},
+		{
 			name: "with arch and epoch",
 			distro: &linux.Release{
 				ID:        "centos",
@@ -33,20 +47,6 @@ func TestRpmMetadata_pURL(t *testing.T) {
 			expected: "pkg:rpm/centos/p@v-r?arch=a&epoch=1&distro=centos-7",
 		},
 		{
-			name: "go case",
-			distro: &linux.Release{
-				ID:        "rhel",
-				VersionID: "8.4",
-			},
-			metadata: RpmdbMetadata{
-				Name:    "p",
-				Version: "v",
-				Release: "r",
-				Epoch:   nil,
-			},
-			expected: "pkg:rpm/rhel/p@v-r?distro=rhel-8.4",
-		},
-		{
 			name: "missing distro",
 			metadata: RpmdbMetadata{
 				Name:    "p",
@@ -55,6 +55,20 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				Epoch:   nil,
 			},
 			expected: "pkg:rpm/p@v-r",
+		},
+		{
+			name: "with upstream source rpm info",
+			distro: &linux.Release{
+				ID:        "rhel",
+				VersionID: "8.4",
+			},
+			metadata: RpmdbMetadata{
+				Name:      "p",
+				Version:   "v",
+				Release:   "r",
+				SourceRpm: "sourcerpm",
+			},
+			expected: "pkg:rpm/rhel/p@v-r?upstream=sourcerpm&distro=rhel-8.4",
 		},
 	}
 
