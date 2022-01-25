@@ -63,6 +63,10 @@ func (m RpmdbMetadata) PackageURL(distro *linux.Release) string {
 		qualifiers[purlEpochQualifier] = strconv.Itoa(*m.Epoch)
 	}
 
+	if m.SourceRpm != "" {
+		qualifiers[purlUpstreamQualifier] = m.SourceRpm
+	}
+
 	return packageurl.NewPackageURL(
 		packageurl.TypeRPM,
 		namespace,
