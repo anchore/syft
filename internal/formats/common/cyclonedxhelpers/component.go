@@ -9,6 +9,7 @@ func Component(p pkg.Package) cyclonedx.Component {
 	return cyclonedx.Component{
 		Type:               cyclonedx.ComponentTypeLibrary,
 		Name:               p.Name,
+		Group:              Group(p),
 		Version:            p.Version,
 		PackageURL:         p.PURL,
 		Licenses:           Licenses(p),
