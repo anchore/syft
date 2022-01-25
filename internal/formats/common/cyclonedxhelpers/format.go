@@ -105,12 +105,13 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 	}
 }
 
-// used to indicate that a relationhip that is part of the core syft sbom
-// data shape can be expressed in cycloneDX
+// used to indicate that a relationship listed under the syft artifact package can be represented as a cyclonedx dependency.
+// NOTE: CycloneDX provides the ability to describe components and their dependency on other components.
+// The dependency graph is capable of representing both direct and transitive relationships.
+// If a relationship is either direct or transitive it can be included in this function.
+// An example of a relationship to not include would be: OwnershipByFileOverlapRelationship.
 func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
-	case artifact.OwnershipByFileOverlapRelationship:
-		return true
 	case artifact.RuntimeDependencyOfRelationship:
 		return true
 	case artifact.DevDependencyOfRelationship:
@@ -126,7 +127,7 @@ func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
 	result := make([]cyclonedx.Dependency, 0)
 	for _, r := range relationships {
-		exists := lookupRelationship(r.Type)
+		exists := isExpressiblePackageRelationship(r.Type)
 		if !exists {
 			log.Warnf("unable to convert relationship from CycloneDX 1.3 JSON, dropping: %+v", r)
 			continue
