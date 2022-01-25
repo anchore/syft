@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
@@ -27,7 +28,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	packages := s.Artifacts.PackageCatalog.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = Component(p)
+		components[i] = toComponent(p)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
@@ -105,8 +106,21 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 	}
 }
 
-func relationshipTypeExists(ty artifact.RelationshipType) bool {
+func toComponent(p pkg.Package) cyclonedx.Component {
+	return cyclonedx.Component{
+		BOMRef:     string(p.ID()),
+		Type:       cyclonedx.ComponentTypeLibrary,
+		Name:       p.Name,
+		Version:    p.Version,
+		PackageURL: p.PURL,
+		Licenses:   toLicenses(p.Licenses),
+	}
+}
+
+func lookupRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
+	case artifact.OwnershipByFileOverlapRelationship:
+		return true
 	case artifact.RuntimeDependencyOfRelationship:
 		return true
 	case artifact.DevDependencyOfRelationship:
@@ -122,9 +136,9 @@ func relationshipTypeExists(ty artifact.RelationshipType) bool {
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
 	result := make([]cyclonedx.Dependency, 0)
 	for _, r := range relationships {
-		exists := relationshipTypeExists(r.Type)
+		exists := lookupRelationship(r.Type)
 		if !exists {
-			log.Warnf("unable to convert relationship from CycloneDX JSON, dropping: %+v", r)
+			log.Warnf("unable to convert relationship from CycloneDX 1.3 JSON, dropping: %+v", r)
 			continue
 		}
 
@@ -164,4 +178,21 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 	}
 
 	return nil
+}
+
+func toLicenses(ls []string) *cyclonedx.Licenses {
+	if len(ls) == 0 {
+		return nil
+	}
+
+	lc := make(cyclonedx.Licenses, len(ls))
+	for i, licenseName := range ls {
+		lc[i] = cyclonedx.LicenseChoice{
+			License: &cyclonedx.License{
+				Name: licenseName,
+			},
+		}
+	}
+
+	return &lc
 }
