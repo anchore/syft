@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
@@ -28,7 +27,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	packages := s.Artifacts.PackageCatalog.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = toComponent(p)
+		components[i] = Component(p)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
@@ -106,17 +105,6 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 	}
 }
 
-func toComponent(p pkg.Package) cyclonedx.Component {
-	return cyclonedx.Component{
-		BOMRef:     string(p.ID()),
-		Type:       cyclonedx.ComponentTypeLibrary,
-		Name:       p.Name,
-		Version:    p.Version,
-		PackageURL: p.PURL,
-		Licenses:   toLicenses(p.Licenses),
-	}
-}
-
 func lookupRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
 	case artifact.OwnershipByFileOverlapRelationship:
@@ -178,21 +166,4 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 	}
 
 	return nil
-}
-
-func toLicenses(ls []string) *cyclonedx.Licenses {
-	if len(ls) == 0 {
-		return nil
-	}
-
-	lc := make(cyclonedx.Licenses, len(ls))
-	for i, licenseName := range ls {
-		lc[i] = cyclonedx.LicenseChoice{
-			License: &cyclonedx.License{
-				Name: licenseName,
-			},
-		}
-	}
-
-	return &lc
 }
