@@ -105,7 +105,9 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 	}
 }
 
-func lookupRelationship(ty artifact.RelationshipType) bool {
+// used to indicate that a relationhip that is part of the core syft sbom
+// data shape can be expressed in cycloneDX
+func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true
