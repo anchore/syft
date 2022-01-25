@@ -529,7 +529,7 @@ get_format_name() (
 download_and_install_asset() (
   download_url="$1"
   download_path="$2"
-  install_path="$3"
+  install_path=$3
   name="$4"
   os="$5"
   arch="$6"
@@ -537,14 +537,7 @@ download_and_install_asset() (
   format="$8"
   binary="$9"
 
-  if [ "$format" = "dmg" ]; then
-    asset_filename="${name}_${version}_${os}_${arch}.${format}"
-    asset_url="${download_url}/${asset_filename}"
-    asset_filepath="${download_path}/${asset_filename}"
-    http_download "${asset_filepath}" "${asset_url}" ""
-  else
-    asset_filepath=$(download_asset_by_checksums_file "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
-  fi
+  asset_filepath=$(download_asset "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
 
   # don't continue if we couldn't download an asset
   if [ -z "${asset_filepath}" ]; then
@@ -555,9 +548,54 @@ download_and_install_asset() (
   install_asset "${asset_filepath}" "${install_path}" "${binary}"
 )
 
-# download_asset_by_checksums_file [release-url-prefix] [name] [os] [arch] [version] [format]
+# download_asset [release-url-prefix] [download-path] [name] [os] [arch] [version] [format] [binary]
 #
-# outputs the filepath to the verified raw asset
+# outputs the path to the downloaded asset asset_filepath
+#
+download_asset() (
+  download_url="$1"
+  download_path="$2"
+  name="$3"
+  os="$4"
+  arch="$5"
+  version="$6"
+  format="$7"
+
+  if [ "$format" = "dmg" ] ||  [ "$os/$arch/$format" = "darwin/arm64/zip" ]; then
+    # the signing process outputs the zip/dmg and the checksum is not included in the checksums.txt file
+    # TODO: remove this case in the future by upgrading the release process
+    asset_filepath=$(download_asset_without_verification "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
+  else
+    asset_filepath=$(download_asset_by_checksums_file "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
+  fi
+
+  echo "${asset_filepath}"
+)
+
+# download_asset_without_verification [release-url-prefix] [destination] [name] [os] [arch] [version] [format]
+#
+# outputs the filepath to the raw asset (no verification against the checksums file is performed)
+#
+download_asset_without_verification() (
+  download_url="$1"
+  destination="$2"
+  name="$3"
+  os="$4"
+  arch="$5"
+  version="$6"
+  format="$7"
+
+  asset_filename="${name}_${version}_${os}_${arch}.${format}"
+  asset_url="${download_url}/${asset_filename}"
+  asset_filepath="${destination}/${asset_filename}"
+  http_download "${asset_filepath}" "${asset_url}" ""
+
+  echo "${asset_filepath}"
+)
+
+# download_asset_by_checksums_file [release-url-prefix] [destination] [name] [os] [arch] [version] [format]
+#
+# outputs the filepath to the raw asset (verified against the checksums file)
 #
 download_asset_by_checksums_file() (
   download_url="$1"
