@@ -21,27 +21,27 @@ import (
 // integrity check
 var _ common.ParserFn = parsePackageJSON
 
-// PackageJSON represents a JavaScript package.json file
-type PackageJSON struct {
+// packageJSON represents a JavaScript package.json file
+type packageJSON struct {
 	Version      string            `json:"version"`
 	Latest       []string          `json:"latest"`
-	Author       Author            `json:"author"`
+	Author       author            `json:"author"`
 	License      json.RawMessage   `json:"license"`
 	Licenses     []license         `json:"licenses"`
 	Name         string            `json:"name"`
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
 	Dependencies map[string]string `json:"dependencies"`
-	Repository   Repository        `json:"repository"`
+	Repository   repository        `json:"repository"`
 }
 
-type Author struct {
+type author struct {
 	Name  string `json:"name" mapstruct:"name"`
 	Email string `json:"email" mapstruct:"email"`
 	URL   string `json:"url" mapstruct:"url"`
 }
 
-type Repository struct {
+type repository struct {
 	Type string `json:"type" mapstructure:"type"`
 	URL  string `json:"url" mapstructure:"url"`
 }
@@ -50,10 +50,10 @@ type Repository struct {
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
-func (a *Author) UnmarshalJSON(b []byte) error {
+func (a *author) UnmarshalJSON(b []byte) error {
 	var authorStr string
 	var fields map[string]string
-	var author Author
+	var auth author
 
 	if err := json.Unmarshal(b, &authorStr); err != nil {
 		// string parsing did not work, assume a map was given
@@ -62,21 +62,21 @@ func (a *Author) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
 	} else {
-		// parse out "name <email> (url)" into an Author struct
+		// parse out "name <email> (url)" into an author struct
 		fields = internal.MatchNamedCaptureGroups(authorPattern, authorStr)
 	}
 
 	// translate the map into a structure
-	if err := mapstructure.Decode(fields, &author); err != nil {
+	if err := mapstructure.Decode(fields, &auth); err != nil {
 		return fmt.Errorf("unable to decode package.json author: %w", err)
 	}
 
-	*a = author
+	*a = auth
 
 	return nil
 }
 
-func (a *Author) AuthorString() string {
+func (a *author) AuthorString() string {
 	result := a.Name
 	if a.Email != "" {
 		result += fmt.Sprintf(" <%s>", a.Email)
@@ -87,10 +87,10 @@ func (a *Author) AuthorString() string {
 	return result
 }
 
-func (r *Repository) UnmarshalJSON(b []byte) error {
+func (r *repository) UnmarshalJSON(b []byte) error {
 	var repositoryStr string
 	var fields map[string]string
-	var repository Repository
+	var repo repository
 
 	if err := json.Unmarshal(b, &repositoryStr); err != nil {
 		// string parsing did not work, assume a map was given
@@ -99,11 +99,11 @@ func (r *Repository) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
 		// translate the map into a structure
-		if err := mapstructure.Decode(fields, &repository); err != nil {
+		if err := mapstructure.Decode(fields, &repo); err != nil {
 			return fmt.Errorf("unable to decode package.json author: %w", err)
 		}
 
-		*r = repository
+		*r = repo
 	} else {
 		r.URL = repositoryStr
 	}
@@ -134,7 +134,7 @@ func licenseFromJSON(b []byte) (string, error) {
 	return "", errors.New("unable to unmarshal license field as either string or object")
 }
 
-func (p PackageJSON) licensesFromJSON() ([]string, error) {
+func (p packageJSON) licensesFromJSON() ([]string, error) {
 	if p.License == nil && p.Licenses == nil {
 		// This package.json doesn't specify any licenses whatsoever
 		return []string{}, nil
@@ -167,7 +167,7 @@ func parsePackageJSON(path string, reader io.Reader) ([]*pkg.Package, []artifact
 	dec := json.NewDecoder(reader)
 
 	for {
-		var p PackageJSON
+		var p packageJSON
 		if err := dec.Decode(&p); err == io.EOF {
 			break
 		} else if err != nil {
@@ -185,7 +185,7 @@ func parsePackageJSON(path string, reader io.Reader) ([]*pkg.Package, []artifact
 	return packages, nil, nil
 }
 
-func newPackageJSONPackage(p PackageJSON) *pkg.Package {
+func newPackageJSONPackage(p packageJSON) *pkg.Package {
 	licenses, err := p.licensesFromJSON()
 	if err != nil {
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
@@ -199,6 +199,8 @@ func newPackageJSONPackage(p PackageJSON) *pkg.Package {
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageJSONMetadataType,
 		Metadata: pkg.NpmPackageJSONMetadata{
+			Name:     p.Name,
+			Version:  p.Version,
 			Author:   p.Author.AuthorString(),
 			Homepage: p.Homepage,
 			URL:      p.Repository.URL,
@@ -207,7 +209,7 @@ func newPackageJSONPackage(p PackageJSON) *pkg.Package {
 	}
 }
 
-func (p PackageJSON) hasNameAndVersionValues() bool {
+func (p packageJSON) hasNameAndVersionValues() bool {
 	return p.Name != "" && p.Version != ""
 }
 
