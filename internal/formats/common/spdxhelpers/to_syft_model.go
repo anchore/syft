@@ -46,56 +46,79 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 	}, nil
 }
 
-func findSyftLinuxRelease(doc *spdx.Document2_2) *linux.Release {
-	var releaseName string
-	var releaseVersion string
-
-	var release *spdx.Package2_2
+func findLinuxReleaseByDocument(doc *spdx.Document2_2) *linux.Release {
+	var p *spdx.Package2_2
 
 	if r := findSpdxRelationshipByType(doc, "DESCRIBES"); r != nil {
 		if string(r.RefA.ElementRefID) == "DOCUMENT" {
-			release = findSpdxPackageByID(doc, r.RefB.ElementRefID)
+			p = findSpdxPackageByID(doc, r.RefB.ElementRefID)
 		}
 	}
 
 	if r := findSpdxRelationshipByType(doc, "DESCRIBED_BY"); r != nil {
 		if string(r.RefB.ElementRefID) == "DOCUMENT" {
-			release = findSpdxPackageByID(doc, r.RefA.ElementRefID)
+			p = findSpdxPackageByID(doc, r.RefA.ElementRefID)
 		}
 	}
 
-	if release != nil {
-		releaseName = release.PackageName
-		releaseVersion = release.PackageVersion
-	} else {
-		categories := []string{"PACKAGE-MANAGER", "PACKAGE_MANAGER"}
+	var name string
+	var version string
 
-		var ref *spdx.PackageExternalReference2_2
+	if p != nil {
+		name = p.PackageName
+		version = p.PackageVersion
+	}
 
-		if release != nil {
-			// SPDX has relationship: PACKAGE_OF
-			// and Package External Reference PACKAGE-MANAGER
-			// spec references "PACKAGE-MANAGER" but JSON schema has "PACKAGE_MANAGER"
-			ref = findSpdxReferenceByName(release, categories...)
+	if p != nil && (name == "" || version == "") {
+		// SPDX has relationship: PACKAGE_OF
+		// and Package External Reference PACKAGE-MANAGER
+		// spec references "PACKAGE-MANAGER" but JSON schema has "PACKAGE_MANAGER"
+		ref := findSpdxReferenceByName(p, "PACKAGE-MANAGER", "PACKAGE_MANAGER")
+
+		if ref != nil {
+			parts := strings.Split(ref.Locator, "-")
+			if len(parts) > 1 {
+				name = parts[0]
+				version = parts[1]
+			}
 		}
+	}
 
-		if ref == nil {
-		nextPackage:
-			for _, p := range doc.Packages {
-				purlValue := extractPURL(p.PackageExternalReferences)
-				if purlValue != "" {
-					purl, err := packageurl.FromString(purlValue)
-					if err != nil {
-						log.Warnf("unable to parse purl: %s", purlValue)
-					} else {
-						for _, qualifier := range purl.Qualifiers {
-							if qualifier.Key == "distro" {
-								parts := strings.Split(qualifier.Value, "-")
-								if len(parts) > 1 {
-									releaseName = parts[0]
-									releaseVersion = parts[1]
-									break nextPackage
-								}
+	if name != "" && version != "" {
+		return &linux.Release{
+			PrettyName: name,
+			Name:       name,
+			ID:         name,
+			IDLike:     []string{name},
+			Version:    version,
+			VersionID:  version,
+		}
+	}
+
+	return nil
+}
+
+func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
+	for _, p := range doc.Packages {
+		purlValue := extractPURL(p.PackageExternalReferences)
+		if purlValue != "" {
+			purl, err := packageurl.FromString(purlValue)
+			if err != nil {
+				log.Warnf("unable to parse purl: %s", purlValue)
+			} else {
+				for _, qualifier := range purl.Qualifiers {
+					if qualifier.Key == "distro" {
+						parts := strings.Split(qualifier.Value, "-")
+						if len(parts) > 1 {
+							name := parts[0]
+							version := parts[1]
+							return &linux.Release{
+								PrettyName: name,
+								Name:       name,
+								ID:         name,
+								IDLike:     []string{name},
+								Version:    version,
+								VersionID:  version,
 							}
 						}
 					}
@@ -104,15 +127,18 @@ func findSyftLinuxRelease(doc *spdx.Document2_2) *linux.Release {
 		}
 	}
 
-	if releaseName != "" && releaseVersion != "" {
-		return &linux.Release{
-			PrettyName: releaseName,
-			Name:       releaseName,
-			ID:         releaseName,
-			IDLike:     []string{releaseName},
-			Version:    releaseVersion,
-			VersionID:  releaseVersion,
-		}
+	return nil
+}
+
+func findSyftLinuxRelease(doc *spdx.Document2_2) *linux.Release {
+	r := findLinuxReleaseByDocument(doc)
+	if r != nil {
+		return r
+	}
+
+	r = findLinuxReleaseByPURL(doc)
+	if r != nil {
+		return r
 	}
 
 	return nil

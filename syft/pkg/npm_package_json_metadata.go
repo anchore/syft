@@ -25,5 +25,4 @@ func (p NpmPackageJSONMetadata) PackageURL() string {
 		"")
 
 	return pURL.ToString()
-
 }

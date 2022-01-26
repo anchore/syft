@@ -33,5 +33,4 @@ func (p CargoPackageMetadata) PackageURL() string {
 		"")
 
 	return pURL.ToString()
-
 }
