@@ -60,7 +60,7 @@ func (t Type) PackageURLType() string {
 	case GoModulePkg:
 		return packageurl.TypeGolang
 	case RustPkg:
-		return "cargo"
+		return Cargo
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -96,7 +96,7 @@ func PackageTypeByName(name string) Type {
 		return PythonPkg
 	case packageurl.TypeGem:
 		return GemPkg
-	case "cargo", "crate":
+	case Cargo, "crate":
 		return RustPkg
 	default:
 		return UnknownPkg

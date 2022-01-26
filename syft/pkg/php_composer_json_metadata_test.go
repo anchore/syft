@@ -1,9 +1,10 @@
 package pkg
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/linux"
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"testing"
 )
 
 func TestPhpComposerJsonMetadata_pURL(t *testing.T) {

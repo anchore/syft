@@ -271,7 +271,7 @@ func extractCPEs(refs []*spdx.PackageExternalReference2_2) (cpes []pkg.CPE) {
 }
 
 func parseLicense(l string) []string {
-	if l == "NOASSERTION" || l == "NONE" {
+	if l == NOASSERTION || l == NONE {
 		return nil
 	}
 	return strings.Split(l, " AND ")

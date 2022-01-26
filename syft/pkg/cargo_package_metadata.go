@@ -25,7 +25,7 @@ func (p CargoPackageMetadata) Pkg() *Package {
 // PackageURL returns the PURL for the specific rust package (see https://github.com/package-url/purl-spec)
 func (p CargoPackageMetadata) PackageURL() string {
 	pURL := packageurl.NewPackageURL(
-		"cargo",
+		Cargo,
 		"",
 		p.Name,
 		p.Version,

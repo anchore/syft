@@ -17,6 +17,10 @@ const (
 	Rust            Language = "rust"
 )
 
+const (
+	Cargo string = "cargo"
+)
+
 // AllLanguages is a set of all programming languages detected by syft.
 var AllLanguages = []Language{
 	Java,
@@ -52,7 +56,7 @@ func LanguageFromPURL(p string) Language {
 		return Python
 	case packageurl.TypeGem:
 		return Ruby
-	case "cargo":
+	case Cargo:
 		return Rust
 	default:
 		return UnknownLanguage
