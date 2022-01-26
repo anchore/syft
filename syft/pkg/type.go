@@ -73,7 +73,11 @@ func PackageTypeFromPURL(p string) Type {
 		return UnknownPkg
 	}
 
-	switch purl.Type {
+	return PackageTypeByName(purl.Type)
+}
+
+func PackageTypeByName(name string) Type {
+	switch name {
 	case packageurl.TypeDebian, "deb":
 		return DebPkg
 	case packageurl.TypeRPM:
