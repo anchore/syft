@@ -40,7 +40,7 @@ func LanguageFromPURL(p string) Language {
 	}
 
 	switch purl.Type {
-	case packageurl.TypeMaven, "gradle":
+	case packageurl.TypeMaven, purlGradlePkgType:
 		return Java
 	case packageurl.TypeComposer:
 		return PHP
@@ -52,7 +52,7 @@ func LanguageFromPURL(p string) Language {
 		return Python
 	case packageurl.TypeGem:
 		return Ruby
-	case "cargo":
+	case purlCargoPkgType:
 		return Rust
 	default:
 		return UnknownLanguage

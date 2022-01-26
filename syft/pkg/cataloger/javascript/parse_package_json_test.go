@@ -24,6 +24,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
 					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 					Homepage: "https://docs.npmjs.com/",
 					URL:      "https://github.com/npm/cli",
@@ -41,6 +43,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
 					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 					Homepage: "https://docs.npmjs.com/",
 					URL:      "https://github.com/npm/cli",
@@ -58,6 +62,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
 					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 					Homepage: "https://docs.npmjs.com/",
 					URL:      "https://github.com/npm/cli",
@@ -75,6 +81,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
 					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 					Homepage: "https://docs.npmjs.com/",
 					URL:      "https://github.com/npm/cli",
@@ -92,6 +100,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
 					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
 					Homepage: "https://docs.npmjs.com/",
 					URL:      "https://github.com/npm/cli",
@@ -109,6 +119,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "function-bind",
+					Version:  "1.1.1",
 					Author:   "Raynos <raynos2@gmail.com>",
 					Homepage: "https://github.com/Raynos/function-bind",
 					URL:      "git://github.com/Raynos/function-bind.git",
