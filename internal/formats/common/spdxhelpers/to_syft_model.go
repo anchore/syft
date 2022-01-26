@@ -23,25 +23,17 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 		typ = pkg.PackageTypeByName(release.Name)
 	}
 
-	spdxIdMap := make(map[string]interface{})
+	spdxIDMap := make(map[string]interface{})
 
-	collectSyftPackages(spdxIdMap, doc, typ)
+	collectSyftPackages(spdxIDMap, doc, typ)
 
-	collectSyftFiles(spdxIdMap, doc)
+	collectSyftFiles(spdxIDMap, doc)
 
 	catalog := pkg.NewCatalog()
 
-	//packages:
-	for _, v := range spdxIdMap {
+	for _, v := range spdxIDMap {
 		if p, ok := v.(*pkg.Package); ok {
 			catalog.Add(*p)
-			//for _, typ := range pkg.AllPkgs {
-			//	if typ == p.Type {
-			//		catalog.Add(*p)
-			//		continue packages
-			//	}
-			//}
-			//log.Warnf("unknown package type, skipping: %s", p.Type)
 		}
 	}
 
@@ -50,7 +42,7 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 			PackageCatalog:    catalog,
 			LinuxDistribution: release,
 		},
-		Relationships: toSyftRelationships(spdxIdMap, doc),
+		Relationships: toSyftRelationships(spdxIDMap, doc),
 	}, nil
 }
 
@@ -62,13 +54,13 @@ func findSyftLinuxRelease(doc *spdx.Document2_2) *linux.Release {
 
 	if r := findSpdxRelationshipByType(doc, "DESCRIBES"); r != nil {
 		if string(r.RefA.ElementRefID) == "DOCUMENT" {
-			release = findSpdxPackageById(doc, r.RefB.ElementRefID)
+			release = findSpdxPackageByID(doc, r.RefB.ElementRefID)
 		}
 	}
 
 	if r := findSpdxRelationshipByType(doc, "DESCRIBED_BY"); r != nil {
 		if string(r.RefB.ElementRefID) == "DOCUMENT" {
-			release = findSpdxPackageById(doc, r.RefA.ElementRefID)
+			release = findSpdxPackageByID(doc, r.RefA.ElementRefID)
 		}
 	}
 
@@ -135,7 +127,7 @@ func findSpdxRelationshipByType(doc *spdx.Document2_2, typ string) *spdx.Relatio
 	return nil
 }
 
-func findSpdxPackageById(doc *spdx.Document2_2, id spdx.ElementID) *spdx.Package2_2 {
+func findSpdxPackageByID(doc *spdx.Document2_2, id spdx.ElementID) *spdx.Package2_2 {
 	for _, p := range doc.Packages {
 		if p.PackageSPDXIdentifier == id {
 			return p
@@ -155,13 +147,13 @@ func findSpdxReferenceByName(p *spdx.Package2_2, categories ...string) *spdx.Pac
 	return nil
 }
 
-func collectSyftFiles(spdxIdMap map[string]interface{}, doc *spdx.Document2_2) {
+func collectSyftFiles(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
 	for _, f := range doc.UnpackagedFiles {
-		spdxIdMap[string(f.FileSPDXIdentifier)] = toSyftLocation(f)
+		spdxIDMap[string(f.FileSPDXIdentifier)] = toSyftLocation(f)
 	}
 }
 
-func toSyftRelationships(spdxIdMap map[string]interface{}, doc *spdx.Document2_2) []artifact.Relationship {
+func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) []artifact.Relationship {
 	var out []artifact.Relationship
 	for _, r := range doc.Relationships {
 		// FIXME what to do with r.RefA.DocumentRefID and  r.RefA.SpecialID
@@ -169,8 +161,8 @@ func toSyftRelationships(spdxIdMap map[string]interface{}, doc *spdx.Document2_2
 			log.Debugf("relationship to external document: %+v", r)
 			continue
 		}
-		a := spdxIdMap[string(r.RefA.ElementRefID)]
-		b := spdxIdMap[string(r.RefB.ElementRefID)]
+		a := spdxIDMap[string(r.RefA.ElementRefID)]
+		b := spdxIDMap[string(r.RefB.ElementRefID)]
 		from, fromOk := a.(*pkg.Package)
 		toPackage, toPackageOk := b.(*pkg.Package)
 		toLocation, toLocationOk := b.(*source.Location)
@@ -203,14 +195,14 @@ func toSyftRelationships(spdxIdMap map[string]interface{}, doc *spdx.Document2_2
 	return out
 }
 
-func collectSyftPackages(spdxIdMap map[string]interface{}, doc *spdx.Document2_2, defaultType pkg.Type) {
+func collectSyftPackages(spdxIDMap map[string]interface{}, doc *spdx.Document2_2, defaultType pkg.Type) {
 	for _, p := range doc.Packages {
 		syftPkg := toSyftPackage(p, defaultType)
-		spdxIdMap[string(p.PackageSPDXIdentifier)] = &syftPkg
+		spdxIDMap[string(p.PackageSPDXIdentifier)] = &syftPkg
 		for _, f := range p.Files {
 			loc := toSyftLocation(f)
 			syftPkg.Locations = append(syftPkg.Locations, *loc)
-			// spdxIdMap[string(f.FileSPDXIdentifier)] = loc
+			// spdxIDMap[string(f.FileSPDXIdentifier)] = loc
 		}
 	}
 }
