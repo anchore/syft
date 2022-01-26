@@ -3,10 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
@@ -15,7 +13,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
@@ -249,60 +246,37 @@ func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			return
 		}
 
-		var s sbom.SBOM
+		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		if err != nil {
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+			return
+		}
+		if cleanup != nil {
+			defer cleanup()
+		}
 
-		// quick hack to use SBOM input:
-		if strings.Index(userInput, "sbom:") == 0 {
-			userInput = userInput[len("sbom:"):]
-			var reader io.Reader
-			if userInput == "-" {
-				reader = os.Stdin
-			} else {
-				reader, err = os.Open(userInput)
-				if err != nil {
-					errs <- fmt.Errorf("unable to open input file: %s", userInput)
-					return
-				}
-			}
-			sbm, _, err := syft.Decode(reader)
-			if err != nil {
-				errs <- fmt.Errorf("failed to convert source from user input %q: %w", userInput, err)
+		s := sbom.SBOM{
+			Source: src.Metadata,
+			Descriptor: sbom.Descriptor{
+				Name:          internal.ApplicationName,
+				Version:       version.FromBuild().Version,
+				Configuration: appConfig,
+			},
+		}
+
+		var relationships []<-chan artifact.Relationship
+		for _, task := range tasks {
+			c := make(chan artifact.Relationship)
+			relationships = append(relationships, c)
+
+			go runTask(task, &s.Artifacts, src, c, errs)
+		}
+		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
+
+		if appConfig.Anchore.Host != "" {
+			if err := runPackageSbomUpload(src, s); err != nil {
+				errs <- err
 				return
-			}
-			s = *sbm
-		} else {
-			src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
-			if err != nil {
-				errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
-				return
-			}
-			if cleanup != nil {
-				defer cleanup()
-			}
-
-			s = sbom.SBOM{
-				Source: src.Metadata,
-				Descriptor: sbom.Descriptor{
-					Name:          internal.ApplicationName,
-					Version:       version.FromBuild().Version,
-					Configuration: appConfig,
-				},
-			}
-
-			var relationships []<-chan artifact.Relationship
-			for _, task := range tasks {
-				c := make(chan artifact.Relationship)
-				relationships = append(relationships, c)
-
-				go runTask(task, &s.Artifacts, src, c, errs)
-			}
-			s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
-
-			if appConfig.Anchore.Host != "" {
-				if err := runPackageSbomUpload(src, s); err != nil {
-					errs <- err
-					return
-				}
 			}
 		}
 
