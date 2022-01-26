@@ -23,7 +23,7 @@ var JenkinsPluginPomPropertiesGroupIDs = []string{
 type JavaMetadata struct {
 	VirtualPath   string         `json:"virtualPath"`
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
-	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty"`
+	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
 	PomProject    *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
 	Parent        *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
@@ -32,8 +32,8 @@ type JavaMetadata struct {
 type PomProperties struct {
 	Path       string            `mapstructure:"path" json:"path"`
 	Name       string            `mapstructure:"name" json:"name"`
-	GroupID    string            `mapstructure:"groupId" json:"groupId"`
-	ArtifactID string            `mapstructure:"artifactId" json:"artifactId"`
+	GroupID    string            `mapstructure:"groupId" json:"groupId" cyclonedx:"groupID"`
+	ArtifactID string            `mapstructure:"artifactId" json:"artifactId" cyclonedx:"artifactID"`
 	Version    string            `mapstructure:"version" json:"version"`
 	Extra      map[string]string `mapstructure:",remain" json:"extraFields"`
 }

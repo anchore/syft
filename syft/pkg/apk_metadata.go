@@ -49,6 +49,14 @@ type ApkFileRecord struct {
 
 // PackageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
 func (m ApkMetadata) PackageURL(distro *linux.Release) string {
+	qualifiers := map[string]string{
+		purlArchQualifier: m.Architecture,
+	}
+
+	if m.OriginPackage != "" {
+		qualifiers[purlUpstreamQualifier] = m.OriginPackage
+	}
+
 	return packageurl.NewPackageURL(
 		// note: this is currently a candidate and not technically within spec
 		// see https://github.com/package-url/purl-spec#other-candidate-types-to-define
@@ -57,9 +65,7 @@ func (m ApkMetadata) PackageURL(distro *linux.Release) string {
 		m.Package,
 		m.Version,
 		purlQualifiers(
-			map[string]string{
-				purlArchQualifier: m.Architecture,
-			},
+			qualifiers,
 			distro,
 		),
 		"",

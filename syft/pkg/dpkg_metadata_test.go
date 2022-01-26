@@ -25,7 +25,6 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 			},
 			metadata: DpkgMetadata{
 				Package: "p",
-				Source:  "s",
 				Version: "v",
 			},
 			expected: "pkg:deb/debian/p@v?distro=debian-11",
@@ -38,7 +37,6 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 			},
 			metadata: DpkgMetadata{
 				Package:      "p",
-				Source:       "s",
 				Version:      "v",
 				Architecture: "a",
 			},
@@ -48,10 +46,36 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 			name: "missing distro",
 			metadata: DpkgMetadata{
 				Package: "p",
-				Source:  "s",
 				Version: "v",
 			},
 			expected: "pkg:deb/p@v",
+		},
+		{
+			name: "with upstream qualifier with source pkg name info",
+			distro: &linux.Release{
+				ID:        "debian",
+				VersionID: "11",
+			},
+			metadata: DpkgMetadata{
+				Package: "p",
+				Source:  "s",
+				Version: "v",
+			},
+			expected: "pkg:deb/debian/p@v?upstream=s&distro=debian-11",
+		},
+		{
+			name: "with upstream qualifier with source pkg name and version info",
+			distro: &linux.Release{
+				ID:        "debian",
+				VersionID: "11",
+			},
+			metadata: DpkgMetadata{
+				Package:       "p",
+				Source:        "s",
+				Version:       "v",
+				SourceVersion: "2.3",
+			},
+			expected: "pkg:deb/debian/p@v?upstream=s@2.3&distro=debian-11",
 		},
 	}
 
