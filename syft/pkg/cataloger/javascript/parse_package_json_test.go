@@ -136,7 +136,14 @@ func TestParsePackageJSON(t *testing.T) {
 				t.Fatalf("unexpected package count: %d!=1", len(actual))
 			}
 
-			for _, d := range deep.Equal(actual[0], &test.ExpectedPkg) {
+			// Add name & version metadata
+			expected := test.ExpectedPkg
+			meta := expected.Metadata.(pkg.NpmPackageJSONMetadata)
+			meta.Name = expected.Name
+			meta.Version = expected.Version
+			expected.Metadata = meta
+
+			for _, d := range deep.Equal(actual[0], &expected) {
 
 				t.Errorf("diff: %+v", d)
 			}
