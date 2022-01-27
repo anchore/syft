@@ -425,9 +425,9 @@ Note for the following example replace `test/image:latest` with an image you own
 its remote reference. Replace $MY_PRIVATE_KEY with a private key you own or have generated with cosign.
 
 ```bash
-cosign sign -key $MY_PRIVATE_KEY test/image:latest
+cosign sign --key $MY_PRIVATE_KEY test/image:latest
 syft test/image:latest -o json > test_latest_sbom.json
-cosign attest -predicate test_latest_sbom.json -key $MY_PRIVATE_KEY
+cosign attest --predicate test_latest_sbom.json --key $MY_PRIVATE_KEY test/image:latest
 ```
 
 Verify the new attestation exists on your image
