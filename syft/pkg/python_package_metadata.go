@@ -106,7 +106,7 @@ func (p PythonDirectURLOriginInfo) vcsURLQualifier() packageurl.Qualifiers {
 	if p.VCS != "" {
 		// Taken from https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst#known-qualifiers-keyvalue-pairs
 		// packageurl-go still doesn't support all qualifier names
-		return packageurl.Qualifiers{{Key: purlVCSURLQualifier, Value: fmt.Sprintf("%s+%s@%s", p.VCS, p.URL, p.CommitID)}}
+		return packageurl.Qualifiers{{Key: VCSURLQualifier, Value: fmt.Sprintf("%s+%s@%s", p.VCS, p.URL, p.CommitID)}}
 	}
 	return nil
 }

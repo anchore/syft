@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -16,8 +17,6 @@ import (
 )
 
 func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
-	release := findSyftLinuxRelease(doc)
-
 	spdxIDMap := make(map[string]interface{})
 
 	collectSyftPackages(spdxIDMap, doc)
@@ -35,7 +34,7 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    catalog,
-			LinuxDistribution: release,
+			LinuxDistribution: findSyftLinuxRelease(doc),
 		},
 		Relationships: toSyftRelationships(spdxIDMap, doc),
 	}, nil
@@ -95,7 +94,7 @@ func findLinuxReleaseByDocument(doc *spdx.Document2_2) *linux.Release {
 
 func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
 	for _, p := range doc.Packages {
-		purlValue := extractPURL(p.PackageExternalReferences)
+		purlValue := extractPURL(p)
 		if purlValue != "" {
 			purl, err := packageurl.FromString(purlValue)
 			if err != nil {
@@ -219,7 +218,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 func collectSyftPackages(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
 	for _, p := range doc.Packages {
 		syftPkg := toSyftPackage(p)
-		spdxIDMap[string(p.PackageSPDXIdentifier)] = &syftPkg
+		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
 		for _, f := range p.Files {
 			loc := toSyftLocation(f)
 			syftPkg.Locations = append(syftPkg.Locations, *loc)
@@ -246,25 +245,105 @@ func requireAndTrimPrefix(val interface{}, prefix string) string {
 	return ""
 }
 
-func toSyftPackage(p *spdx.Package2_2) pkg.Package {
-	purl := extractPURL(p.PackageExternalReferences)
+type pkgInfo struct {
+	purl packageurl.PackageURL
+	typ  pkg.Type
+	lang pkg.Language
+}
+
+func (p *pkgInfo) qualifierValue(name string) string {
+	for _, q := range p.purl.Qualifiers {
+		if q.Key == name {
+			return q.Value
+		}
+	}
+	return ""
+}
+
+func extractPkgInfo(p *spdx.Package2_2) pkgInfo {
+	pu := extractPURL(p)
+	purl, err := packageurl.FromString(pu)
+	if err != nil {
+		return pkgInfo{}
+	}
+	return pkgInfo{
+		purl,
+		pkg.TypeByName(purl.Type),
+		pkg.LanguageByName(purl.Type),
+	}
+}
+
+func toSyftPackage(p *spdx.Package2_2) *pkg.Package {
+	info := extractPkgInfo(p)
+	metadataType, metadata := extractMetadata(p, info)
 	sP := pkg.Package{
-		Type:     pkg.TypeFromPURL(purl),
-		Name:     p.PackageName,
-		Version:  p.PackageVersion,
-		Licenses: parseLicense(p.PackageLicenseDeclared),
-		CPEs:     extractCPEs(p.PackageExternalReferences),
-		PURL:     purl,
-		Language: pkg.LanguageFromPURL(purl),
+		Type:         info.typ,
+		Name:         p.PackageName,
+		Version:      p.PackageVersion,
+		Licenses:     parseLicense(p.PackageLicenseDeclared),
+		CPEs:         extractCPEs(p),
+		PURL:         info.purl.String(),
+		Language:     info.lang,
+		MetadataType: metadataType,
+		Metadata:     metadata,
 	}
 
 	sP.SetID()
 
-	return sP
+	return &sP
 }
 
-func extractPURL(refs []*spdx.PackageExternalReference2_2) string {
-	for _, r := range refs {
+func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interface{}) {
+	upstream := strings.Split(info.qualifierValue(pkg.UpstreamQualifier), "@")
+	upstreamName := upstream[0]
+	upstreamVersion := ""
+	if len(upstream) > 1 {
+		upstreamVersion = upstream[1]
+	}
+	switch info.typ {
+	case pkg.ApkPkg:
+		return pkg.ApkMetadataType, pkg.ApkMetadata{
+			Package:       p.PackageName,
+			OriginPackage: upstreamName,
+			Maintainer:    p.PackageSupplierPerson,
+			Version:       p.PackageVersion,
+			License:       p.PackageLicenseDeclared,
+			Architecture:  info.qualifierValue(pkg.ArchQualifier),
+			URL:           p.PackageHomePage,
+			Description:   p.PackageDescription,
+		}
+	case pkg.RpmPkg:
+		converted, err := strconv.Atoi(info.qualifierValue(pkg.EpochQualifier))
+		var epoch *int
+		if err != nil {
+			epoch = nil
+		} else {
+			epoch = &converted
+		}
+		return pkg.RpmdbMetadataType, pkg.RpmdbMetadata{
+			Name:      p.PackageName,
+			Version:   p.PackageVersion,
+			Epoch:     epoch,
+			Arch:      info.qualifierValue(pkg.ArchQualifier),
+			SourceRpm: info.qualifierValue(pkg.UpstreamQualifier),
+			License:   p.PackageLicenseConcluded,
+			Vendor:    p.PackageOriginatorOrganization,
+		}
+	case pkg.DebPkg:
+		return pkg.DpkgMetadataType, pkg.DpkgMetadata{
+			Package:       p.PackageName,
+			Source:        upstreamName,
+			Version:       p.PackageVersion,
+			SourceVersion: upstreamVersion,
+			Architecture:  info.qualifierValue(pkg.ArchQualifier),
+			Maintainer:    p.PackageOriginatorPerson,
+		}
+	}
+	return pkg.UnknownMetadataType, nil
+}
+
+func extractPURL(p *spdx.Package2_2) string {
+	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(model.PurlExternalRefType) {
 			return r.Locator
 		}
@@ -272,8 +351,8 @@ func extractPURL(refs []*spdx.PackageExternalReference2_2) string {
 	return ""
 }
 
-func extractCPEs(refs []*spdx.PackageExternalReference2_2) (cpes []pkg.CPE) {
-	for _, r := range refs {
+func extractCPEs(p *spdx.Package2_2) (cpes []pkg.CPE) {
+	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(model.Cpe23ExternalRefType) {
 			cpe, err := pkg.NewCPE(r.Locator)
 			if err != nil {
