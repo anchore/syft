@@ -18,6 +18,9 @@ const (
 
 	// this qualifier is not in the pURL spec, but is used by grype to perform indirect matching based on source information
 	purlUpstreamQualifier = "upstream"
+
+	purlCargoPkgType  = "cargo"
+	purlGradlePkgType = "gradle"
 )
 
 type urlIdentifier interface {

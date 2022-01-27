@@ -1,12 +1,13 @@
 package pkg
 
 import (
+	"github.com/scylladb/go-set/strset"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPackageTypeFromPURL(t *testing.T) {
+func TestTypeFromPURL(t *testing.T) {
 
 	tests := []struct {
 		name     string
@@ -54,9 +55,29 @@ func TestPackageTypeFromPURL(t *testing.T) {
 			expected: JavaPkg,
 		},
 	}
+
+	var pkgTypes []string
+	var expectedTypes = strset.New()
+	for _, ty := range AllPkgs {
+		expectedTypes.Add(string(ty))
+	}
+
+	// testing microsoft packages and jenkins-plugins is not valid for purl at this time
+	expectedTypes.Remove(string(KbPkg))
+	expectedTypes.Remove(string(JenkinsPluginPkg))
+
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {
-			assert.Equal(t, test.expected, PackageTypeFromPURL(test.purl))
+			actual := TypeFromPURL(test.purl)
+
+			if actual != "" {
+				pkgTypes = append(pkgTypes, string(actual))
+			}
+
+			assert.Equal(t, test.expected, actual)
 		})
 	}
+
+	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes, "missing one or more package types to test against (maybe a package type was added?)")
+
 }

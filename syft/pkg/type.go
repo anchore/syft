@@ -60,23 +60,24 @@ func (t Type) PackageURLType() string {
 	case GoModulePkg:
 		return packageurl.TypeGolang
 	case RustPkg:
-		return Cargo
+		return "cargo"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
 	}
 }
 
-func PackageTypeFromPURL(p string) Type {
+
+func TypeFromPURL(p string) Type {
 	purl, err := packageurl.FromString(p)
 	if err != nil {
 		return UnknownPkg
 	}
 
-	return PackageTypeByName(purl.Type)
+	return TypeByName(purl.Type)
 }
 
-func PackageTypeByName(name string) Type {
+func TypeByName(name string) Type {
 	switch name {
 	case packageurl.TypeDebian, "deb":
 		return DebPkg
@@ -96,7 +97,7 @@ func PackageTypeByName(name string) Type {
 		return PythonPkg
 	case packageurl.TypeGem:
 		return GemPkg
-	case Cargo, "crate":
+	case "cargo", "crate":
 		return RustPkg
 	default:
 		return UnknownPkg
