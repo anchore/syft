@@ -1,11 +1,10 @@
 package pkg
 
 import (
-	"strings"
-	"testing"
-
 	"github.com/anchore/syft/syft/linux"
 	"github.com/sergi/go-diff/diffmatchpatch"
+	"strings"
+	"testing"
 
 	"github.com/go-test/deep"
 )

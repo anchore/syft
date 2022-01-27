@@ -1,11 +1,5 @@
 package linux
 
-import (
-	"strings"
-
-	"github.com/anchore/packageurl-go"
-)
-
 // Release represents Linux Distribution release information as specified from https://www.freedesktop.org/software/systemd/man/os-release.html
 type Release struct {
 	PrettyName       string   `cyclonedx:"prettyName"` // A pretty operating system name in a format suitable for presentation to the user.
@@ -38,29 +32,4 @@ func (r *Release) String() string {
 	}
 
 	return r.ID + " " + r.VersionID
-}
-
-func NewFromPURLDistro(purl string) *Release {
-	// if package has distro information, use it
-	p, err := packageurl.FromString(purl)
-	if err == nil {
-		for _, q := range p.Qualifiers {
-			if q.Key == "distro" {
-				split := strings.Split(q.Value, "-")
-				if len(split) > 1 {
-					name := split[0]
-					version := split[1]
-					return &Release{
-						PrettyName: name,
-						Name:       name,
-						ID:         name,
-						IDLike:     []string{name},
-						Version:    version,
-						VersionID:  version,
-					}
-				}
-			}
-		}
-	}
-	return nil
 }
