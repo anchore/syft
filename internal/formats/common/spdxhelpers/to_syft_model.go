@@ -16,16 +16,11 @@ import (
 )
 
 func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
-	typ := pkg.UnknownPkg
-
 	release := findSyftLinuxRelease(doc)
-	if release != nil {
-		typ = pkg.PackageTypeByName(release.Name)
-	}
 
 	spdxIDMap := make(map[string]interface{})
 
-	collectSyftPackages(spdxIDMap, doc, typ)
+	collectSyftPackages(spdxIDMap, doc)
 
 	collectSyftFiles(spdxIDMap, doc)
 
@@ -221,14 +216,13 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 	return out
 }
 
-func collectSyftPackages(spdxIDMap map[string]interface{}, doc *spdx.Document2_2, defaultType pkg.Type) {
+func collectSyftPackages(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
 	for _, p := range doc.Packages {
-		syftPkg := toSyftPackage(p, defaultType)
+		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = &syftPkg
 		for _, f := range p.Files {
 			loc := toSyftLocation(f)
 			syftPkg.Locations = append(syftPkg.Locations, *loc)
-			// spdxIDMap[string(f.FileSPDXIdentifier)] = loc
 		}
 	}
 }
@@ -252,14 +246,10 @@ func requireAndTrimPrefix(val interface{}, prefix string) string {
 	return ""
 }
 
-func toSyftPackage(p *spdx.Package2_2, defaultType pkg.Type) pkg.Package {
+func toSyftPackage(p *spdx.Package2_2) pkg.Package {
 	purl := extractPURL(p.PackageExternalReferences)
-	typ := pkg.PackageTypeFromPURL(purl)
-	if typ == pkg.UnknownPkg {
-		typ = defaultType
-	}
 	sP := pkg.Package{
-		Type:     typ,
+		Type:     pkg.TypeFromPURL(purl),
 		Name:     p.PackageName,
 		Version:  p.PackageVersion,
 		Licenses: parseLicense(p.PackageLicenseDeclared),
