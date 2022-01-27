@@ -95,7 +95,7 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64&epoch=2&distro=centos-7",
 		},
 		{
-			name: Cargo,
+			name: "cargo",
 			pkg: Package{
 				Name:    "name",
 				Version: "v0.1.0",
