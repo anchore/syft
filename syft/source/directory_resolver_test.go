@@ -4,6 +4,7 @@
 package source
 
 import (
+	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -257,6 +258,45 @@ func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
 
 	assert.Len(t, refs, 1)
 	assert.Equal(t, "image-symlinks/file-1.txt", refs[0].RealPath)
+}
+
+func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		fixture string
+	}{
+		{
+			name:    "one degree",
+			fixture: "link_to_new_readme",
+		},
+		{
+			name:    "two degrees",
+			fixture: "link_to_link_to_new_readme",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple")
+			assert.NoError(t, err)
+
+			refs, err := resolver.FilesByPath(test.fixture)
+			require.NoError(t, err)
+			assert.Len(t, refs, 1)
+
+			reader, err := resolver.FileContentsByLocation(refs[0])
+			require.NoError(t, err)
+
+			actual, err := io.ReadAll(reader)
+			require.NoError(t, err)
+
+			expected, err := os.ReadFile("test-fixtures/symlinks-simple/readme")
+			require.NoError(t, err)
+
+			assert.Equal(t, string(expected), string(actual))
+		})
+	}
 }
 
 func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {

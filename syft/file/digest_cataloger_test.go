@@ -65,10 +65,11 @@ func TestDigestsCataloger_SimpleContents(t *testing.T) {
 			expected: testDigests(t, regularFiles, crypto.MD5, crypto.SHA1, crypto.SHA256),
 		},
 		{
-			name:       "directory returns error",
+			name:       "directory is ignored",
 			digests:    []crypto.Hash{crypto.MD5},
 			files:      []string{"test-fixtures/last"},
-			catalogErr: true,
+			expected:   make(map[source.Coordinates][]Digest), // empty
+			catalogErr: false,
 		},
 	}
 

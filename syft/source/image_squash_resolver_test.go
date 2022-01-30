@@ -1,6 +1,8 @@
 package source
 
 import (
+	"github.com/stretchr/testify/require"
+	"io"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
@@ -288,4 +290,57 @@ func Test_imageSquashResolver_hasFilesystemIDInLocation(t *testing.T) {
 		assert.NotEmpty(t, location.FileSystemID)
 	}
 
+}
+
+func TestSquashImageResolver_FilesContents(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		fixture  string
+		contents []string
+	}{
+		{
+			name:    "one degree",
+			fixture: "link-2",
+			contents: []string{
+				"NEW file override!", // always from the squashed perspective
+			},
+		},
+		{
+			name:    "two degrees",
+			fixture: "link-indirect",
+			contents: []string{
+				"NEW file override!", // always from the squashed perspective
+			},
+		},
+		{
+			name:     "dead link",
+			fixture:  "link-dead",
+			contents: []string{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
+
+			resolver, err := newImageSquashResolver(img)
+			assert.NoError(t, err)
+
+			refs, err := resolver.FilesByPath(test.fixture)
+			require.NoError(t, err)
+			assert.Len(t, refs, len(test.contents))
+
+			for idx, loc := range refs {
+
+				reader, err := resolver.FileContentsByLocation(loc)
+				require.NoError(t, err)
+
+				actual, err := io.ReadAll(reader)
+				require.NoError(t, err)
+
+				assert.Equal(t, test.contents[idx], string(actual))
+			}
+		})
+	}
 }

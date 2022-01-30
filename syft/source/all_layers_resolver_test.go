@@ -1,6 +1,8 @@
 package source
 
 import (
+	"github.com/stretchr/testify/require"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -300,4 +302,61 @@ func Test_imageAllLayersResolver_hasFilesystemIDInLocation(t *testing.T) {
 		assert.NotEmpty(t, location.FileSystemID)
 	}
 
+}
+
+func TestAllLayersImageResolver_FilesContents(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		fixture  string
+		contents []string
+	}{
+		{
+			name:    "one degree",
+			fixture: "link-2",
+			contents: []string{
+				"file 2!",            // from the first resolved layer's perspective
+				"NEW file override!", // from the second resolved layers perspective
+			},
+		},
+		{
+			name:    "two degrees",
+			fixture: "link-indirect",
+			contents: []string{
+				"file 2!",
+				"NEW file override!",
+			},
+		},
+		{
+			name:     "dead link",
+			fixture:  "link-dead",
+			contents: []string{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
+
+			resolver, err := newAllLayersResolver(img)
+			assert.NoError(t, err)
+
+			refs, err := resolver.FilesByPath(test.fixture)
+			require.NoError(t, err)
+
+			// the given path should have an overridden file
+			require.Len(t, refs, len(test.contents))
+
+			for idx, loc := range refs {
+				reader, err := resolver.FileContentsByLocation(loc)
+				require.NoError(t, err)
+
+				actual, err := io.ReadAll(reader)
+				require.NoError(t, err)
+
+				assert.Equal(t, test.contents[idx], string(actual))
+			}
+
+		})
+	}
 }

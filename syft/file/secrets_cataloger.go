@@ -75,6 +75,10 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, err
 	}
 
+	if metadata.Size == 0 {
+		return nil, nil
+	}
+
 	if i.skipFilesAboveSize > 0 && metadata.Size > i.skipFilesAboveSize {
 		return nil, nil
 	}

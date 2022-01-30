@@ -1,6 +1,7 @@
 package file
 
 import (
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"testing"
 
 	"github.com/anchore/syft/syft/source"
@@ -108,6 +109,64 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			test.expectedErr(t, err)
 
 			src, err := source.NewFromDirectory(test.fixtureDir)
+			test.expectedErr(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			test.expectedErr(t, err)
+
+			actualResults, err := c.Catalog(resolver)
+			test.expectedErr(t, err)
+
+			loc := source.NewLocation(test.location)
+
+			ok := false
+			for actual_loc, actual_classification := range actualResults {
+				if loc.RealPath == actual_loc.RealPath {
+					ok = true
+					assert.Equal(t, test.expected, actual_classification)
+				}
+			}
+
+			if !ok {
+				t.Fatalf("could not find test location=%q", test.location)
+			}
+
+		})
+	}
+}
+
+func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
+	tests := []struct {
+		name         string
+		fixtureImage string
+		location     string
+		expected     []Classification
+		expectedErr  func(assert.TestingT, error, ...interface{}) bool
+	}{
+		{
+			name:         "busybox-regression",
+			fixtureImage: "image-busybox",
+			location:     "/bin/busybox",
+			expected: []Classification{
+				{
+					Class: "busybox-binary",
+					Metadata: map[string]string{
+						"version": "1.35.0",
+					},
+				},
+			},
+			expectedErr: assert.NoError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			c, err := NewClassificationCataloger(DefaultClassifiers)
+			test.expectedErr(t, err)
+
+			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
+			src, err := source.NewFromImage(img, "test-img")
 			test.expectedErr(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)

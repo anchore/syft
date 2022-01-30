@@ -2,6 +2,7 @@ package file
 
 import (
 	"crypto"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -18,6 +19,8 @@ import (
 
 	"github.com/anchore/syft/syft/source"
 )
+
+var errUndigestableFile = errors.New("undigestable file")
 
 type DigestsCataloger struct {
 	hashes []crypto.Hash
@@ -39,8 +42,13 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
+
+		if errors.Is(err, errUndigestableFile) {
+			continue
+		}
+
 		if internal.IsErrPathPermission(err) {
-			log.Debugf("file digests cataloger skipping - %+v", err)
+			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
 			continue
 		}
 
@@ -56,6 +64,16 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 }
 
 func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]Digest, error) {
+	meta, err := resolver.FileMetadataByLocation(location)
+	if err != nil {
+		return nil, err
+	}
+
+	// we should only attempt to report digests for files that are regular files (don't attempt to resolve links)
+	if meta.Type != source.RegularFile {
+		return nil, errUndigestableFile
+	}
+
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, err

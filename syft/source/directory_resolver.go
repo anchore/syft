@@ -305,8 +305,15 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
+		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
+		evaluatedPath, err := filepath.EvalSymlinks(userStrPath)
+		if err != nil {
+			log.Warnf("unable to evaluate symlink for path=%q : %+v", userPath, err)
+			continue
+		}
+
 		// TODO: why not use stored metadata?
-		fileMeta, err := os.Stat(userStrPath)
+		fileMeta, err := os.Stat(evaluatedPath)
 		if errors.Is(err, os.ErrNotExist) {
 			// note: there are other kinds of errors other than os.ErrNotExist that may be given that is platform
 			// specific, but essentially hints at the same overall problem (that the path does not exist). Such an
@@ -317,7 +324,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			// invalid paths. This logging statement is meant to raise IO or permissions related problems.
 			var pathErr *os.PathError
 			if !errors.As(err, &pathErr) {
-				log.Warnf("path is not valid (%s): %+v", userStrPath, err)
+				log.Warnf("path is not valid (%s): %+v", evaluatedPath, err)
 			}
 			continue
 		}
@@ -329,11 +336,17 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 
 		if runtime.GOOS == WindowsOS {
 			userStrPath = windowsToPosix(userStrPath)
+			evaluatedPath = windowsToPosix(evaluatedPath)
 		}
 
 		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
 		if err == nil && exists {
-			references = append(references, NewLocationFromDirectory(r.responsePath(userStrPath), *ref))
+			loc := NewLocationFromDirectory(r.responsePath(userStrPath), *ref)
+			if evaluatedPath != userStrPath {
+				loc.VirtualPath = r.responsePath(evaluatedPath)
+			}
+
+			references = append(references, loc)
 		}
 	}
 
@@ -404,7 +417,8 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		for _, ref := range r.fileTree.AllFiles() {
+		// this should be all non-directory types
+		for _, ref := range r.fileTree.AllFiles(file.TypeReg, file.TypeSymlink, file.TypeHardLink, file.TypeBlockDevice, file.TypeCharacterDevice, file.TypeFifo) {
 			results <- NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
 		}
 	}()
