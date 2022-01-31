@@ -11,6 +11,7 @@ const (
 	CycloneDxJSONOption Option = "cyclonedx-json"
 	SPDXTagValueOption  Option = "spdx-tag-value"
 	SPDXJSONOption      Option = "spdx-json"
+	AttestationOption   Option = "attestation"
 )
 
 var AllOptions = []Option{
@@ -21,6 +22,7 @@ var AllOptions = []Option{
 	CycloneDxJSONOption,
 	SPDXTagValueOption,
 	SPDXJSONOption,
+	AttestationOption,
 }
 
 type Option string
@@ -43,6 +45,8 @@ func ParseOption(userStr string) Option {
 		return SPDXTagValueOption
 	case string(SPDXJSONOption), "spdxjson":
 		return SPDXJSONOption
+	case string(AttestationOption), "attest":
+		return AttestationOption
 	default:
 		return UnknownFormatOption
 	}
