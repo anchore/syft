@@ -31,16 +31,6 @@ type Descriptor struct {
 	Configuration interface{}
 }
 
-func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
-	for _, c := range cs {
-		for n := range c {
-			relationships = append(relationships, n)
-		}
-	}
-
-	return relationships
-}
-
 func AllCoordinates(sbom SBOM) []source.Coordinates {
 	set := source.NewCoordinateSet()
 	for coordinates := range sbom.Artifacts.FileMetadata {

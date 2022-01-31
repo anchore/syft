@@ -23,7 +23,6 @@ func All() []format.Format {
 		spdx22json.Format(),
 		spdx22tagvalue.Format(),
 		text.Format(),
-		attestation.Format(),
 	}
 }
 
