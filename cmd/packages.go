@@ -235,46 +235,58 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
+func generateSBOM(userInput string, errs chan error) (*sbom.SBOM, *source.Source, error) {
+	tasks, err := tasks()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+	}
+	if cleanup != nil {
+		defer cleanup()
+	}
+
+	s := sbom.SBOM{
+		Source: src.Metadata,
+		Descriptor: sbom.Descriptor{
+			Name:          internal.ApplicationName,
+			Version:       version.FromBuild().Version,
+			Configuration: appConfig,
+		},
+	}
+
+	s = buildRelationships(s, src, tasks, errs)
+
+	return &s, src, nil
+}
+
+func buildRelationships(s sbom.SBOM, src *source.Source, tasks []task, errs chan error) sbom.SBOM {
+	var relationships []<-chan artifact.Relationship
+	for _, task := range tasks {
+		c := make(chan artifact.Relationship)
+		relationships = append(relationships, c)
+		go runTask(task, &s.Artifacts, src, c, errs)
+	}
+
+	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
+
+	return s
+}
+
 func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-
-		tasks, err := tasks()
+		s, src, err := generateSBOM(userInput, errs)
 		if err != nil {
 			errs <- err
 			return
 		}
-
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
-		if err != nil {
-			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
-			return
-		}
-		if cleanup != nil {
-			defer cleanup()
-		}
-
-		s := sbom.SBOM{
-			Source: src.Metadata,
-			Descriptor: sbom.Descriptor{
-				Name:          internal.ApplicationName,
-				Version:       version.FromBuild().Version,
-				Configuration: appConfig,
-			},
-		}
-
-		var relationships []<-chan artifact.Relationship
-		for _, task := range tasks {
-			c := make(chan artifact.Relationship)
-			relationships = append(relationships, c)
-
-			go runTask(task, &s.Artifacts, src, c, errs)
-		}
-		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
-
 		if appConfig.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, s); err != nil {
+			if err := runPackageSbomUpload(src, *s); err != nil {
 				errs <- err
 				return
 			}
@@ -282,7 +294,7 @@ func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
-			Value: func() error { return writer.Write(s) },
+			Value: func() error { return writer.Write(*s) },
 		})
 	}()
 	return errs

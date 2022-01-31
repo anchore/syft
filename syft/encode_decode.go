@@ -17,6 +17,7 @@ func Encode(s sbom.SBOM, option format.Option) ([]byte, error) {
 	if f == nil {
 		return nil, fmt.Errorf("unsupported format: %+v", option)
 	}
+
 	buff := bytes.Buffer{}
 
 	if err := f.Encode(&buff, s); err != nil {
