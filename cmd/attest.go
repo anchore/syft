@@ -9,7 +9,6 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format"
@@ -57,22 +56,11 @@ var (
 )
 
 func attestExec(_ *cobra.Command, args []string) error {
-	writer, err := makeWriter([]string{string(format.AttestationOption)}, appConfig.File)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := writer.Close(); err != nil {
-			log.Warnf("unable to write to attestation destination: %w", err)
-		}
-	}()
-
 	// can only be an image for attestation
 	userInput := args[0]
 
 	ko := sign.KeyOpts{
-		KeyRef: appConfig.File,
+		KeyRef: "./cosign.key",
 	}
 
 	return eventLoop(
