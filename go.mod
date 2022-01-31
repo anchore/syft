@@ -57,3 +57,5 @@ require (
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+replace github.com/anchore/stereoscope => github.com/jonasagx/stereoscope v0.0.0-20220131221411-2844f306cc4c
