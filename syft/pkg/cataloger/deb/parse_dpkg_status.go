@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
@@ -154,7 +155,7 @@ func extractSourceVersion(source string) (string, string) {
 }
 
 // handleNewKeyValue parse a new key-value pair from the given unprocessed line
-func handleNewKeyValue(line string) (string, interface{}, error) {
+func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 	if i := strings.Index(line, ":"); i > 0 {
 		var key = strings.TrimSpace(line[0:i])
 		// mapstruct cant handle "-"
@@ -165,6 +166,11 @@ func handleNewKeyValue(line string) (string, interface{}, error) {
 		switch key {
 		case "InstalledSize":
 			numVal, err := strconv.Atoi(val)
+			// TODO: add smarter parser
+			if errors.Is(err, strconv.ErrSyntax) {
+				log.Debugf("%s format is invalid %s: %v", line, val, err)
+				return key, 0, nil
+			}
 			if err != nil {
 				return "", nil, fmt.Errorf("bad installed-size value=%q: %w", val, err)
 			}

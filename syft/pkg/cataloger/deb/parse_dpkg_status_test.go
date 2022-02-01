@@ -94,6 +94,48 @@ func TestSinglePackage(t *testing.T) {
 		})
 	}
 }
+func TestIgnoreFormatError(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected pkg.DpkgMetadata
+	}{
+		{
+			name: "ignore installed size due to format",
+			expected: pkg.DpkgMetadata{
+				Package:       "apt",
+				Source:        "apt-dev",
+				Version:       "1.8.2",
+				Architecture:  "amd64",
+				InstalledSize: 0,
+				Maintainer:    "APT Development Team <deity@lists.debian.org>",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			file, err := os.Open("test-fixtures/status/installed-size-4KB")
+			if err != nil {
+				t.Fatal("Unable to read test_fixtures/single: ", err)
+			}
+			defer func() {
+				err := file.Close()
+				if err != nil {
+					t.Fatal("closing file failed:", err)
+				}
+			}()
+
+			reader := bufio.NewReader(file)
+
+			entry, err := parseDpkgStatusEntry(reader)
+			if err != nil {
+				t.Fatal("Unable to read file contents: ", err)
+			}
+
+			compareEntries(t, entry, test.expected)
+		})
+	}
+}
 
 func TestMultiplePackages(t *testing.T) {
 	tests := []struct {
@@ -204,7 +246,6 @@ func TestMultiplePackages(t *testing.T) {
 }
 
 func TestSourceVersionExtract(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		input    string
