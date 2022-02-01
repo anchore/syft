@@ -27,6 +27,7 @@ import (
 )
 
 var (
+	keyPath   string
 	attestCmd = &cobra.Command{
 		Use:   "attest [SOURCE]",
 		Short: "Generate a package SBOM as an attestation to [SOURCE]",
@@ -55,6 +56,7 @@ var (
 	}
 )
 
+// TODO: does not play well with TUI interface
 func passFunc(isPass bool) (b []byte, err error) {
 	return b, err
 }
@@ -64,7 +66,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	userInput := args[0]
 
 	ko := sign.KeyOpts{
-		KeyRef:   "../cosign.key",
+		KeyRef:   keyPath,
 		PassFunc: passFunc,
 	}
 
@@ -151,8 +153,7 @@ func init() {
 
 func setAttestFlags(flags *pflag.FlagSet) {
 	// Key options
-	flags.StringP(
-		"key", "", "",
+	flags.StringVarP(&keyPath, "key", "", "",
 		"private key to use to sign attestation",
 	)
 }
