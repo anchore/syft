@@ -50,7 +50,7 @@ var (
 				defer profile.Start(profile.MemProfile).Stop()
 			}
 
-			return attestExec(cmd, args)
+			return attestExec(cmd.Context(), cmd, args)
 		},
 	}
 )
@@ -59,7 +59,7 @@ func passFunc(isPass bool) (b []byte, err error) {
 	return b, err
 }
 
-func attestExec(_ *cobra.Command, args []string) error {
+func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation
 	userInput := args[0]
 
@@ -69,7 +69,7 @@ func attestExec(_ *cobra.Command, args []string) error {
 	}
 
 	return eventLoop(
-		attestationExecWorker(userInput, ko),
+		attestationExecWorker(ctx, userInput, ko),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -77,7 +77,7 @@ func attestExec(_ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(userInput string, ko sign.KeyOpts) <-chan error {
+func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpts) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -95,7 +95,7 @@ func attestationExecWorker(userInput string, ko sign.KeyOpts) <-chan error {
 			return
 		}
 
-		err = generateAttestation(bytes, src, ko)
+		err = generateAttestation(ctx, bytes, src, ko)
 		if err != nil {
 			errs <- err
 			return
@@ -105,7 +105,7 @@ func attestationExecWorker(userInput string, ko sign.KeyOpts) <-chan error {
 }
 
 // TODO: context object injection
-func generateAttestation(predicate []byte, src *source.Source, ko sign.KeyOpts) error {
+func generateAttestation(ctx context.Context, predicate []byte, src *source.Source, ko sign.KeyOpts) error {
 	predicateType := in_toto.PredicateSPDX
 
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
