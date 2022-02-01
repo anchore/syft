@@ -55,12 +55,17 @@ var (
 	}
 )
 
+func passFunc(isPass bool) (b []byte, err error) {
+	return b, err
+}
+
 func attestExec(_ *cobra.Command, args []string) error {
 	// can only be an image for attestation
 	userInput := args[0]
 
 	ko := sign.KeyOpts{
-		KeyRef: "./cosign.key",
+		KeyRef:   "../cosign.key",
+		PassFunc: passFunc,
 	}
 
 	return eventLoop(
