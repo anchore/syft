@@ -143,6 +143,16 @@ func TestDetectScheme(t *testing.T) {
 			expectedLocation: "some/path-to-dir",
 		},
 		{
+			name:      "found-podman-image-scheme",
+			userInput: "podman:something:latest",
+			detection: detectorResult{
+				src: image.PodmanDaemonSource,
+				ref: "something:latest",
+			},
+			expectedScheme:   ImageScheme,
+			expectedLocation: "something:latest",
+		},
+		{
 			name:      "explicit-dir",
 			userInput: "dir:some/path-to-dir",
 			detection: detectorResult{
