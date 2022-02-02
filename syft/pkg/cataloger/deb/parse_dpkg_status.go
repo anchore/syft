@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/jonasagx/datasize"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -165,16 +163,12 @@ func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 		// further processing of values based on the key that was discovered
 		switch key {
 		case "InstalledSize":
-			numVal, err := strconv.Atoi(val)
-			// TODO: add smarter parser
-			if errors.Is(err, strconv.ErrSyntax) {
-				log.Debugf("%s format is invalid %s: %v", line, val, err)
-				return key, 0, nil
-			}
+			var s datasize.ByteSize
+			err := s.UnmarshalText([]byte(val))
 			if err != nil {
 				return "", nil, fmt.Errorf("bad installed-size value=%q: %w", val, err)
 			}
-			return key, numVal, nil
+			return key, int(s.Bytes()), nil
 		default:
 			return key, val, nil
 		}

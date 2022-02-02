@@ -2,10 +2,14 @@ package deb
 
 import (
 	"bufio"
+	"errors"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
@@ -20,11 +24,13 @@ func compareEntries(t *testing.T, left, right pkg.DpkgMetadata) {
 
 func TestSinglePackage(t *testing.T) {
 	tests := []struct {
-		name     string
-		expected pkg.DpkgMetadata
+		name        string
+		expected    pkg.DpkgMetadata
+		fixturePath string
 	}{
 		{
-			name: "Test Single Package",
+			name:        "Test Single Package",
+			fixturePath: filepath.Join("test-fixtures", "status", "single"),
 			expected: pkg.DpkgMetadata{
 				Package:       "apt",
 				Source:        "apt-dev",
@@ -68,53 +74,22 @@ func TestSinglePackage(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/status/single")
-			if err != nil {
-				t.Fatal("Unable to read test_fixtures/single: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
-
-			reader := bufio.NewReader(file)
-
-			entry, err := parseDpkgStatusEntry(reader)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
-
-			compareEntries(t, entry, test.expected)
-		})
-	}
-}
-func TestIgnoreFormatError(t *testing.T) {
-	tests := []struct {
-		name     string
-		expected pkg.DpkgMetadata
-	}{
 		{
-			name: "ignore installed size due to format",
+			name:        "ignore installed size due to format",
+			fixturePath: filepath.Join("test-fixtures", "status", "installed-size-4KB"),
 			expected: pkg.DpkgMetadata{
 				Package:       "apt",
 				Source:        "apt-dev",
 				Version:       "1.8.2",
 				Architecture:  "amd64",
-				InstalledSize: 0,
+				InstalledSize: 4096,
 				Maintainer:    "APT Development Team <deity@lists.debian.org>",
 			},
-		},
-	}
+		}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/status/installed-size-4KB")
+			file, err := os.Open(test.fixturePath)
 			if err != nil {
 				t.Fatal("Unable to read test_fixtures/single: ", err)
 			}
@@ -280,6 +255,70 @@ func TestSourceVersionExtract(t *testing.T) {
 				t.Errorf("mismatch version for %q : %q!=%q", test.input, version, test.expected[1])
 			}
 
+		})
+	}
+}
+
+func Test_extractAllFields(t *testing.T) {
+	tests := []struct {
+		name  string
+		input *bufio.Reader
+		want  map[string]interface{}
+		err   error
+	}{
+		{
+			name:  "no more packages",
+			input: bufio.NewReader(strings.NewReader(`Package: apt`)),
+			want:  map[string]interface{}{},
+			err:   errEndOfPackages,
+		},
+		{
+			name: "duplicated key",
+			input: bufio.NewReader(strings.NewReader(`
+Package: apt
+Package: apt-get
+
+`)),
+			want: nil,
+			err:  errors.New("duplicate key discovered: Package"),
+		},
+		{
+			name: "no match for continuation",
+			input: bufio.NewReader(strings.NewReader(`  Package: apt
+
+`)),
+			want: nil,
+			err:  errors.New("no match for continuation: line: '  Package: apt'"),
+		},
+		{
+			name: "find keys",
+			input: bufio.NewReader(strings.NewReader(`Package: apt
+Status: install ok installed
+
+`)),
+			want: map[string]interface{}{
+				"Package": "apt",
+				"Status":  "install ok installed",
+			},
+		},
+		{
+			name: "ignore installed size",
+			input: bufio.NewReader(strings.NewReader(`Package: apt
+Installed-Size: 4KB
+
+`)),
+			want: map[string]interface{}{
+				"Package":       "apt",
+				"InstalledSize": 4096,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := extractAllFields(tt.input)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.err, err)
 		})
 	}
 }
