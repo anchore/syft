@@ -232,7 +232,7 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# build release snapshots
-	$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml
+	$(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: snapshot-with-signing
 snapshot-with-signing: ## Build snapshot release binaries and packages (with dummy signing)
@@ -245,7 +245,7 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	rm -f .github/scripts/apple-signing/log/signing-*
 
 	# build release snapshots
-	bash -c "$(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/signing-* && false)"
+	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/signing-* && false)"
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac

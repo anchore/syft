@@ -72,9 +72,7 @@ run_test_case test_positive_snapshot_download_asset "linux" "arm64" "tar.gz"
 run_test_case test_positive_snapshot_download_asset "linux" "arm64" "rpm"
 run_test_case test_positive_snapshot_download_asset "linux" "arm64" "deb"
 run_test_case test_positive_snapshot_download_asset "darwin" "amd64" "tar.gz"
-run_test_case test_positive_snapshot_download_asset "darwin" "amd64" "zip"
 run_test_case test_positive_snapshot_download_asset "darwin" "arm64" "tar.gz"
-run_test_case test_positive_snapshot_download_asset "darwin" "arm64" "zip"
 run_test_case test_positive_snapshot_download_asset "windows" "amd64" "zip"
 # note: the mac signing process produces a dmg which is not part of the snapshot process (thus is not exercised here)
 

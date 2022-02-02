@@ -7,7 +7,7 @@ env:
   - DOCKER_CLI_EXPERIMENTAL=enabled
 
 builds:
-  - id: linux-builds
+  - id: linux-build
     binary: syft
     goos:
       - linux
@@ -27,7 +27,7 @@ builds:
       -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
       -X github.com/anchore/syft/internal/version.gitDescription={{.Summary}}
 
-  - id: darwin-builds
+  - id: darwin-build
     binary: syft
     goos:
       - darwin
@@ -38,7 +38,7 @@ builds:
     env: *build-env
     ldflags: *build-ldflags
 
-  - id: windows-builds
+  - id: windows-build
     binary: syft
     goos:
       - windows
@@ -52,16 +52,16 @@ builds:
 archives:
   - id: linux-archives
     builds:
-      - linux-builds
+      - linux-build
 
   - id: darwin-archives
     builds:
-      - darwin-builds
+      - darwin-build
 
   - id: windows-archives
     format: zip
     builds:
-      - windows-builds
+      - windows-build
 
 signs:
   - artifacts: archive

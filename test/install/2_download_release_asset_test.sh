@@ -33,8 +33,6 @@ release=$(get_release_tag "${OWNER}" "${REPO}" "latest" )
 # exercise all possible assets against a real github release (based on asset listing from https://github.com/anchore/syft/releases/tag/v0.36.0)
 run_test_case test_download_release_asset "${release}" "darwin" "amd64" "tar.gz" "application/gzip"
 run_test_case test_download_release_asset "${release}" "darwin" "arm64" "tar.gz" "application/gzip"
-run_test_case test_download_release_asset "${release}" "darwin" "arm64" "zip" "application/zip"
-run_test_case test_download_release_asset "${release}" "darwin" "amd64" "dmg" "application/zlib"
 run_test_case test_download_release_asset "${release}" "linux" "amd64" "tar.gz" "application/gzip"
 run_test_case test_download_release_asset "${release}" "linux" "amd64" "rpm" "application/x-rpm"
 run_test_case test_download_release_asset "${release}" "linux" "amd64" "deb" "application/vnd.debian.binary-package"
