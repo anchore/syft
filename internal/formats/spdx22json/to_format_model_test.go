@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 
+	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
 	"github.com/anchore/syft/internal/formats/spdx22json/model"
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
@@ -99,18 +100,18 @@ func Test_lookupRelationship(t *testing.T) {
 	tests := []struct {
 		input   artifact.RelationshipType
 		exists  bool
-		ty      model.RelationshipType
+		ty      spdxhelpers.RelationshipType
 		comment string
 	}{
 		{
 			input:  artifact.ContainsRelationship,
 			exists: true,
-			ty:     model.ContainsRelationship,
+			ty:     spdxhelpers.ContainsRelationship,
 		},
 		{
 			input:   artifact.OwnershipByFileOverlapRelationship,
 			exists:  true,
-			ty:      model.OtherRelationship,
+			ty:      spdxhelpers.OtherRelationship,
 			comment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
 		},
 		{

@@ -7,7 +7,6 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal/formats/spdx22json/model"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
@@ -84,7 +83,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 	for _, r := range doc.Relationships {
 		// FIXME what to do with r.RefA.DocumentRefID and  r.RefA.SpecialID
 		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.CreationInfo.SPDXIdentifier) {
-			log.Debugf("relationship to external document: %+v", r)
+			log.Debugf("ignoring relationship to external document: %+v", r)
 			continue
 		}
 		a := spdxIDMap[string(r.RefA.ElementRefID)]
@@ -98,23 +97,37 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 		}
 		var to artifact.Identifiable
 		var typ artifact.RelationshipType
-		switch r.Relationship {
-		case "CONTAINS":
-			if toLocationOk {
+		if toLocationOk {
+			switch RelationshipType(r.Relationship) {
+			case ContainsRelationship:
 				from.Locations = append(from.Locations, *toLocation)
 				typ = artifact.ContainsRelationship
 				to = toLocation
 			}
-		case "OVERWRITE":
-			typ = artifact.OwnershipByFileOverlapRelationship
-			to = toPackage
+		} else {
+			switch RelationshipType(r.Relationship) {
+			case ContainsRelationship:
+				typ = artifact.ContainsRelationship
+				to = toLocation
+			case BuildDependencyOfRelationship:
+				typ = artifact.BuildDependencyOfRelationship
+				to = toPackage
+			case RuntimeDependencyOfRelationship:
+				typ = artifact.RuntimeDependencyOfRelationship
+				to = toPackage
+			case OtherRelationship:
+				// Encoding uses a specifically formatted comment...
+				if strings.Index(r.RelationshipComment, string(artifact.OwnershipByFileOverlapRelationship)) == 0 {
+					typ = artifact.RuntimeDependencyOfRelationship
+					to = toPackage
+				}
+			}
 		}
 		if typ != "" && to != nil {
 			out = append(out, artifact.Relationship{
 				From: from,
 				To:   to,
 				Type: typ,
-				Data: nil, // FIXME should there be anything for this Data?
 			})
 		}
 	}
@@ -204,7 +217,9 @@ func toSyftPackage(p *spdx.Package2_2) *pkg.Package {
 }
 
 func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interface{}) {
-	upstream := strings.Split(info.qualifierValue(pkg.PURLQualifierUpstream), "@")
+	arch := info.qualifierValue(pkg.PURLQualifierArch)
+	upstreamValue := info.qualifierValue(pkg.PURLQualifierUpstream)
+	upstream := strings.SplitN(upstreamValue, "@", 2)
 	upstreamName := upstream[0]
 	upstreamVersion := ""
 	if len(upstream) > 1 {
@@ -218,7 +233,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Maintainer:    p.PackageSupplierPerson,
 			Version:       p.PackageVersion,
 			License:       p.PackageLicenseDeclared,
-			Architecture:  info.qualifierValue(pkg.PURLQualifierArch),
+			Architecture:  arch,
 			URL:           p.PackageHomePage,
 			Description:   p.PackageDescription,
 		}
@@ -234,8 +249,8 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,
-			Arch:      info.qualifierValue(pkg.PURLQualifierArch),
-			SourceRpm: info.qualifierValue(pkg.PURLQualifierUpstream),
+			Arch:      arch,
+			SourceRpm: upstreamValue,
 			License:   p.PackageLicenseConcluded,
 			Vendor:    p.PackageOriginatorOrganization,
 		}
@@ -245,7 +260,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Source:        upstreamName,
 			Version:       p.PackageVersion,
 			SourceVersion: upstreamVersion,
-			Architecture:  info.qualifierValue(pkg.PURLQualifierArch),
+			Architecture:  arch,
 			Maintainer:    p.PackageOriginatorPerson,
 		}
 	}
@@ -254,7 +269,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 
 func findPURLValue(p *spdx.Package2_2) string {
 	for _, r := range p.PackageExternalReferences {
-		if r.RefType == string(model.PurlExternalRefType) {
+		if r.RefType == string(PurlExternalRefType) {
 			return r.Locator
 		}
 	}
@@ -263,7 +278,7 @@ func findPURLValue(p *spdx.Package2_2) string {
 
 func extractCPEs(p *spdx.Package2_2) (cpes []pkg.CPE) {
 	for _, r := range p.PackageExternalReferences {
-		if r.RefType == string(model.Cpe23ExternalRefType) {
+		if r.RefType == string(Cpe23ExternalRefType) {
 			cpe, err := pkg.NewCPE(r.Locator)
 			if err != nil {
 				log.Warnf("unable to extract SPDX CPE=%q: %+v", r.Locator, err)

@@ -112,3 +112,85 @@ func TestToSyftModel(t *testing.T) {
 	assert.Equal(t, p2meta.SourceVersion, "9.1.3")
 	assert.Len(t, p2.CPEs, 3)
 }
+
+func Test_extractMetadata(t *testing.T) {
+	oneTwoThreeFour := 1234
+	tests := []struct {
+		pkg      spdx.Package2_2
+		metaType pkg.MetadataType
+		meta     interface{}
+	}{
+		{
+			pkg: spdx.Package2_2{
+				PackageName:    "SomeDebPkg",
+				PackageVersion: "43.1.235",
+				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+					{
+						Category: "PACKAGE_MANAGER",
+						Locator:  "pkg:deb/pkg-2@7.3.1?arch=x86_64&upstream=somedebpkg-origin@9.1.3&distro=debian-3.10.9",
+						RefType:  "purl",
+					},
+				},
+			},
+			metaType: pkg.DpkgMetadataType,
+			meta: pkg.DpkgMetadata{
+				Package:       "SomeDebPkg",
+				Source:        "somedebpkg-origin",
+				Version:       "43.1.235",
+				SourceVersion: "9.1.3",
+				Architecture:  "x86_64",
+			},
+		},
+		{
+			pkg: spdx.Package2_2{
+				PackageName:    "SomeApkPkg",
+				PackageVersion: "3.2.9",
+				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+					{
+						Category: "PACKAGE_MANAGER",
+						Locator:  "pkg:alpine/pkg-2@7.3.1?arch=x86_64&upstream=apk-origin@9.1.3&distro=alpine-3.10.9",
+						RefType:  "purl",
+					},
+				},
+			},
+			metaType: pkg.ApkMetadataType,
+			meta: pkg.ApkMetadata{
+				Package:       "SomeApkPkg",
+				OriginPackage: "apk-origin",
+				Version:       "3.2.9",
+				Architecture:  "x86_64",
+			},
+		},
+		{
+			pkg: spdx.Package2_2{
+				PackageName:    "SomeRpmPkg",
+				PackageVersion: "13.2.79",
+				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+					{
+						Category: "PACKAGE_MANAGER",
+						Locator:  "pkg:rpm/pkg-2@7.3.1?arch=x86_64&epoch=1234&upstream=some-rpm-origin-1.16.3&distro=alpine-3.10.9",
+						RefType:  "purl",
+					},
+				},
+			},
+			metaType: pkg.RpmdbMetadataType,
+			meta: pkg.RpmdbMetadata{
+				Name:      "SomeRpmPkg",
+				Version:   "13.2.79",
+				Epoch:     &oneTwoThreeFour,
+				Arch:      "x86_64",
+				Release:   "",
+				SourceRpm: "some-rpm-origin-1.16.3",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.pkg.PackageName, func(t *testing.T) {
+			info := extractPkgInfo(&test.pkg)
+			metaType, meta := extractMetadata(&test.pkg, info)
+			assert.Equal(t, test.metaType, metaType)
+			assert.EqualValues(t, test.meta, meta)
+		})
+	}
+}
