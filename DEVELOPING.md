@@ -32,10 +32,10 @@ The main make tasks for common static analysis and testing are `lint`, `lint-fix
   for in-depth testing of code in the `cmd/` package (such as testing the proper behavior of application configuration,
   CLI switches, and glue code before syft library calls).
 
-- `acceptance`: located within `test/acceptance`, these are smoke-like tests that ensure that application packaging
-  and installation works as expected. For example, during release we provide RPM packages as a download artifact. We 
-  also have an accompanying RPM acceptance test that installs the RPM from a snapshot build and ensures the output
-  of a syft invocation matches canned expected output. New acceptance tests should be added for each release artifact
+- `acceptance`: located within `test/compare` and `test/install`, these are smoke-like tests that ensure that application  
+  packaging and installation works as expected. For example, during release we provide RPM packages as a download 
+  artifact. We also have an accompanying RPM acceptance test that installs the RPM from a snapshot build and ensures the 
+  output of a syft invocation matches canned expected output. New acceptance tests should be added for each release artifact
   and architecture supported (when possible).
 
 ### Data diversity and freshness assertions

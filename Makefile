@@ -4,8 +4,8 @@ RESULTSDIR = test/results
 COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=2m --config .golangci.yaml
-ACC_TEST_IMAGE = centos:8.2.2004
-ACC_DIR = ./test/acceptance
+COMPARE_TEST_IMAGE = centos:8.2.2004
+COMPARE_DIR = ./test/compare
 BOLD := $(shell tput -T linux bold)
 PURPLE := $(shell tput -T linux setaf 5)
 GREEN := $(shell tput -T linux setaf 2)
@@ -47,8 +47,8 @@ ifndef RESULTSDIR
 	$(error RESULTSDIR is not set)
 endif
 
-ifndef ACC_DIR
-	$(error ACC_DIR is not set)
+ifndef COMPARE_DIR
+	$(error COMPARE_DIR is not set)
 endif
 
 ifndef DISTDIR
@@ -70,11 +70,11 @@ endef
 ## Tasks
 
 .PHONY: all
-all: clean static-analysis test ## Run all linux-based checks (linting, license check, unit, integration, and linux acceptance tests)
+all: clean static-analysis test ## Run all linux-based checks (linting, license check, unit, integration, and linux compare tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 .PHONY: test
-test: unit validate-cyclonedx-schema integration benchmark acceptance-linux cli ## Run all tests (currently unit, integration, linux acceptance, and cli tests)
+test: unit validate-cyclonedx-schema integration benchmark compare-linux cli ## Run all tests (currently unit, integration, linux compare, and cli tests)
 
 .PHONY: help
 help:
@@ -167,20 +167,42 @@ benchmark: $(RESULTSDIR) ## Run benchmark tests and compare against the baseline
 show-benchstat:
 	@cat $(RESULTSDIR)/benchstat.txt
 
+# note: this is used by CI to determine if the install test fixture cache (docker image tars) should be busted
+install-fingerprint:
+	cd test/install && \
+		make cache.fingerprint
+
+install-test: $(SNAPSHOTDIR)
+	cd test/install && \
+		make
+
+install-test-cache-save: $(SNAPSHOTDIR)
+	cd test/install && \
+		make save
+
+install-test-cache-load: $(SNAPSHOTDIR)
+	cd test/install && \
+		make load
+
+install-test-ci-mac: $(SNAPSHOTDIR)
+	cd test/install && \
+		make ci-test-mac
+
 .PHONY: integration
 integration: ## Run integration tests
 	$(call title,Running integration tests)
-
 	go test -v ./test/integration
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
-	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/cache.fingerprint && echo "$(INTEGRATION_CACHE_BUSTER)" >> test/integration/test-fixtures/cache.fingerprint
+	$(call title,Integration test fixture fingerprint)
+	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | tee /dev/stderr | md5sum | tee test/integration/test-fixtures/cache.fingerprint && echo "$(INTEGRATION_CACHE_BUSTER)" >> test/integration/test-fixtures/cache.fingerprint
 
 .PHONY: java-packages-fingerprint
 java-packages-fingerprint:
-	@cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
-	make packages.fingerprint
+	$(call title,Java test fixture fingerprint)
+	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
+		make packages.fingerprint
 
 .PHONY: fixtures
 fixtures:
@@ -212,39 +234,40 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	$(TEMPDIR)/goreleaser release --skip-publish --skip-sign --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
-.PHONY: acceptance-mac
-acceptance-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binaries and packages (Mac)
-	$(call title,Running acceptance test: Run on Mac)
-	$(ACC_DIR)/mac.sh \
+.PHONY: compare-mac
+compare-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run compare tests on build snapshot binaries and packages (Mac)
+	$(call title,Running compare test: Run on Mac)
+	$(COMPARE_DIR)/mac.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR) \
-			$(ACC_TEST_IMAGE) \
+			$(COMPARE_DIR) \
+			$(COMPARE_TEST_IMAGE) \
 			$(RESULTSDIR)
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
-.PHONY: acceptance-linux
-acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages (Linux)
+.PHONY: compare-linux
+compare-linux: compare-test-deb-package-install compare-test-rpm-package-install ## Run compare tests on build snapshot binaries and packages (Linux)
 
-.PHONY: acceptance-test-deb-package-install
-acceptance-test-deb-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
-	$(call title,Running acceptance test: DEB install)
-	$(ACC_DIR)/deb.sh \
+.PHONY: compare-test-deb-package-install
+compare-test-deb-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
+	$(call title,Running compare test: DEB install)
+	$(COMPARE_DIR)/deb.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR) \
-			$(ACC_TEST_IMAGE) \
+			$(COMPARE_DIR) \
+			$(COMPARE_TEST_IMAGE) \
 			$(RESULTSDIR)
 
-.PHONY: acceptance-test-rpm-package-install
-acceptance-test-rpm-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
-	$(call title,Running acceptance test: RPM install)
-	$(ACC_DIR)/rpm.sh \
+.PHONY: compare-test-rpm-package-install
+compare-test-rpm-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
+	$(call title,Running compare test: RPM install)
+	$(COMPARE_DIR)/rpm.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR) \
-			$(ACC_TEST_IMAGE) \
+			$(COMPARE_DIR) \
+			$(COMPARE_TEST_IMAGE) \
 			$(RESULTSDIR)
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 cli-fingerprint:
+	$(call title,CLI test fixture fingerprint)
 	find test/cli/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/cli/test-fixtures/cache.fingerprint && echo "$(CLI_CACHE_BUSTER)" >> test/cli/test-fixtures/cache.fingerprint
 
 .PHONY: cli

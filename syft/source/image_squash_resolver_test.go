@@ -239,9 +239,10 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 		{
 			fixtureName:   "image-simple",
 			mimeType:      "text/plain",
-			expectedPaths: strset.New("/somefile-1.txt", "/somefile-2.txt", "/really/nested/file-3.txt"),
+			expectedPaths: strset.New("/somefile-1.txt", "/somefile-2.txt", "/really/nested/file-3.txt", "/really/nested", "/really"),
 		},
 	}
+
 	for _, test := range tests {
 		t.Run(test.fixtureName, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
@@ -252,7 +253,7 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
 			assert.NoError(t, err)
 
-			assert.Equal(t, test.expectedPaths.Size(), len(locations))
+			assert.Len(t, locations, test.expectedPaths.Size())
 			for _, l := range locations {
 				assert.True(t, test.expectedPaths.Has(l.RealPath), "does not have path %q", l.RealPath)
 			}
