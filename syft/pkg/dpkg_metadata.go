@@ -46,14 +46,14 @@ func (m DpkgMetadata) PackageURL(distro *linux.Release) string {
 	}
 
 	qualifiers := map[string]string{
-		ArchQualifier: m.Architecture,
+		PURLQualifierArch: m.Architecture,
 	}
 
 	if m.Source != "" {
 		if m.SourceVersion != "" {
-			qualifiers[UpstreamQualifier] = fmt.Sprintf("%s@%s", m.Source, m.SourceVersion)
+			qualifiers[PURLQualifierUpstream] = fmt.Sprintf("%s@%s", m.Source, m.SourceVersion)
 		} else {
-			qualifiers[UpstreamQualifier] = m.Source
+			qualifiers[PURLQualifierUpstream] = m.Source
 		}
 	}
 

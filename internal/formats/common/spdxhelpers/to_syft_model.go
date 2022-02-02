@@ -51,7 +51,7 @@ func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
 			log.Warnf("unable to parse purl: %s", purlValue)
 			continue
 		}
-		distro := findQualifierValue(purl, pkg.DistroQualifier)
+		distro := findQualifierValue(purl, pkg.PURLQualifierDistro)
 		if distro != "" {
 			parts := strings.Split(distro, "-")
 			name := parts[0]
@@ -204,7 +204,7 @@ func toSyftPackage(p *spdx.Package2_2) *pkg.Package {
 }
 
 func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interface{}) {
-	upstream := strings.Split(info.qualifierValue(pkg.UpstreamQualifier), "@")
+	upstream := strings.Split(info.qualifierValue(pkg.PURLQualifierUpstream), "@")
 	upstreamName := upstream[0]
 	upstreamVersion := ""
 	if len(upstream) > 1 {
@@ -218,12 +218,12 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Maintainer:    p.PackageSupplierPerson,
 			Version:       p.PackageVersion,
 			License:       p.PackageLicenseDeclared,
-			Architecture:  info.qualifierValue(pkg.ArchQualifier),
+			Architecture:  info.qualifierValue(pkg.PURLQualifierArch),
 			URL:           p.PackageHomePage,
 			Description:   p.PackageDescription,
 		}
 	case pkg.RpmPkg:
-		converted, err := strconv.Atoi(info.qualifierValue(pkg.EpochQualifier))
+		converted, err := strconv.Atoi(info.qualifierValue(pkg.PURLQualifierEpoch))
 		var epoch *int
 		if err != nil {
 			epoch = nil
@@ -234,8 +234,8 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,
-			Arch:      info.qualifierValue(pkg.ArchQualifier),
-			SourceRpm: info.qualifierValue(pkg.UpstreamQualifier),
+			Arch:      info.qualifierValue(pkg.PURLQualifierArch),
+			SourceRpm: info.qualifierValue(pkg.PURLQualifierUpstream),
 			License:   p.PackageLicenseConcluded,
 			Vendor:    p.PackageOriginatorOrganization,
 		}
@@ -245,7 +245,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Source:        upstreamName,
 			Version:       p.PackageVersion,
 			SourceVersion: upstreamVersion,
-			Architecture:  info.qualifierValue(pkg.ArchQualifier),
+			Architecture:  info.qualifierValue(pkg.PURLQualifierArch),
 			Maintainer:    p.PackageOriginatorPerson,
 		}
 	}
