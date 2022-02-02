@@ -98,8 +98,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 		var to artifact.Identifiable
 		var typ artifact.RelationshipType
 		if toLocationOk {
-			switch RelationshipType(r.Relationship) {
-			case ContainsRelationship:
+			if r.Relationship == string(ContainsRelationship) {
 				from.Locations = append(from.Locations, *toLocation)
 				typ = artifact.ContainsRelationship
 				to = toLocation
