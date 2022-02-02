@@ -34,136 +34,42 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    catalog,
-			LinuxDistribution: findSyftLinuxRelease(doc),
+			LinuxDistribution: findLinuxReleaseByPURL(doc),
 		},
 		Relationships: toSyftRelationships(spdxIDMap, doc),
 	}, nil
 }
 
-func findLinuxReleaseByDocument(doc *spdx.Document2_2) *linux.Release {
-	var p *spdx.Package2_2
-
-	if r := findSpdxRelationshipByType(doc, "DESCRIBES"); r != nil {
-		if string(r.RefA.ElementRefID) == "DOCUMENT" {
-			p = findSpdxPackageByID(doc, r.RefB.ElementRefID)
-		}
-	}
-
-	if r := findSpdxRelationshipByType(doc, "DESCRIBED_BY"); r != nil {
-		if string(r.RefB.ElementRefID) == "DOCUMENT" {
-			p = findSpdxPackageByID(doc, r.RefA.ElementRefID)
-		}
-	}
-
-	var name string
-	var version string
-
-	if p != nil {
-		name = p.PackageName
-		version = p.PackageVersion
-	}
-
-	if p != nil && (name == "" || version == "") {
-		// SPDX has relationship: PACKAGE_OF
-		// and Package External Reference PACKAGE-MANAGER
-		// spec references "PACKAGE-MANAGER" but JSON schema has "PACKAGE_MANAGER"
-		ref := findSpdxReferenceByName(p, "PACKAGE-MANAGER", "PACKAGE_MANAGER")
-
-		if ref != nil {
-			parts := strings.Split(ref.Locator, "-")
-			if len(parts) > 1 {
-				name = parts[0]
-				version = parts[1]
-			}
-		}
-	}
-
-	if name != "" && version != "" {
-		return &linux.Release{
-			PrettyName: name,
-			Name:       name,
-			ID:         name,
-			IDLike:     []string{name},
-			Version:    version,
-			VersionID:  version,
-		}
-	}
-
-	return nil
-}
-
 func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
 	for _, p := range doc.Packages {
-		purlValue := extractPURL(p)
-		if purlValue != "" {
-			purl, err := packageurl.FromString(purlValue)
-			if err != nil {
-				log.Warnf("unable to parse purl: %s", purlValue)
-			} else {
-				for _, qualifier := range purl.Qualifiers {
-					if qualifier.Key == "distro" {
-						parts := strings.Split(qualifier.Value, "-")
-						if len(parts) > 1 {
-							name := parts[0]
-							version := parts[1]
-							return &linux.Release{
-								PrettyName: name,
-								Name:       name,
-								ID:         name,
-								IDLike:     []string{name},
-								Version:    version,
-								VersionID:  version,
-							}
-						}
-					}
-				}
+		purlValue := findPURLValue(p)
+		if purlValue == "" {
+			continue
+		}
+		purl, err := packageurl.FromString(purlValue)
+		if err != nil {
+			log.Warnf("unable to parse purl: %s", purlValue)
+			continue
+		}
+		distro := findQualifierValue(purl, pkg.DistroQualifier)
+		if distro != "" {
+			parts := strings.Split(distro, "-")
+			name := parts[0]
+			version := ""
+			if len(parts) > 1 {
+				version = parts[1]
+			}
+			return &linux.Release{
+				PrettyName: name,
+				Name:       name,
+				ID:         name,
+				IDLike:     []string{name},
+				Version:    version,
+				VersionID:  version,
 			}
 		}
 	}
 
-	return nil
-}
-
-func findSyftLinuxRelease(doc *spdx.Document2_2) *linux.Release {
-	r := findLinuxReleaseByDocument(doc)
-	if r != nil {
-		return r
-	}
-
-	r = findLinuxReleaseByPURL(doc)
-	if r != nil {
-		return r
-	}
-
-	return nil
-}
-
-func findSpdxRelationshipByType(doc *spdx.Document2_2, typ string) *spdx.Relationship2_2 {
-	for _, r := range doc.Relationships {
-		if typ == r.Relationship {
-			return r
-		}
-	}
-	return nil
-}
-
-func findSpdxPackageByID(doc *spdx.Document2_2, id spdx.ElementID) *spdx.Package2_2 {
-	for _, p := range doc.Packages {
-		if p.PackageSPDXIdentifier == id {
-			return p
-		}
-	}
-	return nil
-}
-
-func findSpdxReferenceByName(p *spdx.Package2_2, categories ...string) *spdx.PackageExternalReference2_2 {
-	for _, r := range p.PackageExternalReferences {
-		for _, category := range categories {
-			if r.Category == category {
-				return r
-			}
-		}
-	}
 	return nil
 }
 
@@ -252,8 +158,12 @@ type pkgInfo struct {
 }
 
 func (p *pkgInfo) qualifierValue(name string) string {
-	for _, q := range p.purl.Qualifiers {
-		if q.Key == name {
+	return findQualifierValue(p.purl, name)
+}
+
+func findQualifierValue(purl packageurl.PackageURL, qualifier string) string {
+	for _, q := range purl.Qualifiers {
+		if q.Key == qualifier {
 			return q.Value
 		}
 	}
@@ -261,7 +171,7 @@ func (p *pkgInfo) qualifierValue(name string) string {
 }
 
 func extractPkgInfo(p *spdx.Package2_2) pkgInfo {
-	pu := extractPURL(p)
+	pu := findPURLValue(p)
 	purl, err := packageurl.FromString(pu)
 	if err != nil {
 		return pkgInfo{}
@@ -342,7 +252,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 	return pkg.UnknownMetadataType, nil
 }
 
-func extractPURL(p *spdx.Package2_2) string {
+func findPURLValue(p *spdx.Package2_2) string {
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(model.PurlExternalRefType) {
 			return r.Locator
