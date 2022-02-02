@@ -1,22 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-CI_HOME="/Users/runner"
-
-function exit_not_ci() {
-    printf "WARNING! It looks like this isn't the CI environment. This script modifies the macOS Keychain setup in ways you probably wouldn't want for your own machine. It also requires an Apple Developer ID Certificate that you shouldn't have outside of the CI environment.\n\nExiting early to make sure nothing bad happens.\n"
-    exit 1
-}
-
-if [[ "${HOME}" != "${CI_HOME}" ]]; then
-  exit_not_ci
-fi
-
-set +u
-if [ -z "${GITHUB_ACTIONS}" ]; then
-  exit_not_ci
-fi
-set -u
+assert_in_ci
 
 function setup_signing() {
   # Write signing certificate to disk from environment variable.

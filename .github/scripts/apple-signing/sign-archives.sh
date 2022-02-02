@@ -65,8 +65,6 @@ sign() {
       return 0
   fi
 
-  set -x
-
   codesign \
     -s "$MAC_SIGNING_IDENTITY" \
     -f \
@@ -75,17 +73,41 @@ sign() {
     --options runtime \
       $EXE_PATH
 
-  codesign --verify $EXE_PATH  --verbose=4
-}
+  if [ $? -ne 0 ]; then
+      exit_with_error "signing failed"
+  fi
 
-export -f sign
+  codesign --verify $EXE_PATH  --verbose=4
+
+  if [ $? -ne 0 ]; then
+      exit_with_error "signing verification failed"
+  fi
+}
 
 title "getting contents from the release archive: $ARCHIVE_ABS_PATH"
 tar -C "$UNARCHIVED_PATH" -xvf "$ARCHIVE_ABS_PATH"
+
+# invalidate the current archive, we only want an asset with signed binaries from this point forward
 rm "$ARCHIVE_ABS_PATH"
 
 title "signing binaries found in the release archive"
-find "$UNARCHIVED_PATH" -perm +111 -type f -exec bash -c 'sign "{}"' \;
+
+discovered_binaries=0
+tmp_pipe=$(mktemp -ut pipe.XXX)
+mkfifo "$tmp_pipe"
+
+find "$UNARCHIVED_PATH" -perm +111 -type f > "$tmp_pipe" &
+
+while IFS= read -r file; do
+  sign "$file"
+  ((discovered_binaries++))
+done < "$tmp_pipe"
+
+rm "$tmp_pipe"
+
+if [ "$discovered_binaries" = "0" ]; then
+    exit_with_error "found no binaries to sign"
+fi
 
 title "recreating the release archive: $ARCHIVE_ABS_PATH"
 (cd $UNARCHIVED_PATH && tar -czvf "$ARCHIVE_ABS_PATH" .)

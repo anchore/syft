@@ -68,21 +68,21 @@ EOF
   title "create the private key"
   openssl genrsa \
             -des3 \
-            -out $KEY_FILE \
+            -out "$KEY_FILE" \
             -passout "pass:$KEY_PASSWORD" \
            2048
 
   title "create the csr"
   openssl req \
             -new \
-            -key $KEY_FILE \
-            -out $CSR_FILE \
+            -key "$KEY_FILE" \
+            -out "$CSR_FILE" \
             -passin "pass:$KEY_PASSWORD" \
-            -config $EXT_FILE \
+            -config "$EXT_FILE" \
             -subj "/CN=$IDENTITY"
 
   commentary "verify the csr: we should see X509 v3 extensions for codesigning in the CSR"
-  openssl req -in $CSR_FILE -noout -text | grep -A1 "X509v3" || exit_with_error "could not find x509 extensions in CSR"
+  openssl req -in "$CSR_FILE" -noout -text | grep -A1 "X509v3" || exit_with_error "could not find x509 extensions in CSR"
 
   title "create the certificate"
   # note: Extensions in certificates are not transferred to certificate requests and vice versa. This means that
@@ -95,10 +95,10 @@ EOF
   openssl x509 \
             -req \
             -days 10000 \
-            -in $CSR_FILE \
-            -signkey $KEY_FILE \
-            -out $CERT_FILE \
-            -extfile $EXT_FILE \
+            -in "$CSR_FILE" \
+            -signkey "$KEY_FILE" \
+            -out "$CERT_FILE" \
+            -extfile "$EXT_FILE" \
             -passin "pass:$KEY_PASSWORD" \
             -extensions $EXT_SECTION
 
@@ -108,9 +108,9 @@ EOF
   title "export cert and private key to .p12 file"
   openssl pkcs12 \
             -export \
-            -out $P12_FILE \
-            -inkey $KEY_FILE \
-            -in $CERT_FILE \
+            -out "$P12_FILE" \
+            -inkey "$KEY_FILE" \
+            -in "$CERT_FILE" \
             -passin "pass:$KEY_PASSWORD" \
             -passout "pass:$P12_PASSWORD"
 
@@ -125,7 +125,7 @@ EOF
   security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
 
   set +e
-  if ! security verify-cert -k "$KEYCHAIN_PATH" -c $CERT_FILE &> /dev/null; then
+  if ! security verify-cert -k "$KEYCHAIN_PATH" -c "$CERT_FILE" &> /dev/null; then
     set -e
     title "import the cert into the dev keychain if it is not already trusted by the system"
 
@@ -134,15 +134,16 @@ EOF
     # note: set the partition list for this certificate's private key to include "apple-tool:" and "apple:" allows the codesign command to access this keychain item without an interactive user prompt.
     security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-    security add-trusted-cert -d -r trustRoot -k "$KEYCHAIN_PATH" $CERT_FILE
-
+    # note: add-trusted-cert requires user interaction
+    commentary "adding the developer certificate as a trusted certificate... (requires user interaction)"
+    security add-trusted-cert -d -r trustRoot -k "$KEYCHAIN_PATH" "$CERT_FILE"
   else
     set -e
     commentary "...dev cert has already been imported onto the dev keychain"
   fi
 
   commentary "make certain there are identities that can be used for codesigning"
-  security find-identity -p codesigning "$KEYCHAIN_PATH" | grep -C 30 $IDENTITY || exit_with_error "could not find identity that can be used with codesign"
+  security find-identity -p codesigning "$KEYCHAIN_PATH" | grep -C 30 "$IDENTITY" || exit_with_error "could not find identity that can be used with codesign"
 
   title "add the dev keychain to the search path for codesign"
   add_keychain $KEYCHAIN_NAME

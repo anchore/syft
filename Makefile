@@ -5,7 +5,7 @@ COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=2m --config .golangci.yaml
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
-SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --rm-dist --snapshot
+SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
 COMPARE_TEST_IMAGE = centos:8.2.2004
 COMPARE_DIR = ./test/compare
 
@@ -60,6 +60,14 @@ endif
 
 define title
     @printf '$(TITLE)$(1)$(RESET)\n'
+endef
+
+define safe_rm_rf
+	bash -c 'test -z "$(1)" && false || rm -rf $(1)'
+endef
+
+define safe_rm_rf_children
+	bash -c 'test -z "$(1)" && false || rm -rf $(1)/*'
 endef
 
 ## Tasks
@@ -224,11 +232,11 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# build release snapshots
-	$(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml
+	$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: snapshot-with-signing
 snapshot-with-signing: ## Build snapshot release binaries and packages (with dummy signing)
-	$(call title,Building snapshot artifacts)
+	$(call title,Building snapshot artifacts (+ signing))
 
 	# create a config with the dist dir overridden
 	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
@@ -237,9 +245,7 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	rm -f .github/scripts/apple-signing/log/signing-*
 
 	# build release snapshots
-	$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml
-
-	cat .github/scripts/apple-signing/log/signing-*
+	bash -c "$(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/signing-* && false)"
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
@@ -312,9 +318,8 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 	bash -c "\
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
-			--release-notes <(cat CHANGELOG.md)"
-
-	cat .github/scripts/apple-signing/log/signing-*
+			--release-notes <(cat CHANGELOG.md)\
+				 || cat .github/scripts/apple-signing/log/signing-* && false"
 
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
@@ -322,15 +327,17 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 
 .PHONY: clean
 clean: clean-dist clean-snapshot clean-test-image-cache ## Remove previous builds, result reports, and test cache
-	rm -rf $(RESULTSDIR)/*
+	$(call safe_rm_rf_children,$(RESULTSDIR))
 
 .PHONY: clean-snapshot
 clean-snapshot:
-	rm -rf $(SNAPSHOTDIR) $(TEMPDIR)/goreleaser.yaml
+	$(call safe_rm_rf,$(SNAPSHOTDIR))
+	rm -f $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: clean-dist
 clean-dist: clean-changelog
-	rm -rf $(DISTDIR) $(TEMPDIR)/goreleaser.yaml
+	$(call safe_rm_rf,$(DISTDIR))
+	rm -f $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: clean-changelog
 clean-changelog:
