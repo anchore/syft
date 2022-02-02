@@ -101,10 +101,8 @@ func getSyftBinaryLocation(t testing.TB) string {
 func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
 	// note: there is a subtle - vs _ difference between these versions
 	switch goOS {
-	case "darwin":
-		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft-macos_darwin_%s/syft", runtime.GOARCH))
-	case "linux":
-		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/syft_linux_%s/syft", runtime.GOARCH))
+	case "darwin", "linux":
+		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, runtime.GOARCH))
 	default:
 		t.Fatalf("unsupported OS: %s", runtime.GOOS)
 	}

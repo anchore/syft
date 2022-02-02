@@ -30,7 +30,8 @@ BOOTSTRAP_CACHE="c7afb99ad"
 ## Build variables
 DISTDIR=./dist
 SNAPSHOTDIR=./snapshot
-SNAPSHOT_BIN=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(shell uname | tr '[:upper:]' '[:lower:]')-builds_darwin_amd64/$(BIN))
+OS=$(shell uname | tr '[:upper:]' '[:lower:]')
+SNAPSHOT_BIN=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(OS)-build_$(OS)_amd64/$(BIN))
 
 ## Variable assertions
 
