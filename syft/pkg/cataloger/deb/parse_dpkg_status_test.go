@@ -302,14 +302,14 @@ Status: install ok installed
 			},
 		},
 		{
-			name: "ignore installed size",
+			name: "ignore installed size parsing error",
 			input: bufio.NewReader(strings.NewReader(`Package: apt
-Installed-Size: 4KB
+Installed-Size: bla
 
 `)),
 			want: map[string]interface{}{
 				"Package":       "apt",
-				"InstalledSize": 4096,
+				"InstalledSize": 0,
 			},
 		},
 	}
@@ -319,6 +319,54 @@ Installed-Size: 4KB
 			got, err := extractAllFields(tt.input)
 			assert.Equal(t, tt.want, got)
 			assert.Equal(t, tt.err, err)
+		})
+	}
+}
+
+func Test_handleNewKeyValue(t *testing.T) {
+	tests := []struct {
+		name    string
+		line    string
+		wantKey string
+		wantVal interface{}
+		err     error
+	}{
+		{
+			name: "cannot parse field",
+			line: "blabla",
+			err:  errors.New("cannot parse field from line: 'blabla'"),
+		},
+		{
+			name:    "parse field",
+			line:    "key: val",
+			wantKey: "key",
+			wantVal: "val",
+		},
+		{
+			name:    "parse installed size",
+			line:    "InstalledSize: 128",
+			wantKey: "InstalledSize",
+			wantVal: 128,
+		},
+		{
+			name:    "parse installed size",
+			line:    "InstalledSize: 1kb",
+			wantKey: "InstalledSize",
+			wantVal: 1024,
+		},
+		{
+			name:    "parse installed-size",
+			line:    "Installed-Size: 1mb",
+			wantKey: "InstalledSize",
+			wantVal: 1048576,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotKey, gotVal, err := handleNewKeyValue(tt.line)
+			assert.Equal(t, tt.err, err)
+			assert.Equalf(t, tt.wantKey, gotKey, "handleNewKeyValue(%v)", tt.line)
+			assert.Equalf(t, tt.wantVal, gotVal, "handleNewKeyValue(%v)", tt.line)
 		})
 	}
 }

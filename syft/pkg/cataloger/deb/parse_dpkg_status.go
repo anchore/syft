@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/jonasagx/datasize"
 	"github.com/mitchellh/mapstructure"
@@ -166,7 +167,7 @@ func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 			var s datasize.ByteSize
 			err := s.UnmarshalText([]byte(val))
 			if err != nil {
-				return "", nil, fmt.Errorf("bad installed-size value=%q: %w", val, err)
+				log.Warnf("bad installed-size value=%q: %w", val, err)
 			}
 			return key, int(s.Bytes()), nil
 		default:
