@@ -39,6 +39,7 @@ var (
 			"appName": internal.ApplicationName,
 			"command": "attest",
 		}),
+		Args:          validateInputArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
