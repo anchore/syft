@@ -260,18 +260,16 @@ func TestSourceVersionExtract(t *testing.T) {
 	}
 }
 
-func Test_extractAllFields(t *testing.T) {
+func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
 		name  string
 		input *bufio.Reader
-		want  map[string]interface{}
+		want  []pkg.Package
 		err   error
 	}{
 		{
 			name:  "no more packages",
 			input: bufio.NewReader(strings.NewReader(`Package: apt`)),
-			want:  map[string]interface{}{},
-			err:   errEndOfPackages,
 		},
 		{
 			name: "duplicated key",
@@ -280,44 +278,58 @@ Package: apt
 Package: apt-get
 
 `)),
-			want: nil,
-			err:  errors.New("duplicate key discovered: Package"),
+			err: errors.New("duplicate key discovered: Package"),
 		},
 		{
 			name: "no match for continuation",
 			input: bufio.NewReader(strings.NewReader(`  Package: apt
 
 `)),
-			want: nil,
-			err:  errors.New("no match for continuation: line: '  Package: apt'"),
+			err: errors.New("no match for continuation: line: '  Package: apt'"),
 		},
 		{
 			name: "find keys",
 			input: bufio.NewReader(strings.NewReader(`Package: apt
 Status: install ok installed
+Installed-Size: 10kib
 
 `)),
-			want: map[string]interface{}{
-				"Package": "apt",
-				"Status":  "install ok installed",
+			want: []pkg.Package{
+				{
+					Name:         "apt",
+					Type:         "deb",
+					MetadataType: "DpkgMetadata",
+					Metadata: pkg.DpkgMetadata{
+						Package:       "apt",
+						InstalledSize: 10240,
+						Files:         []pkg.DpkgFileRecord{},
+					},
+				},
 			},
 		},
 		{
 			name: "ignore installed size parsing error",
 			input: bufio.NewReader(strings.NewReader(`Package: apt
-Installed-Size: bla
+Installed-Size: not-something-you-can-convert-to-integer
 
 `)),
-			want: map[string]interface{}{
-				"Package":       "apt",
-				"InstalledSize": 0,
+			want: []pkg.Package{
+				{
+					Name:         "apt",
+					Type:         "deb",
+					MetadataType: "DpkgMetadata",
+					Metadata: pkg.DpkgMetadata{
+						Package: "apt",
+						Files:   []pkg.DpkgFileRecord{},
+					},
+				},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := extractAllFields(tt.input)
+			got, err := parseDpkgStatus(tt.input)
 			assert.Equal(t, tt.want, got)
 			assert.Equal(t, tt.err, err)
 		})
