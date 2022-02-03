@@ -29,9 +29,9 @@ import (
 var (
 	keyPath   string
 	attestCmd = &cobra.Command{
-		Use:   "attest [SOURCE]",
+		Use:   "attest --output [FORMAT] --key [KEY] [SOURCE]",
 		Short: "Generate a package SBOM as an attestation to [SOURCE]",
-		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container image as the subject of an attestation.",
+		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container image as the predicate of an attestation.",
 		Example: internal.Tprintf(packagesExample, map[string]interface{}{
 			"appName": internal.ApplicationName,
 			"command": "attest",
@@ -110,15 +110,17 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 func generateAttestation(ctx context.Context, predicate []byte, src *source.Source, ko sign.KeyOpts) error {
 	predicateType := in_toto.PredicateSPDX
 
+	// TODO: check with OCI format on disk to see if metadata is included
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
 
 	// TODO: inject command context and cert path
-	sv, err := sign.SignerFromKeyOpts(context.Background(), "", ko)
+	sv, err := sign.SignerFromKeyOpts(ctx, "", ko)
 	if err != nil {
 		return err
 	}
 	defer sv.Close()
 	// TODO: can we include our own types here?
+	// Should we be specific about the format that is being used as the predicate here?
 	wrapped := dsse.WrapSigner(sv, "application/syft.in-toto+json")
 
 	fmt.Fprintln(os.Stderr, "Using generated sbom as payload")
