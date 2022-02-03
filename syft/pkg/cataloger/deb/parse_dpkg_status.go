@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/jonasagx/datasize"
+	"github.com/dustin/go-humanize"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -59,9 +59,6 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
 	var retErr error
 	dpkgFields, err := extractAllFields(reader)
 	if err != nil {
-		if !errors.Is(err, errEndOfPackages) {
-			return pkg.DpkgMetadata{}, err
-		}
 		retErr = err
 	}
 
@@ -164,12 +161,11 @@ func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 		// further processing of values based on the key that was discovered
 		switch key {
 		case "InstalledSize":
-			var s datasize.ByteSize
-			err := s.UnmarshalText([]byte(val))
+			s, err := humanize.ParseBytes(val)
 			if err != nil {
-				log.Warnf("bad installed-size value=%q: %w", val, err)
+				log.Warnf("extracting dpkg fields: bad installed-size value=%q: %w", val, err)
 			}
-			return key, int(s.Bytes()), nil
+			return key, int(s), nil
 		default:
 			return key, val, nil
 		}

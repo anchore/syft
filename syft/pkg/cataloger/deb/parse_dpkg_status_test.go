@@ -3,6 +3,7 @@ package deb
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,14 +76,14 @@ func TestSinglePackage(t *testing.T) {
 			},
 		},
 		{
-			name:        "ignore installed size due to format",
+			name:        "parse storage notation",
 			fixturePath: filepath.Join("test-fixtures", "status", "installed-size-4KB"),
 			expected: pkg.DpkgMetadata{
 				Package:       "apt",
 				Source:        "apt-dev",
 				Version:       "1.8.2",
 				Architecture:  "amd64",
-				InstalledSize: 4096,
+				InstalledSize: 4000,
 				Maintainer:    "APT Development Team <deity@lists.debian.org>",
 			},
 		}}
@@ -329,42 +330,64 @@ func Test_handleNewKeyValue(t *testing.T) {
 		line    string
 		wantKey string
 		wantVal interface{}
-		err     error
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "cannot parse field",
 			line: "blabla",
-			err:  errors.New("cannot parse field from line: 'blabla'"),
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				expected := errors.New("cannot parse field from line: 'blabla'")
+				return assert.Equal(t, expected, err)
+			},
 		},
 		{
 			name:    "parse field",
 			line:    "key: val",
 			wantKey: "key",
 			wantVal: "val",
+			wantErr: assert.NoError,
 		},
 		{
 			name:    "parse installed size",
 			line:    "InstalledSize: 128",
 			wantKey: "InstalledSize",
 			wantVal: 128,
+			wantErr: assert.NoError,
 		},
 		{
-			name:    "parse installed size",
-			line:    "InstalledSize: 1kb",
+			name:    "parse installed kib size",
+			line:    "InstalledSize: 1kib",
 			wantKey: "InstalledSize",
 			wantVal: 1024,
+			wantErr: assert.NoError,
 		},
 		{
-			name:    "parse installed-size",
-			line:    "Installed-Size: 1mb",
+			name:    "parse installed kb size",
+			line:    "InstalledSize: 1kb",
 			wantKey: "InstalledSize",
-			wantVal: 1048576,
+			wantVal: 1000,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "parse installed-size mb",
+			line:    "Installed-Size: 1 mb",
+			wantKey: "InstalledSize",
+			wantVal: 1000000,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "fail parsing installed-size",
+			line:    "Installed-Size: 1bla",
+			wantKey: "InstalledSize",
+			wantVal: 0,
+			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotKey, gotVal, err := handleNewKeyValue(tt.line)
-			assert.Equal(t, tt.err, err)
+			tt.wantErr(t, err, fmt.Sprintf("handleNewKeyValue(%v)", tt.line))
+
 			assert.Equalf(t, tt.wantKey, gotKey, "handleNewKeyValue(%v)", tt.line)
 			assert.Equalf(t, tt.wantVal, gotVal, "handleNewKeyValue(%v)", tt.line)
 		})
