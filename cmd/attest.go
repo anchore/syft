@@ -9,8 +9,10 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/source"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -22,6 +24,7 @@ import (
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/wagoodman/go-partybus"
 
 	signatureoptions "github.com/sigstore/sigstore/pkg/signature/options"
 )
@@ -143,6 +146,14 @@ func generateAttestation(ctx context.Context, predicate []byte, src *source.Sour
 	if err != nil {
 		return errors.Wrap(err, "signing")
 	}
+
+	bus.Publish(partybus.Event{
+		Type: event.Exit,
+		Value: func() error {
+			_, err := os.Stdout.Write(signedPayload)
+			return err
+		},
+	})
 
 	fmt.Println(string(signedPayload))
 	return nil
