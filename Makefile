@@ -233,7 +233,7 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# build release snapshots
-	$(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml
+	bash -c "SKIP_SIGNING=true $(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml"
 
 .PHONY: snapshot-with-signing
 snapshot-with-signing: ## Build snapshot release binaries and packages (with dummy signing)
@@ -243,10 +243,10 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
-	rm -f .github/scripts/apple-signing/log/signing-*
+	rm -f .github/scripts/apple-signing/log/*.txt
 
 	# build release snapshots
-	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/signing-* && false)"
+	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/*.txt && false)"
 
 	# remove the keychain with the trusted self-signed cert automatically
 	.github/scripts/apple-signing/cleanup.sh
@@ -317,15 +317,15 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
-	rm -f .github/scripts/apple-signing/log/signing-*
+	rm -f .github/scripts/apple-signing/log/*.txt
 
 	bash -c "\
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
 			--release-notes <(cat CHANGELOG.md)\
-				 || cat .github/scripts/apple-signing/log/signing-* && false"
+				 || cat .github/scripts/apple-signing/log/*.txt && false"
 
-	cat .github/scripts/apple-signing/log/signing-*
+	cat .github/scripts/apple-signing/log/*.txt
 
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
