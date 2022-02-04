@@ -25,7 +25,7 @@ repackage() {
         tmp_dir=$(mktemp -d)
         cd "$tmp_dir"
         # redirect stdout to stderr to preserve the return value
-        tar xzf "$archive" && zip "$new_archive" $(tar tf "$archive") 1>&2
+        tar xzf "$archive" && zip "$new_archive" ./* 1>&2
         rm -rf "$tmp_dir"
       )
       echo "$new_archive"
