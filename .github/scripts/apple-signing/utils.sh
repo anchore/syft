@@ -2,7 +2,7 @@
 PURPLE='\033[0;35m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
-BOLD=$(tput bold)
+BOLD=$(tput -T linux bold)
 RESET='\033[0m'
 
 function success() {
