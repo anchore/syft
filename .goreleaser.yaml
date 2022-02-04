@@ -6,6 +6,10 @@ env:
   # required to support multi architecture docker builds
   - DOCKER_CLI_EXPERIMENTAL=enabled
 
+before:
+  hooks:
+    - ./.github/scripts/apple-signing/setup.sh {{ .IsSnapshot }}
+
 builds:
   - id: linux-build
     binary: syft
@@ -68,7 +72,7 @@ signs:
     ids:
       - darwin-archives
     signature: "${artifact}"
-    cmd: ./.github/scripts/apple-signing/run.sh
+    cmd: ./.github/scripts/apple-signing/sign.sh
     args:
       - "${artifact}"
       - "{{ .IsSnapshot }}"

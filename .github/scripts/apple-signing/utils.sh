@@ -1,3 +1,5 @@
+SIGNING_IDENTITY_FILENAME=signing-identity.txt
+
 ## terminal goodies
 PURPLE='\033[0;35m'
 GREEN='\033[0;32m'

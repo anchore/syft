@@ -162,7 +162,6 @@ EOF
 
 }
 
-
 function cleanup_signing() {
   title "delete the dev keychain and all certificate material"
   set -xue
