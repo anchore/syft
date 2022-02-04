@@ -41,7 +41,7 @@ main() {
   setup_signing
 
   # sign all of the binaries in the archive and recreate the input archive with the signed binaries
-  sign_archive "$archive_abs_path" "$MAC_SIGNING_IDENTITY"
+  sign_binaries_in_archive "$archive_abs_path" "$MAC_SIGNING_IDENTITY"
 
   # send all of the binaries off to apple to bless
   if $perform_notarization ; then

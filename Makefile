@@ -248,6 +248,9 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	# build release snapshots
 	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/signing-* && false)"
 
+	# remove the keychain with the trusted self-signed cert automatically
+	.github/scripts/apple-signing/cleanup.sh
+
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
 compare-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run compare tests on build snapshot binaries and packages (Mac)

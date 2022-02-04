@@ -108,6 +108,7 @@ EOF
   openssl x509 -text -noout -in $CERT_FILE | grep -A1 'X509v3' || exit_with_error "could not find x509 extensions in certificate"
 
   title "export cert and private key to .p12 file"
+  # note: this step may be entirely optional, however, I found it useful to follow the prod path which goes the route of using a p12
   openssl pkcs12 \
             -export \
             -out "$P12_FILE" \
@@ -121,7 +122,7 @@ EOF
 
   # delete the keychain if it already exists
   if [ -f "$(KEYCHAIN_PATH)" ]; then
-    security delete-keychain $KEYCHAIN_NAME &> /dev/null
+    security delete-keychain "$KEYCHAIN_NAME" &> /dev/null
   fi
 
   security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
@@ -147,7 +148,7 @@ EOF
   # remove any generated cert material since the keychain now has all of this material loaded
   rm -rf "${DIR}"
 
-  commentary "make certain there are identities that can be used for codesigning"
+  commentary "make certain there are identities that can be used for code signing"
   security find-identity -p codesigning "$KEYCHAIN_PATH" | grep -C 30 "$IDENTITY" || exit_with_error "could not find identity that can be used with codesign"
 
   title "add the dev keychain to the search path for codesign"
@@ -161,3 +162,11 @@ EOF
 
 }
 
+
+function cleanup_signing() {
+  title "delete the dev keychain and all certificate material"
+  set -xue
+  security delete-keychain "$KEYCHAIN_NAME"
+  rm -f "$KEYCHAIN_PATH"
+  rm -rf "${DIR}"
+}

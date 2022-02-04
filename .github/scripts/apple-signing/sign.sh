@@ -36,11 +36,11 @@ sign_binary() {
   fi
 }
 
-# sign_archive [archive-abs-path] [signing-identity]
+# sign_binaries_in_archive [archive-abs-path] [signing-identity]
 #
 # signs all binaries within an archive (there must be at least one)
 #
-sign_archive() {
+sign_binaries_in_archive() {
   archive_abs_path=$1
   identity=$2
   
