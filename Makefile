@@ -322,6 +322,8 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 			--release-notes <(cat CHANGELOG.md)\
 				 || cat .github/scripts/apple-signing/log/signing-* && false"
 
+	cat .github/scripts/apple-signing/log/signing-*
+
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
 

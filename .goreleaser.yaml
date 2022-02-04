@@ -48,12 +48,12 @@ builds:
     env: *build-env
     ldflags: *build-ldflags
 
-
 archives:
   - id: linux-archives
     builds:
       - linux-build
 
+  # note: the signing process is depending on tar.gz archives. If this format changes then .github/scripts/apple-signing/*.sh will need to be adjusted
   - id: darwin-archives
     builds:
       - darwin-build
@@ -68,7 +68,7 @@ signs:
     ids:
       - darwin-archives
     signature: "${artifact}"
-    cmd: ./.github/scripts/apple-signing/sign-archives.sh
+    cmd: ./.github/scripts/apple-signing/run.sh
     args:
       - "${artifact}"
       - "{{ .IsSnapshot }}"

@@ -14,7 +14,7 @@ env:
 jobs:
   quality-gate:
     environment: release
-    runs-on: ubuntu-latest # This OS choice is arbitrary. None of the steps in this job are specific to either Linux or macOS.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
@@ -92,7 +92,8 @@ jobs:
 
   release:
     needs: [quality-gate]
-    runs-on: macos-latest # Due to our code signing process, it's vital that we run our release steps on macOS.
+    # due to our code signing process, it's vital that we run our release steps on macOS
+    runs-on: macos-latest
     steps:
       - uses: docker-practice/actions-setup-docker@v1
 
@@ -124,35 +125,21 @@ jobs:
         if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
         run: make bootstrap
 
-      - name: Import GPG key
-        id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v2
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
-
-      - name: GPG signing info
-        run: |
-          echo "fingerprint: ${{ steps.import_gpg.outputs.fingerprint }}"
-          echo "keyid:       ${{ steps.import_gpg.outputs.keyid }}"
-          echo "name:        ${{ steps.import_gpg.outputs.name }}"
-          echo "email:       ${{ steps.import_gpg.outputs.email }}"
-
       - name: Build & publish release artifacts
         run: make release
         env:
           DOCKER_USERNAME: ${{ secrets.TOOLBOX_DOCKER_USER }}
           DOCKER_PASSWORD: ${{ secrets.TOOLBOX_DOCKER_PASS }}
+          # we use a different token than GITHUB_SECRETS to additionally allow updating the homebrew repos
           GITHUB_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
-          GPG_PRIVATE_KEY: ${{ secrets.SIGNING_GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.SIGNING_GPG_PASSPHRASE }}
-          SIGNING_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
-          APPLE_DEVELOPER_ID_CERT: ${{ secrets.APPLE_DEVELOPER_ID_CERT }} # Used during macOS code signing.
-          APPLE_DEVELOPER_ID_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }} # Used during macOS code signing.
-          AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }} # Used during macOS notarization.
-          AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }} # Used during macOS notarization.
+          # used during macOS code signing
+          APPLE_DEVELOPER_ID_CERT: ${{ secrets.APPLE_DEVELOPER_ID_CERT }}
+          APPLE_DEVELOPER_ID_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }}
+          # used during macOS notarization
+          AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }}
+          AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }}
 
       - uses: anchore/sbom-action@v0
         with:

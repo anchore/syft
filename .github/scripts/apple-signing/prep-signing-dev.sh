@@ -26,22 +26,24 @@ KEYCHAIN_NAME=$NAME
 KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME-db
 KEYCHAIN_PASSWORD="topsykretts"
 
+# setup_signing
+#
+# preps the MAC_SIGNING_IDENTITY env var for use in the signing process, using ephemeral developer certificate material
+#
 function setup_signing() {
   # check to see if this has already been done... if so, bail!
   set +ue
   if security find-identity -p codesigning "$KEYCHAIN_PATH" | grep $IDENTITY ; then
-      # note: set the partition list for this certificate's private key to include "apple-tool:" and "apple:" allows the codesign command to access this keychain item without an interactive user prompt.
-      security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
       export MAC_SIGNING_IDENTITY=$IDENTITY
-      echo "MAC_SIGNING_IDENTITY=${IDENTITY}"
-      success "skipping creating dev certificate material (already exists)"
+      commentary "skipping creating dev certificate material (already exists)"
+      commentary "setting MAC_SIGNING_IDENTITY=${IDENTITY}"
       return 0
   fi
   set -ue
 
+  title "setting up developer certificate material"
 
-  mkdir -p ${DIR}
+  mkdir -p "${DIR}"
 
   # configure the openssl extensions
   cat << EOF > $EXT_FILE
@@ -129,7 +131,7 @@ EOF
     set -e
     title "import the cert into the dev keychain if it is not already trusted by the system"
 
-    security import $P12_FILE -P $P12_PASSWORD -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+    security import "$P12_FILE" -P $P12_PASSWORD -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 
     # note: set the partition list for this certificate's private key to include "apple-tool:" and "apple:" allows the codesign command to access this keychain item without an interactive user prompt.
     security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
@@ -142,6 +144,9 @@ EOF
     commentary "...dev cert has already been imported onto the dev keychain"
   fi
 
+  # remove any generated cert material since the keychain now has all of this material loaded
+  rm -rf "${DIR}"
+
   commentary "make certain there are identities that can be used for codesigning"
   security find-identity -p codesigning "$KEYCHAIN_PATH" | grep -C 30 "$IDENTITY" || exit_with_error "could not find identity that can be used with codesign"
 
@@ -151,13 +156,8 @@ EOF
   commentary "verify the keychain actually shows up"
   security list-keychains | grep "$KEYCHAIN_NAME" || exit_with_error "could not find new keychain"
 
-  commentary "created certificate material"
-  tree ${DIR}
-
   export MAC_SIGNING_IDENTITY=$IDENTITY
-  echo "MAC_SIGNING_IDENTITY=${IDENTITY}"
-
-  success "done!"
+  commentary "setting MAC_SIGNING_IDENTITY=${IDENTITY}"
 
 }
 
