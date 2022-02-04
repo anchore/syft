@@ -26,14 +26,8 @@ test_positive_snapshot_install_asset() {
   expected_path="${install_dir}/${binary}"
   assertFileExists "${expected_path}" "install_asset os=${os} arch=${arch} format=${format}"
 
-  build_dir_name="${name}"
-  if [ "$os" == "darwin" ]; then
-    # TODO: when we simplify the goreleaser build steps, this exception would not longer be expected
-    build_dir_name="${name}-macos"
-  fi
-
   assertFilesEqual \
-    "$(snapshot_dir)/${build_dir_name}_${os}_${arch}/${binary}" \
+    "$(snapshot_dir)/${os}-build_${os}_${arch}/${binary}" \
     "${expected_path}" \
     "unable to verify installation of os=${os} arch=${arch} format=${format}"
 
@@ -83,9 +77,7 @@ trap 'teardown_snapshot_server ${worker_pid}' EXIT
 run_test_case test_positive_snapshot_install_asset "linux" "amd64" "tar.gz"
 run_test_case test_positive_snapshot_install_asset "linux" "arm64" "tar.gz"
 run_test_case test_positive_snapshot_install_asset "darwin" "amd64" "tar.gz"
-run_test_case test_positive_snapshot_install_asset "darwin" "amd64" "zip"
 run_test_case test_positive_snapshot_install_asset "darwin" "arm64" "tar.gz"
-run_test_case test_positive_snapshot_install_asset "darwin" "arm64" "zip"
 run_test_case test_positive_snapshot_install_asset "windows" "amd64" "zip"
 
 # let's make certain we covered all assets that were expected

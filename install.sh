@@ -507,14 +507,7 @@ get_format_name() (
   original_format="${format}"
 
   case ${os} in
-    # why override darwin to DMG? two reasons:
-    # 1. the tar.gz does not contain a signed binary
-    # 2. the zip is removed from the checksums file (since the signing process changes the content)
-    darwin) format=dmg ;;
     windows) format=zip ;;
-  esac
-  case "${os}/${arch}" in
-    darwin/arm64) format=zip ;;
   esac
 
   log_trace "get_format_name(os=${os}, arch=${arch}, format=${original_format}) returned '${format}'"
@@ -554,30 +547,6 @@ download_and_install_asset() (
 #
 download_asset() (
   download_url="$1"
-  download_path="$2"
-  name="$3"
-  os="$4"
-  arch="$5"
-  version="$6"
-  format="$7"
-
-  if [ "$format" = "dmg" ] ||  [ "$os/$arch/$format" = "darwin/arm64/zip" ]; then
-    # the signing process outputs the zip/dmg and the checksum is not included in the checksums.txt file
-    # TODO: remove this case in the future by upgrading the release process
-    asset_filepath=$(download_asset_without_verification "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
-  else
-    asset_filepath=$(download_asset_by_checksums_file "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
-  fi
-
-  echo "${asset_filepath}"
-)
-
-# download_asset_without_verification [release-url-prefix] [destination] [name] [os] [arch] [version] [format]
-#
-# outputs the filepath to the raw asset (no verification against the checksums file is performed)
-#
-download_asset_without_verification() (
-  download_url="$1"
   destination="$2"
   name="$3"
   os="$4"
@@ -585,28 +554,7 @@ download_asset_without_verification() (
   version="$6"
   format="$7"
 
-  asset_filename="${name}_${version}_${os}_${arch}.${format}"
-  asset_url="${download_url}/${asset_filename}"
-  asset_filepath="${destination}/${asset_filename}"
-  http_download "${asset_filepath}" "${asset_url}" ""
-
-  echo "${asset_filepath}"
-)
-
-# download_asset_by_checksums_file [release-url-prefix] [destination] [name] [os] [arch] [version] [format]
-#
-# outputs the filepath to the raw asset (verified against the checksums file)
-#
-download_asset_by_checksums_file() (
-  download_url="$1"
-  destination="$2"
-  name="$3"
-  os="$4"
-  arch="$5"
-  version="$6"
-  format="$7"
-
-  log_trace "download_asset_by_checksums_file(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
+  log_trace "download_asset(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
 
   checksums_filepath=$(download_github_release_checksums "${download_url}" "${name}" "${version}" "${destination}")
 
