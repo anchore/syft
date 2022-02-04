@@ -62,7 +62,7 @@ notarize() {
 
   cat <<EOF > "$tmp_file"
 notarize {
-  path = "$archive_path"
+  path = "$payload_archive_path"
   bundle_id = "com.anchore.toolbox.syft"
 }
 
