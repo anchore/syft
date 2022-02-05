@@ -11,6 +11,14 @@ fi
 if [ -z "$APPLE_DEVELOPER_ID_CERT_PASS" ]; then
   exit_with_error "APPLE_DEVELOPER_ID_CERT_PASS not set"
 fi
+
+if [ -z "$DOCKER_USERNAME" ]; then
+  exit_with_error "DOCKER_USERNAME not set"
+fi
+
+if [ -z "$DOCKER_PASSWORD" ]; then
+  exit_with_error "DOCKER_PASSWORD not set"
+fi
 set -u
 
 # setup_signing
@@ -42,4 +50,7 @@ setup_signing() {
   # TODO: extract this from the certificate material itself
   export MAC_SIGNING_IDENTITY="Developer ID Application: ANCHORE, INC. (9MJHKYX5AT)"
   commentary "setting MAC_SIGNING_IDENTITY=${MAC_SIGNING_IDENTITY}"
+
+  commentary "log into docker -- required for publishing (since the default keychain has now been replaced)"
+  echo "${DOCKER_PASSWORD}" | docker login docker.io -u "${DOCKER_USERNAME}"  --password-stdin
 }
