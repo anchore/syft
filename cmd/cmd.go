@@ -6,10 +6,10 @@ import (
 	"os"
 	"sort"
 
+	"github.com/anchore/go-logger/logrus"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/logger"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/gookit/color"
@@ -88,7 +88,7 @@ func initAppConfig() {
 }
 
 func initLogging() {
-	cfg := logger.LogrusConfig{
+	cfg := logrus.Config{
 		EnableConsole: (appConfig.Log.FileLocation == "" || appConfig.CliOptions.Verbosity > 0) && !appConfig.Quiet,
 		EnableFile:    appConfig.Log.FileLocation != "",
 		Level:         appConfig.Log.LevelOpt,
@@ -96,11 +96,12 @@ func initLogging() {
 		FileLocation:  appConfig.Log.FileLocation,
 	}
 
-	logWrapper := logger.NewLogrusLogger(cfg)
-	syft.SetLogger(logWrapper)
-	stereoscope.SetLogger(&logger.LogrusNestedLogger{
-		Logger: logWrapper.Logger.WithField("from-lib", "stereoscope"),
-	})
+	logger, err := logrus.New(cfg)
+	if err != nil {
+		panic(err)
+	}
+	syft.SetLogger(logger)
+	stereoscope.SetLogger(logger.Nested("from-lib", "stereoscope"))
 }
 
 func logAppConfig() {

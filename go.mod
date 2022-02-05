@@ -9,6 +9,7 @@ require (
 	github.com/adrg/xdg v0.2.1
 	github.com/alecthomas/jsonschema v0.0.0-20210301060011-54c507b6f074
 	github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf
+	github.com/anchore/go-logger v0.0.0
 	github.com/anchore/go-rpmdb v0.0.0-20210914181456-a9c52348da63
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
@@ -29,7 +30,6 @@ require (
 	github.com/gookit/color v1.2.7
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/jinzhu/copier v0.3.2
-	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
@@ -50,10 +50,13 @@ require (
 	github.com/wagoodman/go-partybus v0.0.0-20210627031916-db1f5573bbc5
 	github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240
 	github.com/wagoodman/jotframe v0.0.0-20211129225309-56b0d0a4aebb
-	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+replace github.com/anchore/stereoscope => ../stereoscope
+
+replace github.com/anchore/go-logger => ../go-logger

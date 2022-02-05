@@ -3,7 +3,7 @@ Package log contains the singleton object and helper functions for facilitating 
 */
 package log
 
-import "github.com/anchore/syft/syft/logger"
+import "github.com/anchore/go-logger"
 
 // Log is the singleton used to facilitate logging internally within syft
 var Log logger.Logger = &nopLogger{}
@@ -46,4 +46,9 @@ func Debugf(format string, args ...interface{}) {
 // Debug logs the given arguments at the debug logging level.
 func Debug(args ...interface{}) {
 	Log.Debug(args...)
+}
+
+// WithFields returns a message logger with multiple key-value fields.
+func WithFields(fields ...interface{}) logger.MessageLogger {
+	return Log.WithFields(fields...)
 }

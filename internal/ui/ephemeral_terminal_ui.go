@@ -7,12 +7,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/anchore/go-logger"
 	"io"
 	"os"
 	"sync"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/logger"
 	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/ui"
 	"github.com/wagoodman/go-partybus"
@@ -59,9 +59,8 @@ func (h *ephemeralTerminalUI) Setup(unsubscribe func() error) error {
 
 	// prep the logger to not clobber the screen from now on (logrus only)
 	h.logBuffer = bytes.NewBufferString("")
-	logWrapper, ok := log.Log.(*logger.LogrusLogger)
-	if ok {
-		logWrapper.Logger.SetOutput(h.logBuffer)
+	if rootLogger, ok := log.Log.(logger.Controller); ok {
+		rootLogger.SetOutput(h.logBuffer)
 	}
 
 	return h.openScreen()
@@ -129,10 +128,10 @@ func (h *ephemeralTerminalUI) closeScreen(force bool) {
 
 func (h *ephemeralTerminalUI) flushLog() {
 	// flush any errors to the screen before the report
-	logWrapper, ok := log.Log.(*logger.LogrusLogger)
+	rootLogger, ok := log.Log.(logger.Controller)
 	if ok {
-		fmt.Fprint(logWrapper.Output, h.logBuffer.String())
-		logWrapper.Logger.SetOutput(h.uiOutput)
+		fmt.Fprint(rootLogger.GetOutput(), h.logBuffer.String())
+		rootLogger.SetOutput(h.uiOutput)
 	} else {
 		fmt.Fprint(h.uiOutput, h.logBuffer.String())
 	}
