@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -201,6 +202,10 @@ func TestPackagesCmdFlags(t *testing.T) {
 }
 
 func TestRegistryAuth(t *testing.T) {
+	host := "localhost:17"
+	image := fmt.Sprintf("%s/something:latest", host)
+	args := []string{"packages", "-vv", fmt.Sprintf("registry:%s", image)}
+
 	tests := []struct {
 		name       string
 		args       []string
@@ -209,55 +214,55 @@ func TestRegistryAuth(t *testing.T) {
 	}{
 		{
 			name: "fallback to keychain",
-			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			args: args,
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
-				assertInOutput("localhost:5000/something:latest"),
+				assertInOutput(image),
 				assertInOutput("no registry credentials configured, using the default keychain"),
 			},
 		},
 		{
 			name: "use creds",
-			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			args: args,
 			env: map[string]string{
-				"SYFT_REGISTRY_AUTH_AUTHORITY": "localhost:5000",
+				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
 				"SYFT_REGISTRY_AUTH_USERNAME":  "username",
 				"SYFT_REGISTRY_AUTH_PASSWORD":  "password",
 			},
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
-				assertInOutput("localhost:5000/something:latest"),
-				assertInOutput(`using basic auth for registry "localhost:5000"`),
+				assertInOutput(image),
+				assertInOutput(fmt.Sprintf(`using basic auth for registry "%s"`, host)),
 			},
 		},
 		{
 			name: "use token",
-			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			args: args,
 			env: map[string]string{
-				"SYFT_REGISTRY_AUTH_AUTHORITY": "localhost:5000",
+				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
 				"SYFT_REGISTRY_AUTH_TOKEN":     "token",
 			},
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
-				assertInOutput("localhost:5000/something:latest"),
-				assertInOutput(`using token for registry "localhost:5000"`),
+				assertInOutput(image),
+				assertInOutput(fmt.Sprintf(`using token for registry "%s"`, host)),
 			},
 		},
 		{
 			name: "not enough info fallsback to keychain",
-			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			args: args,
 			env: map[string]string{
-				"SYFT_REGISTRY_AUTH_AUTHORITY": "localhost:5000",
+				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
 			},
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
-				assertInOutput("localhost:5000/something:latest"),
+				assertInOutput(image),
 				assertInOutput(`no registry credentials configured, using the default keychain`),
 			},
 		},
 		{
 			name: "allows insecure http flag",
-			args: []string{"packages", "-vv", "registry:localhost:5000/something:latest"},
+			args: args,
 			env: map[string]string{
 				"SYFT_REGISTRY_INSECURE_USE_HTTP": "true",
 			},
