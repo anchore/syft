@@ -83,7 +83,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			},
 		},
 		{
-			name: "defaut-secrets-dir-results-w-reveal-values",
+			name: "default-secrets-dir-results-w-reveal-values",
 			env: map[string]string{
 				"SYFT_SECRETS_REVEAL_VALUES": "true",
 			},

@@ -233,7 +233,9 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 	}
 
 	location := NewLocationFromDirectory(p, *ref)
+	location.VirtualPath = p
 	metadata := fileMetadataFromPath(p, usedInfo, r.isInIndex(location))
+	metadata.LinkDestination = linkTarget
 	r.addFileMetadataToIndex(ref, metadata)
 
 	return targetAbsPath, nil

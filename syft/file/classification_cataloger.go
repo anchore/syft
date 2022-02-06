@@ -19,7 +19,7 @@ func (i *ClassificationCataloger) Catalog(resolver source.FileResolver) (map[sou
 	results := make(map[source.Coordinates][]Classification)
 
 	numResults := 0
-	for location := range resolver.AllLocations() {
+	for _, location := range allRegularFiles(resolver) {
 		for _, classifier := range i.classifiers {
 			result, err := classifier.Classify(resolver, location)
 			if err != nil {

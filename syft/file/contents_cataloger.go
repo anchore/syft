@@ -3,6 +3,7 @@ package file
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"io"
 
 	"github.com/anchore/syft/internal"
@@ -66,9 +67,12 @@ func (i *ContentsCataloger) catalogLocation(resolver source.FileResolver, locati
 	buf := &bytes.Buffer{}
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
 	if _, err = io.Copy(encoder, contentReader); err != nil {
-		return "", internal.ErrPath{Path: location.RealPath, Err: err}
+		return "", internal.ErrPath{Cataloger: "contents-cataloger", Path: location.RealPath, Err: err}
 	}
-	encoder.Close()
+	// note: it's important to close the reader before reading from the buffer since closing will flush the remaining bytes
+	if err := encoder.Close(); err != nil {
+		return "", fmt.Errorf("unable to close base64 encoder: %w", err)
+	}
 
 	return buf.String(), nil
 }

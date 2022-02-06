@@ -42,10 +42,7 @@ func NewSecretsCataloger(patterns map[string]*regexp.Regexp, revealValues bool, 
 
 func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]SearchResult, error) {
 	results := make(map[source.Coordinates][]SearchResult)
-	var locations []source.Location
-	for location := range resolver.AllLocations() {
-		locations = append(locations, location)
-	}
+	locations := allRegularFiles(resolver)
 	stage, prog, secretsDiscovered := secretsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
 		stage.Current = location.RealPath
@@ -86,7 +83,7 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	// TODO: in the future we can swap out search strategies here
 	secrets, err := catalogLocationByLine(resolver, location, i.patterns)
 	if err != nil {
-		return nil, internal.ErrPath{Path: location.RealPath, Err: err}
+		return nil, internal.ErrPath{Cataloger: "secrets-cataloger", Path: location.RealPath, Err: err}
 	}
 
 	if i.revealValues {

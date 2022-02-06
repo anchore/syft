@@ -34,10 +34,7 @@ func NewDigestsCataloger(hashes []crypto.Hash) (*DigestsCataloger, error) {
 
 func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]Digest, error) {
 	results := make(map[source.Coordinates][]Digest)
-	var locations []source.Location
-	for location := range resolver.AllLocations() {
-		locations = append(locations, location)
-	}
+	locations := allRegularFiles(resolver)
 	stage, prog := digestsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
 		stage.Current = location.RealPath
@@ -90,7 +87,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 
 	size, err := io.Copy(io.MultiWriter(writers...), contentReader)
 	if err != nil {
-		return nil, internal.ErrPath{Path: location.RealPath, Err: err}
+		return nil, internal.ErrPath{Cataloger: "digests-cataloger", Path: location.RealPath, Err: err}
 	}
 
 	if size == 0 {
