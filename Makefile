@@ -316,9 +316,11 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 
 	rm -f .github/scripts/apple-signing/log/*.txt
 
+	# note: notarization cannot be done in parallel, thus --parallelism 1
 	bash -c "\
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
+			--parallelism 1 \
 			--release-notes <(cat CHANGELOG.md)\
 				 || cat .github/scripts/apple-signing/log/*.txt && false"
 
