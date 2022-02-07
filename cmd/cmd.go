@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/gookit/color"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
@@ -90,6 +91,7 @@ func initAppConfig() {
 func initLogging() {
 	if logFile, ok := os.LookupEnv("SYFT_LOG_FILE"); ok && logFile != "" {
 		appConfig.Log.FileLocation = logFile
+		appConfig.Log.LevelOpt = logrus.DebugLevel
 	}
 
 	cfg := logger.LogrusConfig{
