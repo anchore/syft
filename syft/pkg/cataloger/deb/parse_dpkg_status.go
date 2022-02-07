@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/dustin/go-humanize"
 	"github.com/mitchellh/mapstructure"
@@ -163,7 +162,7 @@ func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 		case "InstalledSize":
 			s, err := humanize.ParseBytes(val)
 			if err != nil {
-				log.Warnf("extracting dpkg fields: bad installed-size value=%q: %w", val, err)
+				return "", nil, fmt.Errorf("extracting dpkg fields: bad installed-size value=%q: %w", val, err)
 			}
 			return key, int(s), nil
 		default:

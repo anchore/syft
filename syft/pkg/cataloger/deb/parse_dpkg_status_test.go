@@ -262,14 +262,15 @@ func TestSourceVersionExtract(t *testing.T) {
 
 func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
-		name  string
-		input *bufio.Reader
-		want  []pkg.Package
-		err   error
+		name    string
+		input   *bufio.Reader
+		want    []pkg.Package
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name:  "no more packages",
-			input: bufio.NewReader(strings.NewReader(`Package: apt`)),
+			name:    "no more packages",
+			input:   bufio.NewReader(strings.NewReader(`Package: apt`)),
+			wantErr: assert.NoError,
 		},
 		{
 			name: "duplicated key",
@@ -278,14 +279,20 @@ Package: apt
 Package: apt-get
 
 `)),
-			err: errors.New("duplicate key discovered: Package"),
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				expected := errors.New("duplicate key discovered: Package")
+				return errors.Is(err, expected)
+			},
 		},
 		{
 			name: "no match for continuation",
 			input: bufio.NewReader(strings.NewReader(`  Package: apt
 
 `)),
-			err: errors.New("no match for continuation: line: '  Package: apt'"),
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				expected := errors.New("no match for continuation: line: '  Package: apt'")
+				return errors.Is(err, expected)
+			},
 		},
 		{
 			name: "find keys",
@@ -306,6 +313,7 @@ Installed-Size: 10kib
 					},
 				},
 			},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "ignore installed size parsing error",
@@ -313,16 +321,9 @@ Installed-Size: 10kib
 Installed-Size: not-something-you-can-convert-to-integer
 
 `)),
-			want: []pkg.Package{
-				{
-					Name:         "apt",
-					Type:         "deb",
-					MetadataType: "DpkgMetadata",
-					Metadata: pkg.DpkgMetadata{
-						Package: "apt",
-						Files:   []pkg.DpkgFileRecord{},
-					},
-				},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				expected := errors.New("no match for continuation: line: '  Package: apt'")
+				return errors.Is(err, expected)
 			},
 		},
 	}
@@ -330,8 +331,8 @@ Installed-Size: not-something-you-can-convert-to-integer
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := parseDpkgStatus(tt.input)
+			tt.wantErr(t, err, fmt.Sprintf("parseDpkgStatus"))
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.err, err)
 		})
 	}
 }
@@ -390,9 +391,12 @@ func Test_handleNewKeyValue(t *testing.T) {
 		{
 			name:    "fail parsing installed-size",
 			line:    "Installed-Size: 1bla",
-			wantKey: "InstalledSize",
-			wantVal: 0,
-			wantErr: assert.NoError,
+			wantKey: "",
+			wantVal: nil,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				expected := errors.New("no match for continuation: line: '  Package: apt'")
+				return errors.Is(err, expected)
+			},
 		},
 	}
 	for _, tt := range tests {
