@@ -94,7 +94,7 @@ setup_snapshot_server() {
   worker_pid=$!
 
   # it takes some time for the server to be ready...
-  sleep 0.5
+  sleep 3
 
   echo "$worker_pid"
 }

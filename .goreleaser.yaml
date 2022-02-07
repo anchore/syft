@@ -71,7 +71,6 @@ signs:
   - artifacts: archive
     ids:
       - darwin-archives
-    signature: "${artifact}"
     cmd: ./.github/scripts/apple-signing/sign.sh
     args:
       - "${artifact}"
