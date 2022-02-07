@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"strconv"
 	"strings"
 
@@ -18,25 +19,22 @@ import (
 func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 	spdxIDMap := make(map[string]interface{})
 
-	collectSyftPackages(spdxIDMap, doc)
-
-	collectSyftFiles(spdxIDMap, doc)
-
-	catalog := pkg.NewCatalog()
-
-	for _, v := range spdxIDMap {
-		if p, ok := v.(*pkg.Package); ok {
-			catalog.Add(*p)
-		}
-	}
-
-	return &sbom.SBOM{
+	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    catalog,
+			PackageCatalog:    pkg.NewCatalog(),
+			FileMetadata:      map[source.Coordinates]source.FileMetadata{},
+			FileDigests:       map[source.Coordinates][]file.Digest{},
 			LinuxDistribution: findLinuxReleaseByPURL(doc),
 		},
-		Relationships: toSyftRelationships(spdxIDMap, doc),
-	}, nil
+	}
+
+	collectSyftPackages(s, spdxIDMap, doc)
+
+	collectSyftFiles(s, spdxIDMap, doc)
+
+	s.Relationships = toSyftRelationships(spdxIDMap, doc)
+
+	return s, nil
 }
 
 func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
@@ -72,18 +70,58 @@ func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
 	return nil
 }
 
-func collectSyftPackages(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
+func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
 	for _, p := range doc.Packages {
 		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
+		s.Artifacts.PackageCatalog.Add(*syftPkg)
 	}
 }
 
-func collectSyftFiles(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
+func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
 	for _, f := range doc.UnpackagedFiles {
 		l := toSyftLocation(f)
 		spdxIDMap[string(f.FileSPDXIdentifier)] = l
+
+		s.Artifacts.FileMetadata[l.Coordinates] = toFileMetadata(f)
+		s.Artifacts.FileDigests[l.Coordinates] = toFileDigests(f)
 	}
+}
+
+func toFileDigests(f *spdx.File2_2) (digests []file.Digest) {
+	if len(f.FileChecksums) > 0 {
+		for _, digest := range f.FileChecksums {
+			digests = append(digests, file.Digest{
+				Algorithm: string(digest.Algorithm),
+				Value:     digest.Value,
+			})
+		}
+	}
+	return digests
+}
+
+func toFileMetadata(f *spdx.File2_2) (meta source.FileMetadata) {
+	if len(f.FileType) > 0 {
+		// FIXME Syft is currently lossy due to the SPDX 2.2.1 spec not supporting arbitrary mimetypes
+		for _, typ := range f.FileType {
+			switch FileType(typ) {
+			case ImageFileType:
+				meta.MIMEType = "image/"
+			case VideoFileType:
+				meta.MIMEType = "video/"
+			case ApplicationFileType:
+				meta.MIMEType = "application/"
+			case TextFileType:
+				meta.MIMEType = "text/"
+			case AudioFileType:
+				meta.MIMEType = "audio/"
+			case BinaryFileType:
+			case ArchiveFileType:
+			case OtherFileType:
+			}
+		}
+	}
+	return meta
 }
 
 func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) []artifact.Relationship {
@@ -141,9 +179,17 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 }
 
 func toSyftCoordinates(f *spdx.File2_2) source.Coordinates {
+	const layerIdPrefix = "layerID: "
+	var fileSystemID string
+	if strings.Index(f.FileComment, layerIdPrefix) == 0 {
+		fileSystemID = strings.TrimPrefix(f.FileComment, layerIdPrefix)
+	}
+	if strings.Index(string(f.FileSPDXIdentifier), layerIdPrefix) == 0 {
+		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIdPrefix)
+	}
 	return source.Coordinates{
 		RealPath:     f.FileName,
-		FileSystemID: requireAndTrimPrefix(f.FileSPDXIdentifier, "layerID: "),
+		FileSystemID: fileSystemID,
 	}
 }
 

@@ -167,28 +167,28 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	mimeTypePrefix := strings.Split(metadata.MIMEType, "/")[0]
 	switch mimeTypePrefix {
 	case "image":
-		ty = append(ty, string(model.ImageFileType))
+		ty = append(ty, string(spdxhelpers.ImageFileType))
 	case "video":
-		ty = append(ty, string(model.VideoFileType))
+		ty = append(ty, string(spdxhelpers.VideoFileType))
 	case "application":
-		ty = append(ty, string(model.ApplicationFileType))
+		ty = append(ty, string(spdxhelpers.ApplicationFileType))
 	case "text":
-		ty = append(ty, string(model.TextFileType))
+		ty = append(ty, string(spdxhelpers.TextFileType))
 	case "audio":
-		ty = append(ty, string(model.AudioFileType))
+		ty = append(ty, string(spdxhelpers.AudioFileType))
 	}
 
 	if internal.IsExecutable(metadata.MIMEType) {
-		ty = append(ty, string(model.BinaryFileType))
+		ty = append(ty, string(spdxhelpers.BinaryFileType))
 	}
 
 	if internal.IsArchive(metadata.MIMEType) {
-		ty = append(ty, string(model.ArchiveFileType))
+		ty = append(ty, string(spdxhelpers.ArchiveFileType))
 	}
 
 	// TODO: add support for source, spdx, and documentation file types
 	if len(ty) == 0 {
-		ty = append(ty, string(model.OtherFileType))
+		ty = append(ty, string(spdxhelpers.OtherFileType))
 	}
 
 	return ty

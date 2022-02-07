@@ -28,7 +28,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/vnd.unknown",
 			},
 			expected: []string{
-				string(model.ApplicationFileType),
+				string(spdxhelpers.ApplicationFileType),
 			},
 		},
 		{
@@ -37,8 +37,8 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/zip",
 			},
 			expected: []string{
-				string(model.ApplicationFileType),
-				string(model.ArchiveFileType),
+				string(spdxhelpers.ApplicationFileType),
+				string(spdxhelpers.ArchiveFileType),
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "audio/ogg",
 			},
 			expected: []string{
-				string(model.AudioFileType),
+				string(spdxhelpers.AudioFileType),
 			},
 		},
 		{
@@ -56,7 +56,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "video/3gpp",
 			},
 			expected: []string{
-				string(model.VideoFileType),
+				string(spdxhelpers.VideoFileType),
 			},
 		},
 		{
@@ -65,7 +65,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "text/html",
 			},
 			expected: []string{
-				string(model.TextFileType),
+				string(spdxhelpers.TextFileType),
 			},
 		},
 		{
@@ -74,7 +74,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "image/png",
 			},
 			expected: []string{
-				string(model.ImageFileType),
+				string(spdxhelpers.ImageFileType),
 			},
 		},
 		{
@@ -83,8 +83,8 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/x-sharedlib",
 			},
 			expected: []string{
-				string(model.ApplicationFileType),
-				string(model.BinaryFileType),
+				string(spdxhelpers.ApplicationFileType),
+				string(spdxhelpers.BinaryFileType),
 			},
 		},
 	}
