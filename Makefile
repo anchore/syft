@@ -4,7 +4,7 @@ RESULTSDIR = test/results
 COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=2m --config .golangci.yaml
-RELEASE_CMD=$(TEMPDIR)/goreleaser --version && $(TEMPDIR)/goreleaser release --rm-dist --parallelism=2
+RELEASE_CMD=$(TEMPDIR)/goreleaser --version && $(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
 COMPARE_TEST_IMAGE = centos:8.2.2004
 COMPARE_DIR = ./test/compare
