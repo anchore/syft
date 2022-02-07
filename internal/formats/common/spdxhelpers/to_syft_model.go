@@ -72,9 +72,17 @@ func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
 	return nil
 }
 
+func collectSyftPackages(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
+	for _, p := range doc.Packages {
+		syftPkg := toSyftPackage(p)
+		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
+	}
+}
+
 func collectSyftFiles(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
 	for _, f := range doc.UnpackagedFiles {
-		spdxIDMap[string(f.FileSPDXIdentifier)] = toSyftLocation(f)
+		l := toSyftLocation(f)
+		spdxIDMap[string(f.FileSPDXIdentifier)] = l
 	}
 }
 
@@ -99,7 +107,6 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 		var typ artifact.RelationshipType
 		if toLocationOk {
 			if r.Relationship == string(ContainsRelationship) {
-				from.Locations = append(from.Locations, *toLocation)
 				typ = artifact.ContainsRelationship
 				to = toLocation
 			}
@@ -107,7 +114,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 			switch RelationshipType(r.Relationship) {
 			case ContainsRelationship:
 				typ = artifact.ContainsRelationship
-				to = toLocation
+				to = toPackage
 			case BuildDependencyOfRelationship:
 				typ = artifact.BuildDependencyOfRelationship
 				to = toPackage
@@ -133,23 +140,16 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 	return out
 }
 
-func collectSyftPackages(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
-	for _, p := range doc.Packages {
-		syftPkg := toSyftPackage(p)
-		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
-		for _, f := range p.Files {
-			loc := toSyftLocation(f)
-			syftPkg.Locations = append(syftPkg.Locations, *loc)
-		}
+func toSyftCoordinates(f *spdx.File2_2) source.Coordinates {
+	return source.Coordinates{
+		RealPath:     f.FileName,
+		FileSystemID: requireAndTrimPrefix(f.FileSPDXIdentifier, "layerID: "),
 	}
 }
 
 func toSyftLocation(f *spdx.File2_2) *source.Location {
 	return &source.Location{
-		Coordinates: source.Coordinates{
-			RealPath:     f.FileName,
-			FileSystemID: requireAndTrimPrefix(f.FileSPDXIdentifier, "layerID: "),
-		},
+		Coordinates: toSyftCoordinates(f),
 		VirtualPath: f.FileName,
 	}
 }
