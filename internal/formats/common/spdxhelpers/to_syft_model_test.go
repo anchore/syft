@@ -1,10 +1,11 @@
 package spdxhelpers
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestToSyftModel(t *testing.T) {
