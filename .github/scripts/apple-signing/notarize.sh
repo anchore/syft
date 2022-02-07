@@ -19,7 +19,10 @@ notarize() {
 
   title "archiving release binary into ${archive_path}"
 
-  zip "${archive_path}" "${binary_path}"
+  parent=$(dirname "$binary_path")
+  (
+    cd "${parent}" && zip "${archive_path}" "$(basename ${binary_path})"
+  )
 
   if [ ! -f "$archive_path" ]; then
     exit_with_error "cannot find payload for notarization: $archive_path"
