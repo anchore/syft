@@ -179,13 +179,13 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 }
 
 func toSyftCoordinates(f *spdx.File2_2) source.Coordinates {
-	const layerIdPrefix = "layerID: "
+	const layerIDPrefix = "layerID: "
 	var fileSystemID string
-	if strings.Index(f.FileComment, layerIdPrefix) == 0 {
-		fileSystemID = strings.TrimPrefix(f.FileComment, layerIdPrefix)
+	if strings.Index(f.FileComment, layerIDPrefix) == 0 {
+		fileSystemID = strings.TrimPrefix(f.FileComment, layerIDPrefix)
 	}
-	if strings.Index(string(f.FileSPDXIdentifier), layerIdPrefix) == 0 {
-		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIdPrefix)
+	if strings.Index(string(f.FileSPDXIdentifier), layerIDPrefix) == 0 {
+		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIDPrefix)
 	}
 	return source.Coordinates{
 		RealPath:     f.FileName,
