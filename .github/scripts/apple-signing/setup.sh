@@ -6,6 +6,7 @@ IS_SNAPSHOT="$1"
 ## grab utilities
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 . "$SCRIPT_DIR"/utils.sh
+mkdir -p "$SCRIPT_DIR/log"
 
 main() {
 
@@ -33,17 +34,13 @@ main() {
   echo -n "$MAC_SIGNING_IDENTITY" > "$SCRIPT_DIR/$SIGNING_IDENTITY_FILENAME"
 }
 
-set +u
-if [ -z "$SCRIPT" ]
-then
+# capture all output from a subshell to log output additionally to a file (as well as the terminal)
+( (
+  set +u
+  if [ -n "$SKIP_SIGNING" ]; then
+      commentary "skipping signing setup..."
+  else
     set -u
-    # log all output
-    mkdir -p "$SCRIPT_DIR/log"
-    /usr/bin/script "$SCRIPT_DIR/log/setup.txt" /bin/bash -c "$0 $*"
-    exit $?
-elif [ -n "$SKIP_SIGNING" ]; then
-    commentary "skipping signing setup..."
-else
-  set -u
-  main
-fi
+    main
+  fi
+) 2>&1) | tee "$SCRIPT_DIR/log/setup.txt"

@@ -7,6 +7,7 @@ IS_SNAPSHOT="$2"
 ## grab utilities
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 . "$SCRIPT_DIR"/utils.sh
+mkdir -p "$SCRIPT_DIR/log"
 
 
 # sign_binary [binary-path] [signing-identity]
@@ -124,17 +125,13 @@ main() {
   fi
 }
 
-set +u
-if [ -z "$SCRIPT" ]
-then
+# capture all output from a subshell to log output additionally to a file (as well as the terminal)
+( (
+  set +u
+  if [ -n "$SKIP_SIGNING" ]; then
+      commentary "skipping signing setup..."
+  else
     set -u
-    # log all output
-    mkdir -p "$SCRIPT_DIR/log"
-    /usr/bin/script "$SCRIPT_DIR/log/signing-$(basename $ARCHIVE_PATH).txt" /bin/bash -c "$0 $*"
-    exit $?
-elif [ -n "$SKIP_SIGNING" ]; then
-    commentary "skipping signing..."
-else
-  set -u
-  main
-fi
+    main
+  fi
+) 2>&1) | tee "$SCRIPT_DIR/log/signing-$(basename $ARCHIVE_PATH).txt"
