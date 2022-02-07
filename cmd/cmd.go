@@ -88,6 +88,10 @@ func initAppConfig() {
 }
 
 func initLogging() {
+	if logFile, ok := os.LookupEnv("SYFT_LOG_FILE"); ok && logFile != "" {
+		appConfig.Log.FileLocation = logFile
+	}
+
 	cfg := logger.LogrusConfig{
 		EnableConsole: (appConfig.Log.FileLocation == "" || appConfig.CliOptions.Verbosity > 0) && !appConfig.Quiet,
 		EnableFile:    appConfig.Log.FileLocation != "",
