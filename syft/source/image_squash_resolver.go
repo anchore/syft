@@ -83,7 +83,7 @@ func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		results, err := r.img.SquashedTree().FilesByGlob(pattern)
+		results, err := r.img.SquashedTree().FilesByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 		}

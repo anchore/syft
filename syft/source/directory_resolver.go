@@ -341,13 +341,13 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			evaluatedPath = windowsToPosix(evaluatedPath)
 		}
 
-		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
+		exists, ref, err := r.fileTree.File(file.Path(userStrPath), filetree.FollowBasenameLinks)
 		if err == nil && exists {
-			loc := NewLocationFromDirectory(r.responsePath(userStrPath), *ref)
-			if evaluatedPath != userStrPath {
-				loc.VirtualPath = r.responsePath(evaluatedPath)
-			}
-
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
+				*ref,
+			)
 			references = append(references, loc)
 		}
 	}
@@ -360,12 +360,17 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	result := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		globResults, err := r.fileTree.FilesByGlob(pattern)
+		globResults, err := r.fileTree.FilesByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
 		for _, globResult := range globResults {
-			result = append(result, NewLocationFromDirectory(r.responsePath(string(globResult.MatchPath)), globResult.Reference))
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+				globResult.Reference,
+			)
+			result = append(result, loc)
 		}
 	}
 

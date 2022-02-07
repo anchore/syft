@@ -633,12 +633,41 @@ func Test_IndexingNestedSymLinks(t *testing.T) {
 	// check that we can access the same file via 1 symlink
 	locations, err = resolver.FilesByPath("./link_to_new_readme")
 	require.NoError(t, err)
-	assert.Len(t, locations, 1)
+	require.Len(t, locations, 1)
+	assert.Equal(t, "readme", locations[0].RealPath)
+	assert.Equal(t, "link_to_new_readme", locations[0].VirtualPath)
 
 	// check that we can access the same file via 2 symlinks
 	locations, err = resolver.FilesByPath("./link_to_link_to_new_readme")
 	require.NoError(t, err)
-	assert.Len(t, locations, 1)
+	require.Len(t, locations, 1)
+	assert.Equal(t, "readme", locations[0].RealPath)
+	assert.Equal(t, "link_to_link_to_new_readme", locations[0].VirtualPath)
+
+	// check that we can access the same file via 2 symlinks
+	locations, err = resolver.FilesByGlob("**/link_*")
+	require.NoError(t, err)
+	require.Len(t, locations, 2)
+
+	// returned locations can be in any order
+	expectedVirtualPaths := []string{
+		"link_to_link_to_new_readme",
+		"link_to_new_readme",
+	}
+
+	expectedRealPaths := []string{
+		"readme",
+	}
+
+	actualRealPaths := strset.New()
+	actualVirtualPaths := strset.New()
+	for _, a := range locations {
+		actualVirtualPaths.Add(a.VirtualPath)
+		actualRealPaths.Add(a.RealPath)
+	}
+
+	assert.ElementsMatch(t, expectedVirtualPaths, actualVirtualPaths.List())
+	assert.ElementsMatch(t, expectedRealPaths, actualRealPaths.List())
 }
 
 func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
@@ -649,31 +678,20 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", filterFn)
 	assert.NoError(t, err)
 
-	var testingLocations []Location
-
 	// the path to the real file is PRUNED from the index, so we should NOT expect a location returned
 	locations, err := resolver.FilesByPath("./readme")
 	require.NoError(t, err)
 	assert.Empty(t, locations)
 
-	// check that we can access the same file via 1 symlink
+	// check that we cannot access the file even via symlink
 	locations, err = resolver.FilesByPath("./link_to_new_readme")
 	require.NoError(t, err)
-	assert.Len(t, locations, 1)
-	testingLocations = append(testingLocations, locations...)
+	assert.Empty(t, locations)
 
-	// check that we can access the same file via 2 symlinks
+	// check that we still cannot access the same file via 2 symlinks
 	locations, err = resolver.FilesByPath("./link_to_link_to_new_readme")
 	require.NoError(t, err)
-	assert.Len(t, locations, 1)
-	testingLocations = append(testingLocations, locations...)
-
-	// check that we CANNOT get contents from any of the link locations
-	for _, location := range testingLocations {
-		contentReader, err := resolver.FileContentsByLocation(location)
-		assert.Errorf(t, err, "expected an error for getting content from a location not in the index")
-		assert.Nil(t, contentReader)
-	}
+	assert.Empty(t, locations)
 }
 
 func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {

@@ -344,3 +344,158 @@ func TestSquashImageResolver_FilesContents(t *testing.T) {
 		})
 	}
 }
+func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
+	tests := []struct {
+		name     string
+		runner   func(FileResolver) []Location
+		expected []Location
+	}{
+		{
+			name: "by mimetype",
+			runner: func(resolver FileResolver) []Location {
+				// links should not show up when searching mimetype
+				actualLocations, err := resolver.FilesByMIMEType("text/plain")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "/etc/group",
+					},
+					VirtualPath: "/etc/group",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/etc/passwd",
+					},
+					VirtualPath: "/etc/passwd",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/etc/shadow",
+					},
+					VirtualPath: "/etc/shadow",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-1.txt",
+					},
+					VirtualPath: "/file-1.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-3.txt",
+					},
+					VirtualPath: "/file-3.txt",
+				},
+				// why 2 after 3? 2 is written to in a higher layer, and this list is in by layer order
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/file-2.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/parent/file-4.txt",
+					},
+					VirtualPath: "/parent/file-4.txt",
+				},
+			},
+		},
+		{
+			name: "by glob",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				actualLocations, err := resolver.FilesByGlob("*ink-*")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-3.txt",
+					},
+					VirtualPath: "/link-within",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/link-2",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-1.txt",
+					},
+					VirtualPath: "/link-1",
+				},
+			},
+		},
+		{
+			name: "by path to degree 1 link",
+			runner: func(resolver FileResolver) []Location {
+				// links resolve to the final file
+				actualLocations, err := resolver.FilesByPath("/link-2")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				// we have multiple copies across layers
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/link-2",
+				},
+			},
+		},
+		{
+			name: "by path to degree 2 link",
+			runner: func(resolver FileResolver) []Location {
+				// multiple links resolves to the final file
+				actualLocations, err := resolver.FilesByPath("/link-indirect")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				// we have multiple copies across layers
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/link-indirect",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
+
+			resolver, err := newImageSquashResolver(img)
+			assert.NoError(t, err)
+
+			actualLocations := test.runner(resolver)
+			require.Len(t, actualLocations, len(test.expected))
+
+			// some operations on this resolver do not return stable results (order may be different across runs)
+
+			expectedMap := make(map[string]string)
+			for _, e := range test.expected {
+				expectedMap[e.VirtualPath] = e.RealPath
+			}
+
+			actualMap := make(map[string]string)
+			for _, a := range test.expected {
+				actualMap[a.VirtualPath] = a.RealPath
+			}
+
+			assert.Equal(t, expectedMap, actualMap)
+		})
+	}
+
+}

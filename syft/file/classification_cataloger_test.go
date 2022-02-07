@@ -89,7 +89,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-busybox",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "busybox",
+			location:   "[", // note: busybox is a link to [
 			expected: []Classification{
 				{
 					Class: "busybox-binary",
@@ -120,10 +120,10 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			loc := source.NewLocation(test.location)
 
 			ok := false
-			for actual_loc, actual_classification := range actualResults {
-				if loc.RealPath == actual_loc.RealPath {
+			for actualLoc, actualClassification := range actualResults {
+				if loc.RealPath == actualLoc.RealPath {
 					ok = true
-					assert.Equal(t, test.expected, actual_classification)
+					assert.Equal(t, test.expected, actualClassification)
 				}
 			}
 
@@ -146,7 +146,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 		{
 			name:         "busybox-regression",
 			fixtureImage: "image-busybox",
-			location:     "/bin/busybox",
+			location:     "/bin/[",
 			expected: []Classification{
 				{
 					Class: "busybox-binary",
@@ -178,10 +178,10 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 			loc := source.NewLocation(test.location)
 
 			ok := false
-			for actual_loc, actual_classification := range actualResults {
-				if loc.RealPath == actual_loc.RealPath {
+			for actuaLoc, actualClassification := range actualResults {
+				if loc.RealPath == actuaLoc.RealPath {
 					ok = true
-					assert.Equal(t, test.expected, actual_classification)
+					assert.Equal(t, test.expected, actualClassification)
 				}
 			}
 
