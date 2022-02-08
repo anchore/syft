@@ -192,6 +192,8 @@ The `volumeMounts` section mounts our secret to `/config`. The `volumes` section
     
     apiVersion: v1
     kind: Pod
+    metadata:
+      name: syft-k8s-usage
     spec:
       containers:
         - image: anchore/syft:latest
