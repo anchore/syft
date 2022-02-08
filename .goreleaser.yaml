@@ -41,6 +41,11 @@ builds:
     mod_timestamp: *build-timestamp
     env: *build-env
     ldflags: *build-ldflags
+    hooks:
+      post:
+        # we must have signing as a build hook instead of the signs section. The signs section must register a new asset, where we want to replace an existing asset.
+        # a post-build hook has the advantage of not needing to unpackage and repackage a tar.gz with a signed binary
+        - ./.github/scripts/apple-signing/sign.sh "{{ .Path }}" "{{ .IsSnapshot }}" "{{ .Target }}"
 
   - id: windows-build
     binary: syft
@@ -66,15 +71,6 @@ archives:
     format: zip
     builds:
       - windows-build
-
-signs:
-  - artifacts: archive
-    ids:
-      - darwin-archives
-    cmd: ./.github/scripts/apple-signing/sign.sh
-    args:
-      - "${artifact}"
-      - "{{ .IsSnapshot }}"
 
 nfpms:
   - license: "Apache 2.0"

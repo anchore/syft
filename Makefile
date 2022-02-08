@@ -104,7 +104,7 @@ bootstrap-tools: $(TEMPDIR)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.42.1
 	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
-	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.3.1
+	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.4.1
 	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/neilpa/yajsv@v1.4.0
 
 .PHONY: bootstrap-go
@@ -316,11 +316,13 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 
 	rm -f .github/scripts/apple-signing/log/*.txt
 
+	# note: notarization cannot be done in parallel, thus --parallelism 1
 	bash -c "\
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
+			--parallelism 1 \
 			--release-notes <(cat CHANGELOG.md)\
-				 || cat .github/scripts/apple-signing/log/*.txt && false"
+				 || (cat .github/scripts/apple-signing/log/*.txt && false)"
 
 	cat .github/scripts/apple-signing/log/*.txt
 
