@@ -89,36 +89,32 @@ func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.
 }
 
 func toFileDigests(f *spdx.File2_2) (digests []file.Digest) {
-	if len(f.FileChecksums) > 0 {
-		for _, digest := range f.FileChecksums {
-			digests = append(digests, file.Digest{
-				Algorithm: string(digest.Algorithm),
-				Value:     digest.Value,
-			})
-		}
+	for _, digest := range f.FileChecksums {
+		digests = append(digests, file.Digest{
+			Algorithm: string(digest.Algorithm),
+			Value:     digest.Value,
+		})
 	}
 	return digests
 }
 
 func toFileMetadata(f *spdx.File2_2) (meta source.FileMetadata) {
-	if len(f.FileType) > 0 {
-		// FIXME Syft is currently lossy due to the SPDX 2.2.1 spec not supporting arbitrary mimetypes
-		for _, typ := range f.FileType {
-			switch FileType(typ) {
-			case ImageFileType:
-				meta.MIMEType = "image/"
-			case VideoFileType:
-				meta.MIMEType = "video/"
-			case ApplicationFileType:
-				meta.MIMEType = "application/"
-			case TextFileType:
-				meta.MIMEType = "text/"
-			case AudioFileType:
-				meta.MIMEType = "audio/"
-			case BinaryFileType:
-			case ArchiveFileType:
-			case OtherFileType:
-			}
+	// FIXME Syft is currently lossy due to the SPDX 2.2.1 spec not supporting arbitrary mimetypes
+	for _, typ := range f.FileType {
+		switch FileType(typ) {
+		case ImageFileType:
+			meta.MIMEType = "image/"
+		case VideoFileType:
+			meta.MIMEType = "video/"
+		case ApplicationFileType:
+			meta.MIMEType = "application/"
+		case TextFileType:
+			meta.MIMEType = "text/"
+		case AudioFileType:
+			meta.MIMEType = "audio/"
+		case BinaryFileType:
+		case ArchiveFileType:
+		case OtherFileType:
 		}
 	}
 	return meta
