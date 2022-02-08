@@ -67,6 +67,7 @@ func passFunc(isPass bool) (b []byte, err error) {
 
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation
+	// TODO: PR review - best way to validate image OR OCI directory?
 	userInput := args[0]
 
 	ko := sign.KeyOpts{
@@ -88,6 +89,7 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 	go func() {
 		defer close(errs)
 		// TODO: lift scheme detection into public to shortcircuit on dir/file
+		// PR Review - where should we validate?
 		s, src, err := generateSBOM(userInput, errs)
 		if err != nil {
 			errs <- err
@@ -110,24 +112,23 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 	return errs
 }
 
-// TODO: context object injection
 func generateAttestation(ctx context.Context, predicate []byte, src *source.Source, ko sign.KeyOpts) error {
 	predicateType := in_toto.PredicateSPDX
 
 	// TODO: check with OCI format on disk to see if metadata is included
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
 
-	// TODO: inject command context and cert path
 	sv, err := sign.SignerFromKeyOpts(ctx, "", ko)
 	if err != nil {
 		return err
 	}
 	defer sv.Close()
+
 	// TODO: can we include our own types here?
 	// Should we be specific about the format that is being used as the predicate here?
 	wrapped := dsse.WrapSigner(sv, "application/syft.in-toto+json")
 
-	fmt.Fprintln(os.Stderr, "Using generated sbom as payload")
+	fmt.Fprintln(os.Stdout, "Using generated sbom as payload")
 
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
