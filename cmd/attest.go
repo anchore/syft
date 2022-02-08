@@ -48,7 +48,14 @@ const (
 )
 
 var (
-	keyPath   string
+	keyPath         string
+	acceptedFormats = map[format.Option]struct{}{
+		format.CycloneDxXMLOption:  {},
+		format.CycloneDxJSONOption: {},
+		format.JSONOption:          {},
+		format.SPDXJSONOption:      {},
+		format.SPDXTagValueOption:  {},
+	}
 	attestCmd = &cobra.Command{
 		Use:   "attest --output [FORMAT] --key [KEY] [SOURCE]",
 		Short: "Generate a package SBOM as an attestation to [SOURCE]",
@@ -84,7 +91,7 @@ func passFunc(isPass bool) (b []byte, err error) {
 }
 
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
-	// can only be an image for attestation
+	// can only be an image for attestation or OCI DIR
 	// TODO: PR review - best way to validate image OR OCI directory?
 	userInput := args[0]
 
@@ -106,16 +113,23 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
+
 		// TODO: lift scheme detection into public to shortcircuit on dir/file
-		// PR Review - where should we validate?
+		// PR Review - where should we do scheme detection
 		s, src, err := generateSBOM(userInput, errs)
 		if err != nil {
 			errs <- err
 			return
 		}
 
-		// TODO: currently forced into only SPDX; allow user to specify
-		bytes, err := syft.Encode(*s, format.SPDXJSONOption)
+		formatOption := format.ParseOption(outputFormat)
+
+		_, accepted := acceptedFormats[formatOption]
+		if !accepted {
+			errs <- fmt.Errorf("could not accept: %v as a predicate format", outputFormat)
+		}
+
+		bytes, err := syft.Encode(*s, formatOption)
 		if err != nil {
 			errs <- err
 			return
@@ -188,5 +202,8 @@ func setAttestFlags(flags *pflag.FlagSet) {
 	// Key options
 	flags.StringVarP(&keyPath, "key", "", "",
 		"private key to use to sign attestation",
+	)
+	flags.StringVarP(&outputFormat, "output", "-o", "",
+		"SBOM predicate output format",
 	)
 }
