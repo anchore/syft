@@ -98,8 +98,6 @@ func TestSPDXJSONDecoder(t *testing.T) {
 					assert.NoError(t, fmt.Errorf("Unable to find relationship: %s", pkgName))
 				}
 			}
-
-			fmt.Printf("%+v \n\n\n\n", sbom)
 		})
 	}
 }
