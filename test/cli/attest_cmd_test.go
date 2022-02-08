@@ -8,7 +8,6 @@ import (
 func TestAttestCmdFlags(t *testing.T) {
 	// coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
 	// tmp := t.TempDir() + "/"
-
 	tests := []struct {
 		name       string
 		args       []string
@@ -19,19 +18,35 @@ func TestAttestCmdFlags(t *testing.T) {
 			name: "no-args-shows-help",
 			args: []string{"attest"},
 			assertions: []traitAssertion{
-				assertInOutput("an image/directory argument is required"),              // specific error that should be shown
-				assertInOutput("Generate a packaged-based Software Bill Of Materials"), // excerpt from help description
+				assertInOutput("an image/directory argument is required"),  // specific error that should be shown
+				assertInOutput("image as the predicate of an attestation"), // excerpt from help description
 				assertFailingReturnCode,
 			},
 		},
 		{
-			name: "can pass a key password during run OR as ENVVAR",
-			args: []string{"attest"},
-			assertions: []traitAssertion{
-				assertInOutput("an image/directory argument is required"),              // specific error that should be shown
-				assertInOutput("Generate a packaged-based Software Bill Of Materials"), // excerpt from help description
-				assertFailingReturnCode,
-			},
+			name:       "can encode syft.json as the predicate",
+			args:       []string{"attest", "-o", "json"},
+			assertions: []traitAssertion{},
+		},
+		{
+			name:       "can encode CycloneDX as the predicate",
+			args:       []string{"attest", "-o", "cyclonedx"},
+			assertions: []traitAssertion{},
+		},
+		{
+			name:       "can encode SPDX as the predicate",
+			args:       []string{"attest", "-o", "spdx"},
+			assertions: []traitAssertion{},
+		},
+		{
+			name:       "can encode SPDX JSON as the predicate",
+			args:       []string{"attest", "-o", "spdx-json"},
+			assertions: []traitAssertion{},
+		},
+		{
+			name:       "can pass a private key password as an ENV variable",
+			args:       []string{"attest", "-o", "json"},
+			assertions: []traitAssertion{},
 		},
 	}
 
