@@ -29,13 +29,31 @@ import (
 	signatureoptions "github.com/sigstore/sigstore/pkg/signature/options"
 )
 
+const (
+	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] --key [KEY] alpine:latest
+
+  A summary of discovered packages formatted as a predicate to an image attestation
+
+  Supports the following image sources:
+    {{.appName}} {{.command}} --key [KEY] yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
+    {{.appName}} {{.command}} --key [KEY] path/to/a/file/or/dir      OCI tar, OCI directory
+
+  You can also explicitly specify the scheme to use:
+    {{.appName}} {{.command}}  docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
+    {{.appName}} {{.command}} docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
+    {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
+    {{.appName}} {{.command}} oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
+    {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
+`
+)
+
 var (
 	keyPath   string
 	attestCmd = &cobra.Command{
 		Use:   "attest --output [FORMAT] --key [KEY] [SOURCE]",
 		Short: "Generate a package SBOM as an attestation to [SOURCE]",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container image as the predicate of an attestation.",
-		Example: internal.Tprintf(packagesExample, map[string]interface{}{
+		Example: internal.Tprintf(attestExample, map[string]interface{}{
 			"appName": internal.ApplicationName,
 			"command": "attest",
 		}),
