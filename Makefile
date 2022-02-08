@@ -322,7 +322,7 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 			--config $(TEMPDIR)/goreleaser.yaml \
 			--parallelism 1 \
 			--release-notes <(cat CHANGELOG.md)\
-				 || cat .github/scripts/apple-signing/log/*.txt && false"
+				 || (cat .github/scripts/apple-signing/log/*.txt && false)"
 
 	cat .github/scripts/apple-signing/log/*.txt
 
