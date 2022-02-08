@@ -6,6 +6,7 @@ COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=2m --config .golangci.yaml
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
+VERSION=$(shell git describe --dirty --always --tags)
 COMPARE_TEST_IMAGE = centos:8.2.2004
 COMPARE_DIR = ./test/compare
 
@@ -53,6 +54,10 @@ endif
 
 ifndef SNAPSHOTDIR
 	$(error SNAPSHOTDIR is not set)
+endif
+
+ifndef VERSION
+	$(error VERSION is not set)
 endif
 
 ifndef REF_NAME
@@ -326,6 +331,7 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 
 	cat .github/scripts/apple-signing/log/*.txt
 
+	# TODO: turn this into a post-release hook
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
 
