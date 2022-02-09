@@ -31,12 +31,14 @@ If you encounter an issue, please [let us know using the issue tracker](https://
 
 ## Installation
 
+**Note**: Currently, Syft is built only for Linux, macOS and Windows.
+
 ### Recommended
 ```bash
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 ```
 
-...or, you can specify a release version and destination directory for the installation:
+... or, you can specify a release version and destination directory for the installation:
 
 ```
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
@@ -48,7 +50,21 @@ brew tap anchore/syft
 brew install syft
 ```
 
-**Note**: Currently, Syft is built only for macOS and Linux.
+### Nix
+
+**Note**: nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix)
+
+Also syft is currently only in the [unstable channel](https://nixos.wiki/wiki/Nix_channels#The_official_channels) awaiting the `22.05` release
+
+```bash
+nix-env -i syft
+```
+
+... or, just try it out in an ephemeral nix shell
+
+```bash
+nix-shell -p syft
+```
 
 ## Getting started
 
