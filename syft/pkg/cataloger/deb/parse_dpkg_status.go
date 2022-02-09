@@ -58,6 +58,9 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
 	var retErr error
 	dpkgFields, err := extractAllFields(reader)
 	if err != nil {
+		if !errors.Is(err, errEndOfPackages) {
+			return pkg.DpkgMetadata{}, err
+		}
 		retErr = err
 	}
 
@@ -152,7 +155,7 @@ func extractSourceVersion(source string) (string, string) {
 // handleNewKeyValue parse a new key-value pair from the given unprocessed line
 func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 	if i := strings.Index(line, ":"); i > 0 {
-		var key = strings.TrimSpace(line[0:i])
+		key = strings.TrimSpace(line[0:i])
 		// mapstruct cant handle "-"
 		key = strings.ReplaceAll(key, "-", "")
 		val := strings.TrimSpace(line[i+1:])

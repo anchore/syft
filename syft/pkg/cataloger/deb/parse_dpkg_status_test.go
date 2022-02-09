@@ -260,47 +260,46 @@ func TestSourceVersionExtract(t *testing.T) {
 	}
 }
 
+func errIs(expected error) assert.ErrorAssertionFunc {
+	return func(t assert.TestingT, err error, i ...interface{}) bool {
+		return errors.Is(err, expected)
+	}
+}
+
 func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *bufio.Reader
+		input   string
 		want    []pkg.Package
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name:    "no more packages",
-			input:   bufio.NewReader(strings.NewReader(`Package: apt`)),
+			input:   `Package: apt`,
 			wantErr: assert.NoError,
 		},
 		{
 			name: "duplicated key",
-			input: bufio.NewReader(strings.NewReader(`
-Package: apt
+			input: `Package: apt
 Package: apt-get
 
-`)),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				expected := errors.New("duplicate key discovered: Package")
-				return errors.Is(err, expected)
-			},
+`,
+			wantErr: errIs(errors.New("duplicate key discovered: Package")),
 		},
 		{
 			name: "no match for continuation",
-			input: bufio.NewReader(strings.NewReader(`  Package: apt
+			input: `  Package: apt
 
-`)),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				expected := errors.New("no match for continuation: line: '  Package: apt'")
-				return errors.Is(err, expected)
-			},
+`,
+			wantErr: errIs(errors.New("no match for continuation: line: '  Package: apt'")),
 		},
 		{
 			name: "find keys",
-			input: bufio.NewReader(strings.NewReader(`Package: apt
+			input: `Package: apt
 Status: install ok installed
 Installed-Size: 10kib
 
-`)),
+`,
 			want: []pkg.Package{
 				{
 					Name:         "apt",
@@ -317,20 +316,18 @@ Installed-Size: 10kib
 		},
 		{
 			name: "ignore installed size parsing error",
-			input: bufio.NewReader(strings.NewReader(`Package: apt
+			input: `Package: apt
 Installed-Size: not-something-you-can-convert-to-integer
 
-`)),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				expected := errors.New("no match for continuation: line: '  Package: apt'")
-				return errors.Is(err, expected)
-			},
+`,
+			wantErr: errIs(errors.New("no match for continuation: line: '  Package: apt'")),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseDpkgStatus(tt.input)
+			r := bufio.NewReader(strings.NewReader(tt.input))
+			got, err := parseDpkgStatus(r)
 			tt.wantErr(t, err, fmt.Sprintf("parseDpkgStatus"))
 			assert.Equal(t, tt.want, got)
 		})

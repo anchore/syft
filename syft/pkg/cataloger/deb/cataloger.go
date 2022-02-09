@@ -54,6 +54,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		internal.CloseAndLogError(dbContents, dbLocation.VirtualPath)
 		if err != nil {
 			log.Warnf("dpkg cataloger: unable to catalog package=%+v: %w", dbLocation.RealPath, err)
+			continue
 		}
 
 		for i := range pkgs {
