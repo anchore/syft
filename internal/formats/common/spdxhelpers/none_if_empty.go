@@ -6,7 +6,7 @@ import (
 
 func NoneIfEmpty(value string) string {
 	if strings.TrimSpace(value) == "" {
-		return "NONE"
+		return NONE
 	}
 	return value
 }

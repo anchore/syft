@@ -39,7 +39,11 @@ func LanguageFromPURL(p string) Language {
 		return UnknownLanguage
 	}
 
-	switch purl.Type {
+	return LanguageByName(purl.Type)
+}
+
+func LanguageByName(name string) Language {
+	switch name {
 	case packageurl.TypeMaven, purlGradlePkgType:
 		return Java
 	case packageurl.TypeComposer:

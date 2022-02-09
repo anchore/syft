@@ -1,0 +1,25 @@
+{
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2020-11-24T01:12:27Z",
+    "creators": [ "Person: Nisha K (nishak@vmware.com)" ]
+  },
+  "name": "hello-go-module.spdx.json",
+  "documentNamespace": "https://swinslow.net/spdx-examples/example7/hello-go-module",
+  "documentDescribes": [
+    "SPDXRef-go-module-example.com/hello"
+  ],
+  "packages": [
+    {
+      "name": "example.com/hello",
+      "SPDXID": "SPDXRef-go-module-example.com/hello",
+      "downloadLocation": "git@github.com:swinslow/spdx-examples.git#example7/content/src/hello",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ]
+}

@@ -16,7 +16,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name:     "no metadata",
 			input:    pkg.Package{},
-			expected: "NOASSERTION",
+			expected: NOASSERTION,
 		},
 		{
 			name: "from apk",
@@ -43,7 +43,7 @@ func Test_DownloadLocation(t *testing.T) {
 					URL: "",
 				},
 			},
-			expected: "NONE",
+			expected: NONE,
 		},
 	}
 	for _, test := range tests {

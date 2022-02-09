@@ -1,0 +1,72 @@
+{
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2020-11-24T01:12:27Z",
+    "creators": [
+      {
+        "Person": "Nisha K (nishak@vmware.com)"
+      }
+    ]
+  },
+  "name": "hello-go-binary.spdx.json",
+  "documentNamespace": "https://swinslow.net/spdx-examples/example7/hello-go-binary",
+  "externalDocumentRefs": [
+    {
+      "externalDocumentId": "DocumentRef-hello-go-module",
+      "checksum": {
+        "algorithm": "SHA1",
+        "checksumValue": "d661f8f831a99c288a64e5843b4794ad5181224a"
+      },
+      "spdxDocument": "https://swinslow.net/spdx-examples/example7/hello-go-module-cfa0c58d-79db-4860-99b6-258477e4838b"
+    },
+    {
+      "externalDocumentId": "DocumentRef-golang-dist",
+      "checksum": {
+        "algorithm": "SHA1",
+        "checksumValue": "b6cf54a46329e7cc7610aa5d244018b80103d111"
+      },
+      "spdxDocument": "https://swinslow.net/spdx-examples/example7/golang-dist-492dfde4-318b-49f7-b48c-934bfafbde48"
+    },
+    {
+      "externalDocumentId": "DocumentRef-hello-imports",
+      "checksum": {
+        "algorithm": "SHA1",
+        "checksumValue": "14ff98203c3ddd2bd4803c00b5225d2551ca603c"
+      },
+      "spdxDocument": "https://swinslow.net/spdx-examples/example7/hello-imports-c2d068df-67aa-4c68-98c8-100b450fc408"
+    }
+  ],
+  "documentDescribes": [
+    "SPDXRef-go-bin-hello"
+  ],
+  "packages": [
+    {
+      "packageName": "hello",
+      "SPDXID": "SPDXRef-go-bin-hello",
+      "downloadLocation": "git@github.com:swinslow/spdx-examples.git#example7/content/build/hello",
+      "filesAnalyzed": "false",
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "packageCopyrightText": "NOASSERTION"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "DocumentRef-golang-dist",
+      "relatedSpdxElement": "DocumentRef-hello-go-module",
+      "relationshipType": "BUILD_TOOL_OF"
+    },
+    {
+      "spdxElementId": "DocumentRef-golang-dist:SPDXRef-go-compiler",
+      "relatedSpdxElement": "SPDXRef-go-bin-hello",
+      "relationshipType": "GENERATES"
+    },
+    {
+      "spdxElementId": "DocumentRef-hello-imports",
+      "relatedSpdxElement": "SPDXRef-go-bin-hello",
+      "relationshipType": "STATIC_LINK"
+    }
+  ]
+}

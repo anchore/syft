@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	purlArchQualifier   = "arch"
-	purlDistroQualifier = "distro"
-	purlEpochQualifier  = "epoch"
-	purlVCSURLQualifier = "vcs_url"
+	PURLQualifierArch   = "arch"
+	PURLQualifierDistro = "distro"
+	PURLQualifierEpoch  = "epoch"
+	PURLQualifierVCSURL = "vcs_url"
 
-	// this qualifier is not in the pURL spec, but is used by grype to perform indirect matching based on source information
-	purlUpstreamQualifier = "upstream"
+	// PURLQualifierUpstream this qualifier is not in the pURL spec, but is used by grype to perform indirect matching based on source information
+	PURLQualifierUpstream = "upstream"
 
 	purlCargoPkgType  = "cargo"
 	purlGradlePkgType = "gradle"
@@ -83,7 +83,7 @@ func purlQualifiers(vars map[string]string, release *linux.Release) (q packageur
 
 	if release != nil && release.ID != "" && release.VersionID != "" {
 		q = append(q, packageurl.Qualifier{
-			Key:   purlDistroQualifier,
+			Key:   PURLQualifierDistro,
 			Value: fmt.Sprintf("%s-%s", release.ID, release.VersionID),
 		})
 	}

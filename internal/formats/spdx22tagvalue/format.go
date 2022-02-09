@@ -7,7 +7,7 @@ func Format() format.Format {
 	return format.NewFormat(
 		format.SPDXTagValueOption,
 		encoder,
-		nil,
-		nil,
+		decoder,
+		validator,
 	)
 }

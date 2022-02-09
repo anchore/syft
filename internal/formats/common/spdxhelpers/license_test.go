@@ -16,7 +16,7 @@ func Test_License(t *testing.T) {
 		{
 			name:     "no licenses",
 			input:    pkg.Package{},
-			expected: "NONE",
+			expected: NONE,
 		},
 		{
 			name: "no SPDX licenses",
@@ -25,7 +25,7 @@ func Test_License(t *testing.T) {
 					"made-up",
 				},
 			},
-			expected: "NOASSERTION",
+			expected: NOASSERTION,
 		},
 		{
 			name: "with SPDX license",
