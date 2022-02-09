@@ -53,16 +53,6 @@ func assertLoggingLevel(level string) traitAssertion {
 	}
 }
 
-func assertLogFile(filepath string) traitAssertion {
-	return func(tb testing.TB, stdout, stderr string, rc int) {
-		tb.Helper()
-		_, err := os.Stat(filepath)
-		if err != nil {
-			tb.Errorf("no log file: %s", err)
-		}
-	}
-}
-
 func assertNotInOutput(data string) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, _ int) {
 		tb.Helper()
