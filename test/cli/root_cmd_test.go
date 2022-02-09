@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -120,7 +121,8 @@ func TestPersistentFlags(t *testing.T) {
 func TestLogFile(t *testing.T) {
 	request := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
 
-	envLogFile := "a-pretty-log-file.log"
+	envLogFile := filepath.Join(os.TempDir(), "a-pretty-log-file.log")
+	t.Logf("log file path: %s", envLogFile)
 
 	tests := []struct {
 		name       string
@@ -130,7 +132,7 @@ func TestLogFile(t *testing.T) {
 		cleanup    func()
 	}{
 		{
-			name: "log-file",
+			name: "env-var-log-file-name",
 			args: []string{"-vv", request},
 			env:  map[string]string{"SYFT_LOG_FILE": envLogFile},
 			assertions: []traitAssertion{
