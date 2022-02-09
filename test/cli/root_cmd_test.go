@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRootCmdAliasesToPackagesSubcommand(t *testing.T) {
@@ -102,6 +104,49 @@ func TestPersistentFlags(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			cmd, stdout, stderr := runSyft(t, test.env, test.args...)
+			for _, traitFn := range test.assertions {
+				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
+			}
+			if t.Failed() {
+				t.Log("STDOUT:\n", stdout)
+				t.Log("STDERR:\n", stderr)
+				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
+			}
+		})
+	}
+}
+
+func TestLogFile(t *testing.T) {
+	request := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+
+	envLogFile := "a-pretty-log-file.log"
+
+	tests := []struct {
+		name       string
+		args       []string
+		env        map[string]string
+		assertions []traitAssertion
+		cleanup    func()
+	}{
+		{
+			name: "log-file",
+			args: []string{"-vv", request},
+			env:  map[string]string{"SYFT_LOG_FILE": envLogFile},
+			assertions: []traitAssertion{
+				func(tb testing.TB, stdout, stderr string, rc int) {
+					tb.Helper()
+					_, err := os.Stat(envLogFile)
+					assert.NoError(t, err)
+				},
+			},
+			cleanup: func() { assert.NoError(t, os.Remove(envLogFile)) },
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Cleanup(test.cleanup)
+
 			cmd, stdout, stderr := runSyft(t, test.env, test.args...)
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
