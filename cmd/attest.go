@@ -127,6 +127,7 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 		_, accepted := acceptedFormats[formatOption]
 		if !accepted {
 			errs <- fmt.Errorf("could not accept: %v as a predicate format", outputFormat)
+			return
 		}
 
 		bytes, err := syft.Encode(*s, formatOption)
@@ -203,7 +204,7 @@ func setAttestFlags(flags *pflag.FlagSet) {
 	flags.StringVarP(&keyPath, "key", "", "",
 		"private key to use to sign attestation",
 	)
-	flags.StringVarP(&outputFormat, "output", "-o", "",
+	flags.StringVarP(&outputFormat, "output", "", "",
 		"SBOM predicate output format",
 	)
 }
