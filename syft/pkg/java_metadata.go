@@ -5,13 +5,12 @@ import (
 
 	"github.com/anchore/syft/syft/linux"
 
-	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 )
 
 var _ urlIdentifier = (*JavaMetadata)(nil)
 
-var JenkinsPluginPomPropertiesGroupIDs = []string{
+var jenkinsPluginPomPropertiesGroupIDs = []string{
 	"io.jenkins.plugins",
 	"org.jenkins.plugins",
 	"org.jenkins-ci.plugins",
@@ -25,6 +24,7 @@ type JavaMetadata struct {
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
 	PomProject    *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
+	PURL          string         `hash:"ignore" json:"-"` // pURLs and CPEs are ignored for package IDs
 	Parent        *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
 
@@ -59,7 +59,7 @@ type PomParent struct {
 
 // PkgTypeIndicated returns the package Type indicated by the data contained in the PomProperties.
 func (p PomProperties) PkgTypeIndicated() Type {
-	if internal.HasAnyOfPrefixes(p.GroupID, JenkinsPluginPomPropertiesGroupIDs...) || strings.Contains(p.GroupID, ".jenkins.plugin") {
+	if internal.HasAnyOfPrefixes(p.GroupID, jenkinsPluginPomPropertiesGroupIDs...) || strings.Contains(p.GroupID, ".jenkins.plugin") {
 		return JenkinsPluginPkg
 	}
 
@@ -74,18 +74,5 @@ type JavaManifest struct {
 
 // PackageURL returns the PURL for the specific Maven package (see https://github.com/package-url/purl-spec)
 func (m JavaMetadata) PackageURL(_ *linux.Release) string {
-	if m.PomProperties != nil {
-		pURL := packageurl.NewPackageURL(
-			packageurl.TypeMaven,
-			m.PomProperties.GroupID,
-			m.PomProperties.ArtifactID,
-			m.PomProperties.Version,
-			nil, // TODO: there are probably several qualifiers that can be specified here
-			"")
-		return pURL.ToString()
-	}
-
-	// TODO: support non-maven artifacts
-
-	return ""
+	return m.PURL
 }
