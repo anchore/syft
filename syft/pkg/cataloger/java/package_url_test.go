@@ -30,7 +30,7 @@ func Test_packageURL(t *testing.T) {
 						GroupID:    "org.anchore",
 						ArtifactID: "example-java-app-maven",
 						Version:    "0.1.0",
-						Extra:      map[string]string{},
+						Extra:      make(map[string]string),
 					},
 				},
 			},
