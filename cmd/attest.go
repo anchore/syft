@@ -48,15 +48,9 @@ const (
 )
 
 var (
-	keyPath         string
-	acceptedFormats = map[format.Option]struct{}{
-		format.CycloneDxXMLOption:  {},
-		format.CycloneDxJSONOption: {},
-		format.JSONOption:          {},
-		format.SPDXJSONOption:      {},
-		format.SPDXTagValueOption:  {},
-	}
-	attestCmd = &cobra.Command{
+	keyPath           string
+	attestationOutput []string
+	attestCmd         = &cobra.Command{
 		Use:   "attest --output [FORMAT] --key [KEY] [SOURCE]",
 		Short: "Generate a package SBOM as an attestation to [SOURCE]",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container image as the predicate of an attestation.",
@@ -113,7 +107,15 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-
+		if len(attestationOutput) > 1 {
+			errs <- fmt.Errorf("can not generate attestation for more than one output")
+			return
+		}
+		output := format.ParseOption(attestationOutput[0])
+		if output == format.UnknownFormatOption {
+			errs <- fmt.Errorf("can not use %v as attestation format. Try: %v", output, format.AllOptions)
+			return
+		}
 		// TODO: lift scheme detection into public to shortcircuit on dir/file
 		// PR Review - where should we do scheme detection
 		s, src, err := generateSBOM(userInput, errs)
@@ -122,15 +124,7 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 			return
 		}
 
-		formatOption := format.ParseOption(outputFormat)
-
-		_, accepted := acceptedFormats[formatOption]
-		if !accepted {
-			errs <- fmt.Errorf("could not accept: %v as a predicate format", outputFormat)
-			return
-		}
-
-		bytes, err := syft.Encode(*s, format.JSONOption)
+		bytes, err := syft.Encode(*s, output)
 		if err != nil {
 			errs <- err
 			return
@@ -200,10 +194,12 @@ func init() {
 
 func setAttestFlags(flags *pflag.FlagSet) {
 	// Key options
-	flags.StringVarP(&keyPath, "key", "", "",
+	flags.StringVarP(&keyPath, "key", "", "cosign.key",
 		"private key to use to sign attestation",
 	)
-	flags.StringVarP(&outputFormat, "output", "", "",
-		"SBOM predicate output format",
+
+	flags.StringArrayVarP(&attestationOutput,
+		"output", "o", []string{string(format.JSONOption)},
+		fmt.Sprintf("attestation output format, options=%v", format.AllOptions),
 	)
 }
