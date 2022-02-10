@@ -133,7 +133,7 @@ func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
 			var val interface{}
 			key, val, err = handleNewKeyValue(line)
 			if err != nil {
-				log.Warnf("parsing key from line: %s err: %v", line, err)
+				log.Warnf("parsing dpkg status: extracting key-value from line: %s err: %v", line, err)
 				continue
 			}
 
@@ -167,7 +167,7 @@ func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 		case "InstalledSize":
 			s, err := humanize.ParseBytes(val)
 			if err != nil {
-				return "", nil, fmt.Errorf("extracting dpkg fields: bad installed-size value=%q: %w", val, err)
+				return "", nil, fmt.Errorf("bad installed-size value=%q: %w", val, err)
 			}
 			return key, int(s), nil
 		default:

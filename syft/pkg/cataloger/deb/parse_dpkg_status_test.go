@@ -260,9 +260,9 @@ func TestSourceVersionExtract(t *testing.T) {
 	}
 }
 
-func errIs(expected error) assert.ErrorAssertionFunc {
+func assertEqualErr(expected error) assert.ErrorAssertionFunc {
 	return func(t assert.TestingT, err error, i ...interface{}) bool {
-		return errors.Is(err, expected)
+		return assert.Contains(t, err.Error(), expected.Error())
 	}
 }
 
@@ -284,14 +284,14 @@ func Test_parseDpkgStatus(t *testing.T) {
 Package: apt-get
 
 `,
-			wantErr: errIs(errors.New("duplicate key discovered: Package")),
+			wantErr: assertEqualErr(errors.New("duplicate key discovered: Package")),
 		},
 		{
 			name: "no match for continuation",
 			input: `  Package: apt
 
 `,
-			wantErr: errIs(errors.New("no match for continuation: line: '  Package: apt'")),
+			wantErr: assertEqualErr(errors.New("no match for continuation: line: '  Package: apt'")),
 		},
 		{
 			name: "find keys",
@@ -335,12 +335,9 @@ func Test_handleNewKeyValue(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name: "cannot parse field",
-			line: "blabla",
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				expected := errors.New("cannot parse field from line: 'blabla'")
-				return assert.Equal(t, expected, err)
-			},
+			name:    "cannot parse field",
+			line:    "blabla",
+			wantErr: assertEqualErr(errors.New("cannot parse field from line: 'blabla'")),
 		},
 		{
 			name:    "parse field",
@@ -381,11 +378,7 @@ func Test_handleNewKeyValue(t *testing.T) {
 			name:    "fail parsing installed-size",
 			line:    "Installed-Size: 1bla",
 			wantKey: "",
-			wantVal: nil,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				expected := errors.New("no match for continuation: line: '  Package: apt'")
-				return errors.Is(err, expected)
-			},
+			wantErr: assertEqualErr(fmt.Errorf("unhandled size name: %s", "bla")),
 		},
 	}
 	for _, tt := range tests {
