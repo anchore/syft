@@ -155,8 +155,6 @@ func generateAttestation(ctx context.Context, predicate []byte, src *source.Sour
 	// Should we be specific about the format that is being used as the predicate here?
 	wrapped := dsse.WrapSigner(sv, "application/syft.in-toto+json")
 
-	fmt.Fprintln(os.Stdout, "Using generated sbom as payload")
-
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
 		Type:      predicateType,
