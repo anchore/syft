@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/anchore/stereoscope"
@@ -25,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/wagoodman/go-partybus"
+	"golang.org/x/term"
 
 	signatureoptions "github.com/sigstore/sigstore/pkg/signature/options"
 )
@@ -79,9 +81,47 @@ var (
 	}
 )
 
+func isTerminal() bool {
+	stat, _ := os.Stdin.Stat()
+	return (stat.Mode() & os.ModeCharDevice) != 0
+}
+
+func getPassFromTerm(confirm bool) ([]byte, error) {
+	fmt.Fprint(os.Stderr, "Enter password for private key: ")
+	pw1, err := term.ReadPassword(0)
+	if err != nil {
+		return nil, err
+	}
+	if !confirm {
+		return pw1, nil
+	}
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprint(os.Stderr, "Enter password for private key again: ")
+	confirmpw, err := term.ReadPassword(0)
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(pw1) != string(confirmpw) {
+		return nil, errors.New("passwords do not match")
+	}
+	return pw1, nil
+
+}
+
 // TODO: does not play well with TUI interface
 func passFunc(isPass bool) (b []byte, err error) {
-	return b, err
+	pw, ok := os.LookupEnv("COSIGN_PASSWORD")
+	switch {
+	case ok:
+		return []byte(pw), nil
+	case isTerminal():
+		return getPassFromTerm(true)
+	// Handle piped in passwords.
+	default:
+		return io.ReadAll(os.Stdin)
+	}
 }
 
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
