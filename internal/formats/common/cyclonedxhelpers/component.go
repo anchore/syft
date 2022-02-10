@@ -34,10 +34,8 @@ func decodeComponent(c *cyclonedx.Component) (*pkg.Package, error) {
 
 	typ := pkg.Type(prop(c, "type"))
 	purl := c.PackageURL
-	if typ == "" {
-		if purl != "" {
-			typ = pkg.TypeFromPURL(purl)
-		}
+	if typ == "" && purl != "" {
+		typ = pkg.TypeFromPURL(purl)
 	}
 
 	p := &pkg.Package{
