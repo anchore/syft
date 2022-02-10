@@ -314,14 +314,6 @@ Installed-Size: 10kib
 			},
 			wantErr: assert.NoError,
 		},
-		{
-			name: "ignore installed size parsing error",
-			input: `Package: apt
-Installed-Size: not-something-you-can-convert-to-integer
-
-`,
-			wantErr: errIs(errors.New("no match for continuation: line: '  Package: apt'")),
-		},
 	}
 
 	for _, tt := range tests {

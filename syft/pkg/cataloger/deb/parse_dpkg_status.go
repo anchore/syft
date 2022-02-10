@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/dustin/go-humanize"
 	"github.com/mitchellh/mapstructure"
@@ -132,7 +133,8 @@ func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
 			var val interface{}
 			key, val, err = handleNewKeyValue(line)
 			if err != nil {
-				return nil, err
+				log.Warnf("parsing key from line: %s err: %v", line, err)
+				continue
 			}
 
 			if _, ok := dpkgFields[key]; ok {
