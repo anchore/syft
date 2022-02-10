@@ -24,7 +24,7 @@ func Test_encodeCPE(t *testing.T) {
 			expected: "",
 		},
 		{
-			name: "single encodeCPE",
+			name: "single CPE",
 			input: pkg.Package{
 				CPEs: []pkg.CPE{
 					testCPE,
