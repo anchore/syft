@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:16a426e7-fcc7-4b94-abd2-66c67569cc44" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:25133adc-01af-46ad-a198-002034e54097" version="1">
   <metadata>
-    <timestamp>2022-01-14T22:46:49Z</timestamp>
+    <timestamp>2022-02-10T17:18:31-05:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,7 +9,7 @@
         <version>[not provided]</version>
       </tool>
     </tools>
-    <component type="file">
+    <component bom-ref="163686ac6e30c752" type="file">
       <name>/some/path</name>
       <version></version>
     </component>
@@ -48,6 +48,8 @@
     <component type="operating-system">
       <name>debian</name>
       <version>1.2.3</version>
+      <description>debian</description>
+      <swid tagId="debian" name="debian" version="1.2.3"></swid>
       <properties>
         <property name="prettyName">debian</property>
         <property name="id">debian</property>
