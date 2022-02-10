@@ -93,7 +93,6 @@ func propInt(c *cyclonedx.Component, name string) int {
 		return 0
 	}
 	return v
-
 }
 
 func propIntNil(c *cyclonedx.Component, name string) *int {

@@ -22,7 +22,7 @@ func GetValidator(format cyclonedx.BOMFileFormat) format.Validator {
 		}
 		// random JSON does not necessarily cause an error (e.g. SPDX)
 		if (cyclonedx.BOM{} == *bom) {
-			return fmt.Errorf("Not a valid CycloneDX document")
+			return fmt.Errorf("not a valid CycloneDX document")
 		}
 		return nil
 	}
@@ -68,7 +68,7 @@ func toSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 
 func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) error {
 	if bom.Components == nil {
-		return fmt.Errorf("No components are defined in the CycloneDX BOM")
+		return fmt.Errorf("no components are defined in the CycloneDX BOM")
 	}
 	for _, component := range *bom.Components {
 		if err := collectPackages(&component, s, idMap); err != nil {
@@ -94,8 +94,10 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 	}
 
 	if component.Components != nil {
-		for _, c := range *component.Components {
-			collectPackages(&c, s, idMap)
+		for i := range *component.Components {
+			if err := collectPackages(&(*component.Components)[i], s, idMap); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -103,9 +105,10 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 }
 
 func linuxReleaseFromComponents(components []cyclonedx.Component) *linux.Release {
-	for _, component := range components {
+	for i := range components {
+		component := &components[i]
 		if component.Type == cyclonedx.ComponentTypeOS {
-			return linuxReleaseFromOSComponent(&component)
+			return linuxReleaseFromOSComponent(component)
 		}
 	}
 	return nil
@@ -174,25 +177,6 @@ func getPropertyValue(component *cyclonedx.Component, name string) string {
 		}
 	}
 	return ""
-}
-
-// used to indicate that a relationship listed under the syft artifact package can be represented as a cyclonedx dependency.
-// NOTE: CycloneDX provides the ability to describe components and their dependency on other components.
-// The dependency graph is capable of representing both direct and transitive relationships.
-// If a relationship is either direct or transitive it can be included in this function.
-// An example of a relationship to not include would be: OwnershipByFileOverlapRelationship.
-func _isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
-	switch ty {
-	case artifact.RuntimeDependencyOfRelationship:
-		return true
-	case artifact.DevDependencyOfRelationship:
-		return true
-	case artifact.BuildDependencyOfRelationship:
-		return true
-	case artifact.DependencyOfRelationship:
-		return true
-	}
-	return false
 }
 
 func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) error {

@@ -38,29 +38,26 @@ func decodeComponent(c *cyclonedx.Component) (*pkg.Package, error) {
 		typ = pkg.TypeFromPURL(purl)
 	}
 
+	metaType, meta := decodePackageMetadata(c)
+
 	p := &pkg.Package{
-		Name:      c.Name,
-		Version:   c.Version,
-		FoundBy:   prop(c, "foundBy"),
-		Locations: nil,
-		Licenses:  decodeLicenses(c),
-		Language:  pkg.Language(prop(c, "language")),
-		Type:      pkg.Type(typ),
-		CPEs:      cp,
-		PURL:      purl,
-	}
-
-	metaType, meta, err := decodePackageMetadata(c)
-
-	if err == nil {
-		p.MetadataType = metaType
-		p.Metadata = meta
+		Name:         c.Name,
+		Version:      c.Version,
+		FoundBy:      prop(c, "foundBy"),
+		Locations:    nil,
+		Licenses:     decodeLicenses(c),
+		Language:     pkg.Language(prop(c, "language")),
+		Type:         typ,
+		CPEs:         cp,
+		PURL:         purl,
+		MetadataType: metaType,
+		Metadata:     meta,
 	}
 
 	return p, nil
 }
 
-func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{}, error) {
+func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{}) {
 	if c.Properties != nil {
 		typ := prop(c, "metadataType")
 		if typ != "" {
@@ -81,7 +78,7 @@ func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{
 					PullChecksum:     prop(c, "pullChecksum"),
 					GitCommitOfAport: prop(c, "gitCommitOfAport"),
 					Files:            []pkg.ApkFileRecord{},
-				}, nil
+				}
 			case "DpkgMetadata":
 				return pkg.DpkgMetadataType, pkg.DpkgMetadata{
 					Package:       prop(c, "package"),
@@ -92,7 +89,7 @@ func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{
 					Maintainer:    prop(c, "maintainer"),
 					InstalledSize: propInt(c, "installedSize"),
 					Files:         []pkg.DpkgFileRecord{},
-				}, nil
+				}
 			case "RpmdbMetadata":
 				return pkg.RpmdbMetadataType, pkg.RpmdbMetadata{
 					Name:      prop(c, "name"),
@@ -105,10 +102,10 @@ func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{
 					License:   prop(c, "license"),
 					Vendor:    prop(c, "vendor"),
 					Files:     []pkg.RpmdbFileRecord{},
-				}, nil
+				}
 			}
 		}
 	}
 
-	return pkg.UnknownMetadataType, nil, nil
+	return pkg.UnknownMetadataType, nil
 }
