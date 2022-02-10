@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Author(p pkg.Package) string {
+func encodeAuthor(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.NpmPackageJSONMetadata:

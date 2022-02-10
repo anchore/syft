@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Properties(t *testing.T) {
+func Test_encodeProperties(t *testing.T) {
 	epoch := 2
 	tests := []struct {
 		name     string
@@ -132,7 +132,7 @@ func Test_Properties(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Properties(test.input))
+			assert.Equal(t, test.expected, encodeProperties(test.input))
 		})
 	}
 }

@@ -3,12 +3,13 @@ package cyclonedxhelpers
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Properties(p pkg.Package) *[]cyclonedx.Property {
+func encodeProperties(p pkg.Package) *[]cyclonedx.Property {
 	props := []cyclonedx.Property{}
 	props = append(props, *getCycloneDXProperties(p)...)
 	if len(p.Locations) > 0 {
@@ -75,4 +76,30 @@ func getCycloneDXPropertyValue(field reflect.Value) interface{} {
 		return getCycloneDXPropertyValue(reflect.Indirect(field))
 	}
 	return ""
+}
+
+func prop(c *cyclonedx.Component, name string) string {
+	for _, p := range *c.Properties {
+		if p.Name == name {
+			return p.Value
+		}
+	}
+	return ""
+}
+
+func propInt(c *cyclonedx.Component, name string) int {
+	v, err := strconv.Atoi(prop(c, name))
+	if err != nil {
+		return 0
+	}
+	return v
+
+}
+
+func propIntNil(c *cyclonedx.Component, name string) *int {
+	v, err := strconv.Atoi(prop(c, name))
+	if err != nil {
+		return nil
+	}
+	return &v
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func ExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
+func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	refs := []cyclonedx.ExternalReference{}
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {

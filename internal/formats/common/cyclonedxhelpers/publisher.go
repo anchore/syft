@@ -4,7 +4,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Publisher(p pkg.Package) string {
+func encodePublisher(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
