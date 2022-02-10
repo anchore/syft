@@ -134,8 +134,14 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		PassFunc: passFunc,
 	}
 
+	sv, err := sign.SignerFromKeyOpts(ctx, "", ko)
+	if err != nil {
+		return err
+	}
+	defer sv.Close()
+
 	return eventLoop(
-		attestationExecWorker(ctx, userInput, ko),
+		attestationExecWorker(ctx, userInput, sv),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -143,7 +149,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpts) <-chan error {
+func attestationExecWorker(ctx context.Context, userInput string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -170,7 +176,7 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 			return
 		}
 
-		err = generateAttestation(ctx, bytes, src, ko)
+		err = generateAttestation(ctx, bytes, src, sv)
 		if err != nil {
 			errs <- err
 			return
@@ -179,17 +185,11 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 	return errs
 }
 
-func generateAttestation(ctx context.Context, predicate []byte, src *source.Source, ko sign.KeyOpts) error {
+func generateAttestation(ctx context.Context, predicate []byte, src *source.Source, sv *sign.SignerVerifier) error {
 	predicateType := in_toto.PredicateSPDX
 
 	// TODO: check with OCI format on disk to see if metadata is included
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
-
-	sv, err := sign.SignerFromKeyOpts(ctx, "", ko)
-	if err != nil {
-		return err
-	}
-	defer sv.Close()
 
 	// TODO: can we include our own types here?
 	// Should we be specific about the format that is being used as the predicate here?
@@ -217,7 +217,7 @@ func generateAttestation(ctx context.Context, predicate []byte, src *source.Sour
 	bus.Publish(partybus.Event{
 		Type: event.Exit,
 		Value: func() error {
-			_, err := os.Stdout.Write(signedPayload)
+			_, err := os.Stderr.Write(signedPayload)
 			return err
 		},
 	})
