@@ -59,9 +59,7 @@ func toSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 		return nil, err
 	}
 
-	if err := collectRelationships(bom, s, idMap); err != nil {
-		return nil, err
-	}
+	collectRelationships(bom, s, idMap)
 
 	return s, nil
 }
@@ -70,8 +68,8 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]inter
 	if bom.Components == nil {
 		return fmt.Errorf("no components are defined in the CycloneDX BOM")
 	}
-	for _, component := range *bom.Components {
-		if err := collectPackages(&component, s, idMap); err != nil {
+	for i := range *bom.Components {
+		if err := collectPackages(&(*bom.Components)[i], s, idMap); err != nil {
 			return err
 		}
 	}
@@ -179,9 +177,9 @@ func getPropertyValue(component *cyclonedx.Component, name string) string {
 	return ""
 }
 
-func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) error {
+func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) {
 	if bom.Dependencies == nil {
-		return nil
+		return
 	}
 	for _, d := range *bom.Dependencies {
 		from, fromOk := idMap[d.Ref].(artifact.Identifiable)
@@ -201,7 +199,6 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 			}
 		}
 	}
-	return nil
 }
 
 func decodeMetadata(component *cyclonedx.Component) source.Metadata {
