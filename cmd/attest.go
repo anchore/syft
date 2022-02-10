@@ -130,7 +130,7 @@ func attestationExecWorker(ctx context.Context, userInput string, ko sign.KeyOpt
 			return
 		}
 
-		bytes, err := syft.Encode(*s, formatOption)
+		bytes, err := syft.Encode(*s, format.JSONOption)
 		if err != nil {
 			errs <- err
 			return
@@ -190,7 +190,6 @@ func generateAttestation(ctx context.Context, predicate []byte, src *source.Sour
 		},
 	})
 
-	fmt.Println(string(signedPayload))
 	return nil
 }
 
