@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"strings"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
 )
@@ -21,10 +23,19 @@ type NpmPackageJSONMetadata struct {
 
 // PackageURL returns the PURL for the specific NPM package (see https://github.com/package-url/purl-spec)
 func (p NpmPackageJSONMetadata) PackageURL(_ *linux.Release) string {
+	var namespace string
+	name := p.Name
+
+	fields := strings.SplitN(p.Name, "/", 2)
+	if len(fields) > 1 {
+		namespace = fields[0]
+		name = fields[1]
+	}
+
 	return packageurl.NewPackageURL(
 		packageurl.TypeNPM,
-		"",
-		p.Name,
+		namespace,
+		name,
 		p.Version,
 		nil,
 		"",

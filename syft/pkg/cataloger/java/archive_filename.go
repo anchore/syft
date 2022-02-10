@@ -55,28 +55,13 @@ type archiveFilename struct {
 	version string
 }
 
-// TODO: Remove this method once we're using Go 1.15+.
-//
-// Go 1.15 introduces a `SubexpIndex` method for the Regexp type that would let
-// this code be made more elegant. Once we've reached 1.15, we should eliminate
-// this function in favor of that method.
-func subexpIndex(re *regexp.Regexp, name string) int {
-	for i, subexpName := range re.SubexpNames() {
-		if subexpName == name {
-			return i
-		}
-	}
-
-	return -1
-}
-
 func getSubexp(matches []string, subexpName string, re *regexp.Regexp, raw string) string {
 	if len(matches) < 1 {
 		log.Warnf("unexpectedly empty matches for archive '%s'", raw)
 		return ""
 	}
 
-	index := subexpIndex(re, subexpName)
+	index := re.SubexpIndex(subexpName)
 	if index < 1 {
 		log.Warnf("unexpected index of '%s' capture group for Java archive '%s'", subexpName, raw)
 		return ""
