@@ -306,7 +306,11 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
+<<<<<<< HEAD
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
+=======
+	golang.org/x/crypto v0.0.0-20220210151621-f4118a5b28e2 // indirect
+>>>>>>> e1e9ccb (update golang crypto library dependency (#815))
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
