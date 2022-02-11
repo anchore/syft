@@ -141,13 +141,8 @@ func TestPackageURL(t *testing.T) {
 				Version: "bad-v0.1.0",
 				Type:    JavaPkg,
 				Metadata: JavaMetadata{
-					PomProperties: &PomProperties{
-						Path:       "p",
-						Name:       "n",
-						GroupID:    "g.id",
-						ArtifactID: "a",
-						Version:    "v",
-					},
+					PomProperties: &PomProperties{},
+					PURL:          "pkg:maven/g.id/a@v", // assembled by the java cataloger
 				},
 			},
 
@@ -160,13 +155,8 @@ func TestPackageURL(t *testing.T) {
 				Version: "bad-v0.1.0",
 				Type:    JenkinsPluginPkg,
 				Metadata: JavaMetadata{
-					PomProperties: &PomProperties{
-						Path:       "p",
-						Name:       "n",
-						GroupID:    "g.id",
-						ArtifactID: "a",
-						Version:    "v",
-					},
+					PomProperties: &PomProperties{},
+					PURL:          "pkg:maven/g.id/a@v", // assembled by the java cataloger
 				},
 			},
 
