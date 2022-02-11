@@ -44,12 +44,16 @@ func GetDecoder(format cyclonedx.BOMFileFormat) format.Decoder {
 }
 
 func toSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
+	meta := source.Metadata{}
+	if bom.Metadata != nil {
+		meta = decodeMetadata(bom.Metadata.Component)
+	}
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    pkg.NewCatalog(),
 			LinuxDistribution: linuxReleaseFromComponents(*bom.Components),
 		},
-		Source: decodeMetadata(bom.Metadata.Component),
+		Source: meta,
 		//Descriptor:    sbom.Descriptor{},
 	}
 

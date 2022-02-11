@@ -17,21 +17,16 @@ func encodeCPE(p pkg.Package) string {
 
 func decodeCPEs(c *cyclonedx.Component) ([]pkg.CPE, error) {
 	// FIXME -- why are we not encoding all the CPEs and what is the right behavior to decode them?
+	cpes := cpe.Generate(pkg.Package{
+		Name:    c.Name,
+		Version: c.Version,
+		PURL:    c.PackageURL,
+	})
+
 	cp, err := pkg.NewCPE(c.CPE)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		cpes = append(cpes, cp)
 	}
-	return cpe.Generate(pkg.Package{
-		Name:         c.Name,
-		Version:      c.Version,
-		FoundBy:      "",
-		Locations:    nil,
-		Licenses:     nil,
-		Language:     "",
-		Type:         "",
-		CPEs:         []pkg.CPE{cp},
-		PURL:         c.PackageURL,
-		MetadataType: "",
-		Metadata:     nil,
-	}), nil
+
+	return cpes, nil
 }
