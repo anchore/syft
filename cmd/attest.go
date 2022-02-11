@@ -186,6 +186,7 @@ func attestationExecWorker(ctx context.Context, userInput string, sv *sign.Signe
 }
 
 func generateAttestation(ctx context.Context, predicate []byte, src *source.Source, sv *sign.SignerVerifier) error {
+	// TODO: Update to switch based on output type
 	predicateType := in_toto.PredicateSPDX
 
 	// TODO: check with OCI format on disk to see if metadata is included
@@ -217,7 +218,7 @@ func generateAttestation(ctx context.Context, predicate []byte, src *source.Sour
 	bus.Publish(partybus.Event{
 		Type: event.Exit,
 		Value: func() error {
-			_, err := os.Stderr.Write(signedPayload)
+			_, err := os.Stdout.Write(signedPayload)
 			return err
 		},
 	})
