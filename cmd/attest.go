@@ -107,7 +107,6 @@ func getPassFromTerm(confirm bool) ([]byte, error) {
 		return nil, errors.New("passwords do not match")
 	}
 	return pw1, nil
-
 }
 
 // TODO: does not play well with TUI interface
@@ -141,7 +140,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	defer sv.Close()
 
 	return eventLoop(
-		attestationExecWorker(ctx, userInput, sv),
+		attestationExecWorker(userInput, sv),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -149,7 +148,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(ctx context.Context, userInput string, sv *sign.SignerVerifier) <-chan error {
+func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -176,7 +175,7 @@ func attestationExecWorker(ctx context.Context, userInput string, sv *sign.Signe
 			return
 		}
 
-		err = generateAttestation(ctx, bytes, src, sv)
+		err = generateAttestation(bytes, src, sv)
 		if err != nil {
 			errs <- err
 			return
@@ -185,7 +184,7 @@ func attestationExecWorker(ctx context.Context, userInput string, sv *sign.Signe
 	return errs
 }
 
-func generateAttestation(ctx context.Context, predicate []byte, src *source.Source, sv *sign.SignerVerifier) error {
+func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier) error {
 	// TODO: Update to switch based on output type
 	predicateType := in_toto.PredicateSPDX
 
