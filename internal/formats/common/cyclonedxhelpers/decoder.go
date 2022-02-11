@@ -73,22 +73,17 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]inter
 		return fmt.Errorf("no components are defined in the CycloneDX BOM")
 	}
 	for i := range *bom.Components {
-		if err := collectPackages(&(*bom.Components)[i], s, idMap); err != nil {
-			return err
-		}
+		collectPackages(&(*bom.Components)[i], s, idMap)
 	}
 	return nil
 }
 
-func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[string]interface{}) error {
+func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[string]interface{}) {
 	switch component.Type {
 	case cyclonedx.ComponentTypeOS:
 	case cyclonedx.ComponentTypeContainer:
 	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary:
-		p, err := decodeComponent(component)
-		if err != nil {
-			return err
-		}
+		p := decodeComponent(component)
 		idMap[component.BOMRef] = p
 		// TODO there must be a better way than needing to call this manually:
 		p.SetID()
@@ -97,13 +92,9 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 
 	if component.Components != nil {
 		for i := range *component.Components {
-			if err := collectPackages(&(*component.Components)[i], s, idMap); err != nil {
-				return err
-			}
+			collectPackages(&(*component.Components)[i], s, idMap)
 		}
 	}
-
-	return nil
 }
 
 func linuxReleaseFromComponents(components []cyclonedx.Component) *linux.Release {

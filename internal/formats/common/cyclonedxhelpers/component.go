@@ -26,7 +26,7 @@ func hasMetadata(p pkg.Package) bool {
 	return p.Metadata != nil
 }
 
-func decodeComponent(c *cyclonedx.Component) (*pkg.Package, error) {
+func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	typ := pkg.Type(prop(c, "type"))
 	purl := c.PackageURL
 	if typ == "" && purl != "" {
@@ -49,7 +49,7 @@ func decodeComponent(c *cyclonedx.Component) (*pkg.Package, error) {
 		Metadata:     meta,
 	}
 
-	return p, nil
+	return p
 }
 
 func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{}) {
