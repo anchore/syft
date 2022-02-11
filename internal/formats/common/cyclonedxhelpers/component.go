@@ -27,11 +27,6 @@ func hasMetadata(p pkg.Package) bool {
 }
 
 func decodeComponent(c *cyclonedx.Component) (*pkg.Package, error) {
-	cp, err := decodeCPEs(c)
-	if err != nil {
-		return nil, err
-	}
-
 	typ := pkg.Type(prop(c, "type"))
 	purl := c.PackageURL
 	if typ == "" && purl != "" {
@@ -48,7 +43,7 @@ func decodeComponent(c *cyclonedx.Component) (*pkg.Package, error) {
 		Licenses:     decodeLicenses(c),
 		Language:     pkg.Language(prop(c, "language")),
 		Type:         typ,
-		CPEs:         cp,
+		CPEs:         decodeCPEs(c),
 		PURL:         purl,
 		MetadataType: metaType,
 		Metadata:     meta,

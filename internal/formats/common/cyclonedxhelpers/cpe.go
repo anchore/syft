@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
@@ -15,7 +16,7 @@ func encodeCPE(p pkg.Package) string {
 	return ""
 }
 
-func decodeCPEs(c *cyclonedx.Component) ([]pkg.CPE, error) {
+func decodeCPEs(c *cyclonedx.Component) []pkg.CPE {
 	// FIXME -- why are we not encoding all the CPEs and what is the right behavior to decode them?
 	cpes := cpe.Generate(pkg.Package{
 		Name:    c.Name,
@@ -23,10 +24,14 @@ func decodeCPEs(c *cyclonedx.Component) ([]pkg.CPE, error) {
 		PURL:    c.PackageURL,
 	})
 
-	cp, err := pkg.NewCPE(c.CPE)
-	if err == nil {
-		cpes = append(cpes, cp)
+	if c.CPE != "" {
+		cp, err := pkg.NewCPE(c.CPE)
+		if err != nil {
+			log.Warnf("invalid CPE: %s", c.CPE)
+		} else {
+			cpes = append(cpes, cp)
+		}
 	}
 
-	return cpes, nil
+	return cpes
 }
