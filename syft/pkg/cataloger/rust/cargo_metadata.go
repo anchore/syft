@@ -1,9 +1,17 @@
 package rust
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"reflect"
+
+	"github.com/anchore/syft/syft/pkg"
+)
 
 type CargoMetadata struct {
 	Packages []pkg.CargoPackageMetadata `toml:"package"`
+}
+
+func init() {
+	pkg.MetadataTypeByName[pkg.RustCargoPackageMetadataType] = reflect.TypeOf(CargoMetadata{})
 }
 
 // Pkgs returns all of the packages referenced within the Cargo.lock metadata.

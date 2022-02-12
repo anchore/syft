@@ -42,7 +42,7 @@ func Test_decode(t *testing.T) {
 							},
 						},
 						CPE:        "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-						PackageURL: "a-purl-2",
+						PackageURL: "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
 						ExternalReferences: &[]cyclonedx.ExternalReference{
 							{
 								URL:     "",
@@ -189,7 +189,7 @@ func Test_decode(t *testing.T) {
 					pkg:      "package-1",
 					ver:      "1.0.1",
 					cpe:      "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-					purl:     "a-purl-2",
+					purl:     "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
 					relation: "package-2",
 				},
 				{

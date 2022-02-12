@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
@@ -62,4 +63,52 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 		return &refs
 	}
 	return nil
+}
+
+func findExternalRef(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) *cyclonedx.ExternalReference {
+	if c.ExternalReferences != nil {
+		for _, r := range *c.ExternalReferences {
+			if r.Type == typ {
+				return &r
+			}
+		}
+	}
+	return nil
+}
+
+func refUrl(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
+	if r := findExternalRef(c, typ); r != nil {
+		return r.URL
+	}
+	return ""
+}
+
+func refComment(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
+	if r := findExternalRef(c, typ); r != nil {
+		return r.Comment
+	}
+	return ""
+}
+
+func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
+	if c.ExternalReferences == nil {
+		return
+	}
+	switch meta := metadata.(type) {
+	case *pkg.ApkMetadata:
+		meta.URL = refUrl(c, cyclonedx.ERTypeDistribution)
+	case *pkg.CargoPackageMetadata:
+		meta.Source = refUrl(c, cyclonedx.ERTypeDistribution)
+	case *pkg.NpmPackageJSONMetadata:
+		meta.URL = refUrl(c, cyclonedx.ERTypeDistribution)
+		meta.Homepage = refUrl(c, cyclonedx.ERTypeWebsite)
+	case *pkg.GemMetadata:
+		meta.Homepage = refUrl(c, cyclonedx.ERTypeWebsite)
+	case *pkg.PythonPackageMetadata:
+		if meta.DirectURLOrigin == nil {
+			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
+		}
+		meta.DirectURLOrigin.URL = refUrl(c, cyclonedx.ERTypeVCS)
+		meta.DirectURLOrigin.CommitID = strings.TrimPrefix(refComment(c, cyclonedx.ERTypeVCS), "commit: ")
+	}
 }
