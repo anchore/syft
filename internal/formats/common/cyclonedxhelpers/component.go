@@ -1,7 +1,6 @@
 package cyclonedxhelpers
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -35,7 +34,7 @@ func hasMetadata(p pkg.Package) bool {
 }
 
 func decodeComponent(c *cyclonedx.Component) *pkg.Package {
-	typ := pkg.Type(prop(c, "type"))
+	typ := pkg.Type(findPropertyValue(c, "type"))
 	purl := c.PackageURL
 	if typ == "" && purl != "" {
 		typ = pkg.TypeFromPURL(purl)
@@ -46,19 +45,16 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	p := &pkg.Package{
 		Name:         c.Name,
 		Version:      c.Version,
-		FoundBy:      prop(c, "foundBy"),
+		FoundBy:      findPropertyValue(c, "foundBy"),
 		Locations:    decodeLocations(c),
 		Licenses:     decodeLicenses(c),
-		Language:     pkg.Language(prop(c, "language")),
+		Language:     pkg.Language(findPropertyValue(c, "language")),
 		Type:         typ,
 		CPEs:         decodeCPEs(c),
 		PURL:         purl,
 		MetadataType: metaType,
 		Metadata:     meta,
 	}
-
-	allProps := serializeProps(c)
-	log.Info(allProps)
 
 	return p
 }
@@ -81,15 +77,7 @@ func decodeLocations(c *cyclonedx.Component) (out []source.Location) {
 	return
 }
 
-func serializeProps(c *cyclonedx.Component) string {
-	data, _ := json.Marshal(c.Properties)
-	return string(data)
-}
-
 func mapAllProps(c *cyclonedx.Component, obj reflect.Value) {
-	allProps := serializeProps(c)
-	log.Info(allProps)
-
 	value := obj
 	if value.Kind() == reflect.Ptr {
 		value = value.Elem()
@@ -118,26 +106,26 @@ func mapAllProps(c *cyclonedx.Component, obj reflect.Value) {
 			fieldValue = fieldValue.Elem()
 		}
 
-		incoming := prop(c, name)
+		propertyValue := findPropertyValue(c, name)
 		switch fieldType.Kind() {
 		case reflect.String:
 			if fieldValue.CanSet() {
-				fieldValue.SetString(incoming)
+				fieldValue.SetString(propertyValue)
 			} else {
 				msg := fmt.Sprintf("unable to set field: %s.%s", structType.Name(), field.Name)
 				log.Info(msg)
 			}
 		case reflect.Bool:
-			if b, err := strconv.ParseBool(incoming); err == nil {
+			if b, err := strconv.ParseBool(propertyValue); err == nil {
 				fieldValue.SetBool(b)
 			}
 		case reflect.Int:
-			if i, err := strconv.Atoi(incoming); err == nil {
+			if i, err := strconv.Atoi(propertyValue); err == nil {
 				fieldValue.SetInt(int64(i))
 			}
 		case reflect.Float32, reflect.Float64:
-			if i, err := strconv.ParseFloat(incoming, 64); err == nil {
-				fieldValue.SetFloat(float64(i))
+			if i, err := strconv.ParseFloat(propertyValue, 64); err == nil {
+				fieldValue.SetFloat(i)
 			}
 		case reflect.Struct:
 			mapAllProps(c, fieldValue)
@@ -152,7 +140,7 @@ func mapAllProps(c *cyclonedx.Component, obj reflect.Value) {
 
 func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{}) {
 	if c.Properties != nil {
-		typ := pkg.MetadataType(prop(c, "metadataType"))
+		typ := pkg.MetadataType(findPropertyValue(c, "metadataType"))
 		if typ != "" {
 			meta := reflect.New(pkg.MetadataTypeByName[typ])
 			metaPtr := meta.Interface()

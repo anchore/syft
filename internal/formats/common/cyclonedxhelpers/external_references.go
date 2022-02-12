@@ -65,6 +65,29 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	return nil
 }
 
+func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
+	if c.ExternalReferences == nil {
+		return
+	}
+	switch meta := metadata.(type) {
+	case *pkg.ApkMetadata:
+		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
+	case *pkg.CargoPackageMetadata:
+		meta.Source = refURL(c, cyclonedx.ERTypeDistribution)
+	case *pkg.NpmPackageJSONMetadata:
+		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.GemMetadata:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.PythonPackageMetadata:
+		if meta.DirectURLOrigin == nil {
+			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
+		}
+		meta.DirectURLOrigin.URL = refURL(c, cyclonedx.ERTypeVCS)
+		meta.DirectURLOrigin.CommitID = strings.TrimPrefix(refComment(c, cyclonedx.ERTypeVCS), "commit: ")
+	}
+}
+
 func findExternalRef(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) *cyclonedx.ExternalReference {
 	if c.ExternalReferences != nil {
 		for _, r := range *c.ExternalReferences {
@@ -76,7 +99,7 @@ func findExternalRef(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType
 	return nil
 }
 
-func refUrl(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
+func refURL(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) string {
 	if r := findExternalRef(c, typ); r != nil {
 		return r.URL
 	}
@@ -88,27 +111,4 @@ func refComment(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) str
 		return r.Comment
 	}
 	return ""
-}
-
-func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
-	if c.ExternalReferences == nil {
-		return
-	}
-	switch meta := metadata.(type) {
-	case *pkg.ApkMetadata:
-		meta.URL = refUrl(c, cyclonedx.ERTypeDistribution)
-	case *pkg.CargoPackageMetadata:
-		meta.Source = refUrl(c, cyclonedx.ERTypeDistribution)
-	case *pkg.NpmPackageJSONMetadata:
-		meta.URL = refUrl(c, cyclonedx.ERTypeDistribution)
-		meta.Homepage = refUrl(c, cyclonedx.ERTypeWebsite)
-	case *pkg.GemMetadata:
-		meta.Homepage = refUrl(c, cyclonedx.ERTypeWebsite)
-	case *pkg.PythonPackageMetadata:
-		if meta.DirectURLOrigin == nil {
-			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
-		}
-		meta.DirectURLOrigin.URL = refUrl(c, cyclonedx.ERTypeVCS)
-		meta.DirectURLOrigin.CommitID = strings.TrimPrefix(refComment(c, cyclonedx.ERTypeVCS), "commit: ")
-	}
 }

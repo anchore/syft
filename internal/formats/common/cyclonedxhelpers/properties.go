@@ -3,7 +3,6 @@ package cyclonedxhelpers
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
@@ -78,27 +77,11 @@ func getCycloneDXPropertyValue(field reflect.Value) interface{} {
 	return ""
 }
 
-func prop(c *cyclonedx.Component, name string) string {
+func findPropertyValue(c *cyclonedx.Component, name string) string {
 	for _, p := range *c.Properties {
 		if p.Name == name {
 			return p.Value
 		}
 	}
 	return ""
-}
-
-func propInt(c *cyclonedx.Component, name string) int {
-	v, err := strconv.Atoi(prop(c, name))
-	if err != nil {
-		return 0
-	}
-	return v
-}
-
-func propIntNil(c *cyclonedx.Component, name string) *int {
-	v, err := strconv.Atoi(prop(c, name))
-	if err != nil {
-		return nil
-	}
-	return &v
 }
