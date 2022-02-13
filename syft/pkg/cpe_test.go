@@ -50,6 +50,10 @@ func TestNewCPE(t *testing.T) {
 				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", CPEString(test.expected), CPEString(actual))
 			}
 
+			if CPEURI(test.expected) != test.input {
+				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", CPEURI(test.expected), test.input)
+			}
+
 		})
 	}
 }
@@ -105,6 +109,9 @@ func Test_CPEParser(t *testing.T) {
 			assert.Equal(t, c1, test.WFN)
 			assert.Equal(t, c2, test.WFN)
 			assert.Equal(t, CPEString(test.WFN), test.CPEString)
+			assert.Equal(t, CPEURI(c2), test.CPEUrl)
+			assert.Equal(t, CPEURI(c1), test.CPEUrl)
+			assert.Equal(t, must(NewCPE(CPEURI(c1))), test.WFN)
 		})
 	}
 }

@@ -99,6 +99,22 @@ func CPEString(c CPE) string {
 	return output.BindToFmtString()
 }
 
+func CPEURI(c CPE) string {
+	output := CPE{}
+	output.Vendor = sanitize(c.Vendor)
+	output.Product = sanitize(c.Product)
+	output.Language = sanitize(c.Language)
+	output.Version = sanitize(c.Version)
+	output.TargetSW = sanitize(c.TargetSW)
+	output.Part = sanitize(c.Part)
+	output.Edition = sanitize(c.Edition)
+	output.Other = sanitize(c.Other)
+	output.SWEdition = sanitize(c.SWEdition)
+	output.TargetHW = sanitize(c.TargetHW)
+	output.Update = sanitize(c.Update)
+	return output.BindToURI()
+}
+
 // sanitize is a modified version of WFNize function from nvdtools
 // that quotes all the allowed punctation chars with a slash and replaces
 // spaces with underscores. It differs from the upstream implmentation as

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:16a426e7-fcc7-4b94-abd2-66c67569cc44" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:f778df46-c76f-454f-ac38-34f5dcc24a04" version="1">
   <metadata>
-    <timestamp>2022-01-14T22:46:49Z</timestamp>
+    <timestamp>2022-02-13T23:34:27Z</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,7 +9,7 @@
         <version>[not provided]</version>
       </tool>
     </tools>
-    <component type="file">
+    <component bom-ref="163686ac6e30c752" type="file">
       <name>/some/path</name>
       <version></version>
     </component>
@@ -25,6 +25,12 @@
       </licenses>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
       <purl>a-purl-2</purl>
+      <externalReferences>
+        <reference type="advisories">
+          <url>cpe:/:some:package:2</url>
+          <comment>cpe</comment>
+        </reference>
+      </externalReferences>
       <properties>
         <property name="foundBy">the-cataloger-1</property>
         <property name="language">python</property>
@@ -38,6 +44,12 @@
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
       <purl>a-purl-2</purl>
+      <externalReferences>
+        <reference type="advisories">
+          <url>cpe:/:some:package:2</url>
+          <comment>cpe</comment>
+        </reference>
+      </externalReferences>
       <properties>
         <property name="foundBy">the-cataloger-2</property>
         <property name="type">deb</property>

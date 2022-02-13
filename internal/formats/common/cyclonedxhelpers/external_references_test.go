@@ -20,6 +20,16 @@ func Test_ExternalReferences(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name: "cpes",
+			input: pkg.Package{
+				CPEs: []pkg.CPE{
+					testCPE,
+					testCPE2,
+				},
+			},
+			expected: &[]cyclonedx.ExternalReference{{URL: "cpe:/a:name:name:3.2", Comment: "cpe", Type: "advisories"}, {URL: "cpe:/a:name:name2:3.2", Comment: "cpe", Type: "advisories"}},
+		},
+		{
 			name: "from apk",
 			input: pkg.Package{
 				Metadata: pkg.ApkMetadata{

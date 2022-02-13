@@ -5,10 +5,14 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/facebookincubator/nvdtools/wfn"
 )
 
 func ExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	refs := []cyclonedx.ExternalReference{}
+	if len(p.CPEs) > 0 {
+		refs = append(refs, generateCPERefs(p.CPEs)...)
+	}
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
@@ -62,4 +66,16 @@ func ExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 		return &refs
 	}
 	return nil
+}
+
+func generateCPERefs(cpes []wfn.Attributes) []cyclonedx.ExternalReference {
+	cpeRefs := []cyclonedx.ExternalReference{}
+	for _, cpe := range cpes {
+		cpeRefs = append(cpeRefs, cyclonedx.ExternalReference{
+			URL:     pkg.CPEURI(cpe),
+			Type:    cyclonedx.ERTypeAdvisories,
+			Comment: "cpe",
+		})
+	}
+	return cpeRefs
 }

@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.3",
-  "serialNumber": "urn:uuid:258d2616-5b1f-48cd-82a3-d6c95e262950",
+  "serialNumber": "urn:uuid:dc92128f-0c3c-44a5-ba74-7f79aa35065e",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-01-14T22:47:00Z",
+    "timestamp": "2022-02-13T23:34:07Z",
     "tools": [
       {
         "vendor": "anchore",
@@ -13,6 +13,7 @@
       }
     ],
     "component": {
+      "bom-ref": "163686ac6e30c752",
       "type": "file",
       "name": "/some/path",
       "version": ""
@@ -32,6 +33,13 @@
       ],
       "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
       "purl": "a-purl-2",
+      "externalReferences": [
+        {
+          "url": "cpe:/:some:package:2",
+          "comment": "cpe",
+          "type": "advisories"
+        }
+      ],
       "properties": [
         {
           "name": "foundBy",
@@ -61,6 +69,13 @@
       "version": "2.0.1",
       "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
       "purl": "a-purl-2",
+      "externalReferences": [
+        {
+          "url": "cpe:/:some:package:2",
+          "comment": "cpe",
+          "type": "advisories"
+        }
+      ],
       "properties": [
         {
           "name": "foundBy",

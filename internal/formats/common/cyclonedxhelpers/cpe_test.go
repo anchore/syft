@@ -7,9 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	testCPE  = pkg.MustCPE("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
+	testCPE2 = pkg.MustCPE("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*")
+)
+
 func Test_CPE(t *testing.T) {
-	testCPE := pkg.MustCPE("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
-	testCPE2 := pkg.MustCPE("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*")
 	tests := []struct {
 		name     string
 		input    pkg.Package
