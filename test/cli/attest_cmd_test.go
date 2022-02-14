@@ -6,8 +6,10 @@ import (
 )
 
 func TestAttestCmdFlags(t *testing.T) {
-	// coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
-	// tmp := t.TempDir() + "/"
+	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+	cleanup := setupPKI(t)
+	defer cleanup()
+
 	tests := []struct {
 		name       string
 		args       []string
@@ -24,29 +26,11 @@ func TestAttestCmdFlags(t *testing.T) {
 			},
 		},
 		{
-			name:       "can encode syft.json as the predicate",
-			args:       []string{"attest", "-o", "json"},
-			assertions: []traitAssertion{},
-		},
-		{
-			name:       "can encode CycloneDX as the predicate",
-			args:       []string{"attest", "-o", "cyclonedx"},
-			assertions: []traitAssertion{},
-		},
-		{
-			name:       "can encode SPDX as the predicate",
-			args:       []string{"attest", "-o", "spdx"},
-			assertions: []traitAssertion{},
-		},
-		{
-			name:       "can encode SPDX JSON as the predicate",
-			args:       []string{"attest", "-o", "spdx-json"},
-			assertions: []traitAssertion{},
-		},
-		{
-			name:       "can pass a private key password as an ENV variable",
-			args:       []string{"attest", "-o", "json"},
-			assertions: []traitAssertion{},
+			name: "can encode syft.json as the predicate",
+			args: []string{"attest", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertSuccessfulReturnCode,
+			},
 		},
 	}
 
