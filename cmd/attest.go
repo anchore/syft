@@ -142,9 +142,9 @@ func validateScheme(userInput string) error {
 		return nil
 	case strings.HasPrefix(userInput, "registry"):
 		return nil
+	default:
+		return fmt.Errorf("could not support attestation for %s; please try one of these scheme: %v", userInput, validAttestScheme)
 	}
-
-	return fmt.Errorf("could not support attestation for %s; please try one of these scheme: %v", userInput, validAttestScheme)
 }
 
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
@@ -202,7 +202,7 @@ func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan err
 			return
 		}
 
-		err = generateAttestation(bytes, src, sv)
+		err = generateAttestation(bytes, src, sv, output)
 		if err != nil {
 			errs <- err
 			return
@@ -211,9 +211,17 @@ func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan err
 	return errs
 }
 
-func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier) error {
-	// TODO: Update to switch based on output type
-	predicateType := in_toto.PredicateSPDX
+func assertPredicateType(output format.Option) string {
+	switch output {
+	case format.SPDXTagValueOption, format.SPDXJSONOption:
+		return in_toto.PredicateSPDX
+	default:
+		return in_toto.StatementInTotoV01
+	}
+}
+
+func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, output format.Option) error {
+	predicateType := assertPredicateType(output)
 
 	// TODO: check with OCI format on disk to see if metadata is included
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
