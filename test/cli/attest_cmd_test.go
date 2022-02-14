@@ -20,8 +20,8 @@ func TestAttestCmdFlags(t *testing.T) {
 			name: "no-args-shows-help",
 			args: []string{"attest"},
 			assertions: []traitAssertion{
-				assertInOutput("an image/directory argument is required"),  // specific error that should be shown
-				assertInOutput("image as the predicate of an attestation"), // excerpt from help description
+				assertInOutput("an image/directory argument is required"),                   // specific error that should be shown
+				assertInOutput("image or OCI directory as the predicate of an attestation"), // excerpt from help description
 				assertFailingReturnCode,
 			},
 		},
