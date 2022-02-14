@@ -193,7 +193,7 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 
 	// TODO: can we include our own types here?
 	// Should we be specific about the format that is being used as the predicate here?
-	wrapped := dsse.WrapSigner(sv, "application/syft.in-toto+json")
+	wrapped := dsse.WrapSigner(sv, "application/vnd.in-toto+json")
 
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
