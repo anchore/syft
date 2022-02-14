@@ -14,6 +14,37 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
+func setupPKI(t *testing.T) func() {
+	err := os.Setenv("COSIGN_PASSWORD", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command("cosign", "generate-key-pair")
+	stdout, stderr := runCommand(cmd, nil)
+	if cmd.ProcessState.ExitCode() != 0 {
+		t.Log("STDOUT", stdout)
+		t.Log("STDERR", stderr)
+		t.Fatalf("could not generate keypair")
+	}
+
+	return func() {
+		err := os.Unsetenv("COSIGN_PASSWORD")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = os.Remove("cosign.key")
+		if err != nil {
+			t.Fatalf("could not cleanup cosign.key")
+		}
+
+		err = os.Remove("cosign.pub")
+		if err != nil {
+			t.Fatalf("could not cleanup cosign.key")
+		}
+	}
+}
+
 func getFixtureImage(t testing.TB, fixtureImageName string) string {
 	t.Logf("obtaining fixture image for %s", fixtureImageName)
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)

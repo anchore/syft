@@ -223,7 +223,6 @@ func assertPredicateType(output format.Option) string {
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, output format.Option) error {
 	predicateType := assertPredicateType(output)
 
-	// TODO: check with OCI format on disk to see if metadata is included
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
 
 	wrapped := dsse.WrapSigner(sv, "application/vnd.in-toto+json")
