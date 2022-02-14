@@ -116,7 +116,7 @@ func passFunc(isPass bool) (b []byte, err error) {
 	case ok:
 		return []byte(pw), nil
 	case isTerminal():
-		return getPassFromTerm(true)
+		return getPassFromTerm(false)
 	// Handle piped in passwords.
 	default:
 		return io.ReadAll(os.Stdin)
