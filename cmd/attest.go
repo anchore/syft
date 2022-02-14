@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
@@ -34,7 +35,7 @@ import (
 const (
 	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] --key [KEY] alpine:latest
 
-  A summary of discovered packages formatted as a predicate to an image attestation
+  A summary of discovered packages formatted as the predicate to an image attestation
 
   Supports the following image sources:
     {{.appName}} {{.command}} --key [KEY] yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
@@ -52,10 +53,17 @@ const (
 var (
 	keyPath           string
 	attestationOutput []string
-	attestCmd         = &cobra.Command{
+	validAttestScheme = []string{
+		"docker",
+		"docker-archive",
+		"oci-archive",
+		"oci-dir",
+		"registry",
+	}
+	attestCmd = &cobra.Command{
 		Use:   "attest --output [FORMAT] --key [KEY] [SOURCE]",
 		Short: "Generate a package SBOM as an attestation to [SOURCE]",
-		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container image as the predicate of an attestation.",
+		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from a container image or OCI directory as the predicate of an attestation.",
 		Example: internal.Tprintf(attestExample, map[string]interface{}{
 			"appName": internal.ApplicationName,
 			"command": "attest",
@@ -109,7 +117,6 @@ func getPassFromTerm(confirm bool) ([]byte, error) {
 	return pw1, nil
 }
 
-// TODO: does not play well with TUI interface
 func passFunc(isPass bool) (b []byte, err error) {
 	pw, ok := os.LookupEnv("COSIGN_PASSWORD")
 	switch {
@@ -123,10 +130,30 @@ func passFunc(isPass bool) (b []byte, err error) {
 	}
 }
 
+func validateScheme(userInput string) error {
+	switch {
+	case strings.HasPrefix(userInput, "docker"):
+		return nil
+	case strings.HasPrefix(userInput, "docker-archive"):
+		return nil
+	case strings.HasPrefix(userInput, "oci-archive"):
+		return nil
+	case strings.HasPrefix(userInput, "oci-dir"):
+		return nil
+	case strings.HasPrefix(userInput, "registry"):
+		return nil
+	}
+
+	return fmt.Errorf("could not support attestation for %s; please try one of these scheme: %v", userInput, validAttestScheme)
+}
+
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
-	// TODO: PR review - best way to validate image OR OCI directory?
 	userInput := args[0]
+	err := validateScheme(userInput)
+	if err != nil {
+		return err
+	}
 
 	ko := sign.KeyOpts{
 		KeyRef:   keyPath,
@@ -156,13 +183,13 @@ func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan err
 			errs <- fmt.Errorf("can not generate attestation for more than one output")
 			return
 		}
+
 		output := format.ParseOption(attestationOutput[0])
 		if output == format.UnknownFormatOption {
 			errs <- fmt.Errorf("can not use %v as attestation format. Try: %v", output, format.AllOptions)
 			return
 		}
-		// TODO: lift scheme detection into public to shortcircuit on dir/file
-		// PR Review - where should we do scheme detection
+
 		s, src, err := generateSBOM(userInput, errs)
 		if err != nil {
 			errs <- err
@@ -191,8 +218,6 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 	// TODO: check with OCI format on disk to see if metadata is included
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
 
-	// TODO: can we include our own types here?
-	// Should we be specific about the format that is being used as the predicate here?
 	wrapped := dsse.WrapSigner(sv, "application/vnd.in-toto+json")
 
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
