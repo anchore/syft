@@ -132,18 +132,10 @@ func passFunc(isPass bool) (b []byte, err error) {
 
 func validateScheme(userInput string) error {
 	switch {
-	case strings.HasPrefix(userInput, "docker"):
-		return nil
-	case strings.HasPrefix(userInput, "docker-archive"):
-		return nil
-	case strings.HasPrefix(userInput, "oci-archive"):
-		return nil
-	case strings.HasPrefix(userInput, "oci-dir"):
-		return nil
-	case strings.HasPrefix(userInput, "registry"):
-		return nil
-	default:
+	case strings.HasPrefix(userInput, "dir"), strings.HasPrefix(userInput, "file"):
 		return fmt.Errorf("could not support attestation for %s; please try one of these scheme: %v", userInput, validAttestScheme)
+	default:
+		return nil
 	}
 }
 
