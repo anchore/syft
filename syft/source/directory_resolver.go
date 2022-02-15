@@ -338,7 +338,6 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 
 		if runtime.GOOS == WindowsOS {
 			userStrPath = windowsToPosix(userStrPath)
-			evaluatedPath = windowsToPosix(evaluatedPath)
 		}
 
 		exists, ref, err := r.fileTree.File(file.Path(userStrPath), filetree.FollowBasenameLinks)

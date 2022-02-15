@@ -7,7 +7,6 @@ import (
 
 func allRegularFiles(resolver source.FileResolver) (locations []source.Location) {
 	for location := range resolver.AllLocations() {
-
 		resolvedLocations, err := resolver.FilesByPath(location.RealPath)
 		if err != nil {
 			log.Warnf("unable to resolve %+v: %+v", location, err)
@@ -26,7 +25,6 @@ func allRegularFiles(resolver source.FileResolver) (locations []source.Location)
 			}
 			locations = append(locations, resolvedLocation)
 		}
-
 	}
 	return locations
 }
