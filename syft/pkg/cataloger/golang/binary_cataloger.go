@@ -5,10 +5,10 @@ package golang
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/anchore/syft/internal"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -38,18 +38,25 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	}
 
 	for _, location := range fileMatches {
-		r, err := resolver.FileContentsByLocation(location)
-		if err != nil {
-			return pkgs, nil, fmt.Errorf("failed to resolve file contents by location=%q: %w", location.RealPath, err)
-		}
+		// r, err := resolver.FileContentsByLocation(location)
+		// if err != nil {
+		// 	return pkgs, nil, fmt.Errorf("failed to resolve file contents by location=%q: %w", location.RealPath, err)
+		// }
 
-		goPkgs, err := parseGoBin(location, r, openExe)
-		if err != nil {
-			log.Warnf("could not parse possible go binary at %q: %+v", location.RealPath, err)
-		}
+		// goPkgs, err := parseGoBin(location, r, openExe)
+		// if err != nil {
+		// 	log.Warnf("could not parse possible go binary at %q: %+v", location.RealPath, err)
+		// }
 
-		internal.CloseAndLogError(r, location.RealPath)
-		pkgs = append(pkgs, goPkgs...)
+		// internal.CloseAndLogError(r, location.RealPath)
+		info, err := os.Stat(location.RealPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			continue
+		}
+		mod, goVersion := scanFile(location.RealPath, info, true)
+
+		pkgs = append(pkgs, buildGoPkgInfo(location, mod, goVersion, "architecture")...)
 	}
 
 	return pkgs, nil, nil
