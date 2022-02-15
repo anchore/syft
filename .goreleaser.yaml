@@ -124,17 +124,9 @@ dockers:
 docker_manifests:
   - name_template: anchore/syft:{{ .Tag }}
     image_templates:
-      - anchore/syft:{{ .Tag }}-amd64
-      - anchore/syft:v{{ .Major }}-amd64
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
-      - anchore/syft:{{ .Tag }}-arm64v8
-      - anchore/syft:v{{ .Major }}-arm64v8
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
   - name_template: anchore/syft:latest
     image_templates:
-      - anchore/syft:{{ .Tag }}-amd64
-      - anchore/syft:v{{ .Major }}-amd64
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
-      - anchore/syft:{{ .Tag }}-arm64v8
-      - anchore/syft:v{{ .Major }}-arm64v8
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
