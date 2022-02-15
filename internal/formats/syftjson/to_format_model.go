@@ -217,9 +217,17 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 func toSourceModel(src source.Metadata) (model.Source, error) {
 	switch src.Scheme {
 	case source.ImageScheme:
+		metadata := src.ImageMetadata
+		// ensure that empty collections are not shown as null
+		if metadata.RepoDigests == nil {
+			metadata.RepoDigests = []string{}
+		}
+		if metadata.Tags == nil {
+			metadata.Tags = []string{}
+		}
 		return model.Source{
 			Type:   "image",
-			Target: src.ImageMetadata,
+			Target: metadata,
 		}, nil
 	case source.DirectoryScheme:
 		return model.Source{
