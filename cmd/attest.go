@@ -207,7 +207,7 @@ func assertPredicateType(output format.Option) string {
 	switch output {
 	case format.SPDXTagValueOption, format.SPDXJSONOption:
 		return in_toto.PredicateSPDX
-	//TODO this is not default and we need our own predicate types here
+	// TODO this is not default and we need our own predicate types here
 	default:
 		return in_toto.StatementInTotoV01
 	}

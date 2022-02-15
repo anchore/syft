@@ -116,6 +116,7 @@ bootstrap-tools: $(TEMPDIR)
 .PHONY: bootstrap-go
 bootstrap-go:
 	go mod download
+	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/sigstore/cosign/cmd/cosign@latest
 
 .PHONY: bootstrap
 bootstrap: $(RESULTSDIR) bootstrap-go bootstrap-tools ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
