@@ -23,11 +23,11 @@ var (
 
 	// simpleNameExp matches the "simple" variant of yarn.lock entry names, for packages with no namespace prefix.
 	// For example: aws-sdk@2.706.0
-	simpleNameExp = regexp.MustCompile(`^(\w[\w-_.]*)@`)
+	simpleNameExp = regexp.MustCompile(`^"?(\w[\w-_.]*)@`)
 
 	// versionExp matches the "version" line of a yarn.lock entry and captures the version value.
 	// For example: version "4.10.1" (...and the value "4.10.1" is captured)
-	versionExp = regexp.MustCompile(`^\W+version\W+"([\w-_.]+)"`)
+	versionExp = regexp.MustCompile(`^\W+version(\W+"([\w\-_\.]+)"|:\W+([\w\-_\.]+))`)
 )
 
 const (
