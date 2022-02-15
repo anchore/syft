@@ -94,9 +94,9 @@ func toFormatModel(s sbom.SBOM) (*spdx.Document2_2, error) {
 func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 {
 	results := make(map[spdx.ElementID]*spdx.Package2_2)
 
-	for p := range catalog.Enumerate() {
+	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
-		id := fmt.Sprintf("Package-%+v-%s", p.Type, p.Name)
+		id := fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID())
 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 3.16). With respect to NOASSERTION, a written explanation in
@@ -183,9 +183,11 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 			// note: based on the purpose above no discovered checksums should be provided, but instead, only
 			// tool-derived checksums.
-			PackageChecksumSHA1:   "",
-			PackageChecksumSHA256: "",
-			PackageChecksumMD5:    "",
+			//FIXME: this got removed between 0.1.0 and 0.2.0, is this right? it looks like
+			// it wasn't being used anyway
+			//PackageChecksumSHA1:   "",
+			//PackageChecksumSHA256: "",
+			//PackageChecksumMD5:    "",
 
 			// 3.11: Package Home Page
 			// Cardinality: optional, one

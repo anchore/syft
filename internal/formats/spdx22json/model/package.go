@@ -1,5 +1,7 @@
 package model
 
+import "github.com/anchore/syft/internal/formats/common/spdxhelpers"
+
 type Package struct {
 	Item
 	// The checksum property provides a mechanism that can be used to verify that the contents of a File or
@@ -14,7 +16,7 @@ type Package struct {
 	DownloadLocation string `json:"downloadLocation,omitempty"`
 	// An External Reference allows a Package to reference an external source of additional information, metadata,
 	// enumerations, asset identifiers, or downloadable content believed to be relevant to the Package.
-	ExternalRefs []ExternalRef `json:"externalRefs,omitempty"`
+	ExternalRefs []spdxhelpers.ExternalRef `json:"externalRefs,omitempty"`
 	// Indicates whether the file content of this package has been available for or subjected to analysis when
 	// creating the SPDX document. If false indicates packages that represent metadata or URI references to a
 	// project, product, artifact, distribution or a component. If set to false, the package must not contain any files

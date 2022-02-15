@@ -6,8 +6,8 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 	"github.com/anchore/syft/syft/source"
@@ -41,7 +41,7 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
 // request.
-func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers ...Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
+func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ...Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 
@@ -68,7 +68,7 @@ func Catalog(resolver source.FileResolver, theDistro *distro.Distro, catalogers 
 			p.CPEs = cpe.Generate(p)
 
 			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
-			p.PURL = generatePackageURL(p, theDistro)
+			p.PURL = pkg.URL(p, release)
 
 			// create file-to-package relationships for files owned by the package
 			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)

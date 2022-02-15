@@ -23,7 +23,7 @@ import (
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/logger"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -34,16 +34,16 @@ import (
 // CatalogPackages takes an inventory of packages from the given image from a particular perspective
 // (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
 // distribution, and the source object used to wrap the data source.
-func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []artifact.Relationship, *distro.Distro, error) {
+func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []artifact.Relationship, *linux.Release, error) {
 	resolver, err := src.FileResolver(cfg.Search.Scope)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
 	}
 
 	// find the distro
-	theDistro := distro.Identify(resolver)
-	if theDistro != nil {
-		log.Infof("identified distro: %s", theDistro.String())
+	release := linux.IdentifyRelease(resolver)
+	if release != nil {
+		log.Infof("identified distro: %s", release.String())
 	} else {
 		log.Info("could not identify distro")
 	}
@@ -64,12 +64,12 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 		return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
 	}
 
-	catalog, relationships, err := cataloger.Catalog(resolver, theDistro, catalogers...)
+	catalog, relationships, err := cataloger.Catalog(resolver, release, catalogers...)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	return catalog, relationships, theDistro, nil
+	return catalog, relationships, release, nil
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

@@ -2,6 +2,9 @@ package spdxhelpers
 
 import "github.com/anchore/syft/syft/pkg"
 
+const NONE = "NONE"
+const NOASSERTION = "NOASSERTION"
+
 func DownloadLocation(p pkg.Package) string {
 	// 3.7: Package Download Location
 	// Cardinality: mandatory, one
@@ -19,5 +22,5 @@ func DownloadLocation(p pkg.Package) string {
 			return NoneIfEmpty(metadata.URL)
 		}
 	}
-	return "NOASSERTION"
+	return NOASSERTION
 }

@@ -1,0 +1,49 @@
+{
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2020-11-24T01:12:27Z",
+    "creators": [
+      {
+        "Person": "Nisha K (nishak@vmware.com)"
+      }
+    ]
+  },
+  "name": "hello-imports.spdx.json",
+  "documentNamespace": "https://swinslow.net/spdx-examples/example7/hello-imports",
+  "documentDescribes": [
+    "SPDXRef-go-module-golang.org/x/text",
+    "SPDXRef-go-module-rsc.io/quote",
+    "SPDXRef-go-module-rsc.io/sampler"
+  ],
+  "packages": [
+    {
+      "packageName": "golang.org/x/text",
+      "SPDXID": "SPDXRef-go-module-golang.org/x/text",
+      "downloadLocation": "go://golang.org/x/text@v0.0.0-20170915032832-14c0d48ead0c",
+      "filesAnalyzed": "false",
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "packageCopyrightText": "NOASSERTION"
+    },
+    {
+      "packageName": "rsc.io/quote",
+      "SPDXID": "SPDXRef-go-module-rsc.io/quote",
+      "downloadLocation": "go://rsc.io/quote@v1.5.2",
+      "filesAnalyzed": "false",
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "packageCopyrightText": "NOASSERTION"
+    },
+    {
+      "packageName": "rsc.io/sampler",
+      "SPDXID": "SPDXRef-go-module-rsc.io/sampler",
+      "downloadLocation": "go://rsc.io/sampler@v1.3.0",
+      "filesAnalyzed": "false",
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "packageCopyrightText": "NOASSERTION"
+    }
+  ]
+}

@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/anchore/syft/syft/linux"
+
 	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -14,12 +16,14 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-func toFormatModel(s sbom.SBOM) model.Document {
+// ToFormatModel transforms the sbom import a format-specific model.
+// note: this is needed for anchore import functionality
+// TODO: unexport this when/if anchore import functionality is removed
+func ToFormatModel(s sbom.SBOM) model.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil {
 		log.Warnf("unable to create syft-json source object: %+v", err)
@@ -31,12 +35,33 @@ func toFormatModel(s sbom.SBOM) model.Document {
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
 		Source:                src,
-		Distro:                toDistroModel(s.Artifacts.Distro),
+		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
 		},
+	}
+}
+
+func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
+	if d == nil {
+		return model.LinuxRelease{}
+	}
+	return model.LinuxRelease{
+		PrettyName:       d.PrettyName,
+		Name:             d.Name,
+		ID:               d.ID,
+		IDLike:           d.IDLike,
+		Version:          d.Version,
+		VersionID:        d.VersionID,
+		Variant:          d.Variant,
+		VariantID:        d.VariantID,
+		HomeURL:          d.HomeURL,
+		SupportURL:       d.SupportURL,
+		BugReportURL:     d.BugReportURL,
+		PrivacyPolicyURL: d.PrivacyPolicyURL,
+		CPEName:          d.CPEName,
 	}
 }
 
@@ -192,9 +217,17 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 func toSourceModel(src source.Metadata) (model.Source, error) {
 	switch src.Scheme {
 	case source.ImageScheme:
+		metadata := src.ImageMetadata
+		// ensure that empty collections are not shown as null
+		if metadata.RepoDigests == nil {
+			metadata.RepoDigests = []string{}
+		}
+		if metadata.Tags == nil {
+			metadata.Tags = []string{}
+		}
 		return model.Source{
 			Type:   "image",
-			Target: src.ImageMetadata,
+			Target: metadata,
 		}, nil
 	case source.DirectoryScheme:
 		return model.Source{
@@ -208,18 +241,5 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 		}, nil
 	default:
 		return model.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
-	}
-}
-
-// toDistroModel creates a struct with the Linux distribution to be represented in JSON.
-func toDistroModel(d *distro.Distro) model.Distro {
-	if d == nil {
-		return model.Distro{}
-	}
-
-	return model.Distro{
-		Name:    d.Name(),
-		Version: d.FullVersion(),
-		IDLike:  d.IDLike,
 	}
 }

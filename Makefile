@@ -4,8 +4,13 @@ RESULTSDIR = test/results
 COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=2m --config .golangci.yaml
-ACC_TEST_IMAGE = centos:8.2.2004
-ACC_DIR = ./test/acceptance
+RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
+SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
+VERSION=$(shell git describe --dirty --always --tags)
+COMPARE_TEST_IMAGE = centos:8.2.2004
+COMPARE_DIR = ./test/compare
+
+# formatting variables
 BOLD := $(shell tput -T linux bold)
 PURPLE := $(shell tput -T linux setaf 5)
 GREEN := $(shell tput -T linux setaf 2)
@@ -14,28 +19,20 @@ RED := $(shell tput -T linux setaf 1)
 RESET := $(shell tput -T linux sgr0)
 TITLE := $(BOLD)$(PURPLE)
 SUCCESS := $(BOLD)$(GREEN)
+
 # the quality gate lower threshold for unit test total % coverage (by function statements)
 COVERAGE_THRESHOLD := 62
+
 # CI cache busting values; change these if you want CI to not use previous stored cache
-INTEGRATION_CACHE_BUSTER="88738d2f"
-CLI_CACHE_BUSTER="9a2c03cf"
+INTEGRATION_CACHE_BUSTER="894d8ca"
+CLI_CACHE_BUSTER="894d8ca"
 BOOTSTRAP_CACHE="c7afb99ad"
 
 ## Build variables
 DISTDIR=./dist
 SNAPSHOTDIR=./snapshot
-GITTREESTATE=$(if $(shell git status --porcelain),dirty,clean)
-OS := $(shell uname)
-
-ifeq ($(OS),Darwin)
-	SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(BIN)-macos_darwin_amd64/$(BIN))
-else
-	SNAPSHOT_CMD=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(BIN)_linux_amd64/$(BIN))
-endif
-
-ifeq "$(strip $(VERSION))" ""
- override VERSION = $(shell git describe --always --tags --dirty)
-endif
+OS=$(shell uname | tr '[:upper:]' '[:lower:]')
+SNAPSHOT_BIN=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(OS)-build_$(OS)_amd64/$(BIN))
 
 ## Variable assertions
 
@@ -47,8 +44,8 @@ ifndef RESULTSDIR
 	$(error RESULTSDIR is not set)
 endif
 
-ifndef ACC_DIR
-	$(error ACC_DIR is not set)
+ifndef COMPARE_DIR
+	$(error COMPARE_DIR is not set)
 endif
 
 ifndef DISTDIR
@@ -59,6 +56,10 @@ ifndef SNAPSHOTDIR
 	$(error SNAPSHOTDIR is not set)
 endif
 
+ifndef VERSION
+	$(error VERSION is not set)
+endif
+
 ifndef REF_NAME
 	REF_NAME = $(VERSION)
 endif
@@ -67,14 +68,22 @@ define title
     @printf '$(TITLE)$(1)$(RESET)\n'
 endef
 
+define safe_rm_rf
+	bash -c 'test -z "$(1)" && false || rm -rf $(1)'
+endef
+
+define safe_rm_rf_children
+	bash -c 'test -z "$(1)" && false || rm -rf $(1)/*'
+endef
+
 ## Tasks
 
 .PHONY: all
-all: clean static-analysis test ## Run all linux-based checks (linting, license check, unit, integration, and linux acceptance tests)
+all: clean static-analysis test ## Run all linux-based checks (linting, license check, unit, integration, and linux compare tests)
 	@printf '$(SUCCESS)All checks pass!$(RESET)\n'
 
 .PHONY: test
-test: unit validate-cyclonedx-schema integration benchmark acceptance-linux cli ## Run all tests (currently unit, integration, linux acceptance, and cli tests)
+test: unit validate-cyclonedx-schema integration benchmark compare-linux cli ## Run all tests (currently unit, integration, linux compare, and cli tests)
 
 .PHONY: help
 help:
@@ -98,9 +107,9 @@ $(TEMPDIR):
 bootstrap-tools: $(TEMPDIR)
 	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.42.1
-	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.2.0
+	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
-	.github/scripts/goreleaser-install.sh -b $(TEMPDIR)/ v0.177.0
+	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.4.1
 	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/neilpa/yajsv@v1.4.0
 
 .PHONY: bootstrap-go
@@ -167,20 +176,42 @@ benchmark: $(RESULTSDIR) ## Run benchmark tests and compare against the baseline
 show-benchstat:
 	@cat $(RESULTSDIR)/benchstat.txt
 
+# note: this is used by CI to determine if the install test fixture cache (docker image tars) should be busted
+install-fingerprint:
+	cd test/install && \
+		make cache.fingerprint
+
+install-test: $(SNAPSHOTDIR)
+	cd test/install && \
+		make
+
+install-test-cache-save: $(SNAPSHOTDIR)
+	cd test/install && \
+		make save
+
+install-test-cache-load: $(SNAPSHOTDIR)
+	cd test/install && \
+		make load
+
+install-test-ci-mac: $(SNAPSHOTDIR)
+	cd test/install && \
+		make ci-test-mac
+
 .PHONY: integration
 integration: ## Run integration tests
 	$(call title,Running integration tests)
-
 	go test -v ./test/integration
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 integration-fingerprint:
-	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/integration/test-fixtures/cache.fingerprint && echo "$(INTEGRATION_CACHE_BUSTER)" >> test/integration/test-fixtures/cache.fingerprint
+	$(call title,Integration test fixture fingerprint)
+	find test/integration/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | tee /dev/stderr | md5sum | tee test/integration/test-fixtures/cache.fingerprint && echo "$(INTEGRATION_CACHE_BUSTER)" >> test/integration/test-fixtures/cache.fingerprint
 
 .PHONY: java-packages-fingerprint
 java-packages-fingerprint:
-	@cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
-	make packages.fingerprint
+	$(call title,Java test fixture fingerprint)
+	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
+		make packages.fingerprint
 
 .PHONY: fixtures
 fixtures:
@@ -201,57 +232,72 @@ build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
 
 $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)
+
 	# create a config with the dist dir overridden
 	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# build release snapshots
-	# DOCKER_CLI_EXPERIMENTAL needed to support multi architecture builds for goreleaser
-	BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-	DOCKER_CLI_EXPERIMENTAL=enabled \
-	$(TEMPDIR)/goreleaser release --skip-publish --skip-sign --rm-dist --snapshot --config $(TEMPDIR)/goreleaser.yaml
+	bash -c "SKIP_SIGNING=true $(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml"
+
+.PHONY: snapshot-with-signing
+snapshot-with-signing: ## Build snapshot release binaries and packages (with dummy signing)
+	$(call title,Building snapshot artifacts (+ signing))
+
+	# create a config with the dist dir overridden
+	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	rm -f .github/scripts/apple-signing/log/*.txt
+
+	# build release snapshots
+	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/*.txt && false)"
+
+	# remove the keychain with the trusted self-signed cert automatically
+	.github/scripts/apple-signing/cleanup.sh
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
-.PHONY: acceptance-mac
-acceptance-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run acceptance tests on build snapshot binaries and packages (Mac)
-	$(call title,Running acceptance test: Run on Mac)
-	$(ACC_DIR)/mac.sh \
+.PHONY: compare-mac
+compare-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run compare tests on build snapshot binaries and packages (Mac)
+	$(call title,Running compare test: Run on Mac)
+	$(COMPARE_DIR)/mac.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR) \
-			$(ACC_TEST_IMAGE) \
+			$(COMPARE_DIR) \
+			$(COMPARE_TEST_IMAGE) \
 			$(RESULTSDIR)
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
-.PHONY: acceptance-linux
-acceptance-linux: acceptance-test-deb-package-install acceptance-test-rpm-package-install ## Run acceptance tests on build snapshot binaries and packages (Linux)
+.PHONY: compare-linux
+compare-linux: compare-test-deb-package-install compare-test-rpm-package-install ## Run compare tests on build snapshot binaries and packages (Linux)
 
-.PHONY: acceptance-test-deb-package-install
-acceptance-test-deb-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
-	$(call title,Running acceptance test: DEB install)
-	$(ACC_DIR)/deb.sh \
+.PHONY: compare-test-deb-package-install
+compare-test-deb-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
+	$(call title,Running compare test: DEB install)
+	$(COMPARE_DIR)/deb.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR) \
-			$(ACC_TEST_IMAGE) \
+			$(COMPARE_DIR) \
+			$(COMPARE_TEST_IMAGE) \
 			$(RESULTSDIR)
 
-.PHONY: acceptance-test-rpm-package-install
-acceptance-test-rpm-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
-	$(call title,Running acceptance test: RPM install)
-	$(ACC_DIR)/rpm.sh \
+.PHONY: compare-test-rpm-package-install
+compare-test-rpm-package-install: $(RESULTSDIR) $(SNAPSHOTDIR)
+	$(call title,Running compare test: RPM install)
+	$(COMPARE_DIR)/rpm.sh \
 			$(SNAPSHOTDIR) \
-			$(ACC_DIR) \
-			$(ACC_TEST_IMAGE) \
+			$(COMPARE_DIR) \
+			$(COMPARE_TEST_IMAGE) \
 			$(RESULTSDIR)
 
 # note: this is used by CI to determine if the integration test fixture cache (docker image tars) should be busted
 cli-fingerprint:
+	$(call title,CLI test fixture fingerprint)
 	find test/cli/test-fixtures/image-* -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | tee test/cli/test-fixtures/cache.fingerprint && echo "$(CLI_CACHE_BUSTER)" >> test/cli/test-fixtures/cache.fingerprint
 
 .PHONY: cli
 cli: $(SNAPSHOTDIR) ## Run CLI tests
-	chmod 755 "$(SNAPSHOT_CMD)"
-	$(SNAPSHOT_CMD) version
-	SYFT_BINARY_LOCATION='$(SNAPSHOT_CMD)' \
+	chmod 755 "$(SNAPSHOT_BIN)"
+	$(SNAPSHOT_BIN) version
+	SYFT_BINARY_LOCATION='$(SNAPSHOT_BIN)' \
 		go test -count=1 -v ./test/cli
 
 .PHONY: changelog
@@ -269,46 +315,40 @@ CHANGELOG.md:
 release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packages. Intended to be run only on macOS.
 	$(call title,Publishing release artifacts)
 
-	# Prepare for macOS-specific signing process
-	.github/scripts/mac-prepare-for-signing.sh
-
-	# login to docker
-	# note: the previous step creates a new keychain, so it is important to reauth into docker.io
-	@echo $${DOCKER_PASSWORD} | docker login docker.io -u $${DOCKER_USERNAME}  --password-stdin
-
 	# create a config with the dist dir overridden
 	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
-	# release (note the version transformation from v0.7.0 --> 0.7.0)
-	# DOCKER_CLI_EXPERIMENTAL needed to support multi architecture builds for goreleaser
+	rm -f .github/scripts/apple-signing/log/*.txt
+
+	# note: notarization cannot be done in parallel, thus --parallelism 1
 	bash -c "\
-		BUILD_GIT_TREE_STATE=$(GITTREESTATE) \
-		VERSION=$(VERSION:v%=%) \
-		DOCKER_CLI_EXPERIMENTAL=enabled \
-		$(TEMPDIR)/goreleaser \
-			--rm-dist \
+		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
-			--release-notes <(cat CHANGELOG.md)"
+			--parallelism 1 \
+			--release-notes <(cat CHANGELOG.md)\
+				 || (cat .github/scripts/apple-signing/log/*.txt && false)"
 
-	# verify checksum signatures
-	.github/scripts/verify-signature.sh "$(DISTDIR)"
+	cat .github/scripts/apple-signing/log/*.txt
 
+	# TODO: turn this into a post-release hook
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
 
 
 .PHONY: clean
 clean: clean-dist clean-snapshot clean-test-image-cache ## Remove previous builds, result reports, and test cache
-	rm -rf $(RESULTSDIR)/*
+	$(call safe_rm_rf_children,$(RESULTSDIR))
 
 .PHONY: clean-snapshot
 clean-snapshot:
-	rm -rf $(SNAPSHOTDIR) $(TEMPDIR)/goreleaser.yaml
+	$(call safe_rm_rf,$(SNAPSHOTDIR))
+	rm -f $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: clean-dist
 clean-dist: clean-changelog
-	rm -rf $(DISTDIR) $(TEMPDIR)/goreleaser.yaml
+	$(call safe_rm_rf,$(DISTDIR))
+	rm -f $(TEMPDIR)/goreleaser.yaml
 
 .PHONY: clean-changelog
 clean-changelog:

@@ -2,8 +2,8 @@ package sbom
 
 import (
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/distro"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -22,7 +22,7 @@ type Artifacts struct {
 	FileClassifications map[source.Coordinates][]file.Classification
 	FileContents        map[source.Coordinates]string
 	Secrets             map[source.Coordinates][]file.SearchResult
-	Distro              *distro.Distro
+	LinuxDistribution   *linux.Release
 }
 
 type Descriptor struct {

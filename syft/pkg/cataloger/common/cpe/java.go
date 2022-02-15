@@ -40,11 +40,11 @@ var (
 )
 
 func candidateProductsForJava(p pkg.Package) []string {
-	return productsFromArtifactAndGroupIDs(artifactIDFromJavaPackage(p), groupIDsFromJavaPackage(p))
+	return productsFromArtifactAndGroupIDs(artifactIDFromJavaPackage(p), GroupIDsFromJavaPackage(p))
 }
 
 func candidateVendorsForJava(p pkg.Package) fieldCandidateSet {
-	gidVendors := vendorsFromGroupIDs(groupIDsFromJavaPackage(p))
+	gidVendors := vendorsFromGroupIDs(GroupIDsFromJavaPackage(p))
 	nameVendors := vendorsFromJavaManifestNames(p)
 	return newFieldCandidateSetFromSets(gidVendors, nameVendors)
 }
@@ -173,7 +173,7 @@ func artifactIDFromJavaPackage(p pkg.Package) string {
 	return artifactID
 }
 
-func groupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
+func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 	metadata, ok := p.Metadata.(pkg.JavaMetadata)
 	if !ok {
 		return nil

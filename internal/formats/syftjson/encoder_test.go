@@ -8,7 +8,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -139,10 +139,13 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			FileContents: map[source.Coordinates]string{
 				source.NewLocation("/a/place/a").Coordinates: "the-contents",
 			},
-			Distro: &distro.Distro{
-				Type:       distro.RedHat,
-				RawVersion: "7",
-				IDLike:     "rhel",
+			LinuxDistribution: &linux.Release{
+				ID:        "redhat",
+				Version:   "7",
+				VersionID: "7",
+				IDLike: []string{
+					"rhel",
+				},
 			},
 		},
 		Relationships: []artifact.Relationship{

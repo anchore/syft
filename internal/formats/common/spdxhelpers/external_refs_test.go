@@ -3,7 +3,6 @@ package spdxhelpers
 import (
 	"testing"
 
-	"github.com/anchore/syft/internal/formats/spdx22json/model"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,7 +12,7 @@ func Test_ExternalRefs(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    pkg.Package
-		expected []model.ExternalRef
+		expected []ExternalRef
 	}{
 		{
 			name: "cpe + purl",
@@ -23,16 +22,16 @@ func Test_ExternalRefs(t *testing.T) {
 				},
 				PURL: "a-purl",
 			},
-			expected: []model.ExternalRef{
+			expected: []ExternalRef{
 				{
-					ReferenceCategory: model.SecurityReferenceCategory,
+					ReferenceCategory: SecurityReferenceCategory,
 					ReferenceLocator:  pkg.CPEString(testCPE),
-					ReferenceType:     model.Cpe23ExternalRefType,
+					ReferenceType:     Cpe23ExternalRefType,
 				},
 				{
-					ReferenceCategory: model.PackageManagerReferenceCategory,
+					ReferenceCategory: PackageManagerReferenceCategory,
 					ReferenceLocator:  "a-purl",
-					ReferenceType:     model.PurlExternalRefType,
+					ReferenceType:     PurlExternalRefType,
 				},
 			},
 		},

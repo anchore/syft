@@ -3,15 +3,18 @@ package pkg
 import (
 	"sort"
 
-	"github.com/anchore/syft/syft/file"
-
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/scylladb/go-set/strset"
 )
 
 const ApkDBGlob = "**/lib/apk/db/installed"
 
-var _ FileOwner = (*ApkMetadata)(nil)
+var (
+	_ FileOwner     = (*ApkMetadata)(nil)
+	_ urlIdentifier = (*ApkMetadata)(nil)
+)
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
 // See the following sources for more information:
@@ -20,18 +23,18 @@ var _ FileOwner = (*ApkMetadata)(nil)
 // - https://git.alpinelinux.org/apk-tools/tree/src/database.c
 type ApkMetadata struct {
 	Package          string          `mapstructure:"P" json:"package"`
-	OriginPackage    string          `mapstructure:"o" json:"originPackage"`
+	OriginPackage    string          `mapstructure:"o" json:"originPackage" cyclonedx:"originPackage"`
 	Maintainer       string          `mapstructure:"m" json:"maintainer"`
 	Version          string          `mapstructure:"V" json:"version"`
 	License          string          `mapstructure:"L" json:"license"`
 	Architecture     string          `mapstructure:"A" json:"architecture"`
 	URL              string          `mapstructure:"U" json:"url"`
 	Description      string          `mapstructure:"T" json:"description"`
-	Size             int             `mapstructure:"S" json:"size"`
-	InstalledSize    int             `mapstructure:"I" json:"installedSize"`
-	PullDependencies string          `mapstructure:"D" json:"pullDependencies"`
-	PullChecksum     string          `mapstructure:"C" json:"pullChecksum"`
-	GitCommitOfAport string          `mapstructure:"c" json:"gitCommitOfApkPort"`
+	Size             int             `mapstructure:"S" json:"size" cyclonedx:"size"`
+	InstalledSize    int             `mapstructure:"I" json:"installedSize" cyclonedx:"installedSize"`
+	PullDependencies string          `mapstructure:"D" json:"pullDependencies" cyclonedx:"pullDependencies"`
+	PullChecksum     string          `mapstructure:"C" json:"pullChecksum" cyclonedx:"pullChecksum"`
+	GitCommitOfAport string          `mapstructure:"c" json:"gitCommitOfApkPort" cyclonedx:"gitCommitOfApkPort"`
 	Files            []ApkFileRecord `json:"files"`
 }
 
@@ -45,22 +48,28 @@ type ApkFileRecord struct {
 }
 
 // PackageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
-func (m ApkMetadata) PackageURL() string {
-	pURL := packageurl.NewPackageURL(
+func (m ApkMetadata) PackageURL(distro *linux.Release) string {
+	qualifiers := map[string]string{
+		PURLQualifierArch: m.Architecture,
+	}
+
+	if m.OriginPackage != "" {
+		qualifiers[PURLQualifierUpstream] = m.OriginPackage
+	}
+
+	return packageurl.NewPackageURL(
 		// note: this is currently a candidate and not technically within spec
 		// see https://github.com/package-url/purl-spec#other-candidate-types-to-define
 		"alpine",
 		"",
 		m.Package,
 		m.Version,
-		packageurl.Qualifiers{
-			{
-				Key:   "arch",
-				Value: m.Architecture,
-			},
-		},
-		"")
-	return pURL.ToString()
+		purlQualifiers(
+			qualifiers,
+			distro,
+		),
+		"",
+	).ToString()
 }
 
 func (m ApkMetadata) OwnedFiles() (result []string) {

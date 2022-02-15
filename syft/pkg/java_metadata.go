@@ -3,11 +3,14 @@ package pkg
 import (
 	"strings"
 
-	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/linux"
+
 	"github.com/anchore/syft/internal"
 )
 
-var JenkinsPluginPomPropertiesGroupIDs = []string{
+var _ urlIdentifier = (*JavaMetadata)(nil)
+
+var jenkinsPluginPomPropertiesGroupIDs = []string{
 	"io.jenkins.plugins",
 	"org.jenkins.plugins",
 	"org.jenkins-ci.plugins",
@@ -19,8 +22,9 @@ var JenkinsPluginPomPropertiesGroupIDs = []string{
 type JavaMetadata struct {
 	VirtualPath   string         `json:"virtualPath"`
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
-	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty"`
+	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
 	PomProject    *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
+	PURL          string         `hash:"ignore" json:"-"` // pURLs and CPEs are ignored for package IDs
 	Parent        *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
 
@@ -28,8 +32,8 @@ type JavaMetadata struct {
 type PomProperties struct {
 	Path       string            `mapstructure:"path" json:"path"`
 	Name       string            `mapstructure:"name" json:"name"`
-	GroupID    string            `mapstructure:"groupId" json:"groupId"`
-	ArtifactID string            `mapstructure:"artifactId" json:"artifactId"`
+	GroupID    string            `mapstructure:"groupId" json:"groupId" cyclonedx:"groupID"`
+	ArtifactID string            `mapstructure:"artifactId" json:"artifactId" cyclonedx:"artifactID"`
 	Version    string            `mapstructure:"version" json:"version"`
 	Extra      map[string]string `mapstructure:",remain" json:"extraFields"`
 }
@@ -55,7 +59,7 @@ type PomParent struct {
 
 // PkgTypeIndicated returns the package Type indicated by the data contained in the PomProperties.
 func (p PomProperties) PkgTypeIndicated() Type {
-	if internal.HasAnyOfPrefixes(p.GroupID, JenkinsPluginPomPropertiesGroupIDs...) || strings.Contains(p.GroupID, ".jenkins.plugin") {
+	if internal.HasAnyOfPrefixes(p.GroupID, jenkinsPluginPomPropertiesGroupIDs...) || strings.Contains(p.GroupID, ".jenkins.plugin") {
 		return JenkinsPluginPkg
 	}
 
@@ -68,20 +72,7 @@ type JavaManifest struct {
 	NamedSections map[string]map[string]string `json:"namedSections,omitempty"`
 }
 
-// PackageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
-func (m JavaMetadata) PackageURL() string {
-	if m.PomProperties != nil {
-		pURL := packageurl.NewPackageURL(
-			packageurl.TypeMaven,
-			m.PomProperties.GroupID,
-			m.PomProperties.ArtifactID,
-			m.PomProperties.Version,
-			nil, // TODO: there are probably several qualifiers that can be specified here
-			"")
-		return pURL.ToString()
-	}
-
-	// TODO: support non-maven artifacts
-
-	return ""
+// PackageURL returns the PURL for the specific Maven package (see https://github.com/package-url/purl-spec)
+func (m JavaMetadata) PackageURL(_ *linux.Release) string {
+	return m.PURL
 }

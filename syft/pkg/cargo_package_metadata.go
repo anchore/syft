@@ -1,5 +1,12 @@
 package pkg
 
+import (
+	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/linux"
+)
+
+var _ urlIdentifier = (*CargoPackageMetadata)(nil)
+
 type CargoPackageMetadata struct {
 	Name         string   `toml:"name" json:"name"`
 	Version      string   `toml:"version" json:"version"`
@@ -18,4 +25,16 @@ func (p CargoPackageMetadata) Pkg() *Package {
 		MetadataType: RustCargoPackageMetadataType,
 		Metadata:     p,
 	}
+}
+
+// PackageURL returns the PURL for the specific rust package (see https://github.com/package-url/purl-spec)
+func (p CargoPackageMetadata) PackageURL(_ *linux.Release) string {
+	return packageurl.NewPackageURL(
+		"cargo",
+		"",
+		p.Name,
+		p.Version,
+		nil,
+		"",
+	).ToString()
 }

@@ -140,6 +140,7 @@ func setPackageFlags(flags *pflag.FlagSet) {
 	)
 }
 
+// NOTE(alex): Write a helper for the binding operation, which can be used to perform the binding but also double check that the intended effect was had or else return an error. Another thought is to somehow provide zero-valued defaults for all values in our config struct (maybe with reflection?). There may be a mechanism that already exists in viper that protects against this that I'm not aware of. ref: https://github.com/anchore/syft/pull/805#discussion_r801931192
 func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	// Formatting & Input options //////////////////////////////////////////////
 

@@ -1,0 +1,78 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.2",
+  "creationInfo": {
+    "created": "2022-01-18T22:16:16Z",
+    "creators": [
+      "Tool: vendor"
+    ],
+    "licenseListVersion": "3.8"
+  },
+  "name": "alpine:3.10",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://spdx.org/spdxdocs/alpine-154c794c-4264-4e9f-a2ff-5c01bfbfc02c",
+  "documentDescribes": [
+    "SPDXRef-alpine-3.10"
+  ],
+  "packages": [
+    {
+      "name": "alpine",
+      "SPDXID": "SPDXRef-alpine-3.10",
+      "versionInfo": "3.10",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "name": "busybox",
+      "SPDXID": "SPDXRef-busybox-1.30.1-r5",
+      "versionInfo": "1.30.1-r5",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-7d19a72",
+      "copyrightText": "NONE",
+      "comment": "busybox:\n\twarning: No metadata for key: copyright\n\twarning: No metadata for key: download_url\n\twarning: No metadata for key: checksum\n\twarning: No metadata for key: pkg_licenses\n\twarning: No metadata for key: pkg_format\n\twarning: No metadata for key: src_name\n\twarning: No metadata for key: src_version\n"
+    },
+    {
+      "name": "ssl_client",
+      "SPDXID": "SPDXRef-ssl_client-1.30.1-r5",
+      "versionInfo": "1.30.1-r5",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-de5acdd",
+      "copyrightText": "NONE",
+      "comment": "ssl_client:\n\twarning: No metadata for key: copyright\n\twarning: No metadata for key: download_url\n\twarning: No metadata for key: checksum\n\twarning: No metadata for key: pkg_licenses\n\twarning: No metadata for key: pkg_format\n\twarning: No metadata for key: src_name\n\twarning: No metadata for key: src_version\n"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-alpine-3.10",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-9fb3aa2f8b",
+      "relatedSpdxElement": "SPDXRef-busybox-1.30.1-r5",
+      "relationshipType": "CONTAINS"
+    },
+    {
+      "spdxElementId": "SPDXRef-9fb3aa2f8b",
+      "relatedSpdxElement": "SPDXRef-ssl_client-1.30.1-r5",
+      "relationshipType": "CONTAINS"
+    }
+  ],
+  "hasExtractedLicensingInfos": [
+    {
+      "extractedText": "OpenSSL",
+      "licenseId": "LicenseRef-de5acdd"
+    },
+    {
+      "extractedText": "GPL-2.0",
+      "licenseId": "LicenseRef-7d19a72"
+    }
+  ]
+}

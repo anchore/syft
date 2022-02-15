@@ -5,8 +5,10 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
@@ -25,11 +27,67 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	packages := s.Artifacts.PackageCatalog.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = toComponent(p)
+		components[i] = Component(p)
 	}
+	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
 
+	dependencies := toDependencies(s.Relationships)
+	if len(dependencies) > 0 {
+		cdxBOM.Dependencies = &dependencies
+	}
+
 	return cdxBOM
+}
+
+func toOSComponent(distro *linux.Release) []cyclonedx.Component {
+	if distro == nil {
+		return []cyclonedx.Component{}
+	}
+	eRefs := &[]cyclonedx.ExternalReference{}
+	if distro.BugReportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.BugReportURL,
+			Type: cyclonedx.ERTypeIssueTracker,
+		})
+	}
+	if distro.HomeURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:  distro.HomeURL,
+			Type: cyclonedx.ERTypeWebsite,
+		})
+	}
+	if distro.SupportURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.SupportURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "support",
+		})
+	}
+	if distro.PrivacyPolicyURL != "" {
+		*eRefs = append(*eRefs, cyclonedx.ExternalReference{
+			URL:     distro.PrivacyPolicyURL,
+			Type:    cyclonedx.ERTypeOther,
+			Comment: "privacyPolicy",
+		})
+	}
+	if len(*eRefs) == 0 {
+		eRefs = nil
+	}
+	props := getCycloneDXProperties(*distro)
+	if len(*props) == 0 {
+		props = nil
+	}
+	return []cyclonedx.Component{
+		{
+			Type:               cyclonedx.ComponentTypeOS,
+			Name:               distro.Name,
+			Version:            distro.Version,
+			CPE:                distro.CPEName,
+			ExternalReferences: eRefs,
+			Properties:         props,
+		},
+	}
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
@@ -47,47 +105,68 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 	}
 }
 
-func toComponent(p pkg.Package) cyclonedx.Component {
-	return cyclonedx.Component{
-		Type:       cyclonedx.ComponentTypeLibrary,
-		Name:       p.Name,
-		Version:    p.Version,
-		PackageURL: p.PURL,
-		Licenses:   toLicenses(p.Licenses),
+// used to indicate that a relationship listed under the syft artifact package can be represented as a cyclonedx dependency.
+// NOTE: CycloneDX provides the ability to describe components and their dependency on other components.
+// The dependency graph is capable of representing both direct and transitive relationships.
+// If a relationship is either direct or transitive it can be included in this function.
+// An example of a relationship to not include would be: OwnershipByFileOverlapRelationship.
+func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
+	switch ty {
+	case artifact.RuntimeDependencyOfRelationship:
+		return true
+	case artifact.DevDependencyOfRelationship:
+		return true
+	case artifact.BuildDependencyOfRelationship:
+		return true
+	case artifact.DependencyOfRelationship:
+		return true
 	}
+	return false
+}
+
+func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
+	result := make([]cyclonedx.Dependency, 0)
+	for _, r := range relationships {
+		exists := isExpressiblePackageRelationship(r.Type)
+		if !exists {
+			log.Warnf("unable to convert relationship from CycloneDX 1.3 JSON, dropping: %+v", r)
+			continue
+		}
+
+		innerDeps := []cyclonedx.Dependency{}
+		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: string(r.From.ID())})
+		result = append(result, cyclonedx.Dependency{
+			Ref:          string(r.To.ID()),
+			Dependencies: &innerDeps,
+		})
+	}
+	return result
 }
 
 func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component {
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
+		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
+		if err != nil {
+			log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
+		}
 		return &cyclonedx.Component{
+			BOMRef:  string(bomRef),
 			Type:    cyclonedx.ComponentTypeContainer,
 			Name:    srcMetadata.ImageMetadata.UserInput,
 			Version: srcMetadata.ImageMetadata.ManifestDigest,
 		}
 	case source.DirectoryScheme, source.FileScheme:
+		bomRef, err := artifact.IDByHash(srcMetadata.Path)
+		if err != nil {
+			log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)
+		}
 		return &cyclonedx.Component{
-			Type: cyclonedx.ComponentTypeFile,
-			Name: srcMetadata.Path,
+			BOMRef: string(bomRef),
+			Type:   cyclonedx.ComponentTypeFile,
+			Name:   srcMetadata.Path,
 		}
 	}
 
 	return nil
-}
-
-func toLicenses(ls []string) *cyclonedx.Licenses {
-	if len(ls) == 0 {
-		return nil
-	}
-
-	lc := make(cyclonedx.Licenses, len(ls))
-	for i, licenseName := range ls {
-		lc[i] = cyclonedx.LicenseChoice{
-			License: &cyclonedx.License{
-				Name: licenseName,
-			},
-		}
-	}
-
-	return &lc
 }

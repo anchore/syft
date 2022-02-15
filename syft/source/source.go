@@ -6,6 +6,7 @@ within this package.
 package source
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -87,7 +88,14 @@ func parseScheme(userInput string) string {
 }
 
 func getImageWithRetryStrategy(userInput, location string, imageSource image.Source, registryOptions *image.RegistryOptions) (*image.Image, func(), error) {
-	img, err := stereoscope.GetImageFromSource(location, imageSource, registryOptions)
+	ctx := context.TODO()
+
+	var opts []stereoscope.Option
+	if registryOptions != nil {
+		opts = append(opts, stereoscope.WithRegistryOptions(*registryOptions))
+	}
+
+	img, err := stereoscope.GetImageFromSource(ctx, location, imageSource, opts...)
 	if err == nil {
 		// Success on the first try!
 		return img, stereoscope.Cleanup, nil
@@ -117,7 +125,7 @@ func getImageWithRetryStrategy(userInput, location string, imageSource image.Sou
 	// We need to determine the image source again, such that this determination
 	// doesn't take scheme parsing into account.
 	imageSource = image.DetermineImagePullSource(userInput)
-	img, err = stereoscope.GetImageFromSource(userInput, imageSource, registryOptions)
+	img, err = stereoscope.GetImageFromSource(ctx, userInput, imageSource, opts...)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -167,9 +167,12 @@
   }
  },
  "distro": {
-  "name": "redhat",
+  "id": "redhat",
+  "idLike": [
+   "rhel"
+  ],
   "version": "7",
-  "idLike": "rhel"
+  "versionID": "7"
  },
  "descriptor": {
   "name": "syft",
@@ -179,7 +182,7 @@
   }
  },
  "schema": {
-  "version": "2.0.2",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-2.0.2.json"
+  "version": "3.0.1",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.0.1.json"
  }
 }
