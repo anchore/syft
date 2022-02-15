@@ -117,11 +117,9 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			actualResults, err := c.Catalog(resolver)
 			test.expectedErr(t, err)
 
-			loc := source.NewLocation(test.location)
-
 			ok := false
 			for actualLoc, actualClassification := range actualResults {
-				if loc.RealPath == actualLoc.RealPath {
+				if test.location == actualLoc.RealPath {
 					ok = true
 					assert.Equal(t, test.expected, actualClassification)
 				}
@@ -175,11 +173,9 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 			actualResults, err := c.Catalog(resolver)
 			test.expectedErr(t, err)
 
-			loc := source.NewLocation(test.location)
-
 			ok := false
 			for actuaLoc, actualClassification := range actualResults {
-				if loc.RealPath == actuaLoc.RealPath {
+				if actuaLoc.RealPath == test.location {
 					ok = true
 					assert.Equal(t, test.expected, actualClassification)
 				}

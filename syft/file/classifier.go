@@ -52,8 +52,7 @@ var DefaultClassifiers = []Classifier{
 	{
 		Class: "busybox-binary",
 		FilepathPatterns: []*regexp.Regexp{
-			// we match on either files called "busybox" or "[", which busybox tends to link to (at least in the busybox image)
-			regexp.MustCompile(`(.*/|^)(busybox|\[)$`),
+			regexp.MustCompile(`(.*/|^)busybox$`),
 		},
 		EvidencePatternTemplates: []string{
 			`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
