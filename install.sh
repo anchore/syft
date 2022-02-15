@@ -6,9 +6,11 @@ PROJECT_NAME="syft"
 OWNER=anchore
 REPO="${PROJECT_NAME}"
 GITHUB_DOWNLOAD_PREFIX=https://github.com/${OWNER}/${REPO}/releases/download
-INSTALL_SH_BASE_URL=https://raw.githubusercontent.com/anchore/syft
-DOWNLOAD_TAG_INSTALL_SCRIPT=${DOWNLOAD_TAG_INSTALL_SCRIPT:-true}
+INSTALL_SH_BASE_URL=https://raw.githubusercontent.com/${OWNER}/${PROJECT_NAME}
 PROGRAM_ARGS=$@
+
+# do not change the name of this parameter (this must always be backwards compatible)
+DOWNLOAD_TAG_INSTALL_SCRIPT=${DOWNLOAD_TAG_INSTALL_SCRIPT:-true}
 
 #
 # usage [script-name]
@@ -610,7 +612,10 @@ install_asset() (
 main() (
   # parse arguments
 
+  # note: never change default install directory (this must always be backwards compatible)
   install_dir=${install_dir:-./bin}
+
+  # note: never change the program flags or arguments (this must always be backwards compatible)
   while getopts "b:dh?x" arg; do
     case "$arg" in
       b) install_dir="$OPTARG" ;;
@@ -670,6 +675,7 @@ main() (
 
   download_dir=$(mktemp -d)
   trap 'rm -rf -- "$download_dir"' EXIT
+
   log_debug "downloading files into ${download_dir}"
 
   download_and_install_asset "${download_url}" "${download_dir}" "${install_dir}" "${PROJECT_NAME}" "${os}" "${arch}" "${version}" "${format}" "${binary}"
