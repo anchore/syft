@@ -21,6 +21,10 @@ func TestEncodeDecodeCycle(t *testing.T) {
 	assert.NoError(t, err)
 
 	for _, d := range deep.Equal(originalSBOM.Source, actualSBOM.Source) {
+		if strings.HasSuffix(d, "<nil slice> != []") {
+			// semantically the same
+			continue
+		}
 		t.Errorf("metadata difference: %+v", d)
 	}
 

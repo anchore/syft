@@ -63,6 +63,8 @@ func Test_toSourceModel(t *testing.T) {
 					ID:             "id...",
 					ManifestDigest: "digest...",
 					MediaType:      "type...",
+					RepoDigests:    []string{},
+					Tags:           []string{},
 				},
 			},
 		},
