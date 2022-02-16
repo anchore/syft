@@ -38,14 +38,7 @@ const (
     {{.appName}} {{.command}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
     {{.appName}} {{.command}} path/to/a/file/or/dir      a Docker tar, OCI tar, OCI directory, or generic filesystem directory
 
-  You can also explicitly specify the scheme to use:
-    {{.appName}} {{.command}} docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
-    {{.appName}} {{.command}} docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
-    {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
-    {{.appName}} {{.command}} oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
-    {{.appName}} {{.command}} dir:path/to/yourproject                read directly from a path on disk (any directory)
-    {{.appName}} {{.command}} file:path/to/yourproject/file          read directly from a path on disk (any single file)
-    {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
+  {{.schemeHelp}}
 `
 )
 
@@ -55,8 +48,9 @@ var (
 		Short: "Generate a package SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
 		Example: internal.Tprintf(packagesExample, map[string]interface{}{
-			"appName": internal.ApplicationName,
-			"command": "packages",
+			"appName":    internal.ApplicationName,
+			"command":    "packages",
+			"schemeHelp": schemeHelp,
 		}),
 		Args:          validateInputArgs,
 		SilenceUsage:  true,
