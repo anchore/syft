@@ -39,16 +39,15 @@ var AllMetadataTypes = []MetadataType{
 }
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
-	ApkMetadataType:            reflect.TypeOf(ApkMetadata{}),
-	DpkgMetadataType:           reflect.TypeOf(DpkgMetadata{}),
-	GemMetadataType:            reflect.TypeOf(GemMetadata{}),
-	JavaMetadataType:           reflect.TypeOf(JavaMetadata{}),
-	NpmPackageJSONMetadataType: reflect.TypeOf(NpmPackageJSONMetadata{}),
-	RpmdbMetadataType:          reflect.TypeOf(RpmdbMetadata{}),
-	PythonPackageMetadataType:  reflect.TypeOf(PythonPackageMetadata{}),
-	// This would cause a cycle; it's currently being done in rust/cargo_metadata.go:init()
-	// RustCargoPackageMetadataType: reflect.TypeOf(rust.CargoMetadata{}),
-	KbPackageMetadataType:       reflect.TypeOf(KbPackageMetadata{}),
-	GolangBinMetadataType:       reflect.TypeOf(GolangBinMetadata{}),
-	PhpComposerJSONMetadataType: reflect.TypeOf(PhpComposerJSONMetadata{}),
+	ApkMetadataType:              reflect.TypeOf(ApkMetadata{}),
+	DpkgMetadataType:             reflect.TypeOf(DpkgMetadata{}),
+	GemMetadataType:              reflect.TypeOf(GemMetadata{}),
+	JavaMetadataType:             reflect.TypeOf(JavaMetadata{}),
+	NpmPackageJSONMetadataType:   reflect.TypeOf(NpmPackageJSONMetadata{}),
+	RpmdbMetadataType:            reflect.TypeOf(RpmdbMetadata{}),
+	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
+	RustCargoPackageMetadataType: reflect.TypeOf(CargoMetadata{}),
+	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),
+	GolangBinMetadataType:        reflect.TypeOf(GolangBinMetadata{}),
+	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
 }
