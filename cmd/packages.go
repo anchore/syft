@@ -252,12 +252,12 @@ func generateSBOM(userInput string, errs chan error) (*sbom.SBOM, *source.Source
 		},
 	}
 
-	s = buildRelationships(s, src, tasks, errs)
+	buildRelationships(&s, src, tasks, errs)
 
 	return &s, src, nil
 }
 
-func buildRelationships(s sbom.SBOM, src *source.Source, tasks []task, errs chan error) sbom.SBOM {
+func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs chan error) {
 	var relationships []<-chan artifact.Relationship
 	for _, task := range tasks {
 		c := make(chan artifact.Relationship)
@@ -266,8 +266,6 @@ func buildRelationships(s sbom.SBOM, src *source.Source, tasks []task, errs chan
 	}
 
 	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
-
-	return s
 }
 
 func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
@@ -279,6 +277,11 @@ func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			errs <- err
 			return
 		}
+
+		if s == nil {
+			panic("nil sbomb returned with no error")
+		}
+
 		if appConfig.Anchore.Host != "" {
 			if err := runPackageSbomUpload(src, *s); err != nil {
 				errs <- err

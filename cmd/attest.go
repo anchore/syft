@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/ui"
@@ -25,6 +25,7 @@ import (
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/wagoodman/go-partybus"
@@ -43,19 +44,13 @@ const (
 
   {{.schemeHelp}}
 `
+	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
 var (
 	keyPath           string
 	attestationOutput []string
-	validAttestScheme = []string{
-		"docker",
-		"docker-archive",
-		"oci-archive",
-		"oci-dir",
-		"registry",
-	}
-	attestCmd = &cobra.Command{
+	attestCmd         = &cobra.Command{
 		Use:   "attest --output [FORMAT] --key [KEY] [SOURCE]",
 		Short: "Generate a package SBOM as an attestation to [SOURCE]",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from a container image or OCI directory as the predicate of an attestation.",
@@ -103,15 +98,6 @@ func passFunc(isPass bool) (b []byte, err error) {
 	}
 }
 
-func validateScheme(userInput string) error {
-	switch {
-	case strings.HasPrefix(userInput, "dir"), strings.HasPrefix(userInput, "file"):
-		return fmt.Errorf("could not support attestation for %s; please try one of these scheme: %v", userInput, validAttestScheme)
-	default:
-		return nil
-	}
-}
-
 func hasPassword(keypath string) (cosign.PassFunc, error) {
 	keyContents, err := os.ReadFile(keyPath)
 	if err != nil {
@@ -131,9 +117,14 @@ func hasPassword(keypath string) (cosign.PassFunc, error) {
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
 	userInput := args[0]
-	err := validateScheme(userInput)
+	fs := afero.NewOsFs()
+	parsedScheme, _, _, err := source.DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
 		return err
+	}
+
+	if parsedScheme != source.ImageScheme {
+		return fmt.Errorf("attestation can only be used with image sources; found %v", parsedScheme)
 	}
 
 	passFunc, err := hasPassword(keyPath)
@@ -222,7 +213,7 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 		return errors.Wrap(err, "could not hash manifest digest for image")
 	}
 
-	wrapped := dsse.WrapSigner(sv, "application/vnd.in-toto+json")
+	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
 
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
@@ -240,7 +231,7 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 
 	signedPayload, err := wrapped.SignMessage(bytes.NewReader(payload), signatureoptions.WithContext(context.Background()))
 	if err != nil {
-		return errors.Wrap(err, "signing")
+		return errors.Wrap(err, "unable to sign SBOM")
 	}
 
 	bus.Publish(partybus.Event{
@@ -262,11 +253,11 @@ func init() {
 func setAttestFlags(flags *pflag.FlagSet) {
 	// Key options
 	flags.StringVarP(&keyPath, "key", "", "cosign.key",
-		"private key to use to sign attestation",
+		"path to the private key file to use for attestation",
 	)
 
 	flags.StringArrayVarP(&attestationOutput,
 		"output", "o", []string{string(format.JSONOption)},
-		fmt.Sprintf("attestation output format, options=%v", format.AllOptions),
+		fmt.Sprintf("SBOM output format, options=%v", format.AllOptions),
 	)
 }
