@@ -29,7 +29,7 @@ var AllSchemes = []Scheme{
 	FileScheme,
 }
 
-func detectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (Scheme, image.Source, string, error) {
+func DetectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (Scheme, image.Source, string, error) {
 	switch {
 	case strings.HasPrefix(userInput, "dir:"):
 		dirLocation, err := homedir.Expand(strings.TrimPrefix(userInput, "dir:"))
