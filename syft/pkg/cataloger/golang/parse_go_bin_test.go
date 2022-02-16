@@ -1,7 +1,7 @@
 package golang
 
 import (
-	"io"
+	"runtime/debug"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -16,20 +16,21 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	)
 	tests := []struct {
 		name     string
-		mod      string
+		mod      *debug.BuildInfo
 		expected []pkg.Package
 	}{
 		{
 			name:     "buildGoPkgInfo parses a blank mod string and returns no packages",
-			mod:      "",
+			mod:      &debug.BuildInfo{},
 			expected: make([]pkg.Package, 0),
 		},
 		{
 			name: "buildGoPkgInfo parses a populated mod string and returns packages but no source info",
-			mod: `path    github.com/anchore/syft mod     github.com/anchore/syft (devel)
-				  dep     github.com/adrg/xdg     v0.2.1  h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=
-				  dep     github.com/anchore/client-go    v0.0.0-20210222170800-9c70f9b80bcf      h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=
-				  dep     github.com/anchore/client-go    v1.2.3`,
+			mod:  &debug.BuildInfo{},
+
+			//`path    github.com/anchore/syft mod     github.com/anchore/syft (devel)
+			//  dep     github.com/adrg/xdg     v0.2.1  h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=
+			//  dep     github.com/anchore/client-go    v0.0.0-20210222170800-9c70f9b80bcf      h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=`,
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/adrg/xdg",
@@ -94,13 +95,13 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "buildGoPkgInfo parses a populated mod string and returns packages when a replace directive exists",
-			mod: `path    github.com/anchore/test
-			      mod     github.com/anchore/test (devel)
-				  dep     golang.org/x/net        v0.0.0-20211006190231-62292e806868      h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=
-				  dep     golang.org/x/sys        v0.0.0-20211006194710-c8a6f5223071      h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=
-				  dep     golang.org/x/term       v0.0.0-20210927222741-03fcf44c2211
-				  =>      golang.org/x/term       v0.0.0-20210916214954-140adaaadfaf      h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=
-				  dep     github.com/anchore/client-go    v1.2.3`,
+			mod:  &debug.BuildInfo{},
+			//`path    github.com/anchore/test
+			//    mod     github.com/anchore/test (devel)
+			//  dep     golang.org/x/net        v0.0.0-20211006190231-62292e806868      h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=
+			//  dep     golang.org/x/sys        v0.0.0-20211006194710-c8a6f5223071      h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=
+			//  dep     golang.org/x/term       v0.0.0-20210927222741-03fcf44c2211
+			//  =>      golang.org/x/term       v0.0.0-20210916214954-140adaaadfaf      h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=`,
 			expected: []pkg.Package{
 				{
 					Name:     "golang.org/x/net",
@@ -197,30 +198,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					FileSystemID: "layer-id",
 				},
 			}
-			pkgs := buildGoPkgInfo(location, test.mod, goCompiledVersion, archDetails)
+			pkgs := buildGoPkgInfo(location, test.mod)
 			assert.Equal(t, test.expected, pkgs)
-		})
-	}
-}
-
-func Test_parseGoBin_recoversFromPanic(t *testing.T) {
-	freakOut := func(file io.ReadCloser) ([]exe, error) {
-		panic("baaahhh!")
-	}
-	tests := []struct {
-		name     string
-		wantPkgs []pkg.Package
-		wantErr  assert.ErrorAssertionFunc
-	}{
-		{
-			name: "recovers from panic",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			pkgs, err := parseGoBin(source.NewLocation("some/path"), nil, freakOut)
-			assert.Error(t, err)
-			assert.Nil(t, pkgs)
 		})
 	}
 }

@@ -38,25 +38,14 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	}
 
 	for _, location := range fileMatches {
-		// r, err := resolver.FileContentsByLocation(location)
-		// if err != nil {
-		// 	return pkgs, nil, fmt.Errorf("failed to resolve file contents by location=%q: %w", location.RealPath, err)
-		// }
-
-		// goPkgs, err := parseGoBin(location, r, openExe)
-		// if err != nil {
-		// 	log.Warnf("could not parse possible go binary at %q: %+v", location.RealPath, err)
-		// }
-
-		// internal.CloseAndLogError(r, location.RealPath)
 		info, err := os.Stat(location.RealPath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			continue
 		}
-		mod, goVersion := scanFile(location.RealPath, info, true)
+		mod := scanFile(location.RealPath, info)
 
-		pkgs = append(pkgs, buildGoPkgInfo(location, mod, goVersion, "architecture")...)
+		pkgs = append(pkgs, buildGoPkgInfo(location, mod)...)
 	}
 
 	return pkgs, nil, nil
