@@ -213,42 +213,44 @@ func Test_decode(t *testing.T) {
 				}
 				if e.pkg != "" {
 					for p := range sbom.Artifacts.PackageCatalog.Enumerate() {
-						if e.pkg == p.Name {
-							assert.Equal(t, e.ver, p.Version)
-
-							if e.cpe != "" {
-								foundCPE := false
-								for _, c := range p.CPEs {
-									cstr := c.BindToFmtString()
-									if e.cpe == cstr {
-										foundCPE = true
-										break
-									}
-								}
-								if !foundCPE {
-									assert.Fail(t, fmt.Sprintf("CPE not found in package: %s", e.cpe))
-								}
-							}
-
-							if e.purl != "" {
-								assert.Equal(t, e.purl, p.PURL)
-							}
-
-							if e.relation != "" {
-								foundRelation := false
-								for _, r := range sbom.Relationships {
-									p := sbom.Artifacts.PackageCatalog.Package(r.To.ID())
-									if e.relation == p.Name {
-										foundRelation = true
-										break
-									}
-								}
-								if !foundRelation {
-									assert.Fail(t, fmt.Sprintf("relation not found: %s", e.relation))
-								}
-							}
-							continue test
+						if e.pkg != p.Name {
+							continue
 						}
+
+						assert.Equal(t, e.ver, p.Version)
+
+						if e.cpe != "" {
+							foundCPE := false
+							for _, c := range p.CPEs {
+								cstr := c.BindToFmtString()
+								if e.cpe == cstr {
+									foundCPE = true
+									break
+								}
+							}
+							if !foundCPE {
+								assert.Fail(t, fmt.Sprintf("CPE not found in package: %s", e.cpe))
+							}
+						}
+
+						if e.purl != "" {
+							assert.Equal(t, e.purl, p.PURL)
+						}
+
+						if e.relation != "" {
+							foundRelation := false
+							for _, r := range sbom.Relationships {
+								p := sbom.Artifacts.PackageCatalog.Package(r.To.ID())
+								if e.relation == p.Name {
+									foundRelation = true
+									break
+								}
+							}
+							if !foundRelation {
+								assert.Fail(t, fmt.Sprintf("relation not found: %s", e.relation))
+							}
+						}
+						continue test
 					}
 					assert.Fail(t, fmt.Sprintf("package should be present: %s", e.pkg))
 				}
