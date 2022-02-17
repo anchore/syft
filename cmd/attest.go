@@ -98,8 +98,8 @@ func passFunc(isPass bool) (b []byte, err error) {
 	}
 }
 
-func hasPassword(keypath string) (cosign.PassFunc, error) {
-	keyContents, err := os.ReadFile(keyPath)
+func hasPassword(kp string) (cosign.PassFunc, error) {
+	keyContents, err := os.ReadFile(kp)
 	if err != nil {
 		return nil, err
 	}
