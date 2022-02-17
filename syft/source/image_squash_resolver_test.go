@@ -241,7 +241,7 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 		{
 			fixtureName:   "image-simple",
 			mimeType:      "text/plain",
-			expectedPaths: strset.New("/somefile-1.txt", "/somefile-2.txt", "/really/nested/file-3.txt", "/really/nested", "/really"),
+			expectedPaths: strset.New("/somefile-1.txt", "/somefile-2.txt", "/really/nested/file-3.txt"),
 		},
 	}
 

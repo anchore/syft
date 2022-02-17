@@ -13,7 +13,7 @@ require (
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.0.0-20210922164639-b3fa992ebd29
-	github.com/anchore/stereoscope v0.0.0-20220214165125-25ebd49a842b
+	github.com/anchore/stereoscope v0.0.0-20220217141419-c6f02aed9ed2
 	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar/v4 v4.0.2
 	github.com/docker/docker v20.10.12+incompatible
