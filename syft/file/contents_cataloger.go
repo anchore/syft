@@ -64,9 +64,11 @@ func (i *ContentsCataloger) catalogLocation(resolver source.FileResolver, locati
 	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
 
 	buf := &bytes.Buffer{}
-	if _, err = io.Copy(base64.NewEncoder(base64.StdEncoding, buf), contentReader); err != nil {
+	encoder := base64.NewEncoder(base64.StdEncoding, buf)
+	if _, err = io.Copy(encoder, contentReader); err != nil {
 		return "", internal.ErrPath{Path: location.RealPath, Err: err}
 	}
+	encoder.Close()
 
 	return buf.String(), nil
 }
