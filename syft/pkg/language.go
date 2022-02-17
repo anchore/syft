@@ -1,6 +1,10 @@
 package pkg
 
-import "github.com/anchore/packageurl-go"
+import (
+	"strings"
+
+	"github.com/anchore/packageurl-go"
+)
 
 // Language represents a single programming language.
 type Language string
@@ -43,16 +47,16 @@ func LanguageFromPURL(p string) Language {
 }
 
 func LanguageByName(name string) Language {
-	switch name {
-	case packageurl.TypeMaven, purlGradlePkgType:
+	switch strings.ToLower(name) {
+	case packageurl.TypeMaven, string(purlGradlePkgType), string(JavaPkg), string(Java):
 		return Java
-	case packageurl.TypeComposer:
+	case packageurl.TypeComposer, string(PhpComposerPkg), string(PHP):
 		return PHP
-	case packageurl.TypeGolang:
+	case packageurl.TypeGolang, string(GoModulePkg), string(Go):
 		return Go
-	case packageurl.TypeNPM:
+	case packageurl.TypeNPM, string(JavaScript):
 		return JavaScript
-	case packageurl.TypePyPi:
+	case packageurl.TypePyPi, string(Python):
 		return Python
 	case packageurl.TypeGem:
 		return Ruby

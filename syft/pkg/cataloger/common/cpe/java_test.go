@@ -333,7 +333,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.ElementsMatch(t, test.expects, groupIDsFromJavaPackage(test.pkg))
+			assert.ElementsMatch(t, test.expects, GroupIDsFromJavaPackage(test.pkg))
 		})
 	}
 }
