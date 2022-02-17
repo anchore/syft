@@ -19,7 +19,7 @@ func setupPKI(t *testing.T) func() {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("cosign", "generate-key-pair")
+	cmd := exec.Command("./.tmp/cosign", "generate-key-pair")
 	stdout, stderr := runCommand(cmd, nil)
 	if cmd.ProcessState.ExitCode() != 0 {
 		t.Log("STDOUT", stdout)
