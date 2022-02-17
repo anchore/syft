@@ -24,34 +24,32 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifac
 		line := scanner.Text()
 		line = trimRequirementsTxtLine(line)
 
-		switch {
-		case len(line) == 0:
+		if line == "" {
 			// nothing to parse on this line
 			continue
-		case strings.HasPrefix(line, "-e"):
+		}
+
+		if strings.HasPrefix(line, "-e") {
 			// editable packages aren't parsed (yet)
 			continue
-		case len(strings.Split(line, "==")) < 2:
-			// a package without a version, or a range (unpinned) which
-			// does not tell us exactly what will be installed
-			// XXX only needed if we want to log this, otherwise the next case catches it
-			continue
-		case len(strings.Split(line, "==")) == 2:
-			// remove comments if present
-			uncommented := removeTrailingComment(line)
-			// parse a new requirement
-			parts := strings.Split(uncommented, "==")
-			name := strings.TrimSpace(parts[0])
-			version := strings.TrimSpace(parts[1])
-			packages = append(packages, &pkg.Package{
-				Name:     name,
-				Version:  version,
-				Language: pkg.Python,
-				Type:     pkg.PythonPkg,
-			})
-		default:
+		}
+
+		if !strings.Contains(line, "==") {
+			// a package without a version, or a range (unpinned) which does not tell us
+			// exactly what will be installed.
 			continue
 		}
+
+		// parse a new requirement
+		parts := strings.Split(line, "==")
+		name := strings.TrimSpace(parts[0])
+		version := strings.TrimSpace(parts[1])
+		packages = append(packages, &pkg.Package{
+			Name:     name,
+			Version:  version,
+			Language: pkg.Python,
+			Type:     pkg.PythonPkg,
+		})
 	}
 
 	if err := scanner.Err(); err != nil {
