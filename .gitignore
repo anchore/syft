@@ -37,3 +37,7 @@ bin/
 .DS_STORE
 
 *.profile
+
+# attestation
+cosign.key
+cosign.pub
