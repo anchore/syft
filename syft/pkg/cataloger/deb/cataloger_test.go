@@ -12,7 +12,6 @@ import (
 )
 
 func TestDpkgCataloger(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		sources  map[string][]string
