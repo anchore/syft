@@ -22,37 +22,34 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifac
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
+		line = trimRequirementsTxtLine(line)
 
-		line = strings.TrimRight(line, "\n")
-
-		switch {
-		case strings.HasPrefix(line, "#"):
-			// commented out line, skip
-			continue
-		case strings.HasPrefix(line, "-e"):
-			// editable packages aren't parsed (yet)
-			continue
-		case len(strings.Split(line, "==")) < 2:
-			// a package without a version, or a range (unpinned) which
-			// does not tell us exactly what will be installed
-			// XXX only needed if we want to log this, otherwise the next case catches it
-			continue
-		case len(strings.Split(line, "==")) == 2:
-			// remove comments if present
-			uncommented := removeTrailingComment(line)
-			// parse a new requirement
-			parts := strings.Split(uncommented, "==")
-			name := strings.TrimSpace(parts[0])
-			version := strings.TrimSpace(parts[1])
-			packages = append(packages, &pkg.Package{
-				Name:     name,
-				Version:  version,
-				Language: pkg.Python,
-				Type:     pkg.PythonPkg,
-			})
-		default:
+		if line == "" {
+			// nothing to parse on this line
 			continue
 		}
+
+		if strings.HasPrefix(line, "-e") {
+			// editable packages aren't parsed (yet)
+			continue
+		}
+
+		if !strings.Contains(line, "==") {
+			// a package without a version, or a range (unpinned) which does not tell us
+			// exactly what will be installed.
+			continue
+		}
+
+		// parse a new requirement
+		parts := strings.Split(line, "==")
+		name := strings.TrimSpace(parts[0])
+		version := strings.TrimSpace(parts[1])
+		packages = append(packages, &pkg.Package{
+			Name:     name,
+			Version:  version,
+			Language: pkg.Python,
+			Type:     pkg.PythonPkg,
+		})
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -62,16 +59,37 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifac
 	return packages, nil, nil
 }
 
+// trimRequirementsTxtLine removes content from the given requirements.txt line
+// that should not be considered for parsing.
+func trimRequirementsTxtLine(line string) string {
+	line = strings.TrimSpace(line)
+	line = removeTrailingComment(line)
+	line = removeEnvironmentMarkers(line)
+
+	return line
+}
+
 // removeTrailingComment takes a requirements.txt line and strips off comment strings.
 func removeTrailingComment(line string) string {
-	parts := strings.Split(line, "#")
-	switch len(parts) {
-	case 1:
+	parts := strings.SplitN(line, "#", 2)
+	if len(parts) < 2 {
 		// there aren't any comments
+
 		return line
-	default:
-		// any number of "#" means we only want the first part, assuming this
-		// isn't prefixed with "#" (up to the caller)
-		return parts[0]
 	}
+
+	return parts[0]
+}
+
+// removeEnvironmentMarkers removes any instances of environment markers (delimited by ';') from the line.
+// For more information, see https://www.python.org/dev/peps/pep-0508/#environment-markers.
+func removeEnvironmentMarkers(line string) string {
+	parts := strings.SplitN(line, ";", 2)
+	if len(parts) < 2 {
+		// there aren't any environment markers
+
+		return line
+	}
+
+	return parts[0]
 }
