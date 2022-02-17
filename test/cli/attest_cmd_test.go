@@ -1,12 +1,11 @@
 package cli
 
 import (
-	"os"
 	"strings"
 	"testing"
 )
 
-func TestAttestCmdFlags(t *testing.T) {
+func TestAttestCmd(t *testing.T) {
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
 	tests := []struct {
 		name       string
@@ -26,7 +25,7 @@ func TestAttestCmdFlags(t *testing.T) {
 			pw: "",
 		},
 		{
-			name: "can encode syft.json as the predicate",
+			name: "can encode syft.json as the predicate given a password",
 			args: []string{"attest", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
@@ -35,7 +34,7 @@ func TestAttestCmdFlags(t *testing.T) {
 			pw: "test",
 		},
 		{
-			name: "does not prompt for a password when pw is empty",
+			name: "can encode syft.json as the predicate given a blank password",
 			args: []string{"attest", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
@@ -49,13 +48,6 @@ func TestAttestCmdFlags(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cleanup := setupPKI(t, test.pw)
 			defer cleanup()
-
-			if test.pw == "" {
-				// we want to make sure the command succeeds
-				// when the password is blank and the env is unset
-				os.Unsetenv("COSIGN_PASSWORD")
-			}
-
 			cmd, stdout, stderr := runSyft(t, test.env, test.args...)
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
