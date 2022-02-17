@@ -2,10 +2,15 @@ package deb
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
@@ -20,11 +25,13 @@ func compareEntries(t *testing.T, left, right pkg.DpkgMetadata) {
 
 func TestSinglePackage(t *testing.T) {
 	tests := []struct {
-		name     string
-		expected pkg.DpkgMetadata
+		name        string
+		expected    pkg.DpkgMetadata
+		fixturePath string
 	}{
 		{
-			name: "Test Single Package",
+			name:        "Test Single Package",
+			fixturePath: filepath.Join("test-fixtures", "status", "single"),
 			expected: pkg.DpkgMetadata{
 				Package:       "apt",
 				Source:        "apt-dev",
@@ -68,11 +75,22 @@ func TestSinglePackage(t *testing.T) {
 				},
 			},
 		},
-	}
+		{
+			name:        "parse storage notation",
+			fixturePath: filepath.Join("test-fixtures", "status", "installed-size-4KB"),
+			expected: pkg.DpkgMetadata{
+				Package:       "apt",
+				Source:        "apt-dev",
+				Version:       "1.8.2",
+				Architecture:  "amd64",
+				InstalledSize: 4000,
+				Maintainer:    "APT Development Team <deity@lists.debian.org>",
+			},
+		}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/status/single")
+			file, err := os.Open(test.fixturePath)
 			if err != nil {
 				t.Fatal("Unable to read test_fixtures/single: ", err)
 			}
@@ -204,7 +222,6 @@ func TestMultiplePackages(t *testing.T) {
 }
 
 func TestSourceVersionExtract(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		input    string
@@ -239,6 +256,138 @@ func TestSourceVersionExtract(t *testing.T) {
 				t.Errorf("mismatch version for %q : %q!=%q", test.input, version, test.expected[1])
 			}
 
+		})
+	}
+}
+
+func assertAs(expected error) assert.ErrorAssertionFunc {
+	return func(t assert.TestingT, err error, i ...interface{}) bool {
+		return assert.ErrorAs(t, err, &expected)
+	}
+}
+
+func Test_parseDpkgStatus(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    []pkg.Package
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "no more packages",
+			input:   `Package: apt`,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "duplicated key",
+			input: `Package: apt
+Package: apt-get
+
+`,
+			wantErr: assertAs(errors.New("duplicate key discovered: Package")),
+		},
+		{
+			name: "no match for continuation",
+			input: `  Package: apt
+
+`,
+			wantErr: assertAs(errors.New("no match for continuation: line: '  Package: apt'")),
+		},
+		{
+			name: "find keys",
+			input: `Package: apt
+Status: install ok installed
+Installed-Size: 10kib
+
+`,
+			want: []pkg.Package{
+				{
+					Name:         "apt",
+					Type:         "deb",
+					MetadataType: "DpkgMetadata",
+					Metadata: pkg.DpkgMetadata{
+						Package:       "apt",
+						InstalledSize: 10240,
+						Files:         []pkg.DpkgFileRecord{},
+					},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := bufio.NewReader(strings.NewReader(tt.input))
+			got, err := parseDpkgStatus(r)
+			tt.wantErr(t, err, fmt.Sprintf("parseDpkgStatus"))
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_handleNewKeyValue(t *testing.T) {
+	tests := []struct {
+		name    string
+		line    string
+		wantKey string
+		wantVal interface{}
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "cannot parse field",
+			line:    "blabla",
+			wantErr: assertAs(errors.New("cannot parse field from line: 'blabla'")),
+		},
+		{
+			name:    "parse field",
+			line:    "key: val",
+			wantKey: "key",
+			wantVal: "val",
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "parse installed size",
+			line:    "InstalledSize: 128",
+			wantKey: "InstalledSize",
+			wantVal: 128,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "parse installed kib size",
+			line:    "InstalledSize: 1kib",
+			wantKey: "InstalledSize",
+			wantVal: 1024,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "parse installed kb size",
+			line:    "InstalledSize: 1kb",
+			wantKey: "InstalledSize",
+			wantVal: 1000,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "parse installed-size mb",
+			line:    "Installed-Size: 1 mb",
+			wantKey: "InstalledSize",
+			wantVal: 1000000,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "fail parsing installed-size",
+			line:    "Installed-Size: 1bla",
+			wantKey: "",
+			wantErr: assertAs(fmt.Errorf("unhandled size name: %s", "bla")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotKey, gotVal, err := handleNewKeyValue(tt.line)
+			tt.wantErr(t, err, fmt.Sprintf("handleNewKeyValue(%v)", tt.line))
+
+			assert.Equalf(t, tt.wantKey, gotKey, "handleNewKeyValue(%v)", tt.line)
+			assert.Equalf(t, tt.wantVal, gotVal, "handleNewKeyValue(%v)", tt.line)
 		})
 	}
 }
