@@ -4,9 +4,9 @@ package github
 
 type DependencySnapshot struct {
 	Version   int              `json:"version"`
-	Job       Job              `json:"job"`
-	Sha       string           `json:"sha"` // sha of the Git commit
-	Ref       string           `json:"ref"` // ref of the Git commit example "refs/heads/main"
+	Job       Job              `json:"job,omitempty"` // !omitempty
+	Sha       string           `json:"sha,omitempty"` // !omitempty sha of the Git commit
+	Ref       string           `json:"ref,omitempty"` // !omitempty ref of the Git commit example "refs/heads/main"
 	Detector  DetectorMetadata `json:"detector,omitempty"`
 	Metadata  Metadata         `json:"metadata,omitempty"`
 	Manifests Manifests        `json:"manifests,omitempty"`
@@ -14,8 +14,8 @@ type DependencySnapshot struct {
 }
 
 type Job struct {
-	Name    string `json:"name"`
-	ID      string `json:"id"`
+	Name    string `json:"name,omitempty"` // !omitempty
+	ID      string `json:"id,omitempty"`   // !omitempty
 	HTMLURL string `json:"html_url,omitempty"`
 }
 
