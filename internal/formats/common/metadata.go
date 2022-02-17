@@ -9,12 +9,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-// NameValue simple name/value string pair
-type NameValue struct {
-	Name  string
-	Value string
-}
-
 // FieldName return a field name or "" to ignore the field
 type FieldName func(field reflect.StructField) string
 
@@ -56,14 +50,16 @@ func lowerFirst(s string) string {
 }
 
 // Encode recursively encodes the object's properties as NameValue pairs
-func Encode(obj interface{}, prefix string, fn FieldName) []NameValue {
+func Encode(obj interface{}, prefix string, fn FieldName) map[string]string {
 	if obj == nil {
 		return nil
 	}
-	return encode(reflect.ValueOf(obj), prefix, fn)
+	props := map[string]string{}
+	encode(props, reflect.ValueOf(obj), prefix, fn)
+	return props
 }
 
-func encode(value reflect.Value, prefix string, fn FieldName) (out []NameValue) {
+func encode(out map[string]string, value reflect.Value, prefix string, fn FieldName) {
 	if !value.IsValid() || value.Type() == nil {
 		return
 	}
@@ -79,27 +75,27 @@ func encode(value reflect.Value, prefix string, fn FieldName) (out []NameValue) 
 			return
 		}
 		value = value.Elem()
-		out = append(out, encode(value, prefix, fn)...)
+		encode(out, value, prefix, fn)
 	case reflect.String:
 		v := value.String()
 		if v != "" {
-			return []NameValue{{prefix, v}}
+			out[prefix] = v
 		}
 	case reflect.Bool:
 		v := value.Bool()
-		return []NameValue{{prefix, strconv.FormatBool(v)}}
+		out[prefix] = strconv.FormatBool(v)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		v := value.Int()
-		return []NameValue{{prefix, strconv.FormatInt(v, 10)}}
+		out[prefix] = strconv.FormatInt(v, 10)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		v := value.Uint()
-		return []NameValue{{prefix, strconv.FormatUint(v, 10)}}
+		out[prefix] = strconv.FormatUint(v, 10)
 	case reflect.Float32, reflect.Float64:
 		v := value.Float()
-		return []NameValue{{prefix, fmt.Sprintf("%f", v)}}
+		out[prefix] = fmt.Sprintf("%f", v)
 	case reflect.Array, reflect.Slice:
 		for idx := 0; idx < value.Len(); idx++ {
-			out = append(out, encode(value.Index(idx), fmt.Sprintf("%s:%d", prefix, idx), fn)...)
+			encode(out, value.Index(idx), fmt.Sprintf("%s:%d", prefix, idx), fn)
 		}
 	case reflect.Struct:
 		for i := 0; i < typ.NumField(); i++ {
@@ -109,12 +105,11 @@ func encode(value reflect.Value, prefix string, fn FieldName) (out []NameValue) 
 			if name == "" {
 				continue
 			}
-			out = append(out, encode(pv, name, fn)...)
+			encode(out, pv, name, fn)
 		}
 	default:
 		log.Warnf("skipping encoding of unsupported property: %s", prefix)
 	}
-	return out
 }
 
 // fieldName gets the name of the field using the provided FieldName function
@@ -129,33 +124,24 @@ func fieldName(f reflect.StructField, prefix string, fn FieldName) string {
 	return name
 }
 
-// ToMap converts the NameValue pairs to a map structure
-func ToMap(vals []NameValue) map[string]string {
-	out := map[string]string{}
-	for _, nv := range vals {
-		out[nv.Name] = nv.Value
-	}
-	return out
-}
-
 // Decode based on the given type, applies all NameValue pairs to hydrate a new instance
-func Decode(typ reflect.Type, vals []NameValue, prefix string, fn FieldName) interface{} {
+func Decode(typ reflect.Type, vals map[string]string, prefix string, fn FieldName) interface{} {
 	v := reflect.New(typ)
 
-	decode(ToMap(vals), v, prefix, fn)
+	decode(vals, v, prefix, fn)
 
 	return v.Elem().Interface()
 }
 
 // DecodeInto decodes all NameValue pairs to hydrate the given object instance
-func DecodeInto(obj interface{}, vals []NameValue, prefix string, fn FieldName) {
+func DecodeInto(obj interface{}, vals map[string]string, prefix string, fn FieldName) {
 	value := reflect.ValueOf(obj)
 
 	for value.Type().Kind() == reflect.Ptr {
 		value = value.Elem()
 	}
 
-	decode(ToMap(vals), value, prefix, fn)
+	decode(vals, value, prefix, fn)
 }
 
 // nolint: funlen, gocognit, gocyclo

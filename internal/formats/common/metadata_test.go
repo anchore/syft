@@ -110,9 +110,7 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			vals := Encode(test.t1, "props", OptionalJSONTag)
 
-			mapped := ToMap(vals)
-
-			assert.NotEmpty(t, mapped["props:bool_flag"])
+			assert.NotEmpty(t, vals["props:bool_flag"])
 
 			t2 := T1{}
 			DecodeInto(&t2, vals, "props", OptionalJSONTag)

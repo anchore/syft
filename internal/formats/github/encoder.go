@@ -43,12 +43,12 @@ var TagFilter = common.RequiredTag("cyclonedx")
 func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 	out := Metadata{}
 
-	for _, nv := range common.Encode(s.Source, "syft:source", TagFilter) {
-		out[nv.Name] = nv.Value
+	for k, v := range common.Encode(s.Source, "syft:source", TagFilter) {
+		out[k] = v
 	}
 
-	for _, nv := range common.Encode(s.Descriptor, "syft:descriptor", TagFilter) {
-		out[nv.Name] = nv.Value
+	for k, v := range common.Encode(s.Descriptor, "syft:descriptor", TagFilter) {
+		out[k] = v
 	}
 
 	return out
@@ -105,19 +105,16 @@ func getDependencyRelationshipType(p pkg.Package) DependencyRelationship {
 
 func toDependencyMetadata(p pkg.Package) Metadata {
 	out := Metadata{}
-	var props []common.NameValue
 	if len(p.Locations) > 0 {
-		props = common.Encode(p.Locations, "syft:location", TagFilter)
+		for k, v := range common.Encode(p.Locations, "syft:location", TagFilter) {
+			out[k] = v
+		}
 	}
 	if p.Metadata != nil {
-		props = append(props, common.Encode(p.Metadata, "syft:metadata", TagFilter)...)
-		props = append(props, common.NameValue{
-			Name:  "syft:metadata:=",
-			Value: string(p.MetadataType),
-		})
-	}
-	for _, v := range props {
-		out[v.Name] = v.Value
+		out["syft:metadata:="] = string(p.MetadataType)
+		for k, v := range common.Encode(p.Metadata, "syft:metadata", TagFilter) {
+			out[k] = v
+		}
 	}
 	return out
 }
