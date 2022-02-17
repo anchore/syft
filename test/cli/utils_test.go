@@ -14,8 +14,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
-func setupPKI(t *testing.T) func() {
-	err := os.Setenv("COSIGN_PASSWORD", "test")
+func setupPKI(t *testing.T, pw string) func() {
+	err := os.Setenv("COSIGN_PASSWORD", pw)
 	if err != nil {
 		t.Fatal(err)
 	}
