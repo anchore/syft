@@ -112,10 +112,31 @@ func validateScheme(userInput string) error {
 	}
 }
 
+func hasPassword(keypath string) (cosign.PassFunc, error) {
+	keyContents, err := os.ReadFile(keyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var fn cosign.PassFunc = func(bool) (b []byte, err error) { return nil, nil }
+
+	_, err = cosign.LoadPrivateKey(keyContents, nil)
+	if err != nil {
+		fn = passFunc
+	}
+
+	return fn, nil
+}
+
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
 	userInput := args[0]
 	err := validateScheme(userInput)
+	if err != nil {
+		return err
+	}
+
+	passFunc, err := hasPassword(keyPath)
 	if err != nil {
 		return err
 	}
@@ -175,17 +196,6 @@ func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan err
 	}()
 	return errs
 }
-
-/*
-	JSONOption,
-	TextOption,
-	TableOption,
-	CycloneDxXMLOption,
-	CycloneDxJSONOption,
-	SPDXTagValueOption,
-	SPDXJSONOption,
-
-*/
 
 func assertPredicateType(output format.Option) string {
 	switch output {
