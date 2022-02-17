@@ -6,7 +6,7 @@ import (
 )
 
 func TestAttestCmdFlags(t *testing.T) {
-	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+	coverageImage := "anchore/syft:latest"
 	cleanup := setupPKI(t)
 	defer cleanup()
 
@@ -30,6 +30,7 @@ func TestAttestCmdFlags(t *testing.T) {
 			args: []string{"attest", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
+				assertVerifyAttestation(coverageImage),
 			},
 		},
 	}
