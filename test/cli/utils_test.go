@@ -19,6 +19,7 @@ func setupPKI(t *testing.T, pw string) func() {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	cosignPath := filepath.Join(repoRoot(t), ".tmp/cosign")
 	cmd := exec.Command(cosignPath, "generate-key-pair")
 	stdout, stderr := runCommand(cmd, nil)
