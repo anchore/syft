@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/anchore/syft/internal"
-
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/dustin/go-humanize"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -133,7 +133,8 @@ func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
 			var val interface{}
 			key, val, err = handleNewKeyValue(line)
 			if err != nil {
-				return nil, err
+				log.Warnf("parsing dpkg status: extracting key-value from line: %s err: %v", line, err)
+				continue
 			}
 
 			if _, ok := dpkgFields[key]; ok {
@@ -154,9 +155,9 @@ func extractSourceVersion(source string) (string, string) {
 }
 
 // handleNewKeyValue parse a new key-value pair from the given unprocessed line
-func handleNewKeyValue(line string) (string, interface{}, error) {
+func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 	if i := strings.Index(line, ":"); i > 0 {
-		var key = strings.TrimSpace(line[0:i])
+		key = strings.TrimSpace(line[0:i])
 		// mapstruct cant handle "-"
 		key = strings.ReplaceAll(key, "-", "")
 		val := strings.TrimSpace(line[i+1:])
@@ -164,11 +165,11 @@ func handleNewKeyValue(line string) (string, interface{}, error) {
 		// further processing of values based on the key that was discovered
 		switch key {
 		case "InstalledSize":
-			numVal, err := strconv.Atoi(val)
+			s, err := humanize.ParseBytes(val)
 			if err != nil {
 				return "", nil, fmt.Errorf("bad installed-size value=%q: %w", val, err)
 			}
-			return key, numVal, nil
+			return key, int(s), nil
 		default:
 			return key, val, nil
 		}
