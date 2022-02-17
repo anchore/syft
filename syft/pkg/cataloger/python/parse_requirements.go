@@ -74,6 +74,8 @@ func removeTrailingComment(line string) string {
 	parts := strings.SplitN(line, "#", 2)
 	if len(parts) < 2 {
 		// there aren't any comments
+
+		return line
 	}
 
 	return parts[0]
@@ -85,6 +87,8 @@ func removeEnvironmentMarkers(line string) string {
 	parts := strings.SplitN(line, ";", 2)
 	if len(parts) < 2 {
 		// there aren't any comments
+
+		return line
 	}
 
 	return parts[0]
