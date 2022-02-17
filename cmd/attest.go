@@ -22,12 +22,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pkg/profile"
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
+	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/wagoodman/go-partybus"
-	"golang.org/x/term"
 
 	signatureoptions "github.com/sigstore/sigstore/pkg/signature/options"
 )
@@ -90,36 +90,13 @@ func isTerminal() bool {
 	return (stat.Mode() & os.ModeCharDevice) != 0
 }
 
-func getPassFromTerm(confirm bool) ([]byte, error) {
-	fmt.Fprint(os.Stderr, "Enter password for private key: ")
-	pw1, err := term.ReadPassword(0)
-	if err != nil {
-		return nil, err
-	}
-	if !confirm {
-		return pw1, nil
-	}
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprint(os.Stderr, "Enter password for private key again: ")
-	confirmpw, err := term.ReadPassword(0)
-	fmt.Fprintln(os.Stderr)
-	if err != nil {
-		return nil, err
-	}
-
-	if string(pw1) != string(confirmpw) {
-		return nil, errors.New("passwords do not match")
-	}
-	return pw1, nil
-}
-
 func passFunc(isPass bool) (b []byte, err error) {
 	pw, ok := os.LookupEnv("COSIGN_PASSWORD")
 	switch {
 	case ok:
 		return []byte(pw), nil
 	case isTerminal():
-		return getPassFromTerm(false)
+		return cosign.GetPassFromTerm(false)
 	// Handle piped in passwords.
 	default:
 		return io.ReadAll(os.Stdin)
@@ -230,7 +207,10 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 		return fmt.Errorf("could not produce attestation predicate for format: %v", output)
 	}
 
-	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
+	h, err := v1.NewHash(src.Image.Metadata.ManifestDigest)
+	if err != nil {
+		return errors.Wrap(err, "could not hash manifest digest for image")
+	}
 
 	wrapped := dsse.WrapSigner(sv, "application/vnd.in-toto+json")
 
