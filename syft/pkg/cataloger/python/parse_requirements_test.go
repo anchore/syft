@@ -23,6 +23,12 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Language: pkg.Python,
 			Type:     pkg.PythonPkg,
 		},
+		{
+			Name:     "SomeProject",
+			Version:  "5.4",
+			Language: pkg.Python,
+			Type:     pkg.PythonPkg,
+		},
 	}
 
 	fixture, err := os.Open("test-fixtures/requires/requirements.txt")
