@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -59,6 +60,11 @@ func parsePipfileLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 			})
 		}
 	}
+
+	// Without sorting the packages slice, the order of packages will be unstable, due to ranging over a map.
+	sort.Slice(packages, func(i, j int) bool {
+		return packages[i].String() < packages[j].String()
+	})
 
 	return packages, nil, nil
 }
