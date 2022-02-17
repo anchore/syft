@@ -349,7 +349,6 @@ jobs:
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: (cache-miss) Bootstrap go dependencies
-        if: steps.go-cache.outputs.cache-hit != 'true'
         run: make bootstrap-go
 
       - name: Build key for tar cache
