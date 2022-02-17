@@ -199,18 +199,36 @@ func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan err
 	return errs
 }
 
+/*
+	JSONOption,
+	TextOption,
+	TableOption,
+	CycloneDxXMLOption,
+	CycloneDxJSONOption,
+	SPDXTagValueOption,
+	SPDXJSONOption,
+
+*/
+
 func assertPredicateType(output format.Option) string {
 	switch output {
-	case format.SPDXTagValueOption, format.SPDXJSONOption:
+	case format.SPDXJSONOption:
 		return in_toto.PredicateSPDX
-	// TODO this is not default and we need our own predicate types here
+	// Tentative see https://github.com/in-toto/attestation/issues/82
+	case format.CycloneDxJSONOption:
+		return "https://cyclonedx.org/bom"
+	case format.JSONOption:
+		return "https://syft.dev/bom"
 	default:
-		return in_toto.StatementInTotoV01
+		return ""
 	}
 }
 
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, output format.Option) error {
 	predicateType := assertPredicateType(output)
+	if predicateType == "" {
+		return fmt.Errorf("could not produce attestation predicate for format: %v", output)
+	}
 
 	h, _ := v1.NewHash(src.Image.Metadata.ManifestDigest)
 
