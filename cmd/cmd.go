@@ -3,9 +3,10 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/pflag"
 	"os"
 	"sort"
+
+	"github.com/spf13/pflag"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
@@ -90,7 +91,6 @@ func initCmdAliasBindings() {
 }
 
 func bindSharedOutputConfigOption(flags *pflag.FlagSet) error {
-
 	if err := viper.BindPFlag("output", flags.Lookup("output")); err != nil {
 		return err
 	}

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/spf13/viper"
 	"os"
+
+	"github.com/spf13/viper"
 )
 
 type attest struct {
@@ -11,6 +12,7 @@ type attest struct {
 	Password string `yaml:"-" json:"-" mapstructure:"password"`
 }
 
+//nolint:unparam
 func (cfg *attest) parseConfigValues() error {
 	if cfg.Password == "" {
 		// we allow for configuration via syft config/env vars and additionally interop with known cosign config env vars

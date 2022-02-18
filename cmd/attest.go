@@ -270,7 +270,6 @@ func setAttestFlags(flags *pflag.FlagSet) {
 }
 
 func bindAttestConfigOptions(flags *pflag.FlagSet) error {
-
 	// note: output is not included since this configuration option is shared between multiple subcommands
 
 	if err := viper.BindPFlag("attest.key", flags.Lookup("key")); err != nil {
