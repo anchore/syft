@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -43,9 +42,11 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			continue
 		}
-		mod := scanFile(location.RealPath, info)
+		mods := scanFile(location.RealPath, info)
 
-		pkgs = append(pkgs, buildGoPkgInfo(location, mod)...)
+		for _, mod := range mods {
+			pkgs = append(pkgs, buildGoPkgInfo(location, mod)...)
+		}
 	}
 
 	return pkgs, nil, nil
