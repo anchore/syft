@@ -85,6 +85,16 @@ To include software from all image layers in the SBOM, regardless of its presenc
 syft packages <image> --scope all-layers
 ```
 
+To generate an attested SBOM for a Docker or OCI image as the predicate of an in-toto attestation
+```
+syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
+```
+
+The above output is in the form of the [DSSE envelope](https://github.com/secure-systems-lab/dsse/blob/master/envelope.md#dsse-envelope).
+The payload is a base64 encoded SBOM, the payload type is `application/vnd.in-toto+json`, and the signatures array is populated
+with the contents needed for public key verification. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
+
+
 ### Supported sources
 
 Syft can generate a SBOM from a variety of sources:
