@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/pflag"
 	"os"
 	"sort"
 
@@ -57,6 +58,7 @@ func initCmdAliasBindings() {
 		config.PowerUserCatalogerEnabledDefault()
 	}
 
+	// set bindings based on the packages alias
 	switch activeCmd {
 	case packagesCmd, rootCmd:
 		// note: we need to lazily bind config options since they are shared between both the root command
@@ -68,6 +70,16 @@ func initCmdAliasBindings() {
 		if err = bindPackagesConfigOptions(activeCmd.Flags()); err != nil {
 			panic(err)
 		}
+	case attestCmd:
+		// the --output option is an independently defined flag, but a shared config option
+		if err = bindSharedOutputConfigOption(attestCmd.Flags()); err != nil {
+			panic(err)
+		}
+		// even though the root command or packages command is NOT being run, we still need default bindings
+		// such that application config parsing passes.
+		if err = bindExclusivePackagesConfigOptions(packagesCmd.Flags()); err != nil {
+			panic(err)
+		}
 	default:
 		// even though the root command or packages command is NOT being run, we still need default bindings
 		// such that application config parsing passes.
@@ -75,6 +87,15 @@ func initCmdAliasBindings() {
 			panic(err)
 		}
 	}
+}
+
+func bindSharedOutputConfigOption(flags *pflag.FlagSet) error {
+
+	if err := viper.BindPFlag("output", flags.Lookup("output")); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func initAppConfig() {

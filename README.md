@@ -396,6 +396,16 @@ registry:
       token: ""
       # - ... # note, more credentials can be provided via config file only
 
+# generate an attested SBOM
+attest:
+  # path to the private key file to use for attestation
+  # SYFT_ATTEST_KEY env var
+  key: "cosign.key"
+
+  # password to decrypt to given private key
+  # SYFT_ATTEST_PASSWORD env var, additionally responds to COSIGN_PASSWORD
+  password: ""
+
 log:
   # use structured logging
   # same as SYFT_LOG_STRUCTURED env var

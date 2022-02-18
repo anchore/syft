@@ -45,6 +45,7 @@ type Application struct {
 	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
 	Registry           registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 }
 
 // PowerUserCatalogerEnabledDefault switches all catalogers to be enabled when running power-user command
