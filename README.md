@@ -21,6 +21,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 
 ## Features
 - Catalog container images and filesystems to discover packages and libraries.
+- Generate in-toto attestations where an SBOM is included as the payload.
 - Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR/PAR/SAR, Jenkins plugins JPI/HPI, Go modules, PHP Composer)
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
 - Supports Docker and OCI image formats
@@ -68,6 +69,7 @@ nix-shell -p syft
 
 ## Getting started
 
+#### SBOM
 To generate an SBOM for a Docker or OCI image:
 ```
 syft <image>
@@ -85,6 +87,7 @@ To include software from all image layers in the SBOM, regardless of its presenc
 syft packages <image> --scope all-layers
 ```
 
+#### Attestation
 To generate an attested SBOM for a Docker or OCI image as the predicate of an in-toto attestation
 ```
 syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
