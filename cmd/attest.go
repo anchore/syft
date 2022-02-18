@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
@@ -28,6 +30,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
 
 	signatureoptions "github.com/sigstore/sigstore/pkg/signature/options"
@@ -36,28 +39,28 @@ import (
 const (
 	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] --key [KEY] alpine:latest
 
-  A summary of discovered packages formatted as the predicate to an image attestation
-
   Supports the following image sources:
     {{.appName}} {{.command}} --key [KEY] yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
-    {{.appName}} {{.command}} --key [KEY] path/to/a/file/or/dir      OCI tar, OCI directory
+    {{.appName}} {{.command}} --key [KEY] path/to/a/file/or/dir      only for OCI tar or OCI directory
 
-  {{.schemeHelp}}
 `
+	attestSchemeHelp = "\n" + indent + schemeHelpHeader + "\n" + imageSchemeHelp
+
+	attestHelp = attestExample + attestSchemeHelp
+
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
+var attestFormats = []format.Option{format.SPDXJSONOption, format.CycloneDxJSONOption, format.JSONOption}
+
 var (
-	keyPath           string
-	attestationOutput []string
-	attestCmd         = &cobra.Command{
+	attestCmd = &cobra.Command{
 		Use:   "attest --output [FORMAT] --key [KEY] [SOURCE]",
-		Short: "Generate a package SBOM as an attestation to [SOURCE]",
-		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from a container image or OCI directory as the predicate of an attestation.",
-		Example: internal.Tprintf(attestExample, map[string]interface{}{
-			"appName":    internal.ApplicationName,
-			"command":    "attest",
-			"schemeHelp": schemeHelp,
+		Short: "Generate a package SBOM as an attestation for the given [SOURCE] container image",
+		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from a container image as the predicate of an in-toto attestation",
+		Example: internal.Tprintf(attestHelp, map[string]interface{}{
+			"appName": internal.ApplicationName,
+			"command": "attest",
 		}),
 		Args:          validateInputArgs,
 		SilenceUsage:  true,
@@ -80,26 +83,31 @@ var (
 	}
 )
 
-func isTerminal() bool {
-	stat, _ := os.Stdin.Stat()
-	return (stat.Mode() & os.ModeCharDevice) != 0
-}
-
-func passFunc(isPass bool) (b []byte, err error) {
-	pw, ok := os.LookupEnv("COSIGN_PASSWORD")
-	switch {
-	case ok:
-		return []byte(pw), nil
-	case isTerminal():
-		return cosign.GetPassFromTerm(false)
-	// Handle piped in passwords.
-	default:
-		return io.ReadAll(os.Stdin)
+func fetchPassword(_ bool) (b []byte, err error) {
+	potentiallyPipedInput, err := internal.IsPipedInput()
+	if err != nil {
+		log.Warnf("unable to determine if there is piped input: %+v", err)
 	}
+	switch {
+	case appConfig.Attest.Password != "":
+		return []byte(appConfig.Attest.Password), nil
+	case potentiallyPipedInput:
+		// handle piped in passwords
+		pwBytes, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get password from stdin: %w", err)
+		}
+		// be resilient to input that may have newline characters (in case someone is using echo without -n)
+		cleanPw := strings.TrimRight(string(pwBytes), "\n")
+		return []byte(cleanPw), nil
+	case internal.IsTerminal():
+		return cosign.GetPassFromTerm(false)
+	}
+	return nil, errors.New("no method available to fetch password")
 }
 
-func hasPassword(kp string) (cosign.PassFunc, error) {
-	keyContents, err := os.ReadFile(kp)
+func selectPassFunc(keypath string) (cosign.PassFunc, error) {
+	keyContents, err := os.ReadFile(keypath)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +116,7 @@ func hasPassword(kp string) (cosign.PassFunc, error) {
 
 	_, err = cosign.LoadPrivateKey(keyContents, nil)
 	if err != nil {
-		fn = passFunc
+		fn = fetchPassword
 	}
 
 	return fn, nil
@@ -124,16 +132,26 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	}
 
 	if parsedScheme != source.ImageScheme {
-		return fmt.Errorf("attestation can only be used with image sources; found %v", parsedScheme)
+		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", parsedScheme, userInput)
 	}
 
-	passFunc, err := hasPassword(keyPath)
+	if len(appConfig.Output) > 1 {
+		return fmt.Errorf("unable to generate attestation for more than one output")
+	}
+
+	output := format.ParseOption(appConfig.Output[0])
+	predicateType := assertPredicateType(output)
+	if predicateType == "" {
+		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", output, attestFormats)
+	}
+
+	passFunc, err := selectPassFunc(appConfig.Attest.Key)
 	if err != nil {
 		return err
 	}
 
 	ko := sign.KeyOpts{
-		KeyRef:   keyPath,
+		KeyRef:   appConfig.Attest.Key,
 		PassFunc: passFunc,
 	}
 
@@ -144,7 +162,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	defer sv.Close()
 
 	return eventLoop(
-		attestationExecWorker(userInput, sv),
+		attestationExecWorker(userInput, output, predicateType, sv),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -152,20 +170,10 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan error {
+func attestationExecWorker(userInput string, output format.Option, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		if len(attestationOutput) > 1 {
-			errs <- fmt.Errorf("can not generate attestation for more than one output")
-			return
-		}
-
-		output := format.ParseOption(attestationOutput[0])
-		if output == format.UnknownFormatOption {
-			errs <- fmt.Errorf("can not use %v as attestation format. Try: %v", output, format.AllOptions)
-			return
-		}
 
 		s, src, err := generateSBOM(userInput, errs)
 		if err != nil {
@@ -173,13 +181,13 @@ func attestationExecWorker(userInput string, sv *sign.SignerVerifier) <-chan err
 			return
 		}
 
-		bytes, err := syft.Encode(*s, output)
+		sbomBytes, err := syft.Encode(*s, output)
 		if err != nil {
 			errs <- err
 			return
 		}
 
-		err = generateAttestation(bytes, src, sv, output)
+		err = generateAttestation(sbomBytes, src, sv, predicateType)
 		if err != nil {
 			errs <- err
 			return
@@ -202,12 +210,7 @@ func assertPredicateType(output format.Option) string {
 	}
 }
 
-func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, output format.Option) error {
-	predicateType := assertPredicateType(output)
-	if predicateType == "" {
-		return fmt.Errorf("could not produce attestation predicate for format: %v", output)
-	}
-
+func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
 	h, err := v1.NewHash(src.Image.Metadata.ManifestDigest)
 	if err != nil {
 		return errors.Wrap(err, "could not hash manifest digest for image")
@@ -247,17 +250,32 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 
 func init() {
 	setAttestFlags(attestCmd.Flags())
+	if err := bindAttestConfigOptions(attestCmd.Flags()); err != nil {
+		panic(err)
+	}
 	rootCmd.AddCommand(attestCmd)
 }
 
 func setAttestFlags(flags *pflag.FlagSet) {
-	// Key options
-	flags.StringVarP(&keyPath, "key", "", "cosign.key",
+	// key options
+	flags.StringP("key", "", "cosign.key",
 		"path to the private key file to use for attestation",
 	)
 
-	flags.StringArrayVarP(&attestationOutput,
-		"output", "o", []string{string(format.JSONOption)},
-		fmt.Sprintf("SBOM output format, options=%v", format.AllOptions),
+	// in-toto attestations only support JSON predicates, so not all SBOM formats that syft can output are supported
+	flags.StringP(
+		"output", "o", string(format.JSONOption),
+		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", attestFormats),
 	)
+}
+
+func bindAttestConfigOptions(flags *pflag.FlagSet) error {
+
+	// note: output is not included since this configuration option is shared between multiple subcommands
+
+	if err := viper.BindPFlag("attest.key", flags.Lookup("key")); err != nil {
+		return err
+	}
+
+	return nil
 }

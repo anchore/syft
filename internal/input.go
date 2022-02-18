@@ -18,3 +18,9 @@ func IsPipedInput() (bool, error) {
 	// if there *may* be bytes that will show up on stdin that should be used for the analysis source.
 	return fi.Mode()&os.ModeNamedPipe != 0, nil
 }
+
+// IsTerminal returns true if there is a terminal present.
+func IsTerminal() bool {
+	stat, _ := os.Stdin.Stat()
+	return (stat.Mode() & os.ModeCharDevice) != 0
+}
