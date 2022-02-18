@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Licenses(p pkg.Package) *cyclonedx.Licenses {
+func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	lc := cyclonedx.Licenses{}
 	for _, licenseName := range p.Licenses {
 		if value, exists := spdxlicense.ID(licenseName); exists {
@@ -21,4 +21,13 @@ func Licenses(p pkg.Package) *cyclonedx.Licenses {
 		return &lc
 	}
 	return nil
+}
+
+func decodeLicenses(c *cyclonedx.Component) (out []string) {
+	if c.Licenses != nil {
+		for _, l := range *c.Licenses {
+			out = append(out, l.License.ID)
+		}
+	}
+	return
 }

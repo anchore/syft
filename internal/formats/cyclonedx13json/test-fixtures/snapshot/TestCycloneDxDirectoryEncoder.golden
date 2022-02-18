@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.3",
-  "serialNumber": "urn:uuid:258d2616-5b1f-48cd-82a3-d6c95e262950",
+  "serialNumber": "urn:uuid:326afa86-5620-4a80-8f2b-7f283b954b9b",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-01-14T22:47:00Z",
+    "timestamp": "2022-02-10T17:19:38-05:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -13,6 +13,7 @@
       }
     ],
     "component": {
+      "bom-ref": "163686ac6e30c752",
       "type": "file",
       "name": "/some/path",
       "version": ""
@@ -84,6 +85,12 @@
       "type": "operating-system",
       "name": "debian",
       "version": "1.2.3",
+      "description": "debian",
+      "swid": {
+        "tagId": "debian",
+        "name": "debian",
+        "version": "1.2.3"
+      },
       "properties": [
         {
           "name": "prettyName",

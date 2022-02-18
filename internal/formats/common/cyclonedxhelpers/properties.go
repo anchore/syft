@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Properties(p pkg.Package) *[]cyclonedx.Property {
+func encodeProperties(p pkg.Package) *[]cyclonedx.Property {
 	props := []cyclonedx.Property{}
 	props = append(props, *getCycloneDXProperties(p)...)
 	if len(p.Locations) > 0 {
@@ -73,6 +73,15 @@ func getCycloneDXPropertyValue(field reflect.Value) interface{} {
 		return ""
 	case reflect.Ptr:
 		return getCycloneDXPropertyValue(reflect.Indirect(field))
+	}
+	return ""
+}
+
+func findPropertyValue(c *cyclonedx.Component, name string) string {
+	for _, p := range *c.Properties {
+		if p.Name == name {
+			return p.Value
+		}
 	}
 	return ""
 }

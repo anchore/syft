@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Author(p pkg.Package) string {
+func encodeAuthor(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.NpmPackageJSONMetadata:
@@ -29,4 +29,19 @@ func Author(p pkg.Package) string {
 		}
 	}
 	return ""
+}
+
+func decodeAuthor(author string, metadata interface{}) {
+	switch meta := metadata.(type) {
+	case *pkg.NpmPackageJSONMetadata:
+		meta.Author = author
+	case *pkg.PythonPackageMetadata:
+		parts := strings.SplitN(author, " <", 2)
+		meta.Author = parts[0]
+		if len(parts) > 1 {
+			meta.AuthorEmail = strings.TrimSuffix(parts[1], ">")
+		}
+	case *pkg.GemMetadata:
+		meta.Authors = strings.Split(author, ",")
+	}
 }

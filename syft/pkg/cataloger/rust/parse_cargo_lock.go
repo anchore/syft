@@ -20,7 +20,7 @@ func parseCargoLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %v", err)
 	}
 
-	metadata := CargoMetadata{}
+	metadata := pkg.CargoMetadata{}
 	err = tree.Unmarshal(&metadata)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to parse Cargo.lock: %v", err)
