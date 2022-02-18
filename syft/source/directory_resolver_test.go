@@ -623,7 +623,7 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 
 func Test_IndexingNestedSymLinks(t *testing.T) {
 	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// check that we can get the real path
 	locations, err := resolver.FilesByPath("./readme")
@@ -676,7 +676,7 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 	}
 
 	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", filterFn)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// the path to the real file is PRUNED from the index, so we should NOT expect a location returned
 	locations, err := resolver.FilesByPath("./readme")
@@ -695,8 +695,8 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-roots/root")
-	assert.NoError(t, err)
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-multiple-roots/root")
+	require.NoError(t, err)
 
 	// check that we can get the real path
 	locations, err := resolver.FilesByPath("./readme")
@@ -705,6 +705,26 @@ func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
 
 	// check that we can access the same file via 2 symlinks (link_to_link_to_readme -> link_to_readme -> readme)
 	locations, err = resolver.FilesByPath("./link_to_link_to_readme")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+
+	// something looks wrong here
+	t.Failed()
+}
+
+func Test_RootViaSymlink(t *testing.T) {
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinked-root/nested/link-root")
+	require.NoError(t, err)
+
+	locations, err := resolver.FilesByPath("./file1.txt")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+
+	locations, err = resolver.FilesByPath("./nested/file2.txt")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1)
+
+	locations, err = resolver.FilesByPath("./nested/linked-file1.txt")
 	require.NoError(t, err)
 	assert.Len(t, locations, 1)
 }

@@ -48,24 +48,35 @@ type directoryResolver struct {
 }
 
 func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
-	currentWd, err := os.Getwd()
+	currentWD, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("could not create directory resolver: %w", err)
+		return nil, fmt.Errorf("could not gret CWD: %w", err)
+	}
+	// we have to account for the root being accessed through a symlink path and always resolve the real path. Otherwise
+	// we will not be able to normalize given paths that fall under the resolver
+	cleanCWD, err := filepath.EvalSymlinks(currentWD)
+	if err != nil {
+		return nil, fmt.Errorf("could not evaluate CWD symlinks: %w", err)
+	}
+
+	cleanRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return nil, fmt.Errorf("could not evaluate root=%q symlinks: %w", root, err)
 	}
 
 	var currentWdRelRoot string
-	if path.IsAbs(root) {
-		currentWdRelRoot, err = filepath.Rel(currentWd, root)
+	if path.IsAbs(cleanRoot) {
+		currentWdRelRoot, err = filepath.Rel(cleanCWD, cleanRoot)
 		if err != nil {
-			return nil, fmt.Errorf("could not create directory resolver: %w", err)
+			return nil, fmt.Errorf("could not determine given root path to CWD: %w", err)
 		}
 	} else {
-		currentWdRelRoot = filepath.Clean(root)
+		currentWdRelRoot = filepath.Clean(cleanRoot)
 	}
 
 	resolver := directoryResolver{
-		path:                    root,
-		currentWd:               currentWd,
+		path:                    cleanRoot,
+		currentWd:               cleanCWD,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
 		metadata:                make(map[file.ID]FileMetadata),
@@ -74,7 +85,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		errPaths:                make(map[string]error),
 	}
 
-	return &resolver, indexAllRoots(root, resolver.indexTree)
+	return &resolver, indexAllRoots(cleanRoot, resolver.indexTree)
 }
 
 func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {
@@ -310,7 +321,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
 		evaluatedPath, err := filepath.EvalSymlinks(userStrPath)
 		if err != nil {
-			log.Warnf("unable to evaluate symlink for path=%q : %+v", userPath, err)
+			log.Warnf("directory resolver unable to evaluate symlink for path=%q : %+v", userPath, err)
 			continue
 		}
 

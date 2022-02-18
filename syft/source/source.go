@@ -246,7 +246,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			}
 			resolver, err := newDirectoryResolver(s.path, exclusionFunctions...)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}
 			s.directoryResolver = resolver
 		}
