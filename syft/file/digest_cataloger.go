@@ -87,7 +87,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 
 	size, err := io.Copy(io.MultiWriter(writers...), contentReader)
 	if err != nil {
-		return nil, internal.ErrPath{Cataloger: "digests-cataloger", Path: location.RealPath, Err: err}
+		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}
 
 	if size == 0 {
