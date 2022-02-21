@@ -389,7 +389,6 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 					},
 					VirtualPath: "/file-3.txt",
 				},
-				// why 2 after 3? 2 is written to in a higher layer, and this list is in by layer order
 				{
 					Coordinates: Coordinates{
 						RealPath: "/file-2.txt",
