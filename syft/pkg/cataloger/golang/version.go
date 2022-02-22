@@ -67,7 +67,7 @@ func scanFile(file string, info fs.FileInfo) []*debug.BuildInfo {
 	return buildInfo
 }
 
-// openExe opens file and returns it as a io.ReaderAt.
+// openExe opens file and returns it as io.ReaderAt.
 func openExe(file string) ([]io.ReaderAt, error) {
 	f, err := os.Open(file)
 	if err != nil {

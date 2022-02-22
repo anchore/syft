@@ -7,7 +7,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newGoBinaryPackage(dep *debug.Module, settings []pkg.GolangBuildSetting, goVersion, architecture string, location source.Location) pkg.Package {
+func newGoBinaryPackage(dep *debug.Module, settings map[string]string, goVersion, architecture string, location source.Location) pkg.Package {
+	if dep.Replace != nil {
+		dep = dep.Replace
+	}
+
 	p := pkg.Package{
 		Name:     dep.Path,
 		Version:  dep.Version,
@@ -40,22 +44,18 @@ func getGOARCH(settings []debug.BuildSetting) string {
 	return ""
 }
 
-func getBuildSettings(settings []debug.BuildSetting) (gbs []pkg.GolangBuildSetting) {
+func getBuildSettings(settings []debug.BuildSetting) map[string]string {
+	m := make(map[string]string)
 	for _, s := range settings {
-		b := pkg.GolangBuildSetting{
-			Key:   s.Key,
-			Value: s.Value,
-		}
-		gbs = append(gbs, b)
+		m[s.Key] = s.Value
 	}
-	return
+	return m
 }
 
 func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo) []pkg.Package {
-	pkgsSlice := make([]pkg.Package, 0)
-
+	pkgs := make([]pkg.Package, 0)
 	if mod == nil {
-		return pkgsSlice
+		return pkgs
 	}
 
 	gbs := getBuildSettings(mod.Settings)
@@ -65,7 +65,8 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo) []pkg.Packag
 			continue
 		}
 
-		pkgsSlice = append(pkgsSlice, newGoBinaryPackage(dep, gbs, mod.GoVersion, arch, location))
+		pkgs = append(pkgs, newGoBinaryPackage(dep, gbs, mod.GoVersion, arch, location))
 	}
-	return pkgsSlice
+
+	return pkgs
 }
