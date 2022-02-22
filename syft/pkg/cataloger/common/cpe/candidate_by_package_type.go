@@ -45,7 +45,13 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "apache-cassandra"}, // , Vendor: "apache"},
 			candidateAddition{AdditionalProducts: []string{"cassandra"}},
 		},
-
+		{
+			// example image: cloudbees/cloudbees-core-mm:2.319.3.4
+			// this is a wrapped packaging of the handlebars.js node module
+			pkg.JavaPkg,
+			candidateKey{PkgName: "handlebars"},
+			candidateAddition{AdditionalVendors: []string{"handlebarsjs"}},
+		},
 		// NPM packages
 		{
 			pkg.NpmPkg,

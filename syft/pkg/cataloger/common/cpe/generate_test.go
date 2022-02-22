@@ -545,6 +545,81 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{},
 		},
+		{
+			name: "regression: handlebars within java archive",
+			p: pkg.Package{
+				Name:         "handlebars",
+				Version:      "3.0.8",
+				Type:         pkg.JavaPkg,
+				Language:     pkg.Java,
+				FoundBy:      "java-cataloger",
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					Manifest: &pkg.JavaManifest{
+						Main: map[string]string{
+							"Extension-Name":         "handlebars",
+							"Group-Id":               "org.jenkins-ci.ui",
+							"Hudson-Version":         "2.204",
+							"Implementation-Title":   "handlebars",
+							"Implementation-Version": "3.0.8",
+							"Plugin-Version":         "3.0.8",
+							"Short-Name":             "handlebars",
+						},
+					},
+					PomProperties: &pkg.PomProperties{
+						GroupID:    "org.jenkins-ci.ui",
+						ArtifactID: "handlebars",
+						Version:    "3.0.8",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:handlebars:handlebars:3.0.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:handlebarsjs:handlebars:3.0.8:*:*:*:*:*:*:*", // important!
+				"cpe:2.3:a:jenkins-ci:handlebars:3.0.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:handlebars:3.0.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins_ci:handlebars:3.0.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ui:handlebars:3.0.8:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "regression: jenkins plugin active-directory",
+			p: pkg.Package{
+				Name:         "active-directory",
+				Version:      "2.25.1",
+				Type:         pkg.JenkinsPluginPkg,
+				FoundBy:      "java-cataloger",
+				Language:     pkg.Java,
+				MetadataType: pkg.JavaMetadataType,
+				Metadata: pkg.JavaMetadata{
+					Manifest: &pkg.JavaManifest{
+						Main: map[string]string{
+							"Extension-Name": "active-directory",
+							"Group-Id":       "org.jenkins-ci.plugins",
+						},
+					},
+					PomProperties: &pkg.PomProperties{
+						GroupID:    "org.jenkins-ci.plugins",
+						ArtifactID: "org.jenkins-ci.plugins",
+						Version:    "2.25.1",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:active-directory:active-directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:active-directory:active_directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:active:active-directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:active:active_directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:active_directory:active-directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:active_directory:active_directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins-ci:active-directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins-ci:active_directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:active-directory:2.25.1:*:*:*:*:*:*:*", // important!
+				"cpe:2.3:a:jenkins:active_directory:2.25.1:*:*:*:*:*:*:*", // important!
+				"cpe:2.3:a:jenkins_ci:active-directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins_ci:active_directory:2.25.1:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
