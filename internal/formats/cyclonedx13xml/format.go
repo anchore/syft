@@ -1,12 +1,16 @@
 package cyclonedx13xml
 
-import "github.com/anchore/syft/syft/format"
+import (
+	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/anchore/syft/internal/formats/common/cyclonedxhelpers"
+	"github.com/anchore/syft/syft/format"
+)
 
 func Format() format.Format {
 	return format.NewFormat(
 		format.CycloneDxXMLOption,
 		encoder,
-		nil,
-		nil,
+		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
+		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
 	)
 }

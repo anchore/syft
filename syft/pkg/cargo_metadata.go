@@ -1,14 +1,12 @@
-package rust
-
-import "github.com/anchore/syft/syft/pkg"
+package pkg
 
 type CargoMetadata struct {
-	Packages []pkg.CargoPackageMetadata `toml:"package"`
+	Packages []CargoPackageMetadata `toml:"package"`
 }
 
 // Pkgs returns all of the packages referenced within the Cargo.lock metadata.
-func (m CargoMetadata) Pkgs() []*pkg.Package {
-	pkgs := make([]*pkg.Package, 0)
+func (m CargoMetadata) Pkgs() []*Package {
+	pkgs := make([]*Package, 0)
 
 	for _, p := range m.Packages {
 		if p.Dependencies == nil {

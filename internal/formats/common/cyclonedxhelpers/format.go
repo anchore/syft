@@ -27,7 +27,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	packages := s.Artifacts.PackageCatalog.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = Component(p)
+		components[i] = encodeComponent(p)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
@@ -80,9 +80,17 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 	}
 	return []cyclonedx.Component{
 		{
-			Type:               cyclonedx.ComponentTypeOS,
-			Name:               distro.Name,
-			Version:            distro.Version,
+			Type: cyclonedx.ComponentTypeOS,
+			// FIXME is it idiomatic to be using SWID here for specific name and version information?
+			SWID: &cyclonedx.SWID{
+				TagID:   distro.ID,
+				Name:    distro.ID,
+				Version: distro.VersionID,
+			},
+			Description: distro.PrettyName,
+			Name:        distro.ID,
+			Version:     distro.VersionID,
+			// TODO should we add a PURL?
 			CPE:                distro.CPEName,
 			ExternalReferences: eRefs,
 			Properties:         props,

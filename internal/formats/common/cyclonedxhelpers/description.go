@@ -2,7 +2,7 @@ package cyclonedxhelpers
 
 import "github.com/anchore/syft/syft/pkg"
 
-func Description(p pkg.Package) string {
+func encodeDescription(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
@@ -12,4 +12,13 @@ func Description(p pkg.Package) string {
 		}
 	}
 	return ""
+}
+
+func decodeDescription(description string, metadata interface{}) {
+	switch meta := metadata.(type) {
+	case *pkg.ApkMetadata:
+		meta.Description = description
+	case *pkg.NpmPackageJSONMetadata:
+		meta.Description = description
+	}
 }

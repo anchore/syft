@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_License(t *testing.T) {
+func Test_encodeLicense(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -77,7 +77,7 @@ func Test_License(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Licenses(test.input))
+			assert.Equal(t, test.expected, encodeLicenses(test.input))
 		})
 	}
 }

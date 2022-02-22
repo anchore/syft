@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"regexp"
 	"testing"
 
 	"github.com/anchore/syft/syft"
@@ -20,10 +21,26 @@ import (
 // encode-decode-encode loop which will detect lossy behavior in both directions.
 func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	tests := []struct {
-		format format.Option
+		format   format.Option
+		redactor func(in []byte) []byte
 	}{
 		{
 			format: format.JSONOption,
+		},
+		{
+			format: format.CycloneDxJSONOption,
+			redactor: func(in []byte) []byte {
+				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+").ReplaceAll(in, []byte{})
+				return in
+			},
+		},
+		{
+			format: format.CycloneDxXMLOption,
+			redactor: func(in []byte) []byte {
+				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+").ReplaceAll(in, []byte{})
+				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
+				return in
+			},
 		},
 	}
 	for _, test := range tests {
@@ -33,12 +50,18 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 
 			by1, err := syft.Encode(originalSBOM, test.format)
 			assert.NoError(t, err)
+
 			newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
 			assert.NoError(t, err)
 			assert.Equal(t, test.format, newFormat)
 
 			by2, err := syft.Encode(*newSBOM, test.format)
 			assert.NoError(t, err)
+
+			if test.redactor != nil {
+				by1 = test.redactor(by1)
+				by2 = test.redactor(by2)
+			}
 
 			if !assert.True(t, bytes.Equal(by1, by2)) {
 				dmp := diffmatchpatch.New()

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Author(t *testing.T) {
+func Test_encodeAuthor(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -81,7 +81,7 @@ func Test_Author(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Author(test.input))
+			assert.Equal(t, test.expected, encodeAuthor(test.input))
 		})
 	}
 }

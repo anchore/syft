@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ExternalReferences(t *testing.T) {
+func Test_encodeExternalReferences(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -127,7 +127,7 @@ func Test_ExternalReferences(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, ExternalReferences(test.input))
+			assert.Equal(t, test.expected, encodeExternalReferences(test.input))
 		})
 	}
 }

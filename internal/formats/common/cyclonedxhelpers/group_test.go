@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGroup(t *testing.T) {
+func Test_encodeGroup(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -46,7 +46,7 @@ func TestGroup(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Group(test.input))
+			assert.Equal(t, test.expected, encodeGroup(test.input))
 		})
 	}
 }
