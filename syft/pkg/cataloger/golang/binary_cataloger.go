@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -39,7 +40,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	for _, location := range fileMatches {
 		info, err := os.Stat(location.RealPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			log.Warnf("golang cataloger: checking file real path: %v", err)
 			continue
 		}
 		mods := scanFile(location.RealPath, info)
