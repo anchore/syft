@@ -134,6 +134,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"exclude paths from being scanned using a glob expression",
 	)
 
+	flags.StringArrayP(
+		"enable-cataloger", "", nil,
+		"enable specific language or ecosystem cataloger",
+	)
+
 	flags.Bool(
 		"overwrite-existing-image", false,
 		"overwrite an existing image during the upload to Anchore Enterprise",
@@ -170,6 +175,10 @@ func bindExclusivePackagesConfigOptions(flags *pflag.FlagSet) error {
 	}
 
 	if err := viper.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("package.enable-cataloger", flags.Lookup("enable-cataloger")); err != nil {
 		return err
 	}
 
