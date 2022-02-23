@@ -383,6 +383,24 @@ package:
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
 
+  # enable specific language or ecosystem cataloger
+  # default: all catalogers are enabled by default
+  # enable-cataloger:
+  # - "ruby-gemfile-cataloger"
+  # - "ruby-gemspec-cataloger"
+  # - "python-index-cataloger"
+  # - "python-package-cataloger"
+  # - "javascript-lock-cataloger"
+  # - "javascript-package-cataloger"
+  # - "php-composer-installed-cataloger"
+  # - "php-composer-lock-cataloger"
+  # - "dpkgdb-cataloger"
+  # - "rpmdb-cataloger"
+  # - "java-cataloger"
+  # - "apkdb-cataloger"
+  # - "go-module-binary-cataloger"
+  enable-cataloger:
+
 # cataloging file classifications is exposed through the power-user subcommand
 file-classification:
   cataloger:

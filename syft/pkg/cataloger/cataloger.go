@@ -35,7 +35,7 @@ type Cataloger interface {
 
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
 func ImageCatalogers(cfg Config) []Cataloger {
-	return []Cataloger{
+	return filterCatalogers([]Cataloger{
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
@@ -46,12 +46,12 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
-	}
+	}, cfg.EnabledCatalogers)
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
 func DirectoryCatalogers(cfg Config) []Cataloger {
-	return []Cataloger{
+	return filterCatalogers([]Cataloger{
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
@@ -66,12 +66,12 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
-	}
+	}, cfg.EnabledCatalogers)
 }
 
 // AllCatalogers returns all implemented catalogers
 func AllCatalogers(cfg Config) []Cataloger {
-	return []Cataloger{
+	return filterCatalogers([]Cataloger{
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonIndexCataloger(),
@@ -87,5 +87,28 @@ func AllCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
+	}, cfg.EnabledCatalogers)
+}
+
+func filterCatalogers(catalogers []Cataloger, enabledCatalogers []string) []Cataloger {
+	// if enable-cataloger is not set, all applicable catalogers are enabled by default
+	if len(enabledCatalogers) == 0 {
+		return catalogers
 	}
+	var filteredCatalogers []Cataloger
+	for _, cataloger := range catalogers {
+		if contains(enabledCatalogers, cataloger.Name()) {
+			filteredCatalogers = append(filteredCatalogers, cataloger)
+		}
+	}
+	return filteredCatalogers
+}
+
+func contains(catalogers []string, str string) bool {
+	for _, cataloger := range catalogers {
+		if cataloger == str {
+			return true
+		}
+	}
+	return false
 }
