@@ -10,6 +10,10 @@ import (
 
 type CPE = wfn.Attributes
 
+const (
+	allowedCPEPunctuation = "-!\"#$%&'()+,./:;<=>@[]^`{|}~"
+)
+
 // This regex string is taken from
 // https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd which has the official cpe spec
 // This first part matches CPE urls and the second part matches binding strings
@@ -20,12 +24,35 @@ const cpeRegexString = ((`^([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\._\-~%]*){0,6})`)
 
 var cpeRegex = regexp.MustCompile(cpeRegexString)
 
+// NewCPE will parse a formatted CPE string and return a CPE object. Some input, such as the existence of whitespace
+// characters is allowed, however, a more strict validation is done after this sanitization process.
 func NewCPE(cpeStr string) (CPE, error) {
+	// get a CPE object based on the given string --don't validate yet since it may be possible to escape select cases on the callers behalf
+	c, err := newCPEWithoutValidation(cpeStr)
+	if err != nil {
+		return CPE{}, fmt.Errorf("unable to prase CPE string: %w", err)
+	}
+
+	// ensure that this CPE can be validated after being fully sanitized
+	if validateCPEString(CPEString(c)) != nil {
+		return CPE{}, err
+	}
+
+	// we don't return the sanitized string, as this is a concern for later when creating CPE strings. In fact, since
+	// sanitization is lossy (whitespace is replaced, not escaped) it's important that the raw values are left as.
+	return c, nil
+}
+
+func validateCPEString(cpeStr string) error {
 	// We should filter out all CPEs that do not match the official CPE regex
 	// The facebook nvdtools parser can sometimes incorrectly parse invalid CPE strings
 	if !cpeRegex.MatchString(cpeStr) {
-		return CPE{}, fmt.Errorf("failed to parse CPE=%q as it doesn't match the regex=%s", cpeStr, cpeRegexString)
+		return fmt.Errorf("failed to parse CPE=%q as it doesn't match the regex=%s", cpeStr, cpeRegexString)
 	}
+	return nil
+}
+
+func newCPEWithoutValidation(cpeStr string) (CPE, error) {
 	value, err := wfn.Parse(cpeStr)
 	if err != nil {
 		return CPE{}, fmt.Errorf("failed to parse CPE=%q: %w", cpeStr, err)
@@ -60,6 +87,9 @@ func MustCPE(cpeStr string) CPE {
 }
 
 func normalizeCpeField(field string) string {
+	// replace spaces with underscores (per section 5.3.2 of the CPE spec v 2.3)
+	field = strings.ReplaceAll(field, " ", "_")
+
 	// keep dashes and forward slashes unescaped
 	if field == "*" {
 		return wfn.Any
@@ -71,10 +101,9 @@ func normalizeCpeField(field string) string {
 // It correctly removes slashes that are followed by allowed puncts.
 // This is to allow for a correct round trip parsing of cpes with quoted characters.
 func stripSlashes(s string) string {
-	const allowedPunct = "-!\"#$%&'()+,./:;<=>@[]^`{|}!~"
 	sb := strings.Builder{}
 	for i, c := range s {
-		if c == '\\' && i+1 < len(s) && strings.ContainsRune(allowedPunct, rune(s[i+1])) {
+		if c == '\\' && i+1 < len(s) && strings.ContainsRune(allowedCPEPunctuation, rune(s[i+1])) {
 			continue
 		} else {
 			sb.WriteRune(c)
@@ -110,12 +139,13 @@ func CPEString(c CPE) string {
 // end up becoming "prefix" instead causing loss of information and
 // incorrect CPEs being generated.
 func sanitize(s string) string {
-	const allowedPunct = "-!\"#$%&'()+,./:;<=>@[]^`{|}!~"
 	// replace spaces with underscores
 	in := strings.ReplaceAll(s, " ", "_")
+
+	// escape allowable punctuation per section 5.3.2 in the CPE 2.3 spec
 	sb := strings.Builder{}
 	for _, c := range in {
-		if strings.ContainsRune(allowedPunct, c) {
+		if strings.ContainsRune(allowedCPEPunctuation, c) {
 			sb.WriteRune('\\')
 		}
 		sb.WriteRune(c)
