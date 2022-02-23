@@ -28,25 +28,31 @@ import (
 
 const (
 	packagesExample = `  {{.appName}} {{.command}} alpine:latest                a summary of discovered packages
-  {{.appName}} {{.command}} alpine:latest -o json        show all possible cataloging details
-  {{.appName}} {{.command}} alpine:latest -o cyclonedx   show a CycloneDX formatted SBOM
-  {{.appName}} {{.command}} alpine:latest -o spdx        show a SPDX 2.2 tag-value formatted SBOM
-  {{.appName}} {{.command}} alpine:latest -o spdx-json   show a SPDX 2.2 JSON formatted SBOM
-  {{.appName}} {{.command}} alpine:latest -vv            show verbose debug information
+  {{.appName}} {{.command}} alpine:latest -o json            show all possible cataloging details
+  {{.appName}} {{.command}} alpine:latest -o cyclonedx       show a CycloneDX formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o cyclonedx-json  show a CycloneDX JSON formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o spdx            show a SPDX 2.2 Tag-Value formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o spdx-json       show a SPDX 2.2 JSON formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -vv                show verbose debug information
 
   Supports the following image sources:
     {{.appName}} {{.command}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
     {{.appName}} {{.command}} path/to/a/file/or/dir      a Docker tar, OCI tar, OCI directory, or generic filesystem directory
+`
 
-  You can also explicitly specify the scheme to use:
-    {{.appName}} {{.command}} docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
+	schemeHelpHeader = "You can also explicitly specify the scheme to use:"
+	imageSchemeHelp  = `    {{.appName}} {{.command}} docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
+    {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
     {{.appName}} {{.command}} docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
     {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
     {{.appName}} {{.command}} oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
-    {{.appName}} {{.command}} dir:path/to/yourproject                read directly from a path on disk (any directory)
-    {{.appName}} {{.command}} file:path/to/yourproject/file          read directly from a path on disk (any single file)
-    {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
 `
+	nonImageSchemeHelp = `    {{.appName}} {{.command}} dir:path/to/yourproject                read directly from a path on disk (any directory)
+    {{.appName}} {{.command}} file:path/to/yourproject/file          read directly from a path on disk (any single file)
+`
+	packagesSchemeHelp = "\n" + indent + schemeHelpHeader + "\n" + imageSchemeHelp + nonImageSchemeHelp
+
+	packagesHelp = packagesExample + packagesSchemeHelp
 )
 
 var (
@@ -54,7 +60,7 @@ var (
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
-		Example: internal.Tprintf(packagesExample, map[string]interface{}{
+		Example: internal.Tprintf(packagesHelp, map[string]interface{}{
 			"appName": internal.ApplicationName,
 			"command": "packages",
 		}),
@@ -88,7 +94,6 @@ func init() {
 
 func setPackageFlags(flags *pflag.FlagSet) {
 	// Formatting & Input options //////////////////////////////////////////////
-
 	flags.StringP(
 		"scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
@@ -140,15 +145,23 @@ func setPackageFlags(flags *pflag.FlagSet) {
 	)
 }
 
-// NOTE(alex): Write a helper for the binding operation, which can be used to perform the binding but also double check that the intended effect was had or else return an error. Another thought is to somehow provide zero-valued defaults for all values in our config struct (maybe with reflection?). There may be a mechanism that already exists in viper that protects against this that I'm not aware of. ref: https://github.com/anchore/syft/pull/805#discussion_r801931192
 func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
-	// Formatting & Input options //////////////////////////////////////////////
-
-	if err := viper.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
+	if err := bindExclusivePackagesConfigOptions(flags); err != nil {
 		return err
 	}
+	if err := bindSharedOutputConfigOption(flags); err != nil {
+		return err
+	}
+	return nil
+}
 
-	if err := viper.BindPFlag("output", flags.Lookup("output")); err != nil {
+// NOTE(alex): Write a helper for the binding operation, which can be used to perform the binding but also double check that the intended effect was had or else return an error. Another thought is to somehow provide zero-valued defaults for all values in our config struct (maybe with reflection?). There may be a mechanism that already exists in viper that protects against this that I'm not aware of. ref: https://github.com/anchore/syft/pull/805#discussion_r801931192
+func bindExclusivePackagesConfigOptions(flags *pflag.FlagSet) error {
+	// Formatting & Input options //////////////////////////////////////////////
+
+	// note: output is not included since this configuration option is shared between multiple subcommands
+
+	if err := viper.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
 		return err
 	}
 
@@ -236,46 +249,61 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
+func generateSBOM(userInput string, errs chan error) (*sbom.SBOM, *source.Source, error) {
+	tasks, err := tasks()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+	}
+	if cleanup != nil {
+		defer cleanup()
+	}
+
+	s := sbom.SBOM{
+		Source: src.Metadata,
+		Descriptor: sbom.Descriptor{
+			Name:          internal.ApplicationName,
+			Version:       version.FromBuild().Version,
+			Configuration: appConfig,
+		},
+	}
+
+	buildRelationships(&s, src, tasks, errs)
+
+	return &s, src, nil
+}
+
+func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs chan error) {
+	var relationships []<-chan artifact.Relationship
+	for _, task := range tasks {
+		c := make(chan artifact.Relationship)
+		relationships = append(relationships, c)
+		go runTask(task, &s.Artifacts, src, c, errs)
+	}
+
+	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
+}
+
 func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-
-		tasks, err := tasks()
+		s, src, err := generateSBOM(userInput, errs)
 		if err != nil {
 			errs <- err
 			return
 		}
 
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
-		if err != nil {
-			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
-			return
+		if s == nil {
+			panic("nil sbomb returned with no error")
 		}
-		if cleanup != nil {
-			defer cleanup()
-		}
-
-		s := sbom.SBOM{
-			Source: src.Metadata,
-			Descriptor: sbom.Descriptor{
-				Name:          internal.ApplicationName,
-				Version:       version.FromBuild().Version,
-				Configuration: appConfig,
-			},
-		}
-
-		var relationships []<-chan artifact.Relationship
-		for _, task := range tasks {
-			c := make(chan artifact.Relationship)
-			relationships = append(relationships, c)
-
-			go runTask(task, &s.Artifacts, src, c, errs)
-		}
-		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		if appConfig.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, s); err != nil {
+			if err := runPackageSbomUpload(src, *s); err != nil {
 				errs <- err
 				return
 			}
@@ -283,7 +311,7 @@ func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
-			Value: func() error { return writer.Write(s) },
+			Value: func() error { return writer.Write(*s) },
 		})
 	}()
 	return errs

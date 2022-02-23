@@ -287,7 +287,7 @@ func TestDetectScheme(t *testing.T) {
 				}
 			}
 
-			actualScheme, actualSource, actualLocation, err := detectScheme(fs, imageDetector, test.userInput)
+			actualScheme, actualSource, actualLocation, err := DetectScheme(fs, imageDetector, test.userInput)
 			if err != nil {
 				t.Fatalf("unexpected err : %+v", err)
 			}

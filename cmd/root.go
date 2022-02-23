@@ -27,6 +27,8 @@ var rootCmd = &cobra.Command{
 	Version:           version.FromBuild().Version,
 }
 
+const indent = "  "
+
 func init() {
 	// set universal flags
 	rootCmd.PersistentFlags().StringVarP(&persistentOpts.ConfigPath, "config", "c", "", "application config file")
