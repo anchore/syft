@@ -10,6 +10,14 @@ VERSION=$(shell git describe --dirty --always --tags)
 COMPARE_TEST_IMAGE = centos:8.2.2004
 COMPARE_DIR = ./test/compare
 
+# https://reproducible-builds.org/docs/source-date-epoch/
+DATE_FMT = +%Y-%m-%dT%H:%M:%SZ
+ifdef SOURCE_DATE_EPOCH
+    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
+else
+    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
+endif
+
 # formatting variables
 BOLD := $(shell tput -T linux bold)
 PURPLE := $(shell tput -T linux setaf 5)
@@ -239,7 +247,7 @@ $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# build release snapshots
-	bash -c "SKIP_SIGNING=true $(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml"
+	bash -c "BUILD_DATE=$(BUILD_DATE) SKIP_SIGNING=true $(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml"
 
 .PHONY: snapshot-with-signing
 snapshot-with-signing: ## Build snapshot release binaries and packages (with dummy signing)
@@ -252,7 +260,7 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	rm -f .github/scripts/apple-signing/log/*.txt
 
 	# build release snapshots
-	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/*.txt && false)"
+	bash -c "BUILD_DATE=$(BUILD_DATE) $(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/*.txt && false)"
 
 	# remove the keychain with the trusted self-signed cert automatically
 	.github/scripts/apple-signing/cleanup.sh
@@ -324,6 +332,7 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 
 	# note: notarization cannot be done in parallel, thus --parallelism 1
 	bash -c "\
+		BUILD_DATE=$(BUILD_DATE) \
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
 			--parallelism 1 \
