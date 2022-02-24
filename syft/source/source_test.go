@@ -47,55 +47,60 @@ func TestNewFromImage(t *testing.T) {
 
 func TestNewFromDirectory(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		input      string
-		expString  string
-		inputPaths []string
-		expRefs    int
+		desc         string
+		input        string
+		expString    string
+		inputPaths   []string
+		expectedRefs int
+		expectedErr  bool
 	}{
 		{
-			desc:       "no paths exist",
-			input:      "foobar/",
-			inputPaths: []string{"/opt/", "/other"},
+			desc:        "no paths exist",
+			input:       "foobar/",
+			inputPaths:  []string{"/opt/", "/other"},
+			expectedErr: true,
 		},
 		{
-			desc:       "path detected",
-			input:      "test-fixtures",
-			inputPaths: []string{"path-detected/.vimrc"},
-			expRefs:    1,
+			desc:         "path detected",
+			input:        "test-fixtures",
+			inputPaths:   []string{"path-detected/.vimrc"},
+			expectedRefs: 1,
 		},
 		{
-			desc:       "directory ignored",
-			input:      "test-fixtures",
-			inputPaths: []string{"path-detected"},
-			expRefs:    0,
+			desc:         "directory ignored",
+			input:        "test-fixtures",
+			inputPaths:   []string{"path-detected"},
+			expectedRefs: 0,
 		},
 		{
-			desc:       "no files-by-path detected",
-			input:      "test-fixtures",
-			inputPaths: []string{"no-path-detected"},
-			expRefs:    0,
+			desc:         "no files-by-path detected",
+			input:        "test-fixtures",
+			inputPaths:   []string{"no-path-detected"},
+			expectedRefs: 0,
 		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			src, err := NewFromDirectory(test.input)
+			require.NoError(t, err)
+			assert.Equal(t, test.input, src.Metadata.Path)
 
-			if err != nil {
-				t.Errorf("could not create NewDirScope: %+v", err)
-			}
-			if src.Metadata.Path != test.input {
-				t.Errorf("mismatched stringer: '%s' != '%s'", src.Metadata.Path, test.input)
-			}
 			resolver, err := src.FileResolver(SquashedScope)
-			assert.NoError(t, err)
+			if test.expectedErr {
+				if err == nil {
+					t.Fatal("expected an error when making the resolver but got none")
+				}
+				return
+			} else {
+				require.NoError(t, err)
+			}
 
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)
 			}
-			if len(refs) != test.expRefs {
-				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expRefs)
+			if len(refs) != test.expectedRefs {
+				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expectedRefs)
 
 			}
 
