@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/facebookincubator/nvdtools/wfn"
 )
@@ -21,7 +20,6 @@ func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
 	cpe.Version = version
 	cpe.TargetSW = targetSW
 	if pkg.ValidateCPEString(pkg.CPEString(cpe)) != nil {
-		log.Warnf("could not generate CPE for %+v", cpe)
 		return nil
 	}
 	return &cpe
