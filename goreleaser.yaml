@@ -1,0 +1,96 @@
+dist: snapshot
+
+env:
+  # required to support multi architecture docker builds
+  - DOCKER_CLI_EXPERIMENTAL=enabled
+release:
+  prerelease: auto
+  draft: true
+
+before:
+  hooks:
+    - ./.github/scripts/apple-signing/setup.sh {{ .IsSnapshot }}
+
+builds:
+  - id: linux-build
+    binary: syft
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    # set the modified timestamp on the output binary to the git timestamp to ensure a reproducible build
+    mod_timestamp: &build-timestamp '{{ .CommitTimestamp }}'
+    env: &build-env
+      - CGO_ENABLED=0
+    ldflags: &build-ldflags |
+      -w
+      -s
+      -extldflags '-static'
+      -X github.com/anchore/syft/internal/version.version={{.Version}}
+      -X github.com/anchore/syft/internal/version.gitCommit={{.Commit}}
+      -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
+      -X github.com/anchore/syft/internal/version.gitDescription={{.Summary}}
+
+  - id: darwin-build
+    binary: syft
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    mod_timestamp: *build-timestamp
+    env: *build-env
+    ldflags: *build-ldflags
+    hooks:
+      post:
+        # we must have signing as a build hook instead of the signs section. The signs section must register a new
+        # asset, where we want to replace an existing asset. A post-build hook has the advantage of not needing to
+        # unpackage and repackage a tar.gz with a signed binary
+        - ./.github/scripts/apple-signing/sign.sh "{{ .Path }}" "{{ .IsSnapshot }}" "{{ .Target }}"
+
+  - id: windows-build
+    binary: syft
+    goos:
+      - windows
+    goarch:
+      - amd64
+    mod_timestamp: *build-timestamp
+    env: *build-env
+    ldflags: *build-ldflags
+
+archives:
+  - id: linux-archives
+    builds:
+      - linux-build
+
+  # note: the signing process is depending on tar.gz archives. If this format changes then .github/scripts/apple-signing/*.sh will need to be adjusted
+  - id: darwin-archives
+    builds:
+      - darwin-build
+
+  - id: windows-archives
+    format: zip
+    builds:
+      - windows-build
+
+nfpms:
+  - license: "Apache 2.0"
+    maintainer: "Anchore, Inc"
+    homepage: &website "https://github.com/anchore/syft"
+    description: &description "A tool that generates a Software Bill Of Materials (SBOM) from container images and filesystems"
+    formats:
+      - rpm
+      - deb
+
+brews:
+  - tap:
+      owner: anchore
+      name: homebrew-syft
+    ids:
+      - darwin-archives
+      - linux-archives
+    homepage: *website
+    description: *description
+    license: "Apache License 2.0"
+
