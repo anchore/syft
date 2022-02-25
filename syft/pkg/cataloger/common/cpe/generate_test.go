@@ -620,6 +620,23 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins_ci:active_directory:2.25.1:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "regression: special characters in CPE should return nil",
+			p: pkg.Package{
+				Name:         "bundler",
+				Version:      "2.1.4",
+				Type:         pkg.GemPkg,
+				FoundBy:      "gem-cataloger",
+				Language:     pkg.Ruby,
+				MetadataType: pkg.GemMetadataType,
+				Metadata: pkg.GemMetadata{
+					Name:    "bundler",
+					Version: "2.1.4",
+					Authors: []string{"jessica lynn suttles"},
+				},
+			},
+			expected: []string{},
+		},
 	}
 
 	for _, test := range tests {
