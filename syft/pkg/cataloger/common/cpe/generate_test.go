@@ -621,7 +621,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
-			name: "regression: special characters in CPE should return nil",
+			name: "regression: special characters in CPE should result in no generation",
 			p: pkg.Package{
 				Name:         "bundler",
 				Version:      "2.1.4",
@@ -632,10 +632,24 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Metadata: pkg.GemMetadata{
 					Name:    "bundler",
 					Version: "2.1.4",
-					Authors: []string{"jessica lynn suttles"},
+					Authors: []string{
+						"jessica lynn suttles",
+						"stephanie morillo",
+						"david rodríguez",
+						"andré medeiros",
+					},
 				},
 			},
-			expected: []string{},
+			expected: []string{
+				"cpe:2.3:a:jessica-lynn-suttles:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jessica_lynn_suttles:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:stephanie-morillo:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:stephanie_morillo:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:david-rodríguez:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:david_rodríguez:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:andré-medeiros:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:andré_medeiros:bundler:2.1.4:*:*:*:*:*:*:*",
+			},
 		},
 	}
 
