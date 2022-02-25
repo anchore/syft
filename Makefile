@@ -4,7 +4,7 @@ RESULTSDIR = test/results
 COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=4m --config .golangci.yaml
-RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist --timeout 60m
+RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
 VERSION=$(shell git describe --dirty --always --tags)
 COMPARE_TEST_IMAGE = centos:8.2.2004
@@ -250,6 +250,9 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	rm -f .github/scripts/apple-signing/log/*.txt
+
+	# remove the keychain with the trusted self-signed cert automatically (from failed previous runs)
+	.github/scripts/apple-signing/cleanup.sh
 
 	# build release snapshots
 	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/*.txt && false)"
