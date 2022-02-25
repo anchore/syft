@@ -43,8 +43,9 @@ builds:
     ldflags: *build-ldflags
     hooks:
       post:
-        # we must have signing as a build hook instead of the signs section. The signs section must register a new asset, where we want to replace an existing asset.
-        # a post-build hook has the advantage of not needing to unpackage and repackage a tar.gz with a signed binary
+        # we must have signing as a build hook instead of the signs section. The signs section must register a new
+        # asset, where we want to replace an existing asset. A post-build hook has the advantage of not needing to
+        # unpackage and repackage a tar.gz with a signed binary
         - ./.github/scripts/apple-signing/sign.sh "{{ .Path }}" "{{ .IsSnapshot }}" "{{ .Target }}"
 
   - id: windows-build
