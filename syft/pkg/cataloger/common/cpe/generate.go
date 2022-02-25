@@ -12,14 +12,17 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-func newCPE(product, vendor, version, targetSW string) wfn.Attributes {
+func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
 	cpe := *(wfn.NewAttributesWithAny())
 	cpe.Part = "a"
 	cpe.Product = product
 	cpe.Vendor = vendor
 	cpe.Version = version
 	cpe.TargetSW = targetSW
-	return cpe
+	if pkg.ValidateCPEString(pkg.CPEString(cpe)) != nil {
+		return nil
+	}
+	return &cpe
 }
 
 // Generate Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
@@ -43,7 +46,9 @@ func Generate(p pkg.Package) []pkg.CPE {
 			}
 			keys.Add(key)
 			// add a new entry...
-			cpes = append(cpes, newCPE(product, vendor, p.Version, wfn.Any))
+			if cpe := newCPE(product, vendor, p.Version, wfn.Any); cpe != nil {
+				cpes = append(cpes, *cpe)
+			}
 		}
 	}
 
