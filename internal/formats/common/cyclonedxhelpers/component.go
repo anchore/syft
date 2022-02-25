@@ -1,18 +1,30 @@
 package cyclonedxhelpers
 
 import (
-	"fmt"
 	"reflect"
-	"strconv"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
-	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/formats/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
 func encodeComponent(p pkg.Package) cyclonedx.Component {
+	props := encodeProperties(p, "syft:package")
+	props = append(props, encodeCPEs(p)...)
+	if len(p.Locations) > 0 {
+		props = append(props, encodeProperties(p.Locations, "syft:location")...)
+	}
+	if hasMetadata(p) {
+		props = append(props, encodeProperties(p.Metadata, "syft:metadata")...)
+	}
+
+	var properties *[]cyclonedx.Property
+	if len(props) > 0 {
+		properties = &props
+	}
+
 	return cyclonedx.Component{
 		Type:               cyclonedx.ComponentTypeLibrary,
 		Name:               p.Name,
@@ -20,12 +32,12 @@ func encodeComponent(p pkg.Package) cyclonedx.Component {
 		Version:            p.Version,
 		PackageURL:         p.PURL,
 		Licenses:           encodeLicenses(p),
-		CPE:                encodeCPE(p),
+		CPE:                encodeSingleCPE(p),
 		Author:             encodeAuthor(p),
 		Publisher:          encodePublisher(p),
 		Description:        encodeDescription(p),
 		ExternalReferences: encodeExternalReferences(p),
-		Properties:         encodeProperties(p),
+		Properties:         properties,
 	}
 }
 
@@ -34,131 +46,56 @@ func hasMetadata(p pkg.Package) bool {
 }
 
 func decodeComponent(c *cyclonedx.Component) *pkg.Package {
-	typ := pkg.Type(findPropertyValue(c, "type"))
-	purl := c.PackageURL
-	if typ == "" && purl != "" {
-		typ = pkg.TypeFromPURL(purl)
+	values := map[string]string{}
+	for _, p := range *c.Properties {
+		values[p.Name] = p.Value
 	}
 
-	metaType, meta := decodePackageMetadata(c)
-
 	p := &pkg.Package{
-		Name:         c.Name,
-		Version:      c.Version,
-		FoundBy:      findPropertyValue(c, "foundBy"),
-		Locations:    decodeLocations(c),
-		Licenses:     decodeLicenses(c),
-		Language:     pkg.Language(findPropertyValue(c, "language")),
-		Type:         typ,
-		CPEs:         decodeCPEs(c),
-		PURL:         purl,
-		MetadataType: metaType,
-		Metadata:     meta,
+		Name:      c.Name,
+		Version:   c.Version,
+		Locations: decodeLocations(values),
+		Licenses:  decodeLicenses(c),
+		CPEs:      decodeCPEs(c),
+		PURL:      c.PackageURL,
+	}
+
+	common.DecodeInto(p, values, "syft:package", CycloneDXFields)
+
+	p.Metadata = decodePackageMetadata(values, c, p.MetadataType)
+
+	if p.Type == "" {
+		p.Type = pkg.TypeFromPURL(p.PURL)
 	}
 
 	return p
 }
 
-func decodeLocations(c *cyclonedx.Component) (out []source.Location) {
-	if c.Properties != nil {
-		props := *c.Properties
-		for i := 0; i < len(props)-1; i++ {
-			if props[i].Name == "path" && props[i+1].Name == "layerID" {
-				out = append(out, source.Location{
-					Coordinates: source.Coordinates{
-						RealPath:     props[i].Value,
-						FileSystemID: props[i+1].Value,
-					},
-				})
-				i++
-			}
-		}
-	}
-	return
+func decodeLocations(vals map[string]string) []source.Location {
+	v := common.Decode(reflect.TypeOf([]source.Location{}), vals, "syft:location", CycloneDXFields)
+	out, _ := v.([]source.Location)
+	return out
 }
 
-func mapAllProps(c *cyclonedx.Component, obj reflect.Value) {
-	value := obj
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
+func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typ pkg.MetadataType) interface{} {
+	if typ != "" && c.Properties != nil {
+		metaTyp, ok := pkg.MetadataTypeByName[typ]
+		if !ok {
+			return nil
+		}
+		metaPtrTyp := reflect.PtrTo(metaTyp)
+		metaPtr := common.Decode(metaPtrTyp, vals, "syft:metadata", CycloneDXFields)
+
+		// Map all explicit metadata properties
+		decodeAuthor(c.Author, metaPtr)
+		decodeGroup(c.Group, metaPtr)
+		decodePublisher(c.Publisher, metaPtr)
+		decodeDescription(c.Description, metaPtr)
+		decodeExternalReferences(c, metaPtr)
+
+		// return the actual interface{} -> struct ... not interface{} -> *struct
+		return common.PtrToStruct(metaPtr)
 	}
 
-	structType := value.Type()
-	if structType.Kind() != reflect.Struct {
-		return
-	}
-	for i := 0; i < value.NumField(); i++ {
-		field := structType.Field(i)
-		fieldType := field.Type
-		fieldValue := value.Field(i)
-
-		name, mapped := field.Tag.Lookup("cyclonedx")
-		if !mapped {
-			continue
-		}
-
-		if fieldType.Kind() == reflect.Ptr {
-			fieldType = fieldType.Elem()
-			if fieldValue.IsNil() {
-				newValue := reflect.New(fieldType)
-				fieldValue.Set(newValue)
-			}
-			fieldValue = fieldValue.Elem()
-		}
-
-		propertyValue := findPropertyValue(c, name)
-		switch fieldType.Kind() {
-		case reflect.String:
-			if fieldValue.CanSet() {
-				fieldValue.SetString(propertyValue)
-			} else {
-				msg := fmt.Sprintf("unable to set field: %s.%s", structType.Name(), field.Name)
-				log.Info(msg)
-			}
-		case reflect.Bool:
-			if b, err := strconv.ParseBool(propertyValue); err == nil {
-				fieldValue.SetBool(b)
-			}
-		case reflect.Int:
-			if i, err := strconv.Atoi(propertyValue); err == nil {
-				fieldValue.SetInt(int64(i))
-			}
-		case reflect.Float32, reflect.Float64:
-			if i, err := strconv.ParseFloat(propertyValue, 64); err == nil {
-				fieldValue.SetFloat(i)
-			}
-		case reflect.Struct:
-			mapAllProps(c, fieldValue)
-		case reflect.Complex128, reflect.Complex64:
-			fallthrough
-		case reflect.Ptr:
-			msg := fmt.Sprintf("decoding CycloneDX properties to a pointer is not supported: %s.%s", field.Type.Name(), field.Name)
-			log.Warnf(msg)
-		}
-	}
-}
-
-func decodePackageMetadata(c *cyclonedx.Component) (pkg.MetadataType, interface{}) {
-	if c.Properties != nil {
-		typ := pkg.MetadataType(findPropertyValue(c, "metadataType"))
-		if typ != "" {
-			meta := reflect.New(pkg.MetadataTypeByName[typ])
-			metaPtr := meta.Interface()
-
-			// Map all dynamic properties
-			mapAllProps(c, meta.Elem())
-
-			// Map all explicit metadata properties
-			decodeAuthor(c.Author, metaPtr)
-			decodeGroup(c.Group, metaPtr)
-			decodePublisher(c.Publisher, metaPtr)
-			decodeDescription(c.Description, metaPtr)
-			decodeExternalReferences(c, metaPtr)
-
-			// return the actual interface{} | struct ( not interface{} | *struct )
-			return typ, meta.Elem().Interface()
-		}
-	}
-
-	return pkg.UnknownMetadataType, nil
+	return nil
 }
