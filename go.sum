@@ -276,6 +276,8 @@ github.com/alexflint/go-filemutex v0.0.0-20171022225611-72bdc8eae2ae/go.mod h1:C
 github.com/alexkohler/prealloc v1.0.0/go.mod h1:VetnK3dIgFBBKmg0YnD9F9x6Icjd+9cvfHR56wJVlKE=
 github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=
 github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf/go.mod h1:FaODhIA06mxO1E6R32JE0TL1JWZZkmjRIAd4ULvHUKk=
+github.com/anchore/go-macholibre v0.0.0-20220225170338-cb16f8f4bca1 h1:PYUt0iOOBFZkVWkdq3h+LHINi8kDjXXKEZDQPAiV3sE=
+github.com/anchore/go-macholibre v0.0.0-20220225170338-cb16f8f4bca1/go.mod h1:DmTY2Mfcv38hsHbG78xMiTDdxFtkHpgYNVDPsF2TgHk=
 github.com/anchore/go-rpmdb v0.0.0-20210914181456-a9c52348da63 h1:C9W/LAydEz/qdUhx1MdjO9l8NEcFKYknkxDVyo9LAoM=
 github.com/anchore/go-rpmdb v0.0.0-20210914181456-a9c52348da63/go.mod h1:6qH8c6U/3CBVvDDDBZnPSTbTINq3cIdADUYTaVf75EM=
 github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04 h1:VzprUTpc0vW0nnNKJfJieyH/TZ9UYAnTZs5/gHTdAe8=
@@ -1125,6 +1127,7 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.7 h1:81/ik6ipDQS2aGcBfIN5dHDB36BwrStyeAQquSYCV4o=
 github.com/google/go-cmp v0.5.7/go.mod h1:n+brtR0CgQNWTVd5ZUFpTBC8YFBDLK/h/bpaJ8/DtOE=
+github.com/google/go-containerregistry v0.7.0 h1:u0onUUOcyoCDHEiJoyR1R1gx5er1+r06V5DBhUU5ndk=
 github.com/google/go-containerregistry v0.7.0/go.mod h1:2zaoelrL0d08gGbpdP3LqyUuBmhWbpD6IOe2s9nLS2k=
 github.com/google/go-containerregistry v0.7.1-0.20211118220127-abdc633f8305/go.mod h1:6cMIl1RfryEiPzBE67OgtZdEiLWz4myqCQIiBMy3CsM=
 github.com/google/go-containerregistry v0.8.0/go.mod h1:wW5v71NHGnQyb4k+gSshjxidrC7lN33MdWEn+Mz9TsI=
