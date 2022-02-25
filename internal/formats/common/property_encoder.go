@@ -171,16 +171,15 @@ func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldN
 
 	decode(values, v, prefix, fn)
 
-	if isSlice {
-		if isPtr {
-			return v.Elem().Interface()
-		}
-		return PtrToStruct(v.Elem().Interface())
-	} else if isPtr {
-		return v.Interface()
-	} else {
+	switch {
+	case isSlice && isPtr:
 		return v.Elem().Interface()
+	case isSlice:
+		return PtrToStruct(v.Elem().Interface())
+	case isPtr:
+		return v.Interface()
 	}
+	return v.Elem().Interface()
 }
 
 // DecodeInto decodes all values to hydrate the given object instance
