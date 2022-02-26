@@ -4,7 +4,7 @@ RESULTSDIR = test/results
 COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=4m --config .golangci.yaml
-RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist --timeout 60m
+RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
 VERSION=$(shell git describe --dirty --always --tags)
 COMPARE_TEST_IMAGE = centos:8.2.2004
@@ -234,25 +234,24 @@ build: $(SNAPSHOTDIR) ## Build release snapshot binaries and packages
 $(SNAPSHOTDIR): ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)
 
-	# create a config with the dist dir overridden
-	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
+	cd .goreleaser && make snapshot-config
 
 	# build release snapshots
-	bash -c "SKIP_SIGNING=true $(SNAPSHOT_CMD) --skip-sign --config $(TEMPDIR)/goreleaser.yaml"
+	bash -c "$(SNAPSHOT_CMD) --skip-sign"
 
 .PHONY: snapshot-with-signing
 snapshot-with-signing: ## Build snapshot release binaries and packages (with dummy signing)
 	$(call title,Building snapshot artifacts (+ signing))
 
-	# create a config with the dist dir overridden
-	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
+	cd .goreleaser && make snapshot-with-signing-config
 
 	rm -f .github/scripts/apple-signing/log/*.txt
 
+	# remove the keychain with the trusted self-signed cert automatically (from failed previous runs)
+	.github/scripts/apple-signing/cleanup.sh
+
 	# build release snapshots
-	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/*.txt && false)"
+	bash -c "$(SNAPSHOT_CMD) || (cat .github/scripts/apple-signing/log/*.txt && false)"
 
 	# remove the keychain with the trusted self-signed cert automatically
 	.github/scripts/apple-signing/cleanup.sh
@@ -316,16 +315,13 @@ CHANGELOG.md:
 release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packages. Intended to be run only on macOS.
 	$(call title,Publishing release artifacts)
 
-	# create a config with the dist dir overridden
-	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
+	cd .goreleaser && make release-config
 
 	rm -f .github/scripts/apple-signing/log/*.txt
 
 	# note: notarization cannot be done in parallel, thus --parallelism 1
 	bash -c "\
 		$(RELEASE_CMD) \
-			--config $(TEMPDIR)/goreleaser.yaml \
 			--parallelism 1 \
 			--release-notes <(cat CHANGELOG.md)\
 				 || (cat .github/scripts/apple-signing/log/*.txt && false)"
