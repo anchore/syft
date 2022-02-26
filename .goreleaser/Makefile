@@ -1,4 +1,4 @@
-TARGET=../goreleaser.yaml
+TARGET=../.goreleaser.yaml
 
 .PHONY: snapshot-config
 snapshot-config:
