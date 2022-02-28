@@ -36,7 +36,6 @@ linters:
     - staticcheck
     - structcheck
     - stylecheck
-    - typecheck
     - unconvert
     - unparam
     - unused
@@ -44,6 +43,7 @@ linters:
     - whitespace
 
 # do not enable...
+#    - typecheck   # it doesn't recognize packages from import path with different name   
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
 #    - godot
