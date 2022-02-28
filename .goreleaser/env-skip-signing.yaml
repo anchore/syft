@@ -1,5 +1,0 @@
-
-env:
-  # required to support multi architecture docker builds
-  - DOCKER_CLI_EXPERIMENTAL=enabled
-  - SKIP_SIGNING=true
