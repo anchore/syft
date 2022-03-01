@@ -40,7 +40,7 @@ func runAndShow(t *testing.T, cmd *exec.Cmd) {
 
 func TestCosignWorkflow(t *testing.T) {
 	// found under test-fixtures/registry/Makefile
-	coverageImage := "localhost:5010/attest:latest"
+	coverageImage := "127.0.0.1:2222/attest:latest"
 	attestationFile := "attestation.json"
 	tests := []struct {
 		name             string
