@@ -91,8 +91,6 @@ func TestCosignWorkflow(t *testing.T) {
 				cmd.Dir = fixturesPath
 				runAndShow(t, cmd)
 
-				// TODO Load Image
-
 				time.Sleep(time.Second) // TODO: sync so test starts when registry is ready
 			},
 			cleanup: func() {
