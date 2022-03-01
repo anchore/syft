@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 )
 
-func Test_encodeProperties(t *testing.T) {
+func Test_encodeComponentProperties(t *testing.T) {
 	epoch := 2
 	tests := []struct {
 		name     string
@@ -46,13 +47,14 @@ func Test_encodeProperties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
-				{Name: "foundBy", Value: "cataloger"},
-				{Name: "path", Value: "test"},
-				{Name: "originPackage", Value: "libc-dev"},
-				{Name: "installedSize", Value: "4096"},
-				{Name: "pullDependencies", Value: "musl-utils"},
-				{Name: "pullChecksum", Value: "Q1p78yvTLG094tHE1+dToJGbmYzQE="},
-				{Name: "gitCommitOfApkPort", Value: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479"},
+				{Name: "syft:package:foundBy", Value: "cataloger"},
+				{Name: "syft:location:0:path", Value: "test"},
+				{Name: "syft:metadata:gitCommitOfApkPort", Value: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479"},
+				{Name: "syft:metadata:installedSize", Value: "4096"},
+				{Name: "syft:metadata:originPackage", Value: "libc-dev"},
+				{Name: "syft:metadata:pullChecksum", Value: "Q1p78yvTLG094tHE1+dToJGbmYzQE="},
+				{Name: "syft:metadata:pullDependencies", Value: "musl-utils"},
+				{Name: "syft:metadata:size", Value: "0"},
 			},
 		},
 		{
@@ -71,10 +73,10 @@ func Test_encodeProperties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
-				{Name: "metadataType", Value: "DpkgMetadata"},
-				{Name: "source", Value: "tzdata-dev"},
-				{Name: "sourceVersion", Value: "1.0"},
-				{Name: "installedSize", Value: "3036"},
+				{Name: "syft:package:metadataType", Value: "DpkgMetadata"},
+				{Name: "syft:metadata:installedSize", Value: "3036"},
+				{Name: "syft:metadata:source", Value: "tzdata-dev"},
+				{Name: "syft:metadata:sourceVersion", Value: "1.0"},
 			},
 		},
 		{
@@ -92,12 +94,12 @@ func Test_encodeProperties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
-				{Name: "language", Value: pkg.Go.String()},
-				{Name: "type", Value: "go-module"},
-				{Name: "metadataType", Value: "GolangBinMetadata"},
-				{Name: "goCompiledVersion", Value: "1.17"},
-				{Name: "architecture", Value: "amd64"},
-				{Name: "h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
+				{Name: "syft:package:language", Value: pkg.Go.String()},
+				{Name: "syft:package:metadataType", Value: "GolangBinMetadata"},
+				{Name: "syft:package:type", Value: "go-module"},
+				{Name: "syft:metadata:architecture", Value: "amd64"},
+				{Name: "syft:metadata:goCompiledVersion", Value: "1.17"},
+				{Name: "syft:metadata:h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
 			},
 		},
 		{
@@ -121,18 +123,19 @@ func Test_encodeProperties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
-				{Name: "type", Value: "rpm"},
-				{Name: "metadataType", Value: "RpmdbMetadata"},
-				{Name: "epoch", Value: "2"},
-				{Name: "release", Value: "1"},
-				{Name: "sourceRpm", Value: "dive-0.9.2-1.src.rpm"},
-				{Name: "size", Value: "12406784"},
+				{Name: "syft:package:metadataType", Value: "RpmdbMetadata"},
+				{Name: "syft:package:type", Value: "rpm"},
+				{Name: "syft:metadata:epoch", Value: "2"},
+				{Name: "syft:metadata:release", Value: "1"},
+				{Name: "syft:metadata:size", Value: "12406784"},
+				{Name: "syft:metadata:sourceRpm", Value: "dive-0.9.2-1.src.rpm"},
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, encodeProperties(test.input))
+			c := encodeComponent(test.input)
+			assert.Equal(t, test.expected, c.Properties)
 		})
 	}
 }

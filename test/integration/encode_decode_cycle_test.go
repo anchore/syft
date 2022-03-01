@@ -23,21 +23,24 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	tests := []struct {
 		format   format.Option
 		redactor func(in []byte) []byte
+		json     bool
 	}{
 		{
 			format: format.JSONOption,
+			json:   true,
 		},
 		{
 			format: format.CycloneDxJSONOption,
 			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+").ReplaceAll(in, []byte{})
+				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
 				return in
 			},
+			json: true,
 		},
 		{
 			format: format.CycloneDxXMLOption,
 			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+").ReplaceAll(in, []byte{})
+				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
 				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
 				return in
 			},
@@ -63,10 +66,16 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				by2 = test.redactor(by2)
 			}
 
-			if !assert.True(t, bytes.Equal(by1, by2)) {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(string(by1), string(by2), true)
-				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
+			if test.json {
+				s1 := string(by1)
+				s2 := string(by2)
+				assert.JSONEq(t, s1, s2)
+			} else {
+				if !assert.True(t, bytes.Equal(by1, by2)) {
+					dmp := diffmatchpatch.New()
+					diffs := dmp.DiffMain(string(by1), string(by2), true)
+					t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
+				}
 			}
 		})
 	}
