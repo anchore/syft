@@ -41,7 +41,7 @@ func runAndShow(t *testing.T, cmd *exec.Cmd) {
 
 func TestCosignWorkflow(t *testing.T) {
 	// found under test-fixtures/registry/Makefile
-	coverageImage := "localhost:5000/attest:latest"
+	img := "localhost:5000/attest:latest"
 	attestationFile := "attestation.json"
 	tests := []struct {
 		name             string
@@ -59,7 +59,7 @@ func TestCosignWorkflow(t *testing.T) {
 				"attest",
 				"-o",
 				"json",
-				coverageImage,
+				img,
 			},
 			// cosign attach attestation --attestation image_latest_sbom_attestation.json caphill4/attest:latest
 			cosignAttachArgs: []string{
@@ -67,14 +67,14 @@ func TestCosignWorkflow(t *testing.T) {
 				"attestation",
 				"--attestation",
 				attestationFile,
-				coverageImage,
+				img,
 			},
 			// cosign verify-attestation -key cosign.pub caphill4/attest:latest
 			cosignVerifyArgs: []string{
 				"verify-attestation",
 				"-key",
 				"cosign.pub",
-				coverageImage,
+				img,
 			},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,

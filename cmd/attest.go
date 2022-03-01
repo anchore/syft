@@ -185,7 +185,16 @@ func attestationExecWorker(sourceInput source.Input, output format.Option, predi
 	go func() {
 		defer close(errs)
 
-		s, src, err := generateSBOM(sourceInput, source.NewFromRegistry, errs)
+		src, cleanup, err := source.NewFromRegistry(sourceInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		if cleanup != nil {
+			defer cleanup()
+		}
+		if err != nil {
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", sourceInput.UserInput, err)
+			return
+		}
+
+		s, err := generateSBOM(src, errs)
 		if err != nil {
 			errs <- err
 			return
@@ -221,13 +230,21 @@ func assertPredicateType(output format.Option) string {
 }
 
 func findValidDigest(digests []string) string {
+	// since we are only using the OCI repo provider for this source we are safe that this is only 1 value
+	// see https://github.com/anchore/stereoscope/blob/25ebd49a842b5ac0a20c2e2b4b81335b64ad248c/pkg/image/oci/registry_provider.go#L57-L63
 	split := strings.Split(digests[0], "sha256:")
 	return split[1]
 }
 
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
-	if len(src.Image.Metadata.RepoDigests) < 1 {
-		return fmt.Errorf("cannot generate attestation where no repo digests have length of 0; make sure you're passing a OCI registry source for the attest command")
+
+	switch len(src.Image.Metadata.RepoDigests) {
+	case 0:
+		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
+	case 1:
+	default:
+		return fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
+
 	}
 
 	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
@@ -235,8 +252,7 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
 		Type:      predicateType,
-		Digest:    findValidDigest(src.Image.Metadata.RepoDigests), // since we are only using the OCI repo provider for this source we are safe that this is only 1 value
-		// see https://github.com/anchore/stereoscope/blob/25ebd49a842b5ac0a20c2e2b4b81335b64ad248c/pkg/image/oci/registry_provider.go#L57-L63
+		Digest:    findValidDigest(src.Image.Metadata.RepoDigests),
 	})
 	if err != nil {
 		return err

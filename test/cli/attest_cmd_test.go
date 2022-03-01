@@ -6,7 +6,7 @@ import (
 )
 
 func TestAttestCmd(t *testing.T) {
-	coverageImage := "registry:" + "anchore/syft:latest"
+	img := "registry:busybox:latest"
 	tests := []struct {
 		name       string
 		args       []string
@@ -26,19 +26,17 @@ func TestAttestCmd(t *testing.T) {
 		},
 		{
 			name: "can encode syft.json as the predicate given a password",
-			args: []string{"attest", "-o", "json", coverageImage},
+			args: []string{"attest", "-o", "json", img},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
-				// assertVerifyAttestation(coverageImage), Follow up on this assertion with verify blog or ephemperal registry
 			},
 			pw: "test",
 		},
 		{
 			name: "can encode syft.json as the predicate given a blank password",
-			args: []string{"attest", "-o", "json", coverageImage},
+			args: []string{"attest", "-o", "json", img},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
-				// assertVerifyAttestation(coverageImage), Follow up on this assertion with verify blog or ephemperal registry
 			},
 			pw: "",
 		},

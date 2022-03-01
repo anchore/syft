@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/anchore/stereoscope"
-	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
@@ -254,20 +253,10 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-type sourceGenerator func(source.Input, *image.RegistryOptions, []string) (*source.Source, func(), error)
-
-func generateSBOM(si source.Input, srcGen sourceGenerator, errs chan error) (*sbom.SBOM, *source.Source, error) {
+func generateSBOM(src *source.Source, errs chan error) (*sbom.SBOM, error) {
 	tasks, err := tasks()
 	if err != nil {
-		return nil, nil, err
-	}
-
-	src, cleanup, err := srcGen(si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
-	}
-	if cleanup != nil {
-		defer cleanup()
+		return nil, err
 	}
 
 	s := sbom.SBOM{
@@ -281,7 +270,7 @@ func generateSBOM(si source.Input, srcGen sourceGenerator, errs chan error) (*sb
 
 	buildRelationships(&s, src, tasks, errs)
 
-	return &s, src, nil
+	return &s, nil
 }
 
 func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs chan error) {
@@ -299,7 +288,17 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		s, src, err := generateSBOM(si, source.New, errs)
+
+		src, cleanup, err := source.New(si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		if cleanup != nil {
+			defer cleanup()
+		}
+		if err != nil {
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
+			return
+		}
+
+		s, err := generateSBOM(src, errs)
 		if err != nil {
 			errs <- err
 			return
