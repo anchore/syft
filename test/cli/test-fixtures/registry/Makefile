@@ -17,6 +17,7 @@ start:
 				--privileged \
 				-p 127.0.0.1:2222:5000 \
 				registry:2.8
+
 .PHONY: push
 push:
 	docker push 127.0.0.1:2222/attest:latest
