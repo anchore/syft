@@ -131,9 +131,6 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Ignore any source hint. See if this could be a Docker image.
-	imagePullSource := image.DetermineImagePullSource(userInput)
-
 	if parsedScheme != source.ImageScheme {
 		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", parsedScheme, userInput)
 	}
