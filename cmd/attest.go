@@ -131,6 +131,9 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Ignore any source hint. See if this could be a Docker image.
+	imagePullSource := image.DetermineImagePullSource(userInput)
+
 	if parsedScheme != source.ImageScheme {
 		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", parsedScheme, userInput)
 	}
@@ -175,7 +178,7 @@ func attestationExecWorker(userInput string, output format.Option, predicateType
 	go func() {
 		defer close(errs)
 
-		s, src, err := generateSBOM(userInput, errs)
+		s, src, err := generateSBOM(userInput, source.NewFromRegistry, errs)
 		if err != nil {
 			errs <- err
 			return

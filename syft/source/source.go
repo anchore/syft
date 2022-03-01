@@ -35,6 +35,26 @@ type Source struct {
 
 type sourceDetector func(string) (image.Source, string, error)
 
+func NewFromRegistry(userInput string, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+	fs := afero.NewOsFs()
+	parsedScheme, imageSource, location, err := DetectScheme(fs, image.DetectSource, userInput)
+	if err != nil {
+		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
+	}
+
+	if parsedScheme != ImageScheme {
+		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q; attest requires an ImageScheme", userInput)
+	}
+
+	if imageSource == image.DockerDaemonSource {
+		imageSource = image.OciRegistrySource
+	}
+
+	source, cleanupFn, err := generateImageSource(userInput, location, imageSource, registryOptions)
+
+	return source, cleanupFn, err
+}
+
 // New produces a Source based on userInput like dir: or image:tag
 func New(userInput string, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
 	fs := afero.NewOsFs()

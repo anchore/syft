@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
@@ -249,13 +250,15 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-func generateSBOM(userInput string, errs chan error) (*sbom.SBOM, *source.Source, error) {
+type sourceGenerator func(string, *image.RegistryOptions, []string) (*source.Source, func(), error)
+
+func generateSBOM(userInput string, srcGen sourceGenerator, errs chan error) (*sbom.SBOM, *source.Source, error) {
 	tasks, err := tasks()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+	src, cleanup, err := srcGen(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 	}
@@ -292,7 +295,7 @@ func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		s, src, err := generateSBOM(userInput, errs)
+		s, src, err := generateSBOM(userInput, source.New, errs)
 		if err != nil {
 			errs <- err
 			return
