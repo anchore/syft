@@ -33,40 +33,58 @@ type Source struct {
 	Exclusions        []string
 }
 
+// SourceInput is an object that captures the detected user input regarding
+// source location, scheme, and provider type.
+type SourceInput struct {
+	UserInput      string
+	ParsedScheme   Scheme
+	ParsedSource   image.Source
+	ParsedLocation string
+}
+
+func NewSourceInput(userInput string) (*SourceInput, error) {
+	fs := afero.NewOsFs()
+	parsedScheme, parsedSource, parsedLocation, err := DetectScheme(fs, image.DetectSource, userInput)
+	if err != nil {
+		return nil, err
+	}
+
+	// collect user input for downstream consumption
+	return &SourceInput{
+		userInput,
+		parsedScheme,
+		parsedSource,
+		parsedLocation,
+	}, nil
+}
+
 type sourceDetector func(string) (image.Source, string, error)
 
-func NewFromRegistry(userInput string, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
-	fs := afero.NewOsFs()
-	parsedScheme, imageSource, location, err := DetectScheme(fs, image.DetectSource, userInput)
-	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
-	}
-
-	if parsedScheme != ImageScheme {
-		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q; attest requires an ImageScheme", userInput)
-	}
-
+func NewFromRegistry(sourceInput *SourceInput, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+	// if the original detection was from a local daemon we want to short circuit
+	// that and generate the image source from the registry instead
+	imageSource := sourceInput.ParsedSource
 	if imageSource == image.DockerDaemonSource || imageSource == image.PodmanDaemonSource {
 		imageSource = image.OciRegistrySource
 	}
 
-	source, cleanupFn, err := generateImageSource(userInput, location, imageSource, registryOptions)
+	source, cleanupFn, err := generateImageSource(sourceInput.UserInput, sourceInput.ParsedLocation, imageSource, registryOptions)
 
 	return source, cleanupFn, err
 }
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(userInput string, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+func New(sourceInput *SourceInput, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+	var err error
 	fs := afero.NewOsFs()
-	parsedScheme, imageSource, location, err := DetectScheme(fs, image.DetectSource, userInput)
-	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
-	}
-
 	source := &Source{}
 	cleanupFn := func() {}
+	location := sourceInput.ParsedLocation
+	userInput := sourceInput.UserInput
+	imageSource := sourceInput.ParsedSource
+	scheme := sourceInput.ParsedScheme
 
-	switch parsedScheme {
+	switch scheme {
 	case FileScheme:
 		source, cleanupFn, err = generateFileSource(fs, location)
 	case DirectoryScheme:

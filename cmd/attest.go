@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/anchore/stereoscope"
-	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -27,7 +26,6 @@ import (
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -125,14 +123,13 @@ func selectPassFunc(keypath string) (cosign.PassFunc, error) {
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
 	userInput := args[0]
-	fs := afero.NewOsFs()
-	parsedScheme, _, _, err := source.DetectScheme(fs, image.DetectSource, userInput)
+	si, err := source.NewSourceInput(userInput)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not generate source input for attest command: %q", err)
 	}
 
-	if parsedScheme != source.ImageScheme {
-		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", parsedScheme, userInput)
+	if si.ParsedScheme != source.ImageScheme {
+		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.ParsedScheme, userInput)
 	}
 
 	if len(appConfig.Output) > 1 {
@@ -162,7 +159,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	defer sv.Close()
 
 	return eventLoop(
-		attestationExecWorker(userInput, output, predicateType, sv),
+		attestationExecWorker(si, output, predicateType, sv),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -170,12 +167,12 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(userInput string, output format.Option, predicateType string, sv *sign.SignerVerifier) <-chan error {
+func attestationExecWorker(sourceInput *source.SourceInput, output format.Option, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		s, src, err := generateSBOM(userInput, source.NewFromRegistry, errs)
+		s, src, err := generateSBOM(sourceInput, source.NewFromRegistry, errs)
 		if err != nil {
 			errs <- err
 			return

@@ -229,9 +229,13 @@ func packagesExec(_ *cobra.Command, args []string) error {
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
+	si, err := source.NewSourceInput(userInput)
+	if err != nil {
+		return fmt.Errorf("could not generate source input for attest command: %q", err)
+	}
 
 	return eventLoop(
-		packagesExecWorker(userInput, writer),
+		packagesExecWorker(si, writer),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -250,17 +254,17 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-type sourceGenerator func(string, *image.RegistryOptions, []string) (*source.Source, func(), error)
+type sourceGenerator func(*source.SourceInput, *image.RegistryOptions, []string) (*source.Source, func(), error)
 
-func generateSBOM(userInput string, srcGen sourceGenerator, errs chan error) (*sbom.SBOM, *source.Source, error) {
+func generateSBOM(si *source.SourceInput, srcGen sourceGenerator, errs chan error) (*sbom.SBOM, *source.Source, error) {
 	tasks, err := tasks()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	src, cleanup, err := srcGen(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+	src, cleanup, err := srcGen(si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
 	}
 	if cleanup != nil {
 		defer cleanup()
@@ -291,11 +295,11 @@ func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs cha
 	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 }
 
-func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
+func packagesExecWorker(si *source.SourceInput, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		s, src, err := generateSBOM(userInput, source.New, errs)
+		s, src, err := generateSBOM(si, source.New, errs)
 		if err != nil {
 			errs <- err
 			return
