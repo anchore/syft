@@ -19,7 +19,6 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/source"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
 	"github.com/pkg/profile"
@@ -134,7 +133,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	}
 
 	// if the original detection was from a local daemon we want to short circuit
-	// that and generate the image source from the registry instead
+	// that and attempt to generate the image source from a registry source instead
 	imageSource := si.ParsedSource
 	if imageSource == image.DockerDaemonSource || imageSource == image.PodmanDaemonSource {
 		si.ParsedSource = image.OciRegistrySource
@@ -215,10 +214,15 @@ func assertPredicateType(output format.Option) string {
 	}
 }
 
+// TODO: what to do when multiple exist?
+func findValidDigest(digests []string) string {
+	split := strings.Split(digests[0], "sha256:")
+	return split[1]
+}
+
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
-	h, err := v1.NewHash(src.Image.Metadata.ManifestDigest)
-	if err != nil {
-		return errors.Wrap(err, "could not hash manifest digest for image")
+	if len(src.Image.Metadata.RepoDigests) < 1 {
+		return fmt.Errorf("cannot generate attestation where no repo digests have length of 0")
 	}
 
 	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
@@ -226,7 +230,7 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
 		Type:      predicateType,
-		Digest:    h.Hex,
+		Digest:    findValidDigest(src.Image.Metadata.RepoDigests),
 	})
 	if err != nil {
 		return err
