@@ -6,7 +6,7 @@ stop:
 
 .PHONY: build
 build:
-	docker build -t localhost:5010/attest:latest .
+	docker build -t localhost:2222/attest:latest .
 
 .PHONY: start
 start:
@@ -15,8 +15,8 @@ start:
 				--name registry \
 				-it \
 				--privileged \
-				-p 5010:5000 \
+				-p 2222:5000 \
 				registry:2.8
 .PHONY: push
 push:
-	docker push localhost:5010/attest:latest
+	docker push localhost:2222/attest:latest
