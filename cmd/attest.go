@@ -216,7 +216,7 @@ func assertPredicateType(output format.Option) string {
 
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
 	if len(src.Image.Metadata.RepoDigests) < 1 {
-		return fmt.Errorf("cannot generate attestation where no repo digests have length of 0")
+		return fmt.Errorf("cannot generate attestation where no repo digests have length of 0; make sure you're passing a OCI registry source for the attest command")
 	}
 
 	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
