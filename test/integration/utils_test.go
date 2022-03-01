@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -16,15 +17,11 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	userInput := "docker-archive:" + tarPath
-	sourceInput, err := source.NewInput(userInput)
-	if err != nil {
-		t.Fatalf("unable to get source input: %+v", err)
-	}
-	theSource, cleanupSource, err := source.New(sourceInput, nil, nil)
+	sourceInput, err := source.NewInput(userInput, false)
+	require.NoError(t, err)
+	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
 	t.Cleanup(cleanupSource)
-	if err != nil {
-		t.Fatalf("unable to get source: %+v", err)
-	}
+	require.NoError(t, err)
 
 	// TODO: this would be better with functional options (after/during API refactor)
 	c := cataloger.DefaultConfig()
@@ -55,15 +52,11 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 
 func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 	userInput := "dir:" + dir
-	sourceInput, err := source.NewInput(userInput)
-	if err != nil {
-		t.Fatalf("unable to get source input: %+v", err)
-	}
-	theSource, cleanupSource, err := source.New(sourceInput, nil, nil)
+	sourceInput, err := source.NewInput(userInput, false)
+	require.NoError(t, err)
+	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
 	t.Cleanup(cleanupSource)
-	if err != nil {
-		t.Fatalf("unable to get source: %+v", err)
-	}
+	require.NoError(t, err)
 
 	// TODO: this would be better with functional options (after/during API refactor)
 	c := cataloger.DefaultConfig()

@@ -428,11 +428,9 @@ func TestDirectoryExclusions(t *testing.T) {
 	registryOpts := &image.RegistryOptions{}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			sourceInput, err := NewInput("dir:" + test.input)
-			if err != nil {
-				t.Errorf("could not create NewInput: %+v", err)
-			}
-			src, fn, err := New(sourceInput, registryOpts, test.exclusions)
+			sourceInput, err := NewInput("dir:"+test.input, false)
+			require.NoError(t, err)
+			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()
 
 			if test.err {
@@ -524,11 +522,9 @@ func TestImageExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
-			sourceInput, err := NewInput(archiveLocation)
-			if err != nil {
-				t.Errorf("could not create NewInput: %+v", err)
-			}
-			src, fn, err := New(sourceInput, registryOpts, test.exclusions)
+			sourceInput, err := NewInput(archiveLocation, false)
+			require.NoError(t, err)
+			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()
 
 			if err != nil {

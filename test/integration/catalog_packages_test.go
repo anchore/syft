@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/anchore/syft/syft/linux"
@@ -23,11 +24,9 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		userInput := "docker-archive:" + tarPath
-		sourceInput, err := source.NewInput(userInput)
-		if err != nil {
-			b.Fatalf("unable to get source input: %+v", err)
-		}
-		theSource, cleanupSource, err := source.New(sourceInput, nil, nil)
+		sourceInput, err := source.NewInput(userInput, false)
+		require.NoError(b, err)
+		theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
 		b.Cleanup(cleanupSource)
 		if err != nil {
 			b.Fatalf("unable to get source: %+v", err)
