@@ -229,7 +229,7 @@ func packagesExec(_ *cobra.Command, args []string) error {
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
-	si, err := source.NewInput(userInput, true)
+	si, err := source.ParseInput(userInput, true)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for attest command: %q", err)
 	}

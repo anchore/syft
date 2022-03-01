@@ -123,7 +123,7 @@ func selectPassFunc(keypath string) (cosign.PassFunc, error) {
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
 	userInput := args[0]
-	si, err := source.NewInput(userInput, false)
+	si, err := source.ParseInput(userInput, false)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for attest command: %q", err)
 	}

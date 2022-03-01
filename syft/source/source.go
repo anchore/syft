@@ -43,9 +43,9 @@ type Input struct {
 	autoDetectAvailableImageSources bool
 }
 
-// NewInput generates a source Input that can be used as an argument to generate a new source
+// ParseInput generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry.
-func NewInput(userInput string, detectAvailableImageSources bool) (*Input, error) {
+func ParseInput(userInput string, detectAvailableImageSources bool) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
