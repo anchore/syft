@@ -42,6 +42,8 @@ type Input struct {
 	ParsedLocation string
 }
 
+// NewInput generates a source Input that can be used as an argument to generate a new source
+// from specific providers incuding a registry.
 func NewInput(userInput string) (*Input, error) {
 	fs := afero.NewOsFs()
 	parsedScheme, parsedSource, parsedLocation, err := DetectScheme(fs, image.DetectSource, userInput)
