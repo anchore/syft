@@ -46,7 +46,7 @@ func NewFromRegistry(userInput string, registryOptions *image.RegistryOptions, e
 		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q; attest requires an ImageScheme", userInput)
 	}
 
-	if imageSource == image.DockerDaemonSource {
+	if imageSource == image.DockerDaemonSource || imageSource == image.PodmanDaemonSource {
 		imageSource = image.OciRegistrySource
 	}
 
