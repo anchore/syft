@@ -45,28 +45,6 @@ func TestNewFromImage(t *testing.T) {
 	})
 }
 
-func TestNewFromRegistry(t *testing.T) {
-	tests := []struct {
-		desc           string
-		input          string
-		expectedScheme Scheme
-		expectedErr    bool
-	}{
-		{
-			desc:           "registry-image-no-scheme",
-			input:          "wagoodman/dive:latest",
-			expectedScheme: ImageScheme,
-			expectedErr:    false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			// TODO
-		})
-	}
-}
-
 func TestNewFromDirectory(t *testing.T) {
 	testCases := []struct {
 		desc         string
