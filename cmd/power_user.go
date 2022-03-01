@@ -115,7 +115,7 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			return
 		}
 
-		si, err := source.NewSourceInput(userInput)
+		si, err := source.NewInput(userInput)
 		if err != nil {
 			errs <- err
 			return

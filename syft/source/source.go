@@ -33,16 +33,16 @@ type Source struct {
 	Exclusions        []string
 }
 
-// SourceInput is an object that captures the detected user input regarding
-// source location, scheme, and provider type.
-type SourceInput struct {
+// Input is an object that captures the detected user input regarding source location, scheme, and provider type.
+// It acts as a struct input for some source constructors.
+type Input struct {
 	UserInput      string
 	ParsedScheme   Scheme
 	ParsedSource   image.Source
 	ParsedLocation string
 }
 
-func NewSourceInput(userInput string) (*SourceInput, error) {
+func NewInput(userInput string) (*Input, error) {
 	fs := afero.NewOsFs()
 	parsedScheme, parsedSource, parsedLocation, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -50,7 +50,7 @@ func NewSourceInput(userInput string) (*SourceInput, error) {
 	}
 
 	// collect user input for downstream consumption
-	return &SourceInput{
+	return &Input{
 		userInput,
 		parsedScheme,
 		parsedSource,
@@ -60,21 +60,12 @@ func NewSourceInput(userInput string) (*SourceInput, error) {
 
 type sourceDetector func(string) (image.Source, string, error)
 
-func NewFromRegistry(sourceInput *SourceInput, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
-	// if the original detection was from a local daemon we want to short circuit
-	// that and generate the image source from the registry instead
-	imageSource := sourceInput.ParsedSource
-	if imageSource == image.DockerDaemonSource || imageSource == image.PodmanDaemonSource {
-		imageSource = image.OciRegistrySource
-	}
-
-	source, cleanupFn, err := generateImageSource(sourceInput.UserInput, sourceInput.ParsedLocation, imageSource, registryOptions)
-
-	return source, cleanupFn, err
+func NewFromRegistry(sourceInput *Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+	return generateImageSource(sourceInput.UserInput, sourceInput.ParsedLocation, sourceInput.ParsedSource, registryOptions)
 }
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(sourceInput *SourceInput, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+func New(sourceInput *Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
 	var err error
 	fs := afero.NewOsFs()
 	source := &Source{}

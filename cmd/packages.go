@@ -229,7 +229,7 @@ func packagesExec(_ *cobra.Command, args []string) error {
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
-	si, err := source.NewSourceInput(userInput)
+	si, err := source.NewInput(userInput)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for attest command: %q", err)
 	}
@@ -254,9 +254,9 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-type sourceGenerator func(*source.SourceInput, *image.RegistryOptions, []string) (*source.Source, func(), error)
+type sourceGenerator func(*source.Input, *image.RegistryOptions, []string) (*source.Source, func(), error)
 
-func generateSBOM(si *source.SourceInput, srcGen sourceGenerator, errs chan error) (*sbom.SBOM, *source.Source, error) {
+func generateSBOM(si *source.Input, srcGen sourceGenerator, errs chan error) (*sbom.SBOM, *source.Source, error) {
 	tasks, err := tasks()
 	if err != nil {
 		return nil, nil, err
@@ -295,7 +295,7 @@ func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs cha
 	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 }
 
-func packagesExecWorker(si *source.SourceInput, writer sbom.Writer) <-chan error {
+func packagesExecWorker(si *source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)

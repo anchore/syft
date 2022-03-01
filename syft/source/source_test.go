@@ -45,6 +45,28 @@ func TestNewFromImage(t *testing.T) {
 	})
 }
 
+func TestNewFromRegistry(t *testing.T) {
+	tests := []struct {
+		desc           string
+		input          string
+		expectedScheme Scheme
+		expectedErr    bool
+	}{
+		{
+			desc:           "registry-image-no-scheme",
+			input:          "wagoodman/dive:latest",
+			expectedScheme: ImageScheme,
+			expectedErr:    false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			// TODO
+		})
+	}
+}
+
 func TestNewFromDirectory(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -428,9 +450,9 @@ func TestDirectoryExclusions(t *testing.T) {
 	registryOpts := &image.RegistryOptions{}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			sourceInput, err := NewSourceInput("dir:" + test.input)
+			sourceInput, err := NewInput("dir:" + test.input)
 			if err != nil {
-				t.Errorf("could not create NewSourceInput: %+v", err)
+				t.Errorf("could not create NewInput: %+v", err)
 			}
 			src, fn, err := New(sourceInput, registryOpts, test.exclusions)
 			defer fn()
@@ -524,9 +546,9 @@ func TestImageExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
-			sourceInput, err := NewSourceInput(archiveLocation)
+			sourceInput, err := NewInput(archiveLocation)
 			if err != nil {
-				t.Errorf("could not create NewSourceInput: %+v", err)
+				t.Errorf("could not create NewInput: %+v", err)
 			}
 			src, fn, err := New(sourceInput, registryOpts, test.exclusions)
 			defer fn()

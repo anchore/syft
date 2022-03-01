@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -123,13 +124,20 @@ func selectPassFunc(keypath string) (cosign.PassFunc, error) {
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
 	userInput := args[0]
-	si, err := source.NewSourceInput(userInput)
+	si, err := source.NewInput(userInput)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for attest command: %q", err)
 	}
 
 	if si.ParsedScheme != source.ImageScheme {
 		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.ParsedScheme, userInput)
+	}
+
+	// if the original detection was from a local daemon we want to short circuit
+	// that and generate the image source from the registry instead
+	imageSource := si.ParsedSource
+	if imageSource == image.DockerDaemonSource || imageSource == image.PodmanDaemonSource {
+		si.ParsedSource = image.OciRegistrySource
 	}
 
 	if len(appConfig.Output) > 1 {
@@ -167,7 +175,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(sourceInput *source.SourceInput, output format.Option, predicateType string, sv *sign.SignerVerifier) <-chan error {
+func attestationExecWorker(sourceInput *source.Input, output format.Option, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
