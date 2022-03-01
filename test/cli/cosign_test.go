@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,7 +92,21 @@ func TestCosignWorkflow(t *testing.T) {
 				cmd.Dir = fixturesPath
 				runAndShow(t, cmd)
 
-				time.Sleep(2 * time.Second) // TODO: sync so test starts when registry is ready
+				var done = make(chan struct{})
+				defer close(done)
+				for interval := range testRetryIntervals(done) {
+					resp, err := http.Get("http://127.0.0.1:5000/v2/")
+					if err != nil {
+						t.Logf("waiting for registry err=%+v", err)
+					} else {
+						if resp.StatusCode == http.StatusOK {
+							break
+						}
+						t.Logf("waiting for registry code=%+v", resp.StatusCode)
+					}
+
+					time.Sleep(interval)
+				}
 			},
 			cleanup: func() {
 				cwd, err := os.Getwd()
@@ -124,24 +139,32 @@ func TestCosignWorkflow(t *testing.T) {
 			for _, traitFn := range tt.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
-			os.WriteFile("attestation.json", []byte(stdout), 0666)
+			checkCmdFailure(t, stdout, stderr, cmd)
+			require.NoError(t, os.WriteFile(attestationFile, []byte(stdout), 0666))
 
 			// attach
 			cmd, stdout, stderr = runCosign(t, tt.env, tt.cosignAttachArgs...)
 			for _, traitFn := range tt.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
+			checkCmdFailure(t, stdout, stderr, cmd)
 
 			// attest
 			cmd, stdout, stderr = runCosign(t, tt.env, tt.cosignAttachArgs...)
 			for _, traitFn := range tt.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
-			if t.Failed() {
-				t.Log("STDOUT:\n", stdout)
-				t.Log("STDERR:\n", stderr)
-				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-			}
+			checkCmdFailure(t, stdout, stderr, cmd)
+
 		})
+	}
+}
+
+func checkCmdFailure(t testing.TB, stdout, stderr string, cmd *exec.Cmd) {
+	require.Falsef(t, t.Failed(), "%s %s trait assertion failed", cmd.Path, strings.Join(cmd.Args, " "))
+	if t.Failed() {
+		t.Log("STDOUT:\n", stdout)
+		t.Log("STDERR:\n", stderr)
+		t.Log("COMMAND:", strings.Join(cmd.Args, " "))
 	}
 }

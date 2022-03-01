@@ -52,11 +52,16 @@ func ParseInput(userInput string, detectAvailableImageSources bool) (*Input, err
 		return nil, err
 	}
 
-	if detectAvailableImageSources && source == image.UnknownSource {
-		if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
-			source = imagePullSource
+	if source == image.UnknownSource {
+		if detectAvailableImageSources {
+			if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
+				source = imagePullSource
+				location = userInput
+				scheme = ImageScheme
+			}
+		}
+		if location == "" {
 			location = userInput
-			scheme = ImageScheme
 		}
 	}
 
@@ -74,7 +79,9 @@ type sourceDetector func(string) (image.Source, string, error)
 
 func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
 	source, cleanupFn, err := generateImageSource(in, registryOptions)
-	source.Exclusions = exclusions
+	if source != nil {
+		source.Exclusions = exclusions
+	}
 	return source, cleanupFn, err
 }
 
