@@ -6,7 +6,7 @@ import (
 )
 
 func TestAttestCmd(t *testing.T) {
-	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+	coverageImage := "registry:" + "anchore/syft:latest"
 	tests := []struct {
 		name       string
 		args       []string
