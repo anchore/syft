@@ -139,7 +139,7 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 	for _, r := range relationships {
 		exists := isExpressiblePackageRelationship(r.Type)
 		if !exists {
-			log.Debugf("unable to convert relationship from CycloneDX 1.3 JSON, dropping: %+v", r)
+			log.Warnf("unable to convert relationship from CycloneDX 1.3 JSON, dropping: %+v", r)
 			continue
 		}
 

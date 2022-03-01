@@ -93,9 +93,6 @@ func encode(out map[string]string, value reflect.Value, prefix string, fn FieldN
 	typ := value.Type()
 
 	switch typ.Kind() {
-	// case reflect.Interface:
-	//	v := value.Elem()
-	//	out = append(out, encode(v, prefix, fn)...)
 	case reflect.Ptr:
 		if value.IsNil() {
 			return
