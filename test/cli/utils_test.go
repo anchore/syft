@@ -103,7 +103,6 @@ func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, 
 
 	stdout, stderr := runCommand(cmd, env)
 	return cmd, stdout, stderr
-
 }
 
 func getCosignCommand(t testing.TB, args ...string) *exec.Cmd {
