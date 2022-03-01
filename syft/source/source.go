@@ -37,9 +37,9 @@ type Source struct {
 // It acts as a struct input for some source constructors.
 type Input struct {
 	UserInput                       string
-	ParsedScheme                    Scheme
-	ParsedSource                    image.Source
-	ParsedLocation                  string
+	Scheme                          Scheme
+	ImageSource                     image.Source
+	Location                        string
 	autoDetectAvailableImageSources bool
 }
 
@@ -47,25 +47,25 @@ type Input struct {
 // from specific providers including a registry.
 func NewInput(userInput string, detectAvailableImageSources bool) (*Input, error) {
 	fs := afero.NewOsFs()
-	parsedScheme, parsedSource, parsedLocation, err := DetectScheme(fs, image.DetectSource, userInput)
+	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
 		return nil, err
 	}
 
-	if detectAvailableImageSources && parsedSource == image.UnknownSource {
+	if detectAvailableImageSources && source == image.UnknownSource {
 		if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
-			parsedSource = imagePullSource
-			parsedLocation = userInput
-			parsedScheme = ImageScheme
+			source = imagePullSource
+			location = userInput
+			scheme = ImageScheme
 		}
 	}
 
 	// collect user input for downstream consumption
 	return &Input{
 		UserInput:                       userInput,
-		ParsedScheme:                    parsedScheme,
-		ParsedSource:                    parsedSource,
-		ParsedLocation:                  parsedLocation,
+		Scheme:                          scheme,
+		ImageSource:                     source,
+		Location:                        location,
 		autoDetectAvailableImageSources: detectAvailableImageSources,
 	}, nil
 }
@@ -85,11 +85,11 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 	var source *Source
 	cleanupFn := func() {}
 
-	switch in.ParsedScheme {
+	switch in.Scheme {
 	case FileScheme:
-		source, cleanupFn, err = generateFileSource(fs, in.ParsedLocation)
+		source, cleanupFn, err = generateFileSource(fs, in.Location)
 	case DirectoryScheme:
-		source, cleanupFn, err = generateDirectorySource(fs, in.ParsedLocation)
+		source, cleanupFn, err = generateDirectorySource(fs, in.Location)
 	case ImageScheme:
 		source, cleanupFn, err = generateImageSource(in, registryOptions)
 	default:
@@ -106,10 +106,10 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Source, func(), error) {
 	img, cleanup, err := getImageWithRetryStrategy(in, registryOptions)
 	if err != nil || img == nil {
-		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.ParsedLocation, err)
+		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
 
-	s, err := NewFromImage(img, in.ParsedLocation)
+	s, err := NewFromImage(img, in.Location)
 	if err != nil {
 		return nil, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 	}
@@ -134,7 +134,7 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 		opts = append(opts, stereoscope.WithRegistryOptions(*registryOptions))
 	}
 
-	img, err := stereoscope.GetImageFromSource(ctx, in.ParsedLocation, in.ParsedSource, opts...)
+	img, err := stereoscope.GetImageFromSource(ctx, in.Location, in.ImageSource, opts...)
 	if err == nil {
 		// Success on the first try!
 		return img, stereoscope.Cleanup, nil
@@ -164,9 +164,9 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 	// We need to determine the image source again, such that this determination
 	// doesn't take scheme parsing into account.
 	if in.autoDetectAvailableImageSources {
-		in.ParsedSource = image.DetermineDefaultImagePullSource(in.UserInput)
+		in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
 	}
-	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ParsedSource, opts...)
+	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
 	if err != nil {
 		return nil, nil, err
 	}

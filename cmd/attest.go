@@ -128,17 +128,17 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		return fmt.Errorf("could not generate source input for attest command: %q", err)
 	}
 
-	if si.ParsedScheme != source.ImageScheme {
-		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.ParsedScheme, userInput)
+	if si.Scheme != source.ImageScheme {
+		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.Scheme, userInput)
 	}
 
 	// if the original detection was from a local daemon we want to short circuit
 	// that and attempt to generate the image source from a registry source instead
-	switch si.ParsedSource {
+	switch si.ImageSource {
 	case image.UnknownSource, image.OciRegistrySource:
-		si.ParsedSource = image.OciRegistrySource
+		si.ImageSource = image.OciRegistrySource
 	default:
-		return fmt.Errorf("attest command can only be used with image sources fetch directly from the registry, but discovered an image source of %q when given %q", si.ParsedSource, userInput)
+		return fmt.Errorf("attest command can only be used with image sources fetch directly from the registry, but discovered an image source of %q when given %q", si.ImageSource, userInput)
 	}
 
 	if len(appConfig.Output) > 1 {
