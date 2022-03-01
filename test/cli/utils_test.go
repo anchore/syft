@@ -95,6 +95,21 @@ func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, st
 	return cmd, stdout, stderr
 }
 
+func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
+	cmd := getCosignCommand(t, args...)
+	if env == nil {
+		env = make(map[string]string)
+	}
+
+	stdout, stderr := runCommand(cmd, env)
+	return cmd, stdout, stderr
+
+}
+
+func getCosignCommand(t testing.TB, args ...string) *exec.Cmd {
+	return exec.Command(filepath.Join(repoRoot(t), ".tmp/cosign"), args...)
+}
+
 func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
 	if env != nil {
 		cmd.Env = append(os.Environ(), envMapToSlice(env)...)
