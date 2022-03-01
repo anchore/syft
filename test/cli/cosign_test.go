@@ -91,7 +91,7 @@ func TestCosignWorkflow(t *testing.T) {
 				cmd.Dir = fixturesPath
 				runAndShow(t, cmd)
 
-				time.Sleep(time.Second) // TODO: sync so test starts when registry is ready
+				time.Sleep(2 * time.Second) // TODO: sync so test starts when registry is ready
 			},
 			cleanup: func() {
 				cwd, err := os.Getwd()
