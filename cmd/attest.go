@@ -131,7 +131,7 @@ func selectPassFunc(keypath string) (cosign.PassFunc, error) {
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
 	userInput := args[0]
-	si, err := source.ParseInput(userInput, false)
+	si, err := source.ParseInput(userInput, appConfig.Platform, false)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for attest command: %w", err)
 	}
@@ -303,6 +303,11 @@ func setAttestFlags(flags *pflag.FlagSet) {
 	flags.StringP(
 		"output", "o", formatAliases(syftjson.ID)[0],
 		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", formatAliases(attestFormats...)),
+	)
+
+	flags.StringP(
+		"platform", "", "",
+		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')",
 	)
 }
 

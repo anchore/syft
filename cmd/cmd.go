@@ -72,8 +72,8 @@ func initCmdAliasBindings() {
 			panic(err)
 		}
 	case attestCmd:
-		// the --output option is an independently defined flag, but a shared config option
-		if err = bindSharedOutputConfigOption(attestCmd.Flags()); err != nil {
+		// the --output and --platform options are independently defined flags, but a shared config option
+		if err = bindSharedConfigOption(attestCmd.Flags()); err != nil {
 			panic(err)
 		}
 		// even though the root command or packages command is NOT being run, we still need default bindings
@@ -90,8 +90,12 @@ func initCmdAliasBindings() {
 	}
 }
 
-func bindSharedOutputConfigOption(flags *pflag.FlagSet) error {
+func bindSharedConfigOption(flags *pflag.FlagSet) error {
 	if err := viper.BindPFlag("output", flags.Lookup("output")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("platform", flags.Lookup("platform")); err != nil {
 		return err
 	}
 
