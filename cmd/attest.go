@@ -214,6 +214,11 @@ func assertPredicateType(output format.Option) string {
 	}
 }
 
+func findValidDigest(digests []string) string {
+	split := strings.Split(digests[0], "sha256:")
+	return split[1]
+}
+
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
 	if len(src.Image.Metadata.RepoDigests) < 1 {
 		return fmt.Errorf("cannot generate attestation where no repo digests have length of 0; make sure you're passing a OCI registry source for the attest command")
@@ -224,7 +229,7 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
 		Type:      predicateType,
-		Digest:    src.Image.Metadata.RepoDigests[0], // since we are only using the OCI repo provider for this source we are safe that this is only 1 value
+		Digest:    findValidDigest(src.Image.Metadata.RepoDigests), // since we are only using the OCI repo provider for this source we are safe that this is only 1 value
 		// see https://github.com/anchore/stereoscope/blob/25ebd49a842b5ac0a20c2e2b4b81335b64ad248c/pkg/image/oci/registry_provider.go#L57-L63
 	})
 	if err != nil {
