@@ -22,6 +22,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 
 	expectedMain := pkg.Package{
 		Name:     "github.com/anchore/syft",
+		Version:  "(devel)",
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
 		Locations: []source.Location{
@@ -94,7 +95,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			name: "buildGoPkgInfo parses a mod without packages",
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -107,7 +108,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			name: "buildGoPkgInfo parses a populated mod string and returns packages but no source info",
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -174,7 +175,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			name: "buildGoPkgInfo parses a populated mod string and returns packages when a replace directive exists",
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
