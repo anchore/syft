@@ -52,16 +52,22 @@ func ParseInput(userInput string, detectAvailableImageSources bool) (*Input, err
 		return nil, err
 	}
 
-	if source == image.UnknownSource && scheme == UnknownScheme {
-		if detectAvailableImageSources {
-			if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
-				source = imagePullSource
-				location = userInput
-				scheme = ImageScheme
+	if source == image.UnknownSource {
+		// only run for these two scheme
+		// only check on packages command, attest we automatically try to pull from userInput
+		switch scheme {
+		case ImageScheme, UnknownScheme:
+			if detectAvailableImageSources {
+				if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
+					scheme = ImageScheme
+					source = imagePullSource
+					location = userInput
+				}
 			}
-		}
-		if location == "" {
-			location = userInput
+			if location == "" {
+				location = userInput
+			}
+		default:
 		}
 	}
 
