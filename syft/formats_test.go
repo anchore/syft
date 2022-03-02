@@ -1,22 +1,21 @@
-package formats
+package syft
 
 import (
 	"io"
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/format"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIdentify(t *testing.T) {
 	tests := []struct {
 		fixture  string
-		expected format.Option
+		expected string
 	}{
 		{
 			fixture:  "test-fixtures/alpine-syft.json",
-			expected: format.JSONOption,
+			expected: string(JSONFormatOption),
 		},
 	}
 	for _, test := range tests {
@@ -25,10 +24,9 @@ func TestIdentify(t *testing.T) {
 			assert.NoError(t, err)
 			by, err := io.ReadAll(f)
 			assert.NoError(t, err)
-			frmt, err := Identify(by)
-			assert.NoError(t, err)
+			frmt := IdentifyFormat(by)
 			assert.NotNil(t, frmt)
-			assert.Equal(t, test.expected, frmt.Option)
+			assert.Equal(t, test.expected, frmt.Names()[0])
 		})
 	}
 }

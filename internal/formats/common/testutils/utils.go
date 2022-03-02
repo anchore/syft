@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -32,7 +31,7 @@ func FromSnapshot() ImageOption {
 	}
 }
 
-func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format format.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	// grab the latest image contents and persist
@@ -66,7 +65,7 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format format.Format,
 	}
 }
 
-func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format format.Format, sbom sbom.SBOM, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	err := format.Encode(&buffer, sbom)

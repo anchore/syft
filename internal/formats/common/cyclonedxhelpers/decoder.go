@@ -6,14 +6,13 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-func GetValidator(format cyclonedx.BOMFileFormat) format.Validator {
+func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 	return func(reader io.Reader) error {
 		bom := &cyclonedx.BOM{}
 		err := cyclonedx.NewBOMDecoder(reader, format).Decode(bom)
@@ -28,7 +27,7 @@ func GetValidator(format cyclonedx.BOMFileFormat) format.Validator {
 	}
 }
 
-func GetDecoder(format cyclonedx.BOMFileFormat) format.Decoder {
+func GetDecoder(format cyclonedx.BOMFileFormat) sbom.Decoder {
 	return func(reader io.Reader) (*sbom.SBOM, error) {
 		bom := &cyclonedx.BOM{}
 		err := cyclonedx.NewBOMDecoder(reader, format).Decode(bom)
