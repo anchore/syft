@@ -106,7 +106,6 @@ setup_snapshot_server() {
 
   echoerr "$(ls -1 $(snapshot_dir) | sed 's/^/  ▕―― /')"
 
-  # it takes some time for the server to be ready...
   check_snapshots_server_ready
 
   echoerr "snapshot server ready! (worker=${worker_pid})"
