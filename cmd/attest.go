@@ -237,14 +237,12 @@ func findValidDigest(digests []string) string {
 }
 
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
-
 	switch len(src.Image.Metadata.RepoDigests) {
 	case 0:
 		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
 	case 1:
 	default:
 		return fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
-
 	}
 
 	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
