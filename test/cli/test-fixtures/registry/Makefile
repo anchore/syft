@@ -1,4 +1,4 @@
-all: build start push
+all: build start
 
 .PHONY: stop
 stop:

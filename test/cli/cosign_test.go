@@ -107,6 +107,11 @@ func TestCosignWorkflow(t *testing.T) {
 
 					time.Sleep(interval)
 				}
+
+				cmd = exec.Command("make", "push")
+				cmd.Dir = fixturesPath
+				runAndShow(t, cmd)
+
 			},
 			cleanup: func() {
 				cwd, err := os.Getwd()
