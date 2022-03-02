@@ -22,6 +22,30 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
+func TestParseInput(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected Scheme
+	}{
+		{
+			name:     "ParseInput parses a file input",
+			input:    "test-fixtures/image-simple/file-1.txt",
+			expected: FileScheme,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			sourceInput, err := ParseInput(test.input, true)
+			if err != nil {
+				t.Errorf("failed to ParseInput")
+			}
+			assert.Equal(t, sourceInput.Scheme, test.expected)
+		})
+	}
+}
+
 func TestNewFromImageFails(t *testing.T) {
 	t.Run("no image given", func(t *testing.T) {
 		_, err := NewFromImage(nil, "")
