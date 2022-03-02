@@ -114,6 +114,7 @@ Sources can be explicitly provided with a scheme:
 
 ```
 docker:yourrepo/yourimage:tag          use images from the Docker daemon
+podman:yourrepo/yourimage:tag          use images from the Podman daemon
 docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
 oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
 oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
