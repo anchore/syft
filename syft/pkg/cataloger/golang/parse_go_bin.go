@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newGoBinaryPackage(dep *debug.Module, settings map[string]string, goVersion, architecture string, location source.Location) pkg.Package {
+func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
@@ -25,7 +25,7 @@ func newGoBinaryPackage(dep *debug.Module, settings map[string]string, goVersion
 			GoCompiledVersion: goVersion,
 			H1Digest:          dep.Sum,
 			Architecture:      architecture,
-			BuildSettings:     settings,
+			BuildSettings:     buildSettings,
 		},
 	}
 
@@ -58,15 +58,22 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo) []pkg.Packag
 		return pkgs
 	}
 
-	gbs := getBuildSettings(mod.Settings)
 	arch := getGOARCH(mod.Settings)
 	for _, dep := range mod.Deps {
 		if dep == nil {
 			continue
 		}
 
-		pkgs = append(pkgs, newGoBinaryPackage(dep, gbs, mod.GoVersion, arch, location))
+		pkgs = append(pkgs, newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil))
 	}
+
+	var empty debug.Module
+	if mod.Main == empty {
+		return pkgs
+	}
+	gbs := getBuildSettings(mod.Settings)
+	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
+	pkgs = append(pkgs, main)
 
 	return pkgs
 }

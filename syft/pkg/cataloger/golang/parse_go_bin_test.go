@@ -20,6 +20,26 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		"GOAMD64": "v1",
 	}
 
+	expectedMain := pkg.Package{
+		Name:     "github.com/anchore/syft",
+		Language: pkg.Go,
+		Type:     pkg.GoModulePkg,
+		Locations: []source.Location{
+			{
+				Coordinates: source.Coordinates{
+					RealPath:     "/a-path",
+					FileSystemID: "layer-id",
+				},
+			},
+		},
+		MetadataType: pkg.GolangBinMetadataType,
+		Metadata: pkg.GolangBinMetadata{
+			GoCompiledVersion: goCompiledVersion,
+			Architecture:      archDetails,
+			BuildSettings:     buildSettings,
+		},
+	}
+
 	tests := []struct {
 		name     string
 		mod      *debug.BuildInfo
@@ -29,6 +49,59 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			name:     "buildGoPkgInfo parses a blank mod string and returns no packages",
 			mod:      &debug.BuildInfo{},
 			expected: make([]pkg.Package, 0),
+		},
+		{
+			name: "buildGoPkgInfo parses a mod without main module",
+			mod: &debug.BuildInfo{
+				GoVersion: goCompiledVersion,
+				Settings: []debug.BuildSetting{
+					{Key: "GOARCH", Value: archDetails},
+					{Key: "GOOS", Value: "darwin"},
+					{Key: "GOAMD64", Value: "v1"},
+				},
+				Deps: []*debug.Module{
+					{
+						Path:    "github.com/adrg/xdg",
+						Version: "v0.2.1",
+						Sum:     "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+					},
+				},
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/adrg/xdg",
+					Version:  "v0.2.1",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: []source.Location{
+						{
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						},
+					},
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+					},
+				},
+			},
+		},
+		{
+			name: "buildGoPkgInfo parses a mod without packages",
+			mod: &debug.BuildInfo{
+				GoVersion: goCompiledVersion,
+				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Settings: []debug.BuildSetting{
+					{Key: "GOARCH", Value: archDetails},
+					{Key: "GOOS", Value: "darwin"},
+					{Key: "GOAMD64", Value: "v1"},
+				},
+			},
+			expected: []pkg.Package{expectedMain},
 		},
 		{
 			name: "buildGoPkgInfo parses a populated mod string and returns packages but no source info",
@@ -72,7 +145,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
-						BuildSettings:     buildSettings,
 					},
 				},
 				{
@@ -93,48 +165,22 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
-						BuildSettings:     buildSettings,
 					},
 				},
-				{
-					Name:     "github.com/anchore/client-go",
-					Version:  "v1.2.3",
-					Language: pkg.Go,
-					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{
-							Coordinates: source.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
-						},
-					},
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
-						GoCompiledVersion: goCompiledVersion,
-						Architecture:      archDetails,
-					},
-				},
+				expectedMain,
 			},
 		},
 		{
 			name: "buildGoPkgInfo parses a populated mod string and returns packages when a replace directive exists",
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main: debug.Module{
-					Path: "github.com/anchore/test",
-				},
+				Main:      debug.Module{Path: "github.com/anchore/syft"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
 					{Key: "GOAMD64", Value: "v1"},
 				},
 				Deps: []*debug.Module{
-					{
-						Path:    "golang.org/x/net",
-						Version: "v0.0.0-20211006190231-62292e806868",
-						Sum:     "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
-					},
 					{
 						Path:    "golang.org/x/sys",
 						Version: "v0.0.0-20211006194710-c8a6f5223071",
@@ -154,23 +200,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			},
 			expected: []pkg.Package{
 				{
-					Name:     "golang.org/x/net",
-					Version:  "v0.0.0-20211006190231-62292e806868",
-					Language: pkg.Go,
-					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{
-							Coordinates: source.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							}}},
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
-						GoCompiledVersion: goCompiledVersion,
-						Architecture:      archDetails,
-						H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
-						BuildSettings:     buildSettings}},
-				{
 					Name:     "golang.org/x/sys",
 					Version:  "v0.0.0-20211006194710-c8a6f5223071",
 					Language: pkg.Go,
@@ -185,8 +214,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
-						BuildSettings:     buildSettings}},
+						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE="}},
 				{
 					Name:     "golang.org/x/term",
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
@@ -204,8 +232,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
-						BuildSettings:     buildSettings}},
+						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI="},
+				},
+				expectedMain,
 			},
 		},
 	}
