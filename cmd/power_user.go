@@ -115,7 +115,13 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			return
 		}
 
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		si, err := source.ParseInput(userInput, true)
+		if err != nil {
+			errs <- err
+			return
+		}
+
+		src, cleanup, err := source.New(*si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 		if err != nil {
 			errs <- err
 			return

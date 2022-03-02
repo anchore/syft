@@ -33,28 +33,80 @@ type Source struct {
 	Exclusions        []string
 }
 
-type sourceDetector func(string) (image.Source, string, error)
+// Input is an object that captures the detected user input regarding source location, scheme, and provider type.
+// It acts as a struct input for some source constructors.
+type Input struct {
+	UserInput                       string
+	Scheme                          Scheme
+	ImageSource                     image.Source
+	Location                        string
+	autoDetectAvailableImageSources bool
+}
 
-// New produces a Source based on userInput like dir: or image:tag
-func New(userInput string, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+// ParseInput generates a source Input that can be used as an argument to generate a new source
+// from specific providers including a registry.
+func ParseInput(userInput string, detectAvailableImageSources bool) (*Input, error) {
 	fs := afero.NewOsFs()
-	parsedScheme, imageSource, location, err := DetectScheme(fs, image.DetectSource, userInput)
+	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("unable to parse input=%q: %w", userInput, err)
+		return nil, err
 	}
 
-	source := &Source{}
+	if source == image.UnknownSource {
+		// only run for these two scheme
+		// only check on packages command, attest we automatically try to pull from userInput
+		switch scheme {
+		case ImageScheme, UnknownScheme:
+			if detectAvailableImageSources {
+				if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
+					scheme = ImageScheme
+					source = imagePullSource
+					location = userInput
+				}
+			}
+			if location == "" {
+				location = userInput
+			}
+		default:
+		}
+	}
+
+	// collect user input for downstream consumption
+	return &Input{
+		UserInput:                       userInput,
+		Scheme:                          scheme,
+		ImageSource:                     source,
+		Location:                        location,
+		autoDetectAvailableImageSources: detectAvailableImageSources,
+	}, nil
+}
+
+type sourceDetector func(string) (image.Source, string, error)
+
+func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+	source, cleanupFn, err := generateImageSource(in, registryOptions)
+	if source != nil {
+		source.Exclusions = exclusions
+	}
+	return source, cleanupFn, err
+}
+
+// New produces a Source based on userInput like dir: or image:tag
+func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+	var err error
+	fs := afero.NewOsFs()
+	var source *Source
 	cleanupFn := func() {}
 
-	switch parsedScheme {
+	switch in.Scheme {
 	case FileScheme:
-		source, cleanupFn, err = generateFileSource(fs, location)
+		source, cleanupFn, err = generateFileSource(fs, in.Location)
 	case DirectoryScheme:
-		source, cleanupFn, err = generateDirectorySource(fs, location)
+		source, cleanupFn, err = generateDirectorySource(fs, in.Location)
 	case ImageScheme:
-		source, cleanupFn, err = generateImageSource(userInput, location, imageSource, registryOptions)
+		source, cleanupFn, err = generateImageSource(in, registryOptions)
 	default:
-		err = fmt.Errorf("unable to process input for scanning: '%s'", userInput)
+		err = fmt.Errorf("unable to process input for scanning: %q", in.UserInput)
 	}
 
 	if err == nil {
@@ -64,15 +116,15 @@ func New(userInput string, registryOptions *image.RegistryOptions, exclusions []
 	return source, cleanupFn, err
 }
 
-func generateImageSource(userInput, location string, imageSource image.Source, registryOptions *image.RegistryOptions) (*Source, func(), error) {
-	img, cleanup, err := getImageWithRetryStrategy(userInput, location, imageSource, registryOptions)
+func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Source, func(), error) {
+	img, cleanup, err := getImageWithRetryStrategy(in, registryOptions)
 	if err != nil || img == nil {
-		return &Source{}, cleanup, fmt.Errorf("could not fetch image '%s': %w", location, err)
+		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
 
-	s, err := NewFromImage(img, location)
+	s, err := NewFromImage(img, in.Location)
 	if err != nil {
-		return &Source{}, cleanup, fmt.Errorf("could not populate source with image: %w", err)
+		return nil, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 	}
 
 	return &s, cleanup, nil
@@ -87,7 +139,7 @@ func parseScheme(userInput string) string {
 	return parts[0]
 }
 
-func getImageWithRetryStrategy(userInput, location string, imageSource image.Source, registryOptions *image.RegistryOptions) (*image.Image, func(), error) {
+func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions) (*image.Image, func(), error) {
 	ctx := context.TODO()
 
 	var opts []stereoscope.Option
@@ -95,13 +147,13 @@ func getImageWithRetryStrategy(userInput, location string, imageSource image.Sou
 		opts = append(opts, stereoscope.WithRegistryOptions(*registryOptions))
 	}
 
-	img, err := stereoscope.GetImageFromSource(ctx, location, imageSource, opts...)
+	img, err := stereoscope.GetImageFromSource(ctx, in.Location, in.ImageSource, opts...)
 	if err == nil {
 		// Success on the first try!
 		return img, stereoscope.Cleanup, nil
 	}
 
-	scheme := parseScheme(userInput)
+	scheme := parseScheme(in.UserInput)
 	if !(scheme == "docker" || scheme == "registry") {
 		// Image retrieval failed, and we shouldn't retry it. It's most likely that the
 		// user _did_ intend the parsed scheme, but there was a legitimate failure with
@@ -118,14 +170,16 @@ func getImageWithRetryStrategy(userInput, location string, imageSource image.Sou
 		"scheme %q specified, but it coincides with a common image name; re-examining user input %q"+
 			" without scheme parsing because image retrieval using scheme parsing was unsuccessful: %v",
 		scheme,
-		userInput,
+		in.UserInput,
 		err,
 	)
 
 	// We need to determine the image source again, such that this determination
 	// doesn't take scheme parsing into account.
-	imageSource = image.DetermineImagePullSource(userInput)
-	img, err = stereoscope.GetImageFromSource(ctx, userInput, imageSource, opts...)
+	if in.autoDetectAvailableImageSources {
+		in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
+	}
+	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -136,16 +190,16 @@ func getImageWithRetryStrategy(userInput, location string, imageSource image.Sou
 func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {
 	fileMeta, err := fs.Stat(location)
 	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
 	}
 
 	if !fileMeta.IsDir() {
-		return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
 	}
 
 	s, err := NewFromDirectory(location)
 	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
 	}
 
 	return &s, func() {}, nil
@@ -154,11 +208,11 @@ func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), err
 func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
 	fileMeta, err := fs.Stat(location)
 	if err != nil {
-		return &Source{}, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
 	}
 
 	if fileMeta.IsDir() {
-		return &Source{}, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
 	}
 
 	s, cleanupFn := NewFromFile(location)

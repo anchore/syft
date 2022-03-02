@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
@@ -95,6 +97,20 @@ func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, st
 	return cmd, stdout, stderr
 }
 
+func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
+	cmd := getCosignCommand(t, args...)
+	if env == nil {
+		env = make(map[string]string)
+	}
+
+	stdout, stderr := runCommand(cmd, env)
+	return cmd, stdout, stderr
+}
+
+func getCosignCommand(t testing.TB, args ...string) *exec.Cmd {
+	return exec.Command(filepath.Join(repoRoot(t), ".tmp/cosign"), args...)
+}
+
 func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
 	if env != nil {
 		cmd.Env = append(os.Environ(), envMapToSlice(env)...)
@@ -153,4 +169,41 @@ func repoRoot(t testing.TB) string {
 		t.Fatal("unable to get abs path to repo root:", err)
 	}
 	return absRepoRoot
+}
+
+func testRetryIntervals(done <-chan struct{}) <-chan time.Duration {
+	return exponentialBackoffDurations(250*time.Millisecond, 4*time.Second, 2, done)
+}
+
+func exponentialBackoffDurations(minDuration, maxDuration time.Duration, step float64, done <-chan struct{}) <-chan time.Duration {
+	sleepDurations := make(chan time.Duration)
+	go func() {
+		defer close(sleepDurations)
+	retryLoop:
+		for attempt := 0; ; attempt++ {
+			duration := exponentialBackoffDuration(minDuration, maxDuration, step, attempt)
+
+			select {
+			case sleepDurations <- duration:
+				break
+			case <-done:
+				break retryLoop
+			}
+
+			if duration == maxDuration {
+				break
+			}
+		}
+	}()
+	return sleepDurations
+}
+
+func exponentialBackoffDuration(minDuration, maxDuration time.Duration, step float64, attempt int) time.Duration {
+	duration := time.Duration(float64(minDuration) * math.Pow(step, float64(attempt)))
+	if duration < minDuration {
+		return minDuration
+	} else if duration > maxDuration {
+		return maxDuration
+	}
+	return duration
 }
