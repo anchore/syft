@@ -125,7 +125,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	userInput := args[0]
 	si, err := source.ParseInput(userInput, false)
 	if err != nil {
-		return fmt.Errorf("could not generate source input for attest command: %q", err)
+		return fmt.Errorf("could not generate source input for attest command: %w", err)
 	}
 
 	switch si.Scheme {

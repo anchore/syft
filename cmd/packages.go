@@ -231,7 +231,7 @@ func packagesExec(_ *cobra.Command, args []string) error {
 	userInput := args[0]
 	si, err := source.ParseInput(userInput, true)
 	if err != nil {
-		return fmt.Errorf("could not generate source input for attest command: %q", err)
+		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}
 
 	return eventLoop(
@@ -306,7 +306,7 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 		}
 
 		if s == nil {
-			panic("nil sbomb returned with no error")
+			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
 		}
 
 		if appConfig.Anchore.Host != "" {
