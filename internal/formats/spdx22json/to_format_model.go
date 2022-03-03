@@ -152,11 +152,17 @@ func toFiles(s sbom.SBOM) []model.File {
 func toFileChecksums(digests []file.Digest) (checksums []model.Checksum) {
 	for _, digest := range digests {
 		checksums = append(checksums, model.Checksum{
-			Algorithm:     digest.Algorithm,
+			Algorithm:     toChecksumAlgorithm(digest.Algorithm),
 			ChecksumValue: digest.Value,
 		})
 	}
 	return checksums
+}
+
+func toChecksumAlgorithm(algorithm string) string {
+	// basically, we need an uppercase version of our algorithm:
+	// https://github.com/spdx/spdx-spec/blob/development/v2.2.2/schemas/spdx-schema.json#L165
+	return strings.ToUpper(algorithm)
 }
 
 func toFileTypes(metadata *source.FileMetadata) (ty []string) {
