@@ -306,7 +306,7 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 		}
 
 		if s == nil {
-			errs <- fmt.Errorf("nil SBOM returned with no error for %q", si.UserInput)
+			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
 		}
 
 		if appConfig.Anchore.Host != "" {
