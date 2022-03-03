@@ -231,7 +231,7 @@ func packagesExec(_ *cobra.Command, args []string) error {
 	userInput := args[0]
 	si, err := source.ParseInput(userInput, true)
 	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %q", err)
+		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}
 
 	return eventLoop(
