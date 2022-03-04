@@ -26,22 +26,34 @@ func TestParseInput(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
+		platform string
 		expected Scheme
+		errFn    require.ErrorAssertionFunc
 	}{
 		{
 			name:     "ParseInput parses a file input",
 			input:    "test-fixtures/image-simple/file-1.txt",
 			expected: FileScheme,
 		},
+		{
+			name:     "errors out when using platform for non-image scheme",
+			input:    "test-fixtures/image-simple/file-1.txt",
+			platform: "arm64",
+			errFn:    require.Error,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			sourceInput, err := ParseInput(test.input, true)
-			if err != nil {
-				t.Errorf("failed to ParseInput")
+			if test.errFn == nil {
+				test.errFn = require.NoError
 			}
-			assert.Equal(t, sourceInput.Scheme, test.expected)
+			sourceInput, err := ParseInput(test.input, test.platform, true)
+			test.errFn(t, err)
+			if test.expected != "" {
+				require.NotNil(t, sourceInput)
+				assert.Equal(t, sourceInput.Scheme, test.expected)
+			}
 		})
 	}
 }
@@ -452,7 +464,7 @@ func TestDirectoryExclusions(t *testing.T) {
 	registryOpts := &image.RegistryOptions{}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			sourceInput, err := ParseInput("dir:"+test.input, false)
+			sourceInput, err := ParseInput("dir:"+test.input, "", false)
 			require.NoError(t, err)
 			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()
@@ -546,7 +558,7 @@ func TestImageExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
-			sourceInput, err := ParseInput(archiveLocation, false)
+			sourceInput, err := ParseInput(archiveLocation, "", false)
 			require.NoError(t, err)
 			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()

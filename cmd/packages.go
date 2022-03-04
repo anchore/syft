@@ -6,17 +6,15 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/anchore/syft/internal/formats/table"
-
-	"github.com/anchore/syft/syft"
-
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -112,6 +110,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"file to write the default report output to (default is STDOUT)",
 	)
 
+	flags.StringP(
+		"platform", "", "",
+		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')",
+	)
+
 	// Upload options //////////////////////////////////////////////////////////
 	flags.StringP(
 		"host", "H", "",
@@ -153,7 +156,7 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	if err := bindExclusivePackagesConfigOptions(flags); err != nil {
 		return err
 	}
-	if err := bindSharedOutputConfigOption(flags); err != nil {
+	if err := bindSharedConfigOption(flags); err != nil {
 		return err
 	}
 	return nil
@@ -232,7 +235,7 @@ func packagesExec(_ *cobra.Command, args []string) error {
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
-	si, err := source.ParseInput(userInput, true)
+	si, err := source.ParseInput(userInput, appConfig.Platform, true)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}

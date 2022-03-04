@@ -40,12 +40,13 @@ type Input struct {
 	Scheme                          Scheme
 	ImageSource                     image.Source
 	Location                        string
+	Platform                        string
 	autoDetectAvailableImageSources bool
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry.
-func ParseInput(userInput string, detectAvailableImageSources bool) (*Input, error) {
+func ParseInput(userInput string, platform string, detectAvailableImageSources bool) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -71,12 +72,17 @@ func ParseInput(userInput string, detectAvailableImageSources bool) (*Input, err
 		}
 	}
 
+	if scheme != ImageScheme && platform != "" {
+		return nil, fmt.Errorf("cannot specify a platform for a non-image source")
+	}
+
 	// collect user input for downstream consumption
 	return &Input{
 		UserInput:                       userInput,
 		Scheme:                          scheme,
 		ImageSource:                     source,
 		Location:                        location,
+		Platform:                        platform,
 		autoDetectAvailableImageSources: detectAvailableImageSources,
 	}, nil
 }
@@ -147,10 +153,19 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 		opts = append(opts, stereoscope.WithRegistryOptions(*registryOptions))
 	}
 
+	if in.Platform != "" {
+		opts = append(opts, stereoscope.WithPlatform(in.Platform))
+	}
+
 	img, err := stereoscope.GetImageFromSource(ctx, in.Location, in.ImageSource, opts...)
+	cleanup := func() {
+		if err := img.Cleanup(); err != nil {
+			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
+		}
+	}
 	if err == nil {
 		// Success on the first try!
-		return img, stereoscope.Cleanup, nil
+		return img, cleanup, nil
 	}
 
 	scheme := parseScheme(in.UserInput)
@@ -180,11 +195,12 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 		in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
 	}
 	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
-	if err != nil {
-		return nil, nil, err
+	cleanup = func() {
+		if err := img.Cleanup(); err != nil {
+			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
+		}
 	}
-
-	return img, stereoscope.Cleanup, nil
+	return img, cleanup, err
 }
 
 func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {

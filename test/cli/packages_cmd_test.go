@@ -184,6 +184,14 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertInOutput("search-indexed-archives: false"),
 			},
 		},
+		{
+			name: "platform-option-wired-up",
+			args: []string{"packages", "--platform", "arm64", "-o", "json", "registry:busybox:1.31"},
+			assertions: []traitAssertion{
+				assertInOutput("sha256:1ee006886991ad4689838d3a288e0dd3fd29b70e276622f16b67a8922831a853"), // linux/arm64 image digest
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {

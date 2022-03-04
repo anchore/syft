@@ -15,6 +15,9 @@ type ImageMetadata struct {
 	RawManifest    []byte          `json:"manifest"`
 	RawConfig      []byte          `json:"config"`
 	RepoDigests    []string        `json:"repoDigests"`
+	Architecture   string          `json:"architecture"`
+	Variant        string          `json:"architectureVariant,omitempty"`
+	OS             string          `json:"os"`
 }
 
 // LayerMetadata represents all static metadata that defines what a container image layer is.
@@ -42,6 +45,9 @@ func NewImageMetadata(img *image.Image, userInput string) ImageMetadata {
 		RawConfig:      img.Metadata.RawConfig,
 		RawManifest:    img.Metadata.RawManifest,
 		RepoDigests:    img.Metadata.RepoDigests,
+		Architecture:   img.Metadata.Architecture,
+		Variant:        img.Metadata.Variant,
+		OS:             img.Metadata.OS,
 	}
 
 	// populate image metadata
