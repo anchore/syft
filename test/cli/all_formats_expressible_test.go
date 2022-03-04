@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 
@@ -18,8 +19,9 @@ func TestAllFormatsExpressible(t *testing.T) {
 		},
 		assertSuccessfulReturnCode,
 	}
-
-	for _, o := range syft.FormatOptions() {
+	formats := syft.FormatIDs()
+	require.NotEmpty(t, formats)
+	for _, o := range formats {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {
 			cmd, stdout, stderr := runSyft(t, nil, "dir:./test-fixtures/image-pkg-coverage", "-o", string(o))
 			for _, traitFn := range commonAssertions {

@@ -6,11 +6,13 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func Format(names ...string) sbom.Format {
+const ID sbom.FormatID = "cyclonedx-1-json"
+
+func Format() sbom.Format {
 	return sbom.NewFormat(
+		ID,
 		encoder,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
-		append(names, "cyclonedx-json", "cyclone-json", "cyclonedx")...,
 	)
 }

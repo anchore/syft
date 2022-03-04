@@ -4,11 +4,13 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func Format(names ...string) sbom.Format {
+const ID sbom.FormatID = "syft-text"
+
+func Format() sbom.Format {
 	return sbom.NewFormat(
+		ID,
 		encoder,
 		nil,
 		nil,
-		append(names, "text")...,
 	)
 }

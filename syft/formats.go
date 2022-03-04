@@ -2,6 +2,7 @@ package syft
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/anchore/syft/internal/formats/cyclonedx13json"
 	"github.com/anchore/syft/internal/formats/cyclonedx13xml"
@@ -13,57 +14,68 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const (
-	JSONFormatOption          FormatOption = "json"
-	TextFormatOption          FormatOption = "text"
-	TableFormatOption         FormatOption = "table"
-	CycloneDxXMLFormatOption  FormatOption = "cyclonedx-xml"
-	CycloneDxJSONFormatOption FormatOption = "cyclonedx-json"
-	SPDXTagValueFormatOption  FormatOption = "spdx-tag-value"
-	SPDXJSONFormatOption      FormatOption = "spdx-json"
-)
-
 var formats []sbom.Format
 
 func init() {
 	formats = []sbom.Format{
-		syftjson.Format(string(JSONFormatOption)),
-		cyclonedx13xml.Format(string(CycloneDxXMLFormatOption)),
-		cyclonedx13json.Format(string(CycloneDxJSONFormatOption)),
-		spdx22tagvalue.Format(string(SPDXTagValueFormatOption)),
-		spdx22json.Format(string(SPDXJSONFormatOption)),
-		table.Format(string(TableFormatOption)),
-		text.Format(string(TextFormatOption)),
+		syftjson.Format(),
+		cyclonedx13xml.Format(),
+		cyclonedx13json.Format(),
+		spdx22tagvalue.Format(),
+		spdx22json.Format(),
+		table.Format(),
+		text.Format(),
 	}
 }
 
-type FormatOption string
-
-func FormatOptions() []FormatOption {
-	return []FormatOption{
-		JSONFormatOption,
-		TextFormatOption,
-		TableFormatOption,
-		CycloneDxXMLFormatOption,
-		CycloneDxJSONFormatOption,
-		SPDXTagValueFormatOption,
-		SPDXJSONFormatOption,
-	}
-}
-
-func FormatByOption(option FormatOption) sbom.Format {
-	return FormatByName(string(option))
-}
-
-func FormatByName(name string) sbom.Format {
+func FormatIDs() (ids []sbom.FormatID) {
 	for _, f := range formats {
-		for _, formatName := range f.Names() {
-			if formatName == name {
-				return f
-			}
+		ids = append(ids, f.ID())
+	}
+	return ids
+}
+
+func FormatByID(id sbom.FormatID) sbom.Format {
+	for _, f := range formats {
+		if f.ID() == id {
+			return f
 		}
 	}
 	return nil
+}
+
+func FormatByName(name string) sbom.Format {
+	cleanName := cleanFormatName(name)
+	for _, f := range formats {
+		if cleanFormatName(string(f.ID())) == cleanName {
+			return f
+		}
+	}
+
+	// handle any aliases for any supported format
+	switch cleanName {
+	case "json", "syftjson":
+		return FormatByID(syftjson.ID)
+	case "cyclonedx", "cyclone", "cyclonedxxml":
+		return FormatByID(cyclonedx13xml.ID)
+	case "cyclonedxjson":
+		return FormatByID(cyclonedx13json.ID)
+	case "spdx", "spdxtv", "spdxtagvalue":
+		return FormatByID(spdx22tagvalue.ID)
+	case "spdxjson":
+		return FormatByID(spdx22json.ID)
+	case "table":
+		return FormatByID(table.ID)
+	case "text":
+		return FormatByID(text.ID)
+	}
+
+	return nil
+}
+
+func cleanFormatName(name string) string {
+	r := strings.NewReplacer("-", "", "_", "")
+	return strings.ToLower(r.Replace(name))
 }
 
 func IdentifyFormat(by []byte) sbom.Format {

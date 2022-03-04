@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anchore/syft/internal/formats/table"
+
 	"github.com/anchore/syft/syft"
 
 	"github.com/anchore/syft/syft/sbom"
@@ -30,7 +32,7 @@ func makeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
 func parseOptions(outputs []string, defaultFile string) (out []sbom.WriterOption, errs error) {
 	// always should have one option -- we generally get the default of "table", but just make sure
 	if len(outputs) == 0 {
-		outputs = append(outputs, string(syft.TableFormatOption))
+		outputs = append(outputs, string(table.ID))
 	}
 
 	for _, name := range outputs {

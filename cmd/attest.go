@@ -9,6 +9,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anchore/syft/internal/formats/cyclonedx13json"
+	"github.com/anchore/syft/internal/formats/spdx22json"
+	"github.com/anchore/syft/internal/formats/syftjson"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
@@ -49,10 +53,10 @@ const (
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
-var attestFormats = []syft.FormatOption{
-	syft.JSONFormatOption,
-	syft.SPDXJSONFormatOption,
-	syft.CycloneDxJSONFormatOption,
+var attestFormats = []sbom.FormatID{
+	syftjson.ID,
+	spdx22json.ID,
+	cyclonedx13json.ID,
 }
 
 var (
@@ -156,7 +160,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	format := syft.FormatByName(appConfig.Output[0])
 	predicateType := formatPredicateType(format)
 	if predicateType == "" {
-		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", format.Names()[0], attestFormats)
+		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", format.ID(), attestFormats)
 	}
 
 	passFunc, err := selectPassFunc(appConfig.Attest.Key)
@@ -220,14 +224,13 @@ func attestationExecWorker(sourceInput source.Input, format sbom.Format, predica
 }
 
 func formatPredicateType(format sbom.Format) string {
-	formatNames := internal.NewStringSet(format.Names()...)
-	switch {
-	case formatNames.Contains(string(syft.SPDXJSONFormatOption)):
+	switch format.ID() {
+	case spdx22json.ID:
 		return in_toto.PredicateSPDX
-	case formatNames.Contains(string(syft.CycloneDxJSONFormatOption)):
+	case cyclonedx13json.ID:
 		// Tentative see https://github.com/in-toto/attestation/issues/82
 		return "https://cyclonedx.org/bom"
-	case formatNames.Contains(string(syft.JSONFormatOption)):
+	case syftjson.ID:
 		return "https://syft.dev/bom"
 	default:
 		return ""
@@ -298,7 +301,7 @@ func setAttestFlags(flags *pflag.FlagSet) {
 
 	// in-toto attestations only support JSON predicates, so not all SBOM formats that syft can output are supported
 	flags.StringP(
-		"output", "o", string(syft.JSONFormatOption),
+		"output", "o", string(syftjson.ID),
 		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", attestFormats),
 	)
 }

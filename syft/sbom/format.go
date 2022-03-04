@@ -11,15 +11,17 @@ var (
 	ErrValidationNotSupported = errors.New("validation not supported")
 )
 
+type FormatID string
+
 type Format interface {
-	Names() []string
+	ID() FormatID
 	Encode(io.Writer, SBOM) error
 	Decode(io.Reader) (*SBOM, error)
 	Validate(io.Reader) error
 }
 
 type format struct {
-	names     []string
+	id        FormatID
 	encoder   Encoder
 	decoder   Decoder
 	validator Validator
@@ -40,17 +42,17 @@ type Encoder func(io.Writer, SBOM) error
 // really represent a different format that also uses json)
 type Validator func(reader io.Reader) error
 
-func NewFormat(encoder Encoder, decoder Decoder, validator Validator, names ...string) Format {
+func NewFormat(id FormatID, encoder Encoder, decoder Decoder, validator Validator) Format {
 	return &format{
-		names:     names,
+		id:        id,
 		encoder:   encoder,
 		decoder:   decoder,
 		validator: validator,
 	}
 }
 
-func (f format) Names() []string {
-	return f.names
+func (f format) ID() FormatID {
+	return f.id
 }
 
 func (f format) Encode(output io.Writer, s SBOM) error {

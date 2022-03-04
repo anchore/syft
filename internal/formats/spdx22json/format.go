@@ -4,12 +4,14 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
+const ID sbom.FormatID = "spdx-2-json"
+
 // note: this format is LOSSY relative to the syftjson format
-func Format(names ...string) sbom.Format {
+func Format() sbom.Format {
 	return sbom.NewFormat(
+		ID,
 		encoder,
 		decoder,
 		validator,
-		append(names, "spdx-json", "spdx")...,
 	)
 }

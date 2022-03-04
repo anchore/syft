@@ -13,7 +13,7 @@ func dummyEncoder(io.Writer, SBOM) error {
 }
 
 func dummyFormat(name string) Format {
-	return NewFormat(dummyEncoder, nil, nil, name)
+	return NewFormat(FormatID(name), dummyEncoder, nil, nil)
 }
 
 type writerConfig struct {
@@ -27,7 +27,7 @@ func TestOutputWriter(t *testing.T) {
 	testName := func(options []WriterOption, err bool) string {
 		var out []string
 		for _, opt := range options {
-			out = append(out, string(opt.Format.Names()[0])+"="+opt.Path)
+			out = append(out, string(opt.Format.ID())+"="+opt.Path)
 		}
 		errs := ""
 		if err {
@@ -153,7 +153,7 @@ func TestOutputWriter(t *testing.T) {
 			for i, e := range test.expected {
 				w := mw.writers[i].(*streamWriter)
 
-				assert.Equal(t, string(w.format.Names()[0]), e.format)
+				assert.Equal(t, string(w.format.ID()), e.format)
 
 				if e.file != "" {
 					assert.FileExists(t, tmp+e.file)
