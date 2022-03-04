@@ -1,4 +1,4 @@
-name: golangci-lint
+name: "Linters"
 on:
   workflow_dispatch:
   push:
@@ -12,7 +12,7 @@ env:
 
 jobs:
   golangci:
-    name: "GolangCI Lint"
+    name: "GolangCI"
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-go@v2
@@ -24,4 +24,4 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.42.1
-          args: --tests=false --timeout=4m --config .golangci.yaml
+          args: --config .golangci.yaml
