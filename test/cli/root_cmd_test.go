@@ -122,8 +122,6 @@ func TestLogFile(t *testing.T) {
 	request := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
 
 	envLogFile := filepath.Join(os.TempDir(), "a-pretty-log-file.log")
-	t.Logf("log file path: %s", envLogFile)
-
 	tests := []struct {
 		name       string
 		args       []string
