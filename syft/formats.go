@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
+// these have been exported for the benefit of API users
 const (
 	JSONFormatID          = syftjson.ID
 	TextFormatID          = text.ID

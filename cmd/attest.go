@@ -160,7 +160,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	format := syft.FormatByName(appConfig.Output[0])
 	predicateType := formatPredicateType(format)
 	if predicateType == "" {
-		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", format.ID(), attestFormats)
+		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", formatAliases(format.ID()), formatAliases(attestFormats...))
 	}
 
 	passFunc, err := selectPassFunc(appConfig.Attest.Key)
@@ -301,8 +301,8 @@ func setAttestFlags(flags *pflag.FlagSet) {
 
 	// in-toto attestations only support JSON predicates, so not all SBOM formats that syft can output are supported
 	flags.StringP(
-		"output", "o", string(syftjson.ID),
-		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", attestFormats),
+		"output", "o", formatAliases(syftjson.ID)[0],
+		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", formatAliases(attestFormats...)),
 	)
 }
 
