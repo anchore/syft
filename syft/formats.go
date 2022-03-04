@@ -14,6 +14,16 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
+const (
+	JSONFormatID          = syftjson.ID
+	TextFormatID          = text.ID
+	TableFormatID         = table.ID
+	CycloneDxXMLFormatID  = cyclonedx13xml.ID
+	CycloneDxJSONFormatID = cyclonedx13json.ID
+	SPDXTagValueFormatID  = spdx22tagvalue.ID
+	SPDXJSONFormatID      = spdx22json.ID
+)
+
 var formats []sbom.Format
 
 func init() {
