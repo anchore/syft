@@ -23,6 +23,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gookit/color v1.4.2
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/in-toto/in-toto-golang v0.3.4-0.20211211042327-af1f9fb822bf
 	github.com/jinzhu/copier v0.3.2
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/archiver/v3 v3.5.1
@@ -34,6 +35,7 @@ require (
 	github.com/pkg/profile v1.5.0
 	github.com/scylladb/go-set v1.0.2
 	github.com/sergi/go-diff v1.2.0
+	github.com/sigstore/cosign v1.5.2
 	github.com/sigstore/sigstore v1.1.1-0.20220217212907-e48ca03a5ba7
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spdx/tools-golang v0.2.0
@@ -52,11 +54,6 @@ require (
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	gopkg.in/yaml.v2 v2.4.0
-)
-
-require (
-	github.com/in-toto/in-toto-golang v0.3.4-0.20211211042327-af1f9fb822bf
-	github.com/sigstore/cosign v1.5.2
 )
 
 require (

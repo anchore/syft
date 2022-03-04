@@ -8,7 +8,6 @@
 package golang
 
 import (
-	"bytes"
 	"debug/buildinfo"
 	"errors"
 	"io"
@@ -18,7 +17,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	macho "github.com/anchore/go-macholibre"
+	"github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -82,8 +81,7 @@ func openExe(file string) ([]io.ReaderAt, error) {
 		return nil, err
 	}
 
-	// adding macho multi-architecture support (both for 64bit and 32 bit)... this case is not in the stdlib yet
-	if bytes.HasPrefix(data, []byte("\xCA\xFE\xBA\xBE")) || bytes.HasPrefix(data, []byte("\xCA\xFE\xBA\xBF")) {
+	if macho.IsUniversalMachoBinary(f) {
 		var readers []io.ReaderAt
 		ers, err := macho.ExtractReaders(f)
 		if err != nil {
