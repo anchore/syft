@@ -1,25 +1,27 @@
 name: golangci-lint
- on:
-   # Triggers the workflow on push or pull request events but only for the main branch
-   push:
-     branches: 
+on:
+  workflow_dispatch
+  push:
+    branches:
        - main
-   pull_request:
-     branches:
-       - '*'
- permissions:
-   contents: read
-   pull-requests: read
- jobs:
-   golangci:
-     name: lint
-     runs-on: ubuntu-20.04
-     steps:
-       - uses: actions/setup-go@v2
-       - uses: actions/checkout@v2
-       - name: golangci-lint
-         uses: golangci/golangci-lint-action@v2
-         with:
-           version: v1.42.1
-           args: --timeout 9m
-           only-new-issues: true
+  pull_request:
+
+env:
+  GO_VERSION: "1.17.x"
+  GO_STABLE_VERSION: true
+
+jobs:
+  golangci:
+    name: "GolangCI Lint"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          stable: ${{ env.GO_STABLE_VERSION }}
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.42.1
+          args: --tests=false --timeout=4m --config .golangci.yaml
