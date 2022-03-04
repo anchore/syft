@@ -3,7 +3,7 @@ TEMPDIR = ./.tmp
 RESULTSDIR = test/results
 COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
-LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=4m --config .golangci.yaml
+# LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=4m --config .golangci.yaml
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
 VERSION=$(shell git describe --dirty --always --tags)
@@ -106,7 +106,6 @@ $(TEMPDIR):
 .PHONY: bootstrap-tools
 bootstrap-tools: $(TEMPDIR)
 	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.42.1
 	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.4.1
@@ -132,7 +131,9 @@ lint: ## Run gofmt + golangci lint checks
 	@test -z "$(shell gofmt -l -s .)"
 
 	# run all golangci-lint rules
-	$(LINTCMD)
+# 	NOTE(jonasagx): As of Mar-4th, 2022: golangci-lint runs on its own worklow, with go 1.17,
+# 	because incompatibilities with go 1.18
+#	$(LINTCMD) 
 
 	# go tooling does not play well with certain filename characters, ensure the common cases don't result in future "go get" failures
 	$(eval MALFORMED_FILENAMES := $(shell find . | grep -e ':'))
@@ -142,7 +143,7 @@ lint: ## Run gofmt + golangci lint checks
 lint-fix: ## Auto-format all source code + run golangci lint fixers
 	$(call title,Running lint fixers)
 	gofmt -w -s .
-	$(LINTCMD) --fix
+# 	$(LINTCMD) --fix
 	go mod tidy
 
 .PHONY: check-licenses
