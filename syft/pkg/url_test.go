@@ -26,6 +26,20 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
 		},
 		{
+			name: "pub",
+			pkg: Package{
+				Name:    "bad-name",
+				Version: "0.1.0",
+				Type:    PubPkg,
+				Metadata: PubMetadata{
+					Name:      "name",
+					Version:   "0.2.0",
+					HostedURL: "pub.hosted.org",
+				},
+			},
+			expected: "pkg:pub/name@0.2.0?hosted_url=pub.hosted.org",
+		},
+		{
 			name: "python",
 			pkg: Package{
 				Name:    "bad-name",

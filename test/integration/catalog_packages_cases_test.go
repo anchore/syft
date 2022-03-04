@@ -223,4 +223,17 @@ var commonTestCases = []testCase{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
 		},
 	},
+	{
+		name:        "find pubspec lock packages",
+		pkgType:     pkg.PubPkg,
+		pkgLanguage: pkg.Dart,
+		pkgInfo: map[string]string{
+			"ansicolor":  "1.1.1",
+			"archive":    "2.0.13",
+			"args":       "1.6.0",
+			"key_binder": "1.11.20",
+			"ale":        "3.3.0",
+			"analyzer":   "0.40.7",
+		},
+	},
 }

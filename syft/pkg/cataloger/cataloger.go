@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/dartlang"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -43,6 +44,7 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
+		dartlang.NewPubspecLockCataloger(),
 	}
 }
 
@@ -61,6 +63,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
+		dartlang.NewPubspecLockCataloger(),
 	}
 }
 
@@ -80,5 +83,6 @@ func AllCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
+		dartlang.NewPubspecLockCataloger(),
 	}
 }

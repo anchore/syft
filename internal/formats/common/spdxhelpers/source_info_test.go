@@ -126,6 +126,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from PHP composer manifest",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.PubPkg,
+			},
+			expected: []string{
+				"from pubspec manifest",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

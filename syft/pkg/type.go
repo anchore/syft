@@ -20,6 +20,7 @@ const (
 	GoModulePkg      Type = "go-module"
 	RustPkg          Type = "rust-crate"
 	KbPkg            Type = "msrc-kb"
+	PubPkg           Type = "pub"
 )
 
 // AllPkgs represents all supported package types
@@ -36,6 +37,7 @@ var AllPkgs = []Type{
 	GoModulePkg,
 	RustPkg,
 	KbPkg,
+	PubPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -61,6 +63,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGolang
 	case RustPkg:
 		return "cargo"
+	case PubPkg:
+		return packageurl.TypePub
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -98,6 +102,8 @@ func TypeByName(name string) Type {
 		return GemPkg
 	case "cargo", "crate":
 		return RustPkg
+	case packageurl.TypePub:
+		return PubPkg
 	default:
 		return UnknownPkg
 	}
