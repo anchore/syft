@@ -2,6 +2,11 @@ package integration
 
 import (
 	"bytes"
+	"github.com/anchore/syft/internal/formats/cyclonedx13json"
+	"github.com/anchore/syft/internal/formats/cyclonedx13xml"
+	"github.com/anchore/syft/internal/formats/syftjson"
+	"github.com/anchore/syft/syft/sbom"
+	"github.com/stretchr/testify/require"
 	"regexp"
 	"testing"
 
@@ -9,7 +14,6 @@ import (
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 
-	"github.com/anchore/syft/syft/format"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,16 +25,16 @@ import (
 // encode-decode-encode loop which will detect lossy behavior in both directions.
 func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	tests := []struct {
-		format   format.Option
-		redactor func(in []byte) []byte
-		json     bool
+		formatOption sbom.FormatID
+		redactor     func(in []byte) []byte
+		json         bool
 	}{
 		{
-			format: format.JSONOption,
-			json:   true,
+			formatOption: syftjson.ID,
+			json:         true,
 		},
 		{
-			format: format.CycloneDxJSONOption,
+			formatOption: cyclonedx13json.ID,
 			redactor: func(in []byte) []byte {
 				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
 				return in
@@ -38,7 +42,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			json: true,
 		},
 		{
-			format: format.CycloneDxXMLOption,
+			formatOption: cyclonedx13xml.ID,
 			redactor: func(in []byte) []byte {
 				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
 				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
@@ -47,18 +51,21 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(string(test.format), func(t *testing.T) {
+		t.Run(string(test.formatOption), func(t *testing.T) {
 
 			originalSBOM, _ := catalogFixtureImage(t, "image-pkg-coverage")
 
-			by1, err := syft.Encode(originalSBOM, test.format)
+			format := syft.FormatByID(test.formatOption)
+			require.NotNil(t, format)
+
+			by1, err := syft.Encode(originalSBOM, format)
 			assert.NoError(t, err)
 
 			newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
 			assert.NoError(t, err)
-			assert.Equal(t, test.format, newFormat)
+			assert.Equal(t, format.ID(), newFormat.ID())
 
-			by2, err := syft.Encode(*newSBOM, test.format)
+			by2, err := syft.Encode(*newSBOM, format)
 			assert.NoError(t, err)
 
 			if test.redactor != nil {

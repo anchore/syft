@@ -6,6 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/anchore/syft/internal/formats/table"
+
+	"github.com/anchore/syft/syft"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
@@ -15,7 +19,6 @@ import (
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -100,8 +103,8 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringArrayP(
-		"output", "o", []string{string(format.TableOption)},
-		fmt.Sprintf("report output format, options=%v", format.AllOptions),
+		"output", "o", formatAliases(table.ID),
+		fmt.Sprintf("report output format, options=%v", formatAliases(syft.FormatIDs()...)),
 	)
 
 	flags.StringP(

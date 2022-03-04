@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/output"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
@@ -74,7 +73,7 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	writer, err := output.MakeWriter(output.WriterOption{
+	writer, err := sbom.NewWriter(sbom.WriterOption{
 		Format: syftjson.Format(),
 		Path:   appConfig.File,
 	})

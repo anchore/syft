@@ -1,71 +1,28 @@
-package output
+package sbom
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path"
 
-	"github.com/anchore/syft/syft/format"
-	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/internal/log"
+
 	"github.com/hashicorp/go-multierror"
 )
 
-// streamWriter implements sbom.Writer for a given format and io.Writer, also providing a close function for cleanup
-type streamWriter struct {
-	format format.Format
-	out    io.Writer
-	close  func() error
-}
-
-// Write the provided SBOM to the data stream
-func (w *streamWriter) Write(s sbom.SBOM) error {
-	return w.format.Encode(w.out, s)
-}
-
-// Close any resources, such as open files
-func (w *streamWriter) Close() error {
-	if w.close != nil {
-		return w.close()
-	}
-	return nil
-}
-
 // multiWriter holds a list of child sbom.Writers to apply all Write and Close operations to
 type multiWriter struct {
-	writers []sbom.Writer
-}
-
-// Write writes the SBOM to all writers
-func (m *multiWriter) Write(s sbom.SBOM) (errs error) {
-	for _, w := range m.writers {
-		err := w.Write(s)
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		}
-	}
-	return errs
-}
-
-// Close closes all writers
-func (m *multiWriter) Close() (errs error) {
-	for _, w := range m.writers {
-		err := w.Close()
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		}
-	}
-	return errs
+	writers []Writer
 }
 
 // WriterOption Format and path strings used to create sbom.Writer
 type WriterOption struct {
-	Format format.Format
+	Format Format
 	Path   string
 }
 
-// MakeWriter create all report writers from input options; if a file is not specified, os.Stdout is used
-func MakeWriter(options ...WriterOption) (_ sbom.Writer, errs error) {
+// NewWriter create all report writers from input options; if a file is not specified, os.Stdout is used
+func NewWriter(options ...WriterOption) (Writer, error) {
 	if len(options) == 0 {
 		return nil, fmt.Errorf("no output options provided")
 	}
@@ -73,9 +30,9 @@ func MakeWriter(options ...WriterOption) (_ sbom.Writer, errs error) {
 	out := &multiWriter{}
 
 	defer func() {
-		if errs != nil {
-			// close any previously opened files; we can't really recover from any errors
-			_ = out.Close()
+		// close any previously opened files; we can't really recover from any errors
+		if err := out.Close(); err != nil {
+			log.Warnf("unable to close sbom writers: %+v", err)
 		}
 	}()
 
@@ -113,4 +70,26 @@ func MakeWriter(options ...WriterOption) (_ sbom.Writer, errs error) {
 	}
 
 	return out, nil
+}
+
+// Write writes the SBOM to all writers
+func (m *multiWriter) Write(s SBOM) (errs error) {
+	for _, w := range m.writers {
+		err := w.Write(s)
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		}
+	}
+	return errs
+}
+
+// Close closes all writers
+func (m *multiWriter) Close() (errs error) {
+	for _, w := range m.writers {
+		err := w.Close()
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		}
+	}
+	return errs
 }

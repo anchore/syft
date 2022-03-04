@@ -14,7 +14,7 @@ import (
 // integrity check
 var _ common.ParserFn = parseGemFileLockEntries
 
-var sectionsOfInterest = internal.NewStringSetFromSlice([]string{"GEM"})
+var sectionsOfInterest = internal.NewStringSet("GEM")
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
 func parseGemFileLockEntries(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {

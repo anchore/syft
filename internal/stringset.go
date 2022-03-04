@@ -6,12 +6,7 @@ import "sort"
 type StringSet map[string]struct{}
 
 // NewStringSet creates a new empty StringSet.
-func NewStringSet() StringSet {
-	return make(StringSet)
-}
-
-// NewStringSetFromSlice creates a StringSet populated with values from the given slice.
-func NewStringSetFromSlice(start []string) StringSet {
+func NewStringSet(start ...string) StringSet {
 	ret := make(StringSet)
 	for _, s := range start {
 		ret.Add(s)

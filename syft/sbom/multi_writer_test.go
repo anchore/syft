@@ -1,16 +1,20 @@
-package output
+package sbom
 
 import (
+	"io"
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/internal/formats/spdx22json"
-	"github.com/anchore/syft/internal/formats/syftjson"
-	"github.com/anchore/syft/internal/formats/table"
-	"github.com/anchore/syft/internal/formats/text"
-
 	"github.com/stretchr/testify/assert"
 )
+
+func dummyEncoder(io.Writer, SBOM) error {
+	return nil
+}
+
+func dummyFormat(name string) Format {
+	return NewFormat(FormatID(name), dummyEncoder, nil, nil)
+}
 
 type writerConfig struct {
 	format string
@@ -23,7 +27,7 @@ func TestOutputWriter(t *testing.T) {
 	testName := func(options []WriterOption, err bool) string {
 		var out []string
 		for _, opt := range options {
-			out = append(out, string(opt.Format.Option)+"="+opt.Path)
+			out = append(out, string(opt.Format.ID())+"="+opt.Path)
 		}
 		errs := ""
 		if err {
@@ -44,7 +48,7 @@ func TestOutputWriter(t *testing.T) {
 		{
 			outputs: []WriterOption{
 				{
-					Format: table.Format(),
+					Format: dummyFormat("table"),
 					Path:   "",
 				},
 			},
@@ -57,7 +61,7 @@ func TestOutputWriter(t *testing.T) {
 		{
 			outputs: []WriterOption{
 				{
-					Format: syftjson.Format(),
+					Format: dummyFormat("json"),
 				},
 			},
 			expected: []writerConfig{
@@ -69,7 +73,7 @@ func TestOutputWriter(t *testing.T) {
 		{
 			outputs: []WriterOption{
 				{
-					Format: syftjson.Format(),
+					Format: dummyFormat("json"),
 					Path:   "test-2.json",
 				},
 			},
@@ -83,11 +87,11 @@ func TestOutputWriter(t *testing.T) {
 		{
 			outputs: []WriterOption{
 				{
-					Format: syftjson.Format(),
+					Format: dummyFormat("json"),
 					Path:   "test-3/1.json",
 				},
 				{
-					Format: spdx22json.Format(),
+					Format: dummyFormat("spdx-json"),
 					Path:   "test-3/2.json",
 				},
 			},
@@ -105,10 +109,10 @@ func TestOutputWriter(t *testing.T) {
 		{
 			outputs: []WriterOption{
 				{
-					Format: text.Format(),
+					Format: dummyFormat("text"),
 				},
 				{
-					Format: spdx22json.Format(),
+					Format: dummyFormat("spdx-json"),
 					Path:   "test-4.json",
 				},
 			},
@@ -133,7 +137,7 @@ func TestOutputWriter(t *testing.T) {
 				}
 			}
 
-			writer, err := MakeWriter(outputs...)
+			writer, err := NewWriter(outputs...)
 
 			if test.err {
 				assert.Error(t, err)
@@ -149,7 +153,7 @@ func TestOutputWriter(t *testing.T) {
 			for i, e := range test.expected {
 				w := mw.writers[i].(*streamWriter)
 
-				assert.Equal(t, string(w.format.Option), e.format)
+				assert.Equal(t, string(w.format.ID()), e.format)
 
 				if e.file != "" {
 					assert.FileExists(t, tmp+e.file)

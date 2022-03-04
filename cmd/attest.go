@@ -9,6 +9,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anchore/syft/internal/formats/cyclonedx13json"
+	"github.com/anchore/syft/internal/formats/spdx22json"
+	"github.com/anchore/syft/internal/formats/syftjson"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
@@ -17,7 +21,7 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
@@ -49,7 +53,11 @@ const (
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
-var attestFormats = []format.Option{format.SPDXJSONOption, format.CycloneDxJSONOption, format.JSONOption}
+var attestFormats = []sbom.FormatID{
+	syftjson.ID,
+	spdx22json.ID,
+	cyclonedx13json.ID,
+}
 
 var (
 	attestCmd = &cobra.Command{
@@ -149,10 +157,10 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to generate attestation for more than one output")
 	}
 
-	output := format.ParseOption(appConfig.Output[0])
-	predicateType := assertPredicateType(output)
+	format := syft.FormatByName(appConfig.Output[0])
+	predicateType := formatPredicateType(format)
 	if predicateType == "" {
-		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", output, attestFormats)
+		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", formatAliases(format.ID()), formatAliases(attestFormats...))
 	}
 
 	passFunc, err := selectPassFunc(appConfig.Attest.Key)
@@ -172,7 +180,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	defer sv.Close()
 
 	return eventLoop(
-		attestationExecWorker(*si, output, predicateType, sv),
+		attestationExecWorker(*si, format, predicateType, sv),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -180,7 +188,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(sourceInput source.Input, output format.Option, predicateType string, sv *sign.SignerVerifier) <-chan error {
+func attestationExecWorker(sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -200,7 +208,7 @@ func attestationExecWorker(sourceInput source.Input, output format.Option, predi
 			return
 		}
 
-		sbomBytes, err := syft.Encode(*s, output)
+		sbomBytes, err := syft.Encode(*s, format)
 		if err != nil {
 			errs <- err
 			return
@@ -215,14 +223,14 @@ func attestationExecWorker(sourceInput source.Input, output format.Option, predi
 	return errs
 }
 
-func assertPredicateType(output format.Option) string {
-	switch output {
-	case format.SPDXJSONOption:
+func formatPredicateType(format sbom.Format) string {
+	switch format.ID() {
+	case spdx22json.ID:
 		return in_toto.PredicateSPDX
-	// Tentative see https://github.com/in-toto/attestation/issues/82
-	case format.CycloneDxJSONOption:
+	case cyclonedx13json.ID:
+		// Tentative see https://github.com/in-toto/attestation/issues/82
 		return "https://cyclonedx.org/bom"
-	case format.JSONOption:
+	case syftjson.ID:
 		return "https://syft.dev/bom"
 	default:
 		return ""
@@ -293,8 +301,8 @@ func setAttestFlags(flags *pflag.FlagSet) {
 
 	// in-toto attestations only support JSON predicates, so not all SBOM formats that syft can output are supported
 	flags.StringP(
-		"output", "o", string(format.JSONOption),
-		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", attestFormats),
+		"output", "o", formatAliases(syftjson.ID)[0],
+		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", formatAliases(attestFormats...)),
 	)
 }
 
