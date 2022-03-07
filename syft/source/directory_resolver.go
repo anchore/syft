@@ -147,7 +147,7 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 	}
 
 	// link cycles could cause a revisit --we should not allow this
-	if r.fileTree.HasPath(file.Path(path)) {
+	if r.hasBeenIndexed(path) {
 		return "", nil
 	}
 
@@ -191,6 +191,23 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 	default:
 		return "", fmt.Errorf("unsupported file type: %s", t)
 	}
+}
+
+func (r directoryResolver) hasBeenIndexed(p string) bool {
+	filePath := file.Path(p)
+	if !r.fileTree.HasPath(filePath) {
+		return false
+	}
+
+	exists, ref, err := r.fileTree.File(filePath)
+	if err != nil || !exists || ref == nil {
+		return false
+	}
+
+	// cases like "/" will be in the tree, but not been indexed yet (a special case). We want to capture
+	// these cases as new paths to index.
+	_, exists = r.metadata[ref.ID()]
+	return exists
 }
 
 func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error {

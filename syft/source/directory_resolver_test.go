@@ -848,3 +848,20 @@ func testWithTimeout(t *testing.T, timeout time.Duration, test func(*testing.T))
 	case <-done:
 	}
 }
+
+func Test_IncludeRootPathInIndex(t *testing.T) {
+	filterFn := func(path string, _ os.FileInfo) bool {
+		return path != "/"
+	}
+
+	resolver, err := newDirectoryResolver("/", filterFn)
+	require.NoError(t, err)
+
+	exists, ref, err := resolver.fileTree.File(file.Path("/"))
+	require.NoError(t, err)
+	require.NotNil(t, ref)
+	assert.True(t, exists)
+
+	_, exists = resolver.metadata[ref.ID()]
+	require.True(t, exists)
+}
