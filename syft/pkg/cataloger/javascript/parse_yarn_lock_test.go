@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseYarnLock(t *testing.T) {
@@ -76,15 +78,11 @@ func TestParseYarnLock(t *testing.T) {
 			t.Parallel()
 
 			fixture, err := os.Open(file)
-			if err != nil {
-				t.Fatalf("failed to open fixture: %+v", err)
-			}
+			require.NoError(t, err)
 
 			// TODO: no relationships are under test yet
 			actual, _, err := parseYarnLock(fixture.Name(), fixture)
-			if err != nil {
-				t.Fatalf("failed to parse yarn.lock: %+v", err)
-			}
+			require.NoError(t, err)
 
 			assertPkgsEqual(t, actual, expected)
 		})
@@ -97,11 +95,11 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 		expected string
 	}{
 		{
-			line:     "\"@babel/code-frame@npm:7.10.4\":",
+			line:     `"@babel/code-frame@npm:7.10.4":`,
 			expected: "@babel/code-frame",
 		},
 		{
-			line:     "\"@babel/code-frame@^7.0.0\", \"@babel/code-frame@^7.10.4\":",
+			line:     `"@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4":`,
 			expected: "@babel/code-frame",
 		},
 		{
@@ -121,31 +119,31 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 			expected: "c0n-fab_u.laTION",
 		},
 		{
-			line:     "\"newtest@workspace:.\":",
+			line:     `"newtest@workspace:.":`,
 			expected: "newtest",
 		},
 		{
-			line:     "\"color-convert@npm:^1.9.0\":",
+			line:     `"color-convert@npm:^1.9.0":`,
 			expected: "color-convert",
 		},
 		{
-			line:     "\"@npmcorp/code-frame@^7.1.0\", \"@npmcorp/code-frame@^7.10.4\":",
+			line:     `"@npmcorp/code-frame@^7.1.0", "@npmcorp/code-frame@^7.10.4":`,
 			expected: "@npmcorp/code-frame",
 		},
 		{
-			line:     "\"@npmcorp/code-frame@^7.2.3\":",
+			line:     `"@npmcorp/code-frame@^7.2.3":`,
 			expected: "@npmcorp/code-frame",
 		},
 		{
-			line:     "\"@s/odd-name@^7.1.2\":",
+			line:     `"@s/odd-name@^7.1.2":`,
 			expected: "@s/odd-name",
 		},
 		{
-			line:     "\"@/code-frame@^7.3.4\":",
+			line:     `"@/code-frame@^7.3.4":`,
 			expected: "",
 		},
 		{
-			line:     "\"code-frame\":",
+			line:     `"code-frame":`,
 			expected: "",
 		},
 	}
@@ -155,9 +153,7 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 		t.Run(test.expected, func(t *testing.T) {
 			t.Parallel()
 			actual := findPackageName(test.line)
-			if actual != test.expected {
-				t.Errorf("incorrectly parsed package name: want %s, got %s", test.expected, actual)
-			}
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -168,27 +164,27 @@ func TestParseYarnFindPackageVersions(t *testing.T) {
 		expected string
 	}{
 		{
-			line:     "  version \"7.10.4\"",
+			line:     `  version "7.10.4"`,
 			expected: "7.10.4",
 		},
 		{
-			line:     " version \"7.11.5\"",
+			line:     ` version "7.11.5"`,
 			expected: "7.11.5",
 		},
 		{
-			line:     "version \"7.12.6\"",
+			line:     `version "7.12.6"`,
 			expected: "",
 		},
 		{
-			line:     "  version \"0.0.0\"",
+			line:     `  version "0.0.0"`,
 			expected: "0.0.0",
 		},
 		{
-			line:     "  version \"2\" ",
+			line:     `  version "2" `,
 			expected: "2",
 		},
 		{
-			line:     "  version \"9.3\"",
+			line:     `  version "9.3"`,
 			expected: "9.3",
 		},
 		{
@@ -200,7 +196,7 @@ func TestParseYarnFindPackageVersions(t *testing.T) {
 			expected: "",
 		},
 		{
-			line:     "\"color-convert@npm:^1.9.0\":",
+			line:     `"color-convert@npm:^1.9.0":`,
 			expected: "",
 		},
 		{
@@ -246,9 +242,7 @@ func TestParseYarnFindPackageVersions(t *testing.T) {
 		t.Run(test.expected, func(t *testing.T) {
 			t.Parallel()
 			actual := findPackageVersion(test.line)
-			if actual != test.expected {
-				t.Errorf("incorrectly parsed package name: want %s, got %s", test.expected, actual)
-			}
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
