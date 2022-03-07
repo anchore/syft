@@ -16,7 +16,6 @@ require (
 	github.com/anchore/stereoscope v0.0.0-20220307154759-8a5a70c227d3
 	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar/v4 v4.0.2
-	github.com/docker/docker v20.10.12+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/facebookincubator/nvdtools v0.1.4
 	github.com/go-test/deep v1.0.8
@@ -56,7 +55,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/sigstore/cosign v1.5.2-0.20220302132634-73235ac02e4a
+require (
+	github.com/docker/docker v20.10.12+incompatible
+	github.com/sigstore/cosign v1.6.0
+)
 
 require (
 	bitbucket.org/creachadair/shell v0.0.6 // indirect
@@ -170,7 +172,7 @@ require (
 	github.com/hashicorp/go-version v1.4.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/vault/api v1.3.1 // indirect
-	github.com/hashicorp/vault/sdk v0.3.0 // indirect
+	github.com/hashicorp/vault/sdk v0.4.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20210703085342-c1f07ee84431 // indirect
@@ -214,7 +216,7 @@ require (
 	github.com/theupdateframework/go-tuf v0.0.0-20220211205608-f0c3294f63b9 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/urfave/cli v1.22.5 // indirect
-	github.com/xanzy/go-gitlab v0.55.1 // indirect
+	github.com/xanzy/go-gitlab v0.56.0 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	github.com/zeebo/errs v1.2.2 // indirect
@@ -248,6 +250,7 @@ require (
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
 	golang.org/x/tools v0.1.8 // indirect
 	google.golang.org/api v0.70.0 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
@@ -321,7 +324,6 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220218161850-94dd64e39d7c // indirect
 	google.golang.org/grpc v1.44.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

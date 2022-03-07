@@ -1350,8 +1350,9 @@ github.com/hashicorp/serf v0.9.6/go.mod h1:TXZNMjZQijwlDvp+r0b63xZ45H7JmCmgg4gpT
 github.com/hashicorp/vault/api v1.3.0/go.mod h1:EabNQLI0VWbWoGlA+oBLC8PXmR9D60aUVgQGvangFWQ=
 github.com/hashicorp/vault/api v1.3.1 h1:pkDkcgTh47PRjY1NEFeofqR4W/HkNUi9qIakESO2aRM=
 github.com/hashicorp/vault/api v1.3.1/go.mod h1:QeJoWxMFt+MsuWcYhmwRLwKEXrjwAFFywzhptMsTIUw=
-github.com/hashicorp/vault/sdk v0.3.0 h1:kR3dpxNkhh/wr6ycaJYqp6AFT/i2xaftbfnwZduTKEY=
 github.com/hashicorp/vault/sdk v0.3.0/go.mod h1:aZ3fNuL5VNydQk8GcLJ2TV8YCRVvyaakYkhZRoVuhj0=
+github.com/hashicorp/vault/sdk v0.4.1 h1:3SaHOJY687jY1fnB61PtL0cOkKItphrbLmux7T92HBo=
+github.com/hashicorp/vault/sdk v0.4.1/go.mod h1:aZ3fNuL5VNydQk8GcLJ2TV8YCRVvyaakYkhZRoVuhj0=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 h1:xixZ2bWeofWV68J+x6AzmKuVM/JWCQwkWm6GW/MUR6I=
 github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87/go.mod h1:CtWFDAQgb7dxtzFs4tWbplKIe2jSi3+5vKbgIO0SLnQ=
@@ -1941,8 +1942,8 @@ github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFR
 github.com/shurcooL/go v0.0.0-20180423040247-9e1955d9fb6e/go.mod h1:TDJrrUr11Vxrven61rcy3hJMUqaf/CLWYhHNPmT14Lk=
 github.com/shurcooL/go-goon v0.0.0-20170922171312-37c2f522c041/go.mod h1:N5mDOmsrJOB+vfqUK+7DmDyjhSLIIBnXo9lvZJj3MWQ=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
-github.com/sigstore/cosign v1.5.2-0.20220302132634-73235ac02e4a h1:4QV0ZqC9l82QRtDHdm3jYatY3VC70+a+kD9qbQ6Dn2Q=
-github.com/sigstore/cosign v1.5.2-0.20220302132634-73235ac02e4a/go.mod h1:54MEOuZykYBTeq/ds2M/3HIwuWDYJmgjX2GhvMJ8JNc=
+github.com/sigstore/cosign v1.6.0 h1:GBG+asPgsf2iawldL9uO8JDGbFO5yXuvaBTjdejsMzo=
+github.com/sigstore/cosign v1.6.0/go.mod h1:Ocd28z0Pwtd6+A8s/Vb4SbhwuWOqVdeYAW4yCGF4Ndg=
 github.com/sigstore/fulcio v0.1.2-0.20220114150912-86a2036f9bc7 h1:XE7A9lJ+wYhmUFBWYTaw3Ph943zHB4iBYd5R0SX0ZOA=
 github.com/sigstore/fulcio v0.1.2-0.20220114150912-86a2036f9bc7/go.mod h1:ANQivY/lfOp9hN92S813LEthkm/kit96hzeIF3SNoZA=
 github.com/sigstore/rekor v0.4.1-0.20220114213500-23f583409af3 h1:mbqXrm8YZXN/cJMGeBkgPnswtfrOxDE1f7QZdJ+POQE=
@@ -2146,8 +2147,8 @@ github.com/withfig/autocomplete-tools/packages/cobra v0.0.0-20220122124547-31d38
 github.com/x-cray/logrus-prefixed-formatter v0.5.2 h1:00txxvfBM9muc0jiLIEAkAcIMJzfthRT6usrui8uGmg=
 github.com/x-cray/logrus-prefixed-formatter v0.5.2/go.mod h1:2duySbKsL6M18s5GU7VPsoEPHyzalCE06qoARUCeBBE=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
-github.com/xanzy/go-gitlab v0.55.1 h1:IgX/DS9buV0AUz8fuJPQkdl0fQGfBiAsAHxpun8sNhg=
-github.com/xanzy/go-gitlab v0.55.1/go.mod h1:F0QEXwmqiBUxCgJm8fE9S+1veX4XC9Z4cfaAbqwk4YM=
+github.com/xanzy/go-gitlab v0.56.0 h1:/QHBvk3IKVNwvXB/UOWVb5J6VCN6r2bg9/WxjUbFY/0=
+github.com/xanzy/go-gitlab v0.56.0/go.mod h1:F0QEXwmqiBUxCgJm8fE9S+1veX4XC9Z4cfaAbqwk4YM=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
 github.com/xdg-go/scram v1.0.2/go.mod h1:1WAq6h33pAW+iRreB34OORO2Nf7qel3VV3fjBj+hCSs=
