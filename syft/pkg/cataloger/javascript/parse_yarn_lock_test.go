@@ -65,18 +65,30 @@ func TestParseYarnLock(t *testing.T) {
 		},
 	}
 
-	fixture, err := os.Open("test-fixtures/yarn/yarn.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
+	testFixtures := []string{
+		"test-fixtures/yarn/yarn.lock",
+		"test-fixtures/yarn-berry/yarn.lock",
 	}
 
-	// TODO: no relationships are under test yet
-	actual, _, err := parseYarnLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse yarn.lock: %+v", err)
-	}
+	for _, file := range testFixtures {
+		file := file
+		t.Run(file, func(t *testing.T) {
+			t.Parallel()
 
-	assertPkgsEqual(t, actual, expected)
+			fixture, err := os.Open(file)
+			if err != nil {
+				t.Fatalf("failed to open fixture: %+v", err)
+			}
+
+			// TODO: no relationships are under test yet
+			actual, _, err := parseYarnLock(fixture.Name(), fixture)
+			if err != nil {
+				t.Fatalf("failed to parse yarn.lock: %+v", err)
+			}
+
+			assertPkgsEqual(t, actual, expected)
+		})
+	}
 }
 
 func TestParseYarnFindPackageNames(t *testing.T) {
@@ -107,6 +119,34 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 		{
 			line:     "c0n-fab_u.laTION@^7.0.0",
 			expected: "c0n-fab_u.laTION",
+		},
+		{
+			line:     "\"newtest@workspace:.\":",
+			expected: "newtest",
+		},
+		{
+			line:     "\"color-convert@npm:^1.9.0\":",
+			expected: "color-convert",
+		},
+		{
+			line:     "\"@npmcorp/code-frame@^7.1.0\", \"@npmcorp/code-frame@^7.10.4\":",
+			expected: "@npmcorp/code-frame",
+		},
+		{
+			line:     "\"@npmcorp/code-frame@^7.2.3\":",
+			expected: "@npmcorp/code-frame",
+		},
+		{
+			line:     "\"@s/odd-name@^7.1.2\":",
+			expected: "@s/odd-name",
+		},
+		{
+			line:     "\"@/code-frame@^7.3.4\":",
+			expected: "",
+		},
+		{
+			line:     "\"code-frame\":",
+			expected: "",
 		},
 	}
 
@@ -162,6 +202,42 @@ func TestParseYarnFindPackageVersions(t *testing.T) {
 		{
 			line:     "\"color-convert@npm:^1.9.0\":",
 			expected: "",
+		},
+		{
+			line:     "  version: 1.9.3",
+			expected: "1.9.3",
+		},
+		{
+			line:     "  version: 2",
+			expected: "2",
+		},
+		{
+			line:     "  version: 9.3",
+			expected: "9.3",
+		},
+		{
+			line:     "ajv@^6.10.2, ajv@^6.5.5",
+			expected: "",
+		},
+		{
+			line:     "atob@^2.1.2:",
+			expected: "",
+		},
+		{
+			line:     "  version: 1.0.0-alpha+001",
+			expected: "1.0.0-alpha",
+		},
+		{
+			line:     "  version: 1.0.0-beta_test+exp.sha.5114f85",
+			expected: "1.0.0-beta_test",
+		},
+		{
+			line:     "  version: 1.0.0+21AF26D3-117B344092BD",
+			expected: "1.0.0",
+		},
+		{
+			line:     "  version: 0.0.0-use.local",
+			expected: "0.0.0-use.local",
 		},
 	}
 

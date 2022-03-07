@@ -16,18 +16,15 @@ import (
 var _ common.ParserFn = parseYarnLock
 
 var (
-	// composedNameExp matches the "composed" variant of yarn.lock entry names,
-	// where the name appears in quotes and is prefixed with @<some-namespace>.
-	// For example: "@babel/code-frame@^7.0.0"
-	composedNameExp = regexp.MustCompile(`^"(@[^@]+)`)
-
-	// simpleNameExp matches the "simple" variant of yarn.lock entry names, for packages with no namespace prefix.
-	// For example: aws-sdk@2.706.0
-	simpleNameExp = regexp.MustCompile(`^(\w[\w-_.]*)@`)
+	// packageNameExp matches the name of the dependency in yarn.lock
+	// including scope/namespace prefix if found.
+	// For example: "aws-sdk@2.706.0" returns "aws-sdk"
+	//              "@babel/code-frame@^7.0.0" returns "@babel/code-frame"
+	packageNameExp = regexp.MustCompile(`^"?((?:@\w[\w-_.]*\/)?\w[\w-_.]*)@`)
 
 	// versionExp matches the "version" line of a yarn.lock entry and captures the version value.
 	// For example: version "4.10.1" (...and the value "4.10.1" is captured)
-	versionExp = regexp.MustCompile(`^\W+version\W+"([\w-_.]+)"`)
+	versionExp = regexp.MustCompile(`^\W+version(?:\W+"|:\W+)([\w-_.]+)"?`)
 )
 
 const (
@@ -87,11 +84,7 @@ func parseYarnLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 }
 
 func findPackageName(line string) string {
-	if matches := composedNameExp.FindStringSubmatch(line); len(matches) >= 2 {
-		return matches[1]
-	}
-
-	if matches := simpleNameExp.FindStringSubmatch(line); len(matches) >= 2 {
+	if matches := packageNameExp.FindStringSubmatch(line); len(matches) >= 2 {
 		return matches[1]
 	}
 
