@@ -78,3 +78,101 @@ func TestParseYarnLock(t *testing.T) {
 
 	assertPkgsEqual(t, actual, expected)
 }
+
+func TestParseYarnFindPackageNames(t *testing.T) {
+	tests := []struct {
+		line     string
+		expected string
+	}{
+		{
+			line:     "\"@babel/code-frame@npm:7.10.4\":",
+			expected: "@babel/code-frame",
+		},
+		{
+			line:     "\"@babel/code-frame@^7.0.0\", \"@babel/code-frame@^7.10.4\":",
+			expected: "@babel/code-frame",
+		},
+		{
+			line:     "ajv@^6.10.2, ajv@^6.5.5:",
+			expected: "ajv",
+		},
+		{
+			line:     "aws-sdk@2.706.0:",
+			expected: "aws-sdk",
+		},
+		{
+			line:     "asn1.js@^4.0.0:",
+			expected: "asn1.js",
+		},
+		{
+			line:     "c0n-fab_u.laTION@^7.0.0",
+			expected: "c0n-fab_u.laTION",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.expected, func(t *testing.T) {
+			t.Parallel()
+			actual := findPackageName(test.line)
+			if actual != test.expected {
+				t.Errorf("incorrectly parsed package name: want %s, got %s", test.expected, actual)
+			}
+		})
+	}
+}
+
+func TestParseYarnFindPackageVersions(t *testing.T) {
+	tests := []struct {
+		line     string
+		expected string
+	}{
+		{
+			line:     "  version \"7.10.4\"",
+			expected: "7.10.4",
+		},
+		{
+			line:     " version \"7.11.5\"",
+			expected: "7.11.5",
+		},
+		{
+			line:     "version \"7.12.6\"",
+			expected: "",
+		},
+		{
+			line:     "  version \"0.0.0\"",
+			expected: "0.0.0",
+		},
+		{
+			line:     "  version \"2\" ",
+			expected: "2",
+		},
+		{
+			line:     "  version \"9.3\"",
+			expected: "9.3",
+		},
+		{
+			line:     "ajv@^6.10.2, ajv@^6.5.5",
+			expected: "",
+		},
+		{
+			line:     "atob@^2.1.2:",
+			expected: "",
+		},
+		{
+			line:     "\"color-convert@npm:^1.9.0\":",
+			expected: "",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.expected, func(t *testing.T) {
+			t.Parallel()
+			actual := findPackageVersion(test.line)
+			if actual != test.expected {
+				t.Errorf("incorrectly parsed package name: want %s, got %s", test.expected, actual)
+			}
+		})
+	}
+}
