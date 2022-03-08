@@ -20,13 +20,13 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	return DependencySnapshot{
 		Version: 0,
 		// The GitHub specifics must be filled out elsewhere, Syft does not have this information
-		Job: Job{
-			Name:    "",
-			ID:      "",
-			HTMLURL: "",
-		},
-		Sha: "",
-		Ref: "",
+		//Job: Job{
+		//	Name:    "",
+		//	ID:      "",
+		//	HTMLURL: "",
+		//},
+		//Sha: "",
+		//Ref: "",
 		Detector: DetectorMetadata{
 			Name:    internal.ApplicationName,
 			URL:     "https://github.com/anchore/syft", // TODO is there a good URL to use here?
@@ -113,9 +113,12 @@ func toDependencyMetadata(p pkg.Package) Metadata {
 		//}
 	}
 	if p.Metadata != nil {
-		out["syft:metadata:="] = string(p.MetadataType)
-		for k, v := range common.Encode(p.Metadata, "syft:metadata", TagFilter) {
-			out[k] = v
+		props := common.Encode(p.Metadata, "syft:metadata", TagFilter)
+		if len(props) > 0 {
+			out["syft:metadata:="] = string(p.MetadataType)
+			for k, v := range props {
+				out[k] = v
+			}
 		}
 	}
 	return out
