@@ -12,7 +12,7 @@ env:
 
 jobs:
   golangci:
-    name: "GolangCI"
+    name: "GolangCI parkour around go 1.18 🤦"
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-go@v2

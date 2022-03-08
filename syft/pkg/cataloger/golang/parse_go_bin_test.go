@@ -1,4 +1,3 @@
-//nolint
 package golang
 
 import (
@@ -48,9 +47,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			name:     "buildGoPkgInfo parses a blank mod string and returns no packages",
+			name:     "buildGoPkgInfo parses a nil mod",
+			mod:      nil,
+			expected: []pkg.Package(nil),
+		},
+		{
+			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
 			mod:      &debug.BuildInfo{},
-			expected: make([]pkg.Package, 0),
+			expected: []pkg.Package(nil),
 		},
 		{
 			name: "buildGoPkgInfo parses a mod without main module",

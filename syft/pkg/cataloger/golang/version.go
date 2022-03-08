@@ -17,7 +17,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/anchore/go-macholibre"
+	macho "github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -35,39 +35,44 @@ func scanFile(file string, info fs.FileInfo) []*debug.BuildInfo {
 		// Accept file symlinks only.
 		i, err := os.Stat(file)
 		if err != nil || !i.Mode().IsRegular() {
-			log.Debugf("golang version cataloger: %s: symlink", file)
+			log.Debugf("golang cataloger: %s: symlink", file)
 			return nil
 		}
 		info = i
 	}
 
 	if !isExe(file, info) {
-		log.Debugf("golang version cataloger: %s: not executable file\n", file)
+		log.Debugf("golang cataloger: %s: not executable file\n", file)
 		return nil
 	}
 
-	readers, err := openExe(file)
+	// NOTE: multiple readers are returned to cover universal binaries, which are files
+	// with more than one binary
+	readers, err := getReaders(file)
 	if err != nil {
-		log.Warnf("golang version cataloger: opening binary: %v", err)
+		log.Warnf("golang cataloger: opening binary: %v", err)
 		return nil
 	}
 
-	buildInfo := make([]*debug.BuildInfo, 0)
+	builds := make([]*debug.BuildInfo, 0)
 	for _, r := range readers {
 		bi, err := buildinfo.Read(r)
 		if err != nil {
 			if pathErr := (*os.PathError)(nil); !errors.As(err, &pathErr) {
-				log.Warnf("golang version cataloger:  %s: %v\n", file, err)
+				log.Warnf("golang cataloger: scanning file %s: %v\n", file, err)
 			}
 			return nil
 		}
-		buildInfo = append(buildInfo, bi)
+		builds = append(builds, bi)
 	}
-	return buildInfo
+
+	setArch(readers, builds)
+
+	return builds
 }
 
 // openExe opens file and returns it as io.ReaderAt.
-func openExe(file string) ([]io.ReaderAt, error) {
+func getReaders(file string) ([]io.ReaderAt, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -82,13 +87,14 @@ func openExe(file string) ([]io.ReaderAt, error) {
 	}
 
 	if macho.IsUniversalMachoBinary(f) {
-		var readers []io.ReaderAt
-		ers, err := macho.ExtractReaders(f)
+		machoReaders, err := macho.ExtractReaders(f)
 		if err != nil {
+			log.Debugf("extracting readers: %v", err)
 			return nil, err
 		}
 
-		for _, e := range ers {
+		var readers []io.ReaderAt
+		for _, e := range machoReaders {
 			readers = append(readers, e.Reader)
 		}
 
