@@ -1,0 +1,46 @@
+{
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2020-11-24T01:12:27Z",
+    "creators": [
+      {
+        "Person": "Nisha K (nishak@vmware.com)"
+      }
+    ]
+  },
+  "name": "golang-dist",
+  "documentNamespace": "https://swinslow.net/spdx-examples/example7/golang-dist",
+  "documentDescribes": [
+    "SPDXRef-golang-dist"
+  ],
+  "packages": [
+    {
+      "packageName": "go1.16.4.linux-amd64",
+      "SPDXID": "SPDXRef-golang-dist",
+      "downloadLocation": "https://golang.org/dl/go1.16.4.linux-amd64.tar.gz",
+      "packageVersion": "1.16.4",
+      "filesAnalyzed": "false",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7154e88f5a8047aad4b80ebace58a059e36e7e2e4eb3b383127a28c711b4ff59"
+        }
+      ],
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "LicenseRef-Golang-BSD-plus-Patents",
+      "packageCopyrightText": "Copyright (c) 2009 The Go Authors. All rights reserved."
+    },
+    {
+      "packageName": "go",
+      "SPDXID": "SPDXRef-go-compiler",
+      "downloadLocation": "https://golang.org/dl/go1.16.4.linux-amd64.tar.gz",
+      "packageVersion": "1.16.4",
+      "filesAnalyzed": "false",
+      "packageLicenseConcluded": "NOASSERTION",
+      "packageLicenseDeclared": "NOASSERTION",
+      "packageCopyrightText": "NOASSERTION"
+    }
+  ]
+}

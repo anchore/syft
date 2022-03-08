@@ -66,3 +66,39 @@ func (t Type) PackageURLType() string {
 		return ""
 	}
 }
+
+func TypeFromPURL(p string) Type {
+	purl, err := packageurl.FromString(p)
+	if err != nil {
+		return UnknownPkg
+	}
+
+	return TypeByName(purl.Type)
+}
+
+func TypeByName(name string) Type {
+	switch name {
+	case packageurl.TypeDebian, "deb":
+		return DebPkg
+	case packageurl.TypeRPM:
+		return RpmPkg
+	case "alpine":
+		return ApkPkg
+	case packageurl.TypeMaven:
+		return JavaPkg
+	case packageurl.TypeComposer:
+		return PhpComposerPkg
+	case packageurl.TypeGolang:
+		return GoModulePkg
+	case packageurl.TypeNPM:
+		return NpmPkg
+	case packageurl.TypePyPi:
+		return PythonPkg
+	case packageurl.TypeGem:
+		return GemPkg
+	case "cargo", "crate":
+		return RustPkg
+	default:
+		return UnknownPkg
+	}
+}

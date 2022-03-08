@@ -3,8 +3,10 @@ package file
 import (
 	"crypto"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -16,17 +18,23 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func testDigests(t testing.TB, files []string, hashes ...crypto.Hash) map[source.Coordinates][]Digest {
+func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Hash) map[source.Coordinates][]Digest {
 	digests := make(map[source.Coordinates][]Digest)
 
 	for _, f := range files {
-		fh, err := os.Open(f)
+		fh, err := os.Open(filepath.Join(root, f))
 		if err != nil {
 			t.Fatalf("could not open %q : %+v", f, err)
 		}
 		b, err := ioutil.ReadAll(fh)
 		if err != nil {
 			t.Fatalf("could not read %q : %+v", f, err)
+		}
+
+		if len(b) == 0 {
+			// we don't keep digests for empty files
+			digests[source.NewLocation(f).Coordinates] = []Digest{}
+			continue
 		}
 
 		for _, hash := range hashes {
@@ -42,55 +50,43 @@ func testDigests(t testing.TB, files []string, hashes ...crypto.Hash) map[source
 	return digests
 }
 
-func TestDigestsCataloger_SimpleContents(t *testing.T) {
-	regularFiles := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"}
+func TestDigestsCataloger(t *testing.T) {
 
 	tests := []struct {
-		name       string
-		digests    []crypto.Hash
-		files      []string
-		expected   map[source.Coordinates][]Digest
-		catalogErr bool
+		name     string
+		digests  []crypto.Hash
+		files    []string
+		expected map[source.Coordinates][]Digest
 	}{
 		{
 			name:     "md5",
 			digests:  []crypto.Hash{crypto.MD5},
-			files:    regularFiles,
-			expected: testDigests(t, regularFiles, crypto.MD5),
+			files:    []string{"test-fixtures/last/empty/empty", "test-fixtures/last/path.txt"},
+			expected: testDigests(t, "test-fixtures/last", []string{"empty/empty", "path.txt"}, crypto.MD5),
 		},
 		{
 			name:     "md5-sha1-sha256",
 			digests:  []crypto.Hash{crypto.MD5, crypto.SHA1, crypto.SHA256},
-			files:    regularFiles,
-			expected: testDigests(t, regularFiles, crypto.MD5, crypto.SHA1, crypto.SHA256),
-		},
-		{
-			name:       "directory returns error",
-			digests:    []crypto.Hash{crypto.MD5},
-			files:      []string{"test-fixtures/last"},
-			catalogErr: true,
+			files:    []string{"test-fixtures/last/empty/empty", "test-fixtures/last/path.txt"},
+			expected: testDigests(t, "test-fixtures/last", []string{"empty/empty", "path.txt"}, crypto.MD5, crypto.SHA1, crypto.SHA256),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			c, err := NewDigestsCataloger(test.digests)
-			if err != nil {
-				t.Fatalf("could not create cataloger: %+v", err)
-			}
+			require.NoError(t, err)
 
-			resolver := source.NewMockResolverForPaths(test.files...)
+			src, err := source.NewFromDirectory("test-fixtures/last/")
+			require.NoError(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
 			actual, err := c.Catalog(resolver)
-			if err != nil && !test.catalogErr {
-				t.Fatalf("could not catalog (but should have been able to): %+v", err)
-			} else if err == nil && test.catalogErr {
-				t.Fatalf("expected catalog error but did not get one")
-			} else if test.catalogErr && err != nil {
-				return
-			}
+			require.NoError(t, err)
 
-			assert.Equal(t, actual, test.expected, "mismatched digests")
-
+			assert.Equal(t, test.expected, actual, "mismatched digests")
 		})
 	}
 }

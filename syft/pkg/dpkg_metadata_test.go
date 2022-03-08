@@ -12,39 +12,76 @@ import (
 
 func TestDpkgMetadata_pURL(t *testing.T) {
 	tests := []struct {
-		distro   linux.Release
+		name     string
+		distro   *linux.Release
 		metadata DpkgMetadata
 		expected string
 	}{
 		{
-			distro: linux.Release{
-				ID: "debian",
+			name: "go case",
+			distro: &linux.Release{
+				ID:        "debian",
+				VersionID: "11",
 			},
 			metadata: DpkgMetadata{
-				Package:      "p",
-				Source:       "s",
-				Version:      "v",
-				Architecture: "a",
+				Package: "p",
+				Version: "v",
 			},
-			expected: "pkg:deb/debian/p@v?arch=a",
+			expected: "pkg:deb/debian/p@v?distro=debian-11",
 		},
 		{
-			distro: linux.Release{
-				ID: "ubuntu",
+			name: "with arch info",
+			distro: &linux.Release{
+				ID:        "ubuntu",
+				VersionID: "16.04",
 			},
 			metadata: DpkgMetadata{
 				Package:      "p",
-				Source:       "s",
 				Version:      "v",
 				Architecture: "a",
 			},
-			expected: "pkg:deb/ubuntu/p@v?arch=a",
+			expected: "pkg:deb/ubuntu/p@v?arch=a&distro=ubuntu-16.04",
+		},
+		{
+			name: "missing distro",
+			metadata: DpkgMetadata{
+				Package: "p",
+				Version: "v",
+			},
+			expected: "pkg:deb/p@v",
+		},
+		{
+			name: "with upstream qualifier with source pkg name info",
+			distro: &linux.Release{
+				ID:        "debian",
+				VersionID: "11",
+			},
+			metadata: DpkgMetadata{
+				Package: "p",
+				Source:  "s",
+				Version: "v",
+			},
+			expected: "pkg:deb/debian/p@v?upstream=s&distro=debian-11",
+		},
+		{
+			name: "with upstream qualifier with source pkg name and version info",
+			distro: &linux.Release{
+				ID:        "debian",
+				VersionID: "11",
+			},
+			metadata: DpkgMetadata{
+				Package:       "p",
+				Source:        "s",
+				Version:       "v",
+				SourceVersion: "2.3",
+			},
+			expected: "pkg:deb/debian/p@v?upstream=s@2.3&distro=debian-11",
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.expected, func(t *testing.T) {
-			actual := test.metadata.PackageURL(&test.distro)
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.metadata.PackageURL(test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

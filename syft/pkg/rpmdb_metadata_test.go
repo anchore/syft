@@ -12,13 +12,30 @@ import (
 
 func TestRpmMetadata_pURL(t *testing.T) {
 	tests := []struct {
-		distro   linux.Release
+		name     string
+		distro   *linux.Release
 		metadata RpmdbMetadata
 		expected string
 	}{
 		{
-			distro: linux.Release{
-				ID: "centos",
+			name: "go case",
+			distro: &linux.Release{
+				ID:        "rhel",
+				VersionID: "8.4",
+			},
+			metadata: RpmdbMetadata{
+				Name:    "p",
+				Version: "v",
+				Release: "r",
+				Epoch:   nil,
+			},
+			expected: "pkg:rpm/rhel/p@v-r?distro=rhel-8.4",
+		},
+		{
+			name: "with arch and epoch",
+			distro: &linux.Release{
+				ID:        "centos",
+				VersionID: "7",
 			},
 			metadata: RpmdbMetadata{
 				Name:    "p",
@@ -27,26 +44,37 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				Release: "r",
 				Epoch:   intRef(1),
 			},
-			expected: "pkg:rpm/centos/p@v-r?arch=a&epoch=1",
+			expected: "pkg:rpm/centos/p@v-r?arch=a&epoch=1&distro=centos-7",
 		},
 		{
-			distro: linux.Release{
-				ID: "rhel",
-			},
+			name: "missing distro",
 			metadata: RpmdbMetadata{
 				Name:    "p",
 				Version: "v",
-				Arch:    "a",
 				Release: "r",
 				Epoch:   nil,
 			},
-			expected: "pkg:rpm/rhel/p@v-r?arch=a",
+			expected: "pkg:rpm/p@v-r",
+		},
+		{
+			name: "with upstream source rpm info",
+			distro: &linux.Release{
+				ID:        "rhel",
+				VersionID: "8.4",
+			},
+			metadata: RpmdbMetadata{
+				Name:      "p",
+				Version:   "v",
+				Release:   "r",
+				SourceRpm: "sourcerpm",
+			},
+			expected: "pkg:rpm/rhel/p@v-r?upstream=sourcerpm&distro=rhel-8.4",
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.expected, func(t *testing.T) {
-			actual := test.metadata.PackageURL(&test.distro)
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.metadata.PackageURL(test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

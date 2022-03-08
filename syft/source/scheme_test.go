@@ -143,6 +143,16 @@ func TestDetectScheme(t *testing.T) {
 			expectedLocation: "some/path-to-dir",
 		},
 		{
+			name:      "found-podman-image-scheme",
+			userInput: "podman:something:latest",
+			detection: detectorResult{
+				src: image.PodmanDaemonSource,
+				ref: "something:latest",
+			},
+			expectedScheme:   ImageScheme,
+			expectedLocation: "something:latest",
+		},
+		{
 			name:      "explicit-dir",
 			userInput: "dir:some/path-to-dir",
 			detection: detectorResult{
@@ -277,7 +287,7 @@ func TestDetectScheme(t *testing.T) {
 				}
 			}
 
-			actualScheme, actualSource, actualLocation, err := detectScheme(fs, imageDetector, test.userInput)
+			actualScheme, actualSource, actualLocation, err := DetectScheme(fs, imageDetector, test.userInput)
 			if err != nil {
 				t.Fatalf("unexpected err : %+v", err)
 			}

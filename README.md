@@ -21,7 +21,8 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 
 ## Features
 - Catalog container images and filesystems to discover packages and libraries.
-- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR, Jenkins plugins JPI/HPI, Go modules)
+- Generate in-toto attestations where an SBOM is included as the payload.
+- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR/PAR/SAR, Jenkins plugins JPI/HPI, Go modules, PHP Composer)
 - Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
 - Supports Docker and OCI image formats
 - Direct support for [Grype](https://github.com/anchore/grype), a fast and powerful vulnerability matcher.
@@ -31,12 +32,14 @@ If you encounter an issue, please [let us know using the issue tracker](https://
 
 ## Installation
 
+**Note**: Currently, Syft is built only for Linux, macOS and Windows.
+
 ### Recommended
 ```bash
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 ```
 
-...or, you can specify a release version and destination directory for the installation:
+... or, you can specify a release version and destination directory for the installation:
 
 ```
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
@@ -48,11 +51,26 @@ brew tap anchore/syft
 brew install syft
 ```
 
-**Note**: Currently, Syft is built only for macOS and Linux.
+### Nix
+
+**Note**: nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix)
+
+Also syft is currently only in the [unstable channel](https://nixos.wiki/wiki/Nix_channels#The_official_channels) awaiting the `22.05` release
+
+```bash
+nix-env -i syft
+```
+
+... or, just try it out in an ephemeral nix shell
+
+```bash
+nix-shell -p syft
+```
 
 ## Getting started
 
-To generate an SBOM for a Docker or OCI image:
+#### SBOM
+To generate an SBOM for an OCI image:
 ```
 syft <image>
 ```
@@ -68,6 +86,17 @@ To include software from all image layers in the SBOM, regardless of its presenc
 ```
 syft packages <image> --scope all-layers
 ```
+
+#### SBOM Attestation
+To generate an attested SBOM for an OCI image as the predicate of an in-toto attestation
+```
+syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
+```
+
+The above output is in the form of the [DSSE envelope](https://github.com/secure-systems-lab/dsse/blob/master/envelope.md#dsse-envelope).
+The payload is a base64 encoded `in-toto` statement with the SBOM as the predicate, the payload type is `application/vnd.in-toto+json`, and the signatures array is populated
+with the contents needed for public key verification. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
+
 
 ### Supported sources
 
@@ -85,6 +114,7 @@ Sources can be explicitly provided with a scheme:
 
 ```
 docker:yourrepo/yourimage:tag          use images from the Docker daemon
+podman:yourrepo/yourimage:tag          use images from the Podman daemon
 docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
 oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
 oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
@@ -192,6 +222,8 @@ The `volumeMounts` section mounts our secret to `/config`. The `volumes` section
     
     apiVersion: v1
     kind: Pod
+    metadata:
+      name: syft-k8s-usage
     spec:
       containers:
         - image: anchore/syft:latest
@@ -269,7 +301,7 @@ package:
   # note: for now this only applies to the java package cataloger
   # SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES env var
   search-unindexed-archives: false
-   
+
   cataloger:
     # enable/disable cataloging of packages
     # SYFT_PACKAGE_CATALOGER_ENABLED env var
@@ -366,9 +398,9 @@ registry:
 
   # credentials for specific registries
   auth:
-    - # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
+      # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
       # SYFT_REGISTRY_AUTH_AUTHORITY env var
-      authority: ""
+    - authority: ""
       # SYFT_REGISTRY_AUTH_USERNAME env var
       username: ""
       # SYFT_REGISTRY_AUTH_PASSWORD env var
@@ -376,7 +408,17 @@ registry:
       # note: token and username/password are mutually exclusive
       # SYFT_REGISTRY_AUTH_TOKEN env var
       token: ""
-    - ... # note, more credentials can be provided via config file only
+      # - ... # note, more credentials can be provided via config file only
+
+# generate an attested SBOM
+attest:
+  # path to the private key file to use for attestation
+  # SYFT_ATTEST_KEY env var
+  key: "cosign.key"
+
+  # password to decrypt to given private key
+  # SYFT_ATTEST_PASSWORD env var, additionally responds to COSIGN_PASSWORD
+  password: ""
 
 log:
   # use structured logging
@@ -412,5 +454,38 @@ anchore:
   # (feature-preview) path to dockerfile to be uploaded with the syft results to Anchore Enterprise (supported on Enterprise 3.0+)
   # same as -d ; SYFT_ANCHORE_DOCKERFILE env var
   dockerfile: ""
-
 ```
+
+### Adding an SBOM to an image as an attestation using Syft
+
+`syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]`
+
+SBOMs themselves can serve as input to different analysis tools. The Anchore organization offers the vulnerability scanner
+[grype](https://github.com/anchore/grype) as one such tool.
+One of the foundational approaches to "trust" between tools is for producers to use the artifacts generated by syft as attestations to their images.
+The DSSE output of `syft attest` can be used with the [cosign](https://github.com/sigstore/cosign) tool to attach an attestation to an image.
+
+#### Example attest
+Note for the following example replace `docker.io/image:latest` with an image you own. You should also have push access to 
+its remote reference. Replace $MY_PRIVATE_KEY with a private key you own or have generated with cosign.
+
+```bash
+syft attest --key $MY_PRIVATE_KEY docker.io/image:latest > image_latest_sbom_attestation.json
+cosign attach attestation --attestation image_latest_sbom_attestation.json docker.io/image:latest
+```
+
+Verify the new attestation exists on your image
+```bash
+cosign verify-attestation -key $MY_PUBLIC_KEY docker.io/image:latest | jq '.payload | @base64d | .payload | fromjson | .predicate'
+```
+
+You should see this output along with the attached SBOM.
+```
+Verification for docker.io/image:latest --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - The signatures were verified against the specified public key
+  - Any certificates were verified against the Fulcio roots.
+```
+
+Consumers of your image can now trust that the SBOM associated with your image is correct and from a trusted source.

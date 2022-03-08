@@ -21,6 +21,7 @@ var archiveFormatGlobs = []string{
 	"**/*.war",
 	"**/*.ear",
 	"**/*.par",
+	"**/*.sar",
 	"**/*.jpi",
 	"**/*.hpi",
 	"**/*.lpkg", // Zip-compressed package used to deploy applications
@@ -119,6 +120,13 @@ func (j *archiveParser) parse() ([]*pkg.Package, []artifact.Relationship, error)
 	// lastly, add the parent package to the list (assuming the parent exists)
 	if parentPkg != nil {
 		pkgs = append([]*pkg.Package{parentPkg}, pkgs...)
+	}
+
+	// add pURLs to all packages found
+	// note: since package information may change after initial creation when parsing multiple locations within the
+	// jar, we wait until the conclusion of the parsing process before synthesizing pURLs.
+	for _, p := range pkgs {
+		addPURL(p)
 	}
 
 	return pkgs, relationships, nil
@@ -347,7 +355,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	}
 
 	if packageIdentitiesMatch(p, parentPkg) {
-		updatePackage(p, parentPkg)
+		updateParentPackage(p, parentPkg)
 		return nil
 	}
 
@@ -378,7 +386,7 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	return false
 }
 
-func updatePackage(p pkg.Package, parentPkg *pkg.Package) {
+func updateParentPackage(p pkg.Package, parentPkg *pkg.Package) {
 	// we've run across more information about our parent package, add this info to the parent package metadata
 	// the pom properties is typically a better source of information for name and version than the manifest
 	parentPkg.Name = p.Name
@@ -399,4 +407,18 @@ func updatePackage(p pkg.Package, parentPkg *pkg.Package) {
 		parentMetadata.PomProperties = &pomPropertiesCopy
 		parentPkg.Metadata = parentMetadata
 	}
+}
+
+func addPURL(p *pkg.Package) {
+	purl := packageURL(*p)
+	if purl == "" {
+		return
+	}
+
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		return
+	}
+	metadata.PURL = purl
+	p.Metadata = metadata
 }

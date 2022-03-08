@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:7b1c3b1d-ea3b-4022-9dcc-80f4b4cbce36" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:dd1d1863-04be-414c-9b2a-bdc0e0f25e9f" version="1">
   <metadata>
-    <timestamp>2021-12-03T13:16:45-08:00</timestamp>
+    <timestamp>2022-02-25T12:54:44-05:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,7 +9,7 @@
         <version>[not provided]</version>
       </tool>
     </tools>
-    <component type="file">
+    <component bom-ref="163686ac6e30c752" type="file">
       <name>/some/path</name>
       <version></version>
     </component>
@@ -20,15 +20,43 @@
       <version>1.0.1</version>
       <licenses>
         <license>
-          <name>MIT</name>
+          <id>MIT</id>
         </license>
       </licenses>
+      <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
       <purl>a-purl-2</purl>
+      <properties>
+        <property name="syft:package:foundBy">the-cataloger-1</property>
+        <property name="syft:package:language">python</property>
+        <property name="syft:package:metadataType">PythonPackageMetadata</property>
+        <property name="syft:package:type">python</property>
+        <property name="syft:location:0:path">/some/path/pkg1</property>
+      </properties>
     </component>
     <component type="library">
       <name>package-2</name>
       <version>2.0.1</version>
+      <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
       <purl>a-purl-2</purl>
+      <properties>
+        <property name="syft:package:foundBy">the-cataloger-2</property>
+        <property name="syft:package:metadataType">DpkgMetadata</property>
+        <property name="syft:package:type">deb</property>
+        <property name="syft:location:0:path">/some/path/pkg1</property>
+        <property name="syft:metadata:installedSize">0</property>
+      </properties>
+    </component>
+    <component type="operating-system">
+      <name>debian</name>
+      <version>1.2.3</version>
+      <description>debian</description>
+      <swid tagId="debian" name="debian" version="1.2.3"></swid>
+      <properties>
+        <property name="syft:distro:id">debian</property>
+        <property name="syft:distro:idLike:0">like!</property>
+        <property name="syft:distro:prettyName">debian</property>
+        <property name="syft:distro:versionID">1.2.3</property>
+      </properties>
     </component>
   </components>
 </bom>

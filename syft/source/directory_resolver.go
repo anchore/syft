@@ -48,24 +48,35 @@ type directoryResolver struct {
 }
 
 func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
-	currentWd, err := os.Getwd()
+	currentWD, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("could not create directory resolver: %w", err)
+		return nil, fmt.Errorf("could not gret CWD: %w", err)
+	}
+	// we have to account for the root being accessed through a symlink path and always resolve the real path. Otherwise
+	// we will not be able to normalize given paths that fall under the resolver
+	cleanCWD, err := filepath.EvalSymlinks(currentWD)
+	if err != nil {
+		return nil, fmt.Errorf("could not evaluate CWD symlinks: %w", err)
+	}
+
+	cleanRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return nil, fmt.Errorf("could not evaluate root=%q symlinks: %w", root, err)
 	}
 
 	var currentWdRelRoot string
-	if path.IsAbs(root) {
-		currentWdRelRoot, err = filepath.Rel(currentWd, root)
+	if path.IsAbs(cleanRoot) {
+		currentWdRelRoot, err = filepath.Rel(cleanCWD, cleanRoot)
 		if err != nil {
-			return nil, fmt.Errorf("could not create directory resolver: %w", err)
+			return nil, fmt.Errorf("could not determine given root path to CWD: %w", err)
 		}
 	} else {
-		currentWdRelRoot = filepath.Clean(root)
+		currentWdRelRoot = filepath.Clean(cleanRoot)
 	}
 
 	resolver := directoryResolver{
-		path:                    root,
-		currentWd:               currentWd,
+		path:                    cleanRoot,
+		currentWd:               cleanCWD,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
 		metadata:                make(map[file.ID]FileMetadata),
@@ -74,7 +85,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		errPaths:                make(map[string]error),
 	}
 
-	return &resolver, indexAllRoots(root, resolver.indexTree)
+	return &resolver, indexAllRoots(cleanRoot, resolver.indexTree)
 }
 
 func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {
@@ -136,7 +147,7 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 	}
 
 	// link cycles could cause a revisit --we should not allow this
-	if r.fileTree.HasPath(file.Path(path)) {
+	if r.hasBeenIndexed(path) {
 		return "", nil
 	}
 
@@ -180,6 +191,23 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 	default:
 		return "", fmt.Errorf("unsupported file type: %s", t)
 	}
+}
+
+func (r directoryResolver) hasBeenIndexed(p string) bool {
+	filePath := file.Path(p)
+	if !r.fileTree.HasPath(filePath) {
+		return false
+	}
+
+	exists, ref, err := r.fileTree.File(filePath)
+	if err != nil || !exists || ref == nil {
+		return false
+	}
+
+	// cases like "/" will be in the tree, but not been indexed yet (a special case). We want to capture
+	// these cases as new paths to index.
+	_, exists = r.metadata[ref.ID()]
+	return exists
 }
 
 func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error {
@@ -233,7 +261,9 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 	}
 
 	location := NewLocationFromDirectory(p, *ref)
+	location.VirtualPath = p
 	metadata := fileMetadataFromPath(p, usedInfo, r.isInIndex(location))
+	metadata.LinkDestination = linkTarget
 	r.addFileMetadataToIndex(ref, metadata)
 
 	return targetAbsPath, nil
@@ -305,8 +335,15 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			continue
 		}
 
+		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
+		evaluatedPath, err := filepath.EvalSymlinks(userStrPath)
+		if err != nil {
+			log.Warnf("directory resolver unable to evaluate symlink for path=%q : %+v", userPath, err)
+			continue
+		}
+
 		// TODO: why not use stored metadata?
-		fileMeta, err := os.Stat(userStrPath)
+		fileMeta, err := os.Stat(evaluatedPath)
 		if errors.Is(err, os.ErrNotExist) {
 			// note: there are other kinds of errors other than os.ErrNotExist that may be given that is platform
 			// specific, but essentially hints at the same overall problem (that the path does not exist). Such an
@@ -317,7 +354,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			// invalid paths. This logging statement is meant to raise IO or permissions related problems.
 			var pathErr *os.PathError
 			if !errors.As(err, &pathErr) {
-				log.Warnf("path is not valid (%s): %+v", userStrPath, err)
+				log.Warnf("path is not valid (%s): %+v", evaluatedPath, err)
 			}
 			continue
 		}
@@ -331,9 +368,14 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			userStrPath = windowsToPosix(userStrPath)
 		}
 
-		exists, ref, err := r.fileTree.File(file.Path(userStrPath))
+		exists, ref, err := r.fileTree.File(file.Path(userStrPath), filetree.FollowBasenameLinks)
 		if err == nil && exists {
-			references = append(references, NewLocationFromDirectory(r.responsePath(userStrPath), *ref))
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
+				*ref,
+			)
+			references = append(references, loc)
 		}
 	}
 
@@ -345,12 +387,17 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	result := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		globResults, err := r.fileTree.FilesByGlob(pattern)
+		globResults, err := r.fileTree.FilesByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
 		for _, globResult := range globResults {
-			result = append(result, NewLocationFromDirectory(r.responsePath(string(globResult.MatchPath)), globResult.Reference))
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+				globResult.Reference,
+			)
+			result = append(result, loc)
 		}
 	}
 
@@ -404,7 +451,8 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		for _, ref := range r.fileTree.AllFiles() {
+		// this should be all non-directory types
+		for _, ref := range r.fileTree.AllFiles(file.TypeReg, file.TypeSymlink, file.TypeHardLink, file.TypeBlockDevice, file.TypeCharacterDevice, file.TypeFifo) {
 			results <- NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
 		}
 	}()

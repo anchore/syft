@@ -63,6 +63,7 @@ func fileMetadataFromPath(path string, info os.FileInfo, withMIMEType bool) File
 		// unsupported across platforms
 		UserID:   uid,
 		GroupID:  gid,
+		Size:     info.Size(),
 		MIMEType: mimeType,
 	}
 }

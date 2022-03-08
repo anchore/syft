@@ -2,7 +2,6 @@ package spdx22json
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -131,8 +130,7 @@ func toFiles(s sbom.SBOM) []model.File {
 		results = append(results, model.File{
 			Item: model.Item{
 				Element: model.Element{
-					SPDXID:  string(coordinates.ID()),
-					Name:    filepath.Base(coordinates.RealPath),
+					SPDXID:  model.ElementID(coordinates.ID()).String(),
 					Comment: comment,
 				},
 				// required, no attempt made to determine license information
@@ -154,11 +152,17 @@ func toFiles(s sbom.SBOM) []model.File {
 func toFileChecksums(digests []file.Digest) (checksums []model.Checksum) {
 	for _, digest := range digests {
 		checksums = append(checksums, model.Checksum{
-			Algorithm:     digest.Algorithm,
+			Algorithm:     toChecksumAlgorithm(digest.Algorithm),
 			ChecksumValue: digest.Value,
 		})
 	}
 	return checksums
+}
+
+func toChecksumAlgorithm(algorithm string) string {
+	// basically, we need an uppercase version of our algorithm:
+	// https://github.com/spdx/spdx-spec/blob/development/v2.2.2/schemas/spdx-schema.json#L165
+	return strings.ToUpper(algorithm)
 }
 
 func toFileTypes(metadata *source.FileMetadata) (ty []string) {
@@ -169,28 +173,28 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	mimeTypePrefix := strings.Split(metadata.MIMEType, "/")[0]
 	switch mimeTypePrefix {
 	case "image":
-		ty = append(ty, string(model.ImageFileType))
+		ty = append(ty, string(spdxhelpers.ImageFileType))
 	case "video":
-		ty = append(ty, string(model.VideoFileType))
+		ty = append(ty, string(spdxhelpers.VideoFileType))
 	case "application":
-		ty = append(ty, string(model.ApplicationFileType))
+		ty = append(ty, string(spdxhelpers.ApplicationFileType))
 	case "text":
-		ty = append(ty, string(model.TextFileType))
+		ty = append(ty, string(spdxhelpers.TextFileType))
 	case "audio":
-		ty = append(ty, string(model.AudioFileType))
+		ty = append(ty, string(spdxhelpers.AudioFileType))
 	}
 
 	if internal.IsExecutable(metadata.MIMEType) {
-		ty = append(ty, string(model.BinaryFileType))
+		ty = append(ty, string(spdxhelpers.BinaryFileType))
 	}
 
 	if internal.IsArchive(metadata.MIMEType) {
-		ty = append(ty, string(model.ArchiveFileType))
+		ty = append(ty, string(spdxhelpers.ArchiveFileType))
 	}
 
 	// TODO: add support for source, spdx, and documentation file types
 	if len(ty) == 0 {
-		ty = append(ty, string(model.OtherFileType))
+		ty = append(ty, string(spdxhelpers.OtherFileType))
 	}
 
 	return ty
@@ -206,21 +210,21 @@ func toRelationships(relationships []artifact.Relationship) (result []model.Rela
 		}
 
 		result = append(result, model.Relationship{
-			SpdxElementID:      string(r.From.ID()),
+			SpdxElementID:      model.ElementID(r.From.ID()).String(),
 			RelationshipType:   relationshipType,
-			RelatedSpdxElement: string(r.To.ID()),
+			RelatedSpdxElement: model.ElementID(r.To.ID()).String(),
 			Comment:            comment,
 		})
 	}
 	return result
 }
 
-func lookupRelationship(ty artifact.RelationshipType) (bool, model.RelationshipType, string) {
+func lookupRelationship(ty artifact.RelationshipType) (bool, spdxhelpers.RelationshipType, string) {
 	switch ty {
 	case artifact.ContainsRelationship:
-		return true, model.ContainsRelationship, ""
+		return true, spdxhelpers.ContainsRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
-		return true, model.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
+		return true, spdxhelpers.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
 	}
 	return false, "", ""
 }

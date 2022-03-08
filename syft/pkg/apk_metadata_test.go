@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"github.com/anchore/syft/syft/linux"
 	"strings"
 	"testing"
 
@@ -11,16 +12,35 @@ import (
 
 func TestApkMetadata_pURL(t *testing.T) {
 	tests := []struct {
+		name     string
 		metadata ApkMetadata
+		distro   linux.Release
 		expected string
 	}{
 		{
+			name: "gocase",
 			metadata: ApkMetadata{
 				Package:      "p",
 				Version:      "v",
 				Architecture: "a",
 			},
-			expected: "pkg:alpine/p@v?arch=a",
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:alpine/p@v?arch=a&distro=alpine-3.4.6",
+		},
+		{
+			name: "missing architecture",
+			metadata: ApkMetadata{
+				Package: "p",
+				Version: "v",
+			},
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:alpine/p@v?distro=alpine-3.4.6",
 		},
 		// verify #351
 		{
@@ -29,7 +49,11 @@ func TestApkMetadata_pURL(t *testing.T) {
 				Version:      "v84",
 				Architecture: "am86",
 			},
-			expected: "pkg:alpine/g++@v84?arch=am86",
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
 			metadata: ApkMetadata{
@@ -37,13 +61,31 @@ func TestApkMetadata_pURL(t *testing.T) {
 				Version:      "v84",
 				Architecture: "am86",
 			},
-			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86",
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.15.0",
+			},
+			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
+		},
+		{
+			name: "add source information as qualifier",
+			metadata: ApkMetadata{
+				Package:       "p",
+				Version:       "v",
+				Architecture:  "a",
+				OriginPackage: "origin",
+			},
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.expected, func(t *testing.T) {
-			actual := test.metadata.PackageURL()
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.metadata.PackageURL(&test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

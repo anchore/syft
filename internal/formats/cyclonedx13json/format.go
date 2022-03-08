@@ -1,12 +1,18 @@
 package cyclonedx13json
 
-import "github.com/anchore/syft/syft/format"
+import (
+	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/anchore/syft/internal/formats/common/cyclonedxhelpers"
+	"github.com/anchore/syft/syft/sbom"
+)
 
-func Format() format.Format {
-	return format.NewFormat(
-		format.CycloneDxJSONOption,
+const ID sbom.FormatID = "cyclonedx-1-json"
+
+func Format() sbom.Format {
+	return sbom.NewFormat(
+		ID,
 		encoder,
-		nil,
-		nil,
+		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
+		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
 	)
 }

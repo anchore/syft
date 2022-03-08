@@ -1,13 +1,17 @@
 package spdx22json
 
-import "github.com/anchore/syft/syft/format"
+import (
+	"github.com/anchore/syft/syft/sbom"
+)
 
-// note: this format is LOSSY relative to the syftjson formation, which means that decoding and validation is not supported at this time
-func Format() format.Format {
-	return format.NewFormat(
-		format.SPDXJSONOption,
+const ID sbom.FormatID = "spdx-2-json"
+
+// note: this format is LOSSY relative to the syftjson format
+func Format() sbom.Format {
+	return sbom.NewFormat(
+		ID,
 		encoder,
-		nil,
-		nil,
+		decoder,
+		validator,
 	)
 }

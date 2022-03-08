@@ -5,3 +5,8 @@ sqlalchemy >= 1.0.0
 -e https://github.com/pecan/pecan.git
 -r other-requirements.txt
 --requirements super-secretrequirements.txt
+SomeProject ==5.4 ; python_version < '3.8'
+coverage != 3.5 # Version Exclusion. Anything except version 3.5
+numpyNew; sys_platform == 'win32'
+numpy >= 3.4.1; sys_platform == 'win32'
+Mopidy-Dirble ~= 1.1 # Compatible release. Same as >= 1.1, == 1.*

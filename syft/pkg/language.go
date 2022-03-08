@@ -1,5 +1,11 @@
 package pkg
 
+import (
+	"strings"
+
+	"github.com/anchore/packageurl-go"
+)
+
 // Language represents a single programming language.
 type Language string
 
@@ -29,4 +35,34 @@ var AllLanguages = []Language{
 // String returns the string representation of the language.
 func (l Language) String() string {
 	return string(l)
+}
+
+func LanguageFromPURL(p string) Language {
+	purl, err := packageurl.FromString(p)
+	if err != nil {
+		return UnknownLanguage
+	}
+
+	return LanguageByName(purl.Type)
+}
+
+func LanguageByName(name string) Language {
+	switch strings.ToLower(name) {
+	case packageurl.TypeMaven, string(purlGradlePkgType), string(JavaPkg), string(Java):
+		return Java
+	case packageurl.TypeComposer, string(PhpComposerPkg), string(PHP):
+		return PHP
+	case packageurl.TypeGolang, string(GoModulePkg), string(Go):
+		return Go
+	case packageurl.TypeNPM, string(JavaScript):
+		return JavaScript
+	case packageurl.TypePyPi, string(Python):
+		return Python
+	case packageurl.TypeGem:
+		return Ruby
+	case purlCargoPkgType:
+		return Rust
+	default:
+		return UnknownLanguage
+	}
 }

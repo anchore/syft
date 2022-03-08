@@ -20,17 +20,17 @@ func Test_noneIfEmpty(t *testing.T) {
 		{
 			name:     "empty",
 			value:    "",
-			expected: "NONE",
+			expected: NONE,
 		},
 		{
 			name:     "space",
 			value:    " ",
-			expected: "NONE",
+			expected: NONE,
 		},
 		{
 			name:     "tab",
 			value:    "\t",
-			expected: "NONE",
+			expected: NONE,
 		},
 	}
 	for _, test := range tests {
