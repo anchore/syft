@@ -153,11 +153,11 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		return fmt.Errorf("attest command can only be used with image sources fetch directly from the registry, but discovered an image source of %q when given %q", si.ImageSource, userInput)
 	}
 
-	if len(appConfig.Output) > 1 {
+	if len(appConfig.Outputs) > 1 {
 		return fmt.Errorf("unable to generate attestation for more than one output")
 	}
 
-	format := syft.FormatByName(appConfig.Output[0])
+	format := syft.FormatByName(appConfig.Outputs[0])
 	predicateType := formatPredicateType(format)
 	if predicateType == "" {
 		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", formatAliases(format.ID()), formatAliases(attestFormats...))

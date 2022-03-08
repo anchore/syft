@@ -6,8 +6,8 @@ import (
 	"path"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/hashicorp/go-multierror"
+	"github.com/mitchellh/go-homedir"
 )
 
 // multiWriter holds a list of child sbom.Writers to apply all Write and Close operations to
@@ -21,8 +21,21 @@ type WriterOption struct {
 	Path   string
 }
 
+func NewWriterOption(f Format, p string) WriterOption {
+	expandedPath, err := homedir.Expand(p)
+	if err != nil {
+		log.Warnf("could not expand given writer output path=%q: %w", p, err)
+		// ignore errors
+		expandedPath = p
+	}
+	return WriterOption{
+		Format: f,
+		Path:   expandedPath,
+	}
+}
+
 // NewWriter create all report writers from input options; if a file is not specified, os.Stdout is used
-func NewWriter(options ...WriterOption) (Writer, error) {
+func NewWriter(options ...WriterOption) (_ Writer, err error) {
 	if len(options) == 0 {
 		return nil, fmt.Errorf("no output options provided")
 	}
@@ -30,9 +43,11 @@ func NewWriter(options ...WriterOption) (Writer, error) {
 	out := &multiWriter{}
 
 	defer func() {
-		// close any previously opened files; we can't really recover from any errors
-		if err := out.Close(); err != nil {
-			log.Warnf("unable to close sbom writers: %+v", err)
+		if err != nil {
+			// close any previously opened files; we can't really recover from any errors
+			if err := out.Close(); err != nil {
+				log.Warnf("unable to close sbom writers: %+v", err)
+			}
 		}
 	}()
 

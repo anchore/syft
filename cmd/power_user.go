@@ -73,10 +73,12 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	writer, err := sbom.NewWriter(sbom.WriterOption{
-		Format: syftjson.Format(),
-		Path:   appConfig.File,
-	})
+	writer, err := sbom.NewWriter(
+		sbom.NewWriterOption(
+			syftjson.Format(),
+			appConfig.File,
+		),
+	)
 	if err != nil {
 		return err
 	}

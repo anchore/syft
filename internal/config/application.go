@@ -30,7 +30,7 @@ type parser interface {
 // Application is the main syft application configuration.
 type Application struct {
 	ConfigPath         string             `yaml:",omitempty" json:"configPath"`                                                         // the location where the application config was read from (either from -c or discovered while loading)
-	Output             []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
+	Outputs            []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
 	File               string             `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
 	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`                                              // -q, indicates to not show any status output to stderr (ETUI or logging UI)
 	CheckForAppUpdate  bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
@@ -104,6 +104,7 @@ func (cfg *Application) parseConfigValues() error {
 	for _, optionFn := range []func() error{
 		cfg.parseUploadOptions,
 		cfg.parseLogLevelOption,
+		cfg.parseFile,
 	} {
 		if err := optionFn(); err != nil {
 			return err
@@ -122,6 +123,17 @@ func (cfg *Application) parseConfigValues() error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func (cfg *Application) parseFile() error {
+	if cfg.File != "" {
+		expandedPath, err := homedir.Expand(cfg.File)
+		if err != nil {
+			return fmt.Errorf("unable to expand file path=%q: %w", cfg.File, err)
+		}
+		cfg.File = expandedPath
 	}
 	return nil
 }
