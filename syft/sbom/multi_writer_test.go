@@ -2,9 +2,11 @@ package sbom
 
 import (
 	"io"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/pkg/homedir"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -167,6 +169,36 @@ func TestOutputWriter(t *testing.T) {
 					assert.Nil(t, w.close)
 				}
 			}
+		})
+	}
+}
+
+func TestNewWriterOption(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{
+			name:     "expand home dir",
+			path:     "~/place.txt",
+			expected: filepath.Join(homedir.Get(), "place.txt"),
+		},
+		{
+			name:     "passthrough other paths",
+			path:     "/other/place.txt",
+			expected: "/other/place.txt",
+		},
+		{
+			name:     "no path",
+			path:     "",
+			expected: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			o := NewWriterOption(dummyFormat("table"), tt.path)
+			assert.Equal(t, tt.expected, o.Path)
 		})
 	}
 }

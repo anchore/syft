@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -190,6 +191,26 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertInOutput("sha256:1ee006886991ad4689838d3a288e0dd3fd29b70e276622f16b67a8922831a853"), // linux/arm64 image digest
 				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "json-file-flag",
+			args: []string{"packages", "-o", "json", "--file", filepath.Join(tmp, "output-1.json"), coverageImage},
+			assertions: []traitAssertion{
+				assertSuccessfulReturnCode,
+				assertFileOutput(t, filepath.Join(tmp, "output-1.json"),
+					assertJsonReport,
+				),
+			},
+		},
+		{
+			name: "json-output-flag-to-file",
+			args: []string{"packages", "-o", fmt.Sprintf("json=%s", filepath.Join(tmp, "output-2.json")), coverageImage},
+			assertions: []traitAssertion{
+				assertSuccessfulReturnCode,
+				assertFileOutput(t, filepath.Join(tmp, "output-2.json"),
+					assertJsonReport,
+				),
 			},
 		},
 	}
