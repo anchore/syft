@@ -2,13 +2,14 @@ package integration
 
 import (
 	"bytes"
-	"github.com/anchore/syft/internal/formats/cyclonedx13json"
-	"github.com/anchore/syft/internal/formats/cyclonedx13xml"
+	"regexp"
+	"testing"
+
+	"github.com/anchore/syft/internal/formats/cyclonedxjson"
+	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/require"
-	"regexp"
-	"testing"
 
 	"github.com/anchore/syft/syft"
 
@@ -34,7 +35,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			json:         true,
 		},
 		{
-			formatOption: cyclonedx13json.ID,
+			formatOption: cyclonedxjson.ID,
 			redactor: func(in []byte) []byte {
 				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
 				return in
@@ -42,7 +43,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			json: true,
 		},
 		{
-			formatOption: cyclonedx13xml.ID,
+			formatOption: cyclonedxxml.ID,
 			redactor: func(in []byte) []byte {
 				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
 				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})

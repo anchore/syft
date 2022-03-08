@@ -1,4 +1,4 @@
-package cyclonedx13json
+package cyclonedxjson
 
 import (
 	"fmt"

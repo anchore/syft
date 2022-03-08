@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:dd1d1863-04be-414c-9b2a-bdc0e0f25e9f" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:5fa94827-eb85-4f32-a62d-76fb6e89a2dd" version="1">
   <metadata>
-    <timestamp>2022-02-25T12:54:44-05:00</timestamp>
+    <timestamp>2022-03-08T12:30:33Z</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,9 +9,9 @@
         <version>[not provided]</version>
       </tool>
     </tools>
-    <component bom-ref="163686ac6e30c752" type="file">
-      <name>/some/path</name>
-      <version></version>
+    <component bom-ref="711095b1cdf90cce" type="container">
+      <name>user-image-input</name>
+      <version>sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368</version>
     </component>
   </metadata>
   <components>
@@ -23,14 +23,15 @@
           <id>MIT</id>
         </license>
       </licenses>
-      <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
-      <purl>a-purl-2</purl>
+      <cpe>cpe:2.3:*:some:package:1:*:*:*:*:*:*:*</cpe>
+      <purl>a-purl-1</purl>
       <properties>
         <property name="syft:package:foundBy">the-cataloger-1</property>
         <property name="syft:package:language">python</property>
         <property name="syft:package:metadataType">PythonPackageMetadata</property>
         <property name="syft:package:type">python</property>
-        <property name="syft:location:0:path">/some/path/pkg1</property>
+        <property name="syft:location:0:layerID">sha256:16e64541f2ddf59a90391ce7bb8af90313f7d373f2105d88f3d3267b72e0ebab</property>
+        <property name="syft:location:0:path">/somefile-1.txt</property>
       </properties>
     </component>
     <component type="library">
@@ -42,7 +43,8 @@
         <property name="syft:package:foundBy">the-cataloger-2</property>
         <property name="syft:package:metadataType">DpkgMetadata</property>
         <property name="syft:package:type">deb</property>
-        <property name="syft:location:0:path">/some/path/pkg1</property>
+        <property name="syft:location:0:layerID">sha256:de6c235f76ea24c8503ec08891445b5d6a8bdf8249117ed8d8b0b6fb3ebe4f67</property>
+        <property name="syft:location:0:path">/somefile-2.txt</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>
     </component>

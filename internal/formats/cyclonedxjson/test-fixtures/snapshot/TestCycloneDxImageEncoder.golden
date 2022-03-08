@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
-  "specVersion": "1.3",
-  "serialNumber": "urn:uuid:195a66a2-6d39-472e-b62b-0cafb9bfedd4",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:342c3d2c-d26e-47b6-94d6-92fbf41da945",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-02-25T12:54:25-05:00",
+    "timestamp": "2022-03-08T12:30:39Z",
     "tools": [
       {
         "vendor": "anchore",
@@ -13,10 +13,10 @@
       }
     ],
     "component": {
-      "bom-ref": "163686ac6e30c752",
-      "type": "file",
-      "name": "/some/path",
-      "version": ""
+      "bom-ref": "711095b1cdf90cce",
+      "type": "container",
+      "name": "user-image-input",
+      "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
     }
   },
   "components": [
@@ -31,8 +31,8 @@
           }
         }
       ],
-      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-      "purl": "a-purl-2",
+      "cpe": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+      "purl": "a-purl-1",
       "properties": [
         {
           "name": "syft:package:foundBy",
@@ -51,8 +51,12 @@
           "value": "python"
         },
         {
+          "name": "syft:location:0:layerID",
+          "value": "sha256:16e64541f2ddf59a90391ce7bb8af90313f7d373f2105d88f3d3267b72e0ebab"
+        },
+        {
           "name": "syft:location:0:path",
-          "value": "/some/path/pkg1"
+          "value": "/somefile-1.txt"
         }
       ]
     },
@@ -76,8 +80,12 @@
           "value": "deb"
         },
         {
+          "name": "syft:location:0:layerID",
+          "value": "sha256:de6c235f76ea24c8503ec08891445b5d6a8bdf8249117ed8d8b0b6fb3ebe4f67"
+        },
+        {
           "name": "syft:location:0:path",
-          "value": "/some/path/pkg1"
+          "value": "/somefile-2.txt"
         },
         {
           "name": "syft:metadata:installedSize",

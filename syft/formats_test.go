@@ -1,8 +1,12 @@
 package syft
 
 import (
-	"github.com/anchore/syft/internal/formats/cyclonedx13json"
-	"github.com/anchore/syft/internal/formats/cyclonedx13xml"
+	"io"
+	"os"
+	"testing"
+
+	"github.com/anchore/syft/internal/formats/cyclonedxjson"
+	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
@@ -10,9 +14,6 @@ import (
 	"github.com/anchore/syft/internal/formats/text"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/require"
-	"io"
-	"os"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -89,25 +90,25 @@ func TestFormatByName(t *testing.T) {
 		// Cyclonedx JSON
 		{
 			name: "cyclonedx-json",
-			want: cyclonedx13json.ID,
+			want: cyclonedxjson.ID,
 		},
 		{
 			name: "cyclonedx-1-json",
-			want: cyclonedx13json.ID,
+			want: cyclonedxjson.ID,
 		},
 
 		// Cyclonedx XML
 		{
 			name: "cyclonedx",
-			want: cyclonedx13xml.ID,
+			want: cyclonedxxml.ID,
 		},
 		{
 			name: "cyclonedx-xml",
-			want: cyclonedx13xml.ID,
+			want: cyclonedxxml.ID,
 		},
 		{
 			name: "cyclonedx-1-xml",
-			want: cyclonedx13xml.ID,
+			want: cyclonedxxml.ID,
 		},
 
 		// Syft Table
