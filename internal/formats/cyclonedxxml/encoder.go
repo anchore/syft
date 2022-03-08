@@ -1,4 +1,4 @@
-package cyclonedx13xml
+package cyclonedxxml
 
 import (
 	"io"

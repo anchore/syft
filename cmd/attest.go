@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anchore/syft/internal/formats/cyclonedx13json"
+	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/syftjson"
 
@@ -56,7 +56,7 @@ const (
 var attestFormats = []sbom.FormatID{
 	syftjson.ID,
 	spdx22json.ID,
-	cyclonedx13json.ID,
+	cyclonedxjson.ID,
 }
 
 var (
@@ -227,7 +227,7 @@ func formatPredicateType(format sbom.Format) string {
 	switch format.ID() {
 	case spdx22json.ID:
 		return in_toto.PredicateSPDX
-	case cyclonedx13json.ID:
+	case cyclonedxjson.ID:
 		// Tentative see https://github.com/in-toto/attestation/issues/82
 		return "https://cyclonedx.org/bom"
 	case syftjson.ID:
