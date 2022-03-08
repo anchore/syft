@@ -16,7 +16,10 @@ import (
 
 func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	scanTime := time.Now().Format(time.RFC3339) // TODO is there a record of this somewhere?
-	versionInfo := version.FromBuild()
+	version := version.FromBuild().Version
+	if version == "[not provided]" {
+		version = "0.0.0-dev"
+	}
 	return DependencySnapshot{
 		Version: 0,
 		// The GitHub specifics must be filled out elsewhere, Syft does not have this information
@@ -30,7 +33,7 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 		Detector: DetectorMetadata{
 			Name:    internal.ApplicationName,
 			URL:     "https://github.com/anchore/syft", // TODO is there a good URL to use here?
-			Version: versionInfo.Version,
+			Version: version,
 		},
 		Metadata:  toSnapshotMetadata(s),
 		Manifests: toGithubManifests(s),
