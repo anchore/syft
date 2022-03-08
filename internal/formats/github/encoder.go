@@ -59,11 +59,10 @@ func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 
 func toGithubManifests(s *sbom.SBOM) Manifests {
 	path := s.Source.Path
-	path = "package.json"
 	name := path
 	if path == "" {
 		path = s.Source.ImageMetadata.UserInput
-		name = fmt.Sprintf("%s/%s", strings.ToLower(strings.TrimSuffix(string(s.Source.Scheme), "Scheme")), path)
+		name = fmt.Sprintf("%s:%s", strings.ToLower(strings.TrimSuffix(string(s.Source.Scheme), "Scheme")), path)
 	}
 	manifest := Manifest{
 		Name: name,
@@ -86,7 +85,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 	}
 
 	out := Manifests{}
-	out[path] = manifest
+	out[name] = manifest
 	return out
 }
 
