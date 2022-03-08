@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"

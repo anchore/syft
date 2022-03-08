@@ -2,9 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"os"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -14,7 +14,6 @@ type attest struct {
 	Password string `yaml:"-" json:"-" mapstructure:"password"` // password for the private key
 }
 
-//nolint:unparam
 func (cfg *attest) parseConfigValues() error {
 	if cfg.Key != "" {
 		expandedPath, err := homedir.Expand(cfg.Key)
