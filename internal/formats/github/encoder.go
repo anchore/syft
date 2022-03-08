@@ -59,6 +59,7 @@ func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 
 func toGithubManifests(s *sbom.SBOM) Manifests {
 	path := s.Source.Path
+	path = "package.json"
 	name := path
 	if path == "" {
 		path = s.Source.ImageMetadata.UserInput
