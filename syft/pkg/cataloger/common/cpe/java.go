@@ -17,6 +17,7 @@ var (
 		"org",
 		"net",
 		"io",
+		"be",
 	}
 
 	primaryJavaManifestGroupIDFields = []string{
