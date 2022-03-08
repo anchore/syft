@@ -62,7 +62,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 	manifest := Manifest{
 		Name: path,
 		File: FileInfo{
-			SourceLocation: fmt.Sprintf("%s:%s", strings.ToLower(strings.TrimSuffix(string(s.Source.Scheme), "Scheme")), path),
+			SourceLocation: fmt.Sprintf("%s/%s", strings.ToLower(strings.TrimSuffix(string(s.Source.Scheme), "Scheme")), path),
 		},
 		Metadata: Metadata{},
 		Resolved: DependencyGraph{},
