@@ -38,7 +38,7 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	}
 }
 
-var TagFilter = common.RequiredTag("cyclonedx")
+var TagFilter = common.RequiredTag("github")
 
 func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 	out := Metadata{}
@@ -106,9 +106,11 @@ func getDependencyRelationshipType(p pkg.Package) DependencyRelationship {
 func toDependencyMetadata(p pkg.Package) Metadata {
 	out := Metadata{}
 	if len(p.Locations) > 0 {
-		for k, v := range common.Encode(p.Locations, "syft:location", TagFilter) {
-			out[k] = v
-		}
+		// We have limited properties, only encode the first location
+		out["syft:location"] = p.Locations[0].Coordinates.RealPath
+		//for k, v := range common.Encode(p.Locations, "syft:location", TagFilter) {
+		//	out[k] = v
+		//}
 	}
 	if p.Metadata != nil {
 		out["syft:metadata:="] = string(p.MetadataType)
