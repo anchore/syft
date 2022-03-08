@@ -1,0 +1,126 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:342c3d2c-d26e-47b6-94d6-92fbf41da945",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-03-08T12:30:39Z",
+    "tools": [
+      {
+        "vendor": "anchore",
+        "name": "syft",
+        "version": "[not provided]"
+      }
+    ],
+    "component": {
+      "bom-ref": "711095b1cdf90cce",
+      "type": "container",
+      "name": "user-image-input",
+      "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "package-1",
+      "version": "1.0.1",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+      "purl": "a-purl-1",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "the-cataloger-1"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "python"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "PythonPackageMetadata"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "python"
+        },
+        {
+          "name": "syft:location:0:layerID",
+          "value": "sha256:16e64541f2ddf59a90391ce7bb8af90313f7d373f2105d88f3d3267b72e0ebab"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/somefile-1.txt"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "package-2",
+      "version": "2.0.1",
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "the-cataloger-2"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "DpkgMetadata"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "deb"
+        },
+        {
+          "name": "syft:location:0:layerID",
+          "value": "sha256:de6c235f76ea24c8503ec08891445b5d6a8bdf8249117ed8d8b0b6fb3ebe4f67"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/somefile-2.txt"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "type": "operating-system",
+      "name": "debian",
+      "version": "1.2.3",
+      "description": "debian",
+      "swid": {
+        "tagId": "debian",
+        "name": "debian",
+        "version": "1.2.3"
+      },
+      "properties": [
+        {
+          "name": "syft:distro:id",
+          "value": "debian"
+        },
+        {
+          "name": "syft:distro:idLike:0",
+          "value": "like!"
+        },
+        {
+          "name": "syft:distro:prettyName",
+          "value": "debian"
+        },
+        {
+          "name": "syft:distro:versionID",
+          "value": "1.2.3"
+        }
+      ]
+    }
+  ]
+}

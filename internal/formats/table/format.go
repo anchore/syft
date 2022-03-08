@@ -1,10 +1,14 @@
 package table
 
-import "github.com/anchore/syft/syft/format"
+import (
+	"github.com/anchore/syft/syft/sbom"
+)
 
-func Format() format.Format {
-	return format.NewFormat(
-		format.TableOption,
+const ID sbom.FormatID = "syft-table"
+
+func Format() sbom.Format {
+	return sbom.NewFormat(
+		ID,
 		encoder,
 		nil,
 		nil,

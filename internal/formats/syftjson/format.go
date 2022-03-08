@@ -1,10 +1,14 @@
 package syftjson
 
-import "github.com/anchore/syft/syft/format"
+import (
+	"github.com/anchore/syft/syft/sbom"
+)
 
-func Format() format.Format {
-	return format.NewFormat(
-		format.JSONOption,
+const ID sbom.FormatID = "syft-3-json"
+
+func Format() sbom.Format {
+	return sbom.NewFormat(
+		ID,
 		encoder,
 		decoder,
 		validator,

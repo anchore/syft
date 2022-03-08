@@ -16,12 +16,13 @@ func CloseAndLogError(closer io.Closer, location string) {
 }
 
 type ErrPath struct {
-	Path string
-	Err  error
+	Context string
+	Path    string
+	Err     error
 }
 
 func (e ErrPath) Error() string {
-	return fmt.Sprintf("unable to observe contents of %+v: %v", e.Path, e.Err)
+	return fmt.Sprintf("%s unable to observe contents of %+v: %v", e.Context, e.Path, e.Err)
 }
 
 func IsErrPath(err error) bool {

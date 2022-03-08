@@ -6,17 +6,10 @@ import (
 	"io"
 
 	"github.com/anchore/syft/syft/sbom"
-
-	"github.com/anchore/syft/internal/formats"
-	"github.com/anchore/syft/syft/format"
 )
 
 // Encode takes all SBOM elements and a format option and encodes an SBOM document.
-func Encode(s sbom.SBOM, option format.Option) ([]byte, error) {
-	f := formats.ByOption(option)
-	if f == nil {
-		return nil, fmt.Errorf("unsupported format: %+v", option)
-	}
+func Encode(s sbom.SBOM, f sbom.Format) ([]byte, error) {
 	buff := bytes.Buffer{}
 
 	if err := f.Encode(&buff, s); err != nil {
@@ -27,19 +20,17 @@ func Encode(s sbom.SBOM, option format.Option) ([]byte, error) {
 }
 
 // Decode takes a reader for an SBOM and generates all internal SBOM elements.
-func Decode(reader io.Reader) (*sbom.SBOM, format.Option, error) {
+func Decode(reader io.Reader) (*sbom.SBOM, sbom.Format, error) {
 	by, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, format.UnknownFormatOption, fmt.Errorf("unable to read sbom: %w", err)
+		return nil, nil, fmt.Errorf("unable to read sbom: %w", err)
 	}
 
-	f, err := formats.Identify(by)
-	if err != nil {
-		return nil, format.UnknownFormatOption, fmt.Errorf("unable to detect format: %w", err)
-	}
+	f := IdentifyFormat(by)
 	if f == nil {
-		return nil, format.UnknownFormatOption, fmt.Errorf("unable to identify format")
+		return nil, nil, fmt.Errorf("unable to identify format")
 	}
+
 	s, err := f.Decode(bytes.NewReader(by))
-	return s, f.Option, err
+	return s, f, err
 }

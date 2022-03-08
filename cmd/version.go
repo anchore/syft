@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var outputFormat string
+var versionCmdOutputFormat string
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
@@ -20,14 +20,14 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
-	versionCmd.Flags().StringVarP(&outputFormat, "output", "o", "text", "format to show version information (available=[text, json])")
+	versionCmd.Flags().StringVarP(&versionCmdOutputFormat, "output", "o", "text", "format to show version information (available=[text, json])")
 	rootCmd.AddCommand(versionCmd)
 }
 
 func printVersion(_ *cobra.Command, _ []string) {
 	versionInfo := version.FromBuild()
 
-	switch outputFormat {
+	switch versionCmdOutputFormat {
 	case "text":
 		fmt.Println("Application:    ", internal.ApplicationName)
 		fmt.Println("Version:        ", versionInfo.Version)
@@ -54,7 +54,7 @@ func printVersion(_ *cobra.Command, _ []string) {
 			os.Exit(1)
 		}
 	default:
-		fmt.Printf("unsupported output format: %s\n", outputFormat)
+		fmt.Printf("unsupported output format: %s\n", versionCmdOutputFormat)
 		os.Exit(1)
 	}
 }

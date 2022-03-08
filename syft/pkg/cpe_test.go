@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func must(c CPE, e error) CPE {
@@ -91,10 +93,9 @@ func Test_CPEParser(t *testing.T) {
 		WFN       CPE    `json:"wfn"`
 	}{}
 	out, err := ioutil.ReadFile("test-fixtures/cpe-data.json")
-	if err != nil {
-		t.Fatal("Unable to read test-fixtures/cpe-data.json: ", err)
-	}
-	json.Unmarshal(out, &testCases)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(out, &testCases))
+
 	for _, test := range testCases {
 		t.Run(test.CPEString, func(t *testing.T) {
 			c1, err := NewCPE(test.CPEString)
@@ -110,19 +111,72 @@ func Test_CPEParser(t *testing.T) {
 }
 
 func Test_InvalidCPE(t *testing.T) {
-
-	testCases := []string{
-		"cpe:2.3:a:some-vendor:name:1:3.2:*:*:*:*:*:*:*",
-		"cpe:2.3:a:some-vendor:name:1^:*:*:*:*:*:*:*",
-		"cpe:2.3:a:some-vendor:name:**:*:*:*:*:*:*:*",
-		"cpe:2.3:a:some-vendor:name:*\\:*:*:*:*:*:*:*",
+	type testcase struct {
+		name        string
+		in          string
+		expected    string
+		expectedErr bool
 	}
 
-	for _, test := range testCases {
-		t.Run(test, func(t *testing.T) {
-			_, err := NewCPE(test)
-			assert.Error(t, err)
-			assert.Contains(t, fmt.Sprint(err), "regex")
+	tests := []testcase{
+		{
+			// 5.3.2: The underscore (x5f) MAY be used, and it SHOULD be used in place of whitespace characters (which SHALL NOT be used)
+			name:     "translates spaces",
+			in:       "cpe:2.3:a:some-vendor:name:1 2:*:*:*:*:*:*:*",
+			expected: "cpe:2.3:a:some-vendor:name:1_2:*:*:*:*:*:*:*",
+		},
+		{
+			// it isn't easily possible in the string formatted string to detect improper escaping of : (it will fail parsing)
+			name:        "unescaped ':' cannot be helped -- too many fields",
+			in:          "cpe:2.3:a:some-vendor:name:::*:*:*:*:*:*:*",
+			expectedErr: true,
+		},
+		{
+			name:     "too few fields",
+			in:       "cpe:2.3:a:some-vendor:name:*:*:*:*:*:*:*",
+			expected: "cpe:2.3:a:some-vendor:name:*:*:*:*:*:*:*:*",
+		},
+		// Note: though the CPE spec does not allow for ? and * as escaped character input, these seem to be allowed in
+		// the NVD CPE validator for this reason these edge cases were removed
+	}
+
+	// the wfn library does not account for escapes of . and -
+	exceptions := ".-"
+	// it isn't easily possible in the string formatted string to detect improper escaping of : (it will fail parsing)
+	skip := ":"
+
+	// make escape exceptions for section 5.3.2 of the CPE spec (2.3)
+	for _, char := range allowedCPEPunctuation {
+		if strings.Contains(skip, string(char)) {
+			continue
+		}
+
+		in := fmt.Sprintf("cpe:2.3:a:some-vendor:name:*:%s:*:*:*:*:*:*", string(char))
+		exp := fmt.Sprintf(`cpe:2.3:a:some-vendor:name:*:\%s:*:*:*:*:*:*`, string(char))
+		if strings.Contains(exceptions, string(char)) {
+			exp = in
+		}
+
+		tests = append(tests, testcase{
+			name:        fmt.Sprintf("allowes future escape of character (%s)", string(char)),
+			in:          in,
+			expected:    exp,
+			expectedErr: false,
+		})
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c, err := NewCPE(test.in)
+			if test.expectedErr {
+				assert.Error(t, err)
+				if t.Failed() {
+					t.Logf("got CPE: %q details: %+v", CPEString(c), c)
+				}
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, CPEString(c))
 		})
 	}
 }

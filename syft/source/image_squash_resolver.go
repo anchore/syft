@@ -1,6 +1,7 @@
 package source
 
 import (
+	"archive/tar"
 	"fmt"
 	"io"
 
@@ -82,7 +83,7 @@ func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		results, err := r.img.SquashedTree().FilesByGlob(pattern)
+		results, err := r.img.SquashedTree().FilesByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 		}
@@ -137,6 +138,29 @@ func (r *imageSquashResolver) RelativeFileByPath(_ Location, path string) *Locat
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
 func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+	entry, err := r.img.FileCatalog.Get(location.ref)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
+	}
+
+	switch entry.Metadata.TypeFlag {
+	case tar.TypeSymlink, tar.TypeLink:
+		// the location we are searching may be a symlink, we should always work with the resolved file
+		locations, err := r.FilesByPath(location.RealPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve content location at location=%+v: %w", location, err)
+		}
+
+		switch len(locations) {
+		case 0:
+			return nil, fmt.Errorf("link resolution failed while resolving content location: %+v", location)
+		case 1:
+			location = locations[0]
+		default:
+			return nil, fmt.Errorf("link resolution resulted in multiple results while resolving content location: %+v", location)
+		}
+	}
+
 	return r.img.FileContentsByRef(location.ref)
 }
 

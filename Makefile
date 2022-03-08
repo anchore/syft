@@ -3,7 +3,7 @@ TEMPDIR = ./.tmp
 RESULTSDIR = test/results
 COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
 COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
-LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=2m --config .golangci.yaml
+LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=4m --config .golangci.yaml
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
 VERSION=$(shell git describe --dirty --always --tags)
@@ -25,7 +25,7 @@ COVERAGE_THRESHOLD := 62
 
 # CI cache busting values; change these if you want CI to not use previous stored cache
 INTEGRATION_CACHE_BUSTER="894d8ca"
-CLI_CACHE_BUSTER="894d8ca"
+CLI_CACHE_BUSTER="e5cdfd8"
 BOOTSTRAP_CACHE="c7afb99ad"
 
 ## Build variables
@@ -111,6 +111,7 @@ bootstrap-tools: $(TEMPDIR)
 	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.4.1
 	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/neilpa/yajsv@v1.4.0
+	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/sigstore/cosign/cmd/cosign@v1.5.1
 
 .PHONY: bootstrap-go
 bootstrap-go:

@@ -3,6 +3,7 @@ FROM busybox:latest
 
 # LAYER 1:
 ADD file-1.txt .
+
 # LAYER 2: link with previous data
 RUN ln -s ./file-1.txt link-1
 
@@ -25,6 +26,7 @@ RUN ln -s ./i-dont-exist.txt link-dead
 
 # LAYER 9: add the parent dir
 ADD parent /parent
+
 # LAYER 10: parent is a symlink
 RUN ln -s /parent parent-link
 

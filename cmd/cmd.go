@@ -6,6 +6,8 @@ import (
 	"os"
 	"sort"
 
+	"github.com/spf13/pflag"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
@@ -57,6 +59,7 @@ func initCmdAliasBindings() {
 		config.PowerUserCatalogerEnabledDefault()
 	}
 
+	// set bindings based on the packages alias
 	switch activeCmd {
 	case packagesCmd, rootCmd:
 		// note: we need to lazily bind config options since they are shared between both the root command
@@ -68,6 +71,16 @@ func initCmdAliasBindings() {
 		if err = bindPackagesConfigOptions(activeCmd.Flags()); err != nil {
 			panic(err)
 		}
+	case attestCmd:
+		// the --output and --platform options are independently defined flags, but a shared config option
+		if err = bindSharedConfigOption(attestCmd.Flags()); err != nil {
+			panic(err)
+		}
+		// even though the root command or packages command is NOT being run, we still need default bindings
+		// such that application config parsing passes.
+		if err = bindExclusivePackagesConfigOptions(packagesCmd.Flags()); err != nil {
+			panic(err)
+		}
 	default:
 		// even though the root command or packages command is NOT being run, we still need default bindings
 		// such that application config parsing passes.
@@ -75,6 +88,18 @@ func initCmdAliasBindings() {
 			panic(err)
 		}
 	}
+}
+
+func bindSharedConfigOption(flags *pflag.FlagSet) error {
+	if err := viper.BindPFlag("output", flags.Lookup("output")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("platform", flags.Lookup("platform")); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func initAppConfig() {

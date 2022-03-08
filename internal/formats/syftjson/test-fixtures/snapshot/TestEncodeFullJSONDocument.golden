@@ -163,7 +163,9 @@
    ],
    "manifest": "ZXlKelkyaGxiV0ZXWlhKemFXOXVJam95TENKdFpXUnBZVlI1Y0dVaU9pSmguLi4=",
    "config": "ZXlKaGNtTm9hWFJsWTNSMWNtVWlPaUpoYldRMk5DSXNJbU52Ym1acC4uLg==",
-   "repoDigests": []
+   "repoDigests": [],
+   "architecture": "",
+   "os": ""
   }
  },
  "distro": {

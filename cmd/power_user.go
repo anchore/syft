@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/output"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
@@ -26,7 +25,7 @@ const powerUserExample = `  {{.appName}} {{.command}} <image>
 
   DEPRECATED - THIS COMMAND WILL BE REMOVED in v1.0.0
 
-  Only image sources are supported (e.g. docker: , docker-archive: , oci: , etc.), the directory source (dir:) is not supported.
+  Only image sources are supported (e.g. docker: , podman: , docker-archive: , oci: , etc.), the directory source (dir:) is not supported.
 
   All behavior is controlled via application configuration and environment variables (see https://github.com/anchore/syft#configuration)
 `
@@ -74,10 +73,12 @@ func powerUserExec(_ *cobra.Command, args []string) error {
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
 
-	writer, err := output.MakeWriter(output.WriterOption{
-		Format: syftjson.Format(),
-		Path:   appConfig.File,
-	})
+	writer, err := sbom.NewWriter(
+		sbom.NewWriterOption(
+			syftjson.Format(),
+			appConfig.File,
+		),
+	)
 	if err != nil {
 		return err
 	}
@@ -115,7 +116,13 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			return
 		}
 
-		src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		si, err := source.ParseInput(userInput, appConfig.Platform, true)
+		if err != nil {
+			errs <- err
+			return
+		}
+
+		src, cleanup, err := source.New(*si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 		if err != nil {
 			errs <- err
 			return

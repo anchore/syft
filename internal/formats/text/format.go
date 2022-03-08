@@ -1,10 +1,14 @@
 package text
 
-import "github.com/anchore/syft/syft/format"
+import (
+	"github.com/anchore/syft/syft/sbom"
+)
 
-func Format() format.Format {
-	return format.NewFormat(
-		format.TextOption,
+const ID sbom.FormatID = "syft-text"
+
+func Format() sbom.Format {
+	return sbom.NewFormat(
+		ID,
 		encoder,
 		nil,
 		nil,
