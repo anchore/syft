@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func Format() format.Format {
-	return format.NewFormat(
-		format.GitHubJSON,
+const ID sbom.FormatID = "github-1-json"
+
+func Format() sbom.Format {
+	return sbom.NewFormat(
+		ID,
 		func(writer io.Writer, sbom sbom.SBOM) error {
 			bom := toGithubModel(&sbom)
 
