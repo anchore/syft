@@ -86,9 +86,6 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 		if !ok {
 			manifest = &Manifest{
 				Name: path,
-				File: FileInfo{
-					SourceLocation: path,
-				},
 				Metadata: Metadata{
 					"syft:path": toPath(s.Source, p, true),
 				},
