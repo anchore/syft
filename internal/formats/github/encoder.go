@@ -78,7 +78,7 @@ func toPath(s *source.Metadata, p *pkg.Package, full bool) string {
 		case source.FileScheme:
 			return fmt.Sprintf("%s:/%s", s.Path, strings.TrimPrefix(coords.RealPath, "/"))
 		case source.DirectoryScheme:
-			return strings.TrimPrefix(fmt.Sprintf("%s:/%s", s.Path, coords.RealPath), "./")
+			return strings.TrimPrefix(fmt.Sprintf("%s/%s", s.Path, coords.RealPath), "./")
 		}
 	}
 	return fmt.Sprintf("%s%s", s.Path, s.ImageMetadata.UserInput)
@@ -95,9 +95,11 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 			manifest = &Manifest{
 				Name: path,
 				File: FileInfo{
-					SourceLocation: toPath(&s.Source, &p, true),
+					SourceLocation: path,
 				},
-				Metadata: Metadata{},
+				Metadata: Metadata{
+					"syft:path": toPath(&s.Source, &p, true),
+				},
 				Resolved: DependencyGraph{},
 			}
 			manifests[path] = manifest

@@ -91,9 +91,11 @@ func Test_toGithubModel(t *testing.T) {
 			"ubuntu:18.04:/usr/lib": Manifest{
 				Name: "ubuntu:18.04:/usr/lib",
 				File: FileInfo{
-					SourceLocation: "ubuntu:18.04@fsid-1:/usr/lib",
+					SourceLocation: "ubuntu:18.04:/usr/lib",
 				},
-				Metadata: Metadata{},
+				Metadata: Metadata{
+					"syft:path": "ubuntu:18.04@fsid-1:/usr/lib",
+				},
 				Resolved: DependencyGraph{
 					"pkg:generic/pkg-1@1.0.1": DependencyNode{
 						Purl:         "pkg:generic/pkg-1@1.0.1",
@@ -110,7 +112,10 @@ func Test_toGithubModel(t *testing.T) {
 			"ubuntu:18.04:/etc": Manifest{
 				Name: "ubuntu:18.04:/etc",
 				File: FileInfo{
-					SourceLocation: "ubuntu:18.04@fsid-1:/etc",
+					SourceLocation: "ubuntu:18.04:/etc",
+				},
+				Metadata: Metadata{
+					"syft:path": "ubuntu:18.04@fsid-1:/etc",
 				},
 				Resolved: DependencyGraph{
 					"pkg:generic/pkg-3@3.0.3": DependencyNode{
