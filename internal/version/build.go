@@ -23,7 +23,7 @@ var platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 // Version defines the application version details (generally from build information)
 type Version struct {
 	Version           string `json:"version"`           // application semantic version
-	JsonSchemaVersion string `json:"jsonSchemaVersion"` // application semantic JSON schema version
+	JSONSchemaVersion string `json:"jsonSchemaVersion"` // application semantic JSON schema version
 	GitCommit         string `json:"gitCommit"`         // git SHA at build-time
 	GitDescription    string `json:"gitDescription"`    // output of 'git describe --dirty --always --tags'
 	BuildDate         string `json:"buildDate"`         // date of the build
@@ -43,7 +43,7 @@ func (v Version) IsProductionBuild() bool {
 func FromBuild() Version {
 	return Version{
 		Version:           version,
-		JsonSchemaVersion: internal.JSONSchemaVersion,
+		JSONSchemaVersion: internal.JSONSchemaVersion,
 		GitCommit:         gitCommit,
 		GitDescription:    gitDescription,
 		BuildDate:         buildDate,
