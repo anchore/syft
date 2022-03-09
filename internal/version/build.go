@@ -23,7 +23,7 @@ var platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 // Version defines the application version details (generally from build information)
 type Version struct {
 	Version        string `json:"version"`        // application semantic version
-	SchemaVersion  string `json:"schemaVesion"`   // application semantic JSON schema version
+	SchemaVersion  string `json:"schemaVersion"`  // application semantic JSON schema version
 	GitCommit      string `json:"gitCommit"`      // git SHA at build-time
 	GitDescription string `json:"gitDescription"` // output of 'git describe --dirty --always --tags'
 	BuildDate      string `json:"buildDate"`      // date of the build
