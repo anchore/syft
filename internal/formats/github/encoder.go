@@ -23,18 +23,10 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	}
 	return DependencySnapshot{
 		Version: 0,
-		// TODO allow property input to specify this information to the presenter
-		// The GitHub specifics must be filled out elsewhere, Syft does not have this information
-		//Job: Job{
-		//	Name:    "",
-		//	ID:      "",
-		//	HTMLURL: "",
-		//},
-		//Sha: "",
-		//Ref: "",
+		// TODO allow property input to specify the Job, Sha, and Ref
 		Detector: DetectorMetadata{
 			Name:    internal.ApplicationName,
-			URL:     "https://github.com/anchore/syft", // TODO is there a good URL to use here?
+			URL:     "https://github.com/anchore/syft",
 			Version: v,
 		},
 		Metadata:  toSnapshotMetadata(s),
@@ -64,7 +56,7 @@ func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 }
 
 // toPath Generates a string representation of the package location, optionally including the layer hash
-func toPath(s *source.Metadata, p *pkg.Package, full bool) string {
+func toPath(s source.Metadata, p pkg.Package, full bool) string {
 	if len(p.Locations) > 0 {
 		coords := &p.Locations[0].Coordinates
 		switch s.Scheme {
@@ -89,7 +81,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 	manifests := map[string]*Manifest{}
 
 	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
-		path := toPath(&s.Source, &p, false)
+		path := toPath(s.Source, p, false)
 		manifest, ok := manifests[path]
 		if !ok {
 			manifest = &Manifest{
@@ -98,7 +90,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 					SourceLocation: path,
 				},
 				Metadata: Metadata{
-					"syft:path": toPath(&s.Source, &p, true),
+					"syft:path": toPath(s.Source, p, true),
 				},
 				Resolved: DependencyGraph{},
 			}
