@@ -31,7 +31,7 @@ type Manifests map[string]Manifest
 // or representing a logical group of dependencies.
 type Manifest struct {
 	Name     string          `json:"name"`
-	File     FileInfo        `json:"file,omitempty"`
+	File     FileInfo        `json:"file"`
 	Metadata Metadata        `json:"metadata,omitempty"`
 	Resolved DependencyGraph `json:"resolved,omitempty"`
 }

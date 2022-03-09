@@ -90,6 +90,9 @@ func Test_toGithubModel(t *testing.T) {
 		Manifests: Manifests{
 			"ubuntu:18.04:/usr/lib": Manifest{
 				Name: "ubuntu:18.04:/usr/lib",
+				File: FileInfo{
+					SourceLocation: "ubuntu:18.04:/usr/lib",
+				},
 				Metadata: Metadata{
 					"syft:path": "ubuntu:18.04@fsid-1:/usr/lib",
 				},
@@ -108,6 +111,9 @@ func Test_toGithubModel(t *testing.T) {
 			},
 			"ubuntu:18.04:/etc": Manifest{
 				Name: "ubuntu:18.04:/etc",
+				File: FileInfo{
+					SourceLocation: "ubuntu:18.04:/etc",
+				},
 				Metadata: Metadata{
 					"syft:path": "ubuntu:18.04@fsid-1:/etc",
 				},
