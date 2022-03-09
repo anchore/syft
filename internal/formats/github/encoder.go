@@ -7,21 +7,23 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/formats/common"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
+// toGithubModel converts the provided SBOM to a GitHub dependency model
 func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	scanTime := time.Now().Format(time.RFC3339) // TODO is there a record of this somewhere?
-	version := version.FromBuild().Version
-	if version == "[not provided]" {
-		version = "0.0.0-dev"
+	v := version.FromBuild().Version
+	if v == "[not provided]" {
+		v = "0.0.0-dev"
 	}
 	return DependencySnapshot{
 		Version: 0,
+		// TODO allow property input to specify this information to the presenter
 		// The GitHub specifics must be filled out elsewhere, Syft does not have this information
 		//Job: Job{
 		//	Name:    "",
@@ -33,7 +35,7 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 		Detector: DetectorMetadata{
 			Name:    internal.ApplicationName,
 			URL:     "https://github.com/anchore/syft", // TODO is there a good URL to use here?
-			Version: version,
+			Version: v,
 		},
 		Metadata:  toSnapshotMetadata(s),
 		Manifests: toGithubManifests(s),
@@ -41,55 +43,85 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	}
 }
 
-var TagFilter = common.RequiredTag("github")
-
+// toSnapshotMetadata captures the linux distribution information and other metadata
 func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 	out := Metadata{}
 
-	for k, v := range common.Encode(s.Source, "syft:source", TagFilter) {
-		out[k] = v
-	}
-
-	for k, v := range common.Encode(s.Descriptor, "syft:descriptor", TagFilter) {
-		out[k] = v
+	if s.Artifacts.LinuxDistribution != nil {
+		d := s.Artifacts.LinuxDistribution
+		qualifiers := packageurl.Qualifiers{}
+		if len(d.IDLike) > 0 {
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "like",
+				Value: strings.Join(d.IDLike, ","),
+			})
+		}
+		purl := packageurl.NewPackageURL("generic", "", d.ID, d.VersionID, qualifiers, "")
+		out["syft:distro"] = purl.ToString()
 	}
 
 	return out
 }
 
+// toPath Generates a string representation of the package location, optionally including the layer hash
+func toPath(s *source.Metadata, p *pkg.Package, full bool) string {
+	if len(p.Locations) > 0 {
+		coords := &p.Locations[0].Coordinates
+		switch s.Scheme {
+		case source.ImageScheme:
+			in := strings.ReplaceAll(s.ImageMetadata.UserInput, ":/", "//")
+			path := strings.TrimPrefix(coords.RealPath, "/")
+			if full {
+				return fmt.Sprintf("%s@%s:/%s", in, coords.FileSystemID, path)
+			}
+			return fmt.Sprintf("%s:/%s", in, path)
+		case source.FileScheme:
+			return fmt.Sprintf("%s:/%s", s.Path, strings.TrimPrefix(coords.RealPath, "/"))
+		case source.DirectoryScheme:
+			return strings.TrimPrefix(fmt.Sprintf("%s:/%s", s.Path, coords.RealPath), "./")
+		}
+	}
+	return fmt.Sprintf("%s%s", s.Path, s.ImageMetadata.UserInput)
+}
+
+// toGithubManifests manifests, each of which represents a specific location that has dependencies
 func toGithubManifests(s *sbom.SBOM) Manifests {
-	path := s.Source.Path
-	name := path
-	if path == "" {
-		path = s.Source.ImageMetadata.UserInput
-		name = fmt.Sprintf("%s:%s", strings.ToLower(strings.TrimSuffix(string(s.Source.Scheme), "Scheme")), path)
-	}
-	manifest := Manifest{
-		Name: name,
-		File: FileInfo{
-			SourceLocation: name,
-		},
-		Metadata: Metadata{},
-		Resolved: DependencyGraph{},
-	}
+	manifests := map[string]*Manifest{}
 
 	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
-		purl := shortPURL(p)
-		manifest.Resolved[purl] = DependencyNode{
+		path := toPath(&s.Source, &p, false)
+		manifest, ok := manifests[path]
+		if !ok {
+			manifest = &Manifest{
+				Name: path,
+				File: FileInfo{
+					SourceLocation: toPath(&s.Source, &p, true),
+				},
+				Metadata: Metadata{},
+				Resolved: DependencyGraph{},
+			}
+			manifests[path] = manifest
+		}
+
+		name := dependencyName(p)
+		manifest.Resolved[name] = DependencyNode{
 			Purl:         p.PURL,
 			Metadata:     toDependencyMetadata(p),
-			Relationship: getDependencyRelationshipType(p),
-			Scope:        getDependencyScope(p),
-			Dependencies: getDependencies(s, p),
+			Relationship: toDependencyRelationshipType(p),
+			Scope:        toDependencyScope(p),
+			Dependencies: toDependencies(s, p),
 		}
 	}
 
 	out := Manifests{}
-	out[name] = manifest
+	for k, v := range manifests {
+		out[k] = *v
+	}
 	return out
 }
 
-func shortPURL(p pkg.Package) string {
+// dependencyName to make things a little nicer to read; this might end up being lossy
+func dependencyName(p pkg.Package) string {
 	purl, err := packageurl.FromString(p.PURL)
 	if err != nil {
 		log.Warnf("Invalid PURL for package: '%s' PURL: '%s' (%w)", p.Name, p.PURL, err)
@@ -100,41 +132,27 @@ func shortPURL(p pkg.Package) string {
 	return purl.ToString()
 }
 
-func getDependencyScope(p pkg.Package) DependencyScope {
+func toDependencyScope(_ pkg.Package) DependencyScope {
 	return DependencyScopeRuntime
 }
 
-func getDependencyRelationshipType(p pkg.Package) DependencyRelationship {
+func toDependencyRelationshipType(_ pkg.Package) DependencyRelationship {
 	return DependencyRelationshipDirect
 }
 
-func toDependencyMetadata(p pkg.Package) Metadata {
-	out := Metadata{}
-	if len(p.Locations) > 0 {
-		// We have limited properties, only encode the first location
-		out["syft:location"] = p.Locations[0].Coordinates.RealPath
-		//for k, v := range common.Encode(p.Locations, "syft:location", TagFilter) {
-		//	out[k] = v
-		//}
-	}
-	if p.Metadata != nil {
-		props := common.Encode(p.Metadata, "syft:metadata", TagFilter)
-		if len(props) > 0 {
-			out["syft:metadata:="] = string(p.MetadataType)
-			for k, v := range props {
-				out[k] = v
-			}
-		}
-	}
-	return out
+func toDependencyMetadata(_ pkg.Package) Metadata {
+	// We have limited properties: up to 8 with reasonably small values
+	// For now, we are encoding the location as part of the key, we are encoding PURLs with most
+	// of the other information Grype might need; and the distro information at the top level
+	// so we don't need anything here yet
+	return Metadata{}
 }
 
-func getDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
+func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
 	for _, r := range s.Relationships {
 		if r.From.ID() == p.ID() {
 			if p, ok := r.To.(pkg.Package); ok {
-				purl := shortPURL(p)
-				out = append(out, purl)
+				out = append(out, dependencyName(p))
 			}
 		}
 	}

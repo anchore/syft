@@ -27,7 +27,7 @@ type DetectorMetadata struct {
 
 type Manifests map[string]Manifest
 
-// A collection of related dependencies, either declared in a file,
+// Manifest A collection of related dependencies, either declared in a file,
 // or representing a logical group of dependencies.
 type Manifest struct {
 	Name     string          `json:"name"`
@@ -40,7 +40,7 @@ type FileInfo struct {
 	SourceLocation string `json:"source_location,omitempty"`
 }
 
-// A notation of whether a dependency is requested directly
+// DependencyRelationship A notation of whether a dependency is requested directly
 // by this manifest, or is a dependency of another dependency.
 type DependencyRelationship string
 
@@ -49,7 +49,7 @@ const (
 	DependencyRelationshipIndirect DependencyRelationship = "indirect"
 )
 
-// A notation of whether the dependency is required for the primary
+// DependencyScope A notation of whether the dependency is required for the primary
 // build artifact (runtime), or is only used for development.
 // Future versions of this specification may allow for more granular
 // scopes, like `runtimeserver`, `runtimeshipped`,
