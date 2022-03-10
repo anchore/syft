@@ -115,10 +115,13 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 				File: FileInfo{
 					SourceLocation: path,
 				},
-				Metadata: Metadata{
-					"syft:filesystem": filesystem(p),
-				},
 				Resolved: DependencyGraph{},
+			}
+			fs := filesystem(p)
+			if fs != "" {
+				manifest.Metadata = Metadata{
+					"syft:filesystem": fs,
+				}
 			}
 			manifests[path] = manifest
 		}
