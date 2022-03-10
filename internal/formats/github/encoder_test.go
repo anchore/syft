@@ -94,7 +94,7 @@ func Test_toGithubModel(t *testing.T) {
 					SourceLocation: "ubuntu:18.04:/usr/lib",
 				},
 				Metadata: Metadata{
-					"syft:path": "ubuntu:18.04@fsid-1:/usr/lib",
+					"syft:filesystem": "fsid-1",
 				},
 				Resolved: DependencyGraph{
 					"pkg:generic/pkg-1@1.0.1": DependencyNode{
@@ -115,7 +115,7 @@ func Test_toGithubModel(t *testing.T) {
 					SourceLocation: "ubuntu:18.04:/etc",
 				},
 				Metadata: Metadata{
-					"syft:path": "ubuntu:18.04@fsid-1:/etc",
+					"syft:filesystem": "fsid-1",
 				},
 				Resolved: DependencyGraph{
 					"pkg:generic/pkg-3@3.0.3": DependencyNode{

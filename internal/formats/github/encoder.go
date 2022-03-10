@@ -55,22 +55,26 @@ func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 	return out
 }
 
-// toPath Generates a string representation of the package location, optionally including the layer hash
-func toPath(s source.Metadata, p pkg.Package, full bool) string {
+func filesystem(p pkg.Package) string {
 	if len(p.Locations) > 0 {
-		coords := &p.Locations[0].Coordinates
+		return p.Locations[0].FileSystemID
+	}
+	return ""
+}
+
+// toPath Generates a string representation of the package location, optionally including the layer hash
+func toPath(s source.Metadata, p pkg.Package) string {
+	if len(p.Locations) > 0 {
+		location := &p.Locations[0]
 		switch s.Scheme {
 		case source.ImageScheme:
 			in := strings.ReplaceAll(s.ImageMetadata.UserInput, ":/", "//")
-			path := strings.TrimPrefix(coords.RealPath, "/")
-			if full {
-				return fmt.Sprintf("%s@%s:/%s", in, coords.FileSystemID, path)
-			}
+			path := strings.TrimPrefix(location.RealPath, "/")
 			return fmt.Sprintf("%s:/%s", in, path)
 		case source.FileScheme:
-			return fmt.Sprintf("%s:/%s", s.Path, strings.TrimPrefix(coords.RealPath, "/"))
+			return fmt.Sprintf("%s:/%s", s.Path, strings.TrimPrefix(location.RealPath, "/"))
 		case source.DirectoryScheme:
-			return strings.TrimPrefix(fmt.Sprintf("%s/%s", s.Path, coords.RealPath), "./")
+			return strings.TrimPrefix(fmt.Sprintf("%s/%s", s.Path, location.RealPath), "./")
 		}
 	}
 	return fmt.Sprintf("%s%s", s.Path, s.ImageMetadata.UserInput)
@@ -81,7 +85,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 	manifests := map[string]*Manifest{}
 
 	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
-		path := toPath(s.Source, p, false)
+		path := toPath(s.Source, p)
 		manifest, ok := manifests[path]
 		if !ok {
 			manifest = &Manifest{
@@ -90,7 +94,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 					SourceLocation: path,
 				},
 				Metadata: Metadata{
-					"syft:path": toPath(s.Source, p, true),
+					"syft:filesystem": filesystem(p),
 				},
 				Resolved: DependencyGraph{},
 			}
