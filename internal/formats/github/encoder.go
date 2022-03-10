@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mholt/archiver/v3"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -62,22 +64,49 @@ func filesystem(p pkg.Package) string {
 	return ""
 }
 
-// toPath Generates a string representation of the package location, optionally including the layer hash
-func toPath(s source.Metadata, p pkg.Package) string {
+// relativePath attempts to get the relative path of the package to the "scan root"
+func relativePath(p pkg.Package) string {
 	if len(p.Locations) > 0 {
 		location := &p.Locations[0]
+		if location.VirtualPath != "" {
+			return location.VirtualPath
+		}
+		return location.RealPath
+	}
+	return ""
+}
+
+// isArchive returns true if the path appears to be an archive
+func isArchive(path string) bool {
+	_, err := archiver.ByExtension(path)
+	return err == nil
+}
+
+// toPath Generates a string representation of the package location, optionally including the layer hash
+func toPath(s source.Metadata, p pkg.Package) string {
+	inputPath := strings.TrimPrefix(s.Path, "./")
+	if inputPath == "." {
+		inputPath = ""
+	}
+	if len(p.Locations) > 0 {
+		packagePath := strings.TrimPrefix(relativePath(p), "/")
 		switch s.Scheme {
 		case source.ImageScheme:
-			in := strings.ReplaceAll(s.ImageMetadata.UserInput, ":/", "//")
-			path := strings.TrimPrefix(location.RealPath, "/")
-			return fmt.Sprintf("%s:/%s", in, path)
+			image := strings.ReplaceAll(s.ImageMetadata.UserInput, ":/", "//")
+			return fmt.Sprintf("%s:/%s", image, packagePath)
 		case source.FileScheme:
-			return fmt.Sprintf("%s:/%s", s.Path, strings.TrimPrefix(location.RealPath, "/"))
+			if isArchive(inputPath) {
+				return fmt.Sprintf("%s:/%s", inputPath, packagePath)
+			}
+			return inputPath
 		case source.DirectoryScheme:
-			return strings.TrimPrefix(fmt.Sprintf("%s/%s", s.Path, location.RealPath), "./")
+			if inputPath != "" {
+				return fmt.Sprintf("%s/%s", inputPath, packagePath)
+			}
+			return packagePath
 		}
 	}
-	return fmt.Sprintf("%s%s", s.Path, s.ImageMetadata.UserInput)
+	return fmt.Sprintf("%s%s", inputPath, s.ImageMetadata.UserInput)
 }
 
 // toGithubManifests manifests, each of which represents a specific location that has dependencies

@@ -132,4 +132,30 @@ func Test_toGithubModel(t *testing.T) {
 	s1, _ := json.Marshal(expected)
 	s2, _ := json.Marshal(actual)
 	assert.JSONEq(t, string(s1), string(s2))
+
+	// Just test the other schemes:
+	s.Source.Path = "."
+	s.Source.Scheme = source.DirectoryScheme
+	actual = toGithubModel(&s)
+	assert.Equal(t, "etc", actual.Manifests["etc"].Name)
+
+	s.Source.Path = "./artifacts"
+	s.Source.Scheme = source.DirectoryScheme
+	actual = toGithubModel(&s)
+	assert.Equal(t, "artifacts/etc", actual.Manifests["artifacts/etc"].Name)
+
+	s.Source.Path = "/artifacts"
+	s.Source.Scheme = source.DirectoryScheme
+	actual = toGithubModel(&s)
+	assert.Equal(t, "/artifacts/etc", actual.Manifests["/artifacts/etc"].Name)
+
+	s.Source.Path = "./executable"
+	s.Source.Scheme = source.FileScheme
+	actual = toGithubModel(&s)
+	assert.Equal(t, "executable", actual.Manifests["executable"].Name)
+
+	s.Source.Path = "./archive.tar.gz"
+	s.Source.Scheme = source.FileScheme
+	actual = toGithubModel(&s)
+	assert.Equal(t, "archive.tar.gz:/etc", actual.Manifests["archive.tar.gz:/etc"].Name)
 }
