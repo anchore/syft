@@ -64,18 +64,6 @@ func filesystem(p pkg.Package) string {
 	return ""
 }
 
-// relativePath attempts to get the relative path of the package to the "scan root"
-func relativePath(p pkg.Package) string {
-	if len(p.Locations) > 0 {
-		location := &p.Locations[0]
-		if location.VirtualPath != "" {
-			return location.VirtualPath
-		}
-		return location.RealPath
-	}
-	return ""
-}
-
 // isArchive returns true if the path appears to be an archive
 func isArchive(path string) bool {
 	_, err := archiver.ByExtension(path)
@@ -89,7 +77,12 @@ func toPath(s source.Metadata, p pkg.Package) string {
 		inputPath = ""
 	}
 	if len(p.Locations) > 0 {
-		packagePath := strings.TrimPrefix(relativePath(p), "/")
+		location := p.Locations[0]
+		packagePath := location.RealPath
+		if location.VirtualPath != "" {
+			packagePath = location.VirtualPath
+		}
+		packagePath = strings.TrimPrefix(packagePath, "/")
 		switch s.Scheme {
 		case source.ImageScheme:
 			image := strings.ReplaceAll(s.ImageMetadata.UserInput, ":/", "//")
