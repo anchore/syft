@@ -65,9 +65,12 @@ func parseGoBin(location source.Location, reader io.ReadCloser, opener exeOpener
 func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(strings.NewReader(mod))
+
+	// filter mod dependencies: [dep, name, version, sha]
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 
+		// must have dep, name, version
 		if len(fields) < 3 {
 			continue
 		}
@@ -75,6 +78,7 @@ func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg
 		name := fields[1]
 		version := fields[2]
 		h1Digest := ""
+		// if dep is *not* vendored, it'll also have h1digest
 		if len(fields) >= 4 {
 			h1Digest = fields[3]
 		}
@@ -83,7 +87,7 @@ func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg
 			pkgsSlice = append(pkgsSlice, newGoBinaryPackage(name, version, h1Digest, goVersion, arch, location))
 		}
 		if fields[0] == replaceIdentifier {
-			// replace the last entry in the package slice
+			// replace the previous entry in the package slice
 			pkgsSlice[len(pkgsSlice)-1] = newGoBinaryPackage(name, version, h1Digest, goVersion, arch, location)
 		}
 	}
