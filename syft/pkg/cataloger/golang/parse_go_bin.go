@@ -70,18 +70,26 @@ func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 
-		// must have dep, name, version, sha
-		if len(fields) < 4 {
+		// must have dep, name, version
+		if len(fields) < 3 {
 			continue
 		}
 
-		if fields[0] == packageIdentifier || fields[0] == replaceIdentifier {
-			name := fields[1]
-			version := fields[2]
-			h1Digest := fields[3]
+		name := fields[1]
+		version := fields[2]
+		h1Digest := ""
+		// if dep is *not* vendored, it'll also have h1digest
+		if len(fields) >= 4 {
+			h1Digest = fields[3]
+		}
+
+		if fields[0] == packageIdentifier {
 			pkgsSlice = append(pkgsSlice, newGoBinaryPackage(name, version, h1Digest, goVersion, arch, location))
 		}
+		if fields[0] == replaceIdentifier {
+			// replace the previous entry in the package slice
+			pkgsSlice[len(pkgsSlice)-1] = newGoBinaryPackage(name, version, h1Digest, goVersion, arch, location)
+		}
 	}
-
 	return pkgsSlice
 }
