@@ -5,6 +5,8 @@ import (
 	"io"
 
 	"github.com/CycloneDX/cyclonedx-go"
+
+	"github.com/anchore/syft/internal/formats/common"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -155,6 +157,14 @@ func linuxReleaseFromOSComponent(component *cyclonedx.Component) *linux.Release 
 				}
 			}
 		}
+	}
+
+	if component.Properties != nil {
+		values := map[string]string{}
+		for _, p := range *component.Properties {
+			values[p.Name] = p.Value
+		}
+		common.DecodeInto(&rel, values, "syft:distro", CycloneDXFields)
 	}
 
 	return rel

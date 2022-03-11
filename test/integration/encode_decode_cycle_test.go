@@ -54,35 +54,38 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	for _, test := range tests {
 		t.Run(string(test.formatOption), func(t *testing.T) {
 
-			originalSBOM, _ := catalogFixtureImage(t, "image-pkg-coverage")
+			// use second image for relationships
+			for _, image := range []string{"image-pkg-coverage", "image-owning-package"} {
+				originalSBOM, _ := catalogFixtureImage(t, image)
 
-			format := syft.FormatByID(test.formatOption)
-			require.NotNil(t, format)
+				format := syft.FormatByID(test.formatOption)
+				require.NotNil(t, format)
 
-			by1, err := syft.Encode(originalSBOM, format)
-			assert.NoError(t, err)
+				by1, err := syft.Encode(originalSBOM, format)
+				assert.NoError(t, err)
 
-			newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
-			assert.NoError(t, err)
-			assert.Equal(t, format.ID(), newFormat.ID())
+				newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
+				assert.NoError(t, err)
+				assert.Equal(t, format.ID(), newFormat.ID())
 
-			by2, err := syft.Encode(*newSBOM, format)
-			assert.NoError(t, err)
+				by2, err := syft.Encode(*newSBOM, format)
+				assert.NoError(t, err)
 
-			if test.redactor != nil {
-				by1 = test.redactor(by1)
-				by2 = test.redactor(by2)
-			}
+				if test.redactor != nil {
+					by1 = test.redactor(by1)
+					by2 = test.redactor(by2)
+				}
 
-			if test.json {
-				s1 := string(by1)
-				s2 := string(by2)
-				assert.JSONEq(t, s1, s2)
-			} else {
-				if !assert.True(t, bytes.Equal(by1, by2)) {
-					dmp := diffmatchpatch.New()
-					diffs := dmp.DiffMain(string(by1), string(by2), true)
-					t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
+				if test.json {
+					s1 := string(by1)
+					s2 := string(by2)
+					assert.JSONEq(t, s1, s2)
+				} else {
+					if !assert.True(t, bytes.Equal(by1, by2)) {
+						dmp := diffmatchpatch.New()
+						diffs := dmp.DiffMain(string(by1), string(by2), true)
+						t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
+					}
 				}
 			}
 		})
