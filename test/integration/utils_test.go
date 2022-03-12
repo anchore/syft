@@ -1,15 +1,14 @@
 package integration
 
 import (
+	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg/cataloger/packages"
 	"github.com/stretchr/testify/require"
 	"testing"
-
-	"github.com/anchore/syft/syft/pkg/cataloger"
 
 	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -23,10 +22,11 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 	t.Cleanup(cleanupSource)
 	require.NoError(t, err)
 
-	// TODO: this would be better with functional options (after/during API refactor)
-	c := cataloger.DefaultConfig()
-	c.Search.Scope = source.SquashedScope
-	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
+	// TODO: this would be better with functional options (after/during API refactor)... this should be replaced
+	resolver, err := theSource.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+	release := linux.IdentifyRelease(resolver)
+	pkgCatalog, relationships, err := packages.Catalog(resolver, release, packages.CatalogersBySourceScheme(theSource.Metadata.Scheme, packages.DefaultSearchConfig())...)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -34,7 +34,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    pkgCatalog,
-			LinuxDistribution: actualDistro,
+			LinuxDistribution: release,
 		},
 		Relationships: relationships,
 		Source:        theSource.Metadata,
@@ -59,9 +59,10 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 	require.NoError(t, err)
 
 	// TODO: this would be better with functional options (after/during API refactor)
-	c := cataloger.DefaultConfig()
-	c.Search.Scope = source.AllLayersScope
-	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
+	resolver, err := theSource.FileResolver(source.AllLayersScope)
+	require.NoError(t, err)
+	release := linux.IdentifyRelease(resolver)
+	pkgCatalog, relationships, err := packages.Catalog(resolver, release, packages.CatalogersBySourceScheme(theSource.Metadata.Scheme, packages.DefaultSearchConfig())...)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
@@ -69,7 +70,7 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    pkgCatalog,
-			LinuxDistribution: actualDistro,
+			LinuxDistribution: release,
 		},
 		Relationships: relationships,
 		Source:        theSource.Metadata,

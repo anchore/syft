@@ -2,17 +2,17 @@ package java
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 
 	"github.com/anchore/syft/internal/file"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parseTarWrappedJavaArchive
+var _ generic.Parser = parseTarWrappedJavaArchive
 
 var genericTarGlobs = []string{
 	"**/*.tar",

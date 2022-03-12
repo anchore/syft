@@ -3,15 +3,15 @@ package javascript
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parsePackageLock
+var _ generic.Parser = parsePackageLock
 
 // PackageLock represents a JavaScript package.lock json file
 type PackageLock struct {

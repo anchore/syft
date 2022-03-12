@@ -3,16 +3,16 @@ package python
 import (
 	"bufio"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parseRequirementsTxt
+var _ generic.Parser = parseRequirementsTxt
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.

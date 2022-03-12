@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"regexp"
 
@@ -15,11 +16,10 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parsePackageJSON
+var _ generic.Parser = parsePackageJSON
 
 // packageJSON represents a JavaScript package.json file
 type packageJSON struct {

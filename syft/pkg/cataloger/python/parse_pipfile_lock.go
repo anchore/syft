@@ -3,13 +3,13 @@ package python
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"sort"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 type PipfileLock struct {
@@ -36,7 +36,7 @@ type Dependency struct {
 }
 
 // integrity check
-var _ common.ParserFn = parsePipfileLock
+var _ generic.Parser = parsePipfileLock
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
 func parsePipfileLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {

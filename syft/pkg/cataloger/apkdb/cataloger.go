@@ -5,14 +5,14 @@ package apkdb
 
 import (
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewApkdbCataloger returns a new Alpine DB cataloger object.
-func NewApkdbCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
+func NewApkdbCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
 		pkg.ApkDBGlob: parseApkDB,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "apkdb-cataloger")
+	return generic.NewCataloger(nil, globParsers, "apkdb-cataloger")
 }

@@ -13,11 +13,8 @@ import (
 	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
-	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/pkg/profile"
@@ -97,7 +94,7 @@ func init() {
 func setPackageFlags(flags *pflag.FlagSet) {
 	// Formatting & Input options //////////////////////////////////////////////
 	flags.StringP(
-		"scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
+		"scope", "s", syft.DefaultCatalogingConfig().Scope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringArrayP(
@@ -260,35 +257,16 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-func generateSBOM(src *source.Source, errs chan error) (*sbom.SBOM, error) {
-	tasks, err := tasks()
+func generateSBOM(src *source.Source) (*sbom.SBOM, error) {
+	catalogingConfig, err := appConfig.ToCatalogingConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	s := sbom.SBOM{
-		Source: src.Metadata,
-		Descriptor: sbom.Descriptor{
-			Name:          internal.ApplicationName,
-			Version:       version.FromBuild().Version,
-			Configuration: appConfig,
-		},
-	}
-
-	buildRelationships(&s, src, tasks, errs)
-
-	return &s, nil
-}
-
-func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs chan error) {
-	var relationships []<-chan artifact.Relationship
-	for _, task := range tasks {
-		c := make(chan artifact.Relationship)
-		relationships = append(relationships, c)
-		go runTask(task, &s.Artifacts, src, c, errs)
-	}
-
-	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
+	return syft.Catalog(src,
+		syft.WithConfig(*catalogingConfig),
+		syft.WithDefaultPackages(appConfig.Package.ToConfig()),
+	)
 }
 
 func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
@@ -305,7 +283,7 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 			return
 		}
 
-		s, err := generateSBOM(src, errs)
+		s, err := generateSBOM(src)
 		if err != nil {
 			errs <- err
 			return
@@ -313,6 +291,7 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 
 		if s == nil {
 			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
+			return
 		}
 
 		if appConfig.Anchore.Host != "" {
@@ -328,16 +307,6 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 		})
 	}()
 	return errs
-}
-
-func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
-	for _, c := range cs {
-		for n := range c {
-			relationships = append(relationships, n)
-		}
-	}
-
-	return relationships
 }
 
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {

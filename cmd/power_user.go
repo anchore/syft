@@ -10,8 +10,6 @@ import (
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
-	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -110,11 +108,6 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 		appConfig.FileMetadata.Cataloger.Enabled = true
 		appConfig.FileContents.Cataloger.Enabled = true
 		appConfig.FileClassification.Cataloger.Enabled = true
-		tasks, err := tasks()
-		if err != nil {
-			errs <- err
-			return
-		}
 
 		si, err := source.ParseInput(userInput, appConfig.Platform, true)
 		if err != nil {
@@ -131,28 +124,20 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			defer cleanup()
 		}
 
-		s := sbom.SBOM{
-			Source: src.Metadata,
-			Descriptor: sbom.Descriptor{
-				Name:          internal.ApplicationName,
-				Version:       version.FromBuild().Version,
-				Configuration: appConfig,
-			},
+		s, err := generateSBOM(src)
+		if err != nil {
+			errs <- err
+			return
 		}
 
-		var relationships []<-chan artifact.Relationship
-		for _, task := range tasks {
-			c := make(chan artifact.Relationship)
-			relationships = append(relationships, c)
-
-			go runTask(task, &s.Artifacts, src, c, errs)
+		if s == nil {
+			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
+			return
 		}
-
-		s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
-			Value: func() error { return writer.Write(s) },
+			Value: func() error { return writer.Write(*s) },
 		})
 	}()
 

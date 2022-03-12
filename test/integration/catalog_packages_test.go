@@ -1,11 +1,11 @@
 package integration
 
 import (
+	"github.com/anchore/syft/syft/pkg/cataloger/packages"
 	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -21,7 +21,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
 	var pc *pkg.Catalog
-	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
+	for _, c := range packages.InstalledCatalogers(packages.DefaultSearchConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		userInput := "docker-archive:" + tarPath
 		sourceInput, err := source.ParseInput(userInput, "", false)
@@ -41,7 +41,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 
 		b.Run(c.Name(), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				pc, _, err = cataloger.Catalog(resolver, theDistro, c)
+				pc, _, err = packages.Catalog(resolver, theDistro, c)
 				if err != nil {
 					b.Fatalf("failure during benchmark: %+v", err)
 				}

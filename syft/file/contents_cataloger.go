@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/anchore/syft/internal/file"
 	"io"
 
 	"github.com/anchore/syft/internal"
@@ -12,15 +13,25 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type ContentsCataloger struct {
-	globs                     []string
-	skipFilesAboveSizeInBytes int64
+type ContentsCatalogerConfig struct {
+	Globs                     []string
+	SkipFilesAboveSizeInBytes int64
 }
 
-func NewContentsCataloger(globs []string, skipFilesAboveSize int64) (*ContentsCataloger, error) {
+type ContentsCataloger struct {
+	config ContentsCatalogerConfig
+}
+
+func DefaultContentsCatalogerConfig() ContentsCatalogerConfig {
+	return ContentsCatalogerConfig{
+		Globs:                     nil,
+		SkipFilesAboveSizeInBytes: 1 * file.MB,
+	}
+}
+
+func NewContentsCataloger(config ContentsCatalogerConfig) (*ContentsCataloger, error) {
 	return &ContentsCataloger{
-		globs:                     globs,
-		skipFilesAboveSizeInBytes: skipFilesAboveSize,
+		config: config,
 	}, nil
 }
 
@@ -28,7 +39,7 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Co
 	results := make(map[source.Coordinates]string)
 	var locations []source.Location
 
-	locations, err := resolver.FilesByGlob(i.globs...)
+	locations, err := resolver.FilesByGlob(i.config.Globs...)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +49,7 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Co
 			return nil, err
 		}
 
-		if i.skipFilesAboveSizeInBytes > 0 && metadata.Size > i.skipFilesAboveSizeInBytes {
+		if i.config.SkipFilesAboveSizeInBytes > 0 && metadata.Size > i.config.SkipFilesAboveSizeInBytes {
 			continue
 		}
 

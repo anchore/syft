@@ -3,11 +3,11 @@ package php
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // Note: composer version 2 introduced a new structure for the installed.json file, so we support both
@@ -37,7 +37,7 @@ func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 }
 
 // integrity check
-var _ common.ParserFn = parseComposerLock
+var _ generic.Parser = parseComposerLock
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
 func parseInstalledJSON(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {

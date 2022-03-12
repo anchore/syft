@@ -3,6 +3,8 @@ package file
 import (
 	"bytes"
 	"fmt"
+	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/syft/event/monitor"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -10,12 +12,8 @@ import (
 
 	"github.com/anchore/syft/internal"
 
-	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 var DefaultSecretsPatterns = map[string]string{
@@ -26,24 +24,39 @@ var DefaultSecretsPatterns = map[string]string{
 	"generic-api-key":    `(?i)api(-|_)?key["'=:\s]*?(?P<value>[A-Z0-9]{20,60})["']?(\s|$)`,
 }
 
-type SecretsCataloger struct {
-	patterns           map[string]*regexp.Regexp
-	revealValues       bool
-	skipFilesAboveSize int64
+type SecretsCatalogerConfig struct {
+	Patterns     map[string]*regexp.Regexp
+	RevealValues bool
+	MaxFileSize  int64
 }
 
-func NewSecretsCataloger(patterns map[string]*regexp.Regexp, revealValues bool, maxFileSize int64) (*SecretsCataloger, error) {
+type SecretsCataloger struct {
+	config SecretsCatalogerConfig
+}
+
+func DefaultSecretsCatalogerConfig() SecretsCatalogerConfig {
+	patterns, err := GenerateSearchPatterns(DefaultSecretsPatterns, nil, nil)
+	if err != nil {
+		patterns = make(map[string]*regexp.Regexp)
+		log.Errorf("unable to create default secrets config: %w", err)
+	}
+	return SecretsCatalogerConfig{
+		Patterns:     patterns,
+		RevealValues: false,
+		MaxFileSize:  1 * file.MB,
+	}
+}
+
+func NewSecretsCataloger(config SecretsCatalogerConfig) (*SecretsCataloger, error) {
 	return &SecretsCataloger{
-		patterns:           patterns,
-		revealValues:       revealValues,
-		skipFilesAboveSize: maxFileSize,
+		config: config,
 	}, nil
 }
 
 func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]SearchResult, error) {
 	results := make(map[source.Coordinates][]SearchResult)
 	locations := allRegularFiles(resolver)
-	stage, prog, secretsDiscovered := secretsCatalogingProgress(int64(len(locations)))
+	stage, prog, secretsDiscovered := monitor.NewSecretsCatalogerMonitor(int64(len(locations)))
 	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
@@ -76,17 +89,17 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, nil
 	}
 
-	if i.skipFilesAboveSize > 0 && metadata.Size > i.skipFilesAboveSize {
+	if i.config.MaxFileSize > 0 && metadata.Size > i.config.MaxFileSize {
 		return nil, nil
 	}
 
 	// TODO: in the future we can swap out search strategies here
-	secrets, err := catalogLocationByLine(resolver, location, i.patterns)
+	secrets, err := catalogLocationByLine(resolver, location, i.config.Patterns)
 	if err != nil {
 		return nil, internal.ErrPath{Context: "secrets-cataloger", Path: location.RealPath, Err: err}
 	}
 
-	if i.revealValues {
+	if i.config.RevealValues {
 		for idx, secret := range secrets {
 			value, err := extractValue(resolver, location, secret.SeekPosition, secret.Length)
 			if err != nil {
@@ -129,30 +142,4 @@ func extractValue(resolver source.FileResolver, location source.Location, start,
 	}
 
 	return buf.String(), nil
-}
-
-type SecretsMonitor struct {
-	progress.Stager
-	SecretsDiscovered progress.Monitorable
-	progress.Progressable
-}
-
-func secretsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual, *progress.Manual) {
-	stage := &progress.Stage{}
-	secretsDiscovered := &progress.Manual{}
-	prog := &progress.Manual{
-		Total: locations,
-	}
-
-	bus.Publish(partybus.Event{
-		Type:   event.SecretsCatalogerStarted,
-		Source: secretsDiscovered,
-		Value: SecretsMonitor{
-			Stager:            progress.Stager(stage),
-			SecretsDiscovered: secretsDiscovered,
-			Progressable:      prog,
-		},
-	})
-
-	return stage, prog, secretsDiscovered
 }

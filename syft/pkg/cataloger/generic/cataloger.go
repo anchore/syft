@@ -1,7 +1,7 @@
 /*
-Package common provides generic utilities used by multiple catalogers.
+Package generic provides utilities used by multiple package catalogers.
 */
-package common
+package generic
 
 import (
 	"fmt"
@@ -14,17 +14,17 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-// GenericCataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
+// Cataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
-type GenericCataloger struct {
-	globParsers       map[string]ParserFn
-	pathParsers       map[string]ParserFn
+type Cataloger struct {
+	globParsers       map[string]Parser
+	pathParsers       map[string]Parser
 	upstreamCataloger string
 }
 
-// NewGenericCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a GenericCataloger
-func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string) *GenericCataloger {
-	return &GenericCataloger{
+// NewCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a Cataloger
+func NewCataloger(pathParsers map[string]Parser, globParsers map[string]Parser, upstreamCataloger string) *Cataloger {
+	return &Cataloger{
 		globParsers:       globParsers,
 		pathParsers:       pathParsers,
 		upstreamCataloger: upstreamCataloger,
@@ -32,12 +32,12 @@ func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string
 }
 
 // Name returns a string that uniquely describes the upstream cataloger that this Generic Cataloger represents.
-func (c *GenericCataloger) Name() string {
+func (c *Cataloger) Name() string {
 	return c.upstreamCataloger
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -70,8 +70,8 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *GenericCataloger) selectFiles(resolver source.FilePathResolver) map[source.Location]ParserFn {
-	var parserByLocation = make(map[source.Location]ParserFn)
+func (c *Cataloger) selectFiles(resolver source.FilePathResolver) map[source.Location]Parser {
+	var parserByLocation = make(map[source.Location]Parser)
 
 	// select by exact path
 	for path, parser := range c.pathParsers {

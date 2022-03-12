@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"regexp"
 	"strings"
@@ -14,11 +15,10 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parseGemFileLockEntries
+var _ generic.Parser = parseGemFileLockEntries
 
 type postProcessor func(string) []string
 

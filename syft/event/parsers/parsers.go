@@ -5,10 +5,9 @@ package parsers
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/event/monitor"
 
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
@@ -38,12 +37,12 @@ func checkEventType(actual, expected partybus.EventType) error {
 	return nil
 }
 
-func ParsePackageCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
+func ParsePackageCatalogerStarted(e partybus.Event) (*monitor.PackageCatalogerMonitor, error) {
 	if err := checkEventType(e.Type, event.PackageCatalogerStarted); err != nil {
 		return nil, err
 	}
 
-	monitor, ok := e.Value.(cataloger.Monitor)
+	monitor, ok := e.Value.(monitor.PackageCatalogerMonitor)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Value", e.Value)
 	}
@@ -51,12 +50,12 @@ func ParsePackageCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) 
 	return &monitor, nil
 }
 
-func ParseSecretsCatalogingStarted(e partybus.Event) (*file.SecretsMonitor, error) {
+func ParseSecretsCatalogingStarted(e partybus.Event) (*monitor.SecretsCatalogerMonitor, error) {
 	if err := checkEventType(e.Type, event.SecretsCatalogerStarted); err != nil {
 		return nil, err
 	}
 
-	monitor, ok := e.Value.(file.SecretsMonitor)
+	monitor, ok := e.Value.(monitor.SecretsCatalogerMonitor)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Value", e.Value)
 	}

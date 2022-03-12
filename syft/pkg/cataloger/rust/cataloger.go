@@ -4,14 +4,14 @@ Package rust provides a concrete Cataloger implementation for Cargo.lock files.
 package rust
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.
-func NewCargoLockCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
+func NewCargoLockCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
 		"**/Cargo.lock": parseCargoLock,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "rust-cataloger")
+	return generic.NewCataloger(nil, globParsers, "rust-cataloger")
 }

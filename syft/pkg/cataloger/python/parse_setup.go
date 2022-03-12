@@ -2,17 +2,17 @@ package python
 
 import (
 	"bufio"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parseSetup
+var _ generic.Parser = parseSetup
 
 // match examples:
 //		'pathlib3==2.2.0;python_version<"3.6"'  --> match(name=pathlib3 version=2.2.0)

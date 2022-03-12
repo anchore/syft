@@ -188,23 +188,28 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
+func attestationExecWorker(si source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		src, cleanup, err := source.NewFromRegistry(sourceInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		src, cleanup, err := source.NewFromRegistry(si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 		if cleanup != nil {
 			defer cleanup()
 		}
 		if err != nil {
-			errs <- fmt.Errorf("failed to construct source from user input %q: %w", sourceInput.UserInput, err)
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
 			return
 		}
 
-		s, err := generateSBOM(src, errs)
+		s, err := generateSBOM(src)
 		if err != nil {
 			errs <- err
+			return
+		}
+
+		if s == nil {
+			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
 			return
 		}
 

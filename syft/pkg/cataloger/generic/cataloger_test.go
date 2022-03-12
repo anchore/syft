@@ -1,4 +1,4 @@
-package common
+package generic
 
 import (
 	"fmt"
@@ -27,10 +27,10 @@ func parser(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship
 
 func TestGenericCataloger(t *testing.T) {
 
-	globParsers := map[string]ParserFn{
+	globParsers := map[string]Parser{
 		"**/a-path.txt": parser,
 	}
-	pathParsers := map[string]ParserFn{
+	pathParsers := map[string]Parser{
 		"test-fixtures/another-path.txt": parser,
 		"test-fixtures/last/path.txt":    parser,
 	}
@@ -38,7 +38,7 @@ func TestGenericCataloger(t *testing.T) {
 
 	expectedSelection := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"}
 	resolver := source.NewMockResolverForPaths(expectedSelection...)
-	cataloger := NewGenericCataloger(pathParsers, globParsers, upstream)
+	cataloger := NewCataloger(pathParsers, globParsers, upstream)
 
 	expectedPkgs := make(map[string]pkg.Package)
 	for _, path := range expectedSelection {

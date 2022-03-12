@@ -3,6 +3,7 @@ package apkdb
 import (
 	"bufio"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"path"
 	"strconv"
@@ -14,12 +15,11 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 	"github.com/mitchellh/mapstructure"
 )
 
 // integrity check
-var _ common.ParserFn = parseApkDB
+var _ generic.Parser = parseApkDB
 
 func newApkDBPackage(d *pkg.ApkMetadata) *pkg.Package {
 	return &pkg.Package{

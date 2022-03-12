@@ -2,16 +2,16 @@ package rust
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 	"github.com/pelletier/go-toml"
 )
 
 // integrity check
-var _ common.ParserFn = parseCargoLock
+var _ generic.Parser = parseCargoLock
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.
 func parseCargoLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {

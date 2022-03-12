@@ -2,6 +2,7 @@ package java
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"path"
 	"strings"
@@ -10,11 +11,10 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parseJavaArchive
+var _ generic.Parser = parseJavaArchive
 
 var archiveFormatGlobs = []string{
 	"**/*.jar",

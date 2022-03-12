@@ -1,6 +1,6 @@
 package java
 
-type Config struct {
+type CatalogerConfig struct {
 	SearchUnindexedArchives bool
 	SearchIndexedArchives   bool
 }

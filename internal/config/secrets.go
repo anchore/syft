@@ -1,7 +1,9 @@
 package config
 
 import (
-	"github.com/anchore/syft/internal/file"
+	"fmt"
+	internalFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/spf13/viper"
 )
@@ -18,11 +20,23 @@ func (cfg secrets) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("secrets.cataloger.enabled", catalogerEnabledDefault)
 	v.SetDefault("secrets.cataloger.scope", source.AllLayersScope)
 	v.SetDefault("secrets.reveal-values", false)
-	v.SetDefault("secrets.skip-files-above-size", 1*file.MB)
+	v.SetDefault("secrets.skip-files-above-size", 1*internalFile.MB)
 	v.SetDefault("secrets.additional-patterns", map[string]string{})
 	v.SetDefault("secrets.exclude-pattern-names", []string{})
 }
 
 func (cfg *secrets) parseConfigValues() error {
 	return cfg.Cataloger.parseConfigValues()
+}
+
+func (cfg secrets) ToConfig() (*file.SecretsCatalogerConfig, error) {
+	patterns, err := file.GenerateSearchPatterns(file.DefaultSecretsPatterns, cfg.AdditionalPatterns, cfg.ExcludePatternNames)
+	if err != nil {
+		return nil, fmt.Errorf("unable to process secrets config patterns: %w", err)
+	}
+	return &file.SecretsCatalogerConfig{
+		Patterns:     patterns,
+		RevealValues: cfg.RevealValues,
+		MaxFileSize:  cfg.SkipFilesAboveSize,
+	}, nil
 }

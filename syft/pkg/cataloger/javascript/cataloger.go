@@ -4,24 +4,24 @@ Package javascript provides a concrete Cataloger implementation for JavaScript e
 package javascript
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewJavascriptPackageCataloger returns a new JavaScript cataloger object based on detection of npm based packages.
-func NewJavascriptPackageCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
+func NewJavascriptPackageCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
 		"**/package.json": parsePackageJSON,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "javascript-package-cataloger")
+	return generic.NewCataloger(nil, globParsers, "javascript-package-cataloger")
 }
 
 // NewJavascriptLockCataloger returns a new Javascript cataloger object base on package lock files.
-func NewJavascriptLockCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
+func NewJavascriptLockCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
 		"**/package-lock.json": parsePackageLock,
 		"**/yarn.lock":         parseYarnLock,
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "javascript-lock-cataloger")
+	return generic.NewCataloger(nil, globParsers, "javascript-lock-cataloger")
 }

@@ -2,16 +2,16 @@ package python
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 	"github.com/pelletier/go-toml"
 )
 
 // integrity check
-var _ common.ParserFn = parsePoetryLock
+var _ generic.Parser = parsePoetryLock
 
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
 func parsePoetryLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {

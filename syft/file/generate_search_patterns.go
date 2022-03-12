@@ -31,8 +31,10 @@ func GenerateSearchPatterns(basePatterns map[string]string, additionalPatterns m
 	}
 
 	// add all additional cases
-	for name, pattern := range additionalPatterns {
-		addFn(name, pattern)
+	if additionalPatterns != nil {
+		for name, pattern := range additionalPatterns {
+			addFn(name, pattern)
+		}
 	}
 
 	if errs != nil {

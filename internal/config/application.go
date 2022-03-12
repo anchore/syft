@@ -3,6 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/file"
 	"path"
 	"reflect"
 	"strings"
@@ -47,6 +50,35 @@ type Application struct {
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
 	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
+}
+
+func (cfg Application) ToCatalogingConfig() (*syft.CatalogingConfig, error) {
+	digests, err := file.DigestHashesByName(cfg.FileMetadata.Digests...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse config item 'file-metadata.digests': %w", err)
+	}
+
+	secretsConfig, err := cfg.Secrets.ToConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return &syft.CatalogingConfig{
+		// note: package catalogers cannot be determined until runtime
+		ToolName:             internal.ApplicationName,
+		ToolVersion:          version.FromBuild().Version,
+		ToolConfiguration:    cfg,
+		Scope:                cfg.Package.Cataloger.ScopeOpt,
+		ProcessTasksInSerial: false,
+		CaptureFileMetadata:  cfg.FileMetadata.Cataloger.Enabled,
+		DigestHashes:         digests,
+		CaptureSecrets:       cfg.Secrets.Cataloger.Enabled,
+		SecretsConfig:        *secretsConfig,
+		SecretsScope:         cfg.Secrets.Cataloger.ScopeOpt,
+		ClassifyFiles:        cfg.FileClassification.Cataloger.Enabled,
+		FileClassifiers:      file.DefaultClassifiers(),
+		ContentsConfig:       cfg.FileContents.ToConfig(),
+	}, nil
 }
 
 // PowerUserCatalogerEnabledDefault switches all catalogers to be enabled when running power-user command

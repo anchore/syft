@@ -3,17 +3,17 @@ package javascript
 import (
 	"bufio"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"regexp"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
 
 // integrity check
-var _ common.ParserFn = parseYarnLock
+var _ generic.Parser = parseYarnLock
 
 var (
 	// packageNameExp matches the name of the dependency in yarn.lock

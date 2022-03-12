@@ -4,12 +4,12 @@ Package java provides a concrete Cataloger implementation for Java archives (jar
 package java
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewJavaCataloger returns a new Java archive cataloger object.
-func NewJavaCataloger(cfg Config) *common.GenericCataloger {
-	globParsers := make(map[string]common.ParserFn)
+func NewJavaCataloger(cfg CatalogerConfig) *generic.Cataloger {
+	globParsers := make(map[string]generic.Parser)
 
 	// java archive formats
 	for _, pattern := range archiveFormatGlobs {
@@ -30,5 +30,5 @@ func NewJavaCataloger(cfg Config) *common.GenericCataloger {
 		}
 	}
 
-	return common.NewGenericCataloger(nil, globParsers, "java-cataloger")
+	return generic.NewCataloger(nil, globParsers, "java-cataloger")
 }

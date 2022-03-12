@@ -11,53 +11,55 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var DefaultClassifiers = []Classifier{
-	{
-		Class: "python-binary",
-		FilepathPatterns: []*regexp.Regexp{
-			regexp.MustCompile(`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`),
-			regexp.MustCompile(`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`),
+func DefaultClassifiers() []Classifier {
+	return []Classifier{
+		{
+			Class: "python-binary",
+			FilepathPatterns: []*regexp.Regexp{
+				regexp.MustCompile(`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`),
+				regexp.MustCompile(`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`),
+			},
+			EvidencePatternTemplates: []string{
+				`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`,
+			},
 		},
-		EvidencePatternTemplates: []string{
-			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`,
+		{
+			Class: "cpython-source",
+			FilepathPatterns: []*regexp.Regexp{
+				regexp.MustCompile(`(.*/|^)patchlevel.h$`),
+			},
+			EvidencePatternTemplates: []string{
+				`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`,
+			},
 		},
-	},
-	{
-		Class: "cpython-source",
-		FilepathPatterns: []*regexp.Regexp{
-			regexp.MustCompile(`(.*/|^)patchlevel.h$`),
+		{
+			Class: "go-binary",
+			FilepathPatterns: []*regexp.Regexp{
+				regexp.MustCompile(`(.*/|^)go$`),
+			},
+			EvidencePatternTemplates: []string{
+				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`,
+			},
 		},
-		EvidencePatternTemplates: []string{
-			`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`,
+		{
+			Class: "go-binary-hint",
+			FilepathPatterns: []*regexp.Regexp{
+				regexp.MustCompile(`(.*/|^)VERSION$`),
+			},
+			EvidencePatternTemplates: []string{
+				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`,
+			},
 		},
-	},
-	{
-		Class: "go-binary",
-		FilepathPatterns: []*regexp.Regexp{
-			regexp.MustCompile(`(.*/|^)go$`),
+		{
+			Class: "busybox-binary",
+			FilepathPatterns: []*regexp.Regexp{
+				regexp.MustCompile(`(.*/|^)busybox$`),
+			},
+			EvidencePatternTemplates: []string{
+				`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			},
 		},
-		EvidencePatternTemplates: []string{
-			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`,
-		},
-	},
-	{
-		Class: "go-binary-hint",
-		FilepathPatterns: []*regexp.Regexp{
-			regexp.MustCompile(`(.*/|^)VERSION$`),
-		},
-		EvidencePatternTemplates: []string{
-			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`,
-		},
-	},
-	{
-		Class: "busybox-binary",
-		FilepathPatterns: []*regexp.Regexp{
-			regexp.MustCompile(`(.*/|^)busybox$`),
-		},
-		EvidencePatternTemplates: []string{
-			`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
-		},
-	},
+	}
 }
 
 type Classifier struct {
