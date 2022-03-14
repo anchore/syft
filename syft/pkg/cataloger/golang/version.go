@@ -11,44 +11,34 @@ import (
 	"debug/buildinfo"
 	"errors"
 	"io"
-	"io/fs"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"strings"
 
 	macho "github.com/anchore/go-macholibre"
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 )
 
 // isExe reports whether the file should be considered executable.
-func isExe(file string, info fs.FileInfo) bool {
+func isExe(file string, mode os.FileMode) bool {
 	if runtime.GOOS == "windows" {
 		return strings.HasSuffix(strings.ToLower(file), ".exe")
 	}
-	return info.Mode().IsRegular() && info.Mode()&0111 != 0
+	return mode.IsRegular() && mode&0111 != 0
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(file string, info fs.FileInfo) []*debug.BuildInfo {
-	if info.Mode()&fs.ModeSymlink != 0 {
-		// Accept file symlinks only.
-		i, err := os.Stat(file)
-		if err != nil || !i.Mode().IsRegular() {
-			log.Debugf("golang cataloger: %s: symlink", file)
-			return nil
-		}
-		info = i
-	}
-
-	if !isExe(file, info) {
-		log.Debugf("golang cataloger: %s: not executable file\n", file)
+func scanFile(reader file.LazyReader, filename string, mode os.FileMode) []*debug.BuildInfo {
+	if !isExe(filename, mode) {
+		log.Debugf("golang cataloger: %s: not executable file\n", filename)
 		return nil
 	}
 
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
-	readers, err := getReaders(file)
+	readers, err := getReaders(reader)
 	if err != nil {
 		log.Warnf("golang cataloger: opening binary: %v", err)
 		return nil
@@ -59,7 +49,7 @@ func scanFile(file string, info fs.FileInfo) []*debug.BuildInfo {
 		bi, err := buildinfo.Read(r)
 		if err != nil {
 			if pathErr := (*os.PathError)(nil); !errors.As(err, &pathErr) {
-				log.Warnf("golang cataloger: scanning file %s: %v\n", file, err)
+				log.Warnf("golang cataloger: scanning file %s: %v\n", filename, err)
 			}
 			return nil
 		}
@@ -72,16 +62,12 @@ func scanFile(file string, info fs.FileInfo) []*debug.BuildInfo {
 }
 
 // openExe opens file and returns it as io.ReaderAt.
-func getReaders(file string) ([]io.ReaderAt, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
+func getReaders(f file.LazyReader) ([]io.ReaderAt, error) {
 	data := make([]byte, 16)
 	if _, err := io.ReadFull(f, data); err != nil {
 		return nil, err
 	}
-	_, err = f.Seek(0, 0)
+	_, err := f.Seek(0, 0)
 	if err != nil {
 		return nil, err
 	}

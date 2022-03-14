@@ -135,7 +135,7 @@ func (r *imageSquashResolver) RelativeFileByPath(_ Location, path string) *Locat
 	return &paths[0]
 }
 
-// FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
+// FileContentsByLocation fetches file contents for a single file reference, regardless of the source layer.
 // If the path does not exist an error is returned.
 func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	entry, err := r.img.FileCatalog.Get(location.ref)

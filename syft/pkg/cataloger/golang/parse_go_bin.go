@@ -85,8 +85,6 @@ func setArch(readers []io.ReaderAt, builds []*debug.BuildInfo) {
 
 		builds[i].Settings = append(builds[i].Settings, debug.BuildSetting{Key: GOARCH, Value: a})
 	}
-
-	fmt.Printf("build: %+v\n", builds[0])
 }
 
 func getGOARCH(settings []debug.BuildSetting) string {

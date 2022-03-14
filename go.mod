@@ -295,3 +295,5 @@ require (
 require github.com/docker/docker v20.10.12+incompatible
 
 require google.golang.org/protobuf v1.27.1 // indirect
+
+replace github.com/anchore/stereoscope => github.com/jonasagx/stereoscope v0.0.0-20220314180508-62daa1e1d05e

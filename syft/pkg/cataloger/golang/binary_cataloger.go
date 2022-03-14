@@ -5,8 +5,8 @@ package golang
 
 import (
 	"fmt"
-	"os"
 
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -38,12 +38,26 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	}
 
 	for _, location := range fileMatches {
-		info, err := os.Stat(location.RealPath)
+		readerCloser, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			log.Warnf("golang cataloger: checking file real path: %v", err)
+			log.Debugf("golang cataloger: opening file: %v", err)
 			continue
 		}
-		mods := scanFile(location.RealPath, info)
+
+		reader, ok := readerCloser.(file.LazyReader)
+		if !ok {
+			log.Warnf("golang cataloger: resolver cannot provide file reader")
+			continue
+		}
+
+		metadata, err := resolver.FileMetadataByLocation(location)
+		if err != nil {
+			log.Debugf("golang cataloger: getting location metadata: %v", err)
+			continue
+		}
+
+		mods := scanFile(reader, location.RealPath, metadata.Mode)
+		internal.CloseAndLogError(readerCloser, location.RealPath)
 
 		for _, mod := range mods {
 			pkgs = append(pkgs, buildGoPkgInfo(location, mod)...)
