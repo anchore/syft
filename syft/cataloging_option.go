@@ -53,7 +53,7 @@ func WithPackageCatalogers(catalogers ...pkg.Cataloger) CatalogingOption {
 	}
 }
 
-func WithDefaultPackages(cfg packages.SearchConfig) CatalogingOption {
+func WithDefaultPackageCatalogers(cfg packages.SearchConfig) CatalogingOption {
 	return func(src *source.Source, config *CatalogingConfig) error {
 		config.PackageCatalogers = packages.CatalogersBySourceScheme(src.Metadata.Scheme, cfg)
 		return nil

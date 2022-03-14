@@ -265,7 +265,7 @@ func generateSBOM(src *source.Source) (*sbom.SBOM, error) {
 
 	return syft.Catalog(src,
 		syft.WithConfig(*catalogingConfig),
-		syft.WithDefaultPackages(appConfig.Package.ToConfig()),
+		syft.WithDefaultPackageCatalogers(appConfig.Package.ToConfig()),
 	)
 }
 
