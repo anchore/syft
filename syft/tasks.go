@@ -117,11 +117,6 @@ func generateCatalogSecretsTask(config CatalogingConfig) (task, error) {
 		return nil, nil
 	}
 
-	//patterns, err := file.GenerateSearchPatterns(file.DefaultSecretsPatterns, appConfig.Secrets.AdditionalPatterns, appConfig.Secrets.ExcludePatternNames)
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	secretsCataloger, err := file.NewSecretsCataloger(config.SecretsConfig)
 	if err != nil {
 		return nil, err
