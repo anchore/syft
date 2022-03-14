@@ -165,6 +165,7 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo) []pkg.Packag
 	if mod.Main == empty {
 		return pkgs
 	}
+	mod.Main.Version = ""
 	gbs := getBuildSettings(mod.Settings)
 	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
 	pkgs = append(pkgs, main)
