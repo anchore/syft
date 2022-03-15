@@ -17,9 +17,17 @@ import (
 	"strings"
 
 	macho "github.com/anchore/go-macholibre"
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 )
+
+// unionReader is a single interface with all reading functions used by golang bin
+// cataloger.
+type unionReader interface {
+	io.Reader
+	io.ReaderAt
+	io.Seeker
+	io.Closer
+}
 
 // isExe reports whether the file should be considered executable.
 func isExe(file string, mode os.FileMode) bool {
@@ -30,7 +38,7 @@ func isExe(file string, mode os.FileMode) bool {
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(reader file.LazyReader, filename string, mode os.FileMode) []*debug.BuildInfo {
+func scanFile(reader unionReader, filename string, mode os.FileMode) []*debug.BuildInfo {
 	if !isExe(filename, mode) {
 		log.Debugf("golang cataloger: %s: not executable file\n", filename)
 		return nil
@@ -62,7 +70,7 @@ func scanFile(reader file.LazyReader, filename string, mode os.FileMode) []*debu
 }
 
 // openExe opens file and returns it as io.ReaderAt.
-func getReaders(f file.LazyReader) ([]io.ReaderAt, error) {
+func getReaders(f unionReader) ([]io.ReaderAt, error) {
 	data := make([]byte, 16)
 	if _, err := io.ReadFull(f, data); err != nil {
 		return nil, err

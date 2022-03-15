@@ -4,9 +4,11 @@ Package golang provides a concrete Cataloger implementation for go.mod files.
 package golang
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -40,20 +42,19 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	for _, location := range fileMatches {
 		readerCloser, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			log.Debugf("golang cataloger: opening file: %v", err)
-			continue
-		}
-
-		reader, ok := readerCloser.(file.LazyReader)
-		if !ok {
-			log.Warnf("golang cataloger: resolver cannot provide file reader")
+			log.Warnf("golang cataloger: opening file: %v", err)
 			continue
 		}
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
-			log.Debugf("golang cataloger: getting location metadata: %v", err)
+			log.Warnf("golang cataloger: getting location metadata: %v", err)
 			continue
+		}
+
+		reader, err := getUnionReader(readerCloser)
+		if err != nil {
+			return nil, nil, err
 		}
 
 		mods := scanFile(reader, location.RealPath, metadata.Mode)
@@ -65,4 +66,31 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	}
 
 	return pkgs, nil, nil
+}
+
+func getUnionReader(readerCloser io.ReadCloser) (unionReader, error) {
+	reader, ok := readerCloser.(unionReader)
+	if ok {
+		return reader, nil
+	}
+	log.Debugf("golang cataloger: unable to use stereoscope file, reading entire contents")
+
+	b, err := ioutil.ReadAll(readerCloser)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read contents from go binary: %w", err)
+	}
+
+	bytesReader := bytes.NewReader(b)
+
+	reader = struct {
+		io.ReadCloser
+		io.ReaderAt
+		io.Seeker
+	}{
+		ReadCloser: io.NopCloser(bytesReader),
+		ReaderAt:   bytesReader,
+		Seeker:     bytesReader,
+	}
+
+	return reader, nil
 }
