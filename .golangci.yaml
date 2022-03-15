@@ -44,9 +44,6 @@ linters:
     - whitespace
 run:
   timeout: 4m
-  # skip-files:
-    # - syft/pkg/cataloger/golang/parse_go_bin.go # NOTE(jonasagx): this file has code that requires go 1.18, which is currently incompatible ith golangci-lint
-    # - _test\.go
 # do not enable...
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
