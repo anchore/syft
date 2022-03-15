@@ -12,6 +12,12 @@ import (
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/syftjson"
+	cbundle "github.com/sigstore/cosign/pkg/cosign/bundle"
+	"github.com/sigstore/cosign/pkg/oci/static"
+	sigs "github.com/sigstore/cosign/pkg/signature"
+	"github.com/sigstore/cosign/pkg/types"
+	"github.com/sigstore/rekor/pkg/generated/client"
+	"github.com/sigstore/rekor/pkg/generated/models"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -26,6 +32,7 @@ import (
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
 	"github.com/pkg/profile"
+	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
@@ -113,19 +120,22 @@ func fetchPassword(_ bool) (b []byte, err error) {
 }
 
 func selectPassFunc(keypath string) (cosign.PassFunc, error) {
-	keyContents, err := os.ReadFile(keypath)
-	if err != nil {
-		return nil, err
+	if keypath != "" {
+		keyContents, err := os.ReadFile(keypath)
+		if err != nil {
+			return nil, err
+		}
+		var fn cosign.PassFunc = func(bool) (b []byte, err error) { return nil, nil }
+
+		_, err = cosign.LoadPrivateKey(keyContents, nil)
+		if err != nil {
+			fn = fetchPassword
+		}
+
+		return fn, nil
 	}
 
-	var fn cosign.PassFunc = func(bool) (b []byte, err error) { return nil, nil }
-
-	_, err = cosign.LoadPrivateKey(keyContents, nil)
-	if err != nil {
-		fn = fetchPassword
-	}
-
-	return fn, nil
+	return nil, nil
 }
 
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
@@ -163,14 +173,23 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", formatAliases(format.ID()), formatAliases(attestFormats...))
 	}
 
+	appConfig.Attest.Key = ""
 	passFunc, err := selectPassFunc(appConfig.Attest.Key)
 	if err != nil {
 		return err
 	}
 
 	ko := sign.KeyOpts{
-		KeyRef:   appConfig.Attest.Key,
-		PassFunc: passFunc,
+		KeyRef:                   "",
+		PassFunc:                 passFunc,
+		Sk:                       false,
+		Slot:                     "signature",
+		FulcioURL:                "https://fulcio.sigstore.dev",
+		InsecureSkipFulcioVerify: true,
+		RekorURL:                 "https://rekor.sigstore.dev",
+		OIDCIssuer:               "https://oauth2.sigstore.dev/auth",
+		OIDCClientID:             "sigstore",
+		OIDCClientSecret:         "",
 	}
 
 	sv, err := sign.SignerFromKeyOpts(ctx, "", ko)
@@ -223,6 +242,33 @@ func attestationExecWorker(sourceInput source.Input, format sbom.Format, predica
 	return errs
 }
 
+type tlogUploadFn func(*client.Rekor, []byte) (*models.LogEntryAnon, error)
+
+func uploadToTlog(ctx context.Context, sv *sign.SignerVerifier, rekorURL string, upload tlogUploadFn) (*cbundle.RekorBundle, error) {
+	var rekorBytes []byte
+	// Upload the cert or the public key, depending on what we have
+	if sv.Cert != nil {
+		rekorBytes = sv.Cert
+	} else {
+		pemBytes, err := sigs.PublicKeyPem(sv, signatureoptions.WithContext(ctx))
+		if err != nil {
+			return nil, err
+		}
+		rekorBytes = pemBytes
+	}
+
+	rekorClient, err := rekor.NewClient(rekorURL)
+	if err != nil {
+		return nil, err
+	}
+	entry, err := upload(rekorClient, rekorBytes)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Fprintln(os.Stderr, "tlog entry created with index:", *entry.LogIndex)
+	return cbundle.EntryToBundle(entry), nil
+}
+
 func formatPredicateType(format sbom.Format) string {
 	switch format.ID() {
 	case spdx22json.ID:
@@ -269,10 +315,25 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 		return err
 	}
 
+	opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
+	if sv.Cert != nil {
+		opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
+	}
+
 	signedPayload, err := wrapped.SignMessage(bytes.NewReader(payload), signatureoptions.WithContext(context.Background()))
 	if err != nil {
 		return errors.Wrap(err, "unable to sign SBOM")
 	}
+
+	ctx := context.Background()
+
+	bundle, err := uploadToTlog(ctx, sv, "https://rekor.sigstore.dev", func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
+		return cosign.TLogUploadInTotoAttestation(ctx, r, signedPayload, b)
+	})
+	if err != nil {
+		return err
+	}
+	opts = append(opts, static.WithBundle(bundle))
 
 	bus.Publish(partybus.Event{
 		Type: event.Exit,
