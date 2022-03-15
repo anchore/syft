@@ -43,6 +43,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	tests := []struct {
 		name     string
 		mod      *debug.BuildInfo
+		arch     string
 		expected []pkg.Package
 	}{
 		{
@@ -57,6 +58,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "buildGoPkgInfo parses a mod without main module",
+			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
 				Settings: []debug.BuildSetting{
@@ -97,6 +99,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "buildGoPkgInfo parses a mod without packages",
+			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
 				Main:      debug.Module{Path: "github.com/anchore/syft"},
@@ -110,6 +113,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "buildGoPkgInfo parses a populated mod string and returns packages but no source info",
+			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
 				Main:      debug.Module{Path: "github.com/anchore/syft"},
@@ -177,6 +181,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "buildGoPkgInfo parses a populated mod string and returns packages when a replace directive exists",
+			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
 				Main:      debug.Module{Path: "github.com/anchore/syft"},
@@ -256,7 +261,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					FileSystemID: "layer-id",
 				},
 			}
-			pkgs := buildGoPkgInfo(location, test.mod)
+			pkgs := buildGoPkgInfo(location, test.mod, test.arch)
 			assert.Equal(t, test.expected, pkgs)
 		})
 	}

@@ -6,9 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
-	"runtime"
 	"runtime/debug"
-	"strings"
 
 	macho "github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"
@@ -23,21 +21,8 @@ type unionReader interface {
 	io.Closer
 }
 
-// isExe reports whether the file should be considered executable.
-func isExe(file string, mode os.FileMode) bool {
-	if runtime.GOOS == "windows" {
-		return strings.HasSuffix(strings.ToLower(file), ".exe")
-	}
-	return mode.IsRegular() && mode&0111 != 0
-}
-
 // scanFile scans file to try to report the Go and module versions.
 func scanFile(reader unionReader, filename string, mode os.FileMode) ([]*debug.BuildInfo, []string) {
-	if !isExe(filename, mode) {
-		log.Debugf("golang cataloger: %s: not executable file\n", filename)
-		return nil, nil
-	}
-
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, err := getReaders(reader)
