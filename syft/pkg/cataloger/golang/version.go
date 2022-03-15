@@ -1,4 +1,5 @@
 //nolint
+
 package golang
 
 import (
