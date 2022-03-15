@@ -286,7 +286,11 @@ check-for-app-update: true
 # exclude:
 #   - "/etc/**"
 #   - "./out/**/*.json"
-exclude:
+exclude: []
+
+# os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
+# same as --platform; SYFT_PLATFORM env var
+platform: ""
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
