@@ -50,8 +50,13 @@ func URL(p Package, release *linux.Release) string {
 		fields := re.Split(p.Name, -1)
 		namespace = fields[0]
 		name = strings.TrimPrefix(p.Name, namespace+"/")
+	case p.Type == NpmPkg:
+		fields := strings.SplitN(p.Name, "/", 2)
+		if len(fields) > 1 {
+			namespace = fields[0]
+			name = fields[1]
+		}
 	}
-
 	// generate a purl from the package data
 	return packageurl.NewPackageURL(
 		purlType,

@@ -75,7 +75,7 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 				Version:       "v",
 				SourceVersion: "2.3",
 			},
-			expected: "pkg:deb/debian/p@v?upstream=s@2.3&distro=debian-11",
+			expected: "pkg:deb/debian/p@v?upstream=s%402.3&distro=debian-11",
 		},
 	}
 
