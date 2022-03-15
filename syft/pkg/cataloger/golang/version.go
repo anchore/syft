@@ -1,10 +1,3 @@
-// This code was copied from the Go std library.
-// https://github.com/golang/go/blob/master/src/cmd/go/internal/version/version.go
-
-// Copyright 2011 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package golang
 
 import (
@@ -38,10 +31,10 @@ func isExe(file string, mode os.FileMode) bool {
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(reader unionReader, filename string, mode os.FileMode) []*debug.BuildInfo {
+func scanFile(reader unionReader, filename string, mode os.FileMode) ([]*debug.BuildInfo, []string) {
 	if !isExe(filename, mode) {
 		log.Debugf("golang cataloger: %s: not executable file\n", filename)
-		return nil
+		return nil, nil
 	}
 
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
@@ -49,7 +42,7 @@ func scanFile(reader unionReader, filename string, mode os.FileMode) []*debug.Bu
 	readers, err := getReaders(reader)
 	if err != nil {
 		log.Warnf("golang cataloger: opening binary: %v", err)
-		return nil
+		return nil, nil
 	}
 
 	builds := make([]*debug.BuildInfo, 0)
@@ -59,27 +52,18 @@ func scanFile(reader unionReader, filename string, mode os.FileMode) []*debug.Bu
 			if pathErr := (*os.PathError)(nil); !errors.As(err, &pathErr) {
 				log.Warnf("golang cataloger: scanning file %s: %v\n", filename, err)
 			}
-			return nil
+			return nil, nil
 		}
 		builds = append(builds, bi)
 	}
 
-	setArch(readers, builds)
+	archs := getArchs(readers, builds)
 
-	return builds
+	return builds, archs
 }
 
 // openExe opens file and returns it as io.ReaderAt.
 func getReaders(f unionReader) ([]io.ReaderAt, error) {
-	data := make([]byte, 16)
-	if _, err := io.ReadFull(f, data); err != nil {
-		return nil, err
-	}
-	_, err := f.Seek(0, 0)
-	if err != nil {
-		return nil, err
-	}
-
 	if macho.IsUniversalMachoBinary(f) {
 		machoReaders, err := macho.ExtractReaders(f)
 		if err != nil {

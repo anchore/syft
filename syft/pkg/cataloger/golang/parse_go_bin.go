@@ -24,16 +24,6 @@ var (
 	// appear to be in a known format, or it breaks the rules of that format,
 	// or when there are I/O errors reading the file.
 	errUnrecognizedFormat = errors.New("unrecognized file format")
-
-	// errNotGoExe is returned when a given executable file is valid but does
-	// not contain Go build information.
-	errNotGoExe = errors.New("not a Go executable")
-
-	// The build info blob left by the linker is identified by
-	// a 16-byte header, consisting of buildInfoMagic (14 bytes),
-	// the binary's pointer size (1 byte),
-	// and whether the binary is big endian (1 byte).
-	buildInfoMagic = []byte("\xff Go buildinf:")
 )
 
 func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
@@ -63,17 +53,23 @@ func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, locat
 	return p
 }
 
-func setArch(readers []io.ReaderAt, builds []*debug.BuildInfo) {
+// getArchs finds a binary architecture by two ways:
+// 1) reading build info from binaries compiled by go1.18+
+// 2) reading file headers from binaries compiled by < go1.18
+func getArchs(readers []io.ReaderAt, builds []*debug.BuildInfo) []string {
 	if len(readers) != len(builds) {
 		log.Errorf("golang cataloger: bin parsing: number of builds and readers doesn't match")
-		return
+		return nil
 	}
 
-	for _, build := range builds {
-		if getGOARCH(build.Settings) != "" {
-			return
-		}
-		break
+	archs := make([]string, len(builds))
+	for i, build := range builds {
+		archs[i] = getGOARCH(build.Settings)
+	}
+
+	// if architecture was found via build settings return
+	if archs[0] != "" {
+		return archs
 	}
 
 	for i, r := range readers {
@@ -83,8 +79,9 @@ func setArch(readers []io.ReaderAt, builds []*debug.BuildInfo) {
 			continue
 		}
 
-		builds[i].Settings = append(builds[i].Settings, debug.BuildSetting{Key: GOARCH, Value: a})
+		archs[i] = a
 	}
+	return archs
 }
 
 func getGOARCH(settings []debug.BuildSetting) string {
@@ -146,13 +143,12 @@ func getBuildSettings(settings []debug.BuildSetting) map[string]string {
 	return m
 }
 
-func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo) []pkg.Package {
+func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
 	var pkgs []pkg.Package
 	if mod == nil {
 		return pkgs
 	}
 
-	arch := getGOARCH(mod.Settings)
 	for _, dep := range mod.Deps {
 		if dep == nil {
 			continue

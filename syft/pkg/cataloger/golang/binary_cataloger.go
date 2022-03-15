@@ -57,11 +57,11 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 			return nil, nil, err
 		}
 
-		mods := scanFile(reader, location.RealPath, metadata.Mode)
+		mods, archs := scanFile(reader, location.RealPath, metadata.Mode)
 		internal.CloseAndLogError(readerCloser, location.RealPath)
 
-		for _, mod := range mods {
-			pkgs = append(pkgs, buildGoPkgInfo(location, mod)...)
+		for i, mod := range mods {
+			pkgs = append(pkgs, buildGoPkgInfo(location, mod, archs[i])...)
 		}
 	}
 
