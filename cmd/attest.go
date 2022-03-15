@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/syftjson"
@@ -20,7 +21,6 @@ import (
 	"github.com/sigstore/rekor/pkg/generated/models"
 
 	"github.com/anchore/stereoscope"
-	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -138,61 +138,66 @@ func selectPassFunc(keypath string) (cosign.PassFunc, error) {
 	return nil, nil
 }
 
-func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
-	// can only be an image for attestation or OCI DIR
-	userInput := args[0]
-	si, err := source.ParseInput(userInput, appConfig.Platform, false)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for attest command: %w", err)
-	}
-
-	switch si.Scheme {
-	case source.ImageScheme, source.UnknownScheme:
-		// at this point we know that it cannot be dir: or file: schemes, so we will assume that the unknown scheme could represent an image
-		si.Scheme = source.ImageScheme
-	default:
-		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.Scheme, userInput)
-	}
-
-	// if the original detection was from a local daemon we want to short circuit
-	// that and attempt to generate the image source from a registry source instead
-	switch si.ImageSource {
-	case image.UnknownSource, image.OciRegistrySource:
-		si.ImageSource = image.OciRegistrySource
-	default:
-		return fmt.Errorf("attest command can only be used with image sources fetch directly from the registry, but discovered an image source of %q when given %q", si.ImageSource, userInput)
-	}
-
-	if len(appConfig.Outputs) > 1 {
-		return fmt.Errorf("unable to generate attestation for more than one output")
-	}
-
-	format := syft.FormatByName(appConfig.Outputs[0])
-	predicateType := formatPredicateType(format)
-	if predicateType == "" {
-		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", formatAliases(format.ID()), formatAliases(attestFormats...))
-	}
-
-	appConfig.Attest.Key = ""
-	passFunc, err := selectPassFunc(appConfig.Attest.Key)
-	if err != nil {
-		return err
-	}
-
-	ko := sign.KeyOpts{
-		KeyRef:                   "",
-		PassFunc:                 passFunc,
+func validateAttestationArgs(appConfig *config.Application, si *source.Input) (format sbom.Format, predicateType string, ko *sign.KeyOpts, err error) {
+	ko = &sign.KeyOpts{
 		Sk:                       false,
 		Slot:                     "signature",
 		FulcioURL:                "https://fulcio.sigstore.dev",
-		InsecureSkipFulcioVerify: true,
+		InsecureSkipFulcioVerify: false,
 		RekorURL:                 "https://rekor.sigstore.dev",
 		OIDCIssuer:               "https://oauth2.sigstore.dev/auth",
 		OIDCClientID:             "sigstore",
 		OIDCClientSecret:         "",
 	}
 
-	sv, err := sign.SignerFromKeyOpts(ctx, "", ko)
+	// if the original detection was from a local daemon we want to short circuit
+	// that and attempt to generate the image source from a registry source instead
+	switch si.Scheme {
+	case source.ImageScheme, source.UnknownScheme:
+		// at this point we know that it cannot be dir: or file: schemes
+		// so we will assume that the unknown scheme could represent an image
+		si.Scheme = source.ImageScheme
+	default:
+		return format, predicateType, ko, fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.Scheme, si.UserInput)
+	}
+
+	if len(appConfig.Outputs) > 1 {
+		return format, predicateType, ko, fmt.Errorf("unable to generate attestation for more than one output")
+	}
+
+	if appConfig.Attest.KeyRef != "" {
+		passFunc, err := selectPassFunc(appConfig.Attest.KeyRef)
+		if err != nil {
+			return format, predicateType, ko, err
+		}
+
+		ko.PassFunc = passFunc
+		ko.KeyRef = appConfig.Attest.KeyRef
+	}
+
+	format = syft.FormatByName(appConfig.Outputs[0])
+	predicateType = formatPredicateType(format)
+	if predicateType == "" {
+		return format, predicateType, ko, fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", formatAliases(format.ID()), formatAliases(attestFormats...))
+	}
+
+	return format, predicateType, ko, err
+}
+
+func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
+	// can only be an image from an OCI registry for attestation
+	userInput := args[0]
+	si, err := source.ParseInput(userInput, appConfig.Platform, false)
+	if err != nil {
+		return fmt.Errorf("could not generate source input for attest command: %w", err)
+	}
+
+	format, predicateType, ko, err := validateAttestationArgs(appConfig, si)
+	if err != nil {
+		return err
+	}
+
+	sv, err := sign.SignerFromKeyOpts(ctx, "", *ko)
 	if err != nil {
 		return err
 	}
@@ -265,7 +270,10 @@ func uploadToTlog(ctx context.Context, sv *sign.SignerVerifier, rekorURL string,
 	if err != nil {
 		return nil, err
 	}
-	fmt.Fprintln(os.Stderr, "tlog entry created with index:", *entry.LogIndex)
+	_, err = fmt.Fprintln(os.Stderr, "tlog entry created with index:", *entry.LogIndex)
+	if err != nil {
+		return nil, err
+	}
 	return cbundle.EntryToBundle(entry), nil
 }
 
@@ -327,13 +335,12 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 
 	ctx := context.Background()
 
-	bundle, err := uploadToTlog(ctx, sv, "https://rekor.sigstore.dev", func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
+	_, err = uploadToTlog(ctx, sv, "https://rekor.sigstore.dev", func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
 		return cosign.TLogUploadInTotoAttestation(ctx, r, signedPayload, b)
 	})
 	if err != nil {
 		return err
 	}
-	opts = append(opts, static.WithBundle(bundle))
 
 	bus.Publish(partybus.Event{
 		Type: event.Exit,
@@ -356,7 +363,7 @@ func init() {
 
 func setAttestFlags(flags *pflag.FlagSet) {
 	// key options
-	flags.StringP("key", "", "cosign.key",
+	flags.StringP("key", "", "",
 		"path to the private key file to use for attestation",
 	)
 

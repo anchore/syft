@@ -59,6 +59,7 @@ require (
 require (
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/sigstore/cosign v1.6.0
+	github.com/sigstore/rekor v0.4.1-0.20220114213500-23f583409af3
 )
 
 require (
@@ -217,7 +218,6 @@ require (
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/fulcio v0.1.2-0.20220114150912-86a2036f9bc7 // indirect
-	github.com/sigstore/rekor v0.4.1-0.20220114213500-23f583409af3 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.0.0-beta.12 // indirect

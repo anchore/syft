@@ -9,18 +9,18 @@ import (
 )
 
 type attest struct {
-	Key string `yaml:"key" json:"key" mapstructure:"key"` // same as --key, file path to the private key
+	KeyRef string `yaml:"key" json:"key" mapstructure:"key"` // same as --key, file path to the private key
 	// IMPORTANT: do not show the password in any YAML/JSON output (sensitive information)
 	Password string `yaml:"-" json:"-" mapstructure:"password"` // password for the private key
 }
 
 func (cfg *attest) parseConfigValues() error {
-	if cfg.Key != "" {
-		expandedPath, err := homedir.Expand(cfg.Key)
+	if cfg.KeyRef != "" {
+		expandedPath, err := homedir.Expand(cfg.KeyRef)
 		if err != nil {
-			return fmt.Errorf("unable to expand key path=%q: %w", cfg.Key, err)
+			return fmt.Errorf("unable to expand key path=%q: %w", cfg.KeyRef, err)
 		}
-		cfg.Key = expandedPath
+		cfg.KeyRef = expandedPath
 	}
 
 	if cfg.Password == "" {
