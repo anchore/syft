@@ -1,11 +1,8 @@
-//nolint
-
 package golang
 
 import (
-	"debug/buildinfo" //nolint
+	"debug/buildinfo"
 	"io"
-	"os"
 	"runtime/debug"
 
 	macho "github.com/anchore/go-macholibre"
@@ -22,7 +19,7 @@ type unionReader interface {
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(reader unionReader, filename string, mode os.FileMode) ([]*debug.BuildInfo, []string) {
+func scanFile(reader unionReader, filename string) ([]*debug.BuildInfo, []string) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, err := getReaders(reader)

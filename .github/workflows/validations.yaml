@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v2
         with:
-          go-version: "1.17.x" # NOTE: please use GO_VERSION once golangci supports go1.18+
+          go-version: ${{ env.GO_VERSION }} # NOTE: please use GO_VERSION once golangci supports go1.18+
           stable: ${{ env.GO_STABLE_VERSION }}
 
       - uses: actions/checkout@v2

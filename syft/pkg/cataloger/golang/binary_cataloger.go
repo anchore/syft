@@ -46,18 +46,12 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 			continue
 		}
 
-		metadata, err := resolver.FileMetadataByLocation(location)
-		if err != nil {
-			log.Warnf("golang cataloger: getting location metadata: %v", err)
-			continue
-		}
-
 		reader, err := getUnionReader(readerCloser)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		mods, archs := scanFile(reader, location.RealPath, metadata.Mode)
+		mods, archs := scanFile(reader, location.RealPath)
 		internal.CloseAndLogError(readerCloser, location.RealPath)
 
 		for i, mod := range mods {
