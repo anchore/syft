@@ -187,7 +187,7 @@ func validateAttestationArgs(appConfig *config.Application, si *source.Input) (f
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image from an OCI registry for attestation
 	userInput := args[0]
-	si, err := source.ParseInput(userInput, appConfig.Platform, false)
+	si, err := source.ParseInput(userInput, appConfig.Platform, true)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for attest command: %w", err)
 	}
@@ -299,6 +299,7 @@ func findValidDigest(digests []string) string {
 }
 
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
+	// TODO add ghcr registry parsing to get correct digest based on user input
 	switch len(src.Image.Metadata.RepoDigests) {
 	case 0:
 		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")

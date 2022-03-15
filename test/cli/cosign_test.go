@@ -54,7 +54,7 @@ func TestCosignWorkflow(t *testing.T) {
 		cleanup          func()
 	}{
 		{
-			name: "cosign verify syft attest",
+			name: "cosign verify syft attest hard pki",
 			syftArgs: []string{
 				"attest",
 				"-o",
@@ -118,6 +118,80 @@ func TestCosignWorkflow(t *testing.T) {
 				assert.NoErrorf(t, err, "unable to get cwd: %+v", err)
 
 				fixturesPath := filepath.Join(cwd, "test-fixtures", "registry")
+				makeTask := filepath.Join(fixturesPath, "Makefile")
+				t.Logf("Generating Fixture from 'make %s'", makeTask)
+
+				// delete attestation file
+				os.Remove(attestationFile)
+
+				cmd := exec.Command("make", "stop")
+				cmd.Dir = fixturesPath
+
+				runAndShow(t, cmd)
+			},
+		},
+		{
+			name: "cosign verify syft attest keyless",
+			syftArgs: []string{
+				"attest",
+				"-o",
+				"json",
+				img,
+			},
+			// cosign attach attestation --attestation image_latest_sbom_attestation.json caphill4/attest:latest
+			cosignAttachArgs: []string{
+				"attach",
+				"attestation",
+				"--attestation",
+				attestationFile,
+				img,
+			},
+			// cosign verify-attestation -key cosign.pub caphill4/attest:latest
+			cosignVerifyArgs: []string{
+				img,
+			},
+			assertions: []traitAssertion{
+				assertSuccessfulReturnCode,
+			},
+			setup: func(t *testing.T) {
+				cwd, err := os.Getwd()
+				require.NoErrorf(t, err, "unable to get cwd: %+v", err)
+
+				// get working directory for local registry
+				fixturesPath := filepath.Join(cwd, "test-fixtures", "attestation")
+				makeTask := filepath.Join(fixturesPath, "Makefile")
+				t.Logf("Generating Fixture from 'make %s'", makeTask)
+
+				cmd := exec.Command("make")
+				cmd.Dir = fixturesPath
+				runAndShow(t, cmd)
+
+				var done = make(chan struct{})
+				defer close(done)
+				for interval := range testRetryIntervals(done) {
+					resp, err := http.Get("http://127.0.0.1:5000/v2/")
+					if err != nil {
+						t.Logf("waiting for registry err=%+v", err)
+					} else {
+						if resp.StatusCode == http.StatusOK {
+							break
+						}
+						t.Logf("waiting for registry code=%+v", resp.StatusCode)
+					}
+
+					time.Sleep(interval)
+				}
+
+				cmd = exec.Command("make", "push")
+				cmd.Dir = fixturesPath
+				runAndShow(t, cmd)
+
+			},
+			cleanup: func() {
+				cwd, err := os.Getwd()
+				assert.NoErrorf(t, err, "unable to get cwd: %+v", err)
+
+				fixturesPath := filepath.Join(cwd, "test-fixtures", "attestation")
 				makeTask := filepath.Join(fixturesPath, "Makefile")
 				t.Logf("Generating Fixture from 'make %s'", makeTask)
 
