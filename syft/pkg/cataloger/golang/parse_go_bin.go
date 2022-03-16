@@ -27,6 +27,18 @@ var (
 	errUnrecognizedFormat = errors.New("unrecognized file format")
 )
 
+func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
+	gbs := getBuildSettings(mod.Settings)
+	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
+	main.Version = ""
+
+	if v, ok := gbs["vcs.revision"]; ok {
+		main.Version = v
+	}
+
+	return main
+}
+
 func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
@@ -167,9 +179,8 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 	if mod.Main == empty {
 		return pkgs
 	}
-	mod.Main.Version = ""
-	gbs := getBuildSettings(mod.Settings)
-	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
+
+	main := makeGoMainPackage(mod, arch, location)
 	pkgs = append(pkgs, main)
 
 	return pkgs

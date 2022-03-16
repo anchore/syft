@@ -1,3 +1,4 @@
+//nolint
 // Copyright 2018 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -224,14 +225,14 @@ type AuxCSect64 struct {
 }
 
 // Auxiliary type
-const (
-	_AUX_EXCEPT = 255
-	_AUX_FCN    = 254
-	_AUX_SYM    = 253
-	_AUX_FILE   = 252
-	_AUX_CSECT  = 251
-	_AUX_SECT   = 250
-)
+// const (
+// 	_AUX_EXCEPT = 255
+// 	_AUX_FCN    = 254
+// 	_AUX_SYM    = 253
+// 	_AUX_FILE   = 252
+// 	_AUX_CSECT  = 251
+// 	_AUX_SECT   = 250
+// )
 
 // Symbol type field.
 const (
