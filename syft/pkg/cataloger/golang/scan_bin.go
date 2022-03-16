@@ -33,7 +33,7 @@ func scanFile(reader unionReader, filename string) ([]*debug.BuildInfo, []string
 	for _, r := range readers {
 		bi, err := buildinfo.Read(r)
 		if err != nil {
-			log.Warnf("golang cataloger: scanning file %s: %v\n", filename, err)
+			log.Warnf("golang cataloger: scanning file %s: %v", filename, err)
 			return nil, nil
 		}
 		builds = append(builds, bi)
@@ -44,7 +44,7 @@ func scanFile(reader unionReader, filename string) ([]*debug.BuildInfo, []string
 	return builds, archs
 }
 
-// openExe opens file and returns it as io.ReaderAt.
+// getReaders extracts one or more io.ReaderAt objects representing binaries that can be processed (multiple binaries in the case for multi-architecture binaries).
 func getReaders(f unionReader) ([]io.ReaderAt, error) {
 	if macho.IsUniversalMachoBinary(f) {
 		machoReaders, err := macho.ExtractReaders(f)
