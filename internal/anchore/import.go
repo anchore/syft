@@ -45,7 +45,7 @@ func importProgress(source string) (*progress.Stage, *progress.Manual) {
 	return stage, prog
 }
 
-// nolint:funlen,bodyclose
+// nolint:funlen
 func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 	stage, prog := importProgress(c.config.BaseURL)
 

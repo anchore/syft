@@ -34,6 +34,16 @@ jobs:
           checkName: "Static analysis"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
+      - name: Check static analysis results - golangci-lint
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: static-analysis-golangci-lint
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
+          checkName: "Static analysis - golangci-lint"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+
       - name: Check unit test results
         uses: fountainhead/action-wait-for-check@v1.0.0
         id: unit

@@ -1,3 +1,4 @@
+//nolint
 package golang
 
 import (
@@ -31,6 +32,7 @@ func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, locat
 	}
 
 	p := pkg.Package{
+		FoundBy:  catalogerName,
 		Name:     dep.Path,
 		Version:  dep.Version,
 		Language: pkg.Go,

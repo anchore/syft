@@ -22,6 +22,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 
 	expectedMain := pkg.Package{
 		Name:     "github.com/anchore/syft",
+		FoundBy:  catalogerName,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
 		Locations: []source.Location{
@@ -77,6 +78,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/adrg/xdg",
+					FoundBy:  catalogerName,
 					Version:  "v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
@@ -138,6 +140,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/adrg/xdg",
+					FoundBy:  catalogerName,
 					Version:  "v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
@@ -158,6 +161,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 				{
 					Name:     "github.com/anchore/client-go",
+					FoundBy:  catalogerName,
 					Version:  "v0.0.0-20210222170800-9c70f9b80bcf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
@@ -211,6 +215,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "golang.org/x/sys",
+					FoundBy:  catalogerName,
 					Version:  "v0.0.0-20211006194710-c8a6f5223071",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
@@ -227,6 +232,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE="}},
 				{
 					Name:     "golang.org/x/term",
+					FoundBy:  catalogerName,
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,

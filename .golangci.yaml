@@ -42,9 +42,12 @@ linters:
     - unused
     - varcheck
     - whitespace
-run:
-  timeout: 4m
-# do not enable...
+
+issues:
+  exclude-rules:
+    - path: syft/pkg/cataloger/golang/scan_bin.go
+      text: "bla"
+      # do not enable...
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
 #    - godot
