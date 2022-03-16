@@ -1,13 +1,53 @@
 package golang
 
 import (
+	"os"
 	"runtime/debug"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func Test_getGOARCHFromBin(t *testing.T) {
+	tests := []struct {
+		name     string
+		filepath string
+		expected string
+	}{
+		{
+			name:     "pe",
+			filepath: "test-fixtures/archs/gcc-386-mingw-exec",
+			expected: "332",
+		},
+		{
+			name:     "elf-ppc64",
+			filepath: "test-fixtures/archs/hello-linux-ppc64el",
+			expected: "ppc64",
+		},
+		{
+			name:     "mach-o-arm64",
+			filepath: "test-fixtures/archs/hello-mach-o-arm64",
+			expected: "arm64",
+		},
+		{
+			name:     "xcoff",
+			filepath: "internal/xcoff/testdata/gcc-ppc32-aix-dwarf2-exec",
+			expected: "479",
+		},
+	}
+
+	for _, tt := range tests {
+		f, err := os.Open(tt.filepath)
+		require.NoError(t, err)
+		arch, err := getGOARCHFromBin(f)
+		require.NoError(t, err, "test name: %s", tt.name)
+		require.Equal(t, tt.expected, arch)
+	}
+
+}
 
 func TestBuildGoPkgInfo(t *testing.T) {
 	const (

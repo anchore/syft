@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -124,7 +125,11 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 		}
 		arch = f.Cpu.String()
 	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}):
-		arch = "xcoff"
+		f, err := xcoff.NewFile(r)
+		if err != nil {
+			return "", errUnrecognizedFormat
+		}
+		arch = fmt.Sprintf("%d", f.FileHeader.TargetMachine)
 	default:
 		return "", errUnrecognizedFormat
 	}
