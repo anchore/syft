@@ -180,6 +180,8 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		pkgs = append(pkgs, newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil))
 	}
 
+	// NOTE(jonasagx): this use happened originally while creating unit tests. It might never
+	// happen in the wild, but I kept it as a safeguard against empty modules.
 	var empty debug.Module
 	if mod.Main == empty {
 		return pkgs
