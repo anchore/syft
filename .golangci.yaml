@@ -43,10 +43,6 @@ linters:
     - varcheck
     - whitespace
 
-issues:
-  exclude-rules:
-    - path: syft/pkg/cataloger/golang/scan_bin.go
-      text: "bla"
       # do not enable...
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
