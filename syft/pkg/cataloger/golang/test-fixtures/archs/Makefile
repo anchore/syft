@@ -26,4 +26,4 @@ $(DESTINATION).fingerprint: clean
 
 .PHONY: clean
 clean:
-	rm $(DESTINATION)/*
+	rm -f $(DESTINATION)/*
