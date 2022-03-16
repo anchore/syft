@@ -47,8 +47,10 @@ func hasMetadata(p pkg.Package) bool {
 
 func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	values := map[string]string{}
-	for _, p := range *c.Properties {
-		values[p.Name] = p.Value
+	if c.Properties != nil {
+		for _, p := range *c.Properties {
+			values[p.Name] = p.Value
+		}
 	}
 
 	p := &pkg.Package{
