@@ -219,6 +219,12 @@ java-packages-fingerprint:
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
 		make packages.fingerprint
 
+.PHONY: go-binaries-fingerprint
+go-binaries-fingerprint:
+	$(call title,Go binaries test fixture fingerprint)
+	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
+		make binaries.fingerprint
+
 .PHONY: fixtures
 fixtures:
 	$(call title,Generating test fixtures)

@@ -1,8 +1,14 @@
 package golang
 
 import (
+	"bufio"
+	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime/debug"
+	"strconv"
+	"syscall"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -11,7 +17,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// make will run the default make target for the given test fixture path
+func runMakeTarget(t *testing.T, fixtureName string) {
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	fixtureDir := filepath.Join(cwd, "test-fixtures/", fixtureName)
+
+	t.Logf("Generating Fixture in %q", fixtureDir)
+
+	cmd := exec.Command("make")
+	cmd.Dir = fixtureDir
+
+	stderr, err := cmd.StderrPipe()
+	require.NoError(t, err)
+
+	stdout, err := cmd.StdoutPipe()
+	require.NoError(t, err)
+
+	err = cmd.Start()
+	require.NoError(t, err)
+
+	show := func(label string, reader io.ReadCloser) {
+		scanner := bufio.NewScanner(reader)
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			t.Logf("%s: %s", label, scanner.Text())
+		}
+	}
+	go show("out", stdout)
+	go show("err", stderr)
+
+	if err := cmd.Wait(); err != nil {
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			// The program has exited with an exit code != 0
+
+			// This works on both Unix and Windows. Although package
+			// syscall is generally platform dependent, WaitStatus is
+			// defined for both Unix and Windows and in both cases has
+			// an ExitStatus() method with the same signature.
+			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				if status.ExitStatus() != 0 {
+					t.Fatalf("failed to generate fixture: rc=%d", status.ExitStatus())
+				}
+			}
+		} else {
+			t.Fatalf("unable to get generate fixture result: %+v", err)
+		}
+	}
+}
+
 func Test_getGOARCHFromBin(t *testing.T) {
+	runMakeTarget(t, "archs")
+
 	tests := []struct {
 		name     string
 		filepath string
@@ -19,23 +76,34 @@ func Test_getGOARCHFromBin(t *testing.T) {
 	}{
 		{
 			name:     "pe",
-			filepath: "test-fixtures/archs/gcc-386-mingw-exec",
-			expected: "332",
+			filepath: "test-fixtures/archs/binaries/hello-win-amd64",
+			// see: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
+			expected: strconv.Itoa(0x8664),
 		},
 		{
 			name:     "elf-ppc64",
-			filepath: "test-fixtures/archs/hello-linux-ppc64el",
+			filepath: "test-fixtures/archs/binaries/hello-linux-ppc64le",
 			expected: "ppc64",
 		},
 		{
 			name:     "mach-o-arm64",
-			filepath: "test-fixtures/archs/hello-mach-o-arm64",
+			filepath: "test-fixtures/archs/binaries/hello-mach-o-arm64",
 			expected: "arm64",
 		},
 		{
-			name:     "xcoff",
+			name:     "linux-arm",
+			filepath: "test-fixtures/archs/binaries/hello-linux-arm",
+			expected: "arm",
+		},
+		{
+			name:     "xcoff-32bit",
 			filepath: "internal/xcoff/testdata/gcc-ppc32-aix-dwarf2-exec",
-			expected: "479",
+			expected: strconv.Itoa(0x1DF),
+		},
+		{
+			name:     "xcoff-64bit",
+			filepath: "internal/xcoff/testdata/gcc-ppc64-aix-dwarf2-exec",
+			expected: strconv.Itoa(0x1F7),
 		},
 	}
 
@@ -44,7 +112,7 @@ func Test_getGOARCHFromBin(t *testing.T) {
 		require.NoError(t, err)
 		arch, err := getGOARCHFromBin(f)
 		require.NoError(t, err, "test name: %s", tt.name)
-		require.Equal(t, tt.expected, arch)
+		assert.Equal(t, tt.expected, arch)
 	}
 
 }
