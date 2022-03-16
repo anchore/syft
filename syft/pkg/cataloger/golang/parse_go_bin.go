@@ -72,7 +72,12 @@ func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, locat
 // 2) reading file headers from binaries compiled by < go1.18
 func getArchs(readers []io.ReaderAt, builds []*debug.BuildInfo) []string {
 	if len(readers) != len(builds) {
-		log.Errorf("golang cataloger: bin parsing: number of builds and readers doesn't match")
+		log.Warnf("golang cataloger: bin parsing: number of builds and readers doesn't match")
+		return nil
+	}
+
+	if len(readers) == 0 || len(builds) == 0 {
+		log.Warnf("golang cataloger: bin parsing: %d readers and %d build info items", len(readers), len(builds))
 		return nil
 	}
 
@@ -88,7 +93,7 @@ func getArchs(readers []io.ReaderAt, builds []*debug.BuildInfo) []string {
 
 	for i, r := range readers {
 		a, err := getGOARCHFromBin(r)
-		if err != nil || a == "" {
+		if err != nil {
 			log.Warnf("golang cataloger: bin parsing: getting arch from binary: %v", err)
 			continue
 		}
@@ -113,7 +118,7 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 	// a format-specific function to load segment and section headers.
 	ident := make([]byte, 16)
 	if n, err := r.ReadAt(ident, 0); n < len(ident) || err != nil {
-		return "", errUnrecognizedFormat
+		return "", fmt.Errorf("unrecognized file format: %w", err)
 	}
 
 	var arch string
@@ -121,25 +126,25 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 	case bytes.HasPrefix(ident, []byte("\x7FELF")):
 		f, err := elf.NewFile(r)
 		if err != nil {
-			return "", errUnrecognizedFormat
+			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = f.Machine.String()
 	case bytes.HasPrefix(ident, []byte("MZ")):
 		f, err := pe.NewFile(r)
 		if err != nil {
-			return "", errUnrecognizedFormat
+			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = fmt.Sprintf("%d", f.Machine)
 	case bytes.HasPrefix(ident, []byte("\xFE\xED\xFA")) || bytes.HasPrefix(ident[1:], []byte("\xFA\xED\xFE")):
 		f, err := macho.NewFile(r)
 		if err != nil {
-			return "", errUnrecognizedFormat
+			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = f.Cpu.String()
 	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}):
 		f, err := xcoff.NewFile(r)
 		if err != nil {
-			return "", errUnrecognizedFormat
+			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = fmt.Sprintf("%d", f.FileHeader.TargetMachine)
 	default:
