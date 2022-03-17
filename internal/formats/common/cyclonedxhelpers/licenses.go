@@ -26,7 +26,9 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 func decodeLicenses(c *cyclonedx.Component) (out []string) {
 	if c.Licenses != nil {
 		for _, l := range *c.Licenses {
-			out = append(out, l.License.ID)
+			if l.License != nil {
+				out = append(out, l.License.ID)
+			}
 		}
 	}
 	return

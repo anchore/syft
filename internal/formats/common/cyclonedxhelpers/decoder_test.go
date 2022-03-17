@@ -272,4 +272,14 @@ func Test_missingDataDecode(t *testing.T) {
 
 	_, err = toSyftModel(bom)
 	assert.NoError(t, err)
+
+	pkg := decodeComponent(&cyclonedx.Component{
+		Licenses: &cyclonedx.Licenses{
+			{
+				License: nil,
+			},
+		},
+	})
+
+	assert.Len(t, pkg.Licenses, 0)
 }
