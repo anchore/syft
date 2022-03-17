@@ -122,7 +122,12 @@ bootstrap: $(RESULTSDIR) bootstrap-go bootstrap-tools ## Download and install al
 	$(call title,Bootstrapping dependencies)
 
 .PHONY: static-analysis
-static-analysis: lint check-go-mod-tidy check-licenses
+static-analysis: check-go-mod-tidy check-licenses
+
+ # NOTE: isolating golanci-lint so it runs over go1.17 in CI, since it is not compatible with
+ # go1.18+
+.PHONY: static-analysis-golanci-lint
+static-analysis-golanci-lint: lint
 
 .PHONY: lint
 lint: ## Run gofmt + golangci lint checks
@@ -213,6 +218,12 @@ java-packages-fingerprint:
 	$(call title,Java test fixture fingerprint)
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
 		make packages.fingerprint
+
+.PHONY: go-binaries-fingerprint
+go-binaries-fingerprint:
+	$(call title,Go binaries test fixture fingerprint)
+	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
+		make binaries.fingerprint
 
 .PHONY: fixtures
 fixtures:

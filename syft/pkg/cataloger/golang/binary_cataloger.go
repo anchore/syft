@@ -4,10 +4,12 @@ Package golang provides a concrete Cataloger implementation for go.mod files.
 package golang
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -38,19 +40,51 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	}
 
 	for _, location := range fileMatches {
-		r, err := resolver.FileContentsByLocation(location)
+		readerCloser, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			return pkgs, nil, fmt.Errorf("failed to resolve file contents by location=%q: %w", location.RealPath, err)
+			log.Warnf("golang cataloger: opening file: %v", err)
+			continue
 		}
 
-		goPkgs, err := parseGoBin(location, r, openExe)
+		reader, err := getUnionReader(readerCloser)
 		if err != nil {
-			log.Warnf("could not parse possible go binary at %q: %+v", location.RealPath, err)
+			return nil, nil, err
 		}
 
-		internal.CloseAndLogError(r, location.RealPath)
-		pkgs = append(pkgs, goPkgs...)
+		mods, archs := scanFile(reader, location.RealPath)
+		internal.CloseAndLogError(readerCloser, location.RealPath)
+
+		for i, mod := range mods {
+			pkgs = append(pkgs, buildGoPkgInfo(location, mod, archs[i])...)
+		}
 	}
 
 	return pkgs, nil, nil
+}
+
+func getUnionReader(readerCloser io.ReadCloser) (unionReader, error) {
+	reader, ok := readerCloser.(unionReader)
+	if ok {
+		return reader, nil
+	}
+	log.Debugf("golang cataloger: unable to use stereoscope file, reading entire contents")
+
+	b, err := ioutil.ReadAll(readerCloser)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read contents from go binary: %w", err)
+	}
+
+	bytesReader := bytes.NewReader(b)
+
+	reader = struct {
+		io.ReadCloser
+		io.ReaderAt
+		io.Seeker
+	}{
+		ReadCloser: io.NopCloser(bytesReader),
+		ReaderAt:   bytesReader,
+		Seeker:     bytesReader,
+	}
+
+	return reader, nil
 }
