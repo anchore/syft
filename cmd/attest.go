@@ -142,7 +142,7 @@ func validateAttestationArgs(appConfig *config.Application, si *source.Input) (f
 	ko = &sign.KeyOpts{
 		Sk:                       false,
 		Slot:                     "signature",
-		FulcioURL:                "http://localhost:5555",
+		FulcioURL:                "https://fulcio.sigstore.dev",
 		InsecureSkipFulcioVerify: false,
 		RekorURL:                 "https://rekor.sigstore.dev",
 		OIDCIssuer:               "https://oauth2.sigstore.dev/auth",
@@ -300,12 +300,8 @@ func findValidDigest(digests []string) string {
 
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
 	// TODO add ghcr registry parsing to get correct digest based on user input
-	switch len(src.Image.Metadata.RepoDigests) {
-	case 0:
+	if len(src.Image.Metadata.RepoDigests) < 1 {
 		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
-	case 1:
-	default:
-		return fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
 	}
 
 	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
