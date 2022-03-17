@@ -1,25 +1,20 @@
 version: '3.2'
 services:
   fulcio-server:
-    build:
-      context: .
-      target: "deploy"
+    image: bcallawa/fulcio-bd4d600f674b081a535a886a15cb8d9a
     command: [
-      "fulcio-server",
       "serve",
       "--host=0.0.0.0",
       "--port=5555",
-      "--ca=googleca",
-      "--gcp_private_ca_parent=projects/project-rekor/locations/us-central1/certificateAuthorities/sigstore",
+      "--ca=ephemeralca",
       "--ct-log-url=http://ct_server:6962/test",
       # Uncomment this for production logging
       # "--log_type=prod",
-      ]
+    ]
     restart: always # keep the server running
     ports:
       - "5555:5555"
     volumes:
-      - ~/.config/gcloud:/root/.config/gcloud/:z
       - ./config/config.jsn:/etc/fulcio-config/config.json:z
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5555/ping"]
@@ -29,7 +24,6 @@ services:
       start_period: 5s
     depends_on:
       - dex-idp
-
   dex-idp:
     image: dexidp/dex:v2.30.0
     user: root
@@ -50,100 +44,3 @@ services:
       retries: 3
       start_period: 5s
 
-         mysql:
-    platform: linux/amd64
-    image: gcr.io/trillian-opensource-ci/db_server:v1.4.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=zaphod
-      - MYSQL_DATABASE=test
-      - MYSQL_USER=test
-      - MYSQL_PASSWORD=zaphod
-    restart: always # keep the MySQL server running
-    healthcheck:
-      test: ["CMD", "/etc/init.d/mysql", "status"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-
-  redis-server:
-    image: docker.io/redis:5.0.10
-    command: [
-      "--bind",
-      "0.0.0.0",
-      "--appendonly",
-      "yes"
-    ]
-    restart: always # keep the redis server running
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-  trillian-log-server:
-    image: gcr.io/projectsigstore/trillian_log_server@sha256:f850a0defd089ea844822030c67ae05bc93c91168a7dd4aceb0b6648c39f696b
-    command: [
-      "--storage_system=mysql",
-      "--mysql_uri=test:zaphod@tcp(mysql:3306)/test",
-      "--rpc_endpoint=0.0.0.0:8090",
-      "--http_endpoint=0.0.0.0:8091",
-      "--alsologtostderr",
-    ]
-    restart: always # retry while mysql is starting up
-    ports:
-      - "8090:8090"
-      - "8091:8091"
-    depends_on:
-      - mysql
-
-  trillian-log-signer:
-    image: gcr.io/projectsigstore/trillian_log_signer@sha256:fe90d523f6617974f70878918e4b31d49b2b46a86024bb2d6b01d2bbfed8edbf
-    command: [
-      "--storage_system=mysql",
-      "--mysql_uri=test:zaphod@tcp(mysql:3306)/test",
-      "--rpc_endpoint=0.0.0.0:8090",
-      "--http_endpoint=0.0.0.0:8091",
-      "--force_master",
-      "--alsologtostderr",
-    ]
-    restart: always # retry while mysql is starting up
-    ports:
-      - "8092:8091"
-    depends_on:
-      - mysql
-
-  rekor-server:
-    build:
-      context: .
-      target: "deploy"
-    command: [
-      "rekor-server",
-      "serve",
-      "--trillian_log_server.address=trillian-log-server",
-      "--trillian_log_server.port=8090",
-      "--redis_server.address=redis-server",
-      "--redis_server.port=6379",
-      "--rekor_server.address=0.0.0.0",
-      "--rekor_server.signer=memory",
-      "--enable_attestation_storage",
-      "--attestation_storage_bucket=file:///var/run/attestations",
-      # Uncomment this for production logging
-      # "--log_type=prod",
-      ]
-    volumes:
-    - "/var/run/attestations:/var/run/attestations:z"
-    restart: always # keep the server running
-    ports:
-      - "3000:3000"
-      - "2112:2112"
-    depends_on:
-      - mysql
-      - redis-server
-      - trillian-log-server
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
