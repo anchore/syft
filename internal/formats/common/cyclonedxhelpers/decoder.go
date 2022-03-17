@@ -46,7 +46,7 @@ func GetDecoder(format cyclonedx.BOMFileFormat) sbom.Decoder {
 
 func toSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 	meta := source.Metadata{}
-	if bom.Metadata != nil {
+	if bom.Metadata != nil && bom.Metadata.Component != nil {
 		meta = decodeMetadata(bom.Metadata.Component)
 	}
 	s := &sbom.SBOM{
