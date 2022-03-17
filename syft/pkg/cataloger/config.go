@@ -5,7 +5,9 @@ import (
 )
 
 type Config struct {
-	Search SearchConfig
+	Search         SearchConfig
+	Catalogers     []string
+	CatalogerGroup Group
 }
 
 func DefaultConfig() Config {

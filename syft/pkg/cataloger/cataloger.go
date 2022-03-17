@@ -6,6 +6,9 @@ catalogers defined in child packages as well as the interface definition to impl
 package cataloger
 
 import (
+	"fmt"
+
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
@@ -22,6 +25,20 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+type Group string
+
+const (
+	IndexGroup        Group = "index"
+	InstallationGroup Group = "install"
+	AllGroup          Group = "all"
+)
+
+var AllGroups = []Group{
+	IndexGroup,
+	InstallationGroup,
+	AllGroup,
+}
+
 // Cataloger describes behavior for an object to participate in parsing container image or file system
 // contents for the purpose of discovering Packages. Each concrete implementation should focus on discovering Packages
 // for a specific Package Type or ecosystem.
@@ -32,8 +49,8 @@ type Cataloger interface {
 	Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error)
 }
 
-// ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
-func ImageCatalogers(cfg Config) []Cataloger {
+// InstallationCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
+func InstallationCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
@@ -47,8 +64,8 @@ func ImageCatalogers(cfg Config) []Cataloger {
 	}
 }
 
-// DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
-func DirectoryCatalogers(cfg Config) []Cataloger {
+// IndexCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
+func IndexCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
@@ -84,4 +101,48 @@ func AllCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 	}
+}
+
+func SelectGroup(cfg Config) ([]Cataloger, error) {
+	switch cfg.CatalogerGroup {
+	case IndexGroup:
+		log.Info("cataloging index group")
+		return IndexCatalogers(cfg), nil
+	case InstallationGroup:
+		log.Info("cataloging installation group")
+		return InstallationCatalogers(cfg), nil
+	case AllGroup:
+		log.Info("cataloging all group")
+		return AllCatalogers(cfg), nil
+	default:
+		return nil, fmt.Errorf("unknown cataloger group, Group: %s", cfg.CatalogerGroup)
+	}
+}
+
+func FilterCatalogers(cfg Config, groupCatalogers []Cataloger) []Cataloger {
+	return filterCatalogers(groupCatalogers, cfg.Catalogers)
+}
+
+func filterCatalogers(catalogers []Cataloger, enabledCatalogers []string) []Cataloger {
+	// if enable-cataloger is not set, all applicable catalogers are enabled by default
+	if len(enabledCatalogers) == 0 {
+		return catalogers
+	}
+	var filteredCatalogers []Cataloger
+	for _, cataloger := range catalogers {
+		if contains(enabledCatalogers, cataloger.Name()) {
+			filteredCatalogers = append(filteredCatalogers, cataloger)
+		}
+	}
+	return filteredCatalogers
+}
+
+func contains(catalogers []string, str string) bool {
+	for _, cataloger := range catalogers {
+		if cataloger == str ||
+			fmt.Sprintf("%s-cataloger", cataloger) == str {
+			return true
+		}
+	}
+	return false
 }

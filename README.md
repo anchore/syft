@@ -314,6 +314,29 @@ package:
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
 
+  # Cataloger group select 
+  # When Empty default select for each scheme - Dir:Index, Image:installed
+  # Options: [index install all].
+  # cataloger-group: ""
+
+  # enable specific language or ecosystem cataloger
+  # default: select catalogers out of group
+  # catalogers:
+  # - "ruby-gemfile-cataloger"
+  # - "ruby-gemspec-cataloger"
+  # - "python-index-cataloger"
+  # - "python-package-cataloger"
+  # - "javascript-lock-cataloger"
+  # - "javascript-package-cataloger"
+  # - "php-composer-installed-cataloger"
+  # - "php-composer-lock-cataloger"
+  # - "dpkgdb-cataloger"
+  # - "rpmdb-cataloger"
+  # - "java-cataloger"
+  # - "apkdb-cataloger"
+  # - "go-module-binary-cataloger"
+  catalogers:
+
 # cataloging file classifications is exposed through the power-user subcommand
 file-classification:
   cataloger:
