@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/internal/formats/syftjson/model"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
@@ -78,4 +79,47 @@ func Test_toSyftSourceData(t *testing.T) {
 
 	// assert all possible schemes were under test
 	assert.ElementsMatch(t, allSchemes.List(), testedSchemes.List(), "not all source.Schemes are under test")
+}
+
+func Test_idsHaveChanged(t *testing.T) {
+	s, err := toSyftModel(model.Document{
+		Source: model.Source{
+			Type:   "file",
+			Target: "some/path",
+		},
+		Artifacts: []model.Package{
+			{
+				PackageBasicData: model.PackageBasicData{
+					ID:   "1",
+					Name: "pkg-1",
+				},
+			},
+			{
+				PackageBasicData: model.PackageBasicData{
+					ID:   "2",
+					Name: "pkg-2",
+				},
+			},
+		},
+		ArtifactRelationships: []model.Relationship{
+			{
+				Parent: "1",
+				Child:  "2",
+				Type:   string(artifact.ContainsRelationship),
+			},
+		},
+	})
+
+	assert.NoError(t, err)
+	assert.Len(t, s.Relationships, 1)
+
+	r := s.Relationships[0]
+
+	from := s.Artifacts.PackageCatalog.Package(r.From.ID())
+	assert.NotNil(t, from)
+	assert.Equal(t, "pkg-1", from.Name)
+
+	to := s.Artifacts.PackageCatalog.Package(r.To.ID())
+	assert.NotNil(t, to)
+	assert.Equal(t, "pkg-2", to.Name)
 }
