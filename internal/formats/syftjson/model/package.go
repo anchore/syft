@@ -124,6 +124,11 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		p.Metadata = payload
+	case pkg.GolangBinMetadataType:
+		var payload pkg.GolangBinMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
 	default:
 		log.Warnf("unknown package metadata type=%q for packageID=%q", p.MetadataType, p.ID)
 	}
