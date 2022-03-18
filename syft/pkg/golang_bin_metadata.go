@@ -5,5 +5,5 @@ type GolangBinMetadata struct {
 	BuildSettings     map[string]string `json:"goBuildSettings,omitempty" cyclonedx:"goBuildSettings"`
 	GoCompiledVersion string            `json:"goCompiledVersion" cyclonedx:"goCompiledVersion"`
 	Architecture      string            `json:"architecture" cyclonedx:"architecture"`
-	H1Digest          string            `json:"h1Digest" cyclonedx:"h1Digest"`
+	H1Digest          string            `json:"h1Digest,omitempty" cyclonedx:"h1Digest"`
 }
