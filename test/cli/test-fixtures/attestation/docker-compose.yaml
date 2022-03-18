@@ -1,87 +1,26 @@
 version: '3.2'
 services:
-  rekor-server:
-    image: caphill4/rekor-server:latest
-    command: [
-      "rekor-server",
-      "serve",
-      "--trillian_log_server.address=trillian-log-server",
-      "--trillian_log_server.port=8090",
-      "--rekor_server.address=0.0.0.0",
-      "--rekor_server.signer=memory",
-      "--enable_attestation_storage",
-      "--attestation_storage_bucket=file:///var/run/attestations",
-      # Uncomment this for production logging
-      # "--log_type=prod",
-      ]
-    volumes:
-    - "/var/run/attestations:/var/run/attestations:z"
-    restart: always # keep the server running
-    ports:
-      - "3000:3000"
-      - "2112:2112"
+  ctfe_init:
+    build:
+      context: .
+      dockerfile: Dockerfile.ctfe_init
     depends_on:
-      - mysql
       - trillian-log-server
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-
-  fulcio-server:
-    image: bcallawa/fulcio-bd4d600f674b081a535a886a15cb8d9a
-    command: [
-      "serve",
-      "--host=0.0.0.0",
-      "--port=5555",
-      "--ca=ephemeralca",
-      "--ct-log-url=http://ct_server:6962/test",
-      # Uncomment this for production logging
-      # "--log_type=prod",
-    ]
-    restart: always # keep the server running
-    ports:
-      - "5555:5555"
     volumes:
-      - ./config/config.jsn:/etc/fulcio-config/config.json:z
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5555/ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-    depends_on:
-      - dex-idp
-  dex-idp:
-    image: dexidp/dex:v2.30.0
-    user: root
-    command: [
-      "dex",
-      "serve",
-      "/etc/config/docker-compose-config.yaml",
-      ]
-    restart: always # keep the server running
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./config/dex:/etc/config/:ro
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/auth/healthz"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
+      - ./config/ctfe/:/etc/config/:rw
   ct_server:
     image: gcr.io/trillian-opensource-ci/ctfe
+    volumes:
+      - ./config/ctfe/:/etc/config/:ro
     command: [
+        "--log_config" ,"/etc/config/ct_server.cfg",
         "--log_rpc_server", "trillian-log-server:8096",
         "--http_endpoint", "0.0.0.0:6962",
         "--alsologtostderr",
     ]
     restart: always # retry while ctfe_init is running
     depends_on:
+      - ctfe_init
       - trillian-log-server
       - trillian-log-signer
     ports:
