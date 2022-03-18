@@ -1,18 +1,18 @@
 package model
 
-import "testing"
+import (
+	"testing"
 
-func TestUnmarshalPackage(t *testing.T) {
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestUnmarshalPackageGolang(t *testing.T) {
 	tests := []struct {
 		name        string
 		p           *Package
 		packageData []byte
 	}{
-		{
-			name:        "Package.UnmarshalJSON will unmarshal blank json",
-			p:           &Package{},
-			packageData: []byte(`{}`),
-		},
 		{
 			name: "Package.UnmarshalJSON unmarshals PackageBasicData",
 			p:    &Package{},
@@ -47,6 +47,11 @@ func TestUnmarshalPackage(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not unmarshal packageData: %v", err)
 			}
+
+			assert.NotNil(t, test.p.Metadata)
+			golangMetadata := test.p.Metadata.(pkg.GolangBinMetadata)
+			assert.NotEmpty(t, golangMetadata)
+			assert.Equal(t, "go1.18", golangMetadata.GoCompiledVersion)
 		})
 	}
 }
