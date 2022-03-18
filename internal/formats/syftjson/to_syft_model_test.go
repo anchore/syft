@@ -114,10 +114,12 @@ func Test_idsHaveChanged(t *testing.T) {
 	assert.Len(t, s.Relationships, 1)
 
 	r := s.Relationships[0]
+
 	from := s.Artifacts.PackageCatalog.Package(r.From.ID())
 	assert.NotNil(t, from)
+	assert.Equal(t, "pkg-1", from.Name)
+
 	to := s.Artifacts.PackageCatalog.Package(r.To.ID())
 	assert.NotNil(t, to)
-	assert.Equal(t, "pkg-1", from.Name)
 	assert.Equal(t, "pkg-2", to.Name)
 }
