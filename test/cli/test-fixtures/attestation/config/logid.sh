@@ -37,12 +37,12 @@ get_log_id
 if ! [[ -s /tmp/logid ]]; then
 	echo "No log found; let's create one..."
 	create_log
-	# update config file accordingly
-	update_config
-else
-	echo "Log ID known but config not found"
-	update_config
 fi
+echo "Updating config with current log"
+update_config
 
 configid=`cat /etc/config/ct_server.cfg|grep log_id|awk ' { print $2 } '`
 echo "Exisiting configuration uses log ID $configid, exiting"
+echo "Printing shared directory contents"
+
+ls -alt /etc/config

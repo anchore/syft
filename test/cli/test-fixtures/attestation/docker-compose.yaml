@@ -22,6 +22,23 @@ services:
       - trillian-log-server
     volumes:
       - ctfeConfig:/etc/config/:rw
+  ct_server:
+    image: gcr.io/trillian-opensource-ci/ctfe
+    volumes:
+      - ctfeConfig:/etc/config/:rw
+    command: [
+        "--log_config" ,"/etc/config/ct_server.cfg",
+        "--log_rpc_server", "trillian-log-server:8096",
+        "--http_endpoint", "0.0.0.0:6962",
+        "--alsologtostderr",
+    ]
+    restart: always # retry while ctfe_init is running
+    depends_on:
+      - trillian-log-server
+      - trillian-log-signer
+      - ctfe_init
+    ports:
+      - "6962:6962"
   trillian-log-server:
     image: gcr.io/trillian-opensource-ci/log_server
     command: [
