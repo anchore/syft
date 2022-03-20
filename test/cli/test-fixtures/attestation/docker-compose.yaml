@@ -1,30 +1,5 @@
 version: '3.2'
 services:
-  ctfe_init:
-    build:
-      context: .
-      dockerfile: Dockerfile.ctfe_init
-    depends_on:
-      - trillian-log-server
-    volumes:
-      - ./config/ctfe/:/etc/config/:rw
-  ct_server:
-    image: gcr.io/trillian-opensource-ci/ctfe
-    volumes:
-      - ./config/ctfe/:/etc/config/:ro
-    command: [
-        "--log_config" ,"/etc/config/ct_server.cfg",
-        "--log_rpc_server", "trillian-log-server:8096",
-        "--http_endpoint", "0.0.0.0:6962",
-        "--alsologtostderr",
-    ]
-    restart: always # retry while ctfe_init is running
-    depends_on:
-      - ctfe_init
-      - trillian-log-server
-      - trillian-log-signer
-    ports:
-      - "6962:6962"
   mysql:
     image: gcr.io/trillian-opensource-ci/db_server:3c8193ebb2d7fedb44d18e9c810d0d2e4dbb7e4d
     environment:
@@ -39,6 +14,14 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+  ctfe_init:
+    build:
+      context: .
+      dockerfile: Dockerfile.ctfe_init
+    depends_on:
+      - trillian-log-server
+    volumes:
+      - ctfeConfig:/etc/config/:rw
   trillian-log-server:
     image: gcr.io/trillian-opensource-ci/log_server
     command: [
@@ -50,8 +33,8 @@ services:
     ]
     restart: always # retry while mysql is starting up
     ports:
-      - "8095:8090"
-      - "8096:8091"
+      - "8096:8096"
+      - "8095:8095"
     depends_on:
       - mysql
   trillian-log-signer:
@@ -60,12 +43,14 @@ services:
       "--storage_system=mysql",
       "--mysql_uri=test:password@tcp(mysql:3306)/test",
       "--rpc_endpoint=0.0.0.0:8095",
-      "--http_endpoint=0.0.0.0:8096",
+      "--http_endpoint=0.0.0.0:8097",
       "--force_master",
       "--alsologtostderr",
     ]
     restart: always # retry while mysql is starting up
     ports:
-      - "8097:8096"
+      - "8097:8097"
     depends_on:
       - mysql
+volumes:
+  ctfeConfig: {}

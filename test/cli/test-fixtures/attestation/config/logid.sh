@@ -16,11 +16,11 @@
 
 
 function get_log_id() {
-	curl -s --retry-connrefused --retry 10 http://trillian-log-server:8090/metrics |grep "^quota_acquired_tokens{spec=\"trees"|head -1|awk ' { print $1 } '|sed -e 's/[^0-9]*//g' > /tmp/logid
+	curl -s --retry-connrefused --retry 10 http://trillian-log-server:8095/metrics |grep "^quota_acquired_tokens{spec=\"trees"|head -1|awk ' { print $1 } '|sed -e 's/[^0-9]*//g' > /tmp/logid
 }
 
 function create_log () {
-	/go/bin/createtree -admin_server trillian-log-server:8091 > /tmp/logid
+	/go/bin/createtree -admin_server trillian-log-server:8096 > /tmp/logid
 	echo -n "Created log ID " && cat /tmp/logid
 }
 
@@ -30,8 +30,10 @@ function update_config() {
 }
 
 # check to see if log id exists; if so, use that
-echo "Checking for existing configuration..."
+echo -n "Checking for existing configuration..."
+echo "Checking for preexisting logs..."
 get_log_id
+# else create one
 if ! [[ -s /tmp/logid ]]; then
 	echo "No log found; let's create one..."
 	create_log
@@ -41,5 +43,6 @@ else
 	echo "Log ID known but config not found"
 	update_config
 fi
+
 configid=`cat /etc/config/ct_server.cfg|grep log_id|awk ' { print $2 } '`
 echo "Exisiting configuration uses log ID $configid, exiting"
