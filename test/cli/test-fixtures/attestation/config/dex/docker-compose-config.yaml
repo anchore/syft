@@ -19,7 +19,7 @@ storage:
   type: memory
 
 web:
-  http: 0.0.0.0:8888
+  http: dex-idp:8888
 
 frontend:
   issuer: Fulcio in Docker Compose

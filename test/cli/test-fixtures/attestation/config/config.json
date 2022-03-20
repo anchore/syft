@@ -1,10 +1,9 @@
 {
   "OIDCIssuers": {
-    "http://dex-idp:8888/auth": {
-      "IssuerURL": "http://dex-idp:8888/auth",
-      "ClientID": "fulcio",
-      "IssuerClaim": "$.federated_claims.connector_id",
-      "Type": "email"
-    }
+	  "https://token.actions.githubusercontent.com": {
+		  "IssuerURL": "https://token.actions.githubusercontent.com",
+		  "ClientID": "anchore",
+		  "Type": "github-workflow"
+	  }
   }
 }
