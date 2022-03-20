@@ -1,5 +1,29 @@
 version: '3.2'
 services:
+  fulcio-server:
+    image: fulcio_fulcio-server
+    command: [
+      "fulcio-server",
+      "serve",
+      "--host=0.0.0.0",
+      "--port=5555",
+      "--ca=ephemeralca",
+      "--ct-log-url=http://ct_server:6962/test",
+      ]
+    restart: always # keep the server running
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./config/config.json:/etc/fulcio-config/config.json:z
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      - dex-idp
+      - ct_server
   mysql:
     image: gcr.io/trillian-opensource-ci/db_server:3c8193ebb2d7fedb44d18e9c810d0d2e4dbb7e4d
     environment:
@@ -39,6 +63,25 @@ services:
       - ctfe_init
     ports:
       - "6962:6962"
+  dex-idp:
+    image: dexidp/dex:v2.30.0
+    user: root
+    command: [
+      "dex",
+      "serve",
+      "/etc/config/docker-compose-config.yaml",
+      ]
+    restart: always # keep the server running
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config/dex:/etc/config/:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/auth/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
   trillian-log-server:
     image: gcr.io/trillian-opensource-ci/log_server
     command: [

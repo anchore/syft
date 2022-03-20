@@ -43,6 +43,3 @@ update_config
 
 configid=`cat /etc/config/ct_server.cfg|grep log_id|awk ' { print $2 } '`
 echo "Exisiting configuration uses log ID $configid, exiting"
-echo "Printing shared directory contents"
-
-ls -alt /etc/config
