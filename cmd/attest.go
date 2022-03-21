@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sigstore/cosign/cmd/cosign/cli/options"
+
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/spdx22json"
@@ -359,12 +361,39 @@ func init() {
 }
 
 func setAttestFlags(flags *pflag.FlagSet) {
-	// key options
-	flags.StringP("key", "", "",
+	// attestation options
+	flags.StringP(
+		"key", "", "",
 		"path to the private key file to use for attestation",
 	)
 
-	// in-toto attestations only support JSON predicates, so not all SBOM formats that syft can output are supported
+	flags.StringP(
+		"fulcio_url", "", options.DefaultFulcioURL,
+		"",
+	)
+
+	flags.StringP(
+		"rekor_url", "", options.DefaultRekorURL,
+		"",
+	)
+
+	flags.StringP(
+		"oidc_issuer", "", options.DefaultOIDCIssuerURL,
+		"",
+	)
+
+	flags.StringP(
+		"oidc_client_id", "", "",
+		"",
+	)
+
+	flags.StringP(
+		"oidc_client_secret", "", "",
+		"",
+	)
+
+	// in-toto attestations only support JSON predicates
+	// not all SBOM formats that syft can output are supported
 	flags.StringP(
 		"output", "o", formatAliases(syftjson.ID)[0],
 		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", formatAliases(attestFormats...)),
@@ -378,8 +407,27 @@ func setAttestFlags(flags *pflag.FlagSet) {
 
 func bindAttestConfigOptions(flags *pflag.FlagSet) error {
 	// note: output is not included since this configuration option is shared between multiple subcommands
-
 	if err := viper.BindPFlag("attest.key", flags.Lookup("key")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("attest.fulcio_url", flags.Lookup("fulcio_url")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("attest.rekor_url", flags.Lookup("rekor_url")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("attest.oidc_issuer", flags.Lookup("oidc_issuer")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("attest.oidc_client_id", flags.Lookup("oidc_client_id")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("attest.oidc_client_secret", flags.Lookup("oidc_client_secret")); err != nil {
 		return err
 	}
 
