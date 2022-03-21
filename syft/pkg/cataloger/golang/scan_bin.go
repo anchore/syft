@@ -3,6 +3,7 @@ package golang
 
 import (
 	"debug/buildinfo"
+	"errors"
 	"io"
 	"runtime/debug"
 
@@ -32,8 +33,13 @@ func scanFile(reader unionReader, filename string) ([]*debug.BuildInfo, []string
 	var builds []*debug.BuildInfo
 	for _, r := range readers {
 		bi, err := buildinfo.Read(r)
-		if err != nil {
+		if errors.As(err, &errNotGoExe) {
 			log.Debugf("golang cataloger: scanning file %s: %v", filename, err)
+			return nil, nil
+		}
+
+		if err != nil {
+			log.Warnf("golang cataloger: scanning file %s: %v", filename, err)
 			return nil, nil
 		}
 		builds = append(builds, bi)

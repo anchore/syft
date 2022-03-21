@@ -25,6 +25,10 @@ var (
 	// appear to be in a known format, or it breaks the rules of that format,
 	// or when there are I/O errors reading the file.
 	errUnrecognizedFormat = errors.New("unrecognized file format")
+
+	// errNotGoExe is returned when a given executable file is valid but does
+	// not contain Go build information.
+	errNotGoExe = errors.New("not a Go executable")
 )
 
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
