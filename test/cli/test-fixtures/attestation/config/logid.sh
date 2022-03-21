@@ -19,6 +19,10 @@ function get_log_id() {
 	curl -s --retry-connrefused --retry 10 http://trillian-log-server:8095/metrics |grep "^quota_acquired_tokens{spec=\"trees"|head -1|awk ' { print $1 } '|sed -e 's/[^0-9]*//g' > /tmp/logid
 }
 
+function get_ephemeral_ca() {
+	curl -s --retry-connrefused --retry 10 http://fulcio-server:5555/api/v1/rootCert > /etc/config/root.pem
+}
+
 function create_log () {
 	/go/bin/createtree -admin_server trillian-log-server:8096 > /tmp/logid
 	echo -n "Created log ID " && cat /tmp/logid
@@ -43,3 +47,8 @@ update_config
 
 configid=`cat /etc/config/ct_server.cfg|grep log_id|awk ' { print $2 } '`
 echo "Exisiting configuration uses log ID $configid, exiting"
+
+echo "Grabing fulcio root pem file"
+get_ephemeral_ca
+
+echo "Finished ct_server configuration"

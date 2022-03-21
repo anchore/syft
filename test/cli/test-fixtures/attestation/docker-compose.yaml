@@ -23,7 +23,6 @@ services:
       start_period: 5s
     depends_on:
       - dex-idp
-      - ct_server
   mysql:
     image: gcr.io/trillian-opensource-ci/db_server:3c8193ebb2d7fedb44d18e9c810d0d2e4dbb7e4d
     environment:
@@ -44,6 +43,7 @@ services:
       dockerfile: Dockerfile.ctfe_init
     depends_on:
       - trillian-log-server
+      - fulcio-server
     volumes:
       - ctfeConfig:/etc/config/:rw
   ct_server:
