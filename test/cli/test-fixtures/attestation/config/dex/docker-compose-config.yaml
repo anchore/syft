@@ -31,12 +31,12 @@ expiry:
 
 oauth2:
   responseTypes: [ "code" ]
-  alwaysShowLoginScreen: true
+  alwaysShowLoginScreen: false
   skipApprovalScreen: true
 
 connectors:
 - type: mockCallback
-  id: https://any.valid.url/
+  id: approved
   name: AlwaysApprovesOIDCProvider
 
 staticClients:

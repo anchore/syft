@@ -146,7 +146,7 @@ func validateAttestationArgs(appConfig *config.Application, si *source.Input) (f
 		InsecureSkipFulcioVerify: false,
 		RekorURL:                 "https://rekor.sigstore.dev",
 		OIDCIssuer:               "http://dex-idp:8888/auth",
-		OIDCClientID:             "sigstore",
+		OIDCClientID:             "fulcio",
 		OIDCClientSecret:         "",
 	}
 

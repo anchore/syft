@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-issuer: http://0.0.0.0:8888/auth
+issuer: http://dex-idp:8888/auth
 
 storage:
   type: memory
@@ -31,7 +31,7 @@ expiry:
 
 oauth2:
   responseTypes: [ "code" ]
-  alwaysShowLoginScreen: false
+  alwaysShowLoginScreen: true
   skipApprovalScreen: true
 
 connectors:
