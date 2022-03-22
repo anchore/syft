@@ -3,8 +3,12 @@ package file
 import (
 	"bytes"
 	"fmt"
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -56,7 +60,7 @@ func NewSecretsCataloger(config SecretsCatalogerConfig) (*SecretsCataloger, erro
 func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]SearchResult, error) {
 	results := make(map[source.Coordinates][]SearchResult)
 	locations := allRegularFiles(resolver)
-	stage, prog, secretsDiscovered := monitor.NewSecretsCatalogerMonitor(int64(len(locations)))
+	stage, prog, secretsDiscovered := newSecretsCatalogerMonitor(int64(len(locations)))
 	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
@@ -142,4 +146,24 @@ func extractValue(resolver source.FileResolver, location source.Location, start,
 	}
 
 	return buf.String(), nil
+}
+
+func newSecretsCatalogerMonitor(locations int64) (*progress.Stage, *progress.Manual, *progress.Manual) {
+	stage := &progress.Stage{}
+	secretsDiscovered := &progress.Manual{}
+	prog := &progress.Manual{
+		Total: locations,
+	}
+
+	bus.Publish(partybus.Event{
+		Type:   event.SecretsCatalogerStarted,
+		Source: secretsDiscovered,
+		Value: monitor.SecretsCatalogerMonitor{
+			Stager:            progress.Stager(stage),
+			SecretsDiscovered: secretsDiscovered,
+			Progressable:      prog,
+		},
+	})
+
+	return stage, prog, secretsDiscovered
 }

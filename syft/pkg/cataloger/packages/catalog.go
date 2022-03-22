@@ -2,14 +2,18 @@ package packages
 
 import (
 	"fmt"
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/hashicorp/go-multierror"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 )
 
 // Catalog a given source (container image or filesystem) with the given catalogers, returning all discovered packages.
@@ -20,7 +24,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 
-	filesProcessed, packagesDiscovered := monitor.NewPackageCatalogerMonitor()
+	filesProcessed, packagesDiscovered := newPackageCatalogerMonitor()
 
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
@@ -103,4 +107,19 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathRe
 	}
 
 	return relationships, nil
+}
+
+// newPackageCatalogerMonitor creates a new PackageCatalogerMonitor object and publishes the object on the bus as a PackageCatalogerStarted event.
+func newPackageCatalogerMonitor() (*progress.Manual, *progress.Manual) {
+	filesProcessed := progress.Manual{}
+	packagesDiscovered := progress.Manual{}
+
+	bus.Publish(partybus.Event{
+		Type: event.PackageCatalogerStarted,
+		Value: monitor.PackageCatalogerMonitor{
+			FilesProcessed:     progress.Monitorable(&filesProcessed),
+			PackagesDiscovered: progress.Monitorable(&packagesDiscovered),
+		},
+	})
+	return &filesProcessed, &packagesDiscovered
 }

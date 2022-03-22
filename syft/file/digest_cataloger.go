@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/syft/event"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 	"hash"
 	"io"
 
@@ -29,7 +32,7 @@ func NewDigestsCataloger(hashes []crypto.Hash) (*DigestsCataloger, error) {
 func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]Digest, error) {
 	results := make(map[source.Coordinates][]Digest)
 	locations := allRegularFiles(resolver)
-	stage, prog := monitor.FileDigesterMonitor(int64(len(locations)))
+	stage, prog := digestsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
@@ -100,4 +103,24 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	}
 
 	return result, nil
+}
+
+func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
+	stage := &progress.Stage{}
+	prog := &progress.Manual{
+		Total: locations,
+	}
+
+	bus.Publish(partybus.Event{
+		Type: event.FileDigestsCatalogerStarted,
+		Value: struct {
+			progress.Stager
+			progress.Progressable
+		}{
+			Stager:       progress.Stager(stage),
+			Progressable: prog,
+		},
+	})
+
+	return stage, prog
 }
