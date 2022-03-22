@@ -106,7 +106,7 @@ $(TEMPDIR):
 .PHONY: bootstrap-tools
 bootstrap-tools: $(TEMPDIR)
 	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.42.1
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.45.0
 	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.4.1
@@ -122,12 +122,7 @@ bootstrap: $(RESULTSDIR) bootstrap-go bootstrap-tools ## Download and install al
 	$(call title,Bootstrapping dependencies)
 
 .PHONY: static-analysis
-static-analysis: check-go-mod-tidy check-licenses
-
- # NOTE: isolating golanci-lint so it runs over go1.17 in CI, since it is not compatible with
- # go1.18+
-.PHONY: static-analysis-golanci-lint
-static-analysis-golanci-lint: lint
+static-analysis: check-go-mod-tidy check-licenses lint
 
 .PHONY: lint
 lint: ## Run gofmt + golangci lint checks
