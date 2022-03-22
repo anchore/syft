@@ -2,15 +2,16 @@ package java
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/internal/archive"
 	"io"
 	"path"
 	"strings"
 
-	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // integrity check
@@ -35,7 +36,7 @@ var archiveFormatGlobs = []string{
 }
 
 type archiveParser struct {
-	fileManifest file.ZipFileManifest
+	fileManifest archive.ZipFileManifest
 	virtualPath  string
 	archivePath  string
 	contentPath  string
@@ -74,7 +75,7 @@ func newJavaArchiveParser(virtualPath string, reader io.Reader, detectNested boo
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
 	}
 
-	fileManifest, err := file.NewZipFileManifest(archivePath)
+	fileManifest, err := archive.NewZipFileManifest(archivePath)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to read files from java archive: %w", err)
 	}
@@ -144,7 +145,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}
 
 	// fetch the manifest file
-	contents, err := file.ContentsFromZip(j.archivePath, manifestMatches...)
+	contents, err := archive.ContentsFromZip(j.archivePath, manifestMatches...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", j.virtualPath, err)
 	}
@@ -213,9 +214,9 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 
 // discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func discoverPkgsFromZip(virtualPath, archivePath, contentPath string, fileManifest file.ZipFileManifest, parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromZip(virtualPath, archivePath, contentPath string, fileManifest archive.ZipFileManifest, parentPkg *pkg.Package) ([]*pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := file.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
+	openers, err := archive.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
@@ -274,7 +275,7 @@ func discoverPkgsFromOpener(virtualPath, pathWithinArchive string, archiveOpener
 }
 
 func pomPropertiesByParentPath(archivePath string, extractPaths []string, virtualPath string) (map[string]pkg.PomProperties, error) {
-	contentsOfMavenPropertiesFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
+	contentsOfMavenPropertiesFiles, err := archive.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -302,7 +303,7 @@ func pomPropertiesByParentPath(archivePath string, extractPaths []string, virtua
 }
 
 func pomProjectByParentPath(archivePath string, extractPaths []string, virtualPath string) (map[string]pkg.PomProject, error) {
-	contentsOfMavenProjectFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
+	contentsOfMavenProjectFiles, err := archive.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}

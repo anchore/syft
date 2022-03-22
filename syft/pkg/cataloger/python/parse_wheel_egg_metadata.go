@@ -3,11 +3,11 @@ package python
 import (
 	"bufio"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"path/filepath"
 	"strings"
 
-	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 
 	"github.com/mitchellh/mapstructure"

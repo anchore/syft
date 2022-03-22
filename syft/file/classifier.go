@@ -11,6 +11,12 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+type Classifier struct {
+	Class                    string
+	FilepathPatterns         []*regexp.Regexp
+	EvidencePatternTemplates []string
+}
+
 func DefaultClassifiers() []Classifier {
 	return []Classifier{
 		{
@@ -60,17 +66,6 @@ func DefaultClassifiers() []Classifier {
 			},
 		},
 	}
-}
-
-type Classifier struct {
-	Class                    string
-	FilepathPatterns         []*regexp.Regexp
-	EvidencePatternTemplates []string
-}
-
-type Classification struct {
-	Class    string            `json:"class"`
-	Metadata map[string]string `json:"metadata"`
 }
 
 func (c Classifier) Classify(resolver source.FileResolver, location source.Location) (*Classification, error) {

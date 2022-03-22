@@ -3,7 +3,11 @@ package syft
 import (
 	"fmt"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/fileclassifier"
+	"github.com/anchore/syft/syft/file/cataloger/filecontents"
+	"github.com/anchore/syft/syft/file/cataloger/filedigests"
+	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
+	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg/cataloger/packages"
 	"github.com/anchore/syft/syft/sbom"
@@ -13,7 +17,7 @@ import (
 type task func(*sbom.Artifacts, *source.Source) ([]artifact.Relationship, error)
 type taskGenerator func(CatalogingConfig) (task, error)
 
-func generateCatalogPackagesTask(config CatalogingConfig) (task, error) {
+func generatePackagesCatalogingTask(config CatalogingConfig) (task, error) {
 	if len(config.PackageCatalogers) == 0 {
 		return nil, nil
 	}
@@ -38,12 +42,12 @@ func generateCatalogPackagesTask(config CatalogingConfig) (task, error) {
 	}, nil
 }
 
-func generateCatalogFileMetadataTask(config CatalogingConfig) (task, error) {
+func generateFileMetadataCatalogingTask(config CatalogingConfig) (task, error) {
 	if !config.CaptureFileMetadata {
 		return nil, nil
 	}
 
-	metadataCataloger := file.NewMetadataCataloger()
+	cataloger := filemetadata.NewCataloger()
 
 	return func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 		resolver, err := src.FileResolver(config.Scope)
@@ -51,7 +55,7 @@ func generateCatalogFileMetadataTask(config CatalogingConfig) (task, error) {
 			return nil, err
 		}
 
-		result, err := metadataCataloger.Catalog(resolver)
+		result, err := cataloger.Catalog(resolver)
 		if err != nil {
 			return nil, err
 		}
@@ -61,12 +65,12 @@ func generateCatalogFileMetadataTask(config CatalogingConfig) (task, error) {
 
 }
 
-func generateCatalogFileDigestsTask(config CatalogingConfig) (task, error) {
+func generateFileDigestsCatalogingTask(config CatalogingConfig) (task, error) {
 	if len(config.DigestHashes) == 0 {
 		return nil, nil
 	}
 
-	digestsCataloger, err := file.NewDigestsCataloger(config.DigestHashes)
+	cataloger, err := filedigests.NewCataloger(config.DigestHashes)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +81,7 @@ func generateCatalogFileDigestsTask(config CatalogingConfig) (task, error) {
 			return nil, err
 		}
 
-		result, err := digestsCataloger.Catalog(resolver)
+		result, err := cataloger.Catalog(resolver)
 		if err != nil {
 			return nil, err
 		}
@@ -87,12 +91,12 @@ func generateCatalogFileDigestsTask(config CatalogingConfig) (task, error) {
 
 }
 
-func generateCatalogContentsTask(config CatalogingConfig) (task, error) {
-	if len(config.ContentsConfig.Globs) > 0 {
+func generateContentsCatalogingTask(config CatalogingConfig) (task, error) {
+	if len(config.ContentsConfig.Globs) == 0 {
 		return nil, nil
 	}
 
-	contentsCataloger, err := file.NewContentsCataloger(config.ContentsConfig)
+	cataloger, err := filecontents.NewCataloger(config.ContentsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +107,7 @@ func generateCatalogContentsTask(config CatalogingConfig) (task, error) {
 			return nil, err
 		}
 
-		result, err := contentsCataloger.Catalog(resolver)
+		result, err := cataloger.Catalog(resolver)
 		if err != nil {
 			return nil, err
 		}
@@ -112,12 +116,12 @@ func generateCatalogContentsTask(config CatalogingConfig) (task, error) {
 	}, nil
 }
 
-func generateCatalogSecretsTask(config CatalogingConfig) (task, error) {
+func generateSecretsCatalogingTask(config CatalogingConfig) (task, error) {
 	if !config.CaptureSecrets {
 		return nil, nil
 	}
 
-	secretsCataloger, err := file.NewSecretsCataloger(config.SecretsConfig)
+	cataloger, err := secrets.NewCataloger(config.SecretsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +132,7 @@ func generateCatalogSecretsTask(config CatalogingConfig) (task, error) {
 			return nil, err
 		}
 
-		result, err := secretsCataloger.Catalog(resolver)
+		result, err := cataloger.Catalog(resolver)
 		if err != nil {
 			return nil, err
 		}
@@ -138,12 +142,12 @@ func generateCatalogSecretsTask(config CatalogingConfig) (task, error) {
 
 }
 
-func generateCatalogFileClassificationsTask(config CatalogingConfig) (task, error) {
+func generateFileClassifierTask(config CatalogingConfig) (task, error) {
 	if !config.ClassifyFiles {
 		return nil, nil
 	}
 
-	classifierCataloger, err := file.NewClassificationCataloger(config.FileClassifiers)
+	cataloger, err := fileclassifier.NewCataloger(config.FileClassifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +158,7 @@ func generateCatalogFileClassificationsTask(config CatalogingConfig) (task, erro
 			return nil, err
 		}
 
-		result, err := classifierCataloger.Catalog(resolver)
+		result, err := cataloger.Catalog(resolver)
 		if err != nil {
 			return nil, err
 		}

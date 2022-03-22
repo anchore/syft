@@ -3,6 +3,7 @@ package syft
 import (
 	"crypto"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/packages"
 	"github.com/anchore/syft/syft/source"
@@ -82,7 +83,7 @@ func WithFileDigests(hashes ...crypto.Hash) CatalogingOption {
 	}
 }
 
-func WithSecrets(secretConfig *file.SecretsCatalogerConfig) CatalogingOption {
+func WithSecrets(secretConfig *secrets.CatalogerConfig) CatalogingOption {
 	return func(_ *source.Source, config *CatalogingConfig) error {
 		config.CaptureSecrets = true
 		if secretConfig != nil {

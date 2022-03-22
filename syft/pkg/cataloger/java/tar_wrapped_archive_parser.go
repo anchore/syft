@@ -2,10 +2,9 @@ package java
 
 import (
 	"fmt"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
-
-	"github.com/anchore/syft/internal/file"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -59,7 +58,7 @@ func parseTarWrappedJavaArchive(virtualPath string, reader io.Reader) ([]*pkg.Pa
 }
 
 func discoverPkgsFromTar(virtualPath, archivePath, contentPath string) ([]*pkg.Package, []artifact.Relationship, error) {
-	openers, err := file.ExtractGlobsFromTarToUniqueTempFile(archivePath, contentPath, archiveFormatGlobs...)
+	openers, err := archive.ExtractGlobsFromTarToUniqueTempFile(archivePath, contentPath, archiveFormatGlobs...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from tar: %w", err)
 	}

@@ -2,10 +2,9 @@ package java
 
 import (
 	"fmt"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
-
-	"github.com/anchore/syft/internal/file"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -33,7 +32,7 @@ func parseZipWrappedJavaArchive(virtualPath string, reader io.Reader) ([]*pkg.Pa
 	// functions support zips with shell scripts prepended to the file. Specifically, the helpers use the central
 	// header at the end of the file to determine where the beginning of the zip payload is (unlike the standard lib
 	// or archiver).
-	fileManifest, err := file.NewZipFileManifest(archivePath)
+	fileManifest, err := archive.NewZipFileManifest(archivePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read files from java archive: %w", err)
 	}

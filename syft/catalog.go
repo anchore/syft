@@ -19,12 +19,12 @@ func Catalog(src *source.Source, options ...CatalogingOption) (*sbom.SBOM, error
 	var tasks []task
 
 	generators := []taskGenerator{
-		generateCatalogPackagesTask,
-		generateCatalogFileMetadataTask,
-		generateCatalogFileDigestsTask,
-		generateCatalogSecretsTask,
-		generateCatalogFileClassificationsTask,
-		generateCatalogContentsTask,
+		generatePackagesCatalogingTask,
+		generateFileMetadataCatalogingTask,
+		generateFileDigestsCatalogingTask,
+		generateSecretsCatalogingTask,
+		generateFileClassifierTask,
+		generateContentsCatalogingTask,
 	}
 
 	for _, generator := range generators {

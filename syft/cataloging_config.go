@@ -2,6 +2,8 @@ package syft
 
 import (
 	"crypto"
+	"github.com/anchore/syft/syft/file/cataloger/filecontents"
+	"github.com/anchore/syft/syft/file/cataloger/secrets"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
@@ -25,13 +27,13 @@ type CatalogingConfig struct {
 	DigestHashes        []crypto.Hash
 	// secrets
 	CaptureSecrets bool
-	SecretsConfig  file.SecretsCatalogerConfig
+	SecretsConfig  secrets.CatalogerConfig
 	SecretsScope   source.Scope
 	// file classification
 	ClassifyFiles   bool
 	FileClassifiers []file.Classifier
 	// file contents
-	ContentsConfig file.ContentsCatalogerConfig
+	ContentsConfig filecontents.CatalogerConfig
 }
 
 func DefaultCatalogingConfig() CatalogingConfig {
@@ -40,8 +42,8 @@ func DefaultCatalogingConfig() CatalogingConfig {
 		ToolName:        internal.ApplicationName,
 		ToolVersion:     version.Guess(),
 		SecretsScope:    source.AllLayersScope,
-		SecretsConfig:   file.DefaultSecretsCatalogerConfig(),
+		SecretsConfig:   secrets.DefaultCatalogerConfig(),
 		FileClassifiers: file.DefaultClassifiers(),
-		ContentsConfig:  file.DefaultContentsCatalogerConfig(),
+		ContentsConfig:  filecontents.DefaultCatalogerConfig(),
 	}
 }

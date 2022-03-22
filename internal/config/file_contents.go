@@ -1,8 +1,8 @@
 package config
 
 import (
-	internalFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/filecontents"
 	"github.com/anchore/syft/syft/source"
 	"github.com/spf13/viper"
 )
@@ -16,7 +16,7 @@ type fileContents struct {
 func (cfg fileContents) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("file-contents.cataloger.enabled", catalogerEnabledDefault)
 	v.SetDefault("file-contents.cataloger.scope", source.SquashedScope)
-	v.SetDefault("file-contents.skip-files-above-size", 1*internalFile.MB)
+	v.SetDefault("file-contents.skip-files-above-size", 1*file.MB)
 	v.SetDefault("file-contents.globs", []string{})
 }
 
@@ -24,8 +24,8 @@ func (cfg *fileContents) parseConfigValues() error {
 	return cfg.Cataloger.parseConfigValues()
 }
 
-func (cfg fileContents) ToConfig() file.ContentsCatalogerConfig {
-	return file.ContentsCatalogerConfig{
+func (cfg fileContents) ToConfig() filecontents.CatalogerConfig {
+	return filecontents.CatalogerConfig{
 		Globs:                     cfg.Globs,
 		SkipFilesAboveSizeInBytes: cfg.SkipFilesAboveSize,
 	}
