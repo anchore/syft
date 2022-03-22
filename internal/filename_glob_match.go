@@ -1,8 +1,8 @@
-package file
+package internal
 
-// GlobMatch evaluates the given glob pattern against the given "name" string, indicating if there is a match or not.
+// FileNameGlobMatch evaluates the given glob pattern against the given "name" string, indicating if there is a match or not.
 // Source: https://research.swtch.com/glob.go
-func GlobMatch(pattern, name string) bool {
+func FileNameGlobMatch(pattern, name string) bool {
 	px := 0
 	nx := 0
 	nextPx := 0

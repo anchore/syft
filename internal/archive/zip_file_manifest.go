@@ -2,7 +2,6 @@ package archive
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"os"
 	"sort"
 	"strings"
@@ -49,7 +48,7 @@ func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 			// so that glob logic is consistent inside and outside of ZIP archives
 			normalizedEntry := normalizeZipEntryName(entry)
 
-			if file.GlobMatch(pattern, normalizedEntry) {
+			if internal.FileNameGlobMatch(pattern, normalizedEntry) {
 				uniqueMatches.Add(entry)
 			}
 		}

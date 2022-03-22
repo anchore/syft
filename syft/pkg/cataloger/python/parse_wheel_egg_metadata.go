@@ -3,7 +3,7 @@ package python
 import (
 	"bufio"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/internal"
 	"io"
 	"path/filepath"
 	"strings"
@@ -82,7 +82,7 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 // of egg metadata (as opposed to a directory that contains more metadata
 // files).
 func isEggRegularFile(path string) bool {
-	return file.GlobMatch(eggFileMetadataGlob, path)
+	return internal.FileNameGlobMatch(eggFileMetadataGlob, path)
 }
 
 // determineSitePackagesRootPath returns the path of the site packages root,

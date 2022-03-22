@@ -1,4 +1,4 @@
-package file
+package internal
 
 import (
 	"strings"
@@ -32,7 +32,7 @@ func TestGlobMatch(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if GlobMatch(test.pattern, test.data) != test.ok {
+		if FileNameGlobMatch(test.pattern, test.data) != test.ok {
 			t.Errorf("failed glob='%s' data='%s'", test.pattern, test.data)
 		}
 	}
