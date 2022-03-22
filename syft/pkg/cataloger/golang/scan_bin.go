@@ -24,17 +24,27 @@ func scanFile(reader unionReader, filename string) ([]*debug.BuildInfo, []string
 	// with more than one binary
 	readers, err := getReaders(reader)
 	if err != nil {
-		log.Warnf("golang cataloger: opening binary: %v", err)
+		log.Warnf("golang cataloger: failed to open a binary: %v", err)
 		return nil, nil
 	}
 
 	var builds []*debug.BuildInfo
 	for _, r := range readers {
 		bi, err := buildinfo.Read(r)
+
+		// note: the stdlib does not export the error we need to check for
 		if err != nil {
-			log.Warnf("golang cataloger: scanning file %s: %v", filename, err)
+			if err.Error() == "not a Go executable" {
+				// since the cataloger can only select executables and not distinguish if they are a go-compiled
+				// binary, we should not show warnings/logs in this case.
+				return nil, nil
+			}
+			// in this case we could not read the or parse the file, but not explicitly because it is not a
+			// go-compiled binary (though it still might be).
+			log.Warnf("golang cataloger: failed to read buildinfo (file=%q): %v", filename, err)
 			return nil, nil
 		}
+
 		builds = append(builds, bi)
 	}
 
