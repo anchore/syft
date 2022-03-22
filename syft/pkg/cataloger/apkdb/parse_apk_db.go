@@ -3,11 +3,12 @@ package apkdb
 import (
 	"bufio"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 
 	"github.com/anchore/syft/syft/artifact"
 

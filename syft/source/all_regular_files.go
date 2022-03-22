@@ -2,9 +2,10 @@ package source
 
 import (
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 )
 
-func AllRegularFiles(resolver FileResolver) (locations []Location) {
+func AllRegularFiles(resolver FileResolver) (locations []file.Location) {
 	for location := range resolver.AllLocations() {
 		resolvedLocations, err := resolver.FilesByPath(location.RealPath)
 		if err != nil {
@@ -19,7 +20,7 @@ func AllRegularFiles(resolver FileResolver) (locations []Location) {
 				continue
 			}
 
-			if metadata.Type != RegularFile {
+			if metadata.Type != file.RegularFile {
 				continue
 			}
 			locations = append(locations, resolvedLocation)

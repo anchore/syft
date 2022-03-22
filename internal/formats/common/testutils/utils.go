@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -157,8 +159,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Locations: []source.Location{
-			source.NewLocationFromImage(string(ref1.RealPath), *ref1, img),
+		Locations: []file.Location{
+			file.NewLocationFromImage(string(ref1.RealPath), *ref1, img),
 		},
 		Type:         pkg.PythonPkg,
 		FoundBy:      "the-cataloger-1",
@@ -177,8 +179,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Locations: []source.Location{
-			source.NewLocationFromImage(string(ref2.RealPath), *ref2, img),
+		Locations: []file.Location{
+			file.NewLocationFromImage(string(ref2.RealPath), *ref2, img),
 		},
 		Type:         pkg.DebPkg,
 		FoundBy:      "the-cataloger-2",
@@ -234,8 +236,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 		Version: "1.0.1",
 		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
-		Locations: []source.Location{
-			source.NewLocation("/some/path/pkg1"),
+		Locations: []file.Location{
+			file.NewLocation("/some/path/pkg1"),
 		},
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
@@ -259,8 +261,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Locations: []source.Location{
-			source.NewLocation("/some/path/pkg1"),
+		Locations: []file.Location{
+			file.NewLocation("/some/path/pkg1"),
 		},
 		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{

@@ -6,8 +6,9 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -17,13 +18,13 @@ const (
 
 type exeOpener func(file io.ReadCloser) ([]exe, error)
 
-func newGoBinaryPackage(name, version, h1Digest, goVersion, architecture string, location source.Location) pkg.Package {
+func newGoBinaryPackage(name, version, h1Digest, goVersion, architecture string, location file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:     name,
 		Version:  version,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Locations: []source.Location{
+		Locations: []file.Location{
 			location,
 		},
 		MetadataType: pkg.GolangBinMetadataType,
@@ -39,7 +40,7 @@ func newGoBinaryPackage(name, version, h1Digest, goVersion, architecture string,
 	return p
 }
 
-func parseGoBin(location source.Location, reader io.ReadCloser, opener exeOpener) (pkgs []pkg.Package, err error) {
+func parseGoBin(location file.Location, reader io.ReadCloser, opener exeOpener) (pkgs []pkg.Package, err error) {
 	var exes []exe
 	// it has been found that there are stdlib paths within openExe that can panic. We want to prevent this behavior
 	// bubbling up and halting execution. For this reason we try to recover from any panic and return an error.
@@ -62,7 +63,7 @@ func parseGoBin(location source.Location, reader io.ReadCloser, opener exeOpener
 	return pkgs, err
 }
 
-func buildGoPkgInfo(location source.Location, mod, goVersion, arch string) []pkg.Package {
+func buildGoPkgInfo(location file.Location, mod, goVersion, arch string) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
 	scanner := bufio.NewScanner(strings.NewReader(mod))
 

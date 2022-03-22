@@ -14,7 +14,7 @@ import (
 
 func Test_DocumentName(t *testing.T) {
 	allSchemes := strset.New()
-	for _, s := range source.AllSchemes {
+	for _, s := range source.AllTypes {
 		allSchemes.Add(string(s))
 	}
 	testedSchemes := strset.New()
@@ -29,7 +29,7 @@ func Test_DocumentName(t *testing.T) {
 			name:      "image",
 			inputName: "my-name",
 			srcMetadata: source.Metadata{
-				Scheme: source.ImageScheme,
+				Scheme: source.ImageType,
 				ImageMetadata: source.ImageMetadata{
 					UserInput:      "image-repo/name:tag",
 					ID:             "id",
@@ -42,7 +42,7 @@ func Test_DocumentName(t *testing.T) {
 			name:      "directory",
 			inputName: "my-name",
 			srcMetadata: source.Metadata{
-				Scheme: source.DirectoryScheme,
+				Scheme: source.DirectoryType,
 				Path:   "some/path/to/place",
 			},
 			expected: "some/path/to/place",
@@ -51,7 +51,7 @@ func Test_DocumentName(t *testing.T) {
 			name:      "file",
 			inputName: "my-name",
 			srcMetadata: source.Metadata{
-				Scheme: source.FileScheme,
+				Scheme: source.FileType,
 				Path:   "some/path/to/place",
 			},
 			expected: "some/path/to/place",

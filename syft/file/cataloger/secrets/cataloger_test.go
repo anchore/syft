@@ -199,7 +199,7 @@ func TestSecretsCataloger(t *testing.T) {
 				return
 			}
 
-			loc := source.NewLocation(test.fixture)
+			loc := file.NewLocation(test.fixture)
 			if _, exists := actualResults[loc.Coordinates]; !exists {
 				t.Fatalf("could not find location=%q in results", loc)
 			}
@@ -437,7 +437,7 @@ j4f668YfhUbKdRF6S6734856
 				t.Fatalf("could not catalog: %+v", err)
 			}
 
-			loc := source.NewLocation(test.fixture)
+			loc := file.NewLocation(test.fixture)
 			if _, exists := actualResults[loc.Coordinates]; !exists && test.expected != nil {
 				t.Fatalf("could not find location=%q in results", loc)
 			} else if !exists && test.expected == nil {

@@ -11,12 +11,13 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 )
@@ -39,10 +40,10 @@ type directoryResolver struct {
 	currentWdRelativeToRoot string
 	currentWd               string
 	fileTree                *filetree.FileTree
-	metadata                map[file.ID]FileMetadata
+	metadata                map[stereoscopeFile.ID]file.Metadata
 	// TODO: wire up to report these paths in the json report
 	pathFilterFns  []pathFilterFn
-	refsByMIMEType map[string][]file.Reference
+	refsByMIMEType map[string][]stereoscopeFile.Reference
 	errPaths       map[string]error
 }
 
@@ -78,9 +79,9 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		currentWd:               cleanCWD,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
-		metadata:                make(map[file.ID]FileMetadata),
+		metadata:                make(map[stereoscopeFile.ID]file.Metadata),
 		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
-		refsByMIMEType:          make(map[string][]file.Reference),
+		refsByMIMEType:          make(map[string][]stereoscopeFile.Reference),
 		errPaths:                make(map[string]error),
 	}
 
@@ -180,12 +181,12 @@ func (r *directoryResolver) isFileAccessErr(path string, err error) bool {
 }
 
 func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, error) {
-	switch t := newFileTypeFromMode(info.Mode()); t {
-	case SymbolicLink:
+	switch t := file.NewFileTypeFromMode(info.Mode()); t {
+	case file.SymbolicLink:
 		return r.addSymlinkToIndex(p, info)
-	case Directory:
+	case file.Directory:
 		return "", r.addDirectoryToIndex(p, info)
-	case RegularFile:
+	case file.RegularFile:
 		return "", r.addFileToIndex(p, info)
 	default:
 		return "", fmt.Errorf("unsupported file type: %s", t)
@@ -193,7 +194,7 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 }
 
 func (r directoryResolver) hasBeenIndexed(p string) bool {
-	filePath := file.Path(p)
+	filePath := stereoscopeFile.Path(p)
 	if !r.fileTree.HasPath(filePath) {
 		return false
 	}
@@ -210,26 +211,26 @@ func (r directoryResolver) hasBeenIndexed(p string) bool {
 }
 
 func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error {
-	ref, err := r.fileTree.AddDir(file.Path(p))
+	ref, err := r.fileTree.AddDir(stereoscopeFile.Path(p))
 	if err != nil {
 		return err
 	}
 
-	location := NewLocationFromDirectory(p, *ref)
-	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
+	location := file.NewLocationFromDirectory(p, *ref)
+	metadata := file.MetadataFromPath(p, info, r.isInIndex(location))
 	r.addFileMetadataToIndex(ref, metadata)
 
 	return nil
 }
 
 func (r directoryResolver) addFileToIndex(p string, info os.FileInfo) error {
-	ref, err := r.fileTree.AddFile(file.Path(p))
+	ref, err := r.fileTree.AddFile(stereoscopeFile.Path(p))
 	if err != nil {
 		return err
 	}
 
-	location := NewLocationFromDirectory(p, *ref)
-	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
+	location := file.NewLocationFromDirectory(p, *ref)
+	metadata := file.MetadataFromPath(p, info, r.isInIndex(location))
 	r.addFileMetadataToIndex(ref, metadata)
 
 	return nil
@@ -249,7 +250,7 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 		linkTarget = filepath.Join(filepath.Dir(p), linkTarget)
 	}
 
-	ref, err := r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
+	ref, err := r.fileTree.AddSymLink(stereoscopeFile.Path(p), stereoscopeFile.Path(linkTarget))
 	if err != nil {
 		return "", err
 	}
@@ -259,16 +260,16 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 		targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
 	}
 
-	location := NewLocationFromDirectory(p, *ref)
+	location := file.NewLocationFromDirectory(p, *ref)
 	location.VirtualPath = p
-	metadata := fileMetadataFromPath(p, usedInfo, r.isInIndex(location))
+	metadata := file.MetadataFromPath(p, usedInfo, r.isInIndex(location))
 	metadata.LinkDestination = linkTarget
 	r.addFileMetadataToIndex(ref, metadata)
 
 	return targetAbsPath, nil
 }
 
-func (r directoryResolver) addFileMetadataToIndex(ref *file.Reference, metadata FileMetadata) {
+func (r directoryResolver) addFileMetadataToIndex(ref *stereoscopeFile.Reference, metadata file.Metadata) {
 	if ref != nil {
 		if metadata.MIMEType != "" {
 			r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
@@ -315,7 +316,7 @@ func (r *directoryResolver) HasPath(userPath string) bool {
 	if err != nil {
 		return false
 	}
-	return r.fileTree.HasPath(file.Path(requestPath))
+	return r.fileTree.HasPath(stereoscopeFile.Path(requestPath))
 }
 
 // Stringer to represent a directory path data source
@@ -323,9 +324,9 @@ func (r directoryResolver) String() string {
 	return fmt.Sprintf("dir:%s", r.path)
 }
 
-// FilesByPath returns all file.References that match the given paths from the directory.
-func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) {
-	var references = make([]Location, 0)
+// FilesByPath returns all stereoscopeFile.References that match the given paths from the directory.
+func (r directoryResolver) FilesByPath(userPaths ...string) ([]file.Location, error) {
+	var references = make([]file.Location, 0)
 
 	for _, userPath := range userPaths {
 		userStrPath, err := r.requestPath(userPath)
@@ -367,9 +368,9 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			userStrPath = windowsToPosix(userStrPath)
 		}
 
-		exists, ref, err := r.fileTree.File(file.Path(userStrPath), filetree.FollowBasenameLinks)
+		exists, ref, err := r.fileTree.File(stereoscopeFile.Path(userStrPath), filetree.FollowBasenameLinks)
 		if err == nil && exists {
-			loc := NewVirtualLocationFromDirectory(
+			loc := file.NewVirtualLocationFromDirectory(
 				r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
 				r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
 				*ref,
@@ -381,9 +382,9 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 	return references, nil
 }
 
-// FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
-	result := make([]Location, 0)
+// FilesByGlob returns all stereoscopeFile.References that match the given path glob pattern from any layer in the image.
+func (r directoryResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
+	result := make([]file.Location, 0)
 
 	for _, pattern := range patterns {
 		globResults, err := r.fileTree.FilesByGlob(pattern, filetree.FollowBasenameLinks)
@@ -391,7 +392,7 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 			return nil, err
 		}
 		for _, globResult := range globResults {
-			loc := NewVirtualLocationFromDirectory(
+			loc := file.NewVirtualLocationFromDirectory(
 				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
 				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
 				globResult.Reference,
@@ -404,9 +405,9 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 }
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
-// This is helpful when attempting to find a file that is in the same layer or lower as another file. For the
+// This is helpful when attempting to find a file that is in the same layer or lower as another stereoscopeFile. For the
 // directoryResolver, this is a simple path lookup.
-func (r *directoryResolver) RelativeFileByPath(_ Location, path string) *Location {
+func (r *directoryResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
 	paths, err := r.FilesByPath(path)
 	if err != nil {
 		return nil
@@ -420,59 +421,60 @@ func (r *directoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 
 // FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
-func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
-	if location.ref.RealPath == "" {
+func (r directoryResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+	if location.Ref().RealPath == "" {
 		return nil, errors.New("empty path given")
 	}
 	if !r.isInIndex(location) {
 		// this is in cases where paths have been explicitly excluded from the tree index. In which case
 		// we should DENY all content requests. Why? These paths have been indicated to be inaccessible (either
 		// by preference or these files are not readable by the current user).
-		return nil, fmt.Errorf("file content is inaccessible path=%q", location.ref.RealPath)
+		return nil, fmt.Errorf("file content is inaccessible path=%q", location.Ref().RealPath)
 	}
 	// RealPath is posix so for windows directory resolver we need to translate
 	// to its true on disk path.
-	filePath := string(location.ref.RealPath)
+	filePath := string(location.Ref().RealPath)
 	if runtime.GOOS == WindowsOS {
 		filePath = posixToWindows(filePath)
 	}
-	return file.NewLazyReadCloser(filePath), nil
+	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
-func (r directoryResolver) isInIndex(location Location) bool {
-	if location.ref.RealPath == "" {
+func (r directoryResolver) isInIndex(location file.Location) bool {
+	if location.Ref().RealPath == "" {
 		return false
 	}
-	return r.fileTree.HasPath(location.ref.RealPath, filetree.FollowBasenameLinks)
+	return r.fileTree.HasPath(location.Ref().RealPath, filetree.FollowBasenameLinks)
 }
 
-func (r *directoryResolver) AllLocations() <-chan Location {
-	results := make(chan Location)
+func (r *directoryResolver) AllLocations() <-chan file.Location {
+	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		// this should be all non-directory types
-		for _, ref := range r.fileTree.AllFiles(file.TypeReg, file.TypeSymlink, file.TypeHardLink, file.TypeBlockDevice, file.TypeCharacterDevice, file.TypeFifo) {
-			results <- NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
+		for _, ref := range r.fileTree.AllFiles(stereoscopeFile.TypeReg, stereoscopeFile.TypeSymlink, stereoscopeFile.TypeHardLink, stereoscopeFile.TypeBlockDevice, stereoscopeFile.TypeCharacterDevice, stereoscopeFile.TypeFifo) {
+			results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
 		}
 	}()
 	return results
 }
 
-func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
-	metadata, exists := r.metadata[location.ref.ID()]
+func (r *directoryResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
+	ref := location.Ref()
+	metadata, exists := r.metadata[ref.ID()]
 	if !exists {
-		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
+		return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 	}
 
 	return metadata, nil
 }
 
-func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error) {
-	var locations []Location
+func (r *directoryResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
+	var locations []file.Location
 	for _, ty := range types {
 		if refs, ok := r.refsByMIMEType[ty]; ok {
 			for _, ref := range refs {
-				locations = append(locations, NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref))
+				locations = append(locations, file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref))
 			}
 		}
 	}
@@ -515,8 +517,8 @@ func isUnallowableFileType(_ string, info os.FileInfo) bool {
 		// we can't filter out by filetype for non-existent files
 		return false
 	}
-	switch newFileTypeFromMode(info.Mode()) {
-	case CharacterDevice, Socket, BlockDevice, FIFONode, IrregularFile:
+	switch file.NewFileTypeFromMode(info.Mode()) {
+	case file.CharacterDevice, file.Socket, file.BlockDevice, file.FIFONode, file.IrregularFile:
 		return true
 		// note: symlinks that point to these files may still get by.
 		// We handle this later in processing to help prevent against infinite links traversal.

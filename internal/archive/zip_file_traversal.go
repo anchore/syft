@@ -4,11 +4,12 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/internal/log"
 )

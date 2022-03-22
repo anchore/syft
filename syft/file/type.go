@@ -1,4 +1,4 @@
-package source
+package file
 
 import (
 	"archive/tar"
@@ -6,23 +6,23 @@ import (
 )
 
 const (
-	RegularFile FileType = "RegularFile"
+	RegularFile Type = "RegularFile"
 	// IrregularFile is how syft defines files that are neither regular, symbolic or directory.
 	// For ref: the seven standard Unix file types are regular, directory, symbolic link,
 	// FIFO special, block special, character special, and socket as defined by POSIX.
-	IrregularFile   FileType = "IrregularFile"
-	HardLink        FileType = "HardLink"
-	SymbolicLink    FileType = "SymbolicLink"
-	CharacterDevice FileType = "CharacterDevice"
-	BlockDevice     FileType = "BlockDevice"
-	Directory       FileType = "Directory"
-	FIFONode        FileType = "FIFONode"
-	Socket          FileType = "Socket"
+	IrregularFile   Type = "IrregularFile"
+	HardLink        Type = "HardLink"
+	SymbolicLink    Type = "SymbolicLink"
+	CharacterDevice Type = "CharacterDevice"
+	BlockDevice     Type = "BlockDevice"
+	Directory       Type = "Directory"
+	FIFONode        Type = "FIFONode"
+	Socket          Type = "Socket"
 )
 
-type FileType string
+type Type string
 
-func newFileTypeFromTarHeaderTypeFlag(flag byte) FileType {
+func NewFileTypeFromTarHeaderTypeFlag(flag byte) Type {
 	switch flag {
 	case tar.TypeReg, tar.TypeRegA:
 		return RegularFile
@@ -42,7 +42,7 @@ func newFileTypeFromTarHeaderTypeFlag(flag byte) FileType {
 	return IrregularFile
 }
 
-func newFileTypeFromMode(mode os.FileMode) FileType {
+func NewFileTypeFromMode(mode os.FileMode) Type {
 	switch {
 	case isSet(mode, os.ModeSymlink):
 		return SymbolicLink

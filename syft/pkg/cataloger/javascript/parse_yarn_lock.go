@@ -3,9 +3,10 @@ package javascript
 import (
 	"bufio"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"regexp"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"

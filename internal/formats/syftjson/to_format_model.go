@@ -73,7 +73,7 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 	}
 }
 
-func toSecrets(data map[source.Coordinates][]file.SearchResult) []model.Secrets {
+func toSecrets(data map[file.Coordinates][]file.SearchResult) []model.Secrets {
 	results := make([]model.Secrets, 0)
 	for coordinates, secrets := range data {
 		results = append(results, model.Secrets{
@@ -94,7 +94,7 @@ func toFile(s sbom.SBOM) []model.File {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range sbom.AllCoordinates(s) {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -131,7 +131,7 @@ func toFile(s sbom.SBOM) []model.File {
 	return results
 }
 
-func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMetadata) *model.FileMetadataEntry {
+func toFileMetadataEntry(coordinates file.Coordinates, metadata *file.Metadata) *model.FileMetadataEntry {
 	if metadata == nil {
 		return nil
 	}
@@ -175,7 +175,7 @@ func toPackageModel(p pkg.Package) model.Package {
 		licenses = p.Licenses
 	}
 
-	var coordinates = make([]source.Coordinates, len(p.Locations))
+	var coordinates = make([]file.Coordinates, len(p.Locations))
 	for i, l := range p.Locations {
 		coordinates[i] = l.Coordinates
 	}
@@ -216,7 +216,7 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 // toSourceModel creates a new source object to be represented into JSON.
 func toSourceModel(src source.Metadata) (model.Source, error) {
 	switch src.Scheme {
-	case source.ImageScheme:
+	case source.ImageType:
 		metadata := src.ImageMetadata
 		// ensure that empty collections are not shown as null
 		if metadata.RepoDigests == nil {
@@ -229,12 +229,12 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 			Type:   "image",
 			Target: metadata,
 		}, nil
-	case source.DirectoryScheme:
+	case source.DirectoryType:
 		return model.Source{
 			Type:   "directory",
 			Target: src.Path,
 		}, nil
-	case source.FileScheme:
+	case source.FileType:
 		return model.Source{
 			Type:   "file",
 			Target: src.Path,

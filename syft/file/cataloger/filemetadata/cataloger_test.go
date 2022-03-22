@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,13 +34,13 @@ func TestFileMetadataCataloger(t *testing.T) {
 	tests := []struct {
 		path     string
 		exists   bool
-		expected source.FileMetadata
+		expected file.Metadata
 		err      bool
 	}{
 		{
 			path:   "/file-1.txt",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Mode:     0644,
 				Type:     "RegularFile",
 				UserID:   1,
@@ -51,7 +52,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/hardlink-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Mode:            0644,
 				Type:            "HardLink",
 				LinkDestination: "file-1.txt",
@@ -63,7 +64,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/symlink-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Mode:            0777 | os.ModeSymlink,
 				Type:            "SymbolicLink",
 				LinkDestination: "file-1.txt",
@@ -75,7 +76,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/char-device-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Mode:     0644 | os.ModeDevice | os.ModeCharDevice,
 				Type:     "CharacterDevice",
 				UserID:   0,
@@ -86,7 +87,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/block-device-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Mode:     0644 | os.ModeDevice,
 				Type:     "BlockDevice",
 				UserID:   0,
@@ -97,7 +98,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/fifo-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Mode:     0644 | os.ModeNamedPipe,
 				Type:     "FIFONode",
 				UserID:   0,
@@ -108,7 +109,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/bin",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Mode:     0755 | os.ModeDir,
 				Type:     "Directory",
 				UserID:   0,
@@ -120,12 +121,12 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			_, ref, err := img.SquashedTree().File(file.Path(test.path))
+			_, ref, err := img.SquashedTree().File(stereoscopeFile.Path(test.path))
 			if err != nil {
 				t.Fatalf("unable to get file: %+v", err)
 			}
 
-			l := source.NewLocationFromImage(test.path, *ref, img)
+			l := file.NewLocationFromImage(test.path, *ref, img)
 
 			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
 

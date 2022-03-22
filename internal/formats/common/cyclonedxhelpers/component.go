@@ -3,11 +3,12 @@ package cyclonedxhelpers
 import (
 	"reflect"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/syft/internal/formats/common"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func encodeComponent(p pkg.Package) cyclonedx.Component {
@@ -71,9 +72,9 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	return p
 }
 
-func decodeLocations(vals map[string]string) []source.Location {
-	v := common.Decode(reflect.TypeOf([]source.Location{}), vals, "syft:location", CycloneDXFields)
-	out, _ := v.([]source.Location)
+func decodeLocations(vals map[string]string) []file.Location {
+	v := common.Decode(reflect.TypeOf([]file.Location{}), vals, "syft:location", CycloneDXFields)
+	out, _ := v.([]file.Location)
 	return out
 }
 

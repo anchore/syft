@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"net/http"
 	"strings"
 	"testing"
@@ -56,9 +57,9 @@ func sbomFixture() sbom.SBOM {
 				Name:    "name",
 				Version: "version",
 				FoundBy: "foundBy",
-				Locations: []source.Location{
+				Locations: []file.Location{
 					{
-						Coordinates: source.Coordinates{
+						Coordinates: file.Coordinates{
 							RealPath:     "path",
 							FileSystemID: "layerID",
 						},
@@ -102,13 +103,13 @@ func sbomFixture() sbom.SBOM {
 		},
 		Relationships: []artifact.Relationship{
 			{
-				From: source.NewLocation("/place1"),
-				To:   source.NewLocation("/place2"),
+				From: file.NewLocation("/place1"),
+				To:   file.NewLocation("/place2"),
 				Type: artifact.ContainsRelationship,
 			},
 		},
 		Source: source.Metadata{
-			Scheme: source.ImageScheme,
+			Scheme: source.ImageType,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      "user-in",
 				Layers:         nil,

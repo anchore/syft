@@ -136,12 +136,12 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 		return fmt.Errorf("could not generate source input for attest command: %w", err)
 	}
 
-	switch si.Scheme {
-	case source.ImageScheme, source.UnknownScheme:
+	switch si.Type {
+	case source.ImageType, source.UnknownType:
 		// at this point we know that it cannot be dir: or file: schemes, so we will assume that the unknown scheme could represent an image
-		si.Scheme = source.ImageScheme
+		si.Type = source.ImageType
 	default:
-		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.Scheme, userInput)
+		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.Type, userInput)
 	}
 
 	// if the original detection was from a local daemon we want to short circuit

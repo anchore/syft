@@ -16,9 +16,9 @@ func encoder(output io.Writer, s sbom.SBOM) error {
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
 
 	switch s.Source.Scheme {
-	case source.DirectoryScheme, source.FileScheme:
+	case source.DirectoryType, source.FileType:
 		fmt.Fprintf(w, "[Path: %s]\n", s.Source.Path)
-	case source.ImageScheme:
+	case source.ImageType:
 		fmt.Fprintln(w, "[Image]")
 
 		for idx, l := range s.Source.ImageMetadata.Layers {

@@ -15,12 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 	"github.com/scylladb/go-set/strset"
-
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/wagoodman/go-progress"
 )
 
@@ -466,7 +465,7 @@ func Test_directoryResolver_index(t *testing.T) {
 			cwd, err := os.Getwd()
 			require.NoError(t, err)
 
-			p := file.Path(path.Join(cwd, test.path))
+			p := stereoscopeFile.Path(path.Join(cwd, test.path))
 			assert.Equal(t, true, r.fileTree.HasPath(p))
 			exists, ref, err := r.fileTree.File(p)
 			assert.Equal(t, true, exists)
@@ -735,20 +734,20 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		location Location
+		location file.Location
 		expects  string
 		err      bool
 	}{
 		{
 			name: "use file reference for content requests",
-			location: NewLocationFromDirectory("some/place", file.Reference{
-				RealPath: file.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")),
+			location: file.NewLocationFromDirectory("some/place", stereoscopeFile.Reference{
+				RealPath: stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")),
 			}),
 			expects: "this file has contents",
 		},
 		{
 			name:     "error on empty file reference",
-			location: NewLocationFromDirectory("doesn't matter", file.Reference{}),
+			location: file.NewLocationFromDirectory("doesn't matter", stereoscopeFile.Reference{}),
 			err:      true,
 		},
 	}
@@ -823,12 +822,12 @@ func Test_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
 		resolver, err := newDirectoryResolver("./test-fixtures/symlinks-loop")
 		require.NoError(t, err)
 
-		locations, err := resolver.FilesByGlob("**/file.target")
+		locations, err := resolver.FilesByGlob("**/stereoscopeFile.target")
 		require.NoError(t, err)
 		// Note: I'm not certain that this behavior is correct, but it is not an infinite loop (which is the point of the test)
-		// - block/loop0/file.target
-		// - devices/loop0/file.target
-		// - devices/loop0/subsystem/loop0/file.target
+		// - block/loop0/stereoscopeFile.target
+		// - devices/loop0/stereoscopeFile.target
+		// - devices/loop0/subsystem/loop0/stereoscopeFile.target
 		assert.Len(t, locations, 3)
 	}
 
@@ -857,7 +856,7 @@ func Test_IncludeRootPathInIndex(t *testing.T) {
 	resolver, err := newDirectoryResolver("/", filterFn)
 	require.NoError(t, err)
 
-	exists, ref, err := resolver.fileTree.File(file.Path("/"))
+	exists, ref, err := resolver.fileTree.File(stereoscopeFile.Path("/"))
 	require.NoError(t, err)
 	require.NotNil(t, ref)
 	assert.True(t, exists)

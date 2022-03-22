@@ -42,9 +42,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p1 := pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Locations: []source.Location{
+		Locations: []file.Location{
 			{
-				Coordinates: source.Coordinates{
+				Coordinates: file.Coordinates{
 					RealPath: "/a/place/a",
 				},
 			},
@@ -68,9 +68,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p2 := pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Locations: []source.Location{
+		Locations: []file.Location{
 			{
-				Coordinates: source.Coordinates{
+				Coordinates: file.Coordinates{
 					RealPath: "/b/place/b",
 				},
 			},
@@ -95,49 +95,49 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			FileMetadata: map[source.Coordinates]source.FileMetadata{
-				source.NewLocation("/a/place").Coordinates: {
+			FileMetadata: map[file.Coordinates]file.Metadata{
+				file.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
 					Type:    "directory",
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/a/place/a").Coordinates: {
+				file.NewLocation("/a/place/a").Coordinates: {
 					Mode:    0775,
 					Type:    "regularFile",
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/b").Coordinates: {
+				file.NewLocation("/b").Coordinates: {
 					Mode:            0775,
 					Type:            "symbolicLink",
 					LinkDestination: "/c",
 					UserID:          0,
 					GroupID:         0,
 				},
-				source.NewLocation("/b/place/b").Coordinates: {
+				file.NewLocation("/b/place/b").Coordinates: {
 					Mode:    0644,
 					Type:    "regularFile",
 					UserID:  1,
 					GroupID: 2,
 				},
 			},
-			FileDigests: map[source.Coordinates][]file.Digest{
-				source.NewLocation("/a/place/a").Coordinates: {
+			FileDigests: map[file.Coordinates][]file.Digest{
+				file.NewLocation("/a/place/a").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
 					},
 				},
-				source.NewLocation("/b/place/b").Coordinates: {
+				file.NewLocation("/b/place/b").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c",
 					},
 				},
 			},
-			FileContents: map[source.Coordinates]string{
-				source.NewLocation("/a/place/a").Coordinates: "the-contents",
+			FileContents: map[file.Coordinates]string{
+				file.NewLocation("/a/place/a").Coordinates: "the-contents",
 			},
 			LinuxDistribution: &linux.Release{
 				ID:        "redhat",
@@ -159,7 +159,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			},
 		},
 		Source: source.Metadata{
-			Scheme: source.ImageScheme,
+			Scheme: source.ImageType,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      "user-image-input",
 				ID:             "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",

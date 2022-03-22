@@ -1,8 +1,9 @@
 package generic
 
 import (
-	"github.com/anchore/syft/syft/pkg"
 	"io"
+
+	"github.com/anchore/syft/syft/pkg"
 
 	"github.com/anchore/syft/syft/artifact"
 )

@@ -3,8 +3,9 @@ package javascript
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"

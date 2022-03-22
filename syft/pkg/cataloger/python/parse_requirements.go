@@ -3,9 +3,10 @@ package python
 import (
 	"bufio"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"

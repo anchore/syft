@@ -2,6 +2,7 @@ package syft
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"

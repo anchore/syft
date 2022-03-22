@@ -4,6 +4,7 @@ import (
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -111,17 +112,17 @@ func toSyftSourceData(s model.Source) *source.Metadata {
 	switch s.Type {
 	case "directory":
 		return &source.Metadata{
-			Scheme: source.DirectoryScheme,
+			Scheme: source.DirectoryType,
 			Path:   s.Target.(string),
 		}
 	case "file":
 		return &source.Metadata{
-			Scheme: source.FileScheme,
+			Scheme: source.FileType,
 			Path:   s.Target.(string),
 		}
 	case "image":
 		return &source.Metadata{
-			Scheme:        source.ImageScheme,
+			Scheme:        source.ImageType,
 			ImageMetadata: s.Target.(source.ImageMetadata),
 		}
 	}
@@ -148,9 +149,9 @@ func toSyftPackage(p model.Package) pkg.Package {
 		cpes = append(cpes, value)
 	}
 
-	var locations = make([]source.Location, len(p.Locations))
+	var locations = make([]file.Location, len(p.Locations))
 	for i, c := range p.Locations {
-		locations[i] = source.NewLocationFromCoordinates(c)
+		locations[i] = file.NewLocationFromCoordinates(c)
 	}
 
 	return pkg.Package{

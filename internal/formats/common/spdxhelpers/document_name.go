@@ -10,9 +10,9 @@ import (
 
 func DocumentName(srcMetadata source.Metadata) (string, error) {
 	switch srcMetadata.Scheme {
-	case source.ImageScheme:
+	case source.ImageType:
 		return cleanName(srcMetadata.ImageMetadata.UserInput), nil
-	case source.DirectoryScheme, source.FileScheme:
+	case source.DirectoryType, source.FileType:
 		return cleanName(srcMetadata.Path), nil
 	}
 

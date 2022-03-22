@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"regexp"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 
 	"github.com/anchore/syft/internal/log"
 

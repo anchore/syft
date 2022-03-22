@@ -1,18 +1,16 @@
-package source
+package file
 
 import (
 	"os"
 
 	"github.com/anchore/stereoscope/pkg/file"
-
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 )
 
-type FileMetadata struct {
+type Metadata struct {
 	Mode            os.FileMode
-	Type            FileType
+	Type            Type
 	UserID          int
 	GroupID         int
 	LinkDestination string
@@ -20,15 +18,15 @@ type FileMetadata struct {
 	MIMEType        string
 }
 
-func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, error) {
+func MetadataByLocation(img *image.Image, location Location) (Metadata, error) {
 	entry, err := img.FileCatalog.Get(location.ref)
 	if err != nil {
-		return FileMetadata{}, err
+		return Metadata{}, err
 	}
 
-	return FileMetadata{
+	return Metadata{
 		Mode:            entry.Metadata.Mode,
-		Type:            newFileTypeFromTarHeaderTypeFlag(entry.Metadata.TypeFlag),
+		Type:            NewFileTypeFromTarHeaderTypeFlag(entry.Metadata.TypeFlag),
 		UserID:          entry.Metadata.UserID,
 		GroupID:         entry.Metadata.GroupID,
 		LinkDestination: entry.Metadata.Linkname,
@@ -37,7 +35,7 @@ func fileMetadataByLocation(img *image.Image, location Location) (FileMetadata, 
 	}, nil
 }
 
-func fileMetadataFromPath(path string, info os.FileInfo, withMIMEType bool) FileMetadata {
+func MetadataFromPath(path string, info os.FileInfo, withMIMEType bool) Metadata {
 	var mimeType string
 	uid, gid := GetXid(info)
 
@@ -57,9 +55,9 @@ func fileMetadataFromPath(path string, info os.FileInfo, withMIMEType bool) File
 		mimeType = file.MIMEType(f)
 	}
 
-	return FileMetadata{
+	return Metadata{
 		Mode: info.Mode(),
-		Type: newFileTypeFromMode(info.Mode()),
+		Type: NewFileTypeFromMode(info.Mode()),
 		// unsupported across platforms
 		UserID:   uid,
 		GroupID:  gid,

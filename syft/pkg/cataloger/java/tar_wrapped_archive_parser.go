@@ -2,9 +2,10 @@ package java
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"io"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"

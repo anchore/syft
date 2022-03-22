@@ -21,11 +21,11 @@ func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string, erro
 func DocumentNamespace(name string, srcMetadata source.Metadata) string {
 	input := "unknown-source-type"
 	switch srcMetadata.Scheme {
-	case source.ImageScheme:
+	case source.ImageType:
 		input = "image"
-	case source.DirectoryScheme:
+	case source.DirectoryType:
 		input = "dir"
-	case source.FileScheme:
+	case source.FileType:
 		input = "file"
 	}
 

@@ -2,7 +2,8 @@ package syft
 
 import (
 	"crypto"
-	"github.com/anchore/syft/syft/file"
+
+	"github.com/anchore/syft/syft/file/cataloger/fileclassifier"
 	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/packages"
@@ -100,7 +101,7 @@ func WithFileClassification() CatalogingOption {
 	}
 }
 
-func WithFileClassifiers(classifiers ...file.Classifier) CatalogingOption {
+func WithFileClassifiers(classifiers ...fileclassifier.Classifier) CatalogingOption {
 	return func(_ *source.Source, config *CatalogingConfig) error {
 		config.ClassifyFiles = !(len(classifiers) > 0)
 		config.FileClassifiers = classifiers

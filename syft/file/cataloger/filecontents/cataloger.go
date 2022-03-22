@@ -34,9 +34,9 @@ func NewCataloger(config CatalogerConfig) (*Cataloger, error) {
 	}, nil
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates]string, error) {
-	results := make(map[source.Coordinates]string)
-	var locations []source.Location
+func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates]string, error) {
+	results := make(map[file.Coordinates]string)
+	var locations []file.Location
 
 	locations, err := resolver.FilesByGlob(i.config.Globs...)
 	if err != nil {
@@ -67,7 +67,7 @@ func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinate
 	return results, nil
 }
 
-func (i *Cataloger) catalogLocation(resolver source.FileResolver, location source.Location) (string, error) {
+func (i *Cataloger) catalogLocation(resolver source.FileResolver, location file.Location) (string, error) {
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return "", err

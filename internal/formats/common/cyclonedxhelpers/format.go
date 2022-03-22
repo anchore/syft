@@ -155,7 +155,7 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 
 func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component {
 	switch srcMetadata.Scheme {
-	case source.ImageScheme:
+	case source.ImageType:
 		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
 		if err != nil {
 			log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
@@ -166,7 +166,7 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 			Name:    srcMetadata.ImageMetadata.UserInput,
 			Version: srcMetadata.ImageMetadata.ManifestDigest,
 		}
-	case source.DirectoryScheme, source.FileScheme:
+	case source.DirectoryType, source.FileType:
 		bomRef, err := artifact.IDByHash(srcMetadata.Path)
 		if err != nil {
 			log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)

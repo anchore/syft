@@ -9,8 +9,6 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 )
@@ -29,34 +27,34 @@ func (r rpmdbTestFileResolverMock) HasPath(path string) bool {
 	return !r.ignorePaths
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...string) ([]source.Location, error) {
+func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...string) ([]file.Location, error) {
 	if r.ignorePaths {
 		// act as if no paths exist
 		return nil, nil
 	}
 	// act as if all files exist
-	var locations = make([]source.Location, len(paths))
+	var locations = make([]file.Location, len(paths))
 	for i, p := range paths {
-		locations[i] = source.NewLocation(p)
+		locations[i] = file.NewLocation(p)
 	}
 	return locations, nil
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByGlob(...string) ([]source.Location, error) {
+func (r *rpmdbTestFileResolverMock) FilesByGlob(...string) ([]file.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *rpmdbTestFileResolverMock) RelativeFileByPath(source.Location, string) *source.Location {
+func (r *rpmdbTestFileResolverMock) RelativeFileByPath(file.Location, string) *file.Location {
 	panic(fmt.Errorf("not implemented"))
 	return nil
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]source.Location, error) {
+func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]file.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 func TestParseRpmDB(t *testing.T) {
-	dbLocation := source.NewLocation("test-path")
+	dbLocation := file.NewLocation("test-path")
 
 	tests := []struct {
 		fixture     string
@@ -71,7 +69,7 @@ func TestParseRpmDB(t *testing.T) {
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Locations:    []source.Location{dbLocation},
+					Locations:    []file.Location{dbLocation},
 					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
@@ -98,7 +96,7 @@ func TestParseRpmDB(t *testing.T) {
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Locations:    []source.Location{dbLocation},
+					Locations:    []file.Location{dbLocation},
 					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,

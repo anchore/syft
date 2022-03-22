@@ -37,7 +37,7 @@ type Source struct {
 // It acts as a struct input for some source constructors.
 type Input struct {
 	UserInput                       string
-	Scheme                          Scheme
+	Type                            Type
 	ImageSource                     image.Source
 	Location                        string
 	Platform                        string
@@ -48,7 +48,7 @@ type Input struct {
 // from specific providers including a registry.
 func ParseInput(userInput string, platform string, detectAvailableImageSources bool) (*Input, error) {
 	fs := afero.NewOsFs()
-	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
+	sType, source, location, err := DetectTypeFromScheme(fs, image.DetectSource, userInput)
 	if err != nil {
 		return nil, err
 	}
@@ -56,11 +56,11 @@ func ParseInput(userInput string, platform string, detectAvailableImageSources b
 	if source == image.UnknownSource {
 		// only run for these two scheme
 		// only check on packages command, attest we automatically try to pull from userInput
-		switch scheme {
-		case ImageScheme, UnknownScheme:
+		switch sType {
+		case ImageType, UnknownType:
 			if detectAvailableImageSources {
 				if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
-					scheme = ImageScheme
+					sType = ImageType
 					source = imagePullSource
 					location = userInput
 				}
@@ -72,14 +72,14 @@ func ParseInput(userInput string, platform string, detectAvailableImageSources b
 		}
 	}
 
-	if scheme != ImageScheme && platform != "" {
+	if sType != ImageType && platform != "" {
 		return nil, fmt.Errorf("cannot specify a platform for a non-image source")
 	}
 
 	// collect user input for downstream consumption
 	return &Input{
 		UserInput:                       userInput,
-		Scheme:                          scheme,
+		Type:                            sType,
 		ImageSource:                     source,
 		Location:                        location,
 		Platform:                        platform,
@@ -104,12 +104,12 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 	var source *Source
 	cleanupFn := func() {}
 
-	switch in.Scheme {
-	case FileScheme:
+	switch in.Type {
+	case FileType:
 		source, cleanupFn, err = generateFileSource(fs, in.Location)
-	case DirectoryScheme:
+	case DirectoryType:
 		source, cleanupFn, err = generateDirectorySource(fs, in.Location)
-	case ImageScheme:
+	case ImageType:
 		source, cleanupFn, err = generateImageSource(in, registryOptions)
 	default:
 		err = fmt.Errorf("unable to process input for scanning: %q", in.UserInput)
@@ -241,7 +241,7 @@ func NewFromDirectory(path string) (Source, error) {
 	return Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Scheme: DirectoryScheme,
+			Scheme: DirectoryType,
 			Path:   path,
 		},
 		path: path,
@@ -255,7 +255,7 @@ func NewFromFile(path string) (Source, func()) {
 	return Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Scheme: FileScheme,
+			Scheme: FileType,
 			Path:   path,
 		},
 		path: analysisPath,
@@ -298,7 +298,7 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 	return Source{
 		Image: img,
 		Metadata: Metadata{
-			Scheme:        ImageScheme,
+			Scheme:        ImageType,
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
 	}, nil
@@ -306,7 +306,7 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 
 func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 	switch s.Metadata.Scheme {
-	case DirectoryScheme, FileScheme:
+	case DirectoryType, FileType:
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 		if s.directoryResolver == nil {
@@ -321,7 +321,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			s.directoryResolver = resolver
 		}
 		return s.directoryResolver, nil
-	case ImageScheme:
+	case ImageType:
 		var resolver FileResolver
 		var err error
 		switch scope {

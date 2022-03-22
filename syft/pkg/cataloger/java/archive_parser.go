@@ -2,10 +2,11 @@ package java
 
 import (
 	"fmt"
-	"github.com/anchore/syft/internal/archive"
 	"io"
 	"path"
 	"strings"
+
+	"github.com/anchore/syft/internal/archive"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"

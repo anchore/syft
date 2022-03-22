@@ -27,13 +27,13 @@ func TestParseInput(t *testing.T) {
 		name     string
 		input    string
 		platform string
-		expected Scheme
+		expected Type
 		errFn    require.ErrorAssertionFunc
 	}{
 		{
 			name:     "ParseInput parses a file input",
 			input:    "test-fixtures/image-simple/file-1.txt",
-			expected: FileScheme,
+			expected: FileType,
 		},
 		{
 			name:     "errors out when using platform for non-image scheme",
@@ -52,7 +52,7 @@ func TestParseInput(t *testing.T) {
 			test.errFn(t, err)
 			if test.expected != "" {
 				require.NotNil(t, sourceInput)
-				assert.Equal(t, sourceInput.Scheme, test.expected)
+				assert.Equal(t, sourceInput.Type, test.expected)
 			}
 		})
 	}

@@ -199,7 +199,7 @@ func decodeMetadata(component *cyclonedx.Component) source.Metadata {
 	switch component.Type {
 	case cyclonedx.ComponentTypeContainer:
 		return source.Metadata{
-			Scheme: source.ImageScheme,
+			Scheme: source.ImageType,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      component.Name,
 				ID:             component.BOMRef,
@@ -208,7 +208,7 @@ func decodeMetadata(component *cyclonedx.Component) source.Metadata {
 		}
 	case cyclonedx.ComponentTypeFile:
 		return source.Metadata{
-			Scheme: source.FileScheme, // or source.DirectoryScheme
+			Scheme: source.FileType, // or source.DirectoryType
 			Path:   component.Name,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      component.Name,

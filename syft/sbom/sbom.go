@@ -17,11 +17,11 @@ type SBOM struct {
 
 type Artifacts struct {
 	PackageCatalog      *pkg.Catalog
-	FileMetadata        map[source.Coordinates]source.FileMetadata
-	FileDigests         map[source.Coordinates][]file.Digest
-	FileClassifications map[source.Coordinates][]file.Classification
-	FileContents        map[source.Coordinates]string
-	Secrets             map[source.Coordinates][]file.SearchResult
+	FileMetadata        map[file.Coordinates]file.Metadata
+	FileDigests         map[file.Coordinates][]file.Digest
+	FileClassifications map[file.Coordinates][]file.Classification
+	FileContents        map[file.Coordinates]string
+	Secrets             map[file.Coordinates][]file.SearchResult
 	LinuxDistribution   *linux.Release
 }
 
@@ -31,8 +31,8 @@ type Descriptor struct {
 	Configuration interface{}
 }
 
-func AllCoordinates(sbom SBOM) []source.Coordinates {
-	set := source.NewCoordinateSet()
+func AllCoordinates(sbom SBOM) []file.Coordinates {
+	set := file.NewCoordinateSet()
 	for coordinates := range sbom.Artifacts.FileMetadata {
 		set.Add(coordinates)
 	}
@@ -53,12 +53,12 @@ func AllCoordinates(sbom SBOM) []source.Coordinates {
 	return set.ToSlice()
 }
 
-func extractCoordinates(relationship artifact.Relationship) (results []source.Coordinates) {
-	if coordinates, exists := relationship.From.(source.Coordinates); exists {
+func extractCoordinates(relationship artifact.Relationship) (results []file.Coordinates) {
+	if coordinates, exists := relationship.From.(file.Coordinates); exists {
 		results = append(results, coordinates)
 	}
 
-	if coordinates, exists := relationship.To.(source.Coordinates); exists {
+	if coordinates, exists := relationship.To.(file.Coordinates); exists {
 		results = append(results, coordinates)
 	}
 

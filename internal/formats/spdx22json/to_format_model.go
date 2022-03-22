@@ -16,7 +16,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
@@ -94,7 +93,7 @@ func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationsh
 			continue
 		}
 
-		if _, ok := relationship.To.(source.Coordinates); !ok {
+		if _, ok := relationship.To.(file.Coordinates); !ok {
 			continue
 		}
 
@@ -110,7 +109,7 @@ func toFiles(s sbom.SBOM) []model.File {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range sbom.AllCoordinates(s) {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -165,7 +164,7 @@ func toChecksumAlgorithm(algorithm string) string {
 	return strings.ToUpper(algorithm)
 }
 
-func toFileTypes(metadata *source.FileMetadata) (ty []string) {
+func toFileTypes(metadata *file.Metadata) (ty []string) {
 	if metadata == nil {
 		return nil
 	}

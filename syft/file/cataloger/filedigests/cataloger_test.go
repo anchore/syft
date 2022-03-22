@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Hash) map[source.Coordinates][]file.Digest {
-	digests := make(map[source.Coordinates][]file.Digest)
+func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Hash) map[file.Coordinates][]file.Digest {
+	digests := make(map[file.Coordinates][]file.Digest)
 
 	for _, f := range files {
 		fh, err := os.Open(filepath.Join(root, f))
@@ -31,14 +31,14 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 
 		if len(b) == 0 {
 			// we don't keep digests for empty files
-			digests[source.NewLocation(f).Coordinates] = []file.Digest{}
+			digests[file.NewLocation(f).Coordinates] = []file.Digest{}
 			continue
 		}
 
 		for _, hash := range hashes {
 			h := hash.New()
 			h.Write(b)
-			digests[source.NewLocation(f).Coordinates] = append(digests[source.NewLocation(f).Coordinates], file.Digest{
+			digests[file.NewLocation(f).Coordinates] = append(digests[file.NewLocation(f).Coordinates], file.Digest{
 				Algorithm: file.CleanDigestAlgorithmName(hash.String()),
 				Value:     fmt.Sprintf("%x", h.Sum(nil)),
 			})
@@ -54,7 +54,7 @@ func TestDigestsCataloger(t *testing.T) {
 		name     string
 		digests  []crypto.Hash
 		files    []string
-		expected map[source.Coordinates][]file.Digest
+		expected map[file.Coordinates][]file.Digest
 	}{
 		{
 			name:     "md5",
@@ -145,7 +145,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unable to get file=%q : %+v", test.path, err)
 			}
-			l := source.NewLocationFromImage(test.path, *ref, img)
+			l := file.NewLocationFromImage(test.path, *ref, img)
 
 			if len(actual[l.Coordinates]) == 0 {
 				if test.expected != "" {

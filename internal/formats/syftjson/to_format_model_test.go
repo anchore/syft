@@ -13,7 +13,7 @@ import (
 
 func Test_toSourceModel(t *testing.T) {
 	allSchemes := strset.New()
-	for _, s := range source.AllSchemes {
+	for _, s := range source.AllTypes {
 		allSchemes.Add(string(s))
 	}
 	testedSchemes := strset.New()
@@ -26,7 +26,7 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "directory",
 			src: source.Metadata{
-				Scheme: source.DirectoryScheme,
+				Scheme: source.DirectoryType,
 				Path:   "some/path",
 			},
 			expected: model.Source{
@@ -37,7 +37,7 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "file",
 			src: source.Metadata{
-				Scheme: source.FileScheme,
+				Scheme: source.FileType,
 				Path:   "some/path",
 			},
 			expected: model.Source{
@@ -48,7 +48,7 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "image",
 			src: source.Metadata{
-				Scheme: source.ImageScheme,
+				Scheme: source.ImageType,
 				ImageMetadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",

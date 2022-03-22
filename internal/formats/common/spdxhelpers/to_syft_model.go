@@ -13,7 +13,6 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
@@ -22,8 +21,8 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    pkg.NewCatalog(),
-			FileMetadata:      map[source.Coordinates]source.FileMetadata{},
-			FileDigests:       map[source.Coordinates][]file.Digest{},
+			FileMetadata:      map[file.Coordinates]file.Metadata{},
+			FileDigests:       map[file.Coordinates][]file.Digest{},
 			LinuxDistribution: findLinuxReleaseByPURL(doc),
 		},
 	}
@@ -98,7 +97,7 @@ func toFileDigests(f *spdx.File2_2) (digests []file.Digest) {
 	return digests
 }
 
-func toFileMetadata(f *spdx.File2_2) (meta source.FileMetadata) {
+func toFileMetadata(f *spdx.File2_2) (meta file.Metadata) {
 	// FIXME Syft is currently lossy due to the SPDX 2.2.1 spec not supporting arbitrary mimetypes
 	for _, typ := range f.FileType {
 		switch FileType(typ) {
@@ -132,7 +131,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 		b := spdxIDMap[string(r.RefB.ElementRefID)]
 		from, fromOk := a.(*pkg.Package)
 		toPackage, toPackageOk := b.(*pkg.Package)
-		toLocation, toLocationOk := b.(*source.Location)
+		toLocation, toLocationOk := b.(*file.Location)
 		if !fromOk || !(toPackageOk || toLocationOk) {
 			log.Debugf("unable to find valid relationship mapping from SPDX 2.2 JSON, ignoring: (from: %+v) (to: %+v)", a, b)
 			continue
@@ -174,7 +173,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 	return out
 }
 
-func toSyftCoordinates(f *spdx.File2_2) source.Coordinates {
+func toSyftCoordinates(f *spdx.File2_2) file.Coordinates {
 	const layerIDPrefix = "layerID: "
 	var fileSystemID string
 	if strings.Index(f.FileComment, layerIDPrefix) == 0 {
@@ -183,14 +182,14 @@ func toSyftCoordinates(f *spdx.File2_2) source.Coordinates {
 	if strings.Index(string(f.FileSPDXIdentifier), layerIDPrefix) == 0 {
 		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIDPrefix)
 	}
-	return source.Coordinates{
+	return file.Coordinates{
 		RealPath:     f.FileName,
 		FileSystemID: fileSystemID,
 	}
 }
 
-func toSyftLocation(f *spdx.File2_2) *source.Location {
-	return &source.Location{
+func toSyftLocation(f *spdx.File2_2) *file.Location {
+	return &file.Location{
 		Coordinates: toSyftCoordinates(f),
 		VirtualPath: f.FileName,
 	}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/source"

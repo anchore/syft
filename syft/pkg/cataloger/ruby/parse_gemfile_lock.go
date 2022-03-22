@@ -2,9 +2,10 @@ package ruby
 
 import (
 	"bufio"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"

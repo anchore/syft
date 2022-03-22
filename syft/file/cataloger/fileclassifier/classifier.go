@@ -1,4 +1,4 @@
-package file
+package fileclassifier
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"regexp"
 	"text/template"
+
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/source"
@@ -68,7 +70,7 @@ func DefaultClassifiers() []Classifier {
 	}
 }
 
-func (c Classifier) Classify(resolver source.FileResolver, location source.Location) (*Classification, error) {
+func (c Classifier) Classify(resolver source.FileResolver, location file.Location) (*file.Classification, error) {
 	doesFilepathMatch, filepathNamedGroupValues := filepathMatches(c.FilepathPatterns, location)
 	if !doesFilepathMatch {
 		return nil, nil
@@ -86,7 +88,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 		return nil, err
 	}
 
-	var result *Classification
+	var result *file.Classification
 	for _, patternTemplate := range c.EvidencePatternTemplates {
 		tmpl, err := template.New("").Parse(patternTemplate)
 		if err != nil {
@@ -110,7 +112,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pattern, string(contents))
 		if result == nil {
-			result = &Classification{
+			result = &file.Classification{
 				Class:    c.Class,
 				Metadata: matchMetadata,
 			}
@@ -123,7 +125,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 	return result, nil
 }
 
-func filepathMatches(patterns []*regexp.Regexp, location source.Location) (bool, map[string]string) {
+func filepathMatches(patterns []*regexp.Regexp, location file.Location) (bool, map[string]string) {
 	for _, path := range []string{location.RealPath, location.VirtualPath} {
 		if path == "" {
 			continue

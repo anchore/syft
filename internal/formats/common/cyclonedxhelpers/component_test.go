@@ -1,13 +1,13 @@
 package cyclonedxhelpers
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_encodeComponentProperties(t *testing.T) {
@@ -26,8 +26,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 			name: "from apk",
 			input: pkg.Package{
 				FoundBy: "cataloger",
-				Locations: []source.Location{
-					{Coordinates: source.Coordinates{RealPath: "test"}},
+				Locations: []file.Location{
+					{Coordinates: file.Coordinates{RealPath: "test"}},
 				},
 				Metadata: pkg.ApkMetadata{
 					Package:          "libc-utils",

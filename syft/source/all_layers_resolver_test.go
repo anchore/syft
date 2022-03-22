@@ -1,6 +1,7 @@
 package source
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"github.com/stretchr/testify/require"
 	"io"
 	"testing"
@@ -116,15 +117,15 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			for idx, actual := range refs {
 				expected := c.resolutions[idx]
 
-				if string(actual.ref.RealPath) != expected.path {
-					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), expected.path)
+				if string(actual.Ref().RealPath) != expected.path {
+					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.Ref().RealPath), expected.path)
 				}
 
-				if expected.path != "" && string(actual.ref.RealPath) != actual.RealPath {
+				if expected.path != "" && string(actual.Ref().RealPath) != actual.RealPath {
 					t.Errorf("we should always prefer real paths over ones with links")
 				}
 
-				entry, err := img.FileCatalog.Get(actual.ref)
+				entry, err := img.FileCatalog.Get(actual.Ref())
 				if err != nil {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}
@@ -223,15 +224,15 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 			for idx, actual := range refs {
 				expected := c.resolutions[idx]
 
-				if string(actual.ref.RealPath) != expected.path {
-					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.ref.RealPath), expected.path)
+				if string(actual.Ref().RealPath) != expected.path {
+					t.Errorf("bad resolve path: '%s'!='%s'", string(actual.Ref().RealPath), expected.path)
 				}
 
-				if expected.path != "" && string(actual.ref.RealPath) != actual.RealPath {
+				if expected.path != "" && string(actual.Ref().RealPath) != actual.RealPath {
 					t.Errorf("we should always prefer real paths over ones with links")
 				}
 
-				entry, err := img.FileCatalog.Get(actual.ref)
+				entry, err := img.FileCatalog.Get(actual.Ref())
 				if err != nil {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}
@@ -364,72 +365,72 @@ func TestAllLayersImageResolver_FilesContents(t *testing.T) {
 func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 	tests := []struct {
 		name     string
-		runner   func(FileResolver) []Location
-		expected []Location
+		runner   func(FileResolver) []file.Location
+		expected []file.Location
 	}{
 		{
 			name: "by mimetype",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver FileResolver) []file.Location {
 				// links should not show up when searching mimetype
 				actualLocations, err := resolver.FilesByMIMEType("text/plain")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/etc/group",
 					},
 					VirtualPath: "/etc/group",
 				},
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/etc/passwd",
 					},
 					VirtualPath: "/etc/passwd",
 				},
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/etc/shadow",
 					},
 					VirtualPath: "/etc/shadow",
 				},
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-1.txt",
 					},
 					VirtualPath: "/file-1.txt",
 				},
 				// copy 1
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/file-2.txt",
 				},
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-3.txt",
 					},
 					VirtualPath: "/file-3.txt",
 				},
 				// copy 2
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/file-2.txt",
 				},
 				// copy 1
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/parent/file-4.txt",
 					},
 					VirtualPath: "/parent/file-4.txt",
 				},
 				// copy 2
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/parent/file-4.txt",
 					},
 					VirtualPath: "/parent/file-4.txt",
@@ -438,35 +439,35 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by glob",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver FileResolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("*ink-*")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-1.txt",
 					},
 					VirtualPath: "/link-1",
 				},
 				// copy 1
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/link-2",
 				},
 				// copy 2
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/link-2",
 				},
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-3.txt",
 					},
 					VirtualPath: "/link-within",
@@ -475,22 +476,22 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by path to degree 1 link",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver FileResolver) []file.Location {
 				// links resolve to the final file
 				actualLocations, err := resolver.FilesByPath("/link-2")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				// we have multiple copies across layers
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/link-2",
 				},
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/link-2",
@@ -499,22 +500,22 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by path to degree 2 link",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver FileResolver) []file.Location {
 				// multiple links resolves to the final file
 				actualLocations, err := resolver.FilesByPath("/link-indirect")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				// we have multiple copies across layers
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/link-indirect",
 				},
 				{
-					Coordinates: Coordinates{
+					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
 					VirtualPath: "/link-indirect",

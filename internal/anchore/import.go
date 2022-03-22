@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
-	"time"
 
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/stereoscope/pkg/image"

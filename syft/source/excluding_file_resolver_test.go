@@ -5,8 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
+	"github.com/anchore/syft/syft/file"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -67,7 +66,7 @@ func TestExcludingResolver(t *testing.T) {
 			locations, _ = excludingResolver.FilesByMIMEType()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
-			locations = []Location{}
+			locations = []file.Location{}
 
 			channel := excludingResolver.AllLocations()
 			for location := range channel {
@@ -119,18 +118,17 @@ func difference(a, b []string) []string {
 	return diff
 }
 
-func makeLocation(path string) Location {
-	return Location{
-		Coordinates: Coordinates{
+func makeLocation(path string) file.Location {
+	return file.Location{
+		Coordinates: file.Coordinates{
 			RealPath:     path,
 			FileSystemID: "",
 		},
 		VirtualPath: "",
-		ref:         file.Reference{},
 	}
 }
 
-func locationPaths(locations []Location) []string {
+func locationPaths(locations []file.Location) []string {
 	paths := []string{}
 	for _, l := range locations {
 		paths = append(paths, l.RealPath)
@@ -142,20 +140,20 @@ type mockResolver struct {
 	locations []string
 }
 
-func (r *mockResolver) getLocations() ([]Location, error) {
-	out := []Location{}
+func (r *mockResolver) getLocations() ([]file.Location, error) {
+	out := []file.Location{}
 	for _, path := range r.locations {
 		out = append(out, makeLocation(path))
 	}
 	return out, nil
 }
 
-func (r *mockResolver) FileContentsByLocation(_ Location) (io.ReadCloser, error) {
+func (r *mockResolver) FileContentsByLocation(_ file.Location) (io.ReadCloser, error) {
 	return io.NopCloser(strings.NewReader("Hello, world!")), nil
 }
 
-func (r *mockResolver) FileMetadataByLocation(_ Location) (FileMetadata, error) {
-	return FileMetadata{
+func (r *mockResolver) FileMetadataByLocation(_ file.Location) (file.Metadata, error) {
+	return file.Metadata{
 		LinkDestination: "MOCK",
 	}, nil
 }
@@ -164,28 +162,28 @@ func (r *mockResolver) HasPath(_ string) bool {
 	return true
 }
 
-func (r *mockResolver) FilesByPath(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByPath(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) FilesByGlob(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) FilesByMIMEType(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) RelativeFileByPath(_ Location, path string) *Location {
-	return &Location{
-		Coordinates: Coordinates{
+func (r *mockResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
+	return &file.Location{
+		Coordinates: file.Coordinates{
 			RealPath: path,
 		},
 	}
 }
 
-func (r *mockResolver) AllLocations() <-chan Location {
-	c := make(chan Location)
+func (r *mockResolver) AllLocations() <-chan file.Location {
+	c := make(chan file.Location)
 	go func() {
 		defer close(c)
 		locations, _ := r.getLocations()

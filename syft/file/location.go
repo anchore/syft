@@ -1,4 +1,4 @@
-package source
+package file
 
 import (
 	"fmt"
@@ -108,4 +108,8 @@ func (l Location) String() string {
 		str += fmt.Sprintf(" Layer=%q", l.FileSystemID)
 	}
 	return fmt.Sprintf("Location<%s>", str)
+}
+
+func (l Location) Ref() file.Reference {
+	return l.ref
 }

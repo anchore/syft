@@ -2,6 +2,7 @@ package packages
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"

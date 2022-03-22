@@ -29,8 +29,8 @@ func NewCataloger(hashes []crypto.Hash) (*Cataloger, error) {
 	}, nil
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]file.Digest, error) {
-	results := make(map[source.Coordinates][]file.Digest)
+func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates][]file.Digest, error) {
+	results := make(map[file.Coordinates][]file.Digest)
 	locations := source.AllRegularFiles(resolver)
 	stage, prog := digestsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
@@ -57,14 +57,14 @@ func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinate
 	return results, nil
 }
 
-func (i *Cataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]file.Digest, error) {
+func (i *Cataloger) catalogLocation(resolver source.FileResolver, location file.Location) ([]file.Digest, error) {
 	meta, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
 	}
 
 	// we should only attempt to report digests for files that are regular files (don't attempt to resolve links)
-	if meta.Type != source.RegularFile {
+	if meta.Type != file.RegularFile {
 		return nil, errUndigestableFile
 	}
 

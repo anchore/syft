@@ -2,10 +2,11 @@ package python
 
 import (
 	"bufio"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"

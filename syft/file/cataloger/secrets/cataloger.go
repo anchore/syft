@@ -56,8 +56,8 @@ func NewCataloger(config CatalogerConfig) (*Cataloger, error) {
 	}, nil
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]file.SearchResult, error) {
-	results := make(map[source.Coordinates][]file.SearchResult)
+func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates][]file.SearchResult, error) {
+	results := make(map[file.Coordinates][]file.SearchResult)
 	locations := source.AllRegularFiles(resolver)
 	stage, prog, secretsDiscovered := newSecretsCatalogerMonitor(int64(len(locations)))
 	for _, location := range locations {
@@ -82,7 +82,7 @@ func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinate
 	return results, nil
 }
 
-func (i *Cataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]file.SearchResult, error) {
+func (i *Cataloger) catalogLocation(resolver source.FileResolver, location file.Location) ([]file.SearchResult, error) {
 	metadata, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (i *Cataloger) catalogLocation(resolver source.FileResolver, location sourc
 	return secrets, nil
 }
 
-func extractValue(resolver source.FileResolver, location source.Location, start, length int64) (string, error) {
+func extractValue(resolver source.FileResolver, location file.Location, start, length int64) (string, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return "", fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)

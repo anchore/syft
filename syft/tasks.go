@@ -2,6 +2,7 @@ package syft
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file/cataloger/fileclassifier"
 	"github.com/anchore/syft/syft/file/cataloger/filecontents"
@@ -62,7 +63,6 @@ func generateFileMetadataCatalogingTask(config CatalogingConfig) (task, error) {
 		results.FileMetadata = result
 		return nil, nil
 	}, nil
-
 }
 
 func generateFileDigestsCatalogingTask(config CatalogingConfig) (task, error) {
@@ -88,7 +88,6 @@ func generateFileDigestsCatalogingTask(config CatalogingConfig) (task, error) {
 		results.FileDigests = result
 		return nil, nil
 	}, nil
-
 }
 
 func generateContentsCatalogingTask(config CatalogingConfig) (task, error) {
@@ -139,7 +138,6 @@ func generateSecretsCatalogingTask(config CatalogingConfig) (task, error) {
 		results.Secrets = result
 		return nil, nil
 	}, nil
-
 }
 
 func generateFileClassifierTask(config CatalogingConfig) (task, error) {

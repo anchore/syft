@@ -1,7 +1,7 @@
 //go:build !windows
 // +build !windows
 
-package source
+package file
 
 import (
 	"os"
@@ -49,7 +49,7 @@ func Test_fileMetadataFromPath(t *testing.T) {
 			info, err := os.Lstat(test.path)
 			require.NoError(t, err)
 
-			actual := fileMetadataFromPath(test.path, info, test.withMIMEType)
+			actual := MetadataFromPath(test.path, info, test.withMIMEType)
 			assert.Equal(t, test.expectedMIMEType, actual.MIMEType)
 			assert.Equal(t, test.expectedType, string(actual.Type))
 		})

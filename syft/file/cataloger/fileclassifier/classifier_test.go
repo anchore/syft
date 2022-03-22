@@ -1,25 +1,25 @@
-package file
+package fileclassifier
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFilepathMatches(t *testing.T) {
 	tests := []struct {
 		name                string
-		location            source.Location
+		location            file.Location
 		patterns            []string
 		expectedMatches     bool
 		expectedNamedGroups map[string]string
 	}{
 		{
 			name: "simple-filename-match",
-			location: source.Location{
-				Coordinates: source.Coordinates{
+			location: file.Location{
+				Coordinates: file.Coordinates{
 					RealPath: "python2.7",
 				},
 			},
@@ -30,8 +30,8 @@ func TestFilepathMatches(t *testing.T) {
 		},
 		{
 			name: "filepath-match",
-			location: source.Location{
-				Coordinates: source.Coordinates{
+			location: file.Location{
+				Coordinates: file.Coordinates{
 					RealPath: "/usr/bin/python2.7",
 				},
 			},
@@ -42,7 +42,7 @@ func TestFilepathMatches(t *testing.T) {
 		},
 		{
 			name: "virtual-filepath-match",
-			location: source.Location{
+			location: file.Location{
 				VirtualPath: "/usr/bin/python2.7",
 			},
 			patterns: []string{
@@ -52,7 +52,7 @@ func TestFilepathMatches(t *testing.T) {
 		},
 		{
 			name: "full-filepath-match",
-			location: source.Location{
+			location: file.Location{
 				VirtualPath: "/usr/bin/python2.7",
 			},
 			patterns: []string{
@@ -62,8 +62,8 @@ func TestFilepathMatches(t *testing.T) {
 		},
 		{
 			name: "anchored-filename-match-FAILS",
-			location: source.Location{
-				Coordinates: source.Coordinates{
+			location: file.Location{
+				Coordinates: file.Coordinates{
 					RealPath: "/usr/bin/python2.7",
 				},
 			},
@@ -74,7 +74,7 @@ func TestFilepathMatches(t *testing.T) {
 		},
 		{
 			name:     "empty-filename-match-FAILS",
-			location: source.Location{},
+			location: file.Location{},
 			patterns: []string{
 				`^python([0-9]+\.[0-9]+)$`,
 			},

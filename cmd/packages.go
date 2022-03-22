@@ -312,7 +312,7 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM) error {
 	log.Infof("uploading results to %s", appConfig.Anchore.Host)
 
-	if src.Metadata.Scheme != source.ImageScheme {
+	if src.Metadata.Scheme != source.ImageType {
 		return fmt.Errorf("unable to upload results: only images are supported")
 	}
 

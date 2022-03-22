@@ -1,7 +1,7 @@
 //go:build linux || darwin
 // +build linux darwin
 
-package source
+package file
 
 import (
 	"os"

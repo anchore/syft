@@ -5,6 +5,7 @@ package parsers
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/event/monitor"
 
 	"github.com/anchore/syft/syft/event"

@@ -3,12 +3,14 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/file"
 	"path"
 	"reflect"
 	"strings"
+
+	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/fileclassifier"
 
 	"github.com/adrg/xdg"
 	"github.com/anchore/syft/internal"
@@ -76,7 +78,7 @@ func (cfg Application) ToCatalogingConfig() (*syft.CatalogingConfig, error) {
 		SecretsConfig:        *secretsConfig,
 		SecretsScope:         cfg.Secrets.Cataloger.ScopeOpt,
 		ClassifyFiles:        cfg.FileClassification.Cataloger.Enabled,
-		FileClassifiers:      file.DefaultClassifiers(),
+		FileClassifiers:      fileclassifier.DefaultClassifiers(),
 		ContentsConfig:       cfg.FileContents.ToConfig(),
 	}, nil
 }

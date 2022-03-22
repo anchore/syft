@@ -1,11 +1,11 @@
 package golang
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,9 +35,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
+					Locations: []file.Location{
 						{
-							Coordinates: source.Coordinates{
+							Coordinates: file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -55,9 +55,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20210222170800-9c70f9b80bcf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
+					Locations: []file.Location{
 						{
-							Coordinates: source.Coordinates{
+							Coordinates: file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -86,9 +86,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20211006190231-62292e806868",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
+					Locations: []file.Location{
 						{
-							Coordinates: source.Coordinates{
+							Coordinates: file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -106,9 +106,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20211006194710-c8a6f5223071",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
+					Locations: []file.Location{
 						{
-							Coordinates: source.Coordinates{
+							Coordinates: file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -126,9 +126,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
+					Locations: []file.Location{
 						{
-							Coordinates: source.Coordinates{
+							Coordinates: file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -151,8 +151,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				p := &test.expected[i]
 				p.SetID()
 			}
-			location := source.Location{
-				Coordinates: source.Coordinates{
+			location := file.Location{
+				Coordinates: file.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
@@ -178,7 +178,7 @@ func Test_parseGoBin_recoversFromPanic(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pkgs, err := parseGoBin(source.NewLocation("some/path"), nil, freakOut)
+			pkgs, err := parseGoBin(file.NewLocation("some/path"), nil, freakOut)
 			assert.Error(t, err)
 			assert.Nil(t, pkgs)
 		})

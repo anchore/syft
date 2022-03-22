@@ -69,13 +69,13 @@ func IndexCatalogers(cfg SearchConfig) []pkg.Cataloger {
 	}
 }
 
-func CatalogersBySourceScheme(scheme source.Scheme, cfg SearchConfig) []pkg.Cataloger {
+func CatalogersBySourceScheme(scheme source.Type, cfg SearchConfig) []pkg.Cataloger {
 	switch scheme {
-	case source.ImageScheme:
+	case source.ImageType:
 		return InstalledCatalogers(cfg)
-	case source.FileScheme:
+	case source.FileType:
 		return AllCatalogers(cfg)
-	case source.DirectoryScheme:
+	case source.DirectoryType:
 		return IndexCatalogers(cfg)
 	}
 	return nil

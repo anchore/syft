@@ -1,9 +1,9 @@
 package pkg
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,9 +12,9 @@ func TestFingerprint(t *testing.T) {
 		Name:    "pi",
 		Version: "3.14",
 		FoundBy: "Archimedes",
-		Locations: []source.Location{
+		Locations: []file.Location{
 			{
-				Coordinates: source.Coordinates{
+				Coordinates: file.Coordinates{
 					RealPath:     "39.0742° N, 21.8243° E",
 					FileSystemID: "Earth",
 				},

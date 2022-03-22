@@ -6,6 +6,8 @@ package generic
 import (
 	"fmt"
 
+	"github.com/anchore/syft/syft/file"
+
 	"github.com/anchore/syft/syft/artifact"
 
 	"github.com/anchore/syft/internal"
@@ -70,8 +72,8 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *Cataloger) selectFiles(resolver source.FilePathResolver) map[source.Location]Parser {
-	var parserByLocation = make(map[source.Location]Parser)
+func (c *Cataloger) selectFiles(resolver source.FilePathResolver) map[file.Location]Parser {
+	var parserByLocation = make(map[file.Location]Parser)
 
 	// select by exact path
 	for path, parser := range c.pathParsers {

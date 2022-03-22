@@ -1,9 +1,10 @@
 package version
 
 import (
-	"github.com/anchore/syft/internal/log"
 	"runtime/debug"
 	"strings"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 func Guess() string {

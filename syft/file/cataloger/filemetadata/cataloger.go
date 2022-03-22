@@ -4,6 +4,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -16,9 +17,9 @@ func NewCataloger() *Cataloger {
 	return &Cataloger{}
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates]source.FileMetadata, error) {
-	results := make(map[source.Coordinates]source.FileMetadata)
-	var locations []source.Location
+func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates]file.Metadata, error) {
+	results := make(map[file.Coordinates]file.Metadata)
+	var locations []file.Location
 	for location := range resolver.AllLocations() {
 		locations = append(locations, location)
 	}

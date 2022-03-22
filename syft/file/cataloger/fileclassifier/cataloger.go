@@ -7,17 +7,17 @@ import (
 )
 
 type Cataloger struct {
-	classifiers []file.Classifier
+	classifiers []Classifier
 }
 
-func NewCataloger(classifiers []file.Classifier) (*Cataloger, error) {
+func NewCataloger(classifiers []Classifier) (*Cataloger, error) {
 	return &Cataloger{
 		classifiers: classifiers,
 	}, nil
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]file.Classification, error) {
-	results := make(map[source.Coordinates][]file.Classification)
+func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates][]file.Classification, error) {
+	results := make(map[file.Coordinates][]file.Classification)
 
 	numResults := 0
 	for _, location := range source.AllRegularFiles(resolver) {
