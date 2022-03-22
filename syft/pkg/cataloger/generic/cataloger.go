@@ -51,7 +51,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		}
 
 		discoveredPackages, discoveredRelationships, err := parser(location.RealPath, contentReader)
-		internal.CloseAndLogError(contentReader, location.VirtualPath)
+		internal.CloseAndLogError(contentReader, location.AccessPath)
 		if err != nil {
 			// TODO: should we fail? or only log?
 			log.Warnf("cataloger '%s' failed to parse entries at location=%+v: %+v", c.upstreamCataloger, location, err)

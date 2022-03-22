@@ -634,14 +634,14 @@ func Test_IndexingNestedSymLinks(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
 	assert.Equal(t, "readme", locations[0].RealPath)
-	assert.Equal(t, "link_to_new_readme", locations[0].VirtualPath)
+	assert.Equal(t, "link_to_new_readme", locations[0].AccessPath)
 
 	// check that we can access the same file via 2 symlinks
 	locations, err = resolver.FilesByPath("./link_to_link_to_new_readme")
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
 	assert.Equal(t, "readme", locations[0].RealPath)
-	assert.Equal(t, "link_to_link_to_new_readme", locations[0].VirtualPath)
+	assert.Equal(t, "link_to_link_to_new_readme", locations[0].AccessPath)
 
 	// check that we can access the same file via 2 symlinks
 	locations, err = resolver.FilesByGlob("**/link_*")
@@ -661,7 +661,7 @@ func Test_IndexingNestedSymLinks(t *testing.T) {
 	actualRealPaths := strset.New()
 	actualVirtualPaths := strset.New()
 	for _, a := range locations {
-		actualVirtualPaths.Add(a.VirtualPath)
+		actualVirtualPaths.Add(a.AccessPath)
 		actualRealPaths.Add(a.RealPath)
 	}
 

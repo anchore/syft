@@ -43,7 +43,7 @@ func TestFilepathMatches(t *testing.T) {
 		{
 			name: "virtual-filepath-match",
 			location: file.Location{
-				VirtualPath: "/usr/bin/python2.7",
+				AccessPath: "/usr/bin/python2.7",
 			},
 			patterns: []string{
 				`python([0-9]+\.[0-9]+)$`,
@@ -53,7 +53,7 @@ func TestFilepathMatches(t *testing.T) {
 		{
 			name: "full-filepath-match",
 			location: file.Location{
-				VirtualPath: "/usr/bin/python2.7",
+				AccessPath: "/usr/bin/python2.7",
 			},
 			patterns: []string{
 				`.*/bin/python([0-9]+\.[0-9]+)$`,

@@ -18,7 +18,7 @@ func TestFingerprint(t *testing.T) {
 					RealPath:     "39.0742° N, 21.8243° E",
 					FileSystemID: "Earth",
 				},
-				VirtualPath: "/Ancient-Greece",
+				AccessPath: "/Ancient-Greece",
 			},
 		},
 		Licenses: []string{

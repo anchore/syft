@@ -11,7 +11,7 @@ func TestLocation_ID(t *testing.T) {
 	tests := []struct {
 		name        string
 		coordinates Coordinates
-		virtualPath string
+		accessPath  string
 		ref         file.Reference
 	}{
 		{
@@ -27,7 +27,7 @@ func TestLocation_ID(t *testing.T) {
 				RealPath:     "path!",
 				FileSystemID: "filesystem!",
 			},
-			virtualPath: "virtualPath!",
+			accessPath: "accessPath!",
 			ref: file.Reference{
 				RealPath: "other-real-path!",
 			},
@@ -37,7 +37,7 @@ func TestLocation_ID(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			l := Location{
 				Coordinates: test.coordinates,
-				VirtualPath: test.virtualPath,
+				AccessPath:  test.accessPath,
 				ref:         test.ref,
 			}
 			assert.Equal(t, l.ID(), test.coordinates.ID())

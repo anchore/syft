@@ -10,8 +10,8 @@ import (
 
 func Test_allRegularFiles(t *testing.T) {
 	type access struct {
-		realPath    string
-		virtualPath string
+		realPath   string
+		accessPath string
 	}
 	tests := []struct {
 		name             string
@@ -56,8 +56,8 @@ func Test_allRegularFiles(t *testing.T) {
 			virtualLocations := strset.New()
 			for _, l := range locations {
 				realLocations.Add(l.RealPath)
-				if l.VirtualPath != "" {
-					virtualLocations.Add(l.VirtualPath)
+				if l.AccessPath != "" {
+					virtualLocations.Add(l.AccessPath)
 				}
 			}
 			assert.ElementsMatch(t, tt.wantRealPaths.List(), realLocations.List(), "mismatched real paths")

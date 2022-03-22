@@ -80,7 +80,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location file.Locatio
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
 	// TODO: there is room for improvement here, as this may use an excessive amount of memory. Alternate approach is to leverage a RuneReader.
 	contents, err := ioutil.ReadAll(contentReader)
@@ -126,7 +126,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location file.Locatio
 }
 
 func filepathMatches(patterns []*regexp.Regexp, location file.Location) (bool, map[string]string) {
-	for _, path := range []string{location.RealPath, location.VirtualPath} {
+	for _, path := range []string{location.RealPath, location.AccessPath} {
 		if path == "" {
 			continue
 		}

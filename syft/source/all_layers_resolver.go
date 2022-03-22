@@ -193,10 +193,10 @@ func (r *allLayersResolver) FileContentsByLocation(location file.Location) (io.R
 	switch entry.Metadata.TypeFlag {
 	case tar.TypeSymlink, tar.TypeLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
-		newLocation := r.RelativeFileByPath(location, location.VirtualPath)
+		newLocation := r.RelativeFileByPath(location, location.AccessPath)
 		if newLocation == nil {
 			// this is a dead link
-			return nil, fmt.Errorf("no contents for location=%q", location.VirtualPath)
+			return nil, fmt.Errorf("no contents for location=%q", location.AccessPath)
 		}
 		location = *newLocation
 	}

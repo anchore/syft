@@ -94,9 +94,9 @@ func (c *Catalog) Add(p Package) {
 			c.idsByPath[l.RealPath] = append(c.idsByPath[l.RealPath], id)
 			observedPaths.Add(l.RealPath)
 		}
-		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Contains(l.VirtualPath) {
-			c.idsByPath[l.VirtualPath] = append(c.idsByPath[l.VirtualPath], id)
-			observedPaths.Add(l.VirtualPath)
+		if l.AccessPath != "" && l.RealPath != l.AccessPath && !observedPaths.Contains(l.AccessPath) {
+			c.idsByPath[l.AccessPath] = append(c.idsByPath[l.AccessPath], id)
+			observedPaths.Add(l.AccessPath)
 		}
 	}
 }

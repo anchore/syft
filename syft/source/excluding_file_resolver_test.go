@@ -124,7 +124,7 @@ func makeLocation(path string) file.Location {
 			RealPath:     path,
 			FileSystemID: "",
 		},
-		VirtualPath: "",
+		AccessPath: "",
 	}
 }
 

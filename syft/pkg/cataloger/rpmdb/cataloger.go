@@ -42,7 +42,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		}
 
 		discoveredPkgs, err := parseRpmDB(resolver, location, dbContentReader)
-		internal.CloseAndLogError(dbContentReader, location.VirtualPath)
+		internal.CloseAndLogError(dbContentReader, location.AccessPath)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to catalog rpmdb package=%+v: %w", location.RealPath, err)
 		}

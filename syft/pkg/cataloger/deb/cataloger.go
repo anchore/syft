@@ -53,7 +53,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		}
 
 		pkgs, err := parseDpkgStatus(dbContents)
-		internal.CloseAndLogError(dbContents, dbLocation.VirtualPath)
+		internal.CloseAndLogError(dbContents, dbLocation.AccessPath)
 		if err != nil {
 			log.Warnf("dpkg cataloger: unable to catalog package=%+v: %w", dbLocation.RealPath, err)
 			continue
@@ -85,7 +85,7 @@ func addLicenses(resolver source.FileResolver, dbLocation file.Location, p *pkg.
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, p)
 
 	if copyrightReader != nil && copyrightLocation != nil {
-		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.VirtualPath)
+		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.AccessPath)
 		// attach the licenses
 		p.Licenses = parseLicensesFromCopyright(copyrightReader)
 
@@ -130,7 +130,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation file.Loca
 	md5Reader, md5Location := fetchMd5Contents(resolver, dbLocation, p)
 
 	if md5Reader != nil && md5Location != nil {
-		defer internal.CloseAndLogError(md5Reader, md5Location.VirtualPath)
+		defer internal.CloseAndLogError(md5Reader, md5Location.AccessPath)
 		// attach the file list
 		files = append(files, parseDpkgMD5Info(md5Reader)...)
 
@@ -141,7 +141,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation file.Loca
 	conffilesReader, conffilesLocation := fetchConffileContents(resolver, dbLocation, p)
 
 	if conffilesReader != nil && conffilesLocation != nil {
-		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.VirtualPath)
+		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.AccessPath)
 		// attach the file list
 		files = append(files, parseDpkgConffileInfo(conffilesReader)...)
 

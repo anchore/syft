@@ -72,7 +72,7 @@ func (i *Cataloger) catalogLocation(resolver source.FileResolver, location file.
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
 	// create a set of hasher objects tied together with a single writer to feed content into
 	hashers := make([]hash.Hash, len(i.hashes))

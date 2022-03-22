@@ -191,7 +191,7 @@ func toSyftCoordinates(f *spdx.File2_2) file.Coordinates {
 func toSyftLocation(f *spdx.File2_2) *file.Location {
 	return &file.Location{
 		Coordinates: toSyftCoordinates(f),
-		VirtualPath: f.FileName,
+		AccessPath:  f.FileName,
 	}
 }
 

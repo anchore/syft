@@ -381,59 +381,59 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/etc/group",
 					},
-					VirtualPath: "/etc/group",
+					AccessPath: "/etc/group",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/etc/passwd",
 					},
-					VirtualPath: "/etc/passwd",
+					AccessPath: "/etc/passwd",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/etc/shadow",
 					},
-					VirtualPath: "/etc/shadow",
+					AccessPath: "/etc/shadow",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-1.txt",
 					},
-					VirtualPath: "/file-1.txt",
+					AccessPath: "/file-1.txt",
 				},
 				// copy 1
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/file-2.txt",
+					AccessPath: "/file-2.txt",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-3.txt",
 					},
-					VirtualPath: "/file-3.txt",
+					AccessPath: "/file-3.txt",
 				},
 				// copy 2
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/file-2.txt",
+					AccessPath: "/file-2.txt",
 				},
 				// copy 1
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/parent/file-4.txt",
 					},
-					VirtualPath: "/parent/file-4.txt",
+					AccessPath: "/parent/file-4.txt",
 				},
 				// copy 2
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/parent/file-4.txt",
 					},
-					VirtualPath: "/parent/file-4.txt",
+					AccessPath: "/parent/file-4.txt",
 				},
 			},
 		},
@@ -450,27 +450,27 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/file-1.txt",
 					},
-					VirtualPath: "/link-1",
+					AccessPath: "/link-1",
 				},
 				// copy 1
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-2",
+					AccessPath: "/link-2",
 				},
 				// copy 2
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-2",
+					AccessPath: "/link-2",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-3.txt",
 					},
-					VirtualPath: "/link-within",
+					AccessPath: "/link-within",
 				},
 			},
 		},
@@ -488,13 +488,13 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-2",
+					AccessPath: "/link-2",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-2",
+					AccessPath: "/link-2",
 				},
 			},
 		},
@@ -512,13 +512,13 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-indirect",
+					AccessPath: "/link-indirect",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-indirect",
+					AccessPath: "/link-indirect",
 				},
 			},
 		},
@@ -536,7 +536,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 			assert.Len(t, actualLocations, len(test.expected))
 			for i, actual := range actualLocations {
 				assert.Equal(t, test.expected[i].RealPath, actual.RealPath)
-				assert.Equal(t, test.expected[i].VirtualPath, actual.VirtualPath)
+				assert.Equal(t, test.expected[i].AccessPath, actual.AccessPath)
 			}
 		})
 	}

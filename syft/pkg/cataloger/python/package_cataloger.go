@@ -142,7 +142,7 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, m
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.VirtualPath)
+	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.AccessPath)
 
 	scanner := bufio.NewScanner(topLevelContents)
 	for scanner.Scan() {
@@ -171,7 +171,7 @@ func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, meta
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(directURLContents, directURLLocation.VirtualPath)
+	defer internal.CloseAndLogError(directURLContents, directURLLocation.AccessPath)
 
 	buffer, err := ioutil.ReadAll(directURLContents)
 	if err != nil {
@@ -198,7 +198,7 @@ func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolv
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(metadataContents, metadataLocation.VirtualPath)
+	defer internal.CloseAndLogError(metadataContents, metadataLocation.AccessPath)
 
 	metadata, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
 	if err != nil {

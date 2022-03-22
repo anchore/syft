@@ -364,43 +364,43 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/etc/group",
 					},
-					VirtualPath: "/etc/group",
+					AccessPath: "/etc/group",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/etc/passwd",
 					},
-					VirtualPath: "/etc/passwd",
+					AccessPath: "/etc/passwd",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/etc/shadow",
 					},
-					VirtualPath: "/etc/shadow",
+					AccessPath: "/etc/shadow",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-1.txt",
 					},
-					VirtualPath: "/file-1.txt",
+					AccessPath: "/file-1.txt",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-3.txt",
 					},
-					VirtualPath: "/file-3.txt",
+					AccessPath: "/file-3.txt",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/file-2.txt",
+					AccessPath: "/file-2.txt",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/parent/file-4.txt",
 					},
-					VirtualPath: "/parent/file-4.txt",
+					AccessPath: "/parent/file-4.txt",
 				},
 			},
 		},
@@ -417,19 +417,19 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/file-3.txt",
 					},
-					VirtualPath: "/link-within",
+					AccessPath: "/link-within",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-2",
+					AccessPath: "/link-2",
 				},
 				{
 					Coordinates: file.Coordinates{
 						RealPath: "/file-1.txt",
 					},
-					VirtualPath: "/link-1",
+					AccessPath: "/link-1",
 				},
 			},
 		},
@@ -447,7 +447,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-2",
+					AccessPath: "/link-2",
 				},
 			},
 		},
@@ -465,7 +465,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 					Coordinates: file.Coordinates{
 						RealPath: "/file-2.txt",
 					},
-					VirtualPath: "/link-indirect",
+					AccessPath: "/link-indirect",
 				},
 			},
 		},
@@ -486,12 +486,12 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 
 			expectedMap := make(map[string]string)
 			for _, e := range test.expected {
-				expectedMap[e.VirtualPath] = e.RealPath
+				expectedMap[e.AccessPath] = e.RealPath
 			}
 
 			actualMap := make(map[string]string)
 			for _, a := range test.expected {
-				actualMap[a.VirtualPath] = a.RealPath
+				actualMap[a.AccessPath] = a.RealPath
 			}
 
 			assert.Equal(t, expectedMap, actualMap)

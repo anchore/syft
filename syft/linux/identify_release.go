@@ -69,7 +69,7 @@ func IdentifyRelease(resolver source.FileResolver) *Release {
 			}
 
 			content, err := ioutil.ReadAll(contentReader)
-			internal.CloseAndLogError(contentReader, location.VirtualPath)
+			internal.CloseAndLogError(contentReader, location.AccessPath)
 			if err != nil {
 				log.Warnf("unable to read %q: %+v", location.RealPath, err)
 				break
