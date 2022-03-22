@@ -142,14 +142,15 @@ func selectPassFunc(keypath string) (cosign.PassFunc, error) {
 
 func validateAttestationArgs(appConfig *config.Application, si *source.Input) (format sbom.Format, predicateType string, ko *sign.KeyOpts, err error) {
 	ko = &sign.KeyOpts{
+		KeyRef:                   appConfig.Attest.KeyRef,
 		Sk:                       false,
 		Slot:                     "signature",
-		FulcioURL:                "http://localhost:5555",
-		InsecureSkipFulcioVerify: true,
-		RekorURL:                 "https://rekor.sigstore.dev",
-		OIDCIssuer:               "http://dex-idp:8888/auth",
-		OIDCClientID:             "fulcio",
-		OIDCClientSecret:         "",
+		FulcioURL:                appConfig.Attest.FulcioURL,
+		InsecureSkipFulcioVerify: false,
+		RekorURL:                 appConfig.Attest.RekorURL,
+		OIDCIssuer:               appConfig.Attest.OIDCIssuer,
+		OIDCClientID:             appConfig.Attest.OIDCClientID,
+		OIDCClientSecret:         appConfig.Attest.OIDCClientSecret,
 	}
 
 	// if the original detection was from a local daemon we want to short circuit
