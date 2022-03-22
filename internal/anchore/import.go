@@ -56,7 +56,7 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 	authedCtx := c.newRequestContext(ctxWithTimeout)
 
 	stage.Current = "starting session"
-	startOperation, _, err := c.client.ImportsApi.CreateOperation(authedCtx)
+	startOperation, createResponse, err := c.client.ImportsApi.CreateOperation(authedCtx)
 	if err != nil {
 		var detail = "no details given"
 		var openAPIErr external.GenericOpenAPIError
@@ -65,6 +65,8 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 		}
 		return fmt.Errorf("unable to start import session: %w: %s", err, detail)
 	}
+	defer createResponse.Body.Close()
+
 	prog.N++
 	sessionID := startOperation.Uuid
 
@@ -98,7 +100,7 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 		Force: optional.NewBool(cfg.OverwriteExistingUpload),
 	}
 
-	_, _, err = c.client.ImagesApi.AddImage(authedCtx, imageModel, &opts)
+	_, addResponse, err := c.client.ImagesApi.AddImage(authedCtx, imageModel, &opts)
 	if err != nil {
 		var detail = "no details given"
 		var openAPIErr external.GenericOpenAPIError
@@ -107,6 +109,8 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 		}
 		return fmt.Errorf("unable to complete import session=%q: %w: %s", sessionID, err, detail)
 	}
+	defer addResponse.Body.Close()
+
 	prog.N++
 
 	stage.Current = ""
