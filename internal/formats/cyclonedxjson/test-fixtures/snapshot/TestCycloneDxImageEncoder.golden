@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:342c3d2c-d26e-47b6-94d6-92fbf41da945",
+  "serialNumber": "urn:uuid:6374e6c2-1025-40e6-a7c6-24d7ee1f359e",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-03-08T12:30:39Z",
+    "timestamp": "2022-03-31T22:36:00+01:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -21,6 +21,7 @@
   },
   "components": [
     {
+      "bom-ref": "2a46171f91c8d4bc",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -61,6 +62,7 @@
       ]
     },
     {
+      "bom-ref": "ae77680e9b1d087e",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
