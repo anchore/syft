@@ -2,6 +2,7 @@ package linux
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"github.com/acobaugh/osrelease"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -53,7 +53,7 @@ var identityFiles = []parseEntry{
 }
 
 // IdentifyRelease parses distro-specific files to discover and raise linux distribution release details.
-func IdentifyRelease(resolver source.FileResolver) *Release {
+func IdentifyRelease(resolver file.Resolver) *Release {
 	for _, entry := range identityFiles {
 		locations, err := resolver.FilesByPath(entry.path)
 		if err != nil {

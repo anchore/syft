@@ -1,12 +1,6 @@
 package file
 
-import (
-	"os"
-
-	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/log"
-)
+import "os"
 
 type Metadata struct {
 	Mode            os.FileMode
@@ -16,52 +10,4 @@ type Metadata struct {
 	LinkDestination string
 	Size            int64
 	MIMEType        string
-}
-
-func MetadataByLocation(img *image.Image, location Location) (Metadata, error) {
-	entry, err := img.FileCatalog.Get(location.ref)
-	if err != nil {
-		return Metadata{}, err
-	}
-
-	return Metadata{
-		Mode:            entry.Metadata.Mode,
-		Type:            NewFileTypeFromTarHeaderTypeFlag(entry.Metadata.TypeFlag),
-		UserID:          entry.Metadata.UserID,
-		GroupID:         entry.Metadata.GroupID,
-		LinkDestination: entry.Metadata.Linkname,
-		Size:            entry.Metadata.Size,
-		MIMEType:        entry.Metadata.MIMEType,
-	}, nil
-}
-
-func MetadataFromPath(path string, info os.FileInfo, withMIMEType bool) Metadata {
-	var mimeType string
-	uid, gid := GetXid(info)
-
-	if withMIMEType {
-		f, err := os.Open(path)
-		if err != nil {
-			// TODO: it may be that the file is inaccessible, however, this is not an error or a warning. In the future we need to track these as known-unknowns
-			f = nil
-		} else {
-			defer func() {
-				if err := f.Close(); err != nil {
-					log.Warnf("unable to close file while obtaining metadata: %s", path)
-				}
-			}()
-		}
-
-		mimeType = file.MIMEType(f)
-	}
-
-	return Metadata{
-		Mode: info.Mode(),
-		Type: NewFileTypeFromMode(info.Mode()),
-		// unsupported across platforms
-		UserID:   uid,
-		GroupID:  gid,
-		Size:     info.Size(),
-		MIMEType: mimeType,
-	}
 }

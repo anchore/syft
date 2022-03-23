@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/source"
 )
 
 type CatalogerConfig struct {
@@ -34,7 +33,7 @@ func NewCataloger(config CatalogerConfig) (*Cataloger, error) {
 	}, nil
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates]string, error) {
+func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]string, error) {
 	results := make(map[file.Coordinates]string)
 	var locations []file.Location
 
@@ -67,7 +66,7 @@ func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates]
 	return results, nil
 }
 
-func (i *Cataloger) catalogLocation(resolver source.FileResolver, location file.Location) (string, error) {
+func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) (string, error) {
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return "", err

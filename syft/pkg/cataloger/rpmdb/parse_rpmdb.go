@@ -12,11 +12,10 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
-func parseRpmDB(resolver source.FilePathResolver, dbLocation file.Location, reader io.Reader) ([]pkg.Package, error) {
+func parseRpmDB(resolver file.PathResolver, dbLocation file.Location, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
@@ -91,7 +90,7 @@ func toELVersion(metadata pkg.RpmdbMetadata) string {
 	return fmt.Sprintf("%s-%s", metadata.Version, metadata.Release)
 }
 
-func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
+func extractRpmdbFileRecords(resolver file.PathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
 	for _, record := range entry.Files {

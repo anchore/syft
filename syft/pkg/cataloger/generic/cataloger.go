@@ -13,7 +13,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Cataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
@@ -39,7 +38,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -72,7 +71,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *Cataloger) selectFiles(resolver source.FilePathResolver) map[file.Location]Parser {
+func (c *Cataloger) selectFiles(resolver file.PathResolver) map[file.Location]Parser {
 	var parserByLocation = make(map[file.Location]Parser)
 
 	// select by exact path

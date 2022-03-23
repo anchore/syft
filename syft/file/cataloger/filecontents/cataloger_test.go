@@ -4,7 +4,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,7 +72,7 @@ func TestContentsCataloger(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			resolver := source.NewMockResolverForPaths(test.files...)
+			resolver := file.NewMockResolverForPaths(test.files...)
 			actual, err := c.Catalog(resolver)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, actual, "mismatched contents")

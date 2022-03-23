@@ -8,6 +8,7 @@ package source
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -304,7 +305,7 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 	}, nil
 }
 
-func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
+func (s *Source) FileResolver(scope Scope) (file.Resolver, error) {
 	switch s.Metadata.Scheme {
 	case DirectoryType, FileType:
 		s.mutex.Lock()
@@ -322,7 +323,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 		return s.directoryResolver, nil
 	case ImageType:
-		var resolver FileResolver
+		var resolver file.Resolver
 		var err error
 		switch scope {
 		case SquashedScope:
@@ -337,11 +338,11 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 		// image tree contains all paths, so we filter out the excluded entries afterwards
 		if len(s.Exclusions) > 0 {
-			resolver = NewExcludingResolver(resolver, getImageExclusionFunction(s.Exclusions))
+			resolver = file.NewExcludingResolver(resolver, getImageExclusionFunction(s.Exclusions))
 		}
 		return resolver, nil
 	}
-	return nil, fmt.Errorf("unable to determine FilePathResolver with current scheme=%q", s.Metadata.Scheme)
+	return nil, fmt.Errorf("unable to determine PathResolver with current scheme=%q", s.Metadata.Scheme)
 }
 
 func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func(), error) {

@@ -2,6 +2,7 @@ package generic
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"io/ioutil"
 	"testing"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func parser(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
@@ -37,7 +37,7 @@ func TestGenericCataloger(t *testing.T) {
 	upstream := "some-other-cataloger"
 
 	expectedSelection := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"}
-	resolver := source.NewMockResolverForPaths(expectedSelection...)
+	resolver := file.NewMockResolverForPaths(expectedSelection...)
 	cataloger := NewCataloger(pathParsers, globParsers, upstream)
 
 	expectedPkgs := make(map[string]pkg.Package)

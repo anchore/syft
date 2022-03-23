@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-var _ FileResolver = (*imageSquashResolver)(nil)
+var _ file.Resolver = (*imageSquashResolver)(nil)
 
 // imageSquashResolver implements path and content access for the Squashed source option for container image data sources.
 type imageSquashResolver struct {
@@ -191,5 +191,5 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]file.Location,
 }
 
 func (r *imageSquashResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
-	return file.MetadataByLocation(r.img, location)
+	return fileMetadataByImageLocation(r.img, location)
 }

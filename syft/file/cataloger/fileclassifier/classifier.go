@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft/source"
 )
 
 type Classifier struct {
@@ -70,7 +69,7 @@ func DefaultClassifiers() []Classifier {
 	}
 }
 
-func (c Classifier) Classify(resolver source.FileResolver, location file.Location) (*file.Classification, error) {
+func (c Classifier) Classify(resolver file.Resolver, location file.Location) (*file.Classification, error) {
 	doesFilepathMatch, filepathNamedGroupValues := filepathMatches(c.FilepathPatterns, location)
 	if !doesFilepathMatch {
 		return nil, nil

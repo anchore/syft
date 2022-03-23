@@ -30,7 +30,7 @@ var unixSystemRuntimePrefixes = []string{
 	"/sys",
 }
 
-var _ FileResolver = (*directoryResolver)(nil)
+var _ file.Resolver = (*directoryResolver)(nil)
 
 type pathFilterFn func(string, os.FileInfo) bool
 
@@ -217,7 +217,7 @@ func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error
 	}
 
 	location := file.NewLocationFromDirectory(p, *ref)
-	metadata := file.MetadataFromPath(p, info, r.isInIndex(location))
+	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
 	r.addFileMetadataToIndex(ref, metadata)
 
 	return nil
@@ -230,7 +230,7 @@ func (r directoryResolver) addFileToIndex(p string, info os.FileInfo) error {
 	}
 
 	location := file.NewLocationFromDirectory(p, *ref)
-	metadata := file.MetadataFromPath(p, info, r.isInIndex(location))
+	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
 	r.addFileMetadataToIndex(ref, metadata)
 
 	return nil
@@ -262,7 +262,7 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 
 	location := file.NewLocationFromDirectory(p, *ref)
 	location.AccessPath = p
-	metadata := file.MetadataFromPath(p, usedInfo, r.isInIndex(location))
+	metadata := fileMetadataFromPath(p, usedInfo, r.isInIndex(location))
 	metadata.LinkDestination = linkTarget
 	r.addFileMetadataToIndex(ref, metadata)
 

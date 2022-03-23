@@ -16,7 +16,7 @@ func NewCataloger(classifiers []Classifier) (*Cataloger, error) {
 	}, nil
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates][]file.Classification, error) {
+func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates][]file.Classification, error) {
 	results := make(map[file.Coordinates][]file.Classification)
 
 	numResults := 0

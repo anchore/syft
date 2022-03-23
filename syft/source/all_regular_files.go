@@ -5,7 +5,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-func AllRegularFiles(resolver FileResolver) (locations []file.Location) {
+func AllRegularFiles(resolver file.Resolver) (locations []file.Location) {
 	for location := range resolver.AllLocations() {
 		resolvedLocations, err := resolver.FilesByPath(location.RealPath)
 		if err != nil {

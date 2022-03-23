@@ -13,8 +13,6 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -36,7 +34,7 @@ func (c *PackageCataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
-func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *PackageCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var fileMatches []file.Location
 
 	for _, glob := range []string{eggMetadataGlob, wheelMetadataGlob, eggFileMetadataGlob} {
@@ -61,7 +59,7 @@ func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 }
 
 // catalogEggOrWheel takes the primary metadata file reference and returns the python package it represents.
-func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metadataLocation file.Location) (*pkg.Package, error) {
+func (c *PackageCataloger) catalogEggOrWheel(resolver file.Resolver, metadataLocation file.Location) (*pkg.Package, error) {
 	metadata, sources, err := c.assembleEggOrWheelMetadata(resolver, metadataLocation)
 	if err != nil {
 		return nil, err
@@ -96,7 +94,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 }
 
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.
-func (c *PackageCataloger) fetchRecordFiles(resolver source.FileResolver, metadataLocation file.Location) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
+func (c *PackageCataloger) fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
@@ -126,7 +124,7 @@ func (c *PackageCataloger) fetchRecordFiles(resolver source.FileResolver, metada
 }
 
 // fetchTopLevelPackages finds a corresponding top_level.txt file for the given python package metadata file and returns the set of package names contained.
-func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, metadataLocation file.Location) (pkgs []string, sources []file.Location, err error) {
+func (c *PackageCataloger) fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Location) (pkgs []string, sources []file.Location, err error) {
 	// a top_level.txt file specifies the python top-level packages (provided by this python package) installed into site-packages
 	parentDir := filepath.Dir(metadataLocation.RealPath)
 	topLevelPath := filepath.Join(parentDir, "top_level.txt")
@@ -156,7 +154,7 @@ func (c *PackageCataloger) fetchTopLevelPackages(resolver source.FileResolver, m
 	return pkgs, sources, nil
 }
 
-func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, metadataLocation file.Location) (d *pkg.PythonDirectURLOriginInfo, sources []file.Location, err error) {
+func (c *PackageCataloger) fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) (d *pkg.PythonDirectURLOriginInfo, sources []file.Location, err error) {
 	parentDir := filepath.Dir(metadataLocation.RealPath)
 	directURLPath := filepath.Join(parentDir, "direct_url.json")
 	directURLLocation := resolver.RelativeFileByPath(metadataLocation, directURLPath)
@@ -191,7 +189,7 @@ func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, meta
 }
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
-func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation file.Location) (*pkg.PythonPackageMetadata, []file.Location, error) {
+func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Location) (*pkg.PythonPackageMetadata, []file.Location, error) {
 	var sources = []file.Location{metadataLocation}
 
 	metadataContents, err := resolver.FileContentsByLocation(metadataLocation)

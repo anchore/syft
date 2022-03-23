@@ -29,7 +29,7 @@ func NewCataloger(hashes []crypto.Hash) (*Cataloger, error) {
 	}, nil
 }
 
-func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates][]file.Digest, error) {
+func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates][]file.Digest, error) {
 	results := make(map[file.Coordinates][]file.Digest)
 	locations := source.AllRegularFiles(resolver)
 	stage, prog := digestsCatalogingProgress(int64(len(locations)))
@@ -57,7 +57,7 @@ func (i *Cataloger) Catalog(resolver source.FileResolver) (map[file.Coordinates]
 	return results, nil
 }
 
-func (i *Cataloger) catalogLocation(resolver source.FileResolver, location file.Location) ([]file.Digest, error) {
+func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) ([]file.Digest, error) {
 	meta, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err

@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-var _ FileResolver = (*allLayersResolver)(nil)
+var _ file.Resolver = (*allLayersResolver)(nil)
 
 // allLayersResolver implements path and content access for the AllLayers source option for container image data sources.
 type allLayersResolver struct {
@@ -237,5 +237,5 @@ func (r *allLayersResolver) AllLocations() <-chan file.Location {
 }
 
 func (r *allLayersResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
-	return file.MetadataByLocation(r.img, location)
+	return fileMetadataByImageLocation(r.img, location)
 }

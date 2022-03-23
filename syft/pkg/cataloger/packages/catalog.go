@@ -2,6 +2,7 @@ package packages
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -11,7 +12,6 @@ import (
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -21,7 +21,7 @@ import (
 // In order to efficiently retrieve contents from an underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each cataloger and accumulated into a single
 // request.
-func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
+func Catalog(resolver file.Resolver, release *linux.Release, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 
@@ -77,7 +77,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 	return catalog, allRelationships, nil
 }
 
-func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathResolver) ([]artifact.Relationship, error) {
+func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver) ([]artifact.Relationship, error) {
 	fileOwner, ok := p.Metadata.(pkg.FileOwner)
 	if !ok {
 		return nil, nil

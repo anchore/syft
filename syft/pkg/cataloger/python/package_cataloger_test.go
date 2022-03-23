@@ -1,10 +1,10 @@
 package python
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 	"github.com/go-test/deep"
 )
 
@@ -137,7 +137,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := source.NewMockResolverForPaths(test.fixtures...)
+			resolver := file.NewMockResolverForPaths(test.fixtures...)
 
 			locations, err := resolver.FilesByPath(test.fixtures...)
 			if err != nil {
@@ -173,7 +173,7 @@ func TestIgnorePackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
-			resolver := source.NewMockResolverForPaths(test.MetadataFixture)
+			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
 			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
 			if err != nil {

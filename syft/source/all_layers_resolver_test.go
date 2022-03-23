@@ -365,12 +365,12 @@ func TestAllLayersImageResolver_FilesContents(t *testing.T) {
 func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 	tests := []struct {
 		name     string
-		runner   func(FileResolver) []file.Location
+		runner   func(file.Resolver) []file.Location
 		expected []file.Location
 	}{
 		{
 			name: "by mimetype",
-			runner: func(resolver FileResolver) []file.Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links should not show up when searching mimetype
 				actualLocations, err := resolver.FilesByMIMEType("text/plain")
 				assert.NoError(t, err)
@@ -439,7 +439,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by glob",
-			runner: func(resolver FileResolver) []file.Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("*ink-*")
 				assert.NoError(t, err)
@@ -476,7 +476,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by path to degree 1 link",
-			runner: func(resolver FileResolver) []file.Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links resolve to the final file
 				actualLocations, err := resolver.FilesByPath("/link-2")
 				assert.NoError(t, err)
@@ -500,7 +500,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by path to degree 2 link",
-			runner: func(resolver FileResolver) []file.Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// multiple links resolves to the final file
 				actualLocations, err := resolver.FilesByPath("/link-indirect")
 				assert.NoError(t, err)

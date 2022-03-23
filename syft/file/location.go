@@ -79,15 +79,15 @@ func NewLocationFromDirectory(responsePath string, ref file.Reference) Location 
 }
 
 // NewVirtualLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory with a separate virtual access path.
-func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, ref file.Reference) Location {
-	if responsePath == virtualResponsePath {
+func NewVirtualLocationFromDirectory(responsePath, accessResponsePath string, ref file.Reference) Location {
+	if responsePath == accessResponsePath {
 		return NewLocationFromDirectory(responsePath, ref)
 	}
 	return Location{
 		Coordinates: Coordinates{
 			RealPath: responsePath,
 		},
-		AccessPath: virtualResponsePath,
+		AccessPath: accessResponsePath,
 		ref:        ref,
 	}
 }

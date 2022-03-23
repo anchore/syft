@@ -2,6 +2,7 @@ package source
 
 import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,13 +16,13 @@ func Test_allRegularFiles(t *testing.T) {
 	}
 	tests := []struct {
 		name             string
-		setup            func() FileResolver
+		setup            func() file.Resolver
 		wantRealPaths    *strset.Set
 		wantVirtualPaths *strset.Set
 	}{
 		{
 			name: "image",
-			setup: func() FileResolver {
+			setup: func() file.Resolver {
 				img := imagetest.GetFixtureImage(t, "docker-archive", "image-file-type-mix")
 
 				s, err := NewFromImage(img, "---")
@@ -37,7 +38,7 @@ func Test_allRegularFiles(t *testing.T) {
 		},
 		{
 			name: "directory",
-			setup: func() FileResolver {
+			setup: func() file.Resolver {
 				s, err := NewFromDirectory("test-fixtures/symlinked-root/nested/link-root")
 				require.NoError(t, err)
 				r, err := s.FileResolver(SquashedScope)

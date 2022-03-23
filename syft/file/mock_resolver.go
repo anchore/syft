@@ -1,42 +1,41 @@
-package source
+package file
 
 import (
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/anchore/syft/syft/file"
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-var _ FileResolver = (*MockResolver)(nil)
+var _ Resolver = (*MockResolver)(nil)
 
-// MockResolver implements the FileResolver interface and is intended for use *only in test code*.
+// MockResolver implements the Resolver interface and is intended for use *only in test code*.
 // It provides an implementation that can resolve local filesystem paths using only a provided discrete list of file
 // paths, which are typically paths to test fixtures.
 type MockResolver struct {
-	locations     []file.Location
-	metadata      map[file.Location]file.Metadata
-	mimeTypeIndex map[string][]file.Location
+	locations     []Location
+	metadata      map[Location]Metadata
+	mimeTypeIndex map[string][]Location
 }
 
 // NewMockResolverForPaths creates a new MockResolver, where the only resolvable
 // files are those specified by the supplied paths.
 func NewMockResolverForPaths(paths ...string) *MockResolver {
-	var locations []file.Location
+	var locations []Location
 	for _, p := range paths {
-		locations = append(locations, file.NewLocation(p))
+		locations = append(locations, NewLocation(p))
 	}
 
 	return &MockResolver{
 		locations: locations,
-		metadata:  make(map[file.Location]file.Metadata),
+		metadata:  make(map[Location]Metadata),
 	}
 }
 
-func NewMockResolverForPathsWithMetadata(metadata map[file.Location]file.Metadata) *MockResolver {
-	var locations []file.Location
-	var mimeTypeIndex = make(map[string][]file.Location)
+func NewMockResolverForPathsWithMetadata(metadata map[Location]Metadata) *MockResolver {
+	var locations []Location
+	var mimeTypeIndex = make(map[string][]Location)
 	for l, m := range metadata {
 		locations = append(locations, l)
 		mimeTypeIndex[m.MIMEType] = append(mimeTypeIndex[m.MIMEType], l)
@@ -66,7 +65,7 @@ func (r MockResolver) String() string {
 
 // FileContentsByLocation fetches file contents for a single location. If the
 // path does not exist, an error is returned.
-func (r MockResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	for _, l := range r.locations {
 		if l == location {
 			return os.Open(location.RealPath)
@@ -77,12 +76,12 @@ func (r MockResolver) FileContentsByLocation(location file.Location) (io.ReadClo
 }
 
 // FilesByPath returns all Locations that match the given paths.
-func (r MockResolver) FilesByPath(paths ...string) ([]file.Location, error) {
-	var results []file.Location
+func (r MockResolver) FilesByPath(paths ...string) ([]Location, error) {
+	var results []Location
 	for _, p := range paths {
 		for _, location := range r.locations {
 			if p == location.RealPath {
-				results = append(results, file.NewLocation(p))
+				results = append(results, NewLocation(p))
 			}
 		}
 	}
@@ -91,8 +90,8 @@ func (r MockResolver) FilesByPath(paths ...string) ([]file.Location, error) {
 }
 
 // FilesByGlob returns all Locations that match the given path glob pattern.
-func (r MockResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
-	var results []file.Location
+func (r MockResolver) FilesByGlob(patterns ...string) ([]Location, error) {
+	var results []Location
 	for _, pattern := range patterns {
 		for _, location := range r.locations {
 			matches, err := doublestar.Match(pattern, location.RealPath)
@@ -109,7 +108,7 @@ func (r MockResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
 }
 
 // RelativeFileByPath returns a single Location for the given path.
-func (r MockResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
+func (r MockResolver) RelativeFileByPath(_ Location, path string) *Location {
 	paths, err := r.FilesByPath(path)
 	if err != nil {
 		return nil
@@ -122,8 +121,8 @@ func (r MockResolver) RelativeFileByPath(_ file.Location, path string) *file.Loc
 	return &paths[0]
 }
 
-func (r MockResolver) AllLocations() <-chan file.Location {
-	results := make(chan file.Location)
+func (r MockResolver) AllLocations() <-chan Location {
+	results := make(chan Location)
 	go func() {
 		defer close(results)
 		for _, l := range r.locations {
@@ -133,19 +132,19 @@ func (r MockResolver) AllLocations() <-chan file.Location {
 	return results
 }
 
-func (r MockResolver) FileMetadataByLocation(l file.Location) (file.Metadata, error) {
+func (r MockResolver) FileMetadataByLocation(l Location) (Metadata, error) {
 	info, err := os.Stat(l.RealPath)
 	if err != nil {
-		return file.Metadata{}, err
+		return Metadata{}, err
 	}
 
 	// other types not supported
-	ty := file.RegularFile
+	ty := RegularFile
 	if info.IsDir() {
-		ty = file.Directory
+		ty = Directory
 	}
 
-	return file.Metadata{
+	return Metadata{
 		Mode:    info.Mode(),
 		Type:    ty,
 		UserID:  0, // not supported
@@ -154,8 +153,8 @@ func (r MockResolver) FileMetadataByLocation(l file.Location) (file.Metadata, er
 	}, nil
 }
 
-func (r MockResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
-	var locations []file.Location
+func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+	var locations []Location
 	for _, ty := range types {
 		locations = append(r.mimeTypeIndex[ty], locations...)
 	}

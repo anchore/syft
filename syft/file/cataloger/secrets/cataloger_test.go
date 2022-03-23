@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -188,7 +187,7 @@ func TestSecretsCataloger(t *testing.T) {
 				return
 			}
 
-			resolver := source.NewMockResolverForPaths(test.fixture)
+			resolver := file.NewMockResolverForPaths(test.fixture)
 
 			actualResults, err := c.Catalog(resolver)
 			if err != nil && !test.catalogErr {
@@ -430,7 +429,7 @@ j4f668YfhUbKdRF6S6734856
 				t.Fatalf("could not create cataloger: %+v", err)
 			}
 
-			resolver := source.NewMockResolverForPaths(test.fixture)
+			resolver := file.NewMockResolverForPaths(test.fixture)
 
 			actualResults, err := c.Catalog(resolver)
 			if err != nil {

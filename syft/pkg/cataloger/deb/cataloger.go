@@ -17,7 +17,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -39,7 +38,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDBGlob)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to find dpkg status files's by glob: %w", err)
@@ -80,7 +79,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	return allPackages, nil, nil
 }
 
-func addLicenses(resolver source.FileResolver, dbLocation file.Location, p *pkg.Package) {
+func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	// get license information from the copyright file
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, p)
 
@@ -94,7 +93,7 @@ func addLicenses(resolver source.FileResolver, dbLocation file.Location, p *pkg.
 	}
 }
 
-func mergeFileListing(resolver source.FileResolver, dbLocation file.Location, p *pkg.Package) {
+func mergeFileListing(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	metadata := p.Metadata.(pkg.DpkgMetadata)
 
 	// get file listing (package files + additional config files)
@@ -122,7 +121,7 @@ loopNewFiles:
 	p.Locations = append(p.Locations, infoLocations...)
 }
 
-func getAdditionalFileListing(resolver source.FileResolver, dbLocation file.Location, p *pkg.Package) ([]pkg.DpkgFileRecord, []file.Location) {
+func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) ([]pkg.DpkgFileRecord, []file.Location) {
 	// ensure the default value for a collection is never nil since this may be shown as JSON
 	var files = make([]pkg.DpkgFileRecord, 0)
 	var locations []file.Location
@@ -152,7 +151,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation file.Loca
 	return files, locations
 }
 
-func fetchMd5Contents(resolver source.FileResolver, dbLocation file.Location, p *pkg.Package) (io.ReadCloser, *file.Location) {
+func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) (io.ReadCloser, *file.Location) {
 	var md5Reader io.ReadCloser
 	var err error
 
@@ -179,7 +178,7 @@ func fetchMd5Contents(resolver source.FileResolver, dbLocation file.Location, p 
 	return md5Reader, location
 }
 
-func fetchConffileContents(resolver source.FileResolver, dbLocation file.Location, p *pkg.Package) (io.ReadCloser, *file.Location) {
+func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) (io.ReadCloser, *file.Location) {
 	var reader io.ReadCloser
 	var err error
 
@@ -206,7 +205,7 @@ func fetchConffileContents(resolver source.FileResolver, dbLocation file.Locatio
 	return reader, location
 }
 
-func fetchCopyrightContents(resolver source.FileResolver, dbLocation file.Location, p *pkg.Package) (io.ReadCloser, *file.Location) {
+func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) (io.ReadCloser, *file.Location) {
 	// look for /usr/share/docs/NAME/copyright files
 	name := p.Name
 	copyrightPath := path.Join(docsPath, name, "copyright")
