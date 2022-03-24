@@ -13,6 +13,11 @@ var (
 
 type FormatID string
 
+// String returns a string representation of the FormatID.
+func (f FormatID) String() string {
+	return string(f)
+}
+
 type Format interface {
 	ID() FormatID
 	Encode(io.Writer, SBOM) error

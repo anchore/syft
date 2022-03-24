@@ -1,6 +1,7 @@
 package syft
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"testing"
@@ -37,6 +38,31 @@ func TestIdentify(t *testing.T) {
 			frmt := IdentifyFormat(by)
 			assert.NotNil(t, frmt)
 			assert.Equal(t, test.expected, frmt.ID())
+		})
+	}
+}
+
+func TestFormats_EmptyInput(t *testing.T) {
+	for _, format := range formats {
+		t.Run(format.ID().String(), func(t *testing.T) {
+			t.Run("format.Decode", func(t *testing.T) {
+				input := bytes.NewReader(nil)
+
+				assert.NotPanics(t, func() {
+					decodedSBOM, err := format.Decode(input)
+					assert.Error(t, err)
+					assert.Nil(t, decodedSBOM)
+				})
+			})
+
+			t.Run("format.Validate", func(t *testing.T) {
+				input := bytes.NewReader(nil)
+
+				assert.NotPanics(t, func() {
+					err := format.Validate(input)
+					assert.Error(t, err)
+				})
+			})
 		})
 	}
 }
