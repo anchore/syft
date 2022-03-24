@@ -10,11 +10,13 @@ import (
 	"io"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 	"github.com/anchore/syft/syft/source"
+	"golang.org/x/mod/module"
 )
 
 const GOARCH = "GOARCH"
@@ -31,10 +33,21 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
 	main.Version = ""
 
-	if v, ok := gbs["vcs.revision"]; ok {
-		main.Version = v
+	if version, ok := gbs["vcs.revision"]; ok {
+		if timestamp, ok := gbs["vcs.time"]; ok {
+			ts, err := time.Parse(time.RFC3339, timestamp)
+			if err == nil {
+				version = module.PseudoVersion("", "", ts, version)
+			}
+		}
+		main.Version = version
 	}
 
+	if md, ok := main.Metadata.(pkg.GolangBinMetadata); ok {
+		md.MainModule = true
+		main.Metadata = md
+	}
+	main.SetID()
 	return main
 }
 

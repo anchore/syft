@@ -146,6 +146,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
 			BuildSettings:     buildSettings,
+			MainModule:        true,
 		},
 	}
 
