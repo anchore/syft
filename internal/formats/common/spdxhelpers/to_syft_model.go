@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,10 @@ import (
 )
 
 func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
+	if doc == nil {
+		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
+	}
+
 	spdxIDMap := make(map[string]interface{})
 
 	s := &sbom.SBOM{
