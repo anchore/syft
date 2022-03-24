@@ -35,10 +35,11 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 
 	if version, ok := gbs["vcs.revision"]; ok {
 		if timestamp, ok := gbs["vcs.time"]; ok {
-			ts, err := time.Parse(time.RFC3339, timestamp)
-			if err == nil {
-				version = module.PseudoVersion("", "", ts, version)
-			}
+			//NOTE: err is ignored, because if parsing fails
+			// we still use the empty Time{} struct to generate an empty date, like 00010101000000
+			// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
+			ts, _ := time.Parse(time.RFC3339, timestamp)
+			version = module.PseudoVersion("", "", ts, version)
 		}
 		main.Version = version
 	}

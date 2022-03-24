@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -122,14 +123,25 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		goCompiledVersion = "1.18"
 		archDetails       = "amd64"
 	)
-	buildSettings := map[string]string{
-		"GOARCH":  "amd64",
-		"GOOS":    "darwin",
-		"GOAMD64": "v1",
+	expectedBuildSettings := map[string]string{
+		"GOARCH":       "amd64",
+		"GOOS":         "darwin",
+		"GOAMD64":      "v1",
+		"vcs.revision": "abcdef123456",
+		"vcs.time":     time.Time{}.String(),
+	}
+
+	buildSetting := []debug.BuildSetting{
+		{Key: "GOARCH", Value: archDetails},
+		{Key: "GOOS", Value: "darwin"},
+		{Key: "GOAMD64", Value: "v1"},
+		{Key: "vcs.revision", Value: "abcdef123456"},
+		{Key: "vcs.time", Value: time.Time{}.String()},
 	}
 
 	expectedMain := pkg.Package{
 		Name:     "github.com/anchore/syft",
+		Version:  "v0.0.0-00010101000000-abcdef123456",
 		FoundBy:  catalogerName,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
@@ -145,7 +157,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Metadata: pkg.GolangBinMetadata{
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
-			BuildSettings:     buildSettings,
+			BuildSettings:     expectedBuildSettings,
 			MainModule:        true,
 		},
 	}
@@ -214,11 +226,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
 				Main:      debug.Module{Path: "github.com/anchore/syft"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
+				Settings:  buildSetting,
 			},
 			expected: []pkg.Package{expectedMain},
 		},
@@ -228,11 +236,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
 				Main:      debug.Module{Path: "github.com/anchore/syft"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
+				Settings:  buildSetting,
 				Deps: []*debug.Module{
 					{
 						Path:    "github.com/adrg/xdg",
@@ -298,11 +302,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
 				Main:      debug.Module{Path: "github.com/anchore/syft"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
+				Settings:  buildSetting,
 				Deps: []*debug.Module{
 					{
 						Path:    "golang.org/x/sys",
