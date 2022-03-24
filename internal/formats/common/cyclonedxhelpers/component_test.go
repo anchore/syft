@@ -100,6 +100,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				{Name: "syft:metadata:architecture", Value: "amd64"},
 				{Name: "syft:metadata:goCompiledVersion", Value: "1.17"},
 				{Name: "syft:metadata:h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
+				{Name: "syft:metadata:mainModule", Value: "false"},
 			},
 		},
 		{
