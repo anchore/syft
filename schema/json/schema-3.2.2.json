@@ -426,8 +426,7 @@
     "GolangBinMetadata": {
       "required": [
         "goCompiledVersion",
-        "architecture",
-        "mainModule"
+        "architecture"
       ],
       "properties": {
         "goBuildSettings": {

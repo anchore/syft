@@ -31,7 +31,7 @@ var (
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
-	main.Version = ""
+	main.Version = module.ZeroPseudoVersion("")
 
 	if version, ok := gbs["vcs.revision"]; ok {
 		if timestamp, ok := gbs["vcs.time"]; ok {
