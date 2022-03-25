@@ -11,14 +11,6 @@
 
 A CLI tool and Go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. Exceptional for vulnerability detection when used with a scanner tool like [Grype](https://github.com/anchore/grype).
 
-### Join our Virtual OSS Meetup!
-
-You are invited to join us on March 23rd, 11AM-Noon PT for our virtual open source meetup.  
-
-Hosts Priyanka “Pinky” Ravi of Weaveworks and Dan Luhring from Anchore OSS will explore how open source project Flux is utilizing Syft-generated SBOMs to secure the software supply chain.
-
-[Register here!](https://get.anchore.com/anchore-oss-meetup-mar-23-2022/)
-
 ### Join our community meetings!
 
 - Calendar: https://calendar.google.com/calendar/u/0/r?cid=Y182OTM4dGt0MjRtajI0NnNzOThiaGtnM29qNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t
