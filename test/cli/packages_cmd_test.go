@@ -95,7 +95,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(20),
+				assertPackageCount(26),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -103,7 +103,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "all-layers-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "all-layers", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(22),
+				assertPackageCount(28),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -114,7 +114,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
 			},
 			assertions: []traitAssertion{
-				assertPackageCount(22),
+				assertPackageCount(28),
 				assertSuccessfulReturnCode,
 			},
 		},
