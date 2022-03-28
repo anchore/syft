@@ -865,3 +865,24 @@ func Test_IncludeRootPathInIndex(t *testing.T) {
 	_, exists = resolver.metadata[ref.ID()]
 	require.True(t, exists)
 }
+
+func TestDirectoryResolver_indexPath(t *testing.T) {
+	// TODO: Ideally we can use an OS abstraction, which would obviate the need for real FS setup.
+	tempFile, err := os.CreateTemp("", "")
+	require.NoError(t, err)
+
+	resolver, err := newDirectoryResolver(tempFile.Name())
+	require.NoError(t, err)
+
+	t.Run("filtering path with nil os.FileInfo", func(t *testing.T) {
+		// We use one of these prefixes in order to trigger a pathFilterFn
+		filteredPath := unixSystemRuntimePrefixes[0]
+
+		var fileInfo os.FileInfo = nil
+
+		assert.NotPanics(t, func() {
+			_, err := resolver.indexPath(filteredPath, fileInfo, nil)
+			assert.NoError(t, err)
+		})
+	})
+}

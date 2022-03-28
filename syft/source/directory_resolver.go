@@ -132,10 +132,15 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 }
 
 func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {
+	// link cycles could cause a revisit --we should not allow this
+	if r.hasBeenIndexed(path) {
+		return "", nil
+	}
+
 	// ignore any path which a filter function returns true
 	for _, filterFn := range r.pathFilterFns {
 		if filterFn != nil && filterFn(path, info) {
-			if info.IsDir() {
+			if info != nil && info.IsDir() {
 				return "", fs.SkipDir
 			}
 			return "", nil
@@ -143,11 +148,6 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 	}
 
 	if r.isFileAccessErr(path, err) {
-		return "", nil
-	}
-
-	// link cycles could cause a revisit --we should not allow this
-	if r.hasBeenIndexed(path) {
 		return "", nil
 	}
 
