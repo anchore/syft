@@ -620,6 +620,38 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins_ci:active_directory:2.25.1:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "regression: special characters in CPE should result in no generation",
+			p: pkg.Package{
+				Name:         "bundler",
+				Version:      "2.1.4",
+				Type:         pkg.GemPkg,
+				FoundBy:      "gem-cataloger",
+				Language:     pkg.Ruby,
+				MetadataType: pkg.GemMetadataType,
+				Metadata: pkg.GemMetadata{
+					Name:    "bundler",
+					Version: "2.1.4",
+					Authors: []string{
+						"jessica lynn suttles",
+						"stephanie morillo",
+						"david rodríguez",
+						"andré medeiros",
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:*:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:bundler:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-lang:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jessica-lynn-suttles:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jessica_lynn_suttles:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:stephanie-morillo:bundler:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:stephanie_morillo:bundler:2.1.4:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {

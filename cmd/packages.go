@@ -10,12 +10,13 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -27,7 +28,7 @@ import (
 )
 
 const (
-	packagesExample = `  {{.appName}} {{.command}} alpine:latest                a summary of discovered packages
+	packagesExample = `  {{.appName}} {{.command}} alpine:latest                    a summary of discovered packages
   {{.appName}} {{.command}} alpine:latest -o json            show all possible cataloging details
   {{.appName}} {{.command}} alpine:latest -o cyclonedx       show a CycloneDX formatted SBOM
   {{.appName}} {{.command}} alpine:latest -o cyclonedx-json  show a CycloneDX JSON formatted SBOM
@@ -42,6 +43,7 @@ const (
 
 	schemeHelpHeader = "You can also explicitly specify the scheme to use:"
 	imageSchemeHelp  = `    {{.appName}} {{.command}} docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
+    {{.appName}} {{.command}} podman:yourrepo/yourimage:tag        	 explicitly use the Podman daemon
     {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
     {{.appName}} {{.command}} docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
     {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
@@ -99,13 +101,18 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringArrayP(
-		"output", "o", []string{string(format.TableOption)},
-		fmt.Sprintf("report output format, options=%v", format.AllOptions),
+		"output", "o", formatAliases(table.ID),
+		fmt.Sprintf("report output format, options=%v", formatAliases(syft.FormatIDs()...)),
 	)
 
 	flags.StringP(
 		"file", "", "",
 		"file to write the default report output to (default is STDOUT)",
+	)
+
+	flags.StringP(
+		"platform", "", "",
+		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')",
 	)
 
 	// Upload options //////////////////////////////////////////////////////////
@@ -154,7 +161,7 @@ func bindPackagesConfigOptions(flags *pflag.FlagSet) error {
 	if err := bindExclusivePackagesConfigOptions(flags); err != nil {
 		return err
 	}
-	if err := bindSharedOutputConfigOption(flags); err != nil {
+	if err := bindSharedConfigOption(flags); err != nil {
 		return err
 	}
 	return nil
@@ -224,7 +231,7 @@ func validateInputArgs(cmd *cobra.Command, args []string) error {
 }
 
 func packagesExec(_ *cobra.Command, args []string) error {
-	writer, err := makeWriter(appConfig.Output, appConfig.File)
+	writer, err := makeWriter(appConfig.Outputs, appConfig.File)
 	if err != nil {
 		return err
 	}
@@ -237,9 +244,13 @@ func packagesExec(_ *cobra.Command, args []string) error {
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
+	si, err := source.ParseInput(userInput, appConfig.Platform, true)
+	if err != nil {
+		return fmt.Errorf("could not generate source input for packages command: %w", err)
+	}
 
 	return eventLoop(
-		packagesExecWorker(userInput, writer),
+		packagesExecWorker(*si, writer),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -258,18 +269,10 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-func generateSBOM(userInput string, errs chan error) (*sbom.SBOM, *source.Source, error) {
+func generateSBOM(src *source.Source, errs chan error) (*sbom.SBOM, error) {
 	tasks, err := tasks()
 	if err != nil {
-		return nil, nil, err
-	}
-
-	src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
-	}
-	if cleanup != nil {
-		defer cleanup()
+		return nil, err
 	}
 
 	s := sbom.SBOM{
@@ -283,7 +286,7 @@ func generateSBOM(userInput string, errs chan error) (*sbom.SBOM, *source.Source
 
 	buildRelationships(&s, src, tasks, errs)
 
-	return &s, src, nil
+	return &s, nil
 }
 
 func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs chan error) {
@@ -297,18 +300,28 @@ func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []task, errs cha
 	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 }
 
-func packagesExecWorker(userInput string, writer sbom.Writer) <-chan error {
+func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		s, src, err := generateSBOM(userInput, errs)
+
+		src, cleanup, err := source.New(si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		if cleanup != nil {
+			defer cleanup()
+		}
+		if err != nil {
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
+			return
+		}
+
+		s, err := generateSBOM(src, errs)
 		if err != nil {
 			errs <- err
 			return
 		}
 
 		if s == nil {
-			panic("nil sbomb returned with no error")
+			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
 		}
 
 		if appConfig.Anchore.Host != "" {

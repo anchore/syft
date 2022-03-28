@@ -66,7 +66,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				LinkDestination: "file-1.txt",
 				UserID:          1,
 				GroupID:         2,
-				MIMEType:        "text/plain",
+				MIMEType:        "",
 			},
 		},
 		{
@@ -78,7 +78,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				LinkDestination: "file-1.txt",
 				UserID:          0,
 				GroupID:         0,
-				MIMEType:        "text/plain",
+				MIMEType:        "",
 			},
 		},
 		{
@@ -89,7 +89,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				Type:     "CharacterDevice",
 				UserID:   0,
 				GroupID:  0,
-				MIMEType: "text/plain",
+				MIMEType: "",
 			},
 		},
 		{
@@ -100,7 +100,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				Type:     "BlockDevice",
 				UserID:   0,
 				GroupID:  0,
-				MIMEType: "text/plain",
+				MIMEType: "",
 			},
 		},
 		{
@@ -111,7 +111,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				Type:     "FIFONode",
 				UserID:   0,
 				GroupID:  0,
-				MIMEType: "text/plain",
+				MIMEType: "",
 			},
 		},
 		{
@@ -122,7 +122,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				Type:     "Directory",
 				UserID:   0,
 				GroupID:  0,
-				MIMEType: "text/plain",
+				MIMEType: "",
 			},
 		},
 	}

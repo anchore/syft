@@ -11,7 +11,7 @@ import (
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
 // in content fetching to uniquely identify a file relative to a request (the VirtualPath).
 type Location struct {
-	Coordinates
+	Coordinates `cyclonedx:""` // Empty string here means there is no intermediate property name, e.g. syft:locations:0:path without "coordinates"
 	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
 	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
 	VirtualPath string         `hash:"ignore"` // The path to the file which may or may not have hardlinks / symlinks
@@ -75,6 +75,20 @@ func NewLocationFromDirectory(responsePath string, ref file.Reference) Location 
 			RealPath: responsePath,
 		},
 		ref: ref,
+	}
+}
+
+// NewVirtualLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory with a separate virtual access path.
+func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, ref file.Reference) Location {
+	if responsePath == virtualResponsePath {
+		return NewLocationFromDirectory(responsePath, ref)
+	}
+	return Location{
+		Coordinates: Coordinates{
+			RealPath: responsePath,
+		},
+		VirtualPath: virtualResponsePath,
+		ref:         ref,
 	}
 }
 

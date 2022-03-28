@@ -5,12 +5,10 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/anchore/syft/syft/file"
-
-	"github.com/scylladb/go-set/strset"
-
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/scylladb/go-set/strset"
 )
 
 const RpmDBGlob = "**/var/lib/rpm/Packages"
@@ -24,7 +22,7 @@ var (
 type RpmdbMetadata struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
-	Epoch     *int              `json:"epoch"  cyclonedx:"epoch"`
+	Epoch     *int              `json:"epoch"  cyclonedx:"epoch" jsonschema:"nullable"`
 	Arch      string            `json:"architecture"`
 	Release   string            `json:"release" cyclonedx:"release"`
 	SourceRpm string            `json:"sourceRpm" cyclonedx:"sourceRpm"`

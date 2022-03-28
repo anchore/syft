@@ -25,7 +25,7 @@ COVERAGE_THRESHOLD := 62
 
 # CI cache busting values; change these if you want CI to not use previous stored cache
 INTEGRATION_CACHE_BUSTER="894d8ca"
-CLI_CACHE_BUSTER="894d8ca"
+CLI_CACHE_BUSTER="e5cdfd8"
 BOOTSTRAP_CACHE="c7afb99ad"
 
 ## Build variables
@@ -106,7 +106,7 @@ $(TEMPDIR):
 .PHONY: bootstrap-tools
 bootstrap-tools: $(TEMPDIR)
 	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.42.1
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.45.0
 	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
 	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.4.1
@@ -122,7 +122,7 @@ bootstrap: $(RESULTSDIR) bootstrap-go bootstrap-tools ## Download and install al
 	$(call title,Bootstrapping dependencies)
 
 .PHONY: static-analysis
-static-analysis: lint check-go-mod-tidy check-licenses
+static-analysis: check-go-mod-tidy check-licenses lint
 
 .PHONY: lint
 lint: ## Run gofmt + golangci lint checks
@@ -213,6 +213,12 @@ java-packages-fingerprint:
 	$(call title,Java test fixture fingerprint)
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
 		make packages.fingerprint
+
+.PHONY: go-binaries-fingerprint
+go-binaries-fingerprint:
+	$(call title,Go binaries test fixture fingerprint)
+	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
+		make binaries.fingerprint
 
 .PHONY: fixtures
 fixtures:

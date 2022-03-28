@@ -55,7 +55,6 @@ func DetectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (
 	}
 
 	// next: let's try more generic sources (dir, file, etc.)
-
 	location, err := homedir.Expand(userInput)
 	if err != nil {
 		return UnknownScheme, image.UnknownSource, "", fmt.Errorf("unable to expand potential directory path: %w", err)
@@ -69,5 +68,6 @@ func DetectScheme(fs afero.Fs, imageDetector sourceDetector, userInput string) (
 	if fileMeta.IsDir() {
 		return DirectoryScheme, source, location, nil
 	}
+
 	return FileScheme, source, location, nil
 }

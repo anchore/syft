@@ -258,3 +258,28 @@ func Test_decode(t *testing.T) {
 		})
 	}
 }
+
+func Test_missingDataDecode(t *testing.T) {
+	bom := &cyclonedx.BOM{
+		Metadata:   nil,
+		Components: &[]cyclonedx.Component{},
+	}
+
+	_, err := toSyftModel(bom)
+	assert.NoError(t, err)
+
+	bom.Metadata = &cyclonedx.Metadata{}
+
+	_, err = toSyftModel(bom)
+	assert.NoError(t, err)
+
+	pkg := decodeComponent(&cyclonedx.Component{
+		Licenses: &cyclonedx.Licenses{
+			{
+				License: nil,
+			},
+		},
+	})
+
+	assert.Len(t, pkg.Licenses, 0)
+}

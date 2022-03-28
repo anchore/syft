@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/formats"
-	"github.com/anchore/syft/internal/output"
-	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/internal/formats/table"
+
+	"github.com/anchore/syft/syft"
+
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/hashicorp/go-multierror"
 )
@@ -19,7 +20,7 @@ func makeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
 		return nil, err
 	}
 
-	writer, err := output.MakeWriter(outputOptions...)
+	writer, err := sbom.NewWriter(outputOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -28,10 +29,10 @@ func makeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
 }
 
 // parseOptions utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseOptions(outputs []string, defaultFile string) (out []output.WriterOption, errs error) {
+func parseOptions(outputs []string, defaultFile string) (out []sbom.WriterOption, errs error) {
 	// always should have one option -- we generally get the default of "table", but just make sure
 	if len(outputs) == 0 {
-		outputs = append(outputs, string(format.TableOption))
+		outputs = append(outputs, string(table.ID))
 	}
 
 	for _, name := range outputs {
@@ -40,33 +41,24 @@ func parseOptions(outputs []string, defaultFile string) (out []output.WriterOpti
 		// split to at most two parts for <format>=<file>
 		parts := strings.SplitN(name, "=", 2)
 
-		// the format option is the first part
+		// the format name is the first part
 		name = parts[0]
 
 		// default to the --file or empty string if not specified
 		file := defaultFile
 
-		// If a file is specified as part of the output option, use that
+		// If a file is specified as part of the output formatName, use that
 		if len(parts) > 1 {
 			file = parts[1]
 		}
 
-		option := format.ParseOption(name)
-		if option == format.UnknownFormatOption {
+		format := syft.FormatByName(name)
+		if format == nil {
 			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
 			continue
 		}
 
-		encoder := formats.ByOption(option)
-		if encoder == nil {
-			errs = multierror.Append(errs, fmt.Errorf("unknown format: %s", outputFormat))
-			continue
-		}
-
-		out = append(out, output.WriterOption{
-			Format: *encoder,
-			Path:   file,
-		})
+		out = append(out, sbom.NewWriterOption(format, file))
 	}
 	return out, errs
 }

@@ -22,6 +22,42 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
+func TestParseInput(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		platform string
+		expected Scheme
+		errFn    require.ErrorAssertionFunc
+	}{
+		{
+			name:     "ParseInput parses a file input",
+			input:    "test-fixtures/image-simple/file-1.txt",
+			expected: FileScheme,
+		},
+		{
+			name:     "errors out when using platform for non-image scheme",
+			input:    "test-fixtures/image-simple/file-1.txt",
+			platform: "arm64",
+			errFn:    require.Error,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.errFn == nil {
+				test.errFn = require.NoError
+			}
+			sourceInput, err := ParseInput(test.input, test.platform, true)
+			test.errFn(t, err)
+			if test.expected != "" {
+				require.NotNil(t, sourceInput)
+				assert.Equal(t, sourceInput.Scheme, test.expected)
+			}
+		})
+	}
+}
+
 func TestNewFromImageFails(t *testing.T) {
 	t.Run("no image given", func(t *testing.T) {
 		_, err := NewFromImage(nil, "")
@@ -47,55 +83,60 @@ func TestNewFromImage(t *testing.T) {
 
 func TestNewFromDirectory(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		input      string
-		expString  string
-		inputPaths []string
-		expRefs    int
+		desc         string
+		input        string
+		expString    string
+		inputPaths   []string
+		expectedRefs int
+		expectedErr  bool
 	}{
 		{
-			desc:       "no paths exist",
-			input:      "foobar/",
-			inputPaths: []string{"/opt/", "/other"},
+			desc:        "no paths exist",
+			input:       "foobar/",
+			inputPaths:  []string{"/opt/", "/other"},
+			expectedErr: true,
 		},
 		{
-			desc:       "path detected",
-			input:      "test-fixtures",
-			inputPaths: []string{"path-detected/.vimrc"},
-			expRefs:    1,
+			desc:         "path detected",
+			input:        "test-fixtures",
+			inputPaths:   []string{"path-detected/.vimrc"},
+			expectedRefs: 1,
 		},
 		{
-			desc:       "directory ignored",
-			input:      "test-fixtures",
-			inputPaths: []string{"path-detected"},
-			expRefs:    0,
+			desc:         "directory ignored",
+			input:        "test-fixtures",
+			inputPaths:   []string{"path-detected"},
+			expectedRefs: 0,
 		},
 		{
-			desc:       "no files-by-path detected",
-			input:      "test-fixtures",
-			inputPaths: []string{"no-path-detected"},
-			expRefs:    0,
+			desc:         "no files-by-path detected",
+			input:        "test-fixtures",
+			inputPaths:   []string{"no-path-detected"},
+			expectedRefs: 0,
 		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			src, err := NewFromDirectory(test.input)
+			require.NoError(t, err)
+			assert.Equal(t, test.input, src.Metadata.Path)
 
-			if err != nil {
-				t.Errorf("could not create NewDirScope: %+v", err)
-			}
-			if src.Metadata.Path != test.input {
-				t.Errorf("mismatched stringer: '%s' != '%s'", src.Metadata.Path, test.input)
-			}
 			resolver, err := src.FileResolver(SquashedScope)
-			assert.NoError(t, err)
+			if test.expectedErr {
+				if err == nil {
+					t.Fatal("expected an error when making the resolver but got none")
+				}
+				return
+			} else {
+				require.NoError(t, err)
+			}
 
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)
 			}
-			if len(refs) != test.expRefs {
-				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expRefs)
+			if len(refs) != test.expectedRefs {
+				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expectedRefs)
 
 			}
 
@@ -423,7 +464,9 @@ func TestDirectoryExclusions(t *testing.T) {
 	registryOpts := &image.RegistryOptions{}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, fn, err := New("dir:"+test.input, registryOpts, test.exclusions)
+			sourceInput, err := ParseInput("dir:"+test.input, "", false)
+			require.NoError(t, err)
+			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()
 
 			if test.err {
@@ -515,7 +558,9 @@ func TestImageExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
-			src, fn, err := New(archiveLocation, registryOpts, test.exclusions)
+			sourceInput, err := ParseInput(archiveLocation, "", false)
+			require.NoError(t, err)
+			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()
 
 			if err != nil {

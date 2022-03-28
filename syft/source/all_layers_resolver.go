@@ -126,7 +126,7 @@ func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 
 	for _, pattern := range patterns {
 		for idx, layerIdx := range r.layers {
-			results, err := r.img.Layers[layerIdx].Tree.FilesByGlob(pattern, filetree.DoNotFollowDeadBasenameLinks)
+			results, err := r.img.Layers[layerIdx].Tree.FilesByGlob(pattern, filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 			}
@@ -184,6 +184,22 @@ func (r *allLayersResolver) RelativeFileByPath(location Location, path string) *
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
 func (r *allLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+	entry, err := r.img.FileCatalog.Get(location.ref)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
+	}
+
+	switch entry.Metadata.TypeFlag {
+	case tar.TypeSymlink, tar.TypeLink:
+		// the location we are searching may be a symlink, we should always work with the resolved file
+		newLocation := r.RelativeFileByPath(location, location.VirtualPath)
+		if newLocation == nil {
+			// this is a dead link
+			return nil, fmt.Errorf("no contents for location=%q", location.VirtualPath)
+		}
+		location = *newLocation
+	}
+
 	return r.img.FileContentsByRef(location.ref)
 }
 

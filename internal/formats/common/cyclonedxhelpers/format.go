@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/google/uuid"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
@@ -11,7 +13,6 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/google/uuid"
 )
 
 func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
@@ -74,9 +75,10 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 	if len(*eRefs) == 0 {
 		eRefs = nil
 	}
-	props := getCycloneDXProperties(*distro)
-	if len(*props) == 0 {
-		props = nil
+	props := encodeProperties(distro, "syft:distro")
+	var properties *[]cyclonedx.Property
+	if len(props) > 0 {
+		properties = &props
 	}
 	return []cyclonedx.Component{
 		{
@@ -93,7 +95,7 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 			// TODO should we add a PURL?
 			CPE:                distro.CPEName,
 			ExternalReferences: eRefs,
-			Properties:         props,
+			Properties:         properties,
 		},
 	}
 }

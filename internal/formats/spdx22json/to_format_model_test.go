@@ -142,7 +142,7 @@ func Test_toFileChecksums(t *testing.T) {
 			name: "has digests",
 			digests: []file.Digest{
 				{
-					Algorithm: "sha256",
+					Algorithm: "SHA256",
 					Value:     "deadbeefcafe",
 				},
 				{
@@ -152,11 +152,11 @@ func Test_toFileChecksums(t *testing.T) {
 			},
 			expected: []model.Checksum{
 				{
-					Algorithm:     "sha256",
+					Algorithm:     "SHA256",
 					ChecksumValue: "deadbeefcafe",
 				},
 				{
-					Algorithm:     "md5",
+					Algorithm:     "MD5",
 					ChecksumValue: "meh",
 				},
 			},

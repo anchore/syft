@@ -221,7 +221,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 			// 3.17: Copyright Text: copyright notice(s) text, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one
-			// Purpose: Identify the copyright holders of the package, as well as any dates present. This will be a free form text field extracted from package information files. The options to populate this field are limited to:
+			// Purpose: IdentifyFormat the copyright holders of the package, as well as any dates present. This will be a free form text field extracted from package information files. The options to populate this field are limited to:
 			//
 			// Any text related to a copyright notice, even if not complete;
 			// NONE if the package contains no copyright information whatsoever; or

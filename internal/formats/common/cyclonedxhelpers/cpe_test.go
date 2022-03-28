@@ -3,8 +3,9 @@ package cyclonedxhelpers
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_encodeCPE(t *testing.T) {
@@ -51,7 +52,7 @@ func Test_encodeCPE(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, encodeCPE(test.input))
+			assert.Equal(t, test.expected, encodeSingleCPE(test.input))
 		})
 	}
 }

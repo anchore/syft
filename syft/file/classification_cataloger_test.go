@@ -1,6 +1,7 @@
 package file
 
 import (
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"testing"
 
 	"github.com/anchore/syft/syft/source"
@@ -88,7 +89,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		{
 			name:       "positive-busybox",
 			fixtureDir: "test-fixtures/classifiers/positive",
-			location:   "busybox",
+			location:   "[", // note: busybox is a link to [
 			expected: []Classification{
 				{
 					Class: "busybox-binary",
@@ -116,13 +117,67 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			actualResults, err := c.Catalog(resolver)
 			test.expectedErr(t, err)
 
-			loc := source.NewLocation(test.location)
+			ok := false
+			for actualLoc, actualClassification := range actualResults {
+				if test.location == actualLoc.RealPath {
+					ok = true
+					assert.Equal(t, test.expected, actualClassification)
+				}
+			}
+
+			if !ok {
+				t.Fatalf("could not find test location=%q", test.location)
+			}
+
+		})
+	}
+}
+
+func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
+	tests := []struct {
+		name         string
+		fixtureImage string
+		location     string
+		expected     []Classification
+		expectedErr  func(assert.TestingT, error, ...interface{}) bool
+	}{
+		{
+			name:         "busybox-regression",
+			fixtureImage: "image-busybox",
+			location:     "/bin/[",
+			expected: []Classification{
+				{
+					Class: "busybox-binary",
+					Metadata: map[string]string{
+						"version": "1.35.0",
+					},
+				},
+			},
+			expectedErr: assert.NoError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			c, err := NewClassificationCataloger(DefaultClassifiers)
+			test.expectedErr(t, err)
+
+			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
+			src, err := source.NewFromImage(img, "test-img")
+			test.expectedErr(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			test.expectedErr(t, err)
+
+			actualResults, err := c.Catalog(resolver)
+			test.expectedErr(t, err)
 
 			ok := false
-			for actual_loc, actual_classification := range actualResults {
-				if loc.RealPath == actual_loc.RealPath {
+			for actuaLoc, actualClassification := range actualResults {
+				if actuaLoc.RealPath == test.location {
 					ok = true
-					assert.Equal(t, test.expected, actual_classification)
+					assert.Equal(t, test.expected, actualClassification)
 				}
 			}
 

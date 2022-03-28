@@ -5,15 +5,16 @@ import (
 	"io"
 
 	"github.com/CycloneDX/cyclonedx-go"
+
+	"github.com/anchore/syft/internal/formats/common"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-func GetValidator(format cyclonedx.BOMFileFormat) format.Validator {
+func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 	return func(reader io.Reader) error {
 		bom := &cyclonedx.BOM{}
 		err := cyclonedx.NewBOMDecoder(reader, format).Decode(bom)
@@ -28,7 +29,7 @@ func GetValidator(format cyclonedx.BOMFileFormat) format.Validator {
 	}
 }
 
-func GetDecoder(format cyclonedx.BOMFileFormat) format.Decoder {
+func GetDecoder(format cyclonedx.BOMFileFormat) sbom.Decoder {
 	return func(reader io.Reader) (*sbom.SBOM, error) {
 		bom := &cyclonedx.BOM{}
 		err := cyclonedx.NewBOMDecoder(reader, format).Decode(bom)
@@ -45,7 +46,7 @@ func GetDecoder(format cyclonedx.BOMFileFormat) format.Decoder {
 
 func toSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 	meta := source.Metadata{}
-	if bom.Metadata != nil {
+	if bom.Metadata != nil && bom.Metadata.Component != nil {
 		meta = decodeMetadata(bom.Metadata.Component)
 	}
 	s := &sbom.SBOM{
@@ -156,6 +157,14 @@ func linuxReleaseFromOSComponent(component *cyclonedx.Component) *linux.Release 
 				}
 			}
 		}
+	}
+
+	if component.Properties != nil {
+		values := map[string]string{}
+		for _, p := range *component.Properties {
+			values[p.Name] = p.Value
+		}
+		common.DecodeInto(&rel, values, "syft:distro", CycloneDXFields)
 	}
 
 	return rel

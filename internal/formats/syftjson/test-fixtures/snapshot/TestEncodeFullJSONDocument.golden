@@ -163,7 +163,9 @@
    ],
    "manifest": "ZXlKelkyaGxiV0ZXWlhKemFXOXVJam95TENKdFpXUnBZVlI1Y0dVaU9pSmguLi4=",
    "config": "ZXlKaGNtTm9hWFJsWTNSMWNtVWlPaUpoYldRMk5DSXNJbU52Ym1acC4uLg==",
-   "repoDigests": []
+   "repoDigests": [],
+   "architecture": "",
+   "os": ""
   }
  },
  "distro": {
@@ -182,7 +184,7 @@
   }
  },
  "schema": {
-  "version": "3.0.1",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.0.1.json"
+  "version": "3.2.1",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.2.1.json"
  }
 }

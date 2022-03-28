@@ -1,0 +1,117 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:498e659b-0758-4a7f-816e-91bee18df634",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2022-03-08T12:30:39Z",
+    "tools": [
+      {
+        "vendor": "anchore",
+        "name": "syft",
+        "version": "[not provided]"
+      }
+    ],
+    "component": {
+      "bom-ref": "163686ac6e30c752",
+      "type": "file",
+      "name": "/some/path"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "package-1",
+      "version": "1.0.1",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "the-cataloger-1"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "python"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "PythonPackageMetadata"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "python"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/some/path/pkg1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "package-2",
+      "version": "2.0.1",
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "the-cataloger-2"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "DpkgMetadata"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "deb"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/some/path/pkg1"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "type": "operating-system",
+      "name": "debian",
+      "version": "1.2.3",
+      "description": "debian",
+      "swid": {
+        "tagId": "debian",
+        "name": "debian",
+        "version": "1.2.3"
+      },
+      "properties": [
+        {
+          "name": "syft:distro:id",
+          "value": "debian"
+        },
+        {
+          "name": "syft:distro:idLike:0",
+          "value": "like!"
+        },
+        {
+          "name": "syft:distro:prettyName",
+          "value": "debian"
+        },
+        {
+          "name": "syft:distro:versionID",
+          "value": "1.2.3"
+        }
+      ]
+    }
+  ]
+}

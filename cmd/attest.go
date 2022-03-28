@@ -9,6 +9,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anchore/syft/internal/formats/cyclonedxjson"
+	"github.com/anchore/syft/internal/formats/spdx22json"
+	"github.com/anchore/syft/internal/formats/syftjson"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
@@ -17,9 +21,8 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
 	"github.com/pkg/profile"
@@ -27,7 +30,6 @@ import (
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -51,7 +53,11 @@ const (
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
-var attestFormats = []format.Option{format.SPDXJSONOption, format.CycloneDxJSONOption, format.JSONOption}
+var attestFormats = []sbom.FormatID{
+	syftjson.ID,
+	spdx22json.ID,
+	cyclonedxjson.ID,
+}
 
 var (
 	attestCmd = &cobra.Command{
@@ -125,24 +131,36 @@ func selectPassFunc(keypath string) (cosign.PassFunc, error) {
 func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	// can only be an image for attestation or OCI DIR
 	userInput := args[0]
-	fs := afero.NewOsFs()
-	parsedScheme, _, _, err := source.DetectScheme(fs, image.DetectSource, userInput)
+	si, err := source.ParseInput(userInput, appConfig.Platform, false)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not generate source input for attest command: %w", err)
 	}
 
-	if parsedScheme != source.ImageScheme {
-		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", parsedScheme, userInput)
+	switch si.Scheme {
+	case source.ImageScheme, source.UnknownScheme:
+		// at this point we know that it cannot be dir: or file: schemes, so we will assume that the unknown scheme could represent an image
+		si.Scheme = source.ImageScheme
+	default:
+		return fmt.Errorf("attest command can only be used with image sources but discovered %q when given %q", si.Scheme, userInput)
 	}
 
-	if len(appConfig.Output) > 1 {
+	// if the original detection was from a local daemon we want to short circuit
+	// that and attempt to generate the image source from a registry source instead
+	switch si.ImageSource {
+	case image.UnknownSource, image.OciRegistrySource:
+		si.ImageSource = image.OciRegistrySource
+	default:
+		return fmt.Errorf("attest command can only be used with image sources fetch directly from the registry, but discovered an image source of %q when given %q", si.ImageSource, userInput)
+	}
+
+	if len(appConfig.Outputs) > 1 {
 		return fmt.Errorf("unable to generate attestation for more than one output")
 	}
 
-	output := format.ParseOption(appConfig.Output[0])
-	predicateType := assertPredicateType(output)
+	format := syft.FormatByName(appConfig.Outputs[0])
+	predicateType := formatPredicateType(format)
 	if predicateType == "" {
-		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", output, attestFormats)
+		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", formatAliases(format.ID()), formatAliases(attestFormats...))
 	}
 
 	passFunc, err := selectPassFunc(appConfig.Attest.Key)
@@ -162,7 +180,7 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	defer sv.Close()
 
 	return eventLoop(
-		attestationExecWorker(userInput, output, predicateType, sv),
+		attestationExecWorker(*si, format, predicateType, sv),
 		setupSignals(),
 		eventSubscription,
 		stereoscope.Cleanup,
@@ -170,18 +188,27 @@ func attestExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	)
 }
 
-func attestationExecWorker(userInput string, output format.Option, predicateType string, sv *sign.SignerVerifier) <-chan error {
+func attestationExecWorker(sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		s, src, err := generateSBOM(userInput, errs)
+		src, cleanup, err := source.NewFromRegistry(sourceInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+		if cleanup != nil {
+			defer cleanup()
+		}
+		if err != nil {
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", sourceInput.UserInput, err)
+			return
+		}
+
+		s, err := generateSBOM(src, errs)
 		if err != nil {
 			errs <- err
 			return
 		}
 
-		sbomBytes, err := syft.Encode(*s, output)
+		sbomBytes, err := syft.Encode(*s, format)
 		if err != nil {
 			errs <- err
 			return
@@ -196,24 +223,34 @@ func attestationExecWorker(userInput string, output format.Option, predicateType
 	return errs
 }
 
-func assertPredicateType(output format.Option) string {
-	switch output {
-	case format.SPDXJSONOption:
+func formatPredicateType(format sbom.Format) string {
+	switch format.ID() {
+	case spdx22json.ID:
 		return in_toto.PredicateSPDX
-	// Tentative see https://github.com/in-toto/attestation/issues/82
-	case format.CycloneDxJSONOption:
+	case cyclonedxjson.ID:
+		// Tentative see https://github.com/in-toto/attestation/issues/82
 		return "https://cyclonedx.org/bom"
-	case format.JSONOption:
+	case syftjson.ID:
 		return "https://syft.dev/bom"
 	default:
 		return ""
 	}
 }
 
+func findValidDigest(digests []string) string {
+	// since we are only using the OCI repo provider for this source we are safe that this is only 1 value
+	// see https://github.com/anchore/stereoscope/blob/25ebd49a842b5ac0a20c2e2b4b81335b64ad248c/pkg/image/oci/registry_provider.go#L57-L63
+	split := strings.Split(digests[0], "sha256:")
+	return split[1]
+}
+
 func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
-	h, err := v1.NewHash(src.Image.Metadata.ManifestDigest)
-	if err != nil {
-		return errors.Wrap(err, "could not hash manifest digest for image")
+	switch len(src.Image.Metadata.RepoDigests) {
+	case 0:
+		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
+	case 1:
+	default:
+		return fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
 	}
 
 	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
@@ -221,7 +258,7 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
 		Type:      predicateType,
-		Digest:    h.Hex,
+		Digest:    findValidDigest(src.Image.Metadata.RepoDigests),
 	})
 	if err != nil {
 		return err
@@ -264,8 +301,13 @@ func setAttestFlags(flags *pflag.FlagSet) {
 
 	// in-toto attestations only support JSON predicates, so not all SBOM formats that syft can output are supported
 	flags.StringP(
-		"output", "o", string(format.JSONOption),
-		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", attestFormats),
+		"output", "o", formatAliases(syftjson.ID)[0],
+		fmt.Sprintf("the SBOM format encapsulated within the attestation, available options=%v", formatAliases(attestFormats...)),
+	)
+
+	flags.StringP(
+		"platform", "", "",
+		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')",
 	)
 }
 

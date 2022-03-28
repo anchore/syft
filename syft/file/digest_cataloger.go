@@ -2,6 +2,7 @@ package file
 
 import (
 	"crypto"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -19,6 +20,8 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+var errUndigestableFile = errors.New("undigestable file")
+
 type DigestsCataloger struct {
 	hashes []crypto.Hash
 }
@@ -31,16 +34,18 @@ func NewDigestsCataloger(hashes []crypto.Hash) (*DigestsCataloger, error) {
 
 func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]Digest, error) {
 	results := make(map[source.Coordinates][]Digest)
-	var locations []source.Location
-	for location := range resolver.AllLocations() {
-		locations = append(locations, location)
-	}
+	locations := allRegularFiles(resolver)
 	stage, prog := digestsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
 		stage.Current = location.RealPath
 		result, err := i.catalogLocation(resolver, location)
+
+		if errors.Is(err, errUndigestableFile) {
+			continue
+		}
+
 		if internal.IsErrPathPermission(err) {
-			log.Debugf("file digests cataloger skipping - %+v", err)
+			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
 			continue
 		}
 
@@ -56,6 +61,16 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 }
 
 func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]Digest, error) {
+	meta, err := resolver.FileMetadataByLocation(location)
+	if err != nil {
+		return nil, err
+	}
+
+	// we should only attempt to report digests for files that are regular files (don't attempt to resolve links)
+	if meta.Type != source.RegularFile {
+		return nil, errUndigestableFile
+	}
+
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, err
@@ -72,7 +87,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 
 	size, err := io.Copy(io.MultiWriter(writers...), contentReader)
 	if err != nil {
-		return nil, internal.ErrPath{Path: location.RealPath, Err: err}
+		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}
 
 	if size == 0 {

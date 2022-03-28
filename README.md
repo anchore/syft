@@ -9,7 +9,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/anchore/syft/blob/main/LICENSE)
 [![Slack Invite](https://img.shields.io/badge/Slack-Join-blue?logo=slack)](https://anchore.com/slack)
 
-A CLI tool and Go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. Exceptional for vulnerability detection when used with a scanner tool like [Grype](https://github.com/anchore/grype).
+A CLI tool and Go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. Exceptional for vulnerability detection when used with a scanner like [Grype](https://github.com/anchore/grype).
 
 ### Join our community meetings!
 
@@ -20,15 +20,25 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
 ## Features
-- Catalog container images and filesystems to discover packages and libraries.
-- Generate in-toto attestations where an SBOM is included as the payload.
-- Supports packages and libraries from various ecosystems (APK, DEB, RPM, Ruby Bundles, Python Wheel/Egg/requirements.txt, JavaScript NPM/Yarn, Java JAR/EAR/WAR/PAR/SAR, Jenkins plugins JPI/HPI, Go modules, PHP Composer)
-- Linux distribution identification (supports Alpine, BusyBox, CentOS/RedHat, Debian/Ubuntu flavored distributions)
-- Supports Docker and OCI image formats
-- Direct support for [Grype](https://github.com/anchore/grype), a fast and powerful vulnerability matcher.
+- Generates SBOMs for container images, filesystems, archives, and more to discover packages and libraries
+- Supports OCI and Docker image formats
+- Linux distribution identification
+- Works seamlessly with [Grype](https://github.com/anchore/grype) (a fast, modern vulnerability scanner)
+- Able to create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
 
+### Supported Ecosystems
 
-If you encounter an issue, please [let us know using the issue tracker](https://github.com/anchore/syft/issues).
+- Alpine (apk)
+- Debian (dpkg)
+- Go (go.mod, Go binaries)
+- Java (jar, ear, war, par, sar)
+- JavaScript (npm, yarn)
+- Jenkins Plugins (jpi, hpi)
+- PHP (composer)
+- Python (wheel, egg, poetry, requirements.txt)
+- Red Hat (rpm)
+- Ruby (gem)
+- Rust (cargo.lock)
 
 ## Installation
 
@@ -53,15 +63,13 @@ brew install syft
 
 ### Nix
 
-**Note**: nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix)
-
-Also syft is currently only in the [unstable channel](https://nixos.wiki/wiki/Nix_channels#The_official_channels) awaiting the `22.05` release
+**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix). Syft is currently only in the [unstable channel](https://nixos.wiki/wiki/Nix_channels#The_official_channels) awaiting the `22.05` release
 
 ```bash
 nix-env -i syft
 ```
 
-... or, just try it out in an ephemeral nix shell
+... or, just try it out in an ephemeral nix shell:
 
 ```bash
 nix-shell -p syft
@@ -70,33 +78,28 @@ nix-shell -p syft
 ## Getting started
 
 #### SBOM
-To generate an SBOM for an OCI image:
+
+To generate an SBOM for a container image:
+
 ```
 syft <image>
 ```
 
-**Note**: This is equivalent to specifying the `packages` subcommand:
-```
-syft packages <image>
-```
-
-The above output includes only software that is visible in the container (i.e., the squashed representation of the image).
-To include software from all image layers in the SBOM, regardless of its presence in the final image, provide `--scope all-layers`:
+The above output includes only software that is visible in the container (i.e., the squashed representation of the image). To include software from all image layers in the SBOM, regardless of its presence in the final image, provide `--scope all-layers`:
 
 ```
-syft packages <image> --scope all-layers
+syft <image> --scope all-layers
 ```
 
-#### SBOM Attestation
-To generate an attested SBOM for an OCI image as the predicate of an in-toto attestation
+#### SBOM attestation
+
+To generate an SBOM attestation for a container image:
 ```
 syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
 ```
 
 The above output is in the form of the [DSSE envelope](https://github.com/secure-systems-lab/dsse/blob/master/envelope.md#dsse-envelope).
-The payload is a base64 encoded `in-toto` statement with the SBOM as the predicate, the payload type is `application/vnd.in-toto+json`, and the signatures array is populated
-with the contents needed for public key verification. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
-
+The payload is a base64 encoded `in-toto` statement with the generated SBOM as the predicate. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
 
 ### Supported sources
 
@@ -104,16 +107,17 @@ Syft can generate a SBOM from a variety of sources:
 
 ```
 # catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
-syft packages path/to/image.tar
+syft path/to/image.tar
 
 # catalog a directory
-syft packages path/to/dir
+syft path/to/dir
 ```
 
 Sources can be explicitly provided with a scheme:
 
 ```
 docker:yourrepo/yourimage:tag          use images from the Docker daemon
+podman:yourrepo/yourimage:tag          use images from the Podman daemon
 docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
 oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
 oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
@@ -145,7 +149,7 @@ The output format for Syft is configurable as well using the
 `-o` (or `--output`) option:
 
 ```
-syft packages <image> -o <format>
+syft <image> -o <format>
 ```
 
 Where the `formats` available are:
@@ -163,20 +167,16 @@ Syft can also output _multiple_ files in differing formats by appending
 `=<file>` to the option, for example to output Syft JSON and SPDX JSON:
 
 ```shell
-syft packages <image> -o json=sbom.syft.json -o spdx-json=sbom.spdx.json
+syft <image> -o json=sbom.syft.json -o spdx-json=sbom.spdx.json
 ```
 
 ## Private Registry Authentication
 
 ### Local Docker Credentials
-When a container runtime is not present, Syft can still utilize credentials configured in common credential sources (such as `~/.docker/config.json`). 
-It will pull images from private registries using these credentials. The config file is where your credentials are stored when authenticating with private registries via some command like `docker login`. 
-For more information see the `go-containerregistry` [documentation](https://github.com/google/go-containerregistry/tree/main/pkg/authn).
-
+When a container runtime is not present, Syft can still utilize credentials configured in common credential sources (such as `~/.docker/config.json`). It will pull images from private registries using these credentials. The config file is where your credentials are stored when authenticating with private registries via some command like `docker login`. For more information see the `go-containerregistry` [documentation](https://github.com/google/go-containerregistry/tree/main/pkg/authn).
 
 An example `config.json` looks something like this:
-```
-// config.json
+```json
 {
 	"auths": {
 		"registry.example.com": {
@@ -189,15 +189,17 @@ An example `config.json` looks something like this:
 
 You can run the following command as an example. It details the mount/environment configuration a container needs to access a private registry:
 
-`docker run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>`
-
+```
+docker run -v ./config.json:/config/config.json -e "DOCKER_CONFIG=/config" anchore/syft:latest  <private_image>
+```
 
 ### Docker Credentials in Kubernetes
-The below section shows a simple workflow on how to mount this config file as a secret into a container on kubernetes.
-1. Create a secret. The value of `config.json` is important. It refers to the specification detailed [here](https://github.com/google/go-containerregistry/tree/main/pkg/authn#the-config-file). 
-Below this section is the `secret.yaml` file that the pod configuration will consume as a volume. 
-The key `config.json` is important. It will end up being the name of the file when mounted into the pod.
-    ```
+
+Here's a simple workflow to mount this config file as a secret into a container on Kubernetes.
+
+1. Create a secret. The value of `config.json` is important. It refers to the specification detailed [here](https://github.com/google/go-containerregistry/tree/main/pkg/authn#the-config-file). Below this section is the `secret.yaml` file that the pod configuration will consume as a volume. The key `config.json` is important. It will end up being the name of the file when mounted into the pod.
+
+    ```yaml
     # secret.yaml
     
     apiVersion: v1
@@ -212,11 +214,9 @@ The key `config.json` is important. It will end up being the name of the file wh
     `kubectl apply -f secret.yaml`
 
 
-2. Create your pod running syft. The env `DOCKER_CONFIG` is important because it advertises where to look for the credential file. 
-In the below example, setting `DOCKER_CONFIG=/config` informs syft that credentials can be found at `/config/config.json`. 
-This is why we used `config.json` as the key for our secret. When mounted into containers the secrets' key is used as the filename. 
-The `volumeMounts` section mounts our secret to `/config`. The `volumes` section names our volume and leverages the secret we created in step one.
-    ```
+2. Create your pod running syft. The env `DOCKER_CONFIG` is important because it advertises where to look for the credential file. In the below example, setting `DOCKER_CONFIG=/config` informs syft that credentials can be found at `/config/config.json`. This is why we used `config.json` as the key for our secret. When mounted into containers the secrets' key is used as the filename. The `volumeMounts` section mounts our secret to `/config`. The `volumes` section names our volume and leverages the secret we created in step one.
+
+    ```yaml
     # pod.yaml
     
     apiVersion: v1
@@ -245,10 +245,9 @@ The `volumeMounts` section mounts our secret to `/config`. The `volumes` section
     `kubectl apply -f pod.yaml`
 
 
-3. The user can now run `kubectl logs syft-private-registry-demo`. The logs should show the syft analysis for the `<private_image>` provided in the pod configuration.
+3. The user can now run `kubectl logs syft-private-registry-demo`. The logs should show the Syft analysis for the `<private_image>` provided in the pod configuration.
 
-Using the above information, users should be able to configure private registry access without having to do so in the `grype` or `syft` configuration files.
-They will also not be dependent on a docker daemon, (or some other runtime software) for registry configuration and access.
+Using the above information, users should be able to configure private registry access without having to do so in the `grype` or `syft` configuration files.  They will also not be dependent on a Docker daemon, (or some other runtime software) for registry configuration and access.
 
 ## Configuration
 
@@ -285,7 +284,11 @@ check-for-app-update: true
 # exclude:
 #   - "/etc/**"
 #   - "./out/**/*.json"
-exclude:
+exclude: []
+
+# os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
+# same as --platform; SYFT_PLATFORM env var
+platform: ""
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
@@ -477,26 +480,25 @@ anchore:
 
 `syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]`
 
-SBOMs themselves can serve as input to different analysis tools. The Anchore organization offers the vulnerability scanner
-[grype](https://github.com/anchore/grype) as one such tool.
-One of the foundational approaches to "trust" between tools is for producers to use the artifacts generated by syft as attestations to their images.
-The DSSE output of `syft attest` can be used with the [cosign](https://github.com/sigstore/cosign) tool to attach an attestation to an image.
+SBOMs themselves can serve as input to different analysis tools. [Grype](https://github.com/anchore/grype), a vulnerability scanner CLI tool from Anchore, is one such tool. Publishers of container images can use attestations to enable their consumers to trust Syft-generated SBOM descriptions of those container images. To create and provide these attestations, image publishers can run `syft attest` in conjunction with the [cosign](https://github.com/sigstore/cosign) tool to attach SBOM attestations to their images.
 
-#### Example attest
+#### Example attestation
 Note for the following example replace `docker.io/image:latest` with an image you own. You should also have push access to 
-its remote reference. Replace $MY_PRIVATE_KEY with a private key you own or have generated with cosign.
+its remote reference. Replace `$MY_PRIVATE_KEY` with a private key you own or have generated with cosign.
 
 ```bash
 syft attest --key $MY_PRIVATE_KEY docker.io/image:latest > image_latest_sbom_attestation.json
 cosign attach attestation --attestation image_latest_sbom_attestation.json docker.io/image:latest
 ```
 
-Verify the new attestation exists on your image
+Verify the new attestation exists on your image.
+
 ```bash
 cosign verify-attestation -key $MY_PUBLIC_KEY docker.io/image:latest | jq '.payload | @base64d | .payload | fromjson | .predicate'
 ```
 
-You should see this output along with the attached SBOM.
+You should see this output along with the attached SBOM:
+
 ```
 Verification for docker.io/image:latest --
 The following checks were performed on each of these signatures:
