@@ -55,30 +55,28 @@ func parsePubspecLock(path string, reader io.Reader) ([]*pkg.Package, []artifact
 }
 
 func newPubspecLockPackage(name string, p pubspecLockPackage) *pkg.Package {
-	metadata := &pkg.PubMetadata{
-		Name:      name,
-		Version:   p.Version,
-		HostedURL: p.getHostedURL(),
-		VcsURL:    p.getVcsURL(),
-	}
-
 	return &pkg.Package{
 		Name:         name,
 		Version:      p.Version,
 		Language:     pkg.Dart,
-		Type:         pkg.PubPkg,
-		MetadataType: pkg.PubMetadataType,
-		Metadata:     *metadata,
+		Type:         pkg.DartPubPkg,
+		MetadataType: pkg.DartPubMetadataType,
+		Metadata: &pkg.DartPubMetadata{
+			Name:      name,
+			Version:   p.Version,
+			HostedURL: p.getHostedURL(),
+			VcsURL:    p.getVcsURL(),
+		},
 	}
 }
 
 func (p *pubspecLockPackage) getVcsURL() string {
 	if p.Source == "git" {
 		if p.Description.Path == "." {
-			return fmt.Sprintf("%s%%40%s", p.Description.URL, p.Description.ResolvedRef)
+			return fmt.Sprintf("%s@%s", p.Description.URL, p.Description.ResolvedRef)
 		}
 
-		return fmt.Sprintf("%s%%40%s%%23%s", p.Description.URL, p.Description.ResolvedRef, p.Description.Path)
+		return fmt.Sprintf("%s@%s#%s", p.Description.URL, p.Description.ResolvedRef, p.Description.Path)
 	}
 
 	return ""

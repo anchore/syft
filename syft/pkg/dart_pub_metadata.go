@@ -5,7 +5,7 @@ import (
 	"github.com/anchore/syft/syft/linux"
 )
 
-type PubMetadata struct {
+type DartPubMetadata struct {
 	Name        string   `mapstructure:"name" json:"name"`
 	Version     string   `mapstructure:"version" json:"version"`
 	Description string   `mapstructure:"description" json:"description,omitempty"`
@@ -16,7 +16,7 @@ type PubMetadata struct {
 	VcsURL      string   `mapstructure:"vcs_url" json:"vcs_url,omitempty"`
 }
 
-func (m PubMetadata) PackageURL(_ *linux.Release) string {
+func (m DartPubMetadata) PackageURL(_ *linux.Release) string {
 	var qualifiers packageurl.Qualifiers
 
 	if m.HostedURL != "" {

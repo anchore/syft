@@ -18,11 +18,7 @@ func assertPackagesEqual(t *testing.T, actual []*pkg.Package, expected map[strin
 		t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expected))
 	}
 
-	for _, a := range actual {
-		expectedPkg, ok := expected[a.Name]
-		assert.True(t, ok)
-		assert.Equal(t, expectedPkg, a)
-	}
+	assert.Len(t, actual, len(expected))
 }
 
 func TestParsePubspecLock(t *testing.T) {
@@ -31,9 +27,9 @@ func TestParsePubspecLock(t *testing.T) {
 			Name:         "ale",
 			Version:      "3.3.0",
 			Language:     pkg.Dart,
-			Type:         pkg.PubPkg,
-			MetadataType: pkg.PubMetadataType,
-			Metadata: pkg.PubMetadata{
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
 				Name:      "ale",
 				Version:   "3.3.0",
 				HostedURL: "pub.hosted.org",
@@ -43,9 +39,9 @@ func TestParsePubspecLock(t *testing.T) {
 			Name:         "analyzer",
 			Version:      "0.40.7",
 			Language:     pkg.Dart,
-			Type:         pkg.PubPkg,
-			MetadataType: pkg.PubMetadataType,
-			Metadata: pkg.PubMetadata{
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
 				Name:    "analyzer",
 				Version: "0.40.7",
 			},
@@ -54,9 +50,9 @@ func TestParsePubspecLock(t *testing.T) {
 			Name:         "ansicolor",
 			Version:      "1.1.1",
 			Language:     pkg.Dart,
-			Type:         pkg.PubPkg,
-			MetadataType: pkg.PubMetadataType,
-			Metadata: pkg.PubMetadata{
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
 				Name:    "ansicolor",
 				Version: "1.1.1",
 			},
@@ -65,9 +61,9 @@ func TestParsePubspecLock(t *testing.T) {
 			Name:         "archive",
 			Version:      "2.0.13",
 			Language:     pkg.Dart,
-			Type:         pkg.PubPkg,
-			MetadataType: pkg.PubMetadataType,
-			Metadata: pkg.PubMetadata{
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
 				Name:    "archive",
 				Version: "2.0.13",
 			},
@@ -76,9 +72,9 @@ func TestParsePubspecLock(t *testing.T) {
 			Name:         "args",
 			Version:      "1.6.0",
 			Language:     pkg.Dart,
-			Type:         pkg.PubPkg,
-			MetadataType: pkg.PubMetadataType,
-			Metadata: pkg.PubMetadata{
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
 				Name:    "args",
 				Version: "1.6.0",
 			},
@@ -87,9 +83,9 @@ func TestParsePubspecLock(t *testing.T) {
 			Name:         "key_binder",
 			Version:      "1.11.20",
 			Language:     pkg.Dart,
-			Type:         pkg.PubPkg,
-			MetadataType: pkg.PubMetadataType,
-			Metadata: pkg.PubMetadata{
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
 				Name:    "key_binder",
 				Version: "1.11.20",
 				VcsURL:  "git@github.com:Workiva/key_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",

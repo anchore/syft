@@ -13,6 +13,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from RPM DB"
 	case pkg.ApkPkg:
 		answer = "acquired package info from APK DB"
+	case pkg.DartPubPkg:
+		answer = "acquired package info from pubspec manifest"
 	case pkg.DebPkg:
 		answer = "acquired package info from DPKG DB"
 	case pkg.NpmPkg:
@@ -29,8 +31,6 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from rust cargo manifest"
 	case pkg.PhpComposerPkg:
 		answer = "acquired package info from PHP composer manifest"
-	case pkg.PubPkg:
-		answer = "acquired package info from pubspec manifest"
 	default:
 		answer = "acquired package info from the following paths"
 	}

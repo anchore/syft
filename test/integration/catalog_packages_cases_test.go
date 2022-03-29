@@ -225,7 +225,7 @@ var commonTestCases = []testCase{
 	},
 	{
 		name:        "find pubspec lock packages",
-		pkgType:     pkg.PubPkg,
+		pkgType:     pkg.DartPubPkg,
 		pkgLanguage: pkg.Dart,
 		pkgInfo: map[string]string{
 			"ansicolor":  "1.1.1",

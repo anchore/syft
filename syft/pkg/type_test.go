@@ -49,7 +49,7 @@ func TestTypeFromPURL(t *testing.T) {
 		},
 		{
 			purl:     "pkg:pub/util@1.2.34?hosted_url=pub.hosted.org",
-			expected: PubPkg,
+			expected: DartPubPkg,
 		},
 		{
 			purl:     "pkg:composer/laravel/laravel@5.5.0",

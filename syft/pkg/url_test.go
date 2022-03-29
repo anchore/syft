@@ -30,8 +30,8 @@ func TestPackageURL(t *testing.T) {
 			pkg: Package{
 				Name:    "bad-name",
 				Version: "0.1.0",
-				Type:    PubPkg,
-				Metadata: PubMetadata{
+				Type:    DartPubPkg,
+				Metadata: DartPubMetadata{
 					Name:      "name",
 					Version:   "0.2.0",
 					HostedURL: "pub.hosted.org",

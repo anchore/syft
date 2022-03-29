@@ -128,7 +128,7 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
-				Type: pkg.PubPkg,
+				Type: pkg.DartPubPkg,
 			},
 			expected: []string{
 				"from pubspec manifest",
