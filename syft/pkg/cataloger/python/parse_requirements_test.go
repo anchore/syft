@@ -1,6 +1,7 @@
 package python
 
 import (
+	"github.com/anchore/syft/syft/source"
 	"os"
 	"testing"
 
@@ -42,7 +43,14 @@ func TestParseRequirementsTxt(t *testing.T) {
 		t.Fatalf("failed to parse requirements: %+v", err)
 	}
 
-	if diff := cmp.Diff(expected, actual, cmp.AllowUnexported(pkg.Package{})); diff != "" {
+	if diff := cmp.Diff(expected, actual,
+		cmp.AllowUnexported(pkg.Package{}),
+		cmp.Comparer(
+			func(x, y source.LocationSet) bool {
+				return cmp.Equal(x.ToSlice(), y.ToSlice())
+			},
+		),
+	); diff != "" {
 		t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
 	}
 }

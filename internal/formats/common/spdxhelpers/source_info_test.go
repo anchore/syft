@@ -18,10 +18,10 @@ func Test_SourceInfo(t *testing.T) {
 			name: "locations are captured",
 			input: pkg.Package{
 				// note: no type given
-				Locations: []source.Location{
+				Locations: source.NewLocationSet(
 					source.NewVirtualLocation("/a-place", "/b-place"),
 					source.NewVirtualLocation("/c-place", "/d-place"),
-				},
+				),
 			},
 			expected: []string{
 				"from the following paths",

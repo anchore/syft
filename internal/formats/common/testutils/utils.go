@@ -157,9 +157,9 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Locations: []source.Location{
+		Locations: source.NewLocationSet(
 			source.NewLocationFromImage(string(ref1.RealPath), *ref1, img),
-		},
+		),
 		Type:         pkg.PythonPkg,
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
@@ -177,9 +177,9 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Locations: []source.Location{
+		Locations: source.NewLocationSet(
 			source.NewLocationFromImage(string(ref2.RealPath), *ref2, img),
-		},
+		),
 		Type:         pkg.DebPkg,
 		FoundBy:      "the-cataloger-2",
 		MetadataType: pkg.DpkgMetadataType,
@@ -234,9 +234,9 @@ func newDirectoryCatalog() *pkg.Catalog {
 		Version: "1.0.1",
 		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
-		Locations: []source.Location{
+		Locations: source.NewLocationSet(
 			source.NewLocation("/some/path/pkg1"),
-		},
+		),
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
 		Licenses:     []string{"MIT"},
@@ -259,9 +259,9 @@ func newDirectoryCatalog() *pkg.Catalog {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Locations: []source.Location{
+		Locations: source.NewLocationSet(
 			source.NewLocation("/some/path/pkg1"),
-		},
+		),
 		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{
 			Package: "package-2",

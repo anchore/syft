@@ -19,17 +19,17 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 
 	var pkgs = []Package{
 		{
-			Locations: []source.Location{
+			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/a/path", "/another/path"),
 				source.NewVirtualLocation("/b/path", "/bee/path"),
-			},
+			),
 			Type: RpmPkg,
 		},
 		{
-			Locations: []source.Location{
+			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/c/path", "/another/path"),
 				source.NewVirtualLocation("/d/path", "/another/path"),
-			},
+			),
 			Type: NpmPkg,
 		},
 	}
@@ -106,18 +106,18 @@ func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
 
 func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 	p1 := Package{
-		Locations: []source.Location{
+		Locations: source.NewLocationSet(
 			source.NewVirtualLocation("/b/path", "/another/path"),
 			source.NewVirtualLocation("/b/path", "/b/path"),
-		},
+		),
 		Type: RpmPkg,
 		Name: "Package-1",
 	}
 
 	p2 := Package{
-		Locations: []source.Location{
+		Locations: source.NewLocationSet(
 			source.NewVirtualLocation("/b/path", "/b/path"),
-		},
+		),
 		Type: RpmPkg,
 		Name: "Package-2",
 	}

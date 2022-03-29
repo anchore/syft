@@ -14,7 +14,7 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 	foundPackages := internal.NewStringSet()
 
 	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.NpmPkg) {
-		for _, actualLocation := range actualPkg.Locations {
+		for _, actualLocation := range actualPkg.Locations.ToSlice() {
 			if strings.Contains(actualLocation.RealPath, "node_modules") {
 				t.Errorf("found packages from package-lock.json in node_modules: %s", actualLocation)
 			}
@@ -35,7 +35,7 @@ func TestYarnPackageLockDirectory(t *testing.T) {
 	foundPackages := internal.NewStringSet()
 
 	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.NpmPkg) {
-		for _, actualLocation := range actualPkg.Locations {
+		for _, actualLocation := range actualPkg.Locations.ToSlice() {
 			if strings.Contains(actualLocation.RealPath, "node_modules") {
 				t.Errorf("found packages from yarn.lock in node_modules: %s", actualLocation)
 			}

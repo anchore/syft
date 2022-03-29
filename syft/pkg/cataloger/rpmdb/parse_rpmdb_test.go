@@ -71,7 +71,7 @@ func TestParseRpmDB(t *testing.T) {
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Locations:    []source.Location{dbLocation},
+					Locations:    source.NewLocationSet(dbLocation),
 					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
@@ -98,7 +98,7 @@ func TestParseRpmDB(t *testing.T) {
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Locations:    []source.Location{dbLocation},
+					Locations:    source.NewLocationSet(dbLocation),
 					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,

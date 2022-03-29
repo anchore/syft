@@ -33,7 +33,7 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from the following paths"
 	}
 	var paths []string
-	for _, l := range p.Locations {
+	for _, l := range p.Locations.ToSlice() {
 		paths = append(paths, l.RealPath)
 	}
 

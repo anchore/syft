@@ -133,14 +133,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		FoundBy:  catalogerName,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Locations: []source.Location{
-			{
+		Locations: source.NewLocationSet(
+			source.Location{
 				Coordinates: source.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
 			},
-		},
+		),
 		MetadataType: pkg.GolangBinMetadataType,
 		Metadata: pkg.GolangBinMetadata{
 			GoCompiledVersion: goCompiledVersion,
@@ -190,14 +190,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{
+					Locations: source.NewLocationSet(
+						source.Location{
 							Coordinates: source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
 						},
-					},
+					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
@@ -252,14 +252,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{
+					Locations: source.NewLocationSet(
+						source.Location{
 							Coordinates: source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
 						},
-					},
+					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
@@ -273,14 +273,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20210222170800-9c70f9b80bcf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{
+					Locations: source.NewLocationSet(
+						source.Location{
 							Coordinates: source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
 						},
-					},
+					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
@@ -327,12 +327,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20211006194710-c8a6f5223071",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{
+					Locations: source.NewLocationSet(
+						source.Location{
 							Coordinates: source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
-							}}},
+							},
+						},
+					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
@@ -344,14 +346,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: []source.Location{
-						{
+					Locations: source.NewLocationSet(
+						source.Location{
 							Coordinates: source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
 						},
-					},
+					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,

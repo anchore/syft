@@ -81,6 +81,12 @@ func (c *Catalog) Add(p Package) {
 		id = p.ID()
 	}
 
+	if other, exists := c.byID[id]; exists {
+		// there is already a package with this fingerprint merge the existing record with the new one
+		other.Merge(p)
+		return
+	}
+
 	// store by package ID
 	c.byID[id] = p
 
@@ -89,7 +95,7 @@ func (c *Catalog) Add(p Package) {
 
 	// store by file location paths
 	observedPaths := internal.NewStringSet()
-	for _, l := range p.Locations {
+	for _, l := range p.Locations.ToSlice() {
 		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
 			c.idsByPath[l.RealPath] = append(c.idsByPath[l.RealPath], id)
 			observedPaths.Add(l.RealPath)
@@ -145,8 +151,10 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
 			if pkgs[i].Version == pkgs[j].Version {
-				if pkgs[i].Type == pkgs[j].Type && len(pkgs[i].Locations) > 0 && len(pkgs[j].Locations) > 0 {
-					return pkgs[i].Locations[0].String() < pkgs[j].Locations[0].String()
+				iLocations := pkgs[i].Locations.ToSlice()
+				jLocations := pkgs[j].Locations.ToSlice()
+				if pkgs[i].Type == pkgs[j].Type && len(iLocations) > 0 && len(jLocations) > 0 {
+					return iLocations[0].String() < jLocations[0].String()
 				}
 				return pkgs[i].Type < pkgs[j].Type
 			}

@@ -55,7 +55,7 @@ func Generate(p pkg.Package) []pkg.CPE {
 	// filter out any known combinations that don't accurately represent this package
 	cpes = filter(cpes, p, cpeFilters...)
 
-	sort.Sort(BySpecificity(cpes))
+	sort.Sort(pkg.CPEBySpecificity(cpes))
 
 	return cpes
 }

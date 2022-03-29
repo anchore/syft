@@ -53,7 +53,8 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationship
 
 	for _, p := range catalog.Sorted() {
 		idMap[string(p.ID())] = p
-		for _, l := range p.Locations {
+		locations := p.Locations.ToSlice()
+		for _, l := range locations {
 			idMap[string(l.Coordinates.ID())] = l.Coordinates
 		}
 	}
@@ -166,7 +167,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
-		Locations:    locations,
+		Locations:    source.NewLocationSet(locations...),
 		Licenses:     p.Licenses,
 		Language:     p.Language,
 		Type:         p.Type,

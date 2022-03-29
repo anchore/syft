@@ -58,8 +58,9 @@ func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 }
 
 func filesystem(p pkg.Package) string {
-	if len(p.Locations) > 0 {
-		return p.Locations[0].FileSystemID
+	locations := p.Locations.ToSlice()
+	if len(locations) > 0 {
+		return locations[0].FileSystemID
 	}
 	return ""
 }
@@ -76,8 +77,9 @@ func toPath(s source.Metadata, p pkg.Package) string {
 	if inputPath == "." {
 		inputPath = ""
 	}
-	if len(p.Locations) > 0 {
-		location := p.Locations[0]
+	locations := p.Locations.ToSlice()
+	if len(locations) > 0 {
+		location := locations[0]
 		packagePath := location.RealPath
 		if location.VirtualPath != "" {
 			packagePath = location.VirtualPath

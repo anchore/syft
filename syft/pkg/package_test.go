@@ -12,15 +12,15 @@ func TestFingerprint(t *testing.T) {
 		Name:    "pi",
 		Version: "3.14",
 		FoundBy: "Archimedes",
-		Locations: []source.Location{
-			{
+		Locations: source.NewLocationSet(
+			source.Location{
 				Coordinates: source.Coordinates{
 					RealPath:     "39.0742° N, 21.8243° E",
 					FileSystemID: "Earth",
 				},
 				VirtualPath: "/Ancient-Greece",
 			},
-		},
+		),
 		Licenses: []string{
 			"cc0-1.0",
 			"MIT",
