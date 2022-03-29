@@ -1,0 +1,10 @@
+{
+  "name": "yarn-lock-nested-package",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "async": "0.9.2",
+    "resize-observer-polyfill": "^1.5.1"
+  }
+}
