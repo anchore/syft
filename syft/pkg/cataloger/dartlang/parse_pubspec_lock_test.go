@@ -10,14 +10,6 @@ import (
 )
 
 func assertPackagesEqual(t *testing.T, actual []*pkg.Package, expected map[string]*pkg.Package) {
-	t.Helper()
-	if len(actual) != len(expected) {
-		for _, a := range actual {
-			t.Log("   ", a)
-		}
-		t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expected))
-	}
-
 	assert.Len(t, actual, len(expected))
 }
 
