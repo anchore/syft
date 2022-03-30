@@ -65,6 +65,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	// for image scans we should not expect to see any of the following package types
 	definedLanguages.Remove(pkg.Go.String())
 	definedLanguages.Remove(pkg.Rust.String())
+	definedLanguages.Remove(pkg.Dart.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -76,6 +77,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.KbPkg))
 	definedPkgs.Remove(string(pkg.GoModulePkg))
 	definedPkgs.Remove(string(pkg.RustPkg))
+	definedPkgs.Remove(string(pkg.DartPubPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

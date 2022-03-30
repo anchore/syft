@@ -1,4 +1,4 @@
-package dartlang
+package dart
 
 import (
 	"os"
@@ -80,7 +80,7 @@ func TestParsePubspecLock(t *testing.T) {
 			Metadata: pkg.DartPubMetadata{
 				Name:    "key_binder",
 				Version: "1.11.20",
-				VcsURL:  "git@github.com:Workiva/key_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
+				VcsURL:  "git@github.com:Workiva/key_binder.git#3f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
 			},
 		},
 	}

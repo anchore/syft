@@ -1,4 +1,4 @@
-package dartlang
+package dart
 
 import (
 	"fmt"

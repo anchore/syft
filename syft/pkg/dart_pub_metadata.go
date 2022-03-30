@@ -6,14 +6,10 @@ import (
 )
 
 type DartPubMetadata struct {
-	Name        string   `mapstructure:"name" json:"name"`
-	Version     string   `mapstructure:"version" json:"version"`
-	Description string   `mapstructure:"description" json:"description,omitempty"`
-	Authors     []string `mapstructure:"authors" json:"authors,omitempty"`
-	Homepage    string   `mapstructure:"homepage" json:"homepage,omitempty"`
-	Repository  string   `mapstructure:"repository" json:"repository,omitempty"`
-	HostedURL   string   `mapstructure:"hosted_url" json:"hosted_url,omitempty"`
-	VcsURL      string   `mapstructure:"vcs_url" json:"vcs_url,omitempty"`
+	Name      string `mapstructure:"name" json:"name"`
+	Version   string `mapstructure:"version" json:"version"`
+	HostedURL string `mapstructure:"hosted_url" json:"hosted_url,omitempty"`
+	VcsURL    string `mapstructure:"vcs_url" json:"vcs_url,omitempty"`
 }
 
 func (m DartPubMetadata) PackageURL(_ *linux.Release) string {

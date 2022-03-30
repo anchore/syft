@@ -186,6 +186,19 @@ var dirOnlyTestCases = []testCase{
 			"alcaeus/mongo-php-adapter": "1.1.11",
 		},
 	},
+	{
+		name:        "find pubspec lock packages",
+		pkgType:     pkg.DartPubPkg,
+		pkgLanguage: pkg.Dart,
+		pkgInfo: map[string]string{
+			"ansicolor":  "1.1.1",
+			"archive":    "2.0.13",
+			"args":       "1.6.0",
+			"key_binder": "1.11.20",
+			"ale":        "3.3.0",
+			"analyzer":   "0.40.7",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
@@ -221,19 +234,6 @@ var commonTestCases = []testCase{
 		duplicates:  1, // there is a "example-jenkins-plugin" HPI, and nested within that a JAR of the same name
 		pkgInfo: map[string]string{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
-		},
-	},
-	{
-		name:        "find pubspec lock packages",
-		pkgType:     pkg.DartPubPkg,
-		pkgLanguage: pkg.Dart,
-		pkgInfo: map[string]string{
-			"ansicolor":  "1.1.1",
-			"archive":    "2.0.13",
-			"args":       "1.6.0",
-			"key_binder": "1.11.20",
-			"ale":        "3.3.0",
-			"analyzer":   "0.40.7",
 		},
 	},
 }

@@ -20,7 +20,7 @@ const (
 	GoModulePkg      Type = "go-module"
 	RustPkg          Type = "rust-crate"
 	KbPkg            Type = "msrc-kb"
-	DartPubPkg       Type = "pub"
+	DartPubPkg       Type = "dart-pub"
 )
 
 // AllPkgs represents all supported package types
