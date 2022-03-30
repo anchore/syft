@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
+	"github.com/anchore/syft/internal/formats/cyclonedxxml"
+	"github.com/anchore/syft/internal/formats/syftjson"
 	"regexp"
 	"testing"
 
@@ -29,10 +31,10 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		redactor     func(in []byte) []byte
 		json         bool
 	}{
-		//{
-		//	formatOption: syftjson.ID,
-		//	json:         true,
-		//},
+		{
+			formatOption: syftjson.ID,
+			json:         true,
+		},
 		{
 			formatOption: cyclonedxjson.ID,
 			redactor: func(in []byte) []byte {
@@ -41,14 +43,14 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			},
 			json: true,
 		},
-		//{
-		//	formatOption: cyclonedxxml.ID,
-		//	redactor: func(in []byte) []byte {
-		//		in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
-		//		in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
-		//		return in
-		//	},
-		//},
+		{
+			formatOption: cyclonedxxml.ID,
+			redactor: func(in []byte) []byte {
+				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
+				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
+				return in
+			},
+		},
 	}
 
 	for _, test := range tests {
