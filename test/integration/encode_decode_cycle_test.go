@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"regexp"
 	"testing"
@@ -49,11 +50,11 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		//	},
 		//},
 	}
-	for _, test := range tests {
-		t.Run(string(test.formatOption), func(t *testing.T) {
 
-			// use second image for relationships
-			for _, image := range []string{"image-pkg-coverage", "image-owning-package"} {
+	for _, test := range tests {
+		// use second image for relationships
+		for _, image := range []string{"image-pkg-coverage", "image-owning-package"} {
+			t.Run(fmt.Sprintf("%s/%s", test.formatOption, image), func(t *testing.T) {
 				originalSBOM, _ := catalogFixtureImage(t, image)
 
 				format := syft.FormatByID(test.formatOption)
@@ -85,7 +86,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 						t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 					}
 				}
-			}
-		})
+			})
+		}
 	}
 }
