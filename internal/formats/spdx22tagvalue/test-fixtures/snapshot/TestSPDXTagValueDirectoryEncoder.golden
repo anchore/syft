@@ -2,16 +2,16 @@ SPDXVersion: SPDX-2.2
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: /some/path
-DocumentNamespace: https://anchore.com/syft/dir/some/path-4dc24efe-4ad4-4bd1-9c9a-070f6751dfc9
+DocumentNamespace: https://anchore.com/syft/dir/some/path-787558bd-c0fa-41d5-a19a-ebdec2c1fe14
 LicenseListVersion: 3.16
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-[not provided]
-Created: 2022-03-30T17:08:03Z
+Created: 2022-03-30T18:57:18Z
 
 ##### Package: package-2
 
 PackageName: package-2
-SPDXID: SPDXRef-Package-deb-package-2-c5592a2b5097e5e8
+SPDXID: SPDXRef-Package-deb-package-2-ceda99598967ae8d
 PackageVersion: 2.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -24,7 +24,7 @@ ExternalRef: PACKAGE_MANAGER purl a-purl-2
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-cc1dad43d9c89915
+SPDXID: SPDXRef-Package-python-package-1-b85dbb4e6ece5082
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false

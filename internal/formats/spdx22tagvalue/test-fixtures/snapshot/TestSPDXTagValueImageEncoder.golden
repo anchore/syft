@@ -2,16 +2,16 @@ SPDXVersion: SPDX-2.2
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-69a58a12-ea59-474b-adc4-d2614bf53efa
+DocumentNamespace: https://anchore.com/syft/image/user-image-input-08dedfa0-bf15-426e-9473-f006939c96dc
 LicenseListVersion: 3.16
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-[not provided]
-Created: 2022-03-30T17:08:03Z
+Created: 2022-03-30T18:57:18Z
 
 ##### Package: package-2
 
 PackageName: package-2
-SPDXID: SPDXRef-Package-deb-package-2-81473bbc11130324
+SPDXID: SPDXRef-Package-deb-package-2-ae77680e9b1d087e
 PackageVersion: 2.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -24,7 +24,7 @@ ExternalRef: PACKAGE_MANAGER purl a-purl-2
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-eb0539995f72dcd3
+SPDXID: SPDXRef-Package-python-package-1-2a46171f91c8d4bc
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
