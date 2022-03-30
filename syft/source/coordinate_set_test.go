@@ -1,6 +1,7 @@
 package source
 
 import (
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/stretchr/testify/require"
 	"testing"
 
@@ -98,23 +99,17 @@ func TestCoordinateSet_Hash(t *testing.T) {
 			want: assert.NotEqual,
 		},
 		{
-			name: "sets with same path but different FS IDs have the same hash",
-			setA: NewCoordinateSet(binA),
-			setB: NewCoordinateSet(binB),
-			want: assert.Equal,
-		},
-		{
-			name: "sets with same paths but different FS IDs have the same hash",
+			name: "sets with same paths but different FS IDs have different hashes",
 			setA: NewCoordinateSet(etcA, binA),
-			setB: NewCoordinateSet(binB, etcB),
-			want: assert.Equal,
+			setB: NewCoordinateSet(etcB, binB),
+			want: assert.NotEqual,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotA, err := tt.setA.Hash()
+			gotA, err := artifact.IDByHash(tt.setA)
 			require.NoError(t, err)
-			gotB, err := tt.setB.Hash()
+			gotB, err := artifact.IDByHash(tt.setB)
 			require.NoError(t, err)
 			tt.want(t, gotA, gotB)
 		})

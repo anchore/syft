@@ -90,7 +90,7 @@ func (c *Catalog) Add(p Package) {
 
 	if existing, exists := c.byID[id]; exists {
 		// there is already a package with this fingerprint merge the existing record with the new one
-		if err := existing.Merge(p); err != nil {
+		if err := existing.merge(p); err != nil {
 			log.Warnf("failed to merge packages: %+v", err)
 		}
 		return

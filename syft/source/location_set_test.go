@@ -1,6 +1,7 @@
 package source
 
 import (
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/stretchr/testify/require"
 	"testing"
 
@@ -167,9 +168,9 @@ func TestLocationSet_Hash(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotA, err := tt.setA.Hash()
+			gotA, err := artifact.IDByHash(tt.setA)
 			require.NoError(t, err)
-			gotB, err := tt.setB.Hash()
+			gotB, err := artifact.IDByHash(tt.setB)
 			require.NoError(t, err)
 			tt.want(t, gotA, gotB)
 		})

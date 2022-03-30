@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 )

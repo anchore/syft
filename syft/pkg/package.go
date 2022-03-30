@@ -23,7 +23,7 @@ type Package struct {
 	Language     Language           `cyclonedx:"language"`     // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
 	Type         Type               `cyclonedx:"type"`         // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
 	CPEs         []CPE              `hash:"ignore"`            // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
-	PURL         string             `hash:"ignore"`            // the Package URL (see https://github.com/package-url/purl-spec) (note: this is NOT included in the definition of the ID since all fields on a pURL are derived from other fields)
+	PURL         string             `hash:"ignore"`            // the Package URL (see https://github.com/package-url/purl-spec)
 	MetadataType MetadataType       `cyclonedx:"metadataType"` // the shape of the additional data in the "metadata" field
 	Metadata     interface{}        // additional data found while parsing the package source
 }
@@ -47,7 +47,7 @@ func (p Package) String() string {
 	return fmt.Sprintf("Pkg(name=%q version=%q type=%q id=%q)", p.Name, p.Version, p.Type, p.id)
 }
 
-func (p *Package) Merge(other Package) error {
+func (p *Package) merge(other Package) error {
 	if p.id != other.id {
 		return fmt.Errorf("cannot merge packages with different IDs: %q vs %q", p.id, other.id)
 	}

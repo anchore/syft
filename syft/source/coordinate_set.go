@@ -1,9 +1,10 @@
 package source
 
 import (
+	"sort"
+
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/scylladb/go-set/strset"
-	"sort"
 )
 
 type CoordinateSet struct {
@@ -77,10 +78,8 @@ func (s CoordinateSet) ToSlice() []Coordinates {
 	return coordinates
 }
 
-func (s *CoordinateSet) Hash() (uint64, error) {
-	// don't consider the filesystem when hashing the location, allowing us to deduplicate location. Only consider the real path.
-	paths := s.Paths()
-	return hashstructure.Hash(paths, hashstructure.FormatV2, &hashstructure.HashOptions{
+func (s CoordinateSet) Hash() (uint64, error) {
+	return hashstructure.Hash(s.ToSlice(), hashstructure.FormatV2, &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

@@ -474,7 +474,7 @@ func TestPackage_Merge(t *testing.T) {
 			tt.subject.SetID()
 			tt.other.SetID()
 
-			err := tt.subject.Merge(tt.other)
+			err := tt.subject.merge(tt.other)
 			if tt.expected == nil {
 				require.Error(t, err)
 				return
