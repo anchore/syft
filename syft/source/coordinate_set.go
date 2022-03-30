@@ -2,6 +2,7 @@ package source
 
 import (
 	"github.com/mitchellh/hashstructure/v2"
+	"github.com/scylladb/go-set/strset"
 	"sort"
 )
 
@@ -65,12 +66,14 @@ func (s *CoordinateSet) ToSlice() []Coordinates {
 
 func (s *CoordinateSet) Hash() (uint64, error) {
 	s.safeAccess()
-	coordinates := s.ToSlice()
-	for i, _ := range coordinates {
+	paths := strset.New()
+	for _, c := range s.ToSlice() {
 		// don't consider the filesystem when hashing the location, allowing us to deduplicate location.
-		coordinates[i].FileSystemID = ""
+		paths.Add(c.RealPath)
 	}
-	return hashstructure.Hash(coordinates, hashstructure.FormatV2, &hashstructure.HashOptions{
+	pathSlice := paths.List()
+	sort.Strings(pathSlice)
+	return hashstructure.Hash(pathSlice, hashstructure.FormatV2, &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

@@ -70,6 +70,7 @@ func (s *LocationSet) CoordinateSet() CoordinateSet {
 }
 
 func (s *LocationSet) Hash() (uint64, error) {
+	// access paths are not considered when hashing a location set, only the real paths and filesystem IDs
 	cs := s.CoordinateSet()
 	return hashstructure.Hash(&cs, hashstructure.FormatV2, &hashstructure.HashOptions{
 		ZeroNil:      true,

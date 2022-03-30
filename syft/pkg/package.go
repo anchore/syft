@@ -47,18 +47,20 @@ func (p Package) String() string {
 	return fmt.Sprintf("Pkg(name=%q version=%q type=%q id=%q)", p.Name, p.Version, p.Type, p.id)
 }
 
-func (p *Package) Merge(other Package) {
+func (p *Package) Merge(other Package) error {
 	if p.id != other.id {
-		log.Warnf("merging packages with different IDs: %q vs %q", p.id, other.id)
+		return fmt.Errorf("cannot merge packages with different IDs: %q vs %q", p.id, other.id)
+	}
+	if p.PURL != other.PURL {
+		return fmt.Errorf("cannot merge packages with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
 	}
 
-	// we need to merge all fields which are ignored during fingerprinting.
 	p.Locations.Add(other.Locations.ToSlice()...)
 
 	p.CPEs = mergeCPEs(p.CPEs, other.CPEs)
+
 	if p.PURL == "" {
 		p.PURL = other.PURL
-	} else if p.PURL != other.PURL {
-		log.Warnf("merging packages with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
 	}
+	return nil
 }

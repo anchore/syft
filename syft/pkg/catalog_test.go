@@ -3,11 +3,10 @@ package pkg
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/scylladb/go-set/strset"
-
 	"github.com/anchore/syft/syft/source"
+	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type expectedIndexes struct {
@@ -144,6 +143,68 @@ func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 		})
 	}
 
+}
+
+func TestCatalog_MergeRecords(t *testing.T) {
+	var tests = []struct {
+		name              string
+		pkgs              []Package
+		expectedLocations []source.Location
+	}{
+		{
+			name: "multiple Locations with shared path",
+			pkgs: []Package{
+				{
+					Locations: source.NewLocationSet(
+						source.Location{
+							Coordinates: source.Coordinates{
+								RealPath:     "/b/path",
+								FileSystemID: "a",
+							},
+							VirtualPath: "/another/path",
+						},
+					),
+					Type: RpmPkg,
+				},
+				{
+					Locations: source.NewLocationSet(
+						source.Location{
+							Coordinates: source.Coordinates{
+								RealPath:     "/b/path",
+								FileSystemID: "b",
+							},
+							VirtualPath: "/another/path",
+						},
+					),
+					Type: RpmPkg,
+				},
+			},
+			expectedLocations: []source.Location{
+				{
+					Coordinates: source.Coordinates{
+						RealPath:     "/b/path",
+						FileSystemID: "a",
+					},
+					VirtualPath: "/another/path",
+				},
+				{
+					Coordinates: source.Coordinates{
+						RealPath:     "/b/path",
+						FileSystemID: "b",
+					},
+					VirtualPath: "/another/path",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := NewCatalog(tt.pkgs...).PackagesByPath("/b/path")
+			require.Len(t, actual, 1)
+			assert.Equal(t, tt.expectedLocations, actual[0].Locations.ToSlice())
+		})
+	}
 }
 
 func TestCatalog_EnumerateNilCatalog(t *testing.T) {
