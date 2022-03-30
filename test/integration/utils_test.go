@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *source.Source) {
+func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope) (sbom.SBOM, *source.Source) {
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	userInput := "docker-archive:" + tarPath
@@ -25,7 +25,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 
 	// TODO: this would be better with functional options (after/during API refactor)
 	c := cataloger.DefaultConfig()
-	c.Search.Scope = source.SquashedScope
+	c.Search.Scope = scope
 	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
 	if err != nil {
 		t.Fatalf("failed to catalog image: %+v", err)

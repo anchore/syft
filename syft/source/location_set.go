@@ -10,7 +10,6 @@ type LocationSet struct {
 }
 
 func NewLocationSet(locations ...Location) (s LocationSet) {
-	s.safeAccess()
 	for _, l := range locations {
 		s.Add(l)
 	}
@@ -18,34 +17,34 @@ func NewLocationSet(locations ...Location) (s LocationSet) {
 	return s
 }
 
-func (s *LocationSet) safeAccess() {
+func (s *LocationSet) Add(locations ...Location) {
 	if s.set == nil {
 		s.set = make(map[Location]struct{})
 	}
-}
-
-func (s *LocationSet) Add(locations ...Location) {
-	s.safeAccess()
 	for _, l := range locations {
 		s.set[l] = struct{}{}
 	}
 }
 
-func (s *LocationSet) Remove(locations ...Location) {
-	s.safeAccess()
+func (s LocationSet) Remove(locations ...Location) {
+	if s.set == nil {
+		return
+	}
 	for _, l := range locations {
 		delete(s.set, l)
 	}
 }
 
-func (s *LocationSet) Contains(l Location) bool {
-	s.safeAccess()
+func (s LocationSet) Contains(l Location) bool {
+	if s.set == nil {
+		return false
+	}
 	_, ok := s.set[l]
 	return ok
 }
 
-func (s *LocationSet) ToSlice() []Location {
-	if s == nil {
+func (s LocationSet) ToSlice() []Location {
+	if s.set == nil {
 		return nil
 	}
 	locations := make([]Location, len(s.set))
@@ -59,7 +58,7 @@ func (s *LocationSet) ToSlice() []Location {
 }
 
 func (s *LocationSet) CoordinateSet() CoordinateSet {
-	if s == nil {
+	if s.set == nil {
 		return NewCoordinateSet()
 	}
 	set := NewCoordinateSet()

@@ -13,6 +13,7 @@ import (
 // Catalog represents a collection of Packages.
 type Catalog struct {
 	byID      map[artifact.ID]Package
+	idsByName map[string][]artifact.ID
 	idsByType map[Type][]artifact.ID
 	idsByPath map[string][]artifact.ID // note: this is real path or virtual path
 	lock      sync.RWMutex
@@ -22,6 +23,7 @@ type Catalog struct {
 func NewCatalog(pkgs ...Package) *Catalog {
 	catalog := Catalog{
 		byID:      make(map[artifact.ID]Package),
+		idsByName: make(map[string][]artifact.ID),
 		idsByType: make(map[Type][]artifact.ID),
 		idsByPath: make(map[string][]artifact.ID),
 	}
@@ -58,6 +60,11 @@ func (c *Catalog) PackagesByPath(path string) []Package {
 	return c.Packages(c.idsByPath[path])
 }
 
+// PackagesByName returns all packages that were discovered with a matching name.
+func (c *Catalog) PackagesByName(name string) []Package {
+	return c.Packages(c.idsByName[name])
+}
+
 // Packages returns all packages for the given ID.
 func (c *Catalog) Packages(ids []artifact.ID) (result []Package) {
 	for _, i := range ids {
@@ -91,6 +98,9 @@ func (c *Catalog) Add(p Package) {
 
 	// store by package ID
 	c.byID[id] = p
+
+	// store by package name
+	c.idsByName[p.Name] = append(c.idsByName[p.Name], p.id)
 
 	// store by package type
 	c.idsByType[p.Type] = append(c.idsByType[p.Type], id)

@@ -11,7 +11,6 @@ type CoordinateSet struct {
 }
 
 func NewCoordinateSet(coordinates ...Coordinates) (s CoordinateSet) {
-	s.safeAccess()
 	for _, l := range coordinates {
 		s.Add(l)
 	}
@@ -19,34 +18,48 @@ func NewCoordinateSet(coordinates ...Coordinates) (s CoordinateSet) {
 	return s
 }
 
-func (s *CoordinateSet) safeAccess() {
+func (s *CoordinateSet) Add(coordinates ...Coordinates) {
 	if s.set == nil {
 		s.set = make(map[Coordinates]struct{})
 	}
-}
-
-func (s *CoordinateSet) Add(coordinates ...Coordinates) {
-	s.safeAccess()
 	for _, l := range coordinates {
 		s.set[l] = struct{}{}
 	}
 }
 
-func (s *CoordinateSet) Remove(coordinates ...Coordinates) {
-	s.safeAccess()
+func (s CoordinateSet) Remove(coordinates ...Coordinates) {
+	if s.set == nil {
+		return
+	}
 	for _, l := range coordinates {
 		delete(s.set, l)
 	}
 }
 
-func (s *CoordinateSet) Contains(l Coordinates) bool {
-	s.safeAccess()
+func (s CoordinateSet) Contains(l Coordinates) bool {
+	if s.set == nil {
+		return false
+	}
 	_, ok := s.set[l]
 	return ok
 }
 
-func (s *CoordinateSet) ToSlice() []Coordinates {
-	if s == nil {
+func (s CoordinateSet) Paths() []string {
+	if s.set == nil {
+		return nil
+	}
+
+	paths := strset.New()
+	for _, c := range s.ToSlice() {
+		paths.Add(c.RealPath)
+	}
+	pathSlice := paths.List()
+	sort.Strings(pathSlice)
+	return pathSlice
+}
+
+func (s CoordinateSet) ToSlice() []Coordinates {
+	if s.set == nil {
 		return nil
 	}
 	coordinates := make([]Coordinates, len(s.set))
@@ -65,15 +78,9 @@ func (s *CoordinateSet) ToSlice() []Coordinates {
 }
 
 func (s *CoordinateSet) Hash() (uint64, error) {
-	s.safeAccess()
-	paths := strset.New()
-	for _, c := range s.ToSlice() {
-		// don't consider the filesystem when hashing the location, allowing us to deduplicate location.
-		paths.Add(c.RealPath)
-	}
-	pathSlice := paths.List()
-	sort.Strings(pathSlice)
-	return hashstructure.Hash(pathSlice, hashstructure.FormatV2, &hashstructure.HashOptions{
+	// don't consider the filesystem when hashing the location, allowing us to deduplicate location. Only consider the real path.
+	paths := s.Paths()
+	return hashstructure.Hash(paths, hashstructure.FormatV2, &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

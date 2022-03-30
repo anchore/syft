@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/syftjson"
+	"github.com/anchore/syft/syft/source"
 	"regexp"
 	"testing"
 
@@ -57,7 +58,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		// use second image for relationships
 		for _, image := range []string{"image-pkg-coverage", "image-owning-package"} {
 			t.Run(fmt.Sprintf("%s/%s", test.formatOption, image), func(t *testing.T) {
-				originalSBOM, _ := catalogFixtureImage(t, image)
+				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope)
 
 				format := syft.FormatByID(test.formatOption)
 				require.NotNil(t, format)
