@@ -3,6 +3,7 @@ package pkg
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
@@ -120,25 +121,51 @@ func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 		Type: RpmPkg,
 		Name: "Package-2",
 	}
+	p2Dup := Package{
+		Locations: source.NewLocationSet(
+			source.NewVirtualLocation("/b/path", "/another/path"),
+			source.NewVirtualLocation("/b/path", "/c/path/b/dup"),
+		),
+		Type: RpmPkg,
+		Name: "Package-2",
+	}
+
 	tests := []struct {
-		name string
-		pkg  Package
+		name  string
+		pkgs  []Package
+		paths []string
 	}{
 		{
 			name: "multiple locations with shared path",
-			pkg:  p1,
+			pkgs: []Package{p1},
+			paths: []string{
+				"/b/path",
+				"/another/path",
+			},
 		},
 		{
 			name: "one location with shared path",
-			pkg:  p2,
+			pkgs: []Package{p2},
+			paths: []string{
+				"/b/path",
+			},
+		},
+		{
+			name: "two instances with similar locations",
+			pkgs: []Package{p2, p2Dup},
+			paths: []string{
+				"/b/path",
+				"/another/path",
+				"/c/path/b/dup", // this updated the path index on merge
+			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := NewCatalog(test.pkg).PackagesByPath("/b/path")
-			if len(actual) != 1 {
-				t.Errorf("expected exactly one package path, got %d", len(actual))
+			for _, path := range test.paths {
+				actualPackages := NewCatalog(test.pkgs...).PackagesByPath(path)
+				require.Len(t, actualPackages, 1)
 			}
 		})
 	}
@@ -210,4 +237,38 @@ func TestCatalog_MergeRecords(t *testing.T) {
 func TestCatalog_EnumerateNilCatalog(t *testing.T) {
 	var c *Catalog
 	assert.Empty(t, c.Enumerate())
+}
+
+func Test_idOrderedSet_add(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []artifact.ID
+		expected []artifact.ID
+	}{
+		{
+			name: "elements deduplicated when added",
+			input: []artifact.ID{
+				"1", "2", "3", "4", "1", "2", "3", "4", "1", "2", "3", "4",
+			},
+			expected: []artifact.ID{
+				"1", "2", "3", "4",
+			},
+		},
+		{
+			name: "elements retain ordering when added",
+			input: []artifact.ID{
+				"4", "3", "2", "1",
+			},
+			expected: []artifact.ID{
+				"4", "3", "2", "1",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var s orderedIDSet
+			s.add(tt.input...)
+			assert.Equal(t, tt.expected, s.slice)
+		})
+	}
 }
