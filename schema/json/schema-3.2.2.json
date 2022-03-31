@@ -162,6 +162,28 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "DartPubMetadata": {
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "hosted_url": {
+          "type": "string"
+        },
+        "vcs_url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
     "Descriptor": {
       "required": [
         "name",
@@ -661,6 +683,9 @@
             },
             {
               "$ref": "#/definitions/CargoPackageMetadata"
+            },
+            {
+              "$ref": "#/definitions/DartPubMetadata"
             },
             {
               "$ref": "#/definitions/DpkgMetadata"
