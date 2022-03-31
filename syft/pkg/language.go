@@ -19,6 +19,7 @@ const (
 	Ruby            Language = "ruby"
 	Go              Language = "go"
 	Rust            Language = "rust"
+	Dart            Language = "dart"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.
@@ -30,6 +31,7 @@ var AllLanguages = []Language{
 	Ruby,
 	Go,
 	Rust,
+	Dart,
 }
 
 // String returns the string representation of the language.
@@ -62,6 +64,8 @@ func LanguageByName(name string) Language {
 		return Ruby
 	case purlCargoPkgType:
 		return Rust
+	case packageurl.TypePub, string(Dart):
+		return Dart
 	default:
 		return UnknownLanguage
 	}

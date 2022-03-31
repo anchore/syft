@@ -1,9 +1,10 @@
 package pkg
 
 import (
+	"testing"
+
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestLanguageFromPURL(t *testing.T) {
@@ -28,6 +29,10 @@ func TestLanguageFromPURL(t *testing.T) {
 		{
 			purl: "pkg:golang/github.com/gorilla/context@234fd47e07d1004f0aed9c",
 			want: Go,
+		},
+		{
+			purl: "pkg:pub/util@1.2.34",
+			want: Dart,
 		},
 		{
 			purl: "pkg:cargo/clap@2.33.0",

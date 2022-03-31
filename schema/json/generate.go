@@ -37,6 +37,7 @@ type artifactMetadataContainer struct {
 	Cargo  pkg.CargoPackageMetadata
 	Go     pkg.GolangBinMetadata
 	Php    pkg.PhpComposerJSONMetadata
+	Dart   pkg.DartPubMetadata
 }
 
 func main() {

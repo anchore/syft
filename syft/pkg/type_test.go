@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	"github.com/scylladb/go-set/strset"
 	"testing"
+
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -45,6 +46,10 @@ func TestTypeFromPURL(t *testing.T) {
 		{
 			purl:     "pkg:cargo/clap@2.33.0",
 			expected: RustPkg,
+		},
+		{
+			purl:     "pkg:pub/util@1.2.34?hosted_url=pub.hosted.org",
+			expected: DartPubPkg,
 		},
 		{
 			purl:     "pkg:composer/laravel/laravel@5.5.0",
