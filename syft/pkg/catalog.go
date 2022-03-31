@@ -108,8 +108,9 @@ func (c *Catalog) Add(p Package) {
 		// there is already a package with this fingerprint merge the existing record with the new one
 		if err := existing.merge(p); err != nil {
 			log.Warnf("failed to merge packages: %+v", err)
+		} else {
+			c.addPathsToIndex(p)
 		}
-		c.addPathsToIndex(p)
 		return
 	}
 

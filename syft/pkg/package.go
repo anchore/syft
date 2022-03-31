@@ -52,7 +52,7 @@ func (p *Package) merge(other Package) error {
 		return fmt.Errorf("cannot merge packages with different IDs: %q vs %q", p.id, other.id)
 	}
 	if p.PURL != other.PURL {
-		return fmt.Errorf("cannot merge packages with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
+		log.Warnf("merging packages have with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
 	}
 
 	p.Locations.Add(other.Locations.ToSlice()...)

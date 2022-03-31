@@ -409,65 +409,6 @@ func TestPackage_Merge(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "error when there are different pURLs",
-			subject: Package{
-				Name:    "pi",
-				Version: "3.14",
-				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
-					originalLocation,
-				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
-				Language: "math",
-				Type:     PythonPkg,
-				CPEs: []CPE{
-					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
-				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
-				Metadata: PythonPackageMetadata{
-					Name:                 "pi",
-					Version:              "3.14",
-					License:              "cc0-1.0",
-					Author:               "Archimedes",
-					AuthorEmail:          "Archimedes@circles.io",
-					Platform:             "universe",
-					SitePackagesRootPath: "Pi",
-				},
-			},
-			other: Package{
-				Name:    "pi",
-				Version: "3.14",
-				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
-					originalLocation,
-				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
-				Language: "math",
-				Type:     PythonPkg,
-				CPEs: []CPE{
-					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
-				},
-				PURL:         "pkg:pypi/pi-DIFFERENCE@3.14", // difference
-				MetadataType: PythonPackageMetadataType,
-				Metadata: PythonPackageMetadata{
-					Name:                 "pi",
-					Version:              "3.14",
-					License:              "cc0-1.0",
-					Author:               "Archimedes",
-					AuthorEmail:          "Archimedes@circles.io",
-					Platform:             "universe",
-					SitePackagesRootPath: "Pi",
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
