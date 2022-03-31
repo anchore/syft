@@ -1,6 +1,7 @@
 package deb
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
@@ -115,15 +116,13 @@ func TestDpkgCataloger(t *testing.T) {
 			for idx := range actual {
 				a := &actual[idx]
 				// we will test the sources separately
-				var sourcesList = make([]string, len(a.Locations))
-				for i, s := range a.Locations {
+				var sourcesList = make([]string, len(a.Locations.ToSlice()))
+				for i, s := range a.Locations.ToSlice() {
 					sourcesList[i] = s.RealPath
 				}
-				a.Locations = nil
+				a.Locations = source.NewLocationSet()
 
-				for _, d := range deep.Equal(sourcesList, test.sources[a.Name]) {
-					t.Errorf("diff: %+v", d)
-				}
+				assert.ElementsMatch(t, sourcesList, test.sources[a.Name])
 			}
 
 			// test remaining fields...

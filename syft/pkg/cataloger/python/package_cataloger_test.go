@@ -144,7 +144,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			test.expectedPackage.Locations = locations
+			test.expectedPackage.Locations = source.NewLocationSet(locations...)
 
 			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
 			if err != nil {

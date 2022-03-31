@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/anchore/syft/syft/source"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -9,7 +10,7 @@ import (
 func TestRegression212ApkBufferSize(t *testing.T) {
 	// This is a regression test for issue #212 (https://github.com/anchore/syft/issues/212) in which the apk db could
 	// not be processed due to a scanner buffer that was too small
-	sbom, _ := catalogFixtureImage(t, "image-large-apk-data")
+	sbom, _ := catalogFixtureImage(t, "image-large-apk-data", source.SquashedScope)
 
 	expectedPkgs := 58
 	actualPkgs := 0

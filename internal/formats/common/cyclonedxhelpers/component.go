@@ -13,8 +13,9 @@ import (
 func encodeComponent(p pkg.Package) cyclonedx.Component {
 	props := encodeProperties(p, "syft:package")
 	props = append(props, encodeCPEs(p)...)
-	if len(p.Locations) > 0 {
-		props = append(props, encodeProperties(p.Locations, "syft:location")...)
+	locations := p.Locations.ToSlice()
+	if len(locations) > 0 {
+		props = append(props, encodeProperties(locations, "syft:location")...)
 	}
 	if hasMetadata(p) {
 		props = append(props, encodeProperties(p.Metadata, "syft:metadata")...)
@@ -73,10 +74,13 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	return p
 }
 
-func decodeLocations(vals map[string]string) []source.Location {
+func decodeLocations(vals map[string]string) source.LocationSet {
 	v := common.Decode(reflect.TypeOf([]source.Location{}), vals, "syft:location", CycloneDXFields)
-	out, _ := v.([]source.Location)
-	return out
+	out, ok := v.([]source.Location)
+	if !ok {
+		out = nil
+	}
+	return source.NewLocationSet(out...)
 }
 
 func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typ pkg.MetadataType) interface{} {

@@ -80,7 +80,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 		Name:         metadata.Name,
 		Version:      metadata.Version,
 		FoundBy:      c.Name(),
-		Locations:    sources,
+		Locations:    source.NewLocationSet(sources...),
 		Licenses:     licenses,
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,

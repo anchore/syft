@@ -56,14 +56,14 @@ func sbomFixture() sbom.SBOM {
 				Name:    "name",
 				Version: "version",
 				FoundBy: "foundBy",
-				Locations: []source.Location{
-					{
+				Locations: source.NewLocationSet(
+					source.Location{
 						Coordinates: source.Coordinates{
 							RealPath:     "path",
 							FileSystemID: "layerID",
 						},
 					},
-				},
+				),
 				Licenses: []string{"license"},
 				Language: pkg.Python,
 				Type:     pkg.PythonPkg,
