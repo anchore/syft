@@ -51,7 +51,7 @@
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
    ],
-   "purl": "a-purl-2",
+   "purl": "pkg:deb/debian/package-2@2.0.1",
    "metadataType": "DpkgMetadata",
    "metadata": {
     "package": "package-2",

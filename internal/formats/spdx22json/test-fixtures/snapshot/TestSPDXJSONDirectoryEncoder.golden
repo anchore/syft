@@ -3,7 +3,7 @@
  "name": "/some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2022-03-30T21:48:28.297464Z",
+  "created": "2022-04-01T15:48:39.459232Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-[not provided]"
@@ -11,7 +11,7 @@
   "licenseListVersion": "3.16"
  },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/dir/some/path-e188d59b-76f6-4c7f-a9f2-1ae7d0577781",
+ "documentNamespace": "https://anchore.com/syft/dir/some/path-8d335d81-29c9-4236-84f1-2292ea92aaf5",
  "packages": [
   {
    "SPDXID": "SPDXRef-b85dbb4e6ece5082",
@@ -48,7 +48,7 @@
     },
     {
      "referenceCategory": "PACKAGE_MANAGER",
-     "referenceLocator": "a-purl-2",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
      "referenceType": "purl"
     }
    ],

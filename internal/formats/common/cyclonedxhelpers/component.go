@@ -5,6 +5,7 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/formats/common"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -39,7 +40,21 @@ func encodeComponent(p pkg.Package) cyclonedx.Component {
 		Description:        encodeDescription(p),
 		ExternalReferences: encodeExternalReferences(p),
 		Properties:         properties,
+		BOMRef:             deriveBomRef(p),
 	}
+}
+
+func deriveBomRef(p pkg.Package) string {
+	// try and parse the PURL if possible and append syft id to it, to make
+	// the purl unique in the BOM.
+	// TODO: In the future we may want to dedupe by PURL and combine components with
+	// the same PURL while preserving their unique metadata.
+	if parsedPURL, err := packageurl.FromString(p.PURL); err == nil {
+		parsedPURL.Qualifiers = append(parsedPURL.Qualifiers, packageurl.Qualifier{Key: "syft-id", Value: string(p.ID())})
+		return parsedPURL.ToString()
+	}
+	// fallback is to use strictly the ID if there is no valid pURL
+	return string(p.ID())
 }
 
 func hasMetadata(p pkg.Package) bool {
