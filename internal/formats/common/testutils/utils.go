@@ -169,7 +169,7 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Name:    "package-1",
 			Version: "1.0.1",
 		},
-		PURL: "a-purl-1",
+		PURL: "a-purl-1", // intentionally a bad pURL for test fixtures
 		CPEs: []pkg.CPE{
 			pkg.MustCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
 		},
@@ -187,7 +187,7 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Package: "package-2",
 			Version: "2.0.1",
 		},
-		PURL: "a-purl-2",
+		PURL: "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []pkg.CPE{
 			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
@@ -249,7 +249,7 @@ func newDirectoryCatalog() *pkg.Catalog {
 				},
 			},
 		},
-		PURL: "a-purl-2",
+		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
 		CPEs: []pkg.CPE{
 			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
@@ -267,7 +267,7 @@ func newDirectoryCatalog() *pkg.Catalog {
 			Package: "package-2",
 			Version: "2.0.1",
 		},
-		PURL: "a-purl-2",
+		PURL: "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []pkg.CPE{
 			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
