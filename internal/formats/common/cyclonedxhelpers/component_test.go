@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -136,6 +137,57 @@ func Test_encodeComponentProperties(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := encodeComponent(test.input)
 			assert.Equal(t, test.expected, c.Properties)
+		})
+	}
+}
+
+func Test_deriveBomRef(t *testing.T) {
+	pkgWithPurl := pkg.Package{
+		Name:    "django",
+		Version: "1.11.1",
+		PURL:    "pkg:pypi/django@1.11.1",
+	}
+	pkgWithPurl.SetID()
+
+	pkgWithOutPurl := pkg.Package{
+		Name:    "django",
+		Version: "1.11.1",
+		PURL:    "",
+	}
+	pkgWithOutPurl.SetID()
+
+	pkgWithBadPurl := pkg.Package{
+		Name:    "django",
+		Version: "1.11.1",
+		PURL:    "pkg:pyjango@1.11.1",
+	}
+	pkgWithBadPurl.SetID()
+
+	tests := []struct {
+		name string
+		pkg  pkg.Package
+		want string
+	}{
+		{
+			name: "use pURL-id hybrid",
+			pkg:  pkgWithPurl,
+			want: fmt.Sprintf("pkg:pypi/django@1.11.1?syft-id=%s", pkgWithPurl.ID()),
+		},
+		{
+			name: "fallback to ID when pURL is invalid",
+			pkg:  pkgWithBadPurl,
+			want: string(pkgWithBadPurl.ID()),
+		},
+		{
+			name: "fallback to ID when pURL is missing",
+			pkg:  pkgWithOutPurl,
+			want: string(pkgWithOutPurl.ID()),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.pkg.ID()
+			assert.Equal(t, tt.want, deriveBomRef(tt.pkg))
 		})
 	}
 }
