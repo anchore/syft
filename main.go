@@ -7,8 +7,11 @@ package main
 
 import (
 	"github.com/anchore/syft/cmd"
+	"log"
 )
 
 func main() {
-	cmd.Execute()
+	if err := cmd.New().Execute(); err != nil {
+		log.Fatalf("error during syft execution: %v", err)
+	}
 }
