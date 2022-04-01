@@ -1597,7 +1597,7 @@ limitations under the License.
                     <xs:documentation>The date and time (timestamp) when the release note was created.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="aliases" minOccurs="0" maxOccurs="1">
+            <xs:element name="outputs" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:sequence minOccurs="0" maxOccurs="unbounded">
                         <xs:element name="alias" type="xs:normalizedString">

@@ -256,7 +256,7 @@
             "time": "2020-06-07T16:31:51+00:00"
         }
     ],
-    "aliases": [],
+    "outputs": [],
     "minimum-stability": "stable",
     "stability-flags": {
         "intelligence/bt-base": 20,

@@ -12,20 +12,21 @@ var (
 
 func New() *cobra.Command {
 	cmd := &cobra.Command{
-		Short:             packagesCmd.Short,
-		Long:              packagesCmd.Long,
-		Args:              packagesCmd.Args,
-		Example:           packagesCmd.Example,
+		Short:             Packages().Short,
+		Long:              Packages().Long,
+		Args:              Packages().Args,
+		Example:           Packages().Example,
 		SilenceUsage:      true,
 		SilenceErrors:     true,
-		PreRunE:           packagesCmd.PreRunE,
-		RunE:              packagesCmd.RunE,
-		ValidArgsFunction: packagesCmd.ValidArgsFunction,
+		PreRunE:           Packages().PreRunE,
+		RunE:              Packages().RunE,
+		ValidArgsFunction: Packages().ValidArgsFunction,
 		Version:           version.FromBuild().Version,
 	}
 	ro.AddFlags(cmd)
 
 	// TODO: Add syft sub-commands
-
+	cmd.AddCommand(Packages())
+	cmd.AddCommand(Version())
 	return cmd
 }

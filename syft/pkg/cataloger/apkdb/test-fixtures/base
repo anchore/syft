@@ -57,7 +57,7 @@ a:0:0:600
 Z:Q1vfk1apUWI4yLJGhhNRd0kJixfvY=
 F:etc/init.d
 F:etc/modprobe.d
-R:aliases.conf
+R:outputs.conf
 Z:Q1WUbh6TBYNVK7e4Y+uUvLs/7viqk=
 R:blacklist.conf
 Z:Q1xxYGU6S6TLQvb7ervPrWWwAWqMg=
