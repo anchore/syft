@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.2
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: /some/path
-DocumentNamespace: https://anchore.com/syft/dir/some/path-71aa3553-1a73-405f-9f1f-6347d6d4593b
+DocumentNamespace: https://anchore.com/syft/dir/some/path-d227b0f2-4ee8-4e10-ac43-019db86d16ff
 LicenseListVersion: 3.16
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-[not provided]
-Created: 2022-03-30T21:48:22Z
+Created: 2022-04-01T15:48:44Z
 
 ##### Package: package-2
 
@@ -19,7 +19,7 @@ PackageLicenseConcluded: NONE
 PackageLicenseDeclared: NONE
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
-ExternalRef: PACKAGE_MANAGER purl a-purl-2
+ExternalRef: PACKAGE_MANAGER purl pkg:deb/debian/package-2@2.0.1
 
 ##### Package: package-1
 
