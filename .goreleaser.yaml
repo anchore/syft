@@ -99,6 +99,11 @@ dockers:
       - "anchore/syft:{{ .Tag }}-amd64"
       - "anchore/syft:v{{ .Major }}-amd64"
       - "anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64"
+      - "ghcr.io/anchore/syft:latest"
+      - "ghcr.io/anchore/syft:{{ .Tag }}-amd64"
+      - "ghcr.io/anchore/syft:v{{ .Major }}-amd64"
+      - "ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64"
+    goarch: amd64
     dockerfile: Dockerfile
     use: buildx
     build_flag_templates:
@@ -112,6 +117,9 @@ dockers:
       - "anchore/syft:{{ .Tag }}-arm64v8"
       - "anchore/syft:v{{ .Major }}-arm64v8"
       - "anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8"
+      - "ghcr.io/anchore/syft:{{ .Tag }}-arm64v8"
+      - "ghcr.io/anchore/syft:v{{ .Major }}-arm64v8"
+      - "ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8"
     goarch: arm64
     dockerfile: Dockerfile
     use: buildx
@@ -131,3 +139,11 @@ docker_manifests:
     image_templates:
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
       - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
+  - name_template: ghcr.io/anchore/syft:{{ .Tag }}
+    image_templates:
+      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
+      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
+  - name_template: ghcr.io/anchore/syft:latest
+    image_templates:
+      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
+      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
