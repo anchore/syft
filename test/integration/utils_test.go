@@ -1,8 +1,8 @@
 package integration
 
 import (
+	"github.com/anchore/syft/syft/cataloger/packages"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/pkg/cataloger/packages"
 	"github.com/stretchr/testify/require"
 	"testing"
 

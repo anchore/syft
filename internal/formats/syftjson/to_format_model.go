@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/cpe"
 	"sort"
 	"strconv"
 
@@ -152,7 +153,7 @@ func toFileMetadataEntry(coordinates file.Coordinates, metadata *file.Metadata) 
 	}
 }
 
-func toPackageModels(catalog *pkg.Catalog) []model.Package {
+func toPackageModels(catalog *pkg.Collection) []model.Package {
 	artifacts := make([]model.Package, 0)
 	if catalog == nil {
 		return artifacts
@@ -167,7 +168,7 @@ func toPackageModels(catalog *pkg.Catalog) []model.Package {
 func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = pkg.CPEString(c)
+		cpes[i] = cpe.String(c)
 	}
 
 	var licenses = make([]string, 0)

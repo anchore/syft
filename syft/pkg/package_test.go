@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"testing"
 
@@ -27,8 +28,8 @@ func TestFingerprint(t *testing.T) {
 		},
 		Language: "math",
 		Type:     PythonPkg,
-		CPEs: []CPE{
-			must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+		CPEs: []cpe.CPE{
+			cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 		},
 		PURL:         "pkg:pypi/pi@3.14",
 		MetadataType: PythonPackageMetadataType,
@@ -129,7 +130,7 @@ func TestFingerprint(t *testing.T) {
 		{
 			name: "CPEs is ignored",
 			transform: func(pkg Package) Package {
-				pkg.CPEs = []CPE{}
+				pkg.CPEs = []cpe.CPE{}
 				return pkg
 			},
 			expectIdentical: true,

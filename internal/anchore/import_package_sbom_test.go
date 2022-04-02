@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"net/http"
 	"strings"
@@ -23,7 +24,7 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
-func must(c pkg.CPE, e error) pkg.CPE {
+func must(c cpe.CPE, e error) cpe.CPE {
 	if e != nil {
 		panic(e)
 	}
@@ -53,7 +54,7 @@ func (m *mockPackageSBOMImportAPI) ImportImagePackages(ctx context.Context, sess
 func sbomFixture() sbom.SBOM {
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: pkg.NewCatalog(pkg.Package{
+			PackageCatalog: pkg.NewCollection(pkg.Package{
 				Name:    "name",
 				Version: "version",
 				FoundBy: "foundBy",
@@ -68,8 +69,8 @@ func sbomFixture() sbom.SBOM {
 				Licenses: []string{"license"},
 				Language: pkg.Python,
 				Type:     pkg.PythonPkg,
-				CPEs: []pkg.CPE{
-					must(pkg.NewCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
+				CPEs: []cpe.CPE{
+					must(cpe.New("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*")),
 				},
 				PURL:         "purl",
 				MetadataType: pkg.PythonPackageMetadataType,

@@ -2,11 +2,10 @@ package syft
 
 import (
 	"crypto"
-
-	"github.com/anchore/syft/syft/file/cataloger/fileclassifier"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
+	"github.com/anchore/syft/syft/cataloger/files/fileclassifier"
+	"github.com/anchore/syft/syft/cataloger/files/secrets"
+	"github.com/anchore/syft/syft/cataloger/packages"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/packages"
 	"github.com/anchore/syft/syft/source"
 )
 

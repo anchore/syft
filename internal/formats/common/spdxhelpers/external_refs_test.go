@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"github.com/anchore/syft/syft/cpe"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -8,7 +9,7 @@ import (
 )
 
 func Test_ExternalRefs(t *testing.T) {
-	testCPE := pkg.MustCPE("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
+	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -17,7 +18,7 @@ func Test_ExternalRefs(t *testing.T) {
 		{
 			name: "cpe + purl",
 			input: pkg.Package{
-				CPEs: []pkg.CPE{
+				CPEs: []cpe.CPE{
 					testCPE,
 				},
 				PURL: "a-purl",
@@ -25,7 +26,7 @@ func Test_ExternalRefs(t *testing.T) {
 			expected: []ExternalRef{
 				{
 					ReferenceCategory: SecurityReferenceCategory,
-					ReferenceLocator:  pkg.CPEString(testCPE),
+					ReferenceLocator:  cpe.String(testCPE),
 					ReferenceType:     Cpe23ExternalRefType,
 				},
 				{

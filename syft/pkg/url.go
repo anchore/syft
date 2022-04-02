@@ -15,7 +15,6 @@ const (
 	PURLQualifierDistro = "distro"
 	PURLQualifierEpoch  = "epoch"
 	PURLQualifierVCSURL = "vcs_url"
-
 	// PURLQualifierUpstream this qualifier is not in the pURL spec, but is used by grype to perform indirect matching based on source information
 	PURLQualifierUpstream = "upstream"
 

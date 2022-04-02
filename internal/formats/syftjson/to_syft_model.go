@@ -4,6 +4,7 @@ import (
 	"github.com/anchore/syft/internal/formats/syftjson/model"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -47,7 +48,7 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 	}
 }
 
-func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationships []model.Relationship) []artifact.Relationship {
+func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relationships []model.Relationship) []artifact.Relationship {
 	idMap := make(map[string]interface{})
 
 	for _, p := range catalog.Sorted() {
@@ -129,8 +130,8 @@ func toSyftSourceData(s model.Source) *source.Metadata {
 	return nil
 }
 
-func toSyftCatalog(pkgs []model.Package) *pkg.Catalog {
-	catalog := pkg.NewCatalog()
+func toSyftCatalog(pkgs []model.Package) *pkg.Collection {
+	catalog := pkg.NewCollection()
 	for _, p := range pkgs {
 		catalog.Add(toSyftPackage(p))
 	}
@@ -138,9 +139,9 @@ func toSyftCatalog(pkgs []model.Package) *pkg.Catalog {
 }
 
 func toSyftPackage(p model.Package) pkg.Package {
-	var cpes []pkg.CPE
+	var cpes []cpe.CPE
 	for _, c := range p.CPEs {
-		value, err := pkg.NewCPE(c)
+		value, err := cpe.New(c)
 		if err != nil {
 			log.Warnf("excluding invalid CPE %q: %v", c, err)
 			continue

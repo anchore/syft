@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"github.com/anchore/syft/syft/cpe"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,8 +10,8 @@ import (
 )
 
 func Test_encodeCPE(t *testing.T) {
-	testCPE := pkg.MustCPE("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
-	testCPE2 := pkg.MustCPE("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*")
+	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
+	testCPE2 := cpe.Must("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*")
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -20,14 +21,14 @@ func Test_encodeCPE(t *testing.T) {
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "no metadata",
 			input: pkg.Package{
-				CPEs: []pkg.CPE{},
+				CPEs: []cpe.CPE{},
 			},
 			expected: "",
 		},
 		{
 			name: "single CPE",
 			input: pkg.Package{
-				CPEs: []pkg.CPE{
+				CPEs: []cpe.CPE{
 					testCPE,
 				},
 			},
@@ -36,7 +37,7 @@ func Test_encodeCPE(t *testing.T) {
 		{
 			name: "multiple CPEs",
 			input: pkg.Package{
-				CPEs: []pkg.CPE{
+				CPEs: []cpe.CPE{
 					testCPE2,
 					testCPE,
 				},

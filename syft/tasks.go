@@ -2,15 +2,15 @@ package syft
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/cataloger/files/fileclassifier"
+	"github.com/anchore/syft/syft/cataloger/files/filecontents"
+	"github.com/anchore/syft/syft/cataloger/files/filedigests"
+	"github.com/anchore/syft/syft/cataloger/files/filemetadata"
+	"github.com/anchore/syft/syft/cataloger/files/secrets"
 
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file/cataloger/fileclassifier"
-	"github.com/anchore/syft/syft/file/cataloger/filecontents"
-	"github.com/anchore/syft/syft/file/cataloger/filedigests"
-	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
+	"github.com/anchore/syft/syft/cataloger/packages"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/pkg/cataloger/packages"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )

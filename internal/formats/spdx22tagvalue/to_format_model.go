@@ -89,9 +89,9 @@ func toFormatModel(s sbom.SBOM) (*spdx.Document2_2, error) {
 	}, nil
 }
 
-// packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
+// packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
 // nolint: funlen
-func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 {
+func toFormatPackages(catalog *pkg.Collection) map[spdx.ElementID]*spdx.Package2_2 {
 	results := make(map[spdx.ElementID]*spdx.Package2_2)
 
 	for _, p := range catalog.Sorted() {

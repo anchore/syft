@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"github.com/anchore/syft/syft/cpe"
 	"strconv"
 	"strings"
 
@@ -20,7 +21,7 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
+			PackageCatalog:    pkg.NewCollection(),
 			FileMetadata:      map[file.Coordinates]file.Metadata{},
 			FileDigests:       map[file.Coordinates][]file.Digest{},
 			LinuxDistribution: findLinuxReleaseByPURL(doc),
@@ -316,10 +317,10 @@ func findPURLValue(p *spdx.Package2_2) string {
 	return ""
 }
 
-func extractCPEs(p *spdx.Package2_2) (cpes []pkg.CPE) {
+func extractCPEs(p *spdx.Package2_2) (cpes []cpe.CPE) {
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(Cpe23ExternalRefType) {
-			cpe, err := pkg.NewCPE(r.Locator)
+			cpe, err := cpe.New(r.Locator)
 			if err != nil {
 				log.Warnf("unable to extract SPDX CPE=%q: %+v", r.Locator, err)
 				continue

@@ -1,7 +1,7 @@
 package integration
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/packages"
+	"github.com/anchore/syft/syft/cataloger/packages"
 	"github.com/stretchr/testify/require"
 	"testing"
 
@@ -20,7 +20,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	imagetest.GetFixtureImage(b, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
-	var pc *pkg.Catalog
+	var pc *pkg.Collection
 	for _, c := range packages.InstalledCatalogers(packages.DefaultSearchConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		userInput := "docker-archive:" + tarPath

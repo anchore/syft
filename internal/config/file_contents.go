@@ -1,8 +1,8 @@
 package config
 
 import (
+	"github.com/anchore/syft/syft/cataloger/files/filecontents"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/file/cataloger/filecontents"
 	"github.com/anchore/syft/syft/source"
 	"github.com/spf13/viper"
 )

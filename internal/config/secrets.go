@@ -2,9 +2,9 @@ package config
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/cataloger/files/secrets"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/source"
 	"github.com/spf13/viper"
 )

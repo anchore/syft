@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"bytes"
+	"github.com/anchore/syft/syft/cpe"
 	"strings"
 	"testing"
 
@@ -99,7 +100,7 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
 	t.Helper()
-	catalog := pkg.NewCatalog()
+	catalog := pkg.NewCollection()
 	var cfg imageCfg
 	var img *image.Image
 	for _, opt := range options {
@@ -151,7 +152,7 @@ func carriageRedactor(s []byte) []byte {
 	return []byte(msg)
 }
 
-func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
+func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
@@ -172,8 +173,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Version: "1.0.1",
 		},
 		PURL: "a-purl-1",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -190,8 +191,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Version: "2.0.1",
 		},
 		PURL: "a-purl-2",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 }
@@ -227,8 +228,8 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 	}
 }
 
-func newDirectoryCatalog() *pkg.Catalog {
-	catalog := pkg.NewCatalog()
+func newDirectoryCatalog() *pkg.Collection {
+	catalog := pkg.NewCollection()
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
@@ -252,8 +253,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 			},
 		},
 		PURL: "a-purl-2",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -270,8 +271,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 			Version: "2.0.1",
 		},
 		PURL: "a-purl-2",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 

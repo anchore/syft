@@ -138,7 +138,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			pkgs, expectedRelations := test.setup(t)
-			c := NewCatalog(pkgs...)
+			c := NewCollection(pkgs...)
 			relationships := RelationshipsByFileOwnership(c)
 
 			assert.Len(t, relationships, len(expectedRelations))

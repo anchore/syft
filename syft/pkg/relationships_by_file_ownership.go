@@ -23,7 +23,7 @@ type ownershipByFilesMetadata struct {
 
 // RelationshipsByFileOwnership creates a package-to-package relationship based on discovering which packages have
 // evidence locations that overlap with ownership claim from another package's package manager metadata.
-func RelationshipsByFileOwnership(catalog *Catalog) []artifact.Relationship {
+func RelationshipsByFileOwnership(catalog *Collection) []artifact.Relationship {
 	var relationships = findOwnershipByFilesRelationships(catalog)
 
 	var edges []artifact.Relationship
@@ -45,7 +45,7 @@ func RelationshipsByFileOwnership(catalog *Catalog) []artifact.Relationship {
 
 // findOwnershipByFilesRelationships find overlaps in file ownership with a file that defines another package. Specifically, a .Location.Path of
 // a package is found to be owned by another (from the owner's .Metadata.Files[]).
-func findOwnershipByFilesRelationships(catalog *Catalog) map[artifact.ID]map[artifact.ID]*strset.Set {
+func findOwnershipByFilesRelationships(catalog *Collection) map[artifact.ID]map[artifact.ID]*strset.Set {
 	var relationships = make(map[artifact.ID]map[artifact.ID]*strset.Set)
 
 	if catalog == nil {

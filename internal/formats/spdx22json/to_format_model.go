@@ -48,7 +48,7 @@ func toFormatModel(s sbom.SBOM) (*model.Document, error) {
 	}, nil
 }
 
-func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []model.Package {
+func toPackages(catalog *pkg.Collection, relationships []artifact.Relationship) []model.Package {
 	packages := make([]model.Package, 0)
 
 	for _, p := range catalog.Sorted() {

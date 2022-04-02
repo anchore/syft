@@ -211,13 +211,13 @@ integration-fingerprint:
 .PHONY: java-packages-fingerprint
 java-packages-fingerprint:
 	$(call title,Java test fixture fingerprint)
-	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
+	cd syft/cataloger/packages/java/test-fixtures/java-builds && \
 		make packages.fingerprint
 
 .PHONY: fixtures
 fixtures:
 	$(call title,Generating test fixtures)
-	cd syft/pkg/cataloger/java/test-fixtures/java-builds && make
+	cd syft/cataloger/packages/java/test-fixtures/java-builds && make
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema

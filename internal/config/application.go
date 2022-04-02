@@ -3,17 +3,16 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/cataloger/files/fileclassifier"
 	"path"
 	"reflect"
 	"strings"
 
+	"github.com/adrg/xdg"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/file/cataloger/fileclassifier"
-
-	"github.com/adrg/xdg"
-	"github.com/anchore/syft/internal"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
