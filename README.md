@@ -40,6 +40,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
+- Conda (conda-forge packages)
 
 ## Installation
 
