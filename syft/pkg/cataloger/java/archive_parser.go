@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	syftFile "github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 )
@@ -174,7 +175,10 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Metadata: pkg.JavaMetadata{
 			VirtualPath: j.virtualPath,
 			Manifest:    manifest,
-			Digest:      digest,
+			Digest: &syftFile.Digest{
+				Algorithm: file.DefaultDigestAlgorithm,
+				Value:     digest,
+			},
 		},
 	}, nil
 }

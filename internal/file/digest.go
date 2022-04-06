@@ -10,6 +10,8 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
+const DefaultDigestAlgorithm = "sha1"
+
 // Digest takes a filepath and returns a sha1 digest for the given contents
 func Digest(filepath string) (digest string, err error) {
 	file, err := os.Open(filepath)

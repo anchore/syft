@@ -3,6 +3,7 @@ package pkg
 import (
 	"strings"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 
 	"github.com/anchore/syft/internal"
@@ -24,7 +25,7 @@ type JavaMetadata struct {
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
 	PomProject    *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
-	Digest        string         `hash:"ignore" json:"digest"`
+	Digest        *file.Digest   `hash:"ignore" json:"digest,omitempty"`
 	PURL          string         `hash:"ignore" json:"-"` // pURLs and CPEs are ignored for package IDs
 	Parent        *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
