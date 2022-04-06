@@ -19,9 +19,6 @@ var jenkinsPluginPomPropertiesGroupIDs = []string{
 }
 
 // JavaMetadata encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
-// Archiver should be setting the sha1
-// TODO: add fields that distinguish between maven vs on disk discovery
-// TODO: always do a maven search after packages returned if online
 type JavaMetadata struct {
 	VirtualPath   string         `json:"virtualPath" cyclonedx:"virtualPath"` // we need to include the virtual path in cyclonedx documents to prevent deduplication of jars within jars
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
