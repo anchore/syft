@@ -71,6 +71,7 @@ func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths
 }
 
 // ExtractFromZipToUniqueTempFile extracts select paths for the given archive to a temporary directory, returning file openers for each file extracted.
+// It also preserves the digest of the discovered zip file on the opener so that data can be used later for metadata construction
 func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (map[string]Opener, error) {
 	results := make(map[string]Opener)
 
@@ -91,6 +92,12 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 		// provides a ReadCloser. It is up to the caller to handle closing the file explicitly.
 		defer tempFile.Close()
 
+		// grab and assign digest for the visited zip file
+		digest, err := Digest(file.FileInfo().Name())
+		if err != nil {
+			log.Warnf("failed to parse digest for file (%s): %+v", file.Name, err)
+		}
+
 		zippedFile, err := file.Open()
 		if err != nil {
 			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
@@ -110,7 +117,10 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.Name, archivePath, err)
 		}
 
-		results[file.Name] = Opener{path: tempFile.Name()}
+		results[file.Name] = Opener{
+			path:   tempFile.Name(),
+			digest: digest,
+		}
 
 		return nil
 	}

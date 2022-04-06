@@ -100,6 +100,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JenkinsPluginPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						Digest:      "3a9b2c4fae1dd05f48888759c8b9d4c429fe0888",
 						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -149,6 +150,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						Digest:      "f7038ca092b6a69386ef3077bf572c0d16dc05c2",
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -174,6 +176,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
+						Digest:      "93a3df66b4391dd33ce39a301cf6bb2870120fa9",
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -567,7 +570,6 @@ func TestParseNestedJar(t *testing.T) {
 						}
 					}
 				}
-
 			}
 		})
 	}

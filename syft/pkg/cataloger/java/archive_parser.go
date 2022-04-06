@@ -101,6 +101,7 @@ func (j *archiveParser) parse() ([]*pkg.Package, []artifact.Relationship, error)
 	}
 
 	// find aux packages from pom.properties/pom.xml and potentially modify the existing parentPkg
+	// NOTE: we cannot generate sha1 digests from packages discovered via pom.properties/pom.xml
 	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(parentPkg)
 	if err != nil {
 		return nil, nil, err
@@ -135,6 +136,7 @@ func (j *archiveParser) parse() ([]*pkg.Package, []artifact.Relationship, error)
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	// search and parse java manifest files
+	// TODO: do we want to prefer or check for pom files over manifest here?
 	manifestMatches := j.fileManifest.GlobMatch(manifestGlob)
 	if len(manifestMatches) > 1 {
 		return nil, fmt.Errorf("found multiple manifests in the jar: %+v", manifestMatches)
@@ -157,6 +159,12 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, nil
 	}
 
+	// grab and assign digest for the entire archive
+	digest, err := file.Digest(j.archivePath)
+	if err != nil {
+		log.Warnf("failed to parse digest for file (%s): %+v", j.archivePath, err)
+	}
+
 	return &pkg.Package{
 		Name:         selectName(manifest, j.fileInfo),
 		Version:      selectVersion(manifest, j.fileInfo),
@@ -166,6 +174,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Metadata: pkg.JavaMetadata{
 			VirtualPath: j.virtualPath,
 			Manifest:    manifest,
+			Digest:      digest,
 		},
 	}, nil
 }
@@ -181,12 +190,14 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 
 	var pkgs []*pkg.Package
 
-	properties, err := pomPropertiesByParentPath(j.archivePath, j.fileManifest.GlobMatch(pomPropertiesGlob), j.virtualPath)
+	// pom.properties
+	properties, err := pomPropertiesByParentPath(j.archivePath, j.virtualPath, j.fileManifest.GlobMatch(pomPropertiesGlob))
 	if err != nil {
 		return nil, err
 	}
 
-	projects, err := pomProjectByParentPath(j.archivePath, j.fileManifest.GlobMatch(pomXMLGlob), j.virtualPath)
+	// pom.xml
+	projects, err := pomProjectByParentPath(j.archivePath, j.virtualPath, j.fileManifest.GlobMatch(pomXMLGlob))
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +284,7 @@ func discoverPkgsFromOpener(virtualPath, pathWithinArchive string, archiveOpener
 	return nestedPkgs, nestedRelationships, nil
 }
 
-func pomPropertiesByParentPath(archivePath string, extractPaths []string, virtualPath string) (map[string]pkg.PomProperties, error) {
+func pomPropertiesByParentPath(archivePath, virtualPath string, extractPaths []string) (map[string]pkg.PomProperties, error) {
 	contentsOfMavenPropertiesFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
@@ -298,10 +309,11 @@ func pomPropertiesByParentPath(archivePath string, extractPaths []string, virtua
 
 		propertiesByParentPath[path.Dir(filePath)] = *pomProperties
 	}
+
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, extractPaths []string, virtualPath string) (map[string]pkg.PomProject, error) {
+func pomProjectByParentPath(archivePath, virtualPath string, extractPaths []string) (map[string]pkg.PomProject, error) {
 	contentsOfMavenProjectFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)

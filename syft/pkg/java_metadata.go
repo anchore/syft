@@ -19,11 +19,15 @@ var jenkinsPluginPomPropertiesGroupIDs = []string{
 }
 
 // JavaMetadata encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
+// Archiver should be setting the sha1
+// TODO: add fields that distinguish between maven vs on disk discovery
+// TODO: always do a maven search after packages returned if online
 type JavaMetadata struct {
 	VirtualPath   string         `json:"virtualPath" cyclonedx:"virtualPath"` // we need to include the virtual path in cyclonedx documents to prevent deduplication of jars within jars
 	Manifest      *JavaManifest  `mapstructure:"Manifest" json:"manifest,omitempty"`
 	PomProperties *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
 	PomProject    *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
+	Digest        string         `hash:"ignore" json:"digest"`
 	PURL          string         `hash:"ignore" json:"-"` // pURLs and CPEs are ignored for package IDs
 	Parent        *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
