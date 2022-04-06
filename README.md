@@ -29,6 +29,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 ### Supported Ecosystems
 
 - Alpine (apk)
+- Conda (environments, conda packages)
 - Dart (pubs)
 - Debian (dpkg)
 - Go (go.mod, Go binaries)
@@ -40,7 +41,6 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
-- Conda (conda-forge packages)
 
 ## Installation
 
