@@ -1,21 +1,8 @@
-name: data-science 
+name: sfyt-test-fixture
 channels:
   - conda-forge
 dependencies:
   - python=3.10.*
   - pip
-  - mamba
-  - jupyterhub
   - jupyterlab
-  - dask=2022.4.0
-  - distributed=2022.4.0
-  - dask-labextension
-  - nbgitpuller
-  - nodejs
-  - s3fs
-  - pandas
-  - numpy
-  - streamlit
-  #- pip:
-  #  - scikeras
-  #  - streamlit-aggrid
+  - arrow-cpp

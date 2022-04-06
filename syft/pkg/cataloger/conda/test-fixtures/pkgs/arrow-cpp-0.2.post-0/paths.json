@@ -1,0 +1,271 @@
+{
+  "paths": [
+    {
+      "_path": "include/arrow/api.h",
+      "path_type": "hardlink",
+      "sha256": "2736d232126a055a226251ddaa6e48279b20c10b818519b6b1f07592816edc92",
+      "size_in_bytes": 1161
+    },
+    {
+      "_path": "include/arrow/array.h",
+      "path_type": "hardlink",
+      "sha256": "d39c297825c1e6a096d86d47be3c86aa1ca84e29ceff668fa8573255158dec85",
+      "size_in_bytes": 19783
+    },
+    {
+      "_path": "include/arrow/buffer.h",
+      "path_type": "hardlink",
+      "sha256": "ba9c9218c935e01311e70abfcb10520746608f5828149ed940434bfcecb80c6f",
+      "size_in_bytes": 8525
+    },
+    {
+      "_path": "include/arrow/builder.h",
+      "path_type": "hardlink",
+      "sha256": "8c65ecfc2ce8fba824b3103a96624d81242230065a9d0b3712dcc8d6c3c77b69",
+      "size_in_bytes": 15114
+    },
+    {
+      "_path": "include/arrow/column.h",
+      "path_type": "hardlink",
+      "sha256": "db39af691b46daa2b8da5b7dd8857b535c62f1a01d62e4d4755f07165530938c",
+      "size_in_bytes": 3183
+    },
+    {
+      "_path": "include/arrow/compare.h",
+      "path_type": "hardlink",
+      "sha256": "1b686feba01141737fa5d449b2f8f25d6927ba9e1b21b4c8edb390ae9d46eb51",
+      "size_in_bytes": 1669
+    },
+    {
+      "_path": "include/arrow/io/file.h",
+      "path_type": "hardlink",
+      "sha256": "35efdeb07b6954167b1b95d412294a8dafea1c9603bb0b5f8073e699e86d0bad",
+      "size_in_bytes": 4502
+    },
+    {
+      "_path": "include/arrow/io/hdfs.h",
+      "path_type": "hardlink",
+      "sha256": "e5cac1a7cc4a2d6daff8c96873453d1bfe04058ec810c2fff4ededd8ab332aff",
+      "size_in_bytes": 6550
+    },
+    {
+      "_path": "include/arrow/io/interfaces.h",
+      "path_type": "hardlink",
+      "sha256": "3e0974d7c688c5173b66066eddf0683b793b5f6549e69c8c3093c1d6ef213724",
+      "size_in_bytes": 3683
+    },
+    {
+      "_path": "include/arrow/io/memory.h",
+      "path_type": "hardlink",
+      "sha256": "5d0192951c3cbfa52dfc71e21f8b3f1264886322e1c4d27817c160c62b0bba22",
+      "size_in_bytes": 2663
+    },
+    {
+      "_path": "include/arrow/ipc/adapter.h",
+      "path_type": "hardlink",
+      "sha256": "bb3acd919d73c17a97be18452e8e5bfb0d49a9228c3d323c2f0cc00cad77bd08",
+      "size_in_bytes": 4118
+    },
+    {
+      "_path": "include/arrow/ipc/file.h",
+      "path_type": "hardlink",
+      "sha256": "1b6ed831f61a31f0776dc069aeccebb9dc46ec5d1b3a66cdeacbe15cc94feaa7",
+      "size_in_bytes": 4601
+    },
+    {
+      "_path": "include/arrow/ipc/json.h",
+      "path_type": "hardlink",
+      "sha256": "1681a90c5405bfb9435c94c549dafaca272b496f31eeb47443560ab400d999c3",
+      "size_in_bytes": 2462
+    },
+    {
+      "_path": "include/arrow/ipc/metadata.h",
+      "path_type": "hardlink",
+      "sha256": "1ff17ce7342e7a5ae0e5951363aba61b0f66bcb924fc13c402e6b89588aba47b",
+      "size_in_bytes": 4325
+    },
+    {
+      "_path": "include/arrow/ipc/stream.h",
+      "path_type": "hardlink",
+      "sha256": "c4b6f1f290af69d292435529b23e8cf2f5b936058838c21f277afb4a63f72c24",
+      "size_in_bytes": 3168
+    },
+    {
+      "_path": "include/arrow/jemalloc/memory_pool.h",
+      "path_type": "hardlink",
+      "sha256": "543727b12e5c271dd8cf1c00b894d9f8df9fe9652aef5ea375d2b7b725e39819",
+      "size_in_bytes": 1658
+    },
+    {
+      "_path": "include/arrow/memory_pool.h",
+      "path_type": "hardlink",
+      "sha256": "3187f17df3f17db0bbbb205fd86d29fe8a70954bc39644b8a5ea4c49039a5be4",
+      "size_in_bytes": 3086
+    },
+    {
+      "_path": "include/arrow/pretty_print.h",
+      "path_type": "hardlink",
+      "sha256": "7b7c573be66796709ae89c45c61377a9e401be00e58da8d0de85bc19cf76b783",
+      "size_in_bytes": 1255
+    },
+    {
+      "_path": "include/arrow/schema.h",
+      "path_type": "hardlink",
+      "sha256": "0fc566a2038a2e2075bfe39637ae8bf830a03bea094ac9bd9079ddd723d50f72",
+      "size_in_bytes": 1909
+    },
+    {
+      "_path": "include/arrow/status.h",
+      "path_type": "hardlink",
+      "sha256": "2ea142f3f4534051291d4c52814c083a3d0f5f985032335aa0ffed02a19df8b9",
+      "size_in_bytes": 6211
+    },
+    {
+      "_path": "include/arrow/table.h",
+      "path_type": "hardlink",
+      "sha256": "f09403eaa19e01cfc8368ca00975563e5a0f69f19ef9b8b2343030d7511b75ad",
+      "size_in_bytes": 4890
+    },
+    {
+      "_path": "include/arrow/test-util.h",
+      "path_type": "hardlink",
+      "sha256": "52079f7be1c454f77df97e62914bb6862b8839e06999b7ff3ce892928c5fdb72",
+      "size_in_bytes": 8684
+    },
+    {
+      "_path": "include/arrow/type.h",
+      "path_type": "hardlink",
+      "sha256": "a173746ede6dc93f56789dd45b5c7838a0bd97342e9b29c938cc2a6229da7046",
+      "size_in_bytes": 18786
+    },
+    {
+      "_path": "include/arrow/type_fwd.h",
+      "path_type": "hardlink",
+      "sha256": "6ead99c424bdfc211e3af76ed26b19671c679e8858480e9646109a3620bfeb0a",
+      "size_in_bytes": 3513
+    },
+    {
+      "_path": "include/arrow/type_traits.h",
+      "path_type": "hardlink",
+      "sha256": "9cbd5ec34ec12e896a1aed7cb210598da342a44a2aa355a92708c15533b1fefa",
+      "size_in_bytes": 8510
+    },
+    {
+      "_path": "include/arrow/util/bit-util.h",
+      "path_type": "hardlink",
+      "sha256": "6b006f45c34a75f184d37be345389e109a535c7f369c9c93d5964090d3ec2fad",
+      "size_in_bytes": 4536
+    },
+    {
+      "_path": "include/arrow/util/logging.h",
+      "path_type": "hardlink",
+      "sha256": "16deba95f8804a54e1b63c49036aad83bf00e8107aeaadf35bfd272c3951bfff",
+      "size_in_bytes": 3793
+    },
+    {
+      "_path": "include/arrow/util/macros.h",
+      "path_type": "hardlink",
+      "sha256": "3a6e586bc3488597b9cdcfe7b922e9b2bb05aedffeffc734928074e1ca1d4c45",
+      "size_in_bytes": 1117
+    },
+    {
+      "_path": "include/arrow/util/random.h",
+      "path_type": "hardlink",
+      "sha256": "68e569a21fa0d49c7430d5f54c4dfb1343c390f5df08ecdc059566683f502fca",
+      "size_in_bytes": 4204
+    },
+    {
+      "_path": "include/arrow/util/visibility.h",
+      "path_type": "hardlink",
+      "sha256": "b71a635aea1b66b017086a398fe8420a56b40216578d07d8e10b6b7ce463cf9f",
+      "size_in_bytes": 1352
+    },
+    {
+      "_path": "lib/libarrow.a",
+      "path_type": "hardlink",
+      "sha256": "6df66cfec082a28d61573caf9c34da8374d36485387fc3fe64b79565c2463913",
+      "size_in_bytes": 14355336
+    },
+    {
+      "_path": "lib/libarrow.so",
+      "path_type": "hardlink",
+      "sha256": "b78a27017b37658d87b67bfb0deef137617fc91754298245b930b9cb3359554b",
+      "size_in_bytes": 5909300
+    },
+    {
+      "_path": "lib/libarrow_io.a",
+      "path_type": "hardlink",
+      "sha256": "3eccee79cb45eb5204065291839208ffa4b56629e9c1ccdb2ab1001273a58901",
+      "size_in_bytes": 4662858
+    },
+    {
+      "_path": "lib/libarrow_io.so",
+      "file_mode": "binary",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/feedstock_root/build_artefacts/arrow-cpp_1487947520996/_b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pl",
+      "sha256": "79292c55da3c694706df8d02c084d5b1eac515a2b3e837c948c4b6f957ae90bd",
+      "size_in_bytes": 1937496
+    },
+    {
+      "_path": "lib/libarrow_ipc.a",
+      "path_type": "hardlink",
+      "sha256": "c252e5bcad8d647eec5a5f48c1871b135c27a9036346990a9e6cec1db9b66502",
+      "size_in_bytes": 12793062
+    },
+    {
+      "_path": "lib/libarrow_ipc.so",
+      "file_mode": "binary",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/feedstock_root/build_artefacts/arrow-cpp_1487947520996/_b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pl",
+      "sha256": "01f9f890189a64e0499253d86a38da297390ef2af91cdb71b6c8ff70521a38a2",
+      "size_in_bytes": 5119944
+    },
+    {
+      "_path": "lib/libarrow_jemalloc.a",
+      "path_type": "hardlink",
+      "sha256": "8ce6f1f26503cda56330130310a7e56c112b6434608a309ee169347de7abbe60",
+      "size_in_bytes": 210974
+    },
+    {
+      "_path": "lib/libarrow_jemalloc.so",
+      "file_mode": "binary",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/feedstock_root/build_artefacts/arrow-cpp_1487947520996/_b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pl",
+      "sha256": "f1db3f9ec517604179d98207b04b9defd0d031dbfe5147bea861c7a2cdb00cfb",
+      "size_in_bytes": 118032
+    },
+    {
+      "_path": "lib/pkgconfig/arrow-io.pc",
+      "file_mode": "text",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/opt/anaconda1anaconda2anaconda3",
+      "sha256": "b340b7795ddb2bcb161889366bb34317b0423a06f862779bdb69b507c6f5301a",
+      "size_in_bytes": 1017
+    },
+    {
+      "_path": "lib/pkgconfig/arrow-ipc.pc",
+      "file_mode": "text",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/opt/anaconda1anaconda2anaconda3",
+      "sha256": "9f597a11e398834db8d8b42f7b714c4a7d676e8b99db8f452728a788eb67b75d",
+      "size_in_bytes": 1021
+    },
+    {
+      "_path": "lib/pkgconfig/arrow-jemalloc.pc",
+      "file_mode": "text",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/opt/anaconda1anaconda2anaconda3",
+      "sha256": "f762f2362a9631b17e1f77fe60c5913e5e0b95475da2a25476529adfcf8806a2",
+      "size_in_bytes": 1049
+    },
+    {
+      "_path": "lib/pkgconfig/arrow.pc",
+      "file_mode": "text",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/opt/anaconda1anaconda2anaconda3",
+      "sha256": "5ca80de3bcafaedabd2ce7192117f7a36d1e090b399e13a634195e0409eb3fd0",
+      "size_in_bytes": 1060
+    }
+  ],
+  "paths_version": 1
+}
