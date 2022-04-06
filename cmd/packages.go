@@ -48,6 +48,7 @@ const (
     {{.appName}} {{.command}} docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
     {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
     {{.appName}} {{.command}} oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
+    {{.appName}} {{.command}} sif-file:path/to/yourimage.sif         read directly from a sif image on disk (squashfuse required for mounting image)
 `
 	nonImageSchemeHelp = `    {{.appName}} {{.command}} dir:path/to/yourproject                read directly from a path on disk (any directory)
     {{.appName}} {{.command}} file:path/to/yourproject/file          read directly from a path on disk (any single file)

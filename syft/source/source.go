@@ -16,6 +16,7 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/stereoscope/pkg/image/sif"
 	"github.com/anchore/syft/internal/log"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archiver/v3"
@@ -110,7 +111,12 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 	case DirectoryScheme:
 		source, cleanupFn, err = generateDirectorySource(fs, in.Location)
 	case ImageScheme:
-		source, cleanupFn, err = generateImageSource(in, registryOptions)
+		switch in.ImageSource {
+		case image.SifFileSource:
+			source, cleanupFn, err = generateSifImageSource(in, registryOptions)
+		default:
+			source, cleanupFn, err = generateImageSource(in, registryOptions)
+		}
 	default:
 		err = fmt.Errorf("unable to process input for scanning: %q", in.UserInput)
 	}
@@ -131,6 +137,20 @@ func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Sou
 	s, err := NewFromImage(img, in.Location)
 	if err != nil {
 		return nil, cleanup, fmt.Errorf("could not populate source with image: %w", err)
+	}
+
+	return &s, cleanup, nil
+}
+
+func generateSifImageSource(in Input, registryOptions *image.RegistryOptions) (*Source, func(), error) {
+	img, cleanup, err := getSifImage(in, registryOptions)
+	if err != nil || img == nil {
+		return nil, cleanup, fmt.Errorf("could not fetch sif image %q: %w", in.Location, err)
+	}
+
+	s, err := NewFromSifImage(img, in.Location)
+	if err != nil {
+		return nil, cleanup, fmt.Errorf("could not populate source with sif image: %w", err)
 	}
 
 	return &s, cleanup, nil
@@ -201,6 +221,31 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 		}
 	}
 	return img, cleanup, err
+}
+
+func getSifImage(in Input, registryOptions *image.RegistryOptions) (*sif.Image, func(), error) {
+	ctx := context.TODO()
+
+	var opts []stereoscope.Option
+	if registryOptions != nil {
+		opts = append(opts, stereoscope.WithRegistryOptions(*registryOptions))
+	}
+
+	if in.Platform != "" {
+		opts = append(opts, stereoscope.WithPlatform(in.Platform))
+	}
+
+	img, err := stereoscope.GetSifImageFromSource(ctx, in.Location, in.ImageSource, opts...)
+	cleanup := func() {
+		if err := img.Cleanup(ctx); err != nil {
+			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
+		}
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return img, cleanup, nil
 }
 
 func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {
@@ -304,6 +349,25 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 	}, nil
 }
 
+// NewFromSifImage creates a new source object tailored to catalog a given sif image
+func NewFromSifImage(img *sif.Image, userImageStr string) (Source, error) {
+	if img == nil {
+		return Source{}, fmt.Errorf("no image given")
+	}
+
+	stereoscopeImg := &image.Image{Metadata: img.Metadata}
+
+	return Source{
+		mutex: &sync.Mutex{},
+		Metadata: Metadata{
+			Scheme:        ImageScheme,
+			ImageMetadata: NewImageMetadata(stereoscopeImg, userImageStr),
+			Path:          userImageStr,
+		},
+		path: img.MountedPath,
+	}, nil
+}
+
 func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 	switch s.Metadata.Scheme {
 	case DirectoryScheme, FileScheme:
@@ -322,6 +386,23 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 		return s.directoryResolver, nil
 	case ImageScheme:
+		// directory mount is used for current image
+		if s.path != "" {
+			s.mutex.Lock()
+			defer s.mutex.Unlock()
+			if s.directoryResolver == nil {
+				exclusionFunctions, err := getDirectoryExclusionFunctions(s.path, s.Exclusions)
+				if err != nil {
+					return nil, err
+				}
+				resolver, err := newDirectoryResolver(s.path, exclusionFunctions...)
+				if err != nil {
+					return nil, fmt.Errorf("unable to create directory resolver: %w", err)
+				}
+				s.directoryResolver = resolver
+			}
+			return s.directoryResolver, nil
+		}
 		var resolver FileResolver
 		var err error
 		switch scope {

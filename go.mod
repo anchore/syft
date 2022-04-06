@@ -41,7 +41,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spdx/tools-golang v0.2.0
 	github.com/spf13/afero v1.8.0
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
@@ -56,6 +56,9 @@ require (
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+// TODO: remove this and update anchore's stereoscope to new version once sylabs PR merged
+replace github.com/anchore/stereoscope => github.com/Poluect/stereoscope v0.0.0-20220406165417-c84610727906
 
 require (
 	github.com/docker/docker v20.10.12+incompatible
@@ -212,6 +215,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.0.0-beta.12 // indirect
+	github.com/sylabs/sif/v2 v2.4.3-0.20220401211304-d7a38b58471c // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tent/canonical-json-go v0.0.0-20130607151641-96e4ba3a7613 // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
