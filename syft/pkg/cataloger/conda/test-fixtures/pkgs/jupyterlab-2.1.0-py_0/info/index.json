@@ -1,0 +1,20 @@
+{
+  "arch": null,
+  "build": "py_0",
+  "build_number": 0,
+  "depends": [
+    "jinja2 >=2.10",
+    "jupyterlab_server >=1.0.0,<2.0.0",
+    "notebook >=4.3.1",
+    "python >=3.5",
+    "tornado !=6.0.0,!=6.0.1,!=6.0.2"
+  ],
+  "license": "BSD-3-Clause",
+  "license_family": "BSD",
+  "name": "jupyterlab",
+  "noarch": "python",
+  "platform": null,
+  "subdir": "noarch",
+  "timestamp": 1586212455849,
+  "version": "2.1.0"
+}
