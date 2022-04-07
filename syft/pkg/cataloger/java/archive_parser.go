@@ -175,10 +175,10 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Metadata: pkg.JavaMetadata{
 			VirtualPath: j.virtualPath,
 			Manifest:    manifest,
-			Digest: &syftFile.Digest{
-				Algorithm: file.DefaultDigestAlgorithm,
+			ArchiveDigests: []syftFile.Digest{{
+				Algorithm: "SHA-1",
 				Value:     digest,
-			},
+			}},
 		},
 	}, nil
 }

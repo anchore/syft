@@ -95,7 +95,7 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 		// grab and assign digest for the visited zip file
 		digest, err := Digest(file.FileInfo().Name())
 		if err != nil {
-			log.Warnf("failed to parse digest for file (%s): %+v", file.Name, err)
+			log.Warnf("failed to calculate digest for file (%s): %+v", file.Name, err)
 		}
 
 		zippedFile, err := file.Open()

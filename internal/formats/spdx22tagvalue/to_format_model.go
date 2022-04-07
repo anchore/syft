@@ -110,11 +110,13 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 		// FilesAnalyzed should be true in this case
 		if p.MetadataType == pkg.JavaMetadataType {
 			javaMetadata := p.Metadata.(pkg.JavaMetadata)
-			if javaMetadata.Digest != nil {
+			if len(javaMetadata.ArchiveDigests) > 0 {
 				filesAnalyzed = true
-				checksums[spdx.SHA1] = spdx.Checksum{
-					Algorithm: spdx.SHA1,
-					Value:     javaMetadata.Digest.Value,
+				for _, digest := range javaMetadata.ArchiveDigests {
+					checksums[spdx.SHA1] = spdx.Checksum{
+						Algorithm: spdx.SHA1,
+						Value:     digest.Value,
+					}
 				}
 			}
 		}

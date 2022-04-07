@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/file"
 	syftFile "github.com/anchore/syft/syft/file"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -51,15 +50,17 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 				})
 			}
 		case pkg.JavaMetadata:
-			if metadata.Digest != nil {
-				refs = append(refs, cyclonedx.ExternalReference{
-					URL:  "",
-					Type: cyclonedx.ERTypeBuildMeta,
-					Hashes: &[]cyclonedx.Hash{{
-						Algorithm: file.DefaultDigestAlgorithm,
-						Value:     metadata.Digest.Value,
-					}},
-				})
+			if len(metadata.ArchiveDigests) > 0 {
+				for _, digest := range metadata.ArchiveDigests {
+					refs = append(refs, cyclonedx.ExternalReference{
+						URL:  "",
+						Type: cyclonedx.ERTypeBuildMeta,
+						Hashes: &[]cyclonedx.Hash{{
+							Algorithm: cyclonedx.HashAlgoSHA1,
+							Value:     digest.Value,
+						}},
+					})
+				}
 			}
 		case pkg.PythonPackageMetadata:
 			if metadata.DirectURLOrigin != nil && metadata.DirectURLOrigin.URL != "" {
@@ -95,14 +96,15 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 	case *pkg.GemMetadata:
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 	case *pkg.JavaMetadata:
-		meta.Digest = &syftFile.Digest{}
+		var digests []syftFile.Digest
 		ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta)
 		for _, hash := range *ref.Hashes {
-			if hash.Algorithm == file.DefaultDigestAlgorithm {
-				meta.Digest.Algorithm = file.DefaultDigestAlgorithm
-				meta.Digest.Value = hash.Value
-			}
+			digests = append(digests, syftFile.Digest{
+				Algorithm: fmt.Sprintf("%v", hash.Algorithm),
+				Value:     hash.Value,
+			})
 		}
+		meta.ArchiveDigests = digests
 	case *pkg.PythonPackageMetadata:
 		if meta.DirectURLOrigin == nil {
 			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}

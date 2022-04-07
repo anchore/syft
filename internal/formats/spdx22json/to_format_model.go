@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/anchore/syft/internal"
-	internalFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
 	"github.com/anchore/syft/internal/formats/spdx22json/model"
 	"github.com/anchore/syft/internal/log"
@@ -64,12 +63,14 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 		// https://spdx.dev/wp-content/uploads/sites/41/2020/08/SPDX-specification-2-2.pdf
 		if p.MetadataType == pkg.JavaMetadataType {
 			javaMetadata := p.Metadata.(pkg.JavaMetadata)
-			if javaMetadata.Digest != nil {
+			if len(javaMetadata.ArchiveDigests) > 0 {
 				filesAnalyzed = true
-				checksums = append(checksums, model.Checksum{
-					Algorithm:     internalFile.DefaultDigestAlgorithm,
-					ChecksumValue: javaMetadata.Digest.Value,
-				})
+				for _, digest := range javaMetadata.ArchiveDigests {
+					checksums = append(checksums, model.Checksum{
+						Algorithm:     digest.Algorithm,
+						ChecksumValue: digest.Value,
+					})
+				}
 			}
 		}
 		// note: the license concluded and declared should be the same since we are collecting license information
