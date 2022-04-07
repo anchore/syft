@@ -8,6 +8,7 @@ package cataloger
 import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
@@ -35,6 +36,7 @@ type Cataloger interface {
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
 func ImageCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
+		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
@@ -50,6 +52,7 @@ func ImageCatalogers(cfg Config) []Cataloger {
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
 func DirectoryCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
+		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
@@ -69,6 +72,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 // AllCatalogers returns all implemented catalogers
 func AllCatalogers(cfg Config) []Cataloger {
 	return []Cataloger{
+		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonIndexCataloger(),
