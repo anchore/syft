@@ -56,7 +56,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 						URL:  "",
 						Type: cyclonedx.ERTypeBuildMeta,
 						Hashes: &[]cyclonedx.Hash{{
-							Algorithm: cyclonedx.HashAlgoSHA1,
+							Algorithm: cyclonedx.HashAlgorithm(digest.Algorithm),
 							Value:     digest.Value,
 						}},
 					})
@@ -100,7 +100,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 		ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta)
 		for _, hash := range *ref.Hashes {
 			digests = append(digests, syftFile.Digest{
-				Algorithm: fmt.Sprintf("%v", hash.Algorithm),
+				Algorithm: string(hash.Algorithm),
 				Value:     hash.Value,
 			})
 		}

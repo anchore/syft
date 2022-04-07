@@ -71,7 +71,6 @@ func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths
 }
 
 // ExtractFromZipToUniqueTempFile extracts select paths for the given archive to a temporary directory, returning file openers for each file extracted.
-// It also preserves the digest of the discovered zip file on the opener so that data can be used later for metadata construction
 func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (map[string]Opener, error) {
 	results := make(map[string]Opener)
 

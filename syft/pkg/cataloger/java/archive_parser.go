@@ -163,7 +163,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	// grab and assign digest for the entire archive
 	digest, err := syftFile.CalculateDigest(j.archivePath, syftFile.HashAlgoSHA1)
 	if err != nil {
-		log.Warnf("failed to parse digest for file (%s): %+v", j.archivePath, err)
+		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
 
 	return &pkg.Package{

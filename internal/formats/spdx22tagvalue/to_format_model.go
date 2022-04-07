@@ -113,8 +113,8 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 			if len(javaMetadata.ArchiveDigests) > 0 {
 				filesAnalyzed = true
 				for _, digest := range javaMetadata.ArchiveDigests {
-					checksums[spdx.SHA1] = spdx.Checksum{
-						Algorithm: spdx.SHA1,
+					checksums[spdx.ChecksumAlgorithm(digest.Algorithm)] = spdx.Checksum{
+						Algorithm: spdx.ChecksumAlgorithm(digest.Algorithm),
 						Value:     digest.Value,
 					}
 				}
