@@ -92,12 +92,6 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 		// provides a ReadCloser. It is up to the caller to handle closing the file explicitly.
 		defer tempFile.Close()
 
-		// grab and assign digest for the visited zip file
-		digest, err := Digest(file.FileInfo().Name())
-		if err != nil {
-			log.Warnf("failed to calculate digest for file (%s): %+v", file.Name, err)
-		}
-
 		zippedFile, err := file.Open()
 		if err != nil {
 			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
@@ -118,8 +112,7 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 		}
 
 		results[file.Name] = Opener{
-			path:   tempFile.Name(),
-			digest: digest,
+			path: tempFile.Name(),
 		}
 
 		return nil

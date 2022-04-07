@@ -7,8 +7,7 @@ import (
 
 // Opener is an object that stores a path to later be opened as a file.
 type Opener struct {
-	path   string
-	digest string
+	path string
 }
 
 // Open the stored path as a io.ReadCloser.

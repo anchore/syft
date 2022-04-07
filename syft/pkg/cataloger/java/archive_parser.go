@@ -161,7 +161,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}
 
 	// grab and assign digest for the entire archive
-	digest, err := file.Digest(j.archivePath)
+	digest, err := syftFile.CalculateDigest(j.archivePath, syftFile.HashAlgoSHA1)
 	if err != nil {
 		log.Warnf("failed to parse digest for file (%s): %+v", j.archivePath, err)
 	}
@@ -173,12 +173,9 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
-			VirtualPath: j.virtualPath,
-			Manifest:    manifest,
-			ArchiveDigests: []syftFile.Digest{{
-				Algorithm: "SHA-1",
-				Value:     digest,
-			}},
+			VirtualPath:    j.virtualPath,
+			Manifest:       manifest,
+			ArchiveDigests: []syftFile.Digest{*digest},
 		},
 	}, nil
 }
