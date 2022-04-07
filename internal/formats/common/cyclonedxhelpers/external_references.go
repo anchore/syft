@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/file"
+	syftFile "github.com/anchore/syft/syft/file"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
@@ -92,6 +93,15 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 	case *pkg.GemMetadata:
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.JavaMetadata:
+		meta.Digest = &syftFile.Digest{}
+		ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta)
+		for _, hash := range *ref.Hashes {
+			if hash.Algorithm == file.DefaultDigestAlgorithm {
+				meta.Digest.Algorithm = file.DefaultDigestAlgorithm
+				meta.Digest.Value = hash.Value
+			}
+		}
 	case *pkg.PythonPackageMetadata:
 		if meta.DirectURLOrigin == nil {
 			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
