@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 	"github.com/gookit/color"
@@ -286,8 +285,7 @@ func TestParseJar(t *testing.T) {
 
 				// redact Digest which is computed differently between CI and local
 				if len(metadata.ArchiveDigests) > 0 {
-					var digests []file.Digest
-					metadata.ArchiveDigests = digests
+					metadata.ArchiveDigests = nil
 				}
 
 				// ignore select fields (only works for the main section)
