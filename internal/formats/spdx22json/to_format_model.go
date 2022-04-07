@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/anchore/syft/internal"
+	internalFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
 	"github.com/anchore/syft/internal/formats/spdx22json/model"
 	"github.com/anchore/syft/internal/log"
@@ -56,6 +57,7 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 		license := spdxhelpers.License(p)
 		packageSpdxID := model.ElementID(p.ID()).String()
 		filesAnalyzed := false
+		checksums := make([]model.Checksum, 0)
 
 		// we generate digest for some Java packages
 		// see page 33 of the spdx specification for 2.2
@@ -64,11 +66,16 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 			javaMetadata := p.Metadata.(pkg.JavaMetadata)
 			if javaMetadata.Digest != nil {
 				filesAnalyzed = true
+				checksums = append(checksums, model.Checksum{
+					Algorithm:     internalFile.DefaultDigestAlgorithm,
+					ChecksumValue: javaMetadata.Digest.Value,
+				})
 			}
 		}
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
 		packages = append(packages, model.Package{
+			Checksums:        checksums,
 			Description:      spdxhelpers.Description(p),
 			DownloadLocation: spdxhelpers.DownloadLocation(p),
 			ExternalRefs:     spdxhelpers.ExternalRefs(p),
