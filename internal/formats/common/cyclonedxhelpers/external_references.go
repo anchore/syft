@@ -2,8 +2,9 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
-	"github.com/anchore/syft/internal/file"
 	"strings"
+
+	"github.com/anchore/syft/internal/file"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
