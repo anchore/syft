@@ -55,14 +55,24 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 	for _, p := range catalog.Sorted() {
 		license := spdxhelpers.License(p)
 		packageSpdxID := model.ElementID(p.ID()).String()
+		filesAnalyzed := false
 
+		// we generate digest for some Java packages
+		// see page 33 of the spdx specification for 2.2
+		// https://spdx.dev/wp-content/uploads/sites/41/2020/08/SPDX-specification-2-2.pdf
+		if p.MetadataType == pkg.JavaMetadataType {
+			javaMetadata := p.Metadata.(pkg.JavaMetadata)
+			if javaMetadata.Digest != nil {
+				filesAnalyzed = true
+			}
+		}
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
 		packages = append(packages, model.Package{
 			Description:      spdxhelpers.Description(p),
 			DownloadLocation: spdxhelpers.DownloadLocation(p),
 			ExternalRefs:     spdxhelpers.ExternalRefs(p),
-			FilesAnalyzed:    false,
+			FilesAnalyzed:    filesAnalyzed,
 			HasFiles:         fileIDsForPackage(packageSpdxID, relationships),
 			Homepage:         spdxhelpers.Homepage(p),
 			// The Declared License is what the authors of a project believe govern the package
