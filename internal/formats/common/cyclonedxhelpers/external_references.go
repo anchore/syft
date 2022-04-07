@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-//nolint:funlen
+//nolint:funlen, gocognit
 func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	var refs []cyclonedx.ExternalReference
 	if hasMetadata(p) {
