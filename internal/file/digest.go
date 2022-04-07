@@ -3,9 +3,10 @@ package file
 import (
 	"crypto/sha1" //nolint:gosec
 	"encoding/hex"
-	"golang.org/x/xerrors"
 	"io"
 	"os"
+
+	"golang.org/x/xerrors"
 
 	"github.com/anchore/syft/internal/log"
 )
