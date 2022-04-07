@@ -1,7 +1,7 @@
 package file
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" //nolint:gosec
 	"encoding/hex"
 	"golang.org/x/xerrors"
 	"io"
@@ -19,7 +19,7 @@ func Digest(filepath string) (digest string, err error) {
 		return digest, xerrors.Errorf("unable to open file: %s - %w", filepath, err)
 	}
 
-	h := sha1.New()
+	h := sha1.New() //nolint:gosec
 	if _, err := io.Copy(h, file); err != nil {
 		return digest, xerrors.Errorf("unable to calculate SHA-1 for %s: %w", filepath, err)
 	}
