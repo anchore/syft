@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"github.com/anchore/syft/internal/file"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -9,7 +10,7 @@ import (
 )
 
 func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
-	refs := []cyclonedx.ExternalReference{}
+	var refs []cyclonedx.ExternalReference
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
@@ -44,6 +45,17 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.Homepage,
 					Type: cyclonedx.ERTypeWebsite,
+				})
+			}
+		case pkg.JavaMetadata:
+			if metadata.Digest != nil {
+				refs = append(refs, cyclonedx.ExternalReference{
+					URL:  "",
+					Type: cyclonedx.ERTypeBuildMeta,
+					Hashes: &[]cyclonedx.Hash{{
+						Algorithm: file.DefaultDigestAlgorithm,
+						Value:     metadata.Digest.Value,
+					}},
 				})
 			}
 		case pkg.PythonPackageMetadata:
