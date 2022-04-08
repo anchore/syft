@@ -97,14 +97,19 @@ func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.Pack
 	for _, record := range entry.Files {
 		// only persist RPMDB file records which exist in the image/directory, otherwise ignore them
 		if resolver.HasPath(record.Path) {
-			records = append(records, pkg.RpmdbFileRecord{
-				Path: record.Path,
-				Mode: pkg.RpmdbFileMode(record.Mode),
-				Size: int(record.Size),
-				Digest: file.Digest{
+			var digest *file.Digest
+			if record.Digest != "" {
+				digest = &file.Digest{
 					Value:     record.Digest,
 					Algorithm: entry.DigestAlgorithm.String(),
-				},
+				}
+			}
+
+			records = append(records, pkg.RpmdbFileRecord{
+				Path:      record.Path,
+				Mode:      pkg.RpmdbFileMode(record.Mode),
+				Size:      int(record.Size),
+				Digest:    digest,
 				UserName:  record.Username,
 				GroupName: record.Groupname,
 				Flags:     record.Flags.String(),

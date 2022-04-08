@@ -37,7 +37,7 @@ type RpmdbFileRecord struct {
 	Path      string        `json:"path"`
 	Mode      RpmdbFileMode `json:"mode"`
 	Size      int           `json:"size"`
-	Digest    file.Digest   `json:"digest"`
+	Digest    *file.Digest  `json:"digest,omitempty"`
 	UserName  string        `json:"userName"`
 	GroupName string        `json:"groupName"`
 	Flags     string        `json:"flags"`
