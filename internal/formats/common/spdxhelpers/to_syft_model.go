@@ -309,6 +309,14 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Architecture:  arch,
 			Maintainer:    p.PackageOriginatorPerson,
 		}
+	case pkg.JavaPkg:
+		var digests []file.Digest
+		for algorithm, value := range p.PackageChecksums {
+			digests = append(digests, file.Digest{Algorithm: string(algorithm), Value: value.Value})
+		}
+		return pkg.JavaMetadataType, pkg.JavaMetadata{
+			ArchiveDigests: digests,
+		}
 	}
 	return pkg.UnknownMetadataType, nil
 }
