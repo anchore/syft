@@ -37,8 +37,8 @@ var archiveFormatGlobs = []string{
 	// project that we can build in CI feel free to include it
 }
 
-// JavaArchiveHashes are all the current hash algorithms used to calculate archive digests
-var JavaArchiveHashes = []crypto.Hash{
+// javaArchiveHashes are all the current hash algorithms used to calculate archive digests
+var javaArchiveHashes = []crypto.Hash{
 	crypto.SHA1,
 }
 
@@ -174,7 +174,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	defer archiveCloser.Close()
 
 	// grab and assign digest for the entire archive
-	digests, err := syftFile.DigestsFromFile(archiveCloser, JavaArchiveHashes)
+	digests, err := syftFile.DigestsFromFile(archiveCloser, javaArchiveHashes)
 	if err != nil {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
