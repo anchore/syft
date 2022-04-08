@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:1535f940-172f-4d97-8280-d5a5764d1557" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:7d05a901-fcf8-401b-b41d-e14439a39cdd" version="1">
   <metadata>
-    <timestamp>2022-04-01T11:57:46-04:00</timestamp>
+    <timestamp>2022-04-08T23:14:59+08:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
         <name>syft</name>
-        <version>[not provided]</version>
+        <version>v0.42.0-bogus</version>
       </tool>
     </tools>
-    <component bom-ref="e777314b02b362e4" type="container">
+    <component bom-ref="7ed2d2d27a8f2b13" type="container">
       <name>user-image-input</name>
       <version>sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368</version>
     </component>
@@ -30,7 +30,7 @@
         <property name="syft:package:language">python</property>
         <property name="syft:package:metadataType">PythonPackageMetadata</property>
         <property name="syft:package:type">python</property>
-        <property name="syft:location:0:layerID">sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59</property>
+        <property name="syft:location:0:layerID">sha256:7f11abb1b83da28ce374f1e6535949b58ba8dd848cb55859b493f839aaa6a85d</property>
         <property name="syft:location:0:path">/somefile-1.txt</property>
       </properties>
     </component>
@@ -43,7 +43,7 @@
         <property name="syft:package:foundBy">the-cataloger-2</property>
         <property name="syft:package:metadataType">DpkgMetadata</property>
         <property name="syft:package:type">deb</property>
-        <property name="syft:location:0:layerID">sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec</property>
+        <property name="syft:location:0:layerID">sha256:82cebd2161fac27a7815709eb5167086b5a1391119bdf7c7be27ee1f5a33c942</property>
         <property name="syft:location:0:path">/somefile-2.txt</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>

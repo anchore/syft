@@ -1,15 +1,15 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:dec3f6b4-8458-48bb-b60d-dfd312f6ec4e",
+  "serialNumber": "urn:uuid:d56cee6e-ae65-456b-aa8d-50e3b75034f7",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-04-01T11:48:04-04:00",
+    "timestamp": "2022-04-08T23:15:28+08:00",
     "tools": [
       {
         "vendor": "anchore",
         "name": "syft",
-        "version": "[not provided]"
+        "version": "v0.42.0-bogus"
       }
     ],
     "component": {

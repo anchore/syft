@@ -1,19 +1,19 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:054d973e-fe99-4762-92e4-eaf01997ae41",
+  "serialNumber": "urn:uuid:d0c9eadf-196b-48e0-a314-a1d92046fd2b",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-04-01T11:48:04-04:00",
+    "timestamp": "2022-04-08T23:15:28+08:00",
     "tools": [
       {
         "vendor": "anchore",
         "name": "syft",
-        "version": "[not provided]"
+        "version": "v0.42.0-bogus"
       }
     ],
     "component": {
-      "bom-ref": "e777314b02b362e4",
+      "bom-ref": "7ed2d2d27a8f2b13",
       "type": "container",
       "name": "user-image-input",
       "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
@@ -53,7 +53,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"
+          "value": "sha256:7f11abb1b83da28ce374f1e6535949b58ba8dd848cb55859b493f839aaa6a85d"
         },
         {
           "name": "syft:location:0:path",
@@ -83,7 +83,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec"
+          "value": "sha256:82cebd2161fac27a7815709eb5167086b5a1391119bdf7c7be27ee1f5a33c942"
         },
         {
           "name": "syft:location:0:path",
