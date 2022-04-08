@@ -56,11 +56,11 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 		license := spdxhelpers.License(p)
 		packageSpdxID := model.ElementID(p.ID()).String()
 		filesAnalyzed := false
-		checksums := make([]model.Checksum, 0)
 
 		// we generate digest for some Java packages
 		// see page 33 of the spdx specification for 2.2
-		// https://spdx.dev/wp-content/uploads/sites/41/2020/08/SPDX-specification-2-2.pdf
+		// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
+		var checksums []model.Checksum
 		if p.MetadataType == pkg.JavaMetadataType {
 			javaMetadata := p.Metadata.(pkg.JavaMetadata)
 			if len(javaMetadata.ArchiveDigests) > 0 {

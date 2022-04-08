@@ -82,7 +82,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}
 
-	return digests, err
+	return digests, nil
 }
 
 func DigestsFromFile(closer io.ReadCloser, hashes []crypto.Hash) ([]Digest, error) {
