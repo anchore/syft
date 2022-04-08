@@ -97,13 +97,17 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 	case *pkg.JavaMetadata:
 		var digests []syftFile.Digest
-		ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta)
-		for _, hash := range *ref.Hashes {
-			digests = append(digests, syftFile.Digest{
-				Algorithm: string(hash.Algorithm),
-				Value:     hash.Value,
-			})
+		if ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta); ref != nil {
+			if ref.Hashes != nil {
+				for _, hash := range *ref.Hashes {
+					digests = append(digests, syftFile.Digest{
+						Algorithm: string(hash.Algorithm),
+						Value:     hash.Value,
+					})
+				}
+			}
 		}
+
 		meta.ArchiveDigests = digests
 	case *pkg.PythonPackageMetadata:
 		if meta.DirectURLOrigin == nil {
