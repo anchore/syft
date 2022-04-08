@@ -1,8 +1,9 @@
 package integration
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg/cataloger"
 
@@ -40,6 +41,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 		Source:        theSource.Metadata,
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
+			Vendor:  "anchore",
 			Version: "v0.42.0-bogus",
 			// the application configuration should be persisted here, however, we do not want to import
 			// the application configuration in this package (it's reserved only for ingestion by the cmd package)
