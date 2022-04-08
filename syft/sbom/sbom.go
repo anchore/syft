@@ -28,6 +28,7 @@ type Artifacts struct {
 type Descriptor struct {
 	Name          string
 	Version       string
+	Vendor        string
 	Configuration interface{}
 }
 
