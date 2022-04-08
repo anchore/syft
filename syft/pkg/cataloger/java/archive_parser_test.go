@@ -283,6 +283,11 @@ func TestParseJar(t *testing.T) {
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				metadata.Parent = nil
 
+				// redact Digest which is computed differently between CI and local
+				if len(metadata.ArchiveDigests) > 0 {
+					metadata.ArchiveDigests = nil
+				}
+
 				// ignore select fields (only works for the main section)
 				for _, field := range test.ignoreExtras {
 					if metadata.Manifest != nil && metadata.Manifest.Main != nil {
@@ -567,7 +572,6 @@ func TestParseNestedJar(t *testing.T) {
 						}
 					}
 				}
-
 			}
 		})
 	}

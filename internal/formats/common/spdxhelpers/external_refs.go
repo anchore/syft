@@ -22,5 +22,6 @@ func ExternalRefs(p pkg.Package) (externalRefs []ExternalRef) {
 			ReferenceType:     PurlExternalRefType,
 		})
 	}
+
 	return externalRefs
 }
