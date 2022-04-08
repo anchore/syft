@@ -110,9 +110,7 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.Name, archivePath, err)
 		}
 
-		results[file.Name] = Opener{
-			path: tempFile.Name(),
-		}
+		results[file.Name] = Opener{path: tempFile.Name()}
 
 		return nil
 	}

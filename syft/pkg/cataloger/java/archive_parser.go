@@ -1,8 +1,10 @@
 package java
 
 import (
+	"crypto"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"strings"
 
@@ -33,6 +35,11 @@ var archiveFormatGlobs = []string{
 	// LifeRay makes it pretty cumbersome to make a such plugins; their docs are
 	// out of date, and they charge for their IDE. If you find an example
 	// project that we can build in CI feel free to include it
+}
+
+// JavaArchiveHashes are all the current hash algorithms used to calculate archive digests
+var JavaArchiveHashes = []crypto.Hash{
+	crypto.SHA1,
 }
 
 type archiveParser struct {
@@ -160,8 +167,14 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, nil
 	}
 
+	archiveCloser, err := os.Open(j.archivePath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open archive path (%s): %w", j.archivePath, err)
+	}
+	defer archiveCloser.Close()
+
 	// grab and assign digest for the entire archive
-	digest, err := syftFile.CalculateDigest(j.archivePath, syftFile.HashAlgoSHA1)
+	digests, err := syftFile.DigestsFromFile(archiveCloser, JavaArchiveHashes)
 	if err != nil {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
@@ -175,7 +188,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Metadata: pkg.JavaMetadata{
 			VirtualPath:    j.virtualPath,
 			Manifest:       manifest,
-			ArchiveDigests: []syftFile.Digest{*digest},
+			ArchiveDigests: digests,
 		},
 	}, nil
 }
