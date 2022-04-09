@@ -2,20 +2,29 @@ package alpm
 
 import (
 	"bufio"
+	"compress/gzip"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
-	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/source"
 	"github.com/mitchellh/mapstructure"
+	"github.com/vbatts/go-mtree"
 )
 
-// integrity check
-var _ common.ParserFn = parseAlpmDB
+var (
+	ignoredFiles = map[string]bool{
+		"/set":       true,
+		".BUILDINFO": true,
+		".PKGINFO":   true,
+		"":           true,
+	}
+)
 
 func newAlpmDBPackage(d *pkg.AlpmMetadata) *pkg.Package {
 	return &pkg.Package{
@@ -51,8 +60,22 @@ func newScanner(reader io.Reader) *bufio.Scanner {
 	return scanner
 }
 
-func parseDesc(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
+func getFileReader(path string, resolver source.FileResolver) (io.Reader, error) {
+	locs, err := resolver.FilesByPath(path)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: Should we maybe check if we found the file
+	dbContentReader, err := resolver.FileContentsByLocation(locs[0])
+	if err != nil {
+		return nil, err
+	}
+	return dbContentReader, nil
+}
+
+func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 	var entry pkg.AlpmMetadata
+	var err error
 	pkgFields := make(map[string]interface{})
 	for b.Scan() {
 		fields := strings.SplitN(b.Text(), "\n", 2)
@@ -68,13 +91,37 @@ func parseDesc(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 		value := strings.TrimSpace(fields[1])
 
 		switch key {
-		case "version":
-			ver := strings.SplitN(value, ":", 2)
-			if len(ver) == 1 {
-				pkgFields[key] = value
-			} else {
-				pkgFields["epoch"] = ver[0]
-				pkgFields[key] = ver[1]
+		case "files":
+			var files []map[string]string
+			for _, f := range strings.Split(value, "\n") {
+				path := fmt.Sprintf("/%s", f)
+				if ok := ignoredFiles[path]; !ok {
+					files = append(files, map[string]string{"path": path})
+				}
+			}
+			pkgFields[key] = files
+		case "backup":
+			var backup []map[string]interface{}
+			for _, f := range strings.Split(value, "\n") {
+				fields := strings.SplitN(f, "\t", 2)
+				path := fmt.Sprintf("/%s", fields[0])
+				if ok := ignoredFiles[path]; !ok {
+					backup = append(backup, map[string]interface{}{
+						"path":      path,
+						"md5digest": fields[1],
+						"digest": &file.Digest{
+							Algorithm: "md5",
+							Value:     fields[1],
+						}})
+				}
+			}
+			pkgFields[key] = backup
+		case "reason":
+			fallthrough
+		case "size":
+			pkgFields[key], err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse %s to integer", value)
 			}
 		default:
 			pkgFields[key] = value
@@ -83,47 +130,105 @@ func parseDesc(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 	if err := mapstructure.Decode(pkgFields, &entry); err != nil {
 		return nil, fmt.Errorf("unable to parse ALPM metadata: %w", err)
 	}
-	if entry.Package == "" {
+	if entry.Package == "" && len(entry.Files) == 0 && len(entry.Backup) == 0 {
 		return nil, nil
 	}
 	return &entry, nil
 }
 
-func parseFiles(b *bufio.Scanner) []pkg.AlpmFileRecord {
+func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
+	var err error
 	var entries []pkg.AlpmFileRecord
-	for b.Scan() {
-		if b.Text() == "" {
-			break
-		}
-		fields := strings.SplitN(b.Text(), "\n", 2)
-		if fields[0] != "%FILES%" {
-			return nil
-		}
-		for _, f := range strings.Split(fields[1], "\n") {
-			entries = append(entries, pkg.AlpmFileRecord{Path: f})
-		}
+
+	r, err = gzip.NewReader(r)
+	if err != nil {
+		return nil, err
 	}
-	return entries
+	specDh, err := mtree.ParseSpec(r)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range specDh.Entries {
+		var entry pkg.AlpmFileRecord
+		fileFields := make(map[string]interface{})
+		if ok := ignoredFiles[f.Name]; ok {
+			continue
+		}
+		path := fmt.Sprintf("/%s", f.Name)
+		fileFields["path"] = path
+		for _, kv := range f.Keywords {
+			kw := string(mtree.KeyVal(kv).Keyword())
+			if kw == "time" {
+				// All unix timestamps have a .0 suffixs.
+				v := strings.Split(mtree.KeyVal(kv).Value(), ".")
+				i, _ := strconv.ParseInt(v[0], 10, 64)
+				tm := time.Unix(i, 0)
+				fileFields[kw] = tm
+			} else {
+				fileFields[kw] = mtree.KeyVal(kv).Value()
+			}
+		}
+		if err := mapstructure.Decode(fileFields, &entry); err != nil {
+			return nil, fmt.Errorf("unable to parse ALPM mtree data: %w", err)
+		}
+		// This identifies a file
+		if entry.Type == "" {
+			entry.Digest = &file.Digest{
+				Algorithm: "sha256",
+				Value:     entry.Sha256digest,
+			}
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
 }
 
-func parseAlpmDB(f string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	base := filepath.Dir(f)
+func parseAlpmDBEntry(reader io.Reader) (*pkg.AlpmMetadata, error) {
 	scanner := newScanner(reader)
-	metadata, err := parseDesc(scanner)
+	metadata, err := parseDatabase(scanner)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if metadata == nil {
-		return nil, nil, nil
+		return nil, nil
+	}
+	return metadata, nil
+}
+
+func parseAlpmDB(resolver source.FileResolver, desc string, reader io.Reader) ([]pkg.Package, error) {
+	metadata, err := parseAlpmDBEntry(reader)
+	if err != nil {
+		return nil, err
 	}
 
-	filesIndex := filepath.Join(base, "files")
-	r, err := os.Open(filesIndex)
-	if err == nil {
-		// TODO: Figure out why we sometimes don't  find the "files" file
-		scanner = newScanner(r)
-		metadata.Files = parseFiles(scanner)
+	base := filepath.Dir(desc)
+	mtree := filepath.Join(base, "mtree")
+	r, err := getFileReader(mtree, resolver)
+	if err != nil {
+		return nil, err
+	}
+	pkgFiles, err := parseMtree(r)
+	if err != nil {
+		return nil, err
+	}
+	// The replace the files found the the pacman database with the files from the mtree These contain more metadata and
+	// thus more usefull.
+	metadata.Files = pkgFiles
+
+	// We only really do this to get any backup database entries from the files database
+	files := filepath.Join(base, "files")
+	r, err = getFileReader(files, resolver)
+	if err != nil {
+		return nil, err
+	}
+	filesMetadata, err := parseAlpmDBEntry(reader)
+	if err != nil {
+		return nil, err
+	} else if filesMetadata != nil {
+		metadata.Backup = filesMetadata.Backup
 	}
 
-	return []*pkg.Package{newAlpmDBPackage(metadata)}, nil, nil
+	p := *newAlpmDBPackage(metadata)
+	p.SetID()
+	return []pkg.Package{p}, nil
 }
