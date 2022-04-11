@@ -67,7 +67,7 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 				filesAnalyzed = true
 				for _, digest := range javaMetadata.ArchiveDigests {
 					checksums = append(checksums, model.Checksum{
-						Algorithm:     digest.Algorithm,
+						Algorithm:     strings.ToUpper(digest.Algorithm),
 						ChecksumValue: digest.Value,
 					})
 				}
