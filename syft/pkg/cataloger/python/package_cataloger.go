@@ -93,6 +93,50 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 	return p, nil
 }
 
+func (c *PackageCataloger) SelectLocation(resolver source.FileResolver, metadataLocation source.Location, fileNames ...string) (string, *source.Location) {
+
+	for _, name := range fileNames {
+		recordPath := filepath.Join(filepath.Dir(metadataLocation.RealPath), name)
+		recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
+		if recordRef != nil {
+			return recordPath, recordRef
+		}
+	}
+
+	return "", nil
+}
+
+// fetchRecordFiles finds a corresponding installed-files.txt file for the given python package metadata file and returns the set of file records contained.
+func (c *PackageCataloger) fetchInstalledFiles(resolver source.FileResolver, metadataLocation source.Location, sitePackagesRootPath string) (files []pkg.PythonFileRecord, sources []source.Location, err error) {
+	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
+	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
+	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
+
+	// lets find the installed-files.txt file relative to the directory where the METADATA file resides (in path AND layer structure)
+	recordPath := filepath.Join(filepath.Dir(metadataLocation.RealPath), "installed-files.txt")
+	recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
+
+	if recordRef != nil {
+		sources = append(sources, *recordRef)
+
+		recordContents, err := resolver.FileContentsByLocation(*recordRef)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer internal.CloseAndLogError(recordContents, recordPath)
+
+		// parse the record contents
+		installedFiles, err := parseInstalledFiles(recordContents, metadataLocation.RealPath, sitePackagesRootPath)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		files = append(files, installedFiles...)
+
+	}
+	return files, sources, nil
+}
+
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.
 func (c *PackageCataloger) fetchRecordFiles(resolver source.FileResolver, metadataLocation source.Location) (files []pkg.PythonFileRecord, sources []source.Location, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
@@ -208,6 +252,13 @@ func (c *PackageCataloger) assembleEggOrWheelMetadata(resolver source.FileResolv
 	if err != nil {
 		return nil, nil, err
 	}
+	if len(r) == 0 {
+		r, s, err = c.fetchInstalledFiles(resolver, metadataLocation, metadata.SitePackagesRootPath)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	sources = append(sources, s...)
 	metadata.Files = r
 
