@@ -199,6 +199,25 @@ var dirOnlyTestCases = []testCase{
 			"analyzer":   "0.40.7",
 		},
 	},
+	{
+		name:        "find dotnet packages",
+		pkgType:     pkg.DotnetPkg,
+		pkgLanguage: pkg.Dotnet,
+		pkgInfo: map[string]string{
+			"AWSSDK.Core": "3.7.10.6",
+			"Microsoft.Extensions.DependencyInjection":              "6.0.0",
+			"Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
+			"Microsoft.Extensions.Logging":                          "6.0.0",
+			"Microsoft.Extensions.Logging.Abstractions":             "6.0.0",
+			"Microsoft.Extensions.Options":                          "6.0.0",
+			"Microsoft.Extensions.Primitives":                       "6.0.0",
+			"Newtonsoft.Json":                                       "13.0.1",
+			"Serilog":                                               "2.10.0",
+			"Serilog.Sinks.Console":                                 "4.0.1",
+			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
+			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
+		},
+	},
 }
 
 var commonTestCases = []testCase{

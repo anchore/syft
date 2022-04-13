@@ -17,6 +17,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from pubspec manifest"
 	case pkg.DebPkg:
 		answer = "acquired package info from DPKG DB"
+	case pkg.DotnetPkg:
+		answer = "acquired package info from dotnet project assets file"
 	case pkg.NpmPkg:
 		answer = "acquired package info from installed node module manifest file"
 	case pkg.PythonPkg:

@@ -38,6 +38,7 @@ type artifactMetadataContainer struct {
 	Go     pkg.GolangBinMetadata
 	Php    pkg.PhpComposerJSONMetadata
 	Dart   pkg.DartPubMetadata
+	Dotnet pkg.DotnetDepsMetadata
 }
 
 func main() {

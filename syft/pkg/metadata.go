@@ -18,6 +18,7 @@ const (
 	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
 	RpmdbMetadataType            MetadataType = "RpmdbMetadata"
 	DartPubMetadataType          MetadataType = "DartPubMetadata"
+	DotnetDepsMetadataType       MetadataType = "DotnetDepsMetadata"
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
 	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
 	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
@@ -33,6 +34,7 @@ var AllMetadataTypes = []MetadataType{
 	NpmPackageJSONMetadataType,
 	RpmdbMetadataType,
 	DartPubMetadataType,
+	DotnetDepsMetadataType,
 	PythonPackageMetadataType,
 	RustCargoPackageMetadataType,
 	KbPackageMetadataType,
@@ -48,6 +50,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	NpmPackageJSONMetadataType:   reflect.TypeOf(NpmPackageJSONMetadata{}),
 	RpmdbMetadataType:            reflect.TypeOf(RpmdbMetadata{}),
 	DartPubMetadataType:          reflect.TypeOf(DartPubMetadata{}),
+	DotnetDepsMetadataType:       reflect.TypeOf(DotnetDepsMetadata{}),
 	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
 	RustCargoPackageMetadataType: reflect.TypeOf(CargoMetadata{}),
 	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),

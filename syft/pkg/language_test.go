@@ -35,6 +35,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			want: Dart,
 		},
 		{
+			purl: "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
+			want: Dotnet,
+		},
+		{
 			purl: "pkg:cargo/clap@2.33.0",
 			want: Rust,
 		},
