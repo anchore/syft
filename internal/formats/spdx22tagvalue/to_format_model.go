@@ -134,7 +134,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 			// 3.2: Package SPDX Identifier: "SPDXRef-[idstring]"
 			// Cardinality: mandatory, one
-			PackageSPDXIdentifier: spdx.ElementID(id),
+			PackageSPDXIdentifier: spdx.ElementID(spdxhelpers.SanitizeElementID(id)),
 
 			// 3.3: Package Version
 			// Cardinality: optional, one
