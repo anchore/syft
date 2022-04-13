@@ -119,7 +119,6 @@ func (c *PackageCataloger) fetchInstalledFiles(resolver source.FileResolver, met
 		}
 
 		files = append(files, installedFiles...)
-
 	}
 	return files, sources, nil
 }
