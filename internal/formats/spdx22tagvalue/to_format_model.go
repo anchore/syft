@@ -96,7 +96,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
-		id := fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID())
+		id := spdxhelpers.SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID()))
 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 3.16). With respect to NOASSERTION, a written explanation in
@@ -134,7 +134,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 			// 3.2: Package SPDX Identifier: "SPDXRef-[idstring]"
 			// Cardinality: mandatory, one
-			PackageSPDXIdentifier: spdx.ElementID(spdxhelpers.SanitizeElementID(id)),
+			PackageSPDXIdentifier: spdx.ElementID(id),
 
 			// 3.3: Package Version
 			// Cardinality: optional, one
