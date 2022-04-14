@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -86,12 +85,26 @@ func purlQualifiers(vars map[string]string, release *linux.Release) (q packageur
 		})
 	}
 
-	if release != nil && release.ID != "" && release.VersionID != "" {
-		q = append(q, packageurl.Qualifier{
-			Key:   PURLQualifierDistro,
-			Value: fmt.Sprintf("%s-%s", release.ID, release.VersionID),
-		})
+	distroQualifiers := []string{}
+
+	if release == nil {
+		return q
 	}
+
+	if release.ID != "" {
+		distroQualifiers = append(distroQualifiers, release.ID)
+	}
+
+	if release.VersionID != "" {
+		distroQualifiers = append(distroQualifiers, release.VersionID)
+	} else if release.BuildID != "" {
+		distroQualifiers = append(distroQualifiers, release.BuildID)
+	}
+
+	q = append(q, packageurl.Qualifier{
+		Key:   PURLQualifierDistro,
+		Value: strings.Join(distroQualifiers, "-"),
+	})
 
 	return q
 }

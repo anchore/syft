@@ -13,6 +13,10 @@ type LinuxRelease struct {
 	IDLike           IDLikes `json:"idLike,omitempty"`
 	Version          string  `json:"version,omitempty"`
 	VersionID        string  `json:"versionID,omitempty"`
+	VersionCodename  string  `json:"versionCodename,omitempty"`
+	BuildID          string  `json:"buildID,omitempty"`
+	ImageID          string  `json:"imageID,omitempty"`
+	ImageVersion     string  `json:"imageVersion,omitempty"`
 	Variant          string  `json:"variant,omitempty"`
 	VariantID        string  `json:"variantID,omitempty"`
 	HomeURL          string  `json:"homeURL,omitempty"`

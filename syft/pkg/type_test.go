@@ -59,6 +59,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",
 			expected: JavaPkg,
 		},
+		{
+			purl:     "pkg:alpm/arch/linux@5.10.0?arch=x86_64&distro=arch",
+			expected: AlpmPkg,
+		},
 	}
 
 	var pkgTypes []string
