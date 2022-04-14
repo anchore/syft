@@ -44,12 +44,23 @@ type AlpmFileRecord struct {
 
 // PackageURL returns the PURL for the specific Arch Linux package (see https://github.com/package-url/purl-spec)
 func (m AlpmMetadata) PackageURL(distro *linux.Release) string {
+	qualifiers := map[string]string{
+		PURLQualifierArch: m.Architecture,
+	}
+
+	if m.BasePackage != "" {
+		qualifiers[PURLQualifierUpstream] = m.BasePackage
+	}
+
 	return packageurl.NewPackageURL(
-		"archlinux",
-		"",
-		"",
-		"",
-		packageurl.Qualifiers{},
+		"alpm",
+		distro.ID,
+		m.Package,
+		m.Version,
+		purlQualifiers(
+			qualifiers,
+			distro,
+		),
 		"",
 	).ToString()
 }
