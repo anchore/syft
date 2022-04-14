@@ -135,6 +135,7 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			Source: src.Metadata,
 			Descriptor: sbom.Descriptor{
 				Name:          internal.ApplicationName,
+				Vendor:        internal.VendorName,
 				Version:       version.FromBuild().Version,
 				Configuration: appConfig,
 			},

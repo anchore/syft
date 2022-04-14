@@ -16,6 +16,7 @@ type Document struct {
 type Descriptor struct {
 	Name          string      `json:"name"`
 	Version       string      `json:"version"`
+	Vendor        string      `json:"vendor"`
 	Configuration interface{} `json:"configuration,omitempty"`
 }
 

@@ -270,6 +270,7 @@ func generateSBOM(src *source.Source, errs chan error) (*sbom.SBOM, error) {
 		Source: src.Metadata,
 		Descriptor: sbom.Descriptor{
 			Name:          internal.ApplicationName,
+			Vendor:        internal.VendorName,
 			Version:       version.FromBuild().Version,
 			Configuration: appConfig,
 		},
