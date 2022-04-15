@@ -21,9 +21,7 @@ import (
 )
 
 var (
-	appConfig         *config.Application
-	eventBus          *partybus.Bus
-	eventSubscription *partybus.Subscription
+	appConfig *config.Application
 )
 
 func init() {
