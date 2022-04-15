@@ -104,12 +104,12 @@ func Test_toGithubModel(t *testing.T) {
 				},
 				Resolved: DependencyGraph{
 					"pkg:generic/pkg-1@1.0.1": DependencyNode{
-						Purl:         "pkg:generic/pkg-1@1.0.1",
+						PackageURL:   "pkg:generic/pkg-1@1.0.1",
 						Scope:        DependencyScopeRuntime,
 						Relationship: DependencyRelationshipDirect,
 					},
 					"pkg:generic/pkg-2@2.0.2": DependencyNode{
-						Purl:         "pkg:generic/pkg-2@2.0.2",
+						PackageURL:   "pkg:generic/pkg-2@2.0.2",
 						Scope:        DependencyScopeRuntime,
 						Relationship: DependencyRelationshipDirect,
 					},
@@ -125,7 +125,7 @@ func Test_toGithubModel(t *testing.T) {
 				},
 				Resolved: DependencyGraph{
 					"pkg:generic/pkg-3@3.0.3": DependencyNode{
-						Purl:         "pkg:generic/pkg-3@3.0.3",
+						PackageURL:   "pkg:generic/pkg-3@3.0.3",
 						Scope:        DependencyScopeRuntime,
 						Relationship: DependencyRelationshipDirect,
 					},

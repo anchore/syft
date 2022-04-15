@@ -14,9 +14,9 @@ type DependencySnapshot struct {
 }
 
 type Job struct {
-	Name    string `json:"name,omitempty"` // !omitempty
-	ID      string `json:"id,omitempty"`   // !omitempty
-	HTMLURL string `json:"html_url,omitempty"`
+	Correlator string `json:"correlator,omitempty"` // !omitempty
+	ID         string `json:"id,omitempty"`         // !omitempty
+	HTMLURL    string `json:"html_url,omitempty"`
 }
 
 type DetectorMetadata struct {
@@ -62,7 +62,7 @@ const (
 )
 
 type DependencyNode struct {
-	Purl         string                 `json:"purl,omitempty"`
+	PackageURL   string                 `json:"package_url,omitempty"`
 	Metadata     Metadata               `json:"metadata,omitempty"`
 	Relationship DependencyRelationship `json:"relationship,omitempty"`
 	Scope        DependencyScope        `json:"scope,omitempty"`

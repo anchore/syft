@@ -130,7 +130,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 
 		name := dependencyName(p)
 		manifest.Resolved[name] = DependencyNode{
-			Purl:         p.PURL,
+			PackageURL:   p.PURL,
 			Metadata:     toDependencyMetadata(p),
 			Relationship: toDependencyRelationshipType(p),
 			Scope:        toDependencyScope(p),
