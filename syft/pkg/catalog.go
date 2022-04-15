@@ -10,11 +10,28 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+type orderedIDSet struct {
+	slice []artifact.ID
+}
+
+func (s *orderedIDSet) add(ids ...artifact.ID) {
+loopNewIDs:
+	for _, newID := range ids {
+		for _, existingID := range s.slice {
+			if existingID == newID {
+				continue loopNewIDs
+			}
+		}
+		s.slice = append(s.slice, newID)
+	}
+}
+
 // Catalog represents a collection of Packages.
 type Catalog struct {
 	byID      map[artifact.ID]Package
-	idsByType map[Type][]artifact.ID
-	idsByPath map[string][]artifact.ID // note: this is real path or virtual path
+	idsByName map[string]orderedIDSet
+	idsByType map[Type]orderedIDSet
+	idsByPath map[string]orderedIDSet // note: this is real path or virtual path
 	lock      sync.RWMutex
 }
 
@@ -22,8 +39,9 @@ type Catalog struct {
 func NewCatalog(pkgs ...Package) *Catalog {
 	catalog := Catalog{
 		byID:      make(map[artifact.ID]Package),
-		idsByType: make(map[Type][]artifact.ID),
-		idsByPath: make(map[string][]artifact.ID),
+		idsByName: make(map[string]orderedIDSet),
+		idsByType: make(map[Type]orderedIDSet),
+		idsByPath: make(map[string]orderedIDSet),
 	}
 
 	for _, p := range pkgs {
@@ -55,7 +73,12 @@ func (c *Catalog) Package(id artifact.ID) *Package {
 
 // PackagesByPath returns all packages that were discovered from the given path.
 func (c *Catalog) PackagesByPath(path string) []Package {
-	return c.Packages(c.idsByPath[path])
+	return c.Packages(c.idsByPath[path].slice)
+}
+
+// PackagesByName returns all packages that were discovered with a matching name.
+func (c *Catalog) PackagesByName(name string) []Package {
+	return c.Packages(c.idsByName[name].slice)
 }
 
 // Packages returns all packages for the given ID.
@@ -81,24 +104,56 @@ func (c *Catalog) Add(p Package) {
 		id = p.ID()
 	}
 
-	// store by package ID
-	c.byID[id] = p
+	if existing, exists := c.byID[id]; exists {
+		// there is already a package with this fingerprint merge the existing record with the new one
+		if err := existing.merge(p); err != nil {
+			log.Warnf("failed to merge packages: %+v", err)
+		} else {
+			c.addPathsToIndex(p)
+		}
+		return
+	}
 
-	// store by package type
-	c.idsByType[p.Type] = append(c.idsByType[p.Type], id)
+	c.addToIndex(p)
+}
 
-	// store by file location paths
+func (c *Catalog) addToIndex(p Package) {
+	c.byID[p.id] = p
+	c.addNameToIndex(p)
+	c.addTypeToIndex(p)
+	c.addPathsToIndex(p)
+}
+
+func (c *Catalog) addNameToIndex(p Package) {
+	nameIndex := c.idsByName[p.Name]
+	nameIndex.add(p.id)
+	c.idsByName[p.Name] = nameIndex
+}
+
+func (c *Catalog) addTypeToIndex(p Package) {
+	typeIndex := c.idsByType[p.Type]
+	typeIndex.add(p.id)
+	c.idsByType[p.Type] = typeIndex
+}
+
+func (c *Catalog) addPathsToIndex(p Package) {
 	observedPaths := internal.NewStringSet()
-	for _, l := range p.Locations {
+	for _, l := range p.Locations.ToSlice() {
 		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
-			c.idsByPath[l.RealPath] = append(c.idsByPath[l.RealPath], id)
+			c.addPathToIndex(p.id, l.RealPath)
 			observedPaths.Add(l.RealPath)
 		}
 		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Contains(l.VirtualPath) {
-			c.idsByPath[l.VirtualPath] = append(c.idsByPath[l.VirtualPath], id)
+			c.addPathToIndex(p.id, l.VirtualPath)
 			observedPaths.Add(l.VirtualPath)
 		}
 	}
+}
+
+func (c *Catalog) addPathToIndex(id artifact.ID, path string) {
+	pathIndex := c.idsByPath[path]
+	pathIndex.add(id)
+	c.idsByPath[path] = pathIndex
 }
 
 // Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
@@ -124,7 +179,7 @@ func (c *Catalog) Enumerate(types ...Type) <-chan Package {
 					continue
 				}
 			}
-			for _, id := range ids {
+			for _, id := range ids.slice {
 				p := c.Package(id)
 				if p != nil {
 					channel <- *p
@@ -145,8 +200,10 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
 			if pkgs[i].Version == pkgs[j].Version {
-				if pkgs[i].Type == pkgs[j].Type && len(pkgs[i].Locations) > 0 && len(pkgs[j].Locations) > 0 {
-					return pkgs[i].Locations[0].String() < pkgs[j].Locations[0].String()
+				iLocations := pkgs[i].Locations.ToSlice()
+				jLocations := pkgs[j].Locations.ToSlice()
+				if pkgs[i].Type == pkgs[j].Type && len(iLocations) > 0 && len(jLocations) > 0 {
+					return iLocations[0].String() < jLocations[0].String()
 				}
 				return pkgs[i].Type < pkgs[j].Type
 			}

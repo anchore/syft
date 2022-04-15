@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "d9a7c58726ab4bef",
+   "id": "b3fa3ee64756b0c6",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -31,7 +31,7 @@
    }
   },
   {
-   "id": "ac462e450060da2c",
+   "id": "b324f4d9ee5413fe",
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
@@ -184,7 +184,7 @@
   }
  },
  "schema": {
-  "version": "3.2.1",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.2.1.json"
+  "version": "3.2.2",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.2.2.json"
  }
 }

@@ -19,12 +19,12 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		{
 			pkg.JavaPkg,
 			candidateKey{PkgName: "springframework"},
-			candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}},
+			candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}, AdditionalVendors: []string{"pivotal_software", "springsource", "vmware"}},
 		},
 		{
 			pkg.JavaPkg,
 			candidateKey{PkgName: "spring-core"},
-			candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}},
+			candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}, AdditionalVendors: []string{"pivotal_software", "springsource", "vmware"}},
 		},
 		{
 			// example image: docker.io/nuxeo:latest

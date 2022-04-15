@@ -35,32 +35,38 @@ func Test_toGithubModel(t *testing.T) {
 		{
 			Name:    "pkg-1",
 			Version: "1.0.1",
-			Locations: []source.Location{{
-				Coordinates: source.Coordinates{
-					RealPath:     "/usr/lib",
-					FileSystemID: "fsid-1",
+			Locations: source.NewLocationSet(
+				source.Location{
+					Coordinates: source.Coordinates{
+						RealPath:     "/usr/lib",
+						FileSystemID: "fsid-1",
+					},
 				},
-			}},
+			),
 		},
 		{
 			Name:    "pkg-2",
 			Version: "2.0.2",
-			Locations: []source.Location{{
-				Coordinates: source.Coordinates{
-					RealPath:     "/usr/lib",
-					FileSystemID: "fsid-1",
+			Locations: source.NewLocationSet(
+				source.Location{
+					Coordinates: source.Coordinates{
+						RealPath:     "/usr/lib",
+						FileSystemID: "fsid-1",
+					},
 				},
-			}},
+			),
 		},
 		{
 			Name:    "pkg-3",
 			Version: "3.0.3",
-			Locations: []source.Location{{
-				Coordinates: source.Coordinates{
-					RealPath:     "/etc",
-					FileSystemID: "fsid-1",
+			Locations: source.NewLocationSet(
+				source.Location{
+					Coordinates: source.Coordinates{
+						RealPath:     "/etc",
+						FileSystemID: "fsid-1",
+					},
 				},
-			}},
+			),
 		},
 	} {
 		p.PURL = packageurl.NewPackageURL(

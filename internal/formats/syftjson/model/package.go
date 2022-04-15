@@ -130,6 +130,12 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		p.Metadata = payload
+	case pkg.DartPubMetadataType:
+		var payload pkg.DartPubMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
 	default:
 		log.Warnf("unknown package metadata type=%q for packageID=%q", p.MetadataType, p.ID)
 	}

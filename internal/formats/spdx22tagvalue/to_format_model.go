@@ -96,12 +96,30 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
-		id := fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID())
+		id := spdxhelpers.SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID()))
 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 3.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 3.16) is preferred.
 		license := spdxhelpers.License(p)
+
+		filesAnalyzed := false
+		checksums := make(map[spdx.ChecksumAlgorithm]spdx.Checksum)
+
+		// If the pkg type is Java we have attempted to generated a digest
+		// FilesAnalyzed should be true in this case
+		if p.MetadataType == pkg.JavaMetadataType {
+			javaMetadata := p.Metadata.(pkg.JavaMetadata)
+			if len(javaMetadata.ArchiveDigests) > 0 {
+				filesAnalyzed = true
+				for _, digest := range javaMetadata.ArchiveDigests {
+					checksums[spdx.ChecksumAlgorithm(digest.Algorithm)] = spdx.Checksum{
+						Algorithm: spdx.ChecksumAlgorithm(digest.Algorithm),
+						Value:     digest.Value,
+					}
+				}
+			}
+		}
 
 		results[spdx.ElementID(id)] = &spdx.Package2_2{
 
@@ -159,7 +177,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 			// Intent: A package can refer to a project, product, artifact, distribution or a component that is
 			// external to the SPDX document.
-			FilesAnalyzed: false,
+			FilesAnalyzed: filesAnalyzed,
 			// NOT PART OF SPEC: did FilesAnalyzed tag appear?
 			IsFilesAnalyzedTagPresent: true,
 
@@ -180,6 +198,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 			// to determine if any file in the original package has been changed. If the SPDX file is to be included
 			// in a package, this value should not be calculated. The SHA-1 algorithm will be used to provide the
 			// checksum by default.
+			PackageChecksums: checksums,
 
 			// note: based on the purpose above no discovered checksums should be provided, but instead, only
 			// tool-derived checksums.

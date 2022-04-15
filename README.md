@@ -29,6 +29,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 ### Supported Ecosystems
 
 - Alpine (apk)
+- Dart (pubs)
 - Debian (dpkg)
 - Go (go.mod, Go binaries)
 - Java (jar, ear, war, par, sar)
@@ -155,9 +156,9 @@ syft <image> -o <format>
 Where the `formats` available are:
 - `json`: Use this to get as much information out of Syft as possible!
 - `text`: A row-oriented, human-and-machine-friendly output.
-- `cyclonedx`: A XML report conforming to the [CycloneDX 1.3 specification](https://cyclonedx.org/specification/overview/).
-- `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.3 specification](https://cyclonedx.org/specification/overview/).
-- `spdx`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
+- `cyclonedx-xml`: A XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `table`: A columnar summary (default).
 

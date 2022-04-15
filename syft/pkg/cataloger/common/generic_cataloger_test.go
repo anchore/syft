@@ -53,7 +53,7 @@ func TestGenericCataloger(t *testing.T) {
 	assert.Len(t, actualPkgs, len(expectedPkgs))
 
 	for _, p := range actualPkgs {
-		ref := p.Locations[0]
+		ref := p.Locations.ToSlice()[0]
 		exP, ok := expectedPkgs[ref.RealPath]
 		if !ok {
 			t.Errorf("missing expected pkg: ref=%+v", ref)

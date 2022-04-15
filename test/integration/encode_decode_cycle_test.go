@@ -2,12 +2,14 @@ package integration
 
 import (
 	"bytes"
-	"regexp"
-	"testing"
-
+	"fmt"
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/syftjson"
+	"github.com/anchore/syft/syft/source"
+	"regexp"
+	"testing"
+
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/require"
 
@@ -51,12 +53,12 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(string(test.formatOption), func(t *testing.T) {
 
-			// use second image for relationships
-			for _, image := range []string{"image-pkg-coverage", "image-owning-package"} {
-				originalSBOM, _ := catalogFixtureImage(t, image)
+	for _, test := range tests {
+		// use second image for relationships
+		for _, image := range []string{"image-pkg-coverage", "image-owning-package"} {
+			t.Run(fmt.Sprintf("%s/%s", test.formatOption, image), func(t *testing.T) {
+				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope)
 
 				format := syft.FormatByID(test.formatOption)
 				require.NotNil(t, format)
@@ -87,7 +89,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 						t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 					}
 				}
-			}
-		})
+			})
+		}
 	}
 }

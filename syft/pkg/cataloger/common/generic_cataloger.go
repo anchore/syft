@@ -58,9 +58,8 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 
 		for _, p := range discoveredPackages {
 			p.FoundBy = c.upstreamCataloger
-			p.Locations = append(p.Locations, location)
+			p.Locations.Add(location)
 			p.SetID()
-
 			packages = append(packages, *p)
 		}
 

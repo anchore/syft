@@ -44,14 +44,12 @@ func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, locat
 	}
 
 	p := pkg.Package{
-		FoundBy:  catalogerName,
-		Name:     dep.Path,
-		Version:  dep.Version,
-		Language: pkg.Go,
-		Type:     pkg.GoModulePkg,
-		Locations: []source.Location{
-			location,
-		},
+		FoundBy:      catalogerName,
+		Name:         dep.Path,
+		Version:      dep.Version,
+		Language:     pkg.Go,
+		Type:         pkg.GoModulePkg,
+		Locations:    source.NewLocationSet(location),
 		MetadataType: pkg.GolangBinMetadataType,
 		Metadata: pkg.GolangBinMetadata{
 			GoCompiledVersion: goVersion,

@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -61,6 +62,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
+		dart.NewPubspecLockCataloger(),
 	}, cfg.EnabledCatalogers)
 }
 
@@ -80,6 +82,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
+		dart.NewPubspecLockCataloger(),
 	}, cfg.EnabledCatalogers)
 }
 

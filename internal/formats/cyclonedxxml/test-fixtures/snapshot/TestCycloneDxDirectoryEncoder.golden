@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:892f8304-0142-45b1-b411-cade3c53057f" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:554fd820-210b-40c8-8c0b-75690274e21c" version="1">
   <metadata>
-    <timestamp>2022-03-08T12:30:33Z</timestamp>
+    <timestamp>2022-04-01T11:57:46-04:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -14,7 +14,7 @@
     </component>
   </metadata>
   <components>
-    <component type="library">
+    <component bom-ref="b85dbb4e6ece5082" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
@@ -32,11 +32,11 @@
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
     </component>
-    <component type="library">
+    <component bom-ref="pkg:deb/debian/package-2@2.0.1?syft-id=ceda99598967ae8d" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
-      <purl>a-purl-2</purl>
+      <purl>pkg:deb/debian/package-2@2.0.1</purl>
       <properties>
         <property name="syft:package:foundBy">the-cataloger-2</property>
         <property name="syft:package:metadataType">DpkgMetadata</property>
