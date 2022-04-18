@@ -46,6 +46,8 @@ func PackagesCmd(ctx context.Context, app *config.Application, args []string) er
 	}
 
 	eventBus := partybus.NewBus()
+	stereoscope.SetBus(eventBus)
+	syft.SetBus(eventBus)
 
 	return eventloop.EventLoop(
 		execWorker(app, *si, writer),
