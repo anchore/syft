@@ -193,6 +193,7 @@ func loadConfig(v *viper.Viper, configPath string) error {
 		if err := v.ReadInConfig(); err != nil {
 			return fmt.Errorf("unable to read application config=%q : %w", configPath, err)
 		}
+		v.Set("config", v.ConfigFileUsed())
 		// don't fall through to other options if the config path was explicitly provided
 		return nil
 	}
@@ -203,6 +204,7 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	v.AddConfigPath(".")
 	v.SetConfigName("." + internal.ApplicationName)
 	if err = v.ReadInConfig(); err == nil {
+		v.Set("config", v.ConfigFileUsed())
 		return nil
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
@@ -212,6 +214,7 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	v.AddConfigPath("." + internal.ApplicationName)
 	v.SetConfigName("config")
 	if err = v.ReadInConfig(); err == nil {
+		v.Set("config", v.ConfigFileUsed())
 		return nil
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
@@ -223,6 +226,7 @@ func loadConfig(v *viper.Viper, configPath string) error {
 		v.AddConfigPath(home)
 		v.SetConfigName("." + internal.ApplicationName)
 		if err = v.ReadInConfig(); err == nil {
+			v.Set("config", v.ConfigFileUsed())
 			return nil
 		} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 			return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
@@ -236,6 +240,7 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	}
 	v.SetConfigName("config")
 	if err = v.ReadInConfig(); err == nil {
+		v.Set("config", v.ConfigFileUsed())
 		return nil
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
