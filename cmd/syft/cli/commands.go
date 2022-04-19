@@ -29,7 +29,7 @@ func New() *cobra.Command {
 	// e.g. pod.context = APPNAME_POD_CONTEXT
 	v := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")))
 
-	// since root is aliased as packages we need to construct this command first
+	// since root is aliased as the packages cmd we need to construct this command first
 	packagesCmd := Packages(v, app, ro, po)
 
 	// rootCmd is currently an alias for the packages command

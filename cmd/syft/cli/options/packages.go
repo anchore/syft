@@ -69,8 +69,6 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	// Formatting & Input options //////////////////////////////////////////////
 
-	// note: output is not included since this configuration option is shared between multiple subcommands
-
 	if err := v.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
 		return err
 	}
@@ -80,6 +78,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("output", flags.Lookup("output")); err != nil {
 		return err
 	}
 

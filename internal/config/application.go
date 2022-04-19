@@ -199,7 +199,6 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	}
 
 	// start searching for valid configs in order...
-
 	// 1. look for .<appname>.yaml (in the current directory)
 	v.AddConfigPath(".")
 	v.SetConfigName("." + internal.ApplicationName)
@@ -245,6 +244,5 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 	}
-
 	return nil
 }
