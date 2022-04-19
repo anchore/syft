@@ -1,12 +1,13 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
@@ -14,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/wagoodman/go-partybus"
 )
 
@@ -23,13 +25,17 @@ const (
 )
 
 func init() {
-	setPackageFlags(convertCmd.Flags())
+	setConvertFlags(convertCmd.Flags())
 	rootCmd.AddCommand(convertCmd)
 }
 
 var (
 	convertCmd = &cobra.Command{
-		Use:           "convert original.json -o [FORMAT]",
+		Use: "convert original.json -o [FORMAT]",
+		Example: internal.Tprintf(convertExample, map[string]interface{}{
+			"appName": internal.ApplicationName,
+			"command": "convert",
+		}),
 		Args:          validateInputArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -40,12 +46,21 @@ var (
 				defer profile.Start(profile.MemProfile).Stop()
 			}
 
-			return convertExec(cmd.Context(), cmd, args)
+			return convertExec(cmd, args)
 		},
 	}
 )
 
-func convertExec(ctx context.Context, _ *cobra.Command, args []string) error {
+func setConvertFlags(flags *pflag.FlagSet) {
+	flags.StringP(
+		"output", "o", string(table.ID),
+		fmt.Sprintf("report output format, options=%v", formatAliases(syft.FormatIDs()...)),
+	)
+}
+
+func convertExec(_ *cobra.Command, args []string) error {
+	log.Debugf("output options: %+v", appConfig.Outputs)
+
 	writer, err := makeWriter(appConfig.Outputs, appConfig.File)
 	if err != nil {
 		return err
@@ -69,7 +84,7 @@ func convertExec(ctx context.Context, _ *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}
-	log.Infof("loaded sbom with %s format", format)
+	log.Infof("loaded sbom with %s format", format.ID())
 
 	// TODO: handle unsupported formats, like github's
 
@@ -86,11 +101,11 @@ func convertExecWorker(s *sbom.SBOM, w sbom.Writer) <-chan error {
 	errs := make(chan error)
 
 	go func() {
+		defer close(errs)
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
 			Value: func() error { return w.Write(*s) },
 		})
-
 	}()
 	return errs
 }
