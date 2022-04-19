@@ -28,6 +28,10 @@ type Package struct {
 	Metadata     interface{}        // additional data found while parsing the package source
 }
 
+func (p *Package) OverrideID(id artifact.ID) {
+	p.id = id
+}
+
 func (p *Package) SetID() {
 	id, err := artifact.IDByHash(p)
 	if err != nil {
