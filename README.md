@@ -25,6 +25,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Linux distribution identification
 - Works seamlessly with [Grype](https://github.com/anchore/grype) (a fast, modern vulnerability scanner)
 - Able to create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
+- Convert between SBOM formats, such as CycloneDX (JSON, XML), SPDX, and Syft's own format.
 
 ### Supported Ecosystems
 
@@ -90,6 +91,15 @@ The above output includes only software that is visible in the container (i.e., 
 
 ```
 syft <image> --scope all-layers
+```
+
+#### Converting to different formats
+
+Syft can convert between different SBOM formats, such as CycloneDX, SPDX, and Syft's own format.
+
+``` bash
+syft convert sbom.syft.json -o spdx-json
+syft convert sbom.syft.json -o cyclonedx-json="sbom.cdx.json"
 ```
 
 #### SBOM attestation
