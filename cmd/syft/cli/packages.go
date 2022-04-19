@@ -71,7 +71,7 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions) 
 			// configure logging for command
 			newLogWrapper(app)
 
-			return packages.PackagesCmd(cmd.Context(), app, args)
+			return packages.Cmd(cmd.Context(), app, args)
 		},
 	}
 

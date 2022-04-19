@@ -71,41 +71,41 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 
 	// note: output is not included since this configuration option is shared between multiple subcommands
 
-	if err := viper.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
+	if err := v.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("file", flags.Lookup("file")); err != nil {
+	if err := v.BindPFlag("file", flags.Lookup("file")); err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
+	if err := v.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
 		return err
 	}
 
 	// Upload options //////////////////////////////////////////////////////////
 
-	if err := viper.BindPFlag("anchore.host", flags.Lookup("host")); err != nil {
+	if err := v.BindPFlag("anchore.host", flags.Lookup("host")); err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("anchore.username", flags.Lookup("username")); err != nil {
+	if err := v.BindPFlag("anchore.username", flags.Lookup("username")); err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("anchore.password", flags.Lookup("password")); err != nil {
+	if err := v.BindPFlag("anchore.password", flags.Lookup("password")); err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("anchore.dockerfile", flags.Lookup("dockerfile")); err != nil {
+	if err := v.BindPFlag("anchore.dockerfile", flags.Lookup("dockerfile")); err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("anchore.overwrite-existing-image", flags.Lookup("overwrite-existing-image")); err != nil {
+	if err := v.BindPFlag("anchore.overwrite-existing-image", flags.Lookup("overwrite-existing-image")); err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag("anchore.import-timeout", flags.Lookup("import-timeout")); err != nil {
+	if err := v.BindPFlag("anchore.import-timeout", flags.Lookup("import-timeout")); err != nil {
 		return err
 	}
 

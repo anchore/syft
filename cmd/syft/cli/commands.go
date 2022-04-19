@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	golog "log"
 	"strings"
 
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -42,7 +43,10 @@ func New() *cobra.Command {
 		Version:       version.FromBuild().Version,
 	}
 	cmd.SetVersionTemplate(fmt.Sprintf("%s {{.Version}}\n", internal.ApplicationName))
-	ro.AddFlags(cmd, v)
+	err := ro.AddFlags(cmd, v)
+	if err != nil {
+		golog.Fatal(err)
+	}
 
 	// Add sub-commands.
 	cmd.AddCommand(packagesCmd)

@@ -26,7 +26,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-func PackagesCmd(ctx context.Context, app *config.Application, args []string) error {
+func Cmd(ctx context.Context, app *config.Application, args []string) error {
 	writer, err := makeWriter(app.Outputs, app.File)
 	if err != nil {
 		return err

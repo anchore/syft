@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -23,7 +24,10 @@ func Version(v *viper.Viper, app *config.Application) *cobra.Command {
 		},
 	}
 
-	o.AddFlags(cmd, v)
+	err := o.AddFlags(cmd, v)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return cmd
 }

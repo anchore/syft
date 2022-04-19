@@ -3,13 +3,15 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"path"
 	"reflect"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/adrg/xdg"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
@@ -65,6 +67,7 @@ func (a *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 	if err := loadConfig(v, configPath); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Not Found; ignore this error
+			log.Debug("no config file found; proceeding with defaults")
 		}
 	}
 
@@ -107,48 +110,48 @@ func (a *Application) parseConfigValues() error {
 	return nil
 }
 
-func (cfg *Application) parseUploadOptions() error {
-	if cfg.Anchore.Host == "" && cfg.Anchore.Dockerfile != "" {
+func (a *Application) parseUploadOptions() error {
+	if a.Anchore.Host == "" && a.Anchore.Dockerfile != "" {
 		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
 	}
 	return nil
 }
 
-func (cfg *Application) parseLogLevelOption() error {
+func (a *Application) parseLogLevelOption() error {
 	switch {
-	case cfg.Quiet:
+	case a.Quiet:
 		// TODO: this is bad: quiet option trumps all other logging options (such as to a file on disk)
 		// we should be able to quiet the console logging and leave file logging alone...
 		// ... this will be an enhancement for later
-		cfg.Log.LevelOpt = logrus.PanicLevel
-	case cfg.Log.Level != "":
-		if cfg.Verbosity > 0 {
-			return fmt.Errorf("cannot explicitly set log level (cfg file or env var) and use -v flag together")
+		a.Log.LevelOpt = logrus.PanicLevel
+	case a.Log.Level != "":
+		if a.Verbosity > 0 {
+			return fmt.Errorf("cannot explicitly set log level (a file or env var) and use -v flag together")
 		}
 
-		lvl, err := logrus.ParseLevel(strings.ToLower(cfg.Log.Level))
+		lvl, err := logrus.ParseLevel(strings.ToLower(a.Log.Level))
 		if err != nil {
-			return fmt.Errorf("bad log level configured (%q): %w", cfg.Log.Level, err)
+			return fmt.Errorf("bad log level configured (%q): %w", a.Log.Level, err)
 		}
 
-		cfg.Log.LevelOpt = lvl
-		if cfg.Log.LevelOpt >= logrus.InfoLevel {
-			cfg.Verbosity = 1
+		a.Log.LevelOpt = lvl
+		if a.Log.LevelOpt >= logrus.InfoLevel {
+			a.Verbosity = 1
 		}
 	default:
 
-		switch v := cfg.Verbosity; {
+		switch v := a.Verbosity; {
 		case v == 1:
-			cfg.Log.LevelOpt = logrus.InfoLevel
+			a.Log.LevelOpt = logrus.InfoLevel
 		case v >= 2:
-			cfg.Log.LevelOpt = logrus.DebugLevel
+			a.Log.LevelOpt = logrus.DebugLevel
 		default:
-			cfg.Log.LevelOpt = logrus.ErrorLevel
+			a.Log.LevelOpt = logrus.ErrorLevel
 		}
 	}
 
-	if cfg.Log.Level == "" {
-		cfg.Log.Level = cfg.Log.LevelOpt.String()
+	if a.Log.Level == "" {
+		a.Log.Level = a.Log.LevelOpt.String()
 	}
 
 	return nil
@@ -171,15 +174,15 @@ func loadDefaultValues(v *viper.Viper) {
 	}
 }
 
-func (cfg Application) String() string {
+func (a Application) String() string {
 	// yaml is pretty human friendly (at least when compared to json)
-	appCfgStr, err := yaml.Marshal(&cfg)
+	appaStr, err := yaml.Marshal(&a)
 
 	if err != nil {
 		return err.Error()
 	}
 
-	return string(appCfgStr)
+	return string(appaStr)
 }
 
 func loadConfig(v *viper.Viper, configPath string) error {
