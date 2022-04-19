@@ -12,6 +12,7 @@ before:
 
 builds:
   - id: linux-build
+    dir: ./cmd/syft
     binary: syft
     goos:
       - linux
@@ -32,6 +33,7 @@ builds:
       -X github.com/anchore/syft/internal/version.gitDescription={{.Summary}}
 
   - id: darwin-build
+    dir: ./cmd/syft
     binary: syft
     goos:
       - darwin
@@ -49,6 +51,7 @@ builds:
         - ./.github/scripts/apple-signing/sign.sh "{{ .Path }}" "{{ .IsSnapshot }}" "{{ .Target }}"
 
   - id: windows-build
+    dir: ./cmd/syft
     binary: syft
     goos:
       - windows

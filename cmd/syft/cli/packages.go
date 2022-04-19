@@ -44,8 +44,7 @@ const (
 	packagesHelp = packagesExample + packagesSchemeHelp
 )
 
-func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions) *cobra.Command {
-	o := &options.PackagesOptions{}
+func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
@@ -75,7 +74,7 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions) 
 		},
 	}
 
-	err := o.AddFlags(cmd, v)
+	err := po.AddFlags(cmd, v)
 	if err != nil {
 		log.Fatal(err)
 	}

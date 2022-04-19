@@ -22,6 +22,7 @@ const indent = "  "
 // New constructs the `syft packages` command and aliases the root command.
 func New() *cobra.Command {
 	ro := &options.RootOptions{}
+	po := &options.PackagesOptions{}
 	app := &config.Application{}
 
 	// allow for nested options to be specified via environment variables
@@ -29,7 +30,7 @@ func New() *cobra.Command {
 	v := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")))
 
 	// since root is aliased as packages we need to construct this command first
-	packagesCmd := Packages(v, app, ro)
+	packagesCmd := Packages(v, app, ro, po)
 
 	// rootCmd is currently an alias for the packages command
 	cmd := &cobra.Command{
@@ -44,6 +45,12 @@ func New() *cobra.Command {
 	}
 	cmd.SetVersionTemplate(fmt.Sprintf("%s {{.Version}}\n", internal.ApplicationName))
 	err := ro.AddFlags(cmd, v)
+	if err != nil {
+		golog.Fatal(err)
+	}
+
+	// add package flags to rootCmd because of alias
+	err = po.AddFlags(cmd, v)
 	if err != nil {
 		golog.Fatal(err)
 	}
