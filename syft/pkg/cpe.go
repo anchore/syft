@@ -30,7 +30,7 @@ func NewCPE(cpeStr string) (CPE, error) {
 	// get a CPE object based on the given string --don't validate yet since it may be possible to escape select cases on the callers behalf
 	c, err := newCPEWithoutValidation(cpeStr)
 	if err != nil {
-		return CPE{}, fmt.Errorf("unable to prase CPE string: %w", err)
+		return CPE{}, fmt.Errorf("unable to parse CPE string: %w", err)
 	}
 
 	// ensure that this CPE can be validated after being fully sanitized
