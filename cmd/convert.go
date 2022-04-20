@@ -7,6 +7,11 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/formats/cyclonedxjson"
+	"github.com/anchore/syft/internal/formats/cyclonedxxml"
+	"github.com/anchore/syft/internal/formats/spdx22json"
+	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
+	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
@@ -20,9 +25,17 @@ import (
 )
 
 const (
-	convertExample = `  {{.appName}} {{.command}} original.json --to [FORMAT]
+	convertExample = `  {{.appName}} {{.command}} alpine.syft.json -o alpine.spdx.xml
 `
 )
+
+var convertableFormats = []sbom.FormatID{
+	syftjson.ID,
+	spdx22json.ID,
+	spdx22tagvalue.ID,
+	cyclonedxjson.ID,
+	cyclonedxxml.ID,
+}
 
 func init() {
 	setConvertFlags(convertCmd.Flags())
@@ -31,7 +44,9 @@ func init() {
 
 var (
 	convertCmd = &cobra.Command{
-		Use: "convert original.json -o [FORMAT]",
+		Use:   "convert original.json -o [FORMAT]",
+		Short: "Convert between SBOM formats",
+		Long:  "",
 		Example: internal.Tprintf(convertExample, map[string]interface{}{
 			"appName": internal.ApplicationName,
 			"command": "convert",
@@ -61,6 +76,11 @@ func setConvertFlags(flags *pflag.FlagSet) {
 func convertExec(_ *cobra.Command, args []string) error {
 	log.Debugf("output options: %+v", appConfig.Outputs)
 
+	outputFormat := syft.FormatByName(appConfig.Outputs[0])
+	if !isSupportedFormat(outputFormat.ID()) {
+		return fmt.Errorf("cannot convert to %s", outputFormat.ID())
+	}
+
 	writer, err := makeWriter(appConfig.Outputs, appConfig.File)
 	if err != nil {
 		return err
@@ -80,13 +100,14 @@ func convertExec(_ *cobra.Command, args []string) error {
 	}
 	defer f.Close()
 
-	sbom, format, err := syft.Decode(f)
+	sbom, inputFormat, err := syft.Decode(f)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}
-	log.Infof("loaded sbom with %s format", format.ID())
 
-	// TODO: handle unsupported formats, like github's
+	if !isSupportedFormat(inputFormat.ID()) {
+		return fmt.Errorf("cannot convert from %s format", outputFormat.ID())
+	}
 
 	return eventLoop(
 		convertExecWorker(sbom, writer),
@@ -108,4 +129,14 @@ func convertExecWorker(s *sbom.SBOM, w sbom.Writer) <-chan error {
 		})
 	}()
 	return errs
+}
+
+func isSupportedFormat(format sbom.FormatID) bool {
+	for _, f := range convertableFormats {
+		if format == f {
+			return true
+		}
+	}
+
+	return false
 }
