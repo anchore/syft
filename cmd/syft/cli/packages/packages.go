@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
+	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
@@ -26,7 +27,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 )
 
-func Cmd(ctx context.Context, app *config.Application, args []string) error {
+func Run(ctx context.Context, app *config.Application, args []string) error {
 	writer, err := makeWriter(app.Outputs, app.File)
 	if err != nil {
 		return err
@@ -54,7 +55,7 @@ func Cmd(ctx context.Context, app *config.Application, args []string) error {
 		eventloop.SetupSignals(),
 		eventBus.Subscribe(),
 		stereoscope.Cleanup,
-		ui.Select(isVerbose(app), app.Quiet)...,
+		ui.Select(options.IsVerbose(app), app.Quiet)...,
 	)
 }
 
@@ -72,7 +73,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			return
 		}
 
-		s, err := generateSBOM(src, errs, app)
+		s, err := GenerateSBOM(src, errs, app)
 		if err != nil {
 			errs <- err
 			return
@@ -146,7 +147,7 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Applicati
 	return nil
 }
 
-func generateSBOM(src *source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
+func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
 	tasks, err := eventloop.Tasks(app)
 	if err != nil {
 		return nil, err
@@ -174,10 +175,10 @@ func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task
 		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
 	}
 
-	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
+	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
 }
 
-func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
+func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
 	for _, c := range cs {
 		for n := range c {
 			relationships = append(relationships, n)
@@ -185,17 +186,6 @@ func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []art
 	}
 
 	return relationships
-}
-
-func isVerbose(app *config.Application) (result bool) {
-	isPipedInput, err := internal.IsPipedInput()
-	if err != nil {
-		// since we can't tell if there was piped input we assume that there could be to disable the ETUI
-		log.Warnf("unable to determine if there is piped input: %+v", err)
-		return true
-	}
-	// verbosity should consider if there is piped input (in which case we should not show the ETUI)
-	return app.Verbosity > 0 || isPipedInput
 }
 
 // makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer

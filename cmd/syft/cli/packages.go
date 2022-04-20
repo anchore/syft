@@ -62,15 +62,14 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 			if err := app.LoadAllValues(v, ro.Config); err != nil {
 				return err
 			}
+			// configure logging for command
+			newLogWrapper(app)
 
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}
 
-			// configure logging for command
-			newLogWrapper(app)
-
-			return packages.Cmd(cmd.Context(), app, args)
+			return packages.Run(cmd.Context(), app, args)
 		},
 	}
 

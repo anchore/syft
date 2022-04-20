@@ -57,6 +57,7 @@ type Application struct {
 func (a *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 	// priority order: viper.Set, flag, env, config, kv, defaults
 	// flags have already been loaded into viper by command construction
+	// TODO: flip defaults with AutomaticEnv so keys are populated before execution
 
 	// load environment variables
 	v.SetEnvPrefix(internal.ApplicationName)

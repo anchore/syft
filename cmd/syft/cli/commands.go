@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	golog "log"
 	"strings"
 
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -19,10 +18,14 @@ import (
 
 const indent = "  "
 
-// New constructs the `syft packages` command and aliases the root command.
-func New() *cobra.Command {
-	ro := &options.RootOptions{}
-	po := &options.PackagesOptions{}
+// New constructs the `syft packages` command, aliases the root command to `syft packages`,
+// and constructs the `syft power-user` and `syft attest` commands. It is also responsible for
+// organizing flag usage and injeting the application config for each command.
+// Because of how the `cobra` library behaves, the application's configuration is initialized
+// at this level. Values from the config should only be used after `app.LoadAllValues` has been called.
+// Cobra does not have knowledge of the user provided flags until the `RunE` block of each command.
+// `RunE` is the earliest that the complete application configuration can be loaded.
+func New() (*cobra.Command, error) {
 	app := &config.Application{}
 
 	// allow for nested options to be specified via environment variables
@@ -30,10 +33,16 @@ func New() *cobra.Command {
 	v := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")))
 
 	// since root is aliased as the packages cmd we need to construct this command first
+	// we also need the command to have information about the `root` options because of this alias
+	ro := &options.RootOptions{}
+	po := &options.PackagesOptions{}
 	packagesCmd := Packages(v, app, ro, po)
 
+	// root options are also passed to the attestCmd so that a user provided config location can be discovered
+	attestCmd := Attest(v, app, ro)
+
 	// rootCmd is currently an alias for the packages command
-	cmd := &cobra.Command{
+	rootCmd := &cobra.Command{
 		Short:         packagesCmd.Short,
 		Long:          packagesCmd.Long,
 		Args:          packagesCmd.Args,
@@ -43,23 +52,29 @@ func New() *cobra.Command {
 		RunE:          packagesCmd.RunE,
 		Version:       version.FromBuild().Version,
 	}
-	cmd.SetVersionTemplate(fmt.Sprintf("%s {{.Version}}\n", internal.ApplicationName))
-	err := ro.AddFlags(cmd, v)
+	rootCmd.SetVersionTemplate(fmt.Sprintf("%s {{.Version}}\n", internal.ApplicationName))
+
+	// start adding flags to all the commands
+	err := ro.AddFlags(rootCmd, v)
 	if err != nil {
-		golog.Fatal(err)
+		return nil, err
 	}
 
-	// add package flags to rootCmd because of alias
-	err = po.AddFlags(cmd, v)
+	// package flags need to be decorated onto the rootCmd so that rootCmd can function as a packages alias
+	err = po.AddFlags(rootCmd, v)
 	if err != nil {
-		golog.Fatal(err)
+		return nil, err
 	}
+
+	// attest also uses flags from the packagesCmd since it generates an sbom
+	err = po.AddFlags(attestCmd, v)
 
 	// Add sub-commands.
-	cmd.AddCommand(packagesCmd)
-	cmd.AddCommand(Version(v, app))
+	rootCmd.AddCommand(packagesCmd)
+	rootCmd.AddCommand(attestCmd)
+	rootCmd.AddCommand(Version(v, app))
 
-	return cmd
+	return rootCmd, err
 }
 
 func helpArgs(cmd *cobra.Command, args []string) error {

@@ -7,7 +7,12 @@ import (
 )
 
 func main() {
-	if err := cli.New().Execute(); err != nil {
+	cli, err := cli.New()
+	if err != nil {
+		log.Fatalf("error during command construction: %v", err)
+	}
+
+	if err := cli.Execute(); err != nil {
 		log.Fatalf("error during command execution: %v", err)
 	}
 }
