@@ -57,12 +57,6 @@ type Application struct {
 func (a *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 	// priority order: viper.Set, flag, env, config, kv, defaults
 	// flags have already been loaded into viper by command construction
-	// TODO: flip defaults with AutomaticEnv so keys are populated before execution
-
-	// load environment variables
-	v.SetEnvPrefix(internal.ApplicationName)
-	v.AllowEmptyEnv(true)
-	v.AutomaticEnv()
 
 	// check if user specified config; otherwise read all possible paths
 	if err := loadConfig(v, configPath); err != nil {
@@ -74,6 +68,11 @@ func (a *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 
 	// load default config values into viper
 	loadDefaultValues(v)
+
+	// load environment variables
+	v.SetEnvPrefix(internal.ApplicationName)
+	v.AllowEmptyEnv(true)
+	v.AutomaticEnv()
 
 	// unmarshal fully populated viper object onto config
 	err := v.Unmarshal(a)
@@ -125,11 +124,17 @@ func (a *Application) parseLogLevelOption() error {
 		// we should be able to quiet the console logging and leave file logging alone...
 		// ... this will be an enhancement for later
 		a.Log.LevelOpt = logrus.PanicLevel
-	case a.Log.Level != "":
-		if a.Verbosity > 0 {
-			return fmt.Errorf("cannot explicitly set log level (a file or env var) and use -v flag together")
-		}
 
+	case a.Verbosity > 0:
+		switch v := a.Verbosity; {
+		case v == 1:
+			a.Log.LevelOpt = logrus.InfoLevel
+		case v >= 2:
+			a.Log.LevelOpt = logrus.DebugLevel
+		default:
+			a.Log.LevelOpt = logrus.ErrorLevel
+		}
+	case a.Log.Level != "":
 		lvl, err := logrus.ParseLevel(strings.ToLower(a.Log.Level))
 		if err != nil {
 			return fmt.Errorf("bad log level configured (%q): %w", a.Log.Level, err)
@@ -140,15 +145,7 @@ func (a *Application) parseLogLevelOption() error {
 			a.Verbosity = 1
 		}
 	default:
-
-		switch v := a.Verbosity; {
-		case v == 1:
-			a.Log.LevelOpt = logrus.InfoLevel
-		case v >= 2:
-			a.Log.LevelOpt = logrus.DebugLevel
-		default:
-			a.Log.LevelOpt = logrus.ErrorLevel
-		}
+		a.Log.LevelOpt = logrus.InfoLevel
 	}
 
 	if a.Log.Level == "" {

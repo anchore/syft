@@ -35,6 +35,7 @@ func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions)
 			}
 			// configure logging for command
 			newLogWrapper(app)
+			logApplicationConfig(app)
 
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()

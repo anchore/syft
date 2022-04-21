@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/anchore/stereoscope"
@@ -53,22 +54,21 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 			"appName": internal.ApplicationName,
 			"command": "packages",
 		}),
-		Args:          helpArgs,
-		SilenceUsage:  true,
-		SilenceErrors: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// this MUST be called first to make sure app config decodes
-			// the viper object correctly
+		Args: func(cmd *cobra.Command, args []string) error {
 			if err := app.LoadAllValues(v, ro.Config); err != nil {
-				return err
+				return fmt.Errorf("invalid application config: %v", err)
 			}
 			// configure logging for command
 			newLogWrapper(app)
-
+			logApplicationConfig(app)
+			return helpArgs(cmd, args)
+		},
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}
-
 			return packages.Run(cmd.Context(), app, args)
 		},
 	}

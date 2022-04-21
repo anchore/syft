@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/event"
+	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
@@ -40,6 +41,7 @@ func New() (*cobra.Command, error) {
 
 	// root options are also passed to the attestCmd so that a user provided config location can be discovered
 	attestCmd := Attest(v, app, ro)
+	poweruserCmd := PowerUser(v, app, ro)
 
 	// rootCmd is currently an alias for the packages command
 	rootCmd := &cobra.Command{
@@ -68,10 +70,20 @@ func New() (*cobra.Command, error) {
 
 	// attest also uses flags from the packagesCmd since it generates an sbom
 	err = po.AddFlags(attestCmd, v)
+	if err != nil {
+		return nil, err
+	}
+
+	// poweruser also uses the packagesCmd flags since it is a specialized version of the command
+	err = po.AddFlags(poweruserCmd, v)
+	if err != nil {
+		return nil, err
+	}
 
 	// Add sub-commands.
 	rootCmd.AddCommand(packagesCmd)
 	rootCmd.AddCommand(attestCmd)
+	rootCmd.AddCommand(poweruserCmd)
 	rootCmd.AddCommand(Version(v, app))
 
 	return rootCmd, err
@@ -106,4 +118,8 @@ func checkForApplicationUpdate() {
 	} else {
 		log.Debugf("no new %s update available", internal.ApplicationName)
 	}
+}
+
+func logApplicationConfig(app *config.Application) {
+	log.Debugf("application config:\n%+v", color.Magenta.Sprint(app.String()))
 }

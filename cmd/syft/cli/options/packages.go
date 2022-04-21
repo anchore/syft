@@ -84,6 +84,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 		return err
 	}
 
+	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
+		return err
+	}
+
 	// Upload options //////////////////////////////////////////////////////////
 
 	if err := v.BindPFlag("anchore.host", flags.Lookup("host")); err != nil {

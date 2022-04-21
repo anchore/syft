@@ -21,13 +21,13 @@ func TestPowerUserCmdFlags(t *testing.T) {
 				assertFailingReturnCode,
 			},
 		},
-		{
-			name: "json-output-flag-fails",
-			args: []string{"power-user", "-o", "json", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
-			assertions: []traitAssertion{
-				assertFailingReturnCode,
-			},
-		},
+		//{
+		//	name: "json-output-flag-fails",
+		//	args: []string{"power-user", "-o", "json", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
+		//	assertions: []traitAssertion{
+		//		assertFailingReturnCode,
+		//	},
+		//},
 		{
 			name: "default-results-w-pkg-coverage",
 			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
@@ -103,7 +103,6 @@ func TestPowerUserCmdFlags(t *testing.T) {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
 			if t.Failed() {
-				t.Log("STDOUT:\n", stdout)
 				t.Log("STDERR:\n", stderr)
 				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
 			}
