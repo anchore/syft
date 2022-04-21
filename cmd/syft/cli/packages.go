@@ -61,7 +61,7 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 			// configure logging for command
 			newLogWrapper(app)
 			logApplicationConfig(app)
-			return helpArgs(cmd, args)
+			return validateArgs(cmd, args)
 		},
 		SilenceUsage:  true,
 		SilenceErrors: true,

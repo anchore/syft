@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/anchore/syft/cmd/syft/cli/attest"
@@ -32,16 +33,22 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *c
 			"appName": internal.ApplicationName,
 			"command": "attest",
 		}),
-		Args:          helpArgs,
+		Args: func(cmd *cobra.Command, args []string) error {
+			// run to unmarshal viper object onto app config
+			// the viper object correctly
+			if err := app.LoadAllValues(v, ro.Config); err != nil {
+				return fmt.Errorf("invalid application config: %v", err)
+			}
+			// configure logging for command
+			newLogWrapper(app)
+			logApplicationConfig(app)
+			return validateArgs(cmd, args)
+		},
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// this MUST be called first to make sure app config decodes
 			// the viper object correctly
-			if err := app.LoadAllValues(v, ro.Config); err != nil {
-				return err
-			}
-			// configure logging for command
 			newLogWrapper(app)
 			logApplicationConfig(app)
 

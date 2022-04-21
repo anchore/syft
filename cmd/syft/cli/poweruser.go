@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/poweruser"
 	"github.com/anchore/syft/internal"
@@ -23,20 +24,19 @@ func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions)
 			"appName": internal.ApplicationName,
 			"command": "power-user",
 		}),
-		Args:          helpArgs,
-		Hidden:        true,
-		SilenceUsage:  true,
-		SilenceErrors: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// this MUST be called first to make sure app config decodes
-			// the viper object correctly
+		Args: func(cmd *cobra.Command, args []string) error {
 			if err := app.LoadAllValues(v, ro.Config); err != nil {
-				return err
+				return fmt.Errorf("invalid application config: %v", err)
 			}
 			// configure logging for command
 			newLogWrapper(app)
 			logApplicationConfig(app)
-
+			return validateArgs(cmd, args)
+		},
+		Hidden:        true,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}

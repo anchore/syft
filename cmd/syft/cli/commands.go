@@ -89,7 +89,7 @@ func New() (*cobra.Command, error) {
 	return rootCmd, err
 }
 
-func helpArgs(cmd *cobra.Command, args []string) error {
+func validateArgs(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		// in the case that no arguments are given we want to show the help text and return with a non-0 return code.
 		if err := cmd.Help(); err != nil {
