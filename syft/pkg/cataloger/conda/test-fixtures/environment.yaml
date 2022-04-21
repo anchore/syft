@@ -1,8 +1,0 @@
-name: sfyt-test-fixture
-channels:
-  - conda-forge
-dependencies:
-  - python=3.10.*
-  - pip
-  - jupyterlab
-  - arrow-cpp
