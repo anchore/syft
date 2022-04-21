@@ -8,6 +8,7 @@ import (
 
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
+	"github.com/anchore/syft/internal/formats/github"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
@@ -169,6 +170,18 @@ func TestFormatByName(t *testing.T) {
 			name: "syft-json",
 			want: syftjson.ID,
 		},
+
+		// GitHub JSON
+		{
+			name: "github",
+			want: github.ID,
+		},
+
+		{
+			name: "github-json",
+			want: github.ID,
+		},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
