@@ -35,13 +35,13 @@ func importConfig(ctx context.Context, api configImportAPI, sessionID string, co
 			if errors.As(err, &openAPIErr) {
 				log.Errorf("api response: %+v", string(openAPIErr.Body()))
 			}
-			return "", fmt.Errorf("unable to import ConfigPath: %w", err)
+			return "", fmt.Errorf("unable to import Config: %w", err)
 		}
 
 		defer httpResponse.Body.Close()
 
 		if httpResponse.StatusCode != 200 {
-			return "", fmt.Errorf("unable to import ConfigPath: %s", httpResponse.Status)
+			return "", fmt.Errorf("unable to import Config: %s", httpResponse.Status)
 		}
 
 		return response.Digest, nil

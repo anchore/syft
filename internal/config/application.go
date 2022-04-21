@@ -89,6 +89,7 @@ func (a *Application) parseConfigValues() error {
 	for _, optionFn := range []func() error{
 		a.parseUploadOptions,
 		a.parseLogLevelOption,
+		a.parseFile,
 	} {
 		if err := optionFn(); err != nil {
 			return err
@@ -152,6 +153,17 @@ func (a *Application) parseLogLevelOption() error {
 		a.Log.Level = a.Log.LevelOpt.String()
 	}
 
+	return nil
+}
+
+func (cfg *Application) parseFile() error {
+	if cfg.File != "" {
+		expandedPath, err := homedir.Expand(cfg.File)
+		if err != nil {
+			return fmt.Errorf("unable to expand file path=%q: %w", cfg.File, err)
+		}
+		cfg.File = expandedPath
+	}
 	return nil
 }
 

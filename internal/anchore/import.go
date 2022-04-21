@@ -84,7 +84,7 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 
 	configDigest, err := importConfig(authedCtx, c.client.ImportsApi, sessionID, cfg.SBOM.Source.ImageMetadata.RawConfig, stage)
 	if err != nil {
-		return fmt.Errorf("failed to import ConfigPath: %w", err)
+		return fmt.Errorf("failed to import Config: %w", err)
 	}
 	prog.N++
 
