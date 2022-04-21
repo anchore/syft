@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/logger"
-	"github.com/anchore/syft/syft"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -79,20 +76,4 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 	}
 
 	return cmd
-}
-
-func newLogWrapper(app *config.Application) {
-	cfg := logger.LogrusConfig{
-		EnableConsole: (app.Log.FileLocation == "" || app.Verbosity > 0) && !app.Quiet,
-		EnableFile:    app.Log.FileLocation != "",
-		Level:         app.Log.LevelOpt,
-		Structured:    app.Log.Structured,
-		FileLocation:  app.Log.FileLocation,
-	}
-
-	logWrapper := logger.NewLogrusLogger(cfg)
-	syft.SetLogger(logWrapper)
-	stereoscope.SetLogger(&logger.LogrusNestedLogger{
-		Logger: logWrapper.Logger.WithField("from-lib", "stereoscope"),
-	})
 }

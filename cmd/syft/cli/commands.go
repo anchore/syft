@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anchore/stereoscope"
+	"github.com/anchore/syft/internal/logger"
+	"github.com/anchore/syft/syft"
+
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
@@ -122,4 +126,20 @@ func checkForApplicationUpdate() {
 
 func logApplicationConfig(app *config.Application) {
 	log.Debugf("application config:\n%+v", color.Magenta.Sprint(app.String()))
+}
+
+func newLogWrapper(app *config.Application) {
+	cfg := logger.LogrusConfig{
+		EnableConsole: (app.Log.FileLocation == "" || app.Verbosity > 0) && !app.Quiet,
+		EnableFile:    app.Log.FileLocation != "",
+		Level:         app.Log.LevelOpt,
+		Structured:    app.Log.Structured,
+		FileLocation:  app.Log.FileLocation,
+	}
+
+	logWrapper := logger.NewLogrusLogger(cfg)
+	syft.SetLogger(logWrapper)
+	stereoscope.SetLogger(&logger.LogrusNestedLogger{
+		Logger: logWrapper.Logger.WithField("from-lib", "stereoscope"),
+	})
 }

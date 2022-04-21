@@ -33,8 +33,8 @@ type parser interface {
 // Application is the main syft application configuration.
 type Application struct {
 	// the location where the application config was read from (either from -c or discovered while loading); default .syft.yaml
-	Config    string `yaml:"config,omitempty" json:"config" mapstructure:"config"`
-	Verbosity uint   `yaml:"verbosity,omitempty" json:"verbosity" mapstructure:"verbosity"`
+	ConfigPath string `yaml:"configPath,omitempty" json:"configPath" mapstructure:"config"`
+	Verbosity  uint   `yaml:"verbosity,omitempty" json:"verbosity" mapstructure:"verbosity"`
 	// -q, indicates to not show any status output to stderr (ETUI or logging UI)
 	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`
 	Outputs            []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output

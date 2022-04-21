@@ -98,6 +98,47 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 	return errs
 }
 
+func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
+	tasks, err := eventloop.Tasks(app)
+	if err != nil {
+		return nil, err
+	}
+
+	s := sbom.SBOM{
+		Source: src.Metadata,
+		Descriptor: sbom.Descriptor{
+			Name:          internal.ApplicationName,
+			Version:       version.FromBuild().Version,
+			Configuration: app,
+		},
+	}
+
+	buildRelationships(&s, src, tasks, errs)
+
+	return &s, nil
+}
+
+func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
+	var relationships []<-chan artifact.Relationship
+	for _, task := range tasks {
+		c := make(chan artifact.Relationship)
+		relationships = append(relationships, c)
+		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
+	}
+
+	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
+}
+
+func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
+	for _, c := range cs {
+		for n := range c {
+			relationships = append(relationships, n)
+		}
+	}
+
+	return relationships
+}
+
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Application) error {
 	log.Infof("uploading results to %s", app.Anchore.Host)
 
@@ -145,47 +186,6 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Applicati
 	}
 
 	return nil
-}
-
-func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
-	tasks, err := eventloop.Tasks(app)
-	if err != nil {
-		return nil, err
-	}
-
-	s := sbom.SBOM{
-		Source: src.Metadata,
-		Descriptor: sbom.Descriptor{
-			Name:          internal.ApplicationName,
-			Version:       version.FromBuild().Version,
-			Configuration: app,
-		},
-	}
-
-	buildRelationships(&s, src, tasks, errs)
-
-	return &s, nil
-}
-
-func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
-	var relationships []<-chan artifact.Relationship
-	for _, task := range tasks {
-		c := make(chan artifact.Relationship)
-		relationships = append(relationships, c)
-		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
-	}
-
-	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
-}
-
-func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
-	for _, c := range cs {
-		for n := range c {
-			relationships = append(relationships, n)
-		}
-	}
-
-	return relationships
 }
 
 // makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer

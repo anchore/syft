@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/poweruser"
 	"github.com/anchore/syft/internal"
