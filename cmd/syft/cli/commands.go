@@ -65,19 +65,16 @@ func New() (*cobra.Command, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	// package flags need to be decorated onto the rootCmd so that rootCmd can function as a packages alias
 	err = po.AddFlags(rootCmd, v)
 	if err != nil {
 		return nil, err
 	}
-
 	// attest also uses flags from the packagesCmd since it generates an sbom
 	err = po.AddFlags(attestCmd, v)
 	if err != nil {
 		return nil, err
 	}
-
 	// poweruser also uses the packagesCmd flags since it is a specialized version of the command
 	err = po.AddFlags(poweruserCmd, v)
 	if err != nil {
@@ -88,6 +85,7 @@ func New() (*cobra.Command, error) {
 	rootCmd.AddCommand(packagesCmd)
 	rootCmd.AddCommand(attestCmd)
 	rootCmd.AddCommand(poweruserCmd)
+	rootCmd.AddCommand(Completion())
 	rootCmd.AddCommand(Version(v, app))
 
 	return rootCmd, err
