@@ -54,7 +54,7 @@ type Application struct {
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 }
 
-func (a *Application) LoadAllValues(v *viper.Viper, configPath string) error {
+func (cfg *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 	// priority order: viper.Set, flag, env, config, kv, defaults
 	// flags have already been loaded into viper by command construction
 
@@ -75,21 +75,21 @@ func (a *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 	v.AutomaticEnv()
 
 	// unmarshal fully populated viper object onto config
-	err := v.Unmarshal(a)
+	err := v.Unmarshal(cfg)
 	if err != nil {
 		return err
 	}
 
 	// Convert all populated config options to their internal application values ex: scope string => scopeOpt source.Scope
-	return a.parseConfigValues()
+	return cfg.parseConfigValues()
 }
 
-func (a *Application) parseConfigValues() error {
+func (cfg *Application) parseConfigValues() error {
 	// parse application config options
 	for _, optionFn := range []func() error{
-		a.parseUploadOptions,
-		a.parseLogLevelOption,
-		a.parseFile,
+		cfg.parseUploadOptions,
+		cfg.parseLogLevelOption,
+		cfg.parseFile,
 	} {
 		if err := optionFn(); err != nil {
 			return err
@@ -98,7 +98,7 @@ func (a *Application) parseConfigValues() error {
 	// parse nested config options
 	// for each field in the configuration struct, see if the field implements the parser interface
 	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
-	value := reflect.ValueOf(a).Elem()
+	value := reflect.ValueOf(cfg).Elem()
 	for i := 0; i < value.NumField(); i++ {
 		// note: since the interface method of parser is a pointer receiver we need to get the value of the field as a pointer.
 		if parsable, ok := value.Field(i).Addr().Interface().(parser); ok {
@@ -111,46 +111,46 @@ func (a *Application) parseConfigValues() error {
 	return nil
 }
 
-func (a *Application) parseUploadOptions() error {
-	if a.Anchore.Host == "" && a.Anchore.Dockerfile != "" {
+func (cfg *Application) parseUploadOptions() error {
+	if cfg.Anchore.Host == "" && cfg.Anchore.Dockerfile != "" {
 		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
 	}
 	return nil
 }
 
-func (a *Application) parseLogLevelOption() error {
+func (cfg *Application) parseLogLevelOption() error {
 	switch {
-	case a.Quiet:
+	case cfg.Quiet:
 		// TODO: this is bad: quiet option trumps all other logging options (such as to a file on disk)
 		// we should be able to quiet the console logging and leave file logging alone...
 		// ... this will be an enhancement for later
-		a.Log.LevelOpt = logrus.PanicLevel
+		cfg.Log.LevelOpt = logrus.PanicLevel
 
-	case a.Verbosity > 0:
-		switch v := a.Verbosity; {
+	case cfg.Verbosity > 0:
+		switch v := cfg.Verbosity; {
 		case v == 1:
-			a.Log.LevelOpt = logrus.InfoLevel
+			cfg.Log.LevelOpt = logrus.InfoLevel
 		case v >= 2:
-			a.Log.LevelOpt = logrus.DebugLevel
+			cfg.Log.LevelOpt = logrus.DebugLevel
 		default:
-			a.Log.LevelOpt = logrus.ErrorLevel
+			cfg.Log.LevelOpt = logrus.ErrorLevel
 		}
-	case a.Log.Level != "":
-		lvl, err := logrus.ParseLevel(strings.ToLower(a.Log.Level))
+	case cfg.Log.Level != "":
+		lvl, err := logrus.ParseLevel(strings.ToLower(cfg.Log.Level))
 		if err != nil {
-			return fmt.Errorf("bad log level configured (%q): %w", a.Log.Level, err)
+			return fmt.Errorf("bad log level configured (%q): %w", cfg.Log.Level, err)
 		}
 
-		a.Log.LevelOpt = lvl
-		if a.Log.LevelOpt >= logrus.InfoLevel {
-			a.Verbosity = 1
+		cfg.Log.LevelOpt = lvl
+		if cfg.Log.LevelOpt >= logrus.InfoLevel {
+			cfg.Verbosity = 1
 		}
 	default:
-		a.Log.LevelOpt = logrus.InfoLevel
+		cfg.Log.LevelOpt = logrus.InfoLevel
 	}
 
-	if a.Log.Level == "" {
-		a.Log.Level = a.Log.LevelOpt.String()
+	if cfg.Log.Level == "" {
+		cfg.Log.Level = cfg.Log.LevelOpt.String()
 	}
 
 	return nil
@@ -184,9 +184,9 @@ func loadDefaultValues(v *viper.Viper) {
 	}
 }
 
-func (a Application) String() string {
+func (cfg Application) String() string {
 	// yaml is pretty human friendly (at least when compared to json)
-	appaStr, err := yaml.Marshal(&a)
+	appaStr, err := yaml.Marshal(&cfg)
 
 	if err != nil {
 		return err.Error()
