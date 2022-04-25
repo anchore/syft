@@ -39,7 +39,7 @@ type CondaMeta struct {
         Type string `json:"type"`
     } `json:"link"`
     MD5 string `json:"md5"`
-    Name string `json:"name"`
+    Name string `json:"name"` // common name of the package
     Noarch string `json:"noarch"`
     PackageTarballFullPath string `json:"package_tarball_full_path"`
     PackageType string `json:"package_type"`
@@ -57,15 +57,28 @@ type CondaMeta struct {
     Version string `json:"version"`
 }
 
-// integrity check
-var _ common.ParserFn = parseCondaMeta
-
-func parseCondaMeta(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-    packages := make([]*pkg.Package, 0)
+func parseCondaMeta(_ string, reader io.Reader) (pkg.CondaPackageMetadata, error) {
 
     json_decoder := json.NewDecoder(reader)
+    
+    var condaPkgMeta CondaMeta
+    if err := json_decoder.Decode(&condaPkgMeta); err == io.EOF {
+        break
+    } else if err != nil {
+        return nil, fmt.Errorf("Failed to parse conda-meta/*.json file: %w", err)
+    }
 
-    return packages, nil, nil
-
+    condaPackageMetadata := pkg.CondaPackageMetadata {
+        Channel: condaPkgMeta.Channel,
+        ExtractedPackageDir: condaPkgMeta.ExtractedPackageDir,
+        Files: condaPkgMeta.Files,
+        FN: condaPkgMeta.FN,
+        PackageTarballFullPath: condaPkgMeta.PackageTarballFullPath,
+        PathsData: condaPkgMeta.PathsData,
+        SHA256: condaPkgMeta.SHA256,
+        URL: condaPkgMeta.URL,
+        Version: condaPkgMeta.Version,
+    }
+    return condaPackageMetadata, nil
 }
 
