@@ -69,6 +69,9 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 
 			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
 			p.PURL = pkg.URL(p, release)
+			if p.Language == "" {
+				p.Language = pkg.LanguageFromPURL(p.PURL)
+			}
 
 			// create file-to-package relationships for files owned by the package
 			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)

@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/syft/source"
+	"github.com/google/go-cmp/cmp"
 	"regexp"
 	"testing"
 
@@ -21,12 +22,14 @@ import (
 )
 
 // TestEncodeDecodeEncodeCycleComparison is testing for differences in how SBOM documents get encoded on multiple cycles.
-// By encding and decoding the sbom we can compare the differences between the set of resulting objects. However,
+// By encoding and decoding the sbom we can compare the differences between the set of resulting objects. However,
 // this requires specific comparisons being done, and select redactions/omissions being made. Additionally, there are
 // already unit tests on each format encoder-decoder for properly functioning comparisons in depth, so there is no need
 // to do an object-to-object comparison. For this reason this test focuses on a bytes-to-bytes comparison after an
 // encode-decode-encode loop which will detect lossy behavior in both directions.
 func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
+	// use second image for relationships
+	images := []string{"image-pkg-coverage", "image-owning-package"}
 	tests := []struct {
 		formatOption sbom.FormatID
 		redactor     func(in []byte) []byte
@@ -37,6 +40,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			json:         true,
 		},
 		{
+
 			formatOption: cyclonedxjson.ID,
 			redactor: func(in []byte) []byte {
 				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
@@ -45,6 +49,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			json: true,
 		},
 		{
+
 			formatOption: cyclonedxxml.ID,
 			redactor: func(in []byte) []byte {
 				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
@@ -55,9 +60,8 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		// use second image for relationships
-		for _, image := range []string{"image-pkg-coverage", "image-owning-package"} {
-			t.Run(fmt.Sprintf("%s/%s", test.formatOption, image), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s", test.formatOption), func(t *testing.T) {
+			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope)
 
 				format := syft.FormatByID(test.formatOption)
@@ -81,15 +85,15 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				if test.json {
 					s1 := string(by1)
 					s2 := string(by2)
-					assert.JSONEq(t, s1, s2)
-				} else {
-					if !assert.True(t, bytes.Equal(by1, by2)) {
-						dmp := diffmatchpatch.New()
-						diffs := dmp.DiffMain(string(by1), string(by2), true)
-						t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
+					if diff := cmp.Diff(s1, s2); diff != "" {
+						t.Errorf("Encode/Decode mismatch (-want +got):\n%s", diff)
 					}
+				} else if !assert.True(t, bytes.Equal(by1, by2)) {
+					dmp := diffmatchpatch.New()
+					diffs := dmp.DiffMain(string(by1), string(by2), true)
+					t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 				}
-			})
-		}
+			}
+		})
 	}
 }
