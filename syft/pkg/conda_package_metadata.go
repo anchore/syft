@@ -7,7 +7,7 @@ import (
 
 var _ urlIdentifier = (*CondaPackageMetadata)(nil)
 
-type Path struct {
+type CondaPathMeta struct {
     Path string
     PathType string
     SHA256 string
@@ -19,9 +19,7 @@ type CondaPackageMetadata struct {
     Files []string
     FN string
     PackageTarballFullPath string
-    PathsData struct {
-        Paths []Path
-    }
+    PathsData []CondaPathMeta
     SHA256 string
     URL string
     Version string

@@ -5,14 +5,39 @@ within a given conda environment's conda-meta directory
 package conda
 
 import (
-    "github.com/anchore/syft/syft/pkg/cataloger/common"
+    "fmt"
+    //"github.com/anchore/syft/syft/pkg/cataloger/common"
+    "github.com/anchore/syft/syft/artifact"
+    "github.com/anchore/syft/syft/pkg"
+    "github.com/anchore/syft/syft/source"
 )
 
-// NewCondaMetaCataloger returns a new conda-meta cataloger object
-func NewCondaMetaCataloger() *common.GenericCataloger {
-    globParsers := map[string]common.ParserFn{
-        "**/conda-meta/*.json": parseCondaMeta,
+// TODO: add any additional useful conda files here such as history, recipes, etc.
+const (
+    condaMetaJSON = "**/conda-meta/*.json"
+)
+
+type CondaMetaCataloger struct{}
+
+func NewCondaPackageCataloger() *CondaMetaCataloger {
+    return &CondaMetaCataloger{}
+}
+
+func (c *CondaMetaCataloger) CondaMetaCatalog(resolver  source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+   var fileMatches []source.Location
+
+   for _, glob := range []string{condaMetaJSON} {
+       matches, err := resolver.FilesByGlob(glob)
+       if err != nil {
+           return nil, nil, fmt.Errorf("failed to find conda files by glob: %s", glob)
+       }
+       fileMatches = append(fileMatches, matches...)
     }
 
-    return common.NewGenericCataloger(nil, globParsers, "conda-cataloger")
+    var pkgs []pkg.Package
+    //TODO: generate and add pkg.Package for each given conda-meta .json
+
+    return pkgs, nil, nil
 }
+
+
