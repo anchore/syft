@@ -1,11 +1,11 @@
-package cmd
+package options
 
 import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func formatAliases(ids ...sbom.FormatID) (aliases []string) {
+func FormatAliases(ids ...sbom.FormatID) (aliases []string) {
 	for _, id := range ids {
 		switch id {
 		case syft.JSONFormatID:

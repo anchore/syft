@@ -1,4 +1,4 @@
-package cmd
+package eventloop
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ func (u *uiMock) Teardown(_ bool) error {
 	return u.Called().Error(0)
 }
 
-func Test_eventLoop_gracefulExit(t *testing.T) {
+func Test_EventLoop_gracefulExit(t *testing.T) {
 	test := func(t *testing.T) {
 
 		testBus := partybus.NewBus()
@@ -92,7 +92,7 @@ func Test_eventLoop_gracefulExit(t *testing.T) {
 		}
 
 		assert.NoError(t,
-			eventLoop(
+			EventLoop(
 				worker(),
 				signaler(),
 				subscription,
@@ -109,7 +109,7 @@ func Test_eventLoop_gracefulExit(t *testing.T) {
 	testWithTimeout(t, 5*time.Second, test)
 }
 
-func Test_eventLoop_workerError(t *testing.T) {
+func Test_EventLoop_workerError(t *testing.T) {
 	test := func(t *testing.T) {
 
 		testBus := partybus.NewBus()
@@ -155,7 +155,7 @@ func Test_eventLoop_workerError(t *testing.T) {
 
 		// ensure we see an error returned
 		assert.ErrorIs(t,
-			eventLoop(
+			EventLoop(
 				worker(),
 				signaler(),
 				subscription,
@@ -174,7 +174,7 @@ func Test_eventLoop_workerError(t *testing.T) {
 	testWithTimeout(t, 5*time.Second, test)
 }
 
-func Test_eventLoop_unsubscribeError(t *testing.T) {
+func Test_EventLoop_unsubscribeError(t *testing.T) {
 	test := func(t *testing.T) {
 
 		testBus := partybus.NewBus()
@@ -226,7 +226,7 @@ func Test_eventLoop_unsubscribeError(t *testing.T) {
 		// unsubscribe errors should be handled and ignored, not propagated. We are additionally asserting that
 		// this case is handled as a controlled shutdown (this test should not timeout)
 		assert.NoError(t,
-			eventLoop(
+			EventLoop(
 				worker(),
 				signaler(),
 				subscription,
@@ -243,7 +243,7 @@ func Test_eventLoop_unsubscribeError(t *testing.T) {
 	testWithTimeout(t, 5*time.Second, test)
 }
 
-func Test_eventLoop_handlerError(t *testing.T) {
+func Test_EventLoop_handlerError(t *testing.T) {
 	test := func(t *testing.T) {
 
 		testBus := partybus.NewBus()
@@ -296,7 +296,7 @@ func Test_eventLoop_handlerError(t *testing.T) {
 		// handle errors SHOULD propagate the event loop. We are additionally asserting that this case is
 		// handled as a controlled shutdown (this test should not timeout)
 		assert.ErrorIs(t,
-			eventLoop(
+			EventLoop(
 				worker(),
 				signaler(),
 				subscription,
@@ -315,7 +315,7 @@ func Test_eventLoop_handlerError(t *testing.T) {
 	testWithTimeout(t, 5*time.Second, test)
 }
 
-func Test_eventLoop_signalsStopExecution(t *testing.T) {
+func Test_EventLoop_signalsStopExecution(t *testing.T) {
 	test := func(t *testing.T) {
 
 		testBus := partybus.NewBus()
@@ -351,7 +351,7 @@ func Test_eventLoop_signalsStopExecution(t *testing.T) {
 		}
 
 		assert.NoError(t,
-			eventLoop(
+			EventLoop(
 				worker(),
 				signaler(),
 				subscription,
@@ -368,7 +368,7 @@ func Test_eventLoop_signalsStopExecution(t *testing.T) {
 	testWithTimeout(t, 5*time.Second, test)
 }
 
-func Test_eventLoop_uiTeardownError(t *testing.T) {
+func Test_EventLoop_uiTeardownError(t *testing.T) {
 	test := func(t *testing.T) {
 
 		testBus := partybus.NewBus()
@@ -421,7 +421,7 @@ func Test_eventLoop_uiTeardownError(t *testing.T) {
 
 		// ensure we see an error returned
 		assert.ErrorIs(t,
-			eventLoop(
+			EventLoop(
 				worker(),
 				signaler(),
 				subscription,

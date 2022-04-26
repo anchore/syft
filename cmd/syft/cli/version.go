@@ -1,33 +1,41 @@
-package cmd
+package cli
 
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
-
+	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/version"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-var versionCmdOutputFormat string
+func Version(v *viper.Viper, app *config.Application) *cobra.Command {
+	o := &options.VersionOptions{}
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "show the version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return printVersion(o.Output)
+		},
+	}
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "show the version",
-	Run:   printVersion,
+	err := o.AddFlags(cmd, v)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return cmd
 }
 
-func init() {
-	versionCmd.Flags().StringVarP(&versionCmdOutputFormat, "output", "o", "text", "format to show version information (available=[text, json])")
-	rootCmd.AddCommand(versionCmd)
-}
-
-func printVersion(_ *cobra.Command, _ []string) {
+func printVersion(output string) error {
 	versionInfo := version.FromBuild()
 
-	switch versionCmdOutputFormat {
+	switch output {
 	case "text":
 		fmt.Println("Application:       ", internal.ApplicationName)
 		fmt.Println("Version:           ", versionInfo.Version)
@@ -55,7 +63,9 @@ func printVersion(_ *cobra.Command, _ []string) {
 			os.Exit(1)
 		}
 	default:
-		fmt.Printf("unsupported output format: %s\n", versionCmdOutputFormat)
+		fmt.Printf("unsupported output format: %s\n", output)
 		os.Exit(1)
 	}
+
+	return nil
 }
