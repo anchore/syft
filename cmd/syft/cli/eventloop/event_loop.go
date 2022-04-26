@@ -1,4 +1,4 @@
-package cmd
+package eventloop
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ import (
 // signal interrupts. Is responsible for handling each event relative to a given UI an to coordinate eventing until
 // an eventual graceful exit.
 // nolint:funlen
-func eventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *partybus.Subscription, cleanupFn func(), uxs ...ui.UI) error {
+func EventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *partybus.Subscription, cleanupFn func(), uxs ...ui.UI) error {
 	defer cleanupFn()
 	events := subscription.Events()
 	var err error
