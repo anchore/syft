@@ -86,6 +86,10 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 		p.Type = pkg.TypeFromPURL(p.PURL)
 	}
 
+	if p.Language == "" {
+		p.Language = pkg.LanguageFromPURL(p.PURL)
+	}
+
 	return p
 }
 

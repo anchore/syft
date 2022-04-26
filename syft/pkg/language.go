@@ -11,7 +11,7 @@ type Language string
 
 const (
 	// the full set of supported programming languages
-	UnknownLanguage Language = "UnknownLanguage"
+	UnknownLanguage Language = ""
 	Java            Language = "java"
 	JavaScript      Language = "javascript"
 	Python          Language = "python"
