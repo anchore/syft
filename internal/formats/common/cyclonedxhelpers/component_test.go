@@ -191,3 +191,31 @@ func Test_deriveBomRef(t *testing.T) {
 		})
 	}
 }
+
+func Test_decodeComponent(t *testing.T) {
+	javaComponentWithNoSyftProperties := cyclonedx.Component{
+		Name:       "ch.qos.logback/logback-classic",
+		Version:    "1.2.3",
+		PackageURL: "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+		Type:       "library",
+		BOMRef:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+	}
+
+	tests := []struct {
+		name      string
+		component cyclonedx.Component
+		want      pkg.Language
+	}{
+		{
+			name:      "derive language from pURL if missing",
+			component: javaComponentWithNoSyftProperties,
+			want:      pkg.Java,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, decodeComponent(&tt.component).Language)
+		})
+	}
+}
