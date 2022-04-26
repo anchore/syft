@@ -37,7 +37,11 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	}{
 		{
 			formatOption: syftjson.ID,
-			json:         true,
+			redactor: func(in []byte) []byte {
+				in = regexp.MustCompile("\"(id|parent)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
+				return in
+			},
+			json: true,
 		},
 		{
 			formatOption: cyclonedxjson.ID,
