@@ -53,8 +53,9 @@ var imageOnlyTestCases = []testCase{
 	},
 	{
 		// When the image is build lib overwrites pkgs/lib causing there to only be two packages
-		name:    "find apkdb packages",
-		pkgType: pkg.ApkPkg,
+		name:        "find apkdb packages",
+		pkgType:     pkg.ApkPkg,
+		pkgLanguage: pkg.UnknownLanguage,
 		pkgInfo: map[string]string{
 			"musl-utils": "1.1.24-r2",
 			"libc-utils": "0.7.2-r0",
@@ -169,9 +170,10 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:       "find apkdb packages",
-		pkgType:    pkg.ApkPkg,
-		duplicates: 2, // when the directory is cataloged we have duplicates between lib/ and pkgs/lib
+		name:        "find apkdb packages",
+		pkgType:     pkg.ApkPkg,
+		pkgLanguage: pkg.UnknownLanguage,
+		duplicates:  2, // when the directory is cataloged we have duplicates between lib/ and pkgs/lib
 		pkgInfo: map[string]string{
 			"musl-utils": "1.1.24-r2",
 			"libc-utils": "0.7.2-r0",
@@ -203,15 +205,17 @@ var dirOnlyTestCases = []testCase{
 
 var commonTestCases = []testCase{
 	{
-		name:    "find rpmdb packages",
-		pkgType: pkg.RpmPkg,
+		name:        "find rpmdb packages",
+		pkgType:     pkg.RpmPkg,
+		pkgLanguage: pkg.UnknownLanguage,
 		pkgInfo: map[string]string{
 			"dive": "0.9.2-1",
 		},
 	},
 	{
-		name:    "find dpkg packages",
-		pkgType: pkg.DebPkg,
+		name:        "find dpkg packages",
+		pkgType:     pkg.DebPkg,
+		pkgLanguage: pkg.UnknownLanguage,
 		pkgInfo: map[string]string{
 			"apt":     "1.8.2",
 			"dash":    "0.5.8-2.4",
