@@ -19,8 +19,10 @@ type dotnetDeps struct {
 }
 
 type dotnetDepsLibrary struct {
-	Type string `json:"type"`
-	Path string `json:"path"`
+	Type     string `json:"type"`
+	Path     string `json:"path"`
+	Sha512   string `json:"sha512"`
+	HashPath string `json:"hashPath"`
 }
 
 func parseDotnetDeps(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
@@ -60,8 +62,11 @@ func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary) *pkg.Packag
 		Type:         pkg.DotnetPkg,
 		MetadataType: pkg.DotnetDepsMetadataType,
 		Metadata: &pkg.DotnetDepsMetadata{
-			Name:    name,
-			Version: version,
+			Name:     name,
+			Version:  version,
+			Path:     lib.Path,
+			Sha512:   lib.Sha512,
+			HashPath: lib.HashPath,
 		},
 	}
 }
