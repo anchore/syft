@@ -62,7 +62,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?syft-id=ae77680e9b1d087e",
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=ae77680e9b1d087e",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
