@@ -109,7 +109,7 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case packageurl.TypePub:
 		return DartPubPkg
-	//case packageurl.TypeDotnet:
+	// case packageurl.TypeDotnet:
 	case "dotnet": // TODO:
 		return DotnetPkg
 	default:

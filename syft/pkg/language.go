@@ -69,7 +69,7 @@ func LanguageByName(name string) Language {
 	case packageurl.TypePub, string(Dart):
 		return Dart
 	case string(Dotnet): // TODO:
-		//case packageurl.TypeDotnet, string(Dotnet):
+		// case packageurl.TypeDotnet, string(Dotnet):
 		return Dotnet
 	default:
 		return UnknownLanguage
