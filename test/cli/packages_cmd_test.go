@@ -96,7 +96,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(20),
+				assertPackageCount(32),
 				assertSuccessfulReturnCode,
 			},
 		},
