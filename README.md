@@ -117,14 +117,15 @@ syft path/to/dir
 Sources can be explicitly provided with a scheme:
 
 ```
-docker:yourrepo/yourimage:tag          use images from the Docker daemon
-podman:yourrepo/yourimage:tag          use images from the Podman daemon
-docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
-oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
-oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
-dir:path/to/yourproject                read directly from a path on disk (any directory)
-file:path/to/yourproject/file          read directly from a path on disk (any single file)
-registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
+docker:yourrepo/yourimage:tag            use images from the Docker daemon
+podman:yourrepo/yourimage:tag            use images from the Podman daemon
+docker-archive:path/to/yourimage.tar     use a tarball from disk for archives created from "docker save"
+oci-archive:path/to/yourimage.tar        use a tarball from disk for OCI archives (from Skopeo or otherwise)
+oci-dir:path/to/yourimage                read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
+singularity-image:path/to/yourimage.sif  read directly from a Singularity Image Format (SIF) container on disk
+dir:path/to/yourproject                  read directly from a path on disk (any directory)
+file:path/to/yourproject/file            read directly from a path on disk (any single file)
+registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
 
 ### Excluding file paths
