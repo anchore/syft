@@ -32,7 +32,7 @@
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
     </component>
-    <component bom-ref="pkg:deb/debian/package-2@2.0.1?syft-id=ceda99598967ae8d" type="library">
+    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=ceda99598967ae8d" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
