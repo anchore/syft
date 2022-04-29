@@ -6,10 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anchore/stereoscope"
-	"github.com/anchore/syft/cmd/syft/cli/eventloop"
-	"github.com/anchore/syft/cmd/syft/cli/options"
-	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
@@ -18,12 +14,9 @@ import (
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/hashicorp/go-multierror"
-	"github.com/wagoodman/go-partybus"
 )
 
 var convertableFormats = []sbom.FormatID{
@@ -71,31 +64,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 		return fmt.Errorf("cannot convert from %s format", outputFormat.ID())
 	}
 
-	eventBus := partybus.NewBus()
-	stereoscope.SetBus(eventBus)
-	syft.SetBus(eventBus)
-
-	return eventloop.EventLoop(
-		execWorker(sbom, writer),
-		eventloop.SetupSignals(),
-		eventBus.Subscribe(),
-		stereoscope.Cleanup,
-		ui.Select(options.IsVerbose(app), app.Quiet)...,
-	)
-}
-
-func execWorker(s *sbom.SBOM, w sbom.Writer) <-chan error {
-	errs := make(chan error)
-
-	go func() {
-		defer close(errs)
-
-		bus.Publish(partybus.Event{
-			Type:  event.Exit,
-			Value: func() error { return w.Write(*s) },
-		})
-	}()
-	return errs
+	return writer.Write(*sbom)
 }
 
 func isSupportedFormat(format sbom.FormatID) bool {

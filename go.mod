@@ -57,7 +57,6 @@ require (
 require (
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/in-toto/in-toto-golang v0.3.4-0.20211211042327-af1f9fb822bf
-	github.com/pkg/profile v1.2.1
 	github.com/sigstore/cosign v1.7.2
 	github.com/sigstore/sigstore v1.2.1-0.20220401110139-0e610e39782f
 )

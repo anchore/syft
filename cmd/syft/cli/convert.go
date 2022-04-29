@@ -36,7 +36,7 @@ func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions) *
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// newLogWrapper(app)
+			newLogWrapper(app)
 			// logApplicationConfig(app)
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()

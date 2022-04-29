@@ -3,13 +3,14 @@ package integration
 import (
 	"bytes"
 	"fmt"
-	"github.com/anchore/syft/internal/formats/cyclonedxjson"
-	"github.com/anchore/syft/internal/formats/cyclonedxxml"
-	"github.com/anchore/syft/internal/formats/syftjson"
-	"github.com/anchore/syft/syft/source"
-	"github.com/google/go-cmp/cmp"
+	"io/ioutil"
+	"os"
 	"regexp"
 	"testing"
+
+	"github.com/anchore/syft/internal/formats/spdx22json"
+	"github.com/anchore/syft/syft/source"
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/require"
@@ -29,36 +30,46 @@ import (
 // encode-decode-encode loop which will detect lossy behavior in both directions.
 func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	// use second image for relationships
-	images := []string{"image-pkg-coverage", "image-owning-package"}
+	images := []string{"image-owning-package"}
+	// images := []string{"image-pkg-coverage", "image-owning-package"}
 	tests := []struct {
 		formatOption sbom.FormatID
 		redactor     func(in []byte) []byte
 		json         bool
 	}{
 		{
-			formatOption: syftjson.ID,
+			formatOption: spdx22json.ID,
 			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("\"(id|parent)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
+				// in = regexp.MustCompile("\"(SPDXID|created|name|documentNamespace|sourceInfo|licenseDeclared|licenseConcluded|originator|referenceLocator)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
+				in = regexp.MustCompile("\"(SPDXID|created|name|documentNamespace|spdxElementId)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
 				return in
 			},
 			json: true,
 		},
-		{
-			formatOption: cyclonedxjson.ID,
-			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
-				return in
-			},
-			json: true,
-		},
-		{
-			formatOption: cyclonedxxml.ID,
-			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
-				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
-				return in
-			},
-		},
+		// {
+		// 	formatOption: syftjson.ID,
+		// 	redactor: func(in []byte) []byte {
+		// 		in = regexp.MustCompile("\"(id|parent)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
+		// 		return in
+		// 	},
+		// 	json: true,
+		// },
+		// {
+		// 	formatOption: cyclonedxjson.ID,
+		// 	redactor: func(in []byte) []byte {
+		// 		in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
+		// 		return in
+		// 	},
+		// 	json: true,
+		// },
+		// {
+		// 	formatOption: cyclonedxxml.ID,
+		// 	redactor: func(in []byte) []byte {
+		// 		in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
+		// 		in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
+		// 		return in
+		// 	},
+		// },
 	}
 
 	for _, test := range tests {
@@ -70,6 +81,8 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				require.NotNil(t, format)
 
 				by1, err := syft.Encode(originalSBOM, format)
+				// t.Logf("original SBOM encoded: %s", by1)
+
 				assert.NoError(t, err)
 
 				newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
@@ -77,12 +90,15 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				assert.Equal(t, format.ID(), newFormat.ID())
 
 				by2, err := syft.Encode(*newSBOM, format)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				if test.redactor != nil {
 					by1 = test.redactor(by1)
 					by2 = test.redactor(by2)
 				}
+
+				saveTempFile(t, by1, "by1-")
+				saveTempFile(t, by2, "by2-")
 
 				if test.json {
 					s1 := string(by1)
@@ -98,4 +114,13 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			}
 		})
 	}
+}
+
+func saveTempFile(t *testing.T, b []byte, prefix string) {
+	f, err := ioutil.TempFile(os.TempDir(), prefix)
+	assert.NoError(t, err)
+	s, err := f.Write(b)
+	assert.NoError(t, err)
+	t.Logf("you've got %d bytes written to %s", s, f.Name())
+	f.Close()
 }
