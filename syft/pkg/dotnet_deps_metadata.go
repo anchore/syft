@@ -17,7 +17,7 @@ func (m DotnetDepsMetadata) PackageURL(_ *linux.Release) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(
-		"dotnet", // TODO: packageurl.TypeDotnet,
+		packageurl.TypeDotnet,
 		"",
 		m.Name,
 		m.Version,

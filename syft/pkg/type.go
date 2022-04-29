@@ -68,8 +68,7 @@ func (t Type) PackageURLType() string {
 	case DartPubPkg:
 		return packageurl.TypePub
 	case DotnetPkg:
-		// TODO: return packageurl.TypeDotnet
-		return "dotnet"
+		return packageurl.TypeDotnet
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -109,8 +108,7 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case packageurl.TypePub:
 		return DartPubPkg
-	// case packageurl.TypeDotnet:
-	case "dotnet": // TODO:
+	case packageurl.TypeDotnet:
 		return DotnetPkg
 	default:
 		return UnknownPkg

@@ -68,8 +68,7 @@ func LanguageByName(name string) Language {
 		return Rust
 	case packageurl.TypePub, string(Dart):
 		return Dart
-	case string(Dotnet): // TODO:
-		// case packageurl.TypeDotnet, string(Dotnet):
+	case packageurl.TypeDotnet:
 		return Dotnet
 	default:
 		return UnknownLanguage
