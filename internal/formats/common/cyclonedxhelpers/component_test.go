@@ -171,7 +171,7 @@ func Test_deriveBomRef(t *testing.T) {
 		{
 			name: "use pURL-id hybrid",
 			pkg:  pkgWithPurl,
-			want: fmt.Sprintf("pkg:pypi/django@1.11.1?syft-id=%s", pkgWithPurl.ID()),
+			want: fmt.Sprintf("pkg:pypi/django@1.11.1?package-id=%s", pkgWithPurl.ID()),
 		},
 		{
 			name: "fallback to ID when pURL is invalid",

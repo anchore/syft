@@ -305,7 +305,7 @@ cli: $(SNAPSHOTDIR) ## Run CLI tests
 	chmod 755 "$(SNAPSHOT_BIN)"
 	$(SNAPSHOT_BIN) version
 	SYFT_BINARY_LOCATION='$(SNAPSHOT_BIN)' \
-		go test -count=1 -v ./test/cli
+		go test -count=1 -timeout=15m -v ./test/cli
 
 .PHONY: changelog
 changelog: clean-changelog CHANGELOG.md
