@@ -93,13 +93,12 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-#### Converting to different formats
+#### Format conversion - __experimental__
 
-Syft can convert between different SBOM formats, such as CycloneDX, SPDX, and Syft's own format.
+Syft can convert between different SBOM formats, such as CycloneDX, SPDX, and Syft's own format. The habitability to convert SBOMs  helps saving the time and effort it would take to recreate them from a container image, or file system.
 
 ``` bash
-syft convert sbom.syft.json -o spdx-json
-syft convert sbom.syft.json -o cyclonedx-json="sbom.cdx.json"
+syft convert sbom.syft.json -o cyclonedx-json > sbom.cdx.json
 ```
 
 #### SBOM attestation

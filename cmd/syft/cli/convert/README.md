@@ -4,7 +4,7 @@ This command allows users to convert between SBOM formats. It's important to hig
 
 To convert between two formats simply run:
 ```sh
-syft convert [SBOM file] -o [FOMAT] > [output file]
+syft convert [SBOM file] -o [FORMAT] > [output file]
 ``` 
 
 ## Supported formats
@@ -36,6 +36,8 @@ That is how we compare the results for the table below:
 | CycloneDX-xml  |      |                       |               |                            |               |
 
 ### Supported fields across formats
+These fields might still lose data with conversion.
+
 	- Packages (most relevant, because of pURLs)
 	- Files (2nd most relevant)
 	- Relationships*

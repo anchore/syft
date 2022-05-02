@@ -29,13 +29,6 @@ var convertableFormats = []sbom.FormatID{
 }
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
-	log.Debugf("output options: %+v", app.Outputs)
-
-	outputFormat := syft.FormatByName(app.Outputs[0])
-	if !isSupportedFormat(outputFormat.ID()) {
-		return fmt.Errorf("cannot convert to %s", outputFormat.ID())
-	}
-
 	writer, err := makeWriter(app.Outputs, app.File)
 	if err != nil {
 		return err
@@ -61,7 +54,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	f.Close()
 
 	if !isSupportedFormat(inputFormat.ID()) {
-		return fmt.Errorf("cannot convert from %s format", outputFormat.ID())
+		return fmt.Errorf("cannot convert from %s format", inputFormat.ID())
 	}
 
 	return writer.Write(*sbom)
@@ -80,9 +73,15 @@ func isSupportedFormat(format sbom.FormatID) bool {
 // makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
 func makeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
-	outputOptions, err := parseOptions(outputs, defaultFile)
+	outputOptions, formats, err := parseOptions(outputs, defaultFile)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, f := range formats {
+		if !isSupportedFormat(f.ID()) {
+			return nil, fmt.Errorf("cannot convert to %s", f.ID())
+		}
 	}
 
 	writer, err := sbom.NewWriter(outputOptions...)
@@ -98,7 +97,7 @@ func makeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
 }
 
 // parseOptions utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseOptions(outputs []string, defaultFile string) (out []sbom.WriterOption, errs error) {
+func parseOptions(outputs []string, defaultFile string) (out []sbom.WriterOption, formats []sbom.Format, errs error) {
 	// always should have one option -- we generally get the default of "table", but just make sure
 	if len(outputs) == 0 {
 		outputs = append(outputs, string(table.ID))
@@ -127,7 +126,8 @@ func parseOptions(outputs []string, defaultFile string) (out []sbom.WriterOption
 			continue
 		}
 
+		formats = append(formats, format)
 		out = append(out, sbom.NewWriterOption(format, file))
 	}
-	return out, errs
+	return out, formats, errs
 }
