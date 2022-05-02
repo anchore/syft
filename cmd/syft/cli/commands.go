@@ -123,6 +123,8 @@ func checkForApplicationUpdate() {
 }
 
 func logApplicationConfig(app *config.Application) {
+	versionInfo := version.FromBuild()
+	log.Infof("syft version: %+v", versionInfo.Version)
 	log.Debugf("application config:\n%+v", color.Magenta.Sprint(app.String()))
 }
 

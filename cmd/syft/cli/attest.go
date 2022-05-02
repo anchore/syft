@@ -49,9 +49,6 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *c
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// this MUST be called first to make sure app config decodes
 			// the viper object correctly
-			newLogWrapper(app)
-			logApplicationConfig(app)
-
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}
