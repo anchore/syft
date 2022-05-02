@@ -7,17 +7,20 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/adrg/xdg"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/mitchellh/go-homedir"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
 
-var ErrApplicationConfigNotFound = fmt.Errorf("application config not found")
-
-var catalogerEnabledDefault = false
+var (
+	ErrApplicationConfigNotFound = fmt.Errorf("application config not found")
+	catalogerEnabledDefault      = false
+)
 
 type defaultValueLoader interface {
 	loadDefaultValues(*viper.Viper)
@@ -29,13 +32,15 @@ type parser interface {
 
 // Application is the main syft application configuration.
 type Application struct {
-	ConfigPath         string             `yaml:",omitempty" json:"configPath"`                                                         // the location where the application config was read from (either from -c or discovered while loading)
+	// the location where the application config was read from (either from -c or discovered while loading); default .syft.yaml
+	ConfigPath string `yaml:"configPath,omitempty" json:"configPath" mapstructure:"config"`
+	Verbosity  uint   `yaml:"verbosity,omitempty" json:"verbosity" mapstructure:"verbosity"`
+	// -q, indicates to not show any status output to stderr (ETUI or logging UI)
+	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`
 	Outputs            []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
 	File               string             `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
-	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`                                              // -q, indicates to not show any status output to stderr (ETUI or logging UI)
 	CheckForAppUpdate  bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
 	Anchore            anchore            `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
-	CliOptions         CliOnlyOptions     `yaml:"-" json:"-"`                                                                           // all options only available through the CLI (not via env vars or config)
 	Dev                development        `yaml:"dev" json:"dev" mapstructure:"dev"`
 	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
 	Package            pkg                `yaml:"package" json:"package" mapstructure:"package"`
@@ -49,54 +54,34 @@ type Application struct {
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 }
 
-// PowerUserCatalogerEnabledDefault switches all catalogers to be enabled when running power-user command
-func PowerUserCatalogerEnabledDefault() {
-	catalogerEnabledDefault = true
-}
+func (cfg *Application) LoadAllValues(v *viper.Viper, configPath string) error {
+	// priority order: viper.Set, flag, env, config, kv, defaults
+	// flags have already been loaded into viper by command construction
 
-func newApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) *Application {
-	config := &Application{
-		CliOptions: cliOpts,
-	}
-	config.loadDefaultValues(v)
-	return config
-}
-
-// LoadApplicationConfig populates the given viper object with application configuration discovered on disk
-func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application, error) {
-	// the user may not have a config, and this is OK, we can use the default config + default cobra cli values instead
-	config := newApplicationConfig(v, cliOpts)
-
-	if err := readConfig(v, cliOpts.ConfigPath); err != nil && !errors.Is(err, ErrApplicationConfigNotFound) {
-		return nil, err
-	}
-
-	if err := v.Unmarshal(config); err != nil {
-		return nil, fmt.Errorf("unable to parse config: %w", err)
-	}
-	config.ConfigPath = v.ConfigFileUsed()
-
-	if err := config.parseConfigValues(); err != nil {
-		return nil, fmt.Errorf("invalid application config: %w", err)
-	}
-
-	return config, nil
-}
-
-// init loads the default configuration values into the viper instance (before the config values are read and parsed).
-func (cfg Application) loadDefaultValues(v *viper.Viper) {
-	// set the default values for primitive fields in this struct
-	v.SetDefault("check-for-app-update", true)
-
-	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
-	value := reflect.ValueOf(cfg)
-	for i := 0; i < value.NumField(); i++ {
-		// note: the defaultValueLoader method receiver is NOT a pointer receiver.
-		if loadable, ok := value.Field(i).Interface().(defaultValueLoader); ok {
-			// the field implements defaultValueLoader, call it
-			loadable.loadDefaultValues(v)
+	// check if user specified config; otherwise read all possible paths
+	if err := loadConfig(v, configPath); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Not Found; ignore this error
+			log.Debug("no config file found; proceeding with defaults")
 		}
 	}
+
+	// load default config values into viper
+	loadDefaultValues(v)
+
+	// load environment variables
+	v.SetEnvPrefix(internal.ApplicationName)
+	v.AllowEmptyEnv(true)
+	v.AutomaticEnv()
+
+	// unmarshal fully populated viper object onto config
+	err := v.Unmarshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	// Convert all populated config options to their internal application values ex: scope string => scopeOpt source.Scope
+	return cfg.parseConfigValues()
 }
 
 func (cfg *Application) parseConfigValues() error {
@@ -110,7 +95,6 @@ func (cfg *Application) parseConfigValues() error {
 			return err
 		}
 	}
-
 	// parse nested config options
 	// for each field in the configuration struct, see if the field implements the parser interface
 	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
@@ -123,17 +107,6 @@ func (cfg *Application) parseConfigValues() error {
 				return err
 			}
 		}
-	}
-	return nil
-}
-
-func (cfg *Application) parseFile() error {
-	if cfg.File != "" {
-		expandedPath, err := homedir.Expand(cfg.File)
-		if err != nil {
-			return fmt.Errorf("unable to expand file path=%q: %w", cfg.File, err)
-		}
-		cfg.File = expandedPath
 	}
 	return nil
 }
@@ -152,23 +125,9 @@ func (cfg *Application) parseLogLevelOption() error {
 		// we should be able to quiet the console logging and leave file logging alone...
 		// ... this will be an enhancement for later
 		cfg.Log.LevelOpt = logrus.PanicLevel
-	case cfg.Log.Level != "":
-		if cfg.CliOptions.Verbosity > 0 {
-			return fmt.Errorf("cannot explicitly set log level (cfg file or env var) and use -v flag together")
-		}
 
-		lvl, err := logrus.ParseLevel(strings.ToLower(cfg.Log.Level))
-		if err != nil {
-			return fmt.Errorf("bad log level configured (%q): %w", cfg.Log.Level, err)
-		}
-
-		cfg.Log.LevelOpt = lvl
-		if cfg.Log.LevelOpt >= logrus.InfoLevel {
-			cfg.CliOptions.Verbosity = 1
-		}
-	default:
-
-		switch v := cfg.CliOptions.Verbosity; {
+	case cfg.Verbosity > 0:
+		switch v := cfg.Verbosity; {
 		case v == 1:
 			cfg.Log.LevelOpt = logrus.InfoLevel
 		case v >= 2:
@@ -176,6 +135,18 @@ func (cfg *Application) parseLogLevelOption() error {
 		default:
 			cfg.Log.LevelOpt = logrus.ErrorLevel
 		}
+	case cfg.Log.Level != "":
+		lvl, err := logrus.ParseLevel(strings.ToLower(cfg.Log.Level))
+		if err != nil {
+			return fmt.Errorf("bad log level configured (%q): %w", cfg.Log.Level, err)
+		}
+
+		cfg.Log.LevelOpt = lvl
+		if cfg.Log.LevelOpt >= logrus.InfoLevel {
+			cfg.Verbosity = 1
+		}
+	default:
+		cfg.Log.LevelOpt = logrus.WarnLevel
 	}
 
 	if cfg.Log.Level == "" {
@@ -185,43 +156,64 @@ func (cfg *Application) parseLogLevelOption() error {
 	return nil
 }
 
+func (cfg *Application) parseFile() error {
+	if cfg.File != "" {
+		expandedPath, err := homedir.Expand(cfg.File)
+		if err != nil {
+			return fmt.Errorf("unable to expand file path=%q: %w", cfg.File, err)
+		}
+		cfg.File = expandedPath
+	}
+	return nil
+}
+
+// init loads the default configuration values into the viper instance (before the config values are read and parsed).
+func loadDefaultValues(v *viper.Viper) {
+	// set the default values for primitive fields in this struct
+	v.SetDefault("quiet", false)
+	v.SetDefault("check-for-app-update", true)
+
+	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
+	value := reflect.ValueOf(Application{})
+	for i := 0; i < value.NumField(); i++ {
+		// note: the defaultValueLoader method receiver is NOT a pointer receiver.
+		if loadable, ok := value.Field(i).Interface().(defaultValueLoader); ok {
+			// the field implements defaultValueLoader, call it
+			loadable.loadDefaultValues(v)
+		}
+	}
+}
+
 func (cfg Application) String() string {
 	// yaml is pretty human friendly (at least when compared to json)
-	appCfgStr, err := yaml.Marshal(&cfg)
+	appaStr, err := yaml.Marshal(&cfg)
 
 	if err != nil {
 		return err.Error()
 	}
 
-	return string(appCfgStr)
+	return string(appaStr)
 }
 
-// readConfig attempts to read the given config path from disk or discover an alternate store location
-// nolint:funlen
-func readConfig(v *viper.Viper, configPath string) error {
+func loadConfig(v *viper.Viper, configPath string) error {
 	var err error
-	v.AutomaticEnv()
-	v.SetEnvPrefix(internal.ApplicationName)
-	// allow for nested options to be specified via environment variables
-	// e.g. pod.context = APPNAME_POD_CONTEXT
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-
 	// use explicitly the given user config
 	if configPath != "" {
 		v.SetConfigFile(configPath)
 		if err := v.ReadInConfig(); err != nil {
 			return fmt.Errorf("unable to read application config=%q : %w", configPath, err)
 		}
+		v.Set("config", v.ConfigFileUsed())
 		// don't fall through to other options if the config path was explicitly provided
 		return nil
 	}
 
 	// start searching for valid configs in order...
-
 	// 1. look for .<appname>.yaml (in the current directory)
 	v.AddConfigPath(".")
 	v.SetConfigName("." + internal.ApplicationName)
 	if err = v.ReadInConfig(); err == nil {
+		v.Set("config", v.ConfigFileUsed())
 		return nil
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
@@ -231,6 +223,7 @@ func readConfig(v *viper.Viper, configPath string) error {
 	v.AddConfigPath("." + internal.ApplicationName)
 	v.SetConfigName("config")
 	if err = v.ReadInConfig(); err == nil {
+		v.Set("config", v.ConfigFileUsed())
 		return nil
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
@@ -242,6 +235,7 @@ func readConfig(v *viper.Viper, configPath string) error {
 		v.AddConfigPath(home)
 		v.SetConfigName("." + internal.ApplicationName)
 		if err = v.ReadInConfig(); err == nil {
+			v.Set("config", v.ConfigFileUsed())
 			return nil
 		} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 			return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
@@ -255,10 +249,10 @@ func readConfig(v *viper.Viper, configPath string) error {
 	}
 	v.SetConfigName("config")
 	if err = v.ReadInConfig(); err == nil {
+		v.Set("config", v.ConfigFileUsed())
 		return nil
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 	}
-
-	return ErrApplicationConfigNotFound
+	return nil
 }

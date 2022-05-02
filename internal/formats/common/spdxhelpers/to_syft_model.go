@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,10 @@ import (
 )
 
 func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
+	if doc == nil {
+		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
+	}
+
 	spdxIDMap := make(map[string]interface{})
 
 	s := &sbom.SBOM{
@@ -303,6 +308,14 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			SourceVersion: upstreamVersion,
 			Architecture:  arch,
 			Maintainer:    p.PackageOriginatorPerson,
+		}
+	case pkg.JavaPkg:
+		var digests []file.Digest
+		for algorithm, value := range p.PackageChecksums {
+			digests = append(digests, file.Digest{Algorithm: string(algorithm), Value: value.Value})
+		}
+		return pkg.JavaMetadataType, pkg.JavaMetadata{
+			ArchiveDigests: digests,
 		}
 	}
 	return pkg.UnknownMetadataType, nil

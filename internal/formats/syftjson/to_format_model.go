@@ -175,8 +175,9 @@ func toPackageModel(p pkg.Package) model.Package {
 		licenses = p.Licenses
 	}
 
-	var coordinates = make([]source.Coordinates, len(p.Locations))
-	for i, l := range p.Locations {
+	locations := p.Locations.ToSlice()
+	var coordinates = make([]source.Coordinates, len(locations))
+	for i, l := range locations {
 		coordinates[i] = l.Coordinates
 	}
 

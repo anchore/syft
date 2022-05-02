@@ -42,13 +42,13 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p1 := pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Locations: []source.Location{
-			{
+		Locations: source.NewLocationSet(
+			source.Location{
 				Coordinates: source.Coordinates{
 					RealPath: "/a/place/a",
 				},
 			},
-		},
+		),
 		Type:         pkg.PythonPkg,
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
@@ -68,13 +68,13 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p2 := pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Locations: []source.Location{
-			{
+		Locations: source.NewLocationSet(
+			source.Location{
 				Coordinates: source.Coordinates{
 					RealPath: "/b/place/b",
 				},
 			},
-		},
+		),
 		Type:         pkg.DebPkg,
 		FoundBy:      "the-cataloger-2",
 		MetadataType: pkg.DpkgMetadataType,

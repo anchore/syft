@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -26,9 +27,9 @@ func Test_encodeComponentProperties(t *testing.T) {
 			name: "from apk",
 			input: pkg.Package{
 				FoundBy: "cataloger",
-				Locations: []source.Location{
-					{Coordinates: source.Coordinates{RealPath: "test"}},
-				},
+				Locations: source.NewLocationSet(
+					source.Location{Coordinates: source.Coordinates{RealPath: "test"}},
+				),
 				Metadata: pkg.ApkMetadata{
 					Package:          "libc-utils",
 					OriginPackage:    "libc-dev",
@@ -136,6 +137,85 @@ func Test_encodeComponentProperties(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := encodeComponent(test.input)
 			assert.Equal(t, test.expected, c.Properties)
+		})
+	}
+}
+
+func Test_deriveBomRef(t *testing.T) {
+	pkgWithPurl := pkg.Package{
+		Name:    "django",
+		Version: "1.11.1",
+		PURL:    "pkg:pypi/django@1.11.1",
+	}
+	pkgWithPurl.SetID()
+
+	pkgWithOutPurl := pkg.Package{
+		Name:    "django",
+		Version: "1.11.1",
+		PURL:    "",
+	}
+	pkgWithOutPurl.SetID()
+
+	pkgWithBadPurl := pkg.Package{
+		Name:    "django",
+		Version: "1.11.1",
+		PURL:    "pkg:pyjango@1.11.1",
+	}
+	pkgWithBadPurl.SetID()
+
+	tests := []struct {
+		name string
+		pkg  pkg.Package
+		want string
+	}{
+		{
+			name: "use pURL-id hybrid",
+			pkg:  pkgWithPurl,
+			want: fmt.Sprintf("pkg:pypi/django@1.11.1?package-id=%s", pkgWithPurl.ID()),
+		},
+		{
+			name: "fallback to ID when pURL is invalid",
+			pkg:  pkgWithBadPurl,
+			want: string(pkgWithBadPurl.ID()),
+		},
+		{
+			name: "fallback to ID when pURL is missing",
+			pkg:  pkgWithOutPurl,
+			want: string(pkgWithOutPurl.ID()),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.pkg.ID()
+			assert.Equal(t, tt.want, deriveBomRef(tt.pkg))
+		})
+	}
+}
+
+func Test_decodeComponent(t *testing.T) {
+	javaComponentWithNoSyftProperties := cyclonedx.Component{
+		Name:       "ch.qos.logback/logback-classic",
+		Version:    "1.2.3",
+		PackageURL: "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+		Type:       "library",
+		BOMRef:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+	}
+
+	tests := []struct {
+		name      string
+		component cyclonedx.Component
+		want      pkg.Language
+	}{
+		{
+			name:      "derive language from pURL if missing",
+			component: javaComponentWithNoSyftProperties,
+			want:      pkg.Java,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, decodeComponent(&tt.component).Language)
 		})
 	}
 }
