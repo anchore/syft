@@ -46,7 +46,7 @@ func (o *AttestOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.Flags().BoolVarP(&o.Replace, "replace", "", false,
 		"")
 
-	return bindAttestationConfigOptions(cmd.PersistentFlags(), v)
+	return bindAttestationConfigOptions(cmd.Flags(), v)
 }
 
 func bindAttestationConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
@@ -58,7 +58,7 @@ func bindAttestationConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.no-upload", flags.Lookup("no-upload")); err != nil {
+	if err := v.BindPFlag("attest.no_upload", flags.Lookup("no-upload")); err != nil {
 		return err
 	}
 

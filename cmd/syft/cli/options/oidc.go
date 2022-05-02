@@ -32,15 +32,15 @@ func (o *OIDCOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 }
 
 func bindOIDCConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
-	if err := v.BindPFlag("attest.oidc.oidc-issuer", flags.Lookup("oidc-issuer")); err != nil {
+	if err := v.BindPFlag("attest.oidc_issuer", flags.Lookup("oidc-issuer")); err != nil {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.oidc.identity-token", flags.Lookup("identity-token")); err != nil {
+	if err := v.BindPFlag("attest.oidc_client_id", flags.Lookup("oidc-client-id")); err != nil {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.oidc.oidc-redirect-url", flags.Lookup("oidc-reirect-url")); err != nil {
+	if err := v.BindPFlag("attest.oidc_redirect_url", flags.Lookup("oidc-reirect-url")); err != nil {
 		return err
 	}
 

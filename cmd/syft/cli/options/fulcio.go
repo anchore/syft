@@ -32,15 +32,15 @@ func (o *FulcioOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 }
 
 func bindFulcioConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
-	if err := v.BindPFlag("attest.fulcio.fulcio-url", flags.Lookup("fulcio-url")); err != nil {
+	if err := v.BindPFlag("attest.fulcio_url", flags.Lookup("fulcio-url")); err != nil {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.fulcio.identity-token", flags.Lookup("identity-token")); err != nil {
+	if err := v.BindPFlag("attest.fulcio_identity_token", flags.Lookup("identity-token")); err != nil {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.fulcio.insecure-skip-verify", flags.Lookup("insecure-skip-verify")); err != nil {
+	if err := v.BindPFlag("attest.insecure_skip_verify", flags.Lookup("insecure-skip-verify")); err != nil {
 		return err
 	}
 

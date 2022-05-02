@@ -12,13 +12,18 @@ import (
 type attest struct {
 	KeyRef string `yaml:"key" json:"key" mapstructure:"key"` // same as --key, file path to the private key
 	// IMPORTANT: do not show the password in any YAML/JSON output (sensitive information)
+	Cert                     string `yaml:"cert" json:"cert" mapstructure:"cert"`
+	NoUpload                 bool   `yaml:"no_upload" json:"noUpload" mapstructure:"no_upload"`
+	Force                    bool   `yaml:"force" json:"force" mapstructure:"force"`
+	Recursive                bool   `yaml:"recursive" json:"recursive" mapstructure:"recursive"`
+	Replace                  bool   `yaml:"replace" json:"replace" mapstructure:"replace"`
 	Password                 string `yaml:"-" json:"-" mapstructure:"password"` // password for the private key
 	FulcioURL                string `yaml:"fulcio_url" json:"fulcioUrl" mapstructure:"fulcio_url"`
-	InsecureSkipFulcioVerify bool   `yaml:""`
+	FulcioIdentityToken      string `yaml:"fulcio_identity_token" json:"fulcio_identity_token" mapstructure:"fulcio_identity_token"`
+	InsecureSkipFulcioVerify bool   `yaml:"insecure_skip_verify" json:"insecure_skip_verify" mapstructure:"insecure_skip_verify"`
 	RekorURL                 string `yaml:"rekor_url" json:"rekorUrl" mapstructure:"rekor_url"`
 	OIDCIssuer               string `yaml:"oidc_issuer" json:"oidcIssuer" mapstructure:"oidc_issuer"`
 	OIDCClientID             string `yaml:"oidc_client_id" json:"oidcClientId" mapstructure:"oidc_client_id"`
-	OIDCClientSecret         string `yaml:"oidc_client_secret" json:"oidcClientSecret" mapstructure:"oidc_client_secret"`
 }
 
 func (cfg *attest) parseConfigValues() error {

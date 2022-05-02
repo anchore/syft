@@ -25,8 +25,16 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
+	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
+	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
+	cbundle "github.com/sigstore/cosign/pkg/cosign/bundle"
+	"github.com/sigstore/cosign/pkg/oci/static"
+	sigs "github.com/sigstore/cosign/pkg/signature"
+	"github.com/sigstore/cosign/pkg/types"
+	"github.com/sigstore/rekor/pkg/generated/client"
+	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
 	"github.com/wagoodman/go-partybus"
 
@@ -62,14 +70,23 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", options.FormatAliases(format.ID()), options.FormatAliases(allowedAttestFormats...))
 	}
 
-	passFunc, err := selectPassFunc(app.Attest.KeyRef, app.Attest.Password)
-	if err != nil {
-		return err
+	ko := sign.KeyOpts{
+		KeyRef:                   app.Attest.KeyRef,
+		Slot:                     "signature",
+		FulcioURL:                app.Attest.FulcioURL,
+		InsecureSkipFulcioVerify: app.Attest.InsecureSkipFulcioVerify,
+		RekorURL:                 app.Attest.RekorURL,
+		OIDCIssuer:               app.Attest.OIDCIssuer,
+		OIDCClientID:             app.Attest.OIDCClientID,
 	}
 
-	ko := sign.KeyOpts{
-		KeyRef:   app.Attest.KeyRef,
-		PassFunc: passFunc,
+	if app.Attest.KeyRef != "" {
+		passFunc, err := selectPassFunc(app.Attest.KeyRef, app.Attest.Password)
+		if err != nil {
+			return err
+		}
+
+		ko.PassFunc = passFunc
 	}
 
 	sv, err := sign.SignerFromKeyOpts(ctx, "", "", ko)
@@ -178,9 +195,24 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 		return err
 	}
 
+	opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
+	if sv.Cert != nil {
+		opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
+	}
+
 	signedPayload, err := wrapped.SignMessage(bytes.NewReader(payload), signatureoptions.WithContext(context.Background()))
 	if err != nil {
 		return errors.Wrap(err, "unable to sign SBOM")
+	}
+
+	ctx := context.Background()
+
+	// TODO: inject rekor URL here
+	_, err = uploadToTlog(ctx, sv, "https://rekor.sigstore.dev", func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
+		return cosign.TLogUploadInTotoAttestation(ctx, r, signedPayload, b)
+	})
+	if err != nil {
+		return err
 	}
 
 	bus.Publish(partybus.Event{
@@ -213,4 +245,34 @@ func formatPredicateType(format sbom.Format) string {
 	default:
 		return ""
 	}
+}
+
+type tlogUploadFn func(*client.Rekor, []byte) (*models.LogEntryAnon, error)
+
+func uploadToTlog(ctx context.Context, sv *sign.SignerVerifier, rekorURL string, upload tlogUploadFn) (*cbundle.RekorBundle, error) {
+	var rekorBytes []byte
+	// Upload the cert or the public key, depending on what we have
+	if sv.Cert != nil {
+		rekorBytes = sv.Cert
+	} else {
+		pemBytes, err := sigs.PublicKeyPem(sv, signatureoptions.WithContext(ctx))
+		if err != nil {
+			return nil, err
+		}
+		rekorBytes = pemBytes
+	}
+
+	rekorClient, err := rekor.NewClient(rekorURL)
+	if err != nil {
+		return nil, err
+	}
+	entry, err := upload(rekorClient, rekorBytes)
+	if err != nil {
+		return nil, err
+	}
+	_, err = fmt.Fprintln(os.Stderr, "tlog entry created with index:", *entry.LogIndex)
+	if err != nil {
+		return nil, err
+	}
+	return cbundle.EntryToBundle(entry), nil
 }

@@ -24,7 +24,7 @@ func (o *RekorOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 func bindRekorConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	// TODO: config re-design
-	if err := v.BindPFlag("attest.rekor.rekor-url", flags.Lookup("rekor-url")); err != nil {
+	if err := v.BindPFlag("attest.rekor_url", flags.Lookup("rekor-url")); err != nil {
 		return err
 	}
 
