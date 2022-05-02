@@ -146,7 +146,7 @@ func (cfg *Application) parseLogLevelOption() error {
 			cfg.Verbosity = 1
 		}
 	default:
-		cfg.Log.LevelOpt = logrus.InfoLevel
+		cfg.Log.LevelOpt = logrus.WarnLevel
 	}
 
 	if cfg.Log.Level == "" {
