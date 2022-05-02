@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/syftjson"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
@@ -270,9 +271,7 @@ func uploadToTlog(ctx context.Context, sv *sign.SignerVerifier, rekorURL string,
 	if err != nil {
 		return nil, err
 	}
-	_, err = fmt.Fprintln(os.Stderr, "tlog entry created with index:", *entry.LogIndex)
-	if err != nil {
-		return nil, err
-	}
+
+	log.Infof("tlog entry created with index: %v", *entry.LogIndex)
 	return cbundle.EntryToBundle(entry), nil
 }
