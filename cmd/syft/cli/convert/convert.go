@@ -25,7 +25,7 @@ var convertableFormats = []sbom.FormatID{
 	spdx22tagvalue.ID,
 	cyclonedxjson.ID,
 	cyclonedxxml.ID,
-	// table.ID,
+	table.ID,
 }
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
