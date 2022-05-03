@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"os/exec"
@@ -103,7 +104,7 @@ func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, 
 		env = make(map[string]string)
 	}
 
-	stdout, stderr := runCommand(cmd, env)
+	stdout, stderr := runCommand(t, cmd, env)
 	return cmd, stdout, stderr
 }
 
@@ -111,13 +112,16 @@ func getCosignCommand(t testing.TB, args ...string) *exec.Cmd {
 	return exec.Command(filepath.Join(repoRoot(t), ".tmp/cosign"), args...)
 }
 
-func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
+func runCommand(t testing.TB, cmd *exec.Cmd, env map[string]string) (string, string) {
 	if env != nil {
 		cmd.Env = append(os.Environ(), envMapToSlice(env)...)
 	}
 	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+
+	cmd.Stdout = io.MultiWriter(&stdout, os.Stdout)
+	cmd.Stderr = io.MultiWriter(&stderr, os.Stderr)
+
+	t.Log("running: ", cmd.Path, cmd.Args)
 
 	// ignore errors since this may be what the test expects
 	cmd.Run()

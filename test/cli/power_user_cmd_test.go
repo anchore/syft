@@ -23,7 +23,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-results-w-pkg-coverage",
-			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage"), "-vv"},
 			assertions: []traitAssertion{
 				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
 				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
@@ -37,7 +37,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			env: map[string]string{
 				"SYFT_SECRETS_REVEAL_VALUES": "true",
 			},
-			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets"), "-vv"},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
 				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
@@ -46,7 +46,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-secret-results-dont-reveal-values",
-			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets"), "-vv"},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                               // proof of the secrets cataloger finding something
 				assertNotInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
@@ -55,7 +55,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "content-cataloger-wired-up",
-			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets"), "-vv"},
 			env: map[string]string{
 				"SYFT_FILE_CONTENTS_GLOBS": "/api-key.txt",
 			},
@@ -66,7 +66,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-dir-results-w-pkg-coverage",
-			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage"},
+			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage", "-vv"},
 			assertions: []traitAssertion{
 				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
 				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
@@ -80,7 +80,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			env: map[string]string{
 				"SYFT_SECRETS_REVEAL_VALUES": "true",
 			},
-			args: []string{"power-user", "dir:test-fixtures/image-secrets"},
+			args: []string{"power-user", "dir:test-fixtures/image-secrets", "-vv"},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
 				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
