@@ -212,10 +212,9 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	}
 
 	// TODO: add support for source, spdx, and documentation file types
-	// NOTE: spdx's lib doesn't do this
-	// if len(ty) == 0 {
-	// 	ty = append(ty, string(spdxhelpers.OtherFileType))
-	// }
+	if len(ty) == 0 {
+		ty = append(ty, string(spdxhelpers.OtherFileType))
+	}
 
 	return ty
 }

@@ -74,6 +74,7 @@ func extractSourceFromNamespace(ns string) (src source.Metadata) {
 			return
 		}
 	}
+	src.Scheme = source.UnknownScheme
 	return
 }
 

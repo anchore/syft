@@ -13,9 +13,7 @@ consumers to augment or otherwise change execution.
 */
 package bus
 
-import (
-	"github.com/wagoodman/go-partybus"
-)
+import "github.com/wagoodman/go-partybus"
 
 var publisher partybus.Publisher
 var active bool

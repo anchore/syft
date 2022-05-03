@@ -4,8 +4,10 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestToSyftModel(t *testing.T) {
@@ -193,5 +195,41 @@ func Test_extractMetadata(t *testing.T) {
 			assert.Equal(t, test.metaType, metaType)
 			assert.EqualValues(t, test.meta, meta)
 		})
+	}
+}
+
+func TestExtractSourceFromNamespaces(t *testing.T) {
+	tests := []struct {
+		namespace string
+		expected  source.Metadata
+	}{
+		{
+			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
+			expected:  source.Metadata{Scheme: source.FileScheme},
+		},
+		{
+			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
+			expected:  source.Metadata{Scheme: source.ImageScheme},
+		},
+		{
+			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
+			expected:  source.Metadata{Scheme: source.DirectoryScheme},
+		},
+		{
+			namespace: "https://another-host/blob/123",
+			expected:  source.Metadata{Scheme: source.UnknownScheme},
+		},
+		{
+			namespace: "bla bla",
+			expected:  source.Metadata{Scheme: source.UnknownScheme},
+		},
+		{
+			namespace: "",
+			expected:  source.Metadata{Scheme: source.UnknownScheme},
+		},
+	}
+
+	for _, tt := range tests {
+		require.Equal(t, tt.expected, extractSourceFromNamespace(tt.namespace))
 	}
 }
