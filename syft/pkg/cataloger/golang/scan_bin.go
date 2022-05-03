@@ -41,7 +41,11 @@ func scanFile(reader unionReader, filename string) ([]*debug.BuildInfo, []string
 			}
 			// in this case we could not read the or parse the file, but not explicitly because it is not a
 			// go-compiled binary (though it still might be).
-			log.Warnf("golang cataloger: failed to read buildinfo (file=%q): %v", filename, err)
+			// TODO: We should change this back to "warn" eventually.
+			//  But right now it's catching too many cases where the reader IS NOT a Go binary at all.
+			//  It'd be great to see how we can get those cases to be detected and handled above before we get to
+			//  this point in execution.
+			log.Infof("golang cataloger: unable to read buildinfo (file=%q): %v", filename, err)
 			return nil, nil
 		}
 
