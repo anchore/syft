@@ -12,22 +12,23 @@ import (
 )
 
 const (
-	convertExample = `  {{.appName}} {{.command}} alpine.syft.json -o alpine.spdx.xml
+	convertExample = `  {{.appName}} {{.command}} img.syft.json -o spdx-json                      convert a syft SBOM to spdx-json, output goes to stdout in table format, by default
+  {{.appName}} {{.command}} img.syft.json -o cyclonedx-json=img.cdx.json    convert a syft SBOM to CycloneDX, output goes to a file named img.cdx.json
 `
 )
 
 func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "convert original.json -o [FORMAT]",
+		Use:   "convert sbom.json -o [FORMAT]",
 		Short: "Convert between SBOM formats",
-		Long:  "",
+		Long:  "[Experimental] Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format. For more info about data loss between formats read Syft's README on https://github.com/anchore/syft",
 		Example: internal.Tprintf(convertExample, map[string]interface{}{
 			"appName": internal.ApplicationName,
 			"command": "convert",
 		}),
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := app.LoadAllValues(v, ro.Config); err != nil {
-				return fmt.Errorf("invalida application config: %w", err)
+				return fmt.Errorf("invalid application config: %w", err)
 			}
 			newLogWrapper(app)
 			logApplicationConfig(app)
@@ -37,7 +38,6 @@ func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions) *
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			newLogWrapper(app)
-			// logApplicationConfig(app)
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}

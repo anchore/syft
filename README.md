@@ -95,11 +95,21 @@ syft <image> --scope all-layers
 
 #### Format conversion - __experimental__
 
-Syft can convert between different SBOM formats, such as CycloneDX, SPDX, and Syft's own format. The habitability to convert SBOMs  helps saving the time and effort it would take to recreate them from a container image, or file system.
+Syft can convert between different SBOM formats, such as CycloneDX, SPDX, and Syft's own format. The ability to convert SBOMs helps saving the time and effort it would take to recreate SBOMs from container images, or file systems.
 
 ``` bash
-syft convert sbom.syft.json -o cyclonedx-json > sbom.cdx.json
+syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json
 ```
+
+This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, while files and relationships are more likely to lose data. 
+
+The supported formats are:
+- Syft json
+- Syft table
+- SPDX 2.2 json
+- SPDX 2.2 tag-value
+- cycloneDX 1.3 json
+- cycloneDX 1.3 xml
 
 #### SBOM attestation
 
