@@ -35,6 +35,7 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 		main.Version = v
 	}
 
+	main.SetID()
 	return main
 }
 
