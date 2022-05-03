@@ -93,7 +93,7 @@ func Run(ctx context.Context, app *config.Application, ko *sign.KeyOpts, args []
 	syft.SetBus(eventBus)
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, format, predicateType, sv),
+		execWorker(ctx, app, *si, format, predicateType, sv),
 		eventloop.SetupSignals(),
 		eventBus.Subscribe(),
 		stereoscope.Cleanup,
@@ -128,7 +128,7 @@ func parseImageSource(userInput string, app *config.Application) (s *source.Inpu
 	return si, nil
 }
 
-func execWorker(app *config.Application, sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
+func execWorker(ctx context.Context, app *config.Application, sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -154,7 +154,7 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 			return
 		}
 
-		err = generateAttestation(sbomBytes, src, sv, predicateType)
+		err = generateAttestation(ctx, app, sbomBytes, src, sv, predicateType)
 		if err != nil {
 			errs <- err
 			return
@@ -163,7 +163,7 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 	return errs
 }
 
-func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
+func generateAttestation(ctx context.Context, app *config.Application, predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
 	switch len(src.Image.Metadata.RepoDigests) {
 	case 0:
 		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
@@ -192,8 +192,6 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 	if err != nil {
 		return errors.Wrap(err, "unable to sign SBOM")
 	}
-
-	ctx := context.Background()
 
 	// TODO: inject rekor URL here
 	_, err = uploadToTlog(ctx, sv, "https://rekor.sigstore.dev", func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
