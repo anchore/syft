@@ -31,9 +31,7 @@ import (
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
 	cbundle "github.com/sigstore/cosign/pkg/cosign/bundle"
-	"github.com/sigstore/cosign/pkg/oci/static"
 	sigs "github.com/sigstore/cosign/pkg/signature"
-	"github.com/sigstore/cosign/pkg/types"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
@@ -194,11 +192,6 @@ func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVe
 	payload, err := json.Marshal(sh)
 	if err != nil {
 		return err
-	}
-
-	opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
-	if sv.Cert != nil {
-		opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
 	}
 
 	signedPayload, err := wrapped.SignMessage(bytes.NewReader(payload), signatureoptions.WithContext(context.Background()))

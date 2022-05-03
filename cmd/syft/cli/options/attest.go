@@ -24,9 +24,15 @@ type AttestOptions struct {
 var _ Interface = (*AttestOptions)(nil)
 
 func (o *AttestOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
-	o.Rekor.AddFlags(cmd, v)
-	o.Fulcio.AddFlags(cmd, v)
-	o.OIDC.AddFlags(cmd, v)
+	if err := o.Rekor.AddFlags(cmd, v); err != nil {
+		return err
+	}
+	if err := o.Fulcio.AddFlags(cmd, v); err != nil {
+		return err
+	}
+	if err := o.OIDC.AddFlags(cmd, v); err != nil {
+		return err
+	}
 
 	cmd.Flags().StringVarP(&o.Key, "key", "", defaultKeyFileName,
 		"path to the private key file to use for attestation")

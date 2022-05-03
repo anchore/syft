@@ -19,7 +19,7 @@ var _ Interface = (*RekorOptions)(nil)
 func (o *RekorOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.Flags().StringVar(&o.URL, "rekor-url", DefaultRekorURL,
 		"address of rekor STL server")
-	return bindAttestationConfigOptions(cmd.Flags(), v)
+	return bindRekorConfigOptions(cmd.Flags(), v)
 }
 
 func bindRekorConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
