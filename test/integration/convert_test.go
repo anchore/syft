@@ -21,7 +21,7 @@ import (
 // might be useful to do that in the future, once we gather a better understanding of
 // what users spect from the convert command.
 func TestConvertCmd(t *testing.T) {
-	for _, formatID := range convert.ConvertableFormats {
+	for _, formatID := range convert.ConvertibleFormats {
 		t.Run(formatID.String(), func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 			format := syft.FormatByID(syftjson.ID)

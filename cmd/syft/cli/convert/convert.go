@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-var ConvertableFormats = []sbom.FormatID{
+var ConvertibleFormats = []sbom.FormatID{
 	syftjson.ID,
 	spdx22json.ID,
 	spdx22tagvalue.ID,
@@ -61,7 +61,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 }
 
 func isSupportedFormat(format sbom.FormatID) bool {
-	for _, f := range ConvertableFormats {
+	for _, f := range ConvertibleFormats {
 		if format == f {
 			return true
 		}
