@@ -40,7 +40,7 @@ func bindOIDCConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.oidc_redirect_url", flags.Lookup("oidc-reirect-url")); err != nil {
+	if err := v.BindPFlag("attest.oidc_redirect_url", flags.Lookup("oidc-redirect-url")); err != nil {
 		return err
 	}
 

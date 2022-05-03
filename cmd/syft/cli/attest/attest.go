@@ -50,7 +50,7 @@ var (
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
-func Run(ctx context.Context, app *config.Application, args []string) error {
+func Run(ctx context.Context, app *config.Application, ko *sign.KeyOpts, args []string) error {
 	// We cannot generate an attestation for more than one output
 	if len(app.Outputs) > 1 {
 		return fmt.Errorf("unable to generate attestation for more than one output")
@@ -66,17 +66,11 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	format := syft.FormatByName(app.Outputs[0])
 	predicateType := formatPredicateType(format)
 	if predicateType == "" {
-		return fmt.Errorf("could not produce attestation predicate for given format: %q. Available formats: %+v", options.FormatAliases(format.ID()), options.FormatAliases(allowedAttestFormats...))
-	}
-
-	ko := sign.KeyOpts{
-		KeyRef:                   app.Attest.KeyRef,
-		Slot:                     "signature",
-		FulcioURL:                app.Attest.FulcioURL,
-		InsecureSkipFulcioVerify: app.Attest.InsecureSkipFulcioVerify,
-		RekorURL:                 app.Attest.RekorURL,
-		OIDCIssuer:               app.Attest.OIDCIssuer,
-		OIDCClientID:             app.Attest.OIDCClientID,
+		return fmt.Errorf(
+			"could not produce attestation predicate for given format: %q. Available formats: %+v",
+			options.FormatAliases(format.ID()),
+			options.FormatAliases(allowedAttestFormats...),
+		)
 	}
 
 	if app.Attest.KeyRef != "" {
@@ -88,7 +82,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 		ko.PassFunc = passFunc
 	}
 
-	sv, err := sign.SignerFromKeyOpts(ctx, "", "", ko)
+	sv, err := sign.SignerFromKeyOpts(ctx, "", "", *ko)
 	if err != nil {
 		return err
 	}

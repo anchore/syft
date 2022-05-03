@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+// IMPORTANT: do not show the password in any YAML/JSON output (sensitive information)
 type attest struct {
-	KeyRef string `yaml:"key" json:"key" mapstructure:"key"` // same as --key, file path to the private key
-	// IMPORTANT: do not show the password in any YAML/JSON output (sensitive information)
+	KeyRef                   string `yaml:"key" json:"key" mapstructure:"key"` // same as --key, file path to the private key
 	Cert                     string `yaml:"cert" json:"cert" mapstructure:"cert"`
 	NoUpload                 bool   `yaml:"no_upload" json:"noUpload" mapstructure:"no_upload"`
 	Force                    bool   `yaml:"force" json:"force" mapstructure:"force"`
@@ -24,6 +24,7 @@ type attest struct {
 	RekorURL                 string `yaml:"rekor_url" json:"rekorUrl" mapstructure:"rekor_url"`
 	OIDCIssuer               string `yaml:"oidc_issuer" json:"oidcIssuer" mapstructure:"oidc_issuer"`
 	OIDCClientID             string `yaml:"oidc_client_id" json:"oidcClientId" mapstructure:"oidc_client_id"`
+	OIDCRedirectURL          string `yaml:"oidc_redirect_url" json:"OIDCRedirectURL" mapstructure:"oidc_redirect_url"`
 }
 
 func (cfg *attest) parseConfigValues() error {
@@ -46,6 +47,7 @@ func (cfg *attest) parseConfigValues() error {
 }
 
 func (cfg attest) loadDefaultValues(v *viper.Viper) {
+	v.SetDefault("attest.key", "")
 	v.SetDefault("attest.password", "")
 	v.SetDefault("attest.fulcio_url", options.DefaultFulcioURL)
 	v.SetDefault("attest.rekor_url", options.DefaultRekorURL)

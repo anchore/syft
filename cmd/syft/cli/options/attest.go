@@ -11,6 +11,7 @@ const defaultKeyFileName = "cosign.key"
 type AttestOptions struct {
 	Key       string
 	Cert      string
+	CertChain string
 	NoUpload  bool
 	Force     bool
 	Recursive bool
