@@ -213,7 +213,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -227,7 +227,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -297,7 +297,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
