@@ -25,7 +25,7 @@ func setupPKI(t *testing.T, pw string) func() {
 
 	cosignPath := filepath.Join(repoRoot(t), ".tmp/cosign")
 	cmd := exec.Command(cosignPath, "generate-key-pair")
-	stdout, stderr := runCommand(cmd, nil)
+	stdout, stderr := runCommand(t, cmd, nil)
 	if cmd.ProcessState.ExitCode() != 0 {
 		t.Log("STDOUT", stdout)
 		t.Log("STDERR", stderr)
@@ -58,7 +58,7 @@ func getFixtureImage(t testing.TB, fixtureImageName string) string {
 
 func pullDockerImage(t testing.TB, image string) {
 	cmd := exec.Command("docker", "pull", image)
-	stdout, stderr := runCommand(cmd, nil)
+	stdout, stderr := runCommand(t, cmd, nil)
 	if cmd.ProcessState.ExitCode() != 0 {
 		t.Log("STDOUT", stdout)
 		t.Log("STDERR", stderr)
@@ -81,7 +81,7 @@ func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...
 		args...,
 	)
 	cmd := exec.Command("docker", allArgs...)
-	stdout, stderr := runCommand(cmd, env)
+	stdout, stderr := runCommand(t, cmd, env)
 	return cmd, stdout, stderr
 }
 
@@ -94,7 +94,7 @@ func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, st
 	// we should not have tests reaching out for app update checks
 	env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
 
-	stdout, stderr := runCommand(cmd, env)
+	stdout, stderr := runCommand(t, cmd, env)
 	return cmd, stdout, stderr
 }
 

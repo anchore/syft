@@ -152,7 +152,7 @@ func assertVerifyAttestation(coverageImage string) traitAssertion {
 			coverageImage, // TODO which remote image to use?
 		)
 
-		stdout, stderr := runCommand(attachCmd, nil)
+		stdout, stderr := runCommand(tb, attachCmd, nil)
 		if attachCmd.ProcessState.ExitCode() != 0 {
 			tb.Log("STDOUT", stdout)
 			tb.Log("STDERR", stderr)
@@ -165,7 +165,7 @@ func assertVerifyAttestation(coverageImage string) traitAssertion {
 			coverageImage, // TODO which remote image to use?
 		)
 
-		stdout, stderr = runCommand(verifyCmd, nil)
+		stdout, stderr = runCommand(tb, verifyCmd, nil)
 		if attachCmd.ProcessState.ExitCode() != 0 {
 			tb.Log("STDOUT", stdout)
 			tb.Log("STDERR", stderr)
