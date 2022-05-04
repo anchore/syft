@@ -54,6 +54,18 @@ func TestPowerUserCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
+		{
+			name: "defaut-secrets-results-w-reveal-values",
+			env: map[string]string{
+				"SYFT_SECRETS_REVEAL_VALUES": "true",
+			},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
+			assertions: []traitAssertion{
+				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
+				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {
