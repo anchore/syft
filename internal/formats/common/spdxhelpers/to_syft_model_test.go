@@ -201,35 +201,35 @@ func Test_extractMetadata(t *testing.T) {
 func TestExtractSourceFromNamespaces(t *testing.T) {
 	tests := []struct {
 		namespace string
-		expected  source.Metadata
+		expected  source.Scheme
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.Metadata{Scheme: source.FileScheme},
+			expected:  source.FileScheme,
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.Metadata{Scheme: source.ImageScheme},
+			expected:  source.ImageScheme,
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.Metadata{Scheme: source.DirectoryScheme},
+			expected:  source.DirectoryScheme,
 		},
 		{
 			namespace: "https://another-host/blob/123",
-			expected:  source.Metadata{Scheme: source.UnknownScheme},
+			expected:  source.UnknownScheme,
 		},
 		{
 			namespace: "bla bla",
-			expected:  source.Metadata{Scheme: source.UnknownScheme},
+			expected:  source.UnknownScheme,
 		},
 		{
 			namespace: "",
-			expected:  source.Metadata{Scheme: source.UnknownScheme},
+			expected:  source.UnknownScheme,
 		},
 	}
 
 	for _, tt := range tests {
-		require.Equal(t, tt.expected, extractSourceFromNamespace(tt.namespace))
+		require.Equal(t, tt.expected, extractSchemeFromNamespace(tt.namespace))
 	}
 }

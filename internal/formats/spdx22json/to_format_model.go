@@ -153,7 +153,6 @@ func toFiles(s sbom.SBOM) []model.File {
 				},
 				// required, no attempt made to determine license information
 				LicenseConcluded: "NOASSERTION",
-				// LicenseConcluded: "NONE", 19 changes
 			},
 			Checksums: toFileChecksums(digests),
 			FileName:  coordinates.RealPath,

@@ -21,7 +21,7 @@ func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions) *
 	cmd := &cobra.Command{
 		Use:   "convert sbom.json -o [FORMAT]",
 		Short: "Convert between SBOM formats",
-		Long:  "[Experimental] Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format. For more info about data loss between formats read Syft's README on https://github.com/anchore/syft",
+		Long:  "[Experimental] Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format. For more info about data loss between formats see https://github.com/anchore/syft#format-conversion---experimental",
 		Example: internal.Tprintf(convertExample, map[string]interface{}{
 			"appName": internal.ApplicationName,
 			"command": "convert",
@@ -37,7 +37,6 @@ func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions) *
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			newLogWrapper(app)
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}

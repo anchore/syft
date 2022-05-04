@@ -25,7 +25,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Linux distribution identification
 - Works seamlessly with [Grype](https://github.com/anchore/grype) (a fast, modern vulnerability scanner)
 - Able to create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
-- Convert between SBOM formats, such as CycloneDX (JSON, XML), SPDX, and Syft's own format.
+- Convert between SBOM formats, such as CycloneDX, SPDX, and Syft's own format.
 
 ### Supported Ecosystems
 
@@ -95,10 +95,10 @@ syft <image> --scope all-layers
 
 #### Format conversion - __experimental__
 
-Syft can convert between different SBOM formats, such as CycloneDX, SPDX, and Syft's own format. The ability to convert SBOMs helps saving the time and effort it would take to recreate SBOMs from container images, or file systems.
+The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
 
 ``` bash
-syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json
+syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
 ```
 
 This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, while files and relationships are more likely to lose data. 
@@ -110,6 +110,18 @@ The supported formats are:
 - SPDX 2.2 tag-value
 - cycloneDX 1.3 json
 - cycloneDX 1.3 xml
+
+We support formats with wide community usage AND good encode/decode support by Syft. The recent GitHub format is niche and doesn't have a decoder, therefore was excluded.
+
+The exception to the rule above is table format, which is the default output for two reasons:
+1. it matches syft's default SBOM output
+2. it is handy, as a summary, to print SBOMs as tables
+
+Conversion example:
+```bash
+syft alpine:latest -o json=sbom.syft.json
+syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json
+```
 
 #### SBOM attestation
 

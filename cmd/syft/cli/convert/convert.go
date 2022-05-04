@@ -90,10 +90,6 @@ func makeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
 		return nil, err
 	}
 
-	for _, o := range outputOptions {
-		log.Debugf("writer options: %+v", o.Format)
-	}
-
 	return writer, nil
 }
 

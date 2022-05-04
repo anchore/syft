@@ -17,9 +17,9 @@ import (
 
 // TestConvertCmd tests if the converted SBOM is a valid document according
 // to spec.
-// FIXME: This test can, but currently does not, check the converted SBOM content. It
+// TODO: This test can, but currently does not, check the converted SBOM content. It
 // might be useful to do that in the future, once we gather a better understanding of
-// what users spect from the convert command.
+// what users expect from the convert command.
 func TestConvertCmd(t *testing.T) {
 	for _, formatID := range convert.ConvertibleFormats {
 		t.Run(formatID.String(), func(t *testing.T) {
@@ -53,7 +53,6 @@ func TestConvertCmd(t *testing.T) {
 			require.NoError(t, err)
 
 			os.Stdout = originalStdout
-			// t.Logf("out: %s", out)
 
 			formatFound := syft.IdentifyFormat(out)
 			if formatID == table.ID {
@@ -61,7 +60,6 @@ func TestConvertCmd(t *testing.T) {
 				return
 			}
 			require.Equal(t, formatID, formatFound.ID())
-			// t.Logf("ff: %s", ff)
 		})
 	}
 }

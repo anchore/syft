@@ -9,16 +9,13 @@ import (
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/syftjson"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sergi/go-diff/diffmatchpatch"
-
-	"github.com/anchore/syft/syft/sbom"
-	"github.com/stretchr/testify/require"
-
-	"github.com/anchore/syft/syft"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestEncodeDecodeEncodeCycleComparison is testing for differences in how SBOM documents get encoded on multiple cycles.
@@ -35,16 +32,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		redactor     func(in []byte) []byte
 		json         bool
 	}{
-		// TODO: SPDX's lib and our current implementation of the encoder function creates mismatches with metadata fields.
-		// {
-		// 	formatOption: spdx22json.ID,
-		// 	redactor: func(in []byte) []byte {
-		// 		// in = regexp.MustCompile("\"(SPDXID|created|name|documentNamespace|sourceInfo|licenseDeclared|licenseConcluded|originator|referenceLocator)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
-		// 		in = regexp.MustCompile("\"(SPDXID|created|name|documentNamespace|spdxElementId)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
-		// 		return in
-		// 	},
-		// 	json: true,
-		// },
+		// TODO: SPDX's lib and our encoder implementation creates mismatches with metadata fields, they should be addressed before including SPDX here.
 		{
 			formatOption: syftjson.ID,
 			redactor: func(in []byte) []byte {
@@ -120,12 +108,3 @@ func encode(t *testing.T, s sbom.SBOM, f sbom.Format) []byte {
 
 	return buff.Bytes()
 }
-
-// func saveTempFile(t *testing.T, b []byte, prefix string) {
-// 	f, err := ioutil.TempFile(os.TempDir(), prefix)
-// 	assert.NoError(t, err)
-// 	s, err := f.Write(b)
-// 	assert.NoError(t, err)
-// 	t.Logf("you've got %d bytes written to %s", s, f.Name())
-// 	f.Close()
-// }
