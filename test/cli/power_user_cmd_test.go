@@ -45,15 +45,6 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			},
 		},
 		{
-			name: "default-secret-results-dont-reveal-values",
-			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets"), "-vv"},
-			assertions: []traitAssertion{
-				assertInOutput(`"classification": "generic-api-key"`),                               // proof of the secrets cataloger finding something
-				assertNotInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
-				assertSuccessfulReturnCode,
-			},
-		},
-		{
 			name: "content-cataloger-wired-up",
 			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets"), "-vv"},
 			env: map[string]string{
