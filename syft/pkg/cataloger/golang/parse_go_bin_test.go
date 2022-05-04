@@ -133,6 +133,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		FoundBy:  catalogerName,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
+		Version:  "(devel)",
 		Locations: source.NewLocationSet(
 			source.Location{
 				Coordinates: source.Coordinates{
