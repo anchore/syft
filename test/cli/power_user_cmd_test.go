@@ -32,6 +32,28 @@ func TestPowerUserCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
+		{
+			name: "content-cataloger-wired-up",
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets"), "-vv"},
+			env: map[string]string{
+				"SYFT_FILE_CONTENTS_GLOBS": "/api-key.txt",
+			},
+			assertions: []traitAssertion{
+				assertInOutput(`"contents": "c29tZV9BcEkta0V5ID0gIjEyMzQ1QTdhOTAxYjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MCIK"`), // proof of the content cataloger
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "default-dir-results-w-pkg-coverage",
+			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage", "-vv"},
+			assertions: []traitAssertion{
+				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
+				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
+				assertInOutput(`"algorithm": "sha256"`),         // proof of file-metadata default digest algorithm of sha256
+				assertInOutput(`"metadataType": "ApkMetadata"`), // proof of package artifacts data
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {
