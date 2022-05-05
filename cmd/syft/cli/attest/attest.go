@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -24,6 +23,8 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
 	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
@@ -31,6 +32,9 @@ import (
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/cosign/attestation"
 	cbundle "github.com/sigstore/cosign/pkg/cosign/bundle"
+	"github.com/sigstore/cosign/pkg/oci/mutate"
+	ociremote "github.com/sigstore/cosign/pkg/oci/remote"
+	"github.com/sigstore/cosign/pkg/oci/static"
 	sigs "github.com/sigstore/cosign/pkg/signature"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
@@ -173,11 +177,22 @@ func generateAttestation(ctx context.Context, app *config.Application, predicate
 	}
 
 	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
+	ref, err := name.ParseReference(src.Metadata.ImageMetadata.UserInput)
+	if err != nil {
+		return err
+	}
+
+	digest, err := ociremote.ResolveDigest(ref)
+	if err != nil {
+		return err
+	}
+
+	h, _ := v1.NewHash(digest.Identifier())
 
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
 		Type:      predicateType,
-		Digest:    findValidDigest(src.Image.Metadata.RepoDigests),
+		Digest:    h.Hex,
 	})
 	if err != nil {
 		return err
@@ -193,31 +208,55 @@ func generateAttestation(ctx context.Context, app *config.Application, predicate
 		return errors.Wrap(err, "unable to sign SBOM")
 	}
 
-	// TODO: inject rekor URL here
-	_, err = uploadToTlog(ctx, sv, "https://rekor.sigstore.dev", func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
+	_, err = uploadToTlog(ctx, sv, app.Attest.RekorURL, func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
 		return cosign.TLogUploadInTotoAttestation(ctx, r, signedPayload, b)
 	})
 	if err != nil {
 		return err
 	}
 
-	bus.Publish(partybus.Event{
-		Type: event.Exit,
-		Value: func() error {
-			_, err := os.Stdout.Write(signedPayload)
-			return err
-		},
-	})
+	if app.Attest.NoUpload {
+		bus.Publish(partybus.Event{
+			Type: event.Exit,
+			Value: func() error {
+				_, err := os.Stdout.Write(signedPayload)
+				return err
+			},
+		})
+	}
 
-	return nil
+	return uploadAttestation(signedPayload, digest)
 }
 
+func uploadAttestation(signedPayload []byte, digest name.Digest) error {
+	sig, err := static.NewAttestation(signedPayload)
+	if err != nil {
+		return err
+	}
+
+	se, err := ociremote.SignedEntity(digest)
+	if err != nil {
+		return err
+	}
+
+	// Attach the attestation to the entity.
+	newSE, err := mutate.AttachAttestationToEntity(se, sig)
+	if err != nil {
+		return err
+	}
+
+	// Publish the attestations associated with this entity
+	return ociremote.WriteAttestations(digest.Repository, newSE)
+}
+
+/*
 func findValidDigest(digests []string) string {
 	// since we are only using the OCI repo provider for this source we are safe that this is only 1 value
 	// see https://github.com/anchore/stereoscope/blob/25ebd49a842b5ac0a20c2e2b4b81335b64ad248c/pkg/image/oci/registry_provider.go#L57-L63
 	split := strings.Split(digests[0], "sha256:")
 	return split[1]
 }
+*/
 
 func formatPredicateType(format sbom.Format) string {
 	switch format.ID() {
