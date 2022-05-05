@@ -160,6 +160,7 @@ Where the `formats` available are:
 - `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
+- `github`: A JSON report conforming to GitHub's dependency snapshot format.
 - `table`: A columnar summary (default).
 
 #### Multiple outputs
