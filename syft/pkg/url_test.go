@@ -39,6 +39,20 @@ func TestPackageURL(t *testing.T) {
 			},
 			expected: "pkg:pub/name@0.2.0?hosted_url=pub.hosted.org",
 		},
+
+		{
+			name: "dotnet",
+			pkg: Package{
+				Name:    "Microsoft.CodeAnalysis.Razor",
+				Version: "2.2.0",
+				Type:    DotnetPkg,
+				Metadata: DotnetDepsMetadata{
+					Name:    "Microsoft.CodeAnalysis.Razor",
+					Version: "2.2.0",
+				},
+			},
+			expected: "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
+		},
 		{
 			name: "python",
 			pkg: Package{
