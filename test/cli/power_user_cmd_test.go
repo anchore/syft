@@ -62,7 +62,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets-2")},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
-				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
+				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234568870"`), // proof of the secrets cataloger finding the api key
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -83,7 +83,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			args: []string{"power-user", "dir:test-fixtures/image-secrets-2"},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
-				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
+				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234568870"`), // proof of the secrets cataloger finding the api key
 				assertSuccessfulReturnCode,
 			},
 		},
