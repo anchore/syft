@@ -280,13 +280,25 @@
     "DotnetDepsMetadata": {
       "required": [
         "name",
-        "version"
+        "version",
+        "path",
+        "sha512",
+        "hashPath"
       ],
       "properties": {
         "name": {
           "type": "string"
         },
         "version": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha512": {
+          "type": "string"
+        },
+        "hashPath": {
           "type": "string"
         }
       },
