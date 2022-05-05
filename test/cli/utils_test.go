@@ -3,7 +3,6 @@ package cli
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"math"
 	"os"
 	"os/exec"
@@ -117,11 +116,8 @@ func runCommand(t testing.TB, cmd *exec.Cmd, env map[string]string) (string, str
 		cmd.Env = append(os.Environ(), envMapToSlice(env)...)
 	}
 	var stdout, stderr bytes.Buffer
-
-	cmd.Stdout = io.MultiWriter(&stdout, os.Stdout)
-	cmd.Stderr = io.MultiWriter(&stderr, os.Stderr)
-
-	t.Log("running: ", cmd.Path, cmd.Args)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
 	// ignore errors since this may be what the test expects
 	cmd.Run()

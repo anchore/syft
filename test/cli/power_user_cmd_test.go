@@ -23,7 +23,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-results-w-pkg-coverage",
-			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage"), "-vv"},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
 			assertions: []traitAssertion{
 				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
 				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
@@ -34,7 +34,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "content-cataloger-wired-up",
-			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets"), "-vv"},
+			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-secrets")},
 			env: map[string]string{
 				"SYFT_FILE_CONTENTS_GLOBS": "/api-key.txt",
 			},
@@ -45,7 +45,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-dir-results-w-pkg-coverage",
-			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage", "-vv"},
+			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage"},
 			assertions: []traitAssertion{
 				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
 				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
