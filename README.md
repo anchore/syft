@@ -101,26 +101,21 @@ The ability to convert existing SBOMs means you can create SBOMs in different fo
 syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
 ```
 
-This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, while files and relationships are more likely to lose data. 
+This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost. 
 
 The supported formats are:
 - Syft json
-- Syft table
 - SPDX 2.2 json
 - SPDX 2.2 tag-value
-- cycloneDX 1.3 json
-- cycloneDX 1.3 xml
+- CycloneDX 1.4 json
+- CycloneDX 1.4 xml
 
 We support formats with wide community usage AND good encode/decode support by Syft. The recent GitHub format is niche and doesn't have a decoder, therefore was excluded.
 
-The exception to the rule above is table format, which is the default output for two reasons:
-1. it matches syft's default SBOM output
-2. it is handy, as a summary, to print SBOMs as tables
-
 Conversion example:
 ```sh
-syft alpine:latest -o json=sbom.syft.json # first let's generate a syft SBOM
-syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # now let's convert it to cycloneDX
+syft alpine:latest -o json=sbom.syft.json # generate a syft SBOM
+syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to CycloneDX
 ```
 
 #### SBOM attestation

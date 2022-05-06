@@ -30,7 +30,7 @@ func MakeWriter(outputs []string, defaultFile string, outputFormats ...sbom.Form
 
 	for _, f := range formats {
 		if !IsSupportedFormat(f.ID(), outputFormats) {
-			return nil, fmt.Errorf("cannot convert to %s", f.ID())
+			return nil, fmt.Errorf("cannot convert to %s SBOM format", f.ID())
 		}
 	}
 

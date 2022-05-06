@@ -12,7 +12,6 @@ import (
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
-	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
@@ -24,7 +23,6 @@ var ConvertibleFormats = []sbom.Format{
 	spdx22tagvalue.Format(),
 	cyclonedxjson.Format(),
 	cyclonedxxml.Format(),
-	table.Format(),
 }
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
