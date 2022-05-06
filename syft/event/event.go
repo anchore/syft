@@ -31,4 +31,10 @@ const (
 
 	// ImportStarted is a partybus event that occurs when an SBOM upload process has begun
 	ImportStarted partybus.EventType = "syft-import-started-event"
+
+	// UploadTransparencyLog is a party bus event that occurs when syft uploads a keyless record to the transparency log
+	UploadTransparencyLog partybus.EventType = "syft-upload-transparency-log"
+
+	// UploadOCIAttestation is a party bus event that occurs when syft uploads an attestion to and OCI registry
+	UploadOCIAttestation partybus.EventType = "syft-upload-oic-attestation"
 )

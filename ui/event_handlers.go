@@ -226,6 +226,70 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 	return err
 }
 
+func UploadTransparencyLogHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+
+	wg.Add(1)
+
+	_, spinner := startProcess()
+	title := tileFormat.Sprint("Uploading to Rekor transparency log")
+
+	go func() {
+		defer wg.Done()
+	loop:
+		for {
+			spin := color.Magenta.Sprint(spinner.Next())
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+			select {
+			case <-ctx.Done():
+				break loop
+			case <-time.After(30 * time.Millisecond):
+				break loop
+			}
+		}
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("Uploaded to Rekor transparency log")
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+	}()
+	return nil
+}
+
+func UploadAttestationHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+
+	wg.Add(1)
+
+	_, spinner := startProcess()
+	title := tileFormat.Sprint("Uploading attestation to OCI registry")
+
+	go func() {
+		defer wg.Done()
+	loop:
+		for {
+			spin := color.Magenta.Sprint(spinner.Next())
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+			select {
+			case <-ctx.Done():
+				break loop
+			case <-time.After(30 * time.Millisecond):
+				break loop
+			}
+		}
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("Uploaded attestation to OCI registry")
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+
+	}()
+
+	return nil
+}
+
 // ReadImageHandler periodically writes a the image read/parse/build-tree status in the form of a progress bar.
 func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseReadImage(event)

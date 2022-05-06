@@ -230,6 +230,10 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 		opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
 	}
 
+	bus.Publish(partybus.Event{
+		Type: event.UploadTransparencyLog,
+	})
+
 	// uploads payload to Rekor transparency log and returns bundle for attesation annotations
 	// the entry plus bundle are used during the verify attestation comamand
 	bundle, err := uploadToTlog(context.TODO(), sv, app.Attest.RekorURL, func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
@@ -251,7 +255,10 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 		return err
 	}
 
-	// Attach the attestation to the entity.
+	bus.Publish(partybus.Event{
+		Type: event.UploadOCIAttestation,
+	})
+
 	newSE, err := mutate.AttachAttestationToEntity(se, sig)
 	if err != nil {
 		return err
