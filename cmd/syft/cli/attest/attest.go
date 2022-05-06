@@ -268,15 +268,6 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 	return nil
 }
 
-/*
-func findValidDigest(digests []string) string {
-	// since we are only using the OCI repo provider for this source we are safe that this is only 1 value
-	// see https://github.com/anchore/stereoscope/blob/25ebd49a842b5ac0a20c2e2b4b81335b64ad248c/pkg/image/oci/registry_provider.go#L57-L63
-	split := strings.Split(digests[0], "sha256:")
-	return split[1]
-}
-*/
-
 func formatPredicateType(format sbom.Format) string {
 	switch format.ID() {
 	case spdx22json.ID:
