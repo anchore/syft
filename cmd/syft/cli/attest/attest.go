@@ -36,6 +36,7 @@ import (
 	ociremote "github.com/sigstore/cosign/pkg/oci/remote"
 	"github.com/sigstore/cosign/pkg/oci/static"
 	sigs "github.com/sigstore/cosign/pkg/signature"
+	"github.com/sigstore/cosign/pkg/types"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
@@ -208,13 +209,6 @@ func generateAttestation(ctx context.Context, app *config.Application, predicate
 		return errors.Wrap(err, "unable to sign SBOM")
 	}
 
-	_, err = uploadToTlog(ctx, sv, app.Attest.RekorURL, func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
-		return cosign.TLogUploadInTotoAttestation(ctx, r, signedPayload, b)
-	})
-	if err != nil {
-		return err
-	}
-
 	if app.Attest.NoUpload {
 		bus.Publish(partybus.Event{
 			Type: event.Exit,
@@ -225,11 +219,23 @@ func generateAttestation(ctx context.Context, app *config.Application, predicate
 		})
 	}
 
-	return uploadAttestation(signedPayload, digest)
+	return uploadAttestation(app, signedPayload, digest, sv)
 }
 
-func uploadAttestation(signedPayload []byte, digest name.Digest) error {
-	sig, err := static.NewAttestation(signedPayload)
+func uploadAttestation(app *config.Application, signedPayload []byte, digest name.Digest, sv *sign.SignerVerifier) error {
+	opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
+	if sv.Cert != nil {
+		opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
+	}
+
+	bundle, err := uploadToTlog(context.TODO(), sv, app.Attest.RekorURL, func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
+		return cosign.TLogUploadInTotoAttestation(context.TODO(), r, signedPayload, b)
+	})
+	if err != nil {
+		return err
+	}
+	opts = append(opts, static.WithBundle(bundle))
+	sig, err := static.NewAttestation(signedPayload, opts...)
 	if err != nil {
 		return err
 	}
@@ -246,7 +252,19 @@ func uploadAttestation(signedPayload []byte, digest name.Digest) error {
 	}
 
 	// Publish the attestations associated with this entity
-	return ociremote.WriteAttestations(digest.Repository, newSE)
+	err = ociremote.WriteAttestations(digest.Repository, newSE)
+	if err != nil {
+		return err
+	}
+
+	bus.Publish(partybus.Event{
+		Type: event.Exit,
+		Value: func() error {
+			_, err := os.Stdout.Write(signedPayload)
+			return err
+		},
+	})
+	return nil
 }
 
 /*
