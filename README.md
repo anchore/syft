@@ -112,7 +112,7 @@ We support formats with wide community usage AND good encode/decode support by S
 
 Conversion example:
 ```sh
-syft alpine:latest -o json=sbom.syft.json # generate a syft SBOM
+syft alpine:latest -o syft-json=sbom.syft.json # generate a syft SBOM
 syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to CycloneDX
 ```
 
