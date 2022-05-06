@@ -21,6 +21,7 @@ const (
 	RustPkg          Type = "rust-crate"
 	KbPkg            Type = "msrc-kb"
 	DartPubPkg       Type = "dart-pub"
+	DotnetPkg        Type = "dotnet"
 )
 
 // AllPkgs represents all supported package types
@@ -38,6 +39,7 @@ var AllPkgs = []Type{
 	RustPkg,
 	KbPkg,
 	DartPubPkg,
+	DotnetPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -65,6 +67,8 @@ func (t Type) PackageURLType() string {
 		return "cargo"
 	case DartPubPkg:
 		return packageurl.TypePub
+	case DotnetPkg:
+		return packageurl.TypeDotnet
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -104,6 +108,8 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case packageurl.TypePub:
 		return DartPubPkg
+	case packageurl.TypeDotnet:
+		return DotnetPkg
 	default:
 		return UnknownPkg
 	}
