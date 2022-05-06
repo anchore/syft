@@ -93,7 +93,7 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-### Format conversion (experimental)
+#### Format conversion (experimental)
 
 The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
 
