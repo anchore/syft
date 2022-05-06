@@ -209,7 +209,9 @@ func generateAttestation(app *config.Application, predicate []byte, src *source.
 		return errors.Wrap(err, "unable to sign SBOM")
 	}
 
-	if app.Attest.NoUpload {
+	// We want to give the option to not upload the generated attestation
+	// if passed or if the user is using local PKI
+	if app.Attest.NoUpload || app.Attest.KeyRef != "" {
 		bus.Publish(partybus.Event{
 			Type: event.Exit,
 			Value: func() error {
