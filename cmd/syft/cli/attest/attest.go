@@ -225,6 +225,11 @@ func generateAttestation(app *config.Application, predicate []byte, src *source.
 	return uploadAttestation(app, signedPayload, digest, sv)
 }
 
+// uploads signed SBOM payload to Rekor transparency log along with key information;
+// returns a bundle for attesation annotations
+// rekor bundle includes a signed payload and rekor timestamp;
+// the bundle is then wrapped onto an OCI signed entity and uploaded to
+// the user's image's OCI registry repository as *.att
 func uploadAttestation(app *config.Application, signedPayload []byte, digest name.Digest, sv *sign.SignerVerifier) error {
 	// add application/vnd.dsse.envelope.v1+json as media type for other applications to decode attestation
 	opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
@@ -236,8 +241,11 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 		Type: event.UploadTransparencyLog,
 	})
 
-	// uploads payload to Rekor transparency log and returns bundle for attesation annotations
-	// the entry plus bundle are used during the verify attestation comamand
+	// uploads payload to Rekor transparency log along with key information;
+	// returns bundle for attesation annotations
+	// rekor bundle includes a signed payload and rekor timestamp;
+	// the bundle is then wrapped onto an OCI signed entity and uploaded to
+	// the user's image's OCI registry repository as *.att
 	bundle, err := uploadToTlog(context.TODO(), sv, app.Attest.RekorURL, func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
 		return cosign.TLogUploadInTotoAttestation(context.TODO(), r, signedPayload, b)
 	})
