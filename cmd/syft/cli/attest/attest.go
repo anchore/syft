@@ -55,7 +55,7 @@ var (
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
-func Run(ctx context.Context, app *config.Application, ko *sign.KeyOpts, args []string) error {
+func Run(ctx context.Context, app *config.Application, ko sign.KeyOpts, args []string) error {
 	// We cannot generate an attestation for more than one output
 	if len(app.Outputs) > 1 {
 		return fmt.Errorf("unable to generate attestation for more than one output")
@@ -87,7 +87,7 @@ func Run(ctx context.Context, app *config.Application, ko *sign.KeyOpts, args []
 		ko.PassFunc = passFunc
 	}
 
-	sv, err := sign.SignerFromKeyOpts(ctx, "", "", *ko)
+	sv, err := sign.SignerFromKeyOpts(ctx, "", "", ko)
 	if err != nil {
 		return err
 	}

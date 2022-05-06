@@ -55,7 +55,7 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *c
 			}
 
 			// build cosign key options for attestation
-			ko := &sign.KeyOpts{
+			ko := sign.KeyOpts{
 				KeyRef:                   app.Attest.KeyRef,
 				FulcioURL:                app.Attest.FulcioURL,
 				IDToken:                  app.Attest.FulcioIdentityToken,
