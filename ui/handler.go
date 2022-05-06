@@ -30,8 +30,7 @@ func (r *Handler) RespondsTo(event partybus.Event) bool {
 	case stereoscopeEvent.PullDockerImage,
 		stereoscopeEvent.ReadImage,
 		stereoscopeEvent.FetchImage,
-		syftEvent.UploadTransparencyLog,
-		syftEvent.UploadOCIAttestation,
+		syftEvent.UploadAttestation,
 		syftEvent.PackageCatalogerStarted,
 		syftEvent.SecretsCatalogerStarted,
 		syftEvent.FileDigestsCatalogerStarted,
@@ -56,10 +55,7 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 	case stereoscopeEvent.FetchImage:
 		return FetchImageHandler(ctx, fr, event, wg)
 
-	case syftEvent.UploadTransparencyLog:
-		return UploadTransparencyLogHandler(ctx, fr, event, wg)
-
-	case syftEvent.UploadOCIAttestation:
+	case syftEvent.UploadAttestation:
 		return UploadAttestationHandler(ctx, fr, event, wg)
 
 	case syftEvent.PackageCatalogerStarted:

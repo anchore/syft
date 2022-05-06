@@ -227,68 +227,46 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 }
 
 //nolint:dupl
-func UploadTransparencyLogHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	line, err := fr.Append()
-	if err != nil {
-		return err
-	}
-
-	wg.Add(1)
-
-	_, spinner := startProcess()
-	title := tileFormat.Sprint("Uploading to Rekor transparency log")
-
-	go func() {
-		defer wg.Done()
-	loop:
-		for {
-			spin := color.Magenta.Sprint(spinner.Next())
-			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
-			select {
-			case <-ctx.Done():
-				break loop
-			case <-time.After(interval):
-				break loop
-			}
-		}
-		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Uploaded to Rekor transparency log")
-		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
-	}()
-	return nil
-}
-
-//nolint:dupl
 func UploadAttestationHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseUploadAttestation(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
 	line, err := fr.Append()
 	if err != nil {
 		return err
 	}
-
 	wg.Add(1)
 
-	_, spinner := startProcess()
-	title := tileFormat.Sprint("Uploading attestation to OCI registry")
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, interval)
+	title := tileFormat.Sprint("Uploading attestation")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
+		}
+	}
 
 	go func() {
 		defer wg.Done()
-	loop:
-		for {
-			spin := color.Magenta.Sprint(spinner.Next())
-			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
-			select {
-			case <-ctx.Done():
-				break loop
-			case <-time.After(interval):
-				break loop
-			}
+
+		formatFn(progress.Progress{})
+		for p := range stream {
+			formatFn(p)
 		}
+
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Uploaded attestation to OCI registry")
+		title = tileFormat.Sprint("Uploaded attestation")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
-
-	return nil
+	return err
 }
 
 // ReadImageHandler periodically writes a the image read/parse/build-tree status in the form of a progress bar.

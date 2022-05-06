@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/wagoodman/go-progress"
 	"os"
 
 	"github.com/anchore/stereoscope"
@@ -225,8 +226,26 @@ func generateAttestation(app *config.Application, predicate []byte, src *source.
 	return uploadAttestation(app, signedPayload, digest, sv)
 }
 
+func trackUploadAttestation() (*progress.Stage, *progress.Manual) {
+	stage := &progress.Stage{}
+	prog := &progress.Manual{}
+
+	bus.Publish(partybus.Event{
+		Type: event.UploadAttestation,
+		Value: progress.StagedProgressable(&struct {
+			progress.Stager
+			progress.Progressable
+		}{
+			Stager:       stage,
+			Progressable: prog,
+		}),
+	})
+
+	return stage, prog
+}
+
 // uploads signed SBOM payload to Rekor transparency log along with key information;
-// returns a bundle for attesation annotations
+// returns a bundle for attestation annotations
 // rekor bundle includes a signed payload and rekor timestamp;
 // the bundle is then wrapped onto an OCI signed entity and uploaded to
 // the user's image's OCI registry repository as *.att
@@ -237,9 +256,11 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 		opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
 	}
 
-	bus.Publish(partybus.Event{
-		Type: event.UploadTransparencyLog,
-	})
+	stage, prog := trackUploadAttestation()
+	defer prog.SetCompleted() // just in case we return early
+
+	prog.Total = 2
+	stage.Current = "uploading signing information to transparency log"
 
 	// uploads payload to Rekor transparency log along with key information;
 	// returns bundle for attesation annotations
@@ -253,6 +274,9 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 		return err
 	}
 
+	prog.N = 1
+	stage.Current = "uploading attestation to OCI registry"
+
 	// add bundle OCI attestation that is uploaded to
 	opts = append(opts, static.WithBundle(bundle))
 	sig, err := static.NewAttestation(signedPayload, opts...)
@@ -265,10 +289,6 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 		return err
 	}
 
-	bus.Publish(partybus.Event{
-		Type: event.UploadOCIAttestation,
-	})
-
 	newSE, err := mutate.AttachAttestationToEntity(se, sig)
 	if err != nil {
 		return err
@@ -279,6 +299,8 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 	if err != nil {
 		return err
 	}
+
+	prog.SetCompleted()
 
 	bus.Publish(partybus.Event{
 		Type: event.Exit,
