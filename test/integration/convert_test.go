@@ -21,8 +21,8 @@ import (
 // might be useful to do that in the future, once we gather a better understanding of
 // what users expect from the convert command.
 func TestConvertCmd(t *testing.T) {
-	for _, formatID := range convert.ConvertibleFormats {
-		t.Run(formatID.String(), func(t *testing.T) {
+	for _, format := range convert.ConvertibleFormats {
+		t.Run(format.ID().String(), func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 			format := syft.FormatByID(syftjson.ID)
 
@@ -43,7 +43,7 @@ func TestConvertCmd(t *testing.T) {
 			os.Stdout = stdw
 
 			ctx := context.Background()
-			app := &config.Application{Outputs: []string{formatID.String()}}
+			app := &config.Application{Outputs: []string{format.ID().String()}}
 
 			err = convert.Run(ctx, app, []string{f.Name()})
 			require.NoError(t, err)
@@ -55,11 +55,11 @@ func TestConvertCmd(t *testing.T) {
 			os.Stdout = originalStdout
 
 			formatFound := syft.IdentifyFormat(out)
-			if formatID == table.ID {
+			if format.ID() == table.ID {
 				require.Nil(t, formatFound)
 				return
 			}
-			require.Equal(t, formatID, formatFound.ID())
+			require.Equal(t, format.ID(), formatFound.ID())
 		})
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
@@ -14,7 +13,6 @@ import (
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
@@ -23,12 +21,11 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
-	writer, err := makeWriter(app.Outputs, app.File)
+	writer, err := options.MakeWriter(app.Outputs, app.File, syft.AllFormats...)
 	if err != nil {
 		return err
 	}
@@ -186,55 +183,4 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Applicati
 	}
 
 	return nil
-}
-
-// makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
-// or an error but neither both and if there is no error, sbom.Writer.Close() should be called
-func makeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
-	outputOptions, err := parseOptions(outputs, defaultFile)
-	if err != nil {
-		return nil, err
-	}
-
-	writer, err := sbom.NewWriter(outputOptions...)
-	if err != nil {
-		return nil, err
-	}
-
-	return writer, nil
-}
-
-// parseOptions utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseOptions(outputs []string, defaultFile string) (out []sbom.WriterOption, errs error) {
-	// always should have one option -- we generally get the default of "table", but just make sure
-	if len(outputs) == 0 {
-		outputs = append(outputs, string(table.ID))
-	}
-
-	for _, name := range outputs {
-		name = strings.TrimSpace(name)
-
-		// split to at most two parts for <format>=<file>
-		parts := strings.SplitN(name, "=", 2)
-
-		// the format name is the first part
-		name = parts[0]
-
-		// default to the --file or empty string if not specified
-		file := defaultFile
-
-		// If a file is specified as part of the output formatName, use that
-		if len(parts) > 1 {
-			file = parts[1]
-		}
-
-		format := syft.FormatByName(name)
-		if format == nil {
-			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
-			continue
-		}
-
-		out = append(out, sbom.NewWriterOption(format, file))
-	}
-	return out, errs
 }

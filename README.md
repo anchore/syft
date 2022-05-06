@@ -93,11 +93,11 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-#### Format conversion - __experimental__
+### Format conversion (experimental)
 
 The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
 
-``` bash
+```
 syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
 ```
 
@@ -118,9 +118,9 @@ The exception to the rule above is table format, which is the default output for
 2. it is handy, as a summary, to print SBOMs as tables
 
 Conversion example:
-```bash
-syft alpine:latest -o json=sbom.syft.json
-syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json
+```sh
+syft alpine:latest -o json=sbom.syft.json # first let's generate a syft SBOM
+syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # now let's convert it to cycloneDX
 ```
 
 #### SBOM attestation

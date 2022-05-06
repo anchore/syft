@@ -44,7 +44,7 @@ func TestIdentify(t *testing.T) {
 }
 
 func TestFormats_EmptyInput(t *testing.T) {
-	for _, format := range formats {
+	for _, format := range AllFormats {
 		t.Run(format.ID().String(), func(t *testing.T) {
 			t.Run("format.Decode", func(t *testing.T) {
 				input := bytes.NewReader(nil)
