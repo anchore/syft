@@ -61,7 +61,7 @@ func bindAttestationConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.no_upload", flags.Lookup("no-upload")); err != nil {
+	if err := v.BindPFlag("attest.no-upload", flags.Lookup("no-upload")); err != nil {
 		return err
 	}
 
