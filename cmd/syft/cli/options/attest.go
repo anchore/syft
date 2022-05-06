@@ -73,9 +73,5 @@ func bindAttestationConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 		return err
 	}
 
-	if err := v.BindPFlag("attest.replace", flags.Lookup("replace")); err != nil {
-		return err
-	}
-
 	return nil
 }
