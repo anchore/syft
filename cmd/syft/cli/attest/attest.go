@@ -283,8 +283,7 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 	bus.Publish(partybus.Event{
 		Type: event.Exit,
 		Value: func() error {
-			_, err := os.Stdout.Write(signedPayload)
-			return err
+			return nil
 		},
 	})
 	return nil
