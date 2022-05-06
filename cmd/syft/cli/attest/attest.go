@@ -224,17 +224,22 @@ func generateAttestation(app *config.Application, predicate []byte, src *source.
 }
 
 func uploadAttestation(app *config.Application, signedPayload []byte, digest name.Digest, sv *sign.SignerVerifier) error {
+	// add application/vnd.dsse.envelope.v1+json as media type for other applications to decode attestation
 	opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
 	if sv.Cert != nil {
 		opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
 	}
 
+	// uploads payload to Rekor transparency log and returns bundle for attesation annotations
+	// the entry plus bundle are used during the verify attestation comamand
 	bundle, err := uploadToTlog(context.TODO(), sv, app.Attest.RekorURL, func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
 		return cosign.TLogUploadInTotoAttestation(context.TODO(), r, signedPayload, b)
 	})
 	if err != nil {
 		return err
 	}
+
+	// add bundle OCI attestation that is uploaded to
 	opts = append(opts, static.WithBundle(bundle))
 	sig, err := static.NewAttestation(signedPayload, opts...)
 	if err != nil {

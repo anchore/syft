@@ -15,7 +15,6 @@ type AttestOptions struct {
 	NoUpload  bool
 	Force     bool
 	Recursive bool
-	Replace   bool
 
 	Rekor  RekorOptions
 	Fulcio FulcioOptions
@@ -49,9 +48,6 @@ func (o *AttestOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 	cmd.Flags().BoolVarP(&o.Recursive, "recursive", "", false,
 		"if a multi-arch image is specified, additionally sign each discrete image")
-
-	cmd.Flags().BoolVarP(&o.Replace, "replace", "", false,
-		"")
 
 	return bindAttestationConfigOptions(cmd.Flags(), v)
 }
