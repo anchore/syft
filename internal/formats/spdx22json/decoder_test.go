@@ -2,13 +2,11 @@ package spdx22json
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSPDXJSONDecoder(t *testing.T) {
@@ -62,12 +60,6 @@ func TestSPDXJSONDecoder(t *testing.T) {
 		t.Run(test.path, func(t *testing.T) {
 			f, err := os.Open("test-fixtures/spdx/" + test.path)
 			assert.NoError(t, err)
-
-			if !test.fail {
-				err = Format().Validate(f)
-				require.NoError(t, err)
-				_, err = f.Seek(0, io.SeekStart)
-			}
 
 			sbom, err := decoder(f)
 
