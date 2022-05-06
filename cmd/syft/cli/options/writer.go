@@ -22,16 +22,10 @@ func IsSupportedFormat(format sbom.FormatID, supported []sbom.Format) bool {
 
 // makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
-func MakeWriter(outputs []string, defaultFile string, outputFormats ...sbom.Format) (sbom.Writer, error) {
-	outputOptions, formats, err := parseOutputs(outputs, defaultFile)
+func MakeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
+	outputOptions, err := parseOutputs(outputs, defaultFile)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, f := range formats {
-		if !IsSupportedFormat(f.ID(), outputFormats) {
-			return nil, fmt.Errorf("cannot convert to %s SBOM format", f.ID())
-		}
 	}
 
 	writer, err := sbom.NewWriter(outputOptions...)
@@ -43,7 +37,7 @@ func MakeWriter(outputs []string, defaultFile string, outputFormats ...sbom.Form
 }
 
 // parseOptions utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseOutputs(outputs []string, defaultFile string) (out []sbom.WriterOption, formats []sbom.Format, errs error) {
+func parseOutputs(outputs []string, defaultFile string) (out []sbom.WriterOption, errs error) {
 	// always should have one option -- we generally get the default of "table", but just make sure
 	if len(outputs) == 0 {
 		outputs = append(outputs, string(table.ID))
@@ -72,8 +66,7 @@ func parseOutputs(outputs []string, defaultFile string) (out []sbom.WriterOption
 			continue
 		}
 
-		formats = append(formats, format)
 		out = append(out, sbom.NewWriterOption(format, file))
 	}
-	return out, formats, errs
+	return out, errs
 }

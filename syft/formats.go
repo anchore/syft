@@ -27,10 +27,10 @@ const (
 	SPDXJSONFormatID      = spdx22json.ID
 )
 
-var AllFormats []sbom.Format
+var formats []sbom.Format
 
 func init() {
-	AllFormats = []sbom.Format{
+	formats = []sbom.Format{
 		syftjson.Format(),
 		cyclonedxxml.Format(),
 		cyclonedxjson.Format(),
@@ -43,14 +43,14 @@ func init() {
 }
 
 func FormatIDs() (ids []sbom.FormatID) {
-	for _, f := range AllFormats {
+	for _, f := range formats {
 		ids = append(ids, f.ID())
 	}
 	return ids
 }
 
 func FormatByID(id sbom.FormatID) sbom.Format {
-	for _, f := range AllFormats {
+	for _, f := range formats {
 		if f.ID() == id {
 			return f
 		}
@@ -60,7 +60,7 @@ func FormatByID(id sbom.FormatID) sbom.Format {
 
 func FormatByName(name string) sbom.Format {
 	cleanName := cleanFormatName(name)
-	for _, f := range AllFormats {
+	for _, f := range formats {
 		if cleanFormatName(string(f.ID())) == cleanName {
 			return f
 		}
@@ -95,7 +95,7 @@ func cleanFormatName(name string) string {
 }
 
 func IdentifyFormat(by []byte) sbom.Format {
-	for _, f := range AllFormats {
+	for _, f := range formats {
 		if err := f.Validate(bytes.NewReader(by)); err != nil {
 			continue
 		}

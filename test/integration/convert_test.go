@@ -8,12 +8,25 @@ import (
 
 	"github.com/anchore/syft/cmd/syft/cli/convert"
 	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/formats/cyclonedxjson"
+	"github.com/anchore/syft/internal/formats/cyclonedxxml"
+	"github.com/anchore/syft/internal/formats/spdx22json"
+	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/require"
 )
+
+var convertibleFormats = []sbom.Format{
+	syftjson.Format(),
+	spdx22json.Format(),
+	spdx22tagvalue.Format(),
+	cyclonedxjson.Format(),
+	cyclonedxxml.Format(),
+}
 
 // TestConvertCmd tests if the converted SBOM is a valid document according
 // to spec.
@@ -21,7 +34,7 @@ import (
 // might be useful to do that in the future, once we gather a better understanding of
 // what users expect from the convert command.
 func TestConvertCmd(t *testing.T) {
-	for _, format := range convert.ConvertibleFormats {
+	for _, format := range convertibleFormats {
 		t.Run(format.ID().String(), func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 			format := syft.FormatByID(syftjson.ID)

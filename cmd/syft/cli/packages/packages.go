@@ -25,7 +25,7 @@ import (
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
-	writer, err := options.MakeWriter(app.Outputs, app.File, syft.AllFormats...)
+	writer, err := options.MakeWriter(app.Outputs, app.File)
 	if err != nil {
 		return err
 	}
