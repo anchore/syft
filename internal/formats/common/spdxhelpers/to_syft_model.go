@@ -50,7 +50,7 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 }
 
 // NOTE(jonas): SPDX doesn't inform what an SBOM is about,
-//image, directory, for example. This is our best effort to determine
+// image, directory, for example. This is our best effort to determine
 //the scheme. Syft-generated SBOMs have in the namespace
 //field a type encoded, which we try to identify here.
 func extractSchemeFromNamespace(ns string) source.Scheme {
