@@ -60,7 +60,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			env: map[string]string{
 				"SYFT_SECRETS_REVEAL_VALUES": "true",
 			},
-			args: []string{"power-user", "docker-archive:" + secretsFixture},
+			args: []string{"power-user", "docker-archive:" + secretsFixture, "-vv"},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
 				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
@@ -69,7 +69,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-secret-results-dont-reveal-values",
-			args: []string{"power-user", "docker-archive:" + secretsFixture},
+			args: []string{"power-user", "docker-archive:" + secretsFixture, "-vv"},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                               // proof of the secrets cataloger finding something
 				assertNotInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
@@ -81,7 +81,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			env: map[string]string{
 				"SYFT_SECRETS_REVEAL_VALUES": "true",
 			},
-			args: []string{"power-user", "dir:test-fixtures/image-secrets-dir"},
+			args: []string{"power-user", "dir:test-fixtures/image-secrets-dir", "-vv"},
 			assertions: []traitAssertion{
 				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
 				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
