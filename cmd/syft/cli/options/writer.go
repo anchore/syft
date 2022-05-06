@@ -10,16 +10,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-func IsSupportedFormat(format sbom.FormatID, supported []sbom.Format) bool {
-	for _, f := range supported {
-		if format == f.ID() {
-			return true
-		}
-	}
-
-	return false
-}
-
 // makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
 func MakeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {

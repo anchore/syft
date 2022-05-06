@@ -1,43 +1,23 @@
 package options
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/anchore/syft/internal/formats/syftjson"
-	"github.com/anchore/syft/internal/formats/table"
-	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIsSupportedFormat(t *testing.T) {
 	tests := []struct {
-		outputs   []string
-		supported []sbom.Format
-		wantErr   assert.ErrorAssertionFunc
+		outputs []string
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			outputs:   []string{"json"},
-			supported: []sbom.Format{syftjson.Format()},
-			wantErr:   assert.NoError,
+			outputs: []string{"json"},
+			wantErr: assert.NoError,
 		},
 		{
-			outputs:   []string{"table"},
-			supported: []sbom.Format{syftjson.Format(), table.Format()},
-			wantErr:   assert.NoError,
-		},
-		{
-			outputs: []string{"table"},
-			wantErr: func(t assert.TestingT, err error, bla ...interface{}) bool {
-				return assert.ErrorContains(t, err, fmt.Sprintf("cannot convert to %s", table.ID))
-			},
-		},
-		{
-			outputs:   []string{"table"},
-			supported: []sbom.Format{syftjson.Format()},
-			wantErr: func(t assert.TestingT, err error, bla ...interface{}) bool {
-				return assert.ErrorContains(t, err, fmt.Sprintf("cannot convert to %s", table.ID))
-			},
+			outputs: []string{"table", "json"},
+			wantErr: assert.NoError,
 		},
 		{
 			outputs: []string{"unknown"},
@@ -48,7 +28,7 @@ func TestIsSupportedFormat(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		_, err := MakeWriter(tt.outputs, "", tt.supported...)
+		_, err := MakeWriter(tt.outputs, "")
 		tt.wantErr(t, err)
 	}
 }

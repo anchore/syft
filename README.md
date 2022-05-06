@@ -103,14 +103,12 @@ syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
 
 This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost. 
 
-The supported formats are:
-- Syft json
-- SPDX 2.2 json
+We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
+- Syft JSON
+- SPDX 2.2 JSON
 - SPDX 2.2 tag-value
-- CycloneDX 1.4 json
-- CycloneDX 1.4 xml
-
-We support formats with wide community usage AND good encode/decode support by Syft. The recent GitHub format is niche and doesn't have a decoder, therefore was excluded.
+- CycloneDX 1.4 JSON
+- CycloneDX 1.4 XML
 
 Conversion example:
 ```sh
