@@ -30,12 +30,12 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open SBOM file: %w", err)
 	}
+	defer f.Close()
 
 	sbom, _, err := syft.Decode(f)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}
-	f.Close()
 
 	return writer.Write(*sbom)
 }
