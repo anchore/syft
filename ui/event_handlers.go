@@ -226,7 +226,6 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 	return err
 }
 
-//nolint:dupl
 func UploadAttestationHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	prog, err := syftEventParsers.ParseUploadAttestation(event)
 	if err != nil {
@@ -398,8 +397,8 @@ func SecretsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 	return err
 }
 
+//nolint:dupl
 // FileMetadataCatalogerStartedHandler shows the intermittent secrets searching progress.
-// nolint:dupl
 func FileMetadataCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	prog, err := syftEventParsers.ParseFileMetadataCatalogingStarted(event)
 	if err != nil {
