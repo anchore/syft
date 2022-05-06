@@ -27,7 +27,7 @@ func (o *FulcioOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 		"identity token to use for certificate from fulcio")
 
 	cmd.Flags().BoolVar(&o.InsecureSkipFulcioVerify, "insecure-skip-verify", false,
-		"skip verifying fulcio published to the SCT (this should only be used for testing).")
+		"skip verifying fulcio certificat and the SCT (Signed Certificate Timestamp) (this should only be used for testing).")
 	return bindFulcioConfigOptions(cmd.Flags(), v)
 }
 
