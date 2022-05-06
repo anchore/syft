@@ -26,7 +26,7 @@ func (o *OIDCOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 		"OIDC client ID for application")
 
 	cmd.Flags().StringVar(&o.RedirectURL, "oidc-redirect-url", "",
-		"OIDC redirect URL (Optional). The default oidc-redirect-url is 'http://localhost:0/auth/callback'.")
+		"OIDC redirect URL (Optional)")
 
 	return bindOIDCConfigOptions(cmd.Flags(), v)
 }
