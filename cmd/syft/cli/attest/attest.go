@@ -217,6 +217,7 @@ func generateAttestation(app *config.Application, predicate []byte, src *source.
 				return err
 			},
 		})
+		return nil
 	}
 
 	return uploadAttestation(app, signedPayload, digest, sv)
@@ -314,6 +315,8 @@ func uploadToTlog(ctx context.Context, sv *sign.SignerVerifier, rekorURL string,
 		return nil, err
 	}
 
-	log.Infof("tlog entry created with index: %v", *entry.LogIndex)
+	if entry.LogIndex != nil {
+		log.Debugf("transparency log entry created with index: %v", *entry.LogIndex)
+	}
 	return cbundle.EntryToBundle(entry), nil
 }

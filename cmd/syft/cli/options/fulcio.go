@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const DefaultFulcioURL = "https://fulcio.sigstore.dev"
+const defaultFulcioURL = "https://fulcio.sigstore.dev"
 
 // FulcioOptions is the wrapper for Fulcio related options.
 type FulcioOptions struct {
@@ -20,7 +20,7 @@ var _ Interface = (*FulcioOptions)(nil)
 // AddFlags implements Interface
 func (o *FulcioOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	// TODO: change this back to api.SigstorePublicServerURL after the v1 migration is complete.
-	cmd.Flags().StringVar(&o.URL, "fulcio-url", DefaultFulcioURL,
+	cmd.Flags().StringVar(&o.URL, "fulcio-url", defaultFulcioURL,
 		"address of sigstore PKI server")
 
 	cmd.Flags().StringVar(&o.IdentityToken, "identity-token", "",
