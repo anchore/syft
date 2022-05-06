@@ -226,6 +226,7 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 	return err
 }
 
+//nolint:dupl
 func UploadTransparencyLogHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	line, err := fr.Append()
 	if err != nil {
@@ -246,7 +247,7 @@ func UploadTransparencyLogHandler(ctx context.Context, fr *frame.Frame, event pa
 			select {
 			case <-ctx.Done():
 				break loop
-			case <-time.After(30 * time.Millisecond):
+			case <-time.After(interval):
 				break loop
 			}
 		}
@@ -257,6 +258,7 @@ func UploadTransparencyLogHandler(ctx context.Context, fr *frame.Frame, event pa
 	return nil
 }
 
+//nolint:dupl
 func UploadAttestationHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	line, err := fr.Append()
 	if err != nil {
@@ -277,14 +279,13 @@ func UploadAttestationHandler(ctx context.Context, fr *frame.Frame, event partyb
 			select {
 			case <-ctx.Done():
 				break loop
-			case <-time.After(30 * time.Millisecond):
+			case <-time.After(interval):
 				break loop
 			}
 		}
 		spin := color.Green.Sprint(completedStatus)
 		title = tileFormat.Sprint("Uploaded attestation to OCI registry")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
-
 	}()
 
 	return nil
