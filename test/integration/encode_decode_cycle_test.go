@@ -3,19 +3,22 @@ package integration
 import (
 	"bytes"
 	"fmt"
-	"regexp"
-	"testing"
-
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/syftjson"
-	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
-	"github.com/sergi/go-diff/diffmatchpatch"
-	"github.com/stretchr/testify/assert"
+	"regexp"
+	"testing"
+
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestEncodeDecodeEncodeCycleComparison is testing for differences in how SBOM documents get encoded on multiple cycles.
@@ -32,7 +35,6 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		redactor     func(in []byte) []byte
 		json         bool
 	}{
-		// TODO: SPDX's lib and our encoder implementation creates mismatches with metadata fields, they should be addressed before including SPDX here.
 		{
 			formatOption: syftjson.ID,
 			redactor: func(in []byte) []byte {
@@ -67,13 +69,15 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				format := syft.FormatByID(test.formatOption)
 				require.NotNil(t, format)
 
-				by1 := encode(t, originalSBOM, format)
+				by1, err := syft.Encode(originalSBOM, format)
+				assert.NoError(t, err)
 
 				newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
 				assert.NoError(t, err)
 				assert.Equal(t, format.ID(), newFormat.ID())
 
-				by2 := encode(t, *newSBOM, format)
+				by2, err := syft.Encode(*newSBOM, format)
+				assert.NoError(t, err)
 
 				if test.redactor != nil {
 					by1 = test.redactor(by1)
@@ -94,17 +98,4 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			}
 		})
 	}
-}
-
-func encode(t *testing.T, s sbom.SBOM, f sbom.Format) []byte {
-	buff := bytes.Buffer{}
-	err := f.Encode(&buff, s)
-	require.NoError(t, err)
-	require.NoError(t, f.Validate(&buff))
-
-	err = f.Encode(&buff, s)
-	require.NoError(t, err)
-	require.NotZero(t, buff.Len())
-
-	return buff.Bytes()
 }
