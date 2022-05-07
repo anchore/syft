@@ -96,15 +96,13 @@ syft <image> --scope all-layers
 #### SBOM attestation
 
 ### Keyless support
-
 Syft supports generating attestations using cosign's [keyless](https://github.com/sigstore/cosign/blob/main/KEYLESS.md) signatures.
 
 To use this feature with a format like cyclonedx json simply run:
 ```
 syft attest --output cyclonedx-json <IMAGE WITH OCI WRITE ACCESS>
 ```
-
-This command will open a webbrowser and allow the user to authenticate their OIDC identity as the root of trust for the attestation (Github, Google, Microsoft).
+This command will open a web browser and allow the user to authenticate their OIDC identity as the root of trust for the attestation (Github, Google, Microsoft).
 
 After authenticating, syft will upload the attestation to the OCI registry specified by the image that the user has write access to.
 
@@ -119,7 +117,6 @@ There will also be a printout of the certificates subject `<user identity>` and 
 Certificate subject:  test.email@testdomain.com 
 Certificate issuer URL:  https://accounts.google.com
 ```
-
 
 ### Local private key support
 
