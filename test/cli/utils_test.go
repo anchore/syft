@@ -100,7 +100,10 @@ func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...
 }
 
 func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
-	cmd := getSyftCommand(t, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
+
 	if env == nil {
 		env = make(map[string]string)
 	}
@@ -148,12 +151,6 @@ func envMapToSlice(env map[string]string) (envList []string) {
 		envList = append(envList, fmt.Sprintf("%s=%s", key, val))
 	}
 	return
-}
-
-func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	return exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
 }
 
 func getSyftBinaryLocation(t testing.TB) string {
