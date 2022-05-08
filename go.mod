@@ -56,6 +56,7 @@ require (
 
 require (
 	github.com/docker/docker v20.10.12+incompatible
+	github.com/google/go-containerregistry v0.8.1-0.20220209165246-a44adc326839
 	github.com/in-toto/in-toto-golang v0.3.4-0.20211211042327-af1f9fb822bf
 	github.com/sigstore/cosign v1.7.2
 	github.com/sigstore/rekor v0.4.1-0.20220114213500-23f583409af3
@@ -166,7 +167,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/certificate-transparency-go v1.1.2 // indirect
-	github.com/google/go-containerregistry v0.8.1-0.20220209165246-a44adc326839 // indirect
 	github.com/google/go-github/v42 v42.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
