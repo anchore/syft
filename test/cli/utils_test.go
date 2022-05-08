@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math"
 	"os"
@@ -13,7 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/stretchr/testify/require"
 )
 
 func setupPKI(t *testing.T, pw string) func() {
@@ -51,8 +54,20 @@ func setupPKI(t *testing.T, pw string) func() {
 
 func getFixtureImage(t testing.TB, fixtureImageName string) string {
 	t.Logf("obtaining fixture image for %s", fixtureImageName)
-	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
-	return imagetest.GetFixtureImageTarPath(t, fixtureImageName)
+	request := imagetest.PrepareFixtureImage(t, "docker-archive", fixtureImageName)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	i, err := stereoscope.GetImage(ctx, request)
+	t.Logf("got image %s: %s", fixtureImageName, i.Metadata.ID)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, i.Cleanup())
+	})
+
+	path := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
+	t.Logf("returning %s: %s", fixtureImageName, path)
+	return path
 }
 
 func pullDockerImage(t testing.TB, image string) {
@@ -136,7 +151,9 @@ func envMapToSlice(env map[string]string) (envList []string) {
 }
 
 func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
-	return exec.Command(getSyftBinaryLocation(t), args...)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	return exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
 }
 
 func getSyftBinaryLocation(t testing.TB) string {
