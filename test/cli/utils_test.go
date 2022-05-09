@@ -115,6 +115,8 @@ func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, st
 
 	if err != nil {
 		fmt.Printf("error running syft: %+v", err)
+		fmt.Printf("STDOUT: %s", stdout)
+		fmt.Printf("STDERR: %s", stderr)
 	}
 
 	if stdout == "" {
@@ -125,6 +127,8 @@ func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, st
 
 		if err != nil {
 			fmt.Printf("error running syft: %+v", err)
+			fmt.Printf("STDOUT: %s", stdout)
+			fmt.Printf("STDERR: %s", stderr)
 		}
 	}
 
