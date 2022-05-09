@@ -100,8 +100,21 @@ func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...
 }
 
 func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
+	return runSyftCommand(t, env, true, args...)
+}
+
+func runSyftSafe(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
+	return runSyftCommand(t, env, false, args...)
+}
+
+func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args ...string) (*exec.Cmd, string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
+
+	if !expectError {
+		args = append(args, "-vv")
+	}
+
 	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
 
 	if env == nil {
@@ -113,22 +126,20 @@ func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, st
 
 	stdout, stderr, err := runCommand(cmd, env)
 
-	if err != nil {
-		fmt.Printf("error running syft: %+v", err)
-		fmt.Printf("STDOUT: %s", stdout)
-		fmt.Printf("STDERR: %s", stderr)
-	}
+	if err != nil && !expectError && stdout == "" {
+		fmt.Printf("error running syft: %+v\n", err)
+		fmt.Printf("STDOUT: %s\n", stdout)
+		fmt.Printf("STDERR: %s\n", stderr)
 
-	if stdout == "" {
 		// this probably indicates a timeout
-		args = append(args, "-vv")
+		// args = append(args, "-vv")
 		cmd = exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
 		stdout, stderr, err = runCommand(cmd, env)
 
 		if err != nil {
-			fmt.Printf("error running syft: %+v", err)
-			fmt.Printf("STDOUT: %s", stdout)
-			fmt.Printf("STDERR: %s", stderr)
+			fmt.Printf("error rerunning syft: %+v\n", err)
+			fmt.Printf("STDOUT: %s\n", stdout)
+			fmt.Printf("STDERR: %s\n", stderr)
 		}
 	}
 
