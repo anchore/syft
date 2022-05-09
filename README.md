@@ -32,6 +32,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Alpine (apk)
 - Dart (pubs)
 - Debian (dpkg)
+- Dotnet (deps.json)
 - Go (go.mod, Go binaries)
 - Java (jar, ear, war, par, sar)
 - JavaScript (npm, yarn)
