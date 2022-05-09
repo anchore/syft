@@ -122,28 +122,30 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 		args = append(args, "-vv")
 	}
 
-	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
-
-	go func() {
-		time.Sleep(timeout)
-		if timeout > 0 {
-			// try to get a stack trace printed
-			err := cmd.Process.Signal(syscall.SIGABRT)
-			if err != nil {
-				fmt.Printf("error aborting: %+v", err)
-			}
-		}
-		timer <- true
-	}()
-
-	_ = <-timer
-
 	if env == nil {
 		env = make(map[string]string)
 	}
 
 	// we should not have tests reaching out for app update checks
 	env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
+
+	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
+
+	go func() {
+		time.Sleep(timeout)
+		if timeout > 0 {
+			if cmd != nil && cmd.Process != nil {
+				// try to get a stack trace printed
+				err := cmd.Process.Signal(syscall.SIGABRT)
+				if err != nil {
+					fmt.Printf("error aborting: %+v", err)
+				}
+			}
+		}
+		timer <- true
+	}()
+
+	_ = <-timer
 
 	stdout, stderr, err := runCommand(cmd, env)
 
