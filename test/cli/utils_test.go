@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -108,14 +109,34 @@ func runSyftSafe(t testing.TB, env map[string]string, args ...string) (*exec.Cmd
 }
 
 func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args ...string) (*exec.Cmd, string, string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
+	timeout := 1000 * time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), timeout+100)
+
+	timer := make(chan bool, 1)
+	defer func() {
+		timeout = 0
+		cancel()
+	}()
 
 	if !expectError {
 		args = append(args, "-vv")
 	}
 
 	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
+
+	go func() {
+		time.Sleep(timeout)
+		if timeout > 0 {
+			// try to get a stack trace printed
+			err := cmd.Process.Signal(syscall.SIGABRT)
+			if err != nil {
+				fmt.Printf("error aborting: %+v", err)
+			}
+		}
+		timer <- true
+	}()
+
+	_ = <-timer
 
 	if env == nil {
 		env = make(map[string]string)
@@ -126,7 +147,7 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 
 	stdout, stderr, err := runCommand(cmd, env)
 
-	if err != nil && !expectError && stdout == "" {
+	if !expectError && err != nil && stdout == "" {
 		fmt.Printf("error running syft: %+v\n", err)
 		fmt.Printf("STDOUT: %s\n", stdout)
 		fmt.Printf("STDERR: %s\n", stderr)
