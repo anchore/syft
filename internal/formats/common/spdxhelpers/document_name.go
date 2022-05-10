@@ -1,22 +1,21 @@
 package spdxhelpers
 
 import (
-	"fmt"
 	"path"
 	"strings"
 
 	"github.com/anchore/syft/syft/source"
 )
 
-func DocumentName(srcMetadata source.Metadata) (string, error) {
+func DocumentName(srcMetadata source.Metadata) string {
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		return cleanName(srcMetadata.ImageMetadata.UserInput), nil
+		return cleanName(srcMetadata.ImageMetadata.UserInput)
 	case source.DirectoryScheme, source.FileScheme:
-		return cleanName(srcMetadata.Path), nil
+		return cleanName(srcMetadata.Path)
+	default:
+		return "unknown"
 	}
-
-	return "", fmt.Errorf("unable to determine document name from scheme=%q", srcMetadata.Scheme)
 }
 
 func cleanName(name string) string {

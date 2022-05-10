@@ -20,11 +20,8 @@ import (
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-func toFormatModel(s sbom.SBOM) (*model.Document, error) {
-	name, namespace, err := spdxhelpers.DocumentNameAndNamespace(s.Source)
-	if err != nil {
-		return nil, err
-	}
+func toFormatModel(s sbom.SBOM) *model.Document {
+	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 
 	return &model.Document{
 		Element: model.Element{
@@ -46,7 +43,7 @@ func toFormatModel(s sbom.SBOM) (*model.Document, error) {
 		Packages:          toPackages(s.Artifacts.PackageCatalog, s.Relationships),
 		Files:             toFiles(s),
 		Relationships:     toRelationships(s.Relationships),
-	}, nil
+	}
 }
 
 func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []model.Package {

@@ -8,9 +8,6 @@ import (
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {
-	model, err := toFormatModel(s)
-	if err != nil {
-		return err
-	}
+	model := toFormatModel(s)
 	return tvsaver.Save2_2(model, output)
 }

@@ -25,6 +25,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Linux distribution identification
 - Works seamlessly with [Grype](https://github.com/anchore/grype) (a fast, modern vulnerability scanner)
 - Able to create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
+- Convert between SBOM formats, such as CycloneDX, SPDX, and Syft's own format.
 
 ### Supported Ecosystems
 
@@ -91,6 +92,29 @@ The above output includes only software that is visible in the container (i.e., 
 
 ```
 syft <image> --scope all-layers
+```
+
+#### Format conversion (experimental)
+
+The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
+
+```
+syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
+```
+
+This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost. 
+
+We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
+- Syft JSON
+- SPDX 2.2 JSON
+- SPDX 2.2 tag-value
+- CycloneDX 1.4 JSON
+- CycloneDX 1.4 XML
+
+Conversion example:
+```sh
+syft alpine:latest -o syft-json=sbom.syft.json # generate a syft SBOM
+syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to CycloneDX
 ```
 
 #### SBOM attestation
