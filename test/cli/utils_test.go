@@ -109,8 +109,8 @@ func runSyftSafe(t testing.TB, env map[string]string, args ...string) (*exec.Cmd
 }
 
 func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args ...string) (*exec.Cmd, string, string) {
-	timeout := 1000 * time.Millisecond
-	ctx, cancel := context.WithTimeout(context.Background(), timeout+100)
+	timeout := 90 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 
 	timer := make(chan bool, 1)
 	defer func() {
@@ -144,8 +144,6 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 		}
 		timer <- true
 	}()
-
-	_ = <-timer
 
 	stdout, stderr, err := runCommand(cmd, env)
 
