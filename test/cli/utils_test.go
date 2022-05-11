@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"math"
 	"os"
@@ -11,12 +10,11 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
-	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/stretchr/testify/require"
 )
 
 func setupPKI(t *testing.T, pw string) func() {
@@ -27,7 +25,7 @@ func setupPKI(t *testing.T, pw string) func() {
 
 	cosignPath := filepath.Join(repoRoot(t), ".tmp/cosign")
 	cmd := exec.Command(cosignPath, "generate-key-pair")
-	stdout, stderr := runCommand(cmd, nil)
+	stdout, stderr, _ := runCommand(cmd, nil)
 	if cmd.ProcessState.ExitCode() != 0 {
 		t.Log("STDOUT", stdout)
 		t.Log("STDERR", stderr)
@@ -54,25 +52,13 @@ func setupPKI(t *testing.T, pw string) func() {
 
 func getFixtureImage(t testing.TB, fixtureImageName string) string {
 	t.Logf("obtaining fixture image for %s", fixtureImageName)
-	request := imagetest.PrepareFixtureImage(t, "docker-archive", fixtureImageName)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	i, err := stereoscope.GetImage(ctx, request)
-	t.Logf("got image %s: %s", fixtureImageName, i.Metadata.ID)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, i.Cleanup())
-	})
-
-	path := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
-	t.Logf("returning %s: %s", fixtureImageName, path)
-	return path
+	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
+	return imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 }
 
 func pullDockerImage(t testing.TB, image string) {
 	cmd := exec.Command("docker", "pull", image)
-	stdout, stderr := runCommand(cmd, nil)
+	stdout, stderr, _ := runCommand(cmd, nil)
 	if cmd.ProcessState.ExitCode() != 0 {
 		t.Log("STDOUT", stdout)
 		t.Log("STDERR", stderr)
@@ -95,15 +81,25 @@ func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...
 		args...,
 	)
 	cmd := exec.Command("docker", allArgs...)
-	stdout, stderr := runCommand(cmd, env)
+	stdout, stderr, _ := runCommand(cmd, env)
 	return cmd, stdout, stderr
 }
 
 func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
+	return runSyftCommand(t, env, true, args...)
+}
 
+func runSyftSafe(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
+	return runSyftCommand(t, env, false, args...)
+}
+
+func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args ...string) (*exec.Cmd, string, string) {
+	cancel := make(chan bool, 1)
+	defer func() {
+		cancel <- true
+	}()
+
+	cmd := getSyftCommand(t, args...)
 	if env == nil {
 		env = make(map[string]string)
 	}
@@ -111,7 +107,45 @@ func runSyft(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, st
 	// we should not have tests reaching out for app update checks
 	env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
 
-	stdout, stderr := runCommand(cmd, env)
+	timeout := func() {
+		select {
+		case <-cancel:
+			return
+		case <-time.After(60 * time.Second):
+		}
+
+		if cmd != nil && cmd.Process != nil {
+			// get a stack trace printed
+			err := cmd.Process.Signal(syscall.SIGABRT)
+			if err != nil {
+				t.Errorf("error aborting: %+v", err)
+			}
+		}
+	}
+
+	go timeout()
+
+	stdout, stderr, err := runCommand(cmd, env)
+
+	if !expectError && err != nil && stdout == "" {
+		t.Errorf("error running syft: %+v", err)
+		t.Errorf("STDOUT: %s", stdout)
+		t.Errorf("STDERR: %s", stderr)
+
+		// this probably indicates a timeout
+		args = append(args, "-vv")
+		cmd = getSyftCommand(t, args...)
+
+		go timeout()
+		stdout, stderr, err = runCommand(cmd, env)
+
+		if err != nil {
+			t.Errorf("error rerunning syft: %+v", err)
+			t.Errorf("STDOUT: %s", stdout)
+			t.Errorf("STDERR: %s", stderr)
+		}
+	}
+
 	return cmd, stdout, stderr
 }
 
@@ -121,7 +155,12 @@ func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, 
 		env = make(map[string]string)
 	}
 
-	stdout, stderr := runCommand(cmd, env)
+	stdout, stderr, err := runCommand(cmd, env)
+
+	if err != nil {
+		t.Errorf("error running cosign: %+v", err)
+	}
+
 	return cmd, stdout, stderr
 }
 
@@ -129,7 +168,7 @@ func getCosignCommand(t testing.TB, args ...string) *exec.Cmd {
 	return exec.Command(filepath.Join(repoRoot(t), ".tmp/cosign"), args...)
 }
 
-func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
+func runCommand(cmd *exec.Cmd, env map[string]string) (string, string, error) {
 	if env != nil {
 		cmd.Env = append(os.Environ(), envMapToSlice(env)...)
 	}
@@ -138,9 +177,9 @@ func runCommand(cmd *exec.Cmd, env map[string]string) (string, string) {
 	cmd.Stderr = &stderr
 
 	// ignore errors since this may be what the test expects
-	cmd.Run()
+	err := cmd.Run()
 
-	return stdout.String(), stderr.String()
+	return stdout.String(), stderr.String(), err
 }
 
 func envMapToSlice(env map[string]string) (envList []string) {
@@ -151,6 +190,10 @@ func envMapToSlice(env map[string]string) (envList []string) {
 		envList = append(envList, fmt.Sprintf("%s=%s", key, val))
 	}
 	return
+}
+
+func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
+	return exec.Command(getSyftBinaryLocation(t), args...)
 }
 
 func getSyftBinaryLocation(t testing.TB) string {

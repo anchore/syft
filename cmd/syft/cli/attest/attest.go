@@ -98,11 +98,12 @@ func Run(ctx context.Context, app *config.Application, ko sign.KeyOpts, args []s
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
 	syft.SetBus(eventBus)
+	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
 		execWorker(app, *si, format, predicateType, sv),
 		eventloop.SetupSignals(),
-		eventBus.Subscribe(),
+		subscription,
 		stereoscope.Cleanup,
 		ui.Select(options.IsVerbose(app), app.Quiet)...,
 	)
