@@ -54,10 +54,12 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	stereoscope.SetBus(eventBus)
 	syft.SetBus(eventBus)
 
+	subscription := eventBus.Subscribe()
+
 	return eventloop.EventLoop(
 		execWorker(app, *si, writer),
 		eventloop.SetupSignals(),
-		eventBus.Subscribe(),
+		subscription,
 		stereoscope.Cleanup,
 		ui.Select(options.IsVerbose(app), app.Quiet)...,
 	)
