@@ -110,11 +110,12 @@ func runSyftSafe(t testing.TB, env map[string]string, args ...string) (*exec.Cmd
 
 func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args ...string) (*exec.Cmd, string, string) {
 	timeout := 90 * time.Second
+	timer := make(chan bool, 1)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 
-	timer := make(chan bool, 1)
 	defer func() {
-		timeout = 0
+		timer <- true
 		cancel()
 	}()
 
@@ -132,17 +133,19 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
 
 	go func() {
-		time.Sleep(timeout)
-		if timeout > 0 {
-			if cmd != nil && cmd.Process != nil {
-				// try to get a stack trace printed
-				err := cmd.Process.Signal(syscall.SIGABRT)
-				if err != nil {
-					fmt.Printf("error aborting: %+v", err)
-				}
+		select {
+		case <-timer:
+			return
+		case <-time.After(timeout):
+		}
+
+		if cmd != nil && cmd.Process != nil {
+			// try to get a stack trace printed
+			err := cmd.Process.Signal(syscall.SIGABRT)
+			if err != nil {
+				fmt.Printf("error aborting: %+v", err)
 			}
 		}
-		timer <- true
 	}()
 
 	stdout, stderr, err := runCommand(cmd, env)
@@ -153,7 +156,9 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 		fmt.Printf("STDERR: %s\n", stderr)
 
 		// this probably indicates a timeout
-		// args = append(args, "-vv")
+		if expectError {
+			args = append(args, "-vv")
+		}
 		cmd = exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
 		stdout, stderr, err = runCommand(cmd, env)
 
