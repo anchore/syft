@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/anchore/stereoscope"
+	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
+	"github.com/wagoodman/go-partybus"
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
@@ -36,6 +40,27 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}
+	eventBus := partybus.NewBus()
+	stereoscope.SetBus(eventBus)
+	syft.SetBus(eventBus)
+	sub := eventBus.Subscribe()
+	// defer sub.Unsubscribe()
 
-	return writer.Write(*sbom)
+	return eventloop.EventLoop(
+		func() <-chan error {
+			errs := make(chan error)
+
+			go func() {
+				defer close(errs)
+				if err := writer.Write(*sbom); err != nil {
+					errs <- err
+				}
+			}()
+			return errs
+		}(),
+		eventloop.SetupSignals(),
+		sub,
+		stereoscope.Cleanup,
+		ui.Select(options.IsVerbose(app), app.Quiet)...,
+	)
 }
