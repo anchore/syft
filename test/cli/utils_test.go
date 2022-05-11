@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"math"
 	"os"
@@ -15,9 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/stretchr/testify/require"
 )
 
 func setupPKI(t *testing.T, pw string) func() {
@@ -55,20 +52,8 @@ func setupPKI(t *testing.T, pw string) func() {
 
 func getFixtureImage(t testing.TB, fixtureImageName string) string {
 	t.Logf("obtaining fixture image for %s", fixtureImageName)
-	request := imagetest.PrepareFixtureImage(t, "docker-archive", fixtureImageName)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	i, err := stereoscope.GetImage(ctx, request)
-	t.Logf("got image %s: %s", fixtureImageName, i.Metadata.ID)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, i.Cleanup())
-	})
-
-	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
-	t.Logf("returning %s: %s", fixtureImageName, tarPath)
-	return tarPath
+	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
+	return imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 }
 
 func pullDockerImage(t testing.TB, image string) {
@@ -109,20 +94,12 @@ func runSyftSafe(t testing.TB, env map[string]string, args ...string) (*exec.Cmd
 }
 
 func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args ...string) (*exec.Cmd, string, string) {
-	timeout := 90 * time.Second
-	timer := make(chan bool, 1)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-
+	cancel := make(chan bool, 1)
 	defer func() {
-		timer <- true
-		cancel()
+		cancel <- true
 	}()
 
-	if !expectError {
-		args = append(args, "-vv")
-	}
-
+	cmd := getSyftCommand(t, args...)
 	if env == nil {
 		env = make(map[string]string)
 	}
@@ -130,23 +107,23 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 	// we should not have tests reaching out for app update checks
 	env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
 
-	cmd := exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
-
-	go func() {
+	timeout := func() {
 		select {
-		case <-timer:
+		case <-cancel:
 			return
-		case <-time.After(timeout):
+		case <-time.After(60 * time.Second):
 		}
 
 		if cmd != nil && cmd.Process != nil {
-			// try to get a stack trace printed
+			// get a stack trace printed
 			err := cmd.Process.Signal(syscall.SIGABRT)
 			if err != nil {
 				fmt.Printf("error aborting: %+v", err)
 			}
 		}
-	}()
+	}
+
+	go timeout()
 
 	stdout, stderr, err := runCommand(cmd, env)
 
@@ -156,10 +133,10 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 		fmt.Printf("STDERR: %s\n", stderr)
 
 		// this probably indicates a timeout
-		if expectError {
-			args = append(args, "-vv")
-		}
-		cmd = exec.CommandContext(ctx, getSyftBinaryLocation(t), args...)
+		args = append(args, "-vv")
+		cmd = getSyftCommand(t, args...)
+
+		go timeout()
 		stdout, stderr, err = runCommand(cmd, env)
 
 		if err != nil {
@@ -213,6 +190,10 @@ func envMapToSlice(env map[string]string) (envList []string) {
 		envList = append(envList, fmt.Sprintf("%s=%s", key, val))
 	}
 	return
+}
+
+func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
+	return exec.Command(getSyftBinaryLocation(t), args...)
 }
 
 func getSyftBinaryLocation(t testing.TB) string {
