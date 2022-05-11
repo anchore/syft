@@ -118,7 +118,7 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 			// get a stack trace printed
 			err := cmd.Process.Signal(syscall.SIGABRT)
 			if err != nil {
-				fmt.Printf("error aborting: %+v", err)
+				t.Errorf("error aborting: %+v", err)
 			}
 		}
 	}
@@ -128,9 +128,9 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 	stdout, stderr, err := runCommand(cmd, env)
 
 	if !expectError && err != nil && stdout == "" {
-		fmt.Printf("error running syft: %+v\n", err)
-		fmt.Printf("STDOUT: %s\n", stdout)
-		fmt.Printf("STDERR: %s\n", stderr)
+		t.Errorf("error running syft: %+v", err)
+		t.Errorf("STDOUT: %s", stdout)
+		t.Errorf("STDERR: %s", stderr)
 
 		// this probably indicates a timeout
 		args = append(args, "-vv")
@@ -140,9 +140,9 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 		stdout, stderr, err = runCommand(cmd, env)
 
 		if err != nil {
-			fmt.Printf("error rerunning syft: %+v\n", err)
-			fmt.Printf("STDOUT: %s\n", stdout)
-			fmt.Printf("STDERR: %s\n", stderr)
+			t.Errorf("error rerunning syft: %+v", err)
+			t.Errorf("STDOUT: %s", stdout)
+			t.Errorf("STDERR: %s", stderr)
 		}
 	}
 
@@ -158,7 +158,7 @@ func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, 
 	stdout, stderr, err := runCommand(cmd, env)
 
 	if err != nil {
-		fmt.Printf("error running cosign: %+v", err)
+		t.Errorf("error running cosign: %+v", err)
 	}
 
 	return cmd, stdout, stderr
