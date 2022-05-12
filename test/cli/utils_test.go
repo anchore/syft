@@ -66,6 +66,23 @@ func pullDockerImage(t testing.TB, image string) {
 	}
 }
 
+// docker run -v $(pwd)/sbom:/sbom cyclonedx/cyclonedx-cli:latest validate --input-format json --input-version v1_4 --input-file /sbom
+func runCycloneDXInDocker(t testing.TB, env map[string]string, image string, f *os.File, args ...string) (*exec.Cmd, string, string) {
+	allArgs := append(
+		[]string{
+			"run",
+			"-t",
+			"-v",
+			fmt.Sprintf("%s:/sbom", f.Name()),
+			image,
+		},
+		args...,
+	)
+	cmd := exec.Command("docker", allArgs...)
+	stdout, stderr, _ := runCommand(cmd, env)
+	return cmd, stdout, stderr
+}
+
 func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...string) (*exec.Cmd, string, string) {
 	allArgs := append(
 		[]string{
@@ -150,7 +167,7 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 }
 
 func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
-	cmd := getCosignCommand(t, args...)
+	cmd := getCommand(t, ".tmp/cosign", args...)
 	if env == nil {
 		env = make(map[string]string)
 	}
@@ -164,8 +181,8 @@ func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, 
 	return cmd, stdout, stderr
 }
 
-func getCosignCommand(t testing.TB, args ...string) *exec.Cmd {
-	return exec.Command(filepath.Join(repoRoot(t), ".tmp/cosign"), args...)
+func getCommand(t testing.TB, location string, args ...string) *exec.Cmd {
+	return exec.Command(filepath.Join(repoRoot(t), location), args...)
 }
 
 func runCommand(cmd *exec.Cmd, env map[string]string) (string, string, error) {
