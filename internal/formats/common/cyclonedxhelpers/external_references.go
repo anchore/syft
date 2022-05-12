@@ -116,7 +116,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 			if ref.Hashes != nil {
 				for _, hash := range *ref.Hashes {
 					digests = append(digests, syftFile.Digest{
-						Algorithm: string(hash.Algorithm),
+						Algorithm: syftFile.CleanDigestAlgorithmName(string(hash.Algorithm)),
 						Value:     hash.Value,
 					})
 				}
