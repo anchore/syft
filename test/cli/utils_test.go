@@ -79,7 +79,7 @@ func runCycloneDXInDocker(t testing.TB, env map[string]string, image string, f *
 		args...,
 	)
 	cmd := exec.Command("docker", allArgs...)
-	stdout, stderr := runCommand(cmd, env)
+	stdout, stderr, _ := runCommand(cmd, env)
 	return cmd, stdout, stderr
 }
 
