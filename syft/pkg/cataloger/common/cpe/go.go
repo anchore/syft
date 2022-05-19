@@ -28,7 +28,7 @@ func candidateProductForGo(name string) string {
 		return ""
 	}
 
-	return pathElements[1]
+	return strings.Join(pathElements[1:], "/")
 }
 
 // candidateVendorForGo attempts to find a single vendor name in a best-effort attempt. This implementation prefers
