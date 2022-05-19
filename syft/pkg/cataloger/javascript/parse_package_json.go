@@ -160,7 +160,7 @@ func (p packageJSON) licensesFromJSON() ([]string, error) {
 		return mapLicenses(multiLicense), nil
 	}
 
-	return nil, fmt.Errorf("unable to parse license field: %w", err)
+	return nil, err
 }
 
 func licensesFromJSON(b []byte) ([]license, error) {
@@ -170,7 +170,7 @@ func licensesFromJSON(b []byte) ([]license, error) {
 		return licenseObject, nil
 	}
 
-	return nil, errors.New("unable to unmarshal licenses field")
+	return nil, errors.New("unmarshal failed")
 }
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
