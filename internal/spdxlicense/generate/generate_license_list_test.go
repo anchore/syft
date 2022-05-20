@@ -152,6 +152,7 @@ func TestOverwrite(t *testing.T) {
 	}
 
 	licenseIDs := processSPDXLicense(licenseList)
+	require.Len(t, licenseIDs, 3)
 
 	for id, expected := range overwrites {
 		got, _ := licenseIDs[id]
