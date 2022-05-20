@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLicensePermutations(t *testing.T) {
@@ -142,5 +143,18 @@ func TestFindLicenseVersion(t *testing.T) {
 			got := findLicenseVersion(test.license)
 			assert.Equal(t, test.version, got)
 		})
+	}
+}
+
+func TestOverwrite(t *testing.T) {
+	licenseList := LicenseList{
+		Licenses: []License{{ID: "gpl-2.0+"}},
+	}
+
+	licenseIDs := processSPDXLicense(licenseList)
+
+	for id, expected := range overwrites {
+		got, _ := licenseIDs[id]
+		require.Equal(t, expected, got)
 	}
 }
