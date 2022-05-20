@@ -20,8 +20,8 @@ func TestIDParse(t *testing.T) {
 			"GPL-2.0",
 		},
 		{
-			"GPL-2+",
-			"GPL-2.0+",
+			"GPL-1+",
+			"GPL-1.0+",
 		},
 		{
 			"GPL-3.0.0-or-later",
