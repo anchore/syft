@@ -45,17 +45,17 @@ func GetDecoder(format cyclonedx.BOMFileFormat) sbom.Decoder {
 }
 
 func toSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
-	meta := source.Metadata{}
-	if bom.Metadata != nil && bom.Metadata.Component != nil {
-		meta = decodeMetadata(bom.Metadata.Component)
+	if bom == nil {
+		return nil, fmt.Errorf("no content defined in CycloneDX BOM")
 	}
+
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    pkg.NewCatalog(),
 			LinuxDistribution: linuxReleaseFromComponents(*bom.Components),
 		},
-		Source: meta,
-		//Descriptor:    sbom.Descriptor{},
+		Source:     extractComponents(bom.Metadata),
+		Descriptor: extractDescriptor(bom.Metadata),
 	}
 
 	idMap := make(map[string]interface{})
@@ -205,27 +205,45 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 	}
 }
 
-func decodeMetadata(component *cyclonedx.Component) source.Metadata {
-	switch component.Type {
+func extractComponents(meta *cyclonedx.Metadata) source.Metadata {
+	if meta == nil || meta.Component == nil {
+		return source.Metadata{}
+	}
+	c := meta.Component
+
+	image := source.ImageMetadata{
+		UserInput:      c.Name,
+		ID:             c.BOMRef,
+		ManifestDigest: c.Version,
+	}
+
+	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
 		return source.Metadata{
-			Scheme: source.ImageScheme,
-			ImageMetadata: source.ImageMetadata{
-				UserInput:      component.Name,
-				ID:             component.BOMRef,
-				ManifestDigest: component.Version,
-			},
+			Scheme:        source.ImageScheme,
+			ImageMetadata: image,
 		}
 	case cyclonedx.ComponentTypeFile:
 		return source.Metadata{
-			Scheme: source.FileScheme, // or source.DirectoryScheme
-			Path:   component.Name,
-			ImageMetadata: source.ImageMetadata{
-				UserInput:      component.Name,
-				ID:             component.BOMRef,
-				ManifestDigest: component.Version,
-			},
+			Scheme:        source.FileScheme, // or source.DirectoryScheme
+			Path:          c.Name,
+			ImageMetadata: image,
 		}
 	}
 	return source.Metadata{}
+}
+
+// if there is more than one tool in meta.Tools' list the last item will be used
+// as descriptor. If there is a way to know which tool to use here please fix it.
+func extractDescriptor(meta *cyclonedx.Metadata) (desc sbom.Descriptor) {
+	if meta == nil || meta.Tools == nil {
+		return
+	}
+
+	for _, t := range *meta.Tools {
+		desc.Name = t.Name
+		desc.Version = t.Version
+	}
+
+	return
 }
