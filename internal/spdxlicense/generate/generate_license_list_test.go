@@ -146,16 +146,49 @@ func TestFindLicenseVersion(t *testing.T) {
 	}
 }
 
-func TestOverwrite(t *testing.T) {
-	licenseList := LicenseList{
-		Licenses: []License{{ID: "gpl-2.0+"}},
+func TestReplaceDeprecatedLicenses(t *testing.T) {
+	results := LicenseList{
+		Licenses: []License{
+			{
+				ID:         "ABC-1.0+",
+				Name:       "The ABC License 1.0",
+				Deprecated: true,
+			},
+			{
+				ID:   "ABC-1.0-Or-later",
+				Name: "The ABC License 1.0",
+			},
+			{
+				ID:         "ABC-1.0",
+				Name:       "The ABC License 1.0 Only",
+				Deprecated: true,
+			},
+			{
+				ID:   "ABC-1.0-Only",
+				Name: "The ABC License 1.0 Only",
+			},
+		},
 	}
 
-	licenseIDs := processSPDXLicense(licenseList)
-	require.Len(t, licenseIDs, 3)
+	expected := map[string]string{
+		"abc-1":              "ABC-1.0-Only",
+		"abc-1-only":         "ABC-1.0-Only",
+		"abc-1.0":            "ABC-1.0-Only",
+		"abc-1.0.0":          "ABC-1.0-Only",
+		"abc-1.0-only":       "ABC-1.0-Only",
+		"abc-1.0.0-only":     "ABC-1.0-Only",
+		"abc-1+":             "ABC-1.0-Or-later",
+		"abc-1.0+":           "ABC-1.0-Or-later",
+		"abc-1.0.0+":         "ABC-1.0-Or-later",
+		"abc-1-or-later":     "ABC-1.0-Or-later",
+		"abc-1.0-or-later":   "ABC-1.0-Or-later",
+		"abc-1.0.0-or-later": "ABC-1.0-Or-later",
+	}
 
-	for id, expected := range overwrites {
-		got, _ := licenseIDs[id]
-		require.Equal(t, expected, got)
+	licenses := processSPDXLicense(results)
+	for k, v := range licenses {
+		e := expected[k]
+		// t.Logf("%s --> %s, e: %s", k, v, e)
+		require.Equal(t, e, v, k)
 	}
 }
