@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
 	"github.com/anchore/syft/internal/spdxlicense"
-	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/spdx/tools-golang/spdx"
 )
@@ -69,7 +68,7 @@ func toFormatModel(s sbom.SBOM) *spdx.Document2_2 {
 			// Cardinality: mandatory, one or many
 			CreatorPersons:       nil,
 			CreatorOrganizations: []string{"Anchore, Inc"},
-			CreatorTools:         []string{internal.ApplicationName + "-" + version.FromBuild().Version},
+			CreatorTools:         []string{internal.ApplicationName + "-" + s.Descriptor.Version},
 
 			// 2.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
