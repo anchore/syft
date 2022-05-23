@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:554fd820-210b-40c8-8c0b-75690274e21c" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:a259c072-aaaf-4a3f-a707-49f691b1e9d9" version="1">
   <metadata>
-    <timestamp>2022-04-01T11:57:46-04:00</timestamp>
+    <timestamp>2022-05-23T12:02:41-07:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
         <name>syft</name>
-        <version>[not provided]</version>
+        <version>v0.42.0-bogus</version>
       </tool>
     </tools>
     <component bom-ref="163686ac6e30c752" type="file">

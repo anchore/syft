@@ -19,7 +19,7 @@ import (
 func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	scanTime := time.Now().Format(time.RFC3339) // TODO is there a record of this somewhere?
 	v := s.Descriptor.Version
-	if v == "[not provided]" {
+	if v == "[not provided]" || v == "" {
 		v = "0.0.0-dev"
 	}
 	return DependencySnapshot{
