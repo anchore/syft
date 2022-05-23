@@ -28,6 +28,8 @@ func candidateProductForGo(name string) string {
 		return ""
 	}
 
+	// returning the rest of the path here means longer CPEs, it helps avoiding false-positives
+	// ref: https://github.com/anchore/grype/issues/676
 	return strings.Join(pathElements[1:], "/")
 }
 
