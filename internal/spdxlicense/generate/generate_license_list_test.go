@@ -154,6 +154,28 @@ func TestFindLicenseVersion(t *testing.T) {
 	}
 }
 
+func TestIsEquivalent(t *testing.T) {
+	a := License{
+		ID:         "ABC-1.0+",
+		Name:       "The ABC License 1.0",
+		Deprecated: true,
+	}
+	b := License{
+		ID:   "ABC-1.0-Or-later",
+		Name: "The ABC License 1.0",
+	}
+	c := License{
+		ID:         "ABC-1.0-bla",
+		Name:       "The ABC License 1.0",
+		Deprecated: true,
+	}
+
+	assert.True(t, a.isEquivalent(b))
+	assert.True(t, b.isEquivalent(a))
+	assert.False(t, a.isEquivalent(c))
+	assert.False(t, c.isEquivalent(a))
+}
+
 func TestReplaceDeprecatedLicenses(t *testing.T) {
 	results := LicenseList{
 		Licenses: []License{
@@ -180,6 +202,11 @@ func TestReplaceDeprecatedLicenses(t *testing.T) {
 				Name:       "The Duh License 1.0",
 				Deprecated: true,
 			},
+			{
+				ID:         "Duh-1.0-duh",
+				Name:       "The Duh License 1.0",
+				Deprecated: true,
+			},
 		},
 	}
 
@@ -199,6 +226,9 @@ func TestReplaceDeprecatedLicenses(t *testing.T) {
 		"duh-1":              "Duh-1.0",
 		"duh-1.0":            "Duh-1.0",
 		"duh-1.0.0":          "Duh-1.0",
+		"duh-1-duh":          "Duh-1.0-duh",
+		"duh-1.0-duh":        "Duh-1.0-duh",
+		"duh-1.0.0-duh":      "Duh-1.0-duh",
 	}
 
 	licenses := processSPDXLicense(results)

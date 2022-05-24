@@ -47,6 +47,12 @@ type License struct {
 }
 
 func (l License) isEquivalent(other License) bool {
+	// With this equality check we guarantee the call order doesn't matter:
+	// a.isEquivalent(b) AND b.isEquivalent(a) yield the same value
+	if l.Deprecated == other.Deprecated {
+		return false
+	}
+
 	if l.Name != other.Name {
 		return false
 	}
