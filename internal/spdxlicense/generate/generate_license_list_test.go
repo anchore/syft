@@ -175,6 +175,11 @@ func TestReplaceDeprecatedLicenses(t *testing.T) {
 				ID:   "ABC-1.0-Only",
 				Name: "The ABC License 1.0 Only",
 			},
+			{
+				ID:         "Duh-1.0",
+				Name:       "The Duh License 1.0",
+				Deprecated: true,
+			},
 		},
 	}
 
@@ -191,6 +196,9 @@ func TestReplaceDeprecatedLicenses(t *testing.T) {
 		"abc-1-or-later":     "ABC-1.0-Or-later",
 		"abc-1.0-or-later":   "ABC-1.0-Or-later",
 		"abc-1.0.0-or-later": "ABC-1.0-Or-later",
+		"duh-1":              "Duh-1.0",
+		"duh-1.0":            "Duh-1.0",
+		"duh-1.0.0":          "Duh-1.0",
 	}
 
 	licenses := processSPDXLicense(results)
