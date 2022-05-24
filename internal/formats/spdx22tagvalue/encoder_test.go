@@ -53,7 +53,15 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 			Source: source.Metadata{
 				Scheme: source.DirectoryScheme,
 			},
-			Descriptor: sbom.Descriptor{},
+			Descriptor: sbom.Descriptor{
+				Name:    "syft",
+				Version: "v0.42.0-bogus",
+				// the application configuration should be persisted here, however, we do not want to import
+				// the application configuration in this package (it's reserved only for ingestion by the cmd package)
+				Configuration: map[string]string{
+					"config-key": "config-value",
+				},
+			},
 		},
 		true,
 		spdxTagValueRedactor,
