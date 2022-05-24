@@ -46,10 +46,8 @@ type License struct {
 	SeeAlso     []string `json:"seeAlso"`
 }
 
-func (l License) isEquivalent(other License) bool {
-	// With this equality check we guarantee the call order doesn't matter:
-	// a.isEquivalent(b) AND b.isEquivalent(a) yield the same value
-	if l.Deprecated == other.Deprecated {
+func (l License) canReplace(other License) bool {
+	if l.Deprecated {
 		return false
 	}
 
@@ -187,10 +185,9 @@ func processSPDXLicense(result LicenseList) map[string]string {
 		}
 	}
 
-	for k, v := range licenseIDs {
-		cleanID := strings.ToLower(v)
-		if remap, exists := overwrite[cleanID]; exists {
-			licenseIDs[k] = remap
+	for cleanID, realID := range licenseIDs {
+		if replacementID, exists := overwrite[strings.ToLower(realID)]; exists {
+			licenseIDs[cleanID] = replacementID
 		}
 	}
 
@@ -199,7 +196,7 @@ func processSPDXLicense(result LicenseList) map[string]string {
 
 func findEquivalentLicense(deprecated License, allLicenses []License) *License {
 	for _, l := range allLicenses {
-		if l.isEquivalent(deprecated) {
+		if l.canReplace(deprecated) {
 			return &l
 		}
 	}

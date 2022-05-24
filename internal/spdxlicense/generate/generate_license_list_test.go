@@ -154,59 +154,82 @@ func TestFindLicenseVersion(t *testing.T) {
 	}
 }
 
-func TestIsEquivalent(t *testing.T) {
-	a := License{
+var (
+	license1 = License{
 		ID:         "ABC-1.0+",
 		Name:       "The ABC License 1.0",
 		Deprecated: true,
 	}
-	b := License{
+
+	license2 = License{
 		ID:   "ABC-1.0-Or-later",
 		Name: "The ABC License 1.0",
 	}
-	c := License{
-		ID:         "ABC-1.0-bla",
-		Name:       "The ABC License 1.0",
+
+	license3 = License{
+		ID:         "ABC-1.0",
+		Name:       "The ABC License 1.0 Only",
 		Deprecated: true,
 	}
 
-	assert.True(t, a.isEquivalent(b))
-	assert.True(t, b.isEquivalent(a))
-	assert.False(t, a.isEquivalent(c))
-	assert.False(t, c.isEquivalent(a))
+	license4 = License{
+		ID:   "ABC-1.0-Only",
+		Name: "The ABC License 1.0 Only",
+	}
+	license5 = License{
+		ID:         "Duh-1.0",
+		Name:       "The Duh License 1.0",
+		Deprecated: true,
+	}
+	license6 = License{
+		ID:         "Duh-1.0-duh",
+		Name:       "The Duh License 1.0",
+		Deprecated: true,
+	}
+)
+
+func Test_canReplace(t *testing.T) {
+	tests := []struct {
+		l1, l2   License
+		expected bool
+	}{
+		{license1, license2, false},
+		{license2, license1, true},
+		{license2, license3, false},
+		{license3, license2, false},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(t, tt.expected, tt.l1.canReplace(tt.l2))
+	}
+}
+
+func Test_findEquivalentLicense(t *testing.T) {
+	tests := []struct {
+		l        License
+		expected *License
+		licenses []License
+	}{
+		{license1, nil, []License{}},
+		{license1, nil, []License{license3}},
+		{license1, &license2, []License{license2, license3}},
+		{license1, &license2, []License{license2, license3, license4, license5}},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(t, tt.expected, findEquivalentLicense(tt.l, tt.licenses))
+	}
 }
 
 func TestReplaceDeprecatedLicenses(t *testing.T) {
 	results := LicenseList{
 		Licenses: []License{
-			{
-				ID:         "ABC-1.0+",
-				Name:       "The ABC License 1.0",
-				Deprecated: true,
-			},
-			{
-				ID:   "ABC-1.0-Or-later",
-				Name: "The ABC License 1.0",
-			},
-			{
-				ID:         "ABC-1.0",
-				Name:       "The ABC License 1.0 Only",
-				Deprecated: true,
-			},
-			{
-				ID:   "ABC-1.0-Only",
-				Name: "The ABC License 1.0 Only",
-			},
-			{
-				ID:         "Duh-1.0",
-				Name:       "The Duh License 1.0",
-				Deprecated: true,
-			},
-			{
-				ID:         "Duh-1.0-duh",
-				Name:       "The Duh License 1.0",
-				Deprecated: true,
-			},
+			license1,
+			license2,
+			license3,
+			license4,
+			license5,
+			license6,
 		},
 	}
 
