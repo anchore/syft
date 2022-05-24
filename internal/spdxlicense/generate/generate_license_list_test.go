@@ -46,6 +46,14 @@ func TestLicensePermutations(t *testing.T) {
 			},
 		},
 		{
+			"abc-1.1",
+			[]string{
+				"abc-1",
+				"abc-1.1",
+				"abc-1.1.0",
+			},
+		},
+		{
 			"oldap-2.0",
 			[]string{
 				"oldap-2",
@@ -188,7 +196,6 @@ func TestReplaceDeprecatedLicenses(t *testing.T) {
 	licenses := processSPDXLicense(results)
 	for k, v := range licenses {
 		e := expected[k]
-		// t.Logf("%s --> %s, e: %s", k, v, e)
 		require.Equal(t, e, v, k)
 	}
 }

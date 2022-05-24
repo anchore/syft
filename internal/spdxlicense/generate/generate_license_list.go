@@ -46,7 +46,7 @@ type License struct {
 	SeeAlso     []string `json:"seeAlso"`
 }
 
-func (l *License) isEquivalent(other License) bool {
+func (l License) isEquivalent(other License) bool {
 	if l.Name != other.Name {
 		return false
 	}
@@ -59,8 +59,8 @@ func (l *License) isEquivalent(other License) bool {
 		return false
 	}
 
-	for i := 0; i < len(l.SeeAlso); i++ {
-		if l.SeeAlso[i] != other.SeeAlso[i] {
+	for i, sa := range l.SeeAlso {
+		if sa != other.SeeAlso[i] {
 			return false
 		}
 	}
@@ -158,6 +158,15 @@ func processSPDXLicense(result LicenseList) map[string]string {
 		}
 	}
 
+	/*
+			The order of variations/permutations of a license ID matters because of we how shuffle its digits,
+		  that is because the permutation code can generate the same value for two difference licenses,
+		  for example: The licenses `ABC-1.0` and `ABC-1.1` can both map to `ABC-1`,
+		  so we need to guarantee the order they are created to avoid mapping them wrongly. So we use a sorted list.
+
+			To overwrite deprecated licenses during the first pass we would later on rely on map order,
+			[which in go is not consistent by design](https://stackoverflow.com/a/55925880).
+	*/
 	sort.Slice(result.Licenses, func(i, j int) bool {
 		return result.Licenses[i].ID < result.Licenses[j].ID
 	})
