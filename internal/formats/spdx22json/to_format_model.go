@@ -11,7 +11,6 @@ import (
 	"github.com/anchore/syft/internal/formats/spdx22json/model"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
-	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -34,7 +33,7 @@ func toFormatModel(s sbom.SBOM) *model.Document {
 			Creators: []string{
 				// note: key-value format derived from the JSON example document examples: https://github.com/spdx/spdx-spec/blob/v2.2/examples/SPDXJSONExample-v2.2.spdx.json
 				"Organization: Anchore, Inc",
-				"Tool: " + internal.ApplicationName + "-" + version.FromBuild().Version,
+				"Tool: " + internal.ApplicationName + "-" + s.Descriptor.Version,
 			},
 			LicenseListVersion: spdxlicense.Version,
 		},
