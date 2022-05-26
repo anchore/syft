@@ -31,7 +31,9 @@ func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 
 func GetDecoder(format cyclonedx.BOMFileFormat) sbom.Decoder {
 	return func(reader io.Reader) (*sbom.SBOM, error) {
-		bom := &cyclonedx.BOM{}
+		bom := &cyclonedx.BOM{
+			Components: &[]cyclonedx.Component{},
+		}
 		err := cyclonedx.NewBOMDecoder(reader, format).Decode(bom)
 		if err != nil {
 			return nil, err
