@@ -283,3 +283,10 @@ func Test_missingDataDecode(t *testing.T) {
 
 	assert.Len(t, pkg.Licenses, 0)
 }
+
+func Test_missingComponentsDecode(t *testing.T) {
+	bom := &cyclonedx.BOM{}
+
+	_, err := toSyftModel(bom)
+	assert.Error(t, err)
+}
