@@ -31,7 +31,9 @@ func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 
 func GetDecoder(format cyclonedx.BOMFileFormat) sbom.Decoder {
 	return func(reader io.Reader) (*sbom.SBOM, error) {
-		bom := &cyclonedx.BOM{}
+		bom := &cyclonedx.BOM{
+			Components: &[]cyclonedx.Component{},
+		}
 		err := cyclonedx.NewBOMDecoder(reader, format).Decode(bom)
 		if err != nil {
 			return nil, err
@@ -45,8 +47,8 @@ func GetDecoder(format cyclonedx.BOMFileFormat) sbom.Decoder {
 }
 
 func toSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
-	if bom == nil || bom.Components == nil {
-		return nil, fmt.Errorf("no content or no components are defined in CycloneDX BOM")
+	if bom == nil {
+		return nil, fmt.Errorf("no content defined in CycloneDX BOM")
 	}
 
 	s := &sbom.SBOM{
