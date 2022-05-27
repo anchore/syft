@@ -34,11 +34,11 @@ func (p *Package) OverrideID(id artifact.ID) {
 
 func (p *Package) SetID() {
 	if p.Name == "" {
-		log.Warnf("%s: missing package name, that is necessary for further metadata extraction, such as CPEs and pURLs", p.FoundBy)
+		log.Warnf("%s: missing package name, that is necessary for further metadata extraction. Please take a look at %s", p.FoundBy, p.Locations.ToSlice())
 	}
 
 	if p.Version == "" {
-		log.Warnf("%s: missing package version, that is necessary for further metadata extraction, such as CPEs and pURLs", p.FoundBy)
+		log.Warnf("%s: missing package version, that is necessary for further metadata extraction. Please take a look at %s", p.FoundBy, p.Locations.ToSlice())
 	}
 
 	id, err := artifact.IDByHash(p)

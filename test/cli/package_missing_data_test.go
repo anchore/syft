@@ -14,8 +14,8 @@ func TestPackageMissingNameAndVersion(t *testing.T) {
 	commonAssertions := []traitAssertion{
 		func(tb testing.TB, _, stderr string, _ int) {
 			tb.Helper()
-			assert.Contains(tb, stderr, "python-package-cataloger: missing package name, that is necessary for further metadata extraction, such as CPEs and pURLs")
-			assert.Contains(tb, stderr, "python-package-cataloger: missing package version, that is necessary for further metadata extraction, such as CPEs and pURLs")
+			assert.Contains(tb, stderr, "python-package-cataloger: missing package name, that is necessary for further metadata extraction")
+			assert.Contains(tb, stderr, "python-package-cataloger: missing package version, that is necessary for further metadata extraction")
 		},
 		assertSuccessfulReturnCode,
 	}
