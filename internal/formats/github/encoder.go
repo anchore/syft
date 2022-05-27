@@ -9,7 +9,6 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -148,7 +147,6 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 func dependencyName(p pkg.Package) string {
 	purl, err := packageurl.FromString(p.PURL)
 	if err != nil {
-		log.Warnf("Invalid PURL for package: '%s' PURL: '%s' (%w)", p.Name, p.PURL, err)
 		return ""
 	}
 	// don't use qualifiers for this
