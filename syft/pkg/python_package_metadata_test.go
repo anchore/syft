@@ -1,10 +1,11 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/linux"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"strings"
 	"testing"
+
+	"github.com/anchore/syft/syft/linux"
+	"github.com/sergi/go-diff/diffmatchpatch"
 
 	"github.com/go-test/deep"
 )
@@ -16,6 +17,13 @@ func TestPythonPackageMetadata_pURL(t *testing.T) {
 		metadata PythonPackageMetadata
 		expected string
 	}{
+		// NOTE: making this case explicit since it happens for users
+		// with empty egg/wheel files
+		{
+			name:     "without-name-and-version",
+			metadata: PythonPackageMetadata{},
+			expected: "pkg:pypi/",
+		},
 		{
 			name: "with vcs info",
 			metadata: PythonPackageMetadata{

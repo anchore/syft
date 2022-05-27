@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
-
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 
@@ -63,6 +63,14 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 	metadata, sources, err := c.assembleEggOrWheelMetadata(resolver, metadataLocation)
 	if err != nil {
 		return nil, err
+	}
+
+	if metadata.Name == "" {
+		log.Warn("missing package name, that is necessary for further metadata extraction, such as CPEs and pURLs")
+	}
+
+	if metadata.Version == "" {
+		log.Warn("missing package version, that is necessary for further metadata extraction, such as CPEs and pURLs")
 	}
 
 	// This can happen for Python 2.7 where it is reported from an egg-info, but Python is
