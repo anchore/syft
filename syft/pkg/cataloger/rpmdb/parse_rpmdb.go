@@ -8,11 +8,11 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 
-	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 )
 
 // parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
@@ -47,6 +47,12 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 	allPkgs := make([]pkg.Package, 0)
 
 	for _, entry := range pkgList {
+
+		fileRecords, err := extractRpmdbFileRecords(resolver, entry)
+		if err != nil {
+			return nil, err
+		}
+
 		metadata := pkg.RpmdbMetadata{
 			Name:      entry.Name,
 			Version:   entry.Version,
@@ -57,7 +63,7 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 			Vendor:    entry.Vendor,
 			License:   entry.License,
 			Size:      entry.Size,
-			Files:     extractRpmdbFileRecords(resolver, entry),
+			Files:     fileRecords,
 		}
 
 		p := pkg.Package{
@@ -91,10 +97,15 @@ func toELVersion(metadata pkg.RpmdbMetadata) string {
 	return fmt.Sprintf("%s-%s", metadata.Version, metadata.Release)
 }
 
-func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
+func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
-	for _, record := range entry.Files {
+	files, err := entry.InstalledFiles()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range files {
 		// only persist RPMDB file records which exist in the image/directory, otherwise ignore them
 		if resolver.HasPath(record.Path) {
 			records = append(records, pkg.RpmdbFileRecord{
@@ -111,5 +122,5 @@ func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.Pack
 			})
 		}
 	}
-	return records
+	return records, nil
 }
