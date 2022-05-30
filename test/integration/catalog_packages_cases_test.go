@@ -39,8 +39,6 @@ var imageOnlyTestCases = []testCase{
 			"requests":     "2.22.0",
 			"somerequests": "3.22.0",
 			"someotherpkg": "3.19.0",
-			"brokenpkg":    "",
-			"":             "",
 		},
 	},
 	{
@@ -150,7 +148,6 @@ var dirOnlyTestCases = []testCase{
 			"requests":     "2.22.0",
 			"somerequests": "3.22.0",
 			"someotherpkg": "3.19.0",
-			"brokenpkg":    "",
 			"":             "",
 		},
 	},
