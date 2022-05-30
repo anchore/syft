@@ -28,7 +28,7 @@ func TestPythonPackageMetadata_pURL(t *testing.T) {
 					CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				},
 			},
-			expected: "pkg:pypi/name@v0.1.0?vcs_url=git+https:%2F%2Fgithub.com%2Ftest%2Ftest.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			expected: "pkg:pypi/name@v0.1.0?vcs_url=git+https://github.com/test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		},
 		{
 			name: "should not respond to release info",
