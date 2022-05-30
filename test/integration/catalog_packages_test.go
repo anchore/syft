@@ -118,7 +118,7 @@ func TestPkgCoverageImage(t *testing.T) {
 			if pkgCount != len(c.pkgInfo)+c.duplicates {
 				t.Logf("Discovered packages of type %+v", c.pkgType)
 				for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
-					t.Log("   ", a)
+					t.Log("   ", a, a.Locations)
 				}
 				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
 			}
