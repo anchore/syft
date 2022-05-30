@@ -22,8 +22,7 @@ func TestPackageMissingNameAndVersion(t *testing.T) {
 
 	for _, o := range formats {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {
-			// TODO: does it make sense to add empty metadata for all catalogers?
-			cmd, stdout, stderr := runSyft(t, nil, "dir:./test-fixtures/image-pkg-coverage/pkgs/", "-o", string(o))
+			cmd, stdout, stderr := runSyft(t, nil, "dir:./test-fixtures/image-empty-files/", "-o", string(o))
 			for _, traitFn := range commonAssertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
