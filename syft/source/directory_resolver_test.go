@@ -25,11 +25,22 @@ import (
 )
 
 func TestDirectoryResolver_excludeWhiteoutAndOpaqueFiles(t *testing.T) {
-	// "./test-fixtures/image-whiteout-opaque/" contains one valid file and two others that
-	// should be excluded by isOpaque or isWhiteout
-	resolver, err := newDirectoryResolver("./test-fixtures/image-whiteout-opaque/")
+	dir := "./test-fixtures/image-whiteout-opaque/"
+	var allFiles []string
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		assert.NoError(t, err)
+		if !info.IsDir() {
+			allFiles = append(allFiles, path)
+		}
+		return nil
+	})
 	assert.NoError(t, err)
 
+	resolver, err := newDirectoryResolver(dir)
+	assert.NoError(t, err)
+
+	assert.Len(t, allFiles, 3)
 	assert.Len(t, resolver.fileTree.AllFiles(), 1)
 }
 
