@@ -80,7 +80,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
 		metadata:                make(map[file.ID]FileMetadata),
-		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
+		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath, isWhiteout, isOpaque}, pathFilters...),
 		refsByMIMEType:          make(map[string][]file.Reference),
 		errPaths:                make(map[string]error),
 	}
@@ -509,6 +509,14 @@ func posixToWindows(posixPath string) (windowsPath string) {
 
 func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
 	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
+}
+
+func isWhiteout(path string, _ os.FileInfo) bool {
+	return file.Path(path).IsWhiteout()
+}
+
+func isOpaque(path string, _ os.FileInfo) bool {
+	return file.Path(path).IsDirWhiteout()
 }
 
 func isUnallowableFileType(_ string, info os.FileInfo) bool {

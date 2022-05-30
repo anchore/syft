@@ -24,6 +24,15 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
+func TestDirectoryResolver_excludeWhiteoutAndOpaqueFiles(t *testing.T) {
+	// "./test-fixtures/image-whiteout-opaque/" contains one valid file and two others that
+	// should be excluded by isOpaque or isWhiteout
+	resolver, err := newDirectoryResolver("./test-fixtures/image-whiteout-opaque/")
+	assert.NoError(t, err)
+
+	assert.Len(t, resolver.fileTree.AllFiles(), 1)
+}
+
 func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
 	cases := []struct {
 		name         string
@@ -885,4 +894,64 @@ func TestDirectoryResolver_indexPath(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	})
+}
+
+func Test_isWhiteout(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{
+			name:  "in-folder",
+			input: "/usr/local/.wh.file-2.txt",
+			want:  true,
+		},
+		{
+			name:  "just-file-name",
+			input: ".wh.file-2.txt",
+			want:  true,
+		},
+		{
+			name:  "not whiteout",
+			input: "file-1.txt",
+			want:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var fi os.FileInfo
+			assert.Equalf(t, tt.want, isWhiteout(tt.input, fi), "isWhiteout(%v, %v)", tt.input, fi)
+		})
+	}
+}
+
+func Test_isOpaque(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{
+			name:  "in-path",
+			input: "bin/.wh..wh..opq",
+			want:  true,
+		},
+		{
+			name:  "just-file-name",
+			input: ".wh..wh..opq",
+			want:  true,
+		},
+		{
+			name:  "not-opaque",
+			input: "file-1.txt",
+			want:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var fi os.FileInfo
+			assert.Equalf(t, tt.want, isOpaque(tt.input, fi), "isWhiteout(%v, %v)", tt.input, fi)
+		})
+	}
 }
