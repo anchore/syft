@@ -6,10 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/anchore/syft/syft/file"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
@@ -47,41 +46,47 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 	allPkgs := make([]pkg.Package, 0)
 
 	for _, entry := range pkgList {
-
-		fileRecords, err := extractRpmdbFileRecords(resolver, entry)
+		p, err := newPkg(resolver, dbLocation, entry)
 		if err != nil {
 			return nil, err
 		}
-
-		metadata := pkg.RpmdbMetadata{
-			Name:      entry.Name,
-			Version:   entry.Version,
-			Epoch:     entry.Epoch,
-			Arch:      entry.Arch,
-			Release:   entry.Release,
-			SourceRpm: entry.SourceRpm,
-			Vendor:    entry.Vendor,
-			License:   entry.License,
-			Size:      entry.Size,
-			Files:     fileRecords,
-		}
-
-		p := pkg.Package{
-			Name:         entry.Name,
-			Version:      toELVersion(metadata),
-			Locations:    source.NewLocationSet(dbLocation),
-			FoundBy:      catalogerName,
-			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata:     metadata,
-		}
-
-		p.SetID()
-
-		allPkgs = append(allPkgs, p)
+		allPkgs = append(allPkgs, *p)
 	}
 
 	return allPkgs, nil
+}
+
+func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry *rpmdb.PackageInfo) (*pkg.Package, error) {
+	fileRecords, err := extractRpmdbFileRecords(resolver, entry)
+	if err != nil {
+		return nil, err
+	}
+
+	metadata := pkg.RpmdbMetadata{
+		Name:      entry.Name,
+		Version:   entry.Version,
+		Epoch:     entry.Epoch,
+		Arch:      entry.Arch,
+		Release:   entry.Release,
+		SourceRpm: entry.SourceRpm,
+		Vendor:    entry.Vendor,
+		License:   entry.License,
+		Size:      entry.Size,
+		Files:     fileRecords,
+	}
+
+	p := pkg.Package{
+		Name:         entry.Name,
+		Version:      toELVersion(metadata),
+		Locations:    source.NewLocationSet(dbLocation),
+		FoundBy:      catalogerName,
+		Type:         pkg.RpmPkg,
+		MetadataType: pkg.RpmdbMetadataType,
+		Metadata:     metadata,
+	}
+
+	p.SetID()
+	return &p, nil
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].
