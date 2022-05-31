@@ -15,7 +15,7 @@ func TestFilterOutPackagesWithNoNameOrVersion(t *testing.T) {
 		func(tb testing.TB, stdout, _ string, _ int) {
 			tb.Helper()
 			assert.NotContains(tb, stdout, "broken-1.0.0-py3.8.egg-info")
-			assert.NotContains(tb, stdout, "broken-2.0.0")
+			assert.Contains(tb, stdout, "broken-2.0.0")
 		},
 		assertSuccessfulReturnCode,
 	}
