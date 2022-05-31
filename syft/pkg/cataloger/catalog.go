@@ -85,6 +85,10 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 				allRelationships = append(allRelationships, owningRelationships...)
 			}
 
+			if filterOutPkg(p, hasEmptyName, hasEmptyVersion) {
+				continue
+			}
+
 			// add to catalog
 			catalog.Add(p)
 		}
@@ -102,6 +106,25 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 	packagesDiscovered.SetCompleted()
 
 	return catalog, allRelationships, nil
+}
+
+type filterPkgFn func(pkg.Package) bool
+
+func filterOutPkg(p pkg.Package, filters ...filterPkgFn) bool {
+	for _, f := range filters {
+		if f(p) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasEmptyName(p pkg.Package) bool {
+	return p.Name == ""
+}
+
+func hasEmptyVersion(p pkg.Package) bool {
+	return p.Version == ""
 }
 
 func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathResolver) ([]artifact.Relationship, error) {
