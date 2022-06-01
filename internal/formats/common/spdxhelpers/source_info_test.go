@@ -134,6 +134,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from pubspec manifest",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.DotnetPkg,
+			},
+			expected: []string{
+				"from dotnet project assets file",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

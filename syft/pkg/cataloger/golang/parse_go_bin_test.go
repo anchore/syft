@@ -133,6 +133,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		FoundBy:  catalogerName,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
+		Version:  "(devel)",
 		Locations: source.NewLocationSet(
 			source.Location{
 				Coordinates: source.Coordinates{
@@ -212,7 +213,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -226,7 +227,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -296,7 +297,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},

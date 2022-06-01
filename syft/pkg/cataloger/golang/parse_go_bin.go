@@ -29,7 +29,6 @@ var (
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
-	main.Version = ""
 
 	if v, ok := gbs["vcs.revision"]; ok {
 		main.Version = v
