@@ -40,6 +40,7 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		python.NewPythonPackageCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
+		javascript.NewJavascriptLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpmdb.NewRpmdbCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
