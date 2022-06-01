@@ -56,7 +56,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 						URL:  "",
 						Type: cyclonedx.ERTypeBuildMeta,
 						Hashes: &[]cyclonedx.Hash{{
-							Algorithm: cyclonedx.HashAlgorithm(digest.Algorithm),
+							Algorithm: toCycloneDXAlgorithm(digest.Algorithm),
 							Value:     digest.Value,
 						}},
 					})
@@ -81,6 +81,21 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	return nil
 }
 
+// supported algorithm in cycloneDX as of 1.4
+// "MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512",
+// "SHA3-256", "SHA3-384", "SHA3-512", "BLAKE2b-256", "BLAKE2b-384", "BLAKE2b-512", "BLAKE3"
+// syft supported digests: cmd/syft/cli/eventloop/tasks.go
+// MD5, SHA1, SHA256
+func toCycloneDXAlgorithm(algorithm string) cyclonedx.HashAlgorithm {
+	validMap := map[string]cyclonedx.HashAlgorithm{
+		"sha1":   cyclonedx.HashAlgorithm("SHA-1"),
+		"md5":    cyclonedx.HashAlgorithm("MD5"),
+		"sha256": cyclonedx.HashAlgorithm("SHA-256"),
+	}
+
+	return validMap[algorithm]
+}
+
 func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 	if c.ExternalReferences == nil {
 		return
@@ -101,7 +116,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 			if ref.Hashes != nil {
 				for _, hash := range *ref.Hashes {
 					digests = append(digests, syftFile.Digest{
-						Algorithm: string(hash.Algorithm),
+						Algorithm: syftFile.CleanDigestAlgorithmName(string(hash.Algorithm)),
 						Value:     hash.Value,
 					})
 				}

@@ -11,7 +11,6 @@ import (
 	"github.com/anchore/syft/internal/formats/spdx22json/model"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
-	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -20,11 +19,8 @@ import (
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-func toFormatModel(s sbom.SBOM) (*model.Document, error) {
-	name, namespace, err := spdxhelpers.DocumentNameAndNamespace(s.Source)
-	if err != nil {
-		return nil, err
-	}
+func toFormatModel(s sbom.SBOM) *model.Document {
+	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 
 	return &model.Document{
 		Element: model.Element{
@@ -37,7 +33,7 @@ func toFormatModel(s sbom.SBOM) (*model.Document, error) {
 			Creators: []string{
 				// note: key-value format derived from the JSON example document examples: https://github.com/spdx/spdx-spec/blob/v2.2/examples/SPDXJSONExample-v2.2.spdx.json
 				"Organization: Anchore, Inc",
-				"Tool: " + internal.ApplicationName + "-" + version.FromBuild().Version,
+				"Tool: " + internal.ApplicationName + "-" + s.Descriptor.Version,
 			},
 			LicenseListVersion: spdxlicense.Version,
 		},
@@ -46,7 +42,7 @@ func toFormatModel(s sbom.SBOM) (*model.Document, error) {
 		Packages:          toPackages(s.Artifacts.PackageCatalog, s.Relationships),
 		Files:             toFiles(s),
 		Relationships:     toRelationships(s.Relationships),
-	}, nil
+	}
 }
 
 func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []model.Package {

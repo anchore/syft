@@ -171,7 +171,7 @@ func Test_deriveBomRef(t *testing.T) {
 		{
 			name: "use pURL-id hybrid",
 			pkg:  pkgWithPurl,
-			want: fmt.Sprintf("pkg:pypi/django@1.11.1?syft-id=%s", pkgWithPurl.ID()),
+			want: fmt.Sprintf("pkg:pypi/django@1.11.1?package-id=%s", pkgWithPurl.ID()),
 		},
 		{
 			name: "fallback to ID when pURL is invalid",
@@ -188,6 +188,34 @@ func Test_deriveBomRef(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.pkg.ID()
 			assert.Equal(t, tt.want, deriveBomRef(tt.pkg))
+		})
+	}
+}
+
+func Test_decodeComponent(t *testing.T) {
+	javaComponentWithNoSyftProperties := cyclonedx.Component{
+		Name:       "ch.qos.logback/logback-classic",
+		Version:    "1.2.3",
+		PackageURL: "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+		Type:       "library",
+		BOMRef:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+	}
+
+	tests := []struct {
+		name      string
+		component cyclonedx.Component
+		want      pkg.Language
+	}{
+		{
+			name:      "derive language from pURL if missing",
+			component: javaComponentWithNoSyftProperties,
+			want:      pkg.Java,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, decodeComponent(&tt.component).Language)
 		})
 	}
 }

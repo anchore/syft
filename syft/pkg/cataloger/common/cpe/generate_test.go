@@ -535,6 +535,19 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			name: "go product with vendor candidates and an extra sub-item",
+			p: pkg.Package{
+				Name:     "github.com/someone/something/more",
+				Version:  "3.2",
+				FoundBy:  "go-cataloger",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:someone:something\\/more:3.2:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "generate no CPEs for indeterminate golang package name",
 			p: pkg.Package{
 				Name:     "github.com/what",

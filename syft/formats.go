@@ -74,7 +74,7 @@ func FormatByName(name string) sbom.Format {
 		return FormatByID(cyclonedxxml.ID)
 	case "cyclonedxjson":
 		return FormatByID(cyclonedxjson.ID)
-	case "github":
+	case "github", "githubjson":
 		return FormatByID(github.ID)
 	case "spdx", "spdxtv", "spdxtagvalue":
 		return FormatByID(spdx22tagvalue.ID)
