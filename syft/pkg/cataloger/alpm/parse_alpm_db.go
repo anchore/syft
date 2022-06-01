@@ -86,7 +86,7 @@ func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 		}
 
 		// The alpm database surrounds the keys with %.
-		key := strings.Replace(fields[0], "%", "", -1)
+		key := strings.ReplaceAll(fields[0], "%", "")
 		key = strings.ToLower(key)
 		value := strings.TrimSpace(fields[1])
 
@@ -157,15 +157,15 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 		path := fmt.Sprintf("/%s", f.Name)
 		fileFields["path"] = path
 		for _, kv := range f.Keywords {
-			kw := string(mtree.KeyVal(kv).Keyword())
+			kw := string(kv.Keyword())
 			if kw == "time" {
 				// All unix timestamps have a .0 suffixs.
-				v := strings.Split(mtree.KeyVal(kv).Value(), ".")
+				v := strings.Split(kv.Value(), ".")
 				i, _ := strconv.ParseInt(v[0], 10, 64)
 				tm := time.Unix(i, 0)
 				fileFields[kw] = tm
 			} else {
-				fileFields[kw] = mtree.KeyVal(kv).Value()
+				fileFields[kw] = kv.Value()
 			}
 		}
 		if err := mapstructure.Decode(fileFields, &entry); err != nil {
@@ -212,12 +212,12 @@ func parseAlpmDB(resolver source.FileResolver, desc string, reader io.Reader) ([
 		return nil, err
 	}
 	// The replace the files found the the pacman database with the files from the mtree These contain more metadata and
-	// thus more usefull.
+	// thus more useful.
 	metadata.Files = pkgFiles
 
 	// We only really do this to get any backup database entries from the files database
 	files := filepath.Join(base, "files")
-	r, err = getFileReader(files, resolver)
+	_, err = getFileReader(files, resolver)
 	if err != nil {
 		return nil, err
 	}

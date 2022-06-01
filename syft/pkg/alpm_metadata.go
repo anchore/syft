@@ -21,7 +21,7 @@ type AlpmMetadata struct {
 	Size         int              `mapstructure:"size" json:"size" cyclonedx:"size"`
 	Packager     string           `mapstructure:"packager" json:"packager"`
 	License      string           `mapstructure:"license" json:"license"`
-	Url          string           `mapstructure:"url" json:"url"`
+	URL          string           `mapstructure:"url" json:"url"`
 	Validation   string           `mapstructure:"validation" json:"validation"`
 	Reason       int              `mapstructure:"reason" json:"reason"`
 	Files        []AlpmFileRecord `mapstructure:"files" json:"files"`
@@ -32,8 +32,8 @@ type AlpmMetadata struct {
 type AlpmFileRecord struct {
 	Path         string       `mapstruture:"path" json:"path"`
 	Type         string       `mapstructure:"type" json:"type,omitempty"`
-	Uid          string       `mapstructure:"uid" json:"uid,omitempty"`
-	Gid          string       `mapstructure:"gid" json:"gid,omitempty"`
+	UID          string       `mapstructure:"uid" json:"uid,omitempty"`
+	GID          string       `mapstructure:"gid" json:"gid,omitempty"`
 	Time         time.Time    `mapstructure:"time" json:"time,omitempty"`
 	Size         string       `mapstructure:"size" json:"size,omitempty"`
 	Md5digest    string       `mapstructure:"md5digest" json:"md5digest,omitempty"`
