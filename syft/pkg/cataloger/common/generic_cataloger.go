@@ -56,16 +56,40 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 			continue
 		}
 
+		pkgIDsForRemoval := make([]artifact.Identifiable, 0)
 		for _, p := range discoveredPackages {
 			p.FoundBy = c.upstreamCataloger
 			p.Locations.Add(location)
 			p.SetID()
+			// doing it here so all packages have an ID,
+			// IDs are used to remove relationships
+			if p.Name == "" {
+				pkgIDsForRemoval = append(pkgIDsForRemoval, p)
+				continue
+			}
+
 			packages = append(packages, *p)
 		}
 
-		relationships = append(relationships, discoveredRelationships...)
+		relationships = removePkgsFromRelationships(pkgIDsForRemoval, discoveredRelationships)
 	}
 	return packages, relationships, nil
+}
+
+func removePkgsFromRelationships(pkgs []artifact.Identifiable, relationships []artifact.Relationship) []artifact.Relationship {
+	cleanedRelationships := make([]artifact.Relationship, 0)
+
+	for _, r := range relationships {
+		for _, p := range pkgs {
+			if r.To.ID() == p.ID() || r.From.ID() == p.ID() {
+				goto skip
+			}
+		}
+		cleanedRelationships = append(cleanedRelationships, r)
+	skip:
+	}
+
+	return cleanedRelationships
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging

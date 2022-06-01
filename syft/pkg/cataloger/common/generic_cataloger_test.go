@@ -69,3 +69,80 @@ func TestGenericCataloger(t *testing.T) {
 		}
 	}
 }
+
+func Test_removePkgsFromRelationships(t *testing.T) {
+	one := &pkg.Package{Name: "one", Version: "1.0"}
+	two := &pkg.Package{Name: "two", Version: "1.0"}
+	three := &pkg.Package{Name: "three", Version: "1.0"}
+	four := &pkg.Package{Name: "four", Version: "bla"}
+	five := &pkg.Package{Name: "five", Version: "1.0"}
+
+	pkgs := make([]artifact.Identifiable, 0)
+	for _, p := range []*pkg.Package{one, two, three, four, five} {
+		// IDs are necessary for comparison
+		p.SetID()
+		pkgs = append(pkgs, p)
+	}
+
+	type args struct {
+		remove        []artifact.Identifiable
+		relationships []artifact.Relationship
+	}
+	tests := []struct {
+		name string
+		args args
+		want []artifact.Relationship
+	}{
+		{
+			name: "removes-all-relationships",
+			args: args{
+				remove: []artifact.Identifiable{one, three},
+				relationships: []artifact.Relationship{
+					{From: one, To: two},
+					{From: two, To: three},
+					{From: three, To: four},
+				},
+			},
+			want: []artifact.Relationship{},
+		},
+		{
+			name: "removes-half-relationships",
+			args: args{
+				remove: []artifact.Identifiable{one},
+				relationships: []artifact.Relationship{
+					{From: one, To: two},
+					{From: one, To: three},
+					{From: two, To: three},
+					{From: three, To: four},
+				},
+			},
+			want: []artifact.Relationship{
+				{From: two, To: three},
+				{From: three, To: four},
+			},
+		},
+		{
+			name: "removes-repeated-relationships",
+			args: args{
+				remove: []artifact.Identifiable{one, two},
+				relationships: []artifact.Relationship{
+					{From: one, To: two},
+					{From: one, To: three},
+					{From: two, To: three},
+					{From: two, To: three},
+					{From: three, To: four},
+					{From: four, To: five},
+				},
+			},
+			want: []artifact.Relationship{
+				{From: three, To: four},
+				{From: four, To: five},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, removePkgsFromRelationships(tt.args.remove, tt.args.relationships), "removePkgsFromRelationships(%v, %v)", tt.args.remove, tt.args.relationships)
+		})
+	}
+}

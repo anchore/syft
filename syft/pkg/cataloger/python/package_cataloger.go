@@ -51,11 +51,15 @@ func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to catalog python package=%+v: %w", location.RealPath, err)
 		}
-		if p != nil {
+		if p != nil && pkgHasName(p) {
 			pkgs = append(pkgs, *p)
 		}
 	}
 	return pkgs, nil, nil
+}
+
+func pkgHasName(p *pkg.Package) bool {
+	return p.Name != ""
 }
 
 // catalogEggOrWheel takes the primary metadata file reference and returns the python package it represents.

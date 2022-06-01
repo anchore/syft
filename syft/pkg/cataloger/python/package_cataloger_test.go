@@ -15,6 +15,21 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 		expectedPackage pkg.Package
 	}{
 		{
+			name:     "egg-file-no-version",
+			fixtures: []string{"test-fixtures/no-version-1.0.0-py3.8.egg-info"},
+			expectedPackage: pkg.Package{
+				Name:         "no-version",
+				Type:         pkg.PythonPkg,
+				Language:     pkg.Python,
+				FoundBy:      "python-package-cataloger",
+				MetadataType: pkg.PythonPackageMetadataType,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:                 "no-version",
+					SitePackagesRootPath: "test-fixtures",
+				},
+			},
+		},
+		{
 			name: "egg-info directory",
 			fixtures: []string{
 				"test-fixtures/egg-info/PKG-INFO",
@@ -168,6 +183,9 @@ func TestIgnorePackage(t *testing.T) {
 	}{
 		{
 			MetadataFixture: "test-fixtures/Python-2.7.egg-info",
+		},
+		{
+			MetadataFixture: "test-fixtures/empty-1.0.0-py3.8.egg-info",
 		},
 	}
 
