@@ -60,6 +60,7 @@ require (
 require (
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/sigstore/cosign v1.6.0
+	github.com/vbatts/go-mtree v0.5.0
 )
 
 require (
@@ -218,7 +219,6 @@ require (
 	github.com/theupdateframework/go-tuf v0.0.0-20220211205608-f0c3294f63b9 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/urfave/cli v1.22.5 // indirect
-	github.com/vbatts/go-mtree v0.5.0 // indirect
 	github.com/xanzy/go-gitlab v0.56.0 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
