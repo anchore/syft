@@ -10,7 +10,7 @@ func SourceInfo(p pkg.Package) string {
 	answer := ""
 	switch p.Type {
 	case pkg.AlpmPkg:
-		answer = "aquired package info from ALPM DB"
+		answer = "acquired package info from ALPM DB"
 	case pkg.RpmPkg:
 		answer = "acquired package info from RPM DB"
 	case pkg.ApkPkg:
