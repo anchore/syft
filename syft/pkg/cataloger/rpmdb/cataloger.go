@@ -47,7 +47,12 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 			return nil, nil, fmt.Errorf("unable to catalog rpmdb package=%+v: %w", location.RealPath, err)
 		}
 
-		pkgs = append(pkgs, discoveredPkgs...)
+		for _, p := range discoveredPkgs {
+			if !pkg.IsValid(p) {
+				continue
+			}
+			pkgs = append(pkgs, *p)
+		}
 	}
 	return pkgs, nil, nil
 }

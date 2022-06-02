@@ -162,6 +162,38 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package(nil),
 		},
 		{
+			name: "package without name",
+			mod: &debug.BuildInfo{
+				Deps: []*debug.Module{
+					{
+						Path: "github.com/adrg/xdg",
+					},
+					{
+						Path:    "",
+						Version: "v0.2.1",
+					},
+				},
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/adrg/xdg",
+					FoundBy:  catalogerName,
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: source.NewLocationSet(
+						source.Location{
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						},
+					),
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata:     pkg.GolangBinMetadata{},
+				},
+			},
+		},
+		{
 			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
 			mod:      &debug.BuildInfo{},
 			expected: []pkg.Package(nil),

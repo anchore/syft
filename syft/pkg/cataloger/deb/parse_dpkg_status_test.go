@@ -122,6 +122,10 @@ func TestMultiplePackages(t *testing.T) {
 			name: "Test Multiple Package",
 			expected: []pkg.DpkgMetadata{
 				{
+					Package: "no-version",
+					Files:   []pkg.DpkgFileRecord{},
+				},
+				{
 					Package:       "tzdata",
 					Version:       "2020a-0+deb10u1",
 					Source:        "tzdata-dev",
@@ -209,7 +213,7 @@ func TestMultiplePackages(t *testing.T) {
 				t.Fatal("Unable to read file contents: ", err)
 			}
 
-			if len(pkgs) != 2 {
+			if len(pkgs) != 3 {
 				t.Fatalf("unexpected number of entries: %d", len(pkgs))
 			}
 
@@ -270,7 +274,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
-		want    []pkg.Package
+		want    []*pkg.Package
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -300,7 +304,7 @@ Status: install ok installed
 Installed-Size: 10kib
 
 `,
-			want: []pkg.Package{
+			want: []*pkg.Package{
 				{
 					Name:         "apt",
 					Type:         "deb",
