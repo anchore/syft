@@ -274,7 +274,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
-		want    []*pkg.Package
+		want    []pkg.Package
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -304,7 +304,7 @@ Status: install ok installed
 Installed-Size: 10kib
 
 `,
-			want: []*pkg.Package{
+			want: []pkg.Package{
 				{
 					Name:         "apt",
 					Type:         "deb",
