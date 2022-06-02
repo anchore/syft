@@ -16,7 +16,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 	}{
 		{
 			name:     "egg-file-no-version",
-			fixtures: []string{"test-fixtures/no-version-1.0.0-py3.8.egg-info"},
+			fixtures: []string{"test-fixtures/no-version-py3.8.egg-info"},
 			expectedPackage: pkg.Package{
 				Name:         "no-version",
 				Type:         pkg.PythonPkg,
