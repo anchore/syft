@@ -53,15 +53,6 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	}
 }
 
-func TestPkgFiltering(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-missing-data", source.SquashedScope)
-	require.Equal(t, sbom.Artifacts.PackageCatalog.PackageCount(), 1)
-
-	for _, p := range sbom.Artifacts.PackageCatalog.Sorted() {
-		require.NotZero(t, p.Name)
-	}
-}
-
 func TestPkgCoverageImage(t *testing.T) {
 	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 

@@ -56,42 +56,39 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 			continue
 		}
 
-		pkgIDsForRemoval := make([]artifact.Identifiable, 0)
+		pkgsForRemoval := make(map[artifact.ID]artifact.Identifiable)
 		for _, p := range discoveredPackages {
 			p.FoundBy = c.upstreamCataloger
 			p.Locations.Add(location)
 			p.SetID()
 			// doing it here so all packages have an ID,
-			// IDs are used to remove relationships
-			if p.Name == "" {
-				pkgIDsForRemoval = append(pkgIDsForRemoval, p)
+			// IDs are later used to remove relationships
+			if !pkg.IsValid(p) {
+				pkgsForRemoval[p.ID()] = p
 				continue
 			}
 
 			packages = append(packages, *p)
 		}
 
-		relationships = removePkgsFromRelationships(pkgIDsForRemoval, discoveredRelationships)
+		relationships = removeRelationshipsWithArtifactIDs(pkgsForRemoval, discoveredRelationships)
 	}
 	return packages, relationships, nil
 }
 
-func removePkgsFromRelationships(pkgs []artifact.Identifiable, relationships []artifact.Relationship) []artifact.Relationship {
-	if len(pkgs) == 0 {
+func removeRelationshipsWithArtifactIDs(pkgs map[artifact.ID]artifact.Identifiable, relationships []artifact.Relationship) []artifact.Relationship {
+	if len(pkgs) == 0 || len(relationships) == 0 {
 		// no removal to do
 		return relationships
 	}
 
-	cleanedRelationships := make([]artifact.Relationship, 0)
-
+	var cleanedRelationships []artifact.Relationship
 	for _, r := range relationships {
-		for _, p := range pkgs {
-			if r.To.ID() == p.ID() || r.From.ID() == p.ID() {
-				goto skip
-			}
+		_, removeTo := pkgs[r.To.ID()]
+		_, removaFrom := pkgs[r.From.ID()]
+		if !removeTo && !removaFrom {
+			cleanedRelationships = append(cleanedRelationships, r)
 		}
-		cleanedRelationships = append(cleanedRelationships, r)
-	skip:
 	}
 
 	return cleanedRelationships

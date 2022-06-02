@@ -26,9 +26,8 @@ func parser(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship
 }
 
 func TestGenericCataloger(t *testing.T) {
-
 	globParsers := map[string]ParserFn{
-		"**/a-path.txt": parser,
+		"**/*.txt": parser, // this glob should capture all files, including the empty one
 	}
 	pathParsers := map[string]ParserFn{
 		"test-fixtures/another-path.txt": parser,
@@ -36,7 +35,7 @@ func TestGenericCataloger(t *testing.T) {
 	}
 	upstream := "some-other-cataloger"
 
-	expectedSelection := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"}
+	expectedSelection := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt", "test-fixtures/empty.txt"}
 	resolver := source.NewMockResolverForPaths(expectedSelection...)
 	cataloger := NewGenericCataloger(pathParsers, globParsers, upstream)
 
@@ -50,7 +49,8 @@ func TestGenericCataloger(t *testing.T) {
 
 	actualPkgs, _, err := cataloger.Catalog(resolver)
 	assert.NoError(t, err)
-	assert.Len(t, actualPkgs, len(expectedPkgs))
+	// empty.txt won't become a package
+	assert.Len(t, actualPkgs, len(expectedPkgs)-1)
 
 	for _, p := range actualPkgs {
 		ref := p.Locations.ToSlice()[0]
@@ -70,7 +70,7 @@ func TestGenericCataloger(t *testing.T) {
 	}
 }
 
-func Test_removePkgsFromRelationships(t *testing.T) {
+func Test_removeRelationshipsWithArtifactIDs(t *testing.T) {
 	one := &pkg.Package{Name: "one", Version: "1.0"}
 	two := &pkg.Package{Name: "two", Version: "1.0"}
 	three := &pkg.Package{Name: "three", Version: "1.0"}
@@ -85,7 +85,7 @@ func Test_removePkgsFromRelationships(t *testing.T) {
 	}
 
 	type args struct {
-		remove        []artifact.Identifiable
+		remove        map[artifact.ID]artifact.Identifiable
 		relationships []artifact.Relationship
 	}
 	tests := []struct {
@@ -105,21 +105,26 @@ func Test_removePkgsFromRelationships(t *testing.T) {
 			},
 		},
 		{
-			name: "removes-all-relationships",
+			name: "remove-all-relationships",
 			args: args{
-				remove: []artifact.Identifiable{one, three},
+				remove: map[artifact.ID]artifact.Identifiable{
+					one.ID():   one,
+					three.ID(): three,
+				},
 				relationships: []artifact.Relationship{
 					{From: one, To: two},
 					{From: two, To: three},
 					{From: three, To: four},
 				},
 			},
-			want: []artifact.Relationship{},
+			want: []artifact.Relationship(nil),
 		},
 		{
-			name: "removes-half-relationships",
+			name: "remove-half-of-relationships",
 			args: args{
-				remove: []artifact.Identifiable{one},
+				remove: map[artifact.ID]artifact.Identifiable{
+					one.ID(): one,
+				},
 				relationships: []artifact.Relationship{
 					{From: one, To: two},
 					{From: one, To: three},
@@ -133,9 +138,12 @@ func Test_removePkgsFromRelationships(t *testing.T) {
 			},
 		},
 		{
-			name: "removes-repeated-relationships",
+			name: "remove-repeated-relationships",
 			args: args{
-				remove: []artifact.Identifiable{one, two},
+				remove: map[artifact.ID]artifact.Identifiable{
+					one.ID(): one,
+					two.ID(): two,
+				},
 				relationships: []artifact.Relationship{
 					{From: one, To: two},
 					{From: one, To: three},
@@ -153,7 +161,7 @@ func Test_removePkgsFromRelationships(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, removePkgsFromRelationships(tt.args.remove, tt.args.relationships), "removePkgsFromRelationships(%v, %v)", tt.args.remove, tt.args.relationships)
+			assert.Equalf(t, tt.want, removeRelationshipsWithArtifactIDs(tt.args.remove, tt.args.relationships), "removeRelationshipsWithArtifactIDs(%v, %v)", tt.args.remove, tt.args.relationships)
 		})
 	}
 }
