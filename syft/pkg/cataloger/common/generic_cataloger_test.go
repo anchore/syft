@@ -94,6 +94,17 @@ func Test_removePkgsFromRelationships(t *testing.T) {
 		want []artifact.Relationship
 	}{
 		{
+			name: "nothing-to-remove",
+			args: args{
+				relationships: []artifact.Relationship{
+					{From: one, To: two},
+				},
+			},
+			want: []artifact.Relationship{
+				{From: one, To: two},
+			},
+		},
+		{
 			name: "removes-all-relationships",
 			args: args{
 				remove: []artifact.Identifiable{one, three},

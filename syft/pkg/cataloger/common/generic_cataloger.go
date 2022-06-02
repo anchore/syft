@@ -77,6 +77,11 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 }
 
 func removePkgsFromRelationships(pkgs []artifact.Identifiable, relationships []artifact.Relationship) []artifact.Relationship {
+	if len(pkgs) == 0 {
+		// no removal to do
+		return relationships
+	}
+
 	cleanedRelationships := make([]artifact.Relationship, 0)
 
 	for _, r := range relationships {
