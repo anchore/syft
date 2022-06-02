@@ -51,18 +51,11 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 			return nil, err
 		}
 
-		p := &pkg.Package{
-			Name:         entry.Name,
-			Version:      toELVersion(metadata),
-			Locations:    source.NewLocationSet(dbLocation),
-			FoundBy:      catalogerName,
-			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata:     metadata,
+		if !pkg.IsValid(p) {
+			continue
 		}
 
 		p.SetID()
-
 		allPkgs = append(allPkgs, p)
 	}
 

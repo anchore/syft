@@ -71,7 +71,7 @@ func (p *Package) merge(other Package) error {
 
 // IsValid checks whether a package has the minimum necessary info
 // which is a non-empty name.
-// The nil-check was added as a helper as often, in this codebase, packages
+// The nil-check was added as a helper as often, in this code base, packages
 // move between callers as pointers.
 // CycloneDX and SPDX define Name as the minimum required info for a valid package:
 // * https://spdx.github.io/spdx-spec/package-information/#73-package-version-field
