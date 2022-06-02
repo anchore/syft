@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
-	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
+	//"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -45,7 +45,7 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
-		dotnet.NewDotnetDepsCataloger(),
+		//dotnet.NewDotnetDepsCataloger(),
 	}, cfg.EnabledCatalogers)
 }
 
@@ -65,7 +65,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
-		dotnet.NewDotnetDepsCataloger(),
+		//dotnet.NewDotnetDepsCataloger(),
 	}, cfg.EnabledCatalogers)
 }
 
@@ -86,7 +86,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
-		dotnet.NewDotnetDepsCataloger(),
+		//dotnet.NewDotnetDepsCataloger(),
 	}, cfg.EnabledCatalogers)
 }
 
