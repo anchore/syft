@@ -26,7 +26,7 @@ var (
 	errUnrecognizedFormat = errors.New("unrecognized file format")
 )
 
-func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) *pkg.Package {
+func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
 
@@ -37,12 +37,12 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 	return main
 }
 
-func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) *pkg.Package {
+func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
 
-	p := &pkg.Package{
+	p := pkg.Package{
 		FoundBy:      catalogerName,
 		Name:         dep.Path,
 		Version:      dep.Version,
@@ -173,8 +173,8 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 			continue
 		}
 		p := newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil)
-		if pkg.IsValid(p) {
-			pkgs = append(pkgs, *p)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
 		}
 	}
 
@@ -186,7 +186,7 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 	}
 
 	main := makeGoMainPackage(mod, arch, location)
-	pkgs = append(pkgs, *main)
+	pkgs = append(pkgs, main)
 
 	return pkgs
 }

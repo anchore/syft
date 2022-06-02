@@ -48,10 +48,10 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		}
 
 		for _, p := range discoveredPkgs {
-			if !pkg.IsValid(p) {
+			if !pkg.IsValid(&p) {
 				continue
 			}
-			pkgs = append(pkgs, *p)
+			pkgs = append(pkgs, p)
 		}
 	}
 	return pkgs, nil, nil

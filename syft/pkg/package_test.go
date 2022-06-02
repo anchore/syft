@@ -467,6 +467,6 @@ func TestIsValid(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		require.Equal(t, c.want, IsValid(c.given), "handling case: %s", c.name)
+		require.Equal(t, c.want, IsValid(c.given), "when package: %s", c.name)
 	}
 }

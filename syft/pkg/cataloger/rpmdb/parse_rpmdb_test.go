@@ -60,14 +60,14 @@ func TestParseRpmDB(t *testing.T) {
 
 	tests := []struct {
 		fixture     string
-		expected    map[string]*pkg.Package
+		expected    map[string]pkg.Package
 		ignorePaths bool
 	}{
 		{
 			fixture: "test-fixtures/Packages",
 			// we only surface package paths for files that exist (here we DO NOT expect a path)
 			ignorePaths: true,
-			expected: map[string]*pkg.Package{
+			expected: map[string]pkg.Package{
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",
@@ -94,7 +94,7 @@ func TestParseRpmDB(t *testing.T) {
 			fixture: "test-fixtures/Packages",
 			// we only surface package paths for files that exist (here we expect a path)
 			ignorePaths: false,
-			expected: map[string]*pkg.Package{
+			expected: map[string]pkg.Package{
 				"dive": {
 					Name:         "dive",
 					Version:      "0.9.2-1",

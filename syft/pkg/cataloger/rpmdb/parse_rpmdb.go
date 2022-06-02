@@ -15,7 +15,7 @@ import (
 )
 
 // parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
-func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, reader io.Reader) ([]*pkg.Package, error) {
+func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
@@ -43,7 +43,7 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 		return nil, err
 	}
 
-	var allPkgs []*pkg.Package
+	var allPkgs []pkg.Package
 
 	for _, entry := range pkgList {
 		p, err := newPkg(resolver, dbLocation, entry)
@@ -56,7 +56,7 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 		}
 
 		p.SetID()
-		allPkgs = append(allPkgs, p)
+		allPkgs = append(allPkgs, *p)
 	}
 
 	return allPkgs, nil
