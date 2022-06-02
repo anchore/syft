@@ -76,16 +76,16 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 	return packages, relationships, nil
 }
 
-func removeRelationshipsWithArtifactIDs(pkgs map[artifact.ID]artifact.Identifiable, relationships []artifact.Relationship) []artifact.Relationship {
-	if len(pkgs) == 0 || len(relationships) == 0 {
+func removeRelationshipsWithArtifactIDs(artifactsToExclude map[artifact.ID]artifact.Identifiable, relationships []artifact.Relationship) []artifact.Relationship {
+	if len(artifactsToExclude) == 0 || len(relationships) == 0 {
 		// no removal to do
 		return relationships
 	}
 
 	var cleanedRelationships []artifact.Relationship
 	for _, r := range relationships {
-		_, removeTo := pkgs[r.To.ID()]
-		_, removaFrom := pkgs[r.From.ID()]
+		_, removeTo := artifactsToExclude[r.To.ID()]
+		_, removaFrom := artifactsToExclude[r.From.ID()]
 		if !removeTo && !removaFrom {
 			cleanedRelationships = append(cleanedRelationships, r)
 		}
