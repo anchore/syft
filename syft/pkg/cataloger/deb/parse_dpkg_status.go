@@ -31,9 +31,9 @@ func newDpkgPackage(d pkg.DpkgMetadata) *pkg.Package {
 }
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
-func parseDpkgStatus(reader io.Reader) ([]*pkg.Package, error) {
+func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 	buffedReader := bufio.NewReader(reader)
-	var packages []*pkg.Package
+	var packages []pkg.Package
 
 	continueProcessing := true
 	for continueProcessing {
@@ -46,8 +46,9 @@ func parseDpkgStatus(reader io.Reader) ([]*pkg.Package, error) {
 			}
 		}
 
-		if entry.Package != "" {
-			packages = append(packages, newDpkgPackage(entry))
+		p := newDpkgPackage(entry)
+		if pkg.IsValid(p) {
+			packages = append(packages, *p)
 		}
 	}
 

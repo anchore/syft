@@ -53,16 +53,11 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		pkgs, err := parseDpkgStatus(dbContents)
 		internal.CloseAndLogError(dbContents, dbLocation.VirtualPath)
 		if err != nil {
-			log.Warnf("dpkg cataloger: unable to catalog package=%+v: %w", dbLocation.RealPath, err)
-			continue
+			return nil, nil, fmt.Errorf("unable to catalog dpkg package=%+v: %w", dbLocation.RealPath, err)
 		}
-		var validPkgs []pkg.Package
 
-		for _, p := range pkgs {
-			if !pkg.IsValid(p) {
-				continue
-			}
-
+		for i := range pkgs {
+			p := &pkgs[i]
 			p.FoundBy = c.Name()
 			p.Locations.Add(dbLocation)
 
@@ -73,11 +68,11 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 
 			// fetch additional data from the copyright file to derive the license information
 			addLicenses(resolver, dbLocation, p)
+
 			p.SetID()
-			validPkgs = append(validPkgs, *p)
 		}
 
-		allPackages = append(allPackages, validPkgs...)
+		allPackages = append(allPackages, pkgs...)
 	}
 	return allPackages, nil, nil
 }
