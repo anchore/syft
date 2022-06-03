@@ -147,6 +147,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
 			BuildSettings:     buildSettings,
+			MainModule:        "github.com/anchore/syft",
 		},
 	}
 
@@ -298,6 +299,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+						MainModule:        "github.com/anchore/syft",
 					},
 				},
 				{
@@ -319,6 +321,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
+						MainModule:        "github.com/anchore/syft",
 					},
 				},
 				expectedMain,
@@ -372,7 +375,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE="}},
+						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
+						MainModule:        "github.com/anchore/syft",
+					}},
 				{
 					Name:     "golang.org/x/term",
 					FoundBy:  catalogerName,
@@ -391,7 +396,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI="},
+						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
+						MainModule:        "github.com/anchore/syft",
+					},
 				},
 				expectedMain,
 			},
