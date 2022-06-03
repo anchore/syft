@@ -442,3 +442,31 @@ func TestPackage_Merge(t *testing.T) {
 		})
 	}
 }
+
+func TestIsValid(t *testing.T) {
+	cases := []struct {
+		name  string
+		given *Package
+		want  bool
+	}{
+		{
+			name:  "nil",
+			given: nil,
+			want:  false,
+		},
+		{
+			name:  "has-name",
+			given: &Package{Name: "paul"},
+			want:  true,
+		},
+		{
+			name:  "has-no-name",
+			given: &Package{},
+			want:  false,
+		},
+	}
+
+	for _, c := range cases {
+		require.Equal(t, c.want, IsValid(c.given), "when package: %s", c.name)
+	}
+}

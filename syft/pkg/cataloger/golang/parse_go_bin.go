@@ -172,8 +172,10 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		if dep == nil {
 			continue
 		}
-
-		pkgs = append(pkgs, newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil))
+		p := newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
+		}
 	}
 
 	// NOTE(jonasagx): this use happened originally while creating unit tests. It might never
