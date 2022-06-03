@@ -30,7 +30,8 @@ func TestGenericCataloger(t *testing.T) {
 	}
 
 	globParsers := map[string]ParserFn{
-		"**/*.txt": parser, // this glob should capture all files, including one named empty.txt
+		"**/a-path.txt": parser,
+		"**/empty.txt":  parser,
 	}
 	pathParsers := map[string]ParserFn{
 		"test-fixtures/another-path.txt": parser,
@@ -57,6 +58,7 @@ func TestGenericCataloger(t *testing.T) {
 	assert.Len(t, allParsedPathes, len(expectedSelection))
 	// empty.txt won't become a package
 	assert.Len(t, actualPkgs, len(expectedPkgs)-1)
+	// right now, a relationship is created for each package, but if the relationship includes an invalid package it should be dropped.
 	assert.Len(t, relationships, len(actualPkgs))
 
 	for _, p := range actualPkgs {
