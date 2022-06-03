@@ -7,27 +7,30 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-func parser(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	contents, err := ioutil.ReadAll(reader)
-	if err != nil {
-		panic(err)
-	}
-	return []*pkg.Package{
-		{
-			Name: string(contents),
-		},
-	}, nil, nil
-}
-
 func TestGenericCataloger(t *testing.T) {
+	allParsedPathes := make(map[string]bool)
+	parser := func(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+		allParsedPathes[path] = true
+		contents, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+
+		p := &pkg.Package{Name: string(contents)}
+		r := artifact.Relationship{From: p, To: p,
+			Type: artifact.ContainsRelationship,
+		}
+
+		return []*pkg.Package{p}, []artifact.Relationship{r}, nil
+	}
+
 	globParsers := map[string]ParserFn{
-		"**/*.txt": parser, // this glob should capture all files, including the empty one
+		"**/*.txt": parser, // this glob should capture all files, including one named empty.txt
 	}
 	pathParsers := map[string]ParserFn{
 		"test-fixtures/another-path.txt": parser,
@@ -39,18 +42,22 @@ func TestGenericCataloger(t *testing.T) {
 	resolver := source.NewMockResolverForPaths(expectedSelection...)
 	cataloger := NewGenericCataloger(pathParsers, globParsers, upstream)
 
+	actualPkgs, relationships, err := cataloger.Catalog(resolver)
+	assert.NoError(t, err)
+
 	expectedPkgs := make(map[string]pkg.Package)
 	for _, path := range expectedSelection {
+		require.True(t, allParsedPathes[path])
 		expectedPkgs[path] = pkg.Package{
 			FoundBy: upstream,
 			Name:    fmt.Sprintf("%s file contents!", path),
 		}
 	}
 
-	actualPkgs, _, err := cataloger.Catalog(resolver)
-	assert.NoError(t, err)
+	assert.Len(t, allParsedPathes, len(expectedSelection))
 	// empty.txt won't become a package
 	assert.Len(t, actualPkgs, len(expectedPkgs)-1)
+	assert.Len(t, relationships, len(actualPkgs))
 
 	for _, p := range actualPkgs {
 		ref := p.Locations.ToSlice()[0]
@@ -85,7 +92,7 @@ func Test_removeRelationshipsWithArtifactIDs(t *testing.T) {
 	}
 
 	type args struct {
-		remove        map[artifact.ID]artifact.Identifiable
+		remove        map[artifact.ID]struct{}
 		relationships []artifact.Relationship
 	}
 	tests := []struct {
@@ -107,9 +114,9 @@ func Test_removeRelationshipsWithArtifactIDs(t *testing.T) {
 		{
 			name: "remove-all-relationships",
 			args: args{
-				remove: map[artifact.ID]artifact.Identifiable{
-					one.ID():   one,
-					three.ID(): three,
+				remove: map[artifact.ID]struct{}{
+					one.ID():   {},
+					three.ID(): {},
 				},
 				relationships: []artifact.Relationship{
 					{From: one, To: two},
@@ -122,8 +129,8 @@ func Test_removeRelationshipsWithArtifactIDs(t *testing.T) {
 		{
 			name: "remove-half-of-relationships",
 			args: args{
-				remove: map[artifact.ID]artifact.Identifiable{
-					one.ID(): one,
+				remove: map[artifact.ID]struct{}{
+					one.ID(): {},
 				},
 				relationships: []artifact.Relationship{
 					{From: one, To: two},
@@ -140,9 +147,9 @@ func Test_removeRelationshipsWithArtifactIDs(t *testing.T) {
 		{
 			name: "remove-repeated-relationships",
 			args: args{
-				remove: map[artifact.ID]artifact.Identifiable{
-					one.ID(): one,
-					two.ID(): two,
+				remove: map[artifact.ID]struct{}{
+					one.ID(): {},
+					two.ID(): {},
 				},
 				relationships: []artifact.Relationship{
 					{From: one, To: two},

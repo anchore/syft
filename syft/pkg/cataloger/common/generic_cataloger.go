@@ -56,7 +56,8 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 			continue
 		}
 
-		pkgsForRemoval := make(map[artifact.ID]artifact.Identifiable)
+		pkgsForRemoval := make(map[artifact.ID]struct{})
+		var cleanedRelationships []artifact.Relationship
 		for _, p := range discoveredPackages {
 			p.FoundBy = c.upstreamCataloger
 			p.Locations.Add(location)
@@ -64,19 +65,20 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 			// doing it here so all packages have an ID,
 			// IDs are later used to remove relationships
 			if !pkg.IsValid(p) {
-				pkgsForRemoval[p.ID()] = p
+				pkgsForRemoval[p.ID()] = struct{}{}
 				continue
 			}
 
 			packages = append(packages, *p)
 		}
 
-		relationships = removeRelationshipsWithArtifactIDs(pkgsForRemoval, discoveredRelationships)
+		cleanedRelationships = removeRelationshipsWithArtifactIDs(pkgsForRemoval, discoveredRelationships)
+		relationships = append(relationships, cleanedRelationships...)
 	}
 	return packages, relationships, nil
 }
 
-func removeRelationshipsWithArtifactIDs(artifactsToExclude map[artifact.ID]artifact.Identifiable, relationships []artifact.Relationship) []artifact.Relationship {
+func removeRelationshipsWithArtifactIDs(artifactsToExclude map[artifact.ID]struct{}, relationships []artifact.Relationship) []artifact.Relationship {
 	if len(artifactsToExclude) == 0 || len(relationships) == 0 {
 		// no removal to do
 		return relationships
