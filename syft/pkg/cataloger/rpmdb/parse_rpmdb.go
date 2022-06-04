@@ -43,13 +43,19 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 		return nil, err
 	}
 
-	allPkgs := make([]pkg.Package, 0)
+	var allPkgs []pkg.Package
 
 	for _, entry := range pkgList {
 		p, err := newPkg(resolver, dbLocation, entry)
 		if err != nil {
 			return nil, err
 		}
+
+		if !pkg.IsValid(p) {
+			continue
+		}
+
+		p.SetID()
 		allPkgs = append(allPkgs, *p)
 	}
 

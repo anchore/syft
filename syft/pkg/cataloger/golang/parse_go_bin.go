@@ -28,7 +28,7 @@ var (
 
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
-	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
+	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, location, gbs)
 
 	if v, ok := gbs["vcs.revision"]; ok {
 		main.Version = v
@@ -37,7 +37,7 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 	return main
 }
 
-func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
+func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
@@ -55,6 +55,7 @@ func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, locat
 			H1Digest:          dep.Sum,
 			Architecture:      architecture,
 			BuildSettings:     buildSettings,
+			MainModule:        mainModule,
 		},
 	}
 
@@ -172,8 +173,10 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		if dep == nil {
 			continue
 		}
-
-		pkgs = append(pkgs, newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil))
+		p := newGoBinaryPackage(dep, mod.Main.Path, mod.GoVersion, arch, location, nil)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
+		}
 	}
 
 	// NOTE(jonasagx): this use happened originally while creating unit tests. It might never

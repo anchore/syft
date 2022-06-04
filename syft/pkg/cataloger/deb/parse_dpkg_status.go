@@ -20,8 +20,8 @@ var (
 	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 )
 
-func newDpkgPackage(d pkg.DpkgMetadata) pkg.Package {
-	return pkg.Package{
+func newDpkgPackage(d pkg.DpkgMetadata) *pkg.Package {
+	return &pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
 		Type:         pkg.DebPkg,
@@ -46,8 +46,9 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 			}
 		}
 
-		if entry.Package != "" {
-			packages = append(packages, newDpkgPackage(entry))
+		p := newDpkgPackage(entry)
+		if pkg.IsValid(p) {
+			packages = append(packages, *p)
 		}
 	}
 
