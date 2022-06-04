@@ -56,6 +56,9 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.PersistentFlags().StringArrayVarP(&o.Exclude, "exclude", "", nil,
 		"exclude paths from being scanned using a glob expression")
 
+	cmd.PersistentFlags().StringArrayP("enable-cataloger", "", nil,
+		"enable specific language or ecosystem cataloger")
+
 	cmd.PersistentFlags().BoolVarP(&o.OverwriteExistingImage, "overwrite-existing-image", "", false,
 		"overwrite an existing image during the upload to Anchore Enterprise")
 
@@ -77,6 +80,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("package.enable-cataloger", flags.Lookup("enable-cataloger")); err != nil {
 		return err
 	}
 
