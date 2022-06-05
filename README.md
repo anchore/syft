@@ -57,6 +57,11 @@ curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -
 ```
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
 ```
+### Windows
+
+```powershell
+choco install syft -y
+```
 
 ### Homebrew
 ```bash
