@@ -73,3 +73,111 @@ func TestLanguageFromPURL(t *testing.T) {
 	assert.ElementsMatch(t, expectedLanguages.List(), languages, "missing one or more languages to test against (maybe a package type was added?)")
 
 }
+
+func TestLanguageByName(t *testing.T) {
+	tests := []struct {
+		name     string
+		language Language
+	}{
+		{
+			name:     "maven",
+			language: Java,
+		},
+		{
+			name:     "java",
+			language: Java,
+		},
+		{
+			name:     "java-archive",
+			language: Java,
+		},
+		{
+			name:     "java",
+			language: Java,
+		},
+		{
+			name:     "composer",
+			language: PHP,
+		},
+		{
+			name:     "php-composer",
+			language: PHP,
+		},
+		{
+			name:     "php",
+			language: PHP,
+		},
+		{
+			name:     "go",
+			language: Go,
+		},
+		{
+			name:     "golang",
+			language: Go,
+		},
+		{
+			name:     "go-module",
+			language: Go,
+		},
+		{
+			name:     "npm",
+			language: JavaScript,
+		},
+		{
+			name:     "javascript",
+			language: JavaScript,
+		},
+		{
+			name:     "pypi",
+			language: Python,
+		},
+		{
+			name:     "python",
+			language: Python,
+		},
+		{
+			name:     "gem",
+			language: Ruby,
+		},
+		{
+			name:     "ruby",
+			language: Ruby,
+		},
+		{
+			name:     "rust",
+			language: Rust,
+		},
+		{
+			name:     "rust-crate",
+			language: Rust,
+		},
+		{
+			name:     "cargo",
+			language: Rust,
+		},
+		{
+			name:     "dart",
+			language: Dart,
+		},
+		{
+			name:     "dart-pub",
+			language: Dart,
+		},
+		{
+			name:     "pub",
+			language: Dart,
+		},
+		{
+			name:     "dotnet",
+			language: Dotnet,
+		},
+		{
+			name:     "unknown",
+			language: UnknownLanguage,
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, LanguageByName(test.name), test.language)
+	}
+}
