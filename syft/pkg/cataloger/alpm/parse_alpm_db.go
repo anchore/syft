@@ -134,6 +134,10 @@ func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 	if entry.Package == "" && len(entry.Files) == 0 && len(entry.Backup) == 0 {
 		return nil, nil
 	}
+
+	if entry.Backup == nil {
+		entry.Backup = make([]pkg.AlpmFileRecord, 0)
+	}
 	return &entry, nil
 }
 

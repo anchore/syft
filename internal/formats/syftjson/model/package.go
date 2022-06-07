@@ -63,6 +63,12 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 
 	p.MetadataType = unpacker.MetadataType
 	switch p.MetadataType {
+	case pkg.AlpmMetadataType:
+		var payload pkg.AlpmMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
 	case pkg.ApkMetadataType:
 		var payload pkg.ApkMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
