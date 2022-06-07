@@ -74,6 +74,7 @@ func getFileReader(path string, resolver source.FileResolver) (io.Reader, error)
 	return dbContentReader, nil
 }
 
+// nolint:funlen
 func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 	var entry pkg.AlpmMetadata
 	var err error
