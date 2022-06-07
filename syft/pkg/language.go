@@ -62,11 +62,11 @@ func LanguageByName(name string) Language {
 		return JavaScript
 	case packageurl.TypePyPi, string(Python):
 		return Python
-	case packageurl.TypeGem:
+	case packageurl.TypeGem, string(Ruby):
 		return Ruby
-	case purlCargoPkgType:
+	case purlCargoPkgType, string(RustPkg), string(Rust):
 		return Rust
-	case packageurl.TypePub, string(Dart):
+	case packageurl.TypePub, string(DartPubPkg), string(Dart):
 		return Dart
 	case packageurl.TypeDotnet:
 		return Dotnet
