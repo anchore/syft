@@ -11,23 +11,23 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-type CatalogerConfig struct {
+type Config struct {
 	Globs                     []string
 	SkipFilesAboveSizeInBytes int64
 }
 
 type Cataloger struct {
-	config CatalogerConfig
+	config Config
 }
 
-func DefaultCatalogerConfig() CatalogerConfig {
-	return CatalogerConfig{
+func DefaultConfig() Config {
+	return Config{
 		Globs:                     nil,
 		SkipFilesAboveSizeInBytes: 1 * file.MB,
 	}
 }
 
-func NewCataloger(config CatalogerConfig) (*Cataloger, error) {
+func NewCataloger(config Config) (*Cataloger, error) {
 	return &Cataloger{
 		config: config,
 	}, nil

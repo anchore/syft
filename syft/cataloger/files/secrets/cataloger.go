@@ -27,30 +27,30 @@ var DefaultSecretsPatterns = map[string]string{
 	"generic-api-key":    `(?i)api(-|_)?key["'=:\s]*?(?P<value>[A-Z0-9]{20,60})["']?(\s|$)`,
 }
 
-type CatalogerConfig struct {
+type Config struct {
 	Patterns     map[string]*regexp.Regexp
 	RevealValues bool
 	MaxFileSize  int64
 }
 
 type Cataloger struct {
-	config CatalogerConfig
+	config Config
 }
 
-func DefaultCatalogerConfig() CatalogerConfig {
+func DefaultConfig() Config {
 	patterns, err := file.GenerateSearchPatterns(DefaultSecretsPatterns, nil, nil)
 	if err != nil {
 		patterns = make(map[string]*regexp.Regexp)
 		log.Errorf("unable to create default secrets config: %w", err)
 	}
-	return CatalogerConfig{
+	return Config{
 		Patterns:     patterns,
 		RevealValues: false,
 		MaxFileSize:  1 * file.MB,
 	}
 }
 
-func NewCataloger(config CatalogerConfig) (*Cataloger, error) {
+func NewCataloger(config Config) (*Cataloger, error) {
 	return &Cataloger{
 		config: config,
 	}, nil

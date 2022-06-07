@@ -11,7 +11,17 @@ import (
 )
 
 // Collection represents a collection of Packages.
-type Collection struct {
+type Collection interface {
+	Size() int
+	Package(id artifact.ID) *Package
+	PackagesByPath(path string) []Package
+	Packages(ids []artifact.ID) (result []Package)
+	Add(p Package)
+	Enumerate(types ...Type) <-chan Package
+	Sorted(types ...Type) (pkgs []Package)
+}
+
+type collection struct {
 	byID      map[artifact.ID]Package
 	idsByType map[Type][]artifact.ID
 	idsByPath map[string][]artifact.ID // note: this is real path or virtual path
@@ -19,8 +29,8 @@ type Collection struct {
 }
 
 // NewCollection returns a new empty Collection
-func NewCollection(pkgs ...Package) *Collection {
-	catalog := Collection{
+func NewCollection(pkgs ...Package) Collection {
+	catalog := &collection{
 		byID:      make(map[artifact.ID]Package),
 		idsByType: make(map[Type][]artifact.ID),
 		idsByPath: make(map[string][]artifact.ID),
@@ -30,16 +40,16 @@ func NewCollection(pkgs ...Package) *Collection {
 		catalog.Add(p)
 	}
 
-	return &catalog
+	return catalog
 }
 
-// PackageCount returns the total number of packages that have been added.
-func (c *Collection) PackageCount() int {
+// Size returns the total number of packages that have been added.
+func (c *collection) Size() int {
 	return len(c.byID)
 }
 
 // Package returns the package with the given ID.
-func (c *Collection) Package(id artifact.ID) *Package {
+func (c *collection) Package(id artifact.ID) *Package {
 	v, exists := c.byID[id]
 	if !exists {
 		return nil
@@ -54,12 +64,12 @@ func (c *Collection) Package(id artifact.ID) *Package {
 }
 
 // PackagesByPath returns all packages that were discovered from the given path.
-func (c *Collection) PackagesByPath(path string) []Package {
+func (c *collection) PackagesByPath(path string) []Package {
 	return c.Packages(c.idsByPath[path])
 }
 
 // Packages returns all packages for the given ID.
-func (c *Collection) Packages(ids []artifact.ID) (result []Package) {
+func (c *collection) Packages(ids []artifact.ID) (result []Package) {
 	for _, i := range ids {
 		p, exists := c.byID[i]
 		if exists {
@@ -70,7 +80,7 @@ func (c *Collection) Packages(ids []artifact.ID) (result []Package) {
 }
 
 // Add a package to the Collection.
-func (c *Collection) Add(p Package) {
+func (c *collection) Add(p Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -102,7 +112,7 @@ func (c *Collection) Add(p Package) {
 }
 
 // Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
-func (c *Collection) Enumerate(types ...Type) <-chan Package {
+func (c *collection) Enumerate(types ...Type) <-chan Package {
 	channel := make(chan Package)
 	go func() {
 		defer close(channel)
@@ -135,9 +145,8 @@ func (c *Collection) Enumerate(types ...Type) <-chan Package {
 	return channel
 }
 
-// Sorted enumerates all packages for the given types sorted by package name. Enumerates all packages if no type
-// is specified.
-func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
+// Sorted enumerates all packages for the given types sorted by package name. Enumerates all packages if no type is specified.
+func (c *collection) Sorted(types ...Type) (pkgs []Package) {
 	for p := range c.Enumerate(types...) {
 		pkgs = append(pkgs, p)
 	}

@@ -21,7 +21,7 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCollection(),
+			Packages:          pkg.NewCollection(),
 			FileMetadata:      map[file.Coordinates]file.Metadata{},
 			FileDigests:       map[file.Coordinates][]file.Digest{},
 			LinuxDistribution: findLinuxReleaseByPURL(doc),
@@ -74,7 +74,7 @@ func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *sp
 	for _, p := range doc.Packages {
 		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
-		s.Artifacts.PackageCatalog.Add(*syftPkg)
+		s.Artifacts.Packages.Add(*syftPkg)
 	}
 }
 

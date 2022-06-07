@@ -1,7 +1,8 @@
-package pkg
+package packages
 
 import (
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -12,20 +13,20 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		setup func(t testing.TB) ([]Package, []artifact.Relationship)
+		setup func(t testing.TB) ([]pkg.Package, []artifact.Relationship)
 	}{
 		{
 			name: "owns-by-real-path",
-			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
-				parent := Package{
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
 					Locations: []file.Location{
 						file.NewVirtualLocation("/a/path", "/another/path"),
 						file.NewVirtualLocation("/b/path", "/bee/path"),
 					},
-					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
-						Files: []RpmdbFileRecord{
+					Type:         pkg.RpmPkg,
+					MetadataType: pkg.RpmdbMetadataType,
+					Metadata: pkg.RpmdbMetadata{
+						Files: []pkg.RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},
 							{Path: "/d/path"},
@@ -34,12 +35,12 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				}
 				parent.SetID()
 
-				child := Package{
+				child := pkg.Package{
 					Locations: []file.Location{
 						file.NewVirtualLocation("/c/path", "/another/path"),
 						file.NewVirtualLocation("/d/path", "/another/path"),
 					},
-					Type: NpmPkg,
+					Type: pkg.NpmPkg,
 				}
 				child.SetID()
 
@@ -54,21 +55,21 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					},
 				}
 
-				return []Package{parent, child}, []artifact.Relationship{relationship}
+				return []pkg.Package{parent, child}, []artifact.Relationship{relationship}
 			},
 		},
 		{
 			name: "owns-by-virtual-path",
-			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
-				parent := Package{
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
 					Locations: []file.Location{
 						file.NewVirtualLocation("/a/path", "/some/other/path"),
 						file.NewVirtualLocation("/b/path", "/bee/path"),
 					},
-					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
-						Files: []RpmdbFileRecord{
+					Type:         pkg.RpmPkg,
+					MetadataType: pkg.RpmdbMetadataType,
+					Metadata: pkg.RpmdbMetadata{
+						Files: []pkg.RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},
 							{Path: "/another/path"},
@@ -77,12 +78,12 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				}
 				parent.SetID()
 
-				child := Package{
+				child := pkg.Package{
 					Locations: []file.Location{
 						file.NewVirtualLocation("/c/path", "/another/path"),
 						file.NewLocation("/d/path"),
 					},
-					Type: NpmPkg,
+					Type: pkg.NpmPkg,
 				}
 				child.SetID()
 
@@ -96,21 +97,21 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						},
 					},
 				}
-				return []Package{parent, child}, []artifact.Relationship{relationship}
+				return []pkg.Package{parent, child}, []artifact.Relationship{relationship}
 			},
 		},
 		{
 			name: "ignore-empty-path",
-			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
-				parent := Package{
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
 					Locations: []file.Location{
 						file.NewVirtualLocation("/a/path", "/some/other/path"),
 						file.NewVirtualLocation("/b/path", "/bee/path"),
 					},
-					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
-						Files: []RpmdbFileRecord{
+					Type:         pkg.RpmPkg,
+					MetadataType: pkg.RpmdbMetadataType,
+					Metadata: pkg.RpmdbMetadata{
+						Files: []pkg.RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},
 							{Path: ""},
@@ -120,17 +121,17 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 
 				parent.SetID()
 
-				child := Package{
+				child := pkg.Package{
 					Locations: []file.Location{
 						file.NewVirtualLocation("/c/path", "/another/path"),
 						file.NewLocation("/d/path"),
 					},
-					Type: NpmPkg,
+					Type: pkg.NpmPkg,
 				}
 
 				child.SetID()
 
-				return []Package{parent, child}, nil
+				return []pkg.Package{parent, child}, nil
 			},
 		},
 	}
@@ -138,8 +139,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			pkgs, expectedRelations := test.setup(t)
-			c := NewCollection(pkgs...)
-			relationships := RelationshipsByFileOwnership(c)
+			c := pkg.NewCollection(pkgs...)
+			relationships := findOwnershipByFileOverlapRelationship(c)
 
 			assert.Len(t, relationships, len(expectedRelations))
 			for idx, expectedRelationship := range expectedRelations {

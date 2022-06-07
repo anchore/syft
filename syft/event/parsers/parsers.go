@@ -38,12 +38,12 @@ func checkEventType(actual, expected partybus.EventType) error {
 	return nil
 }
 
-func ParsePackageCatalogerStarted(e partybus.Event) (*monitor.PackageCatalogerMonitor, error) {
-	if err := checkEventType(e.Type, event.PackageCatalogerStarted); err != nil {
+func ParsePackageCatalogerStarted(e partybus.Event) (*monitor.CatalogingMonitor, error) {
+	if err := checkEventType(e.Type, event.CatalogingStarted); err != nil {
 		return nil, err
 	}
 
-	monitor, ok := e.Value.(monitor.PackageCatalogerMonitor)
+	monitor, ok := e.Value.(monitor.CatalogingMonitor)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Value", e.Value)
 	}

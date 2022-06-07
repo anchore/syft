@@ -35,7 +35,7 @@ func encoder(output io.Writer, s sbom.SBOM) error {
 
 	// populate artifacts...
 	rows := 0
-	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
+	for _, p := range s.Artifacts.Packages.Sorted() {
 		fmt.Fprintf(w, "[%s]\n", p.Name)
 		fmt.Fprintln(w, " Version:\t", p.Version)
 		fmt.Fprintln(w, " Type:\t", string(p.Type))

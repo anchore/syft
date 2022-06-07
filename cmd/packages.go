@@ -94,7 +94,7 @@ func init() {
 func setPackageFlags(flags *pflag.FlagSet) {
 	// Formatting & Input options //////////////////////////////////////////////
 	flags.StringP(
-		"scope", "s", syft.DefaultCatalogingConfig().Scope.String(),
+		"scope", "s", syft.DefaultCatalogingConfig().DefaultScope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
 	flags.StringArrayP(
@@ -165,7 +165,7 @@ func bindExclusivePackagesConfigOptions(flags *pflag.FlagSet) error {
 
 	// note: output is not included since this configuration option is shared between multiple subcommands
 
-	if err := viper.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
+	if err := viper.BindPFlag("scope", flags.Lookup("scope")); err != nil {
 		return err
 	}
 
@@ -257,15 +257,9 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-func generateSBOM(src *source.Source) (*sbom.SBOM, error) {
-	catalogingConfig, err := appConfig.ToCatalogingConfig()
-	if err != nil {
-		return nil, err
-	}
-
+func generateSBOM(src *source.Source, config *syft.CatalogingConfig) (*sbom.SBOM, error) {
 	return syft.Catalog(src,
-		syft.WithConfig(*catalogingConfig),
-		syft.WithDefaultPackageCatalogers(appConfig.Package.ToConfig()),
+		syft.WithConfig(*config),
 	)
 }
 
@@ -273,6 +267,12 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
+
+		catalogingConfig, err := appConfig.ToCatalogingConfig()
+		if err != nil {
+			errs <- err
+			return
+		}
 
 		src, cleanup, err := source.New(si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 		if cleanup != nil {
@@ -283,7 +283,7 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 			return
 		}
 
-		s, err := generateSBOM(src)
+		s, err := generateSBOM(src, catalogingConfig)
 		if err != nil {
 			errs <- err
 			return

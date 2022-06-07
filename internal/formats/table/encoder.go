@@ -15,7 +15,7 @@ func encoder(output io.Writer, s sbom.SBOM) error {
 	var rows [][]string
 
 	columns := []string{"Name", "Version", "Type"}
-	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
+	for _, p := range s.Artifacts.Packages.Sorted() {
 		row := []string{
 			p.Name,
 			p.Version,

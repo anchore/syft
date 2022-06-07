@@ -124,7 +124,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			LinuxDistribution: &linux.Release{
 				PrettyName: "debian",
 				Name:       "debian",
@@ -152,7 +152,7 @@ func carriageRedactor(s []byte) []byte {
 	return []byte(msg)
 }
 
-func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
+func populateImageCatalog(catalog pkg.Collection, img *image.Image) {
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
@@ -205,7 +205,7 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			LinuxDistribution: &linux.Release{
 				PrettyName: "debian",
 				Name:       "debian",
@@ -228,7 +228,7 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 	}
 }
 
-func newDirectoryCatalog() *pkg.Collection {
+func newDirectoryCatalog() pkg.Collection {
 	catalog := pkg.NewCollection()
 
 	// populate catalog with test data

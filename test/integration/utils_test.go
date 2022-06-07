@@ -33,7 +33,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string) (sbom.SBOM, *sou
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkgCatalog,
+			Packages:          pkgCatalog,
 			LinuxDistribution: release,
 		},
 		Relationships: relationships,
@@ -69,7 +69,7 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkgCatalog,
+			Packages:          pkgCatalog,
 			LinuxDistribution: release,
 		},
 		Relationships: relationships,

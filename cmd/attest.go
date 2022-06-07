@@ -193,6 +193,12 @@ func attestationExecWorker(si source.Input, format sbom.Format, predicateType st
 	go func() {
 		defer close(errs)
 
+		catalogingConfig, err := appConfig.ToCatalogingConfig()
+		if err != nil {
+			errs <- err
+			return
+		}
+
 		src, cleanup, err := source.NewFromRegistry(si, appConfig.Registry.ToOptions(), appConfig.Exclusions)
 		if cleanup != nil {
 			defer cleanup()
@@ -202,7 +208,7 @@ func attestationExecWorker(si source.Input, format sbom.Format, predicateType st
 			return
 		}
 
-		s, err := generateSBOM(src)
+		s, err := generateSBOM(src, catalogingConfig)
 		if err != nil {
 			errs <- err
 			return

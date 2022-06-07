@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/anchore/syft/syft/cataloger/files/fileclassifier"
+	"github.com/anchore/syft/syft/source"
 	"path"
 	"reflect"
 	"strings"
@@ -21,6 +22,7 @@ import (
 
 var ErrApplicationConfigNotFound = fmt.Errorf("application config not found")
 
+// TODO: set all catalogers when this is set
 var catalogerEnabledDefault = false
 
 type defaultValueLoader interface {
@@ -33,24 +35,24 @@ type parser interface {
 
 // Application is the main syft application configuration.
 type Application struct {
-	ConfigPath         string             `yaml:",omitempty" json:"configPath"`                                                         // the location where the application config was read from (either from -c or discovered while loading)
-	Outputs            []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
-	File               string             `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
-	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`                                              // -q, indicates to not show any status output to stderr (ETUI or logging UI)
-	CheckForAppUpdate  bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
-	Anchore            anchore            `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
-	CliOptions         CliOnlyOptions     `yaml:"-" json:"-"`                                                                           // all options only available through the CLI (not via env vars or config)
-	Dev                development        `yaml:"dev" json:"dev" mapstructure:"dev"`
-	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
-	Package            pkg                `yaml:"package" json:"package" mapstructure:"package"`
-	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
-	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
-	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
-	Secrets            secretsCfg         `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
-	Registry           registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
-	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
-	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
-	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
+	ConfigPath        string         `yaml:",omitempty" json:"configPath"`                                                         // the location where the application config was read from (either from -c or discovered while loading)
+	Outputs           []string       `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
+	File              string         `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
+	Quiet             bool           `yaml:"quiet" json:"quiet" mapstructure:"quiet"`                                              // -q, indicates to not show any status output to stderr (ETUI or logging UI)
+	CheckForAppUpdate bool           `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
+	Anchore           anchore        `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
+	CliOptions        CliOnlyOptions `yaml:"-" json:"-"`                                                                           // all options only available through the CLI (not via env vars or config)
+	Scope             string         `yaml:"scope" json:"scope" mapstructure:"scope"`
+	Dev               development    `yaml:"dev" json:"dev" mapstructure:"dev"`
+	Log               logging        `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
+	Package           pkg            `yaml:"package" json:"package" mapstructure:"package"`
+	FileMetadata      fileMetadata   `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
+	FileContents      fileContents   `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
+	Secrets           secretsCfg     `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
+	Registry          registry       `yaml:"registry" json:"registry" mapstructure:"registry"`
+	Exclusions        []string       `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	Attest            attest         `yaml:"attest" json:"attest" mapstructure:"attest"`
+	Platform          string         `yaml:"platform" json:"platform" mapstructure:"platform"`
 }
 
 func (cfg Application) ToCatalogingConfig() (*syft.CatalogingConfig, error) {
@@ -59,9 +61,19 @@ func (cfg Application) ToCatalogingConfig() (*syft.CatalogingConfig, error) {
 		return nil, fmt.Errorf("unable to parse config item 'file-metadata.digests': %w", err)
 	}
 
+	scopeOption := source.ParseScope(cfg.Scope)
+	if scopeOption == source.UnknownScope {
+		return nil, fmt.Errorf("bad scope value %q", cfg.Scope)
+	}
+
 	secretsConfig, err := cfg.Secrets.ToConfig()
 	if err != nil {
 		return nil, err
+	}
+
+	secretsScopeOption := source.ParseScope(cfg.Secrets.Scope)
+	if secretsScopeOption == source.UnknownScope {
+		return nil, fmt.Errorf("bad scope value %q", cfg.Secrets.Scope)
 	}
 
 	return &syft.CatalogingConfig{
@@ -69,16 +81,13 @@ func (cfg Application) ToCatalogingConfig() (*syft.CatalogingConfig, error) {
 		ToolName:             internal.ApplicationName,
 		ToolVersion:          version.FromBuild().Version,
 		ToolConfiguration:    cfg,
-		Scope:                cfg.Package.Cataloger.ScopeOpt,
+		DefaultScope:         scopeOption,
 		ProcessTasksInSerial: false,
-		CaptureFileMetadata:  cfg.FileMetadata.Cataloger.Enabled,
 		DigestHashes:         digests,
-		CaptureSecrets:       cfg.Secrets.Cataloger.Enabled,
-		SecretsConfig:        *secretsConfig,
-		SecretsScope:         cfg.Secrets.Cataloger.ScopeOpt,
-		ClassifyFiles:        cfg.FileClassification.Cataloger.Enabled,
+		SecretsSearch:        *secretsConfig,
+		SecretsScope:         secretsScopeOption,
 		FileClassifiers:      fileclassifier.DefaultClassifiers(),
-		ContentsConfig:       cfg.FileContents.ToConfig(),
+		ContentsSearch:       cfg.FileContents.ToConfig(),
 	}, nil
 }
 

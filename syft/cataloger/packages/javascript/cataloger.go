@@ -13,15 +13,22 @@ func NewJavascriptPackageCataloger() *generic.Cataloger {
 		"**/package.json": parsePackageJSON,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "javascript-package-cataloger")
+	return generic.NewCataloger(nil, globParsers, "javascript-package-json-cataloger")
 }
 
 // NewJavascriptLockCataloger returns a new Javascript cataloger object base on package lock files.
-func NewJavascriptLockCataloger() *generic.Cataloger {
+func NewJavascriptPackageLockCataloger() *generic.Cataloger {
 	globParsers := map[string]generic.Parser{
 		"**/package-lock.json": parsePackageLock,
-		"**/yarn.lock":         parseYarnLock,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "javascript-lock-cataloger")
+	return generic.NewCataloger(nil, globParsers, "javascript-package-lock-cataloger")
+}
+
+func NewJavascriptYarnLockCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
+		"**/yarn.lock": parseYarnLock,
+	}
+
+	return generic.NewCataloger(nil, globParsers, "javascript-yarn-lock-cataloger")
 }

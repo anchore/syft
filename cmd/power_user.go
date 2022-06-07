@@ -104,10 +104,17 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 	go func() {
 		defer close(errs)
 
-		appConfig.Secrets.Cataloger.Enabled = true
-		appConfig.FileMetadata.Cataloger.Enabled = true
-		appConfig.FileContents.Cataloger.Enabled = true
-		appConfig.FileClassification.Cataloger.Enabled = true
+		// TODO: replace
+		//appConfig.Secrets.Cataloger.Enabled = true
+		//appConfig.FileMetadata.Cataloger.Enabled = true
+		//appConfig.FileContents.Cataloger.Enabled = true
+		//appConfig.FileClassification.Cataloger.Enabled = true
+
+		catalogingConfig, err := appConfig.ToCatalogingConfig()
+		if err != nil {
+			errs <- err
+			return
+		}
 
 		si, err := source.ParseInput(userInput, appConfig.Platform, true)
 		if err != nil {
@@ -124,7 +131,7 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			defer cleanup()
 		}
 
-		s, err := generateSBOM(src)
+		s, err := generateSBOM(src, catalogingConfig)
 		if err != nil {
 			errs <- err
 			return

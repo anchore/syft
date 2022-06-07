@@ -8,13 +8,34 @@ import (
 )
 
 // NewPythonIndexCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
-func NewPythonIndexCataloger() *generic.Cataloger {
+func NewPythonRequirementsCataloger() *generic.Cataloger {
 	globParsers := map[string]generic.Parser{
 		"**/*requirements*.txt": parseRequirementsTxt,
-		"**/poetry.lock":        parsePoetryLock,
-		"**/Pipfile.lock":       parsePipfileLock,
-		"**/setup.py":           parseSetup,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "python-index-cataloger")
+	return generic.NewCataloger(nil, globParsers, "python-requirements-cataloger")
+}
+
+func NewPythonPoetryCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
+		"**/poetry.lock": parsePoetryLock,
+	}
+
+	return generic.NewCataloger(nil, globParsers, "python-poetry-cataloger")
+}
+
+func NewPythonPipfileCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
+		"**/Pipfile.lock": parsePipfileLock,
+	}
+
+	return generic.NewCataloger(nil, globParsers, "python-pipfile-cataloger")
+}
+
+func NewPythonSetupCataloger() *generic.Cataloger {
+	globParsers := map[string]generic.Parser{
+		"**/setup.py": parseSetup,
+	}
+
+	return generic.NewCataloger(nil, globParsers, "python-setup-cataloger")
 }

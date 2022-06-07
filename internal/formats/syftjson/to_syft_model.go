@@ -18,7 +18,7 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    catalog,
+			Packages:          catalog,
 			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
 		},
 		Source:        *toSyftSourceData(doc.Source),
@@ -48,7 +48,7 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 	}
 }
 
-func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relationships []model.Relationship) []artifact.Relationship {
+func toSyftRelationships(doc *model.Document, catalog pkg.Collection, relationships []model.Relationship) []artifact.Relationship {
 	idMap := make(map[string]interface{})
 
 	for _, p := range catalog.Sorted() {
@@ -130,7 +130,7 @@ func toSyftSourceData(s model.Source) *source.Metadata {
 	return nil
 }
 
-func toSyftCatalog(pkgs []model.Package) *pkg.Collection {
+func toSyftCatalog(pkgs []model.Package) pkg.Collection {
 	catalog := pkg.NewCollection()
 	for _, p := range pkgs {
 		catalog.Add(toSyftPackage(p))

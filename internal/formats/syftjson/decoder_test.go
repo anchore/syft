@@ -28,8 +28,8 @@ func TestEncodeDecodeCycle(t *testing.T) {
 		t.Errorf("metadata difference: %+v", d)
 	}
 
-	actualPackages := actualSBOM.Artifacts.PackageCatalog.Sorted()
-	for idx, p := range originalSBOM.Artifacts.PackageCatalog.Sorted() {
+	actualPackages := actualSBOM.Artifacts.Packages.Sorted()
+	for idx, p := range originalSBOM.Artifacts.Packages.Sorted() {
 		if !assert.Equal(t, p.Name, actualPackages[idx].Name) {
 			t.Errorf("different package at idx=%d: %s vs %s", idx, p.Name, actualPackages[idx].Name)
 			continue

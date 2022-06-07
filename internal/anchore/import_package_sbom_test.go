@@ -54,7 +54,7 @@ func (m *mockPackageSBOMImportAPI) ImportImagePackages(ctx context.Context, sess
 func sbomFixture() sbom.SBOM {
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: pkg.NewCollection(pkg.Package{
+			Packages: pkg.NewCollection(pkg.Package{
 				Name:    "name",
 				Version: "version",
 				FoundBy: "foundBy",

@@ -174,7 +174,7 @@ func TestSecretsCataloger(t *testing.T) {
 				regexObjs[name] = obj
 			}
 
-			c, err := NewCataloger(CatalogerConfig{
+			c, err := NewCataloger(Config{
 				Patterns:     regexObjs,
 				RevealValues: test.reveal,
 				MaxFileSize:  test.maxSize,
@@ -420,7 +420,7 @@ j4f668YfhUbKdRF6S6734856
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
 
-			c, err := NewCataloger(CatalogerConfig{
+			c, err := NewCataloger(Config{
 				Patterns:     regexObjs,
 				RevealValues: true,
 				MaxFileSize:  10 * file.MB,

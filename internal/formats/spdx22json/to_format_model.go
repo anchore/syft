@@ -42,13 +42,13 @@ func toFormatModel(s sbom.SBOM) (*model.Document, error) {
 		},
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: namespace,
-		Packages:          toPackages(s.Artifacts.PackageCatalog, s.Relationships),
+		Packages:          toPackages(s.Artifacts.Packages, s.Relationships),
 		Files:             toFiles(s),
 		Relationships:     toRelationships(s.Relationships),
 	}, nil
 }
 
-func toPackages(catalog *pkg.Collection, relationships []artifact.Relationship) []model.Package {
+func toPackages(catalog pkg.Collection, relationships []artifact.Relationship) []model.Package {
 	packages := make([]model.Package, 0)
 
 	for _, p := range catalog.Sorted() {

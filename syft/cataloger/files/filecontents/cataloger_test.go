@@ -66,7 +66,7 @@ func TestContentsCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, err := NewCataloger(CatalogerConfig{
+			c, err := NewCataloger(Config{
 				Globs:                     test.globs,
 				SkipFilesAboveSizeInBytes: test.maxSize,
 			})

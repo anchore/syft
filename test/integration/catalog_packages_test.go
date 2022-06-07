@@ -20,7 +20,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	imagetest.GetFixtureImage(b, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
-	var pc *pkg.Collection
+	var pc pkg.Collection
 	for _, c := range packages.InstalledCatalogers(packages.DefaultSearchConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		userInput := "docker-archive:" + tarPath
@@ -48,7 +48,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 			}
 		})
 
-		b.Logf("catalog for %q number of packages: %d", c.Name(), pc.PackageCount())
+		b.Logf("catalog for %q number of packages: %d", c.Name(), pc.Size())
 	}
 }
 
@@ -84,7 +84,7 @@ func TestPkgCoverageImage(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			pkgCount := 0
 
-			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 
 				if a.Language.String() != "" {
 					observedLanguages.Add(a.Language.String())
@@ -112,7 +112,7 @@ func TestPkgCoverageImage(t *testing.T) {
 
 			if pkgCount != len(c.pkgInfo)+c.duplicates {
 				t.Logf("Discovered packages of type %+v", c.pkgType)
-				for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+				for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 					t.Log("   ", a)
 				}
 				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
@@ -161,7 +161,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actualPkgCount := 0
 
-			for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
+			for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
 
 				observedLanguages.Add(actualPkg.Language.String())
 				observedPkgs.Add(string(actualPkg.Type))
@@ -186,7 +186,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 			}
 
 			if actualPkgCount != len(test.pkgInfo)+test.duplicates {
-				for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
+				for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
 					t.Log("   ", actualPkg)
 				}
 				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))

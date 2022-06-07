@@ -2,12 +2,27 @@ package syft
 
 import (
 	"fmt"
-
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/hashicorp/go-multierror"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 )
+
+type monitorableCollection struct {
+	pkg.Collection
+	monitor *progress.Manual
+}
+
+func (m *monitorableCollection) Add(p pkg.Package) {
+	m.monitor.N++
+	m.Collection.Add(p)
+}
 
 func Catalog(src *source.Source, options ...CatalogingOption) (*sbom.SBOM, error) {
 	var config = DefaultCatalogingConfig()
@@ -17,27 +32,59 @@ func Catalog(src *source.Source, options ...CatalogingOption) (*sbom.SBOM, error
 		}
 	}
 
-	var tasks []task
-
-	generators := []taskGenerator{
-		generatePackagesCatalogingTask,
-		generateFileMetadataCatalogingTask,
-		generateFileDigestsCatalogingTask,
-		generateSecretsCatalogingTask,
-		generateFileClassifierTask,
-		generateContentsCatalogingTask,
+	if config.availableTasks == nil {
+		config.availableTasks = newTaskCollection()
 	}
 
-	for _, generator := range generators {
-		t, err := generator(config)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create cataloging task: %w", err)
-		}
+	tc := config.availableTasks
+	if err := tc.addAllCatalogers(config); err != nil {
+		return nil, fmt.Errorf("unable to register catalogers: %w", err)
+	}
 
-		if t != nil {
-			tasks = append(tasks, t)
+	var catalogingTasks []task
+
+	if len(config.EnabledCatalogers) == 0 {
+		switch src.Metadata.Scheme {
+		case source.ImageType:
+			catalogingTasks = tc.tasks(tc.withLabels(packageTaskLabel, installedTaskLabel)...)
+		case source.FileType:
+			catalogingTasks = tc.tasks(tc.all()...)
+		case source.DirectoryType:
+			// TODO: it looks like gemspec was left out on main, is this intentional? if so it's not accounted for here...
+			catalogingTasks = tc.tasks(tc.withLabels(packageTaskLabel)...)
 		}
 	}
+
+	if len(catalogingTasks) == 0 {
+		return nil, fmt.Errorf("no cataloging tasks configured to run")
+	}
+
+	// special case: we need to identify the linux distro for downstream processing
+	identifyLinuxDistroTask, err := newIdentifyDistroTask(config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create linux distro identification task: %+v", err)
+	}
+
+	synthesizePackageRelationshipsTask, err := newSynthesizePackageRelationshipsTasks(config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create task to synthesize package relationships: %+v", err)
+	}
+
+	taskGroups := [][]task{
+		{
+			identifyLinuxDistroTask,
+		},
+		catalogingTasks,
+		{
+			synthesizePackageRelationshipsTask,
+		},
+	}
+
+	files, pkgs := newCatalogerMonitor()
+	defer func() {
+		files.SetCompleted() // TODO: files monitor is unused... should we remove?
+		pkgs.SetCompleted()
+	}()
 
 	s := sbom.SBOM{
 		Source: src.Metadata,
@@ -46,12 +93,39 @@ func Catalog(src *source.Source, options ...CatalogingOption) (*sbom.SBOM, error
 			Version:       config.ToolVersion,
 			Configuration: config.ToolConfiguration,
 		},
+		Artifacts: sbom.Artifacts{
+			Packages: &monitorableCollection{
+				Collection: pkg.NewCollection(),
+				monitor:    pkgs,
+			},
+		},
 	}
 
-	return &s, runTasks(&s, src, tasks, config.ProcessTasksInSerial)
+	for _, tasks := range taskGroups {
+		if err := runTasks(&s, src, config.ProcessTasksInSerial, tasks...); err != nil {
+			return &s, err
+		}
+	}
+
+	return &s, nil
 }
 
-func runTasks(s *sbom.SBOM, src *source.Source, tasks []task, serial bool) error {
+// newCatalogerMonitor creates a new CatalogingMonitor object and publishes the object on the bus as a CatalogingStarted event.
+func newCatalogerMonitor() (*progress.Manual, *progress.Manual) {
+	filesProcessed := progress.Manual{}
+	packagesDiscovered := progress.Manual{}
+
+	bus.Publish(partybus.Event{
+		Type: event.CatalogingStarted,
+		Value: monitor.CatalogingMonitor{
+			FilesProcessed:     progress.Monitorable(&filesProcessed),
+			PackagesDiscovered: progress.Monitorable(&packagesDiscovered),
+		},
+	})
+	return &filesProcessed, &packagesDiscovered
+}
+
+func runTasks(s *sbom.SBOM, src *source.Source, serial bool, tasks ...task) error {
 	var relationships []<-chan artifact.Relationship
 	var errs = make(chan error)
 	for _, t := range tasks {
@@ -92,7 +166,7 @@ func mergeErrors(errs <-chan error) (allErrs error) {
 func runTask(t task, a *sbom.Artifacts, src *source.Source, r chan<- artifact.Relationship, errs chan<- error) {
 	defer close(r)
 
-	relationships, err := t(a, src)
+	relationships, err := t.Run(a, src)
 	if err != nil {
 		errs <- err
 		return

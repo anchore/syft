@@ -94,7 +94,7 @@ func TestToSyftModel(t *testing.T) {
 
 	assert.NotNil(t, sbom)
 
-	pkgs := sbom.Artifacts.PackageCatalog.Sorted()
+	pkgs := sbom.Artifacts.Packages.Sorted()
 
 	assert.Len(t, pkgs, 2)
 

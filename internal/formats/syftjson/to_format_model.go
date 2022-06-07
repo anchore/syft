@@ -31,7 +31,7 @@ func ToFormatModel(s sbom.SBOM) model.Document {
 	}
 
 	return model.Document{
-		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
+		Artifacts:             toPackageModels(s.Artifacts.Packages),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
@@ -153,7 +153,7 @@ func toFileMetadataEntry(coordinates file.Coordinates, metadata *file.Metadata) 
 	}
 }
 
-func toPackageModels(catalog *pkg.Collection) []model.Package {
+func toPackageModels(catalog pkg.Collection) []model.Package {
 	artifacts := make([]model.Package, 0)
 	if catalog == nil {
 		return artifacts

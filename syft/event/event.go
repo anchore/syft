@@ -10,8 +10,8 @@ const (
 	// AppUpdateAvailable is a partybus event that occurs when an application update is available
 	AppUpdateAvailable partybus.EventType = "syft-app-update-available"
 
-	// PackageCatalogerStarted is a partybus event that occurs when the package cataloging has begun
-	PackageCatalogerStarted partybus.EventType = "syft-package-cataloger-started-event"
+	// CatalogingStarted is a partybus event that occurs when the first cataloger has started
+	CatalogingStarted partybus.EventType = "syft-cataloging-started-event"
 
 	// nolint:gosec
 	// SecretsCatalogerStarted is a partybus event that occurs when the secrets cataloging has begun
