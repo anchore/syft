@@ -112,6 +112,12 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')",
 	)
 
+	flags.StringArrayP(
+		"cataloger", "", nil,
+		// TODO: have a nice way for a user to get the set of catalogers that exist
+		"set which catalogers to use when generating an SBOM",
+	)
+
 	// Upload options //////////////////////////////////////////////////////////
 	flags.StringP(
 		"host", "H", "",
@@ -166,6 +172,10 @@ func bindExclusivePackagesConfigOptions(flags *pflag.FlagSet) error {
 	// note: output is not included since this configuration option is shared between multiple subcommands
 
 	if err := viper.BindPFlag("scope", flags.Lookup("scope")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("catalogers", flags.Lookup("cataloger")); err != nil {
 		return err
 	}
 
@@ -257,18 +267,12 @@ func isVerbose() (result bool) {
 	return appConfig.CliOptions.Verbosity > 0 || isPipedInput
 }
 
-func generateSBOM(src *source.Source, config *syft.CatalogingConfig) (*sbom.SBOM, error) {
-	return syft.Catalog(src,
-		syft.WithConfig(*config),
-	)
-}
-
 func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		catalogingConfig, err := appConfig.ToCatalogingConfig()
+		catalogingOpts, err := appConfig.ToCatalogingOptions()
 		if err != nil {
 			errs <- err
 			return
@@ -283,7 +287,7 @@ func packagesExecWorker(si source.Input, writer sbom.Writer) <-chan error {
 			return
 		}
 
-		s, err := generateSBOM(src, catalogingConfig)
+		s, err := syft.Catalog(src, catalogingOpts...)
 		if err != nil {
 			errs <- err
 			return

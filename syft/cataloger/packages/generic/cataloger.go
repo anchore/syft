@@ -18,23 +18,16 @@ import (
 // Cataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
 type Cataloger struct {
-	globParsers       map[string]Parser
-	pathParsers       map[string]Parser
-	upstreamCataloger string
+	globParsers map[string]Parser
+	pathParsers map[string]Parser
 }
 
 // NewCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a Cataloger
-func NewCataloger(pathParsers map[string]Parser, globParsers map[string]Parser, upstreamCataloger string) *Cataloger {
+func NewCataloger(pathParsers map[string]Parser, globParsers map[string]Parser) *Cataloger {
 	return &Cataloger{
-		globParsers:       globParsers,
-		pathParsers:       pathParsers,
-		upstreamCataloger: upstreamCataloger,
+		globParsers: globParsers,
+		pathParsers: pathParsers,
 	}
-}
-
-// Name returns a string that uniquely describes the upstream cataloger that this Generic Cataloger represents.
-func (c *Cataloger) Name() string {
-	return c.upstreamCataloger
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
@@ -53,12 +46,11 @@ func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.R
 		internal.CloseAndLogError(contentReader, location.AccessPath)
 		if err != nil {
 			// TODO: should we fail? or only log?
-			log.Warnf("cataloger '%s' failed to parse entries at location=%+v: %+v", c.upstreamCataloger, location, err)
+			log.Warnf("cataloger failed to parse entries at location=%+v: %+v", location, err)
 			continue
 		}
 
 		for _, p := range discoveredPackages {
-			p.FoundBy = c.upstreamCataloger
 			p.Locations = append(p.Locations, location)
 			p.SetID()
 

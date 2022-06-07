@@ -10,7 +10,9 @@ import (
 
 const (
 	packageTaskLabel   = "package"
+	packagesTaskLabel  = "packages"
 	fileTaskLabel      = "file"
+	filesTaskLabel     = "files"
 	osTaskLabel        = "os"
 	languageTaskLabel  = "language"
 	installedTaskLabel = "installed"
@@ -18,36 +20,24 @@ const (
 )
 
 type taskCollection struct {
-	taskByName   map[string]task     // name -> generator
-	namesByLabel map[string][]string // label -> names
+	taskConstructorByName map[string]taskGenerator // name -> generator
+	namesByLabel          map[string][]string      // label -> names
 }
 
-func newTaskCollection() *taskCollection {
-	return &taskCollection{
-		taskByName:   make(map[string]task),
-		namesByLabel: make(map[string][]string),
+func newTaskCollection() (*taskCollection, error) {
+	c := &taskCollection{
+		taskConstructorByName: make(map[string]taskGenerator),
+		namesByLabel:          make(map[string][]string),
 	}
+	return c, c.addAllCatalogers()
 }
 
-func (c *taskCollection) add(t task, labels ...string) error {
-	var name string
-	switch v := t.(type) {
-	case pkgCatalogerTask:
-		name = string(v.id)
-	case catalogerTask:
-		name = string(v.id)
-	default:
-		if len(labels) == 0 {
-			return fmt.Errorf("no ID found for generic task")
-		}
-		name = labels[0]
+func (c *taskCollection) add(name string, g taskGenerator, labels ...string) error {
+	if _, exists := c.taskConstructorByName[name]; exists {
+		return fmt.Errorf("task constructor already exists: %q", name)
 	}
 
-	if _, exists := c.taskByName[name]; exists {
-		return fmt.Errorf("task already exists: %q", name)
-	}
-
-	c.taskByName[name] = t
+	c.taskConstructorByName[name] = g
 
 	labelSet := strset.New(labels...)
 	labelSet.Add(name)
@@ -57,118 +47,134 @@ func (c *taskCollection) add(t task, labels ...string) error {
 	return nil
 }
 
-func (c *taskCollection) addAllCatalogers(config CatalogingConfig) error {
+func (c *taskCollection) addAllCatalogers() error {
 	for _, d := range []struct {
+		id        cataloger.ID
 		generator taskGenerator
 		labels    []string
 	}{
 		{
+			id:        cataloger.ApkDBID,
 			generator: newAPKDBCatalogingTask,
-			labels:    []string{packageTaskLabel, osTaskLabel, installedTaskLabel, "alpine", "apk", "apkdb"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, osTaskLabel, installedTaskLabel, "alpine", "apk", "apkdb"},
 		},
 		{
+			id:        cataloger.DpkgID,
 			generator: newDPKGCatalogingTask,
-			labels:    []string{packageTaskLabel, osTaskLabel, installedTaskLabel, "debian", "dpkg", "deb", "dpkgdb"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, osTaskLabel, installedTaskLabel, "debian", "dpkg", "deb", "dpkgdb"},
 		},
 		{
+			id:        cataloger.RpmDBID,
 			generator: newRPMDBCatalogingTask,
-			labels:    []string{packageTaskLabel, osTaskLabel, installedTaskLabel, "redhat", "rhel", "centos", "rpm", "rpmdb"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, osTaskLabel, installedTaskLabel, "redhat", "rhel", "centos", "rpm", "rpmdb"},
 		},
 		{
+			id:        cataloger.RubyGemspecID,
 			generator: newRubyGemSpecCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, installedTaskLabel, "ruby", "gemspec", "gem"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, installedTaskLabel, "ruby", "gemspec", "gem"},
 		},
 		{
+			id:        cataloger.RubyGemfileLockID,
 			generator: newRubyGemFileLockCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "ruby", "gemfile", "gem", "gemfile.lock"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "ruby", "gemfile", "gem", "gemfile.lock"},
 		},
 		{
+			id:        cataloger.PythonPackageID,
 			generator: newPythonPackageCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, installedTaskLabel, "python", "egg", "wheel"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, installedTaskLabel, "python", "egg", "wheel"},
 		},
 		{
+			id:        cataloger.PythonRequirementsID,
 			generator: newPythonRequirementsCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "requirements", "requirements.txt"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "requirements", "requirements.txt"},
 		},
 		{
+			id:        cataloger.PythonPoetryID,
 			generator: newPythonPoetryCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "poetry", "poetry.lock"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "poetry", "poetry.lock"},
 		},
 		{
+			id:        cataloger.PythonSetupID,
 			generator: newPythonSetupCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "setup", "setup.py"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "setup", "setup.py"},
 		},
 		{
+			id:        cataloger.PythonPipFileID,
 			generator: newPythonPipfileCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "pip", "pipfile"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "python", "pip", "pipfile"},
 		},
 		{
+			id:        cataloger.JavascriptPackageJSONID,
 			generator: newJavascriptPackageJSONCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, installedTaskLabel, "javascript", "node", "package.json"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, installedTaskLabel, "javascript", "node", "package.json"},
 		},
 		{
+			id:        cataloger.JavascriptPackageLockID,
 			generator: newJavascriptPackageLockCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "javascript", "node", "package-lock.json"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "javascript", "node", "package-lock.json"},
 		},
 		{
+			id:        cataloger.JavaScriptYarnLockID,
 			generator: newJavascriptYarnLockCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "javascript", "node", "yarn", "yarn.lock"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "javascript", "node", "yarn", "yarn.lock"},
 		},
 		{
+			id:        cataloger.JavaArchiveID,
 			generator: newJavaCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, installedTaskLabel, "java", "maven", "jar", "war", "ear", "jenkins", "hudson", "hpi", "jpi", "par", "sar", "lpkg"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, installedTaskLabel, "java", "maven", "jar", "war", "ear", "jenkins", "hudson", "hpi", "jpi", "par", "sar", "lpkg"},
 		},
 		{
+			id:        cataloger.GoModID,
 			generator: newGolangModuleCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "go", "golang", "go-module", "go.mod"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "go", "golang", "go-module", "go.mod"},
 		},
 		{
+			id:        cataloger.GoBinaryID,
 			generator: newGolangBinaryCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, installedTaskLabel, "go", "golang", "go-module", "binary"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, installedTaskLabel, "go", "golang", "go-module", "binary"},
 		},
 		{
+			id:        cataloger.RustCargoLockID,
 			generator: newRustCargoLockCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "rust", "cargo", "cargo.lock"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "rust", "cargo", "cargo.lock"},
 		},
 		{
+			id:        cataloger.PHPInstalledJSONID,
 			generator: newPHPInstalledCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, installedTaskLabel, "php", "composer", "installed.json"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, installedTaskLabel, "php", "composer", "installed.json"},
 		},
 		{
+			id:        cataloger.PHPComposerLockID,
 			generator: newPHPComposerLockCatalogingTask,
-			labels:    []string{packageTaskLabel, languageTaskLabel, declaredTaskLabel, "php", "composer", "composer.lock"},
+			labels:    []string{packageTaskLabel, packagesTaskLabel, languageTaskLabel, declaredTaskLabel, "php", "composer", "composer.lock"},
 		},
 		{
+			id:        cataloger.FileMetadataID,
 			generator: newFileMetadataCatalogingTask,
-			labels:    []string{fileTaskLabel},
+			labels:    []string{fileTaskLabel, filesTaskLabel},
 		},
 		{
+			id:        cataloger.FileDigestsID,
 			generator: newFileDigestsCatalogingTask,
-			labels:    []string{fileTaskLabel, "digests", "digest", "file-digests"},
+			labels:    []string{fileTaskLabel, filesTaskLabel, "digests", "digest", "file-digests"},
 		},
 		{
+			id:        cataloger.SecretsID,
 			generator: newSecretsCatalogingTask,
 			labels:    []string{"secrets"},
 		},
 		{
+			id:        cataloger.FileClassifierID,
 			generator: newFileClassifierTask,
-			labels:    []string{fileTaskLabel, "classifier"},
+			labels:    []string{fileTaskLabel, filesTaskLabel, "classifier"},
 		},
 		{
+			id:        cataloger.FileContentsID,
 			generator: newFileContentsCatalogingTask,
-			labels:    []string{fileTaskLabel, "contents", "content", "file-contents"},
+			labels:    []string{fileTaskLabel, filesTaskLabel, "contents", "content", "file-contents"},
 		},
 	} {
-		t, err := d.generator(config)
-		if err != nil {
-			return err
-		}
-
-		if t == nil {
-			continue
-		}
-
-		if err := c.add(t, d.labels...); err != nil {
+		if err := c.add(string(d.id), d.generator, d.labels...); err != nil {
 			return err
 		}
 	}
@@ -178,7 +184,7 @@ func (c *taskCollection) addAllCatalogers(config CatalogingConfig) error {
 func (c taskCollection) query(q string) []cataloger.ID {
 	fields := strings.FieldsFunc(q, func(r rune) bool {
 		switch r {
-		case '+', ',', '&':
+		case '+', '&':
 			return true
 		}
 		return false
@@ -189,7 +195,7 @@ func (c taskCollection) query(q string) []cataloger.ID {
 
 func (c taskCollection) all() []cataloger.ID {
 	var ret []cataloger.ID
-	for k := range c.taskByName {
+	for k := range c.taskConstructorByName {
 		ret = append(ret, cataloger.ID(k))
 	}
 
@@ -221,13 +227,24 @@ func (c taskCollection) withLabels(q ...string) []cataloger.ID {
 	return ret
 }
 
-func (c taskCollection) tasks(ids ...cataloger.ID) (ts []task) {
+func (c taskCollection) tasks(config CatalogingConfig, ids ...cataloger.ID) ([]task, error) {
+	var ts []task
 	for _, id := range ids {
-		t, exists := c.taskByName[string(id)]
+		g, exists := c.taskConstructorByName[string(id)]
 		if !exists {
 			continue
 		}
+
+		t, err := g(id, config)
+		if err != nil {
+			return nil, fmt.Errorf("unable to construct task %q: %w", id, err)
+		}
+
+		if t == nil {
+			continue
+		}
+
 		ts = append(ts, t)
 	}
-	return ts
+	return ts, nil
 }

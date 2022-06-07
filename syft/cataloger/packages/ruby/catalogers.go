@@ -13,7 +13,7 @@ func NewGemFileLockCataloger() *generic.Cataloger {
 		"**/Gemfile.lock": parseGemFileLockEntries,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "ruby-gemfile-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }
 
 // NewGemSpecCataloger returns a new Bundler cataloger object tailored for detecting installations of gems (e.g. Gemspec).
@@ -22,5 +22,5 @@ func NewGemSpecCataloger() *generic.Cataloger {
 		"**/specifications/**/*.gemspec": parseGemSpecEntries,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "ruby-gemspec-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

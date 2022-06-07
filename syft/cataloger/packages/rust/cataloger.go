@@ -13,5 +13,5 @@ func NewCargoLockCataloger() *generic.Cataloger {
 		"**/Cargo.lock": parseCargoLock,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "rust-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

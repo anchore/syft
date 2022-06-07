@@ -2,6 +2,7 @@ package syft
 
 import (
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cataloger"
 	"github.com/anchore/syft/syft/cataloger/files/fileclassifier"
 	"github.com/anchore/syft/syft/cataloger/files/filecontents"
@@ -28,7 +29,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type taskGenerator func(CatalogingConfig) (task, error)
+type taskGenerator func(cataloger.ID, CatalogingConfig) (task, error)
 
 type task interface {
 	Run(*sbom.Artifacts, *source.Source) ([]artifact.Relationship, error)
@@ -51,6 +52,14 @@ type pkgCatalogerTask struct {
 	id        cataloger.ID
 	cataloger pkg.Cataloger
 	config    CatalogingConfig
+}
+
+func newPkgCatalogerTask(id cataloger.ID, config CatalogingConfig, c pkg.Cataloger) pkgCatalogerTask {
+	return pkgCatalogerTask{
+		id:        id,
+		cataloger: c,
+		config:    config,
+	}
 }
 
 func (t pkgCatalogerTask) Run(artifacts *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
@@ -90,166 +99,96 @@ func newIdentifyDistroTask(config CatalogingConfig) (task, error) {
 	}, nil
 }
 
-func newAPKDBCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.ApkDBID,
-		cataloger: apkdb.NewApkdbCataloger(),
-		config:    config,
-	}, nil
+func newAPKDBCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, apkdb.NewApkdbCataloger()), nil
 }
 
-func newDPKGCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.DpkgID,
-		cataloger: deb.NewDpkgdbCataloger(),
-		config:    config,
-	}, nil
+func newDPKGCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, deb.NewDpkgdbCataloger()), nil
 }
 
-func newGolangBinaryCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.GoBinaryID,
-		cataloger: golang.NewGoModuleBinaryCataloger(),
-		config:    config,
-	}, nil
+func newGolangBinaryCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, golang.NewGoModuleBinaryCataloger()), nil
 }
 
-func newGolangModuleCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.GoModID,
-		cataloger: golang.NewGoModFileCataloger(),
-		config:    config,
-	}, nil
+func newGolangModuleCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, golang.NewGoModFileCataloger()), nil
 }
 
-func newJavaCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id: cataloger.JavaArchiveID,
-		cataloger: java.NewJavaCataloger(java.CatalogerConfig{
-			SearchUnindexedArchives: config.PackageSearch.IncludeUnindexedArchives,
-			SearchIndexedArchives:   config.PackageSearch.IncludeIndexedArchives,
-		}),
-		config: config,
-	}, nil
+func newJavaCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(
+		id,
+		config,
+		java.NewJavaCataloger(
+			java.CatalogerConfig{
+				SearchUnindexedArchives: config.PackageSearch.IncludeUnindexedArchives,
+				SearchIndexedArchives:   config.PackageSearch.IncludeIndexedArchives,
+			},
+		),
+	), nil
 }
 
-func newJavascriptPackageJSONCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.JavascriptPackageJSONID,
-		cataloger: javascript.NewJavascriptPackageCataloger(),
-		config:    config,
-	}, nil
+func newJavascriptPackageJSONCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, javascript.NewJavascriptPackageCataloger()), nil
 }
 
-func newJavascriptPackageLockCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.JavascriptPackageLockID,
-		cataloger: javascript.NewJavascriptPackageLockCataloger(),
-		config:    config,
-	}, nil
+func newJavascriptPackageLockCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, javascript.NewJavascriptPackageLockCataloger()), nil
 }
 
-func newJavascriptYarnLockCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.JavaScriptYarnLockID,
-		cataloger: javascript.NewJavascriptYarnLockCataloger(),
-		config:    config,
-	}, nil
+func newJavascriptYarnLockCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, javascript.NewJavascriptYarnLockCataloger()), nil
 }
 
-func newPHPComposerLockCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.PHPComposerLockID,
-		cataloger: php.NewPHPComposerLockCataloger(),
-		config:    config,
-	}, nil
+func newPHPComposerLockCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, php.NewPHPComposerLockCataloger()), nil
 }
 
-func newPHPInstalledCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.PHPInstalledJSONID,
-		cataloger: php.NewPHPComposerInstalledCataloger(),
-		config:    config,
-	}, nil
+func newPHPInstalledCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, php.NewPHPComposerInstalledCataloger()), nil
 }
 
-func newPythonPackageCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.PythonPackageID,
-		cataloger: python.NewPythonPackageCataloger(),
-		config:    config,
-	}, nil
+func newPythonPackageCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, python.NewPythonPackageCataloger()), nil
 }
 
-func newPythonRequirementsCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.PythonRequirementsID,
-		cataloger: python.NewPythonRequirementsCataloger(),
-		config:    config,
-	}, nil
+func newPythonRequirementsCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, python.NewPythonRequirementsCataloger()), nil
 }
 
-func newPythonPoetryCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.PythonPoetryID,
-		cataloger: python.NewPythonPoetryCataloger(),
-		config:    config,
-	}, nil
+func newPythonPoetryCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, python.NewPythonPoetryCataloger()), nil
 }
 
-func newPythonPipfileCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.PythonPipFileID,
-		cataloger: python.NewPythonPipfileCataloger(),
-		config:    config,
-	}, nil
+func newPythonPipfileCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, python.NewPythonPipfileCataloger()), nil
 }
 
-func newPythonSetupCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.PythonSetupID,
-		cataloger: python.NewPythonSetupCataloger(),
-		config:    config,
-	}, nil
+func newPythonSetupCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, python.NewPythonSetupCataloger()), nil
 }
 
-func newRPMDBCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.RpmDBID,
-		cataloger: rpmdb.NewRpmdbCataloger(),
-		config:    config,
-	}, nil
+func newRPMDBCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, rpmdb.NewRpmdbCataloger()), nil
 }
 
-func newRubyGemFileLockCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.RubyGemfileLockID,
-		cataloger: ruby.NewGemFileLockCataloger(),
-		config:    config,
-	}, nil
+func newRubyGemFileLockCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, ruby.NewGemFileLockCataloger()), nil
 }
 
-func newRubyGemSpecCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.RubyGemspecID,
-		cataloger: ruby.NewGemSpecCataloger(),
-		config:    config,
-	}, nil
+func newRubyGemSpecCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, ruby.NewGemSpecCataloger()), nil
 }
 
-func newRustCargoLockCatalogingTask(config CatalogingConfig) (task, error) {
-	return pkgCatalogerTask{
-		id:        cataloger.RustCargoLockID,
-		cataloger: rust.NewCargoLockCataloger(),
-		config:    config,
-	}, nil
+func newRustCargoLockCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
+	return newPkgCatalogerTask(id, config, rust.NewCargoLockCataloger()), nil
 }
 
-func newFileMetadataCatalogingTask(config CatalogingConfig) (task, error) {
+func newFileMetadataCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
 	c := filemetadata.NewCataloger()
 
 	return catalogerTask{
-		id: cataloger.FileMetadataID,
+		id: id,
 		genericTask: genericTask{
 			run: func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 				resolver, err := src.FileResolver(config.DefaultScope)
@@ -268,8 +207,9 @@ func newFileMetadataCatalogingTask(config CatalogingConfig) (task, error) {
 	}, nil
 }
 
-func newFileDigestsCatalogingTask(config CatalogingConfig) (task, error) {
+func newFileDigestsCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
 	if len(config.DigestHashes) == 0 {
+		log.Warn("using file-digest cataloger with no file digest algorithms configured")
 		return nil, nil
 	}
 
@@ -279,7 +219,7 @@ func newFileDigestsCatalogingTask(config CatalogingConfig) (task, error) {
 	}
 
 	return catalogerTask{
-		id: cataloger.FileDigestsID,
+		id: id,
 		genericTask: genericTask{
 			run: func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 				resolver, err := src.FileResolver(config.DefaultScope)
@@ -298,8 +238,9 @@ func newFileDigestsCatalogingTask(config CatalogingConfig) (task, error) {
 	}, nil
 }
 
-func newFileContentsCatalogingTask(config CatalogingConfig) (task, error) {
+func newFileContentsCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
 	if len(config.ContentsSearch.Globs) == 0 {
+		log.Warn("using file-content cataloger with no content file paths/globs configured")
 		return nil, nil
 	}
 
@@ -309,7 +250,7 @@ func newFileContentsCatalogingTask(config CatalogingConfig) (task, error) {
 	}
 
 	return catalogerTask{
-		id: cataloger.FileContentsID,
+		id: id,
 		genericTask: genericTask{
 			run: func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 				resolver, err := src.FileResolver(config.DefaultScope)
@@ -328,15 +269,14 @@ func newFileContentsCatalogingTask(config CatalogingConfig) (task, error) {
 	}, nil
 }
 
-func newSecretsCatalogingTask(config CatalogingConfig) (task, error) {
-
+func newSecretsCatalogingTask(id cataloger.ID, config CatalogingConfig) (task, error) {
 	c, err := secrets.NewCataloger(config.SecretsSearch)
 	if err != nil {
 		return nil, err
 	}
 
 	return catalogerTask{
-		id: cataloger.SecretsID,
+		id: id,
 		genericTask: genericTask{
 			run: func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 				resolver, err := src.FileResolver(config.SecretsScope)
@@ -355,15 +295,14 @@ func newSecretsCatalogingTask(config CatalogingConfig) (task, error) {
 	}, nil
 }
 
-func newFileClassifierTask(config CatalogingConfig) (task, error) {
-
+func newFileClassifierTask(id cataloger.ID, config CatalogingConfig) (task, error) {
 	c, err := fileclassifier.NewCataloger(config.FileClassifiers)
 	if err != nil {
 		return nil, err
 	}
 
 	return catalogerTask{
-		id: cataloger.FileClassifierID,
+		id: id,
 		genericTask: genericTask{
 			run: func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 				resolver, err := src.FileResolver(config.DefaultScope)
@@ -383,7 +322,6 @@ func newFileClassifierTask(config CatalogingConfig) (task, error) {
 }
 
 func newSynthesizePackageRelationshipsTasks(config CatalogingConfig) (task, error) {
-
 	return genericTask{
 		run: func(artifacts *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
 			resolver, err := src.FileResolver(config.DefaultScope)

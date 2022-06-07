@@ -28,11 +28,6 @@ func NewPythonPackageCataloger() *PackageCataloger {
 	return &PackageCataloger{}
 }
 
-// Name returns a string that uniquely describes a cataloger
-func (c *PackageCataloger) Name() string {
-	return "python-package-cataloger"
-}
-
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
 func (c *PackageCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var fileMatches []file.Location
@@ -79,7 +74,6 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver file.Resolver, metadataLoc
 	p := &pkg.Package{
 		Name:         metadata.Name,
 		Version:      metadata.Version,
-		FoundBy:      c.Name(),
 		Locations:    sources,
 		Licenses:     licenses,
 		Language:     pkg.Python,

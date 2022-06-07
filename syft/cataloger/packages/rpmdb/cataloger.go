@@ -13,18 +13,11 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const catalogerName = "rpmdb-cataloger"
-
 type Cataloger struct{}
 
 // NewRpmdbCataloger returns a new RPM DB cataloger object.
 func NewRpmdbCataloger() *Cataloger {
 	return &Cataloger{}
-}
-
-// Name returns a string that uniquely describes a cataloger
-func (c *Cataloger) Name() string {
-	return catalogerName
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.

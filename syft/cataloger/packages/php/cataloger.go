@@ -13,7 +13,7 @@ func NewPHPComposerInstalledCataloger() *generic.Cataloger {
 		"**/installed.json": parseInstalledJSON,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "php-composer-installed-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }
 
 // NewPHPComposerLockCataloger returns a new cataloger for PHP composer.lock files.
@@ -22,5 +22,5 @@ func NewPHPComposerLockCataloger() *generic.Cataloger {
 		"**/composer.lock": parseComposerLock,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "php-composer-lock-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

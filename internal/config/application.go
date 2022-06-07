@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/cataloger/files/fileclassifier"
 	"github.com/anchore/syft/syft/source"
 	"path"
 	"reflect"
@@ -42,6 +41,7 @@ type Application struct {
 	CheckForAppUpdate bool           `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
 	Anchore           anchore        `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
 	CliOptions        CliOnlyOptions `yaml:"-" json:"-"`                                                                           // all options only available through the CLI (not via env vars or config)
+	Catalogers        []string       `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Scope             string         `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Dev               development    `yaml:"dev" json:"dev" mapstructure:"dev"`
 	Log               logging        `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
@@ -55,7 +55,8 @@ type Application struct {
 	Platform          string         `yaml:"platform" json:"platform" mapstructure:"platform"`
 }
 
-func (cfg Application) ToCatalogingConfig() (*syft.CatalogingConfig, error) {
+func (cfg Application) ToCatalogingOptions() ([]syft.CatalogingOption, error) {
+
 	digests, err := file.DigestHashesByName(cfg.FileMetadata.Digests...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse config item 'file-metadata.digests': %w", err)
@@ -76,19 +77,23 @@ func (cfg Application) ToCatalogingConfig() (*syft.CatalogingConfig, error) {
 		return nil, fmt.Errorf("bad scope value %q", cfg.Secrets.Scope)
 	}
 
-	return &syft.CatalogingConfig{
-		// note: package catalogers cannot be determined until runtime
-		ToolName:             internal.ApplicationName,
-		ToolVersion:          version.FromBuild().Version,
-		ToolConfiguration:    cfg,
-		DefaultScope:         scopeOption,
-		ProcessTasksInSerial: false,
-		DigestHashes:         digests,
-		SecretsSearch:        *secretsConfig,
-		SecretsScope:         secretsScopeOption,
-		FileClassifiers:      fileclassifier.DefaultClassifiers(),
-		ContentsSearch:       cfg.FileContents.ToConfig(),
-	}, nil
+	c := syft.DefaultCatalogingConfig()
+
+	c.ToolVersion = version.FromBuild().Version
+	c.ToolConfiguration = &c
+	c.DefaultScope = scopeOption
+	c.ProcessTasksInSerial = false
+	c.DigestHashes = digests
+	c.SecretsSearch = *secretsConfig
+	c.SecretsScope = secretsScopeOption
+	c.ContentsSearch = cfg.FileContents.ToConfig()
+
+	opts := []syft.CatalogingOption{
+		syft.WithConfig(c),
+		syft.WithCatalogers(cfg.Catalogers...),
+	}
+
+	return opts, nil
 }
 
 // PowerUserCatalogerEnabledDefault switches all catalogers to be enabled when running power-user command
@@ -142,6 +147,15 @@ func (cfg Application) loadDefaultValues(v *viper.Viper) {
 }
 
 func (cfg *Application) parseConfigValues() error {
+	// parse fields on application directyy
+	var catalogers []string
+	for _, c := range cfg.Catalogers {
+		for _, f := range strings.Split(c, ",") {
+			catalogers = append(catalogers, strings.TrimSpace(f))
+		}
+	}
+	cfg.Catalogers = catalogers
+
 	// parse application config options
 	for _, optionFn := range []func() error{
 		cfg.parseUploadOptions,

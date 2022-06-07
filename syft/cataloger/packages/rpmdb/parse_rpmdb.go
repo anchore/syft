@@ -63,7 +63,6 @@ func parseRpmDB(resolver file.PathResolver, dbLocation file.Location, reader io.
 			Name:         entry.Name,
 			Version:      toELVersion(metadata),
 			Locations:    []file.Location{dbLocation},
-			FoundBy:      catalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmdbMetadataType,
 			Metadata:     metadata,

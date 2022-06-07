@@ -32,11 +32,6 @@ func NewDpkgdbCataloger() *Cataloger {
 	return &Cataloger{}
 }
 
-// Name returns a string that uniquely describes a cataloger
-func (c *Cataloger) Name() string {
-	return "dpkgdb-cataloger"
-}
-
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
 func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDBGlob)
@@ -60,7 +55,6 @@ func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.R
 
 		for i := range pkgs {
 			p := &pkgs[i]
-			p.FoundBy = c.Name()
 			p.Locations = []file.Location{dbLocation}
 
 			// the current entry only has what may have been listed in the status file, however, there are additional

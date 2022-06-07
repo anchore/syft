@@ -14,5 +14,5 @@ func NewApkdbCataloger() *generic.Cataloger {
 		pkg.ApkDBGlob: parseApkDB,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "apkdb-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

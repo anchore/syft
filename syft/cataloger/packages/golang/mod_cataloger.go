@@ -13,5 +13,5 @@ func NewGoModFileCataloger() *generic.Cataloger {
 		"**/go.mod": parseGoMod,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "go-mod-file-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

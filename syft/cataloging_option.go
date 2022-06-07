@@ -2,11 +2,13 @@ package syft
 
 import (
 	"crypto"
+	"fmt"
 	"github.com/anchore/syft/syft/cataloger"
 	"github.com/anchore/syft/syft/cataloger/files/fileclassifier"
 	"github.com/anchore/syft/syft/cataloger/files/secrets"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	"strings"
 )
 
 type CatalogingOption func(*source.Source, *CatalogingConfig) error
@@ -47,30 +49,87 @@ func WithToolConfiguration(c interface{}) CatalogingOption {
 	}
 }
 
-func WithCataloger(id cataloger.ID, c pkg.Cataloger) CatalogingOption {
+func WithPackageCataloger(id cataloger.ID, c pkg.Cataloger) CatalogingOption {
 	return func(_ *source.Source, config *CatalogingConfig) error {
 		if config.availableTasks == nil {
-			config.availableTasks = newTaskCollection()
+			var err error
+			config.availableTasks, err = newTaskCollection()
+			if err != nil {
+				return err
+			}
 		}
 
-		var cfg CatalogingConfig
-		if config != nil {
-			cfg = *config
+		gen := func(id cataloger.ID, cfg CatalogingConfig) (task, error) {
+			return newPkgCatalogerTask(id, cfg, c), nil
 		}
+		config.EnabledCatalogers = append(config.EnabledCatalogers, id)
 
-		return config.availableTasks.add(pkgCatalogerTask{
-			id:        id,
-			cataloger: c,
-			config:    cfg,
-		})
+		return config.availableTasks.add(string(id), gen)
 	}
 }
 
 func WithDefaultCatalogers() CatalogingOption {
 	return func(src *source.Source, config *CatalogingConfig) error {
+		if config.availableTasks == nil {
+			var err error
+			config.availableTasks, err = newTaskCollection()
+			if err != nil {
+				return err
+			}
+		}
+
 		// override any previously added catalogers
-		config.availableTasks = newTaskCollection()
-		config.EnabledCatalogers = nil
+		tc := config.availableTasks
+		if len(config.EnabledCatalogers) == 0 {
+			switch src.Metadata.Scheme {
+			case source.ImageType:
+				config.EnabledCatalogers = tc.withLabels(packageTaskLabel, installedTaskLabel)
+			case source.FileType:
+				config.EnabledCatalogers = tc.all()
+			case source.DirectoryType:
+				// TODO: it looks like gemspec was left out on main, is this intentional? if so it's not accounted for here...
+				config.EnabledCatalogers = tc.withLabels(packageTaskLabel)
+			}
+		}
+
+		return nil
+	}
+}
+
+func WithCatalogers(catalogers ...string) CatalogingOption {
+	return func(src *source.Source, config *CatalogingConfig) error {
+		if config.availableTasks == nil {
+			var err error
+			config.availableTasks, err = newTaskCollection()
+			if err != nil {
+				return err
+			}
+		}
+
+		// override any previously added catalogers
+		for _, q := range catalogers {
+			var ids []cataloger.ID
+			isAdditive := strings.HasPrefix(q, "+")
+			if isAdditive {
+				ids = config.availableTasks.query(strings.TrimPrefix(q, "+"))
+			} else {
+				ids = config.availableTasks.query(q)
+			}
+
+			if len(ids) == 0 {
+				return fmt.Errorf("cataloger selection invalid: %q", q)
+			}
+
+			if isAdditive && len(config.EnabledCatalogers) == 0 {
+				// stick in the default set of catalogers first
+				if err := WithDefaultCatalogers()(src, config); err != nil {
+					return fmt.Errorf("unable to set default catalogers: %w", err)
+				}
+
+			}
+			
+			config.EnabledCatalogers = append(config.EnabledCatalogers, ids...)
+		}
 		return nil
 	}
 }

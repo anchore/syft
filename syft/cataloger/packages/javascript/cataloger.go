@@ -13,7 +13,7 @@ func NewJavascriptPackageCataloger() *generic.Cataloger {
 		"**/package.json": parsePackageJSON,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "javascript-package-json-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }
 
 // NewJavascriptLockCataloger returns a new Javascript cataloger object base on package lock files.
@@ -22,7 +22,7 @@ func NewJavascriptPackageLockCataloger() *generic.Cataloger {
 		"**/package-lock.json": parsePackageLock,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "javascript-package-lock-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }
 
 func NewJavascriptYarnLockCataloger() *generic.Cataloger {
@@ -30,5 +30,5 @@ func NewJavascriptYarnLockCataloger() *generic.Cataloger {
 		"**/yarn.lock": parseYarnLock,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "javascript-yarn-lock-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

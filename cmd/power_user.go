@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft"
 	"os"
 
 	"github.com/anchore/stereoscope"
@@ -110,7 +111,7 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 		//appConfig.FileContents.Cataloger.Enabled = true
 		//appConfig.FileClassification.Cataloger.Enabled = true
 
-		catalogingConfig, err := appConfig.ToCatalogingConfig()
+		catalogingOpts, err := appConfig.ToCatalogingOptions()
 		if err != nil {
 			errs <- err
 			return
@@ -131,7 +132,7 @@ func powerUserExecWorker(userInput string, writer sbom.Writer) <-chan error {
 			defer cleanup()
 		}
 
-		s, err := generateSBOM(src, catalogingConfig)
+		s, err := syft.Catalog(src, catalogingOpts...)
 		if err != nil {
 			errs <- err
 			return

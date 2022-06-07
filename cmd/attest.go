@@ -193,7 +193,7 @@ func attestationExecWorker(si source.Input, format sbom.Format, predicateType st
 	go func() {
 		defer close(errs)
 
-		catalogingConfig, err := appConfig.ToCatalogingConfig()
+		catalogingOpts, err := appConfig.ToCatalogingOptions()
 		if err != nil {
 			errs <- err
 			return
@@ -208,7 +208,7 @@ func attestationExecWorker(si source.Input, format sbom.Format, predicateType st
 			return
 		}
 
-		s, err := generateSBOM(src, catalogingConfig)
+		s, err := syft.Catalog(src, catalogingOpts...)
 		if err != nil {
 			errs <- err
 			return

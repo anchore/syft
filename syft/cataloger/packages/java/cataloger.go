@@ -30,5 +30,5 @@ func NewJavaCataloger(cfg CatalogerConfig) *generic.Cataloger {
 		}
 	}
 
-	return generic.NewCataloger(nil, globParsers, "java-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

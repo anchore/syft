@@ -13,7 +13,7 @@ func NewPythonRequirementsCataloger() *generic.Cataloger {
 		"**/*requirements*.txt": parseRequirementsTxt,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "python-requirements-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }
 
 func NewPythonPoetryCataloger() *generic.Cataloger {
@@ -21,7 +21,7 @@ func NewPythonPoetryCataloger() *generic.Cataloger {
 		"**/poetry.lock": parsePoetryLock,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "python-poetry-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }
 
 func NewPythonPipfileCataloger() *generic.Cataloger {
@@ -29,7 +29,7 @@ func NewPythonPipfileCataloger() *generic.Cataloger {
 		"**/Pipfile.lock": parsePipfileLock,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "python-pipfile-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }
 
 func NewPythonSetupCataloger() *generic.Cataloger {
@@ -37,5 +37,5 @@ func NewPythonSetupCataloger() *generic.Cataloger {
 		"**/setup.py": parseSetup,
 	}
 
-	return generic.NewCataloger(nil, globParsers, "python-setup-cataloger")
+	return generic.NewCataloger(nil, globParsers)
 }

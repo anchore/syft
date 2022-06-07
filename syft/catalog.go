@@ -33,30 +33,24 @@ func Catalog(src *source.Source, options ...CatalogingOption) (*sbom.SBOM, error
 	}
 
 	if config.availableTasks == nil {
-		config.availableTasks = newTaskCollection()
-	}
-
-	tc := config.availableTasks
-	if err := tc.addAllCatalogers(config); err != nil {
-		return nil, fmt.Errorf("unable to register catalogers: %w", err)
-	}
-
-	var catalogingTasks []task
-
-	if len(config.EnabledCatalogers) == 0 {
-		switch src.Metadata.Scheme {
-		case source.ImageType:
-			catalogingTasks = tc.tasks(tc.withLabels(packageTaskLabel, installedTaskLabel)...)
-		case source.FileType:
-			catalogingTasks = tc.tasks(tc.all()...)
-		case source.DirectoryType:
-			// TODO: it looks like gemspec was left out on main, is this intentional? if so it's not accounted for here...
-			catalogingTasks = tc.tasks(tc.withLabels(packageTaskLabel)...)
+		var err error
+		config.availableTasks, err = newTaskCollection()
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	if len(catalogingTasks) == 0 {
+	if len(config.EnabledCatalogers) == 0 {
 		return nil, fmt.Errorf("no cataloging tasks configured to run")
+	}
+
+	catalogingTasks, err := config.availableTasks.tasks(config, config.EnabledCatalogers...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(catalogingTasks) == 0 {
+		return nil, fmt.Errorf("no cataloging tasks found to run")
 	}
 
 	// special case: we need to identify the linux distro for downstream processing
