@@ -1,3 +1,7 @@
+Package:
+
+Package: no-version
+
 Package: tzdata
 Status: install ok installed
 Priority: required

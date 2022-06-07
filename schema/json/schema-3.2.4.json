@@ -1,0 +1,1301 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/Document",
+  "definitions": {
+    "ApkFileRecord": {
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "ownerUid": {
+          "type": "string"
+        },
+        "ownerGid": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "string"
+        },
+        "digest": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Digest"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "ApkMetadata": {
+      "required": [
+        "package",
+        "originPackage",
+        "maintainer",
+        "version",
+        "license",
+        "architecture",
+        "url",
+        "description",
+        "size",
+        "installedSize",
+        "pullDependencies",
+        "pullChecksum",
+        "gitCommitOfApkPort",
+        "files"
+      ],
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "originPackage": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "pullDependencies": {
+          "type": "string"
+        },
+        "pullChecksum": {
+          "type": "string"
+        },
+        "gitCommitOfApkPort": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/ApkFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "CargoPackageMetadata": {
+      "required": [
+        "name",
+        "version",
+        "source",
+        "checksum",
+        "dependencies"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "checksum": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Classification": {
+      "required": [
+        "class",
+        "metadata"
+      ],
+      "properties": {
+        "class": {
+          "type": "string"
+        },
+        "metadata": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Coordinates": {
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "layerID": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "DartPubMetadata": {
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "hosted_url": {
+          "type": "string"
+        },
+        "vcs_url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Descriptor": {
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "configuration": {
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Digest": {
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Document": {
+      "required": [
+        "artifacts",
+        "artifactRelationships",
+        "source",
+        "distro",
+        "descriptor",
+        "schema"
+      ],
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Package"
+          },
+          "type": "array"
+        },
+        "artifactRelationships": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Relationship"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/File"
+          },
+          "type": "array"
+        },
+        "secrets": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Secrets"
+          },
+          "type": "array"
+        },
+        "source": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Source"
+        },
+        "distro": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/LinuxRelease"
+        },
+        "descriptor": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Descriptor"
+        },
+        "schema": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Schema"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "DotnetDepsMetadata": {
+      "required": [
+        "name",
+        "version",
+        "path",
+        "sha512",
+        "hashPath"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha512": {
+          "type": "string"
+        },
+        "hashPath": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "DpkgFileRecord": {
+      "required": [
+        "path",
+        "isConfigFile"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/definitions/Digest"
+        },
+        "isConfigFile": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "DpkgMetadata": {
+      "required": [
+        "package",
+        "source",
+        "version",
+        "sourceVersion",
+        "architecture",
+        "maintainer",
+        "installedSize",
+        "files"
+      ],
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "files": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/DpkgFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "File": {
+      "required": [
+        "id",
+        "location"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/Coordinates"
+        },
+        "metadata": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/FileMetadataEntry"
+        },
+        "contents": {
+          "type": "string"
+        },
+        "digests": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Digest"
+          },
+          "type": "array"
+        },
+        "classifications": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Classification"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "FileMetadataEntry": {
+      "required": [
+        "mode",
+        "type",
+        "userID",
+        "groupID",
+        "mimeType"
+      ],
+      "properties": {
+        "mode": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "linkDestination": {
+          "type": "string"
+        },
+        "userID": {
+          "type": "integer"
+        },
+        "groupID": {
+          "type": "integer"
+        },
+        "mimeType": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "GemMetadata": {
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "homepage": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "GolangBinMetadata": {
+      "required": [
+        "goCompiledVersion",
+        "architecture"
+      ],
+      "properties": {
+        "goBuildSettings": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "goCompiledVersion": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "h1Digest": {
+          "type": "string"
+        },
+        "mainModule": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "JavaManifest": {
+      "properties": {
+        "main": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "namedSections": {
+          "patternProperties": {
+            ".*": {
+              "patternProperties": {
+                ".*": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "JavaMetadata": {
+      "required": [
+        "virtualPath"
+      ],
+      "properties": {
+        "virtualPath": {
+          "type": "string"
+        },
+        "manifest": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/JavaManifest"
+        },
+        "pomProperties": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PomProperties"
+        },
+        "pomProject": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PomProject"
+        },
+        "digest": {
+          "items": {
+            "$ref": "#/definitions/Digest"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "LinuxRelease": {
+      "properties": {
+        "prettyName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "idLike": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "version": {
+          "type": "string"
+        },
+        "versionID": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "variantID": {
+          "type": "string"
+        },
+        "homeURL": {
+          "type": "string"
+        },
+        "supportURL": {
+          "type": "string"
+        },
+        "bugReportURL": {
+          "type": "string"
+        },
+        "privacyPolicyURL": {
+          "type": "string"
+        },
+        "cpeName": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "NpmPackageJSONMetadata": {
+      "required": [
+        "name",
+        "version",
+        "author",
+        "licenses",
+        "homepage",
+        "description",
+        "url"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "author": {
+          "type": "string"
+        },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Package": {
+      "required": [
+        "id",
+        "name",
+        "version",
+        "type",
+        "foundBy",
+        "locations",
+        "licenses",
+        "language",
+        "cpes",
+        "purl"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "foundBy": {
+          "type": "string"
+        },
+        "locations": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Coordinates"
+          },
+          "type": "array"
+        },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "type": "string"
+        },
+        "cpes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "purl": {
+          "type": "string"
+        },
+        "metadataType": {
+          "type": "string"
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/ApkMetadata"
+            },
+            {
+              "$ref": "#/definitions/CargoPackageMetadata"
+            },
+            {
+              "$ref": "#/definitions/DartPubMetadata"
+            },
+            {
+              "$ref": "#/definitions/DotnetDepsMetadata"
+            },
+            {
+              "$ref": "#/definitions/DpkgMetadata"
+            },
+            {
+              "$ref": "#/definitions/GemMetadata"
+            },
+            {
+              "$ref": "#/definitions/GolangBinMetadata"
+            },
+            {
+              "$ref": "#/definitions/JavaMetadata"
+            },
+            {
+              "$ref": "#/definitions/NpmPackageJSONMetadata"
+            },
+            {
+              "$ref": "#/definitions/PhpComposerJSONMetadata"
+            },
+            {
+              "$ref": "#/definitions/PythonPackageMetadata"
+            },
+            {
+              "$ref": "#/definitions/RpmdbMetadata"
+            }
+          ]
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PhpComposerAuthors": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PhpComposerExternalReference": {
+      "required": [
+        "type",
+        "url",
+        "reference"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "shasum": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PhpComposerJSONMetadata": {
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PhpComposerExternalReference"
+        },
+        "dist": {
+          "$ref": "#/definitions/PhpComposerExternalReference"
+        },
+        "require": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "provide": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "require-dev": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "suggest": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "type": "string"
+        },
+        "notification-url": {
+          "type": "string"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/PhpComposerAuthors"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PomParent": {
+      "required": [
+        "groupId",
+        "artifactId",
+        "version"
+      ],
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PomProject": {
+      "required": [
+        "path",
+        "groupId",
+        "artifactId",
+        "version",
+        "name"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "parent": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PomParent"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PomProperties": {
+      "required": [
+        "path",
+        "name",
+        "groupId",
+        "artifactId",
+        "version",
+        "extraFields"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "extraFields": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PythonDirectURLOriginInfo": {
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "commitId": {
+          "type": "string"
+        },
+        "vcs": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PythonFileDigest": {
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PythonFileRecord": {
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "digest": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PythonFileDigest"
+        },
+        "size": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "PythonPackageMetadata": {
+      "required": [
+        "name",
+        "version",
+        "license",
+        "author",
+        "authorEmail",
+        "platform",
+        "sitePackagesRootPath"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "authorEmail": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/PythonFileRecord"
+          },
+          "type": "array"
+        },
+        "sitePackagesRootPath": {
+          "type": "string"
+        },
+        "topLevelPackages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "directUrlOrigin": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PythonDirectURLOriginInfo"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Relationship": {
+      "required": [
+        "parent",
+        "child",
+        "type"
+      ],
+      "properties": {
+        "parent": {
+          "type": "string"
+        },
+        "child": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "RpmdbFileRecord": {
+      "required": [
+        "path",
+        "mode",
+        "size",
+        "digest",
+        "userName",
+        "groupName",
+        "flags"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "integer"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "digest": {
+          "$ref": "#/definitions/Digest"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "flags": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "RpmdbMetadata": {
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "license",
+        "vendor",
+        "files"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        },
+        "sourceRpm": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "license": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/RpmdbFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Schema": {
+      "required": [
+        "version",
+        "url"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "SearchResult": {
+      "required": [
+        "classification",
+        "lineNumber",
+        "lineOffset",
+        "seekPosition",
+        "length"
+      ],
+      "properties": {
+        "classification": {
+          "type": "string"
+        },
+        "lineNumber": {
+          "type": "integer"
+        },
+        "lineOffset": {
+          "type": "integer"
+        },
+        "seekPosition": {
+          "type": "integer"
+        },
+        "length": {
+          "type": "integer"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Secrets": {
+      "required": [
+        "location",
+        "secrets"
+      ],
+      "properties": {
+        "location": {
+          "$ref": "#/definitions/Coordinates"
+        },
+        "secrets": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/SearchResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Source": {
+      "required": [
+        "type",
+        "target"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "target": {
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    }
+  }
+}

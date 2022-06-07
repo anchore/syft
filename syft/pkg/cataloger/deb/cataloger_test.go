@@ -43,6 +43,10 @@ func TestDpkgCataloger(t *testing.T) {
 						Architecture:  "all",
 						Maintainer:    "Steve Langasek <vorlon@debian.org>",
 						InstalledSize: 1016,
+						Description: `Runtime support for the PAM library
+ Contains configuration files and  directories required for
+ authentication  to work on Debian systems.  This package is required
+ on almost all installations.`,
 						Files: []pkg.DpkgFileRecord{
 							{
 								Path: "/etc/pam.conf",
