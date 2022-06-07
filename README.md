@@ -57,7 +57,10 @@ curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -
 ```
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
 ```
-### Windows
+
+### Chocolatey
+
+The chocolatey distribution of syft is community maintained and not distributed by the anchore team
 
 ```powershell
 choco install syft -y
@@ -107,7 +110,7 @@ The ability to convert existing SBOMs means you can create SBOMs in different fo
 syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
 ```
 
-This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost. 
+This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost.
 
 We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
 - Syft JSON
@@ -145,7 +148,7 @@ COSIGN_EXPERIMENTAL=1 cosign verify-attestation <IMAGE_WITH_ATTESTATIONS>
 Users should see that the uploaded attestation claims are validated, the claims exist within the transparency log, and certificates on the attestations were verified against [fulcio](https://github.com/SigStore/fulcio).
 There will also be a printout of the certificates subject `<user identity>` and the certificate issuer URL: `<provider of user identity (Github, Google, Microsoft)>`:
 ```
-Certificate subject:  test.email@testdomain.com 
+Certificate subject:  test.email@testdomain.com
 Certificate issuer URL:  https://accounts.google.com
 ```
 
@@ -260,7 +263,7 @@ Here's a simple workflow to mount this config file as a secret into a container 
 
     ```yaml
     # secret.yaml
-    
+
     apiVersion: v1
     kind: Secret
     metadata:
@@ -277,7 +280,7 @@ Here's a simple workflow to mount this config file as a secret into a container 
 
     ```yaml
     # pod.yaml
-    
+
     apiVersion: v1
     kind: Pod
     metadata:
@@ -524,7 +527,7 @@ anchore:
 SBOMs themselves can serve as input to different analysis tools. [Grype](https://github.com/anchore/grype), a vulnerability scanner CLI tool from Anchore, is one such tool. Publishers of container images can use attestations to enable their consumers to trust Syft-generated SBOM descriptions of those container images. To create and provide these attestations, image publishers can run `syft attest` in conjunction with the [cosign](https://github.com/sigstore/cosign) tool to attach SBOM attestations to their images.
 
 #### Example attestation
-Note for the following example replace `docker.io/image:latest` with an image you own. You should also have push access to 
+Note for the following example replace `docker.io/image:latest` with an image you own. You should also have push access to
 its remote reference. Replace `$MY_PRIVATE_KEY` with a private key you own or have generated with cosign.
 
 ```bash
