@@ -90,7 +90,6 @@ func TestPkgCoverageImage(t *testing.T) {
 			pkgCount := 0
 
 			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
-
 				if a.Language.String() != "" {
 					observedLanguages.Add(a.Language.String())
 				}
@@ -167,7 +166,6 @@ func TestPkgCoverageDirectory(t *testing.T) {
 			actualPkgCount := 0
 
 			for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
-
 				observedLanguages.Add(actualPkg.Language.String())
 				observedPkgs.Add(string(actualPkg.Type))
 

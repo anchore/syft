@@ -30,6 +30,7 @@ func newAlpmDBPackage(d *pkg.AlpmMetadata) *pkg.Package {
 	return &pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
+		FoundBy:      catalogerName,
 		Type:         "alpm",
 		Licenses:     strings.Split(d.License, " "),
 		MetadataType: pkg.AlpmMetadataType,

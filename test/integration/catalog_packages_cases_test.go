@@ -222,6 +222,13 @@ var dirOnlyTestCases = []testCase{
 
 var commonTestCases = []testCase{
 	{
+		name:    "find alpm packages",
+		pkgType: pkg.AlpmPkg,
+		pkgInfo: map[string]string{
+			"pacman": "6.0.1-5",
+		},
+	},
+	{
 		name:    "find rpmdb packages",
 		pkgType: pkg.RpmPkg,
 		pkgInfo: map[string]string{

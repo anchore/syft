@@ -10,7 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-const AlpmDBGlob = "/var/lib/pacman/local/**/desc"
+const AlpmDBGlob = "**/var/lib/pacman/local/**/desc"
 
 type AlpmMetadata struct {
 	BasePackage  string           `mapstructure:"base" json:"basepackage"`
@@ -30,7 +30,7 @@ type AlpmMetadata struct {
 
 // TODO: Implement mtree support
 type AlpmFileRecord struct {
-	Path         string       `mapstruture:"path" json:"path"`
+	Path         string       `mapstruture:"path" json:"path,omitempty"`
 	Type         string       `mapstructure:"type" json:"type,omitempty"`
 	UID          string       `mapstructure:"uid" json:"uid,omitempty"`
 	GID          string       `mapstructure:"gid" json:"gid,omitempty"`
