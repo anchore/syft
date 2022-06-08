@@ -29,6 +29,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
+	sigopts "github.com/sigstore/cosign/cmd/cosign/cli/options"
 	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
 	"github.com/sigstore/cosign/pkg/cosign"
@@ -57,7 +58,7 @@ var (
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
-func Run(ctx context.Context, app *config.Application, ko sign.KeyOpts, args []string) error {
+func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args []string) error {
 	// We cannot generate an attestation for more than one output
 	if len(app.Outputs) > 1 {
 		return fmt.Errorf("unable to generate attestation for more than one output")
