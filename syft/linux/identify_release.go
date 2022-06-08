@@ -114,7 +114,7 @@ func parseOsRelease(contents string) (*Release, error) {
 		VersionCodename:  values["VERSION_CODENAME"],
 		BuildID:          values["BUILD_ID"],
 		ImageID:          values["IMAGE_ID"],
-		ImageVersion:     values["IMAGE_Version"],
+		ImageVersion:     values["IMAGE_VERSION"],
 		Variant:          values["VARIANT"],
 		VariantID:        values["VARIANT_ID"],
 		HomeURL:          values["HOME_URL"],
