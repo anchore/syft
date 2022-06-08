@@ -8,9 +8,10 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
-	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	sigopts "github.com/sigstore/cosign/cmd/cosign/cli/options"
 )
 
 const (
@@ -55,7 +56,7 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *c
 			}
 
 			// build cosign key options for attestation
-			ko := sign.KeyOpts{
+			ko := sigopts.KeyOpts{
 				KeyRef:                   app.Attest.KeyRef,
 				FulcioURL:                app.Attest.FulcioURL,
 				IDToken:                  app.Attest.FulcioIdentityToken,
