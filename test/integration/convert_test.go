@@ -51,6 +51,13 @@ func TestConvertCmd(t *testing.T) {
 			ctx := context.Background()
 			app := &config.Application{Outputs: []string{format.ID().String()}}
 
+			// stdout reduction of test noise
+			rescue := os.Stdout // keep backup of the real stdout
+			os.Stdout, _ = os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+			defer func() {
+				os.Stdout = rescue
+			}()
+
 			err = convert.Run(ctx, app, []string{f.Name()})
 			require.NoError(t, err)
 			file, err := ioutil.ReadFile(f.Name())

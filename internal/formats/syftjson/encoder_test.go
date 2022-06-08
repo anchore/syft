@@ -16,7 +16,7 @@ import (
 	"github.com/anchore/syft/internal/formats/common/testutils"
 )
 
-var updateJson = flag.Bool("update-json", true, "update the *.golden files for json encoders")
+var updateJson = flag.Bool("update-json", false, "update the *.golden files for json encoders")
 
 func TestDirectoryEncoder(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
