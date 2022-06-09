@@ -23,17 +23,14 @@
         "size": {
           "type": "string"
         },
-        "md5digest": {
-          "type": "string"
-        },
-        "sh256digest": {
-          "type": "string"
-        },
         "link": {
           "type": "string"
         },
         "digest": {
-          "$ref": "#/definitions/Digest"
+          "items": {
+            "$ref": "#/definitions/Digest"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": true,

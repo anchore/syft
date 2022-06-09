@@ -21,20 +21,18 @@ func TestDatabaseParser(t *testing.T) {
 			expected: pkg.AlpmMetadata{
 				Backup: []pkg.AlpmFileRecord{
 					{
-						Path:      "/etc/pacman.conf",
-						Md5digest: "de541390e52468165b96511c4665bff4",
-						Digest: &file.Digest{
+						Path: "/etc/pacman.conf",
+						Digests: []file.Digest{{
 							Algorithm: "md5",
 							Value:     "de541390e52468165b96511c4665bff4",
-						},
+						}},
 					},
 					{
-						Path:      "/etc/makepkg.conf",
-						Md5digest: "79fce043df7dfc676ae5ecb903762d8b",
-						Digest: &file.Digest{
+						Path: "/etc/makepkg.conf",
+						Digests: []file.Digest{{
 							Algorithm: "md5",
 							Value:     "79fce043df7dfc676ae5ecb903762d8b",
-						},
+						}},
 					},
 				},
 				Files: []pkg.AlpmFileRecord{
@@ -136,24 +134,30 @@ func TestMtreeParse(t *testing.T) {
 			name: "test mtree parsing",
 			expected: []pkg.AlpmFileRecord{
 				{
-					Path: "/etc",
-					Type: "dir",
-					Time: parseTime("2022-04-10T14:59:52+02:00"),
+					Path:    "/etc",
+					Type:    "dir",
+					Time:    parseTime("2022-04-10T14:59:52+02:00"),
+					Digests: make([]file.Digest, 0),
 				},
 				{
-					Path: "/etc/pacman.d",
-					Type: "dir",
-					Time: parseTime("2022-04-10T14:59:52+02:00"),
+					Path:    "/etc/pacman.d",
+					Type:    "dir",
+					Time:    parseTime("2022-04-10T14:59:52+02:00"),
+					Digests: make([]file.Digest, 0),
 				},
 				{
-					Path:         "/etc/pacman.d/mirrorlist",
-					Size:         "44683",
-					Time:         parseTime("2022-04-10T14:59:52+02:00"),
-					Md5digest:    "81c39827e38c759d7e847f05db62c233",
-					Sha256digest: "fc135ab26f2a227b9599b66a2f1ba325c445acb914d60e7ecf6e5997a87abe1e",
-					Digest: &file.Digest{
-						Algorithm: "sha256",
-						Value:     "fc135ab26f2a227b9599b66a2f1ba325c445acb914d60e7ecf6e5997a87abe1e",
+					Path: "/etc/pacman.d/mirrorlist",
+					Size: "44683",
+					Time: parseTime("2022-04-10T14:59:52+02:00"),
+					Digests: []file.Digest{
+						{
+							Algorithm: "md5digest",
+							Value:     "81c39827e38c759d7e847f05db62c233",
+						},
+						{
+							Algorithm: "sha256",
+							Value:     "fc135ab26f2a227b9599b66a2f1ba325c445acb914d60e7ecf6e5997a87abe1e",
+						},
 					},
 				},
 			},

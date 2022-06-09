@@ -28,18 +28,15 @@ type AlpmMetadata struct {
 	Backup       []AlpmFileRecord `mapstructure:"backup" json:"backup"`
 }
 
-// TODO: Implement mtree support
 type AlpmFileRecord struct {
-	Path         string       `mapstruture:"path" json:"path,omitempty"`
-	Type         string       `mapstructure:"type" json:"type,omitempty"`
-	UID          string       `mapstructure:"uid" json:"uid,omitempty"`
-	GID          string       `mapstructure:"gid" json:"gid,omitempty"`
-	Time         time.Time    `mapstructure:"time" json:"time,omitempty"`
-	Size         string       `mapstructure:"size" json:"size,omitempty"`
-	Md5digest    string       `mapstructure:"md5digest" json:"md5digest,omitempty"`
-	Sha256digest string       `mapstructure:"sha256digest" json:"sh256digest,omitempty"`
-	Link         string       `mapstructure:"link" json:"link,omitempty"`
-	Digest       *file.Digest `json:"digest,omitempty"`
+	Path    string        `mapstruture:"path" json:"path,omitempty"`
+	Type    string        `mapstructure:"type" json:"type,omitempty"`
+	UID     string        `mapstructure:"uid" json:"uid,omitempty"`
+	GID     string        `mapstructure:"gid" json:"gid,omitempty"`
+	Time    time.Time     `mapstructure:"time" json:"time,omitempty"`
+	Size    string        `mapstructure:"size" json:"size,omitempty"`
+	Link    string        `mapstructure:"link" json:"link,omitempty"`
+	Digests []file.Digest `mapstructure:"digests" json:"digest,omitempty"`
 }
 
 // PackageURL returns the PURL for the specific Arch Linux package (see https://github.com/package-url/purl-spec)

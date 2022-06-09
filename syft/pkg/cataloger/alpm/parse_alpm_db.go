@@ -109,12 +109,11 @@ func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 				path := fmt.Sprintf("/%s", fields[0])
 				if ok := ignoredFiles[path]; !ok {
 					backup = append(backup, map[string]interface{}{
-						"path":      path,
-						"md5digest": fields[1],
-						"digest": &file.Digest{
+						"path": path,
+						"digests": []*file.Digest{&file.Digest{
 							Algorithm: "md5",
 							Value:     fields[1],
-						}})
+						}}})
 				}
 			}
 			pkgFields[key] = backup
@@ -156,6 +155,7 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 	}
 	for _, f := range specDh.Entries {
 		var entry pkg.AlpmFileRecord
+		entry.Digests = make([]file.Digest, 0)
 		fileFields := make(map[string]interface{})
 		if ok := ignoredFiles[f.Name]; ok {
 			continue
@@ -164,25 +164,29 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 		fileFields["path"] = path
 		for _, kv := range f.Keywords {
 			kw := string(kv.Keyword())
-			if kw == "time" {
+			switch kw {
+			case "time":
 				// All unix timestamps have a .0 suffixs.
 				v := strings.Split(kv.Value(), ".")
 				i, _ := strconv.ParseInt(v[0], 10, 64)
 				tm := time.Unix(i, 0)
 				fileFields[kw] = tm
-			} else {
+			case "sha256digest":
+				entry.Digests = append(entry.Digests, file.Digest{
+					Algorithm: "sha256",
+					Value:     kv.Value(),
+				})
+			case "md5digest":
+				entry.Digests = append(entry.Digests, file.Digest{
+					Algorithm: "md5digest",
+					Value:     kv.Value(),
+				})
+			default:
 				fileFields[kw] = kv.Value()
 			}
 		}
 		if err := mapstructure.Decode(fileFields, &entry); err != nil {
 			return nil, fmt.Errorf("unable to parse ALPM mtree data: %w", err)
-		}
-		// This identifies a file
-		if entry.Type == "" {
-			entry.Digest = &file.Digest{
-				Algorithm: "sha256",
-				Value:     entry.Sha256digest,
-			}
 		}
 		entries = append(entries, entry)
 	}
