@@ -6,12 +6,16 @@ catalogers defined in child packages as well as the interface definition to impl
 package cataloger
 
 import (
+	"strings"
+
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
-	//"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
+
+	// "github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -45,8 +49,8 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
-		//dotnet.NewDotnetDepsCataloger(),
-	}, cfg.EnabledCatalogers)
+		// dotnet.NewDotnetDepsCataloger(),
+	}, cfg.Catalogers)
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
@@ -65,8 +69,8 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
-		//dotnet.NewDotnetDepsCataloger(),
-	}, cfg.EnabledCatalogers)
+		// dotnet.NewDotnetDepsCataloger(),
+	}, cfg.Catalogers)
 }
 
 // AllCatalogers returns all implemented catalogers
@@ -86,27 +90,34 @@ func AllCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
-		//dotnet.NewDotnetDepsCataloger(),
-	}, cfg.EnabledCatalogers)
+		// dotnet.NewDotnetDepsCataloger(),
+	}, cfg.Catalogers)
 }
 
-func filterCatalogers(catalogers []Cataloger, enabledCatalogers []string) []Cataloger {
-	// if enable-cataloger is not set, all applicable catalogers are enabled by default
-	if len(enabledCatalogers) == 0 {
+func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string) []Cataloger {
+	// if cataloger is not set, all applicable catalogers are enabled by default
+	if len(enabledCatalogerPatterns) == 0 {
 		return catalogers
 	}
-	var filteredCatalogers []Cataloger
+	var keepCatalogers []Cataloger
 	for _, cataloger := range catalogers {
-		if contains(enabledCatalogers, cataloger.Name()) {
-			filteredCatalogers = append(filteredCatalogers, cataloger)
+		if contains(enabledCatalogerPatterns, cataloger.Name()) {
+			keepCatalogers = append(keepCatalogers, cataloger)
+			continue
 		}
+		log.Infof("skipping cataloger %q", cataloger.Name())
 	}
-	return filteredCatalogers
+	return keepCatalogers
 }
 
-func contains(catalogers []string, str string) bool {
-	for _, cataloger := range catalogers {
-		if cataloger == str {
+func contains(enabledPartial []string, catalogerName string) bool {
+	catalogerName = strings.TrimSuffix(catalogerName, "-cataloger")
+	for _, partial := range enabledPartial {
+		partial = strings.TrimSuffix(partial, "-cataloger")
+		if partial == "" {
+			continue
+		}
+		if strings.Contains(catalogerName, partial) {
 			return true
 		}
 	}

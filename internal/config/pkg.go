@@ -9,7 +9,6 @@ type pkg struct {
 	Cataloger               catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
 	SearchUnindexedArchives bool             `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
 	SearchIndexedArchives   bool             `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
-	EnabledCatalogers       []string         `yaml:"enable-cataloger" json:"enable-cataloger" mapstructure:"enable-cataloger"`
 }
 
 func (cfg pkg) loadDefaultValues(v *viper.Viper) {
@@ -21,15 +20,4 @@ func (cfg pkg) loadDefaultValues(v *viper.Viper) {
 
 func (cfg *pkg) parseConfigValues() error {
 	return cfg.Cataloger.parseConfigValues()
-}
-
-func (cfg pkg) ToConfig() cataloger.Config {
-	return cataloger.Config{
-		Search: cataloger.SearchConfig{
-			IncludeIndexedArchives:   cfg.SearchIndexedArchives,
-			IncludeUnindexedArchives: cfg.SearchUnindexedArchives,
-			Scope:                    cfg.Cataloger.ScopeOpt,
-		},
-		EnabledCatalogers: cfg.EnabledCatalogers,
-	}
 }
