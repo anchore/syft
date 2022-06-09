@@ -6,8 +6,9 @@ catalogers defined in child packages as well as the interface definition to impl
 package cataloger
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
