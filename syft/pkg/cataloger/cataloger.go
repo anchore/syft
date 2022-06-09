@@ -6,6 +6,7 @@ catalogers defined in child packages as well as the interface definition to impl
 package cataloger
 
 import (
+	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -49,7 +50,7 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
-		// dotnet.NewDotnetDepsCataloger(),
+		dotnet.NewDotnetDepsCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -69,7 +70,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
-		// dotnet.NewDotnetDepsCataloger(),
+		dotnet.NewDotnetDepsCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -90,7 +91,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
-		// dotnet.NewDotnetDepsCataloger(),
+		dotnet.NewDotnetDepsCataloger(),
 	}, cfg.Catalogers)
 }
 

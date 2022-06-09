@@ -360,6 +360,28 @@ exclude: []
 # same as --platform; SYFT_PLATFORM env var
 platform: ""
 
+# set the list of package catalogers to use when generating the SBOM
+# default = empty (cataloger set determined automatically by the source type [image or file/directory])
+# catalogers:
+#   - "ruby-gemfile"
+#   - "ruby-gemspec"
+#   - "python-index"
+#   - "python-package"
+#   - "javascript-lock"
+#   - "javascript-package"
+#   - "php-composer-installed"
+#   - "php-composer-lock"
+#   - "dpkgdb"
+#   - "rpmdb"
+#   - "java"
+#   - "apkdb"
+#   - "go-module-binary"
+#   - "go-mod-file"
+#   - "dartlang-lock"
+#   - "rust"
+#   - "dotnet-deps"
+catalogers:
+
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
 
@@ -382,27 +404,6 @@ package:
     # the search space to look for packages (options: all-layers, squashed)
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
-
-  # enable package cataloger
-  # default: cataloger set determined by the source type (image or file/directory)
-  # catalogers:
-  #   - "ruby-gemfile"
-  #   - "ruby-gemspec"
-  #   - "python-index"
-  #   - "python-package"
-  #   - "javascript-lock"
-  #   - "javascript-package"
-  #   - "php-composer-installed"
-  #   - "php-composer-lock"
-  #   - "dpkgdb"
-  #   - "rpmdb"
-  #   - "java"
-  #   - "apkdb"
-  #   - "go-module-binary"
-  #   - "go-mod-file"
-  #   - "dartlang-lock"
-  #   - "rust"
-  catalogers:
 
 # cataloging file classifications is exposed through the power-user subcommand
 file-classification:
