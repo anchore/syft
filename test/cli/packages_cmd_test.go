@@ -227,6 +227,14 @@ func TestPackagesCmdFlags(t *testing.T) {
 				),
 			},
 		},
+		{
+			name: "catalogers-option",
+			args: []string{"packages", "-o", "json", "--catalogers", "python,ruby-gemspec", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(6),
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {
