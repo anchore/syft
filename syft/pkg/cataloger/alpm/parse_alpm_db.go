@@ -110,7 +110,7 @@ func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 				if ok := ignoredFiles[path]; !ok {
 					backup = append(backup, map[string]interface{}{
 						"path": path,
-						"digests": []*file.Digest{&file.Digest{
+						"digests": []file.Digest{{
 							Algorithm: "md5",
 							Value:     fields[1],
 						}}})
