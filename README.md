@@ -13,7 +13,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 
 ### Join our Virtual OSS Meetup!
 
-You are invited to join us on June 15th, 11AM-Noon PT for our virtual open source meetup.  
+You are invited to join us on June 15th, 11AM-Noon PT for our virtual open source meetup.
 
 Hosts Amy Bass from Docker Desktop and Christopher Phillips from Anchore OSS will explore how Docker Extensions for Docker Desktop is supporting open source projects and we’ll have the latest update on Syft: in-toto attestations.
 
@@ -229,6 +229,7 @@ Where the `formats` available are:
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `github`: A JSON report conforming to GitHub's dependency snapshot format.
+- `markdown`: A columnar summary in markdown format.
 - `table`: A columnar summary (default).
 
 #### Multiple outputs

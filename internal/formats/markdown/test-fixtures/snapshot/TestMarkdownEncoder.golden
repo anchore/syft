@@ -1,0 +1,4 @@
+|   NAME    | VERSION |  TYPE  |
+|-----------|---------|--------|
+| package-1 | 1.0.1   | python |
+| package-2 | 2.0.1   | deb    |

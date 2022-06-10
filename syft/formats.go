@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/github"
+	"github.com/anchore/syft/internal/formats/markdown"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
@@ -25,6 +26,7 @@ const (
 	GitHubID              = github.ID
 	SPDXTagValueFormatID  = spdx22tagvalue.ID
 	SPDXJSONFormatID      = spdx22json.ID
+	MarkdownFormatID      = markdown.ID
 )
 
 var formats []sbom.Format
@@ -39,6 +41,7 @@ func init() {
 		spdx22json.Format(),
 		table.Format(),
 		text.Format(),
+		markdown.Format(),
 	}
 }
 
@@ -84,6 +87,8 @@ func FormatByName(name string) sbom.Format {
 		return FormatByID(table.ID)
 	case "text":
 		return FormatByID(text.ID)
+	case "markdown", "md":
+		return FormatByID(markdown.ID)
 	}
 
 	return nil

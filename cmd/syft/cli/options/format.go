@@ -24,6 +24,8 @@ func FormatAliases(ids ...sbom.FormatID) (aliases []string) {
 			aliases = append(aliases, "cyclonedx-json")
 		case syft.GitHubID:
 			aliases = append(aliases, "github", "github-json")
+		case syft.MarkdownFormatID:
+			aliases = append(aliases, "markdown", "md")
 		default:
 			aliases = append(aliases, string(id))
 		}
