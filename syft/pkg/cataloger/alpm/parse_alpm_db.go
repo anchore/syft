@@ -40,6 +40,7 @@ func newAlpmDBPackage(d *pkg.AlpmMetadata) *pkg.Package {
 
 func newScanner(reader io.Reader) *bufio.Scanner {
 	// This is taken from the apk parser
+	// https://github.com/anchore/syft/blob/v0.47.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L37
 	const maxScannerCapacity = 1024 * 1024
 	bufScan := make([]byte, maxScannerCapacity)
 	scanner := bufio.NewScanner(reader)
