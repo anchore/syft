@@ -1,86 +1,81 @@
 package pkg
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/linux"
-
 	"github.com/anchore/packageurl-go"
-	"github.com/go-test/deep"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestApkMetadata_pURL(t *testing.T) {
+func TestAlpmMetadata_pURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata ApkMetadata
+		metadata AlpmMetadata
 		distro   linux.Release
 		expected string
 	}{
 		{
 			name: "gocase",
-			metadata: ApkMetadata{
+			metadata: AlpmMetadata{
 				Package:      "p",
 				Version:      "v",
 				Architecture: "a",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
+				ID:      "arch",
+				BuildID: "rolling",
 			},
-			expected: "pkg:alpine/p@v?arch=a&distro=alpine-3.4.6",
+			expected: "pkg:alpm/arch/p@v?arch=a&distro=arch-rolling",
 		},
 		{
 			name: "missing architecture",
-			metadata: ApkMetadata{
+			metadata: AlpmMetadata{
 				Package: "p",
 				Version: "v",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
+				ID: "arch",
 			},
-			expected: "pkg:alpine/p@v?distro=alpine-3.4.6",
+			expected: "pkg:alpm/arch/p@v?distro=arch",
 		},
-		// verify #351
 		{
-			metadata: ApkMetadata{
-				Package:      "g++",
-				Version:      "v84",
-				Architecture: "am86",
+			metadata: AlpmMetadata{
+				Package:      "python",
+				Version:      "3.10.0",
+				Architecture: "any",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
+				ID:      "arch",
+				BuildID: "rolling",
 			},
-			expected: "pkg:alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
+			expected: "pkg:alpm/arch/python@3.10.0?arch=any&distro=arch-rolling",
 		},
 		{
-			metadata: ApkMetadata{
+			metadata: AlpmMetadata{
 				Package:      "g plus plus",
 				Version:      "v84",
-				Architecture: "am86",
+				Architecture: "x86_64",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.15.0",
+				ID:      "arch",
+				BuildID: "rolling",
 			},
-			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
+			expected: "pkg:alpm/arch/g%20plus%20plus@v84?arch=x86_64&distro=arch-rolling",
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: ApkMetadata{
-				Package:       "p",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "origin",
+			metadata: AlpmMetadata{
+				Package:      "p",
+				Version:      "v",
+				Architecture: "a",
+				BasePackage:  "origin",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
+				ID:      "arch",
+				BuildID: "rolling",
 			},
-			expected: "pkg:alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
+			expected: "pkg:alpm/arch/p@v?arch=a&upstream=origin&distro=arch-rolling",
 		},
 	}
 
@@ -111,46 +106,6 @@ func TestApkMetadata_pURL(t *testing.T) {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.metadata.Architecture, purl.Qualifiers.Map()["arch"], true)
 				t.Errorf("invalid purl architecture: %s", dmp.DiffPrettyText(diffs))
-			}
-		})
-	}
-}
-
-func TestApkMetadata_FileOwner(t *testing.T) {
-	tests := []struct {
-		metadata ApkMetadata
-		expected []string
-	}{
-		{
-			metadata: ApkMetadata{
-				Files: []ApkFileRecord{
-					{Path: "/somewhere"},
-					{Path: "/else"},
-				},
-			},
-			expected: []string{
-				"/else",
-				"/somewhere",
-			},
-		},
-		{
-			metadata: ApkMetadata{
-				Files: []ApkFileRecord{
-					{Path: "/somewhere"},
-					{Path: ""},
-				},
-			},
-			expected: []string{
-				"/somewhere",
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(strings.Join(test.expected, ","), func(t *testing.T) {
-			actual := test.metadata.OwnedFiles()
-			for _, d := range deep.Equal(test.expected, actual) {
-				t.Errorf("diff: %+v", d)
 			}
 		})
 	}

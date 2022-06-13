@@ -61,6 +61,7 @@ require (
 	github.com/sigstore/cosign v1.9.0
 	github.com/sigstore/rekor v0.4.1-0.20220114213500-23f583409af3
 	github.com/sigstore/sigstore v1.2.1-0.20220424143412-3d41663116d5
+	github.com/vbatts/go-mtree v0.5.0
 )
 
 require (

@@ -61,7 +61,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 				},
 			},
 		},
-		true,
+		*updateSpdxTagValue,
 		spdxTagValueRedactor,
 	)
 }
