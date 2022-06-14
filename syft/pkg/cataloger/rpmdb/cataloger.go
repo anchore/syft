@@ -49,5 +49,27 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 
 		pkgs = append(pkgs, discoveredPkgs...)
 	}
+
+	// Additionally look for RPM manifest files to detect packages in CBL-Mariner distroless images
+	manifestFileMatches, err := resolver.FilesByGlob(pkg.RpmManifestGlob)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to find rpm manifests by glob: %w", err)
+	}
+
+	for _, location := range manifestFileMatches {
+		reader, err := resolver.FileContentsByLocation(location)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		discoveredPkgs, err := parseRpmManifest(location, reader)
+		internal.CloseAndLogError(reader, location.VirtualPath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to catalog rpm manifest=%+v: %w", location.RealPath, err)
+		}
+
+		pkgs = append(pkgs, discoveredPkgs...)
+	}
+
 	return pkgs, nil, nil
 }

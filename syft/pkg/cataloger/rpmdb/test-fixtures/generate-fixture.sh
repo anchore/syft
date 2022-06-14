@@ -21,3 +21,9 @@ docker exec -i --tty=false generate-rpmdb-fixture bash <<-EOF
 EOF
 
 docker cp generate-rpmdb-fixture:/scratch/Packages .
+
+docker build -o . - <<EOF
+FROM mcr.microsoft.com/cbl-mariner/distroless/base:2.0 as base
+FROM scratch
+COPY --from=base /var/lib/rpmmanifest/container-manifest-2 .
+EOF

@@ -16,6 +16,9 @@ import (
 // rpmdb.sqlite is the sqlite format used in fedora + derivates
 const RpmDBGlob = "**/var/lib/rpm/{Packages,Packages.db,rpmdb.sqlite}"
 
+// Used in CBL-Mariner distroless images
+const RpmManifestGlob = "**/var/lib/rpmmanifest/container-manifest-2"
+
 var (
 	_ FileOwner     = (*RpmdbMetadata)(nil)
 	_ urlIdentifier = (*RpmdbMetadata)(nil)
