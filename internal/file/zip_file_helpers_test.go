@@ -20,8 +20,8 @@ var expectedZipArchiveEntries = []string{
 }
 
 // createZipArchive creates a new ZIP archive file at destinationArchivePath based on the directory found at
-// sourceDirPath.
-func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
+// sourceDirPath. It forces a zip64 archive if zip64 is "0".
+func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath, zip64 string) {
 	t.Helper()
 
 	cwd, err := os.Getwd()
@@ -29,7 +29,7 @@ func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string
 		t.Fatalf("unable to get cwd: %+v", err)
 	}
 
-	cmd := exec.Command("./generate-zip-fixture-from-source-dir.sh", destinationArchivePath, path.Base(sourceDirPath))
+	cmd := exec.Command("./generate-zip-fixture-from-source-dir.sh", destinationArchivePath, path.Base(sourceDirPath), zip64)
 	cmd.Dir = filepath.Join(cwd, "test-fixtures")
 
 	if err := cmd.Start(); err != nil {
@@ -84,7 +84,7 @@ func setupZipFileTest(t testing.TB, sourceDirPath string) string {
 
 	destinationArchiveFilePath := archivePrefix.Name() + ".zip"
 	t.Logf("archive path: %s", destinationArchiveFilePath)
-	createZipArchive(t, sourceDirPath, destinationArchiveFilePath)
+	createZipArchive(t, sourceDirPath, destinationArchiveFilePath, "0")
 
 	t.Cleanup(
 		assertNoError(t,
@@ -109,7 +109,7 @@ func ensureNestedZipExists(t *testing.T, sourceDirPath string) error {
 	t.Helper()
 
 	nestedArchiveFilePath := path.Join(sourceDirPath, "nested.zip")
-	createZipArchive(t, sourceDirPath, nestedArchiveFilePath)
+	createZipArchive(t, sourceDirPath, nestedArchiveFilePath, "0")
 
 	return nil
 }

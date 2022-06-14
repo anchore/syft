@@ -227,7 +227,7 @@ func prepZipSourceFixture(t testing.TB) string {
 
 	t.Logf("archive path: %s", archivePath)
 
-	createZipArchive(t, "zip-source", archivePrefix.Name())
+	createZipArchive(t, "zip-source", archivePrefix.Name(), "0")
 
 	return archivePath
 }
