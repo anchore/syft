@@ -15,12 +15,13 @@ services:
       context: .
       dockerfile: dev.Dockerfile
     volumes:
-      - .:/grype
+      - .:/syft
       - docker-certs-client:/certs/client:ro
     stdin_open: true
     restart: always
     environment:
       DOCKER_TLS_CERTDIR: /certs
+      SKIP_SYMLINK_TESTS: "true"
     networks:
       - docker
     depends_on:

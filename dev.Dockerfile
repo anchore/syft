@@ -3,9 +3,9 @@ FROM docker:latest
 ENV GO_VERSION=1.18.2
 ENV PATH=$PATH:/usr/local/go/bin:/usr/bin/env:/root/go/bin
 
-WORKDIR /grype
+WORKDIR /syft
 
-COPY go.mod go.sum Makefile /grype/
+COPY go.mod go.sum Makefile /syft/
 COPY .github .github
 
 RUN docker-entrypoint.sh sh && \
