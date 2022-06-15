@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -87,7 +88,8 @@ func parseRpmManifest(dbLocation source.Location, reader io.Reader) ([]pkg.Packa
 
 		p, err := parseRpmManifestEntry(strings.TrimSuffix(line, "\n"), dbLocation)
 		if err != nil {
-			return nil, err
+			log.Warnf("unable to parse RPM manifest entry: %w", err)
+			continue
 		}
 
 		if !pkg.IsValid(p) {
