@@ -18,7 +18,7 @@ import (
 // https://github.com/microsoft/CBL-Mariner/blob/3df18fac373aba13a54bd02466e64969574f13af/toolkit/docs/how_it_works/5_misc.md?plain=1#L150
 func parseRpmManifestEntry(entry string, location source.Location) (*pkg.Package, error) {
 	parts := strings.Split(entry, "\t")
-	if len(parts) != 10 {
+	if len(parts) < 10 {
 		return nil, fmt.Errorf("unexpected number of fields in line: %s", entry)
 	}
 
