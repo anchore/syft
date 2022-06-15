@@ -156,6 +156,13 @@ func Test_SourceInfo(t *testing.T) {
 			},
 			expected: []string{
 				"from conan manifest",
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.PortagePkg,
+			},
+			expected: []string{
+				"from portage DB",
 			},
 		},
 	}
