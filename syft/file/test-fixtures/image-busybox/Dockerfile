@@ -1,1 +1,0 @@
-FROM busybox:1.35

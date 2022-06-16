@@ -1,4 +1,0 @@
-NAME="Debian GNU/Linux"
-VERSION_ID="8"
-ID=my-awesome-distro
-ID_LIKE=debian

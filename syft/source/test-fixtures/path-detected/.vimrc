@@ -1,1 +1,0 @@
-" A .vimrc file

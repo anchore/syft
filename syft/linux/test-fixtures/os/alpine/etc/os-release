@@ -1,6 +1,0 @@
-NAME="Alpine Linux"
-ID=alpine
-VERSION_ID=3.11.6
-PRETTY_NAME="Alpine Linux v3.11"
-HOME_URL="https://alpinelinux.org/"
-BUG_REPORT_URL="https://bugs.alpinelinux.org/"

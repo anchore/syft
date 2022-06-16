@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Archiver-Version: Plexus Archiver
-Created-By: Apache Maven 3.6.3
-
-Name: thing-1
-Built-By: ?
-
-Build-Jdk: 14.0.1
-Main-Class: hello.HelloWorld
