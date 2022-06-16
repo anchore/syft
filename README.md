@@ -15,7 +15,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 
 You are invited to join us on June 15th, 11AM-Noon PT for our virtual open source meetup.  
 
-Hosts Amy Bass from Docker Desktop and Christopher Phillips from Anchore OSS will explore how Docker Extensions for Docker Desktop is supporting open source projects and we'll have the latest update on Syft: in-toto attestations.
+Hosts Amy Bass from Docker Desktop and Christopher Phillips from Anchore OSS will explore how Docker Extensions for Docker Desktop is supporting open source projects and we’ll have the latest update on Syft: in-toto attestations.
 
 [Register here ->](https://get.anchore.com/anchore-oss-meetup-jun-15-2022/)
 
@@ -262,6 +262,8 @@ Which would produce output like:
 "alpine-keys","2.4-r1","apkdb-cataloger"
 ...
 ```
+
+Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
 
 #### Multiple outputs
 

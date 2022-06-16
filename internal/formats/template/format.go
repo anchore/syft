@@ -10,7 +10,7 @@ const ID sbom.FormatID = "template"
 func Format() sbom.Format {
 	return sbom.NewFormat(
 		ID,
-		nil,
+		makeEncoderWithTemplate(""),
 		nil,
 		nil,
 	)

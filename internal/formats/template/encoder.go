@@ -3,10 +3,12 @@ package template
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"os"
+	"reflect"
+	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/mitchellh/go-homedir"
@@ -14,7 +16,7 @@ import (
 
 func makeTemplateExecutor(templateFilePath string) (*template.Template, error) {
 	if templateFilePath == "" {
-		return nil, errors.New("please provide a non-empty template path")
+		return nil, errors.New("no template file: please provide a template path")
 	}
 
 	expandedPathToTemplateFile, err := homedir.Expand(templateFilePath)
@@ -28,7 +30,7 @@ func makeTemplateExecutor(templateFilePath string) (*template.Template, error) {
 	}
 
 	templateName := expandedPathToTemplateFile
-	tmpl, err := template.New(templateName).Parse(string(templateContents))
+	tmpl, err := template.New(templateName).Funcs(funcMap).Parse(string(templateContents))
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse template: %w", err)
 	}
@@ -50,3 +52,16 @@ func makeEncoderWithTemplate(templateFilePath string) sbom.Encoder {
 		return tmpl.Execute(w, doc)
 	}
 }
+
+// These are custom functions available to template authors.
+var funcMap = func() template.FuncMap {
+	f := sprig.HermeticTxtFuncMap()
+	f["getLastIndex"] = func(collection interface{}) int {
+		if v := reflect.ValueOf(collection); v.Kind() == reflect.Slice {
+			return v.Len() - 1
+		}
+
+		return 0
+	}
+	return f
+}()
