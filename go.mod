@@ -13,7 +13,7 @@ require (
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20220428202044-a072fa3cb6d7
-	github.com/anchore/stereoscope v0.0.0-20220518185348-c97a3c6ffc67
+	github.com/anchore/stereoscope v0.0.0-20220616165231-b0fd10fdee06
 	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar/v4 v4.0.2
 	github.com/dustin/go-humanize v1.0.0
@@ -110,7 +110,7 @@ require (
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
-	github.com/containerd/containerd v1.5.10 // indirect
+	github.com/containerd/containerd v1.5.13 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.10.1 // indirect
 	github.com/coreos/go-oidc/v3 v3.1.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
