@@ -22,7 +22,42 @@ func TestNewZipFileManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	archiveFilePath := setupZipFileTest(t, sourceDirPath)
+	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
+
+	actual, err := NewZipFileManifest(archiveFilePath)
+	if err != nil {
+		t.Fatalf("unable to extract from unzip archive: %+v", err)
+	}
+
+	if len(expectedZipArchiveEntries) != len(actual) {
+		t.Fatalf("mismatched manifest: %d != %d", len(actual), len(expectedZipArchiveEntries))
+	}
+
+	for _, e := range expectedZipArchiveEntries {
+		_, ok := actual[e]
+		if !ok {
+			t.Errorf("missing path: %s", e)
+		}
+	}
+
+	if t.Failed() {
+		b, err := json.MarshalIndent(actual, "", "  ")
+		if err != nil {
+			t.Fatalf("can't show results: %+v", err)
+		}
+
+		t.Errorf("full result: %s", string(b))
+	}
+}
+
+func TestNewZip64FileManifest(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
+	archiveFilePath := setupZipFileTest(t, sourceDirPath, true)
 
 	actual, err := NewZipFileManifest(archiveFilePath)
 	if err != nil {
@@ -62,7 +97,7 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	archiveFilePath := setupZipFileTest(t, sourceDirPath)
+	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 
 	z, err := NewZipFileManifest(archiveFilePath)
 	if err != nil {
