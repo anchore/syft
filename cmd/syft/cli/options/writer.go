@@ -51,11 +51,12 @@ func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out [
 			file = parts[1]
 		}
 
-		format := syft.FormatByNameWithOption(name, options.Format{TemplateFilePath: templateFilePath})
+		format := syft.FormatByName(name)
 		if format == nil {
 			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
 			continue
 		}
+		format = format.WithOptions(options.Format{TemplateFilePath: templateFilePath})
 
 		out = append(out, sbom.NewWriterOption(format, file))
 	}

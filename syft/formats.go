@@ -13,7 +13,6 @@ import (
 	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/internal/formats/text"
-	options "github.com/anchore/syft/syft/format-options"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -60,10 +59,6 @@ func FormatByID(id sbom.FormatID) sbom.Format {
 		}
 	}
 	return nil
-}
-
-func FormatByNameWithOption(name string, options options.Format) sbom.Format {
-	return FormatByName(name).WithOptions(options)
 }
 
 func FormatByName(name string) sbom.Format {

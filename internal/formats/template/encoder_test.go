@@ -11,8 +11,10 @@ import (
 var updateTmpl = flag.Bool("update-tmpl", false, "update the *.golden files for json encoders")
 
 func Test_makeEncoderWithTemplate(t *testing.T) {
+	f := Format().WithOptions(options.Format{TemplateFilePath: "test-fixtures/csv.template"})
+
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
-		MakeFormatter(options.Format{TemplateFilePath: "test-fixtures/csv.template"}),
+		f,
 		testutils.DirectoryInput(t),
 		*updateTmpl,
 	)

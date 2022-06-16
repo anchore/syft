@@ -17,7 +17,7 @@ func Format() sbom.Format {
 // implementation of sbom.Format interface
 // to make use of format options
 type format struct {
-	opts options.Format
+	templateFilePath string
 }
 
 func (f format) ID() sbom.FormatID {
@@ -29,7 +29,7 @@ func (f format) Decode(reader io.Reader) (*sbom.SBOM, error) {
 }
 
 func (f format) Encode(output io.Writer, s sbom.SBOM) error {
-	tmpl, err := makeTemplateExecutor(f.opts.TemplateFilePath)
+	tmpl, err := makeTemplateExecutor(f.templateFilePath)
 	if err != nil {
 		return err
 	}
@@ -43,6 +43,5 @@ func (f format) Validate(reader io.Reader) error {
 }
 
 func (f format) WithOptions(opts options.Format) sbom.Format {
-	f.opts = opts
-	return f
+	return format{templateFilePath: opts.TemplateFilePath}
 }

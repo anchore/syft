@@ -33,7 +33,6 @@ type format struct {
 	encoder   Encoder
 	decoder   Decoder
 	validator Validator
-	opts      options.Format
 }
 
 // Decoder is a function that can convert an SBOM document of a specific format from a reader into Syft native objects.
@@ -87,6 +86,6 @@ func (f format) Validate(reader io.Reader) error {
 }
 
 func (f format) WithOptions(opts options.Format) Format {
-	f.opts = opts
+	// generic format wrapper doesn't use options
 	return f
 }
