@@ -234,7 +234,7 @@ Where the `formats` available are:
 
 #### Using templates
 
-Syft lets you define custom output formats, using (Go templates)[https://pkg.go.dev/text/template]. Here's how it works:
+Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template). Here's how it works:
 
 - Define your format as a Go template, and save this template as a file.
 
