@@ -63,11 +63,7 @@ func FormatByID(id sbom.FormatID) sbom.Format {
 }
 
 func FormatByNameWithOption(name string, options options.Format) sbom.Format {
-	if name == template.ID.String() {
-		return template.MakeFormatter(options)
-	}
-
-	return FormatByName(name)
+	return FormatByName(name).WithOptions(options)
 }
 
 func FormatByName(name string) sbom.Format {
@@ -96,6 +92,8 @@ func FormatByName(name string) sbom.Format {
 		return FormatByID(table.ID)
 	case "text":
 		return FormatByID(text.ID)
+	case "template":
+		FormatByID(template.ID)
 	}
 
 	return nil

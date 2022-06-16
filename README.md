@@ -248,7 +248,7 @@ Syft lets you define custom output formats, using (Go templates)[https://pkg.go.
 
 Here's what the `csv.tmpl` file might look like:
 ```gotemplate
-"Package","Version Installed", "Found by"
+"Package","Version Installed","Found by"
 {{- range .Artifacts}}
 "{{.Name}}","{{.Version}}","{{.FoundBy}}"
 {{- end}}
@@ -256,7 +256,7 @@ Here's what the `csv.tmpl` file might look like:
 
 Which would produce output like:
 ```text
-"Package","Version Installed", "Found by"
+"Package","Version Installed","Found by"
 "alpine-baselayout","3.2.0-r20","apkdb-cataloger"
 "alpine-baselayout-data","3.2.0-r20","apkdb-cataloger"
 "alpine-keys","2.4-r1","apkdb-cataloger"

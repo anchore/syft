@@ -3,6 +3,8 @@ package sbom
 import (
 	"errors"
 	"io"
+
+	options "github.com/anchore/syft/syft/format-options"
 )
 
 var (
@@ -23,6 +25,7 @@ type Format interface {
 	Encode(io.Writer, SBOM) error
 	Decode(io.Reader) (*SBOM, error)
 	Validate(io.Reader) error
+	WithOptions(options.Format) Format
 }
 
 type format struct {
@@ -30,6 +33,7 @@ type format struct {
 	encoder   Encoder
 	decoder   Decoder
 	validator Validator
+	opts      options.Format
 }
 
 // Decoder is a function that can convert an SBOM document of a specific format from a reader into Syft native objects.
@@ -80,4 +84,9 @@ func (f format) Validate(reader io.Reader) error {
 	}
 
 	return f.validator(reader)
+}
+
+func (f format) WithOptions(opts options.Format) Format {
+	f.opts = opts
+	return f
 }
