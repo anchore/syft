@@ -25,6 +25,10 @@ type Format interface {
 	Validate(io.Reader) error
 }
 
+type formatOptions struct {
+	TemplateFilePath string
+}
+
 type format struct {
 	id        FormatID
 	encoder   Encoder

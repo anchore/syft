@@ -37,7 +37,8 @@ type Application struct {
 	Verbosity  uint   `yaml:"verbosity,omitempty" json:"verbosity" mapstructure:"verbosity"`
 	// -q, indicates to not show any status output to stderr (ETUI or logging UI)
 	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`
-	Outputs            []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
+	Outputs            []string           `yaml:"output" json:"output" mapstructure:"output"` // -o, the format to use for output
+	OutputTemplatePath string             `yaml:"output-template-path" json:"output-template-path" mapstructure:"output-template-path"`
 	File               string             `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
 	CheckForAppUpdate  bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
 	Anchore            anchore            `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise

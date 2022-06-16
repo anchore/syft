@@ -6,14 +6,15 @@ import (
 
 	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/syft"
+	options "github.com/anchore/syft/syft/format-options"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/hashicorp/go-multierror"
 )
 
 // makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
-func MakeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
-	outputOptions, err := parseOutputs(outputs, defaultFile)
+func MakeWriter(outputs []string, defaultFile, templateFilePath string) (sbom.Writer, error) {
+	outputOptions, err := parseOutputs(outputs, defaultFile, templateFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +28,7 @@ func MakeWriter(outputs []string, defaultFile string) (sbom.Writer, error) {
 }
 
 // parseOptions utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseOutputs(outputs []string, defaultFile string) (out []sbom.WriterOption, errs error) {
+func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out []sbom.WriterOption, errs error) {
 	// always should have one option -- we generally get the default of "table", but just make sure
 	if len(outputs) == 0 {
 		outputs = append(outputs, string(table.ID))
@@ -50,7 +51,7 @@ func parseOutputs(outputs []string, defaultFile string) (out []sbom.WriterOption
 			file = parts[1]
 		}
 
-		format := syft.FormatByName(name)
+		format := syft.FormatByNameWithOption(name, options.Format{TemplateFilePath: templateFilePath})
 		if format == nil {
 			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
 			continue

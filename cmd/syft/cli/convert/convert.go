@@ -13,7 +13,7 @@ import (
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
 	log.Warn("convert is an experimental feature, run `syft convert -h` for help")
-	writer, err := options.MakeWriter(app.Outputs, app.File)
+	writer, err := options.MakeWriter(app.Outputs, app.File, "")
 	if err != nil {
 		return err
 	}

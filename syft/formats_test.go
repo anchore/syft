@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/table"
+	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/internal/formats/text"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/require"
@@ -180,6 +181,11 @@ func TestFormatByName(t *testing.T) {
 		{
 			name: "github-json",
 			want: github.ID,
+		},
+
+		{
+			name: "template",
+			want: template.ID,
 		},
 	}
 	for _, tt := range tests {

@@ -15,7 +15,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 
 You are invited to join us on June 15th, 11AM-Noon PT for our virtual open source meetup.  
 
-Hosts Amy Bass from Docker Desktop and Christopher Phillips from Anchore OSS will explore how Docker Extensions for Docker Desktop is supporting open source projects and we’ll have the latest update on Syft: in-toto attestations.
+Hosts Amy Bass from Docker Desktop and Christopher Phillips from Anchore OSS will explore how Docker Extensions for Docker Desktop is supporting open source projects and we'll have the latest update on Syft: in-toto attestations.
 
 [Register here ->](https://get.anchore.com/anchore-oss-meetup-jun-15-2022/)
 
@@ -230,6 +230,38 @@ Where the `formats` available are:
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `github`: A JSON report conforming to GitHub's dependency snapshot format.
 - `table`: A columnar summary (default).
+- `template`: Lets the user specify the output format. See "Using templates" below.
+
+#### Using templates
+
+Syft lets you define custom output formats, using (Go templates)[https://pkg.go.dev/text/template]. Here's how it works:
+
+- Define your format as a Go template, and save this template as a file.
+
+- Set the output format to "template" (`-o template`). 
+
+- Specify the path to the template file (`-t ./path/to/custom.template`).
+
+- Syft's template processing uses the same data models as the `json` output format — so if you're wondering what data is available as you author a template, you can use the output from `syft <image> -o json` as a reference.
+
+**Example:** You could make Syft output data in CSV format by writing a Go template that renders CSV data and then running `syft <image> -o template -t ~/path/to/csv.tmpl`.
+
+Here's what the `csv.tmpl` file might look like:
+```gotemplate
+"Package","Version Installed", "Found by"
+{{- range .Artifacts}}
+"{{.Name}}","{{.Version}}","{{.FoundBy}}"
+{{- end}}
+```
+
+Which would produce output like:
+```text
+"Package","Version Installed", "Found by"
+"alpine-baselayout","3.2.0-r20","apkdb-cataloger"
+"alpine-baselayout-data","3.2.0-r20","apkdb-cataloger"
+"alpine-keys","2.4-r1","apkdb-cataloger"
+...
+```
 
 #### Multiple outputs
 
