@@ -230,7 +230,7 @@ Where the `formats` available are:
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `github`: A JSON report conforming to GitHub's dependency snapshot format.
 - `table`: A columnar summary (default).
-- `template`: Lets the user specify the output format. See "Using templates" below.
+- `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
 
 #### Using templates
 

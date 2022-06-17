@@ -4,31 +4,30 @@ import (
 	"io"
 
 	"github.com/anchore/syft/internal/formats/syftjson"
-	options "github.com/anchore/syft/syft/format-options"
 	"github.com/anchore/syft/syft/sbom"
 )
 
 const ID sbom.FormatID = "template"
 
 func Format() sbom.Format {
-	return format{}
+	return OutputFormat{}
 }
 
 // implementation of sbom.Format interface
 // to make use of format options
-type format struct {
+type OutputFormat struct {
 	templateFilePath string
 }
 
-func (f format) ID() sbom.FormatID {
+func (f OutputFormat) ID() sbom.FormatID {
 	return ID
 }
 
-func (f format) Decode(reader io.Reader) (*sbom.SBOM, error) {
+func (f OutputFormat) Decode(reader io.Reader) (*sbom.SBOM, error) {
 	return nil, sbom.ErrDecodingNotSupported
 }
 
-func (f format) Encode(output io.Writer, s sbom.SBOM) error {
+func (f OutputFormat) Encode(output io.Writer, s sbom.SBOM) error {
 	tmpl, err := makeTemplateExecutor(f.templateFilePath)
 	if err != nil {
 		return err
@@ -38,10 +37,10 @@ func (f format) Encode(output io.Writer, s sbom.SBOM) error {
 	return tmpl.Execute(output, doc)
 }
 
-func (f format) Validate(reader io.Reader) error {
+func (f OutputFormat) Validate(reader io.Reader) error {
 	return sbom.ErrValidationNotSupported
 }
 
-func (f format) WithOptions(opts options.Format) sbom.Format {
-	return format{templateFilePath: opts.TemplateFilePath}
+func (f OutputFormat) WithTemplate(filePath string) sbom.Format {
+	return OutputFormat{templateFilePath: filePath}
 }

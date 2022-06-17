@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/formats/table"
+	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/syft"
-	options "github.com/anchore/syft/syft/format-options"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/hashicorp/go-multierror"
 )
@@ -56,7 +56,10 @@ func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out [
 			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
 			continue
 		}
-		format = format.WithOptions(options.Format{TemplateFilePath: templateFilePath})
+		tmpl, ok := format.(template.OutputFormat)
+		if ok {
+			format = tmpl.WithTemplate(templateFilePath)
+		}
 
 		out = append(out, sbom.NewWriterOption(format, file))
 	}
