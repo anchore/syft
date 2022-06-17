@@ -41,6 +41,7 @@ func (f OutputFormat) Validate(reader io.Reader) error {
 	return sbom.ErrValidationNotSupported
 }
 
-func (f OutputFormat) WithTemplate(filePath string) sbom.Format {
-	return OutputFormat{templateFilePath: filePath}
+// SetTemplatePath sets path for template file
+func (f *OutputFormat) SetTemplatePath(filePath string) {
+	f.templateFilePath = filePath
 }

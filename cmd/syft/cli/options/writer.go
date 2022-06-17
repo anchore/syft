@@ -58,7 +58,8 @@ func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out [
 		}
 		tmpl, ok := format.(template.OutputFormat)
 		if ok {
-			format = tmpl.WithTemplate(templateFilePath)
+			tmpl.SetTemplatePath(templateFilePath)
+			format = tmpl
 		}
 
 		out = append(out, sbom.NewWriterOption(format, file))

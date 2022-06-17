@@ -11,7 +11,8 @@ import (
 var updateTmpl = flag.Bool("update-tmpl", false, "update the *.golden files for json encoders")
 
 func TestFormatWithOption(t *testing.T) {
-	f := OutputFormat{templateFilePath: "test-fixtures/csv.template"}
+	f := OutputFormat{}
+	f.SetTemplatePath("test-fixtures/csv.template")
 
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		f,
