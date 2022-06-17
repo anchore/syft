@@ -15,6 +15,7 @@ import (
 type PackagesOptions struct {
 	Scope                  string
 	Output                 []string
+	OutputTemplatePath     string
 	File                   string
 	Platform               string
 	Host                   string
@@ -34,6 +35,9 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 	cmd.PersistentFlags().StringArrayVarP(&o.Output, "output", "o", FormatAliases(table.ID),
 		fmt.Sprintf("report output format, options=%v", FormatAliases(syft.FormatIDs()...)))
+
+	cmd.PersistentFlags().StringVarP(&o.OutputTemplatePath, "template", "t", "",
+		"specify the path to a Go template file")
 
 	cmd.PersistentFlags().StringVarP(&o.File, "file", "", "",
 		"file to write the default report output to (default is STDOUT)")
@@ -81,6 +85,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("output", flags.Lookup("output")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("output-template-path", flags.Lookup("template")); err != nil {
 		return err
 	}
 

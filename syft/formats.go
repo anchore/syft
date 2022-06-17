@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/table"
+	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/internal/formats/text"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -25,6 +26,7 @@ const (
 	GitHubID              = github.ID
 	SPDXTagValueFormatID  = spdx22tagvalue.ID
 	SPDXJSONFormatID      = spdx22json.ID
+	TemplateFormatID      = template.ID
 )
 
 var formats []sbom.Format
@@ -39,6 +41,7 @@ func init() {
 		spdx22json.Format(),
 		table.Format(),
 		text.Format(),
+		template.Format(),
 	}
 }
 
@@ -84,6 +87,8 @@ func FormatByName(name string) sbom.Format {
 		return FormatByID(table.ID)
 	case "text":
 		return FormatByID(text.ID)
+	case "template":
+		FormatByID(template.ID)
 	}
 
 	return nil
