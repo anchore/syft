@@ -56,8 +56,8 @@ func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out [
 			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
 			continue
 		}
-		tmpl, ok := format.(template.OutputFormat)
-		if ok {
+		
+		if tmpl, ok := format.(template.OutputFormat); ok {
 			tmpl.SetTemplatePath(templateFilePath)
 			format = tmpl
 		}
