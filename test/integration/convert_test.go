@@ -42,32 +42,28 @@ func TestConvertCmd(t *testing.T) {
 			f, err := ioutil.TempFile("", "test-convert-sbom-")
 			require.NoError(t, err)
 			defer func() {
-				err := f.Close()
-				require.NoError(t, err)
 				os.Remove(f.Name())
 			}()
 
 			err = format.Encode(f, sbom)
 			require.NoError(t, err)
 
-			stdr, stdw, err := os.Pipe()
-			require.NoError(t, err)
-			originalStdout := os.Stdout
-			os.Stdout = stdw
-
 			ctx := context.Background()
 			app := &config.Application{Outputs: []string{format.ID().String()}}
 
+			// stdout reduction of test noise
+			rescue := os.Stdout // keep backup of the real stdout
+			os.Stdout, _ = os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+			defer func() {
+				os.Stdout = rescue
+			}()
+
 			err = convert.Run(ctx, app, []string{f.Name()})
 			require.NoError(t, err)
-			stdw.Close()
-
-			out, err := ioutil.ReadAll(stdr)
+			file, err := ioutil.ReadFile(f.Name())
 			require.NoError(t, err)
 
-			os.Stdout = originalStdout
-
-			formatFound := syft.IdentifyFormat(out)
+			formatFound := syft.IdentifyFormat(file)
 			if format.ID() == table.ID {
 				require.Nil(t, formatFound)
 				return

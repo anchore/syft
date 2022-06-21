@@ -190,6 +190,24 @@ func TestPackageURL(t *testing.T) {
 
 			expected: "pkg:maven/g.id/a@v",
 		},
+		{
+			name: "alpm",
+			distro: &linux.Release{
+				ID:      "arch",
+				BuildID: "rolling",
+			},
+			pkg: Package{
+				Name:    "linux",
+				Version: "5.10.0",
+				Type:    AlpmPkg,
+				Metadata: AlpmMetadata{
+					Package: "linux",
+					Version: "5.10.0",
+				},
+			},
+
+			expected: "pkg:alpm/arch/linux@5.10.0?distro=arch-rolling",
+		},
 	}
 
 	var pkgTypes []string

@@ -47,7 +47,7 @@ func TestUnzipToDir(t *testing.T) {
 
 	goldenRootDir := filepath.Join(cwd, "test-fixtures")
 	sourceDirPath := path.Join(goldenRootDir, "zip-source")
-	archiveFilePath := setupZipFileTest(t, sourceDirPath)
+	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 
 	unzipDestinationDir, err := ioutil.TempDir("", "syft-ziputil-contents-TEST-")
 	t.Cleanup(assertNoError(t, func() error {
@@ -227,7 +227,7 @@ func prepZipSourceFixture(t testing.TB) string {
 
 	t.Logf("archive path: %s", archivePath)
 
-	createZipArchive(t, "zip-source", archivePrefix.Name())
+	createZipArchive(t, "zip-source", archivePrefix.Name(), false)
 
 	return archivePath
 }

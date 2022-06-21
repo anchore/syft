@@ -230,6 +230,40 @@ Where the `formats` available are:
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `github`: A JSON report conforming to GitHub's dependency snapshot format.
 - `table`: A columnar summary (default).
+- `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
+
+#### Using templates
+
+Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template). Here's how it works:
+
+- Define your format as a Go template, and save this template as a file.
+
+- Set the output format to "template" (`-o template`). 
+
+- Specify the path to the template file (`-t ./path/to/custom.template`).
+
+- Syft's template processing uses the same data models as the `json` output format — so if you're wondering what data is available as you author a template, you can use the output from `syft <image> -o json` as a reference.
+
+**Example:** You could make Syft output data in CSV format by writing a Go template that renders CSV data and then running `syft <image> -o template -t ~/path/to/csv.tmpl`.
+
+Here's what the `csv.tmpl` file might look like:
+```gotemplate
+"Package","Version Installed","Found by"
+{{- range .Artifacts}}
+"{{.Name}}","{{.Version}}","{{.FoundBy}}"
+{{- end}}
+```
+
+Which would produce output like:
+```text
+"Package","Version Installed","Found by"
+"alpine-baselayout","3.2.0-r20","apkdb-cataloger"
+"alpine-baselayout-data","3.2.0-r20","apkdb-cataloger"
+"alpine-keys","2.4-r1","apkdb-cataloger"
+...
+```
+
+Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
 
 #### Multiple outputs
 

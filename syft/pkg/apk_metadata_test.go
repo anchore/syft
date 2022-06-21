@@ -1,9 +1,10 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/linux"
 	"strings"
 	"testing"
+
+	"github.com/anchore/syft/syft/linux"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/go-test/deep"

@@ -142,6 +142,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from dotnet project assets file",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.AlpmPkg,
+			},
+			expected: []string{
+				"from ALPM DB",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

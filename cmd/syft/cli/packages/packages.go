@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
@@ -25,7 +26,12 @@ import (
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
-	writer, err := options.MakeWriter(app.Outputs, app.File)
+	err := validateOutputOptions(app)
+	if err != nil {
+		return err
+	}
+
+	writer, err := options.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
 	if err != nil {
 		return err
 	}
@@ -181,6 +187,22 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Applicati
 
 	if err := c.Import(context.Background(), importCfg); err != nil {
 		return fmt.Errorf("failed to upload results to host=%s: %+v", app.Anchore.Host, err)
+	}
+
+	return nil
+}
+
+func validateOutputOptions(app *config.Application) error {
+	var usesTemplateOutput bool
+	for _, o := range app.Outputs {
+		if o == template.ID.String() {
+			usesTemplateOutput = true
+			break
+		}
+	}
+
+	if usesTemplateOutput && app.OutputTemplatePath == "" {
+		return fmt.Errorf(`must specify path to template file when using "template" output format`)
 	}
 
 	return nil

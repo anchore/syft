@@ -28,7 +28,7 @@ func TestIsSupportedFormat(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		_, err := MakeWriter(tt.outputs, "")
+		_, err := MakeWriter(tt.outputs, "", "")
 		tt.wantErr(t, err)
 	}
 }

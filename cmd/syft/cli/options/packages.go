@@ -15,6 +15,7 @@ import (
 type PackagesOptions struct {
 	Scope                  string
 	Output                 []string
+	OutputTemplatePath     string
 	File                   string
 	Platform               string
 	Host                   string
@@ -38,6 +39,9 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 	cmd.Flags().StringVarP(&o.File, "file", "", "",
 		"file to write the default report output to (default is STDOUT)")
+
+	cmd.Flags().StringVarP(&o.OutputTemplatePath, "template", "t", "",
+		"specify the path to a Go template file")
 
 	cmd.Flags().StringVarP(&o.Platform, "platform", "", "",
 		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')")
@@ -89,6 +93,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("output", flags.Lookup("output")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("output-template-path", flags.Lookup("template")); err != nil {
 		return err
 	}
 

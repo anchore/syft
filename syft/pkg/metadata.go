@@ -12,6 +12,7 @@ const (
 
 	UnknownMetadataType          MetadataType = "UnknownMetadata"
 	ApkMetadataType              MetadataType = "ApkMetadata"
+	AlpmMetadataType             MetadataType = "AlpmMetadata"
 	DpkgMetadataType             MetadataType = "DpkgMetadata"
 	GemMetadataType              MetadataType = "GemMetadata"
 	JavaMetadataType             MetadataType = "JavaMetadata"
@@ -28,6 +29,7 @@ const (
 
 var AllMetadataTypes = []MetadataType{
 	ApkMetadataType,
+	AlpmMetadataType,
 	DpkgMetadataType,
 	GemMetadataType,
 	JavaMetadataType,
@@ -44,6 +46,7 @@ var AllMetadataTypes = []MetadataType{
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
 	ApkMetadataType:              reflect.TypeOf(ApkMetadata{}),
+	AlpmMetadataType:             reflect.TypeOf(AlpmMetadata{}),
 	DpkgMetadataType:             reflect.TypeOf(DpkgMetadata{}),
 	GemMetadataType:              reflect.TypeOf(GemMetadata{}),
 	JavaMetadataType:             reflect.TypeOf(JavaMetadata{}),

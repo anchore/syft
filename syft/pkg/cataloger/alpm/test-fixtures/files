@@ -1,0 +1,20 @@
+%FILES%
+etc/
+etc/makepkg.conf
+etc/pacman.conf
+usr/
+usr/bin/
+usr/bin/makepkg
+usr/bin/makepkg-template
+usr/bin/pacman
+usr/bin/pacman-conf
+var/
+var/cache/
+var/cache/pacman/
+var/cache/pacman/pkg/
+var/lib/
+var/lib/pacman/
+
+%BACKUP%
+etc/pacman.conf	de541390e52468165b96511c4665bff4
+etc/makepkg.conf	79fce043df7dfc676ae5ecb903762d8b
