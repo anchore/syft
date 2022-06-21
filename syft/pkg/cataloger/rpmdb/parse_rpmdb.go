@@ -14,7 +14,7 @@ import (
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 )
 
-// parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
+// parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
 func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
