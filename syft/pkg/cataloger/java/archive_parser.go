@@ -335,7 +335,7 @@ func pomProjectByParentPath(archivePath, virtualPath string, extractPaths []stri
 
 	projectByParentPath := make(map[string]pkg.PomProject)
 	for filePath, fileContents := range contentsOfMavenProjectFiles {
-		pomProject, err := parsePomXML(filePath, strings.NewReader(fileContents))
+		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents))
 		if err != nil {
 			log.Warnf("failed to parse pom.xml virtualPath=%q path=%q: %+v", virtualPath, filePath, err)
 			continue
