@@ -397,23 +397,24 @@ platform: ""
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
 # catalogers:
-#   - "ruby-gemfile"
-#   - "ruby-gemspec"
-#   - "python-index"
-#   - "python-package"
-#   - "javascript-lock"
-#   - "javascript-package"
-#   - "php-composer-installed"
-#   - "php-composer-lock"
-#   - "dpkgdb"
-#   - "rpmdb"
-#   - "java"
-#   - "apkdb"
-#   - "go-module-binary"
-#   - "go-mod-file"
-#   - "dartlang-lock"
-#   - "rust"
-#   - "dotnet-deps"
+#   - ruby-gemfile
+#   - ruby-gemspec
+#   - python-index
+#   - python-package
+#   - javascript-lock
+#   - javascript-package
+#   - php-composer-installed
+#   - php-composer-lock
+#   - alpmdb
+#   - dpkgdb
+#   - rpmdb
+#   - java
+#   - apkdb
+#   - go-module-binary
+#   - go-mod-file
+#   - dartlang-lock
+#   - rust
+#   - dotnet-deps
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands
