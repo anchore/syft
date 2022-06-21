@@ -4,8 +4,8 @@ import "github.com/anchore/syft/syft/pkg/cataloger/common"
 
 const javaPomCataloger = "java-pom-cataloger"
 
-// NewJavaProjectCataloger returns a cataloger capable of parsing
-// dependency from pom.xml files.
+// NewJavaPomCataloger returns a cataloger capable of parsing
+// dependencies from a pom.xml file.
 // Pom files list dependencies that maybe not be locally installed yet.
 func NewJavaPomCataloger() *common.GenericCataloger {
 	globParsers := make(map[string]common.ParserFn)
