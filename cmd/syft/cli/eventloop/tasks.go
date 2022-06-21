@@ -46,7 +46,7 @@ func generateCatalogPackagesTask(app *config.Application) (Task, error) {
 	}
 
 	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
-		packageCatalog, relationships, theDistro, err := syft.CatalogPackages(src, app.Package.ToConfig())
+		packageCatalog, relationships, theDistro, err := syft.CatalogPackages(src, app.ToCatalogerConfig())
 		if err != nil {
 			return nil, err
 		}

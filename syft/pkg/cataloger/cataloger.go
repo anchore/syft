@@ -6,6 +6,9 @@ catalogers defined in child packages as well as the interface definition to impl
 package cataloger
 
 import (
+	"strings"
+
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
@@ -36,7 +39,7 @@ type Cataloger interface {
 
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
 func ImageCatalogers(cfg Config) []Cataloger {
-	return []Cataloger{
+	return filterCatalogers([]Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
@@ -48,12 +51,12 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
-	}
+	}, cfg.Catalogers)
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
 func DirectoryCatalogers(cfg Config) []Cataloger {
-	return []Cataloger{
+	return filterCatalogers([]Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
@@ -69,12 +72,12 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
-	}
+	}, cfg.Catalogers)
 }
 
 // AllCatalogers returns all implemented catalogers
 func AllCatalogers(cfg Config) []Cataloger {
-	return []Cataloger{
+	return filterCatalogers([]Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
@@ -91,5 +94,35 @@ func AllCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
+	}, cfg.Catalogers)
+}
+
+func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string) []Cataloger {
+	// if cataloger is not set, all applicable catalogers are enabled by default
+	if len(enabledCatalogerPatterns) == 0 {
+		return catalogers
 	}
+	var keepCatalogers []Cataloger
+	for _, cataloger := range catalogers {
+		if contains(enabledCatalogerPatterns, cataloger.Name()) {
+			keepCatalogers = append(keepCatalogers, cataloger)
+			continue
+		}
+		log.Infof("skipping cataloger %q", cataloger.Name())
+	}
+	return keepCatalogers
+}
+
+func contains(enabledPartial []string, catalogerName string) bool {
+	catalogerName = strings.TrimSuffix(catalogerName, "-cataloger")
+	for _, partial := range enabledPartial {
+		partial = strings.TrimSuffix(partial, "-cataloger")
+		if partial == "" {
+			continue
+		}
+		if strings.Contains(catalogerName, partial) {
+			return true
+		}
+	}
+	return false
 }
