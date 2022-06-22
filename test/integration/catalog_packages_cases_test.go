@@ -262,4 +262,14 @@ var commonTestCases = []testCase{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
 		},
 	},
+	{
+		name:        "find java packages based on pom.xml files",
+		pkgType:     pkg.JavaPkg,
+		pkgLanguage: pkg.Java,
+		duplicates:  1, // there is a java jar with this packaged
+		pkgInfo: map[string]string{
+			"joda-time": "2.9.2",
+			"junit":     "4.12",
+		},
+	},
 }
