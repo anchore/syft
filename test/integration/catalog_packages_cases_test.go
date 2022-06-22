@@ -60,6 +60,15 @@ var imageOnlyTestCases = []testCase{
 			"libc-utils": "0.7.2-r0",
 		},
 	},
+	{
+		name:        "find java packages excluding pom.xml", // image scans can not include packages that have yet to be installed
+		pkgType:     pkg.JavaPkg,
+		pkgLanguage: pkg.Java,
+		pkgInfo: map[string]string{
+			"example-java-app-maven": "0.1.0",
+			"joda-time":              "2.9.2",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -218,6 +227,17 @@ var dirOnlyTestCases = []testCase{
 			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
 		},
 	},
+	{
+		name:        "find java packages including pom.xml", // directory scans can include packages that have yet to be installed
+		pkgType:     pkg.JavaPkg,
+		pkgLanguage: pkg.Java,
+		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
+		pkgInfo: map[string]string{
+			"example-java-app-maven": "0.1.0",
+			"joda-time":              "2.9.2",
+			"junit":                  "4.12",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
@@ -244,17 +264,7 @@ var commonTestCases = []testCase{
 			"netbase": "5.4",
 		},
 	},
-	{
-		name:        "find java packages",
-		pkgType:     pkg.JavaPkg,
-		pkgLanguage: pkg.Java,
-		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
-		pkgInfo: map[string]string{
-			"example-java-app-maven": "0.1.0",
-			"joda-time":              "2.9.2",
-			"junit":                  "4.12",
-		},
-	},
+
 	{
 		name:        "find jenkins plugins",
 		pkgType:     pkg.JenkinsPluginPkg,
