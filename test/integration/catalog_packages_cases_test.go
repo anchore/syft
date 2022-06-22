@@ -248,9 +248,11 @@ var commonTestCases = []testCase{
 		name:        "find java packages",
 		pkgType:     pkg.JavaPkg,
 		pkgLanguage: pkg.Java,
+		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
 		pkgInfo: map[string]string{
 			"example-java-app-maven": "0.1.0",
 			"joda-time":              "2.9.2",
+			"junit":                  "4.12",
 		},
 	},
 	{
@@ -260,16 +262,6 @@ var commonTestCases = []testCase{
 		duplicates:  1, // there is a "example-jenkins-plugin" HPI, and nested within that a JAR of the same name
 		pkgInfo: map[string]string{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
-		},
-	},
-	{
-		name:        "find java packages based on pom.xml files",
-		pkgType:     pkg.JavaPkg,
-		pkgLanguage: pkg.Java,
-		duplicates:  1, // there is a java jar with this packaged
-		pkgInfo: map[string]string{
-			"joda-time": "2.9.2",
-			"junit":     "4.12",
 		},
 	},
 }
