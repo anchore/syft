@@ -27,6 +27,8 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+const AllCatalogersPattern = "all"
+
 // Cataloger describes behavior for an object to participate in parsing container image or file system
 // contents for the purpose of discovering Packages. Each concrete implementation should focus on discovering Packages
 // for a specific Package Type or ecosystem.
@@ -99,10 +101,24 @@ func AllCatalogers(cfg Config) []Cataloger {
 	}, cfg.Catalogers)
 }
 
+func RequestedAllCatalogers(cfg Config) bool {
+	for _, enableCatalogerPattern := range cfg.Catalogers {
+		if enableCatalogerPattern == AllCatalogersPattern {
+			return true
+		}
+	}
+	return false
+}
+
 func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string) []Cataloger {
 	// if cataloger is not set, all applicable catalogers are enabled by default
 	if len(enabledCatalogerPatterns) == 0 {
 		return catalogers
+	}
+	for _, enableCatalogerPattern := range enabledCatalogerPatterns {
+		if enableCatalogerPattern == AllCatalogersPattern {
+			return catalogers
+		}
 	}
 	var keepCatalogers []Cataloger
 	for _, cataloger := range catalogers {
