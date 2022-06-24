@@ -66,7 +66,7 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 		return nil, nil, fmt.Errorf("failed to parse APK DB file: %w", err)
 	}
 
-	return pkgs, nil, nil
+	return pkgs, discoverPackageDependencies(pkgs), nil
 }
 
 // parseApkDBEntry reads and parses a single pkg.ApkMetadata element from the stream, returning nil if their are no more entries.
@@ -193,4 +193,44 @@ func processChecksum(value string) *file.Digest {
 		Algorithm: algorithm,
 		Value:     value,
 	}
+}
+
+func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.Relationship) {
+	// map["provides" string] -> packages that provide the "p" key
+	lookup := make(map[string][]*pkg.Package)
+	// read "Provides" (p) and add as keys for lookup keys
+	for _, p := range pkgs {
+		apkg, ok := p.Metadata.(pkg.ApkMetadata)
+		if !ok {
+			// TODO warn
+			continue
+		}
+		for _, provides := range apkg.Provides {
+			// TODO: parse provides to remove =*
+			lookup[provides] = append(lookup[provides], &p)
+		}
+
+	}
+
+	// read "Pull Dependencies" (D) and match with keys
+	for _, p := range pkgs {
+		apkg, ok := p.Metadata.(pkg.ApkMetadata)
+		if !ok {
+			// TODO warn
+			continue
+		}
+
+		for _, dep := range apkg.PullDependencies {
+			// use the lookup to find what pkg we depend on
+			for _, depPkg := range lookup[dep] {
+				// this is a pkg that package "p" depends on... make a relationship
+				relationships = append(relationships, artifact.Relationship{
+					From: p,
+					To:   depPkg,
+					Type: "", // TODO... I think "RUNTIME_DEPENDENCY_OF" ... but really HAS_RUNTIME_DEPENDENCY
+				})
+			}
+		}
+	}
+	return relationships
 }

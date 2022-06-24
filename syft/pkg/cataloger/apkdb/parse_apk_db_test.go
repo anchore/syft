@@ -2,6 +2,10 @@ package apkdb
 
 import (
 	"bufio"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/source"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"os"
 	"testing"
 
@@ -788,6 +792,75 @@ func Test_processChecksum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, &tt.want, processChecksum(tt.value))
+		})
+	}
+}
+
+func Test_discoverPackageDependencies(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		genFn func() ([]*pkg.Package, []artifact.Relationship)
+	}{
+		{
+			name: "has no dependency",
+			genFn: func() ([]*pkg.Package, []artifact.Relationship) {
+				a := &pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"a-thing"},
+					},
+				}
+				a.SetID()
+				b := &pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"b-thing"},
+					},
+				}
+				b.SetID()
+
+				return []*pkg.Package{a, b}, nil
+			},
+		},
+		{
+			name: "has 1 dependency",
+			genFn: func() ([]*pkg.Package, []artifact.Relationship) {
+				a := &pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						PullDependencies: []string{"b-thing"},
+						//Provides:         []string{"a-thing"}, // TODO: do I add a case for this?
+					},
+				}
+				a.SetID()
+				b := &pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"b-thing"},
+					},
+				}
+				b.SetID()
+
+				return []*pkg.Package{a, b}, []artifact.Relationship{
+					{
+						From: a,
+						To:   b,
+						Type: "", // TODO
+					},
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgs, wantRelationships := tt.genFn()
+			gotRelationships := discoverPackageDependencies(pkgs)
+			d := cmp.Diff(wantRelationships, gotRelationships, cmpopts.IgnoreUnexported(pkg.Package{}, source.LocationSet{}))
+			if d != "" {
+				t.Fail()
+				t.Log(d)
+			}
 		})
 	}
 }
