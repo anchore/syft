@@ -75,6 +75,10 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 	var entry pkg.ApkMetadata
 	pkgFields := make(map[string]interface{})
+
+	// We want sane defaults for collections, i.e. an empty array instead of null.
+	pkgFields["D"] = []string{}
+	pkgFields["p"] = []string{}
 	files := make([]pkg.ApkFileRecord, 0)
 
 	var fileRecord *pkg.ApkFileRecord
@@ -92,6 +96,9 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 		value := strings.TrimSpace(fields[1])
 
 		switch key {
+		case "D", "p":
+			entries := strings.Split(value, " ")
+			pkgFields[key] = entries
 		case "F":
 			currentFile := "/" + value
 
@@ -143,7 +150,20 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 		}
 	}
 
-	if err := mapstructure.Decode(pkgFields, &entry); err != nil {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		// By default, mapstructure compares field names in a *case-insensitive* manner.
+		// That would be the wrong approach here, since these apk files use case
+		// *sensitive* field names (e.g. 'P' vs. 'p').
+		MatchName: func(mapKey, fieldName string) bool {
+			return mapKey == fieldName
+		},
+		Result: &entry,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := decoder.Decode(pkgFields); err != nil {
 		return nil, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
 	if entry.Package == "" {

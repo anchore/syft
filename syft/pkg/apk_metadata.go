@@ -28,7 +28,8 @@ type ApkMetadata struct {
 	Description      string          `mapstructure:"T" json:"description"`
 	Size             int             `mapstructure:"S" json:"size" cyclonedx:"size"`
 	InstalledSize    int             `mapstructure:"I" json:"installedSize" cyclonedx:"installedSize"`
-	PullDependencies string          `mapstructure:"D" json:"pullDependencies" cyclonedx:"pullDependencies"`
+	PullDependencies []string        `mapstructure:"D" json:"pullDependencies" cyclonedx:"pullDependencies"`
+	Provides         []string        `mapstructure:"p" json:"provides" cyclonedx:"provides"`
 	PullChecksum     string          `mapstructure:"C" json:"pullChecksum" cyclonedx:"pullChecksum"`
 	GitCommitOfAport string          `mapstructure:"c" json:"gitCommitOfApkPort" cyclonedx:"gitCommitOfApkPort"`
 	Files            []ApkFileRecord `json:"files"`
