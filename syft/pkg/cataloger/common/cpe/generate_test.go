@@ -28,7 +28,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Type:     pkg.DebPkg,
 			},
 			expected: []string{
-				"cpe:2.3:a:name-part:name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name-part:name_part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name-part:python-name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name-part:python_name_part:3.2:*:*:*:*:*:*:*",
@@ -37,12 +36,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:python-name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:python_name_part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name_part:name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name_part:name_part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name_part:python-name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name_part:python_name_part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name-part:name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name-part:name_part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name-part:python-name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name-part:python_name_part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name:name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name:name_part:3.2:*:*:*:*:*:*:*",
@@ -59,7 +56,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:python_name_part:name-part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python_name_part:name_part:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python_name_part:python-name-part:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name_part:python_name_part:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -77,18 +73,15 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:python-name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:python_name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python-name:python-name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python-name:python_name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python:python-name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python:python_name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python_name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python_name:python-name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:python_name:python_name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:alex_goodman:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:alex_goodman:python-name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:alex_goodman:python_name:3.2:*:*:*:*:*:*:*",
@@ -110,7 +103,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Type:     pkg.DebPkg,
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
@@ -132,7 +124,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_lang:name:3.2:*:*:*:*:*:*:*",
@@ -151,9 +142,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 			},
-			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-			},
+			expected: []string{},
 		},
 		{
 			name: "java language with groupID",
@@ -171,10 +160,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:nexus:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:*:*:*",
 			},
@@ -209,9 +196,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:woodstox-codehaus-org:wstx_asl:3.2.7:*:*:*:*:*:*:*",
 				"cpe:2.3:a:woodstox-codehaus-org:wstx-asl:3.2.7:*:*:*:*:*:*:*",
 				"cpe:2.3:a:wstx_asl:wstx-asl:3.2.7:*:*:*:*:*:*:*",
-				"cpe:2.3:a:wstx-asl:wstx-asl:3.2.7:*:*:*:*:*:*:*",
 				"cpe:2.3:a:wstx-asl:wstx_asl:3.2.7:*:*:*:*:*:*:*",
-				"cpe:2.3:a:wstx_asl:wstx_asl:3.2.7:*:*:*:*:*:*:*",
 				"cpe:2.3:a:wstx:wstx_asl:3.2.7:*:*:*:*:*:*:*",
 				"cpe:2.3:a:wstx:wstx-asl:3.2.7:*:*:*:*:*:*:*",
 			},
@@ -225,9 +210,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JenkinsPluginPkg,
 			},
-			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-			},
+			expected: []string{},
 		},
 		{
 			name: "java language - multi tier manifest fields",
@@ -286,7 +269,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:apache_software_foundation:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:apache_software_foundation:cxf:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:apache_software_foundation:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt-bindings-xml:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf-rt-bindings-xml:cxf:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf-rt-bindings-xml:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf-rt-bindings:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
@@ -296,7 +278,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:cxf-rt:cxf:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf-rt:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf:cxf:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf_rt:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf_rt:cxf:3.3.10:*:*:*:*:*:*:*",
@@ -306,7 +287,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:cxf_rt_bindings:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf_rt_bindings_xml:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cxf_rt_bindings_xml:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt_bindings_xml:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -322,7 +302,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:some_vendor:name:3.2:*:*:*:*:*:*:*",
 			},
@@ -340,7 +319,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:1\\:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:some-vendor:name:1\\:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:some_vendor:name:1\\:3.2:*:*:*:*:*:*:*",
 			},
@@ -355,9 +333,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				MetadataType: pkg.DpkgMetadataType,
 				Metadata:     pkg.DpkgMetadata{},
 			},
-			expected: []string{
-				"cpe:2.3:a:name:name:1\\:3.2:*:*:*:*:*:*:*",
-			},
+			expected: []string{},
 		},
 		{
 			name: "cloudbees jenkins package identified via groupId",
@@ -374,7 +350,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
@@ -393,10 +368,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:something:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:something:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:something:something:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -413,9 +386,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-			},
+			expected: []string{},
 		},
 		{
 			name: "jenkins-ci.io package identified via groupId",
@@ -431,9 +402,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-			},
+			expected: []string{},
 		},
 		{
 			name: "jenkins-ci.org package identified via groupId",
@@ -449,9 +418,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{
-				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-			},
+			expected: []string{},
 		},
 		{
 			name: "jira-atlassian filtering",
@@ -472,7 +439,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{
 				"cpe:2.3:a:atlassian:jira-client-core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:atlassian:jira_client_core:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira-client-core:jira-client-core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira-client-core:jira:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira-client-core:jira_client_core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira-client:jira-client-core:3.2:*:*:*:*:*:*:*",
@@ -485,7 +451,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jira_client:jira_client_core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira_client_core:jira-client-core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -505,7 +470,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:cloudbees-installation-manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees-installation-manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees-installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees-installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
@@ -514,7 +478,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:cloudbees_installation:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees_installation:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees_installation_manager:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cloudbees_installation_manager:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
@@ -587,7 +550,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:handlebars:handlebars:3.0.8:*:*:*:*:*:*:*",
 				"cpe:2.3:a:handlebarsjs:handlebars:3.0.8:*:*:*:*:*:*:*", // important!
 				"cpe:2.3:a:jenkins-ci:handlebars:3.0.8:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:handlebars:3.0.8:*:*:*:*:*:*:*",
@@ -619,12 +581,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:active-directory:active-directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:active-directory:active_directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:active:active-directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:active:active_directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:active_directory:active-directory:2.25.1:*:*:*:*:*:*:*",
-				"cpe:2.3:a:active_directory:active_directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins-ci:active-directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins-ci:active_directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:active-directory:2.25.1:*:*:*:*:*:*:*", // important!
@@ -655,7 +615,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:*:bundler:2.1.4:*:*:*:*:*:*:*",
-				"cpe:2.3:a:bundler:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_lang:bundler:2.1.4:*:*:*:*:*:*:*",

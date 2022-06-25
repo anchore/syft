@@ -39,6 +39,10 @@ func Generate(p pkg.Package) []pkg.CPE {
 	cpes := make([]pkg.CPE, 0)
 	for _, product := range products {
 		for _, vendor := range vendors {
+			// avoid generating incorrect cpe...
+			if product == vendor {
+				continue
+			}
 			// prevent duplicate entries...
 			key := fmt.Sprintf("%s|%s|%s", product, vendor, p.Version)
 			if keys.Contains(key) {
