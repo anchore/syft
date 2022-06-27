@@ -96,8 +96,8 @@ func AllCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
-		php.NewPHPComposerLockCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
+		php.NewPHPComposerLockCataloger(),
 	}, cfg.Catalogers)
 }
 
