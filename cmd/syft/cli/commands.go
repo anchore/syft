@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/event"
+	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
 	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -89,6 +90,7 @@ func New() (*cobra.Command, error) {
 	rootCmd.AddCommand(poweruserCmd)
 	rootCmd.AddCommand(Completion())
 	rootCmd.AddCommand(Version(v, app))
+	rootCmd.AddCommand(cranecmd.NewCmdAuthLogin("syft"))
 
 	return rootCmd, err
 }
