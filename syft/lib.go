@@ -64,6 +64,10 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 		return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
 	}
 
+	if cataloger.RequestedAllCatalogers(cfg) {
+		catalogers = cataloger.AllCatalogers(cfg)
+	}
+
 	catalog, relationships, err := cataloger.Catalog(resolver, release, catalogers...)
 	if err != nil {
 		return nil, nil, nil, err
