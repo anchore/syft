@@ -1,16 +1,19 @@
 package syft
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"testing"
 
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
+	"github.com/anchore/syft/internal/formats/github"
 	"github.com/anchore/syft/internal/formats/spdx22json"
 	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
 	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/formats/table"
+	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/internal/formats/text"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/stretchr/testify/require"
@@ -37,6 +40,31 @@ func TestIdentify(t *testing.T) {
 			frmt := IdentifyFormat(by)
 			assert.NotNil(t, frmt)
 			assert.Equal(t, test.expected, frmt.ID())
+		})
+	}
+}
+
+func TestFormats_EmptyInput(t *testing.T) {
+	for _, format := range formats {
+		t.Run(format.ID().String(), func(t *testing.T) {
+			t.Run("format.Decode", func(t *testing.T) {
+				input := bytes.NewReader(nil)
+
+				assert.NotPanics(t, func() {
+					decodedSBOM, err := format.Decode(input)
+					assert.Error(t, err)
+					assert.Nil(t, decodedSBOM)
+				})
+			})
+
+			t.Run("format.Validate", func(t *testing.T) {
+				input := bytes.NewReader(nil)
+
+				assert.NotPanics(t, func() {
+					err := format.Validate(input)
+					assert.Error(t, err)
+				})
+			})
 		})
 	}
 }
@@ -142,6 +170,22 @@ func TestFormatByName(t *testing.T) {
 		{
 			name: "syft-json",
 			want: syftjson.ID,
+		},
+
+		// GitHub JSON
+		{
+			name: "github",
+			want: github.ID,
+		},
+
+		{
+			name: "github-json",
+			want: github.ID,
+		},
+
+		{
+			name: "template",
+			want: template.ID,
 		},
 	}
 	for _, tt := range tests {

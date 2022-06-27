@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/internal/formats/common/testutils"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 var updateSpdxTagValue = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv encoders")
@@ -26,6 +29,38 @@ func TestSPDXTagValueImageEncoder(t *testing.T) {
 		Format(),
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
+		*updateSpdxTagValue,
+		spdxTagValueRedactor,
+	)
+}
+
+func TestSPDXJSONSPDXIDs(t *testing.T) {
+	var pkgs []pkg.Package
+	for _, name := range []string{"some/slashes", "@at-sign", "under_scores"} {
+		p := pkg.Package{
+			Name: name,
+		}
+		p.SetID()
+		pkgs = append(pkgs, p)
+	}
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		Format(),
+		sbom.SBOM{
+			Artifacts: sbom.Artifacts{
+				PackageCatalog: pkg.NewCatalog(pkgs...),
+			},
+			Relationships: nil,
+			Source: source.Metadata{
+				Scheme: source.DirectoryScheme,
+			},
+			Descriptor: sbom.Descriptor{
+				Name:    "syft",
+				Version: "v0.42.0-bogus",
+				Configuration: map[string]string{
+					"config-key": "config-value",
+				},
+			},
+		},
 		*updateSpdxTagValue,
 		spdxTagValueRedactor,
 	)

@@ -28,6 +28,7 @@ can be extended to include specific package metadata struct shapes in the future
 // not matter as long as it is exported.
 type artifactMetadataContainer struct {
 	Apk    pkg.ApkMetadata
+	Alpm   pkg.AlpmMetadata
 	Dpkg   pkg.DpkgMetadata
 	Gem    pkg.GemMetadata
 	Java   pkg.JavaMetadata
@@ -37,6 +38,8 @@ type artifactMetadataContainer struct {
 	Cargo  pkg.CargoPackageMetadata
 	Go     pkg.GolangBinMetadata
 	Php    pkg.PhpComposerJSONMetadata
+	Dart   pkg.DartPubMetadata
+	Dotnet pkg.DotnetDepsMetadata
 }
 
 func main() {

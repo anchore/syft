@@ -30,7 +30,7 @@ var (
 
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
-	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
+	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, location, gbs)
 	main.Version = module.ZeroPseudoVersion("")
 
 	if version, ok := gbs["vcs.revision"]; ok {
@@ -44,34 +44,29 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 		main.Version = version
 	}
 
-	if md, ok := main.Metadata.(pkg.GolangBinMetadata); ok {
-		md.MainModule = true
-		main.Metadata = md
-	}
 	main.SetID()
 	return main
 }
 
-func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
+func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
 
 	p := pkg.Package{
-		FoundBy:  catalogerName,
-		Name:     dep.Path,
-		Version:  dep.Version,
-		Language: pkg.Go,
-		Type:     pkg.GoModulePkg,
-		Locations: []source.Location{
-			location,
-		},
+		FoundBy:      catalogerName,
+		Name:         dep.Path,
+		Version:      dep.Version,
+		Language:     pkg.Go,
+		Type:         pkg.GoModulePkg,
+		Locations:    source.NewLocationSet(location),
 		MetadataType: pkg.GolangBinMetadataType,
 		Metadata: pkg.GolangBinMetadata{
 			GoCompiledVersion: goVersion,
 			H1Digest:          dep.Sum,
 			Architecture:      architecture,
 			BuildSettings:     buildSettings,
+			MainModule:        mainModule,
 		},
 	}
 
@@ -189,8 +184,10 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		if dep == nil {
 			continue
 		}
-
-		pkgs = append(pkgs, newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil))
+		p := newGoBinaryPackage(dep, mod.Main.Path, mod.GoVersion, arch, location, nil)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
+		}
 	}
 
 	// NOTE(jonasagx): this use happened originally while creating unit tests. It might never

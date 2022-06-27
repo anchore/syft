@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -19,8 +18,8 @@ import (
 // toGithubModel converts the provided SBOM to a GitHub dependency model
 func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 	scanTime := time.Now().Format(time.RFC3339) // TODO is there a record of this somewhere?
-	v := version.FromBuild().Version
-	if v == "[not provided]" {
+	v := s.Descriptor.Version
+	if v == "[not provided]" || v == "" {
 		v = "0.0.0-dev"
 	}
 	return DependencySnapshot{
@@ -58,8 +57,9 @@ func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 }
 
 func filesystem(p pkg.Package) string {
-	if len(p.Locations) > 0 {
-		return p.Locations[0].FileSystemID
+	locations := p.Locations.ToSlice()
+	if len(locations) > 0 {
+		return locations[0].FileSystemID
 	}
 	return ""
 }
@@ -76,8 +76,9 @@ func toPath(s source.Metadata, p pkg.Package) string {
 	if inputPath == "." {
 		inputPath = ""
 	}
-	if len(p.Locations) > 0 {
-		location := p.Locations[0]
+	locations := p.Locations.ToSlice()
+	if len(locations) > 0 {
+		location := locations[0]
 		packagePath := location.RealPath
 		if location.VirtualPath != "" {
 			packagePath = location.VirtualPath
@@ -128,7 +129,7 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 
 		name := dependencyName(p)
 		manifest.Resolved[name] = DependencyNode{
-			Purl:         p.PURL,
+			PackageURL:   p.PURL,
 			Metadata:     toDependencyMetadata(p),
 			Relationship: toDependencyRelationshipType(p),
 			Scope:        toDependencyScope(p),

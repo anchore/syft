@@ -147,7 +147,7 @@ lint-fix: ## Auto-format all source code + run golangci lint fixers
 
 .PHONY: check-licenses
 check-licenses: ## Ensure transitive dependencies are compliant with the current license policy
-	$(TEMPDIR)/bouncer check
+	$(TEMPDIR)/bouncer check ./cmd/syft
 
 check-go-mod-tidy:
 	@ .github/scripts/go-mod-tidy-check.sh && echo "go.mod and go.sum are tidy!"
@@ -305,7 +305,7 @@ cli: $(SNAPSHOTDIR) ## Run CLI tests
 	chmod 755 "$(SNAPSHOT_BIN)"
 	$(SNAPSHOT_BIN) version
 	SYFT_BINARY_LOCATION='$(SNAPSHOT_BIN)' \
-		go test -count=1 -v ./test/cli
+		go test -count=1 -timeout=15m -v ./test/cli
 
 .PHONY: changelog
 changelog: clean-changelog CHANGELOG.md

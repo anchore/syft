@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "1d97af55efe9512f",
+   "id": "b85dbb4e6ece5082",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -36,7 +36,7 @@
    }
   },
   {
-   "id": "ad3d1c4abd84bf75",
+   "id": "ceda99598967ae8d",
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
@@ -51,7 +51,7 @@
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
    ],
-   "purl": "a-purl-2",
+   "purl": "pkg:deb/debian/package-2@2.0.1",
    "metadataType": "DpkgMetadata",
    "metadata": {
     "package": "package-2",
@@ -88,7 +88,7 @@
   }
  },
  "schema": {
-  "version": "3.2.2",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.2.2.json"
+  "version": "3.3.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.3.0.json"
  }
 }

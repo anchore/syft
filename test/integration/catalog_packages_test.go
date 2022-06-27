@@ -1,8 +1,9 @@
 package integration
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -53,7 +54,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage")
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -64,6 +65,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	// for image scans we should not expect to see any of the following package types
 	definedLanguages.Remove(pkg.Go.String())
 	definedLanguages.Remove(pkg.Rust.String())
+	definedLanguages.Remove(pkg.Dart.String())
+	definedLanguages.Remove(pkg.Dotnet.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -75,6 +78,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.KbPkg))
 	definedPkgs.Remove(string(pkg.GoModulePkg))
 	definedPkgs.Remove(string(pkg.RustPkg))
+	definedPkgs.Remove(string(pkg.DartPubPkg))
+	definedPkgs.Remove(string(pkg.DotnetPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -85,7 +90,6 @@ func TestPkgCoverageImage(t *testing.T) {
 			pkgCount := 0
 
 			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
-
 				if a.Language.String() != "" {
 					observedLanguages.Add(a.Language.String())
 				}
@@ -162,7 +166,6 @@ func TestPkgCoverageDirectory(t *testing.T) {
 			actualPkgCount := 0
 
 			for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
-
 				observedLanguages.Add(actualPkg.Language.String())
 				observedPkgs.Add(string(actualPkg.Type))
 

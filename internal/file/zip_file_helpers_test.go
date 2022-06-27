@@ -20,16 +20,20 @@ var expectedZipArchiveEntries = []string{
 }
 
 // createZipArchive creates a new ZIP archive file at destinationArchivePath based on the directory found at
-// sourceDirPath.
-func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
+// sourceDirPath. It forces a zip64 archive if zip64 is "0".
+func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string, zip64 bool) {
 	t.Helper()
 
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("unable to get cwd: %+v", err)
 	}
+	zip64Arg := "0"
+	if zip64 {
+		zip64Arg = "1"
+	}
 
-	cmd := exec.Command("./generate-zip-fixture-from-source-dir.sh", destinationArchivePath, path.Base(sourceDirPath))
+	cmd := exec.Command("./generate-zip-fixture-from-source-dir.sh", destinationArchivePath, path.Base(sourceDirPath), zip64Arg)
 	cmd.Dir = filepath.Join(cwd, "test-fixtures")
 
 	if err := cmd.Start(); err != nil {
@@ -66,7 +70,7 @@ func assertNoError(t testing.TB, fn func() error) func() {
 // which should be called (typically deferred) by the caller, the path of the created zip archive, and an error,
 // which should trigger a fatal test failure in the consuming test. The returned cleanup function will never be nil
 // (even if there's an error), and it should always be called.
-func setupZipFileTest(t testing.TB, sourceDirPath string) string {
+func setupZipFileTest(t testing.TB, sourceDirPath string, zip64 bool) string {
 	t.Helper()
 
 	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
@@ -84,7 +88,7 @@ func setupZipFileTest(t testing.TB, sourceDirPath string) string {
 
 	destinationArchiveFilePath := archivePrefix.Name() + ".zip"
 	t.Logf("archive path: %s", destinationArchiveFilePath)
-	createZipArchive(t, sourceDirPath, destinationArchiveFilePath)
+	createZipArchive(t, sourceDirPath, destinationArchiveFilePath, zip64)
 
 	t.Cleanup(
 		assertNoError(t,
@@ -109,7 +113,7 @@ func ensureNestedZipExists(t *testing.T, sourceDirPath string) error {
 	t.Helper()
 
 	nestedArchiveFilePath := path.Join(sourceDirPath, "nested.zip")
-	createZipArchive(t, sourceDirPath, nestedArchiveFilePath)
+	createZipArchive(t, sourceDirPath, nestedArchiveFilePath, false)
 
 	return nil
 }

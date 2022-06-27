@@ -60,7 +60,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		for i := range pkgs {
 			p := &pkgs[i]
 			p.FoundBy = c.Name()
-			p.Locations = []source.Location{dbLocation}
+			p.Locations.Add(dbLocation)
 
 			// the current entry only has what may have been listed in the status file, however, there are additional
 			// files that are listed in multiple other locations. We should retrieve them all and merge the file lists
@@ -88,7 +88,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 		p.Licenses = parseLicensesFromCopyright(copyrightReader)
 
 		// keep a record of the file where this was discovered
-		p.Locations = append(p.Locations, *copyrightLocation)
+		p.Locations.Add(*copyrightLocation)
 	}
 }
 
@@ -117,7 +117,7 @@ loopNewFiles:
 	p.Metadata = metadata
 
 	// persist location information from each new source of information
-	p.Locations = append(p.Locations, infoLocations...)
+	p.Locations.Add(infoLocations...)
 }
 
 func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) ([]pkg.DpkgFileRecord, []source.Location) {

@@ -12,11 +12,14 @@ const (
 
 	UnknownMetadataType          MetadataType = "UnknownMetadata"
 	ApkMetadataType              MetadataType = "ApkMetadata"
+	AlpmMetadataType             MetadataType = "AlpmMetadata"
 	DpkgMetadataType             MetadataType = "DpkgMetadata"
 	GemMetadataType              MetadataType = "GemMetadata"
 	JavaMetadataType             MetadataType = "JavaMetadata"
 	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
 	RpmdbMetadataType            MetadataType = "RpmdbMetadata"
+	DartPubMetadataType          MetadataType = "DartPubMetadata"
+	DotnetDepsMetadataType       MetadataType = "DotnetDepsMetadata"
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
 	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
 	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
@@ -26,11 +29,14 @@ const (
 
 var AllMetadataTypes = []MetadataType{
 	ApkMetadataType,
+	AlpmMetadataType,
 	DpkgMetadataType,
 	GemMetadataType,
 	JavaMetadataType,
 	NpmPackageJSONMetadataType,
 	RpmdbMetadataType,
+	DartPubMetadataType,
+	DotnetDepsMetadataType,
 	PythonPackageMetadataType,
 	RustCargoPackageMetadataType,
 	KbPackageMetadataType,
@@ -40,11 +46,14 @@ var AllMetadataTypes = []MetadataType{
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
 	ApkMetadataType:              reflect.TypeOf(ApkMetadata{}),
+	AlpmMetadataType:             reflect.TypeOf(AlpmMetadata{}),
 	DpkgMetadataType:             reflect.TypeOf(DpkgMetadata{}),
 	GemMetadataType:              reflect.TypeOf(GemMetadata{}),
 	JavaMetadataType:             reflect.TypeOf(JavaMetadata{}),
 	NpmPackageJSONMetadataType:   reflect.TypeOf(NpmPackageJSONMetadata{}),
 	RpmdbMetadataType:            reflect.TypeOf(RpmdbMetadata{}),
+	DartPubMetadataType:          reflect.TypeOf(DartPubMetadata{}),
+	DotnetDepsMetadataType:       reflect.TypeOf(DotnetDepsMetadata{}),
 	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
 	RustCargoPackageMetadataType: reflect.TypeOf(CargoMetadata{}),
 	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),

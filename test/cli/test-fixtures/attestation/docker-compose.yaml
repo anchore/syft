@@ -1,0 +1,116 @@
+version: '3.2'
+services:
+  fulcio-server:
+    image: fulcio_fulcio-server
+    command: [
+      "fulcio-server",
+      "serve",
+      "--host=0.0.0.0",
+      "--port=5555",
+      "--ca=ephemeralca",
+      "--ct-log-url=http://ct_server:6962/test",
+      ]
+    restart: always # keep the server running
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./config/config.json:/etc/fulcio-config/config.json:z
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      - dex-idp
+  mysql:
+    image: gcr.io/trillian-opensource-ci/db_server:3c8193ebb2d7fedb44d18e9c810d0d2e4dbb7e4d
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=password
+    restart: always # keep the MySQL server running
+    healthcheck:
+      test: ["CMD", "/etc/init.d/mysql", "status"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+  ctfe_init:
+    build:
+      context: .
+      dockerfile: Dockerfile.ctfe_init
+    depends_on:
+      - trillian-log-server
+      - fulcio-server
+    volumes:
+      - ctfeConfig:/etc/config/:rw
+  ct_server:
+    image: gcr.io/trillian-opensource-ci/ctfe
+    volumes:
+      - ctfeConfig:/etc/config/:rw
+    command: [
+        "--log_config" ,"/etc/config/ct_server.cfg",
+        "--log_rpc_server", "trillian-log-server:8096",
+        "--http_endpoint", "0.0.0.0:6962",
+        "--alsologtostderr",
+    ]
+    restart: always # retry while ctfe_init is running
+    depends_on:
+      - trillian-log-server
+      - trillian-log-signer
+      - ctfe_init
+    ports:
+      - "6962:6962"
+  dex-idp:
+    image: dexidp/dex:v2.30.0
+    user: root
+    command: [
+      "dex",
+      "serve",
+      "/etc/config/docker-compose-config.yaml",
+      ]
+    restart: always # keep the server running
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config/dex:/etc/config/:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/auth/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+  trillian-log-server:
+    image: gcr.io/trillian-opensource-ci/log_server
+    command: [
+      "--storage_system=mysql",
+      "--mysql_uri=test:password@tcp(mysql:3306)/test",
+      "--rpc_endpoint=0.0.0.0:8096",
+      "--http_endpoint=0.0.0.0:8095",
+      "--alsologtostderr",
+    ]
+    restart: always # retry while mysql is starting up
+    ports:
+      - "8096:8096"
+      - "8095:8095"
+    depends_on:
+      - mysql
+  trillian-log-signer:
+    image: gcr.io/trillian-opensource-ci/log_signer
+    command: [
+      "--storage_system=mysql",
+      "--mysql_uri=test:password@tcp(mysql:3306)/test",
+      "--rpc_endpoint=0.0.0.0:8095",
+      "--http_endpoint=0.0.0.0:8097",
+      "--force_master",
+      "--alsologtostderr",
+    ]
+    restart: always # retry while mysql is starting up
+    ports:
+      - "8097:8097"
+    depends_on:
+      - mysql
+volumes:
+  ctfeConfig: {}

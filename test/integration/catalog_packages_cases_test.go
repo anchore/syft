@@ -60,6 +60,15 @@ var imageOnlyTestCases = []testCase{
 			"libc-utils": "0.7.2-r0",
 		},
 	},
+	{
+		name:        "find java packages excluding pom.xml", // image scans can not include packages that have yet to be installed
+		pkgType:     pkg.JavaPkg,
+		pkgLanguage: pkg.Java,
+		pkgInfo: map[string]string{
+			"example-java-app-maven": "0.1.0",
+			"joda-time":              "2.9.2",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -186,9 +195,59 @@ var dirOnlyTestCases = []testCase{
 			"alcaeus/mongo-php-adapter": "1.1.11",
 		},
 	},
+	{
+		name:        "find pubspec lock packages",
+		pkgType:     pkg.DartPubPkg,
+		pkgLanguage: pkg.Dart,
+		pkgInfo: map[string]string{
+			"ansicolor":  "1.1.1",
+			"archive":    "2.0.13",
+			"args":       "1.6.0",
+			"key_binder": "1.11.20",
+			"ale":        "3.3.0",
+			"analyzer":   "0.40.7",
+		},
+	},
+	{
+		name:        "find dotnet packages",
+		pkgType:     pkg.DotnetPkg,
+		pkgLanguage: pkg.Dotnet,
+		pkgInfo: map[string]string{
+			"AWSSDK.Core": "3.7.10.6",
+			"Microsoft.Extensions.DependencyInjection":              "6.0.0",
+			"Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
+			"Microsoft.Extensions.Logging":                          "6.0.0",
+			"Microsoft.Extensions.Logging.Abstractions":             "6.0.0",
+			"Microsoft.Extensions.Options":                          "6.0.0",
+			"Microsoft.Extensions.Primitives":                       "6.0.0",
+			"Newtonsoft.Json":                                       "13.0.1",
+			"Serilog":                                               "2.10.0",
+			"Serilog.Sinks.Console":                                 "4.0.1",
+			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
+			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
+		},
+	},
+	{
+		name:        "find java packages including pom.xml", // directory scans can include packages that have yet to be installed
+		pkgType:     pkg.JavaPkg,
+		pkgLanguage: pkg.Java,
+		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
+		pkgInfo: map[string]string{
+			"example-java-app-maven": "0.1.0",
+			"joda-time":              "2.9.2",
+			"junit":                  "4.12",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
+	{
+		name:    "find alpm packages",
+		pkgType: pkg.AlpmPkg,
+		pkgInfo: map[string]string{
+			"pacman": "6.0.1-5",
+		},
+	},
 	{
 		name:    "find rpmdb packages",
 		pkgType: pkg.RpmPkg,
@@ -205,15 +264,7 @@ var commonTestCases = []testCase{
 			"netbase": "5.4",
 		},
 	},
-	{
-		name:        "find java packages",
-		pkgType:     pkg.JavaPkg,
-		pkgLanguage: pkg.Java,
-		pkgInfo: map[string]string{
-			"example-java-app-maven": "0.1.0",
-			"joda-time":              "2.9.2",
-		},
-	},
+
 	{
 		name:        "find jenkins plugins",
 		pkgType:     pkg.JenkinsPluginPkg,

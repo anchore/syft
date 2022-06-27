@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	syftFile "github.com/anchore/syft/syft/file"
+
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/anchore/syft/syft/pkg"
 )
 
+//nolint:funlen, gocognit
 func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
-	refs := []cyclonedx.ExternalReference{}
+	var refs []cyclonedx.ExternalReference
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
@@ -46,6 +49,19 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 					Type: cyclonedx.ERTypeWebsite,
 				})
 			}
+		case pkg.JavaMetadata:
+			if len(metadata.ArchiveDigests) > 0 {
+				for _, digest := range metadata.ArchiveDigests {
+					refs = append(refs, cyclonedx.ExternalReference{
+						URL:  "",
+						Type: cyclonedx.ERTypeBuildMeta,
+						Hashes: &[]cyclonedx.Hash{{
+							Algorithm: toCycloneDXAlgorithm(digest.Algorithm),
+							Value:     digest.Value,
+						}},
+					})
+				}
+			}
 		case pkg.PythonPackageMetadata:
 			if metadata.DirectURLOrigin != nil && metadata.DirectURLOrigin.URL != "" {
 				ref := cyclonedx.ExternalReference{
@@ -65,6 +81,21 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	return nil
 }
 
+// supported algorithm in cycloneDX as of 1.4
+// "MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512",
+// "SHA3-256", "SHA3-384", "SHA3-512", "BLAKE2b-256", "BLAKE2b-384", "BLAKE2b-512", "BLAKE3"
+// syft supported digests: cmd/syft/cli/eventloop/tasks.go
+// MD5, SHA1, SHA256
+func toCycloneDXAlgorithm(algorithm string) cyclonedx.HashAlgorithm {
+	validMap := map[string]cyclonedx.HashAlgorithm{
+		"sha1":   cyclonedx.HashAlgorithm("SHA-1"),
+		"md5":    cyclonedx.HashAlgorithm("MD5"),
+		"sha256": cyclonedx.HashAlgorithm("SHA-256"),
+	}
+
+	return validMap[algorithm]
+}
+
 func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 	if c.ExternalReferences == nil {
 		return
@@ -79,6 +110,20 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 	case *pkg.GemMetadata:
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.JavaMetadata:
+		var digests []syftFile.Digest
+		if ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta); ref != nil {
+			if ref.Hashes != nil {
+				for _, hash := range *ref.Hashes {
+					digests = append(digests, syftFile.Digest{
+						Algorithm: syftFile.CleanDigestAlgorithmName(string(hash.Algorithm)),
+						Value:     hash.Value,
+					})
+				}
+			}
+		}
+
+		meta.ArchiveDigests = digests
 	case *pkg.PythonPackageMetadata:
 		if meta.DirectURLOrigin == nil {
 			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}

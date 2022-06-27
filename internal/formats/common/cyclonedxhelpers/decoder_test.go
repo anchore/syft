@@ -1,6 +1,8 @@
 package cyclonedxhelpers
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -282,4 +284,14 @@ func Test_missingDataDecode(t *testing.T) {
 	})
 
 	assert.Len(t, pkg.Licenses, 0)
+}
+
+func Test_missingComponentsDecode(t *testing.T) {
+	bom := &cyclonedx.BOM{}
+	bomBytes, _ := json.Marshal(&bom)
+	decode := GetDecoder(cyclonedx.BOMFileFormatJSON)
+
+	_, err := decode(bytes.NewReader(bomBytes))
+
+	assert.NoError(t, err)
 }

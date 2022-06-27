@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/anchore/syft/syft/source"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestDistroImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-distro-id")
+	sbom, _ := catalogFixtureImage(t, "image-distro-id", source.SquashedScope)
 
 	expected := &linux.Release{
 		PrettyName: "BusyBox v1.31.1",

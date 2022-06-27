@@ -5,14 +5,13 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/anchore/syft/internal/log"
 )
 
 func saveArchiveToTmp(archiveVirtualPath string, reader io.Reader) (string, string, func(), error) {
-	name := path.Base(archiveVirtualPath)
+	name := filepath.Base(archiveVirtualPath)
 	tempDir, err := ioutil.TempDir("", "syft-archive-contents-")
 	if err != nil {
 		return "", "", func() {}, fmt.Errorf("unable to create tempdir for archive processing: %w", err)

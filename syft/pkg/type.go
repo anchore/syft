@@ -9,6 +9,7 @@ const (
 	// the full set of supported packages
 	UnknownPkg       Type = "UnknownPackage"
 	ApkPkg           Type = "apk"
+	AlpmPkg          Type = "alpm"
 	GemPkg           Type = "gem"
 	DebPkg           Type = "deb"
 	RpmPkg           Type = "rpm"
@@ -20,11 +21,14 @@ const (
 	GoModulePkg      Type = "go-module"
 	RustPkg          Type = "rust-crate"
 	KbPkg            Type = "msrc-kb"
+	DartPubPkg       Type = "dart-pub"
+	DotnetPkg        Type = "dotnet"
 )
 
 // AllPkgs represents all supported package types
 var AllPkgs = []Type{
 	ApkPkg,
+	AlpmPkg,
 	GemPkg,
 	DebPkg,
 	RpmPkg,
@@ -36,6 +40,8 @@ var AllPkgs = []Type{
 	GoModulePkg,
 	RustPkg,
 	KbPkg,
+	DartPubPkg,
+	DotnetPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -43,6 +49,8 @@ func (t Type) PackageURLType() string {
 	switch t {
 	case ApkPkg:
 		return "alpine"
+	case AlpmPkg:
+		return "alpm"
 	case GemPkg:
 		return packageurl.TypeGem
 	case DebPkg:
@@ -61,6 +69,10 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGolang
 	case RustPkg:
 		return "cargo"
+	case DartPubPkg:
+		return packageurl.TypePub
+	case DotnetPkg:
+		return packageurl.TypeDotnet
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -82,6 +94,8 @@ func TypeByName(name string) Type {
 		return DebPkg
 	case packageurl.TypeRPM:
 		return RpmPkg
+	case "alpm":
+		return AlpmPkg
 	case "alpine":
 		return ApkPkg
 	case packageurl.TypeMaven:
@@ -98,6 +112,10 @@ func TypeByName(name string) Type {
 		return GemPkg
 	case "cargo", "crate":
 		return RustPkg
+	case packageurl.TypePub:
+		return DartPubPkg
+	case packageurl.TypeDotnet:
+		return DotnetPkg
 	default:
 		return UnknownPkg
 	}

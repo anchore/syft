@@ -3,18 +3,18 @@
  "name": "/some/path",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2021-12-20T19:12:47.869816Z",
+  "created": "2022-05-23T19:10:22.25645Z",
   "creators": [
    "Organization: Anchore, Inc",
-   "Tool: syft-[not provided]"
+   "Tool: syft-v0.42.0-bogus"
   ],
-  "licenseListVersion": "3.15"
+  "licenseListVersion": "3.17"
  },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/dir/some/path-4b896ded-7852-4e31-b764-136b53bdf346",
+ "documentNamespace": "https://anchore.com/syft/dir/some/path-81dbcbfa-251d-4ad5-9b01-be91afb16469",
  "packages": [
   {
-   "SPDXID": "SPDXRef-1d97af55efe9512f",
+   "SPDXID": "SPDXRef-b85dbb4e6ece5082",
    "name": "package-1",
    "licenseConcluded": "MIT",
    "downloadLocation": "NOASSERTION",
@@ -36,7 +36,7 @@
    "versionInfo": "1.0.1"
   },
   {
-   "SPDXID": "SPDXRef-ad3d1c4abd84bf75",
+   "SPDXID": "SPDXRef-ceda99598967ae8d",
    "name": "package-2",
    "licenseConcluded": "NONE",
    "downloadLocation": "NOASSERTION",
@@ -48,7 +48,7 @@
     },
     {
      "referenceCategory": "PACKAGE_MANAGER",
-     "referenceLocator": "a-purl-2",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
      "referenceType": "purl"
     }
    ],

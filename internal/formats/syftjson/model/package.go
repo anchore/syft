@@ -47,7 +47,6 @@ func (p *packageMetadataUnpacker) String() string {
 }
 
 // UnmarshalJSON is a custom unmarshaller for handling basic values and values with ambiguous types.
-// nolint:funlen
 func (p *Package) UnmarshalJSON(b []byte) error {
 	var basic PackageBasicData
 	if err := json.Unmarshal(b, &basic); err != nil {
@@ -61,9 +60,19 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	p.MetadataType = unpacker.MetadataType
+	return unpackMetadata(p, unpacker)
+}
 
+// nolint:funlen
+func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
+	p.MetadataType = unpacker.MetadataType
 	switch p.MetadataType {
+	case pkg.AlpmMetadataType:
+		var payload pkg.AlpmMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
 	case pkg.ApkMetadataType:
 		var payload pkg.ApkMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
@@ -126,6 +135,18 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 		p.Metadata = payload
 	case pkg.GolangBinMetadataType:
 		var payload pkg.GolangBinMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
+	case pkg.DartPubMetadataType:
+		var payload pkg.DartPubMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
+	case pkg.DotnetDepsMetadataType:
+		var payload pkg.DotnetDepsMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
 			return err
 		}

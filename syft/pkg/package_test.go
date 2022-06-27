@@ -3,24 +3,28 @@ package pkg
 import (
 	"testing"
 
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/source"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestFingerprint(t *testing.T) {
+func TestIDUniqueness(t *testing.T) {
+	originalLocation := source.Location{
+		Coordinates: source.Coordinates{
+			RealPath:     "39.0742° N, 21.8243° E",
+			FileSystemID: "Earth",
+		},
+		VirtualPath: "/Ancient-Greece",
+	}
 	originalPkg := Package{
 		Name:    "pi",
 		Version: "3.14",
 		FoundBy: "Archimedes",
-		Locations: []source.Location{
-			{
-				Coordinates: source.Coordinates{
-					RealPath:     "39.0742° N, 21.8243° E",
-					FileSystemID: "Earth",
-				},
-				VirtualPath: "/Ancient-Greece",
-			},
-		},
+		Locations: source.NewLocationSet(
+			originalLocation,
+		),
 		Licenses: []string{
 			"cc0-1.0",
 			"MIT",
@@ -45,9 +49,9 @@ func TestFingerprint(t *testing.T) {
 
 	// this is a set of differential tests, ensuring that select mutations are reflected in the fingerprint (or not)
 	tests := []struct {
-		name            string
-		transform       func(pkg Package) Package
-		expectIdentical bool
+		name                 string
+		transform            func(pkg Package) Package
+		expectedIDComparison assert.ComparisonAssertionFunc
 	}{
 		{
 			name: "go case (no transform)",
@@ -55,7 +59,7 @@ func TestFingerprint(t *testing.T) {
 				// do nothing!
 				return pkg
 			},
-			expectIdentical: true,
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "same metadata is ignored",
@@ -72,7 +76,7 @@ func TestFingerprint(t *testing.T) {
 				}
 				return pkg
 			},
-			expectIdentical: true,
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "licenses order is ignored",
@@ -84,7 +88,7 @@ func TestFingerprint(t *testing.T) {
 				}
 				return pkg
 			},
-			expectIdentical: true,
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "name is reflected",
@@ -92,7 +96,42 @@ func TestFingerprint(t *testing.T) {
 				pkg.Name = "new!"
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
+		},
+		{
+			name: "location is reflected",
+			transform: func(pkg Package) Package {
+				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
+				locations.Add(source.NewLocation("/somewhere/new"))
+				pkg.Locations = locations
+				return pkg
+			},
+			expectedIDComparison: assert.NotEqual,
+		},
+		{
+			name: "same path for different filesystem is NOT reflected",
+			transform: func(pkg Package) Package {
+				newLocation := originalLocation
+				newLocation.FileSystemID = "Mars"
+
+				pkg.Locations = source.NewLocationSet(newLocation)
+				return pkg
+			},
+			expectedIDComparison: assert.Equal,
+		},
+		{
+			name: "multiple equivalent paths for different filesystem is NOT reflected",
+			transform: func(pkg Package) Package {
+				newLocation := originalLocation
+				newLocation.FileSystemID = "Mars"
+
+				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
+				locations.Add(newLocation, originalLocation)
+
+				pkg.Locations = locations
+				return pkg
+			},
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "version is reflected",
@@ -100,7 +139,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.Version = "new!"
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "licenses is reflected",
@@ -108,7 +147,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.Licenses = []string{"new!"}
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "type is reflected",
@@ -116,7 +155,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.Type = RustPkg
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "metadata type is reflected",
@@ -124,7 +163,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.MetadataType = RustCargoPackageMetadataType
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "CPEs is ignored",
@@ -132,7 +171,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.CPEs = []CPE{}
 				return pkg
 			},
-			expectIdentical: true,
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "pURL is ignored",
@@ -140,7 +179,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.PURL = "new!"
 				return pkg
 			},
-			expectIdentical: true,
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "language is reflected",
@@ -148,7 +187,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.Language = Rust
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "foundBy is reflected",
@@ -156,7 +195,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.FoundBy = "new!"
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "metadata mutation is reflected",
@@ -166,7 +205,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.Metadata = metadata
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "new metadata is reflected",
@@ -176,7 +215,7 @@ func TestFingerprint(t *testing.T) {
 				}
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 		{
 			name: "nil metadata is reflected",
@@ -184,7 +223,7 @@ func TestFingerprint(t *testing.T) {
 				pkg.Metadata = nil
 				return pkg
 			},
-			expectIdentical: false,
+			expectedIDComparison: assert.NotEqual,
 		},
 	}
 
@@ -199,12 +238,235 @@ func TestFingerprint(t *testing.T) {
 			transformedFingerprint := transformedPkg.ID()
 			assert.NotEmpty(t, transformedFingerprint)
 
-			if test.expectIdentical {
-				assert.Equal(t, originalFingerprint, transformedFingerprint)
-			} else {
-				assert.NotEqual(t, originalFingerprint, transformedFingerprint)
-			}
-
+			test.expectedIDComparison(t, originalFingerprint, transformedFingerprint)
 		})
+	}
+}
+
+func TestPackage_Merge(t *testing.T) {
+	originalLocation := source.Location{
+		Coordinates: source.Coordinates{
+			RealPath:     "39.0742° N, 21.8243° E",
+			FileSystemID: "Earth",
+		},
+		VirtualPath: "/Ancient-Greece",
+	}
+
+	similarLocation := originalLocation
+	similarLocation.FileSystemID = "Mars"
+
+	tests := []struct {
+		name     string
+		subject  Package
+		other    Package
+		expected *Package
+	}{
+		{
+			name: "merge two packages (different cpes + locations)",
+			subject: Package{
+				Name:    "pi",
+				Version: "3.14",
+				FoundBy: "Archimedes",
+				Locations: source.NewLocationSet(
+					originalLocation,
+				),
+				Licenses: []string{
+					"cc0-1.0",
+					"MIT",
+				},
+				Language: "math",
+				Type:     PythonPkg,
+				CPEs: []CPE{
+					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+				},
+				PURL:         "pkg:pypi/pi@3.14",
+				MetadataType: PythonPackageMetadataType,
+				Metadata: PythonPackageMetadata{
+					Name:                 "pi",
+					Version:              "3.14",
+					License:              "cc0-1.0",
+					Author:               "Archimedes",
+					AuthorEmail:          "Archimedes@circles.io",
+					Platform:             "universe",
+					SitePackagesRootPath: "Pi",
+				},
+			},
+			other: Package{
+				Name:    "pi",
+				Version: "3.14",
+				FoundBy: "Archimedes",
+				Locations: source.NewLocationSet(
+					similarLocation, // NOTE: difference; we have a different layer but the same path
+				),
+				Licenses: []string{
+					"cc0-1.0",
+					"MIT",
+				},
+				Language: "math",
+				Type:     PythonPkg,
+				CPEs: []CPE{
+					must(NewCPE(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`)), // NOTE: difference
+				},
+				PURL:         "pkg:pypi/pi@3.14",
+				MetadataType: PythonPackageMetadataType,
+				Metadata: PythonPackageMetadata{
+					Name:                 "pi",
+					Version:              "3.14",
+					License:              "cc0-1.0",
+					Author:               "Archimedes",
+					AuthorEmail:          "Archimedes@circles.io",
+					Platform:             "universe",
+					SitePackagesRootPath: "Pi",
+				},
+			},
+			expected: &Package{
+				Name:    "pi",
+				Version: "3.14",
+				FoundBy: "Archimedes",
+				Locations: source.NewLocationSet(
+					originalLocation,
+					similarLocation, // NOTE: merge!
+				),
+				Licenses: []string{
+					"cc0-1.0",
+					"MIT",
+				},
+				Language: "math",
+				Type:     PythonPkg,
+				CPEs: []CPE{
+					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+					must(NewCPE(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`)), // NOTE: merge!
+				},
+				PURL:         "pkg:pypi/pi@3.14",
+				MetadataType: PythonPackageMetadataType,
+				Metadata: PythonPackageMetadata{
+					Name:                 "pi",
+					Version:              "3.14",
+					License:              "cc0-1.0",
+					Author:               "Archimedes",
+					AuthorEmail:          "Archimedes@circles.io",
+					Platform:             "universe",
+					SitePackagesRootPath: "Pi",
+				},
+			},
+		},
+		{
+			name: "error when there are different IDs",
+			subject: Package{
+				Name:    "pi",
+				Version: "3.14",
+				FoundBy: "Archimedes",
+				Locations: source.NewLocationSet(
+					originalLocation,
+				),
+				Licenses: []string{
+					"cc0-1.0",
+					"MIT",
+				},
+				Language: "math",
+				Type:     PythonPkg,
+				CPEs: []CPE{
+					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+				},
+				PURL:         "pkg:pypi/pi@3.14",
+				MetadataType: PythonPackageMetadataType,
+				Metadata: PythonPackageMetadata{
+					Name:                 "pi",
+					Version:              "3.14",
+					License:              "cc0-1.0",
+					Author:               "Archimedes",
+					AuthorEmail:          "Archimedes@circles.io",
+					Platform:             "universe",
+					SitePackagesRootPath: "Pi",
+				},
+			},
+			other: Package{
+				Name:    "pi-DIFFERENT", // difference
+				Version: "3.14",
+				FoundBy: "Archimedes",
+				Locations: source.NewLocationSet(
+					originalLocation,
+				),
+				Licenses: []string{
+					"cc0-1.0",
+					"MIT",
+				},
+				Language: "math",
+				Type:     PythonPkg,
+				CPEs: []CPE{
+					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+				},
+				PURL:         "pkg:pypi/pi@3.14",
+				MetadataType: PythonPackageMetadataType,
+				Metadata: PythonPackageMetadata{
+					Name:                 "pi",
+					Version:              "3.14",
+					License:              "cc0-1.0",
+					Author:               "Archimedes",
+					AuthorEmail:          "Archimedes@circles.io",
+					Platform:             "universe",
+					SitePackagesRootPath: "Pi",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.subject.SetID()
+			tt.other.SetID()
+
+			err := tt.subject.merge(tt.other)
+			if tt.expected == nil {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			tt.expected.SetID()
+			require.Equal(t, tt.expected.id, tt.subject.id)
+
+			if diff := cmp.Diff(*tt.expected, tt.subject,
+				cmp.AllowUnexported(Package{}),
+				cmp.Comparer(
+					func(x, y source.LocationSet) bool {
+						return cmp.Equal(
+							x.ToSlice(), y.ToSlice(),
+							cmp.AllowUnexported(source.Location{}),
+							cmp.AllowUnexported(file.Reference{}),
+						)
+					},
+				),
+			); diff != "" {
+				t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsValid(t *testing.T) {
+	cases := []struct {
+		name  string
+		given *Package
+		want  bool
+	}{
+		{
+			name:  "nil",
+			given: nil,
+			want:  false,
+		},
+		{
+			name:  "has-name",
+			given: &Package{Name: "paul"},
+			want:  true,
+		},
+		{
+			name:  "has-no-name",
+			given: &Package{},
+			want:  false,
+		},
+	}
+
+	for _, c := range cases {
+		require.Equal(t, c.want, IsValid(c.given), "when package: %s", c.name)
 	}
 }

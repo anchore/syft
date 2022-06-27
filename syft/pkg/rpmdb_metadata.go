@@ -11,7 +11,13 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-const RpmDBGlob = "**/var/lib/rpm/Packages"
+// Packages is the legacy Berkely db based format
+// Packages.db is the "ndb" format used in SUSE
+// rpmdb.sqlite is the sqlite format used in fedora + derivates
+const RpmDBGlob = "**/var/lib/rpm/{Packages,Packages.db,rpmdb.sqlite}"
+
+// Used in CBL-Mariner distroless images
+const RpmManifestGlob = "**/var/lib/rpmmanifest/container-manifest-2"
 
 var (
 	_ FileOwner     = (*RpmdbMetadata)(nil)

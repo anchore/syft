@@ -51,7 +51,7 @@ func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to catalog python package=%+v: %w", location.RealPath, err)
 		}
-		if p != nil {
+		if pkg.IsValid(p) {
 			pkgs = append(pkgs, *p)
 		}
 	}
@@ -80,7 +80,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.FileResolver, metad
 		Name:         metadata.Name,
 		Version:      metadata.Version,
 		FoundBy:      c.Name(),
-		Locations:    sources,
+		Locations:    source.NewLocationSet(sources...),
 		Licenses:     licenses,
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,

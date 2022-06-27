@@ -55,6 +55,10 @@ func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
 		IDLike:           d.IDLike,
 		Version:          d.Version,
 		VersionID:        d.VersionID,
+		VersionCodename:  d.VersionCodename,
+		BuildID:          d.BuildID,
+		ImageID:          d.ImageID,
+		ImageVersion:     d.ImageVersion,
 		Variant:          d.Variant,
 		VariantID:        d.VariantID,
 		HomeURL:          d.HomeURL,
@@ -175,8 +179,9 @@ func toPackageModel(p pkg.Package) model.Package {
 		licenses = p.Licenses
 	}
 
-	var coordinates = make([]source.Coordinates, len(p.Locations))
-	for i, l := range p.Locations {
+	locations := p.Locations.ToSlice()
+	var coordinates = make([]source.Coordinates, len(locations))
+	for i, l := range locations {
 		coordinates[i] = l.Coordinates
 	}
 

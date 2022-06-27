@@ -38,6 +38,10 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 		IDLike:           d.IDLike,
 		Version:          d.Version,
 		VersionID:        d.VersionID,
+		VersionCodename:  d.VersionCodename,
+		BuildID:          d.BuildID,
+		ImageID:          d.ImageID,
+		ImageVersion:     d.ImageVersion,
 		Variant:          d.Variant,
 		VariantID:        d.VariantID,
 		HomeURL:          d.HomeURL,
@@ -53,7 +57,8 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationship
 
 	for _, p := range catalog.Sorted() {
 		idMap[string(p.ID())] = p
-		for _, l := range p.Locations {
+		locations := p.Locations.ToSlice()
+		for _, l := range locations {
 			idMap[string(l.Coordinates.ID())] = l.Coordinates
 		}
 	}
@@ -166,7 +171,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
-		Locations:    locations,
+		Locations:    source.NewLocationSet(locations...),
 		Licenses:     p.Licenses,
 		Language:     p.Language,
 		Type:         p.Type,
@@ -176,8 +181,12 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Metadata:     p.Metadata,
 	}
 
-	out.SetID()
+	// we don't know if this package ID is truly unique, however, we need to trust the user input in case there are
+	// external references to it. That is, we can't derive our own ID (using pkg.SetID()) since consumers won't
+	// be able to historically interact with data that references the IDs from the original SBOM document being decoded now.
+	out.OverrideID(artifact.ID(p.ID))
 
+	// this alias mapping is currently defunct, but could be useful in the future.
 	id := string(out.ID())
 	if id != p.ID {
 		idAliases[p.ID] = id

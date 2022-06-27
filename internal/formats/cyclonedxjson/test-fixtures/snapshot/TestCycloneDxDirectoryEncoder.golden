@@ -1,15 +1,15 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:498e659b-0758-4a7f-816e-91bee18df634",
+  "serialNumber": "urn:uuid:3ea3363f-3945-4859-9ba1-9a395983d248",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-03-08T12:30:39Z",
+    "timestamp": "2022-05-23T12:05:00-07:00",
     "tools": [
       {
         "vendor": "anchore",
         "name": "syft",
-        "version": "[not provided]"
+        "version": "v0.42.0-bogus"
       }
     ],
     "component": {
@@ -20,6 +20,7 @@
   },
   "components": [
     {
+      "bom-ref": "b85dbb4e6ece5082",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -56,11 +57,12 @@
       ]
     },
     {
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=ceda99598967ae8d",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
       "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-      "purl": "a-purl-2",
+      "purl": "pkg:deb/debian/package-2@2.0.1",
       "properties": [
         {
           "name": "syft:package:foundBy",

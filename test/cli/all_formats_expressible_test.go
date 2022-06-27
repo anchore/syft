@@ -2,10 +2,12 @@ package cli
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/syft"
 )
 
@@ -23,7 +25,12 @@ func TestAllFormatsExpressible(t *testing.T) {
 	require.NotEmpty(t, formats)
 	for _, o := range formats {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {
-			cmd, stdout, stderr := runSyft(t, nil, "dir:./test-fixtures/image-pkg-coverage", "-o", string(o))
+			args := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", string(o)}
+			if o == template.ID {
+				args = append(args, "-t", "test-fixtures/csv.template")
+			}
+
+			cmd, stdout, stderr := runSyft(t, nil, args...)
 			for _, traitFn := range commonAssertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}

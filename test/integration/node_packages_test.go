@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -14,7 +15,7 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 	foundPackages := internal.NewStringSet()
 
 	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.NpmPkg) {
-		for _, actualLocation := range actualPkg.Locations {
+		for _, actualLocation := range actualPkg.Locations.ToSlice() {
 			if strings.Contains(actualLocation.RealPath, "node_modules") {
 				t.Errorf("found packages from package-lock.json in node_modules: %s", actualLocation)
 			}
@@ -33,19 +34,21 @@ func TestYarnPackageLockDirectory(t *testing.T) {
 	sbom, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
 
 	foundPackages := internal.NewStringSet()
+	expectedPackages := internal.NewStringSet("async@0.9.2", "async@3.2.3", "merge-objects@1.0.5", "should-type@1.3.0", "@4lolo/resize-observer-polyfill@1.5.2")
 
 	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.NpmPkg) {
-		for _, actualLocation := range actualPkg.Locations {
+		for _, actualLocation := range actualPkg.Locations.ToSlice() {
 			if strings.Contains(actualLocation.RealPath, "node_modules") {
 				t.Errorf("found packages from yarn.lock in node_modules: %s", actualLocation)
 			}
 		}
-		foundPackages.Add(actualPkg.Name)
+		foundPackages.Add(actualPkg.Name + "@" + actualPkg.Version)
 	}
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
-	const expectedPackageCount = 5
-	if len(foundPackages) != expectedPackageCount {
-		t.Errorf("found the wrong set of yarn.lock packages (expected: %d, actual: %d)", expectedPackageCount, len(foundPackages))
+	if len(foundPackages) != len(expectedPackages) {
+		t.Errorf("found the wrong set of yarn.lock packages (expected: %d, actual: %d)", len(expectedPackages), len(foundPackages))
+	} else if !reflect.DeepEqual(foundPackages, expectedPackages) {
+		t.Errorf("found the wrong set of yarn.lock packages (expected: %+q, actual: %+q)", expectedPackages.ToSlice(), foundPackages.ToSlice())
 	}
 }

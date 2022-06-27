@@ -26,6 +26,34 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
 		},
 		{
+			name: "pub",
+			pkg: Package{
+				Name:    "bad-name",
+				Version: "0.1.0",
+				Type:    DartPubPkg,
+				Metadata: DartPubMetadata{
+					Name:      "name",
+					Version:   "0.2.0",
+					HostedURL: "pub.hosted.org",
+				},
+			},
+			expected: "pkg:pub/name@0.2.0?hosted_url=pub.hosted.org",
+		},
+
+		{
+			name: "dotnet",
+			pkg: Package{
+				Name:    "Microsoft.CodeAnalysis.Razor",
+				Version: "2.2.0",
+				Type:    DotnetPkg,
+				Metadata: DotnetDepsMetadata{
+					Name:    "Microsoft.CodeAnalysis.Razor",
+					Version: "2.2.0",
+				},
+			},
+			expected: "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
+		},
+		{
 			name: "python",
 			pkg: Package{
 				Name:    "bad-name",
@@ -161,6 +189,24 @@ func TestPackageURL(t *testing.T) {
 			},
 
 			expected: "pkg:maven/g.id/a@v",
+		},
+		{
+			name: "alpm",
+			distro: &linux.Release{
+				ID:      "arch",
+				BuildID: "rolling",
+			},
+			pkg: Package{
+				Name:    "linux",
+				Version: "5.10.0",
+				Type:    AlpmPkg,
+				Metadata: AlpmMetadata{
+					Package: "linux",
+					Version: "5.10.0",
+				},
+			},
+
+			expected: "pkg:alpm/arch/linux@5.10.0?distro=arch-rolling",
 		},
 	}
 

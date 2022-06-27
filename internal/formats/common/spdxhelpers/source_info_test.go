@@ -18,10 +18,10 @@ func Test_SourceInfo(t *testing.T) {
 			name: "locations are captured",
 			input: pkg.Package{
 				// note: no type given
-				Locations: []source.Location{
+				Locations: source.NewLocationSet(
 					source.NewVirtualLocation("/a-place", "/b-place"),
 					source.NewVirtualLocation("/c-place", "/d-place"),
-				},
+				),
 			},
 			expected: []string{
 				"from the following paths",
@@ -124,6 +124,30 @@ func Test_SourceInfo(t *testing.T) {
 			},
 			expected: []string{
 				"from PHP composer manifest",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.DartPubPkg,
+			},
+			expected: []string{
+				"from pubspec manifest",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.DotnetPkg,
+			},
+			expected: []string{
+				"from dotnet project assets file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.AlpmPkg,
+			},
+			expected: []string{
+				"from ALPM DB",
 			},
 		},
 	}
