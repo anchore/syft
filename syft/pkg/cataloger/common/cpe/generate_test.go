@@ -665,6 +665,27 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:stephanie_morillo:bundler:2.1.4:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "regression: python redis shadows normal redis",
+			p: pkg.Package{
+				Name:     "redis",
+				Version:  "2.1.4",
+				Type:     pkg.PythonPkg,
+				FoundBy:  "some-analyzer",
+				Language: pkg.Python,
+			},
+			expected: []string{
+				"cpe:2.3:a:python-redis:python-redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-redis:python_redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python-redis:redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python:python-redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python:python_redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python:redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_redis:python-redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_redis:python_redis:2.1.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:python_redis:redis:2.1.4:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
