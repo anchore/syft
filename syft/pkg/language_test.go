@@ -128,6 +128,14 @@ func TestLanguageByName(t *testing.T) {
 			language: JavaScript,
 		},
 		{
+			name:     "node.js",
+			language: JavaScript,
+		},
+		{
+			name:     "nodejs",
+			language: JavaScript,
+		},
+		{
 			name:     "pypi",
 			language: Python,
 		},

@@ -58,7 +58,7 @@ func LanguageByName(name string) Language {
 		return PHP
 	case packageurl.TypeGolang, string(GoModulePkg), string(Go):
 		return Go
-	case packageurl.TypeNPM, string(JavaScript):
+	case packageurl.TypeNPM, string(JavaScript), "nodejs", "node.js":
 		return JavaScript
 	case packageurl.TypePyPi, string(Python):
 		return Python
