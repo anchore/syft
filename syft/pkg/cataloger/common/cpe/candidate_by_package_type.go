@@ -11,6 +11,12 @@ type candidateComposite struct {
 	candidateAddition
 }
 
+type candidateRemovalComposite struct {
+	pkg.Type
+	candidateKey
+	candidateRemovals
+}
+
 // defaultCandidateAdditions is all of the known cases for product and vendor field values that should be used when
 // select package information is discovered
 var defaultCandidateAdditions = buildCandidateLookup(
@@ -123,6 +129,16 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		},
 	})
 
+var defaultCandidateRemovals = buildCandidateRemovalLookup(
+	[]candidateRemovalComposite{
+		// Python packages
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{VendorsToRemove: []string{"redis"}},
+		},
+	})
+
 // buildCandidateLookup is a convenience function for creating the defaultCandidateAdditions set
 func buildCandidateLookup(cc []candidateComposite) (ca map[pkg.Type]map[candidateKey]candidateAddition) {
 	ca = make(map[pkg.Type]map[candidateKey]candidateAddition)
@@ -136,10 +152,28 @@ func buildCandidateLookup(cc []candidateComposite) (ca map[pkg.Type]map[candidat
 	return ca
 }
 
+// buildCandidateRemovalLookup is a convenience function for creating the defaultCandidateRemovals set
+func buildCandidateRemovalLookup(cc []candidateRemovalComposite) (ca map[pkg.Type]map[candidateKey]candidateRemovals) {
+	ca = make(map[pkg.Type]map[candidateKey]candidateRemovals)
+	for _, c := range cc {
+		if _, ok := ca[c.Type]; !ok {
+			ca[c.Type] = make(map[candidateKey]candidateRemovals)
+		}
+		ca[c.Type][c.candidateKey] = c.candidateRemovals
+	}
+	return ca
+}
+
 // candidateKey represents the set of inputs that should be matched on in order to signal more candidate additions to be used.
 type candidateKey struct {
 	Vendor  string
 	PkgName string
+}
+
+// candidateRemovals are the specific removals that should be considered during CPE generation (given a specific candidateKey)
+type candidateRemovals struct {
+	ProductsToRemove []string
+	VendorsToRemove  []string
 }
 
 // candidateAddition are the specific additions that should be considered during CPE generation (given a specific candidateKey)
@@ -188,6 +222,38 @@ func findAdditionalProducts(allAdditions map[pkg.Type]map[candidateKey]candidate
 		PkgName: pkgName,
 	}]; ok {
 		products = append(products, addition.AdditionalProducts...)
+	}
+
+	return products
+}
+
+// findVendorsToRemove searches all possible vendor removals that could be removed during the CPE generation process (given package info + a vendor candidate)
+func findVendorsToRemove(allRemovals map[pkg.Type]map[candidateKey]candidateRemovals, ty pkg.Type, pkgName string) (vendors []string) {
+	removals, ok := allRemovals[ty]
+	if !ok {
+		return nil
+	}
+
+	if removal, ok := removals[candidateKey{
+		PkgName: pkgName,
+	}]; ok {
+		vendors = append(vendors, removal.VendorsToRemove...)
+	}
+
+	return vendors
+}
+
+// findProductsToRemove searches all possible product removals that could be removed during the CPE generation process (given package info)
+func findProductsToRemove(allRemovals map[pkg.Type]map[candidateKey]candidateRemovals, ty pkg.Type, pkgName string) (products []string) {
+	removals, ok := allRemovals[ty]
+	if !ok {
+		return nil
+	}
+
+	if removal, ok := removals[candidateKey{
+		PkgName: pkgName,
+	}]; ok {
+		products = append(products, removal.ProductsToRemove...)
 	}
 
 	return products

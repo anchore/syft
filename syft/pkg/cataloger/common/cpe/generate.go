@@ -110,6 +110,9 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, p.Type, p.Name, vendor)...)
 	}
 
+	// remove known mis
+	vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
+
 	return vendors.uniqueValues()
 }
 
@@ -141,6 +144,9 @@ func candidateProducts(p pkg.Package) []string {
 
 	// add known candidate additions
 	products.addValue(findAdditionalProducts(defaultCandidateAdditions, p.Type, p.Name)...)
+
+	// remove known candidate removals
+	products.removeByValue(findProductsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
 
 	return products.uniqueValues()
 }
