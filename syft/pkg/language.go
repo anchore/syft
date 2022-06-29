@@ -26,6 +26,7 @@ const (
 	Haskell         Language = "haskell"
 	Binary          Language = "binary"
 	File            Language = "file"
+	Elixir          Language = "elixir"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.
@@ -42,6 +43,7 @@ var AllLanguages = []Language{
 	Swift,
 	CPP,
 	Haskell,
+	Elixir,
 }
 
 // String returns the string representation of the language.
