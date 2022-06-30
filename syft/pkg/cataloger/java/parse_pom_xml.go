@@ -63,6 +63,11 @@ func newPackageFromPom(dep gopom.Dependency) *pkg.Package {
 		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
 		MetadataType: pkg.JavaMetadataType,
 		FoundBy:      javaPomCataloger,
+		Metadata: pkg.JavaMetadata{
+			PomProperties: &pkg.PomProperties{
+				GroupID: dep.GroupID,
+			},
+		},
 	}
 
 	p.Metadata = pkg.JavaMetadata{PURL: packageURL(*p)}
