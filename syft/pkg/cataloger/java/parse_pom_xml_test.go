@@ -26,10 +26,7 @@ func Test_parserPomXML(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PURL: "pkg:maven/joda/joda-time@2.9.2",
-						PomProperties: &pkg.PomProperties{
-							GroupID: "joda",
-						},
+						PURL: "pkg:maven/com.joda/joda-time@2.9.2",
 					},
 				},
 				{
@@ -41,9 +38,6 @@ func Test_parserPomXML(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PURL: "pkg:maven/junit/junit@4.12",
-						PomProperties: &pkg.PomProperties{
-							GroupID: "junit",
-						},
 					},
 				},
 			},

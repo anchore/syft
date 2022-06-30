@@ -15,7 +15,7 @@
 	<dependencies>
 		<!-- tag::joda[] -->
 		<dependency>
-			<groupId>joda</groupId>
+			<groupId>com.joda</groupId>
 			<artifactId>joda-time</artifactId>
 			<version>2.9.2</version>
 		</dependency>
