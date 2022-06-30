@@ -69,6 +69,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(string(pkg.Swift.String()))
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
+	definedLanguages.Remove(pkg.Beam.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -86,6 +87,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.ConanPkg))
 	definedPkgs.Remove(string(pkg.HackagePkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.HexPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

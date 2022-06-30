@@ -62,6 +62,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:hackage/HTTP@4000.3.16",
 			want: Haskell,
 		},
+		{
+			purl: "pkg:hex/hpax/hpax@0.1.1",
+			want: Beam,
+		},
 	}
 
 	var languages []string
