@@ -13,6 +13,7 @@ var globsForbiddenFromBeingOwned = []string{
 	ApkDBGlob,
 	DpkgDBGlob,
 	RpmDBGlob,
+	"**/rpm/{Packages,Packages.db,rpmdb.sqlite}",
 	// DEB packages share common copyright info between, this does not mean that sharing these paths implies ownership.
 	"/usr/share/doc/**/copyright",
 }
