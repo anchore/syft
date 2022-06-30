@@ -54,7 +54,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, false)
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()

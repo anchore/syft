@@ -23,7 +23,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope)
+			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, false)
 
 			output := bytes.NewBufferString("")
 			err := syftjson.Format().Encode(output, sbom)
