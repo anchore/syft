@@ -38,7 +38,7 @@ func parseRebarLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 		}
 		if len(tokens) < 5 {
 			name, hash := tokens[1], tokens[2]
-			sourcePkg, _ := pkgMap[name]
+			sourcePkg := pkgMap[name]
 			metadata := sourcePkg.Metadata.(pkg.HexMetadata)
 			if metadata.PkgHash == "" {
 				metadata.PkgHash = hash
