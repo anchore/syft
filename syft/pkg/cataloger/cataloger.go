@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/beam"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
@@ -81,6 +82,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		beam.NewBeamLockCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -115,6 +117,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		beam.NewBeamLockCataloger(),
 	}, cfg.Catalogers)
 }
 

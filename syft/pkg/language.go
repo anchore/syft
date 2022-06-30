@@ -27,6 +27,7 @@ const (
 	Binary          Language = "binary"
 	File            Language = "file"
 	Elixir          Language = "elixir"
+	Beam            Language = "beam"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.
@@ -44,6 +45,7 @@ var AllLanguages = []Language{
 	CPP,
 	Haskell,
 	Elixir,
+	Beam,
 }
 
 // String returns the string representation of the language.
@@ -86,6 +88,8 @@ func LanguageByName(name string) Language {
 		return CPP
 	case packageurl.TypeHackage, string(Haskell):
 		return Haskell
+	case packageurl.TypeHex, string(Beam), "elixir", "erlang":
+		return Beam
 	default:
 		return UnknownLanguage
 	}

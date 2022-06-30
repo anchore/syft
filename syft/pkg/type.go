@@ -22,6 +22,7 @@ const (
 	GoModulePkg           Type = "go-module"
 	GraalVMNativeImagePkg Type = "graalvm-native-image"
 	HackagePkg            Type = "hackage"
+	HexPkg                Type = "hex"
 	JavaPkg               Type = "java-archive"
 	JenkinsPluginPkg      Type = "jenkins-plugin"
 	KbPkg                 Type = "msrc-kb"
@@ -42,11 +43,14 @@ var AllPkgs = []Type{
 	CocoapodsPkg,
 	ConanPkg,
 	DartPubPkg,
+	DartPubPkg,
 	DebPkg,
+	DotnetPkg,
 	DotnetPkg,
 	GemPkg,
 	GoModulePkg,
 	HackagePkg,
+	HexPkg,
 	JavaPkg,
 	JenkinsPluginPkg,
 	KbPkg,
@@ -71,16 +75,20 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeConan
 	case DartPubPkg:
 		return packageurl.TypePub
+	case DebPkg:
+		return "deb"
 	case DotnetPkg:
 		return packageurl.TypeDotnet
 	case GemPkg:
 		return packageurl.TypeGem
-	case DebPkg:
-		return "deb"
+	case HexPkg:
+		return packageurl.TypeHex
 	case GoModulePkg:
 		return packageurl.TypeGolang
 	case HackagePkg:
 		return packageurl.TypeHackage
+	case JavaPkg, JenkinsPluginPkg:
+		return packageurl.TypeMaven
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
 	case PythonPkg:
@@ -89,8 +97,6 @@ func (t Type) PackageURLType() string {
 		return "portage"
 	case NpmPkg:
 		return packageurl.TypeNPM
-	case JavaPkg, JenkinsPluginPkg:
-		return packageurl.TypeMaven
 	case RpmPkg:
 		return packageurl.TypeRPM
 	case RustPkg:
@@ -112,7 +118,7 @@ func TypeFromPURL(p string) Type {
 
 func TypeByName(name string) Type {
 	switch name {
-	case packageurl.TypeDebian, "deb":
+	case packageurl.TypeDebian:
 		return DebPkg
 	case packageurl.TypeRPM:
 		return RpmPkg
@@ -146,6 +152,8 @@ func TypeByName(name string) Type {
 		return HackagePkg
 	case "portage":
 		return PortagePkg
+	case packageurl.TypeHex:
+		return HexPkg
 	default:
 		return UnknownPkg
 	}

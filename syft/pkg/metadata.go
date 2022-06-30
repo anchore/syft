@@ -31,6 +31,7 @@ const (
 	ConanLockMetadataType        MetadataType = "ConanLockMetadataType"
 	PortageMetadataType          MetadataType = "PortageMetadata"
 	HackageMetadataType          MetadataType = "HackageMetadataType"
+	BeamHexMetadataType          MetadataType = "BeamHexMetadataType"
 )
 
 var AllMetadataTypes = []MetadataType{
@@ -54,6 +55,7 @@ var AllMetadataTypes = []MetadataType{
 	ConanLockMetadataType,
 	PortageMetadataType,
 	HackageMetadataType,
+	BeamHexMetadataType,
 }
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
@@ -77,6 +79,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	ConanLockMetadataType:        reflect.TypeOf(ConanLockMetadata{}),
 	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
 	HackageMetadataType:          reflect.TypeOf(HackageMetadata{}),
+	BeamHexMetadataType:          reflect.TypeOf(HexMetadata{}),
 }
 
 func CleanMetadataType(typ MetadataType) MetadataType {
