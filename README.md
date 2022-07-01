@@ -38,6 +38,8 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Debian (dpkg)
 - Dotnet (deps.json)
 - Objective-C (cocoapods)
+- Elixir (mix)
+- Erlang (rebar3)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
 - Java (jar, ear, war, par, sar, native-image)
