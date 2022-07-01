@@ -1,6 +1,8 @@
 package cpp
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -8,7 +10,6 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"github.com/pelletier/go-toml"
 )
 
 // integrity check
@@ -20,20 +21,29 @@ type Conanfile struct {
 
 // parseConanfile is a parser function for conanfile.txt contents, returning all packages discovered.
 func parseConanfile(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	tree, err := toml.LoadReader(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to load conanfile.txt for parsing: %w", err)
-	}
-
-	conanfile := Conanfile{}
-	err = tree.Unmarshal(&conanfile)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse conanfile.txt: %w", err)
-	}
-
+	r := bufio.NewReader(reader)
+	inRequirements := false
 	pkgs := []*pkg.Package{}
-	for _, requiredPackage := range conanfile.Requires {
-		splits := strings.Split(strings.TrimSpace(requiredPackage), "/")
+	for {
+		line, err := r.ReadString('\n')
+		switch {
+		case errors.Is(io.EOF, err):
+			return pkgs, nil, nil
+		case err != nil:
+			return nil, nil, fmt.Errorf("failed to parse conanfile.txt file: %w", err)
+		}
+
+		switch {
+		case strings.Contains(line, "[requires]"):
+			inRequirements = true
+		case strings.ContainsAny(line, "[]#"):
+			inRequirements = false
+		}
+
+		splits := strings.Split(strings.TrimSpace(line), "/")
+		if len(splits) < 2 || !inRequirements {
+			continue
+		}
 		pkgName, pkgVersion := splits[0], splits[1]
 		pkgs = append(pkgs, &pkg.Package{
 			Name:         pkgName,
@@ -47,5 +57,4 @@ func parseConanfile(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 			},
 		})
 	}
-	return pkgs, nil, nil
 }

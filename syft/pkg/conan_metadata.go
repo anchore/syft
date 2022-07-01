@@ -14,7 +14,7 @@ func (m ConanMetadata) PackageURL(_ *linux.Release) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(
-		packageurl.TypeDotnet,
+		packageurl.TypeConan,
 		"",
 		m.Name,
 		m.Version,
