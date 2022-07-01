@@ -150,6 +150,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from ALPM DB",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.ConanPkg,
+			},
+			expected: []string{
+				"from conan manifest",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

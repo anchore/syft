@@ -30,6 +30,8 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 ### Supported Ecosystems
 
 - Alpine (apk)
+- C (conan)
+- C++ (conan)
 - Dart (pubs)
 - Debian (dpkg)
 - Dotnet (deps.json)

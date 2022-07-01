@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
@@ -75,6 +76,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
+		cpp.NewConanfileCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -100,6 +102,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		dotnet.NewDotnetDepsCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
 		php.NewPHPComposerLockCataloger(),
+		cpp.NewConanfileCataloger(),
 	}, cfg.Catalogers)
 }
 

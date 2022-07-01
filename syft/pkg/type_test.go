@@ -68,6 +68,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:alpm/arch/linux@5.10.0?arch=x86_64&distro=arch",
 			expected: AlpmPkg,
 		},
+		{
+			purl:     "pkg:conan/catch2@2.13.8",
+			expected: ConanPkg,
+		},
 	}
 
 	var pkgTypes []string

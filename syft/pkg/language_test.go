@@ -50,6 +50,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",
 			want: Java,
 		},
+		{
+			purl: "pkg:conan/catch2@2.13.8",
+			want: CPP,
+		},
 	}
 
 	var languages []string
@@ -182,6 +186,14 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "unknown",
 			language: UnknownLanguage,
+		},
+		{
+			name:     "conan",
+			language: CPP,
+		},
+		{
+			name:     "c++",
+			language: CPP,
 		},
 	}
 
