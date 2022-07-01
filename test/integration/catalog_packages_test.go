@@ -67,6 +67,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Rust.String())
 	definedLanguages.Remove(pkg.Dart.String())
 	definedLanguages.Remove(pkg.Dotnet.String())
+	definedLanguages.Remove(string(pkg.Swift.String()))
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -80,6 +81,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.RustPkg))
 	definedPkgs.Remove(string(pkg.DartPubPkg))
 	definedPkgs.Remove(string(pkg.DotnetPkg))
+	definedPkgs.Remove(string(pkg.CocoapodsPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

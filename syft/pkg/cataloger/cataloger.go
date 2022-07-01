@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
+	"github.com/anchore/syft/syft/pkg/cataloger/swift"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -75,6 +76,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
+		swift.NewCocoapodsCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -100,6 +102,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		dotnet.NewDotnetDepsCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
 		php.NewPHPComposerLockCataloger(),
+		swift.NewCocoapodsCataloger(),
 	}, cfg.Catalogers)
 }
 

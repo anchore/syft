@@ -63,7 +63,7 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 	return unpackMetadata(p, unpacker)
 }
 
-// nolint:funlen
+// nolint:funlen,gocognit,gocyclo
 func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	p.MetadataType = unpacker.MetadataType
 	switch p.MetadataType {
@@ -141,6 +141,12 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 		p.Metadata = payload
 	case pkg.DartPubMetadataType:
 		var payload pkg.DartPubMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
+	case pkg.CocoapodsMetadataType:
+		var payload pkg.CocoapodsMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
 			return err
 		}

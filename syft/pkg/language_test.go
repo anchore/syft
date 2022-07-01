@@ -50,6 +50,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",
 			want: Java,
 		},
+		{
+			purl: "pkg:cocoapods/GlossButtonNode@3.1.2",
+			want: Swift,
+		},
 	}
 
 	var languages []string
@@ -178,6 +182,18 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "dotnet",
 			language: Dotnet,
+		},
+		{
+			name:     "swift",
+			language: Swift,
+		},
+		{
+			name:     "pod",
+			language: Swift,
+		},
+		{
+			name:     "cocoapods",
+			language: Swift,
 		},
 		{
 			name:     "unknown",

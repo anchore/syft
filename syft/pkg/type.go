@@ -23,6 +23,7 @@ const (
 	KbPkg            Type = "msrc-kb"
 	DartPubPkg       Type = "dart-pub"
 	DotnetPkg        Type = "dotnet"
+	CocoapodsPkg     Type = "pod"
 )
 
 // AllPkgs represents all supported package types
@@ -42,6 +43,7 @@ var AllPkgs = []Type{
 	KbPkg,
 	DartPubPkg,
 	DotnetPkg,
+	CocoapodsPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -73,6 +75,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypePub
 	case DotnetPkg:
 		return packageurl.TypeDotnet
+	case CocoapodsPkg:
+		return packageurl.TypeCocoapods
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -116,6 +120,8 @@ func TypeByName(name string) Type {
 		return DartPubPkg
 	case packageurl.TypeDotnet:
 		return DotnetPkg
+	case packageurl.TypeCocoapods:
+		return CocoapodsPkg
 	default:
 		return UnknownPkg
 	}

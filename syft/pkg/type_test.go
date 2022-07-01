@@ -68,6 +68,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:alpm/arch/linux@5.10.0?arch=x86_64&distro=arch",
 			expected: AlpmPkg,
 		},
+		{
+			purl:     "pkg:cocoapods/GlossButtonNode@3.1.2",
+			expected: CocoapodsPkg,
+		},
 	}
 
 	var pkgTypes []string

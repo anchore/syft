@@ -25,6 +25,7 @@ const (
 	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
 	GolangBinMetadataType        MetadataType = "GolangBinMetadata"
 	PhpComposerJSONMetadataType  MetadataType = "PhpComposerJsonMetadata"
+	CocoapodsMetadataType        MetadataType = "CocoapodsMetadataType"
 )
 
 var AllMetadataTypes = []MetadataType{
@@ -42,6 +43,7 @@ var AllMetadataTypes = []MetadataType{
 	KbPackageMetadataType,
 	GolangBinMetadataType,
 	PhpComposerJSONMetadataType,
+	CocoapodsMetadataType,
 }
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
@@ -59,4 +61,5 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),
 	GolangBinMetadataType:        reflect.TypeOf(GolangBinMetadata{}),
 	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
+	CocoapodsMetadataType:        reflect.TypeOf(CocoapodsMetadata{}),
 }
