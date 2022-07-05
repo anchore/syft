@@ -168,6 +168,19 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
+		name:        "find conan packages",
+		pkgType:     pkg.ConanPkg,
+		pkgLanguage: pkg.CPP,
+		pkgInfo: map[string]string{
+			"catch2":     "2.13.8",
+			"docopt.cpp": "0.6.3",
+			"fmt":        "8.1.1",
+			"spdlog":     "1.9.2",
+			"sdl":        "2.0.20",
+			"fltk":       "1.3.8",
+		},
+	},
+	{
 		name:        "find rust crates",
 		pkgType:     pkg.RustPkg,
 		pkgLanguage: pkg.Rust,
@@ -264,7 +277,6 @@ var commonTestCases = []testCase{
 			"netbase": "5.4",
 		},
 	},
-
 	{
 		name:        "find jenkins plugins",
 		pkgType:     pkg.JenkinsPluginPkg,

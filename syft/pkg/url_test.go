@@ -208,6 +208,21 @@ func TestPackageURL(t *testing.T) {
 
 			expected: "pkg:alpm/arch/linux@5.10.0?distro=arch-rolling",
 		},
+		{
+			name: "conan",
+			pkg: Package{
+				Name:         "catch2",
+				Version:      "2.13.8",
+				Type:         ConanPkg,
+				Language:     CPP,
+				MetadataType: ConanaMetadataType,
+				Metadata: ConanMetadata{
+					Name:    "catch2",
+					Version: "2.13.8",
+				},
+			},
+			expected: "pkg:conan/catch2@2.13.8",
+		},
 	}
 
 	var pkgTypes []string

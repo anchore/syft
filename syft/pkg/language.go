@@ -21,6 +21,7 @@ const (
 	Rust            Language = "rust"
 	Dart            Language = "dart"
 	Dotnet          Language = "dotnet"
+	CPP             Language = "c++"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.
@@ -34,6 +35,7 @@ var AllLanguages = []Language{
 	Rust,
 	Dart,
 	Dotnet,
+	CPP,
 }
 
 // String returns the string representation of the language.
@@ -70,6 +72,8 @@ func LanguageByName(name string) Language {
 		return Dart
 	case packageurl.TypeDotnet:
 		return Dotnet
+	case packageurl.TypeConan, string(CPP):
+		return CPP
 	default:
 		return UnknownLanguage
 	}
