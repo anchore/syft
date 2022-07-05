@@ -7,13 +7,17 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
+// AltRpmDBGlob allows db matches against new locations introduced in fedora:{36,37}
+// See https://github.com/anchore/syft/issues/1077 for larger context
+const AltRpmDBGlob = "**/rpm/{Packages,Packages.db,rpmdb.sqlite}"
+
 var globsForbiddenFromBeingOwned = []string{
 	// any OS DBs should automatically be ignored to prevent cyclic issues (e.g. the "rpm" RPM owns the path to the
 	// RPM DB, so if not ignored that package would own all other packages on the system).
 	ApkDBGlob,
 	DpkgDBGlob,
 	RpmDBGlob,
-	"**/rpm/{Packages,Packages.db,rpmdb.sqlite}",
+	AltRpmDBGlob,
 	// DEB packages share common copyright info between, this does not mean that sharing these paths implies ownership.
 	"/usr/share/doc/**/copyright",
 }
