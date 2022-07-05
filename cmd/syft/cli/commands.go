@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/event"
+	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
 	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +31,7 @@ const indent = "  "
 // at this level. Values from the config should only be used after `app.LoadAllValues` has been called.
 // Cobra does not have knowledge of the user provided flags until the `RunE` block of each command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
+// nolint:funlen
 func New() (*cobra.Command, error) {
 	app := &config.Application{}
 
@@ -82,13 +84,22 @@ func New() (*cobra.Command, error) {
 		return nil, err
 	}
 
+	// commands to add to root
+	cmds := []*cobra.Command{
+		packagesCmd,
+		attestCmd,
+		convertCmd,
+		poweruserCmd,
+		poweruserCmd,
+		Completion(),
+		Version(v, app),
+		cranecmd.NewCmdAuthLogin("syft"),
+	}
+
 	// Add sub-commands.
-	rootCmd.AddCommand(packagesCmd)
-	rootCmd.AddCommand(attestCmd)
-	rootCmd.AddCommand(convertCmd)
-	rootCmd.AddCommand(poweruserCmd)
-	rootCmd.AddCommand(Completion())
-	rootCmd.AddCommand(Version(v, app))
+	for _, cmd := range cmds {
+		rootCmd.AddCommand(cmd)
+	}
 
 	return rootCmd, err
 }
