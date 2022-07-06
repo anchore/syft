@@ -158,6 +158,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from conan manifest",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.PortagePkg,
+			},
+			expected: []string{
+				"from portage DB",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

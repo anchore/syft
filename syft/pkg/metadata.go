@@ -26,6 +26,7 @@ const (
 	GolangBinMetadataType        MetadataType = "GolangBinMetadata"
 	PhpComposerJSONMetadataType  MetadataType = "PhpComposerJsonMetadata"
 	ConanaMetadataType           MetadataType = "ConanaMetadataType"
+	PortageMetadataType          MetadataType = "PortageMetadata"
 )
 
 var AllMetadataTypes = []MetadataType{
@@ -44,6 +45,7 @@ var AllMetadataTypes = []MetadataType{
 	GolangBinMetadataType,
 	PhpComposerJSONMetadataType,
 	ConanaMetadataType,
+	PortageMetadataType,
 }
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
@@ -62,4 +64,5 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	GolangBinMetadataType:        reflect.TypeOf(GolangBinMetadata{}),
 	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
 	ConanaMetadataType:           reflect.TypeOf(ConanMetadata{}),
+	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
 }

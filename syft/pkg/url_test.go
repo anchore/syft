@@ -233,6 +233,7 @@ func TestPackageURL(t *testing.T) {
 
 	// testing microsoft packages is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
+	expectedTypes.Remove(string(PortagePkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

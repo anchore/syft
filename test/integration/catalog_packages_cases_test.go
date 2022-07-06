@@ -278,6 +278,14 @@ var commonTestCases = []testCase{
 		},
 	},
 	{
+		name:    "find portage packages",
+		pkgType: pkg.PortagePkg,
+		pkgInfo: map[string]string{
+			"app-containers/skopeo": "1.5.1",
+		},
+	},
+
+	{
 		name:        "find jenkins plugins",
 		pkgType:     pkg.JenkinsPluginPkg,
 		pkgLanguage: pkg.Java,

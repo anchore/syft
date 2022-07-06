@@ -24,6 +24,7 @@ const (
 	DartPubPkg       Type = "dart-pub"
 	DotnetPkg        Type = "dotnet"
 	ConanPkg         Type = "conan"
+	PortagePkg       Type = "portage"
 )
 
 // AllPkgs represents all supported package types
@@ -44,6 +45,7 @@ var AllPkgs = []Type{
 	DartPubPkg,
 	DotnetPkg,
 	ConanPkg,
+	PortagePkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -77,6 +79,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeDotnet
 	case ConanPkg:
 		return packageurl.TypeConan
+	case PortagePkg:
+		return "portage"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -122,6 +126,8 @@ func TypeByName(name string) Type {
 		return DotnetPkg
 	case packageurl.TypeConan:
 		return ConanPkg
+	case "portage":
+		return PortagePkg
 	default:
 		return UnknownPkg
 	}
