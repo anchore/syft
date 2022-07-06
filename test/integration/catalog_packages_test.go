@@ -82,7 +82,6 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.DartPubPkg))
 	definedPkgs.Remove(string(pkg.DotnetPkg))
 	definedPkgs.Remove(string(pkg.ConanPkg))
-	definedPkgs.Remove(string(pkg.PortagePkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
