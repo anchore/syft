@@ -80,7 +80,6 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 }
 
 func addFiles(resolver source.FileResolver, dbLocation source.Location, entry *pkg.PortageMetadata) error {
-
 	contentsReader, err := resolver.FileContentsByLocation(dbLocation)
 	if err != nil {
 		return err
