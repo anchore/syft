@@ -102,7 +102,7 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, format, predicateType, sv),
+		execWorker(app, *si, format, predicateType, sv, app.File),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -137,7 +137,7 @@ func parseImageSource(userInput string, app *config.Application) (s *source.Inpu
 	return si, nil
 }
 
-func execWorker(app *config.Application, sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
+func execWorker(app *config.Application, sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier, file string) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -163,7 +163,7 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 			return
 		}
 
-		err = generateAttestation(app, sbomBytes, src, sv, predicateType)
+		err = generateAttestation(app, sbomBytes, src, sv, predicateType, file)
 		if err != nil {
 			errs <- err
 			return
@@ -172,7 +172,7 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 	return errs
 }
 
-func generateAttestation(app *config.Application, predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) error {
+func generateAttestation(app *config.Application, predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string, file string) error {
 	switch len(src.Image.Metadata.RepoDigests) {
 	case 0:
 		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
@@ -219,7 +219,12 @@ func generateAttestation(app *config.Application, predicate []byte, src *source.
 		bus.Publish(partybus.Event{
 			Type: event.Exit,
 			Value: func() error {
-				_, err := os.Stdout.Write(signedPayload)
+				var err error
+				if file != "" {
+					err = os.WriteFile(file, signedPayload, 0600)
+				} else {
+					_, err = os.Stdout.Write(signedPayload)
+				}
 				return err
 			},
 		})
