@@ -26,6 +26,15 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
 		},
 		{
+			name: "golang short name",
+			pkg: Package{
+				Name:    "go.opencensus.io",
+				Version: "v0.23.0",
+				Type:    GoModulePkg,
+			},
+			expected: "pkg:golang/go.opencensus.io@v0.23.0",
+		},
+		{
 			name: "pub",
 			pkg: Package{
 				Name:    "bad-name",
@@ -237,7 +246,7 @@ func TestPackageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.pkg.Type != "" {
+			if test.pkg.Type != "" && !contains(pkgTypes, string(test.pkg.Type)) {
 				pkgTypes = append(pkgTypes, string(test.pkg.Type))
 			}
 			actual := URL(test.pkg, test.distro)
@@ -249,4 +258,14 @@ func TestPackageURL(t *testing.T) {
 		})
 	}
 	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes, "missing one or more package types to test against (maybe a package type was added?)")
+}
+
+func contains(values []string, val string) bool {
+	for _, v := range values {
+		if val == v {
+			return true
+		}
+	}
+
+	return false
 }
