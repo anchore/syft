@@ -37,6 +37,10 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from PHP composer manifest"
 	case pkg.CocoapodsPkg:
 		answer = "acquired package info from installed cocoapods manifest file"
+	case pkg.ConanPkg:
+		answer = "acquired package info from conan manifest"
+	case pkg.PortagePkg:
+		answer = "acquired package info from portage DB"
 	default:
 		answer = "acquired package info from the following paths"
 	}

@@ -54,6 +54,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:cocoapods/GlossButtonNode@3.1.2",
 			want: Swift,
 		},
+		{
+			purl: "pkg:conan/catch2@2.13.8",
+			want: CPP,
+		},
 	}
 
 	var languages []string
@@ -198,6 +202,14 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "unknown",
 			language: UnknownLanguage,
+		},
+		{
+			name:     "conan",
+			language: CPP,
+		},
+		{
+			name:     "c++",
+			language: CPP,
 		},
 	}
 

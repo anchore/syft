@@ -151,8 +151,20 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 			return err
 		}
 		p.Metadata = payload
+	case pkg.ConanaMetadataType:
+		var payload pkg.ConanMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
 	case pkg.DotnetDepsMetadataType:
 		var payload pkg.DotnetDepsMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
+	case pkg.PortageMetadataType:
+		var payload pkg.PortageMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
 			return err
 		}

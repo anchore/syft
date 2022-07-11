@@ -25,7 +25,7 @@ Given a version number format `MODEL.REVISION.ADDITION`:
 When adding a new `pkg.*Metadata` that is assigned to the `pkg.Package.Metadata` struct field it is important that a few things
 are done:
 
-- a new integration test case is added to `test/integration/pkg_cases_test.go` that exercises the new package type with the new metadata
+- a new integration test case is added to `test/integration/catalog_packages_cases_test.go` that exercises the new package type with the new metadata
 - the new metadata struct is added to the `artifactMetadataContainer` struct within `schema/json/generate.go`
 
 ## Generating a New Schema

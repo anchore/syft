@@ -14,4 +14,4 @@ jobs:
       - uses: actions/add-to-project@main
         with:
           project-url: https://github.com/orgs/anchore/projects/22
-          github-token: ${{ secrets.CI_WRITE_GITHUB_TOKEN }}
+          github-token: ${{ secrets.ANCHORE_TOOLS_OPS_TEST }}

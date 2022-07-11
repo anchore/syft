@@ -26,7 +26,7 @@ func Test_parserPomXML(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PURL: "pkg:maven/joda-time/joda-time@2.9.2",
+						PURL: "pkg:maven/com.joda/joda-time@2.9.2",
 					},
 				},
 				{

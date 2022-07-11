@@ -72,6 +72,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:cocoapods/GlossButtonNode@3.1.2",
 			expected: CocoapodsPkg,
 		},
+		{
+			purl:     "pkg:conan/catch2@2.13.8",
+			expected: ConanPkg,
+		},
 	}
 
 	var pkgTypes []string
@@ -83,6 +87,7 @@ func TestTypeFromPURL(t *testing.T) {
 	// testing microsoft packages and jenkins-plugins is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(JenkinsPluginPkg))
+	expectedTypes.Remove(string(PortagePkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

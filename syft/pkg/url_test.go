@@ -222,6 +222,21 @@ func TestPackageURL(t *testing.T) {
 			},
 			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
 		},
+		{
+			name: "conan",
+			pkg: Package{
+				Name:         "catch2",
+				Version:      "2.13.8",
+				Type:         ConanPkg,
+				Language:     CPP,
+				MetadataType: ConanaMetadataType,
+				Metadata: ConanMetadata{
+					Name:    "catch2",
+					Version: "2.13.8",
+				},
+			},
+			expected: "pkg:conan/catch2@2.13.8",
+		},
 	}
 
 	var pkgTypes []string
@@ -232,6 +247,7 @@ func TestPackageURL(t *testing.T) {
 
 	// testing microsoft packages is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
+	expectedTypes.Remove(string(PortagePkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

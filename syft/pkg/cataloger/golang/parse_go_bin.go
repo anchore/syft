@@ -10,11 +10,13 @@ import (
 	"io"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 	"github.com/anchore/syft/syft/source"
+	"golang.org/x/mod/module"
 )
 
 const GOARCH = "GOARCH"
@@ -24,14 +26,30 @@ var (
 	// appear to be in a known format, or it breaks the rules of that format,
 	// or when there are I/O errors reading the file.
 	errUnrecognizedFormat = errors.New("unrecognized file format")
+	// devel is used to recognize the current default version when a golang main distribution is built
+	// https://github.com/golang/go/issues/29228 this issue has more details on the progress of being able to
+	// inject the correct version into the main module of the build process
 )
+
+const devel = "(devel)"
 
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, location, gbs)
-
-	if v, ok := gbs["vcs.revision"]; ok {
-		main.Version = v
+	if main.Version == devel {
+		if version, ok := gbs["vcs.revision"]; ok {
+			if timestamp, ok := gbs["vcs.time"]; ok {
+				//NOTE: err is ignored, because if parsing fails
+				// we still use the empty Time{} struct to generate an empty date, like 00010101000000
+				// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
+				ts, _ := time.Parse(time.RFC3339, timestamp)
+				if len(version) >= 12 {
+					version = version[:12]
+				}
+				version = module.PseudoVersion("", "", ts, version)
+			}
+			main.Version = version
+		}
 	}
 
 	return main
