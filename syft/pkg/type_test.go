@@ -69,6 +69,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: AlpmPkg,
 		},
 		{
+			purl:     "pkg:cocoapods/GlossButtonNode@3.1.2",
+			expected: CocoapodsPkg,
+		},
+		{
 			purl:     "pkg:conan/catch2@2.13.8",
 			expected: ConanPkg,
 		},

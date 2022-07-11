@@ -51,6 +51,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			want: Java,
 		},
 		{
+			purl: "pkg:cocoapods/GlossButtonNode@3.1.2",
+			want: Swift,
+		},
+		{
 			purl: "pkg:conan/catch2@2.13.8",
 			want: CPP,
 		},
@@ -182,6 +186,18 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "dotnet",
 			language: Dotnet,
+		},
+		{
+			name:     "swift",
+			language: Swift,
+		},
+		{
+			name:     "pod",
+			language: Swift,
+		},
+		{
+			name:     "cocoapods",
+			language: Swift,
 		},
 		{
 			name:     "unknown",

@@ -145,6 +145,12 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 			return err
 		}
 		p.Metadata = payload
+	case pkg.CocoapodsMetadataType:
+		var payload pkg.CocoapodsMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
 	case pkg.ConanaMetadataType:
 		var payload pkg.ConanMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {

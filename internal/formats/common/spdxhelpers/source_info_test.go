@@ -152,6 +152,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.CocoapodsPkg,
+			},
+			expected: []string{
+				"installed cocoapods manifest file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.ConanPkg,
 			},
 			expected: []string{

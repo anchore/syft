@@ -35,6 +35,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Dart (pubs)
 - Debian (dpkg)
 - Dotnet (deps.json)
+- Objective-C (cocoapods)
 - Go (go.mod, Go binaries)
 - Java (jar, ear, war, par, sar)
 - JavaScript (npm, yarn)
@@ -44,6 +45,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
+- Swift (cocoapods)
 
 ## Installation
 

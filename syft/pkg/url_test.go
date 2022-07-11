@@ -218,6 +218,20 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:alpm/arch/linux@5.10.0?distro=arch-rolling",
 		},
 		{
+			name: "cocoapods",
+			pkg: Package{
+				Name:     "GlossButtonNode",
+				Version:  "3.1.2",
+				Language: Swift,
+				Type:     CocoapodsPkg,
+				Metadata: CocoapodsMetadata{
+					Name:    "GlossButtonNode",
+					Version: "3.1.2",
+				},
+			},
+			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
+		},
+		{
 			name: "conan",
 			pkg: Package{
 				Name:         "catch2",

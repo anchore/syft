@@ -23,6 +23,7 @@ const (
 	KbPkg            Type = "msrc-kb"
 	DartPubPkg       Type = "dart-pub"
 	DotnetPkg        Type = "dotnet"
+	CocoapodsPkg     Type = "pod"
 	ConanPkg         Type = "conan"
 	PortagePkg       Type = "portage"
 )
@@ -44,6 +45,7 @@ var AllPkgs = []Type{
 	KbPkg,
 	DartPubPkg,
 	DotnetPkg,
+	CocoapodsPkg,
 	ConanPkg,
 	PortagePkg,
 }
@@ -77,6 +79,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypePub
 	case DotnetPkg:
 		return packageurl.TypeDotnet
+	case CocoapodsPkg:
+		return packageurl.TypeCocoapods
 	case ConanPkg:
 		return packageurl.TypeConan
 	case PortagePkg:
@@ -124,6 +128,8 @@ func TypeByName(name string) Type {
 		return DartPubPkg
 	case packageurl.TypeDotnet:
 		return DotnetPkg
+	case packageurl.TypeCocoapods:
+		return CocoapodsPkg
 	case packageurl.TypeConan:
 		return ConanPkg
 	case "portage":
