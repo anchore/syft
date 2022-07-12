@@ -174,6 +174,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from portage DB",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.HackagePkg,
+			},
+			expected: []string{
+				"from cabal or stack manifest files",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

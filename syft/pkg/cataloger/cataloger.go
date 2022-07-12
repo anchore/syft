@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
+	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
@@ -82,6 +83,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		swift.NewCocoapodsCataloger(),
 		cpp.NewConanfileCataloger(),
 		portage.NewPortageCataloger(),
+		haskell.NewHackageCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -110,6 +112,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		swift.NewCocoapodsCataloger(),
 		cpp.NewConanfileCataloger(),
 		portage.NewPortageCataloger(),
+		haskell.NewHackageCataloger(),
 	}, cfg.Catalogers)
 }
 

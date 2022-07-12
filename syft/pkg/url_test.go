@@ -246,6 +246,21 @@ func TestPackageURL(t *testing.T) {
 			},
 			expected: "pkg:conan/catch2@2.13.8",
 		},
+		{
+			name: "hackage",
+			pkg: Package{
+				Name:         "HTTP",
+				Version:      "4000.3.16",
+				Type:         HackagePkg,
+				Language:     Haskell,
+				MetadataType: HackageMetadataType,
+				Metadata: HackageMetadata{
+					Name:    "HTTP",
+					Version: "4000.3.16",
+				},
+			},
+			expected: "pkg:hackage/HTTP@4000.3.16",
+		},
 	}
 
 	var pkgTypes []string

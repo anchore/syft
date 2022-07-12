@@ -58,6 +58,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:conan/catch2@2.13.8",
 			want: CPP,
 		},
+		{
+			purl: "pkg:hackage/HTTP@4000.3.16",
+			want: Haskell,
+		},
 	}
 
 	var languages []string
@@ -210,6 +214,14 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "c++",
 			language: CPP,
+		},
+		{
+			name:     "hackage",
+			language: Haskell,
+		},
+		{
+			name:     "haskell",
+			language: Haskell,
 		},
 	}
 

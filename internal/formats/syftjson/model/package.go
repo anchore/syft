@@ -169,6 +169,12 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 			return err
 		}
 		p.Metadata = payload
+	case pkg.HackageMetadataType:
+		var payload pkg.HackageMetadata
+		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+			return err
+		}
+		p.Metadata = payload
 	default:
 		log.Warnf("unknown package metadata type=%q for packageID=%q", p.MetadataType, p.ID)
 	}

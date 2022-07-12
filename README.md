@@ -37,6 +37,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Dotnet (deps.json)
 - Objective-C (cocoapods)
 - Go (go.mod, Go binaries)
+- Haskell (cabal, stack)
 - Java (jar, ear, war, par, sar)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
