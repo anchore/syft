@@ -369,7 +369,7 @@ clean-test-image-tar-cache: ## Delete all test cache (built docker image tars)
 
 .PHONY: clear-test-image-docker-cache
 clean-test-image-docker-cache: ## Purge all test docker images
-	docker images --format '{{.ID}} {{.Repository}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs docker rmi --force
+	docker images --format '{{.ID}} {{.Repository}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs -r docker rmi --force
 
 .PHONY: show-test-image-cache
 show-test-image-cache: ## Show all docker and image tar cache
