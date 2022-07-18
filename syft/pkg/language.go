@@ -23,6 +23,7 @@ const (
 	Dotnet          Language = "dotnet"
 	Swift           Language = "swift"
 	CPP             Language = "c++"
+	Haskell         Language = "haskell"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.
@@ -38,6 +39,7 @@ var AllLanguages = []Language{
 	Dotnet,
 	Swift,
 	CPP,
+	Haskell,
 }
 
 // String returns the string representation of the language.
@@ -78,6 +80,8 @@ func LanguageByName(name string) Language {
 		return Swift
 	case packageurl.TypeConan, string(CPP):
 		return CPP
+	case packageurl.TypeHackage, string(Haskell):
+		return Haskell
 	default:
 		return UnknownLanguage
 	}

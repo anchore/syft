@@ -28,6 +28,7 @@ const (
 	CocoapodsMetadataType        MetadataType = "CocoapodsMetadataType"
 	ConanaMetadataType           MetadataType = "ConanaMetadataType"
 	PortageMetadataType          MetadataType = "PortageMetadata"
+	HackageMetadataType          MetadataType = "HackageMetadataType"
 )
 
 var AllMetadataTypes = []MetadataType{
@@ -48,6 +49,7 @@ var AllMetadataTypes = []MetadataType{
 	CocoapodsMetadataType,
 	ConanaMetadataType,
 	PortageMetadataType,
+	HackageMetadataType,
 }
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
@@ -68,4 +70,5 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	CocoapodsMetadataType:        reflect.TypeOf(CocoapodsMetadata{}),
 	ConanaMetadataType:           reflect.TypeOf(ConanMetadata{}),
 	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
+	HackageMetadataType:          reflect.TypeOf(HackageMetadata{}),
 }
