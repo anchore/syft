@@ -27,6 +27,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
+	"github.com/anchore/syft/syft/pkg/cataloger/nixstore"
 	"github.com/anchore/syft/syft/pkg/cataloger/swift"
 	"github.com/anchore/syft/syft/source"
 )
@@ -58,6 +59,7 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		portage.NewPortageCataloger(),
+		nixstore.NewNixStoreCataloger(),
 	}, cfg.Catalogers)
 }
 

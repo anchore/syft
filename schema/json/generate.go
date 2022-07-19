@@ -41,6 +41,7 @@ type artifactMetadataContainer struct {
 	Dart    pkg.DartPubMetadata
 	Dotnet  pkg.DotnetDepsMetadata
 	Portage pkg.PortageMetadata
+	Nix    pkg.NixStoreMetadata
 }
 
 func main() {
