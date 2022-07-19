@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	packagesExample = `  {{.appName}} {{.command}} alpine:latest                    a summary of discovered packages
+	packagesExample = `  {{.appName}} {{.command}} alpine:latest                                a summary of discovered packages
   {{.appName}} {{.command}} alpine:latest -o json                        show all possible cataloging details
   {{.appName}} {{.command}} alpine:latest -o cyclonedx                   show a CycloneDX formatted SBOM
   {{.appName}} {{.command}} alpine:latest -o cyclonedx-json              show a CycloneDX JSON formatted SBOM
