@@ -53,7 +53,7 @@ func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out [
 
 		format := syft.FormatByName(name)
 		if format == nil {
-			errs = multierror.Append(errs, fmt.Errorf("bad output format: '%s'", name))
+			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, FormatAliases(syft.FormatIDs()...)))
 			continue
 		}
 

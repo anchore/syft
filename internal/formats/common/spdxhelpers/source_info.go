@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+//nolint:funlen
 func SourceInfo(p pkg.Package) string {
 	answer := ""
 	switch p.Type {
@@ -41,6 +42,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from conan manifest"
 	case pkg.PortagePkg:
 		answer = "acquired package info from portage DB"
+	case pkg.HackagePkg:
+		answer = "acquired package info from cabal or stack manifest files"
 	default:
 		answer = "acquired package info from the following paths"
 	}

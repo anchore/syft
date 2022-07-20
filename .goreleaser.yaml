@@ -99,14 +99,40 @@ brews:
 
 dockers:
   - image_templates:
-      - "anchore/syft:latest"
-      - "anchore/syft:{{ .Tag }}-amd64"
-      - "anchore/syft:v{{ .Major }}-amd64"
-      - "anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64"
-      - "ghcr.io/anchore/syft:latest"
-      - "ghcr.io/anchore/syft:{{ .Tag }}-amd64"
-      - "ghcr.io/anchore/syft:v{{ .Major }}-amd64"
-      - "ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64"
+      - anchore/syft:debug
+      - anchore/syft:{{.Tag}}-debug
+      - ghcr.io/anchore/syft:debug
+      - ghcr.io/anchore/syft:{{.Tag}}-debug
+    goarch: amd64
+    dockerfile: Dockerfile.debug
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:debug-arm64v8
+      - anchore/syft:{{.Tag}}-debug-arm64v8
+      - ghcr.io/anchore/syft:debug-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
+    goarch: arm64
+    dockerfile: Dockerfile.debug
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:latest
+      - anchore/syft:{{.Tag}}
+      - ghcr.io/anchore/syft:latest
+      - ghcr.io/anchore/syft:{{.Tag}}
     goarch: amd64
     dockerfile: Dockerfile
     use: buildx
@@ -118,12 +144,8 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
   - image_templates:
-      - "anchore/syft:{{ .Tag }}-arm64v8"
-      - "anchore/syft:v{{ .Major }}-arm64v8"
-      - "anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8"
-      - "ghcr.io/anchore/syft:{{ .Tag }}-arm64v8"
-      - "ghcr.io/anchore/syft:v{{ .Major }}-arm64v8"
-      - "ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8"
+      - anchore/syft:{{.Tag}}-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
     goarch: arm64
     dockerfile: Dockerfile
     use: buildx
@@ -133,42 +155,33 @@ dockers:
       - "--build-arg=BUILD_VERSION={{.Version}}"
       - "--build-arg=VCS_REF={{.FullCommit}}"
       - "--build-arg=VCS_URL={{.GitURL}}"
-      
-  - image_templates:
-      - "anchore/syft:{{ .Tag }}-ppc64le"
-      - "anchore/syft:v{{ .Major }}-ppc64le"
-      - "anchore/syft:v{{ .Major }}.{{ .Minor }}-ppc64le"
-      - "ghcr.io/anchore/syft:{{ .Tag }}-ppc64le"
-      - "ghcr.io/anchore/syft:v{{ .Major }}-ppc64le"
-      - "ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-ppc64le"
-    goarch: ppc64le
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/ppc64le"
-      - "--build-arg=BUILD_DATE={{.Date}}"
-      - "--build-arg=BUILD_VERSION={{.Version}}"
-      - "--build-arg=VCS_REF={{.FullCommit}}"
-      - "--build-arg=VCS_URL={{.GitURL}}"
 
 docker_manifests:
-  - name_template: anchore/syft:{{ .Tag }}
-    image_templates:
-      - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
-      - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
-      - anchore/syft:v{{ .Major }}.{{ .Minor }}-ppc64le
   - name_template: anchore/syft:latest
     image_templates:
-      - anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
-      - anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
-      - anchore/syft:v{{ .Major }}.{{ .Minor }}-ppc64le
-  - name_template: ghcr.io/anchore/syft:{{ .Tag }}
+      - anchore/syft:{{.Tag}}
+      - anchore/syft:{{.Tag}}-arm64v8
+
+  - name_template: anchore/syft:debug
+      - anchore/syft:{{.Tag}}-debug
+      - anchore/syft:{{.Tag}}-debug-arm64v8
+
+  - name_template: anchore/syft:{{.Tag}}
     image_templates:
-      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
-      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
-      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-ppc64le
+      - anchore/syft:{{.Tag}}
+      - anchore/syft:{{.Tag}}-arm64v8
+
   - name_template: ghcr.io/anchore/syft:latest
     image_templates:
-      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-amd64
-      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-arm64v8
-      - ghcr.io/anchore/syft:v{{ .Major }}.{{ .Minor }}-ppc64le
+      - anchore/syft:{{.Tag}}
+      - anchore/syft:{{.Tag}}-arm64v8
+
+  - name_template: ghcr.io/anchore/syft:debug
+    image_templates:
+      - ghcr.io/anchore/syft:{{.Tag}}-debug
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
+
+  - name_template: ghcr.io/anchore/syft:{{.Tag}}
+    image_templates:
+      - ghcr.io/anchore/syft:{{.Tag}}
+      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8

@@ -76,6 +76,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:conan/catch2@2.13.8",
 			expected: ConanPkg,
 		},
+		{
+			purl:     "pkg:hackage/HTTP@4000.3.16",
+			expected: HackagePkg,
+		},
 	}
 
 	var pkgTypes []string
