@@ -172,8 +172,8 @@ docker_manifests:
 
   - name_template: ghcr.io/anchore/syft:latest
     image_templates:
-      - anchore/syft:{{.Tag}}
-      - anchore/syft:{{.Tag}}-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}
+      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
 
   - name_template: ghcr.io/anchore/syft:debug
     image_templates:
