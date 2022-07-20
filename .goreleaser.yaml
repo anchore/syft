@@ -169,7 +169,6 @@ dockers:
       - "--build-arg=VCS_REF={{.FullCommit}}"
       - "--build-arg=VCS_URL={{.GitURL}}"
 
-
 docker_manifests:
   - name_template: anchore/syft:latest
     image_templates:
