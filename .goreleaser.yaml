@@ -101,7 +101,7 @@ dockers:
       - anchore/syft:{{.Tag}}-debug
       - ghcr.io/anchore/syft:{{.Tag}}-debug
     goarch: amd64
-    dockerfile: debug.Dockerfile
+    dockerfile: Dockerfile.debug
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
