@@ -99,6 +99,7 @@ brews:
 dockers:
   - image_templates:
       - anchore/syft:{{.Tag}}-debug
+      - ghcr.io/anchore/syft:{{.Tag}}-debug
     goarch: amd64
     dockerfile: debug.Dockerfile
     use: buildx
