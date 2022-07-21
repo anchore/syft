@@ -42,7 +42,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 				p.Name = name
 				p.Version = version
 				p.FoundBy = c.Name()
-				p.Locations = []source.Location{storeLocation}
+				p.Locations = source.NewLocationSet(storeLocation)
 				p.SetID()
 
 				log.Debug(p)
@@ -51,7 +51,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 
 			} else {
 				nixLookupPkg := nixLookupPkg.(pkg.Package)
-				nixLookupPkg.Locations = append(nixLookupPkg.Locations, storeLocation)
+				nixLookupPkg.Locations = source.NewLocationSet(append(nixLookupPkg.Locations.ToSlice(), storeLocation)...)
 				pkgMap[fmt.Sprintf("%s-%s", name, version)] = nixLookupPkg
 			}
 		}

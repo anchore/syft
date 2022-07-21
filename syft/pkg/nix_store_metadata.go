@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/syft/distro"
+	"github.com/anchore/syft/syft/linux"
 )
 
 const NixStoreGlob = "/nix/store/**"
@@ -15,7 +15,7 @@ type NixStoreMetadata struct {
 	SourceVersion string           `mapstructure:"SourceVersion" json:"sourceVersion"`
 }
 
-func (m NixStoreMetadata) PackageURL(d *distro.Distro) string {
+func (m NixStoreMetadata) PackageURL(d *linux.Release) string {
 	if d == nil {
 		return ""
 	}
@@ -23,7 +23,7 @@ func (m NixStoreMetadata) PackageURL(d *distro.Distro) string {
 		// TODO: replace with `packageurl.TypeDebian` upon merge of https://github.com/package-url/packageurl-go/pull/21
 		// TODO: or, since we're now using an Anchore fork of this module, we could do this sooner.
 		"nix",
-		d.Type.String(),
+		"",
 		m.Package,
 		m.Version,
 		packageurl.Qualifiers{
