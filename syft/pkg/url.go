@@ -41,9 +41,7 @@ func URL(p Package, release *linux.Release) string {
 
 	switch {
 	case purlType == "":
-		// there is no purl type, don't attempt to craft a purl
-		// TODO: should this be a "generic" purl type instead?
-		return ""
+		purlType = packageurl.TypeGeneric
 	case p.Type == GoModulePkg:
 		re := regexp.MustCompile(`(/)[^/]*$`)
 		fields := re.Split(p.Name, -1)
