@@ -222,13 +222,15 @@ func getSyftBinaryLocation(t testing.TB) string {
 }
 
 func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
+	// note: for amd64 we need to update the snapshot location with the v1 suffix
+	// see : https://goreleaser.com/customization/build/#why-is-there-a-_v1-suffix-on-amd64-builds
+	archPath := runtime.GOARCH
+	if runtime.GOARCH == "amd64" {
+		archPath = fmt.Sprintf("%s_v1", archPath)
+	}
 	// note: there is a subtle - vs _ difference between these versions
 	switch goOS {
 	case "darwin", "linux":
-		archPath := runtime.GOARCH
-		if runtime.GOARCH == "amd64" {
-			archPath = fmt.Sprintf("%s_v1", archPath)
-		}
 		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, archPath))
 	default:
 		t.Fatalf("unsupported OS: %s", runtime.GOOS)
