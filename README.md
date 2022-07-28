@@ -412,6 +412,8 @@ platform: ""
 #   - dartlang-lock
 #   - rust
 #   - dotnet-deps
+# rust-audit-binary scans Rust binaries built with https://github.com/Shnatsel/rust-audit
+#   - rust-audit-binary
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands

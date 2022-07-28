@@ -64,7 +64,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s", test.formatOption), func(t *testing.T) {
 			for _, image := range images {
-				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope)
+				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, false)
 
 				format := syft.FormatByID(test.formatOption)
 				require.NotNil(t, format)

@@ -56,7 +56,7 @@ func TestPackageDeduplication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.scope), func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope)
+			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope, false)
 
 			assert.Equal(t, tt.packageCount, sbom.Artifacts.PackageCatalog.PackageCount())
 			for name, expectedInstanceCount := range tt.instanceCount {

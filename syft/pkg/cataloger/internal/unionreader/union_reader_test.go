@@ -1,4 +1,4 @@
-package golang
+package unionreader
 
 import (
 	"io"
@@ -14,13 +14,13 @@ func Test_getUnionReader_notUnionReader(t *testing.T) {
 	reader := io.NopCloser(strings.NewReader(expectedContents))
 
 	// make certain that the test fixture does not implement the union reader
-	_, ok := reader.(unionReader)
+	_, ok := reader.(UnionReader)
 	require.False(t, ok)
 
-	actual, err := getUnionReader(reader)
+	actual, err := GetUnionReader(reader)
 	require.NoError(t, err)
 
-	_, ok = actual.(unionReader)
+	_, ok = actual.(UnionReader)
 	require.True(t, ok)
 
 	b, err := io.ReadAll(actual)

@@ -8,7 +8,7 @@ import (
 )
 
 func TestMarinerDistroless(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-mariner-distroless", source.SquashedScope)
+	sbom, _ := catalogFixtureImage(t, "image-mariner-distroless", source.SquashedScope, false)
 
 	expectedPkgs := 12
 	actualPkgs := 0
