@@ -26,6 +26,9 @@ test_positive_snapshot_install_asset() {
   expected_path="${install_dir}/${binary}"
   assertFileExists "${expected_path}" "install_asset os=${os} arch=${arch} format=${format}"
 
+  if [ $arch == "amd64" ]; then
+	  arch="amd64_v1"
+  fi
   assertFilesEqual \
     "$(snapshot_dir)/${os}-build_${os}_${arch}/${binary}" \
     "${expected_path}" \
