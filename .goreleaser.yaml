@@ -128,6 +128,21 @@ dockers:
       - "--build-arg=BUILD_VERSION={{.Version}}"
       - "--build-arg=VCS_REF={{.FullCommit}}"
       - "--build-arg=VCS_URL={{.GitURL}}"
+  
+  - image_templates:
+      - anchore/syft:debug-ppc64le
+      - anchore/syft:{{.Tag}}-debug-ppc64le
+      - ghcr.io/anchore/syft:debug-ppc64le
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
+    goarch: ppc64le
+    dockerfile: Dockerfile.debug
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/ppc64le"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
 
   - image_templates:
       - anchore/syft:debug-s390x
@@ -209,6 +224,7 @@ docker_manifests:
   - name_template: anchore/syft:debug
       - anchore/syft:{{.Tag}}-debug
       - anchore/syft:{{.Tag}}-debug-arm64v8
+      - anchore/syft:{{.Tag}}-debug-ppc64le
       - anchore/syft:{{.Tag}}-debug-s390x
 
   - name_template: anchore/syft:{{.Tag}}
@@ -229,6 +245,7 @@ docker_manifests:
     image_templates:
       - ghcr.io/anchore/syft:{{.Tag}}-debug
       - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
       - ghcr.io/anchore/syft:{{.Tag}}-debug-s390x
 
   - name_template: ghcr.io/anchore/syft:{{.Tag}}
