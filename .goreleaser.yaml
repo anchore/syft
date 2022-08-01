@@ -2,10 +2,6 @@ release:
   prerelease: auto
   draft: false
 
-env:
-  # required to support multi architecture docker builds
-  - DOCKER_CLI_EXPERIMENTAL=enabled
-
 before:
   hooks:
     - ./.github/scripts/apple-signing/setup.sh {{ .IsSnapshot }}
