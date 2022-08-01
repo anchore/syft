@@ -161,7 +161,7 @@ jobs:
           name: artifacts
           path: dist/**/*
 
-  docker-assets:
+  release-docker-assets:
     needs: [release]
     runs-on: ubuntu-latest
     steps:
