@@ -263,6 +263,18 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	# remove the keychain with the trusted self-signed cert automatically
 	.github/scripts/apple-signing/cleanup.sh
 
+snapshot-docker-images: # Build snapshot images of docker images that will be published on release
+	$(call title,Building snapshot docker release assets)
+
+	# create a config with the dist dir overridden
+	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .github/.goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	bash -c "\
+		$(SNAPSHOT_CMD) \
+			--config $(TEMPDIR)/goreleaser.yaml \
+			--parallelism 1"
+
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
 compare-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run compare tests on build snapshot binaries and packages (Mac)
@@ -351,7 +363,7 @@ release-docker-assets:
 	cat .github/.goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	bash -c "\
-		$(SNAPSHOT_CMD) \
+		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
 			--parallelism 1"
 
