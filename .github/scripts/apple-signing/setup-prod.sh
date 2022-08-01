@@ -14,23 +14,6 @@ if [ -z "$APPLE_DEVELOPER_ID_CERT_PASS" ]; then
   exit_with_error "APPLE_DEVELOPER_ID_CERT_PASS not set"
 fi
 
-if [ -z "$DOCKER_USERNAME" ]; then
-  exit_with_error "DOCKER_USERNAME not set"
-fi
-
-if [ -z "$DOCKER_PASSWORD" ]; then
-  exit_with_error "DOCKER_PASSWORD not set"
-fi
-
-if [ -z "$GHCR_USERNAME" ]; then
-  exit_with_error "GHCR_USERNAME not set"
-fi
-
-if [ -z "$GHCR_PASSWORD" ]; then
-  exit_with_error "GHCR_PASSWORD not set"
-fi
-set -u
-
 # setup_signing
 #
 # preps the MAC_SIGNING_IDENTITY env var for use in the signing process, using production certificate material
