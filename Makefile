@@ -263,6 +263,18 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	# remove the keychain with the trusted self-signed cert automatically
 	.github/scripts/apple-signing/cleanup.sh
 
+snapshot-docker-assets: # Build snapshot images of docker images that will be published on release
+	$(call title,Building snapshot docker release assets)
+
+	# create a config with the dist dir overridden
+	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	bash -c "\
+		$(SNAPSHOT_CMD) \
+			--config $(TEMPDIR)/goreleaser.yaml \
+			--parallelism 1"
+
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
 compare-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run compare tests on build snapshot binaries and packages (Mac)
@@ -342,6 +354,18 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
 
+.PHONY: release-docker-assets
+release-docker-assets:
+	$(call title,Publishing docker release assets)
+
+	# create a config with the dist dir overridden
+	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	bash -c "\
+		$(RELEASE_CMD) \
+			--config $(TEMPDIR)/goreleaser.yaml \
+			--parallelism 1"
 
 .PHONY: clean
 clean: clean-dist clean-snapshot clean-test-image-cache ## Remove previous builds, result reports, and test cache
