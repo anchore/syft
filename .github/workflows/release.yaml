@@ -97,7 +97,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: docker-practice/actions-setup-docker@v1.0.8
+      - uses: docker-practice/actions-setup-docker@1.0.8
 
       - uses: actions/setup-go@v2
         with:
