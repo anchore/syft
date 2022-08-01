@@ -263,7 +263,7 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	# remove the keychain with the trusted self-signed cert automatically
 	.github/scripts/apple-signing/cleanup.sh
 
-snapshot-docker-images: # Build snapshot images of docker images that will be published on release
+snapshot-docker-assets: # Build snapshot images of docker images that will be published on release
 	$(call title,Building snapshot docker release assets)
 
 	# create a config with the dist dir overridden
