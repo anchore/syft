@@ -97,8 +97,6 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: docker-practice/actions-setup-docker@1.0.8
-
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -132,8 +130,6 @@ jobs:
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          DOCKER_USERNAME: ${{ secrets.TOOLBOX_DOCKER_USER }}
-          DOCKER_PASSWORD: ${{ secrets.TOOLBOX_DOCKER_PASS }}
           # we use a different token than GITHUB_SECRETS to additionally allow updating the homebrew repos
           GITHUB_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
           AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
