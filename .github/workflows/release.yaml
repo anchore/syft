@@ -170,7 +170,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Build & Publish docker images
-        run: make docker-assets
+        run: make release-docker-assets
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
