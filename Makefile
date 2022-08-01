@@ -268,7 +268,7 @@ snapshot-docker-assets: # Build snapshot images of docker images that will be pu
 
 	# create a config with the dist dir overridden
 	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .github/.goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	bash -c "\
 		$(SNAPSHOT_CMD) \
@@ -360,7 +360,7 @@ release-docker-assets:
 
 	# create a config with the dist dir overridden
 	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .github/.goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	bash -c "\
 		$(RELEASE_CMD) \
