@@ -44,7 +44,7 @@ func Test_License(t *testing.T) {
 					"GPL-3.0",
 				},
 			},
-			expected: "MIT AND GPL-3.0",
+			expected: "MIT AND GPL-3.0-only",
 		},
 		{
 			name: "cap insensitive",
@@ -53,7 +53,7 @@ func Test_License(t *testing.T) {
 					"gpl-3.0",
 				},
 			},
-			expected: "GPL-3.0",
+			expected: "GPL-3.0-only",
 		},
 		{
 			name: "debian to spdx conversion",
@@ -62,7 +62,7 @@ func Test_License(t *testing.T) {
 					"GPL-2",
 				},
 			},
-			expected: "GPL-2.0",
+			expected: "GPL-2.0-only",
 		},
 	}
 	for _, test := range tests {
