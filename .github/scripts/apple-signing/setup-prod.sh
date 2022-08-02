@@ -29,8 +29,4 @@ setup_signing() {
 
   # Make this new keychain the user's default keychain, so that codesign will be able to find this certificate when we specify it during signing.
   security default-keychain -d "user" -s "${KEYCHAIN_PATH}"
-
-  commentary "log into docker -- required for publishing (since the default keychain has now been replaced)"
-  echo "${DOCKER_PASSWORD}" | docker login docker.io -u "${DOCKER_USERNAME}"  --password-stdin
-  echo "${GHCR_PASSWORD}" | docker login ghcr.io -u "${GHCR_USERNAME}"  --password-stdin
 }
