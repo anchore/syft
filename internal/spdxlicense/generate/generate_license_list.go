@@ -37,46 +37,6 @@ var licenseIDs = map[string]string{
 
 var versionMatch = regexp.MustCompile(`-([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
 
-type License struct {
-	ID          string   `json:"licenseId"`
-	Name        string   `json:"name"`
-	Text        string   `json:"licenseText"`
-	Deprecated  bool     `json:"isDeprecatedLicenseId"`
-	OSIApproved bool     `json:"isOsiApproved"`
-	SeeAlso     []string `json:"seeAlso"`
-}
-
-func (l License) canReplace(other License) bool {
-	if l.Deprecated {
-		return false
-	}
-
-	if l.Name != other.Name {
-		return false
-	}
-
-	if l.OSIApproved != other.OSIApproved {
-		return false
-	}
-
-	if len(l.SeeAlso) != len(other.SeeAlso) {
-		return false
-	}
-
-	for i, sa := range l.SeeAlso {
-		if sa != other.SeeAlso[i] {
-			return false
-		}
-	}
-
-	return l.ID != other.ID
-}
-
-type LicenseList struct {
-	Version  string    `json:"licenseListVersion"`
-	Licenses []License `json:"licenses"`
-}
-
 func main() {
 	if err := run(); err != nil {
 		fmt.Println(err.Error())
@@ -145,21 +105,12 @@ func run() error {
 func processSPDXLicense(result LicenseList) map[string]string {
 	// first pass build map
 	var licenseIDs = make(map[string]string)
-	var overwrite = make(map[string]string)
-
 	for _, l := range result.Licenses {
 		cleanID := strings.ToLower(l.ID)
 		if _, exists := licenseIDs[cleanID]; exists {
 			log.Fatalf("duplicate license ID found: %q", cleanID)
 		}
 		licenseIDs[cleanID] = l.ID
-
-		if l.Deprecated {
-			replacement := findEquivalentLicense(l, result.Licenses)
-			if replacement != nil {
-				overwrite[cleanID] = replacement.ID
-			}
-		}
 	}
 
 	// The order of variations/permutations of a license ID matters because of we how shuffle its digits,
@@ -172,81 +123,38 @@ func processSPDXLicense(result LicenseList) map[string]string {
 		return result.Licenses[i].ID < result.Licenses[j].ID
 	})
 
-	// second pass build exceptions
-	// do not overwrite if already exists
+	// second pass to build exceptions and replacements
+	replaced := strset.New()
 	for _, l := range result.Licenses {
 		var multipleID []string
 		cleanID := strings.ToLower(l.ID)
+
+		var replacement *License
+		if l.Deprecated {
+			replacement = result.findReplacementLicense(l)
+			if replacement != nil {
+				licenseIDs[cleanID] = replacement.ID
+			}
+		}
+
 		multipleID = append(multipleID, buildLicensePermutations(cleanID)...)
 		for _, id := range multipleID {
-			if _, exists := licenseIDs[id]; !exists {
-				licenseIDs[id] = l.ID
+			// don't make replacements for IDs that have already been replaced. Since we have a sorted license list
+			// the earliest replacement is correct (any future replacements are not.
+			// e.g. replace lgpl-2 with LGPL-2.1-only is wrong, but with LGPL-2.0-only is correct)
+			if replacement == nil || replaced.Has(id) {
+				if _, exists := licenseIDs[id]; !exists {
+					licenseIDs[id] = l.ID
+				}
+			} else {
+				// a useful debugging line during builds
+				log.Printf("replacing %s with %s\n", id, replacement.ID)
+
+				licenseIDs[id] = replacement.ID
+				replaced.Add(id)
 			}
 		}
 	}
 
-	for cleanID, realID := range licenseIDs {
-		if replacementID, exists := overwrite[strings.ToLower(realID)]; exists {
-			licenseIDs[cleanID] = replacementID
-		}
-	}
-
 	return licenseIDs
-}
-
-func findEquivalentLicense(deprecated License, allLicenses []License) *License {
-	for _, l := range allLicenses {
-		if l.canReplace(deprecated) {
-			return &l
-		}
-	}
-
-	return nil
-}
-
-func buildLicensePermutations(license string) (perms []string) {
-	lv := findLicenseVersion(license)
-	vp := versionPermutations(lv)
-
-	version := strings.Join(lv, ".")
-	for _, p := range vp {
-		perms = append(perms, strings.Replace(license, version, p, 1))
-	}
-
-	return perms
-}
-
-func findLicenseVersion(license string) (version []string) {
-	versionList := versionMatch.FindAllStringSubmatch(license, -1)
-
-	if len(versionList) == 0 {
-		return version
-	}
-
-	for i, v := range versionList[0] {
-		if v != "" && i != 0 {
-			version = append(version, v)
-		}
-	}
-
-	return version
-}
-
-func versionPermutations(version []string) []string {
-	ver := append([]string(nil), version...)
-	perms := strset.New()
-	for i := 1; i <= 3; i++ {
-		if len(ver) < i+1 {
-			ver = append(ver, "0")
-		}
-
-		perm := strings.Join(ver[:i], ".")
-		badCount := strings.Count(perm, "0") + strings.Count(perm, ".")
-
-		if badCount != len(perm) {
-			perms.Add(perm)
-		}
-	}
-
-	return perms.List()
 }
