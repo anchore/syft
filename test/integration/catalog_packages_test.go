@@ -54,7 +54,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, false)
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -66,6 +66,10 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Go.String())
 	definedLanguages.Remove(pkg.Rust.String())
 	definedLanguages.Remove(pkg.Dart.String())
+	definedLanguages.Remove(pkg.Dotnet.String())
+	definedLanguages.Remove(string(pkg.Swift.String()))
+	definedLanguages.Remove(pkg.CPP.String())
+	definedLanguages.Remove(pkg.Haskell.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -78,6 +82,10 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.GoModulePkg))
 	definedPkgs.Remove(string(pkg.RustPkg))
 	definedPkgs.Remove(string(pkg.DartPubPkg))
+	definedPkgs.Remove(string(pkg.DotnetPkg))
+	definedPkgs.Remove(string(pkg.CocoapodsPkg))
+	definedPkgs.Remove(string(pkg.ConanPkg))
+	definedPkgs.Remove(string(pkg.HackagePkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -88,7 +96,6 @@ func TestPkgCoverageImage(t *testing.T) {
 			pkgCount := 0
 
 			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
-
 				if a.Language.String() != "" {
 					observedLanguages.Add(a.Language.String())
 				}
@@ -165,7 +172,6 @@ func TestPkgCoverageDirectory(t *testing.T) {
 			actualPkgCount := 0
 
 			for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
-
 				observedLanguages.Add(actualPkg.Language.String())
 				observedPkgs.Add(string(actualPkg.Type))
 

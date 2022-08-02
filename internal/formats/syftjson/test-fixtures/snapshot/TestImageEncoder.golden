@@ -9,7 +9,7 @@
    "locations": [
     {
      "path": "/somefile-1.txt",
-     "layerID": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"
+     "layerID": "sha256:7ef28e9c2d56471ee090b578a678bdf28c3b5a311ca7b2e28c2a4185e5bb34c0"
     }
    ],
    "licenses": [
@@ -40,7 +40,7 @@
    "locations": [
     {
      "path": "/somefile-2.txt",
-     "layerID": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec"
+     "layerID": "sha256:86da8aee621161bea2efaf27a2709ddab5e7d44e30ecdfda728b02c03a28fd98"
     }
    ],
    "licenses": [],
@@ -67,7 +67,7 @@
   "type": "image",
   "target": {
    "userInput": "user-image-input",
-   "imageID": "sha256:2480160b55bec40c44d3b145c7b2c1c47160db8575c3dcae086d76b9370ae7ca",
+   "imageID": "sha256:5dd5f5f4247e4e946f555f0de7681a631a5240b614e52717d0aed04808e8c65f",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
    "tags": [
@@ -77,17 +77,17 @@
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59",
+     "digest": "sha256:7ef28e9c2d56471ee090b578a678bdf28c3b5a311ca7b2e28c2a4185e5bb34c0",
      "size": 22
     },
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec",
+     "digest": "sha256:86da8aee621161bea2efaf27a2709ddab5e7d44e30ecdfda728b02c03a28fd98",
      "size": 16
     }
    ],
-   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NjcsImRpZ2VzdCI6InNoYTI1NjoyNDgwMTYwYjU1YmVjNDBjNDRkM2IxNDVjN2IyYzFjNDcxNjBkYjg1NzVjM2RjYWUwODZkNzZiOTM3MGFlN2NhIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjpmYjZiZWVjYjc1YjM5ZjRiYjgxM2RiZjE3N2U1MDFlZGQ1ZGRiM2U2OWJiNDVjZWRlYjc4YzY3NmVlMWI3YTU5In0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OjMxOWI1ODhjZTY0MjUzYTg3YjUzM2M4ZWQwMWNmMDAyNWUwZWFjOThlN2I1MTZlMTI1MzI5NTdlMTI0NGZkZWMifV19",
-   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjEtMTAtMDRUMTE6NDA6MDAuNjM4Mzk0NVoiLCJoaXN0b3J5IjpbeyJjcmVhdGVkIjoiMjAyMS0xMC0wNFQxMTo0MDowMC41OTA3MzE2WiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0xLnR4dCAvc29tZWZpbGUtMS50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn0seyJjcmVhdGVkIjoiMjAyMS0xMC0wNFQxMTo0MDowMC42MzgzOTQ1WiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6ZmI2YmVlY2I3NWIzOWY0YmI4MTNkYmYxNzdlNTAxZWRkNWRkYjNlNjliYjQ1Y2VkZWI3OGM2NzZlZTFiN2E1OSIsInNoYTI1NjozMTliNTg4Y2U2NDI1M2E4N2I1MzNjOGVkMDFjZjAwMjVlMGVhYzk4ZTdiNTE2ZTEyNTMyOTU3ZTEyNDRmZGVjIl19fQ==",
+   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NzMsImRpZ2VzdCI6InNoYTI1Njo1ZGQ1ZjVmNDI0N2U0ZTk0NmY1NTVmMGRlNzY4MWE2MzFhNTI0MGI2MTRlNTI3MTdkMGFlZDA0ODA4ZThjNjVmIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1Njo3ZWYyOGU5YzJkNTY0NzFlZTA5MGI1NzhhNjc4YmRmMjhjM2I1YTMxMWNhN2IyZTI4YzJhNDE4NWU1YmIzNGMwIn0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2Ojg2ZGE4YWVlNjIxMTYxYmVhMmVmYWYyN2EyNzA5ZGRhYjVlN2Q0NGUzMGVjZGZkYTcyOGIwMmMwM2EyOGZkOTgifV19",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjItMDYtMDJUMTQ6MzQ6MzQuNzE5MTM1MTc0WiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIyLTA2LTAyVDE0OjM0OjM0LjY4NjkzMzI2M1oiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMS50eHQgL3NvbWVmaWxlLTEudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9LHsiY3JlYXRlZCI6IjIwMjItMDYtMDJUMTQ6MzQ6MzQuNzE5MTM1MTc0WiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6N2VmMjhlOWMyZDU2NDcxZWUwOTBiNTc4YTY3OGJkZjI4YzNiNWEzMTFjYTdiMmUyOGMyYTQxODVlNWJiMzRjMCIsInNoYTI1Njo4NmRhOGFlZTYyMTE2MWJlYTJlZmFmMjdhMjcwOWRkYWI1ZTdkNDRlMzBlY2RmZGE3MjhiMDJjMDNhMjhmZDk4Il19fQ==",
    "repoDigests": [],
    "architecture": "",
    "os": ""
@@ -111,7 +111,7 @@
   }
  },
  "schema": {
-  "version": "3.2.2",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.2.2.json"
+  "version": "3.3.1",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-3.3.1.json"
  }
 }

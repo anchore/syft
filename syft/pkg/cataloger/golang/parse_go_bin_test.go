@@ -133,6 +133,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		FoundBy:  catalogerName,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
+		Version:  "(devel)",
 		Locations: source.NewLocationSet(
 			source.Location{
 				Coordinates: source.Coordinates{
@@ -146,6 +147,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
 			BuildSettings:     buildSettings,
+			MainModule:        "github.com/anchore/syft",
 		},
 	}
 
@@ -159,6 +161,38 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			name:     "buildGoPkgInfo parses a nil mod",
 			mod:      nil,
 			expected: []pkg.Package(nil),
+		},
+		{
+			name: "package without name",
+			mod: &debug.BuildInfo{
+				Deps: []*debug.Module{
+					{
+						Path: "github.com/adrg/xdg",
+					},
+					{
+						Path:    "",
+						Version: "v0.2.1",
+					},
+				},
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/adrg/xdg",
+					FoundBy:  catalogerName,
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: source.NewLocationSet(
+						source.Location{
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						},
+					),
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata:     pkg.GolangBinMetadata{},
+				},
+			},
 		},
 		{
 			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
@@ -212,7 +246,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -226,7 +260,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -265,6 +299,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+						MainModule:        "github.com/anchore/syft",
 					},
 				},
 				{
@@ -286,6 +321,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
+						MainModule:        "github.com/anchore/syft",
 					},
 				},
 				expectedMain,
@@ -296,7 +332,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft"},
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
 				Settings: []debug.BuildSetting{
 					{Key: "GOARCH", Value: archDetails},
 					{Key: "GOOS", Value: "darwin"},
@@ -339,7 +375,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE="}},
+						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
+						MainModule:        "github.com/anchore/syft",
+					}},
 				{
 					Name:     "golang.org/x/term",
 					FoundBy:  catalogerName,
@@ -358,7 +396,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI="},
+						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
+						MainModule:        "github.com/anchore/syft",
+					},
 				},
 				expectedMain,
 			},

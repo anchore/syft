@@ -6,16 +6,15 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/anchore/syft/syft/file"
-
-	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 )
 
-// parseApkDb parses an "Packages" RPM DB and returns the Packages listed within it.
+// parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
 func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, reader io.Reader) ([]pkg.Package, error) {
 	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
@@ -44,38 +43,56 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 		return nil, err
 	}
 
-	allPkgs := make([]pkg.Package, 0)
+	var allPkgs []pkg.Package
 
 	for _, entry := range pkgList {
-		metadata := pkg.RpmdbMetadata{
-			Name:      entry.Name,
-			Version:   entry.Version,
-			Epoch:     entry.Epoch,
-			Arch:      entry.Arch,
-			Release:   entry.Release,
-			SourceRpm: entry.SourceRpm,
-			Vendor:    entry.Vendor,
-			License:   entry.License,
-			Size:      entry.Size,
-			Files:     extractRpmdbFileRecords(resolver, entry),
+		p, err := newPkg(resolver, dbLocation, entry)
+		if err != nil {
+			return nil, err
 		}
 
-		p := pkg.Package{
-			Name:         entry.Name,
-			Version:      toELVersion(metadata),
-			Locations:    source.NewLocationSet(dbLocation),
-			FoundBy:      catalogerName,
-			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata:     metadata,
+		if !pkg.IsValid(p) {
+			continue
 		}
 
 		p.SetID()
-
-		allPkgs = append(allPkgs, p)
+		allPkgs = append(allPkgs, *p)
 	}
 
 	return allPkgs, nil
+}
+
+func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry *rpmdb.PackageInfo) (*pkg.Package, error) {
+	fileRecords, err := extractRpmdbFileRecords(resolver, entry)
+	if err != nil {
+		return nil, err
+	}
+
+	metadata := pkg.RpmdbMetadata{
+		Name:      entry.Name,
+		Version:   entry.Version,
+		Epoch:     entry.Epoch,
+		Arch:      entry.Arch,
+		Release:   entry.Release,
+		SourceRpm: entry.SourceRpm,
+		Vendor:    entry.Vendor,
+		License:   entry.License,
+		Size:      entry.Size,
+		Files:     fileRecords,
+	}
+
+	p := pkg.Package{
+		Name:         entry.Name,
+		Version:      toELVersion(metadata),
+		Locations:    source.NewLocationSet(dbLocation),
+		FoundBy:      catalogerName,
+		Type:         pkg.RpmPkg,
+		MetadataType: pkg.RpmdbMetadataType,
+		Metadata:     metadata,
+	}
+
+	p.SetID()
+	return &p, nil
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].
@@ -91,10 +108,15 @@ func toELVersion(metadata pkg.RpmdbMetadata) string {
 	return fmt.Sprintf("%s-%s", metadata.Version, metadata.Release)
 }
 
-func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
+func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
-	for _, record := range entry.Files {
+	files, err := entry.InstalledFiles()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range files {
 		// only persist RPMDB file records which exist in the image/directory, otherwise ignore them
 		if resolver.HasPath(record.Path) {
 			records = append(records, pkg.RpmdbFileRecord{
@@ -111,5 +133,5 @@ func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.Pack
 			})
 		}
 	}
-	return records
+	return records, nil
 }

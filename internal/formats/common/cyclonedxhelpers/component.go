@@ -50,7 +50,7 @@ func deriveBomRef(p pkg.Package) string {
 	// TODO: In the future we may want to dedupe by PURL and combine components with
 	// the same PURL while preserving their unique metadata.
 	if parsedPURL, err := packageurl.FromString(p.PURL); err == nil {
-		parsedPURL.Qualifiers = append(parsedPURL.Qualifiers, packageurl.Qualifier{Key: "syft-id", Value: string(p.ID())})
+		parsedPURL.Qualifiers = append(parsedPURL.Qualifiers, packageurl.Qualifier{Key: "package-id", Value: string(p.ID())})
 		return parsedPURL.ToString()
 	}
 	// fallback is to use strictly the ID if there is no valid pURL

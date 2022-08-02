@@ -13,7 +13,7 @@ import (
 
 const powerUserExample = `  {{.appName}} {{.command}} <image>
   DEPRECATED - THIS COMMAND WILL BE REMOVED in v1.0.0
-  Only image sources are supported (e.g. docker: , podman: , docker-archive: , oci: , etc.), the directory source (dir:) is not supported.
+  Only image sources are supported (e.g. docker: , podman: , docker-archive: , oci: , etc.), the directory source (dir:) is not supported, template outputs are not supported.
   All behavior is controlled via application configuration and environment variables (see https://github.com/anchore/syft#configuration)
 `
 

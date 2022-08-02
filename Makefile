@@ -32,7 +32,7 @@ BOOTSTRAP_CACHE="c7afb99ad"
 DISTDIR=./dist
 SNAPSHOTDIR=./snapshot
 OS=$(shell uname | tr '[:upper:]' '[:lower:]')
-SNAPSHOT_BIN=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(OS)-build_$(OS)_amd64/$(BIN))
+SNAPSHOT_BIN=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(OS)-build_$(OS)_amd64_v1/$(BIN))
 
 ## Variable assertions
 
@@ -106,12 +106,12 @@ $(TEMPDIR):
 .PHONY: bootstrap-tools
 bootstrap-tools: $(TEMPDIR)
 	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.45.0
-	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.47.2
+	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.4.0
 	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
-	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.4.1
+	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.10.3
 	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/neilpa/yajsv@v1.4.0
-	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/sigstore/cosign/cmd/cosign@v1.5.1
+	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/sigstore/cosign/cmd/cosign@v1.10.0
 
 .PHONY: bootstrap-go
 bootstrap-go:
@@ -263,6 +263,18 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	# remove the keychain with the trusted self-signed cert automatically
 	.github/scripts/apple-signing/cleanup.sh
 
+snapshot-docker-assets: # Build snapshot images of docker images that will be published on release
+	$(call title,Building snapshot docker release assets)
+
+	# create a config with the dist dir overridden
+	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	bash -c "\
+		$(SNAPSHOT_CMD) \
+			--config $(TEMPDIR)/goreleaser.yaml \
+			--parallelism 1"
+
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
 compare-mac: $(RESULTSDIR) $(SNAPSHOTDIR) ## Run compare tests on build snapshot binaries and packages (Mac)
@@ -305,7 +317,7 @@ cli: $(SNAPSHOTDIR) ## Run CLI tests
 	chmod 755 "$(SNAPSHOT_BIN)"
 	$(SNAPSHOT_BIN) version
 	SYFT_BINARY_LOCATION='$(SNAPSHOT_BIN)' \
-		go test -count=1 -v ./test/cli
+		go test -count=1 -timeout=15m -v ./test/cli
 
 .PHONY: changelog
 changelog: clean-changelog CHANGELOG.md
@@ -342,6 +354,18 @@ release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packag
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
 
+.PHONY: release-docker-assets
+release-docker-assets:
+	$(call title,Publishing docker release assets)
+
+	# create a config with the dist dir overridden
+	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
+	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
+
+	bash -c "\
+		$(RELEASE_CMD) \
+			--config $(TEMPDIR)/goreleaser.yaml \
+			--parallelism 1"
 
 .PHONY: clean
 clean: clean-dist clean-snapshot clean-test-image-cache ## Remove previous builds, result reports, and test cache
@@ -369,7 +393,7 @@ clean-test-image-tar-cache: ## Delete all test cache (built docker image tars)
 
 .PHONY: clear-test-image-docker-cache
 clean-test-image-docker-cache: ## Purge all test docker images
-	docker images --format '{{.ID}} {{.Repository}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs docker rmi --force
+	docker images --format '{{.ID}} {{.Repository}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs -r docker rmi --force
 
 .PHONY: show-test-image-cache
 show-test-image-cache: ## Show all docker and image tar cache

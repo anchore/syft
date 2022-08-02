@@ -13,13 +13,14 @@ import (
 )
 
 const (
-	packagesExample = `  {{.appName}} {{.command}} alpine:latest                    a summary of discovered packages
-  {{.appName}} {{.command}} alpine:latest -o json            show all possible cataloging details
-  {{.appName}} {{.command}} alpine:latest -o cyclonedx       show a CycloneDX formatted SBOM
-  {{.appName}} {{.command}} alpine:latest -o cyclonedx-json  show a CycloneDX JSON formatted SBOM
-  {{.appName}} {{.command}} alpine:latest -o spdx            show a SPDX 2.2 Tag-Value formatted SBOM
-  {{.appName}} {{.command}} alpine:latest -o spdx-json       show a SPDX 2.2 JSON formatted SBOM
-  {{.appName}} {{.command}} alpine:latest -vv                show verbose debug information
+	packagesExample = `  {{.appName}} {{.command}} alpine:latest                                a summary of discovered packages
+  {{.appName}} {{.command}} alpine:latest -o json                        show all possible cataloging details
+  {{.appName}} {{.command}} alpine:latest -o cyclonedx                   show a CycloneDX formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o cyclonedx-json              show a CycloneDX JSON formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o spdx                        show a SPDX 2.2 Tag-Value formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -o spdx-json                   show a SPDX 2.2 JSON formatted SBOM
+  {{.appName}} {{.command}} alpine:latest -vv                            show verbose debug information
+  {{.appName}} {{.command}} alpine:latest -o template -t my_format.tmpl  show a SBOM formatted according to given template file
 
   Supports the following image sources:
     {{.appName}} {{.command}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.

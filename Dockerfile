@@ -1,6 +1,4 @@
-FROM alpine:latest AS build
-
-RUN apk --no-cache add ca-certificates
+FROM gcr.io/distroless/static-debian11:debug AS build
 
 FROM scratch
 # needed for version check HTTPS request
@@ -27,6 +25,5 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL io.artifacthub.package.readme-url="https://raw.githubusercontent.com/anchore/syft/main/README.md"
 LABEL io.artifacthub.package.logo-url="https://user-images.githubusercontent.com/5199289/136844524-1527b09f-c5cb-4aa9-be54-5aa92a6086c1.png"
 LABEL io.artifacthub.package.license="Apache-2.0"
-      
 
 ENTRYPOINT ["/syft"]

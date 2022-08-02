@@ -10,6 +10,8 @@ import (
 	"github.com/anchore/syft/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	sigopts "github.com/sigstore/cosign/cmd/cosign/cli/options"
 )
 
 const (
@@ -49,14 +51,23 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *c
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// this MUST be called first to make sure app config decodes
 			// the viper object correctly
-			newLogWrapper(app)
-			logApplicationConfig(app)
-
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}
 
-			return attest.Run(cmd.Context(), app, args)
+			// build cosign key options for attestation
+			ko := sigopts.KeyOpts{
+				KeyRef:                   app.Attest.KeyRef,
+				FulcioURL:                app.Attest.FulcioURL,
+				IDToken:                  app.Attest.FulcioIdentityToken,
+				InsecureSkipFulcioVerify: app.Attest.InsecureSkipFulcioVerify,
+				RekorURL:                 app.Attest.RekorURL,
+				OIDCIssuer:               app.Attest.OIDCIssuer,
+				OIDCClientID:             app.Attest.OIDCClientID,
+				OIDCRedirectURL:          app.Attest.OIDCRedirectURL,
+			}
+
+			return attest.Run(cmd.Context(), app, ko, args)
 		},
 	}
 

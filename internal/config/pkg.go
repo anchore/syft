@@ -21,13 +21,3 @@ func (cfg pkg) loadDefaultValues(v *viper.Viper) {
 func (cfg *pkg) parseConfigValues() error {
 	return cfg.Cataloger.parseConfigValues()
 }
-
-func (cfg pkg) ToConfig() cataloger.Config {
-	return cataloger.Config{
-		Search: cataloger.SearchConfig{
-			IncludeIndexedArchives:   cfg.SearchIndexedArchives,
-			IncludeUnindexedArchives: cfg.SearchUnindexedArchives,
-			Scope:                    cfg.Cataloger.ScopeOpt,
-		},
-	}
-}

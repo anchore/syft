@@ -10,11 +10,13 @@ import (
 	"io"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 	"github.com/anchore/syft/syft/source"
+	"golang.org/x/mod/module"
 )
 
 const GOARCH = "GOARCH"
@@ -24,21 +26,36 @@ var (
 	// appear to be in a known format, or it breaks the rules of that format,
 	// or when there are I/O errors reading the file.
 	errUnrecognizedFormat = errors.New("unrecognized file format")
+	// devel is used to recognize the current default version when a golang main distribution is built
+	// https://github.com/golang/go/issues/29228 this issue has more details on the progress of being able to
+	// inject the correct version into the main module of the build process
 )
+
+const devel = "(devel)"
 
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
-	main := newGoBinaryPackage(&mod.Main, mod.GoVersion, arch, location, gbs)
-	main.Version = ""
-
-	if v, ok := gbs["vcs.revision"]; ok {
-		main.Version = v
+	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, location, gbs)
+	if main.Version == devel {
+		if version, ok := gbs["vcs.revision"]; ok {
+			if timestamp, ok := gbs["vcs.time"]; ok {
+				//NOTE: err is ignored, because if parsing fails
+				// we still use the empty Time{} struct to generate an empty date, like 00010101000000
+				// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
+				ts, _ := time.Parse(time.RFC3339, timestamp)
+				if len(version) >= 12 {
+					version = version[:12]
+				}
+				version = module.PseudoVersion("", "", ts, version)
+			}
+			main.Version = version
+		}
 	}
 
 	return main
 }
 
-func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
+func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
@@ -56,6 +73,7 @@ func newGoBinaryPackage(dep *debug.Module, goVersion, architecture string, locat
 			H1Digest:          dep.Sum,
 			Architecture:      architecture,
 			BuildSettings:     buildSettings,
+			MainModule:        mainModule,
 		},
 	}
 
@@ -173,8 +191,10 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		if dep == nil {
 			continue
 		}
-
-		pkgs = append(pkgs, newGoBinaryPackage(dep, mod.GoVersion, arch, location, nil))
+		p := newGoBinaryPackage(dep, mod.Main.Path, mod.GoVersion, arch, location, nil)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
+		}
 	}
 
 	// NOTE(jonasagx): this use happened originally while creating unit tests. It might never

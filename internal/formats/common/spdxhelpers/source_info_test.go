@@ -134,6 +134,54 @@ func Test_SourceInfo(t *testing.T) {
 				"from pubspec manifest",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.DotnetPkg,
+			},
+			expected: []string{
+				"from dotnet project assets file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.AlpmPkg,
+			},
+			expected: []string{
+				"from ALPM DB",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.CocoapodsPkg,
+			},
+			expected: []string{
+				"installed cocoapods manifest file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.ConanPkg,
+			},
+			expected: []string{
+				"from conan manifest",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.PortagePkg,
+			},
+			expected: []string{
+				"from portage DB",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.HackagePkg,
+			},
+			expected: []string{
+				"from cabal or stack manifest files",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

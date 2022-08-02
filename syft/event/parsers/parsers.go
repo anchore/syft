@@ -151,3 +151,16 @@ func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, 
 
 	return host, prog, nil
 }
+
+func ParseUploadAttestation(e partybus.Event) (progress.StagedProgressable, error) {
+	if err := checkEventType(e.Type, event.UploadAttestation); err != nil {
+		return nil, err
+	}
+
+	prog, ok := e.Value.(progress.StagedProgressable)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return prog, nil
+}

@@ -27,17 +27,20 @@ can be extended to include specific package metadata struct shapes in the future
 // When a new package metadata definition is created it will need to be manually added here. The variable name does
 // not matter as long as it is exported.
 type artifactMetadataContainer struct {
-	Apk    pkg.ApkMetadata
-	Dpkg   pkg.DpkgMetadata
-	Gem    pkg.GemMetadata
-	Java   pkg.JavaMetadata
-	Npm    pkg.NpmPackageJSONMetadata
-	Python pkg.PythonPackageMetadata
-	Rpm    pkg.RpmdbMetadata
-	Cargo  pkg.CargoPackageMetadata
-	Go     pkg.GolangBinMetadata
-	Php    pkg.PhpComposerJSONMetadata
-	Dart   pkg.DartPubMetadata
+	Apk     pkg.ApkMetadata
+	Alpm    pkg.AlpmMetadata
+	Dpkg    pkg.DpkgMetadata
+	Gem     pkg.GemMetadata
+	Java    pkg.JavaMetadata
+	Npm     pkg.NpmPackageJSONMetadata
+	Python  pkg.PythonPackageMetadata
+	Rpm     pkg.RpmdbMetadata
+	Cargo   pkg.CargoPackageMetadata
+	Go      pkg.GolangBinMetadata
+	Php     pkg.PhpComposerJSONMetadata
+	Dart    pkg.DartPubMetadata
+	Dotnet  pkg.DotnetDepsMetadata
+	Portage pkg.PortageMetadata
 }
 
 func main() {

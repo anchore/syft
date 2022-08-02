@@ -41,7 +41,11 @@ func TestCandidateProductForGo(t *testing.T) {
 		},
 		{
 			pkg:      "github.com/someone/something/long/package/name",
-			expected: "something",
+			expected: "something/long/package/name",
+		},
+		{
+			pkg:      "",
+			expected: "",
 		},
 	}
 

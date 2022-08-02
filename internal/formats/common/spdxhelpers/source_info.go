@@ -6,9 +6,12 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+//nolint:funlen
 func SourceInfo(p pkg.Package) string {
 	answer := ""
 	switch p.Type {
+	case pkg.AlpmPkg:
+		answer = "acquired package info from ALPM DB"
 	case pkg.RpmPkg:
 		answer = "acquired package info from RPM DB"
 	case pkg.ApkPkg:
@@ -17,6 +20,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from pubspec manifest"
 	case pkg.DebPkg:
 		answer = "acquired package info from DPKG DB"
+	case pkg.DotnetPkg:
+		answer = "acquired package info from dotnet project assets file"
 	case pkg.NpmPkg:
 		answer = "acquired package info from installed node module manifest file"
 	case pkg.PythonPkg:
@@ -31,6 +36,14 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from rust cargo manifest"
 	case pkg.PhpComposerPkg:
 		answer = "acquired package info from PHP composer manifest"
+	case pkg.CocoapodsPkg:
+		answer = "acquired package info from installed cocoapods manifest file"
+	case pkg.ConanPkg:
+		answer = "acquired package info from conan manifest"
+	case pkg.PortagePkg:
+		answer = "acquired package info from portage DB"
+	case pkg.HackagePkg:
+		answer = "acquired package info from cabal or stack manifest files"
 	default:
 		answer = "acquired package info from the following paths"
 	}

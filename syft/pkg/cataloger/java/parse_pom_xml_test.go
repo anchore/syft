@@ -10,7 +10,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_parsePomXML(t *testing.T) {
+func Test_parserPomXML(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []*pkg.Package
+	}{
+		{
+			input: "test-fixtures/pom/pom.xml",
+			expected: []*pkg.Package{
+				{
+					Name:         "joda-time",
+					Version:      "2.9.2",
+					FoundBy:      javaPomCataloger,
+					Language:     pkg.Java,
+					Type:         pkg.JavaPkg,
+					MetadataType: pkg.JavaMetadataType,
+					Metadata: pkg.JavaMetadata{
+						PURL: "pkg:maven/com.joda/joda-time@2.9.2",
+					},
+				},
+				{
+					Name:         "junit",
+					Version:      "4.12",
+					FoundBy:      "java-pom-cataloger",
+					Language:     pkg.Java,
+					Type:         pkg.JavaPkg,
+					MetadataType: pkg.JavaMetadataType,
+					Metadata: pkg.JavaMetadata{
+						PURL: "pkg:maven/junit/junit@4.12",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			fixture, err := os.Open(test.input)
+			assert.NoError(t, err)
+
+			actual, relationships, err := parserPomXML(fixture.Name(), fixture)
+			assert.NoError(t, err)
+			assert.Nil(t, relationships)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func Test_parsePomXMLProject(t *testing.T) {
 	tests := []struct {
 		expected pkg.PomProject
 	}{
@@ -37,7 +84,7 @@ func Test_parsePomXML(t *testing.T) {
 			fixture, err := os.Open(test.expected.Path)
 			assert.NoError(t, err)
 
-			actual, err := parsePomXML(fixture.Name(), fixture)
+			actual, err := parsePomXMLProject(fixture.Name(), fixture)
 			assert.NoError(t, err)
 
 			assert.Equal(t, &test.expected, actual)
