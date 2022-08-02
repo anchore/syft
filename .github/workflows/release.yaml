@@ -160,6 +160,9 @@ jobs:
 
   release-docker-assets:
     needs: [release]
+    # code signing requires we run on mac-os runners. docker does not come installed on the mac-os runner
+    # a previous release process installed and configured docker on the mac-os runner which lead to blocked releases
+    # the anchore tools team opted to break this step out to a separate process to remove this work constraint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
