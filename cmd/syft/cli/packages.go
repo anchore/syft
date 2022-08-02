@@ -28,15 +28,16 @@ const (
 `
 
 	schemeHelpHeader = "You can also explicitly specify the scheme to use:"
-	imageSchemeHelp  = `    {{.appName}} {{.command}} docker:yourrepo/yourimage:tag          explicitly use the Docker daemon
-    {{.appName}} {{.command}} podman:yourrepo/yourimage:tag        	 explicitly use the Podman daemon
-    {{.appName}} {{.command}} registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
-    {{.appName}} {{.command}} docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
-    {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
-    {{.appName}} {{.command}} oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
+	imageSchemeHelp  = `    {{.appName}} {{.command}} docker:yourrepo/yourimage:tag            explicitly use the Docker daemon
+    {{.appName}} {{.command}} podman:yourrepo/yourimage:tag        	   explicitly use the Podman daemon
+    {{.appName}} {{.command}} registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
+    {{.appName}} {{.command}} docker-archive:path/to/yourimage.tar     use a tarball from disk for archives created from "docker save"
+    {{.appName}} {{.command}} oci-archive:path/to/yourimage.tar        use a tarball from disk for OCI archives (from Skopeo or otherwise)
+    {{.appName}} {{.command}} oci-dir:path/to/yourimage                read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
+    {{.appName}} {{.command}} singularity:path/to/yourimage.sif        read directly from a Singularity Image Format (SIF) container on disk
 `
-	nonImageSchemeHelp = `    {{.appName}} {{.command}} dir:path/to/yourproject                read directly from a path on disk (any directory)
-    {{.appName}} {{.command}} file:path/to/yourproject/file          read directly from a path on disk (any single file)
+	nonImageSchemeHelp = `    {{.appName}} {{.command}} dir:path/to/yourproject                  read directly from a path on disk (any directory)
+    {{.appName}} {{.command}} file:path/to/yourproject/file            read directly from a path on disk (any single file)
 `
 	packagesSchemeHelp = "\n" + indent + schemeHelpHeader + "\n" + imageSchemeHelp + nonImageSchemeHelp
 
