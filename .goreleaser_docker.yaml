@@ -4,6 +4,9 @@
 # https://github.com/anchore/syft/issues/577
 # https://github.com/anchore/syft/issues/519
 # https://github.com/anchore/syft/issues/576
+release:
+  disable: true
+
 env:
   # required to support multi architecture docker builds
   - DOCKER_CLI_EXPERIMENTAL=enabled
