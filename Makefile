@@ -147,7 +147,7 @@ lint-fix: ## Auto-format all source code + run golangci lint fixers
 
 .PHONY: check-licenses
 check-licenses: ## Ensure transitive dependencies are compliant with the current license policy
-	$(TEMPDIR)/bouncer check ./cmd/syft
+	$(TEMPDIR)/bouncer check ./...
 
 check-go-mod-tidy:
 	@ .github/scripts/go-mod-tidy-check.sh && echo "go.mod and go.sum are tidy!"

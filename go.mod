@@ -216,7 +216,6 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rasky/go-lzo v0.0.0-20200203143853-96a758eda86e // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -324,3 +323,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 )
+
+// Forked to remove https://github.com/rasky/go-lzo dependency, which is GPLv2 licensed.
+replace github.com/CalebQ42/squashfs => github.com/sylabs/squashfs v0.5.5-0.20220526223455-67e0f4cd95c5
