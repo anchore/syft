@@ -3,8 +3,9 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/anchore/syft/syft/source"
 	"testing"
+
+	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/internal/formats/syftjson"
 	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
@@ -23,7 +24,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, false)
+			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, nil)
 
 			output := bytes.NewBufferString("")
 			err := syftjson.Format().Encode(output, sbom)

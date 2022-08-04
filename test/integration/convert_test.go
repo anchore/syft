@@ -36,7 +36,7 @@ var convertibleFormats = []sbom.Format{
 func TestConvertCmd(t *testing.T) {
 	for _, format := range convertibleFormats {
 		t.Run(format.ID().String(), func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, false)
+			sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
 			format := syft.FormatByID(syftjson.ID)
 
 			f, err := ioutil.TempFile("", "test-convert-sbom-")

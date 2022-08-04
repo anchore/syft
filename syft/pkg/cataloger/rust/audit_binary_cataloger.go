@@ -12,7 +12,7 @@ import (
 	rustaudit "github.com/microsoft/go-rustaudit"
 )
 
-const catalogerName = "rust-audit-binary-cataloger"
+const catalogerName = "cargo-auditable-binary-cataloger"
 
 type Cataloger struct{}
 

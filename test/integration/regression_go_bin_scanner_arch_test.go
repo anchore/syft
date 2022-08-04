@@ -1,9 +1,10 @@
 package integration
 
 import (
-	"github.com/anchore/syft/syft/source"
 	"strings"
 	"testing"
+
+	"github.com/anchore/syft/syft/source"
 
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -16,7 +17,7 @@ func TestRegressionGoArchDiscovery(t *testing.T) {
 	)
 	// This is a regression test to make sure the way we detect go binary packages
 	// stays consistent and reproducible as the tool chain evolves
-	sbom, _ := catalogFixtureImage(t, "image-go-bin-arch-coverage", source.SquashedScope, false)
+	sbom, _ := catalogFixtureImage(t, "image-go-bin-arch-coverage", source.SquashedScope, nil)
 
 	var actualELF, actualWIN, actualMACOS int
 

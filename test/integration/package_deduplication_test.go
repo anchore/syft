@@ -2,10 +2,11 @@ package integration
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestPackageDeduplication(t *testing.T) {
@@ -56,7 +57,7 @@ func TestPackageDeduplication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.scope), func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope, false)
+			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope, nil)
 
 			assert.Equal(t, tt.packageCount, sbom.Artifacts.PackageCatalog.PackageCount())
 			for name, expectedInstanceCount := range tt.instanceCount {

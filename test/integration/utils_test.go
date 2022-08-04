@@ -1,8 +1,9 @@
 package integration
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg/cataloger"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope, allCatalogers bool) (sbom.SBOM, *source.Source) {
+func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope, catalogerCfg []string) (sbom.SBOM, *source.Source) {
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	userInput := "docker-archive:" + tarPath
@@ -23,11 +24,9 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	t.Cleanup(cleanupSource)
 	require.NoError(t, err)
 
-	// TODO: this would be better with functional options (after/during API refactor)
 	c := cataloger.DefaultConfig()
-	if allCatalogers {
-		c.Catalogers = []string{"all"}
-	}
+	c.Catalogers = catalogerCfg
+
 	c.Search.Scope = scope
 	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
 	if err != nil {
