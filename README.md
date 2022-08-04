@@ -93,7 +93,7 @@ nix-shell -p syft
 
 ## Getting started
 
-#### SBOM
+### SBOM
 
 To generate an SBOM for a container image:
 
@@ -107,67 +107,9 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-#### Format conversion (experimental)
 
-The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
 
-```
-syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
-```
-
-This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost.
-
-We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
-- Syft JSON
-- SPDX 2.2 JSON
-- SPDX 2.2 tag-value
-- CycloneDX 1.4 JSON
-- CycloneDX 1.4 XML
-
-Conversion example:
-```sh
-syft alpine:latest -o syft-json=sbom.syft.json # generate a syft SBOM
-syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to CycloneDX
-```
-
-#### SBOM attestation
-
-### Keyless support
-Syft supports generating attestations using cosign's [keyless](https://github.com/sigstore/cosign/blob/main/KEYLESS.md) signatures.
-
-To use this feature with a format like CycloneDX json simply run:
-```
-syft attest --output cyclonedx-json <IMAGE WITH OCI WRITE ACCESS>
-```
-This command will open a web browser and allow the user to authenticate their OIDC identity as the root of trust for the attestation (Github, Google, Microsoft).
-
-After authenticating, Syft will upload the attestation to the OCI registry specified by the image that the user has write access to.
-
-You will need to make sure your credentials are configured for the OCI registry you are uploading to so that the attestation can write successfully.
-
-Users can then verify the attestation(or any image with attestations) by running:
-```
-COSIGN_EXPERIMENTAL=1 cosign verify-attestation <IMAGE_WITH_ATTESTATIONS>
-```
-
-Users should see that the uploaded attestation claims are validated, the claims exist within the transparency log, and certificates on the attestations were verified against [fulcio](https://github.com/SigStore/fulcio).
-There will also be a printout of the certificates subject `<user identity>` and the certificate issuer URL: `<provider of user identity (Github, Google, Microsoft)>`:
-```
-Certificate subject:  test.email@testdomain.com
-Certificate issuer URL:  https://accounts.google.com
-```
-
-### Local private key support
-
-To generate an SBOM attestation for a container image using a local private key:
-```
-syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
-```
-
-The above output is in the form of the [DSSE envelope](https://github.com/secure-systems-lab/dsse/blob/master/envelope.md#dsse-envelope).
-The payload is a base64 encoded `in-toto` statement with the generated SBOM as the predicate. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
-
-### Supported sources
+## Supported sources
 
 Syft can generate a SBOM from a variety of sources:
 
@@ -192,6 +134,47 @@ dir:path/to/yourproject                  read directly from a path on disk (any 
 file:path/to/yourproject/file            read directly from a path on disk (any single file)
 registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
+
+#### Default Cataloger Configuration by scan type
+
+##### Image Scanning:
+- alpmdb
+- rpmdb
+- dpkgdb
+- apkdb
+- portage
+- ruby-gemspec
+- python-package
+- php-composer-installed Cataloger
+- javascript-package
+- java
+- go-module-binary
+- dotnet-deps
+
+##### Directory Scanning:
+- alpmdb
+- apkdb
+- dpkgdb
+- portage
+- rpmdb
+- ruby-gemfile
+- python-index
+- python-package
+- php-composer-lock
+- javascript-lock
+- java
+- java-pom
+- go-module-binary
+- go-mod-file
+- rust-cargo-lock
+- dartlang-lock
+- dotnet-deps
+- cocoapods
+- conan
+- hackage
+
+#### Non Default:
+- rust-audit-binary
 
 ### Excluding file paths
 
@@ -230,13 +213,13 @@ Where the `formats` available are:
 - `table`: A columnar summary (default).
 - `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
 
-#### Using templates
+## Using templates
 
 Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template). Here's how it works:
 
 - Define your format as a Go template, and save this template as a file.
 
-- Set the output format to "template" (`-o template`). 
+- Set the output format to "template" (`-o template`).
 
 - Specify the path to the template file (`-t ./path/to/custom.template`).
 
@@ -263,7 +246,7 @@ Which would produce output like:
 
 Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
 
-#### Multiple outputs
+## Multiple outputs
 
 Syft can also output _multiple_ files in differing formats by appending
 `=<file>` to the option, for example to output Syft JSON and SPDX JSON:
@@ -313,7 +296,7 @@ Here's a simple workflow to mount this config file as a secret into a container 
       config.json: <base64 encoded config.json>
     ```
 
-    `kubectl apply -f secret.yaml`
+   `kubectl apply -f secret.yaml`
 
 
 2. Create your pod running syft. The env `DOCKER_CONFIG` is important because it advertises where to look for the credential file. In the below example, setting `DOCKER_CONFIG=/config` informs syft that credentials can be found at `/config/config.json`. This is why we used `config.json` as the key for our secret. When mounted into containers the secrets' key is used as the filename. The `volumeMounts` section mounts our secret to `/config`. The `volumes` section names our volume and leverages the secret we created in step one.
@@ -344,12 +327,73 @@ Here's a simple workflow to mount this config file as a secret into a container 
           secretName: registry-config
     ```
 
-    `kubectl apply -f pod.yaml`
+   `kubectl apply -f pod.yaml`
 
 
 3. The user can now run `kubectl logs syft-private-registry-demo`. The logs should show the Syft analysis for the `<private_image>` provided in the pod configuration.
 
 Using the above information, users should be able to configure private registry access without having to do so in the `grype` or `syft` configuration files.  They will also not be dependent on a Docker daemon, (or some other runtime software) for registry configuration and access.
+
+## Format conversion (experimental)
+
+The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
+
+```
+syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
+```
+
+This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost.
+
+We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
+- Syft JSON
+- SPDX 2.2 JSON
+- SPDX 2.2 tag-value
+- CycloneDX 1.4 JSON
+- CycloneDX 1.4 XML
+
+Conversion example:
+```sh
+syft alpine:latest -o syft-json=sbom.syft.json # generate a syft SBOM
+syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to CycloneDX
+```
+
+## Attestation (experimental)
+### Keyless support
+Syft supports generating attestations using cosign's [keyless](https://github.com/sigstore/cosign/blob/main/KEYLESS.md) signatures.
+
+To use this feature with a format like CycloneDX json simply run:
+```
+syft attest --output cyclonedx-json <IMAGE WITH OCI WRITE ACCESS>
+```
+This command will open a web browser and allow the user to authenticate their OIDC identity as the root of trust for the attestation (Github, Google, Microsoft).
+
+After authenticating, Syft will upload the attestation to the OCI registry specified by the image that the user has write access to.
+
+You will need to make sure your credentials are configured for the OCI registry you are uploading to so that the attestation can write successfully.
+
+Users can then verify the attestation(or any image with attestations) by running:
+```
+COSIGN_EXPERIMENTAL=1 cosign verify-attestation <IMAGE_WITH_ATTESTATIONS>
+```
+
+Users should see that the uploaded attestation claims are validated, the claims exist within the transparency log, and certificates on the attestations were verified against [fulcio](https://github.com/SigStore/fulcio).
+There will also be a printout of the certificates subject `<user identity>` and the certificate issuer URL: `<provider of user identity (Github, Google, Microsoft)>`:
+```
+Certificate subject:  test.email@testdomain.com
+Certificate issuer URL:  https://accounts.google.com
+```
+
+#### Local private key support
+
+To generate an SBOM attestation for a container image using a local private key:
+```
+syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
+```
+
+The above output is in the form of the [DSSE envelope](https://github.com/secure-systems-lab/dsse/blob/master/envelope.md#dsse-envelope).
+The payload is a base64 encoded `in-toto` statement with the generated SBOM as the predicate. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
+
+
 
 ## Configuration
 
