@@ -35,6 +35,7 @@ type RpmdbMetadata struct {
 	Size      int               `json:"size" cyclonedx:"size"`
 	License   string            `json:"license"`
 	Vendor    string            `json:"vendor"`
+	ModularityLabel  string            `json:"modularitylabel"`
 	Files     []RpmdbFileRecord `json:"files"`
 }
 

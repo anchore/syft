@@ -78,6 +78,7 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 		Vendor:    entry.Vendor,
 		License:   entry.License,
 		Size:      entry.Size,
+		ModularityLabel:  entry.Modularitylabel,
 		Files:     fileRecords,
 	}
 
