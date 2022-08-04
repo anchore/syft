@@ -174,7 +174,7 @@ registry:yourrepo/yourimage:tag          pull image directly from a registry (no
 - hackage
 
 #### Non Default:
-- rust-audit-binary
+- cargo-auditable-binary
 
 ### Excluding file paths
 
