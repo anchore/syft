@@ -41,6 +41,8 @@ type Cataloger interface {
 	Name() string
 	// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 	Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error)
+	// UsesExternalSources returns if the cataloger uses external sources, such as querying a database
+	UsesExternalSources() bool
 }
 
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
@@ -58,7 +60,7 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		portage.NewPortageCataloger(),
-	}, cfg.Catalogers)
+	}, cfg)
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
@@ -84,7 +86,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		cpp.NewConanfileCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
-	}, cfg.Catalogers)
+	}, cfg)
 }
 
 // AllCatalogers returns all implemented catalogers
@@ -114,10 +116,20 @@ func AllCatalogers(cfg Config) []Cataloger {
 		cpp.NewConanfileCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
-	}, cfg.Catalogers)
+	}, cfg)
 }
 
+// RequestedAllCatalogers returns true if all Catalogers have been requested. Takes into account cfg.ExternalSourcesEnabled
 func RequestedAllCatalogers(cfg Config) bool {
+	// if external sources are disabled, only return false if there actually are any catalogers that use external sources
+	if !cfg.ExternalSourcesEnabled {
+		for _, cat := range AllCatalogers(Config{Catalogers: []string{"all"}, ExternalSourcesEnabled: true}) {
+			if cat.UsesExternalSources() {
+				return false
+			}
+		}
+	}
+
 	for _, enableCatalogerPattern := range cfg.Catalogers {
 		if enableCatalogerPattern == AllCatalogersPattern {
 			return true
@@ -126,14 +138,33 @@ func RequestedAllCatalogers(cfg Config) bool {
 	return false
 }
 
-func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string) []Cataloger {
+func filterForExternalSources(catalogers []Cataloger, cfg Config) []Cataloger {
+	if cfg.ExternalSourcesEnabled {
+		return catalogers
+	}
+
+	var enabledCatalogers []Cataloger
+	for _, cataloger := range catalogers {
+		if !cataloger.UsesExternalSources() {
+			enabledCatalogers = append(enabledCatalogers, cataloger)
+		} else {
+			log.Infof("cataloger %v will not be used because external sources are disabled", cataloger.Name())
+		}
+	}
+
+	return enabledCatalogers
+}
+
+func filterCatalogers(catalogers []Cataloger, cfg Config) []Cataloger {
+	enabledCatalogerPatterns := cfg.Catalogers
+
 	// if cataloger is not set, all applicable catalogers are enabled by default
 	if len(enabledCatalogerPatterns) == 0 {
-		return catalogers
+		return filterForExternalSources(catalogers, cfg)
 	}
 	for _, enableCatalogerPattern := range enabledCatalogerPatterns {
 		if enableCatalogerPattern == AllCatalogersPattern {
-			return catalogers
+			return filterForExternalSources(catalogers, cfg)
 		}
 	}
 	var keepCatalogers []Cataloger
@@ -144,7 +175,7 @@ func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string)
 		}
 		log.Infof("skipping cataloger %q", cataloger.Name())
 	}
-	return keepCatalogers
+	return filterForExternalSources(keepCatalogers, cfg)
 }
 
 func contains(enabledPartial []string, catalogerName string) bool {

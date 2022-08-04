@@ -39,6 +39,11 @@ func (c *GenericCataloger) Name() string {
 	return c.upstreamCataloger
 }
 
+// UsesExternalSources indicates that any GenericCatalogor does not use external sources
+func (c *GenericCataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
