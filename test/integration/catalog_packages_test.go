@@ -3,6 +3,7 @@ package integration
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/linux"
@@ -54,7 +55,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, false)
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -220,4 +221,25 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	if len(observedPkgs) < len(definedPkgs) {
 		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", len(definedPkgs), len(observedPkgs))
 	}
+}
+
+func TestPkgCoverageCatalogerConfiguration(t *testing.T) {
+	// Check that cataloger configuration can be used to run a cataloger on a source
+	// for which that cataloger isn't enabled by defauly
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, []string{"rust"})
+
+	observedLanguages := internal.NewStringSet()
+	definedLanguages := internal.NewStringSet()
+	definedLanguages.Add("rust")
+
+	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate() {
+		observedLanguages.Add(actualPkg.Language.String())
+	}
+
+	assert.Equal(t, definedLanguages, observedLanguages)
+
+	// Verify that rust isn't actually an image cataloger
+	c := cataloger.DefaultConfig()
+	c.Catalogers = []string{"rust"}
+	assert.Len(t, cataloger.ImageCatalogers(c), 0)
 }

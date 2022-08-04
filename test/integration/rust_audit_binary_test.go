@@ -8,7 +8,7 @@ import (
 )
 
 func TestRustAudit(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-rust-auditable", source.SquashedScope, true)
+	sbom, _ := catalogFixtureImage(t, "image-rust-auditable", source.SquashedScope, []string{"all"})
 
 	expectedPkgs := 2
 	actualPkgs := 0
