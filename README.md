@@ -17,6 +17,8 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Agenda: https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing (join [this group](https://groups.google.com/g/anchore-oss-community) for write access)
 - All are welcome!
 
+For commercial support options with Syft or Grype, please [contact Anchore](https://get.anchore.com/contact/)
+
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
 ## Features
