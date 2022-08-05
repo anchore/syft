@@ -26,17 +26,17 @@ var (
 
 // RpmdbMetadata represents all captured data for a RPM DB package entry.
 type RpmdbMetadata struct {
-	Name      string            `json:"name"`
-	Version   string            `json:"version"`
-	Epoch     *int              `json:"epoch"  cyclonedx:"epoch" jsonschema:"nullable"`
-	Arch      string            `json:"architecture"`
-	Release   string            `json:"release" cyclonedx:"release"`
-	SourceRpm string            `json:"sourceRpm" cyclonedx:"sourceRpm"`
-	Size      int               `json:"size" cyclonedx:"size"`
-	License   string            `json:"license"`
-	Vendor    string            `json:"vendor"`
-	ModularityLabel  string            `json:"modularitylabel"`
-	Files     []RpmdbFileRecord `json:"files"`
+	Name            string            `json:"name"`
+	Version         string            `json:"version"`
+	Epoch           *int              `json:"epoch"  cyclonedx:"epoch" jsonschema:"nullable"`
+	Arch            string            `json:"architecture"`
+	Release         string            `json:"release" cyclonedx:"release"`
+	SourceRpm       string            `json:"sourceRpm" cyclonedx:"sourceRpm"`
+	Size            int               `json:"size" cyclonedx:"size"`
+	License         string            `json:"license"`
+	Vendor          string            `json:"vendor"`
+	ModularityLabel string            `json:"modularitylabel"`
+	Files           []RpmdbFileRecord `json:"files"`
 }
 
 // RpmdbFileRecord represents the file metadata for a single file attributed to a RPM package.

@@ -69,17 +69,17 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 	}
 
 	metadata := pkg.RpmdbMetadata{
-		Name:      entry.Name,
-		Version:   entry.Version,
-		Epoch:     entry.Epoch,
-		Arch:      entry.Arch,
-		Release:   entry.Release,
-		SourceRpm: entry.SourceRpm,
-		Vendor:    entry.Vendor,
-		License:   entry.License,
-		Size:      entry.Size,
-		ModularityLabel:  entry.Modularitylabel,
-		Files:     fileRecords,
+		Name:            entry.Name,
+		Version:         entry.Version,
+		Epoch:           entry.Epoch,
+		Arch:            entry.Arch,
+		Release:         entry.Release,
+		SourceRpm:       entry.SourceRpm,
+		Vendor:          entry.Vendor,
+		License:         entry.License,
+		Size:            entry.Size,
+		ModularityLabel: entry.Modularitylabel,
+		Files:           fileRecords,
 	}
 
 	p := pkg.Package{
