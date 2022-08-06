@@ -322,3 +322,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 )
+
+retract (
+	v0.53.2
+	v0.53.1 // Published accidentally with incorrect license in depdencies
+)
