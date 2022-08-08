@@ -1328,7 +1328,7 @@
         "size",
         "license",
         "vendor",
-        "modularitylabel",
+        "modularityLabel",
         "files"
       ],
       "properties": {
@@ -1366,7 +1366,7 @@
         "vendor": {
           "type": "string"
         },
-        "modularitylabel": {
+        "modularityLabel": {
           "type": "string"
         },
         "files": {
