@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/anchore/syft/syft/source"
@@ -9,6 +10,8 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+var errUnknownMetadataType = errors.New("unknown metadata type")
 
 // Package represents a pkg.Package object specialized for JSON marshaling and unmarshalling.
 type Package struct {
@@ -60,13 +63,22 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	return unpackMetadata(p, unpacker)
+	err := unpackMetadata(p, unpacker)
+	if errors.Is(err, errUnknownMetadataType) {
+		log.Warnf("unknown package metadata type=%q for packageID=%q", p.MetadataType, p.ID)
+		return nil
+	}
+
+	return err
 }
 
 // nolint:funlen,gocognit,gocyclo
 func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	p.MetadataType = unpacker.MetadataType
 	switch p.MetadataType {
+	case "":
+		// there is no metadata, skip
+		break
 	case pkg.AlpmMetadataType:
 		var payload pkg.AlpmMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
@@ -176,8 +188,7 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 		}
 		p.Metadata = payload
 	default:
-		log.Warnf("unknown package metadata type=%q for packageID=%q", p.MetadataType, p.ID)
+		return errUnknownMetadataType
 	}
-
 	return nil
 }
