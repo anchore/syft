@@ -112,8 +112,10 @@ func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationsh
 			continue
 		}
 
-		if string(relationship.From.ID()) == packageSpdxID {
-			fileIDs = append(fileIDs, string(relationship.To.ID()))
+		from := model.ElementID(relationship.From.ID()).String()
+		to := model.ElementID(relationship.To.ID()).String()
+		if from == packageSpdxID {
+			fileIDs = append(fileIDs, to)
 		}
 	}
 	return fileIDs
