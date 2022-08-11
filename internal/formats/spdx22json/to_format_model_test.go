@@ -188,7 +188,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 	}{
 		{
 			name: "find file IDs for packages with package-file relationships",
-			id:   string(p.ID()),
+			id:   model.ElementID(p.ID()).String(),
 			relationships: []artifact.Relationship{
 				{
 					From: p,
@@ -197,12 +197,12 @@ func Test_fileIDsForPackage(t *testing.T) {
 				},
 			},
 			expected: []string{
-				string(c.ID()),
+				model.ElementID(c.ID()).String(),
 			},
 		},
 		{
 			name: "ignore package-to-package",
-			id:   string(p.ID()),
+			id:   model.ElementID(p.ID()).String(),
 			relationships: []artifact.Relationship{
 				{
 					From: p,
@@ -214,7 +214,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 		},
 		{
 			name: "ignore file-to-file",
-			id:   string(p.ID()),
+			id:   model.ElementID(p.ID()).String(),
 			relationships: []artifact.Relationship{
 				{
 					From: c,
@@ -226,7 +226,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 		},
 		{
 			name: "ignore file-to-package",
-			id:   string(p.ID()),
+			id:   model.ElementID(p.ID()).String(),
 			relationships: []artifact.Relationship{
 				{
 					From: c,
@@ -238,7 +238,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 		},
 		{
 			name: "filter by relationship type",
-			id:   string(p.ID()),
+			id:   model.ElementID(p.ID()).String(),
 			relationships: []artifact.Relationship{
 				{
 					From: p,
