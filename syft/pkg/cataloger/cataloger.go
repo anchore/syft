@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/portage"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/rekor"
 	"github.com/anchore/syft/syft/pkg/cataloger/rpmdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
@@ -114,6 +115,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		cpp.NewConanfileCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
+		rekor.NewRekorCataloger(),
 	}, cfg.Catalogers)
 }
 
