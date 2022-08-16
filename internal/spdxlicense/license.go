@@ -12,7 +12,7 @@ import (
 // EX: gpl-2.0.0-only ---> GPL-2.0-only
 // See the debian link for more details on the spdx license differences
 
-//go:generate go run generate/generate_license_list.go
+//go:generate go run ./generate
 
 func ID(id string) (string, bool) {
 	value, exists := licenseIDs[strings.ToLower(id)]
