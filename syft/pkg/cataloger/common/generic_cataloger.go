@@ -6,10 +6,9 @@ package common
 import (
 	"fmt"
 
-	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -19,14 +18,18 @@ import (
 type GenericCataloger struct {
 	globParsers       map[string]ParserFn
 	pathParsers       map[string]ParserFn
+	postProcessors    []PostProcessFunc
 	upstreamCataloger string
 }
 
+type PostProcessFunc func(resolver source.FileResolver, location source.Location, p *pkg.Package) error
+
 // NewGenericCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a GenericCataloger
-func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string) *GenericCataloger {
+func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string, postProcessors ...PostProcessFunc) *GenericCataloger {
 	return &GenericCataloger{
 		globParsers:       globParsers,
 		pathParsers:       pathParsers,
+		postProcessors:    postProcessors,
 		upstreamCataloger: upstreamCataloger,
 	}
 }
@@ -67,6 +70,13 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 			if !pkg.IsValid(p) {
 				pkgsForRemoval[p.ID()] = struct{}{}
 				continue
+			}
+
+			for _, postProcess := range c.postProcessors {
+				err = postProcess(resolver, location, p)
+				if err != nil {
+					return nil, nil, err
+				}
 			}
 
 			packages = append(packages, *p)
