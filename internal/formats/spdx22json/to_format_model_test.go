@@ -1,9 +1,12 @@
 package spdx22json
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/rekor"
+	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/syft/syft/file"
 
@@ -14,6 +17,173 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
+
+func Test_toRelationships(t *testing.T) {
+
+	package_1 := pkg.Package{Name: "Hello World Package 1"}
+	package_1.SetID()
+	package_2 := pkg.Package{Name: "Hello World Package 2"}
+	package_2.SetID()
+	externalRef_1 := rekor.NewExternalRef("HelloWorld", "www.example.com", "SHA1", "bogushash")
+	coordinates := source.Coordinates{
+		RealPath: "foobar path",
+	}
+
+	tests := []struct {
+		name          string
+		relationships []artifact.Relationship
+		result        []model.Relationship
+	}{
+		{
+			name: "both normal and external reference relationships",
+			relationships: []artifact.Relationship{
+				{
+					From: package_1,
+					Type: artifact.DependencyOfRelationship,
+					To:   package_2,
+				},
+				{
+					From: coordinates,
+					Type: artifact.DescribedByRelationship,
+					To:   externalRef_1,
+				},
+			},
+			result: []model.Relationship{
+				{
+					SpdxElementID:      fmt.Sprint("SPDXRef-", package_1.ID()),
+					RelationshipType:   spdxhelpers.DependencyOfRelationship,
+					RelatedSpdxElement: fmt.Sprint("SPDXRef-", package_2.ID()),
+				},
+				{
+					SpdxElementID:      fmt.Sprint("SPDXRef-", coordinates.ID()),
+					RelationshipType:   spdxhelpers.DescribedByRelationship,
+					RelatedSpdxElement: fmt.Sprint("DocumentRef-", externalRef_1.ID()),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.result, toRelationships(test.relationships))
+		})
+	}
+}
+
+func Test_toExternalDocumentRefs(t *testing.T) {
+
+	package_1 := pkg.Package{Name: "Hello World Package 1"}
+	package_2 := pkg.Package{Name: "Hello World Package 2"}
+	externalRef_1 := rekor.NewExternalRef("HelloWorld", "www.example.com", "SHA1", "bogushash")
+	externalRef_2 := rekor.NewExternalRef("Test", "www.test.com", "sha1", "testhash")
+
+	tests := []struct {
+		name          string
+		relationships []artifact.Relationship
+		expected      []model.ExternalDocumentRef
+	}{
+		{
+			name: "empty",
+		},
+		{
+			name: "Both external relationships and non external relationships",
+			relationships: []artifact.Relationship{
+				{
+					From: package_1,
+					To:   package_2,
+					Type: artifact.ContainsRelationship,
+				},
+				{
+					From: package_1,
+					To:   externalRef_1,
+					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []model.ExternalDocumentRef{
+				{
+					ExternalDocumentID: model.DocElementID(externalRef_1.ID()).String(),
+					Checksum:           model.Checksum{Algorithm: "SHA1", ChecksumValue: "bogushash"},
+					SpdxDocument:       externalRef_1.SpdxRef.URI,
+				},
+			},
+		},
+		{
+			name: "Lowercase checksum algorithm",
+			relationships: []artifact.Relationship{
+				{
+					From: package_1,
+					To:   externalRef_2,
+					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []model.ExternalDocumentRef{
+				{
+					ExternalDocumentID: model.DocElementID(externalRef_2.ID()).String(),
+					Checksum:           model.Checksum{Algorithm: "SHA1", ChecksumValue: "testhash"},
+					SpdxDocument:       externalRef_2.SpdxRef.URI,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.ElementsMatch(t, test.expected, toExternalDocumentRefs(test.relationships))
+		})
+	}
+}
+
+func Test_toFiles(t *testing.T) {
+	coordinates1 := source.Coordinates{RealPath: "hi there"}
+	coordinates2 := source.Coordinates{RealPath: "goodbye"}
+
+	tests := []struct {
+		name          string
+		inputSbom     sbom.SBOM
+		expectedFiles []model.File
+	}{
+		{
+			name: "files are created just from relationships",
+			inputSbom: sbom.SBOM{
+				Relationships: []artifact.Relationship{
+					{
+						From: coordinates1,
+						To:   coordinates2,
+					},
+				},
+			},
+			expectedFiles: []model.File{
+				{
+					Item: model.Item{
+						Element:          model.Element{SPDXID: model.ElementID(coordinates1.ID()).String()},
+						LicenseConcluded: "NOASSERTION",
+					},
+					FileName: "hi there",
+				},
+				{
+					Item: model.Item{
+						Element:          model.Element{SPDXID: model.ElementID(coordinates2.ID()).String()},
+						LicenseConcluded: "NOASSERTION",
+					},
+					FileName: "goodbye",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res := toFiles(test.inputSbom)
+			if len(res) != len(test.expectedFiles) {
+				assert.FailNowf(t, "", "unexpected number of files returned, expected %v, found %v", len(test.expectedFiles), len(res))
+			} else {
+				for _, file := range test.expectedFiles {
+					assert.Contains(t, res, file)
+				}
+			}
+		})
+	}
+}
 
 func Test_toFileTypes(t *testing.T) {
 

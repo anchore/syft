@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/rekor"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -37,12 +38,32 @@ func toFormatModel(s sbom.SBOM) *model.Document {
 			},
 			LicenseListVersion: spdxlicense.Version,
 		},
-		DataLicense:       "CC0-1.0",
-		DocumentNamespace: namespace,
-		Packages:          toPackages(s.Artifacts.PackageCatalog, s.Relationships),
-		Files:             toFiles(s),
-		Relationships:     toRelationships(s.Relationships),
+		DataLicense:          "CC0-1.0",
+		ExternalDocumentRefs: toExternalDocumentRefs(s.Relationships),
+		DocumentNamespace:    namespace,
+		Packages:             toPackages(s.Artifacts.PackageCatalog, s.Relationships),
+		Files:                toFiles(s),
+		Relationships:        toRelationships(s.Relationships),
 	}
+}
+
+func toExternalDocumentRefs(relationships []artifact.Relationship) []model.ExternalDocumentRef {
+	var externalRefs []model.ExternalDocumentRef
+
+	for _, rel := range relationships {
+		if externalRef, ok := rel.To.(rekor.ExternalRef); ok {
+			externalRefDocument := model.ExternalDocumentRef{
+				ExternalDocumentID: model.DocElementID(rel.To.ID()).String(),
+				Checksum: model.Checksum{
+					Algorithm:     toChecksumAlgorithm(externalRef.SpdxRef.Alg),
+					ChecksumValue: externalRef.SpdxRef.Checksum,
+				},
+				SpdxDocument: externalRef.SpdxRef.URI,
+			}
+			externalRefs = append(externalRefs, externalRefDocument)
+		}
+	}
+	return externalRefs
 }
 
 func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []model.Package {
@@ -219,19 +240,32 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 func toRelationships(relationships []artifact.Relationship) (result []model.Relationship) {
 	for _, r := range relationships {
 		exists, relationshipType, comment := lookupRelationship(r.Type)
-
 		if !exists {
 			log.Warnf("unable to convert relationship from SPDX 2.2 JSON, dropping: %+v", r)
 			continue
 		}
 
-		result = append(result, model.Relationship{
-			SpdxElementID:      model.ElementID(r.From.ID()).String(),
-			RelationshipType:   relationshipType,
-			RelatedSpdxElement: model.ElementID(r.To.ID()).String(),
-			Comment:            comment,
-		})
+		rel := model.Relationship{
+			SpdxElementID:    model.ElementID(r.From.ID()).String(),
+			RelationshipType: relationshipType,
+			Comment:          comment,
+		}
+
+		// if this relationship contains an external document ref, we need to use DocElementID instead of ElementID
+		if _, ok := r.To.(rekor.ExternalRef); ok {
+			if r.Type == artifact.DescribedByRelationship {
+				rel.RelatedSpdxElement = model.DocElementID(r.To.ID()).String()
+			} else {
+				log.Warnf("Syft does not know how to describe the external reference relationship in SPDX JSON, dropping %+v", r)
+				continue
+			}
+		} else {
+			rel.RelatedSpdxElement = model.ElementID(r.To.ID()).String()
+		}
+
+		result = append(result, rel)
 	}
+
 	return result
 }
 
@@ -241,6 +275,10 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, spdxhelpers.Relatio
 		return true, spdxhelpers.ContainsRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, spdxhelpers.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
+	case artifact.DependencyOfRelationship:
+		return true, spdxhelpers.DependencyOfRelationship, ""
+	case artifact.DescribedByRelationship:
+		return true, spdxhelpers.DescribedByRelationship, ""
 	}
 	return false, "", ""
 }
