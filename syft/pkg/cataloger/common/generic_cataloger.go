@@ -18,27 +18,18 @@ import (
 type GenericCataloger struct {
 	globParsers       map[string]ParserFn
 	pathParsers       map[string]ParserFn
-	postProcess       PostProcessFunc
+	postProcessors    []PostProcessFunc
 	upstreamCataloger string
 }
 
-type PostProcessFunc func(resolver source.FileResolver, location source.Location, p *pkg.Package)
+type PostProcessFunc func(resolver source.FileResolver, location source.Location, p *pkg.Package) error
 
 // NewGenericCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a GenericCataloger
-func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string) *GenericCataloger {
+func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string, postProcessors ...PostProcessFunc) *GenericCataloger {
 	return &GenericCataloger{
 		globParsers:       globParsers,
 		pathParsers:       pathParsers,
-		upstreamCataloger: upstreamCataloger,
-	}
-}
-
-// NewPostProcessingGenericCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a GenericCataloger
-func NewPostProcessingGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string, postProcess PostProcessFunc) *GenericCataloger {
-	return &GenericCataloger{
-		globParsers:       globParsers,
-		pathParsers:       pathParsers,
-		postProcess:       postProcess,
+		postProcessors:    postProcessors,
 		upstreamCataloger: upstreamCataloger,
 	}
 }
@@ -81,8 +72,11 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 				continue
 			}
 
-			if c.postProcess != nil {
-				c.postProcess(resolver, location, p)
+			for _, postProcess := range c.postProcessors {
+				err = postProcess(resolver, location, p)
+				if err != nil {
+					return nil, nil, err
+				}
 			}
 
 			packages = append(packages, *p)
