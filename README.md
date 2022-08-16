@@ -177,6 +177,7 @@ registry:yourrepo/yourimage:tag          pull image directly from a registry (no
 
 #### Non Default:
 - cargo-auditable-binary
+- rekor
 
 ### Excluding file paths
 
@@ -663,3 +664,12 @@ The following checks were performed on each of these signatures:
 ```
 
 Consumers of your image can now trust that the SBOM associated with your image is correct and from a trusted source.
+
+## Discovery of SBOMs on Rekor (experimental)
+Syft can search the Rekor transparency log for SBOMs of binaries it finds while scanning and incorporate the results into the SBOMs it produces. This allows the use of SBOMs produced at build time (such as by a trusted builder), which can provide more information about a binary than a post-compilation analysis. 
+
+The rekor-cataloger searches Rekor by hash for binaries and performs verification to ensure that the SBOMs and attestations have not been tampered with. In the SBOM that Syft produces, the information is represented as an external document reference containing the URI and hash of the SBOM. 
+
+This is an experimental feature. It uses external sources, a functionality that is new to Syft. The use of trusted builders to produce SBOMs has not yet been fully established, and more consideration of what external sources to trust is necessary. Currently, Syft accepts any SBOM attestation that has a valid certificate issued by Fulcio.   
+
+To enable the rekor-cataloger, use the flag ``` --catalogers all ```.
