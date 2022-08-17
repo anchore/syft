@@ -30,6 +30,90 @@ func assertPkgsEqual(t *testing.T, actual []*pkg.Package, expected map[string]pk
 
 func TestParsePackageLock(t *testing.T) {
 	expected := map[string]pkg.Package{
+		"@actions/core": {
+			Name:     "@actions/core",
+			Version:  "1.6.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"wordwrap": {
+			Name:     "wordwrap",
+			Version:  "0.0.3",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"get-stdin": {
+			Name:     "get-stdin",
+			Version:  "5.0.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"minimist": {
+			Name:     "minimist",
+			Version:  "0.0.10",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"optimist": {
+			Name:     "optimist",
+			Version:  "0.6.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"string-width": {
+			Name:     "string-width",
+			Version:  "2.1.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"strip-ansi": {
+			Name:     "strip-ansi",
+			Version:  "4.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"strip-eof": {
+			Name:     "wordwrap",
+			Version:  "1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"ansi-regex": {
+			Name:     "ansi-regex",
+			Version:  "3.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"is-fullwidth-code-point": {
+			Name:     "is-fullwidth-code-point",
+			Version:  "2.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"cowsay": {
+			Name:     "cowsay",
+			Version:  "1.4.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+	}
+	fixture, err := os.Open("test-fixtures/pkg-lock/package-lock.json")
+	if err != nil {
+		t.Fatalf("failed to open fixture: %+v", err)
+	}
+
+	// TODO: no relationships are under test yet
+	actual, _, err := parsePackageLock(fixture.Name(), fixture)
+	if err != nil {
+		t.Fatalf("failed to parse package-lock.json: %+v", err)
+	}
+
+	assertPkgsEqual(t, actual, expected)
+
+}
+
+func TestParsePackageLockV2(t *testing.T) {
+	expected := map[string]pkg.Package{
 		"@types/prop-types": {
 			Name:     "@types/prop-types",
 			Version:  "15.7.5",
@@ -64,7 +148,6 @@ func TestParsePackageLock(t *testing.T) {
 		t.Fatalf("failed to open fixture: %+v", err)
 	}
 
-	// TODO: no relationships are under test yet
 	actual, _, err := parsePackageLock(fixture.Name(), fixture)
 	if err != nil {
 		t.Fatalf("failed to parse package-lock.json: %+v", err)
