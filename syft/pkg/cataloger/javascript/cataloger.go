@@ -76,7 +76,7 @@ func addLicenses(resolver source.FileResolver, location source.Location, p *pkg.
 			return nil
 		}
 
-		p.Licenses = licenses
+		p.Licenses = append(p.Licenses, licenses...)
 	}
 
 	return nil
