@@ -50,15 +50,15 @@ func getSbom(att *InTotoAttestation, client *http.Client) (*[]byte, error) {
 	return &bytes, nil
 }
 
-// getUuids returns the uuids of the Rekor entries associated with an sha hash
+// getUuids returns the uuids of the Rekor entries associated with an sha256 hash
 //
 // Precondition: client is not nil
-func getUuids(sha string, client *client.Rekor) ([]string, error) {
-	if !sha256Check.MatchString(sha) {
-		return nil, fmt.Errorf("invalid sha256 hash %v", sha)
+func getUuids(sha256 string, client *client.Rekor) ([]string, error) {
+	if !sha256Check.MatchString(sha256) {
+		return nil, fmt.Errorf("invalid sha256 hash %v", sha256)
 	}
 
-	query := &models.SearchIndex{Hash: sha}
+	query := &models.SearchIndex{Hash: sha256}
 	params := index.NewSearchIndexParams().WithQuery(query)
 
 	res, err := client.Index.SearchIndex(params)
@@ -89,7 +89,7 @@ func getAndVerifyRekorEntry(uuid string, client *client.Rekor) (*models.LogEntry
 	// logEntry is a map from uuids to logEntryAnons
 	var logEntryAnon *models.LogEntryAnon
 	for _, val := range logEntry {
-		logEntryAnon = &val
+		logEntryAnon = &val //nolint:gosec // only one iteration of loop; no aliasing occurs
 	}
 
 	if logEntryAnon.LogIndex == nil {
@@ -157,26 +157,28 @@ func getAndVerifySbomFromUUID(uuid string, client *Client) (*sbomWithMetadata, e
 	return sbomWrapped, nil
 }
 
-// GetAndVerifySboms retrieves Rekor entries associated with an sha256 hash and verifies the entries and the sboms
+// getAndVerifySbomsFromHash retrieves Rekor entries associated with an sha256 hash and verifies the entries and the sboms
 //
 // Precondition: client and its fields are not nil
-func getAndVerifySbomsFromHash(sha string, client *Client) ([]*sbomWithMetadata, error) {
-	uuids, err := getUuids(sha, client.rekorClient)
+func getAndVerifySbomsFromHash(sha256 string, client *Client) ([]*sbomWithMetadata, error) {
+	uuids, err := getUuids(sha256, client.rekorClient)
 	if err != nil {
-		return nil, fmt.Errorf("error getting uuids on rekor associated with hash \"%v\": %w", sha, err)
+		return nil, fmt.Errorf("error getting uuids on rekor associated with hash \"%v\": %w", sha256, err)
 	}
 
 	var sboms []*sbomWithMetadata
 	for _, uuid := range uuids {
 		sbom, err := getAndVerifySbomFromUUID(uuid, client)
-		//nolint:gocritic //for rewrite to switch statement
 		if err != nil {
 			log.Debug(err)
-		} else if sha != sbom.executableSha256 {
-			log.Warnf("rekor returned a different entry than was asked for")
-		} else {
-			sboms = append(sboms, sbom)
+			continue
 		}
+		if sha256 != sbom.executableSha256 {
+			log.Warn("rekor returned a different entry than was asked for")
+			continue
+		}
+		sboms = append(sboms, sbom)
+
 	}
 
 	return sboms, nil
@@ -187,6 +189,7 @@ func getAndVerifySbomsFromResolver(resolver source.FileResolver, location source
 	if err != nil {
 		return nil, fmt.Errorf("error getting reader from resolver: %w", err)
 	}
+	defer closer.Close()
 
 	bytes, err := io.ReadAll(closer)
 	if err != nil {
@@ -196,7 +199,7 @@ func getAndVerifySbomsFromResolver(resolver source.FileResolver, location source
 	sha256 := sha256.Sum256(bytes)
 	decodedHash := hex.EncodeToString(sha256[:])
 
-	log.Debugf("rekor is being queried for location %v and SHA256: %v", location.RealPath, decodedHash)
+	log.Debugf("rekor is being queried for location %v and SHA256 %v", location.RealPath, decodedHash)
 
 	sboms, err := getAndVerifySbomsFromHash(decodedHash, client)
 	if err != nil {

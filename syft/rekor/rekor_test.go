@@ -35,7 +35,7 @@ type testCase struct {
 }
 
 func Test_CreateRekorSbomRels(t *testing.T) {
-	default_tc := &http.Client{
+	defaultTc := &http.Client{
 		Transport: roundTripperMock{sbomFile: "test-fixtures/sboms/sbom-1.txt"},
 	}
 
@@ -103,7 +103,7 @@ func Test_CreateRekorSbomRels(t *testing.T) {
 
 			var httpClient *http.Client
 			if test.httpClient == nil {
-				httpClient = default_tc
+				httpClient = defaultTc
 			} else {
 				httpClient = test.httpClient
 			}
@@ -151,13 +151,13 @@ type roundTripperMock struct {
 }
 
 func (rt roundTripperMock) RoundTrip(req *http.Request) (*http.Response, error) {
-	sbom_bytes, err := os.ReadFile(rt.sbomFile)
+	sbomBytes, err := os.ReadFile(rt.sbomFile)
 	if err != nil {
 		return nil, err
 	}
 	return &http.Response{
 		StatusCode: 200,
-		Body:       io.NopCloser(bytes.NewReader(sbom_bytes)),
+		Body:       io.NopCloser(bytes.NewReader(sbomBytes)),
 	}, nil
 }
 

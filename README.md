@@ -668,8 +668,8 @@ Consumers of your image can now trust that the SBOM associated with your image i
 ## Discovery of SBOMs on Rekor (experimental)
 Syft can search the Rekor transparency log for SBOM attestations of binaries it finds while scanning and incorporate the results into the SBOMs it produces. This allows the use of SBOMs produced at build time (such as by a trusted builder), to augment binary metadata in the resultant SBOM. 
 
-The rekor-cataloger searches Rekor by hash for binaries and performs verification to ensure that the SBOMs and attestations have not been tampered with. In the SBOM that Syft produces, the information is represented as an external document reference containing the URI and hash of the SBOM. 
+The rekor-cataloger searches Rekor by hash for binaries and performs verification to ensure that the SBOMs and attestations have not been tampered with. It verifies the log entry has been signed by Rekor's public key, the certificate associated with the log entry chains back to the Fulcio root certificate, the log entry timestamp lies in the period of validity of the certificate, and other verifications. In the SBOM that Syft produces, the information is represented as an external document reference containing the URI and hash of the SBOM.
 
 This is an experimental feature. It uses external sources, a functionality that is new to Syft. The use of trusted builders to produce SBOMs has not yet been fully established, and more consideration of what external sources to trust is necessary. Currently, Syft accepts any SBOM attestation that has a valid certificate issued by Fulcio.   
 
-To enable the rekor-cataloger, use the flag ``` --catalogers all ```.
+To enable the rekor-cataloger, use the flag ``` --catalogers rekor ```.

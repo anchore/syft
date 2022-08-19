@@ -58,7 +58,9 @@ func NewClient() (*Client, error) {
 func (r ExternalRef) ID() artifact.ID {
 	id, err := artifact.IDByHash(r.SpdxRef.Checksum)
 	if err != nil {
-		panic("id could not be created from hash for an external ref")
+		// TODO: what to do in this case?
+		log.Warnf("unable to get fingerprint of ExternalRef %+v: %+v", r, err)
+		return ""
 	}
 	return id
 }
@@ -88,7 +90,6 @@ func CreateRekorSbomRels(resolver source.FileResolver, location source.Location,
 	}
 
 	var usedRekorEntries []string
-
 	var rels []artifact.Relationship
 	for _, sbomWithDigest := range sboms {
 		sbom := sbomWithDigest.spdx
@@ -108,7 +109,6 @@ func CreateRekorSbomRels(resolver source.FileResolver, location source.Location,
 			From: location.Coordinates,
 			To:   externalRef,
 			Type: artifact.DescribedByRelationship,
-			Data: nil,
 		}
 		rels = append(rels, *rel)
 		usedRekorEntries = append(usedRekorEntries, sbomWithDigest.rekorEntry)
