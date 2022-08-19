@@ -16,7 +16,7 @@ import (
 
 var (
 	GoogleSbomPredicateType string = "google.com/sbom"
-	shaCheck                       = regexp.MustCompile(`^[a-fA-F0-9]{64}$`)
+	sha256Check                    = regexp.MustCompile(`^[a-fA-F0-9]{64}$`)
 )
 
 type digest struct {
@@ -94,6 +94,8 @@ func parseEntry(entry *models.LogEntryAnon) (*models.IntotoV001Schema, error) {
 }
 
 // validateAttestation does some checks that the attestation contains the necessary fields to proceed
+//
+// Precondition: att is not nil
 func validateAttestation(att *InTotoAttestation) error {
 	// even if predicate type is not GoogleSbomPredicateType, attempt to proceed
 	invalidPredType := false
@@ -101,13 +103,13 @@ func validateAttestation(att *InTotoAttestation) error {
 		invalidPredType = true
 	}
 	var err error
-	if att.Subject == nil {
+	if len(att.Subject) == 0 {
 		err = errors.New("subject of attestation found on rekor is nil. Ignoring log entry")
 	} else if len(att.Subject) > 1 {
 		err = errors.New("attestation found on rekor contains multiple subjects, which is not supported. Ignoring log entry")
 	} else if _, ok := att.Subject[0].Digest["sha256"]; !ok {
 		err = errors.New("attestation subject does not contain a sha256")
-	} else if att.Predicate.Sboms == nil {
+	} else if len(att.Predicate.Sboms) == 0 {
 		err = errors.New("attestation predicate found on rekor does not contain any sboms")
 	}
 
@@ -120,7 +122,7 @@ func validateAttestation(att *InTotoAttestation) error {
 	return nil
 }
 
-// parseAndValidateAttestation parses the entry's attestation to an attestation struct and validates the attestation predicate type
+// parseAndValidateAttestation parses the entry's attestation to an attestation struct and validates the attestation predicate
 //
 // Precondition: entry is not nil
 func parseAndValidateAttestation(entry *models.LogEntryAnon) (*InTotoAttestation, error) {

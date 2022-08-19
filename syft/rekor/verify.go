@@ -116,6 +116,7 @@ func verifySbomHash(att *InTotoAttestation, sbomBytes *[]byte) error {
 	if len(att.Predicate.Sboms) == 0 {
 		return errors.New("attestation has no sboms")
 	}
+
 	// take entry at index 0 because we currently do not handle multiple sboms within one attestation
 	expectedHash := att.Predicate.Sboms[0].Digest.Sha256
 

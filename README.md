@@ -666,7 +666,7 @@ The following checks were performed on each of these signatures:
 Consumers of your image can now trust that the SBOM associated with your image is correct and from a trusted source.
 
 ## Discovery of SBOMs on Rekor (experimental)
-Syft can search the Rekor transparency log for SBOMs of binaries it finds while scanning and incorporate the results into the SBOMs it produces. This allows the use of SBOMs produced at build time (such as by a trusted builder), which can provide more information about a binary than a post-compilation analysis. 
+Syft can search the Rekor transparency log for SBOM attestations of binaries it finds while scanning and incorporate the results into the SBOMs it produces. This allows the use of SBOMs produced at build time (such as by a trusted builder), to augment binary metadata in the resultant SBOM. 
 
 The rekor-cataloger searches Rekor by hash for binaries and performs verification to ensure that the SBOMs and attestations have not been tampered with. In the SBOM that Syft produces, the information is represented as an external document reference containing the URI and hash of the SBOM. 
 

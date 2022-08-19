@@ -1,6 +1,7 @@
 package spdx22json
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -47,12 +48,33 @@ func toFormatModel(s sbom.SBOM) *model.Document {
 	}
 }
 
-func toExternalDocumentRefs(relationships []artifact.Relationship) []model.ExternalDocumentRef {
-	var externalRefs []model.ExternalDocumentRef
+// isValidExternalRelationshipDocument returns if rel contains an ExternalRef and if it to_format_model know how to handle it.
+// An error is returned if rel contains an ExternalRef, but the rel cannot be handled
+func isValidExternalRelationshipDocument(rel artifact.Relationship) (bool, error) {
+	if _, ok := rel.From.(rekor.ExternalRef); ok {
+		return false, errors.New("syft cannot handle an ExternalRef in the FROM field of a relationship")
+	}
+	if externalRef, ok := rel.To.(rekor.ExternalRef); ok {
+		relationshipType := artifact.DescribedByRelationship
+		if rel.Type == relationshipType && toChecksumAlgorithm(externalRef.SpdxRef.Alg) == "SHA1" {
+			return true, nil
+		}
+		return false, fmt.Errorf("syft cannot handle an ExternalRef with relationship type: %v", relationshipType)
+	}
+	return false, nil
+}
 
+func toExternalDocumentRefs(relationships []artifact.Relationship) []model.ExternalDocumentRef {
+	externalDocRefs := []model.ExternalDocumentRef{}
 	for _, rel := range relationships {
-		if externalRef, ok := rel.To.(rekor.ExternalRef); ok {
-			externalRefDocument := model.ExternalDocumentRef{
+		valid, err := isValidExternalRelationshipDocument(rel)
+		if err != nil {
+			log.Warnf("dropping relationship %v: %w", rel, err)
+			continue
+		}
+		if valid {
+			externalRef := rel.To.(rekor.ExternalRef)
+			externalDocRef := model.ExternalDocumentRef{
 				ExternalDocumentID: model.DocElementID(rel.To.ID()).String(),
 				Checksum: model.Checksum{
 					Algorithm:     toChecksumAlgorithm(externalRef.SpdxRef.Alg),
@@ -60,10 +82,10 @@ func toExternalDocumentRefs(relationships []artifact.Relationship) []model.Exter
 				},
 				SpdxDocument: externalRef.SpdxRef.URI,
 			}
-			externalRefs = append(externalRefs, externalRefDocument)
+			externalDocRefs = append(externalDocRefs, externalDocRef)
 		}
 	}
-	return externalRefs
+	return externalDocRefs
 }
 
 func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []model.Package {
@@ -237,7 +259,8 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	return ty
 }
 
-func toRelationships(relationships []artifact.Relationship) (result []model.Relationship) {
+func toRelationships(relationships []artifact.Relationship) []model.Relationship {
+	result := []model.Relationship{}
 	for _, r := range relationships {
 		exists, relationshipType, comment := lookupRelationship(r.Type)
 		if !exists {
@@ -252,20 +275,19 @@ func toRelationships(relationships []artifact.Relationship) (result []model.Rela
 		}
 
 		// if this relationship contains an external document ref, we need to use DocElementID instead of ElementID
-		if _, ok := r.To.(rekor.ExternalRef); ok {
-			if r.Type == artifact.DescribedByRelationship {
-				rel.RelatedSpdxElement = model.DocElementID(r.To.ID()).String()
-			} else {
-				log.Warnf("Syft does not know how to describe the external reference relationship in SPDX JSON, dropping %+v", r)
-				continue
-			}
+		valid, err := isValidExternalRelationshipDocument(r)
+		if err != nil {
+			log.Warnf("dropping relationship %v: %w", rel, err)
+			continue
+		}
+		if valid {
+			rel.RelatedSpdxElement = model.DocElementID(r.To.ID()).String()
 		} else {
 			rel.RelatedSpdxElement = model.ElementID(r.To.ID()).String()
 		}
 
 		result = append(result, rel)
 	}
-
 	return result
 }
 

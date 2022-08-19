@@ -45,7 +45,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	for _, location := range locations {
 		rels, err := rekorLib.CreateRekorSbomRels(resolver, location, client)
 		if err != nil {
-			log.Debug(err)
+			log.Debugf("Rekor cataloger failed to create relationships: %w", err)
 			continue
 		}
 		catalogedRels = append(catalogedRels, rels...)
