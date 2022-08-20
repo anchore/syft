@@ -3,6 +3,8 @@ package sbom
 import (
 	"bytes"
 	"fmt"
+	"io"
+
 	"github.com/anchore/syft/internal/formats/cyclonedxjson"
 	"github.com/anchore/syft/internal/formats/cyclonedxxml"
 	"github.com/anchore/syft/internal/formats/spdx22json"
@@ -12,7 +14,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
 	"github.com/anchore/syft/syft/sbom"
-	"io"
 )
 
 // NewSBOMCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
