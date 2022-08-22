@@ -1,11 +1,12 @@
 package cataloger
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var _ Cataloger = (*dummy)(nil)
@@ -22,12 +23,17 @@ func (d dummy) Catalog(_ source.FileResolver) ([]pkg.Package, []artifact.Relatio
 	panic("not implemented")
 }
 
+func (d dummy) UsesExternalSources() bool {
+	return false
+}
+
 func Test_filterCatalogers(t *testing.T) {
 	tests := []struct {
-		name       string
-		patterns   []string
-		catalogers []string
-		want       []string
+		name                   string
+		patterns               []string
+		ExternalSourcesEnabled bool
+		catalogers             []string
+		want                   []string
 	}{
 		{
 			name:     "no filtering",
@@ -142,6 +148,21 @@ func Test_filterCatalogers(t *testing.T) {
 				"go-module-binary-cataloger",
 			},
 		},
+		{ // Note: no catalogers with external sources are currently implemented
+			name:                   "external sources enabled",
+			patterns:               []string{"all"},
+			ExternalSourcesEnabled: true,
+			catalogers: []string{
+				"ruby-gemspec-cataloger",
+				"python-package-cataloger",
+				"rekor-cataloger",
+			},
+			want: []string{
+				"ruby-gemspec-cataloger",
+				"python-package-cataloger",
+				"rekor-cataloger",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -149,7 +170,8 @@ func Test_filterCatalogers(t *testing.T) {
 			for _, n := range tt.catalogers {
 				catalogers = append(catalogers, dummy{name: n})
 			}
-			got := filterCatalogers(catalogers, tt.patterns)
+			cfg := Config{Catalogers: tt.patterns, ExternalSourcesEnabled: tt.ExternalSourcesEnabled}
+			got := filterCatalogers(catalogers, cfg)
 			var gotNames []string
 			for _, g := range got {
 				gotNames = append(gotNames, g.Name())
