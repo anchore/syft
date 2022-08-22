@@ -1,0 +1,72 @@
+lockfileVersion: 5.4
+
+specifiers:
+  '@logux/eslint-config': ^47.2.0
+  '@size-limit/preset-small-lib': ^8.0.0
+  '@types/fs-extra': ^9.0.13
+  '@types/node': ^18.6.4
+  '@typescript-eslint/eslint-plugin': ^5.32.0
+  '@typescript-eslint/parser': ^5.32.0
+  c8: ^7.12.0
+  check-dts: ^0.6.7
+  clean-publish: ^4.0.1
+  concat-with-sourcemaps: ^1.1.0
+  eslint: ^8.21.0
+  eslint-config-standard: ^17.0.0
+  eslint-plugin-import: ^2.26.0
+  eslint-plugin-n: ^15.2.4
+  eslint-plugin-prefer-let: ^3.0.1
+  eslint-plugin-promise: ^6.0.0
+  fs-extra: ^10.1.0
+  nanodelay: ^1.0.8
+  nanoid: ^3.3.4
+  nanospy: ^0.5.0
+  picocolors: ^1.0.0
+  postcss-parser-tests: ^8.5.1
+  simple-git-hooks: ^2.8.0
+  size-limit: ^8.0.0
+  source-map-js: ^1.0.2
+  strip-ansi: ^6.0.1
+  ts-node: ^10.9.1
+  typescript: ^4.7.4
+  uvu: ^0.5.6
+
+dependencies:
+  nanoid: 3.3.4
+  picocolors: 1.0.0
+  source-map-js: 1.0.2
+
+devDependencies:
+  '@logux/eslint-config': 47.2.0_7hz3xvmviof7onfgk6hpedqcom
+  '@size-limit/preset-small-lib': 8.0.0_size-limit@8.0.0
+  '@types/fs-extra': 9.0.13
+  '@types/node': 18.6.4
+  '@typescript-eslint/eslint-plugin': 5.32.0_iosr3hrei2tubxveewluhu5lhy
+  '@typescript-eslint/parser': 5.32.0_qugx7qdu5zevzvxaiqyxfiwquq
+  c8: 7.12.0
+  check-dts: 0.6.7_typescript@4.7.4
+  clean-publish: 4.0.1
+  concat-with-sourcemaps: 1.1.0
+  eslint: 8.21.0
+  eslint-config-standard: 17.0.0_dfwa53o44x4e5xhsfv5mvfhk5a
+  eslint-plugin-import: 2.26.0_wuikv5nqgdfyng42xxm7lklfmi
+  eslint-plugin-n: 15.2.4_eslint@8.21.0
+  eslint-plugin-prefer-let: 3.0.1
+  eslint-plugin-promise: 6.0.0_eslint@8.21.0
+  fs-extra: 10.1.0
+  nanodelay: 1.0.8
+  nanospy: 0.5.0
+  postcss-parser-tests: 8.5.1
+  simple-git-hooks: 2.8.0
+  size-limit: 8.0.0
+  strip-ansi: 6.0.1
+  ts-node: 10.9.1_hn66opzbaneygq52jmwjxha6su
+  typescript: 4.7.4
+  uvu: 0.5.6
+
+packages:
+  /@bcoe/v8-coverage/0.2.3:
+    resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+    dev: true
+
+  # removed other packages
