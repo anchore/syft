@@ -43,11 +43,11 @@ jobs:
           
           # export the versions for use with create-pull-request
           echo "::set-output name=GOLANGCILINT::$GOLANGCILINT_LATEST_VERSION"
-          echo "::set-output name=BOUNCER::BOUNCER_LATEST_VERSION"
-          echo "::set-output name=CHRONICLE::CHRONICLE_LATEST_VERSION"
-          echo "::set-output name=GORELEASER::GORELEASER_LATEST_VERSION"
-          echo "::set-output name=YAJSV::YAJSV_LATEST_VERSION"
-          echo "::set-output name=COSIGN::COSIGN_LATEST_VERSION"
+          echo "::set-output name=BOUNCER::$BOUNCER_LATEST_VERSION"
+          echo "::set-output name=CHRONICLE::$CHRONICLE_LATEST_VERSION"
+          echo "::set-output name=GORELEASER::$GORELEASER_LATEST_VERSION"
+          echo "::set-output name=YAJSV::$YAJSV_LATEST_VERSION"
+          echo "::set-output name=COSIGN::$COSIGN_LATEST_VERSION"
         id: latest-versions
 
       - uses: tibdex/github-app-token@v1
