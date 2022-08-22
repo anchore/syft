@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -18,6 +19,7 @@ type PackageLock struct {
 	Requires        bool `json:"requires"`
 	LockfileVersion int  `json:"lockfileVersion"`
 	Dependencies    map[string]Dependency
+	Packages        map[string]Package
 }
 
 // Dependency represents a single package dependency listed in the package.lock json file
@@ -25,7 +27,13 @@ type Dependency struct {
 	Version   string `json:"version"`
 	Resolved  string `json:"resolved"`
 	Integrity string `json:"integrity"`
-	Requires  map[string]string
+}
+
+type Package struct {
+	Version   string `json:"version"`
+	Resolved  string `json:"resolved"`
+	Integrity string `json:"integrity"`
+	License   string `json:""`
 }
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
@@ -46,12 +54,28 @@ func parsePackageLock(path string, reader io.Reader) ([]*pkg.Package, []artifact
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)
 		}
+		licenseMap := make(map[string]string)
+		for _, pkgMeta := range lock.Packages {
+			var sb strings.Builder
+			sb.WriteString(pkgMeta.Resolved)
+			sb.WriteString(pkgMeta.Integrity)
+			licenseMap[sb.String()] = pkgMeta.License
+		}
+
 		for name, pkgMeta := range lock.Dependencies {
+			var sb strings.Builder
+			sb.WriteString(pkgMeta.Resolved)
+			sb.WriteString(pkgMeta.Integrity)
+			var licenses []string
+			if license, exists := licenseMap[sb.String()]; exists {
+				licenses = append(licenses, license)
+			}
 			packages = append(packages, &pkg.Package{
 				Name:     name,
 				Version:  pkgMeta.Version,
 				Language: pkg.JavaScript,
 				Type:     pkg.NpmPkg,
+				Licenses: licenses,
 			})
 		}
 	}
