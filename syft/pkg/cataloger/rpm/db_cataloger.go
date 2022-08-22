@@ -27,6 +27,11 @@ func (c *DBCataloger) Name() string {
 	return dbCatalogerName
 }
 
+// UsesExternalSources indicates that the rpmdb cataloger does not use external sources
+func (c *Cataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
 func (c *DBCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	fileMatches, err := resolver.FilesByGlob(pkg.RpmDBGlob)
