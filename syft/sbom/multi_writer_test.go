@@ -15,7 +15,7 @@ func dummyEncoder(io.Writer, SBOM) error {
 }
 
 func dummyFormat(name string) Format {
-	return NewFormat(FormatID(name), dummyEncoder, nil, nil)
+	return NewFormat(FormatID(name), dummyEncoder, nil, nil, nil)
 }
 
 type writerConfig struct {

@@ -25,5 +25,6 @@ func Format() sbom.Format {
 		},
 		nil,
 		nil,
+		nil,
 	)
 }

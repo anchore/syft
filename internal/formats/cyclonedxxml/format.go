@@ -14,5 +14,6 @@ func Format() sbom.Format {
 		encoder,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
+		nil,
 	)
 }

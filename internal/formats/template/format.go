@@ -41,6 +41,10 @@ func (f OutputFormat) Validate(reader io.Reader) error {
 	return sbom.ErrValidationNotSupported
 }
 
+func (f OutputFormat) Parse(input interface{}) (*sbom.SBOM, error) {
+	return nil, sbom.ErrParsingNotSupported
+}
+
 // SetTemplatePath sets path for template file
 func (f *OutputFormat) SetTemplatePath(filePath string) {
 	f.templateFilePath = filePath

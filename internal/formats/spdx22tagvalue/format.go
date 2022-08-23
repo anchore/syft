@@ -13,5 +13,6 @@ func Format() sbom.Format {
 		encoder,
 		decoder,
 		validator,
+		nil,
 	)
 }
