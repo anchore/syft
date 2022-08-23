@@ -29,6 +29,7 @@ func NewJavascriptLockCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
 		"**/package-lock.json": parsePackageLock,
 		"**/yarn.lock":         parseYarnLock,
+		"**/pnpm-lock.yaml":    parsePnpmLock,
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "javascript-lock-cataloger", addLicenses)
@@ -76,7 +77,7 @@ func addLicenses(resolver source.FileResolver, location source.Location, p *pkg.
 			return nil
 		}
 
-		p.Licenses = licenses
+		p.Licenses = append(p.Licenses, licenses...)
 	}
 
 	return nil
