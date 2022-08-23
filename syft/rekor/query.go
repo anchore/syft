@@ -178,7 +178,6 @@ func getAndVerifySbomsFromHash(sha256 string, client *Client) ([]*sbomWithMetada
 			continue
 		}
 		sboms = append(sboms, sbom)
-
 	}
 
 	return sboms, nil

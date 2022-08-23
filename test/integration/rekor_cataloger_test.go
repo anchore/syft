@@ -23,9 +23,11 @@ func TestRekorCataloger(t *testing.T) {
 	}
 	assert.Equal(t, expectedExternalRelationships, foundExternalRelationships)
 
-	// assert that the found external relationship is FROM a coordinates. spdx22json/to_format_model.go depends on this
-	if _, ok := foundExternalRelationship.From.(source.Coordinates); !ok {
-		assert.FailNow(t, "the rekor-cataloger surfaced a relationship that is not FROM a coordinates")
+	if foundExternalRelationships > 0 {
+		// assert that the found external relationship is FROM a coordinates. spdx22json/to_format_model.go depends on this
+		if _, ok := foundExternalRelationship.From.(source.Coordinates); !ok {
+			assert.FailNow(t, "the rekor-cataloger surfaced a relationship that is not FROM a coordinates")
+		}
 	}
 
 }

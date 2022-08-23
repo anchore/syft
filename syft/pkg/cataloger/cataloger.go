@@ -117,6 +117,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		cpp.NewConanfileCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
+		rekor.NewRekorCataloger(),
 	}, cfg)
 }
 
