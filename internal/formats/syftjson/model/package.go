@@ -72,7 +72,7 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// nolint:funlen,gocognit,gocyclo
+//nolint:funlen,gocognit,gocyclo
 func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	p.MetadataType = unpacker.MetadataType
 	switch p.MetadataType {
