@@ -672,4 +672,4 @@ The rekor-cataloger searches Rekor by hash for binaries and performs verificatio
 
 This is an experimental feature. It uses external sources, a functionality that is new to Syft. The use of trusted builders to produce SBOMs has not yet been fully established, and more consideration of what external sources to trust is necessary. Currently, Syft accepts any SBOM attestation that has a valid certificate issued by Fulcio.   
 
-To enable the rekor-cataloger, use the flag ``` --catalogers rekor ```.
+To enable the rekor-cataloger, use the flag ``` --external-sources-enabled=true ```.

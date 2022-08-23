@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope, catalogerCfg []string) (sbom.SBOM, *source.Source) {
+func getImageSource(t *testing.T, fixtureImageName string) *source.Source {
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	userInput := "docker-archive:" + tarPath
@@ -23,6 +23,12 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
 	t.Cleanup(cleanupSource)
 	require.NoError(t, err)
+
+	return theSource
+}
+
+func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope, catalogerCfg []string) (sbom.SBOM, *source.Source) {
+	theSource := getImageSource(t, fixtureImageName)
 
 	c := cataloger.DefaultConfig()
 	c.Catalogers = catalogerCfg

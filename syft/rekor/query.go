@@ -5,7 +5,6 @@ import (
 	"crypto/sha1" //nolint:gosec // sha1 needed for checksums in spdx format
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -21,29 +20,19 @@ import (
 
 // getSbom attempts to retrieve the SBOM from the URI.
 //
-// Precondition: client is not nil and validateAttestation has been called on att
+// Precondition: client is not nil
 //
 // Postcondition: if no error, the returned byte list is not empty
-func getSbom(att *InTotoAttestation, client *http.Client) (*[]byte, error) {
-	if len(att.Predicate.Sboms) > 1 {
-		log.Info("attestation found on Rekor with multiple SBOMS, which is not currently supported. Proceeding with the first SBOM.")
-	}
-	uri := att.Predicate.Sboms[0].URI
-	if uri == "" {
-		return nil, errors.New("uri of sbom is empty")
-	}
-
-	resp, err := client.Get(uri)
+func getSbom(sbomEntry sbomEntry, client *http.Client) (*[]byte, error) {
+	resp, err := client.Get(sbomEntry.URI)
 	if err != nil {
 		return nil, fmt.Errorf("error making http request: %w", err)
 	}
-
 	bytes, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("error reading http response: %w", err)
 	}
-
 	if len(bytes) == 0 {
 		return nil, fmt.Errorf("retrieved sbom is empty")
 	}
@@ -78,18 +67,16 @@ func getAndVerifyRekorEntry(uuid string, client *client.Rekor) (*models.LogEntry
 		return nil, err
 	}
 
-	logEntry := res.Payload
-	if len(logEntry) == 0 {
+	var logEntryAnon models.LogEntryAnon
+	switch len(res.Payload) {
+	case 0:
 		return nil, fmt.Errorf("retrieved rekor entry has no logEntryAnons")
-	}
-	if len(logEntry) > 1 {
+	case 1:
+		for _, val := range res.Payload {
+			logEntryAnon = val
+		}
+	default:
 		return nil, fmt.Errorf("retrieved rekor entry has more than one logEntry")
-	}
-
-	// logEntry is a map from uuids to logEntryAnons
-	var logEntryAnon *models.LogEntryAnon
-	for _, val := range logEntry {
-		logEntryAnon = &val //nolint:gosec // only one iteration of loop; no aliasing occurs
 	}
 
 	if logEntryAnon.LogIndex == nil {
@@ -99,11 +86,10 @@ func getAndVerifyRekorEntry(uuid string, client *client.Rekor) (*models.LogEntry
 	log.Debugf("rekor entry %v was retrieved", logIndex)
 
 	ctx := context.Background()
-	if err = cosign.VerifyTLogEntry(ctx, client, logEntryAnon); err != nil {
+	if err = cosign.VerifyTLogEntry(ctx, client, &logEntryAnon); err != nil {
 		return nil, fmt.Errorf("could not prove that the log entry is on rekor: %w", err)
 	}
-
-	return logEntryAnon, nil
+	return &logEntryAnon, nil
 }
 
 // Precondition: client and its fields are not nil.
@@ -123,19 +109,19 @@ func getAndVerifySbomFromUUID(uuid string, client *Client) (*sbomWithMetadata, e
 
 	log.Debugf("verification of rekor entry %v complete", logIndex)
 
-	att, err := parseAndValidateAttestation(logEntryAnon)
+	subject, sbomEntry, err := parseAndValidateAttestation(logEntryAnon)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing or validating attestation associated with rekor entry %v: %w", logIndex, err)
 	}
 
-	sbomBytes, err := getSbom(att, client.httpClient)
+	sbomBytes, err := getSbom(sbomEntry, client.httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving sbom from rekor entry %v: %w", logIndex, err)
 	}
 
 	log.Debugf("SBOM (%v bytes) retrieved", len(*sbomBytes))
 
-	if err = verifySbomHash(att, sbomBytes); err != nil {
+	if err = verifySbomHash(sbomEntry, sbomBytes); err != nil {
 		return nil, fmt.Errorf("could not verify retrieved sbom (from rekor entry %v): %w", logIndex, err)
 	}
 
@@ -148,12 +134,11 @@ func getAndVerifySbomFromUUID(uuid string, client *Client) (*sbomWithMetadata, e
 	}
 
 	sbomWrapped := &sbomWithMetadata{
-		executableSha256: att.Subject[0].Digest["sha256"],
+		executableSha256: subject.Digest["sha256"],
 		sha1:             decodedHash,
 		rekorEntry:       uuid,
 		spdx:             sbom,
 	}
-
 	return sbomWrapped, nil
 }
 
@@ -163,7 +148,7 @@ func getAndVerifySbomFromUUID(uuid string, client *Client) (*sbomWithMetadata, e
 func getAndVerifySbomsFromHash(sha256 string, client *Client) ([]*sbomWithMetadata, error) {
 	uuids, err := getUuids(sha256, client.rekorClient)
 	if err != nil {
-		return nil, fmt.Errorf("error getting uuids on rekor associated with hash \"%v\": %w", sha256, err)
+		return nil, fmt.Errorf("error getting uuids on rekor associated with hash %q: %w", sha256, err)
 	}
 
 	var sboms []*sbomWithMetadata
@@ -179,7 +164,6 @@ func getAndVerifySbomsFromHash(sha256 string, client *Client) ([]*sbomWithMetada
 		}
 		sboms = append(sboms, sbom)
 	}
-
 	return sboms, nil
 }
 
@@ -204,6 +188,5 @@ func getAndVerifySbomsFromResolver(resolver source.FileResolver, location source
 	if err != nil {
 		return nil, fmt.Errorf("error searching rekor in location %v: %w", location.RealPath, err)
 	}
-
 	return sboms, nil
 }
