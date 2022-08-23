@@ -74,8 +74,9 @@ func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 	}
 }
 
-// nolint:funlen
 // formatDockerImagePullStatus writes the docker image pull status summarized into a single line for the given state.
+//
+//nolint:funlen
 func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *components.Spinner, line *frame.Line) {
 	var size, current uint64
 
@@ -397,8 +398,9 @@ func SecretsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 	return err
 }
 
-//nolint:dupl
 // FileMetadataCatalogerStartedHandler shows the intermittent secrets searching progress.
+//
+//nolint:dupl
 func FileMetadataCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	prog, err := syftEventParsers.ParseFileMetadataCatalogingStarted(event)
 	if err != nil {
@@ -483,7 +485,8 @@ func FileIndexingStartedHandler(ctx context.Context, fr *frame.Frame, event part
 }
 
 // FileMetadataCatalogerStartedHandler shows the intermittent secrets searching progress.
-// nolint:dupl
+//
+//nolint:dupl
 func FileDigestsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	prog, err := syftEventParsers.ParseFileDigestsCatalogingStarted(event)
 	if err != nil {
