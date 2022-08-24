@@ -1,6 +1,7 @@
 package spdx22json
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/formats/spdx22json/model"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/rekor"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -40,12 +42,53 @@ func toFormatModel(s sbom.SBOM) *model.Document {
 			},
 			LicenseListVersion: spdxlicense.Version,
 		},
-		DataLicense:       "CC0-1.0",
-		DocumentNamespace: namespace,
-		Packages:          toPackages(s.Artifacts.PackageCatalog, relationships),
-		Files:             toFiles(s),
-		Relationships:     toRelationships(relationships),
+		DataLicense:          "CC0-1.0",
+		ExternalDocumentRefs: toExternalDocumentRefs(s.Relationships),
+		DocumentNamespace:    namespace,
+		Packages:             toPackages(s.Artifacts.PackageCatalog, relationships),
+		Files:                toFiles(s),
+		Relationships:        toRelationships(relationships),
 	}
+}
+
+// isValidExternalRelationshipDocument returns if rel contains an ExternalRef and if it to_format_model know how to handle it.
+// An error is returned if rel contains an ExternalRef, but the rel cannot be handled
+func isValidExternalRelationshipDocument(rel artifact.Relationship) (bool, error) {
+	if _, ok := rel.From.(rekor.ExternalRef); ok {
+		return false, errors.New("syft cannot handle an ExternalRef in the FROM field of a relationship")
+	}
+	if externalRef, ok := rel.To.(rekor.ExternalRef); ok {
+		relationshipType := artifact.DescribedByRelationship
+		if rel.Type == relationshipType && toChecksumAlgorithm(externalRef.SpdxRef.Alg) == "SHA1" {
+			return true, nil
+		}
+		return false, fmt.Errorf("syft cannot handle an ExternalRef with relationship type: %v", relationshipType)
+	}
+	return false, nil
+}
+
+func toExternalDocumentRefs(relationships []artifact.Relationship) []model.ExternalDocumentRef {
+	externalDocRefs := []model.ExternalDocumentRef{}
+	for _, rel := range relationships {
+		valid, err := isValidExternalRelationshipDocument(rel)
+		if err != nil {
+			log.Warnf("dropping relationship %v: %w", rel, err)
+			continue
+		}
+		if valid {
+			externalRef := rel.To.(rekor.ExternalRef)
+			externalDocRef := model.ExternalDocumentRef{
+				ExternalDocumentID: model.DocElementID(rel.To.ID()).String(),
+				Checksum: model.Checksum{
+					Algorithm:     toChecksumAlgorithm(externalRef.SpdxRef.Alg),
+					ChecksumValue: externalRef.SpdxRef.Checksum,
+				},
+				SpdxDocument: externalRef.SpdxRef.URI,
+			}
+			externalDocRefs = append(externalDocRefs, externalDocRef)
+		}
+	}
+	return externalDocRefs
 }
 
 func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []model.Package {
@@ -238,21 +281,34 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	return ty
 }
 
-func toRelationships(relationships []artifact.Relationship) (result []model.Relationship) {
+func toRelationships(relationships []artifact.Relationship) []model.Relationship {
+	result := []model.Relationship{}
 	for _, r := range relationships {
 		exists, relationshipType, comment := lookupRelationship(r.Type)
-
 		if !exists {
 			log.Warnf("unable to convert relationship from SPDX 2.2 JSON, dropping: %+v", r)
 			continue
 		}
 
-		result = append(result, model.Relationship{
-			SpdxElementID:      model.ElementID(r.From.ID()).String(),
-			RelationshipType:   relationshipType,
-			RelatedSpdxElement: model.ElementID(r.To.ID()).String(),
-			Comment:            comment,
-		})
+		rel := model.Relationship{
+			SpdxElementID:    model.ElementID(r.From.ID()).String(),
+			RelationshipType: relationshipType,
+			Comment:          comment,
+		}
+
+		// if this relationship contains an external document ref, we need to use DocElementID instead of ElementID
+		valid, err := isValidExternalRelationshipDocument(r)
+		if err != nil {
+			log.Warnf("dropping relationship %v: %w", rel, err)
+			continue
+		}
+		if valid {
+			rel.RelatedSpdxElement = model.DocElementID(r.To.ID()).String()
+		} else {
+			rel.RelatedSpdxElement = model.ElementID(r.To.ID()).String()
+		}
+
+		result = append(result, rel)
 	}
 	return result
 }
@@ -263,6 +319,10 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, spdxhelpers.Relatio
 		return true, spdxhelpers.ContainsRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, spdxhelpers.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
+	case artifact.DependencyOfRelationship:
+		return true, spdxhelpers.DependencyOfRelationship, ""
+	case artifact.DescribedByRelationship:
+		return true, spdxhelpers.DescribedByRelationship, ""
 	}
 	return false, "", ""
 }
