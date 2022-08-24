@@ -95,7 +95,8 @@ type directoryEnd struct {
 }
 
 // note: this is derived from readDirectoryEnd within the archive/zip package
-// nolint:gocognit
+//
+//nolint:gocognit
 func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, err error) {
 	// look for directoryEndSignature in the last 1k, then in the last 65k
 	var buf []byte

@@ -74,8 +74,9 @@ func parseApkDB(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relation
 	return packages, nil, nil
 }
 
-// nolint:funlen
 // parseApkDBEntry reads and parses a single pkg.ApkMetadata element from the stream, returning nil if their are no more entries.
+//
+//nolint:funlen
 func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 	var entry pkg.ApkMetadata
 	pkgFields := make(map[string]interface{})

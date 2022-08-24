@@ -26,6 +26,7 @@ type PackagesOptions struct {
 	OverwriteExistingImage bool
 	ImportTimeout          uint
 	Catalogers             []string
+	ExternalSourcesEnabled bool
 }
 
 var _ Interface = (*PackagesOptions)(nil)
@@ -70,9 +71,13 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.Flags().UintVarP(&o.ImportTimeout, "import-timeout", "", 30,
 		"set a timeout duration (in seconds) for the upload to Anchore Enterprise")
 
+	cmd.Flags().BoolVarP(&o.ExternalSourcesEnabled, "external-sources-enabled", "", false,
+		"shut off any use of external sources during sbom generation (default false")
+
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
 
+//nolint:funlen
 func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	// Formatting & Input options //////////////////////////////////////////////
 
@@ -101,6 +106,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("external_sources.external-sources-enabled", flags.Lookup("external-sources-enabled")); err != nil {
 		return err
 	}
 
