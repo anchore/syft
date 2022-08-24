@@ -23,6 +23,20 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			ty:        pkg.UnknownPkg,
 		},
 		{
+			filename:  "pkg-maven.4.3.2.blerg",
+			version:   "4.3.2",
+			extension: "blerg",
+			name:      "pkg-maven",
+			ty:        pkg.UnknownPkg,
+		},
+		{
+			filename:  "pkg-maven_4.3.2.blerg",
+			version:   "4.3.2",
+			extension: "blerg",
+			name:      "pkg-maven",
+			ty:        pkg.UnknownPkg,
+		},
+		{
 			filename:  "pkg-maven-4.3.2.jar",
 			version:   "4.3.2",
 			extension: "jar",
