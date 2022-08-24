@@ -19,6 +19,7 @@ type NpmPackageJSONMetadata struct {
 	Homepage    string   `mapstructure:"homepage" json:"homepage"`
 	Description string   `mapstructure:"description" json:"description"`
 	URL         string   `mapstructure:"url" json:"url"`
+	Private     bool     `mapstructure:"private" json:"private"`
 }
 
 // PackageURL returns the PURL for the specific NPM package (see https://github.com/package-url/purl-spec)
