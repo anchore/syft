@@ -1,9 +1,12 @@
 package spdx22json
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/rekor"
+	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/syft/syft/file"
 
@@ -14,6 +17,279 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 )
+
+func Test_toRelationships(t *testing.T) {
+
+	package1 := pkg.Package{Name: "Hello World Package 1"}
+	package1.SetID()
+	package2 := pkg.Package{Name: "Hello World Package 2"}
+	package2.SetID()
+	externalRef1 := rekor.NewExternalRef("HelloWorld", "www.example.com", "SHA1", "bogushash")
+	coordinates := source.Coordinates{
+		RealPath: "foobar path",
+	}
+
+	tests := []struct {
+		name          string
+		relationships []artifact.Relationship
+		result        []model.Relationship
+	}{
+		{
+			name:   "no relationships",
+			result: []model.Relationship{},
+		},
+		{
+			name: "single external reference relationship",
+			relationships: []artifact.Relationship{
+				{
+					From: coordinates,
+					Type: artifact.DescribedByRelationship,
+					To:   externalRef1,
+				},
+			},
+			result: []model.Relationship{
+				{
+					SpdxElementID:      fmt.Sprint("SPDXRef-", coordinates.ID()),
+					RelationshipType:   spdxhelpers.DescribedByRelationship,
+					RelatedSpdxElement: fmt.Sprint("DocumentRef-", externalRef1.ID()),
+				},
+			},
+		},
+		{
+			name: "single non external reference relationship",
+			relationships: []artifact.Relationship{
+				{
+					From: package1,
+					Type: artifact.ContainsRelationship,
+					To:   package2,
+				},
+			},
+			result: []model.Relationship{
+				{
+					SpdxElementID:      fmt.Sprint("SPDXRef-", package1.ID()),
+					RelationshipType:   spdxhelpers.ContainsRelationship,
+					RelatedSpdxElement: fmt.Sprint("SPDXRef-", package2.ID()),
+				},
+			},
+		},
+		{
+			name: "external reference relationship does not have type DESCRIBED-BY",
+			relationships: []artifact.Relationship{
+				{
+					From: coordinates,
+					Type: artifact.ContainsRelationship,
+					To:   externalRef1,
+				},
+			},
+			result: []model.Relationship{},
+		},
+		{
+			name: "relationship contains ExternalRef in FROM field",
+			relationships: []artifact.Relationship{
+				{
+					From: externalRef1,
+					Type: artifact.ContainsRelationship,
+					To:   externalRef1,
+				},
+			},
+			result: []model.Relationship{},
+		},
+		{
+			name: "spdx22json cannot handle this relationship type",
+			relationships: []artifact.Relationship{
+				{
+					From: package1,
+					Type: artifact.RuntimeDependencyOfRelationship,
+					To:   package2,
+				},
+			},
+			result: []model.Relationship{},
+		},
+		{
+			name: "both normal and external reference relationships",
+			relationships: []artifact.Relationship{
+				{
+					From: package1,
+					Type: artifact.DependencyOfRelationship,
+					To:   package2,
+				},
+				{
+					From: coordinates,
+					Type: artifact.DescribedByRelationship,
+					To:   externalRef1,
+				},
+			},
+			result: []model.Relationship{
+				{
+					SpdxElementID:      fmt.Sprint("SPDXRef-", package1.ID()),
+					RelationshipType:   spdxhelpers.DependencyOfRelationship,
+					RelatedSpdxElement: fmt.Sprint("SPDXRef-", package2.ID()),
+				},
+				{
+					SpdxElementID:      fmt.Sprint("SPDXRef-", coordinates.ID()),
+					RelationshipType:   spdxhelpers.DescribedByRelationship,
+					RelatedSpdxElement: fmt.Sprint("DocumentRef-", externalRef1.ID()),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.result, toRelationships(test.relationships))
+		})
+	}
+}
+
+func Test_toExternalDocumentRefs(t *testing.T) {
+
+	package1 := pkg.Package{Name: "Hello World Package 1"}
+	package2 := pkg.Package{Name: "Hello World Package 2"}
+	externalRef1 := rekor.NewExternalRef("HelloWorld", "www.example.com", "SHA1", "bogushash")
+	externalRef2 := rekor.NewExternalRef("Test", "www.test.com", "sha1", "testhash")
+	externalRef3 := rekor.NewExternalRef("Test", "test uri", "sha256", "sha256 test hash")
+
+	tests := []struct {
+		name          string
+		relationships []artifact.Relationship
+		expected      []model.ExternalDocumentRef
+		exactMatch    []model.ExternalDocumentRef // check equality of list, not of elements
+	}{
+		{
+			name:       "no relationships",
+			exactMatch: []model.ExternalDocumentRef{},
+		},
+		{
+			name: "one external relationships",
+			relationships: []artifact.Relationship{
+				{
+					From: package1,
+					To:   externalRef1,
+					Type: artifact.DescribedByRelationship,
+				},
+			},
+			expected: []model.ExternalDocumentRef{
+				{
+					ExternalDocumentID: model.DocElementID(externalRef1.ID()).String(),
+					Checksum:           model.Checksum{Algorithm: "SHA1", ChecksumValue: "bogushash"},
+					SpdxDocument:       externalRef1.SpdxRef.URI,
+				},
+			},
+		},
+		{
+			name: "Both external relationships and non external relationships",
+			relationships: []artifact.Relationship{
+				{
+					From: package1,
+					To:   package2,
+					Type: artifact.ContainsRelationship,
+				},
+				{
+					From: package1,
+					To:   externalRef1,
+					Type: artifact.DescribedByRelationship,
+				},
+			},
+			expected: []model.ExternalDocumentRef{
+				{
+					ExternalDocumentID: model.DocElementID(externalRef1.ID()).String(),
+					Checksum:           model.Checksum{Algorithm: "SHA1", ChecksumValue: "bogushash"},
+					SpdxDocument:       externalRef1.SpdxRef.URI,
+				},
+			},
+		},
+		{
+			name: "Lowercase checksum algorithm",
+			relationships: []artifact.Relationship{
+				{
+					From: package1,
+					To:   externalRef2,
+					Type: artifact.DescribedByRelationship,
+				},
+			},
+			expected: []model.ExternalDocumentRef{
+				{
+					ExternalDocumentID: model.DocElementID(externalRef2.ID()).String(),
+					Checksum:           model.Checksum{Algorithm: "SHA1", ChecksumValue: "testhash"},
+					SpdxDocument:       externalRef2.SpdxRef.URI,
+				},
+			},
+		},
+		{
+			name: "non sha1 checksum algorithm (sha1 required per spdx spec)",
+			relationships: []artifact.Relationship{
+				{
+					From: package1,
+					To:   externalRef3,
+					Type: artifact.DescribedByRelationship,
+				},
+			},
+			expected: []model.ExternalDocumentRef{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.exactMatch != nil {
+				assert.Equal(t, test.exactMatch, toExternalDocumentRefs(test.relationships))
+			}
+			assert.ElementsMatch(t, test.expected, toExternalDocumentRefs(test.relationships))
+
+		})
+	}
+}
+
+func Test_toFiles(t *testing.T) {
+	coordinates1 := source.Coordinates{RealPath: "hi there"}
+	coordinates2 := source.Coordinates{RealPath: "goodbye"}
+
+	tests := []struct {
+		name          string
+		inputSbom     sbom.SBOM
+		expectedFiles []model.File
+	}{
+		{
+			name: "files are created just from relationships",
+			inputSbom: sbom.SBOM{
+				Relationships: []artifact.Relationship{
+					{
+						From: coordinates1,
+						To:   coordinates2,
+					},
+				},
+			},
+			expectedFiles: []model.File{
+				{
+					Item: model.Item{
+						Element:          model.Element{SPDXID: model.ElementID(coordinates1.ID()).String()},
+						LicenseConcluded: "NOASSERTION",
+					},
+					FileName: "hi there",
+				},
+				{
+					Item: model.Item{
+						Element:          model.Element{SPDXID: model.ElementID(coordinates2.ID()).String()},
+						LicenseConcluded: "NOASSERTION",
+					},
+					FileName: "goodbye",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res := toFiles(test.inputSbom)
+			if len(res) != len(test.expectedFiles) {
+				assert.FailNowf(t, "", "unexpected number of files returned, expected %v, found %v", len(test.expectedFiles), len(res))
+			} else {
+				for _, file := range test.expectedFiles {
+					assert.Contains(t, res, file)
+				}
+			}
+		})
+	}
+}
 
 func Test_toFileTypes(t *testing.T) {
 

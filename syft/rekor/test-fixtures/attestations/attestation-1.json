@@ -1,0 +1,21 @@
+{
+  "_type": "https://in-toto.io/Statement/v0.1",
+  "predicateType": "google.com/sbom",
+  "predicate": {
+    "sboms": [
+      {
+        "format": "SPDX",
+        "digest": {
+          "sha256": "02948ad50464ee57fe237b09054c45b1bff6c7d18729eea1eb740d89d9563209"
+        },
+        "uri": "https://github.com/lumjjb/sample-golang-prov/releases/download/v1.3/binary.spdx"
+      }
+    ],
+    "build-metadata": {
+      "artifact-source-repo": "https://github.com/lumjjb/sample-golang-prov",
+      "artifact-source-repo-commit": "c8cb5f292c77064aeabb488ea4f5e483a5073076",
+      "attestation-generator-repo": "https://github.com/lumjjb/slsa-github-generator-go",
+      "attestation-generator-repo-commit": "6948f4c67f6bca55657fe1fb3630b55b1714ef2d"
+    }
+  }
+}
