@@ -33,6 +33,7 @@ type packageJSON struct {
 	Description  string            `json:"description"`
 	Dependencies map[string]string `json:"dependencies"`
 	Repository   repository        `json:"repository"`
+	Private      bool              `json:"private"`
 }
 
 type author struct {
@@ -217,6 +218,7 @@ func newPackageJSONPackage(p packageJSON) *pkg.Package {
 			Homepage: p.Homepage,
 			URL:      p.Repository.URL,
 			Licenses: licenses,
+			Private:  p.Private,
 		},
 	}
 }

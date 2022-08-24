@@ -147,6 +147,26 @@ func TestParsePackageJSON(t *testing.T) {
 				},
 			},
 		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-private.json",
+			ExpectedPkg: pkg.Package{
+				Name:         "npm",
+				Version:      "6.14.6",
+				Type:         pkg.NpmPkg,
+				Licenses:     []string{"Artistic-2.0"},
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
+					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
+					Licenses: []string{"Artistic-2.0"},
+					Private:  true,
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
