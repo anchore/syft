@@ -2,7 +2,7 @@ package linux
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"regexp"
 	"strings"
 
@@ -68,7 +68,7 @@ func IdentifyRelease(resolver source.FileResolver) *Release {
 				continue
 			}
 
-			content, err := ioutil.ReadAll(contentReader)
+			content, err := io.ReadAll(contentReader)
 			internal.CloseAndLogError(contentReader, location.VirtualPath)
 			if err != nil {
 				log.Warnf("unable to read %q: %+v", location.RealPath, err)

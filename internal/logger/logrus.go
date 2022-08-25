@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -55,7 +54,7 @@ func NewLogrusLogger(cfg LogrusConfig) *LogrusLogger {
 		}
 		output = logFile
 	default:
-		output = ioutil.Discard
+		output = io.Discard
 	}
 
 	appLogger.SetOutput(output)
