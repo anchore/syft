@@ -6,6 +6,16 @@ import (
 )
 
 func TestConvertCmdFlags(t *testing.T) {
+	commonAssertions := []traitAssertion{
+		func(tb testing.TB, stdout, _ string, _ int) {
+			tb.Helper()
+			if len(stdout) < 1000 {
+				tb.Errorf("there may not be any report output (len=%d)", len(stdout))
+			}
+		},
+		assertSuccessfulReturnCode,
+	}
+
 	tests := []struct {
 		name       string
 		args       []string
@@ -17,9 +27,13 @@ func TestConvertCmdFlags(t *testing.T) {
 			args: []string{"convert"},
 			assertions: []traitAssertion{
 				assertInOutput("Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format"),
-				assertInOutput("FAILURE"),
 				assertFailingReturnCode,
 			},
+		},
+		{
+			name:       "syft-format convertable to spdx-json",
+			args:       []string{"convert", "-o", "spdx-json"},
+			assertions: commonAssertions,
 		},
 	}
 
