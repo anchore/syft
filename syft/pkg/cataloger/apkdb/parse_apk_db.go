@@ -209,7 +209,6 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 			// TODO: parse provides to remove =*
 			lookup[provides] = append(lookup[provides], &p)
 		}
-
 	}
 
 	// read "Pull Dependencies" (D) and match with keys
