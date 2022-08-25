@@ -55,15 +55,9 @@ func TestConvertCmdFlags(t *testing.T) {
 					return
 				}
 
-				f, err := os.CreateTemp("", "temp_sbom")
-				if err != nil {
-					t.Fatalf("could not create temp sbom file for convert: %s", err)
-				}
-				defer os.Remove(f.Name()) // clean up temp file
-
-				if _, err := f.Write([]byte(stdout)); err != nil {
-					t.Fatalf("could not write temp sbom for convert: %s", err)
-				}
+				tempDir := t.TempDir()
+				sbomFile := filepath.Join(tempDir, "sbom.json")
+				require.NoError(t, os.WriteFile(sbomFile, stdout, 0666))
 
 				convertArgs := []string{"convert", f.Name(), "-o", c.To}
 				cmd, stdout, stderr = runSyft(t, test.env, convertArgs...)
