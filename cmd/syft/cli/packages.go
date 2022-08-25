@@ -45,6 +45,7 @@ const (
 	packagesHelp = packagesExample + packagesSchemeHelp
 )
 
+//nolint:dupl
 func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "packages [SOURCE]",
