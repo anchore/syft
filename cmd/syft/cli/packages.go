@@ -2,8 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"log"
+
+	"github.com/anchore/syft/cmd/syft/cli/options"
 
 	"github.com/anchore/syft/cmd/syft/cli/packages"
 	"github.com/anchore/syft/internal"
