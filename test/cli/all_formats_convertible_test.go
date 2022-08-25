@@ -32,7 +32,7 @@ func TestConvertCmdFlags(t *testing.T) {
 		},
 		{
 			name:       "syft-format convertable to spdx-json",
-			args:       []string{"convert", "", "-o", "spdx-json"},
+			args:       []string{"convert", "./test-fixtures/sboms/syft.sbom.json", "-o", "spdx-json"},
 			assertions: commonAssertions,
 		},
 	}
