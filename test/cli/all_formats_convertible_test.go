@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -18,28 +19,43 @@ func TestConvertCmdFlags(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		args       []string
+		base       string
+		convert    string
 		env        map[string]string
 		assertions []traitAssertion
 	}{
 		{
-			name: "no-args-shows-help",
-			args: []string{"convert"},
-			assertions: []traitAssertion{
-				assertInOutput("Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format"),
-				assertFailingReturnCode,
-			},
-		},
-		{
 			name:       "syft-format convertable to spdx-json",
-			args:       []string{"convert", "./test-fixtures/sboms/syft.sbom.json", "-o", "spdx-json"},
+			base:       "syft-json",
+			convert:    "spdx-json",
 			assertions: commonAssertions,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd, stdout, stderr := runSyft(t, test.env, test.args...)
+			sbomArgs := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", test.base}
+			cmd, stdout, stderr := runSyft(t, test.env, sbomArgs...)
+			if cmd.ProcessState.ExitCode() != 0 {
+				t.Fatalf("failure executing syft creating an sbom")
+				t.Log("STDOUT:\n", stdout)
+				t.Log("STDERR:\n", stderr)
+				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
+				return
+			}
+
+			f, err := os.CreateTemp("", "temp_sbom")
+			if err != nil {
+				t.Fatalf("could not create temp sbom file for convert: %s", err)
+			}
+			defer os.Remove(f.Name()) // clean up temp file
+
+			if _, err := f.Write([]byte(stdout)); err != nil {
+				t.Fatalf("could not write temp sbom for convert: %s", err)
+			}
+
+			convertArgs := []string{"convert", f.Name(), "-o", test.convert}
+			cmd, stdout, stderr = runSyft(t, test.env, convertArgs...)
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
