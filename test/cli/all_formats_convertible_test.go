@@ -2,8 +2,11 @@ package cli
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type conversion struct {
@@ -57,9 +60,9 @@ func TestConvertCmdFlags(t *testing.T) {
 
 				tempDir := t.TempDir()
 				sbomFile := filepath.Join(tempDir, "sbom.json")
-				require.NoError(t, os.WriteFile(sbomFile, stdout, 0666))
+				require.NoError(t, os.WriteFile(sbomFile, []byte(stdout), 0666))
 
-				convertArgs := []string{"convert", f.Name(), "-o", c.To}
+				convertArgs := []string{"convert", sbomFile, "-o", c.To}
 				cmd, stdout, stderr = runSyft(t, test.env, convertArgs...)
 				for _, traitFn := range test.assertions {
 					traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
