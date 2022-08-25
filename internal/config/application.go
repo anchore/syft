@@ -57,6 +57,7 @@ type Application struct {
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
 	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
+	ExternalSources    ExternalSources    `yaml:"external_sources" json:"external_sources" mapstructure:"external_sources"`
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
@@ -66,7 +67,8 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 			IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 			Scope:                    cfg.Package.Cataloger.ScopeOpt,
 		},
-		Catalogers: cfg.Catalogers,
+		Catalogers:             cfg.Catalogers,
+		ExternalSourcesEnabled: cfg.ExternalSources.ExternalSourcesEnabled,
 	}
 }
 

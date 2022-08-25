@@ -110,29 +110,36 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathRe
 		return nil, nil
 	}
 
-	var relationships []artifact.Relationship
+	locations := map[artifact.ID]source.Location{}
 
 	for _, path := range fileOwner.OwnedFiles() {
-		locations, err := resolver.FilesByPath(path)
+		pathRefs, err := resolver.FilesByPath(path)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find path for path=%q: %w", path, err)
 		}
 
-		if len(locations) == 0 {
+		if len(pathRefs) == 0 {
 			// ideally we want to warn users about missing files from a package, however, it is very common for
 			// container image authors to delete files that are not needed in order to keep image sizes small. Adding
 			// a warning here would be needlessly noisy (even for popular base images).
 			continue
 		}
 
-		for _, l := range locations {
-			relationships = append(relationships, artifact.Relationship{
-				From: p,
-				To:   l.Coordinates,
-				Type: artifact.ContainsRelationship,
-			})
+		for _, ref := range pathRefs {
+			if oldRef, ok := locations[ref.Coordinates.ID()]; ok {
+				log.Debugf("found path duplicate of %s", oldRef.RealPath)
+			}
+			locations[ref.Coordinates.ID()] = ref
 		}
 	}
 
+	var relationships []artifact.Relationship
+	for _, location := range locations {
+		relationships = append(relationships, artifact.Relationship{
+			From: p,
+			To:   location.Coordinates,
+			Type: artifact.ContainsRelationship,
+		})
+	}
 	return relationships, nil
 }

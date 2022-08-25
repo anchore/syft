@@ -9,6 +9,12 @@ SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
 VERSION=$(shell git describe --dirty --always --tags)
 COMPARE_TEST_IMAGE = centos:8.2.2004
 COMPARE_DIR = ./test/compare
+GOLANGCILINT_VERSION = v1.49.0
+BOUNCER_VERSION = v0.4.0
+CHRONICLE_VERSION = v0.4.1
+GORELEASER_VERSION = v1.10.3
+YAJSV_VERSION = v1.4.0
+COSIGN_VERSION = v1.11.1
 
 # formatting variables
 BOLD := $(shell tput -T linux bold)
@@ -32,7 +38,7 @@ BOOTSTRAP_CACHE="c7afb99ad"
 DISTDIR=./dist
 SNAPSHOTDIR=./snapshot
 OS=$(shell uname | tr '[:upper:]' '[:lower:]')
-SNAPSHOT_BIN=$(shell realpath $(shell pwd)/$(SNAPSHOTDIR)/$(OS)-build_$(OS)_amd64_v1/$(BIN))
+SNAPSHOT_BIN=$(realpath $(shell pwd)/$(SNAPSHOTDIR)/$(OS)-build_$(OS)_amd64_v1/$(BIN))
 
 ## Variable assertions
 
@@ -105,13 +111,13 @@ $(TEMPDIR):
 
 .PHONY: bootstrap-tools
 bootstrap-tools: $(TEMPDIR)
-	GO111MODULE=off GOBIN=$(shell realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ v1.47.2
-	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ v0.4.0
-	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ v0.3.0
-	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ v1.10.3
-	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/neilpa/yajsv@v1.4.0
-	GOBIN="$(shell realpath $(TEMPDIR))" go install github.com/sigstore/cosign/cmd/cosign@v1.10.0
+	GO111MODULE=off GOBIN=$(realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ $(GOLANGCILINT_VERSION)
+	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ $(BOUNCER_VERSION)
+	curl -sSfL https://raw.githubusercontent.com/anchore/chronicle/main/install.sh | sh -s -- -b $(TEMPDIR)/ $(CHRONICLE_VERSION)
+	.github/scripts/goreleaser-install.sh -d -b $(TEMPDIR)/ $(GORELEASER_VERSION)
+	GOBIN="$(realpath $(TEMPDIR))" go install github.com/neilpa/yajsv@$(YAJSV_VERSION)
+	GOBIN="$(realpath $(TEMPDIR))" go install github.com/sigstore/cosign/cmd/cosign@$(COSIGN_VERSION)
 
 .PHONY: bootstrap-go
 bootstrap-go:

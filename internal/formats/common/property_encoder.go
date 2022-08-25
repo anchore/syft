@@ -190,7 +190,7 @@ func DecodeInto(obj interface{}, values map[string]string, prefix string, fn Fie
 	decode(values, value, prefix, fn)
 }
 
-// nolint: funlen, gocognit, gocyclo
+//nolint:funlen,gocognit,gocyclo
 func decode(vals map[string]string, value reflect.Value, prefix string, fn FieldName) bool {
 	if !value.IsValid() || value.Type() == nil {
 		return false

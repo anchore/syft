@@ -15,9 +15,10 @@ import (
 var _ common.ParserFn = parseSetup
 
 // match examples:
-//		'pathlib3==2.2.0;python_version<"3.6"'  --> match(name=pathlib3 version=2.2.0)
-//		 "mypy==v0.770",                        --> match(name=mypy version=v0.770)
-//		" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
+//
+//	'pathlib3==2.2.0;python_version<"3.6"'  --> match(name=pathlib3 version=2.2.0)
+//	 "mypy==v0.770",                        --> match(name=mypy version=v0.770)
+//	" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
 var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w\.]*)`)
 
 func parseSetup(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
