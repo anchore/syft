@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/anchore/syft/cmd/syft/cli/options"
+
 	"github.com/anchore/syft/cmd/syft/cli/packages"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
@@ -44,6 +45,7 @@ const (
 	packagesHelp = packagesExample + packagesSchemeHelp
 )
 
+//nolint:dupl
 func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "packages [SOURCE]",
