@@ -2,7 +2,7 @@ package file
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -33,7 +33,7 @@ func ExtractGlobsFromTarToUniqueTempFile(archivePath, dir string, globs ...strin
 
 		// we have a file we want to extract....
 		tempfilePrefix := filepath.Base(filepath.Clean(file.Name())) + "-"
-		tempFile, err := ioutil.TempFile(dir, tempfilePrefix)
+		tempFile, err := os.CreateTemp(dir, tempfilePrefix)
 		if err != nil {
 			return fmt.Errorf("unable to create temp file: %w", err)
 		}
