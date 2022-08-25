@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"reflect"
 	"sort"
@@ -118,7 +118,7 @@ func write(schema []byte) {
 			panic(err)
 		}
 
-		existingSchemaBytes, err := ioutil.ReadAll(existingFh)
+		existingSchemaBytes, err := io.ReadAll(existingFh)
 		if err != nil {
 			panic(err)
 		}

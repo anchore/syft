@@ -18,6 +18,7 @@ const (
 `
 )
 
+//nolint:dupl
 func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "convert [SOURCE-SBOM] -o [FORMAT]",
