@@ -75,6 +75,7 @@ func TestParseRpmDB(t *testing.T) {
 					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
+					Licenses:     []string{"MIT"},
 					Metadata: pkg.RpmdbMetadata{
 						Name:      "dive",
 						Epoch:     nil,
@@ -102,6 +103,7 @@ func TestParseRpmDB(t *testing.T) {
 					FoundBy:      catalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
+					Licenses:     []string{"MIT"},
 					Metadata: pkg.RpmdbMetadata{
 						Name:      "dive",
 						Epoch:     nil,
