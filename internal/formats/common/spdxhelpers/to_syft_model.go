@@ -322,13 +322,17 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 		} else {
 			epoch = &converted
 		}
+		license := p.PackageLicenseDeclared
+		if license == "" {
+			license = p.PackageLicenseConcluded
+		}
 		return pkg.RpmdbMetadataType, pkg.RpmdbMetadata{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,
 			Arch:      arch,
 			SourceRpm: upstreamValue,
-			License:   p.PackageLicenseConcluded,
+			License:   license,
 			Vendor:    p.PackageOriginatorOrganization,
 		}
 	case pkg.DebPkg:

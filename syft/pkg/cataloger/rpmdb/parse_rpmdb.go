@@ -92,6 +92,10 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 		Metadata:     metadata,
 	}
 
+	if entry.License != "" {
+		p.Licenses = append(p.Licenses, entry.License)
+	}
+
 	p.SetID()
 	return &p, nil
 }
