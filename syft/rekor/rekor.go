@@ -77,11 +77,6 @@ func NewExternalRef(docRef string, uri string, alg spdx.ChecksumAlgorithm, hash 
 	}
 }
 
-func warnInfoForUser(uuids []string) {
-	s := fmt.Sprintf("%s\t%v\n", InfoForUser, uuids)
-	log.Warn(s)
-}
-
 // CreateRekorSbomRels searches Rekor by the hash of the file in the given location and creates external reference relationships
 // for any sboms that are found and verified
 func CreateRekorSbomRels(resolver source.FileResolver, location source.Location, client *Client) ([]artifact.Relationship, error) {
@@ -113,11 +108,10 @@ func CreateRekorSbomRels(resolver source.FileResolver, location source.Location,
 		}
 		rels = append(rels, *rel)
 		usedRekorEntries = append(usedRekorEntries, sbomWithDigest.rekorEntry)
-		log.Debug("relationship created for SBOM found on rekor")
+		log.Debugf("relationship created for SBOM found on rekor: %+v", *rel)
 	}
 	if len(rels) > 0 {
-		warnInfoForUser(usedRekorEntries)
+		log.Warn(fmt.Sprintf("%s\t%v\n", InfoForUser, usedRekorEntries))
 	}
-
 	return rels, nil
 }

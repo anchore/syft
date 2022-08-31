@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/spdx/tools-golang/spdx"
@@ -93,10 +94,11 @@ func parseEntry(entry *models.LogEntryAnon) (*models.IntotoV001Schema, error) {
 	return intotoV001, nil
 }
 
-// validateAttestation does some checks that the attestation contains the necessary fields to proceed
+// validateAttestation validates that the attestation contains the necessary fields to proceed, and
+// returns the first subject and first sbom in the attestation
 //
 // Precondition: att is not nil
-func validateAttestation(att *InTotoAttestation) error {
+func validateAndGetFirsts(att *InTotoAttestation) (in_toto.Subject, sbomEntry, error) {
 	// even if predicate type is not GoogleSbomPredicateType, attempt to proceed
 	invalidPredType := false
 	if att.PredicateType != GoogleSbomPredicateType {
@@ -108,40 +110,42 @@ func validateAttestation(att *InTotoAttestation) error {
 	} else if len(att.Subject) > 1 {
 		err = errors.New("attestation found on rekor contains multiple subjects, which is not supported. Ignoring log entry")
 	} else if _, ok := att.Subject[0].Digest["sha256"]; !ok {
-		err = errors.New("attestation subject does not contain a sha256")
+		err = errors.New("attestation subject does not contain a sha256. Ignoring log entry")
 	} else if len(att.Predicate.Sboms) == 0 {
 		err = errors.New("attestation predicate found on rekor does not contain any sboms")
 	}
 
 	if err != nil {
 		if invalidPredType {
-			return fmt.Errorf("the attestation predicate type (%v) is not the accepted type (%v)", att.PredicateType, GoogleSbomPredicateType)
+			return in_toto.Subject{}, sbomEntry{}, fmt.Errorf("the attestation predicate type (%v) is not the accepted type (%v)", att.PredicateType, GoogleSbomPredicateType)
 		}
-		return err
+		return in_toto.Subject{}, sbomEntry{}, err
 	}
-	return nil
+
+	if len(att.Predicate.Sboms) > 1 {
+		log.Debug("attestation found on Rekor with multiple SBOMS, which is not currently supported. Proceeding with the first SBOM.")
+	}
+	return att.Subject[0], att.Predicate.Sboms[0], nil
 }
 
-// parseAndValidateAttestation parses the entry's attestation to an attestation struct and validates the attestation predicate
+// parseAndValidateAttestation parses the entry's attestation,validates the attestation subject and predicate,
+// and returns the first attestation subject and the first sbom in the attestation
 //
 // Precondition: entry is not nil
-func parseAndValidateAttestation(entry *models.LogEntryAnon) (*InTotoAttestation, error) {
+func parseAndValidateAttestation(entry *models.LogEntryAnon) (in_toto.Subject, sbomEntry, error) {
 	attAnon := entry.Attestation
 	if attAnon == nil {
-		return nil, errors.New("attestation is nil")
+		return in_toto.Subject{}, sbomEntry{}, errors.New("attestation is nil")
 	}
 
 	attDecoded := string(attAnon.Data)
 	att := &InTotoAttestation{}
 
 	if err := json.Unmarshal([]byte(attDecoded), att); err != nil {
-		return nil, fmt.Errorf("error unmarshaling attestation to inTotoAttestation type: %w", err)
-	}
-	if err := validateAttestation(att); err != nil {
-		return nil, err
+		return in_toto.Subject{}, sbomEntry{}, fmt.Errorf("error unmarshaling attestation to inTotoAttestation type: %w", err)
 	}
 
-	return att, nil
+	return validateAndGetFirsts(att)
 }
 
 func parseSbom(spdxBytes *[]byte) (*spdx.Document2_2, error) {

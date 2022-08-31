@@ -6,17 +6,30 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/rekor"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestRekorCataloger(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-rekor", source.SquashedScope, []string{"all"})
+	fixtureImageName := "image-rekor"
+	scope := source.SquashedScope
+
+	theSource := getImageSource(t, fixtureImageName)
+	resolver, err := theSource.FileResolver(scope)
+	assert.NoError(t, err)
+
+	client, err := rekor.NewClient()
+	assert.NoError(t, err)
+
+	cataloger := file.NewRekorCataloger(client)
+	rels, err := cataloger.Catalog(resolver)
+	assert.NoError(t, err)
 
 	expectedExternalRelationships := 1
 	var foundExternalRelationship artifact.Relationship
 	foundExternalRelationships := 0
-	for _, rel := range sbom.Relationships {
+	for _, rel := range rels {
 		if _, ok := rel.To.(rekor.ExternalRef); ok {
 			foundExternalRelationships += 1
 			foundExternalRelationship = rel
@@ -30,5 +43,4 @@ func TestRekorCataloger(t *testing.T) {
 			assert.FailNow(t, "the rekor-cataloger surfaced a relationship that is not FROM a coordinates")
 		}
 	}
-
 }

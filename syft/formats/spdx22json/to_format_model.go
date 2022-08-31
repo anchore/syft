@@ -59,7 +59,7 @@ func isValidExternalRelationshipDocument(rel artifact.Relationship) (bool, error
 	}
 	if externalRef, ok := rel.To.(rekor.ExternalRef); ok {
 		relationshipType := artifact.DescribedByRelationship
-		if rel.Type == relationshipType && toChecksumAlgorithm(externalRef.SpdxRef.Alg) == "SHA1" {
+		if rel.Type == relationshipType && toChecksumAlgorithm(externalRef.SpdxRef.Alg) == "SHA1" { // spdx 2.2 spec requires an sha1 hash
 			return true, nil
 		}
 		return false, fmt.Errorf("syft cannot handle an ExternalRef with relationship type: %v", relationshipType)

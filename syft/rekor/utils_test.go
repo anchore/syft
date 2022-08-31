@@ -93,13 +93,8 @@ func Test_parseAndValidateAttestation(t *testing.T) {
 				Attestation: &models.LogEntryAnonAttestation{Data: bytes},
 			}
 
-			output, err := parseAndValidateAttestation(logEntryAnon)
-			assert.Equal(t, test.expectedOutput, output)
-			if test.expectedErr != "" {
-				assert.ErrorContains(t, err, test.expectedErr)
-			} else {
-				assert.NoError(t, err)
-			}
+			_, _, err = parseAndValidateAttestation(logEntryAnon)
+			assert.ErrorContains(t, err, test.expectedErr)
 		})
 	}
 }

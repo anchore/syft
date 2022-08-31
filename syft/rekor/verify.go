@@ -88,10 +88,10 @@ func verify(rekorClient *client.Rekor, entry *models.LogEntryAnon) error {
 	if err != nil {
 		return fmt.Errorf("certificate could not be parsed: %w", err)
 	}
-	cert := certs[0]
-	if cert == nil {
+	if len(certs) == 0 || certs[0] == nil {
 		return fmt.Errorf("certificate could not be parsed: %w", err)
 	}
+	cert := certs[0]
 
 	if err = verifyCert(rekorClient, cert); err != nil {
 		return fmt.Errorf("certificate could not be verified: %w", err)
@@ -108,21 +108,12 @@ func verify(rekorClient *client.Rekor, entry *models.LogEntryAnon) error {
 	return nil
 }
 
-// VerifySbomHash verifies that the hash of the first SBOM in the attestation is equal to the hash of sbomBytes
-func verifySbomHash(att *InTotoAttestation, sbomBytes *[]byte) error {
-	if att == nil {
-		return errors.New("attestation is nil")
-	}
-	if len(att.Predicate.Sboms) == 0 {
-		return errors.New("attestation has no sboms")
-	}
-
-	// take entry at index 0 because we currently do not handle multiple sboms within one attestation
-	expectedHash := att.Predicate.Sboms[0].Digest.Sha256
-
+// VerifySbomHash verifies that the expected hash of the sbom is equal to the hash of sbomBytes
+func verifySbomHash(sbomEntry sbomEntry, sbomBytes *[]byte) error {
 	hash := sha256.Sum256(*sbomBytes)
 	decodedHash := hex.EncodeToString(hash[:])
 
+	expectedHash := sbomEntry.Digest.Sha256
 	if decodedHash != expectedHash {
 		return fmt.Errorf("%v is not equal to %v", decodedHash, expectedHash)
 	}
