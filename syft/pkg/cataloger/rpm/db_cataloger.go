@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const dbCatalogerName = "rpmdb-cataloger"
+const dbCatalogerName = "rpm-db-cataloger"
 
 type DBCataloger struct{}
 

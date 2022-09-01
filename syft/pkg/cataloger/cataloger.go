@@ -55,7 +55,6 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpm.NewRpmdbCataloger(),
-		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
