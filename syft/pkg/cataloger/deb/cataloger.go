@@ -36,11 +36,6 @@ func (c *Cataloger) Name() string {
 	return "dpkgdb-cataloger"
 }
 
-// UsesExternalSources indicates that the dpkgdb cataloger does not use external sources
-func (c *Cataloger) UsesExternalSources() bool {
-	return false
-}
-
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing dpkg support files.
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	dbFileMatches, err := resolver.FilesByGlob(pkg.DpkgDBGlob)
