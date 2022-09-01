@@ -19,53 +19,35 @@ import (
 // NewSBOMCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
 func NewSBOMCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
-		"**/*.syft.json": parseSyftJSON,
-		"**/bom.json":    parseCyclonedxJSON,
-		"**/bom.xml":     parseCyclonedxXML,
-		"**/*.cdx.json":  parseCyclonedxJSON,
-		"**/*.cdx.xml":   parseCyclonedxXML,
-		"**/*.spdx.json": parseSpdxJSON,
-		"**/*.spdx":      parseSpdx,
+		"**/*.syft.json": makeParser(syftjson.Format()),
+		"**/bom.json":    makeParser(cyclonedxjson.Format()),
+		"**/bom.xml":     makeParser(cyclonedxxml.Format()),
+		"**/*.cdx.json":  makeParser(cyclonedxjson.Format()),
+		"**/*.cdx.xml":   makeParser(cyclonedxjson.Format()),
+		"**/*.spdx.json": makeParser(spdx22json.Format()),
+		"**/*.spdx":      makeParser(spdx22tagvalue.Format()),
 	}
 	return common.NewGenericCataloger(nil, globParsers, "sbom-cataloger")
 }
 
-func parseSyftJSON(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	return parseSBOM(path, reader, syftjson.Format())
-}
+func makeParser(format sbom.Format) func(string, io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+	return func(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+		by, err := io.ReadAll(reader)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to read sbom: %w", err)
+		}
 
-func parseCyclonedxJSON(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	return parseSBOM(path, reader, cyclonedxjson.Format())
-}
+		s, err := format.Decode(bytes.NewReader(by))
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to decode sbom: %w", err)
+		}
 
-func parseCyclonedxXML(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	return parseSBOM(path, reader, cyclonedxxml.Format())
-}
+		var packages []*pkg.Package
+		for _, p := range s.Artifacts.PackageCatalog.Sorted() {
+			x := p // copy
+			packages = append(packages, &x)
+		}
 
-func parseSpdxJSON(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	return parseSBOM(path, reader, spdx22json.Format())
-}
-
-func parseSpdx(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	return parseSBOM(path, reader, spdx22tagvalue.Format())
-}
-
-func parseSBOM(_ string, reader io.Reader, format sbom.Format) ([]*pkg.Package, []artifact.Relationship, error) {
-	by, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read sbom: %w", err)
+		return packages, nil, nil
 	}
-
-	s, err := format.Decode(bytes.NewReader(by))
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to decode sbom: %w", err)
-	}
-
-	var packages []*pkg.Package
-	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
-		x := p // copy
-		packages = append(packages, &x)
-	}
-
-	return packages, nil, nil
 }
