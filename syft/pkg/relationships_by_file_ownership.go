@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"sort"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/bmatcuk/doublestar/v4"
@@ -34,12 +36,14 @@ func RelationshipsByFileOwnership(catalog *Catalog) []artifact.Relationship {
 	var edges []artifact.Relationship
 	for parentID, children := range relationships {
 		for childID, files := range children {
+			fs := files.List()
+			sort.Strings(fs)
 			edges = append(edges, artifact.Relationship{
 				From: catalog.byID[parentID],
 				To:   catalog.byID[childID],
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				Data: ownershipByFilesMetadata{
-					Files: files.List(),
+					Files: fs,
 				},
 			})
 		}
