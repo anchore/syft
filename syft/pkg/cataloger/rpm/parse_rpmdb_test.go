@@ -1,4 +1,4 @@
-package rpmdb
+package rpm
 
 import (
 	"fmt"
@@ -72,7 +72,7 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					Locations:    source.NewLocationSet(dbLocation),
-					FoundBy:      catalogerName,
+					FoundBy:      dbCatalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
 					Licenses:     []string{"MIT"},
@@ -100,7 +100,7 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					Locations:    source.NewLocationSet(dbLocation),
-					FoundBy:      catalogerName,
+					FoundBy:      dbCatalogerName,
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmdbMetadataType,
 					Licenses:     []string{"MIT"},

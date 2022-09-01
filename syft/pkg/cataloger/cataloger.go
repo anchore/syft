@@ -24,7 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/portage"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
-	"github.com/anchore/syft/syft/pkg/cataloger/rpmdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"github.com/anchore/syft/syft/pkg/cataloger/swift"
@@ -54,7 +54,8 @@ func ImageCatalogers(cfg Config) []Cataloger {
 		php.NewPHPComposerInstalledCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
-		rpmdb.NewRpmdbCataloger(),
+		rpm.NewRpmdbCataloger(),
+		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
@@ -73,7 +74,8 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		php.NewPHPComposerLockCataloger(),
 		javascript.NewJavascriptLockCataloger(),
 		deb.NewDpkgdbCataloger(),
-		rpmdb.NewRpmdbCataloger(),
+		rpm.NewRpmdbCataloger(),
+		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
 		apkdb.NewApkdbCataloger(),
@@ -100,7 +102,8 @@ func AllCatalogers(cfg Config) []Cataloger {
 		javascript.NewJavascriptLockCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
-		rpmdb.NewRpmdbCataloger(),
+		rpm.NewRpmdbCataloger(),
+		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
 		apkdb.NewApkdbCataloger(),

@@ -1,4 +1,4 @@
-package rpmdb
+package rpm
 
 import (
 	"os"
@@ -18,7 +18,7 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "mariner-release",
 			Version:      "2.0-12.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmdbMetadataType,
 			Metadata: pkg.RpmdbMetadata{
@@ -36,7 +36,7 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "filesystem",
 			Version:      "1.1-9.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmdbMetadataType,
 			Metadata: pkg.RpmdbMetadata{
@@ -54,7 +54,7 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "glibc",
 			Version:      "2.35-2.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmdbMetadataType,
 			Metadata: pkg.RpmdbMetadata{
@@ -72,7 +72,7 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "openssl-libs",
 			Version:      "1.1.1k-15.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmdbMetadataType,
 			Metadata: pkg.RpmdbMetadata{

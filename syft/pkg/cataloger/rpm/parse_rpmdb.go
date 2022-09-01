@@ -1,4 +1,4 @@
-package rpmdb
+package rpm
 
 import (
 	"fmt"
@@ -86,7 +86,7 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 		Name:         entry.Name,
 		Version:      toELVersion(metadata),
 		Locations:    source.NewLocationSet(dbLocation),
-		FoundBy:      catalogerName,
+		FoundBy:      dbCatalogerName,
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmdbMetadataType,
 		Metadata:     metadata,
