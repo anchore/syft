@@ -33,11 +33,6 @@ func (c *PackageCataloger) Name() string {
 	return "python-package-cataloger"
 }
 
-// UsesExternalSources indicates that the python package cataloger does not use external sources
-func (c *PackageCataloger) UsesExternalSources() bool {
-	return false
-}
-
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing python egg and wheel installations.
 func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var fileMatches []source.Location
