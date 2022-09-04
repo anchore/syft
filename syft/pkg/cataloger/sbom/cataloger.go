@@ -23,7 +23,7 @@ func NewSBOMCataloger() *common.GenericCataloger {
 		"**/bom.json":    makeParser(cyclonedxjson.Format()),
 		"**/bom.xml":     makeParser(cyclonedxxml.Format()),
 		"**/*.cdx.json":  makeParser(cyclonedxjson.Format()),
-		"**/*.cdx.xml":   makeParser(cyclonedxjson.Format()),
+		"**/*.cdx.xml":   makeParser(cyclonedxxml.Format()),
 		"**/*.spdx.json": makeParser(spdx22json.Format()),
 		"**/*.spdx":      makeParser(spdx22tagvalue.Format()),
 	}
