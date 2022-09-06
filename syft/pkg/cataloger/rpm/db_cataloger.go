@@ -6,11 +6,9 @@ package rpm
 
 import (
 	"fmt"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -74,5 +72,3 @@ func (c *DBCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []ar
 
 	return pkgs, nil, nil
 }
-
-var _ cataloger.Cataloger = (*DBCataloger)(nil)

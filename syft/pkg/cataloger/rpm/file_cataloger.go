@@ -12,7 +12,6 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -91,8 +90,6 @@ func (c *FileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []
 
 	return pkgs, nil, nil
 }
-
-var _ cataloger.Cataloger = (*FileCataloger)(nil)
 
 func getDigestAlgorithm(header *rpmutils.RpmHeader) string {
 	digestAlgorithm, _ := header.GetString(rpmutils.FILEDIGESTALGO)
