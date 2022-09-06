@@ -18,7 +18,6 @@ const (
 	JavaMetadataType             MetadataType = "JavaMetadata"
 	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
 	RpmMetadataType              MetadataType = "RpmMetadata"
-	RpmdbMetadataType            MetadataType = "RpmdbMetadata" // This is left for compatibility with existing SBOMs
 	DartPubMetadataType          MetadataType = "DartPubMetadata"
 	DotnetDepsMetadataType       MetadataType = "DotnetDepsMetadata"
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
@@ -61,7 +60,6 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	JavaMetadataType:             reflect.TypeOf(JavaMetadata{}),
 	NpmPackageJSONMetadataType:   reflect.TypeOf(NpmPackageJSONMetadata{}),
 	RpmMetadataType:              reflect.TypeOf(RpmMetadata{}),
-	RpmdbMetadataType:            reflect.TypeOf(RpmMetadata{}),
 	DartPubMetadataType:          reflect.TypeOf(DartPubMetadata{}),
 	DotnetDepsMetadataType:       reflect.TypeOf(DotnetDepsMetadata{}),
 	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
@@ -73,4 +71,11 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	ConanaMetadataType:           reflect.TypeOf(ConanMetadata{}),
 	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
 	HackageMetadataType:          reflect.TypeOf(HackageMetadata{}),
+}
+
+func CleanMetadataType(typ MetadataType) MetadataType {
+	if typ == "RpmdbMetadata" {
+		return RpmMetadataType
+	}
+	return typ
 }
