@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -25,11 +26,6 @@ func NewFileCataloger() *FileCataloger {
 // Name returns a string that uniquely describes a cataloger
 func (c *FileCataloger) Name() string {
 	return "rpm-file-cataloger"
-}
-
-// UsesExternalSources indicates that the rpm file cataloger does not use external sources
-func (c *FileCataloger) UsesExternalSources() bool {
-	return false
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm files
@@ -95,6 +91,8 @@ func (c *FileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []
 
 	return pkgs, nil, nil
 }
+
+var _ cataloger.Cataloger = (*FileCataloger)(nil)
 
 func getDigestAlgorithm(header *rpmutils.RpmHeader) string {
 	digestAlgorithm, _ := header.GetString(rpmutils.FILEDIGESTALGO)
