@@ -18,7 +18,7 @@ const (
 	JavaMetadataType             MetadataType = "JavaMetadata"
 	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
 	RpmMetadataType              MetadataType = "RpmMetadata"
-	RpmdbMetadataType            MetadataType = "RpmdbMetadata" // This is left for compatability with existing SBOMs
+	RpmdbMetadataType            MetadataType = "RpmdbMetadata" // This is left for compatibility with existing SBOMs
 	DartPubMetadataType          MetadataType = "DartPubMetadata"
 	DotnetDepsMetadataType       MetadataType = "DotnetDepsMetadata"
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
