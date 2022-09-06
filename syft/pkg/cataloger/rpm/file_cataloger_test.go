@@ -25,9 +25,9 @@ func TestParseRpmFiles(t *testing.T) {
 					Locations:    source.NewLocationSet(),
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmdbMetadataType,
+					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"MIT"},
-					Metadata: pkg.RpmdbMetadata{
+					Metadata: pkg.RpmMetadata{
 						Name:      "abc",
 						Epoch:     intRef(0),
 						Arch:      "x86_64",
@@ -52,9 +52,9 @@ func TestParseRpmFiles(t *testing.T) {
 					Locations:    source.NewLocationSet(),
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmdbMetadataType,
+					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"Public Domain"},
-					Metadata: pkg.RpmdbMetadata{
+					Metadata: pkg.RpmMetadata{
 						Name:      "zork",
 						Epoch:     intRef(0),
 						Arch:      "x86_64",

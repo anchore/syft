@@ -20,12 +20,12 @@ const RpmDBGlob = "**/var/lib/rpm/{Packages,Packages.db,rpmdb.sqlite}"
 const RpmManifestGlob = "**/var/lib/rpmmanifest/container-manifest-2"
 
 var (
-	_ FileOwner     = (*RpmdbMetadata)(nil)
-	_ urlIdentifier = (*RpmdbMetadata)(nil)
+	_ FileOwner     = (*RpmMetadata)(nil)
+	_ urlIdentifier = (*RpmMetadata)(nil)
 )
 
-// RpmdbMetadata represents all captured data for a RPM DB package entry.
-type RpmdbMetadata struct {
+// RpmMetadata represents all captured data for a RPM DB package entry.
+type RpmMetadata struct {
 	Name            string            `json:"name"`
 	Version         string            `json:"version"`
 	Epoch           *int              `json:"epoch"  cyclonedx:"epoch" jsonschema:"nullable"`
@@ -54,7 +54,7 @@ type RpmdbFileRecord struct {
 type RpmdbFileMode uint16
 
 // PackageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
-func (m RpmdbMetadata) PackageURL(distro *linux.Release) string {
+func (m RpmMetadata) PackageURL(distro *linux.Release) string {
 	var namespace string
 	if distro != nil {
 		namespace = distro.ID
@@ -87,7 +87,7 @@ func (m RpmdbMetadata) PackageURL(distro *linux.Release) string {
 	).ToString()
 }
 
-func (m RpmdbMetadata) OwnedFiles() (result []string) {
+func (m RpmMetadata) OwnedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
 		if f.Path != "" {

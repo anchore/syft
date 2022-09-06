@@ -89,7 +89,7 @@ func candidateVendors(p pkg.Package) []string {
 	}
 
 	switch p.MetadataType {
-	case pkg.RpmdbMetadataType:
+	case pkg.RpmMetadataType, pkg.RpmdbMetadataType:
 		vendors.union(candidateVendorsForRPM(p))
 	case pkg.GemMetadataType:
 		vendors.union(candidateVendorsForRuby(p))

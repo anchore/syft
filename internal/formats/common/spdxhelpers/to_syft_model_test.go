@@ -176,8 +176,8 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			metaType: pkg.RpmdbMetadataType,
-			meta: pkg.RpmdbMetadata{
+			metaType: pkg.RpmMetadataType,
+			meta: pkg.RpmMetadata{
 				Name:      "SomeRpmPkg",
 				Version:   "13.2.79",
 				Epoch:     &oneTwoThreeFour,

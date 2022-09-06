@@ -28,7 +28,7 @@ func Originator(p pkg.Package) string {
 			if len(metadata.Authors) > 0 {
 				author = metadata.Authors[0]
 			}
-		case pkg.RpmdbMetadata:
+		case pkg.RpmMetadata:
 			return "Organization: " + metadata.Vendor
 		case pkg.DpkgMetadata:
 			author = metadata.Maintainer

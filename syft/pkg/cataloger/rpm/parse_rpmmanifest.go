@@ -43,7 +43,7 @@ func parseRpmManifestEntry(entry string, location source.Location) (*pkg.Package
 		size = converted
 	}
 
-	metadata := pkg.RpmdbMetadata{
+	metadata := pkg.RpmMetadata{
 		Name:      parts[0],
 		Version:   version,
 		Epoch:     epoch,
@@ -60,7 +60,7 @@ func parseRpmManifestEntry(entry string, location source.Location) (*pkg.Package
 		Locations:    source.NewLocationSet(location),
 		FoundBy:      dbCatalogerName,
 		Type:         pkg.RpmPkg,
-		MetadataType: pkg.RpmdbMetadataType,
+		MetadataType: pkg.RpmMetadataType,
 		Metadata:     metadata,
 	}
 

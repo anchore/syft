@@ -65,8 +65,8 @@ func (c *FileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []
 			Licenses:     licenses,
 			Locations:    source.NewLocationSet(location),
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      nevra.Name,
 				Version:   nevra.Version,
 				Epoch:     parseEpoch(nevra.Epoch),

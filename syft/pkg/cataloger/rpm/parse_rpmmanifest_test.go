@@ -20,8 +20,8 @@ func TestParseRpmManifest(t *testing.T) {
 			Locations:    source.NewLocationSet(location),
 			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "mariner-release",
 				Epoch:     nil,
 				Arch:      "noarch",
@@ -38,8 +38,8 @@ func TestParseRpmManifest(t *testing.T) {
 			Locations:    source.NewLocationSet(location),
 			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "filesystem",
 				Epoch:     nil,
 				Arch:      "x86_64",
@@ -56,8 +56,8 @@ func TestParseRpmManifest(t *testing.T) {
 			Locations:    source.NewLocationSet(location),
 			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "glibc",
 				Epoch:     nil,
 				Arch:      "x86_64",
@@ -74,8 +74,8 @@ func TestParseRpmManifest(t *testing.T) {
 			Locations:    source.NewLocationSet(location),
 			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "openssl-libs",
 				Epoch:     nil,
 				Arch:      "x86_64",

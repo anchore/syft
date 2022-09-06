@@ -91,8 +91,8 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 			return err
 		}
 		p.Metadata = payload
-	case pkg.RpmdbMetadataType:
-		var payload pkg.RpmdbMetadata
+	case pkg.RpmMetadataType, pkg.RpmdbMetadataType:
+		var payload pkg.RpmMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
 			return err
 		}

@@ -121,7 +121,7 @@ func TestPackageURL(t *testing.T) {
 				Name:    "bad-name",
 				Version: "bad-v0.1.0",
 				Type:    RpmPkg,
-				Metadata: RpmdbMetadata{
+				Metadata: RpmMetadata{
 					Name:    "name",
 					Version: "0.1.0",
 					Epoch:   intRef(2),

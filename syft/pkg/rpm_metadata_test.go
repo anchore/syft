@@ -14,7 +14,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 	tests := []struct {
 		name     string
 		distro   *linux.Release
-		metadata RpmdbMetadata
+		metadata RpmMetadata
 		expected string
 	}{
 		{
@@ -23,7 +23,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				ID:        "rhel",
 				VersionID: "8.4",
 			},
-			metadata: RpmdbMetadata{
+			metadata: RpmMetadata{
 				Name:    "p",
 				Version: "v",
 				Release: "r",
@@ -37,7 +37,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				ID:        "centos",
 				VersionID: "7",
 			},
-			metadata: RpmdbMetadata{
+			metadata: RpmMetadata{
 				Name:    "p",
 				Version: "v",
 				Arch:    "a",
@@ -48,7 +48,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 		},
 		{
 			name: "missing distro",
-			metadata: RpmdbMetadata{
+			metadata: RpmMetadata{
 				Name:    "p",
 				Version: "v",
 				Release: "r",
@@ -62,7 +62,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 				ID:        "rhel",
 				VersionID: "8.4",
 			},
-			metadata: RpmdbMetadata{
+			metadata: RpmMetadata{
 				Name:      "p",
 				Version:   "v",
 				Release:   "r",
@@ -86,11 +86,11 @@ func TestRpmMetadata_pURL(t *testing.T) {
 
 func TestRpmMetadata_FileOwner(t *testing.T) {
 	tests := []struct {
-		metadata RpmdbMetadata
+		metadata RpmMetadata
 		expected []string
 	}{
 		{
-			metadata: RpmdbMetadata{
+			metadata: RpmMetadata{
 				Files: []RpmdbFileRecord{
 					{Path: "/somewhere"},
 					{Path: "/else"},
@@ -102,7 +102,7 @@ func TestRpmMetadata_FileOwner(t *testing.T) {
 			},
 		},
 		{
-			metadata: RpmdbMetadata{
+			metadata: RpmMetadata{
 				Files: []RpmdbFileRecord{
 					{Path: "/somewhere"},
 					{Path: ""},

@@ -74,9 +74,9 @@ func TestParseRpmDB(t *testing.T) {
 					Locations:    source.NewLocationSet(dbLocation),
 					FoundBy:      dbCatalogerName,
 					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmdbMetadataType,
+					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"MIT"},
-					Metadata: pkg.RpmdbMetadata{
+					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
 						Arch:      "x86_64",
@@ -102,9 +102,9 @@ func TestParseRpmDB(t *testing.T) {
 					Locations:    source.NewLocationSet(dbLocation),
 					FoundBy:      dbCatalogerName,
 					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmdbMetadataType,
+					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"MIT"},
-					Metadata: pkg.RpmdbMetadata{
+					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
 						Arch:      "x86_64",
@@ -170,12 +170,12 @@ func TestParseRpmDB(t *testing.T) {
 func TestToElVersion(t *testing.T) {
 	tests := []struct {
 		name     string
-		entry    pkg.RpmdbMetadata
+		entry    pkg.RpmMetadata
 		expected string
 	}{
 		{
 			name: "no epoch",
-			entry: pkg.RpmdbMetadata{
+			entry: pkg.RpmMetadata{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",
@@ -184,7 +184,7 @@ func TestToElVersion(t *testing.T) {
 		},
 		{
 			name: "with 0 epoch",
-			entry: pkg.RpmdbMetadata{
+			entry: pkg.RpmMetadata{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",
@@ -194,7 +194,7 @@ func TestToElVersion(t *testing.T) {
 		},
 		{
 			name: "with non-zero epoch",
-			entry: pkg.RpmdbMetadata{
+			entry: pkg.RpmMetadata{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",

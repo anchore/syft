@@ -109,8 +109,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Name:         "dive",
 				Version:      "0.9.2-1",
 				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmdbMetadataType,
-				Metadata: pkg.RpmdbMetadata{
+				MetadataType: pkg.RpmMetadataType,
+				Metadata: pkg.RpmMetadata{
 					Name:      "dive",
 					Epoch:     &epoch,
 					Arch:      "x86_64",
@@ -124,7 +124,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
-				{Name: "syft:package:metadataType", Value: "RpmdbMetadata"},
+				{Name: "syft:package:metadataType", Value: "RpmMetadata"},
 				{Name: "syft:package:type", Value: "rpm"},
 				{Name: "syft:metadata:epoch", Value: "2"},
 				{Name: "syft:metadata:release", Value: "1"},
