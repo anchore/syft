@@ -1,4 +1,4 @@
-package rpmdb
+package rpm
 
 import (
 	"fmt"
@@ -68,7 +68,7 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 		return nil, err
 	}
 
-	metadata := pkg.RpmdbMetadata{
+	metadata := pkg.RpmMetadata{
 		Name:            entry.Name,
 		Version:         entry.Version,
 		Epoch:           entry.Epoch,
@@ -86,9 +86,9 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 		Name:         entry.Name,
 		Version:      toELVersion(metadata),
 		Locations:    source.NewLocationSet(dbLocation),
-		FoundBy:      catalogerName,
+		FoundBy:      dbCatalogerName,
 		Type:         pkg.RpmPkg,
-		MetadataType: pkg.RpmdbMetadataType,
+		MetadataType: pkg.RpmMetadataType,
 		Metadata:     metadata,
 	}
 
@@ -106,7 +106,7 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 // version string, containing epoch (optional), version, and release information. Epoch is an optional field and can be
 // assumed to be 0 when not provided for comparison purposes, however, if the underlying RPM DB entry does not have
 // an epoch specified it would be slightly disingenuous to display a value of 0.
-func toELVersion(metadata pkg.RpmdbMetadata) string {
+func toELVersion(metadata pkg.RpmMetadata) string {
 	if metadata.Epoch != nil {
 		return fmt.Sprintf("%d:%s-%s", *metadata.Epoch, metadata.Version, metadata.Release)
 	}

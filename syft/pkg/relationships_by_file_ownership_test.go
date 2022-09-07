@@ -23,8 +23,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						source.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
+					MetadataType: RpmMetadataType,
+					Metadata: RpmMetadata{
 						Files: []RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},
@@ -66,8 +66,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						source.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
+					MetadataType: RpmMetadataType,
+					Metadata: RpmMetadata{
 						Files: []RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},
@@ -108,8 +108,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						source.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
+					MetadataType: RpmMetadataType,
+					Metadata: RpmMetadata{
 						Files: []RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},

@@ -1,4 +1,4 @@
-package rpmdb
+package rpm
 
 import (
 	"os"
@@ -18,10 +18,10 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "mariner-release",
 			Version:      "2.0-12.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "mariner-release",
 				Epoch:     nil,
 				Arch:      "noarch",
@@ -36,10 +36,10 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "filesystem",
 			Version:      "1.1-9.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "filesystem",
 				Epoch:     nil,
 				Arch:      "x86_64",
@@ -54,10 +54,10 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "glibc",
 			Version:      "2.35-2.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "glibc",
 				Epoch:     nil,
 				Arch:      "x86_64",
@@ -72,10 +72,10 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "openssl-libs",
 			Version:      "1.1.1k-15.cm2",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      catalogerName,
+			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
-			MetadataType: pkg.RpmdbMetadataType,
-			Metadata: pkg.RpmdbMetadata{
+			MetadataType: pkg.RpmMetadataType,
+			Metadata: pkg.RpmMetadata{
 				Name:      "openssl-libs",
 				Epoch:     nil,
 				Arch:      "x86_64",
