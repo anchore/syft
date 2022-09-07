@@ -23,7 +23,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 
 ## Features
 - Generates SBOMs for container images, filesystems, archives, and more to discover packages and libraries
-- Supports OCI and Docker image formats
+- Supports OCI, Docker and [Singularity](https://github.com/sylabs/singularity) image formats
 - Linux distribution identification
 - Works seamlessly with [Grype](https://github.com/anchore/grype) (a fast, modern vulnerability scanner)
 - Able to create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
@@ -118,6 +118,9 @@ Syft can generate a SBOM from a variety of sources:
 ```
 # catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
 syft path/to/image.tar
+
+# catalog a Singularity Image Format (SIF) container
+syft path/to/image.sif
 
 # catalog a directory
 syft path/to/dir
