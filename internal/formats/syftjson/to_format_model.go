@@ -215,6 +215,15 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 			Metadata: r.Data,
 		}
 	}
+	sort.Slice(result, func(i, j int) bool {
+		if iParent, jParent := result[i].Parent, result[j].Parent; iParent != jParent {
+			return iParent < jParent
+		}
+		if iChild, jChild := result[i].Child, result[j].Child; iChild != jChild {
+			return iChild < jChild
+		}
+		return result[i].Type < result[j].Type
+	})
 	return result
 }
 
