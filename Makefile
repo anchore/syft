@@ -226,10 +226,17 @@ go-binaries-fingerprint:
 	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
 		make binaries.fingerprint
 
+.PHONY: rpm-binaries-fingerprint
+rpm-binaries-fingerprint:
+	$(call title,RPM binary test fixture fingerprint)
+	cd syft/pkg/cataloger/rpm/test-fixtures && \
+		make rpms.fingerprint
+
 .PHONY: fixtures
 fixtures:
 	$(call title,Generating test fixtures)
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && make
+	cd syft/pkg/cataloger/rpm/test-fixtures && make
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema

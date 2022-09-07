@@ -1,34 +1,34 @@
 /*
-Package rpmdb provides a concrete Cataloger implementation for RPM "Package" DB files.
+Package rpm provides a concrete DBCataloger implementation for RPM "Package" DB files
+and a FileCataloger for RPM files.
 */
-package rpmdb
+package rpm
 
 import (
 	"fmt"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-const catalogerName = "rpmdb-cataloger"
+const dbCatalogerName = "rpm-db-cataloger"
 
-type Cataloger struct{}
+type DBCataloger struct{}
 
 // NewRpmdbCataloger returns a new RPM DB cataloger object.
-func NewRpmdbCataloger() *Cataloger {
-	return &Cataloger{}
+func NewRpmdbCataloger() *DBCataloger {
+	return &DBCataloger{}
 }
 
 // Name returns a string that uniquely describes a cataloger
-func (c *Cataloger) Name() string {
-	return catalogerName
+func (c *DBCataloger) Name() string {
+	return dbCatalogerName
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *DBCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	fileMatches, err := resolver.FilesByGlob(pkg.RpmDBGlob)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to find rpmdb's by glob: %w", err)

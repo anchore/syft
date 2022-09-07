@@ -326,7 +326,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 		if license == "" {
 			license = p.PackageLicenseConcluded
 		}
-		return pkg.RpmdbMetadataType, pkg.RpmdbMetadata{
+		return pkg.RpmMetadataType, pkg.RpmMetadata{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,

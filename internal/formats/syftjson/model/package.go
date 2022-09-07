@@ -74,7 +74,8 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 
 //nolint:funlen,gocognit,gocyclo
 func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
-	p.MetadataType = unpacker.MetadataType
+	p.MetadataType = pkg.CleanMetadataType(unpacker.MetadataType)
+
 	switch p.MetadataType {
 	case "":
 		// there is no metadata, skip
@@ -91,8 +92,8 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 			return err
 		}
 		p.Metadata = payload
-	case pkg.RpmdbMetadataType:
-		var payload pkg.RpmdbMetadata
+	case pkg.RpmMetadataType:
+		var payload pkg.RpmMetadata
 		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
 			return err
 		}

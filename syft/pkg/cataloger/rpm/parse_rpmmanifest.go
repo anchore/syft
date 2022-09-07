@@ -1,4 +1,4 @@
-package rpmdb
+package rpm
 
 import (
 	"bufio"
@@ -43,7 +43,7 @@ func parseRpmManifestEntry(entry string, location source.Location) (*pkg.Package
 		size = converted
 	}
 
-	metadata := pkg.RpmdbMetadata{
+	metadata := pkg.RpmMetadata{
 		Name:      parts[0],
 		Version:   version,
 		Epoch:     epoch,
@@ -58,9 +58,9 @@ func parseRpmManifestEntry(entry string, location source.Location) (*pkg.Package
 		Name:         parts[0],
 		Version:      toELVersion(metadata),
 		Locations:    source.NewLocationSet(location),
-		FoundBy:      catalogerName,
+		FoundBy:      dbCatalogerName,
 		Type:         pkg.RpmPkg,
-		MetadataType: pkg.RpmdbMetadataType,
+		MetadataType: pkg.RpmMetadataType,
 		Metadata:     metadata,
 	}
 

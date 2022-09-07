@@ -34,7 +34,7 @@ type artifactMetadataContainer struct {
 	Java    pkg.JavaMetadata
 	Npm     pkg.NpmPackageJSONMetadata
 	Python  pkg.PythonPackageMetadata
-	Rpm     pkg.RpmdbMetadata
+	Rpm     pkg.RpmMetadata
 	Cargo   pkg.CargoPackageMetadata
 	Go      pkg.GolangBinMetadata
 	Php     pkg.PhpComposerJSONMetadata

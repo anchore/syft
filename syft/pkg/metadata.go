@@ -17,7 +17,7 @@ const (
 	GemMetadataType              MetadataType = "GemMetadata"
 	JavaMetadataType             MetadataType = "JavaMetadata"
 	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
-	RpmdbMetadataType            MetadataType = "RpmdbMetadata"
+	RpmMetadataType              MetadataType = "RpmMetadata"
 	DartPubMetadataType          MetadataType = "DartPubMetadata"
 	DotnetDepsMetadataType       MetadataType = "DotnetDepsMetadata"
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
@@ -38,7 +38,7 @@ var AllMetadataTypes = []MetadataType{
 	GemMetadataType,
 	JavaMetadataType,
 	NpmPackageJSONMetadataType,
-	RpmdbMetadataType,
+	RpmMetadataType,
 	DartPubMetadataType,
 	DotnetDepsMetadataType,
 	PythonPackageMetadataType,
@@ -59,7 +59,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	GemMetadataType:              reflect.TypeOf(GemMetadata{}),
 	JavaMetadataType:             reflect.TypeOf(JavaMetadata{}),
 	NpmPackageJSONMetadataType:   reflect.TypeOf(NpmPackageJSONMetadata{}),
-	RpmdbMetadataType:            reflect.TypeOf(RpmdbMetadata{}),
+	RpmMetadataType:              reflect.TypeOf(RpmMetadata{}),
 	DartPubMetadataType:          reflect.TypeOf(DartPubMetadata{}),
 	DotnetDepsMetadataType:       reflect.TypeOf(DotnetDepsMetadata{}),
 	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
@@ -71,4 +71,11 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	ConanaMetadataType:           reflect.TypeOf(ConanMetadata{}),
 	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
 	HackageMetadataType:          reflect.TypeOf(HackageMetadata{}),
+}
+
+func CleanMetadataType(typ MetadataType) MetadataType {
+	if typ == "RpmdbMetadata" {
+		return RpmMetadataType
+	}
+	return typ
 }

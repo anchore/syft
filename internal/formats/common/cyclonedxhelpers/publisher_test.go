@@ -31,7 +31,7 @@ func Test_encodePublisher(t *testing.T) {
 		{
 			name: "from rpm",
 			input: pkg.Package{
-				Metadata: pkg.RpmdbMetadata{
+				Metadata: pkg.RpmMetadata{
 					Vendor: "auth",
 				},
 			},

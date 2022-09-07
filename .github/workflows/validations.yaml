@@ -95,6 +95,16 @@ jobs:
           path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
           key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/packages.fingerprint' ) }}
 
+      - name: Build cache key for rpm test-fixture blobs (for unit tests)
+        run: make rpm-binaries-fingerprint
+
+      - name: Restore RPM test-fixture cache
+        id: unit-rpm-cache
+        uses: actions/cache@v2.1.3
+        with:
+          path: syft/pkg/cataloger/rpm/test-fixtures/rpms
+          key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/rpm/test-fixtures/rpms.fingerprint' ) }}
+
       - name: Build cache key for go binary test-fixture blobs (for unit tests)
         run: make go-binaries-fingerprint
 
