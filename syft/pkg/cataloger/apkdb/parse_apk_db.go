@@ -202,12 +202,12 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 	for _, p := range pkgs {
 		apkg, ok := p.Metadata.(pkg.ApkMetadata)
 		if !ok {
-			// TODO warn
+			log.Warnf("cataloger failed to extract apk 'provides' metadata for package %+v", p.Name)
 			continue
 		}
 		for _, provides := range apkg.Provides {
-			// TODO: parse provides to remove =*
-			lookup[provides] = append(lookup[provides], &p)
+			k := strings.Split(provides, "=")[0]
+			lookup[k] = append(lookup[k], &p)
 		}
 	}
 
@@ -215,7 +215,7 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 	for _, p := range pkgs {
 		apkg, ok := p.Metadata.(pkg.ApkMetadata)
 		if !ok {
-			// TODO warn
+			log.Warnf("cataloger failed to extract apk dependency metadata for package %+v", p.Name)
 			continue
 		}
 
@@ -224,9 +224,9 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 			for _, depPkg := range lookup[dep] {
 				// this is a pkg that package "p" depends on... make a relationship
 				relationships = append(relationships, artifact.Relationship{
-					From: p,
-					To:   depPkg,
-					Type: "", // TODO... I think "RUNTIME_DEPENDENCY_OF" ... but really HAS_RUNTIME_DEPENDENCY
+					From: depPkg,
+					To:   p,
+					Type: "runtime-dependency-of", // depPkg IS A runtime dependency OF p
 				})
 			}
 		}

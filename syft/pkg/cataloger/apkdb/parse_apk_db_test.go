@@ -2,12 +2,14 @@ package apkdb
 
 import (
 	"bufio"
+
+	"os"
+	"testing"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"os"
-	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
@@ -830,7 +832,6 @@ func Test_discoverPackageDependencies(t *testing.T) {
 					Name: "package-a",
 					Metadata: pkg.ApkMetadata{
 						PullDependencies: []string{"b-thing"},
-						//Provides:         []string{"a-thing"}, // TODO: do I add a case for this?
 					},
 				}
 				a.SetID()
@@ -844,9 +845,9 @@ func Test_discoverPackageDependencies(t *testing.T) {
 
 				return []*pkg.Package{a, b}, []artifact.Relationship{
 					{
-						From: a,
-						To:   b,
-						Type: "", // TODO
+						From: b,
+						To:   a,
+						Type: "runtime-dependency-of",
 					},
 				}
 			},
