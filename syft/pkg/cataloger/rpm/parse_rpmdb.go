@@ -46,28 +46,21 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 	var allPkgs []pkg.Package
 
 	for _, entry := range pkgList {
-		p, err := newPkg(resolver, dbLocation, entry)
-		if err != nil {
-			return nil, err
-		}
+		p := newPkg(resolver, dbLocation, entry)
 
-		if !pkg.IsValid(p) {
+		if !pkg.IsValid(&p) {
+			log.Warnf("ignoring invalid package found in RPM DB: location=%q name=%q version=%q", dbLocation, entry.Name, entry.Version)
 			continue
 		}
 
 		p.SetID()
-		allPkgs = append(allPkgs, *p)
+		allPkgs = append(allPkgs, p)
 	}
 
 	return allPkgs, nil
 }
 
-func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry *rpmdb.PackageInfo) (*pkg.Package, error) {
-	fileRecords, err := extractRpmdbFileRecords(resolver, entry)
-	if err != nil {
-		return nil, err
-	}
-
+func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry *rpmdb.PackageInfo) pkg.Package {
 	metadata := pkg.RpmMetadata{
 		Name:            entry.Name,
 		Version:         entry.Version,
@@ -79,7 +72,7 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 		License:         entry.License,
 		Size:            entry.Size,
 		ModularityLabel: entry.Modularitylabel,
-		Files:           fileRecords,
+		Files:           extractRpmdbFileRecords(resolver, entry),
 	}
 
 	p := pkg.Package{
@@ -97,7 +90,7 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 	}
 
 	p.SetID()
-	return &p, nil
+	return p
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].
@@ -113,12 +106,13 @@ func toELVersion(metadata pkg.RpmMetadata) string {
 	return fmt.Sprintf("%s-%s", metadata.Version, metadata.Release)
 }
 
-func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
+func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
 	files, err := entry.InstalledFiles()
 	if err != nil {
-		return nil, err
+		log.Warnf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
+		return records
 	}
 
 	for _, record := range files {
@@ -138,5 +132,5 @@ func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.Pack
 			})
 		}
 	}
-	return records, nil
+	return records
 }
