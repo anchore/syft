@@ -31,7 +31,8 @@ const indent = "  "
 // at this level. Values from the config should only be used after `app.LoadAllValues` has been called.
 // Cobra does not have knowledge of the user provided flags until the `RunE` block of each command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
-// nolint:funlen
+//
+//nolint:funlen
 func New() (*cobra.Command, error) {
 	app := &config.Application{}
 
@@ -48,7 +49,7 @@ func New() (*cobra.Command, error) {
 	// root options are also passed to the attestCmd so that a user provided config location can be discovered
 	attestCmd := Attest(v, app, ro)
 	poweruserCmd := PowerUser(v, app, ro)
-	convertCmd := Convert(v, app, ro)
+	convertCmd := Convert(v, app, ro, po)
 
 	// rootCmd is currently an alias for the packages command
 	rootCmd := &cobra.Command{

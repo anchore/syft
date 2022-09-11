@@ -134,6 +134,45 @@ func Test_unpackMetadata(t *testing.T) {
 			}`),
 		},
 		{
+			name:         "can handle RpmdbMetadata",
+			metadataType: pkg.RpmMetadataType,
+			packageData: []byte(`{
+				"id": "4ac699c3b8fe1835",
+				"name": "acl",
+				"version": "2.2.53-1.el8",
+				"type": "rpm",
+				"foundBy": "rpm-db-cataloger",
+				"locations": [
+					{
+					 "path": "/var/lib/rpm/Packages",
+					 "layerID": "sha256:74ddd0ec08fa43d09f32636ba91a0a3053b02cb4627c35051aff89f853606b59"
+					}
+				],
+				"licenses": [
+					"GPLv2+"
+				],
+				"language": "",
+				"cpes": [
+					"cpe:2.3:a:centos:acl:2.2.53-1.el8:*:*:*:*:*:*:*",
+					"cpe:2.3:a:acl:acl:2.2.53-1.el8:*:*:*:*:*:*:*"
+				],
+				"purl": "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+				"metadataType": "RpmdbMetadata",
+				"metadata": {
+					"name": "acl",
+					"version": "2.2.53",
+					"epoch": null,
+					"architecture": "x86_64",
+					"release": "1.el8",
+					"sourceRpm": "acl-2.2.53-1.el8.src.rpm",
+					"size": 205740,
+					"license": "GPLv2+",
+					"vendor": "CentOS",
+					"modularityLabel": ""
+				}
+			}`),
+		},
+		{
 			name:         "bad metadata type is an error",
 			metadataType: "BOGOSITY",
 			wantErr:      require.Error,

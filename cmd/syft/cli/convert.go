@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/anchore/syft/cmd/syft/cli/convert"
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -17,7 +18,8 @@ const (
 `
 )
 
-func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions) *cobra.Command {
+//nolint:dupl
+func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "convert [SOURCE-SBOM] -o [FORMAT]",
 		Short: "Convert between SBOM formats",
@@ -43,5 +45,11 @@ func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions) *
 			return convert.Run(cmd.Context(), app, args)
 		},
 	}
+
+	err := po.AddFlags(cmd, v)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return cmd
 }

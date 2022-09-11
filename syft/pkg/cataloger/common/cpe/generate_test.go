@@ -316,8 +316,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Version:      "3.2",
 				FoundBy:      "some-analyzer",
 				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmdbMetadataType,
-				Metadata: pkg.RpmdbMetadata{
+				MetadataType: pkg.RpmMetadataType,
+				Metadata: pkg.RpmMetadata{
 					Vendor: "some-vendor",
 				},
 			},
@@ -334,8 +334,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Version:      "1:3.2",
 				FoundBy:      "some-analyzer",
 				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmdbMetadataType,
-				Metadata: pkg.RpmdbMetadata{
+				MetadataType: pkg.RpmMetadataType,
+				Metadata: pkg.RpmMetadata{
 					Vendor: "some-vendor",
 				},
 			},

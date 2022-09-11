@@ -14,7 +14,8 @@ import (
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-// nolint:funlen
+//
+//nolint:funlen
 func toFormatModel(s sbom.SBOM) *spdx.Document2_2 {
 	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 
@@ -87,7 +88,8 @@ func toFormatModel(s sbom.SBOM) *spdx.Document2_2 {
 }
 
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
-// nolint: funlen
+//
+//nolint:funlen
 func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 {
 	results := make(map[spdx.ElementID]*spdx.Package2_2)
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"reflect"
 	"sort"
@@ -34,7 +34,7 @@ type artifactMetadataContainer struct {
 	Java    pkg.JavaMetadata
 	Npm     pkg.NpmPackageJSONMetadata
 	Python  pkg.PythonPackageMetadata
-	Rpm     pkg.RpmdbMetadata
+	Rpm     pkg.RpmMetadata
 	Cargo   pkg.CargoPackageMetadata
 	Go      pkg.GolangBinMetadata
 	Php     pkg.PhpComposerJSONMetadata
@@ -118,7 +118,7 @@ func write(schema []byte) {
 			panic(err)
 		}
 
-		existingSchemaBytes, err := ioutil.ReadAll(existingFh)
+		existingSchemaBytes, err := io.ReadAll(existingFh)
 		if err != nil {
 			panic(err)
 		}

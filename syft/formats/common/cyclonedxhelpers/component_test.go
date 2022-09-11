@@ -109,8 +109,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Name:         "dive",
 				Version:      "0.9.2-1",
 				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmdbMetadataType,
-				Metadata: pkg.RpmdbMetadata{
+				MetadataType: pkg.RpmMetadataType,
+				Metadata: pkg.RpmMetadata{
 					Name:      "dive",
 					Epoch:     &epoch,
 					Arch:      "x86_64",
@@ -124,7 +124,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Property{
-				{Name: "syft:package:metadataType", Value: "RpmdbMetadata"},
+				{Name: "syft:package:metadataType", Value: "RpmMetadata"},
 				{Name: "syft:package:type", Value: "rpm"},
 				{Name: "syft:metadata:epoch", Value: "2"},
 				{Name: "syft:metadata:release", Value: "1"},
@@ -193,29 +193,51 @@ func Test_deriveBomRef(t *testing.T) {
 }
 
 func Test_decodeComponent(t *testing.T) {
-	javaComponentWithNoSyftProperties := cyclonedx.Component{
-		Name:       "ch.qos.logback/logback-classic",
-		Version:    "1.2.3",
-		PackageURL: "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
-		Type:       "library",
-		BOMRef:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
-	}
-
 	tests := []struct {
-		name      string
-		component cyclonedx.Component
-		want      pkg.Language
+		name             string
+		component        cyclonedx.Component
+		wantLanguage     pkg.Language
+		wantMetadataType pkg.MetadataType
 	}{
 		{
-			name:      "derive language from pURL if missing",
-			component: javaComponentWithNoSyftProperties,
-			want:      pkg.Java,
+			name: "derive language from pURL if missing",
+			component: cyclonedx.Component{
+				Name:       "ch.qos.logback/logback-classic",
+				Version:    "1.2.3",
+				PackageURL: "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+				Type:       "library",
+				BOMRef:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+			},
+			wantLanguage: pkg.Java,
+		},
+		{
+			name: "handle existing RpmdbMetadata type",
+			component: cyclonedx.Component{
+				Name:       "acl",
+				Version:    "2.2.53-1.el8",
+				PackageURL: "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+				Type:       "library",
+				BOMRef:     "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:metadataType",
+						Value: "RpmdbMetadata",
+					},
+				},
+			},
+			wantMetadataType: pkg.RpmMetadataType,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, decodeComponent(&tt.component).Language)
+			p := decodeComponent(&tt.component)
+			if tt.wantLanguage != "" {
+				assert.Equal(t, tt.wantLanguage, p.Language)
+			}
+			if tt.wantMetadataType != "" {
+				assert.Equal(t, tt.wantMetadataType, p.MetadataType)
+			}
 		})
 	}
 }

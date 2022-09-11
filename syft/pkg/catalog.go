@@ -203,6 +203,10 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 				iLocations := pkgs[i].Locations.ToSlice()
 				jLocations := pkgs[j].Locations.ToSlice()
 				if pkgs[i].Type == pkgs[j].Type && len(iLocations) > 0 && len(jLocations) > 0 {
+					if iLocations[0].String() == jLocations[0].String() {
+						// compare IDs as a final fallback
+						return pkgs[i].ID() < pkgs[j].ID()
+					}
 					return iLocations[0].String() < jLocations[0].String()
 				}
 				return pkgs[i].Type < pkgs[j].Type

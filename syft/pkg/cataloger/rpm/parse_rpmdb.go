@@ -1,4 +1,4 @@
-package rpmdb
+package rpm
 
 import (
 	"fmt"
@@ -46,29 +46,22 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 	var allPkgs []pkg.Package
 
 	for _, entry := range pkgList {
-		p, err := newPkg(resolver, dbLocation, entry)
-		if err != nil {
-			return nil, err
-		}
+		p := newPkg(resolver, dbLocation, entry)
 
-		if !pkg.IsValid(p) {
+		if !pkg.IsValid(&p) {
+			log.Warnf("ignoring invalid package found in RPM DB: location=%q name=%q version=%q", dbLocation, entry.Name, entry.Version)
 			continue
 		}
 
 		p.SetID()
-		allPkgs = append(allPkgs, *p)
+		allPkgs = append(allPkgs, p)
 	}
 
 	return allPkgs, nil
 }
 
-func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry *rpmdb.PackageInfo) (*pkg.Package, error) {
-	fileRecords, err := extractRpmdbFileRecords(resolver, entry)
-	if err != nil {
-		return nil, err
-	}
-
-	metadata := pkg.RpmdbMetadata{
+func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry *rpmdb.PackageInfo) pkg.Package {
+	metadata := pkg.RpmMetadata{
 		Name:            entry.Name,
 		Version:         entry.Version,
 		Epoch:           entry.Epoch,
@@ -79,21 +72,25 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 		License:         entry.License,
 		Size:            entry.Size,
 		ModularityLabel: entry.Modularitylabel,
-		Files:           fileRecords,
+		Files:           extractRpmdbFileRecords(resolver, entry),
 	}
 
 	p := pkg.Package{
 		Name:         entry.Name,
 		Version:      toELVersion(metadata),
 		Locations:    source.NewLocationSet(dbLocation),
-		FoundBy:      catalogerName,
+		FoundBy:      dbCatalogerName,
 		Type:         pkg.RpmPkg,
-		MetadataType: pkg.RpmdbMetadataType,
+		MetadataType: pkg.RpmMetadataType,
 		Metadata:     metadata,
 	}
 
+	if entry.License != "" {
+		p.Licenses = append(p.Licenses, entry.License)
+	}
+
 	p.SetID()
-	return &p, nil
+	return p
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].
@@ -102,19 +99,20 @@ func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry 
 // version string, containing epoch (optional), version, and release information. Epoch is an optional field and can be
 // assumed to be 0 when not provided for comparison purposes, however, if the underlying RPM DB entry does not have
 // an epoch specified it would be slightly disingenuous to display a value of 0.
-func toELVersion(metadata pkg.RpmdbMetadata) string {
+func toELVersion(metadata pkg.RpmMetadata) string {
 	if metadata.Epoch != nil {
 		return fmt.Sprintf("%d:%s-%s", *metadata.Epoch, metadata.Version, metadata.Release)
 	}
 	return fmt.Sprintf("%s-%s", metadata.Version, metadata.Release)
 }
 
-func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) ([]pkg.RpmdbFileRecord, error) {
+func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
 	files, err := entry.InstalledFiles()
 	if err != nil {
-		return nil, err
+		log.Warnf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
+		return records
 	}
 
 	for _, record := range files {
@@ -134,5 +132,5 @@ func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.Pack
 			})
 		}
 	}
-	return records, nil
+	return records
 }

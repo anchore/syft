@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	macho "github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"
@@ -45,7 +44,7 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 		return reader, nil
 	}
 
-	b, err := ioutil.ReadAll(readerCloser)
+	b, err := io.ReadAll(readerCloser)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read contents from binary: %w", err)
 	}

@@ -2,6 +2,7 @@ package javascript
 
 import (
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -44,6 +45,11 @@ func TestParsePnpmLock(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	// we have to sort this for expected to match actual since yaml maps are unordered
+	sort.Slice(actual, func(p, q int) bool {
+		return actual[p].Name < actual[q].Name
+	})
 
 	differences := deep.Equal(expected, actual)
 	if differences != nil {
