@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats/template"
 )
 
 func TestAllFormatsExpressible(t *testing.T) {
