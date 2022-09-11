@@ -1,7 +1,6 @@
 package spdx22tagvalue
 
 import (
-	"github.com/anchore/syft/internal/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -14,6 +13,6 @@ func Format() sbom.Format {
 		encoder,
 		decoder,
 		validator,
-		spdxhelpers.GetParser(),
+		nil,
 	)
 }
