@@ -12,6 +12,5 @@ func Format() sbom.Format {
 		encoder,
 		nil,
 		nil,
-		nil,
 	)
 }

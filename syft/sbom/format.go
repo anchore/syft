@@ -9,7 +9,6 @@ var (
 	ErrEncodingNotSupported   = errors.New("encoding not supported")
 	ErrDecodingNotSupported   = errors.New("decoding not supported")
 	ErrValidationNotSupported = errors.New("validation not supported")
-	ErrParsingNotSupported    = errors.New("parsing not supported")
 )
 
 type FormatID string
@@ -24,7 +23,6 @@ type Format interface {
 	Encode(io.Writer, SBOM) error
 	Decode(io.Reader) (*SBOM, error)
 	Validate(io.Reader) error
-	Parse(interface{}) (*SBOM, error)
 }
 
 type format struct {
@@ -32,7 +30,6 @@ type format struct {
 	encoder   Encoder
 	decoder   Decoder
 	validator Validator
-	parser    Parser
 }
 
 // Decoder is a function that can convert an SBOM document of a specific format from a reader into Syft native objects.
@@ -50,10 +47,7 @@ type Encoder func(io.Writer, SBOM) error
 // really represent a different format that also uses json)
 type Validator func(reader io.Reader) error
 
-// Parser is a function that can convert an SBOM document of a specific format from a golang interface into Syft native objects
-type Parser func(input interface{}) (*SBOM, error)
-
-func NewFormat(id FormatID, encoder Encoder, decoder Decoder, validator Validator, parser Parser) Format {
+func NewFormat(id FormatID, encoder Encoder, decoder Decoder, validator Validator) Format {
 	return &format{
 		id:        id,
 		encoder:   encoder,
@@ -86,12 +80,4 @@ func (f format) Validate(reader io.Reader) error {
 	}
 
 	return f.validator(reader)
-}
-
-func (f format) Parse(input interface{}) (*SBOM, error) {
-	if f.parser == nil {
-		return nil, ErrParsingNotSupported
-	}
-
-	return f.parser(input)
 }
