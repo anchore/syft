@@ -3,8 +3,8 @@ package options
 import (
 	"fmt"
 
-	"github.com/anchore/syft/internal/formats/table"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"
 	"github.com/spf13/cobra"
