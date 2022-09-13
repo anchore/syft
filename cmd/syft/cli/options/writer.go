@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/formats/table"
-	"github.com/anchore/syft/internal/formats/template"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats/table"
+	"github.com/anchore/syft/syft/formats/template"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/hashicorp/go-multierror"
 )

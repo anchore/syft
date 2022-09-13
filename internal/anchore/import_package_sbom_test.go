@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/anchore/client-go/pkg/external"
-	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"

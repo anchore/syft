@@ -12,7 +12,7 @@ import (
 
 	"github.com/alecthomas/jsonschema"
 	"github.com/anchore/syft/internal"
-	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
+	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/pkg"
 )
 

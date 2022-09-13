@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/internal/formats/cyclonedxjson"
-	"github.com/anchore/syft/internal/formats/cyclonedxxml"
-	"github.com/anchore/syft/internal/formats/syftjson"
+	"github.com/anchore/syft/syft/formats/cyclonedxjson"
+	"github.com/anchore/syft/syft/formats/cyclonedxxml"
+	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 
