@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/in-toto/in-toto-golang/in_toto"
-	"github.com/pkg/errors"
 	sigopts "github.com/sigstore/cosign/cmd/cosign/cli/options"
 	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
@@ -108,7 +107,7 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, format, predicateType, sv, app.File),
+		execWorker(app, *si, format, predicateType, sv),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -151,7 +150,7 @@ func parseImageSource(userInput string, app *config.Application) (s *source.Inpu
 	return si, nil
 }
 
-func execWorker(app *config.Application, sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier, file string) <-chan error {
+func execWorker(app *config.Application, sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -177,36 +176,47 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 			return
 		}
 
-		err = generateAttestation(app, sbomBytes, src, sv, predicateType, file)
+		signedPayload, err := generateAttestation(sbomBytes, src, sv, predicateType)
 		if err != nil {
 			errs <- err
 			return
 		}
+
+		err = publishAttestation(app, signedPayload, src, sv)
+		if err != nil {
+			errs <- err
+			return
+		}
+
+		bus.Publish(partybus.Event{
+			Type: event.Exit,
+			Value: func() error {
+				return nil
+			},
+		})
 	}()
 	return errs
 }
 
-func generateAttestation(app *config.Application, predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string, file string) error {
+func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) ([]byte, error) {
+	var h v1.Hash
+
 	switch len(src.Image.Metadata.RepoDigests) {
 	case 0:
-		return fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
+		return nil, fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
 	case 1:
+		d, err := name.NewDigest(src.Image.Metadata.RepoDigests[0])
+		if err != nil {
+			return nil, err
+		}
+
+		h, err = v1.NewHash(d.Identifier())
+		if err != nil {
+			return nil, err
+		}
 	default:
-		return fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
+		return nil, fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
 	}
-
-	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
-	ref, err := name.ParseReference(src.Metadata.ImageMetadata.UserInput)
-	if err != nil {
-		return err
-	}
-
-	digest, err := ociremote.ResolveDigest(ref)
-	if err != nil {
-		return err
-	}
-
-	h, _ := v1.NewHash(digest.Identifier())
 
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
 		Predicate: bytes.NewBuffer(predicate),
@@ -214,38 +224,44 @@ func generateAttestation(app *config.Application, predicate []byte, src *source.
 		Digest:    h.Hex,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	payload, err := json.Marshal(sh)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	signedPayload, err := wrapped.SignMessage(bytes.NewReader(payload), signatureoptions.WithContext(context.Background()))
-	if err != nil {
-		return errors.Wrap(err, "unable to sign SBOM")
-	}
+	wrapped := dsse.WrapSigner(sv, intotoJSONDsseType)
+	return wrapped.SignMessage(bytes.NewReader(payload), signatureoptions.WithContext(context.Background()))
+}
 
+// publishAttestation publishes signedPayload to the location specified by the user.
+func publishAttestation(app *config.Application, signedPayload []byte, src *source.Source, sv *sign.SignerVerifier) error {
+	switch {
 	// We want to give the option to not upload the generated attestation
 	// if passed or if the user is using local PKI
-	if app.Attest.NoUpload || app.Attest.KeyRef != "" {
-		bus.Publish(partybus.Event{
-			Type: event.Exit,
-			Value: func() error {
-				var err error
-				if file != "" {
-					err = os.WriteFile(file, signedPayload, 0600)
-				} else {
-					_, err = os.Stdout.Write(signedPayload)
-				}
-				return err
-			},
-		})
-		return nil
-	}
+	case app.Attest.NoUpload || app.Attest.KeyRef != "":
+		if app.File != "" {
+			return os.WriteFile(app.File, signedPayload, 0600)
+		}
 
-	return uploadAttestation(app, signedPayload, digest, sv)
+		_, err := os.Stdout.Write(signedPayload)
+		return err
+
+	default:
+		ref, err := name.ParseReference(src.Metadata.ImageMetadata.UserInput)
+		if err != nil {
+			return err
+		}
+
+		digest, err := ociremote.ResolveDigest(ref)
+		if err != nil {
+			return err
+		}
+
+		return uploadAttestation(app, signedPayload, digest, sv)
+	}
 }
 
 func trackUploadAttestation() (*progress.Stage, *progress.Manual) {
@@ -324,12 +340,6 @@ func uploadAttestation(app *config.Application, signedPayload []byte, digest nam
 
 	prog.SetCompleted()
 
-	bus.Publish(partybus.Event{
-		Type: event.Exit,
-		Value: func() error {
-			return nil
-		},
-	})
 	return nil
 }
 
