@@ -143,6 +143,7 @@ func parseImageSource(userInput string, app *config.Application) (s *source.Inpu
 	switch si.ImageSource {
 	case image.UnknownSource, image.OciRegistrySource:
 		si.ImageSource = image.OciRegistrySource
+	case image.SingularitySource:
 	default:
 		return nil, fmt.Errorf("attest command can only be used with image sources fetch directly from the registry, but discovered an image source of %q when given %q", si.ImageSource, userInput)
 	}
@@ -176,7 +177,7 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 			return
 		}
 
-		signedPayload, err := generateAttestation(sbomBytes, src, sv, predicateType)
+		signedPayload, err := generateAttestation(sourceInput, sbomBytes, src, sv, predicateType)
 		if err != nil {
 			errs <- err
 			return
@@ -198,24 +199,34 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 	return errs
 }
 
-func generateAttestation(predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) ([]byte, error) {
+func generateAttestation(si source.Input, predicate []byte, src *source.Source, sv *sign.SignerVerifier, predicateType string) ([]byte, error) {
 	var h v1.Hash
 
-	switch len(src.Image.Metadata.RepoDigests) {
-	case 0:
-		return nil, fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
-	case 1:
-		d, err := name.NewDigest(src.Image.Metadata.RepoDigests[0])
-		if err != nil {
-			return nil, err
+	switch si.ImageSource {
+	case image.OciRegistrySource:
+		switch len(src.Image.Metadata.RepoDigests) {
+		case 0:
+			return nil, fmt.Errorf("cannot generate attestation since no repo digests were found; make sure you're passing an OCI registry source for the attest command")
+		case 1:
+			d, err := name.NewDigest(src.Image.Metadata.RepoDigests[0])
+			if err != nil {
+				return nil, err
+			}
+
+			h, err = v1.NewHash(d.Identifier())
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
 		}
 
-		h, err = v1.NewHash(d.Identifier())
+	case image.SingularitySource:
+		var err error
+		h, err = v1.NewHash(src.Image.Metadata.ID)
 		if err != nil {
 			return nil, err
 		}
-	default:
-		return nil, fmt.Errorf("cannot generate attestation since multiple repo digests were found for the image: %+v", src.Image.Metadata.RepoDigests)
 	}
 
 	sh, err := attestation.GenerateStatement(attestation.GenerateOpts{
