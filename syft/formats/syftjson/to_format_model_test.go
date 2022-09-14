@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_toSourceModel(t *testing.T) {

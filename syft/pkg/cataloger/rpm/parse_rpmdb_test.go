@@ -5,14 +5,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/file"
-
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
+	"github.com/anchore/syft/syft/source"
 )
 
 type rpmdbTestFileResolverMock struct {

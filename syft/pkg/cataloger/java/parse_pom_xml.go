@@ -6,10 +6,11 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/vifraa/gopom"
 	"golang.org/x/net/html/charset"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 const pomXMLGlob = "*pom.xml"

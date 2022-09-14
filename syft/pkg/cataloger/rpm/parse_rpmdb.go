@@ -6,12 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 
+	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 )
 
 // parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.

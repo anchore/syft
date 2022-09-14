@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/antihax/optional"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/antihax/optional"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 type ImportConfig struct {

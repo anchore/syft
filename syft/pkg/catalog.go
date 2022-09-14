@@ -4,10 +4,11 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/jinzhu/copier"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/jinzhu/copier"
 )
 
 type orderedIDSet struct {

@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/formats/common/testutils"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/formats/common/testutils"
 )
 
 func TestEncodeDecodeCycle(t *testing.T) {

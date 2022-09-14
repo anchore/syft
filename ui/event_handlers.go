@@ -8,17 +8,18 @@ import (
 	"sync"
 	"time"
 
-	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
-	"github.com/anchore/stereoscope/pkg/image/docker"
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/ui/components"
-	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/dustin/go-humanize"
 	"github.com/gookit/color"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 	"github.com/wagoodman/go-progress/format"
 	"github.com/wagoodman/jotframe/pkg/frame"
+
+	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
+	"github.com/anchore/stereoscope/pkg/image/docker"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/ui/components"
+	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 )
 
 const maxBarWidth = 50

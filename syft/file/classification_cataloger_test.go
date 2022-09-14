@@ -1,11 +1,12 @@
 package file
 
 import (
-	"github.com/anchore/stereoscope/pkg/imagetest"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {

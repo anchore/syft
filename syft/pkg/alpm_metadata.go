@@ -4,10 +4,11 @@ import (
 	"sort"
 	"time"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/scylladb/go-set/strset"
 )
 
 const AlpmDBGlob = "**/var/lib/pacman/local/**/desc"

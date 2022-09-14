@@ -1,11 +1,12 @@
 package source
 
 import (
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/artifact"
 )
 
 func TestLocationSet(t *testing.T) {

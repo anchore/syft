@@ -3,18 +3,16 @@ package file
 import (
 	"crypto"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
-	"github.com/anchore/stereoscope/pkg/imagetest"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/source"
 )
 

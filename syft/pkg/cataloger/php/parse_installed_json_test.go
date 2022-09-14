@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 var expectedInstalledJsonPackages = []*pkg.Package{

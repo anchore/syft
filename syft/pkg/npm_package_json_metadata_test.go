@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/anchore/packageurl-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/packageurl-go"
 )
 
 func TestNpmPackageJSONMetadata_PackageURL(t *testing.T) {

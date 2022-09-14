@@ -7,10 +7,11 @@ import (
 	"strings"
 
 	"github.com/acobaugh/osrelease"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
-	"github.com/google/go-cmp/cmp"
 )
 
 // returns a distro or nil

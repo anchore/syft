@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/anchore/syft/internal/file"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"

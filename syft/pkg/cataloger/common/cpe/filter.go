@@ -3,8 +3,9 @@ package cpe
 import (
 	"strings"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/facebookincubator/nvdtools/wfn"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 const jenkinsName = "jenkins"

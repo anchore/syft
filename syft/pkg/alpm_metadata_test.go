@@ -3,9 +3,10 @@ package pkg
 import (
 	"testing"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestAlpmMetadata_pURL(t *testing.T) {

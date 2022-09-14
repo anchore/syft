@@ -1,11 +1,13 @@
 package cataloger
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var _ Cataloger = (*dummy)(nil)

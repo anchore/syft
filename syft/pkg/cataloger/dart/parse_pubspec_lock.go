@@ -5,11 +5,12 @@ import (
 	"io"
 	"net/url"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"gopkg.in/yaml.v2"
 )
 
 // integrity check

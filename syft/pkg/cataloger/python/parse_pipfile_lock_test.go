@@ -1,13 +1,13 @@
 package python
 
 import (
-	"github.com/anchore/syft/syft/source"
 	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePipFileLock(t *testing.T) {

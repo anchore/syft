@@ -6,12 +6,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/version"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func Version(v *viper.Viper, app *config.Application) *cobra.Command {

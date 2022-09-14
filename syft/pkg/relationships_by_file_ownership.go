@@ -3,10 +3,11 @@ package pkg
 import (
 	"sort"
 
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 // AltRpmDBGlob allows db matches against new locations introduced in fedora:{36,37}

@@ -5,10 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/file"
-
 	"github.com/go-test/deep"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

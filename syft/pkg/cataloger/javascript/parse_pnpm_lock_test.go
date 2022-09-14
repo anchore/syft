@@ -5,8 +5,9 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func fixtureP(str string) *string {

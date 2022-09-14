@@ -7,9 +7,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/facebookincubator/nvdtools/wfn"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/facebookincubator/nvdtools/wfn"
 )
 
 func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {

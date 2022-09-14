@@ -8,14 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/anchore/syft/syft/artifact"
-
-	"github.com/anchore/syft/syft/file"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"github.com/mitchellh/mapstructure"
 )
 
 // integrity check
