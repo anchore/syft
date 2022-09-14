@@ -16,7 +16,7 @@ CHRONICLE_VERSION = v0.4.1
 GOSIMPORTS_VERSION = v0.3.1
 GORELEASER_VERSION = v1.11.2
 YAJSV_VERSION = v1.4.0
-COSIGN_VERSION = v1.11.1
+COSIGN_VERSION = v1.12.0
 
 # formatting variables
 BOLD := $(shell tput -T linux bold)
