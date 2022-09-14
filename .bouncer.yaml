@@ -11,6 +11,10 @@ ignore-packages:
   # packageurl-go is released under the MIT license located in the root of the repo at /mit.LICENSE
   - github.com/anchore/packageurl-go
 
+  # both of these dependencies are specified as Apache-2.0 in their respective GitHub READMEs
+  - github.com/alibabacloud-go/cr-20160607/client
+  - github.com/alibabacloud-go/tea-xml/service
+
   # crypto/internal/boring is released under the openSSL license as a part of the Golang Standard Libary
   - crypto/internal/boring
 
