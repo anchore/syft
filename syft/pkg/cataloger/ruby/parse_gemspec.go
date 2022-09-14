@@ -8,10 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anchore/syft/internal"
-
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"

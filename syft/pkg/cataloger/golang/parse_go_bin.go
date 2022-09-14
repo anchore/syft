@@ -12,11 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/mod/module"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 	"github.com/anchore/syft/syft/source"
-	"golang.org/x/mod/module"
 )
 
 const GOARCH = "GOARCH"

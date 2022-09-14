@@ -8,9 +8,8 @@ import (
 
 	"github.com/wagoodman/go-progress"
 
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/client-go/pkg/external"
+	"github.com/anchore/syft/internal/log"
 )
 
 type dockerfileImportAPI interface {

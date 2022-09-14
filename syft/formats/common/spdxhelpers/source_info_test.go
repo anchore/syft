@@ -3,9 +3,10 @@ package spdxhelpers
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_SourceInfo(t *testing.T) {

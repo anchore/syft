@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"gopkg.in/yaml.v3"
 )
 
 // integrity check

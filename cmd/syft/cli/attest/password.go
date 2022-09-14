@@ -7,9 +7,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sigstore/cosign/pkg/cosign"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/sigstore/cosign/pkg/cosign"
 )
 
 func selectPassFunc(keypath, password string) (cosign.PassFunc, error) {

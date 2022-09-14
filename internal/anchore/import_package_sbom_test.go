@@ -8,6 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/pkg/ioutils"
+	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/client-go/pkg/external"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/formats/syftjson"
@@ -15,11 +21,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/docker/docker/pkg/ioutils"
-	"github.com/go-test/deep"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/wagoodman/go-progress"
 )
 
 func must(c pkg.CPE, e error) pkg.CPE {

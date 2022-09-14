@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anchore/syft/syft/sbom"
-
 	"github.com/olekukonko/tablewriter"
+
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {

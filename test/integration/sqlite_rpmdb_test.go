@@ -3,9 +3,8 @@ package integration
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestSqliteRpm(t *testing.T) {

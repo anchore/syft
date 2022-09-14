@@ -11,15 +11,15 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/anchore/syft/internal"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 const WindowsOS = "windows"

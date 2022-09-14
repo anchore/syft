@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/pkg/ioutils"
+	"github.com/go-test/deep"
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/client-go/pkg/external"
-	"github.com/docker/docker/pkg/ioutils"
-	"github.com/go-test/deep"
 )
 
 type mockConfigImportAPI struct {

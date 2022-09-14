@@ -3,6 +3,10 @@ package cataloger
 import (
 	"fmt"
 
+	"github.com/hashicorp/go-multierror"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -11,9 +15,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 	"github.com/anchore/syft/syft/source"
-	"github.com/hashicorp/go-multierror"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 // Monitor provides progress-related data for observing the progress of a Catalog() call (published on the event bus).

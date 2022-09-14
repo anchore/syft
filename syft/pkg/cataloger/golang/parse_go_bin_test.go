@@ -11,10 +11,11 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 // make will run the default make target for the given test fixture path

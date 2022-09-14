@@ -5,8 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestSPDXJSONDecoder(t *testing.T) {

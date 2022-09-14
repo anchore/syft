@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/anchore/syft/syft/source"
 	"github.com/spf13/viper"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 type FileMetadata struct {

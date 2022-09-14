@@ -3,16 +3,14 @@ package spdx22json
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
-
-	"github.com/anchore/syft/syft/file"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
-
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/formats/spdx22json/model"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_toFileTypes(t *testing.T) {

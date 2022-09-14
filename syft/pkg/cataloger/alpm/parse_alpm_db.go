@@ -10,11 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
+	"github.com/vbatts/go-mtree"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/mitchellh/mapstructure"
-	"github.com/vbatts/go-mtree"
 )
 
 var (

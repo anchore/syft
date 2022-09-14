@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"github.com/CycloneDX/cyclonedx-go"
+
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
 )

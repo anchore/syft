@@ -1,9 +1,10 @@
 package config
 
 import (
+	"github.com/spf13/viper"
+
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/source"
-	"github.com/spf13/viper"
 )
 
 type secrets struct {

@@ -4,16 +4,13 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/anchore/syft/syft/file"
-
 	"github.com/anchore/syft/syft/artifact"
-
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/formats/common/testutils"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-
-	"github.com/anchore/syft/syft/formats/common/testutils"
 )
 
 var updateJson = flag.Bool("update-json", false, "update the *.golden files for json encoders")

@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/ui"
 )
 
 // eventLoop listens to worker errors (from execution path), worker events (from a partybus subscription), and

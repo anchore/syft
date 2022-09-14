@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/linux"
-
-	"github.com/anchore/packageurl-go"
 	"github.com/go-test/deep"
 	"github.com/sergi/go-diff/diffmatchpatch"
+
+	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/linux"
 )
 
 func TestApkMetadata_pURL(t *testing.T) {

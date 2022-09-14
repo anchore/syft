@@ -3,12 +3,13 @@ package cli
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/poweruser"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const powerUserExample = `  {{.appName}} {{.command}} <image>

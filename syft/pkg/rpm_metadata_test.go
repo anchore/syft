@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/sergi/go-diff/diffmatchpatch"
 
 	"github.com/anchore/syft/syft/linux"
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestRpmMetadata_pURL(t *testing.T) {

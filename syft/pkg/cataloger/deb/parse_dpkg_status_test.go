@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/file"
+	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
 )
 
 func compareEntries(t *testing.T, left, right pkg.DpkgMetadata) {

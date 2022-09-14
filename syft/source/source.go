@@ -13,12 +13,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anchore/stereoscope"
-	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/log"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archiver/v3"
 	"github.com/spf13/afero"
+
+	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used

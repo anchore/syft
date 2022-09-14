@@ -5,10 +5,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 )
 
 var updateImageGoldenFiles = flag.Bool("update-image", false, "update the golden fixture images used for testing")

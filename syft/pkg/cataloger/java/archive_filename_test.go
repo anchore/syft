@@ -3,8 +3,9 @@ package java
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/sergi/go-diff/diffmatchpatch"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {

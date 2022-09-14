@@ -1,15 +1,15 @@
 package deb
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/anchore/syft/syft/file"
+	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/go-test/deep"
 )
 
 func TestDpkgCataloger(t *testing.T) {

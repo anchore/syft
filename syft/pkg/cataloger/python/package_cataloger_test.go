@@ -3,9 +3,10 @@ package python
 import (
 	"testing"
 
+	"github.com/go-test/deep"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/go-test/deep"
 )
 
 func TestPythonPackageWheelCataloger(t *testing.T) {

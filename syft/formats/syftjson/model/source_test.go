@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/google/go-cmp/cmp"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestSource_UnmarshalJSON(t *testing.T) {

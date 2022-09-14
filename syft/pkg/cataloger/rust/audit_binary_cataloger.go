@@ -3,13 +3,14 @@ package rust
 import (
 	"fmt"
 
+	rustaudit "github.com/microsoft/go-rustaudit"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
-	rustaudit "github.com/microsoft/go-rustaudit"
 )
 
 const catalogerName = "cargo-auditable-binary-cataloger"

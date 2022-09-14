@@ -2,10 +2,12 @@ package model
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/pkg"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestUnmarshalPackageGolang(t *testing.T) {

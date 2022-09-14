@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/stereoscope/pkg/file"
 )
 
 func TestExcludingResolver(t *testing.T) {

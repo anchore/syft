@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/cmd/syft/cli/convert"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/syft"
@@ -17,7 +19,6 @@ import (
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/require"
 )
 
 var convertibleFormats = []sbom.Format{

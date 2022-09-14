@@ -1,12 +1,13 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/linux"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"strings"
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/sergi/go-diff/diffmatchpatch"
+
+	"github.com/anchore/syft/syft/linux"
 )
 
 func TestPythonPackageMetadata_pURL(t *testing.T) {

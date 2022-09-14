@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-test/deep"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
 )
 
 func TestDatabaseParser(t *testing.T) {

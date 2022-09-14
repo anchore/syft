@@ -9,10 +9,11 @@ import (
 	"context"
 	"sync"
 
-	stereoscopeEvent "github.com/anchore/stereoscope/pkg/event"
-	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/jotframe/pkg/frame"
+
+	stereoscopeEvent "github.com/anchore/stereoscope/pkg/event"
+	syftEvent "github.com/anchore/syft/syft/event"
 )
 
 // Handler is an aggregated event handler for the set of supported events (PullDockerImage, ReadImage, FetchImage, PackageCatalogerStarted)

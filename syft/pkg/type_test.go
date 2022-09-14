@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
-
 	"github.com/stretchr/testify/assert"
 )
 

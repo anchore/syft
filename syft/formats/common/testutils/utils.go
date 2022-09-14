@@ -5,6 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -13,8 +16,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/sergi/go-diff/diffmatchpatch"
-	"github.com/stretchr/testify/assert"
 )
 
 type redactor func(s []byte) []byte

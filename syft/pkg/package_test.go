@@ -3,11 +3,12 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestIDUniqueness(t *testing.T) {

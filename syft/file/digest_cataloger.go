@@ -8,15 +8,13 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anchore/syft/internal"
-
-	"github.com/anchore/syft/internal/log"
-
-	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
 )
 

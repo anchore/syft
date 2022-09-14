@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/vifraa/gopom"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_parserPomXML(t *testing.T) {

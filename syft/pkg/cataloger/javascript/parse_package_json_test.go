@@ -4,9 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestParsePackageJSON(t *testing.T) {

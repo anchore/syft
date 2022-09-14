@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/syft/pkg"
 )
 

@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/google/go-cmp/cmp"
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
 
