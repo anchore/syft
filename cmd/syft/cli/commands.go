@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/stereoscope"
-	"github.com/anchore/syft/internal/logger"
-	"github.com/anchore/syft/syft"
-
-	"github.com/anchore/syft/cmd/syft/cli/options"
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/version"
-	"github.com/anchore/syft/syft/event"
 	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
 	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
+
+	"github.com/anchore/stereoscope"
+	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/logger"
+	"github.com/anchore/syft/internal/version"
+	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/event"
 )
 
 const indent = "  "

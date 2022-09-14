@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	syftFile "github.com/anchore/syft/syft/file"
-
 	"github.com/CycloneDX/cyclonedx-go"
+
+	syftFile "github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

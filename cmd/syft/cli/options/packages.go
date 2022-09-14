@@ -3,13 +3,14 @@ package options
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
 type PackagesOptions struct {

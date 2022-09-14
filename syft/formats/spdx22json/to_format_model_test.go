@@ -4,18 +4,22 @@ import (
 	"fmt"
 	"testing"
 
+<<<<<<< HEAD
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/rekor"
 	"github.com/anchore/syft/syft/sbom"
 
 	"github.com/anchore/syft/syft/file"
+=======
+	"github.com/stretchr/testify/assert"
+>>>>>>> b20310e (Add gosimports (#1205))
 
 	"github.com/anchore/syft/syft/artifact"
-
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/formats/spdx22json/model"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_toRelationships(t *testing.T) {

@@ -4,8 +4,9 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/anchore/syft/syft/formats/common/testutils"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/formats/common/testutils"
 )
 
 var updateTmpl = flag.Bool("update-tmpl", false, "update the *.golden files for json encoders")

@@ -3,18 +3,16 @@ package integration
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/pkg/cataloger"
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger"
+	"github.com/anchore/syft/syft/source"
 )
 
 func BenchmarkImagePackageCatalogers(b *testing.B) {

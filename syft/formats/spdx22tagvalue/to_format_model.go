@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anchore/syft/syft/sbom"
+	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/spdx/tools-golang/spdx"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.

@@ -3,10 +3,11 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/linux"
 	"github.com/scylladb/go-set/strset"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/linux"
 )
 
 func TestPackageURL(t *testing.T) {

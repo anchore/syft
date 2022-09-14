@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/pelletier/go-toml"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"github.com/pelletier/go-toml"
 )
 
 // integrity check

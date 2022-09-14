@@ -5,9 +5,10 @@ import (
 	"io"
 	"sort"
 
+	"golang.org/x/mod/modfile"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"golang.org/x/mod/modfile"
 )
 
 // parseGoMod takes a go.mod and lists all packages discovered.

@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_encodeExternalReferences(t *testing.T) {

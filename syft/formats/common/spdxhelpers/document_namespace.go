@@ -5,9 +5,10 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/google/uuid"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/source"
-	"github.com/google/uuid"
 )
 
 func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string) {

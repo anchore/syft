@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/wagoodman/go-partybus"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -22,7 +24,6 @@ import (
 	"github.com/anchore/syft/syft/formats/template"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/wagoodman/go-partybus"
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {

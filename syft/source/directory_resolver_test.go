@@ -15,13 +15,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/stretchr/testify/assert"
-	"github.com/wagoodman/go-progress"
 )
 
 func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {

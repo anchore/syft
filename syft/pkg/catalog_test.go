@@ -3,11 +3,12 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/source"
 )
 
 type expectedIndexes struct {

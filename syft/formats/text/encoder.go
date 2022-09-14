@@ -6,7 +6,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/anchore/syft/syft/sbom"
-
 	"github.com/anchore/syft/syft/source"
 )
 

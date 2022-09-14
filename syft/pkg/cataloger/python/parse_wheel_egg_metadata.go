@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anchore/syft/internal/file"
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
 

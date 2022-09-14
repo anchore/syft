@@ -1,11 +1,11 @@
 package source
 
 import (
-	"github.com/stretchr/testify/require"
 	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )

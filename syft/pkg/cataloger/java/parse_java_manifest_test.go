@@ -5,10 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
 )
 
 func TestParseJavaManifest(t *testing.T) {

@@ -6,6 +6,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/github"
@@ -16,9 +19,6 @@ import (
 	"github.com/anchore/syft/syft/formats/template"
 	"github.com/anchore/syft/syft/formats/text"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/stretchr/testify/require"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestIdentify(t *testing.T) {

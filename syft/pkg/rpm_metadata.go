@@ -5,10 +5,11 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/scylladb/go-set/strset"
 )
 
 // Packages is the legacy Berkely db based format

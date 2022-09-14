@@ -3,10 +3,9 @@ package pkg
 import (
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
-
-	"github.com/anchore/syft/internal"
 )
 
 var _ urlIdentifier = (*JavaMetadata)(nil)

@@ -13,13 +13,11 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/imagetest"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
 func TestParseInput(t *testing.T) {
