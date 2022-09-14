@@ -3,13 +3,13 @@ package sbom
 import (
 	"bytes"
 	"fmt"
+	"github.com/anchore/syft/syft/formats/cyclonedxjson"
+	"github.com/anchore/syft/syft/formats/cyclonedxxml"
+	"github.com/anchore/syft/syft/formats/spdx22json"
+	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/syftjson"
 	"io"
 
-	"github.com/anchore/syft/internal/formats/cyclonedxjson"
-	"github.com/anchore/syft/internal/formats/cyclonedxxml"
-	"github.com/anchore/syft/internal/formats/spdx22json"
-	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
-	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
