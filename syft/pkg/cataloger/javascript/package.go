@@ -43,13 +43,26 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 	return p
 }
 
-func newPackageLockPackage(resolver source.FileResolver, location source.Location, name string, u lockDependency, licenseMap map[string]string) pkg.Package {
-	var sb strings.Builder
-	sb.WriteString(u.Resolved)
-	sb.WriteString(u.Integrity)
+func newPackageLockV1Package(resolver source.FileResolver, location source.Location, name string, u lockDependency) pkg.Package {
+	return finalizeLockPkg(
+		resolver,
+		location,
+		pkg.Package{
+			Name:      name,
+			Version:   u.Version,
+			Locations: source.NewLocationSet(location),
+			PURL:      packageURL(name, u.Version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+	)
+}
+
+func newPackageLockV2Package(resolver source.FileResolver, location source.Location, name string, u lockPackage) pkg.Package {
 	var licenses []string
-	if l, exists := licenseMap[sb.String()]; exists {
-		licenses = append(licenses, l)
+
+	if u.License != "" {
+		licenses = append(licenses, u.License)
 	}
 
 	return finalizeLockPkg(

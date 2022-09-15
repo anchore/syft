@@ -103,6 +103,13 @@ func TestParsePackageLockV2(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
+			Name:     "npm",
+			Version:  "6.14.6",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/npm@6.14.6",
+		},
+		{
 			Name:     "@types/prop-types",
 			Version:  "15.7.5",
 			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
@@ -133,6 +140,52 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []string{"MIT"},
+		},
+	}
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
+	}
+	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParsePackageLockV3(t *testing.T) {
+	fixture := "test-fixtures/pkg-lock/package-lock-3.json"
+	var expectedRelationships []artifact.Relationship
+	expectedPkgs := []pkg.Package{
+		{
+			Name:     "lock-v3-fixture",
+			Version:  "1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/lock-v3-fixture@1.0.0",
+		},
+		{
+			Name:     "@types/prop-types",
+			Version:  "15.7.5",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
+		},
+		{
+			Name:     "@types/react",
+			Version:  "18.0.20",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/react@18.0.20",
+		},
+		{
+			Name:     "@types/scheduler",
+			Version:  "0.16.2",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
+		},
+		{
+			Name:     "csstype",
+			Version:  "3.1.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/csstype@3.1.1",
 		},
 	}
 	for i := range expectedPkgs {
