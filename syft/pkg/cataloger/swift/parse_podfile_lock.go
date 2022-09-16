@@ -3,7 +3,6 @@ package swift
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -18,7 +17,7 @@ var _ common.ParserFn = parsePodfileLock
 
 // parsePodfileLock is a parser function for Podfile.lock contents, returning all cocoapods pods discovered.
 func parsePodfileLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	bytes, err := ioutil.ReadAll(reader)
+	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
 	}

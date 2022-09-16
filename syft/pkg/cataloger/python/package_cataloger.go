@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
@@ -169,7 +169,7 @@ func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, meta
 	}
 	defer internal.CloseAndLogError(directURLContents, directURLLocation.VirtualPath)
 
-	buffer, err := ioutil.ReadAll(directURLContents)
+	buffer, err := io.ReadAll(directURLContents)
 	if err != nil {
 		return nil, nil, err
 	}
