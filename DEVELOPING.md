@@ -6,7 +6,7 @@ In order to test and develop in this repo you will need the following dependenci
 - docker
 - make
 
-After cloning you can do the following:
+After cloning the following step can help you get setup:
 1. run `make bootstrap` to download go mod dependencies, create the `/.tmp` dir, and download helper utilities.
 2. run `make` to view the selection of developer commands in the Makefile
 3. run `make build` to build the release snapshot binaries and packages
