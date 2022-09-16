@@ -3,7 +3,7 @@ VERSION=$(shell git describe --dirty --always --tags)
 TEMPDIR = ./.tmp
 
 # commands and versions
-LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=4m --config .golangci.yaml
+LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=5m --config .golangci.yaml
 GOIMPORTS_CMD = $(TEMPDIR)/gosimports -local github.com/anchore
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
