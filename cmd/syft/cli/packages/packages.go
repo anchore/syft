@@ -3,7 +3,7 @@ package packages
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/wagoodman/go-partybus"
@@ -162,7 +162,7 @@ func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Applicati
 			return fmt.Errorf("unable to open dockerfile=%q: %w", app.Anchore.Dockerfile, err)
 		}
 
-		dockerfileContents, err = ioutil.ReadAll(fh)
+		dockerfileContents, err = io.ReadAll(fh)
 		if err != nil {
 			return fmt.Errorf("unable to read dockerfile=%q: %w", app.Anchore.Dockerfile, err)
 		}

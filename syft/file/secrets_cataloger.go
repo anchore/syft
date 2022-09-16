@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"sort"
 
@@ -111,7 +110,7 @@ func extractValue(resolver source.FileResolver, location source.Location, start,
 	}
 	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
 
-	n, err := io.CopyN(ioutil.Discard, readCloser, start)
+	n, err := io.CopyN(io.Discard, readCloser, start)
 	if err != nil {
 		return "", fmt.Errorf("unable to read contents for location=%q : %w", location, err)
 	}
