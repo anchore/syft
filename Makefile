@@ -1,19 +1,16 @@
 BIN = syft
+VERSION=$(shell git describe --dirty --always --tags)
 TEMPDIR = ./.tmp
-RESULTSDIR = test/results
-COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
-COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
+
+# commands and versions
 LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=4m --config .golangci.yaml
 GOIMPORTS_CMD = $(TEMPDIR)/gosimports -local github.com/anchore
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
-VERSION=$(shell git describe --dirty --always --tags)
-COMPARE_TEST_IMAGE = centos:8.2.2004
-COMPARE_DIR = ./test/compare
 GOLANGCILINT_VERSION = v1.49.0
+GOSIMPORTS_VERSION = v0.3.1
 BOUNCER_VERSION = v0.4.0
 CHRONICLE_VERSION = v0.4.1
-GOSIMPORTS_VERSION = v0.3.1
 GORELEASER_VERSION = v1.11.2
 YAJSV_VERSION = v1.4.0
 COSIGN_VERSION = v1.12.0
@@ -28,6 +25,12 @@ RESET := $(shell tput -T linux sgr0)
 TITLE := $(BOLD)$(PURPLE)
 SUCCESS := $(BOLD)$(GREEN)
 
+# test variables
+RESULTSDIR = test/results
+COMPARE_DIR = ./test/compare
+COMPARE_TEST_IMAGE = centos:8.2.2004
+COVER_REPORT = $(RESULTSDIR)/unit-coverage-details.txt
+COVER_TOTAL = $(RESULTSDIR)/unit-coverage-summary.txt
 # the quality gate lower threshold for unit test total % coverage (by function statements)
 COVERAGE_THRESHOLD := 62
 
@@ -43,7 +46,6 @@ OS=$(shell uname | tr '[:upper:]' '[:lower:]')
 SNAPSHOT_BIN=$(realpath $(shell pwd)/$(SNAPSHOTDIR)/$(OS)-build_$(OS)_amd64_v1/$(BIN))
 
 ## Variable assertions
-
 ifndef TEMPDIR
 	$(error TEMPDIR is not set)
 endif
@@ -84,6 +86,9 @@ define safe_rm_rf_children
 	bash -c 'test -z "$(1)" && false || rm -rf $(1)/*'
 endef
 
+## Default Task
+.DEFAULT_GOAL:=help
+
 ## Tasks
 
 .PHONY: all
@@ -92,10 +97,6 @@ all: clean static-analysis test ## Run all linux-based checks (linting, license 
 
 .PHONY: test
 test: unit validate-cyclonedx-schema integration benchmark compare-linux cli ## Run all tests (currently unit, integration, linux compare, and cli tests)
-
-.PHONY: help
-help:
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BOLD)$(CYAN)%-25s$(RESET)%s\n", $$1, $$2}'
 
 .PHONY: ci-bootstrap
 ci-bootstrap:
@@ -128,7 +129,7 @@ bootstrap-go:
 	go mod download
 
 .PHONY: bootstrap
-bootstrap: $(RESULTSDIR) bootstrap-go bootstrap-tools ## Download and install all go dependencies (+ prep tooling in the ./tmp dir)
+bootstrap: $(RESULTSDIR) bootstrap-go bootstrap-tools ## Download and install all tooling dependencies (+ prep tooling in the ./tmp dir)
 	$(call title,Bootstrapping dependencies)
 
 .PHONY: static-analysis
@@ -404,14 +405,16 @@ clean-dist: clean-changelog
 clean-changelog:
 	rm -f CHANGELOG.md
 
-clean-test-image-cache: clean-test-image-tar-cache clean-test-image-docker-cache
+clean-test-image-cache: clean-test-image-tar-cache clean-test-image-docker-cache ## Clean test image cache
 
 .PHONY: clear-test-image-tar-cache
-clean-test-image-tar-cache: ## Delete all test cache (built docker image tars)
+clean-test-image-tar-cache:
+	## Delete all test cache (built docker image tars)
 	find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" -delete
 
 .PHONY: clear-test-image-docker-cache
-clean-test-image-docker-cache: ## Purge all test docker images
+clean-test-image-docker-cache:
+	## Purge all test docker images
 	docker images --format '{{.ID}} {{.Repository}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs -r docker rmi --force
 
 .PHONY: show-test-image-cache
@@ -426,3 +429,7 @@ show-test-image-cache: ## Show all docker and image tar cache
 show-test-snapshots: ## Show all test snapshots
 	$(call title,Test snapshots)
 	@find . -type f -wholename "**/test-fixtures/snapshot/*" | sort
+
+.PHONY: help
+help:  ## Display this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BOLD)$(CYAN)%-25s$(RESET)%s\n", $$1, $$2}'
