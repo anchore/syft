@@ -10,7 +10,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -31,20 +30,18 @@ linters:
     - nakedret
     - nolintlint
     - revive
-    - rowserrcheck
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
 
 # do not enable...
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
+#    - rowserrcheck disabled per generics https://github.com/golangci/golangci-lint/issues/2649
 #    - godot
 #    - godox
 #    - goerr113

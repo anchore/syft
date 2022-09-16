@@ -3,7 +3,6 @@ package rpm
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
@@ -17,7 +16,7 @@ import (
 
 // parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
 func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, reader io.Reader) ([]pkg.Package, error) {
-	f, err := ioutil.TempFile("", internal.ApplicationName+"-rpmdb")
+	f, err := os.CreateTemp("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
 	}

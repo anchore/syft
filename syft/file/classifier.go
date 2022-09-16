@@ -3,7 +3,7 @@ package file
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"regexp"
 	"text/template"
 
@@ -84,7 +84,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
 
 	// TODO: there is room for improvement here, as this may use an excessive amount of memory. Alternate approach is to leverage a RuneReader.
-	contents, err := ioutil.ReadAll(contentReader)
+	contents, err := io.ReadAll(contentReader)
 	if err != nil {
 		return nil, err
 	}
