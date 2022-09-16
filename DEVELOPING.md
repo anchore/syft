@@ -14,8 +14,6 @@ After cloning the following step can help you get setup:
 	- this command `go run cmd/syft/main.go alpine:latest` will compile and run syft against `alpine:latest`
 5. view the README or syft help output for more output options
 
-The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
-
 #### Make output
 ```
 all                      Run all linux-based checks (linting, license check, unit, integration, and linux compare tests)
@@ -40,6 +38,8 @@ snapshot-with-signing    Build snapshot release binaries and packages (with dumm
 test                     Run all tests (currently unit, integration, linux compare, and cli tests)
 unit                     Run unit tests (with coverage)
 ```
+
+The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
 
 ## Levels of testing
 
