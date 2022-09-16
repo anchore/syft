@@ -351,7 +351,7 @@ CHANGELOG.md:
 	$(TEMPDIR)/chronicle -vv > CHANGELOG.md
 
 .PHONY: release
-release: clean-dist CHANGELOG.md  ## Build and publish final binaries and packages. Intended to be run only on macOS.
+release: clean-dist CHANGELOG.md
 	$(call title,Publishing release artifacts)
 
 	# create a config with the dist dir overridden
