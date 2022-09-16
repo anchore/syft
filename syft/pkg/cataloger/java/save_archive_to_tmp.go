@@ -3,7 +3,6 @@ package java
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -12,7 +11,7 @@ import (
 
 func saveArchiveToTmp(archiveVirtualPath string, reader io.Reader) (string, string, func(), error) {
 	name := filepath.Base(archiveVirtualPath)
-	tempDir, err := ioutil.TempDir("", "syft-archive-contents-")
+	tempDir, err := os.MkdirTemp("", "syft-archive-contents-")
 	if err != nil {
 		return "", "", func() {}, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
 	}

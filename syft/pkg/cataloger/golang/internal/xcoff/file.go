@@ -4,7 +4,7 @@
 
 // Package xcoff implements access to XCOFF (Extended Common Object File Format) files.
 
-//nolint //this is an internal golang lib
+//nolint:all
 package xcoff
 
 import (
