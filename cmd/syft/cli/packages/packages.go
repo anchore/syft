@@ -43,11 +43,15 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 		}
 	}()
 
-	// could be an image or a directory, with or without a scheme
-	userInput := args[0]
-	si, err := source.ParseInput(userInput, app.Platform, true)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %w", err)
+	// TODO support input from config somehow
+	var userInputs []source.Input
+	for _, userInput := range args {
+		// could be an image or a directory, with or without a scheme
+		si, err := source.ParseInput(userInput, app.Platform, true)
+		if err != nil {
+			return fmt.Errorf("could not generate source input for packages command: %w", err)
+		}
+		userInputs = append(userInputs, *si)
 	}
 
 	eventBus := partybus.NewBus()
@@ -56,7 +60,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, writer),
+		execWorker(app, userInputs, writer),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -64,32 +68,44 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	)
 }
 
-func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
+func execWorker(app *config.Application, input []source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
-		if cleanup != nil {
-			defer cleanup()
-		}
-		if err != nil {
-			errs <- fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
-			return
+		var sources []source.Source
+		for _, si := range input {
+			src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+			if cleanup != nil {
+				defer cleanup()
+			}
+			if err != nil {
+				errs <- fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
+				return
+			}
+			sources = append(sources, *src)
 		}
 
-		s, err := GenerateSBOM(src, errs, app)
+		s, err := GenerateSBOM(sources, errs, app)
 		if err != nil {
 			errs <- err
 			return
 		}
 
 		if s == nil {
-			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
+			ui := ""
+			for i, in := range input {
+				if i > 0 {
+					ui += " "
+				}
+				ui += in.UserInput
+			}
+			errs <- fmt.Errorf("no SBOM produced for %q", ui)
 		}
 
 		if app.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, *s, app); err != nil {
+			// FIXME
+			if err := runPackageSbomUpload(&sources[0], *s, app); err != nil {
 				errs <- err
 				return
 			}
@@ -103,14 +119,19 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 	return errs
 }
 
-func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
+func GenerateSBOM(sources []source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
 	tasks, err := eventloop.Tasks(app)
 	if err != nil {
 		return nil, err
 	}
 
+	var meta []source.Metadata
+	for _, s := range sources {
+		meta = append(meta, s.Metadata)
+	}
+
 	s := sbom.SBOM{
-		Source: src.Metadata,
+		Sources: meta,
 		Descriptor: sbom.Descriptor{
 			Name:          internal.ApplicationName,
 			Version:       version.FromBuild().Version,
@@ -118,17 +139,20 @@ func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) 
 		},
 	}
 
-	buildRelationships(&s, src, tasks, errs)
+	buildRelationships(&s, sources, tasks, errs)
 
 	return &s, nil
 }
 
-func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
+func buildRelationships(s *sbom.SBOM, sources []source.Source, tasks []eventloop.Task, errs chan error) {
 	var relationships []<-chan artifact.Relationship
 	for _, task := range tasks {
-		c := make(chan artifact.Relationship)
-		relationships = append(relationships, c)
-		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
+		for _, src := range sources {
+			src := src
+			c := make(chan artifact.Relationship)
+			relationships = append(relationships, c)
+			go eventloop.RunTask(task, &s.Artifacts, &src, c, errs)
+		}
 	}
 
 	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)

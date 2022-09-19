@@ -20,7 +20,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 		{
 			name: "go case",
 			distro: &linux.Release{
-				ID:        "rhel",
+				OSID:      "rhel",
 				VersionID: "8.4",
 			},
 			metadata: RpmMetadata{
@@ -34,7 +34,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 		{
 			name: "with arch and epoch",
 			distro: &linux.Release{
-				ID:        "centos",
+				OSID:      "centos",
 				VersionID: "7",
 			},
 			metadata: RpmMetadata{
@@ -59,7 +59,7 @@ func TestRpmMetadata_pURL(t *testing.T) {
 		{
 			name: "with upstream source rpm info",
 			distro: &linux.Release{
-				ID:        "rhel",
+				OSID:      "rhel",
 				VersionID: "8.4",
 			},
 			metadata: RpmMetadata{

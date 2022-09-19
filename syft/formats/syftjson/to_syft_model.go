@@ -1,8 +1,6 @@
 package syftjson
 
 import (
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
@@ -19,38 +17,39 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    catalog,
-			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
+			PackageCatalog:     catalog,
+			LinuxDistributions: toSyftLinuxReleases(doc.Distros),
 		},
-		Source:        *toSyftSourceData(doc.Source),
+		Sources:       toSyftSourcesData(doc.Sources),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
 		Relationships: toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases),
 	}, nil
 }
 
-func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
-	if cmp.Equal(d, model.LinuxRelease{}) {
-		return nil
+func toSyftLinuxReleases(releases []model.LinuxRelease) []linux.Release {
+	var out []linux.Release
+	for _, d := range releases {
+		out = append(out, linux.Release{
+			PrettyName:       d.PrettyName,
+			Name:             d.Name,
+			OSID:             d.ID,
+			IDLike:           d.IDLike,
+			Version:          d.Version,
+			VersionID:        d.VersionID,
+			VersionCodename:  d.VersionCodename,
+			BuildID:          d.BuildID,
+			ImageID:          d.ImageID,
+			ImageVersion:     d.ImageVersion,
+			Variant:          d.Variant,
+			VariantID:        d.VariantID,
+			HomeURL:          d.HomeURL,
+			SupportURL:       d.SupportURL,
+			BugReportURL:     d.BugReportURL,
+			PrivacyPolicyURL: d.PrivacyPolicyURL,
+			CPEName:          d.CPEName,
+		})
 	}
-	return &linux.Release{
-		PrettyName:       d.PrettyName,
-		Name:             d.Name,
-		ID:               d.ID,
-		IDLike:           d.IDLike,
-		Version:          d.Version,
-		VersionID:        d.VersionID,
-		VersionCodename:  d.VersionCodename,
-		BuildID:          d.BuildID,
-		ImageID:          d.ImageID,
-		ImageVersion:     d.ImageVersion,
-		Variant:          d.Variant,
-		VariantID:        d.VariantID,
-		HomeURL:          d.HomeURL,
-		SupportURL:       d.SupportURL,
-		BugReportURL:     d.BugReportURL,
-		PrivacyPolicyURL: d.PrivacyPolicyURL,
-		CPEName:          d.CPEName,
-	}
+	return out
 }
 
 func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationships []model.Relationship, idAliases map[string]string) []artifact.Relationship {
@@ -120,6 +119,14 @@ func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
 		Version:       d.Version,
 		Configuration: d.Configuration,
 	}
+}
+
+func toSyftSourcesData(sources []model.Source) []source.Metadata {
+	out := make([]source.Metadata, len(sources))
+	for _, s := range sources {
+		out = append(out, *toSyftSourceData(s))
+	}
+	return out
 }
 
 func toSyftSourceData(s model.Source) *source.Metadata {

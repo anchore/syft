@@ -108,7 +108,7 @@ func parseOsRelease(contents string) (*Release, error) {
 	r := Release{
 		PrettyName:       values["PRETTY_NAME"],
 		Name:             values["NAME"],
-		ID:               values["ID"],
+		OSID:             values["ID"],
 		IDLike:           idLike,
 		Version:          values["VERSION"],
 		VersionID:        values["VERSION_ID"],
@@ -180,7 +180,7 @@ func simpleRelease(prettyName, name, version, cpe string) *Release {
 	return &Release{
 		PrettyName: prettyName,
 		Name:       name,
-		ID:         name,
+		OSID:       name,
 		IDLike:     []string{name},
 		Version:    version,
 		VersionID:  version,

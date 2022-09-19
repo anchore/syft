@@ -94,12 +94,12 @@ func sbomFixture() sbom.SBOM {
 					TopLevelPackages:     []string{"top-level"},
 				},
 			}),
-			LinuxDistribution: &linux.Release{
-				ID:        "centos",
+			LinuxDistributions: []linux.Release{{
+				OSID:      "centos",
 				Version:   "8.0",
 				VersionID: "8.0",
 				IDLike:    []string{"rhel"},
-			},
+			}},
 		},
 		Relationships: []artifact.Relationship{
 			{
@@ -108,7 +108,7 @@ func sbomFixture() sbom.SBOM {
 				Type: artifact.ContainsRelationship,
 			},
 		},
-		Source: source.Metadata{
+		Sources: []source.Metadata{{
 			Scheme: source.ImageScheme,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      "user-in",
@@ -118,7 +118,7 @@ func sbomFixture() sbom.SBOM {
 				MediaType:      "mediatype!",
 				Tags:           nil,
 			},
-		},
+		}},
 	}
 
 }
@@ -179,7 +179,7 @@ func TestPackageSbomImport(t *testing.T) {
 
 			// validating that the mock got the right parameters (api.ImportImagePackages)
 			if test.api.sessionID != sessionID {
-				t.Errorf("different session ID: %s != %s", test.api.sessionID, sessionID)
+				t.Errorf("different session OSID: %s != %s", test.api.sessionID, sessionID)
 			}
 
 			for _, d := range deep.Equal(&test.api.model, theModel) {
@@ -204,15 +204,15 @@ func Test_packageSbomModel(t *testing.T) {
 			name: "distro: has single distro id-like",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
-					LinuxDistribution: &linux.Release{
+					LinuxDistributions: []linux.Release{{
 						Name: "centos-name",
-						ID:   "centos-id",
+						OSID: "centos-id",
 						IDLike: []string{
 							"centos-id-like-1",
 						},
 						Version:   "version",
 						VersionID: "version-id",
-					},
+					}},
 				},
 			},
 			traits: []modelAssertion{
@@ -223,16 +223,16 @@ func Test_packageSbomModel(t *testing.T) {
 			name: "distro: has multiple distro id-like",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
-					LinuxDistribution: &linux.Release{
+					LinuxDistributions: []linux.Release{{
 						Name: "centos-name",
-						ID:   "centos-id",
+						OSID: "centos-id",
 						IDLike: []string{
 							"centos-id-like-1",
 							"centos-id-like-2",
 						},
 						Version:   "version",
 						VersionID: "version-id",
-					},
+					}},
 				},
 			},
 			traits: []modelAssertion{
@@ -243,13 +243,13 @@ func Test_packageSbomModel(t *testing.T) {
 			name: "distro: has no distro id-like",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
-					LinuxDistribution: &linux.Release{
+					LinuxDistributions: []linux.Release{{
 						Name:      "centos-name",
-						ID:        "centos-id",
+						OSID:      "centos-id",
 						IDLike:    []string{},
 						Version:   "version",
 						VersionID: "version-id",
-					},
+					}},
 				},
 			},
 			traits: []modelAssertion{
@@ -260,13 +260,13 @@ func Test_packageSbomModel(t *testing.T) {
 			name: "distro: has no version-id",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
-					LinuxDistribution: &linux.Release{
+					LinuxDistributions: []linux.Release{{
 						Name:      "centos-name",
-						ID:        "centos-id",
+						OSID:      "centos-id",
 						IDLike:    []string{},
 						Version:   "version",
 						VersionID: "",
-					},
+					}},
 				},
 			},
 			traits: []modelAssertion{
@@ -277,13 +277,13 @@ func Test_packageSbomModel(t *testing.T) {
 			name: "distro: has no id",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
-					LinuxDistribution: &linux.Release{
+					LinuxDistributions: []linux.Release{{
 						Name:      "centos-name",
-						ID:        "",
+						OSID:      "",
 						IDLike:    []string{},
 						Version:   "version",
 						VersionID: "version-id",
-					},
+					}},
 				},
 			},
 			traits: []modelAssertion{
@@ -369,7 +369,7 @@ func Test_packageSbomModel(t *testing.T) {
 					modelBytes, err := json.Marshal(&modelPkg)
 					require.NoError(t, err)
 
-					fixPkg := syftjson.ToFormatModel(fix).Source
+					fixPkg := syftjson.ToFormatModel(fix).Sources[0]
 					fixBytes, err := json.Marshal(&fixPkg)
 					require.NoError(t, err)
 

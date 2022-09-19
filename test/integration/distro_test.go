@@ -15,11 +15,11 @@ func TestDistroImage(t *testing.T) {
 	expected := &linux.Release{
 		PrettyName: "BusyBox v1.31.1",
 		Name:       "busybox",
-		ID:         "busybox",
+		OSID:       "busybox",
 		IDLike:     []string{"busybox"},
 		Version:    "1.31.1",
 		VersionID:  "1.31.1",
 	}
 
-	assert.Equal(t, expected, sbom.Artifacts.LinuxDistribution)
+	assert.Equal(t, expected, sbom.Artifacts.LinuxDistributions)
 }

@@ -77,13 +77,13 @@ func (c *Client) Import(ctx context.Context, cfg ImportConfig) error {
 	}
 	prog.N++
 
-	manifestDigest, err := importManifest(authedCtx, c.client.ImportsApi, sessionID, cfg.SBOM.Source.ImageMetadata.RawManifest, stage)
+	manifestDigest, err := importManifest(authedCtx, c.client.ImportsApi, sessionID, cfg.SBOM.Sources[0].ImageMetadata.RawManifest, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Manifest: %w", err)
 	}
 	prog.N++
 
-	configDigest, err := importConfig(authedCtx, c.client.ImportsApi, sessionID, cfg.SBOM.Source.ImageMetadata.RawConfig, stage)
+	configDigest, err := importConfig(authedCtx, c.client.ImportsApi, sessionID, cfg.SBOM.Sources[0].ImageMetadata.RawConfig, stage)
 	if err != nil {
 		return fmt.Errorf("failed to import Config: %w", err)
 	}

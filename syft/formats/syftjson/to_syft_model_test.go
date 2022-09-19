@@ -84,10 +84,10 @@ func Test_toSyftSourceData(t *testing.T) {
 
 func Test_idsHaveChanged(t *testing.T) {
 	s, err := toSyftModel(model.Document{
-		Source: model.Source{
+		Sources: []model.Source{{
 			Type:   "file",
 			Target: "some/path",
-		},
+		}},
 		Artifacts: []model.Package{
 			{
 				PackageBasicData: model.PackageBasicData{

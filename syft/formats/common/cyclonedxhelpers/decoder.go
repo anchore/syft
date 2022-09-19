@@ -53,10 +53,10 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
-			LinuxDistribution: linuxReleaseFromComponents(*bom.Components),
+			PackageCatalog:     pkg.NewCatalog(),
+			LinuxDistributions: linuxReleasesFromComponents(*bom.Components),
 		},
-		Source:     extractComponents(bom.Metadata),
+		Sources:    extractSources(bom.Metadata),
 		Descriptor: extractDescriptor(bom.Metadata),
 	}
 
@@ -100,14 +100,19 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 	}
 }
 
-func linuxReleaseFromComponents(components []cyclonedx.Component) *linux.Release {
+func linuxReleasesFromComponents(components []cyclonedx.Component) []linux.Release {
+	var out []linux.Release
 	for i := range components {
 		component := &components[i]
 		if component.Type == cyclonedx.ComponentTypeOS {
-			return linuxReleaseFromOSComponent(component)
+			rel := linuxReleaseFromOSComponent(component)
+			if rel == nil {
+				continue
+			}
+			out = append(out, *rel)
 		}
 	}
-	return nil
+	return out
 }
 
 func linuxReleaseFromOSComponent(component *cyclonedx.Component) *linux.Release {
@@ -138,7 +143,7 @@ func linuxReleaseFromOSComponent(component *cyclonedx.Component) *linux.Release 
 		CPEName:    component.CPE,
 		PrettyName: name,
 		Name:       name,
-		ID:         name,
+		OSID:       name,
 		IDLike:     []string{name},
 		Version:    version,
 		VersionID:  version,
@@ -207,9 +212,9 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 	}
 }
 
-func extractComponents(meta *cyclonedx.Metadata) source.Metadata {
+func extractSources(meta *cyclonedx.Metadata) []source.Metadata {
 	if meta == nil || meta.Component == nil {
-		return source.Metadata{}
+		return nil
 	}
 	c := meta.Component
 
@@ -221,18 +226,22 @@ func extractComponents(meta *cyclonedx.Metadata) source.Metadata {
 
 	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
-		return source.Metadata{
-			Scheme:        source.ImageScheme,
-			ImageMetadata: image,
+		return []source.Metadata{
+			{
+				Scheme:        source.ImageScheme,
+				ImageMetadata: image,
+			},
 		}
 	case cyclonedx.ComponentTypeFile:
-		return source.Metadata{
-			Scheme:        source.FileScheme, // or source.DirectoryScheme
-			Path:          c.Name,
-			ImageMetadata: image,
+		return []source.Metadata{
+			{
+				Scheme:        source.FileScheme, // or source.DirectoryScheme
+				Path:          c.Name,
+				ImageMetadata: image,
+			},
 		}
 	}
-	return source.Metadata{}
+	return nil
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used

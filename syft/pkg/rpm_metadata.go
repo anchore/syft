@@ -58,7 +58,7 @@ type RpmdbFileMode uint16
 func (m RpmMetadata) PackageURL(distro *linux.Release) string {
 	var namespace string
 	if distro != nil {
-		namespace = distro.ID
+		namespace = distro.OSID
 	}
 
 	qualifiers := map[string]string{

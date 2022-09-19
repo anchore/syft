@@ -97,7 +97,7 @@ func TestPackageURL(t *testing.T) {
 		{
 			name: "deb",
 			distro: &linux.Release{
-				ID:        "ubuntu",
+				OSID:      "ubuntu",
 				VersionID: "20.04",
 			},
 			pkg: Package{
@@ -115,7 +115,7 @@ func TestPackageURL(t *testing.T) {
 		{
 			name: "rpm",
 			distro: &linux.Release{
-				ID:        "centos",
+				OSID:      "centos",
 				VersionID: "7",
 			},
 			pkg: Package{
@@ -144,7 +144,7 @@ func TestPackageURL(t *testing.T) {
 		{
 			name: "apk",
 			distro: &linux.Release{
-				ID:        "alpine",
+				OSID:      "alpine",
 				VersionID: "3.4.6",
 			},
 			pkg: Package{
@@ -203,7 +203,7 @@ func TestPackageURL(t *testing.T) {
 		{
 			name: "alpm",
 			distro: &linux.Release{
-				ID:      "arch",
+				OSID:    "arch",
 				BuildID: "rolling",
 			},
 			pkg: Package{

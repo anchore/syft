@@ -40,8 +40,8 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 	out := Metadata{}
 
-	if s.Artifacts.LinuxDistribution != nil {
-		d := s.Artifacts.LinuxDistribution
+	if len(s.Artifacts.LinuxDistributions) > 0 {
+		d := s.Artifacts.LinuxDistributions[0]
 		qualifiers := packageurl.Qualifiers{}
 		if len(d.IDLike) > 0 {
 			qualifiers = append(qualifiers, packageurl.Qualifier{
@@ -49,7 +49,7 @@ func toSnapshotMetadata(s *sbom.SBOM) Metadata {
 				Value: strings.Join(d.IDLike, ","),
 			})
 		}
-		purl := packageurl.NewPackageURL("generic", "", d.ID, d.VersionID, qualifiers, "")
+		purl := packageurl.NewPackageURL("generic", "", d.OSID, d.VersionID, qualifiers, "")
 		out["syft:distro"] = purl.ToString()
 	}
 
@@ -71,7 +71,7 @@ func isArchive(path string) bool {
 }
 
 // toPath Generates a string representation of the package location, optionally including the layer hash
-func toPath(s source.Metadata, p pkg.Package) string {
+func toPath(s *source.Metadata, p pkg.Package) string {
 	inputPath := strings.TrimPrefix(s.Path, "./")
 	if inputPath == "." {
 		inputPath = ""
@@ -108,7 +108,8 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 	manifests := map[string]*Manifest{}
 
 	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
-		path := toPath(s.Source, p)
+		p := p
+		path := toPath(s.Source(&p), p)
 		manifest, ok := manifests[path]
 		if !ok {
 			manifest = &Manifest{

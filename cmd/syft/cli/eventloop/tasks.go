@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -52,7 +53,10 @@ func generateCatalogPackagesTask(app *config.Application) (Task, error) {
 		}
 
 		results.PackageCatalog = packageCatalog
-		results.LinuxDistribution = theDistro
+
+		if theDistro != nil {
+			results.LinuxDistributions = []linux.Release{*theDistro}
+		}
 
 		return relationships, nil
 	}

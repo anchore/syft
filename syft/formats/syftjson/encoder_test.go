@@ -136,15 +136,15 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			FileContents: map[source.Coordinates]string{
 				source.NewLocation("/a/place/a").Coordinates: "the-contents",
 			},
-			LinuxDistribution: &linux.Release{
-				ID:        "redhat",
+			LinuxDistributions: []linux.Release{{
+				OSID:      "redhat",
 				Version:   "7",
 				VersionID: "7",
 				IDLike: []string{
 					"rhel",
 				},
 			},
-		},
+			}},
 		Relationships: []artifact.Relationship{
 			{
 				From: p1,
@@ -155,7 +155,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 				},
 			},
 		},
-		Source: source.Metadata{
+		Sources: []source.Metadata{{
 			Scheme: source.ImageScheme,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:      "user-image-input",
@@ -182,7 +182,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 				RawConfig:   []byte("eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZp..."),
 				RepoDigests: []string{},
 			},
-		},
+		}},
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",

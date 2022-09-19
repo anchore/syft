@@ -114,7 +114,7 @@ func validateArgs(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("an image/directory argument is required")
 	}
 
-	return cobra.MaximumNArgs(1)(cmd, args)
+	return nil // cobra.MaximumNArgs(1)(cmd, args)
 }
 
 func checkForApplicationUpdate() {

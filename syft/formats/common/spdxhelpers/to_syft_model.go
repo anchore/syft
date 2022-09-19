@@ -25,18 +25,13 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 
 	spdxIDMap := make(map[string]interface{})
 
-	src := source.Metadata{Scheme: source.UnknownScheme}
-	if doc.CreationInfo != nil {
-		src.Scheme = extractSchemeFromNamespace(doc.CreationInfo.DocumentNamespace)
-	}
-
 	s := &sbom.SBOM{
-		Source: src,
+		Sources: getSources(doc),
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
-			FileMetadata:      map[source.Coordinates]source.FileMetadata{},
-			FileDigests:       map[source.Coordinates][]file.Digest{},
-			LinuxDistribution: findLinuxReleaseByPURL(doc),
+			PackageCatalog:     pkg.NewCatalog(),
+			FileMetadata:       map[source.Coordinates]source.FileMetadata{},
+			FileDigests:        map[source.Coordinates][]file.Digest{},
+			LinuxDistributions: findLinuxReleasesByPURL(doc),
 		},
 	}
 
@@ -47,6 +42,19 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 	s.Relationships = toSyftRelationships(spdxIDMap, doc)
 
 	return s, nil
+}
+
+func getSources(doc *spdx.Document2_2) []source.Metadata {
+	src := source.Metadata{Scheme: source.UnknownScheme}
+	if doc.CreationInfo != nil {
+		src.Scheme = extractSchemeFromNamespace(doc.CreationInfo.DocumentNamespace)
+	}
+
+	// FIXME upgrade to SPDX 2.3 in order to support PackagePrimaryPurpose
+	// for _, p := range doc.Packages {
+	// 	if p.PackagePrimaryPurpose ...
+	// }
+	return []source.Metadata{src}
 }
 
 // NOTE(jonas): SPDX doesn't inform what an SBOM is about,
@@ -73,7 +81,8 @@ func extractSchemeFromNamespace(ns string) source.Scheme {
 	return source.UnknownScheme
 }
 
-func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
+func findLinuxReleasesByPURL(doc *spdx.Document2_2) []linux.Release {
+	var out []linux.Release
 	for _, p := range doc.Packages {
 		purlValue := findPURLValue(p)
 		if purlValue == "" {
@@ -92,18 +101,18 @@ func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
 			if len(parts) > 1 {
 				version = parts[1]
 			}
-			return &linux.Release{
+			out = append(out, linux.Release{
 				PrettyName: name,
 				Name:       name,
-				ID:         name,
+				OSID:       name,
 				IDLike:     []string{name},
 				Version:    version,
 				VersionID:  version,
-			}
+			})
 		}
 	}
 
-	return nil
+	return out
 }
 
 func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {

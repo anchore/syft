@@ -91,8 +91,8 @@ func purlQualifiers(vars map[string]string, release *linux.Release) (q packageur
 		return q
 	}
 
-	if release.ID != "" {
-		distroQualifiers = append(distroQualifiers, release.ID)
+	if release.OSID != "" {
+		distroQualifiers = append(distroQualifiers, release.OSID)
 	}
 
 	if release.VersionID != "" {

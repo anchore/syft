@@ -43,7 +43,7 @@ type DpkgFileRecord struct {
 func (m DpkgMetadata) PackageURL(distro *linux.Release) string {
 	var namespace string
 	if distro != nil {
-		namespace = distro.ID
+		namespace = distro.OSID
 	}
 
 	qualifiers := map[string]string{

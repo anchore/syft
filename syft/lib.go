@@ -74,6 +74,14 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 		return nil, nil, nil, err
 	}
 
+	for _, a := range catalog.Sorted() {
+		relationships = append(relationships, artifact.Relationship{
+			From: a,
+			To:   &src.Metadata,
+			Type: artifact.SourceRelationship,
+		})
+	}
+
 	return catalog, relationships, release, nil
 }
 

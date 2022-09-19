@@ -20,7 +20,7 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 		{
 			name: "go case",
 			distro: &linux.Release{
-				ID:        "debian",
+				OSID:      "debian",
 				VersionID: "11",
 			},
 			metadata: DpkgMetadata{
@@ -32,7 +32,7 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 		{
 			name: "with arch info",
 			distro: &linux.Release{
-				ID:        "ubuntu",
+				OSID:      "ubuntu",
 				VersionID: "16.04",
 			},
 			metadata: DpkgMetadata{
@@ -53,7 +53,7 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 		{
 			name: "with upstream qualifier with source pkg name info",
 			distro: &linux.Release{
-				ID:        "debian",
+				OSID:      "debian",
 				VersionID: "11",
 			},
 			metadata: DpkgMetadata{
@@ -66,7 +66,7 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 		{
 			name: "with upstream qualifier with source pkg name and version info",
 			distro: &linux.Release{
-				ID:        "debian",
+				OSID:      "debian",
 				VersionID: "11",
 			},
 			metadata: DpkgMetadata{

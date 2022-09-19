@@ -33,7 +33,7 @@ func TestPythonPackageMetadata_pURL(t *testing.T) {
 		{
 			name: "should not respond to release info",
 			distro: &linux.Release{
-				ID:        "rhel",
+				OSID:      "rhel",
 				VersionID: "8.4",
 			},
 			metadata: PythonPackageMetadata{

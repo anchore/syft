@@ -57,17 +57,23 @@ var (
 	intotoJSONDsseType = `application/vnd.in-toto+json`
 )
 
+//nolint:funlen
 func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args []string) error {
 	// We cannot generate an attestation for more than one output
 	if len(app.Outputs) > 1 {
 		return fmt.Errorf("unable to generate attestation for more than one output")
 	}
 
-	// can only be an image for attestation or OCI DIR
-	userInput := args[0]
-	si, err := parseImageSource(userInput, app)
-	if err != nil {
-		return err
+	// TODO support input from config somehow
+	var userInputs []source.Input
+	for _, userInput := range args {
+		// could be an image or a directory, with or without a scheme
+		// can only be an image for attestation or OCI DIR
+		si, err := parseImageSource(userInput, app)
+		if err != nil {
+			return err
+		}
+		userInputs = append(userInputs, *si)
 	}
 
 	output := parseAttestationOutput(app.Outputs)
@@ -108,7 +114,7 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, format, predicateType, sv, app.File),
+		execWorker(app, userInputs, format, predicateType, sv, app.File),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -151,21 +157,27 @@ func parseImageSource(userInput string, app *config.Application) (s *source.Inpu
 	return si, nil
 }
 
-func execWorker(app *config.Application, sourceInput source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier, file string) <-chan error {
+func execWorker(app *config.Application, sourceInputs []source.Input, format sbom.Format, predicateType string, sv *sign.SignerVerifier, file string) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		src, cleanup, err := source.NewFromRegistry(sourceInput, app.Registry.ToOptions(), app.Exclusions)
-		if cleanup != nil {
-			defer cleanup()
-		}
-		if err != nil {
-			errs <- fmt.Errorf("failed to construct source from user input %q: %w", sourceInput.UserInput, err)
-			return
+		var sources []source.Source
+
+		for _, sourceInput := range sourceInputs {
+			src, cleanup, err := source.NewFromRegistry(sourceInput, app.Registry.ToOptions(), app.Exclusions)
+			if cleanup != nil {
+				defer cleanup()
+			}
+			if err != nil {
+				errs <- fmt.Errorf("failed to construct source from user input %q: %w", sourceInput.UserInput, err)
+				return
+			}
+
+			sources = append(sources, *src)
 		}
 
-		s, err := packages.GenerateSBOM(src, errs, app)
+		s, err := packages.GenerateSBOM(sources, errs, app)
 		if err != nil {
 			errs <- err
 			return
@@ -177,7 +189,7 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 			return
 		}
 
-		err = generateAttestation(app, sbomBytes, src, sv, predicateType, file)
+		err = generateAttestation(app, sbomBytes, &sources[0], sv, predicateType, file)
 		if err != nil {
 			errs <- err
 			return

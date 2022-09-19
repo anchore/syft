@@ -90,7 +90,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 		}
 
 		s := sbom.SBOM{
-			Source: src.Metadata,
+			Sources: []source.Metadata{src.Metadata},
 			Descriptor: sbom.Descriptor{
 				Name:          internal.ApplicationName,
 				Version:       version.FromBuild().Version,

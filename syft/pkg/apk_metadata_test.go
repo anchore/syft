@@ -26,7 +26,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 				Architecture: "a",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
+				OSID:      "alpine",
 				VersionID: "3.4.6",
 			},
 			expected: "pkg:alpine/p@v?arch=a&distro=alpine-3.4.6",
@@ -38,7 +38,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 				Version: "v",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
+				OSID:      "alpine",
 				VersionID: "3.4.6",
 			},
 			expected: "pkg:alpine/p@v?distro=alpine-3.4.6",
@@ -51,7 +51,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 				Architecture: "am86",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
+				OSID:      "alpine",
 				VersionID: "3.4.6",
 			},
 			expected: "pkg:alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
@@ -63,7 +63,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 				Architecture: "am86",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
+				OSID:      "alpine",
 				VersionID: "3.15.0",
 			},
 			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
@@ -77,7 +77,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 				OriginPackage: "origin",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
+				OSID:      "alpine",
 				VersionID: "3.4.6",
 			},
 			expected: "pkg:alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",

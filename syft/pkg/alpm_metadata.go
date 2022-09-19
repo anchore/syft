@@ -52,7 +52,7 @@ func (m AlpmMetadata) PackageURL(distro *linux.Release) string {
 
 	distroID := ""
 	if distro != nil {
-		distroID = distro.ID
+		distroID = distro.OSID
 	}
 
 	return packageurl.NewPackageURL(

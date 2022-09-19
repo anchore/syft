@@ -42,7 +42,7 @@ func TestPhpComposerJsonMetadata_pURL(t *testing.T) {
 		{
 			name: "ignores distro",
 			distro: &linux.Release{
-				ID:        "rhel",
+				OSID:      "rhel",
 				VersionID: "8.4",
 			},
 			metadata: PhpComposerJSONMetadata{

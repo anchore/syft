@@ -123,16 +123,16 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			LinuxDistribution: &linux.Release{
+			LinuxDistributions: []linux.Release{{
 				PrettyName: "debian",
 				Name:       "debian",
-				ID:         "debian",
+				OSID:       "debian",
 				IDLike:     []string{"like!"},
 				Version:    "1.2.3",
 				VersionID:  "1.2.3",
-			},
+			}},
 		},
-		Source: src.Metadata,
+		Sources: []source.Metadata{src.Metadata},
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",
@@ -204,16 +204,16 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			LinuxDistribution: &linux.Release{
+			LinuxDistributions: []linux.Release{{
 				PrettyName: "debian",
 				Name:       "debian",
-				ID:         "debian",
+				OSID:       "debian",
 				IDLike:     []string{"like!"},
 				Version:    "1.2.3",
 				VersionID:  "1.2.3",
-			},
+			}},
 		},
-		Source: src.Metadata,
+		Sources: []source.Metadata{src.Metadata},
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",

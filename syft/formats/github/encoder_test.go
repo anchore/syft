@@ -15,19 +15,19 @@ import (
 
 func Test_toGithubModel(t *testing.T) {
 	s := sbom.SBOM{
-		Source: source.Metadata{
+		Sources: []source.Metadata{{
 			Scheme: source.ImageScheme,
 			ImageMetadata: source.ImageMetadata{
 				UserInput:    "ubuntu:18.04",
 				Architecture: "amd64",
 			},
-		},
+		}},
 		Artifacts: sbom.Artifacts{
-			LinuxDistribution: &linux.Release{
-				ID:        "ubuntu",
+			LinuxDistributions: []linux.Release{{
+				OSID:      "ubuntu",
 				VersionID: "18.04",
 				IDLike:    []string{"debian"},
-			},
+			}},
 			PackageCatalog: pkg.NewCatalog(),
 		},
 	}
@@ -140,28 +140,28 @@ func Test_toGithubModel(t *testing.T) {
 	assert.JSONEq(t, string(s1), string(s2))
 
 	// Just test the other schemes:
-	s.Source.Path = "."
-	s.Source.Scheme = source.DirectoryScheme
+	s.Sources[0].Path = "."
+	s.Sources[0].Scheme = source.DirectoryScheme
 	actual = toGithubModel(&s)
 	assert.Equal(t, "etc", actual.Manifests["etc"].Name)
 
-	s.Source.Path = "./artifacts"
-	s.Source.Scheme = source.DirectoryScheme
+	s.Sources[0].Path = "./artifacts"
+	s.Sources[0].Scheme = source.DirectoryScheme
 	actual = toGithubModel(&s)
 	assert.Equal(t, "artifacts/etc", actual.Manifests["artifacts/etc"].Name)
 
-	s.Source.Path = "/artifacts"
-	s.Source.Scheme = source.DirectoryScheme
+	s.Sources[0].Path = "/artifacts"
+	s.Sources[0].Scheme = source.DirectoryScheme
 	actual = toGithubModel(&s)
 	assert.Equal(t, "/artifacts/etc", actual.Manifests["/artifacts/etc"].Name)
 
-	s.Source.Path = "./executable"
-	s.Source.Scheme = source.FileScheme
+	s.Sources[0].Path = "./executable"
+	s.Sources[0].Scheme = source.FileScheme
 	actual = toGithubModel(&s)
 	assert.Equal(t, "executable", actual.Manifests["executable"].Name)
 
-	s.Source.Path = "./archive.tar.gz"
-	s.Source.Scheme = source.FileScheme
+	s.Sources[0].Path = "./archive.tar.gz"
+	s.Sources[0].Scheme = source.FileScheme
 	actual = toGithubModel(&s)
 	assert.Equal(t, "archive.tar.gz:/etc", actual.Manifests["archive.tar.gz:/etc"].Name)
 }

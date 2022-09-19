@@ -24,7 +24,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 				Architecture: "a",
 			},
 			distro: linux.Release{
-				ID:      "arch",
+				OSID:    "arch",
 				BuildID: "rolling",
 			},
 			expected: "pkg:alpm/arch/p@v?arch=a&distro=arch-rolling",
@@ -36,7 +36,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 				Version: "v",
 			},
 			distro: linux.Release{
-				ID: "arch",
+				OSID: "arch",
 			},
 			expected: "pkg:alpm/arch/p@v?distro=arch",
 		},
@@ -47,7 +47,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 				Architecture: "any",
 			},
 			distro: linux.Release{
-				ID:      "arch",
+				OSID:    "arch",
 				BuildID: "rolling",
 			},
 			expected: "pkg:alpm/arch/python@3.10.0?arch=any&distro=arch-rolling",
@@ -59,7 +59,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 				Architecture: "x86_64",
 			},
 			distro: linux.Release{
-				ID:      "arch",
+				OSID:    "arch",
 				BuildID: "rolling",
 			},
 			expected: "pkg:alpm/arch/g%20plus%20plus@v84?arch=x86_64&distro=arch-rolling",
@@ -73,7 +73,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 				BasePackage:  "origin",
 			},
 			distro: linux.Release{
-				ID:      "arch",
+				OSID:    "arch",
 				BuildID: "rolling",
 			},
 			expected: "pkg:alpm/arch/p@v?arch=a&upstream=origin&distro=arch-rolling",

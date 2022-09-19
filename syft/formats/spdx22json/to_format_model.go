@@ -20,7 +20,9 @@ import (
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
 func toFormatModel(s sbom.SBOM) *model.Document {
-	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
+	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Sources[0])
+
+	// FIXME handle multiple sources properly
 
 	relationships := s.RelationshipsSorted()
 

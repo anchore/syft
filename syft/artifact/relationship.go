@@ -10,6 +10,9 @@ const (
 	// ContainsRelationship (supports any-to-any linkages) is a proxy for the SPDX 2.2 CONTAINS relationship.
 	ContainsRelationship RelationshipType = "contains"
 
+	// SourceRelationship (supports many-to-one linkages)
+	SourceRelationship RelationshipType = "source"
+
 	// RuntimeDependencyOfRelationship is a proxy for the SPDX 2.2.1 RUNTIME_DEPENDENCY_OF relationship.
 	RuntimeDependencyOfRelationship RelationshipType = "runtime-dependency-of"
 

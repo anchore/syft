@@ -38,18 +38,18 @@ func toImportSBOMModel(s sbom.SBOM) importSBOM {
 	m := syftjson.ToFormatModel(s)
 
 	var idLike string
-	if len(m.Distro.IDLike) > 0 {
-		idLike = m.Distro.IDLike[0]
+	if len(m.Distros[0].IDLike) > 0 {
+		idLike = m.Distros[0].IDLike[0]
 	}
 
-	var version = m.Distro.VersionID // note: version is intentionally not used as the default
+	var version = m.Distros[0].VersionID // note: version is intentionally not used as the default
 	if version == "" {
-		version = m.Distro.Version
+		version = m.Distros[0].Version
 	}
 
-	var name = m.Distro.ID // note: name is intentionally not used as the default
+	var name = m.Distros[0].ID // note: name is intentionally not used as the default
 	if name == "" {
-		name = m.Distro.Name
+		name = m.Distros[0].Name
 	}
 
 	return importSBOM{
@@ -57,7 +57,7 @@ func toImportSBOMModel(s sbom.SBOM) importSBOM {
 		ArtifactRelationships: m.ArtifactRelationships,
 		Files:                 m.Files,
 		Secrets:               m.Secrets,
-		Source:                m.Source,
+		Source:                m.Sources[0],
 		Distro: external.ImportDistribution{
 			Name:    name,
 			Version: version,

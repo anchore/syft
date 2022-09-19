@@ -13,7 +13,7 @@ import (
 type SBOM struct {
 	Artifacts     Artifacts
 	Relationships []artifact.Relationship
-	Source        source.Metadata
+	Sources       []source.Metadata
 	Descriptor    Descriptor
 }
 
@@ -24,13 +24,33 @@ type Artifacts struct {
 	FileClassifications map[source.Coordinates][]file.Classification
 	FileContents        map[source.Coordinates]string
 	Secrets             map[source.Coordinates][]file.SearchResult
-	LinuxDistribution   *linux.Release
+	LinuxDistributions  []linux.Release
 }
 
 type Descriptor struct {
 	Name          string
 	Version       string
 	Configuration interface{}
+}
+
+func (s SBOM) Source(p *pkg.Package) *source.Metadata {
+	for _, r := range s.Relationships {
+		if r.Type == artifact.SourceRelationship && r.From.ID() == p.ID() {
+			s, _ := r.To.(*source.Metadata)
+			return s
+		}
+	}
+	return nil
+}
+
+func (s SBOM) Distro(p *pkg.Package) *linux.Release {
+	for _, r := range s.Relationships {
+		if r.Type == artifact.SourceRelationship && r.From.ID() == p.ID() {
+			s, _ := r.To.(*linux.Release)
+			return s
+		}
+	}
+	return nil
 }
 
 func (s SBOM) RelationshipsSorted() []artifact.Relationship {

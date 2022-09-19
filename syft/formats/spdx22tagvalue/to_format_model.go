@@ -17,7 +17,9 @@ import (
 //
 //nolint:funlen
 func toFormatModel(s sbom.SBOM) *spdx.Document2_2 {
-	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
+	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Sources[0])
+
+	// FIXME handle multiple sources properly
 
 	return &spdx.Document2_2{
 		CreationInfo: &spdx.CreationInfo2_2{

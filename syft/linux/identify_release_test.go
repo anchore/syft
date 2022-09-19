@@ -21,7 +21,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Alpine Linux v3.11",
 				Name:         "Alpine Linux",
-				ID:           "alpine",
+				OSID:         "alpine",
 				IDLike:       nil,
 				VersionID:    "3.11.6",
 				HomeURL:      "https://alpinelinux.org/",
@@ -33,7 +33,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "Amazon Linux 2",
 				Name:       "Amazon Linux",
-				ID:         "amzn",
+				OSID:       "amzn",
 				IDLike: []string{
 					"centos",
 					"rhel",
@@ -50,7 +50,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "BusyBox v1.31.1",
 				Name:       "busybox",
-				ID:         "busybox",
+				OSID:       "busybox",
 				IDLike:     []string{"busybox"},
 				Version:    "1.31.1",
 				VersionID:  "1.31.1",
@@ -61,7 +61,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "CentOS Linux 8 (Core)",
 				Name:       "CentOS Linux",
-				ID:         "centos",
+				OSID:       "centos",
 				IDLike: []string{"rhel",
 					"fedora",
 				},
@@ -77,7 +77,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Debian GNU/Linux 8 (jessie)",
 				Name:         "Debian GNU/Linux",
-				ID:           "debian",
+				OSID:         "debian",
 				IDLike:       nil,
 				Version:      "8 (jessie)",
 				VersionID:    "8",
@@ -91,7 +91,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:       "Fedora 31 (Container Image)",
 				Name:             "Fedora",
-				ID:               "fedora",
+				OSID:             "fedora",
 				IDLike:           nil,
 				Version:          "31 (Container Image)",
 				VersionID:        "31",
@@ -109,7 +109,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Red Hat Enterprise Linux Server 7.3 (Maipo)",
 				Name:         "Red Hat Enterprise Linux Server",
-				ID:           "rhel",
+				OSID:         "rhel",
 				IDLike:       []string{"fedora"},
 				Version:      "7.3 (Maipo)",
 				VersionID:    "7.3",
@@ -123,7 +123,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:       "Ubuntu 20.04 LTS",
 				Name:             "Ubuntu",
-				ID:               "ubuntu",
+				OSID:             "ubuntu",
 				IDLike:           []string{"debian"},
 				Version:          "20.04 LTS (Focal Fossa)",
 				VersionCodename:  "focal",
@@ -139,7 +139,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Oracle Linux Server 8.3",
 				Name:         "Oracle Linux Server",
-				ID:           "ol",
+				OSID:         "ol",
 				IDLike:       []string{"fedora"},
 				Version:      "8.3",
 				VersionID:    "8.3",
@@ -158,7 +158,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "CentOS Linux 8 (Core)",
 				Name:       "Scientific Linux",
-				ID:         "scientific",
+				OSID:       "scientific",
 				IDLike: []string{
 					"rhel",
 					"fedora",
@@ -175,7 +175,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "openSUSE Leap 15.2",
 				Name:       "openSUSE Leap",
-				ID:         "opensuse-leap",
+				OSID:       "opensuse-leap",
 				IDLike: []string{
 					"suse",
 					"opensuse",
@@ -192,7 +192,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "SUSE Linux Enterprise Server 15 SP2",
 				Name:       "SLES",
-				ID:         "sles",
+				OSID:       "sles",
 				IDLike:     []string{"suse"},
 				Version:    "15-SP2",
 				VersionID:  "15.2",
@@ -204,7 +204,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "VMware Photon OS/Linux",
 				Name:         "VMware Photon OS",
-				ID:           "photon",
+				OSID:         "photon",
 				IDLike:       nil,
 				Version:      "2.0",
 				VersionID:    "2.0",
@@ -217,7 +217,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Arch Linux",
 				Name:         "Arch Linux",
-				ID:           "arch",
+				OSID:         "arch",
 				IDLike:       nil,
 				BuildID:      "rolling",
 				HomeURL:      "https://www.archlinux.org/",
@@ -237,7 +237,7 @@ func TestIdentifyRelease(t *testing.T) {
 			fixture: "test-fixtures/partial-fields/unknown-id",
 			release: &Release{
 				Name:      "Debian GNU/Linux",
-				ID:        "my-awesome-distro",
+				OSID:      "my-awesome-distro",
 				IDLike:    []string{"debian"},
 				VersionID: "8",
 			},
@@ -254,7 +254,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "centos",
 				Name:       "centos",
-				ID:         "centos",
+				OSID:       "centos",
 				IDLike:     []string{"centos"},
 				Version:    "6",
 				VersionID:  "6",
@@ -266,7 +266,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "CentOS",
 				Name:       "centos",
-				ID:         "centos",
+				OSID:       "centos",
 				IDLike:     []string{"centos"},
 				Version:    "5.7",
 				VersionID:  "5.7",
@@ -277,7 +277,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "CBL-Mariner/Linux",
 				Name:         "Common Base Linux Mariner",
-				ID:           "mariner",
+				OSID:         "mariner",
 				IDLike:       nil,
 				Version:      "1.0.20210901",
 				VersionID:    "1.0",
@@ -291,7 +291,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "Rocky Linux 8.4 (Green Obsidian)",
 				Name:       "Rocky Linux",
-				ID:         "rocky",
+				OSID:       "rocky",
 				IDLike: []string{
 					"rhel",
 					"fedora",
@@ -308,7 +308,7 @@ func TestIdentifyRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "AlmaLinux 8.4 (Electric Cheetah)",
 				Name:       "AlmaLinux",
-				ID:         "almalinux",
+				OSID:       "almalinux",
 				IDLike: []string{
 					"rhel",
 					"centos",
@@ -348,7 +348,7 @@ func TestParseOsRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:       "Ubuntu 20.04 LTS",
 				Name:             "Ubuntu",
-				ID:               "ubuntu",
+				OSID:             "ubuntu",
 				IDLike:           []string{"debian"},
 				Version:          "20.04 LTS (Focal Fossa)",
 				VersionID:        "20.04",
@@ -366,7 +366,7 @@ func TestParseOsRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Debian GNU/Linux 8 (jessie)",
 				Name:         "Debian GNU/Linux",
-				ID:           "debian",
+				OSID:         "debian",
 				IDLike:       nil,
 				Version:      "8 (jessie)",
 				VersionID:    "8",
@@ -382,7 +382,7 @@ func TestParseOsRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "CentOS Linux 8 (Core)",
 				Name:       "CentOS Linux",
-				ID:         "centos",
+				OSID:       "centos",
 				IDLike: []string{
 					"rhel",
 					"fedora",
@@ -401,7 +401,7 @@ func TestParseOsRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Red Hat Enterprise Linux 8.1 (Ootpa)",
 				Name:         "Red Hat Enterprise Linux",
-				ID:           "rhel",
+				OSID:         "rhel",
 				IDLike:       []string{"fedora"},
 				Version:      "8.1 (Ootpa)",
 				VersionID:    "8.1",
@@ -417,7 +417,7 @@ func TestParseOsRelease(t *testing.T) {
 			release: &Release{
 				PrettyName:   "Debian GNU/Linux 8 (jessie)",
 				Name:         "Debian GNU/Linux",
-				ID:           "debian",
+				OSID:         "debian",
 				IDLike:       nil,
 				Version:      "8 (jessie)",
 				VersionID:    "8",
@@ -454,7 +454,7 @@ func TestParseSystemReleaseCPE(t *testing.T) {
 			release: &Release{
 				PrettyName: "centos",
 				Name:       "centos",
-				ID:         "centos",
+				OSID:       "centos",
 				IDLike:     []string{"centos"},
 				Version:    "6",
 				VersionID:  "6",
@@ -494,7 +494,7 @@ func TestParseRedhatRelease(t *testing.T) {
 			release: &Release{
 				PrettyName: "CentOS",
 				Name:       "centos",
-				ID:         "centos",
+				OSID:       "centos",
 				IDLike:     []string{"centos"},
 				Version:    "5.7",
 				VersionID:  "5.7",

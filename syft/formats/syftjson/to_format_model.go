@@ -20,7 +20,7 @@ import (
 // note: this is needed for anchore import functionality
 // TODO: unexport this when/if anchore import functionality is removed
 func ToFormatModel(s sbom.SBOM) model.Document {
-	src, err := toSourceModel(s.Source)
+	src, err := toSourcesModel(s.Sources)
 	if err != nil {
 		log.Warnf("unable to create syft-json source object: %+v", err)
 	}
@@ -30,8 +30,8 @@ func ToFormatModel(s sbom.SBOM) model.Document {
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
-		Source:                src,
-		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
+		Sources:               src,
+		Distros:               toLinuxReleases(s.Artifacts.LinuxDistributions),
 		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
@@ -40,29 +40,30 @@ func ToFormatModel(s sbom.SBOM) model.Document {
 	}
 }
 
-func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
-	if d == nil {
-		return model.LinuxRelease{}
+func toLinuxReleases(releases []linux.Release) []model.LinuxRelease {
+	var out []model.LinuxRelease
+	for _, d := range releases {
+		out = append(out, model.LinuxRelease{
+			PrettyName:       d.PrettyName,
+			Name:             d.Name,
+			ID:               d.OSID,
+			IDLike:           d.IDLike,
+			Version:          d.Version,
+			VersionID:        d.VersionID,
+			VersionCodename:  d.VersionCodename,
+			BuildID:          d.BuildID,
+			ImageID:          d.ImageID,
+			ImageVersion:     d.ImageVersion,
+			Variant:          d.Variant,
+			VariantID:        d.VariantID,
+			HomeURL:          d.HomeURL,
+			SupportURL:       d.SupportURL,
+			BugReportURL:     d.BugReportURL,
+			PrivacyPolicyURL: d.PrivacyPolicyURL,
+			CPEName:          d.CPEName,
+		})
 	}
-	return model.LinuxRelease{
-		PrettyName:       d.PrettyName,
-		Name:             d.Name,
-		ID:               d.ID,
-		IDLike:           d.IDLike,
-		Version:          d.Version,
-		VersionID:        d.VersionID,
-		VersionCodename:  d.VersionCodename,
-		BuildID:          d.BuildID,
-		ImageID:          d.ImageID,
-		ImageVersion:     d.ImageVersion,
-		Variant:          d.Variant,
-		VariantID:        d.VariantID,
-		HomeURL:          d.HomeURL,
-		SupportURL:       d.SupportURL,
-		BugReportURL:     d.BugReportURL,
-		PrivacyPolicyURL: d.PrivacyPolicyURL,
-		CPEName:          d.CPEName,
-	}
+	return out
 }
 
 func toDescriptor(d sbom.Descriptor) model.Descriptor {
@@ -221,6 +222,17 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 		return result[i].Type < result[j].Type
 	})
 	return result
+}
+
+func toSourcesModel(sources []source.Metadata) (out []model.Source, err error) {
+	out = make([]model.Source, len(sources))
+	for i, s := range sources {
+		out[i], err = toSourceModel(s)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
 }
 
 // toSourceModel creates a new source object to be represented into JSON.
