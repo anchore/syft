@@ -73,6 +73,11 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 	output := parseAttestationOutput(app.Outputs)
 
 	format := syft.FormatByName(output)
+
+	// user typo or unknown outputs provided
+	if format == nil {
+		format = syft.FormatByID(spdx22json.ID) // default attestation format
+	}
 	predicateType := formatPredicateType(format)
 	if predicateType == "" {
 		return fmt.Errorf(
