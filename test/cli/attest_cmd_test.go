@@ -40,6 +40,14 @@ func TestAttestCmd(t *testing.T) {
 			},
 			pw: "",
 		},
+		{
+			name: "can encode syft.json as the predicate given a user format typo",
+			args: []string{"attest", "-o", "spdx-jsonx", "--key", "cosign.key", img},
+			assertions: []traitAssertion{
+				assertSuccessfulReturnCode,
+			},
+			pw: "",
+		},
 	}
 
 	for _, test := range tests {
