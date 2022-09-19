@@ -3,19 +3,19 @@ package golang
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"sort"
+
+	"golang.org/x/mod/modfile"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"golang.org/x/mod/modfile"
 )
 
 // parseGoMod takes a go.mod and lists all packages discovered.
 func parseGoMod(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]*pkg.Package)
 
-	contents, err := ioutil.ReadAll(reader)
+	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read go module: %w", err)
 	}

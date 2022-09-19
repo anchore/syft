@@ -3,6 +3,10 @@ package cataloger
 import (
 	"fmt"
 
+	"github.com/hashicorp/go-multierror"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -11,9 +15,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 	"github.com/anchore/syft/syft/source"
-	"github.com/hashicorp/go-multierror"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 // Monitor provides progress-related data for observing the progress of a Catalog() call (published on the event bus).
@@ -70,6 +71,13 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
 			p.PURL = pkg.URL(p, release)
 
+			// if we were not able to identify the language we have an opportunity
+			// to try and get this value from the PURL. Worst case we assert that
+			// we could not identify the language at either stage and set UnknownLanguage
+			if p.Language == "" {
+				p.Language = pkg.LanguageFromPURL(p.PURL)
+			}
+
 			// create file-to-package relationships for files owned by the package
 			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
 			if err != nil {
@@ -103,29 +111,36 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathRe
 		return nil, nil
 	}
 
-	var relationships []artifact.Relationship
+	locations := map[artifact.ID]source.Location{}
 
 	for _, path := range fileOwner.OwnedFiles() {
-		locations, err := resolver.FilesByPath(path)
+		pathRefs, err := resolver.FilesByPath(path)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find path for path=%q: %w", path, err)
 		}
 
-		if len(locations) == 0 {
+		if len(pathRefs) == 0 {
 			// ideally we want to warn users about missing files from a package, however, it is very common for
 			// container image authors to delete files that are not needed in order to keep image sizes small. Adding
 			// a warning here would be needlessly noisy (even for popular base images).
 			continue
 		}
 
-		for _, l := range locations {
-			relationships = append(relationships, artifact.Relationship{
-				From: p,
-				To:   l.Coordinates,
-				Type: artifact.ContainsRelationship,
-			})
+		for _, ref := range pathRefs {
+			if oldRef, ok := locations[ref.Coordinates.ID()]; ok {
+				log.Debugf("found path duplicate of %s", oldRef.RealPath)
+			}
+			locations[ref.Coordinates.ID()] = ref
 		}
 	}
 
+	var relationships []artifact.Relationship
+	for _, location := range locations {
+		relationships = append(relationships, artifact.Relationship{
+			From: p,
+			To:   location.Coordinates,
+			Type: artifact.ContainsRelationship,
+		})
+	}
 	return relationships, nil
 }

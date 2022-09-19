@@ -60,6 +60,15 @@ var imageOnlyTestCases = []testCase{
 			"libc-utils": "0.7.2-r0",
 		},
 	},
+	{
+		name:        "find java packages excluding pom.xml", // image scans can not include packages that have yet to be installed
+		pkgType:     pkg.JavaPkg,
+		pkgLanguage: pkg.Java,
+		pkgInfo: map[string]string{
+			"example-java-app-maven": "0.1.0",
+			"joda-time":              "2.9.2",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -159,6 +168,19 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
+		name:        "find conan packages",
+		pkgType:     pkg.ConanPkg,
+		pkgLanguage: pkg.CPP,
+		pkgInfo: map[string]string{
+			"catch2":     "2.13.8",
+			"docopt.cpp": "0.6.3",
+			"fmt":        "8.1.1",
+			"spdlog":     "1.9.2",
+			"sdl":        "2.0.20",
+			"fltk":       "1.3.8",
+		},
+	},
+	{
 		name:        "find rust crates",
 		pkgType:     pkg.RustPkg,
 		pkgLanguage: pkg.Rust,
@@ -199,9 +221,110 @@ var dirOnlyTestCases = []testCase{
 			"analyzer":   "0.40.7",
 		},
 	},
+	{
+		name:        "find dotnet packages",
+		pkgType:     pkg.DotnetPkg,
+		pkgLanguage: pkg.Dotnet,
+		pkgInfo: map[string]string{
+			"AWSSDK.Core": "3.7.10.6",
+			"Microsoft.Extensions.DependencyInjection":              "6.0.0",
+			"Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
+			"Microsoft.Extensions.Logging":                          "6.0.0",
+			"Microsoft.Extensions.Logging.Abstractions":             "6.0.0",
+			"Microsoft.Extensions.Options":                          "6.0.0",
+			"Microsoft.Extensions.Primitives":                       "6.0.0",
+			"Newtonsoft.Json":                                       "13.0.1",
+			"Serilog":                                               "2.10.0",
+			"Serilog.Sinks.Console":                                 "4.0.1",
+			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
+			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
+		},
+	},
+	{
+		name:        "find java packages including pom.xml", // directory scans can include packages that have yet to be installed
+		pkgType:     pkg.JavaPkg,
+		pkgLanguage: pkg.Java,
+		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
+		pkgInfo: map[string]string{
+			"example-java-app-maven": "0.1.0",
+			"joda-time":              "2.9.2",
+			"junit":                  "4.12",
+		},
+	},
+	{
+		name:        "find cocoapods packages",
+		pkgType:     pkg.CocoapodsPkg,
+		pkgLanguage: pkg.Swift,
+		pkgInfo: map[string]string{
+			"GlossButtonNode":                        "3.1.2",
+			"PINCache":                               "3.0.3",
+			"PINCache/Arc-exception-safe":            "3.0.3",
+			"PINCache/Core":                          "3.0.3",
+			"PINOperation":                           "1.2.1",
+			"PINRemoteImage/Core":                    "3.0.3",
+			"PINRemoteImage/iOS":                     "3.0.3",
+			"PINRemoteImage/PINCache":                "3.0.3",
+			"Reveal-SDK":                             "33",
+			"SwiftGen":                               "6.5.1",
+			"Texture":                                "3.1.0",
+			"Texture/AssetsLibrary":                  "3.1.0",
+			"Texture/Core":                           "3.1.0",
+			"Texture/MapKit":                         "3.1.0",
+			"Texture/Photos":                         "3.1.0",
+			"Texture/PINRemoteImage":                 "3.1.0",
+			"Texture/Video":                          "3.1.0",
+			"TextureSwiftSupport":                    "3.13.0",
+			"TextureSwiftSupport/Components":         "3.13.0",
+			"TextureSwiftSupport/Experiments":        "3.13.0",
+			"TextureSwiftSupport/Extensions":         "3.13.0",
+			"TextureSwiftSupport/LayoutSpecBuilders": "3.13.0",
+			"TinyConstraints":                        "4.0.2",
+		},
+	},
+	{
+		name:        "find hackage packages",
+		pkgType:     pkg.HackagePkg,
+		pkgLanguage: pkg.Haskell,
+		pkgInfo: map[string]string{
+			"Cabal":                    "3.2.1.0",
+			"Diff":                     "0.4.1",
+			"HTTP":                     "4000.3.16",
+			"HUnit":                    "1.6.2.0",
+			"OneTuple":                 "0.3.1",
+			"Only":                     "0.1",
+			"PyF":                      "0.10.2.0",
+			"QuickCheck":               "2.14.2",
+			"RSA":                      "2.4.1",
+			"SHA":                      "1.6.4.4",
+			"Spock":                    "0.14.0.0",
+			"ShellCheck":               "0.8.0",
+			"colourista":               "0.1.0.1",
+			"language-docker":          "11.0.0",
+			"spdx":                     "1.0.0.2",
+			"hspec":                    "2.9.4",
+			"hspec-core":               "2.9.4",
+			"hspec-discover":           "2.9.4",
+			"stm":                      "2.5.0.2",
+			"configurator-pg":          "0.2.6",
+			"hasql-dynamic-statements": "0.3.1.1",
+			"hasql-implicits":          "0.1.0.4",
+			"hasql-pool":               "0.5.2.2",
+			"lens-aeson":               "1.1.3",
+			"optparse-applicative":     "0.16.1.0",
+			"protolude":                "0.3.2",
+			"ptr":                      "0.16.8.2",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
+	{
+		name:    "find alpm packages",
+		pkgType: pkg.AlpmPkg,
+		pkgInfo: map[string]string{
+			"pacman": "6.0.1-5",
+		},
+	},
 	{
 		name:    "find rpmdb packages",
 		pkgType: pkg.RpmPkg,
@@ -219,14 +342,13 @@ var commonTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find java packages",
-		pkgType:     pkg.JavaPkg,
-		pkgLanguage: pkg.Java,
+		name:    "find portage packages",
+		pkgType: pkg.PortagePkg,
 		pkgInfo: map[string]string{
-			"example-java-app-maven": "0.1.0",
-			"joda-time":              "2.9.2",
+			"app-containers/skopeo": "1.5.1",
 		},
 	},
+
 	{
 		name:        "find jenkins plugins",
 		pkgType:     pkg.JenkinsPluginPkg,

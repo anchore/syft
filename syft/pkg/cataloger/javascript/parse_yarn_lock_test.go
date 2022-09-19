@@ -4,12 +4,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
-func TestParseYarnLock(t *testing.T) {
+func TestParseYarnBerry(t *testing.T) {
 	expected := map[string]pkg.Package{
 		"@babel/code-frame": {
 			Name:     "@babel/code-frame",
@@ -66,10 +67,87 @@ func TestParseYarnLock(t *testing.T) {
 			Type:     pkg.NpmPkg,
 		},
 	}
+	testFixtures := []string{
+		"test-fixtures/yarn-berry/yarn.lock",
+	}
+
+	for _, file := range testFixtures {
+		file := file
+		t.Run(file, func(t *testing.T) {
+			t.Parallel()
+
+			fixture, err := os.Open(file)
+			require.NoError(t, err)
+
+			// TODO: no relationships are under test yet
+			actual, _, err := parseYarnLock(fixture.Name(), fixture)
+			require.NoError(t, err)
+
+			assertPkgsEqual(t, actual, expected)
+		})
+	}
+}
+
+func TestParseYarnLock(t *testing.T) {
+	expected := map[string]pkg.Package{
+		"@babel/code-frame": {
+			Name:     "@babel/code-frame",
+			Version:  "7.10.4",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"@types/minimatch": {
+			Name:     "@types/minimatch",
+			Version:  "3.0.3",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"@types/qs": {
+			Name:     "@types/qs",
+			Version:  "6.9.4",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"ajv": {
+			Name:     "ajv",
+			Version:  "6.12.3",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"atob": {
+			Name:     "atob",
+			Version:  "2.1.2",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"aws-sdk": {
+			Name:     "aws-sdk",
+			Version:  "2.706.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"jhipster-core": {
+			Name:     "jhipster-core",
+			Version:  "7.3.4",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"asn1.js": {
+			Name:     "asn1.js",
+			Version:  "4.10.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		"something-i-made-up": {
+			Name:     "something-i-made-up",
+			Version:  "7.7.7",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+	}
 
 	testFixtures := []string{
 		"test-fixtures/yarn/yarn.lock",
-		"test-fixtures/yarn-berry/yarn.lock",
 	}
 
 	for _, file := range testFixtures {

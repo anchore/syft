@@ -17,21 +17,29 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Agenda: https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing (join [this group](https://groups.google.com/g/anchore-oss-community) for write access)
 - All are welcome!
 
+For commercial support options with Syft or Grype, please [contact Anchore](https://get.anchore.com/contact/)
+
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
 ## Features
 - Generates SBOMs for container images, filesystems, archives, and more to discover packages and libraries
-- Supports OCI and Docker image formats
+- Supports OCI, Docker and [Singularity](https://github.com/sylabs/singularity) image formats
 - Linux distribution identification
 - Works seamlessly with [Grype](https://github.com/anchore/grype) (a fast, modern vulnerability scanner)
 - Able to create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
+- Convert between SBOM formats, such as CycloneDX, SPDX, and Syft's own format.
 
 ### Supported Ecosystems
 
 - Alpine (apk)
+- C (conan)
+- C++ (conan)
 - Dart (pubs)
 - Debian (dpkg)
+- Dotnet (deps.json)
+- Objective-C (cocoapods)
 - Go (go.mod, Go binaries)
+- Haskell (cabal, stack)
 - Java (jar, ear, war, par, sar)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
@@ -40,6 +48,7 @@ A CLI tool and Go library for generating a Software Bill of Materials (SBOM) fro
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
+- Swift (cocoapods)
 
 ## Installation
 
@@ -54,6 +63,14 @@ curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -
 
 ```
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
+```
+
+### Chocolatey
+
+The chocolatey distribution of syft is community maintained and not distributed by the anchore team
+
+```powershell
+choco install syft -y
 ```
 
 ### Homebrew
@@ -78,7 +95,7 @@ nix-shell -p syft
 
 ## Getting started
 
-#### SBOM
+### SBOM
 
 To generate an SBOM for a container image:
 
@@ -92,23 +109,18 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-#### SBOM attestation
 
-To generate an SBOM attestation for a container image:
-```
-syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
-```
 
-The above output is in the form of the [DSSE envelope](https://github.com/secure-systems-lab/dsse/blob/master/envelope.md#dsse-envelope).
-The payload is a base64 encoded `in-toto` statement with the generated SBOM as the predicate. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
-
-### Supported sources
+## Supported sources
 
 Syft can generate a SBOM from a variety of sources:
 
 ```
 # catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
 syft path/to/image.tar
+
+# catalog a Singularity Image Format (SIF) container
+syft path/to/image.sif
 
 # catalog a directory
 syft path/to/dir
@@ -117,15 +129,57 @@ syft path/to/dir
 Sources can be explicitly provided with a scheme:
 
 ```
-docker:yourrepo/yourimage:tag          use images from the Docker daemon
-podman:yourrepo/yourimage:tag          use images from the Podman daemon
-docker-archive:path/to/yourimage.tar   use a tarball from disk for archives created from "docker save"
-oci-archive:path/to/yourimage.tar      use a tarball from disk for OCI archives (from Skopeo or otherwise)
-oci-dir:path/to/yourimage              read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
-dir:path/to/yourproject                read directly from a path on disk (any directory)
-file:path/to/yourproject/file          read directly from a path on disk (any single file)
-registry:yourrepo/yourimage:tag        pull image directly from a registry (no container runtime required)
+docker:yourrepo/yourimage:tag            use images from the Docker daemon
+podman:yourrepo/yourimage:tag            use images from the Podman daemon
+docker-archive:path/to/yourimage.tar     use a tarball from disk for archives created from "docker save"
+oci-archive:path/to/yourimage.tar        use a tarball from disk for OCI archives (from Skopeo or otherwise)
+oci-dir:path/to/yourimage                read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
+singularity:path/to/yourimage.sif        read directly from a Singularity Image Format (SIF) container on disk
+dir:path/to/yourproject                  read directly from a path on disk (any directory)
+file:path/to/yourproject/file            read directly from a path on disk (any single file)
+registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
+
+#### Default Cataloger Configuration by scan type
+
+##### Image Scanning:
+- alpmdb
+- rpmdb
+- dpkgdb
+- apkdb
+- portage
+- ruby-gemspec
+- python-package
+- php-composer-installed Cataloger
+- javascript-package
+- java
+- go-module-binary
+- dotnet-deps
+
+##### Directory Scanning:
+- alpmdb
+- apkdb
+- dpkgdb
+- portage
+- rpmdb
+- ruby-gemfile
+- python-index
+- python-package
+- php-composer-lock
+- javascript-lock
+- java
+- java-pom
+- go-module-binary
+- go-mod-file
+- rust-cargo-lock
+- dartlang-lock
+- dotnet-deps
+- cocoapods
+- conan
+- hackage
+
+#### Non Default:
+- cargo-auditable-binary
 
 ### Excluding file paths
 
@@ -156,13 +210,48 @@ syft <image> -o <format>
 Where the `formats` available are:
 - `json`: Use this to get as much information out of Syft as possible!
 - `text`: A row-oriented, human-and-machine-friendly output.
-- `cyclonedx`: A XML report conforming to the [CycloneDX 1.3 specification](https://cyclonedx.org/specification/overview/).
-- `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.3 specification](https://cyclonedx.org/specification/overview/).
-- `spdx`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
+- `cyclonedx-xml`: A XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
+- `github`: A JSON report conforming to GitHub's dependency snapshot format.
 - `table`: A columnar summary (default).
+- `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
 
-#### Multiple outputs
+## Using templates
+
+Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template). Here's how it works:
+
+- Define your format as a Go template, and save this template as a file.
+
+- Set the output format to "template" (`-o template`).
+
+- Specify the path to the template file (`-t ./path/to/custom.template`).
+
+- Syft's template processing uses the same data models as the `json` output format — so if you're wondering what data is available as you author a template, you can use the output from `syft <image> -o json` as a reference.
+
+**Example:** You could make Syft output data in CSV format by writing a Go template that renders CSV data and then running `syft <image> -o template -t ~/path/to/csv.tmpl`.
+
+Here's what the `csv.tmpl` file might look like:
+```gotemplate
+"Package","Version Installed","Found by"
+{{- range .Artifacts}}
+"{{.Name}}","{{.Version}}","{{.FoundBy}}"
+{{- end}}
+```
+
+Which would produce output like:
+```text
+"Package","Version Installed","Found by"
+"alpine-baselayout","3.2.0-r20","apkdb-cataloger"
+"alpine-baselayout-data","3.2.0-r20","apkdb-cataloger"
+"alpine-keys","2.4-r1","apkdb-cataloger"
+...
+```
+
+Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
+
+## Multiple outputs
 
 Syft can also output _multiple_ files in differing formats by appending
 `=<file>` to the option, for example to output Syft JSON and SPDX JSON:
@@ -202,7 +291,7 @@ Here's a simple workflow to mount this config file as a secret into a container 
 
     ```yaml
     # secret.yaml
-    
+
     apiVersion: v1
     kind: Secret
     metadata:
@@ -212,14 +301,14 @@ Here's a simple workflow to mount this config file as a secret into a container 
       config.json: <base64 encoded config.json>
     ```
 
-    `kubectl apply -f secret.yaml`
+   `kubectl apply -f secret.yaml`
 
 
 2. Create your pod running syft. The env `DOCKER_CONFIG` is important because it advertises where to look for the credential file. In the below example, setting `DOCKER_CONFIG=/config` informs syft that credentials can be found at `/config/config.json`. This is why we used `config.json` as the key for our secret. When mounted into containers the secrets' key is used as the filename. The `volumeMounts` section mounts our secret to `/config`. The `volumes` section names our volume and leverages the secret we created in step one.
 
     ```yaml
     # pod.yaml
-    
+
     apiVersion: v1
     kind: Pod
     metadata:
@@ -243,12 +332,73 @@ Here's a simple workflow to mount this config file as a secret into a container 
           secretName: registry-config
     ```
 
-    `kubectl apply -f pod.yaml`
+   `kubectl apply -f pod.yaml`
 
 
 3. The user can now run `kubectl logs syft-private-registry-demo`. The logs should show the Syft analysis for the `<private_image>` provided in the pod configuration.
 
 Using the above information, users should be able to configure private registry access without having to do so in the `grype` or `syft` configuration files.  They will also not be dependent on a Docker daemon, (or some other runtime software) for registry configuration and access.
+
+## Format conversion (experimental)
+
+The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
+
+```
+syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
+```
+
+This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost.
+
+We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
+- Syft JSON
+- SPDX 2.2 JSON
+- SPDX 2.2 tag-value
+- CycloneDX 1.4 JSON
+- CycloneDX 1.4 XML
+
+Conversion example:
+```sh
+syft alpine:latest -o syft-json=sbom.syft.json # generate a syft SBOM
+syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to CycloneDX
+```
+
+## Attestation (experimental)
+### Keyless support
+Syft supports generating attestations using cosign's [keyless](https://github.com/sigstore/cosign/blob/main/KEYLESS.md) signatures.
+
+To use this feature with a format like CycloneDX json simply run:
+```
+syft attest --output cyclonedx-json <IMAGE WITH OCI WRITE ACCESS>
+```
+This command will open a web browser and allow the user to authenticate their OIDC identity as the root of trust for the attestation (Github, Google, Microsoft).
+
+After authenticating, Syft will upload the attestation to the OCI registry specified by the image that the user has write access to.
+
+You will need to make sure your credentials are configured for the OCI registry you are uploading to so that the attestation can write successfully.
+
+Users can then verify the attestation(or any image with attestations) by running:
+```
+COSIGN_EXPERIMENTAL=1 cosign verify-attestation <IMAGE_WITH_ATTESTATIONS>
+```
+
+Users should see that the uploaded attestation claims are validated, the claims exist within the transparency log, and certificates on the attestations were verified against [fulcio](https://github.com/SigStore/fulcio).
+There will also be a printout of the certificates subject `<user identity>` and the certificate issuer URL: `<provider of user identity (Github, Google, Microsoft)>`:
+```
+Certificate subject:  test.email@testdomain.com
+Certificate issuer URL:  https://accounts.google.com
+```
+
+#### Local private key support
+
+To generate an SBOM attestation for a container image using a local private key:
+```
+syft attest --output [FORMAT] --key [KEY] [SOURCE] [flags]
+```
+
+The above output is in the form of the [DSSE envelope](https://github.com/secure-systems-lab/dsse/blob/master/envelope.md#dsse-envelope).
+The payload is a base64 encoded `in-toto` statement with the generated SBOM as the predicate. For details on workflows using this command see [here](#adding-an-sbom-to-an-image-as-an-attestation-using-syft).
+
+
 
 ## Configuration
 
@@ -290,6 +440,31 @@ exclude: []
 # os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
 # same as --platform; SYFT_PLATFORM env var
 platform: ""
+
+# set the list of package catalogers to use when generating the SBOM
+# default = empty (cataloger set determined automatically by the source type [image or file/directory])
+# catalogers:
+#   - ruby-gemfile
+#   - ruby-gemspec
+#   - python-index
+#   - python-package
+#   - javascript-lock
+#   - javascript-package
+#   - php-composer-installed
+#   - php-composer-lock
+#   - alpmdb
+#   - dpkgdb
+#   - rpmdb
+#   - java
+#   - apkdb
+#   - go-module-binary
+#   - go-mod-file
+#   - dartlang-lock
+#   - rust
+#   - dotnet-deps
+# rust-audit-binary scans Rust binaries built with https://github.com/Shnatsel/rust-audit
+#   - rust-audit-binary
+catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
@@ -466,7 +641,7 @@ anchore:
 SBOMs themselves can serve as input to different analysis tools. [Grype](https://github.com/anchore/grype), a vulnerability scanner CLI tool from Anchore, is one such tool. Publishers of container images can use attestations to enable their consumers to trust Syft-generated SBOM descriptions of those container images. To create and provide these attestations, image publishers can run `syft attest` in conjunction with the [cosign](https://github.com/sigstore/cosign) tool to attach SBOM attestations to their images.
 
 #### Example attestation
-Note for the following example replace `docker.io/image:latest` with an image you own. You should also have push access to 
+Note for the following example replace `docker.io/image:latest` with an image you own. You should also have push access to
 its remote reference. Replace `$MY_PRIVATE_KEY` with a private key you own or have generated with cosign.
 
 ```bash

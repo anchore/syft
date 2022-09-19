@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/anchore/syft/syft/file"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/scylladb/go-set/strset"
 )
 
 const DpkgDBGlob = "**/var/lib/dpkg/{status,status.d/**}"
@@ -28,6 +28,7 @@ type DpkgMetadata struct {
 	Architecture  string           `mapstructure:"Architecture" json:"architecture"`
 	Maintainer    string           `mapstructure:"Maintainer" json:"maintainer"`
 	InstalledSize int              `mapstructure:"InstalledSize" json:"installedSize" cyclonedx:"installedSize"`
+	Description   string           `mapstructure:"Description" hash:"ignore" json:"-"`
 	Files         []DpkgFileRecord `json:"files"`
 }
 

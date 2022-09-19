@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/syft/pkg"
 )
 
 const manifestGlob = "/META-INF/MANIFEST.MF"
 
-// nolint:funlen
 // parseJavaManifest takes MANIFEST.MF file content and returns sections of parsed key/value pairs.
 // For more information: https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest
+//
+//nolint:funlen
 func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
 	var sections []map[string]string

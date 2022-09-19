@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -42,14 +41,14 @@ func URL(p Package, release *linux.Release) string {
 
 	switch {
 	case purlType == "":
-		// there is no purl type, don't attempt to craft a purl
-		// TODO: should this be a "generic" purl type instead?
-		return ""
+		purlType = packageurl.TypeGeneric
 	case p.Type == GoModulePkg:
 		re := regexp.MustCompile(`(/)[^/]*$`)
 		fields := re.Split(p.Name, -1)
-		namespace = fields[0]
-		name = strings.TrimPrefix(p.Name, namespace+"/")
+		if len(fields) > 1 {
+			namespace = fields[0]
+			name = strings.TrimPrefix(p.Name, namespace+"/")
+		}
 	case p.Type == NpmPkg:
 		fields := strings.SplitN(p.Name, "/", 2)
 		if len(fields) > 1 {
@@ -86,12 +85,26 @@ func purlQualifiers(vars map[string]string, release *linux.Release) (q packageur
 		})
 	}
 
-	if release != nil && release.ID != "" && release.VersionID != "" {
-		q = append(q, packageurl.Qualifier{
-			Key:   PURLQualifierDistro,
-			Value: fmt.Sprintf("%s-%s", release.ID, release.VersionID),
-		})
+	distroQualifiers := []string{}
+
+	if release == nil {
+		return q
 	}
+
+	if release.ID != "" {
+		distroQualifiers = append(distroQualifiers, release.ID)
+	}
+
+	if release.VersionID != "" {
+		distroQualifiers = append(distroQualifiers, release.VersionID)
+	} else if release.BuildID != "" {
+		distroQualifiers = append(distroQualifiers, release.BuildID)
+	}
+
+	q = append(q, packageurl.Qualifier{
+		Key:   PURLQualifierDistro,
+		Value: strings.Join(distroQualifiers, "-"),
+	})
 
 	return q
 }

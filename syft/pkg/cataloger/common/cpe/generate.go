@@ -7,9 +7,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/facebookincubator/nvdtools/wfn"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/facebookincubator/nvdtools/wfn"
 )
 
 func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
@@ -89,7 +90,7 @@ func candidateVendors(p pkg.Package) []string {
 	}
 
 	switch p.MetadataType {
-	case pkg.RpmdbMetadataType:
+	case pkg.RpmMetadataType:
 		vendors.union(candidateVendorsForRPM(p))
 	case pkg.GemMetadataType:
 		vendors.union(candidateVendorsForRuby(p))

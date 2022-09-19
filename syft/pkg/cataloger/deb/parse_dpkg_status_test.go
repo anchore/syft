@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/file"
+	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
 )
 
 func compareEntries(t *testing.T, left, right pkg.DpkgMetadata) {
@@ -39,6 +39,20 @@ func TestSinglePackage(t *testing.T) {
 				Architecture:  "amd64",
 				InstalledSize: 4064,
 				Maintainer:    "APT Development Team <deity@lists.debian.org>",
+				Description: `commandline package manager
+ This package provides commandline tools for searching and
+ managing as well as querying information about packages
+ as a low-level access to all features of the libapt-pkg library.
+ .
+ These include:
+ * apt-get for retrieval of packages and information about them
+ from authenticated sources and for installation, upgrade and
+ removal of packages together with their dependencies
+ * apt-cache for querying available information about installed
+ as well as installable packages
+ * apt-cdrom to use removable media as a source for packages
+ * apt-config as an interface to the configuration settings
+ * apt-key as an interface to manage authentication keys`,
 				Files: []pkg.DpkgFileRecord{
 					{
 						Path: "/etc/apt/apt.conf.d/01autoremove",
@@ -85,6 +99,20 @@ func TestSinglePackage(t *testing.T) {
 				Architecture:  "amd64",
 				InstalledSize: 4000,
 				Maintainer:    "APT Development Team <deity@lists.debian.org>",
+				Description: `commandline package manager
+ This package provides commandline tools for searching and
+ managing as well as querying information about packages
+ as a low-level access to all features of the libapt-pkg library.
+ .
+ These include:
+ * apt-get for retrieval of packages and information about them
+ from authenticated sources and for installation, upgrade and
+ removal of packages together with their dependencies
+ * apt-cache for querying available information about installed
+ as well as installable packages
+ * apt-cdrom to use removable media as a source for packages
+ * apt-config as an interface to the configuration settings
+ * apt-key as an interface to manage authentication keys`,
 			},
 		}}
 
@@ -122,13 +150,23 @@ func TestMultiplePackages(t *testing.T) {
 			name: "Test Multiple Package",
 			expected: []pkg.DpkgMetadata{
 				{
+					Package: "no-version",
+					Files:   []pkg.DpkgFileRecord{},
+				},
+				{
 					Package:       "tzdata",
 					Version:       "2020a-0+deb10u1",
 					Source:        "tzdata-dev",
 					Architecture:  "all",
 					InstalledSize: 3036,
 					Maintainer:    "GNU Libc Maintainers <debian-glibc@lists.debian.org>",
-					Files:         []pkg.DpkgFileRecord{},
+					Description: `time zone and daylight-saving time data
+ This package contains data required for the implementation of
+ standard local time for many representative locations around the
+ globe. It is updated periodically to reflect changes made by
+ political bodies to time zone boundaries, UTC offsets, and
+ daylight-saving rules.`,
+					Files: []pkg.DpkgFileRecord{},
 				},
 				{
 					Package:       "util-linux",
@@ -136,6 +174,12 @@ func TestMultiplePackages(t *testing.T) {
 					Architecture:  "amd64",
 					InstalledSize: 4327,
 					Maintainer:    "LaMont Jones <lamont@debian.org>",
+					Description: `miscellaneous system utilities
+ This package contains a number of important utilities, most of which
+ are oriented towards maintenance of your system. Some of the more
+ important utilities included in this package allow you to view kernel
+ messages, create new filesystems, view block device information,
+ interface with real time clock, etc.`,
 					Files: []pkg.DpkgFileRecord{
 						{
 							Path: "/etc/default/hwclock",
@@ -209,7 +253,7 @@ func TestMultiplePackages(t *testing.T) {
 				t.Fatal("Unable to read file contents: ", err)
 			}
 
-			if len(pkgs) != 2 {
+			if len(pkgs) != 3 {
 				t.Fatalf("unexpected number of entries: %d", len(pkgs))
 			}
 

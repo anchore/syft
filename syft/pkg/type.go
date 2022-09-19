@@ -9,6 +9,7 @@ const (
 	// the full set of supported packages
 	UnknownPkg       Type = "UnknownPackage"
 	ApkPkg           Type = "apk"
+	AlpmPkg          Type = "alpm"
 	GemPkg           Type = "gem"
 	DebPkg           Type = "deb"
 	RpmPkg           Type = "rpm"
@@ -21,11 +22,17 @@ const (
 	RustPkg          Type = "rust-crate"
 	KbPkg            Type = "msrc-kb"
 	DartPubPkg       Type = "dart-pub"
+	DotnetPkg        Type = "dotnet"
+	CocoapodsPkg     Type = "pod"
+	ConanPkg         Type = "conan"
+	PortagePkg       Type = "portage"
+	HackagePkg       Type = "hackage"
 )
 
 // AllPkgs represents all supported package types
 var AllPkgs = []Type{
 	ApkPkg,
+	AlpmPkg,
 	GemPkg,
 	DebPkg,
 	RpmPkg,
@@ -38,6 +45,11 @@ var AllPkgs = []Type{
 	RustPkg,
 	KbPkg,
 	DartPubPkg,
+	DotnetPkg,
+	CocoapodsPkg,
+	ConanPkg,
+	PortagePkg,
+	HackagePkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -45,6 +57,8 @@ func (t Type) PackageURLType() string {
 	switch t {
 	case ApkPkg:
 		return "alpine"
+	case AlpmPkg:
+		return "alpm"
 	case GemPkg:
 		return packageurl.TypeGem
 	case DebPkg:
@@ -65,6 +79,16 @@ func (t Type) PackageURLType() string {
 		return "cargo"
 	case DartPubPkg:
 		return packageurl.TypePub
+	case DotnetPkg:
+		return packageurl.TypeDotnet
+	case CocoapodsPkg:
+		return packageurl.TypeCocoapods
+	case ConanPkg:
+		return packageurl.TypeConan
+	case PortagePkg:
+		return "portage"
+	case HackagePkg:
+		return packageurl.TypeHackage
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -86,6 +110,8 @@ func TypeByName(name string) Type {
 		return DebPkg
 	case packageurl.TypeRPM:
 		return RpmPkg
+	case "alpm":
+		return AlpmPkg
 	case "alpine":
 		return ApkPkg
 	case packageurl.TypeMaven:
@@ -104,6 +130,16 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case packageurl.TypePub:
 		return DartPubPkg
+	case packageurl.TypeDotnet:
+		return DotnetPkg
+	case packageurl.TypeCocoapods:
+		return CocoapodsPkg
+	case packageurl.TypeConan:
+		return ConanPkg
+	case packageurl.TypeHackage:
+		return HackagePkg
+	case "portage":
+		return PortagePkg
 	default:
 		return UnknownPkg
 	}

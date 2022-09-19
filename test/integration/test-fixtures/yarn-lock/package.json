@@ -3,11 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
   "dependencies": {
-    "collapse-white-space": "^2.0.0",
-    "semver": "^7.3.5"
+    "async": "^3.2.3"
   },
   "devDependencies": {
-    "merge-objects": "^1.0.5"
+    "merge-objects": "^1.0.5",
+    "should-type": "https://github.com/shouldjs/type.git#1.3.0"
   }
 }

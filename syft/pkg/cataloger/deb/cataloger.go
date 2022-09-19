@@ -11,7 +11,6 @@ import (
 	"sort"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"

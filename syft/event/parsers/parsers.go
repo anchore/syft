@@ -6,11 +6,12 @@ package parsers
 import (
 	"fmt"
 
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg/cataloger"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 type ErrBadPayload struct {
@@ -150,4 +151,17 @@ func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, 
 	}
 
 	return host, prog, nil
+}
+
+func ParseUploadAttestation(e partybus.Event) (progress.StagedProgressable, error) {
+	if err := checkEventType(e.Type, event.UploadAttestation); err != nil {
+		return nil, err
+	}
+
+	prog, ok := e.Value.(progress.StagedProgressable)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return prog, nil
 }

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,6 +50,11 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:pub/util@1.2.34?hosted_url=pub.hosted.org",
 			expected: DartPubPkg,
 		},
+
+		{
+			purl:     "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
+			expected: DotnetPkg,
+		},
 		{
 			purl:     "pkg:composer/laravel/laravel@5.5.0",
 			expected: PhpComposerPkg,
@@ -58,6 +62,22 @@ func TestTypeFromPURL(t *testing.T) {
 		{
 			purl:     "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",
 			expected: JavaPkg,
+		},
+		{
+			purl:     "pkg:alpm/arch/linux@5.10.0?arch=x86_64&distro=arch",
+			expected: AlpmPkg,
+		},
+		{
+			purl:     "pkg:cocoapods/GlossButtonNode@3.1.2",
+			expected: CocoapodsPkg,
+		},
+		{
+			purl:     "pkg:conan/catch2@2.13.8",
+			expected: ConanPkg,
+		},
+		{
+			purl:     "pkg:hackage/HTTP@4000.3.16",
+			expected: HackagePkg,
 		},
 	}
 
@@ -70,6 +90,7 @@ func TestTypeFromPURL(t *testing.T) {
 	// testing microsoft packages and jenkins-plugins is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(JenkinsPluginPkg))
+	expectedTypes.Remove(string(PortagePkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

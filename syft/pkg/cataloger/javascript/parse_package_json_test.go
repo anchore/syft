@@ -4,9 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestParsePackageJSON(t *testing.T) {
@@ -72,6 +73,25 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
+			Fixture: "test-fixtures/pkg-json/package-malformed-license.json",
+			ExpectedPkg: pkg.Package{
+				Name:         "npm",
+				Version:      "6.14.6",
+				Type:         pkg.NpmPkg,
+				Licenses:     nil,
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
+					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
+					Licenses: nil,
+				},
+			},
+		},
+		{
 			Fixture: "test-fixtures/pkg-json/package-no-license.json",
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
@@ -125,6 +145,26 @@ func TestParsePackageJSON(t *testing.T) {
 					Homepage: "https://github.com/Raynos/function-bind",
 					URL:      "git://github.com/Raynos/function-bind.git",
 					Licenses: []string{"MIT"},
+				},
+			},
+		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-private.json",
+			ExpectedPkg: pkg.Package{
+				Name:         "npm",
+				Version:      "6.14.6",
+				Type:         pkg.NpmPkg,
+				Licenses:     []string{"Artistic-2.0"},
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Name:     "npm",
+					Version:  "6.14.6",
+					Author:   "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+					Homepage: "https://docs.npmjs.com/",
+					URL:      "https://github.com/npm/cli",
+					Licenses: []string{"Artistic-2.0"},
+					Private:  true,
 				},
 			},
 		},

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
+
+	"github.com/anchore/stereoscope/pkg/image"
 )
 
 // Scheme represents the optional prefixed string at the beginning of a user request (e.g. "docker:").

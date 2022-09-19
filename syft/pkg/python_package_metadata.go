@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/anchore/syft/syft/linux"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/scylladb/go-set/strset"
+	"github.com/anchore/syft/syft/linux"
 )
 
 var (

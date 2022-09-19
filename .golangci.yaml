@@ -10,7 +10,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -22,7 +21,6 @@ linters:
     - gocritic
     - gocyclo
     - gofmt
-    - goimports
     - goprintffuncname
     - gosec
     - gosimple
@@ -32,23 +30,22 @@ linters:
     - nakedret
     - nolintlint
     - revive
-    - rowserrcheck
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
 
 # do not enable...
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
+#    - rowserrcheck disabled per generics https://github.com/golangci/golangci-lint/issues/2649
 #    - godot
 #    - godox
 #    - goerr113
+#    - goimports   # we're using gosimports now instead to account for extra whitespaces (see https://github.com/golang/go/issues/20818)
 #    - golint      # deprecated
 #    - gomnd       # this is too aggressive
 #    - interfacer  # this is a good idea, but is no longer supported and is prone to false positives

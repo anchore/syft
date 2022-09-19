@@ -8,17 +8,18 @@ import (
 	"sync"
 	"time"
 
-	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
-	"github.com/anchore/stereoscope/pkg/image/docker"
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/ui/components"
-	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/dustin/go-humanize"
 	"github.com/gookit/color"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 	"github.com/wagoodman/go-progress/format"
 	"github.com/wagoodman/jotframe/pkg/frame"
+
+	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
+	"github.com/anchore/stereoscope/pkg/image/docker"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/ui/components"
+	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 )
 
 const maxBarWidth = 50
@@ -74,8 +75,9 @@ func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 	}
 }
 
-// nolint:funlen
 // formatDockerImagePullStatus writes the docker image pull status summarized into a single line for the given state.
+//
+//nolint:funlen
 func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *components.Spinner, line *frame.Line) {
 	var size, current uint64
 
@@ -226,6 +228,48 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 	return err
 }
 
+func UploadAttestationHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseUploadAttestation(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+	wg.Add(1)
+
+	formatter, spinner := startProcess()
+	stream := progress.Stream(ctx, prog, interval)
+	title := tileFormat.Sprint("Uploading attestation")
+
+	formatFn := func(p progress.Progress) {
+		progStr, err := formatter.Format(p)
+		spin := color.Magenta.Sprint(spinner.Next())
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
+		}
+	}
+
+	go func() {
+		defer wg.Done()
+
+		formatFn(progress.Progress{})
+		for p := range stream {
+			formatFn(p)
+		}
+
+		spin := color.Green.Sprint(completedStatus)
+		title = tileFormat.Sprint("Uploaded attestation")
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+	}()
+	return err
+}
+
 // ReadImageHandler periodically writes a the image read/parse/build-tree status in the form of a progress bar.
 func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, prog, err := stereoEventParsers.ParseReadImage(event)
@@ -356,7 +400,8 @@ func SecretsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 }
 
 // FileMetadataCatalogerStartedHandler shows the intermittent secrets searching progress.
-// nolint:dupl
+//
+//nolint:dupl
 func FileMetadataCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	prog, err := syftEventParsers.ParseFileMetadataCatalogingStarted(event)
 	if err != nil {
@@ -441,7 +486,8 @@ func FileIndexingStartedHandler(ctx context.Context, fr *frame.Frame, event part
 }
 
 // FileMetadataCatalogerStartedHandler shows the intermittent secrets searching progress.
-// nolint:dupl
+//
+//nolint:dupl
 func FileDigestsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	prog, err := syftEventParsers.ParseFileDigestsCatalogingStarted(event)
 	if err != nil {

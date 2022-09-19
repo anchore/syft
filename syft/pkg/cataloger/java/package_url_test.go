@@ -1,9 +1,11 @@
 package java
 
 import (
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_packageURL(t *testing.T) {

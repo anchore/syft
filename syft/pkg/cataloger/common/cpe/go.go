@@ -28,7 +28,9 @@ func candidateProductForGo(name string) string {
 		return ""
 	}
 
-	return pathElements[1]
+	// returning the rest of the path here means longer CPEs, it helps avoiding false-positives
+	// ref: https://github.com/anchore/grype/issues/676
+	return strings.Join(pathElements[1:], "/")
 }
 
 // candidateVendorForGo attempts to find a single vendor name in a best-effort attempt. This implementation prefers

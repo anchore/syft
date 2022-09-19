@@ -8,18 +8,18 @@ package source
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/anchore/stereoscope"
-	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/log"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archiver/v3"
 	"github.com/spf13/afero"
+
+	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
@@ -345,7 +345,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 }
 
 func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func(), error) {
-	tempDir, err := ioutil.TempDir("", "syft-archive-contents-")
+	tempDir, err := os.MkdirTemp("", "syft-archive-contents-")
 	if err != nil {
 		return "", func() {}, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
 	}

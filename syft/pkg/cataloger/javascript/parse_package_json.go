@@ -7,12 +7,10 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/anchore/syft/internal/log"
-
-	"github.com/anchore/syft/internal"
-
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
@@ -27,12 +25,13 @@ type packageJSON struct {
 	Latest       []string          `json:"latest"`
 	Author       author            `json:"author"`
 	License      json.RawMessage   `json:"license"`
-	Licenses     []license         `json:"licenses"`
+	Licenses     json.RawMessage   `json:"licenses"`
 	Name         string            `json:"name"`
 	Homepage     string            `json:"homepage"`
 	Description  string            `json:"description"`
 	Dependencies map[string]string `json:"dependencies"`
 	Repository   repository        `json:"repository"`
+	Private      bool              `json:"private"`
 }
 
 type author struct {
@@ -145,8 +144,10 @@ func (p packageJSON) licensesFromJSON() ([]string, error) {
 		return []string{singleLicense}, nil
 	}
 
+	multiLicense, err := licensesFromJSON(p.Licenses)
+
 	// The "licenses" field is deprecated. It should be inspected as a last resort.
-	if p.Licenses != nil {
+	if multiLicense != nil && err == nil {
 		mapLicenses := func(licenses []license) []string {
 			mappedLicenses := make([]string, len(licenses))
 			for i, l := range licenses {
@@ -155,10 +156,20 @@ func (p packageJSON) licensesFromJSON() ([]string, error) {
 			return mappedLicenses
 		}
 
-		return mapLicenses(p.Licenses), nil
+		return mapLicenses(multiLicense), nil
 	}
 
-	return nil, fmt.Errorf("unable to parse license field: %w", err)
+	return nil, err
+}
+
+func licensesFromJSON(b []byte) ([]license, error) {
+	var licenseObject []license
+	err := json.Unmarshal(b, &licenseObject)
+	if err == nil {
+		return licenseObject, nil
+	}
+
+	return nil, errors.New("unmarshal failed")
 }
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
@@ -205,6 +216,7 @@ func newPackageJSONPackage(p packageJSON) *pkg.Package {
 			Homepage: p.Homepage,
 			URL:      p.Repository.URL,
 			Licenses: licenses,
+			Private:  p.Private,
 		},
 	}
 }

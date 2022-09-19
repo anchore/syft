@@ -1,0 +1,9 @@
+{
+  "OIDCIssuers": {
+	"http://dex-idp:8888/auth": {
+      "IssuerURL": "http://dex-idp:8888/auth",
+      "ClientID": "fulcio",
+      "Type": "email"
+    }
+  }
+}

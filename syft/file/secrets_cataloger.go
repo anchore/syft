@@ -4,18 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"sort"
 
-	"github.com/anchore/syft/internal"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 var DefaultSecretsPatterns = map[string]string{
@@ -111,7 +110,7 @@ func extractValue(resolver source.FileResolver, location source.Location, start,
 	}
 	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
 
-	n, err := io.CopyN(ioutil.Discard, readCloser, start)
+	n, err := io.CopyN(io.Discard, readCloser, start)
 	if err != nil {
 		return "", fmt.Errorf("unable to read contents for location=%q : %w", location, err)
 	}

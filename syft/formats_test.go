@@ -6,17 +6,19 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/internal/formats/cyclonedxjson"
-	"github.com/anchore/syft/internal/formats/cyclonedxxml"
-	"github.com/anchore/syft/internal/formats/spdx22json"
-	"github.com/anchore/syft/internal/formats/spdx22tagvalue"
-	"github.com/anchore/syft/internal/formats/syftjson"
-	"github.com/anchore/syft/internal/formats/table"
-	"github.com/anchore/syft/internal/formats/text"
-	"github.com/anchore/syft/syft/sbom"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/anchore/syft/syft/formats/cyclonedxjson"
+	"github.com/anchore/syft/syft/formats/cyclonedxxml"
+	"github.com/anchore/syft/syft/formats/github"
+	"github.com/anchore/syft/syft/formats/spdx22json"
+	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/syftjson"
+	"github.com/anchore/syft/syft/formats/table"
+	"github.com/anchore/syft/syft/formats/template"
+	"github.com/anchore/syft/syft/formats/text"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func TestIdentify(t *testing.T) {
@@ -168,6 +170,22 @@ func TestFormatByName(t *testing.T) {
 		{
 			name: "syft-json",
 			want: syftjson.ID,
+		},
+
+		// GitHub JSON
+		{
+			name: "github",
+			want: github.ID,
+		},
+
+		{
+			name: "github-json",
+			want: github.ID,
+		},
+
+		{
+			name: "template",
+			want: template.ID,
 		},
 	}
 	for _, tt := range tests {

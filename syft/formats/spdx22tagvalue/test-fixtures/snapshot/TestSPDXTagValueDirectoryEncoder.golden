@@ -1,0 +1,36 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: /some/path
+DocumentNamespace: https://anchore.com/syft/dir/some/path-c6b20d03-1478-4513-9feb-1ec427d4b547
+LicenseListVersion: 3.17
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-v0.42.0-bogus
+Created: 2022-05-24T22:51:02Z
+
+##### Package: package-2
+
+PackageName: package-2
+SPDXID: SPDXRef-Package-deb-package-2-ceda99598967ae8d
+PackageVersion: 2.0.1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
+ExternalRef: PACKAGE_MANAGER purl pkg:deb/debian/package-2@2.0.1
+
+##### Package: package-1
+
+PackageName: package-1
+SPDXID: SPDXRef-Package-python-package-1-b85dbb4e6ece5082
+PackageVersion: 1.0.1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: MIT
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
+ExternalRef: PACKAGE_MANAGER purl a-purl-2
+

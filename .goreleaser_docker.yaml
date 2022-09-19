@@ -1,0 +1,193 @@
+# Separate docker configuration to isolate docker dependency away from
+# mac-os runner on github actions.
+# See:
+# https://github.com/anchore/syft/issues/577
+# https://github.com/anchore/syft/issues/519
+# https://github.com/anchore/syft/issues/576
+release:
+  disable: true
+
+env:
+  # required to support multi architecture docker builds
+  - DOCKER_CLI_EXPERIMENTAL=enabled
+
+builds:
+  - id: linux-build
+    dir: ./cmd/syft
+    binary: syft
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - ppc64le
+      - s390x
+    # set the modified timestamp on the output binary to the git timestamp to ensure a reproducible build
+    mod_timestamp: &build-timestamp '{{ .CommitTimestamp }}'
+    env: &build-env
+      - CGO_ENABLED=0
+    ldflags: &build-ldflags |
+      -w
+      -s
+      -extldflags '-static'
+      -X github.com/anchore/syft/internal/version.version={{.Version}}
+      -X github.com/anchore/syft/internal/version.gitCommit={{.Commit}}
+      -X github.com/anchore/syft/internal/version.buildDate={{.Date}}
+      -X github.com/anchore/syft/internal/version.gitDescription={{.Summary}}
+
+dockers:
+  - image_templates:
+      - anchore/syft:debug
+      - anchore/syft:{{.Tag}}-debug
+      - ghcr.io/anchore/syft:debug
+      - ghcr.io/anchore/syft:{{.Tag}}-debug
+    goarch: amd64
+    dockerfile: Dockerfile.debug
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:debug-arm64v8
+      - anchore/syft:{{.Tag}}-debug-arm64v8
+      - ghcr.io/anchore/syft:debug-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
+    goarch: arm64
+    dockerfile: Dockerfile.debug
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:debug-ppc64le
+      - anchore/syft:{{.Tag}}-debug-ppc64le
+      - ghcr.io/anchore/syft:debug-ppc64le
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
+    goarch: ppc64le
+    dockerfile: Dockerfile.debug
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/ppc64le"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:debug-s390x
+      - anchore/syft:{{.Tag}}-debug-s390x
+      - ghcr.io/anchore/syft:debug-s390x
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-s390x
+    goarch: s390x
+    dockerfile: Dockerfile.debug
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/s390x"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:latest
+      - anchore/syft:{{.Tag}}
+      - ghcr.io/anchore/syft:latest
+      - ghcr.io/anchore/syft:{{.Tag}}
+    goarch: amd64
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:{{.Tag}}-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
+    goarch: arm64
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:{{.Tag}}-ppc64le
+      - ghcr.io/anchore/syft:{{.Tag}}-ppc64le
+    goarch: ppc64le
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/ppc64le"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+  - image_templates:
+      - anchore/syft:{{.Tag}}-s390x
+      - ghcr.io/anchore/syft:{{.Tag}}-s390x
+    goarch: s390x
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/s390x"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+      - "--build-arg=BUILD_VERSION={{.Version}}"
+      - "--build-arg=VCS_REF={{.FullCommit}}"
+      - "--build-arg=VCS_URL={{.GitURL}}"
+
+docker_manifests:
+  - name_template: anchore/syft:latest
+    image_templates:
+      - anchore/syft:{{.Tag}}
+      - anchore/syft:{{.Tag}}-arm64v8
+      - anchore/syft:{{.Tag}}-ppc64le
+      - anchore/syft:{{.Tag}}-s390x
+
+  - name_template: anchore/syft:debug
+      - anchore/syft:{{.Tag}}-debug
+      - anchore/syft:{{.Tag}}-debug-arm64v8
+      - anchore/syft:{{.Tag}}-debug-ppc64le
+      - anchore/syft:{{.Tag}}-debug-s390x
+
+  - name_template: anchore/syft:{{.Tag}}
+    image_templates:
+      - anchore/syft:{{.Tag}}
+      - anchore/syft:{{.Tag}}-arm64v8
+      - anchore/syft:{{.Tag}}-ppc64le
+      - anchore/syft:{{.Tag}}-s390x
+
+  - name_template: ghcr.io/anchore/syft:latest
+    image_templates:
+      - ghcr.io/anchore/syft:{{.Tag}}
+      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-ppc64le
+      - ghcr.io/anchore/syft:{{.Tag}}-s390x
+
+  - name_template: ghcr.io/anchore/syft:debug
+    image_templates:
+      - ghcr.io/anchore/syft:{{.Tag}}-debug
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
+      - ghcr.io/anchore/syft:{{.Tag}}-debug-s390x
+
+  - name_template: ghcr.io/anchore/syft:{{.Tag}}
+    image_templates:
+      - ghcr.io/anchore/syft:{{.Tag}}
+      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
+      - ghcr.io/anchore/syft:{{.Tag}}-ppc64le
+      - ghcr.io/anchore/syft:{{.Tag}}-s390x

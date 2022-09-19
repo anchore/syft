@@ -1,0 +1,61 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "/some/path",
+ "spdxVersion": "SPDX-2.2",
+ "creationInfo": {
+  "created": "2022-05-23T19:10:22.25645Z",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-v0.42.0-bogus"
+  ],
+  "licenseListVersion": "3.17"
+ },
+ "dataLicense": "CC0-1.0",
+ "documentNamespace": "https://anchore.com/syft/dir/some/path-81dbcbfa-251d-4ad5-9b01-be91afb16469",
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-b85dbb4e6ece5082",
+   "name": "package-1",
+   "licenseConcluded": "MIT",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "a-purl-2",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "MIT",
+   "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
+   "versionInfo": "1.0.1"
+  },
+  {
+   "SPDXID": "SPDXRef-ceda99598967ae8d",
+   "name": "package-2",
+   "licenseConcluded": "NONE",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "NONE",
+   "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
+   "versionInfo": "2.0.1"
+  }
+ ]
+}

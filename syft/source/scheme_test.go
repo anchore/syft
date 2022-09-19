@@ -4,10 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/stereoscope/pkg/image"
 )
 
 func TestDetectScheme(t *testing.T) {

@@ -2,15 +2,16 @@ package linux
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"regexp"
 	"strings"
 
 	"github.com/acobaugh/osrelease"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
-	"github.com/google/go-cmp/cmp"
 )
 
 // returns a distro or nil
@@ -68,7 +69,7 @@ func IdentifyRelease(resolver source.FileResolver) *Release {
 				continue
 			}
 
-			content, err := ioutil.ReadAll(contentReader)
+			content, err := io.ReadAll(contentReader)
 			internal.CloseAndLogError(contentReader, location.VirtualPath)
 			if err != nil {
 				log.Warnf("unable to read %q: %+v", location.RealPath, err)
@@ -111,6 +112,10 @@ func parseOsRelease(contents string) (*Release, error) {
 		IDLike:           idLike,
 		Version:          values["VERSION"],
 		VersionID:        values["VERSION_ID"],
+		VersionCodename:  values["VERSION_CODENAME"],
+		BuildID:          values["BUILD_ID"],
+		ImageID:          values["IMAGE_ID"],
+		ImageVersion:     values["IMAGE_VERSION"],
 		Variant:          values["VARIANT"],
 		VariantID:        values["VARIANT_ID"],
 		HomeURL:          values["HOME_URL"],

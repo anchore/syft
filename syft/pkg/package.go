@@ -28,6 +28,10 @@ type Package struct {
 	Metadata     interface{}        // additional data found while parsing the package source
 }
 
+func (p *Package) OverrideID(id artifact.ID) {
+	p.id = id
+}
+
 func (p *Package) SetID() {
 	id, err := artifact.IDByHash(p)
 	if err != nil {
@@ -63,4 +67,15 @@ func (p *Package) merge(other Package) error {
 		p.PURL = other.PURL
 	}
 	return nil
+}
+
+// IsValid checks whether a package has the minimum necessary info
+// which is a non-empty name.
+// The nil-check was added as a helper as often, in this code base, packages
+// move between callers as pointers.
+// CycloneDX and SPDX define Name as the minimum required info for a valid package:
+// * https://spdx.github.io/spdx-spec/package-information/#73-package-version-field
+// * https://cyclonedx.org/docs/1.4/json/#components_items_name
+func IsValid(p *Package) bool {
+	return p != nil && p.Name != ""
 }

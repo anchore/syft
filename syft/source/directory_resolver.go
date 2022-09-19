@@ -11,15 +11,15 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/anchore/syft/internal"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 const WindowsOS = "windows"
@@ -338,7 +338,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
 		evaluatedPath, err := filepath.EvalSymlinks(userStrPath)
 		if err != nil {
-			log.Warnf("directory resolver unable to evaluate symlink for path=%q : %+v", userPath, err)
+			log.Debugf("directory resolver unable to evaluate symlink for path=%q : %+v", userPath, err)
 			continue
 		}
 

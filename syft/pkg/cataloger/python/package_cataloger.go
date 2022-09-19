@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
+  "github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -50,7 +50,7 @@ func (c *PackageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to catalog python package=%+v: %w", location.RealPath, err)
 		}
-		if p != nil {
+		if pkg.IsValid(p) {
 			pkgs = append(pkgs, *p)
 		}
 	}
@@ -201,7 +201,7 @@ func (c *PackageCataloger) fetchDirectURLData(resolver source.FileResolver, meta
 	}
 	defer internal.CloseAndLogError(directURLContents, directURLLocation.VirtualPath)
 
-	buffer, err := ioutil.ReadAll(directURLContents)
+	buffer, err := io.ReadAll(directURLContents)
 	if err != nil {
 		return nil, nil, err
 	}

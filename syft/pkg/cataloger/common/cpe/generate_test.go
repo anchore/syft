@@ -6,10 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/scylladb/go-set"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestGeneratePackageCPEs(t *testing.T) {
@@ -316,8 +317,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Version:      "3.2",
 				FoundBy:      "some-analyzer",
 				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmdbMetadataType,
-				Metadata: pkg.RpmdbMetadata{
+				MetadataType: pkg.RpmMetadataType,
+				Metadata: pkg.RpmMetadata{
 					Vendor: "some-vendor",
 				},
 			},
@@ -334,8 +335,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Version:      "1:3.2",
 				FoundBy:      "some-analyzer",
 				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmdbMetadataType,
-				Metadata: pkg.RpmdbMetadata{
+				MetadataType: pkg.RpmMetadataType,
+				Metadata: pkg.RpmMetadata{
 					Vendor: "some-vendor",
 				},
 			},
@@ -532,6 +533,19 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:someone:something:3.2:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "go product with vendor candidates and an extra sub-item",
+			p: pkg.Package{
+				Name:     "github.com/someone/something/more",
+				Version:  "3.2",
+				FoundBy:  "go-cataloger",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:someone:something\\/more:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{

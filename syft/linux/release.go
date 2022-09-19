@@ -8,6 +8,10 @@ type Release struct {
 	IDLike           []string `cyclonedx:"idLike"` // list of operating system identifiers in the same syntax as the ID= setting. It should list identifiers of operating systems that are closely related to the local operating system in regards to packaging and programming interfaces.
 	Version          string   // identifies the operating system version, excluding any OS name information, possibly including a release code name, and suitable for presentation to the user.
 	VersionID        string   `cyclonedx:"versionID"` // identifies the operating system version, excluding any OS name information or release code name, and suitable for processing by scripts or usage in generated filenames.
+	VersionCodename  string   `cyclonedx:"versionCodename"`
+	BuildID          string   `cyclonedx:"buildID"` // A string uniquely identifying the system image originally used as the installation base.
+	ImageID          string   `cyclonedx:"imageID"`
+	ImageVersion     string   `cyclonedx:"imageVersion"`
 	Variant          string   `cyclonedx:"variant"`   // identifies a specific variant or edition of the operating system suitable for presentation to the user.
 	VariantID        string   `cyclonedx:"variantID"` // identifies a specific variant or edition of the operating system. This may be interpreted by other packages in order to determine a divergent default configuration.
 	HomeURL          string
@@ -30,6 +34,9 @@ func (r *Release) String() string {
 	if r.Version != "" {
 		return r.ID + " " + r.Version
 	}
+	if r.VersionID != "" {
+		return r.ID + " " + r.VersionID
+	}
 
-	return r.ID + " " + r.VersionID
+	return r.ID + " " + r.BuildID
 }

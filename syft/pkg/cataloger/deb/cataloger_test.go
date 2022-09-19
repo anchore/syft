@@ -1,15 +1,15 @@
 package deb
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/anchore/syft/syft/file"
+	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/go-test/deep"
 )
 
 func TestDpkgCataloger(t *testing.T) {
@@ -43,6 +43,10 @@ func TestDpkgCataloger(t *testing.T) {
 						Architecture:  "all",
 						Maintainer:    "Steve Langasek <vorlon@debian.org>",
 						InstalledSize: 1016,
+						Description: `Runtime support for the PAM library
+ Contains configuration files and  directories required for
+ authentication  to work on Debian systems.  This package is required
+ on almost all installations.`,
 						Files: []pkg.DpkgFileRecord{
 							{
 								Path: "/etc/pam.conf",

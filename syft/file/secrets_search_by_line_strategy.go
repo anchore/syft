@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 
 	"github.com/anchore/syft/internal"
-
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -80,7 +78,7 @@ func readerAtPosition(resolver source.FileResolver, location source.Location, se
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
 	if seekPosition > 0 {
-		n, err := io.CopyN(ioutil.Discard, readCloser, seekPosition)
+		n, err := io.CopyN(io.Discard, readCloser, seekPosition)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read contents for location=%q while searching for secrets: %w", location, err)
 		}

@@ -6,10 +6,9 @@ package common
 import (
 	"fmt"
 
-	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -19,14 +18,18 @@ import (
 type GenericCataloger struct {
 	globParsers       map[string]ParserFn
 	pathParsers       map[string]ParserFn
+	postProcessors    []PostProcessFunc
 	upstreamCataloger string
 }
 
+type PostProcessFunc func(resolver source.FileResolver, location source.Location, p *pkg.Package) error
+
 // NewGenericCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a GenericCataloger
-func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string) *GenericCataloger {
+func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string]ParserFn, upstreamCataloger string, postProcessors ...PostProcessFunc) *GenericCataloger {
 	return &GenericCataloger{
 		globParsers:       globParsers,
 		pathParsers:       pathParsers,
+		postProcessors:    postProcessors,
 		upstreamCataloger: upstreamCataloger,
 	}
 }
@@ -56,16 +59,51 @@ func (c *GenericCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package,
 			continue
 		}
 
+		pkgsForRemoval := make(map[artifact.ID]struct{})
+		var cleanedRelationships []artifact.Relationship
 		for _, p := range discoveredPackages {
 			p.FoundBy = c.upstreamCataloger
 			p.Locations.Add(location)
 			p.SetID()
+			// doing it here so all packages have an ID,
+			// IDs are later used to remove relationships
+			if !pkg.IsValid(p) {
+				pkgsForRemoval[p.ID()] = struct{}{}
+				continue
+			}
+
+			for _, postProcess := range c.postProcessors {
+				err = postProcess(resolver, location, p)
+				if err != nil {
+					return nil, nil, err
+				}
+			}
+
 			packages = append(packages, *p)
 		}
 
-		relationships = append(relationships, discoveredRelationships...)
+		cleanedRelationships = removeRelationshipsWithArtifactIDs(pkgsForRemoval, discoveredRelationships)
+		relationships = append(relationships, cleanedRelationships...)
 	}
 	return packages, relationships, nil
+}
+
+func removeRelationshipsWithArtifactIDs(artifactsToExclude map[artifact.ID]struct{}, relationships []artifact.Relationship) []artifact.Relationship {
+	if len(artifactsToExclude) == 0 || len(relationships) == 0 {
+		// no removal to do
+		return relationships
+	}
+
+	var cleanedRelationships []artifact.Relationship
+	for _, r := range relationships {
+		_, removeTo := artifactsToExclude[r.To.ID()]
+		_, removaFrom := artifactsToExclude[r.From.ID()]
+		if !removeTo && !removaFrom {
+			cleanedRelationships = append(cleanedRelationships, r)
+		}
+	}
+
+	return cleanedRelationships
 }
 
 // SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging

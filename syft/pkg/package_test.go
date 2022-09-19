@@ -3,11 +3,12 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestIDUniqueness(t *testing.T) {
@@ -440,5 +441,33 @@ func TestPackage_Merge(t *testing.T) {
 				t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestIsValid(t *testing.T) {
+	cases := []struct {
+		name  string
+		given *Package
+		want  bool
+	}{
+		{
+			name:  "nil",
+			given: nil,
+			want:  false,
+		},
+		{
+			name:  "has-name",
+			given: &Package{Name: "paul"},
+			want:  true,
+		},
+		{
+			name:  "has-no-name",
+			given: &Package{},
+			want:  false,
+		},
+	}
+
+	for _, c := range cases {
+		require.Equal(t, c.want, IsValid(c.given), "when package: %s", c.name)
 	}
 }

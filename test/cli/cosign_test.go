@@ -59,9 +59,11 @@ func TestCosignWorkflow(t *testing.T) {
 				"attest",
 				"-o",
 				"json",
+				"--key",
+				"cosign.key",
 				img,
 			},
-			// cosign attach attestation --attestation image_latest_sbom_attestation.json caphill4/attest:latest
+			// cosign attach attestation
 			cosignAttachArgs: []string{
 				"attach",
 				"attestation",
@@ -69,7 +71,7 @@ func TestCosignWorkflow(t *testing.T) {
 				attestationFile,
 				img,
 			},
-			// cosign verify-attestation -key cosign.pub caphill4/attest:latest
+			// cosign verify-attestation
 			cosignVerifyArgs: []string{
 				"verify-attestation",
 				"-key",

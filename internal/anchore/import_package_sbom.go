@@ -8,12 +8,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/anchore/client-go/pkg/external"
-	"github.com/anchore/syft/internal/formats/syftjson"
-	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/sbom"
 	"github.com/wagoodman/go-progress"
+
+	"github.com/anchore/client-go/pkg/external"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/formats/syftjson"
+	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 type packageSBOMImportAPI interface {

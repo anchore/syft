@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestIdentifyRelease(t *testing.T) {
@@ -125,6 +126,7 @@ func TestIdentifyRelease(t *testing.T) {
 				ID:               "ubuntu",
 				IDLike:           []string{"debian"},
 				Version:          "20.04 LTS (Focal Fossa)",
+				VersionCodename:  "focal",
 				VersionID:        "20.04",
 				HomeURL:          "https://www.ubuntu.com/",
 				SupportURL:       "https://help.ubuntu.com/",
@@ -217,6 +219,7 @@ func TestIdentifyRelease(t *testing.T) {
 				Name:         "Arch Linux",
 				ID:           "arch",
 				IDLike:       nil,
+				BuildID:      "rolling",
 				HomeURL:      "https://www.archlinux.org/",
 				SupportURL:   "https://bbs.archlinux.org/",
 				BugReportURL: "https://bugs.archlinux.org/",
@@ -349,6 +352,7 @@ func TestParseOsRelease(t *testing.T) {
 				IDLike:           []string{"debian"},
 				Version:          "20.04 LTS (Focal Fossa)",
 				VersionID:        "20.04",
+				VersionCodename:  "focal",
 				HomeURL:          "https://www.ubuntu.com/",
 				SupportURL:       "https://help.ubuntu.com/",
 				BugReportURL:     "https://bugs.launchpad.net/ubuntu/",

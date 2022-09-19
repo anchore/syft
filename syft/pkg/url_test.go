@@ -3,10 +3,11 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/linux"
 	"github.com/scylladb/go-set/strset"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/linux"
 )
 
 func TestPackageURL(t *testing.T) {
@@ -26,6 +27,15 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
 		},
 		{
+			name: "golang short name",
+			pkg: Package{
+				Name:    "go.opencensus.io",
+				Version: "v0.23.0",
+				Type:    GoModulePkg,
+			},
+			expected: "pkg:golang/go.opencensus.io@v0.23.0",
+		},
+		{
 			name: "pub",
 			pkg: Package{
 				Name:    "bad-name",
@@ -38,6 +48,20 @@ func TestPackageURL(t *testing.T) {
 				},
 			},
 			expected: "pkg:pub/name@0.2.0?hosted_url=pub.hosted.org",
+		},
+
+		{
+			name: "dotnet",
+			pkg: Package{
+				Name:    "Microsoft.CodeAnalysis.Razor",
+				Version: "2.2.0",
+				Type:    DotnetPkg,
+				Metadata: DotnetDepsMetadata{
+					Name:    "Microsoft.CodeAnalysis.Razor",
+					Version: "2.2.0",
+				},
+			},
+			expected: "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
 		},
 		{
 			name: "python",
@@ -98,7 +122,7 @@ func TestPackageURL(t *testing.T) {
 				Name:    "bad-name",
 				Version: "bad-v0.1.0",
 				Type:    RpmPkg,
-				Metadata: RpmdbMetadata{
+				Metadata: RpmMetadata{
 					Name:    "name",
 					Version: "0.1.0",
 					Epoch:   intRef(2),
@@ -176,6 +200,68 @@ func TestPackageURL(t *testing.T) {
 
 			expected: "pkg:maven/g.id/a@v",
 		},
+		{
+			name: "alpm",
+			distro: &linux.Release{
+				ID:      "arch",
+				BuildID: "rolling",
+			},
+			pkg: Package{
+				Name:    "linux",
+				Version: "5.10.0",
+				Type:    AlpmPkg,
+				Metadata: AlpmMetadata{
+					Package: "linux",
+					Version: "5.10.0",
+				},
+			},
+
+			expected: "pkg:alpm/arch/linux@5.10.0?distro=arch-rolling",
+		},
+		{
+			name: "cocoapods",
+			pkg: Package{
+				Name:     "GlossButtonNode",
+				Version:  "3.1.2",
+				Language: Swift,
+				Type:     CocoapodsPkg,
+				Metadata: CocoapodsMetadata{
+					Name:    "GlossButtonNode",
+					Version: "3.1.2",
+				},
+			},
+			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
+		},
+		{
+			name: "conan",
+			pkg: Package{
+				Name:         "catch2",
+				Version:      "2.13.8",
+				Type:         ConanPkg,
+				Language:     CPP,
+				MetadataType: ConanaMetadataType,
+				Metadata: ConanMetadata{
+					Name:    "catch2",
+					Version: "2.13.8",
+				},
+			},
+			expected: "pkg:conan/catch2@2.13.8",
+		},
+		{
+			name: "hackage",
+			pkg: Package{
+				Name:         "HTTP",
+				Version:      "4000.3.16",
+				Type:         HackagePkg,
+				Language:     Haskell,
+				MetadataType: HackageMetadataType,
+				Metadata: HackageMetadata{
+					Name:    "HTTP",
+					Version: "4000.3.16",
+				},
+			},
+			expected: "pkg:hackage/HTTP@4000.3.16",
+		},
 	}
 
 	var pkgTypes []string
@@ -186,10 +272,11 @@ func TestPackageURL(t *testing.T) {
 
 	// testing microsoft packages is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
+	expectedTypes.Remove(string(PortagePkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.pkg.Type != "" {
+			if test.pkg.Type != "" && !contains(pkgTypes, string(test.pkg.Type)) {
 				pkgTypes = append(pkgTypes, string(test.pkg.Type))
 			}
 			actual := URL(test.pkg, test.distro)
@@ -201,4 +288,14 @@ func TestPackageURL(t *testing.T) {
 		})
 	}
 	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes, "missing one or more package types to test against (maybe a package type was added?)")
+}
+
+func contains(values []string, val string) bool {
+	for _, v := range values {
+		if val == v {
+			return true
+		}
+	}
+
+	return false
 }

@@ -26,7 +26,7 @@ func TestAttestCmd(t *testing.T) {
 		},
 		{
 			name: "can encode syft.json as the predicate given a password",
-			args: []string{"attest", "-o", "json", img},
+			args: []string{"attest", "-o", "json", "--key", "cosign.key", img},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
 			},
@@ -34,7 +34,15 @@ func TestAttestCmd(t *testing.T) {
 		},
 		{
 			name: "can encode syft.json as the predicate given a blank password",
-			args: []string{"attest", "-o", "json", img},
+			args: []string{"attest", "-o", "json", "--key", "cosign.key", img},
+			assertions: []traitAssertion{
+				assertSuccessfulReturnCode,
+			},
+			pw: "",
+		},
+		{
+			name: "can encode syft.json as the predicate given a user format typo",
+			args: []string{"attest", "-o", "spdx-jsonx", "--key", "cosign.key", img},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
 			},

@@ -37,18 +37,6 @@ var licenseIDs = map[string]string{
 
 var versionMatch = regexp.MustCompile(`-([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
 
-type LicenseList struct {
-	Version  string `json:"licenseListVersion"`
-	Licenses []struct {
-		ID          string   `json:"licenseId"`
-		Name        string   `json:"name"`
-		Text        string   `json:"licenseText"`
-		Deprecated  bool     `json:"isDeprecatedLicenseId"`
-		OSIApproved bool     `json:"isOsiApproved"`
-		SeeAlso     []string `json:"seeAlso"`
-	} `json:"licenses"`
-}
-
 func main() {
 	if err := run(); err != nil {
 		fmt.Println(err.Error())
@@ -102,8 +90,9 @@ func run() error {
 	return nil
 }
 
-// Parsing the provided SPDX license list necessitates a two pass approach.
-// The first pass is only related to what SPDX considers the truth. These K:V pairs will never be overwritten.
+// Parsing the provided SPDX license list necessitates a three pass approach.
+// The first pass is only related to what SPDX considers the truth. We use license info to
+// find replacements for deprecated licenses.
 // The second pass attempts to generate known short/long version listings for each key.
 // For info on some short name conventions see this document:
 // https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-short-name.
@@ -111,6 +100,8 @@ func run() error {
 // The new keys are then also associated with their relative SPDX value. If a key has already been entered
 // we know to ignore it since it came from the first pass which is considered the SPDX source of truth.
 // We also sort the licenses for the second pass so that cases like `GPL-1` associate to `GPL-1.0` and not `GPL-1.1`.
+// The third pass is for overwriting deprecated licenses with replacements, for example GPL-2.0+ is deprecated
+// and now maps to GPL-2.0-or-later.
 func processSPDXLicense(result LicenseList) map[string]string {
 	// first pass build map
 	var licenseIDs = make(map[string]string)
@@ -122,69 +113,48 @@ func processSPDXLicense(result LicenseList) map[string]string {
 		licenseIDs[cleanID] = l.ID
 	}
 
+	// The order of variations/permutations of a license ID matters because of we how shuffle its digits,
+	// that is because the permutation code can generate the same value for two difference licenses,
+	// for example: The licenses `ABC-1.0` and `ABC-1.1` can both map to `ABC-1`,
+	// so we need to guarantee the order they are created to avoid mapping them wrongly. So we use a sorted list.
+	// To overwrite deprecated licenses during the first pass we would later on rely on map order,
+	// [which in go is not consistent by design](https://stackoverflow.com/a/55925880).
 	sort.Slice(result.Licenses, func(i, j int) bool {
 		return result.Licenses[i].ID < result.Licenses[j].ID
 	})
 
-	// second pass build exceptions
-	// do not overwrite if already exists
+	// second pass to build exceptions and replacements
+	replaced := strset.New()
 	for _, l := range result.Licenses {
 		var multipleID []string
 		cleanID := strings.ToLower(l.ID)
+
+		var replacement *License
+		if l.Deprecated {
+			replacement = result.findReplacementLicense(l)
+			if replacement != nil {
+				licenseIDs[cleanID] = replacement.ID
+			}
+		}
+
 		multipleID = append(multipleID, buildLicensePermutations(cleanID)...)
 		for _, id := range multipleID {
-			if _, exists := licenseIDs[id]; !exists {
-				licenseIDs[id] = l.ID
+			// don't make replacements for IDs that have already been replaced. Since we have a sorted license list
+			// the earliest replacement is correct (any future replacements are not.
+			// e.g. replace lgpl-2 with LGPL-2.1-only is wrong, but with LGPL-2.0-only is correct)
+			if replacement == nil || replaced.Has(id) {
+				if _, exists := licenseIDs[id]; !exists {
+					licenseIDs[id] = l.ID
+				}
+			} else {
+				// a useful debugging line during builds
+				log.Printf("replacing %s with %s\n", id, replacement.ID)
+
+				licenseIDs[id] = replacement.ID
+				replaced.Add(id)
 			}
 		}
 	}
 
 	return licenseIDs
-}
-
-func buildLicensePermutations(license string) (perms []string) {
-	lv := findLicenseVersion(license)
-	vp := versionPermutations(lv)
-
-	version := strings.Join(lv, ".")
-	for _, p := range vp {
-		perms = append(perms, strings.Replace(license, version, p, 1))
-	}
-
-	return perms
-}
-
-func findLicenseVersion(license string) (version []string) {
-	versionList := versionMatch.FindAllStringSubmatch(license, -1)
-
-	if len(versionList) == 0 {
-		return version
-	}
-
-	for i, v := range versionList[0] {
-		if v != "" && i != 0 {
-			version = append(version, v)
-		}
-	}
-
-	return version
-}
-
-func versionPermutations(version []string) []string {
-	ver := append([]string(nil), version...)
-	perms := strset.New()
-	for i := 1; i <= 3; i++ {
-		if len(ver) < i+1 {
-			ver = append(ver, "0")
-		}
-
-		perm := strings.Join(ver[:i], ".")
-		badCount := strings.Count(perm, "0") + strings.Count(perm, ".")
-
-		if badCount != len(perm) {
-			perms.Add(perm)
-		}
-	}
-
-	return perms.List()
 }
