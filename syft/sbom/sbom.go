@@ -33,29 +33,7 @@ type Descriptor struct {
 	Configuration interface{}
 }
 
-func AllCoordinates(sbom SBOM) []source.Coordinates {
-	set := source.NewCoordinateSet()
-	for coordinates := range sbom.Artifacts.FileMetadata {
-		set.Add(coordinates)
-	}
-	for coordinates := range sbom.Artifacts.FileContents {
-		set.Add(coordinates)
-	}
-	for coordinates := range sbom.Artifacts.FileClassifications {
-		set.Add(coordinates)
-	}
-	for coordinates := range sbom.Artifacts.FileDigests {
-		set.Add(coordinates)
-	}
-	for _, relationship := range sbom.Relationships {
-		for _, coordinates := range extractCoordinates(relationship) {
-			set.Add(coordinates)
-		}
-	}
-	return set.ToSlice()
-}
-
-func (s *SBOM) RelationshipsSorted() []artifact.Relationship {
+func (s SBOM) RelationshipsSorted() []artifact.Relationship {
 	relationships := s.Relationships
 	sort.SliceStable(relationships, func(i, j int) bool {
 		if relationships[i].From.ID() == relationships[j].From.ID() {
@@ -67,6 +45,28 @@ func (s *SBOM) RelationshipsSorted() []artifact.Relationship {
 		return relationships[i].From.ID() < relationships[j].From.ID()
 	})
 	return relationships
+}
+
+func (s SBOM) AllCoordinates() []source.Coordinates {
+	set := source.NewCoordinateSet()
+	for coordinates := range s.Artifacts.FileMetadata {
+		set.Add(coordinates)
+	}
+	for coordinates := range s.Artifacts.FileContents {
+		set.Add(coordinates)
+	}
+	for coordinates := range s.Artifacts.FileClassifications {
+		set.Add(coordinates)
+	}
+	for coordinates := range s.Artifacts.FileDigests {
+		set.Add(coordinates)
+	}
+	for _, relationship := range s.Relationships {
+		for _, coordinates := range extractCoordinates(relationship) {
+			set.Add(coordinates)
+		}
+	}
+	return set.ToSlice()
 }
 
 func extractCoordinates(relationship artifact.Relationship) (results []source.Coordinates) {
