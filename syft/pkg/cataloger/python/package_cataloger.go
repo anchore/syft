@@ -8,10 +8,9 @@ import (
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
-
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -115,7 +114,8 @@ func (c *PackageCataloger) fetchInstalledFiles(resolver source.FileResolver, met
 		// parse the installed-files contents
 		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.RealPath, sitePackagesRootPath)
 		if err != nil {
-			return nil, nil, err
+			log.Warnf("unable to parse installed-files.txt for python package=%+v: %w", metadataLocation.RealPath, err)
+			return files, sources, nil
 		}
 
 		files = append(files, installedFiles...)
@@ -129,7 +129,7 @@ func (c *PackageCataloger) fetchRecordFiles(resolver source.FileResolver, metada
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
 
-	// lets find the RECORD file relative to the directory where the METADATA file resides (in path AND layer structure)
+	// let's find the RECORD file relative to the directory where the METADATA file resides (in path AND layer structure)
 	recordPath := filepath.Join(filepath.Dir(metadataLocation.RealPath), "RECORD")
 	recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
 
