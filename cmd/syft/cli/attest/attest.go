@@ -76,7 +76,7 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 
 	// user typo or unknown outputs provided
 	if format == nil {
-		format = syft.FormatByID(spdx22json.ID) // default attestation format
+		format = syft.FormatByID(syftjson.ID) // default attestation format
 	}
 	predicateType := formatPredicateType(format)
 	if predicateType == "" {
@@ -118,7 +118,7 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 
 func parseAttestationOutput(outputs []string) (format string) {
 	if len(outputs) == 0 {
-		outputs = append(outputs, string(spdx22json.ID))
+		outputs = append(outputs, string(syftjson.ID))
 	}
 
 	return outputs[0]
