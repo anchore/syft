@@ -6,11 +6,38 @@ In order to test and develop in this repo you will need the following dependenci
 - docker
 - make
 
-After cloning do the following:
+After cloning the following step can help you get setup:
 1. run `make bootstrap` to download go mod dependencies, create the `/.tmp` dir, and download helper utilities.
-2. run `make` to run linting, tests, and other verifications to make certain everything is working alright.
+2. run `make` to view the selection of developer commands in the Makefile
+3. run `make build` to build the release snapshot binaries and packages
+4. for an even quicker start you can run `go run cmd/syft/main.go` to print the syft help.
+	- this command `go run cmd/syft/main.go alpine:latest` will compile and run syft against `alpine:latest`
+5. view the README or syft help output for more output options
 
-Checkout `make help` to see what other actions you can take.
+#### Make output
+```
+all                      Run all linux-based checks (linting, license check, unit, integration, and linux compare tests)
+benchmark                Run benchmark tests and compare against the baseline (if available)
+bootstrap                Download and install all tooling dependencies (+ prep tooling in the ./tmp dir)
+build                    Build release snapshot binaries and packages
+check-licenses           Ensure transitive dependencies are compliant with the current license policy
+clean-test-image-cache   Clean test image cache
+clean                    Remove previous builds, result reports, and test cache
+cli                      Run CLI tests
+compare-linux            Run compare tests on build snapshot binaries and packages (Linux)
+compare-mac              Run compare tests on build snapshot binaries and packages (Mac)
+generate-json-schema     Generate a new json schema
+generate-license-list    Generate an updated spdx license list
+help                     Display this help
+integration              Run integration tests
+lint-fix                 Auto-format all source code + run golangci lint fixers
+lint                     Run gofmt + golangci lint checks
+show-test-image-cache    Show all docker and image tar cache
+show-test-snapshots      Show all test snapshots
+snapshot-with-signing    Build snapshot release binaries and packages (with dummy signing)
+test                     Run all tests (currently unit, integration, linux compare, and cli tests)
+unit                     Run unit tests (with coverage)
+```
 
 The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
 
