@@ -22,16 +22,7 @@ import (
 func toFormatModel(s sbom.SBOM) *model.Document {
 	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 
-	relationships := s.Relationships
-	sort.SliceStable(relationships, func(i, j int) bool {
-		if relationships[i].From.ID() == relationships[j].From.ID() {
-			if relationships[i].To.ID() == relationships[j].To.ID() {
-				return relationships[i].Type < relationships[j].Type
-			}
-			return relationships[i].To.ID() < relationships[j].To.ID()
-		}
-		return relationships[i].From.ID() < relationships[j].From.ID()
-	})
+	relationships := s.RelationshipsSorted()
 
 	return &model.Document{
 		Element: model.Element{

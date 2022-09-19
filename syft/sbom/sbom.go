@@ -1,6 +1,8 @@
 package sbom
 
 import (
+	"sort"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -51,6 +53,20 @@ func AllCoordinates(sbom SBOM) []source.Coordinates {
 		}
 	}
 	return set.ToSlice()
+}
+
+func (s *SBOM) RelationshipsSorted() []artifact.Relationship {
+	relationships := s.Relationships
+	sort.SliceStable(relationships, func(i, j int) bool {
+		if relationships[i].From.ID() == relationships[j].From.ID() {
+			if relationships[i].To.ID() == relationships[j].To.ID() {
+				return relationships[i].Type < relationships[j].Type
+			}
+			return relationships[i].To.ID() < relationships[j].To.ID()
+		}
+		return relationships[i].From.ID() < relationships[j].From.ID()
+	})
+	return relationships
 }
 
 func extractCoordinates(relationship artifact.Relationship) (results []source.Coordinates) {
