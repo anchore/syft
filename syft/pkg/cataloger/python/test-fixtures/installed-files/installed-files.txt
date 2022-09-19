@@ -1,0 +1,6 @@
+../__pycache__/dicttoxml.cpython-36.pyc
+../dicttoxml.py
+PKG-INFO
+SOURCES.txt
+dependency_links.txt
+top_level.txt

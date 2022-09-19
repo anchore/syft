@@ -1,9 +1,11 @@
 package python
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -58,4 +60,35 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 	}
 
 	return records, nil
+}
+
+func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string) ([]pkg.PythonFileRecord, error) {
+	var installedFiles []pkg.PythonFileRecord
+	r := bufio.NewReader(reader)
+
+	for {
+		line, err := r.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("unable to read python installed-files file: %w", err)
+		}
+
+		if location != "" && sitePackagesRootPath != "" {
+			joinedPath := filepath.Join(filepath.Dir(location), line)
+			line, err = filepath.Rel(sitePackagesRootPath, joinedPath)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		installedFile := pkg.PythonFileRecord{
+			Path: strings.ReplaceAll(line, "\n", ""),
+		}
+
+		installedFiles = append(installedFiles, installedFile)
+	}
+
+	return installedFiles, nil
 }
