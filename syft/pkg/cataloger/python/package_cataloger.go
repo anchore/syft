@@ -98,7 +98,7 @@ func (c *PackageCataloger) fetchInstalledFiles(resolver source.FileResolver, met
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the installed-files.txt path to the same layer (or the next adjacent lower layer).
 
-	// lets find the installed-files.txt file relative to the directory where the METADATA file resides (in path AND layer structure)
+	// find the installed-files.txt file relative to the directory where the METADATA file resides (in path AND layer structure)
 	installedFilesPath := filepath.Join(filepath.Dir(metadataLocation.RealPath), "installed-files.txt")
 	installedFilesRef := resolver.RelativeFileByPath(metadataLocation, installedFilesPath)
 
@@ -129,7 +129,7 @@ func (c *PackageCataloger) fetchRecordFiles(resolver source.FileResolver, metada
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
 
-	// let's find the RECORD file relative to the directory where the METADATA file resides (in path AND layer structure)
+	// find the RECORD file relative to the directory where the METADATA file resides (in path AND layer structure)
 	recordPath := filepath.Join(filepath.Dir(metadataLocation.RealPath), "RECORD")
 	recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
 

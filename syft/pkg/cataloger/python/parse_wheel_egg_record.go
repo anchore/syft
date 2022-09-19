@@ -65,7 +65,6 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string) ([]pkg.PythonFileRecord, error) {
 	var installedFiles []pkg.PythonFileRecord
 	r := bufio.NewReader(reader)
-	// scanner := bufio.NewScanner(file)
 
 	for {
 		line, err := r.ReadString('\n')
