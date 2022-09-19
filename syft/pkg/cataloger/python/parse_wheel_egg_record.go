@@ -85,7 +85,7 @@ func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string
 		}
 
 		installedFile := pkg.PythonFileRecord{
-			Path: line,
+			Path: strings.ReplaceAll(line, "\n", ""),
 		}
 
 		installedFiles = append(installedFiles, installedFile)
