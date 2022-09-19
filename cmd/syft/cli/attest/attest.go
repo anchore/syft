@@ -70,7 +70,14 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 		return err
 	}
 
-	format := syft.FormatByName(app.Outputs[0])
+	output := parseAttestationOutput(app.Outputs)
+
+	format := syft.FormatByName(output)
+
+	// user typo or unknown outputs provided
+	if format == nil {
+		format = syft.FormatByID(syftjson.ID) // default attestation format
+	}
 	predicateType := formatPredicateType(format)
 	if predicateType == "" {
 		return fmt.Errorf(
@@ -107,6 +114,14 @@ func Run(ctx context.Context, app *config.Application, ko sigopts.KeyOpts, args 
 		stereoscope.Cleanup,
 		ui.Select(options.IsVerbose(app), app.Quiet)...,
 	)
+}
+
+func parseAttestationOutput(outputs []string) (format string) {
+	if len(outputs) == 0 {
+		outputs = append(outputs, string(syftjson.ID))
+	}
+
+	return outputs[0]
 }
 
 func parseImageSource(userInput string, app *config.Application) (s *source.Input, err error) {
