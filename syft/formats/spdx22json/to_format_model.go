@@ -22,6 +22,8 @@ import (
 func toFormatModel(s sbom.SBOM) *model.Document {
 	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 
+	relationships := s.RelationshipsSorted()
+
 	return &model.Document{
 		Element: model.Element{
 			SPDXID: model.ElementID("DOCUMENT").String(),
@@ -39,9 +41,9 @@ func toFormatModel(s sbom.SBOM) *model.Document {
 		},
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: namespace,
-		Packages:          toPackages(s.Artifacts.PackageCatalog, s.Relationships),
+		Packages:          toPackages(s.Artifacts.PackageCatalog, relationships),
 		Files:             toFiles(s),
-		Relationships:     toRelationships(s.Relationships),
+		Relationships:     toRelationships(relationships),
 	}
 }
 
@@ -113,8 +115,8 @@ func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationsh
 		}
 
 		from := model.ElementID(relationship.From.ID()).String()
-		to := model.ElementID(relationship.To.ID()).String()
 		if from == packageSpdxID {
+			to := model.ElementID(relationship.To.ID()).String()
 			fileIDs = append(fileIDs, to)
 		}
 	}
@@ -125,7 +127,7 @@ func toFiles(s sbom.SBOM) []model.File {
 	results := make([]model.File, 0)
 	artifacts := s.Artifacts
 
-	for _, coordinates := range sbom.AllCoordinates(s) {
+	for _, coordinates := range s.AllCoordinates() {
 		var metadata *source.FileMetadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
@@ -160,6 +162,9 @@ func toFiles(s sbom.SBOM) []model.File {
 
 	// sort by real path then virtual path to ensure the result is stable across multiple runs
 	sort.SliceStable(results, func(i, j int) bool {
+		if results[i].FileName == results[j].FileName {
+			return results[i].SPDXID < results[j].SPDXID
+		}
 		return results[i].FileName < results[j].FileName
 	})
 	return results

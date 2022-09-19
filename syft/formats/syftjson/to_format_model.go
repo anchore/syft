@@ -93,7 +93,7 @@ func toFile(s sbom.SBOM) []model.File {
 	results := make([]model.File, 0)
 	artifacts := s.Artifacts
 
-	for _, coordinates := range sbom.AllCoordinates(s) {
+	for _, coordinates := range s.AllCoordinates() {
 		var metadata *source.FileMetadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation

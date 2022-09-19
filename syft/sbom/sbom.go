@@ -1,6 +1,8 @@
 package sbom
 
 import (
+	"sort"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -31,21 +33,35 @@ type Descriptor struct {
 	Configuration interface{}
 }
 
-func AllCoordinates(sbom SBOM) []source.Coordinates {
+func (s SBOM) RelationshipsSorted() []artifact.Relationship {
+	relationships := s.Relationships
+	sort.SliceStable(relationships, func(i, j int) bool {
+		if relationships[i].From.ID() == relationships[j].From.ID() {
+			if relationships[i].To.ID() == relationships[j].To.ID() {
+				return relationships[i].Type < relationships[j].Type
+			}
+			return relationships[i].To.ID() < relationships[j].To.ID()
+		}
+		return relationships[i].From.ID() < relationships[j].From.ID()
+	})
+	return relationships
+}
+
+func (s SBOM) AllCoordinates() []source.Coordinates {
 	set := source.NewCoordinateSet()
-	for coordinates := range sbom.Artifacts.FileMetadata {
+	for coordinates := range s.Artifacts.FileMetadata {
 		set.Add(coordinates)
 	}
-	for coordinates := range sbom.Artifacts.FileContents {
+	for coordinates := range s.Artifacts.FileContents {
 		set.Add(coordinates)
 	}
-	for coordinates := range sbom.Artifacts.FileClassifications {
+	for coordinates := range s.Artifacts.FileClassifications {
 		set.Add(coordinates)
 	}
-	for coordinates := range sbom.Artifacts.FileDigests {
+	for coordinates := range s.Artifacts.FileDigests {
 		set.Add(coordinates)
 	}
-	for _, relationship := range sbom.Relationships {
+	for _, relationship := range s.Relationships {
 		for _, coordinates := range extractCoordinates(relationship) {
 			set.Add(coordinates)
 		}
