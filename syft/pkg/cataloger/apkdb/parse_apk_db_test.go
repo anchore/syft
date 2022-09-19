@@ -2,7 +2,6 @@ package apkdb
 
 import (
 	"bufio"
-
 	"os"
 	"testing"
 
@@ -11,17 +10,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestExtraFileAttributes(t *testing.T) {
@@ -802,19 +799,19 @@ func Test_discoverPackageDependencies(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		genFn func() ([]*pkg.Package, []artifact.Relationship)
+		genFn func() ([]pkg.Package, []artifact.Relationship)
 	}{
 		{
 			name: "has no dependency",
-			genFn: func() ([]*pkg.Package, []artifact.Relationship) {
-				a := &pkg.Package{
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
 					Name: "package-a",
 					Metadata: pkg.ApkMetadata{
 						Provides: []string{"a-thing"},
 					},
 				}
 				a.SetID()
-				b := &pkg.Package{
+				b := pkg.Package{
 					Name: "package-b",
 					Metadata: pkg.ApkMetadata{
 						Provides: []string{"b-thing"},
@@ -822,20 +819,20 @@ func Test_discoverPackageDependencies(t *testing.T) {
 				}
 				b.SetID()
 
-				return []*pkg.Package{a, b}, nil
+				return []pkg.Package{a, b}, nil
 			},
 		},
 		{
 			name: "has 1 dependency",
-			genFn: func() ([]*pkg.Package, []artifact.Relationship) {
-				a := &pkg.Package{
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
 					Name: "package-a",
 					Metadata: pkg.ApkMetadata{
 						PullDependencies: []string{"b-thing"},
 					},
 				}
 				a.SetID()
-				b := &pkg.Package{
+				b := pkg.Package{
 					Name: "package-b",
 					Metadata: pkg.ApkMetadata{
 						Provides: []string{"b-thing"},
@@ -843,7 +840,7 @@ func Test_discoverPackageDependencies(t *testing.T) {
 				}
 				b.SetID()
 
-				return []*pkg.Package{a, b}, []artifact.Relationship{
+				return []pkg.Package{a, b}, []artifact.Relationship{
 					{
 						From: b,
 						To:   a,
