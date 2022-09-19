@@ -22,6 +22,17 @@ import (
 func toFormatModel(s sbom.SBOM) *model.Document {
 	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 
+	relationships := s.Relationships
+	sort.SliceStable(relationships, func(i, j int) bool {
+		if relationships[i].From.ID() == relationships[j].From.ID() {
+			if relationships[i].To.ID() == relationships[j].To.ID() {
+				return relationships[i].Type < relationships[j].Type
+			}
+			return relationships[i].To.ID() < relationships[j].To.ID()
+		}
+		return relationships[i].From.ID() < relationships[j].From.ID()
+	})
+
 	return &model.Document{
 		Element: model.Element{
 			SPDXID: model.ElementID("DOCUMENT").String(),
@@ -39,9 +50,9 @@ func toFormatModel(s sbom.SBOM) *model.Document {
 		},
 		DataLicense:       "CC0-1.0",
 		DocumentNamespace: namespace,
-		Packages:          toPackages(s.Artifacts.PackageCatalog, s.Relationships),
+		Packages:          toPackages(s.Artifacts.PackageCatalog, relationships),
 		Files:             toFiles(s),
-		Relationships:     toRelationships(s.Relationships),
+		Relationships:     toRelationships(relationships),
 	}
 }
 
@@ -113,8 +124,8 @@ func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationsh
 		}
 
 		from := model.ElementID(relationship.From.ID()).String()
-		to := model.ElementID(relationship.To.ID()).String()
 		if from == packageSpdxID {
+			to := model.ElementID(relationship.To.ID()).String()
 			fileIDs = append(fileIDs, to)
 		}
 	}
@@ -160,6 +171,9 @@ func toFiles(s sbom.SBOM) []model.File {
 
 	// sort by real path then virtual path to ensure the result is stable across multiple runs
 	sort.SliceStable(results, func(i, j int) bool {
+		if results[i].FileName == results[j].FileName {
+			return results[i].SPDXID < results[j].SPDXID
+		}
 		return results[i].FileName < results[j].FileName
 	})
 	return results
