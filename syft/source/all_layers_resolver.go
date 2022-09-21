@@ -120,8 +120,6 @@ func (r *allLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-//
-//nolint:gocognit
 func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
@@ -134,14 +132,6 @@ func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 			}
 
 			for _, result := range results {
-				found, _, err := r.img.Layers[layerIdx].Tree.File(result.RealPath)
-				if err != nil {
-					return nil, fmt.Errorf("failed to resolve file during glob resolution %s: %w", result.RealPath, err)
-				}
-				if !found {
-					// this file is not present in the layer
-					continue
-				}
 				// don't consider directories (special case: there is no path information for /)
 				if result.RealPath == "/" {
 					continue
