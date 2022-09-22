@@ -50,9 +50,9 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 				PackageCatalog: pkg.NewCatalog(pkgs...),
 			},
 			Relationships: nil,
-			Source: source.Metadata{
+			Sources: []source.Metadata{{
 				Scheme: source.DirectoryScheme,
-			},
+			}},
 			Descriptor: sbom.Descriptor{
 				Name:    "syft",
 				Version: "v0.42.0-bogus",

@@ -23,14 +23,14 @@ type packageSBOMImportAPI interface {
 
 // importSBOM mirrors all elements found on the syftjson model format object relative to the anchore engine import schema.
 type importSBOM struct {
-	Artifacts             []syftjsonModel.Package      `json:"artifacts"` // Artifacts is the list of packages discovered and placed into the catalog
-	ArtifactRelationships []syftjsonModel.Relationship `json:"artifactRelationships"`
-	Files                 []syftjsonModel.File         `json:"files,omitempty"`   // note: must have omitempty
-	Secrets               []syftjsonModel.Secrets      `json:"secrets,omitempty"` // note: must have omitempty
-	Source                syftjsonModel.Source         `json:"source"`            // Source represents the original object that was cataloged
-	Distro                external.ImportDistribution  `json:"distro"`            // Distro represents the Linux distribution that was detected from the source
-	Descriptor            syftjsonModel.Descriptor     `json:"descriptor"`        // Descriptor is a block containing self-describing information about syft
-	Schema                syftjsonModel.Schema         `json:"schema"`            // Schema is a block reserved for defining the version for the shape of this JSON document and where to find the schema document to validate the shape
+	Artifacts             []syftjsonModel.Package       `json:"artifacts"` // Artifacts is the list of packages discovered and placed into the catalog
+	ArtifactRelationships []syftjsonModel.Relationship  `json:"artifactRelationships"`
+	Files                 []syftjsonModel.File          `json:"files,omitempty"`   // note: must have omitempty
+	Secrets               []syftjsonModel.Secrets       `json:"secrets,omitempty"` // note: must have omitempty
+	Sources               []syftjsonModel.Source        `json:"sources"`           // Source represents the original object that was cataloged
+	Distros               []external.ImportDistribution `json:"distros"`           // Distro represents the Linux distribution that was detected from the source
+	Descriptor            syftjsonModel.Descriptor      `json:"descriptor"`        // Descriptor is a block containing self-describing information about syft
+	Schema                syftjsonModel.Schema          `json:"schema"`            // Schema is a block reserved for defining the version for the shape of this JSON document and where to find the schema document to validate the shape
 }
 
 // toImportSBOMModel transforms the current sbom shape into what is needed for the current anchore import api shape.
@@ -57,12 +57,12 @@ func toImportSBOMModel(s sbom.SBOM) importSBOM {
 		ArtifactRelationships: m.ArtifactRelationships,
 		Files:                 m.Files,
 		Secrets:               m.Secrets,
-		Source:                m.Sources[0],
-		Distro: external.ImportDistribution{
+		Sources:               m.Sources,
+		Distros: []external.ImportDistribution{{
 			Name:    name,
 			Version: version,
 			IdLike:  idLike,
-		},
+		}},
 		Descriptor: m.Descriptor,
 		Schema:     m.Schema,
 	}

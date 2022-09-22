@@ -49,8 +49,8 @@ func Test_decodeJSON(t *testing.T) {
 			split := strings.SplitN(test.distro, ":", 2)
 			name := split[0]
 			version := split[1]
-			assert.Equal(t, bom.Artifacts.LinuxDistribution.ID, name)
-			assert.Equal(t, bom.Artifacts.LinuxDistribution.Version, version)
+			assert.Equal(t, bom.Artifacts.LinuxDistributions[0].ID, name)
+			assert.Equal(t, bom.Artifacts.LinuxDistributions[0].Version, version)
 
 		pkgs:
 			for _, pkg := range test.packages {
