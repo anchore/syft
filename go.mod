@@ -55,7 +55,7 @@ require (
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/anchore/stereoscope v0.0.0-20220829182958-659c89aa659f
+	github.com/anchore/stereoscope v0.0.0-20220921141924-56552770e555
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/go-openapi/runtime v0.24.1
 	github.com/google/go-containerregistry v0.11.0
