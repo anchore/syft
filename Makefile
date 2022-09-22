@@ -13,7 +13,7 @@ BOUNCER_VERSION = v0.4.0
 CHRONICLE_VERSION = v0.4.1
 GORELEASER_VERSION = v1.11.4
 YAJSV_VERSION = v1.4.0
-COSIGN_VERSION = v1.12.0
+COSIGN_VERSION = v1.12.1
 
 # formatting variables
 BOLD := $(shell tput -T linux bold)
