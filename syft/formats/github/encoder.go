@@ -72,7 +72,14 @@ func isArchive(path string) bool {
 
 // toPath Generates a string representation of the package location, optionally including the layer hash
 func toPath(s *source.Metadata, p pkg.Package) string {
-	inputPath := strings.TrimPrefix(s.Path, "./")
+	scheme := source.UnknownScheme
+	imageInput := ""
+	inputPath := ""
+	if s != nil {
+		scheme = s.Scheme
+		imageInput = s.ImageMetadata.UserInput
+		inputPath = strings.TrimPrefix(s.Path, "./")
+	}
 	if inputPath == "." {
 		inputPath = ""
 	}
@@ -84,9 +91,9 @@ func toPath(s *source.Metadata, p pkg.Package) string {
 			packagePath = location.VirtualPath
 		}
 		packagePath = strings.TrimPrefix(packagePath, "/")
-		switch s.Scheme {
+		switch scheme {
 		case source.ImageScheme:
-			image := strings.ReplaceAll(s.ImageMetadata.UserInput, ":/", "//")
+			image := strings.ReplaceAll(imageInput, ":/", "//")
 			return fmt.Sprintf("%s:/%s", image, packagePath)
 		case source.FileScheme:
 			if isArchive(inputPath) {
@@ -100,7 +107,7 @@ func toPath(s *source.Metadata, p pkg.Package) string {
 			return packagePath
 		}
 	}
-	return fmt.Sprintf("%s%s", inputPath, s.ImageMetadata.UserInput)
+	return fmt.Sprintf("%s:%s:%s", inputPath, imageInput, p.PURL)
 }
 
 // toGithubManifests manifests, each of which represents a specific location that has dependencies

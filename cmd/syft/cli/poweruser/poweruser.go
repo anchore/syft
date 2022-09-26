@@ -11,7 +11,6 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
-	"github.com/anchore/syft/cmd/syft/cli/packages"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
@@ -19,7 +18,6 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/sbom"
@@ -98,15 +96,9 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			},
 		}
 
-		var relationships []<-chan artifact.Relationship
 		for _, task := range tasks {
-			c := make(chan artifact.Relationship)
-			relationships = append(relationships, c)
-
-			go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
+			eventloop.RunTask(task, &s, src, errs)
 		}
-
-		s.Relationships = append(s.Relationships, packages.MergeRelationships(relationships...)...)
 
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,

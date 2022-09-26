@@ -138,44 +138,48 @@
    ]
   }
  ],
- "source": {
-  "type": "image",
-  "target": {
-   "userInput": "user-image-input",
-   "imageID": "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
-   "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
-   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-   "tags": [
-    "stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b"
-   ],
-   "imageSize": 38,
-   "layers": [
-    {
-     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",
-     "size": 22
-    },
-    {
-     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
-     "size": 16
-    }
-   ],
-   "manifest": "ZXlKelkyaGxiV0ZXWlhKemFXOXVJam95TENKdFpXUnBZVlI1Y0dVaU9pSmguLi4=",
-   "config": "ZXlKaGNtTm9hWFJsWTNSMWNtVWlPaUpoYldRMk5DSXNJbU52Ym1acC4uLg==",
-   "repoDigests": [],
-   "architecture": "",
-   "os": ""
+ "sources": [
+  {
+   "type": "image",
+   "target": {
+    "userInput": "user-image-input",
+    "imageID": "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+    "tags": [
+     "stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b"
+    ],
+    "imageSize": 38,
+    "layers": [
+     {
+      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+      "digest": "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",
+      "size": 22
+     },
+     {
+      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+      "digest": "sha256:366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
+      "size": 16
+     }
+    ],
+    "manifest": "ZXlKelkyaGxiV0ZXWlhKemFXOXVJam95TENKdFpXUnBZVlI1Y0dVaU9pSmguLi4=",
+    "config": "ZXlKaGNtTm9hWFJsWTNSMWNtVWlPaUpoYldRMk5DSXNJbU52Ym1acC4uLg==",
+    "repoDigests": [],
+    "architecture": "",
+    "os": ""
+   }
   }
- },
- "distro": {
-  "id": "redhat",
-  "idLike": [
-   "rhel"
-  ],
-  "version": "7",
-  "versionID": "7"
- },
+ ],
+ "distros": [
+  {
+   "id": "redhat",
+   "idLike": [
+    "rhel"
+   ],
+   "version": "7",
+   "versionID": "7"
+  }
+ ],
  "descriptor": {
   "name": "syft",
   "version": "v0.42.0-bogus",

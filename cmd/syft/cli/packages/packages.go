@@ -19,9 +19,10 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/template"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -93,14 +94,14 @@ func execWorker(app *config.Application, input []source.Input, writer sbom.Write
 		}
 
 		if s == nil {
-			ui := ""
+			userInput := ""
 			for i, in := range input {
 				if i > 0 {
-					ui += " "
+					userInput += " "
 				}
-				ui += in.UserInput
+				userInput += in.UserInput
 			}
-			errs <- fmt.Errorf("no SBOM produced for %q", ui)
+			errs <- fmt.Errorf("no SBOM produced for %q", userInput)
 		}
 
 		if app.Anchore.Host != "" {
@@ -125,13 +126,15 @@ func GenerateSBOM(sources []source.Source, errs chan error, app *config.Applicat
 		return nil, err
 	}
 
-	var meta []source.Metadata
-	for _, s := range sources {
-		meta = append(meta, s.Metadata)
-	}
-
 	s := sbom.SBOM{
-		Sources: meta,
+		Artifacts: sbom.Artifacts{
+			PackageCatalog:      pkg.NewCatalog(),
+			Secrets:             map[source.Coordinates][]file.SearchResult{},
+			FileDigests:         map[source.Coordinates][]file.Digest{},
+			FileClassifications: map[source.Coordinates][]file.Classification{},
+			FileMetadata:        map[source.Coordinates]source.FileMetadata{},
+			FileContents:        map[source.Coordinates]string{},
+		},
 		Descriptor: sbom.Descriptor{
 			Name:          internal.ApplicationName,
 			Version:       version.FromBuild().Version,
@@ -139,33 +142,20 @@ func GenerateSBOM(sources []source.Source, errs chan error, app *config.Applicat
 		},
 	}
 
-	buildRelationships(&s, sources, tasks, errs)
+	buildSBOM(&s, sources, tasks, errs)
 
 	return &s, nil
 }
 
-func buildRelationships(s *sbom.SBOM, sources []source.Source, tasks []eventloop.Task, errs chan error) {
-	var relationships []<-chan artifact.Relationship
-	for _, task := range tasks {
-		for _, src := range sources {
-			src := src
-			c := make(chan artifact.Relationship)
-			relationships = append(relationships, c)
-			go eventloop.RunTask(task, &s.Artifacts, &src, c, errs)
+func buildSBOM(s *sbom.SBOM, sources []source.Source, tasks []eventloop.Task, errs chan error) {
+	for _, src := range sources {
+		src := src
+		meta := &src.Metadata
+		s.Sources = append(s.Sources, *meta)
+		for _, task := range tasks {
+			eventloop.RunTask(task, s, &src, errs)
 		}
 	}
-
-	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
-}
-
-func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
-	for _, c := range cs {
-		for n := range c {
-			relationships = append(relationships, n)
-		}
-	}
-
-	return relationships
 }
 
 func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Application) error {

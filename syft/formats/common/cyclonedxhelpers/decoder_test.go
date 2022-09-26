@@ -210,7 +210,7 @@ func Test_decode(t *testing.T) {
 		test:
 			for _, e := range test.expected {
 				if e.os != "" {
-					assert.Equal(t, e.os, sbom.Artifacts.LinuxDistributions[0].ID)
+					assert.Equal(t, e.os, sbom.Artifacts.LinuxDistributions[0].OSID)
 					assert.Equal(t, e.ver, sbom.Artifacts.LinuxDistributions[0].VersionID)
 				}
 				if e.pkg != "" {

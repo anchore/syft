@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -77,7 +78,13 @@ func Test_toGithubModel(t *testing.T) {
 			nil,
 			"",
 		).ToString()
+		p.SetID()
 		s.Artifacts.PackageCatalog.Add(p)
+		s.Relationships = append(s.Relationships, artifact.Relationship{
+			From: p,
+			To:   &s.Sources[0],
+			Type: artifact.SourceRelationship,
+		})
 	}
 
 	actual := toGithubModel(&s)
