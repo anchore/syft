@@ -579,6 +579,75 @@ func TestImageExclusions(t *testing.T) {
 	}
 }
 
+func Test_crossPlatformExclusions(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		root    string
+		path    string
+		exclude string
+		match   bool
+	}{
+		{
+			desc:    "linux doublestar",
+			root:    "/usr",
+			path:    "/usr/var/lib/etc.txt",
+			exclude: "**/*.txt",
+			match:   true,
+		},
+		{
+			desc:    "linux relative",
+			root:    "/usr/var/lib",
+			path:    "/usr/var/lib/etc.txt",
+			exclude: "./*.txt",
+			match:   true,
+		},
+		{
+			desc:    "linux one level",
+			root:    "/usr",
+			path:    "/usr/var/lib/etc.txt",
+			exclude: "*/*.txt",
+			match:   false,
+		},
+		// NOTE: since these tests will run in linux and macOS, the windows paths will be
+		// considered relative if they do not start with a forward slash and paths with backslashes
+		// won't be modified by the filepath.ToSlash call, so these are emulating the result of
+		// filepath.ToSlash usage
+		{
+			desc:    "windows doublestar",
+			root:    "/C:/User/stuff",
+			path:    "/C:/User/stuff/thing.txt",
+			exclude: "**/*.txt",
+			match:   true,
+		},
+		{
+			desc:    "windows relative",
+			root:    "/C:/User/stuff",
+			path:    "/C:/User/stuff/thing.txt",
+			exclude: "./*.txt",
+			match:   true,
+		},
+		{
+			desc:    "windows one level",
+			root:    "/C:/User/stuff",
+			path:    "/C:/User/stuff/thing.txt",
+			exclude: "*/*.txt",
+			match:   false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			fns, err := getDirectoryExclusionFunctions(test.root, []string{test.exclude})
+			require.NoError(t, err)
+
+			for _, f := range fns {
+				result := f(test.path, nil)
+				require.Equal(t, test.match, result)
+			}
+		})
+	}
+}
+
 // createArchive creates a new archive file at destinationArchivePath based on the directory found at sourceDirPath.
 func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
 	t.Helper()
