@@ -392,6 +392,9 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 		return nil, err
 	}
 
+	// this handles Windows file paths by converting them to C:/something/else format
+	root = filepath.ToSlash(root)
+
 	if !strings.HasSuffix(root, "/") {
 		root += "/"
 	}
@@ -414,6 +417,8 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 	return []pathFilterFn{
 		func(path string, _ os.FileInfo) bool {
 			for _, exclusion := range exclusions {
+				// this is required to handle Windows filepaths
+				path = filepath.ToSlash(path)
 				matches, err := doublestar.Match(exclusion, path)
 				if err != nil {
 					return false
