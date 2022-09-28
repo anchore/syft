@@ -13,20 +13,22 @@ import (
 // integrity check
 var _ common.ParserFn = parseConanlock
 
+type conanLock struct {
+	GraphLock struct {
+		Nodes map[string]struct {
+			Ref string
+		}
+	} `json:"graph_lock"`
+}
+
 // parseConanlock is a parser function for conan.lock contents, returning all packages discovered.
 func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	pkgs := []*pkg.Package{}
-	var graphLock struct {
-		GraphLock struct {
-			Nodes map[string]struct {
-				Ref string
-			}
-		} `json:"graph_lock"`
-	}
-	if err := json.NewDecoder(reader).Decode(&graphLock); err != nil {
+	var cl conanLock
+	if err := json.NewDecoder(reader).Decode(&cl); err != nil {
 		return nil, nil, err
 	}
-	for _, node := range graphLock.GraphLock.Nodes {
+	for _, node := range cl.GraphLock.Nodes {
 		if len(node.Ref) > 0 {
 			// ref: pkga/0.1@user/testing
 			splits := strings.Split(strings.Split(node.Ref, "@")[0], "/")
