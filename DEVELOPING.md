@@ -107,7 +107,10 @@ SBOM data model, it's translated output formats, and the core SBOM generation lo
 - file catalogers and their organization can be viewed/added to the `syft/file` package
 - The source package provides an abstraction to allow a user to loosely define a data source that can be cataloged
 - Logging Abstraction ...
-- 
+
+#### Code example of syft as a library
+Here is a gist of using syft as a library to generate a SBOM from a docker image: [link](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b).
+The execution flow for the example is detailed below.
 
 #### Execution flow examples for the syft library
 ```mermaid
@@ -128,8 +131,7 @@ sequenceDiagram
     Note right of catalog: cataloger configuration is done based on src
 ```
 
-#### Code example of syft as a library
-Here is a gist of using syft as a library to generate a SBOM from a docker image: [link](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b).
+
 
 ## Testing
 
