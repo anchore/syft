@@ -50,6 +50,9 @@ func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 				Metadata: pkg.ConanMetadata{
 					Name:    pkgName,
 					Version: pkgVersion,
+					Options: node.Options,
+					Path:    node.Path,
+					Context: node.Context,
 				},
 			})
 		}

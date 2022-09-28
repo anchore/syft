@@ -8,6 +8,9 @@ import (
 type ConanMetadata struct {
 	Name    string `mapstructure:"name" json:"name"`
 	Version string `mapstructure:"version" json:"version"`
+	Options string `mapstructure:"options" json:"options"`
+	Path    string `mapstructure:"path" json:"path"`
+	Context string `mapstructure:"context" json:"context"`
 }
 
 func (m ConanMetadata) PackageURL(_ *linux.Release) string {
