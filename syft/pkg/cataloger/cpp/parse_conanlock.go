@@ -3,6 +3,7 @@ package cpp
 import (
 	"encoding/json"
 	"io"
+	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -14,7 +15,20 @@ var _ common.ParserFn = parseConanlock
 
 type conanLock struct {
 	GraphLock struct {
-		Nodes map[string]pkg.ConanMetadata `json:"nodes"`
+		Nodes map[string]struct {
+			Ref              string `json:"ref"`
+			PackageID        string `json:"package_id"`
+			Context          string `json:"context"`
+			Prev             string `json:"prev"`
+			Requires         string `json:"requires"`
+			BuildRequires    string `json:"build_requires"`
+			PythonRequires   string `json:"py_requires"`
+			Options          string `json:"options"`
+			RevisionsEnabled string `json:"revisions_enabled"`
+			Relaxed          string `json:"relaxed"`
+			Modified         string `json:"modified"`
+			Path             string `json:"path"`
+		} `json:"nodes"`
 	} `json:"graph_lock"`
 	Version     string `json:"version"`
 	ProfileHost string `json:"profile_host"`
@@ -28,9 +42,9 @@ func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 		return nil, nil, err
 	}
 	for _, node := range cl.GraphLock.Nodes {
-		metadata := pkg.ConanMetadata{
+		metadata := pkg.ConanLockMetadata{
 			Ref:     node.Ref,
-			Options: node.Options,
+			Options: parseOptions(node.Options),
 			Path:    node.Path,
 			Context: node.Context,
 		}
@@ -51,4 +65,21 @@ func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 	}
 
 	return pkgs, nil, nil
+}
+
+func parseOptions(options string) map[string]string {
+	o := make(map[string]string)
+	if len(options) == 0 {
+		return nil
+	}
+
+	kvps := strings.Split(options, "\n")
+	for _, kvp := range kvps {
+		kv := strings.Split(kvp, "=")
+		if len(kv) == 2 {
+			o[kv[0]] = kv[1]
+		}
+	}
+
+	return o
 }

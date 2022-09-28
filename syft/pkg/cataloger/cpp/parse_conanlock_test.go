@@ -17,9 +17,12 @@ func TestParseConanlock(t *testing.T) {
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanaMetadataType,
-			Metadata: pkg.ConanMetadata{
-				Ref:     "zlib/1.2.12",
-				Options: "fPIC=True\nshared=False",
+			Metadata: pkg.ConanLockMetadata{
+				Ref: "zlib/1.2.12",
+				Options: map[string]string{
+					"fPIC":   "True",
+					"shared": "False",
+				},
 				Path:    "all/conanfile.py",
 				Context: "host",
 			},

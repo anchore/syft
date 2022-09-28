@@ -11,9 +11,9 @@ func TestConanMetadata_PackageURL(t *testing.T) {
 		{
 			name: "happy path",
 			m: ConanMetadata{
-				Ref: "pkg/1.2.3@user/channel",
+				Ref: "catch2/2.13.8",
 			},
-			want: "pkg:conan/pkg@1.2.3",
+			want: "pkg:conan/catch2@2.13.8",
 		},
 	}
 
