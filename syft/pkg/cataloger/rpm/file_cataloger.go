@@ -29,6 +29,7 @@ func (c *FileCataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm files
+//
 //nolint:funlen
 func (c *FileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	fileMatches, err := resolver.FilesByGlob("**/*.rpm")
