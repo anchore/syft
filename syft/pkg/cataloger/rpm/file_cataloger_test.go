@@ -79,6 +79,9 @@ func TestParseRpmFiles(t *testing.T) {
 				},
 			},
 		},
+		{
+			fixture: "test-fixtures/bad",
+		},
 	}
 
 	for _, test := range tests {
