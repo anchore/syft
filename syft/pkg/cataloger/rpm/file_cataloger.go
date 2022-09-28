@@ -9,6 +9,7 @@ import (
 	"github.com/sassoftware/go-rpmutils"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -28,6 +29,7 @@ func (c *FileCataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm files
+//nolint:funlen
 func (c *FileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	fileMatches, err := resolver.FilesByGlob("**/*.rpm")
 	if err != nil {
@@ -43,7 +45,8 @@ func (c *FileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []
 
 		rpm, err := rpmutils.ReadRpm(contentReader)
 		if err != nil {
-			return nil, nil, err
+			log.Debugf("RPM file found but unable to read: %s (%v)", location.RealPath, err)
+			continue
 		}
 
 		nevra, err := rpm.Header.GetNEVRA()
