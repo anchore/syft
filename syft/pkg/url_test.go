@@ -241,8 +241,7 @@ func TestPackageURL(t *testing.T) {
 				Language:     CPP,
 				MetadataType: ConanaMetadataType,
 				Metadata: ConanMetadata{
-					Name:    "catch2",
-					Version: "2.13.8",
+					Ref: "catch2/2.13.8",
 				},
 			},
 			expected: "pkg:conan/catch2@2.13.8",

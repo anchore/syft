@@ -18,8 +18,10 @@ func TestParseConanlock(t *testing.T) {
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanaMetadataType,
 			Metadata: pkg.ConanMetadata{
-				Name:    "zlib",
-				Version: "1.2.12",
+				Ref:     "zlib/1.2.12",
+				Options: "fPIC=True\nshared=False",
+				Path:    "all/conanfile.py",
+				Context: "host",
 			},
 		},
 	}

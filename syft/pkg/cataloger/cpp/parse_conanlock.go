@@ -3,7 +3,6 @@ package cpp
 import (
 	"encoding/json"
 	"io"
-	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -34,28 +33,26 @@ func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 		return nil, nil, err
 	}
 	for _, node := range cl.GraphLock.Nodes {
-		if len(node.Ref) > 0 {
-			// ref: pkga/0.1@user/testing
-			splits := strings.Split(strings.Split(node.Ref, "@")[0], "/")
-			if len(splits) < 2 {
-				continue
-			}
-			pkgName, pkgVersion := splits[0], splits[1]
-			pkgs = append(pkgs, &pkg.Package{
-				Name:         pkgName,
-				Version:      pkgVersion,
-				Language:     pkg.CPP,
-				Type:         pkg.ConanPkg,
-				MetadataType: pkg.ConanaMetadataType,
-				Metadata: pkg.ConanMetadata{
-					Name:    pkgName,
-					Version: pkgVersion,
-					Options: node.Options,
-					Path:    node.Path,
-					Context: node.Context,
-				},
-			})
+		metadata := pkg.ConanMetadata{
+			Ref:     node.Ref,
+			Options: node.Options,
+			Path:    node.Path,
+			Context: node.Context,
 		}
+
+		pkgName, pkgVersion := metadata.NameAndVersion()
+		if pkgName == "" || pkgVersion == "" {
+			continue
+		}
+
+		pkgs = append(pkgs, &pkg.Package{
+			Name:         pkgName,
+			Version:      pkgVersion,
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			MetadataType: pkg.ConanaMetadataType,
+			Metadata:     metadata,
+		})
 	}
 
 	return pkgs, nil, nil
