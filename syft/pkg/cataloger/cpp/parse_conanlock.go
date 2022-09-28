@@ -14,12 +14,7 @@ var _ common.ParserFn = parseConanlock
 
 type conanLock struct {
 	GraphLock struct {
-		Nodes map[string]struct {
-			Ref     string `json:"ref"`
-			Options string `json:"options"`
-			Path    string `json:"path"`
-			Context string `json:"context"`
-		} `json:"nodes"`
+		Nodes map[string]pkg.ConanMetadata `json:"nodes"`
 	} `json:"graph_lock"`
 	Version     string `json:"version"`
 	ProfileHost string `json:"profile_host"`
