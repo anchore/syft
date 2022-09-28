@@ -16,9 +16,14 @@ var _ common.ParserFn = parseConanlock
 type conanLock struct {
 	GraphLock struct {
 		Nodes map[string]struct {
-			Ref string
-		}
+			Ref     string `json:"ref"`
+			Options string `json:"options"`
+			Path    string `json:"path"`
+			Context string `json:"context"`
+		} `json:"nodes"`
 	} `json:"graph_lock"`
+	Version     string `json:"version"`
+	ProfileHost string `json:"profile_host"`
 }
 
 // parseConanlock is a parser function for conan.lock contents, returning all packages discovered.
