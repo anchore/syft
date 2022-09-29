@@ -11,25 +11,29 @@ import (
 )
 
 func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
+	// the idAliases map takes into account changes between the ID in the document and the ID of an object
 	idAliases := make(map[string]string)
 
 	catalog := toSyftCatalog(doc.Artifacts, idAliases)
 
-	return &sbom.SBOM{
+	s := &sbom.SBOM{
+		Descriptor: toSyftDescriptor(doc.Descriptor),
+		Sources:    toSyftSourcesData(doc.Sources, idAliases),
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:     catalog,
-			LinuxDistributions: toSyftLinuxReleases(doc.Distros),
+			LinuxDistributions: toSyftLinuxReleases(doc.Distros, idAliases),
 		},
-		Sources:       toSyftSourcesData(doc.Sources),
-		Descriptor:    toSyftDescriptor(doc.Descriptor),
-		Relationships: toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases),
-	}, nil
+	}
+
+	s.Relationships = toSyftRelationships(s, &doc, catalog, doc.ArtifactRelationships, idAliases)
+
+	return s, nil
 }
 
-func toSyftLinuxReleases(releases []model.LinuxRelease) []linux.Release {
+func toSyftLinuxReleases(releases []model.LinuxRelease, idAliases map[string]string) []linux.Release {
 	var out []linux.Release
 	for _, d := range releases {
-		out = append(out, linux.Release{
+		r := linux.Release{
 			PrettyName:       d.PrettyName,
 			Name:             d.Name,
 			OSID:             d.ID,
@@ -47,12 +51,17 @@ func toSyftLinuxReleases(releases []model.LinuxRelease) []linux.Release {
 			BugReportURL:     d.BugReportURL,
 			PrivacyPolicyURL: d.PrivacyPolicyURL,
 			CPEName:          d.CPEName,
-		})
+		}
+
+		idAliases[d.UID] = string(r.ID())
+
+		out = append(out, r)
 	}
 	return out
 }
 
-func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationships []model.Relationship, idAliases map[string]string) []artifact.Relationship {
+func toSyftRelationships(s *sbom.SBOM, doc *model.Document, catalog *pkg.Catalog, relationships []model.Relationship, idAliases map[string]string) []artifact.Relationship {
+	// the idMap takes IDs and maps them to Syft objects for appropriate relationships
 	idMap := make(map[string]interface{})
 
 	for _, p := range catalog.Sorted() {
@@ -67,11 +76,18 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationship
 		idMap[f.ID] = f.Location
 	}
 
+	for i := range s.Sources {
+		src := &s.Sources[i]
+		idMap[string(src.ID())] = src
+	}
+
 	var out []artifact.Relationship
 	for _, r := range relationships {
 		syftRelationship := toSyftRelationship(idMap, r, idAliases)
 		if syftRelationship != nil {
 			out = append(out, *syftRelationship)
+		} else {
+			log.Debugf("nil relationship from: %s to: %s", r.Parent, r.Child)
 		}
 	}
 	return out
@@ -98,9 +114,9 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 	typ := artifact.RelationshipType(relationship.Type)
 
 	switch typ {
-	case artifact.OwnershipByFileOverlapRelationship:
-		fallthrough
-	case artifact.ContainsRelationship:
+	case artifact.OwnershipByFileOverlapRelationship,
+		artifact.ContainsRelationship,
+		artifact.SourceRelationship:
 	default:
 		log.Warnf("unknown relationship type: %s", typ)
 		return nil
@@ -121,33 +137,37 @@ func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
 	}
 }
 
-func toSyftSourcesData(sources []model.Source) []source.Metadata {
+func toSyftSourcesData(sources []model.Source, idAliases map[string]string) []source.Metadata {
 	out := make([]source.Metadata, len(sources))
-	for _, s := range sources {
-		out = append(out, *toSyftSourceData(s))
+	for i, s := range sources {
+		out[i] = *toSyftSourceData(s, idAliases)
 	}
 	return out
 }
 
-func toSyftSourceData(s model.Source) *source.Metadata {
+func toSyftSourceData(s model.Source, idAliases map[string]string) *source.Metadata {
+	var out *source.Metadata
 	switch s.Type {
 	case "directory":
-		return &source.Metadata{
+		out = &source.Metadata{
 			Scheme: source.DirectoryScheme,
 			Path:   s.Target.(string),
 		}
 	case "file":
-		return &source.Metadata{
+		out = &source.Metadata{
 			Scheme: source.FileScheme,
 			Path:   s.Target.(string),
 		}
 	case "image":
-		return &source.Metadata{
+		out = &source.Metadata{
 			Scheme:        source.ImageScheme,
 			ImageMetadata: s.Target.(source.ImageMetadata),
 		}
 	}
-	return nil
+	if out != nil {
+		idAliases[s.ID] = string(out.ID())
+	}
+	return out
 }
 
 func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Catalog {

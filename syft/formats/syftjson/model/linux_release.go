@@ -7,6 +7,7 @@ import (
 type IDLikes []string
 
 type LinuxRelease struct {
+	UID              string  `json:"uid,omitempty"`
 	PrettyName       string  `json:"prettyName,omitempty"`
 	Name             string  `json:"name,omitempty"`
 	ID               string  `json:"id,omitempty"`

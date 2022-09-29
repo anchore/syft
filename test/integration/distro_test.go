@@ -12,7 +12,7 @@ import (
 func TestDistroImage(t *testing.T) {
 	sbom, _ := catalogFixtureImage(t, "image-distro-id", source.SquashedScope, nil)
 
-	expected := &linux.Release{
+	expected := linux.Release{
 		PrettyName: "BusyBox v1.31.1",
 		Name:       "busybox",
 		OSID:       "busybox",
@@ -21,5 +21,5 @@ func TestDistroImage(t *testing.T) {
 		VersionID:  "1.31.1",
 	}
 
-	assert.Equal(t, expected, sbom.Artifacts.LinuxDistributions)
+	assert.Equal(t, expected, sbom.Artifacts.LinuxDistributions[0])
 }

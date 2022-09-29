@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -31,13 +32,18 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
 
+	distros := []linux.Release{}
+	if actualDistro != nil {
+		distros = append(distros, *actualDistro)
+	}
+
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkgCatalog,
-			LinuxDistribution: actualDistro,
+			PackageCatalog:     pkgCatalog,
+			LinuxDistributions: distros,
 		},
 		Relationships: relationships,
-		Source:        theSource.Metadata,
+		Sources:       []source.Metadata{theSource.Metadata},
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",
@@ -66,12 +72,17 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 		t.Fatalf("failed to catalog image: %+v", err)
 	}
 
+	distros := []linux.Release{}
+	if actualDistro != nil {
+		distros = append(distros, *actualDistro)
+	}
+
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkgCatalog,
-			LinuxDistribution: actualDistro,
+			PackageCatalog:     pkgCatalog,
+			LinuxDistributions: distros,
 		},
 		Relationships: relationships,
-		Source:        theSource.Metadata,
+		Sources:       []source.Metadata{theSource.Metadata},
 	}, theSource
 }

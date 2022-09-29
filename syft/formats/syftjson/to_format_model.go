@@ -44,6 +44,7 @@ func toLinuxReleases(releases []linux.Release) []model.LinuxRelease {
 	var out []model.LinuxRelease
 	for _, d := range releases {
 		out = append(out, model.LinuxRelease{
+			UID:              string(d.ID()),
 			PrettyName:       d.PrettyName,
 			Name:             d.Name,
 			ID:               d.OSID,
@@ -248,16 +249,19 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 			metadata.Tags = []string{}
 		}
 		return model.Source{
+			ID:     string(src.ID()),
 			Type:   "image",
 			Target: metadata,
 		}, nil
 	case source.DirectoryScheme:
 		return model.Source{
+			ID:     string(src.ID()),
 			Type:   "directory",
 			Target: src.Path,
 		}, nil
 	case source.FileScheme:
 		return model.Source{
+			ID:     string(src.ID()),
 			Type:   "file",
 			Target: src.Path,
 		}, nil
