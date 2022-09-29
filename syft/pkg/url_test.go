@@ -239,14 +239,29 @@ func TestPackageURL(t *testing.T) {
 				Version:      "2.13.8",
 				Type:         ConanPkg,
 				Language:     CPP,
-				MetadataType: ConanaMetadataType,
+				MetadataType: ConanMetadataType,
 				Metadata: ConanMetadata{
-					Name:    "catch2",
-					Version: "2.13.8",
+					Ref: "catch2/2.13.8",
 				},
 			},
 			expected: "pkg:conan/catch2@2.13.8",
 		},
+		// note both Ref should parse the same for conan ecosystem
+		{
+			name: "conan lock",
+			pkg: Package{
+				Name:         "catch2",
+				Version:      "2.13.8",
+				Type:         ConanPkg,
+				Language:     CPP,
+				MetadataType: ConanLockMetadataType,
+				Metadata: ConanLockMetadata{
+					Ref: "catch2/2.13.8",
+				},
+			},
+			expected: "pkg:conan/catch2@2.13.8",
+		},
+
 		{
 			name: "hackage",
 			pkg: Package{
