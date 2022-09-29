@@ -248,6 +248,59 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "ConanLockMetadata": {
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "package_id": {
+          "type": "string"
+        },
+        "prev": {
+          "type": "string"
+        },
+        "requires": {
+          "type": "string"
+        },
+        "build_requires": {
+          "type": "string"
+        },
+        "py_requires": {
+          "type": "string"
+        },
+        "options": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "path": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "ConanMetadata": {
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
     "Coordinates": {
       "required": [
         "path"
@@ -604,6 +657,28 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "HackageMetadata": {
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "pkgHash": {
+          "type": "string"
+        },
+        "snapshotURL": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
     "JavaManifest": {
       "properties": {
         "main": {
@@ -656,6 +731,22 @@
             "$ref": "#/definitions/Digest"
           },
           "type": "array"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "KbPackageMetadata": {
+      "required": [
+        "product_id",
+        "kb"
+      ],
+      "properties": {
+        "product_id": {
+          "type": "string"
+        },
+        "kb": {
+          "type": "string"
         }
       },
       "additionalProperties": true,
@@ -842,6 +933,12 @@
               "$ref": "#/definitions/CargoPackageMetadata"
             },
             {
+              "$ref": "#/definitions/ConanLockMetadata"
+            },
+            {
+              "$ref": "#/definitions/ConanMetadata"
+            },
+            {
               "$ref": "#/definitions/DartPubMetadata"
             },
             {
@@ -857,7 +954,13 @@
               "$ref": "#/definitions/GolangBinMetadata"
             },
             {
+              "$ref": "#/definitions/HackageMetadata"
+            },
+            {
               "$ref": "#/definitions/JavaMetadata"
+            },
+            {
+              "$ref": "#/definitions/KbPackageMetadata"
             },
             {
               "$ref": "#/definitions/NpmPackageJSONMetadata"
