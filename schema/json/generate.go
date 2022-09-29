@@ -44,7 +44,6 @@ type artifactMetadataContainer struct {
 	Portage   pkg.PortageMetadata
 	Conan     pkg.ConanMetadata
 	ConanLock pkg.ConanLockMetadata
-	RustCargo pkg.CargoPackageMetadata
 	KbPackage pkg.KbPackageMetadata
 	Hackage   pkg.HackageMetadata
 }
