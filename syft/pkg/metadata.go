@@ -26,7 +26,8 @@ const (
 	GolangBinMetadataType        MetadataType = "GolangBinMetadata"
 	PhpComposerJSONMetadataType  MetadataType = "PhpComposerJsonMetadata"
 	CocoapodsMetadataType        MetadataType = "CocoapodsMetadataType"
-	ConanaMetadataType           MetadataType = "ConanaMetadataType"
+	ConanMetadataType            MetadataType = "ConanMetadataType"
+	ConanLockMetadataType        MetadataType = "ConanLockMetadataType"
 	PortageMetadataType          MetadataType = "PortageMetadata"
 	HackageMetadataType          MetadataType = "HackageMetadataType"
 )
@@ -47,7 +48,8 @@ var AllMetadataTypes = []MetadataType{
 	GolangBinMetadataType,
 	PhpComposerJSONMetadataType,
 	CocoapodsMetadataType,
-	ConanaMetadataType,
+	ConanMetadataType,
+	ConanLockMetadataType,
 	PortageMetadataType,
 	HackageMetadataType,
 }
@@ -68,7 +70,8 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	GolangBinMetadataType:        reflect.TypeOf(GolangBinMetadata{}),
 	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
 	CocoapodsMetadataType:        reflect.TypeOf(CocoapodsMetadata{}),
-	ConanaMetadataType:           reflect.TypeOf(ConanMetadata{}),
+	ConanMetadataType:            reflect.TypeOf(ConanMetadata{}),
+	ConanLockMetadataType:        reflect.TypeOf(ConanLockMetadata{}),
 	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
 	HackageMetadataType:          reflect.TypeOf(HackageMetadata{}),
 }

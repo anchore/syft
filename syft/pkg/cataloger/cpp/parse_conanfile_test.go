@@ -16,7 +16,7 @@ func TestParseConanfile(t *testing.T) {
 			Version:      "2.13.8",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
 				Ref: "catch2/2.13.8",
 			},
@@ -26,7 +26,7 @@ func TestParseConanfile(t *testing.T) {
 			Version:      "0.6.3",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
 				Ref: "docopt.cpp/0.6.3",
 			},
@@ -36,7 +36,7 @@ func TestParseConanfile(t *testing.T) {
 			Version:      "8.1.1",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
 				Ref: "fmt/8.1.1",
 			},
@@ -46,7 +46,7 @@ func TestParseConanfile(t *testing.T) {
 			Version:      "1.9.2",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
 				Ref: "spdlog/1.9.2",
 			},
@@ -56,7 +56,7 @@ func TestParseConanfile(t *testing.T) {
 			Version:      "2.0.20",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
 				Ref: "sdl/2.0.20",
 			},
@@ -66,7 +66,7 @@ func TestParseConanfile(t *testing.T) {
 			Version:      "1.3.8",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
 				Ref: "fltk/1.3.8",
 			},

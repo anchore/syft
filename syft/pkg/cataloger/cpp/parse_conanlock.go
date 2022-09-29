@@ -16,18 +16,15 @@ var _ common.ParserFn = parseConanlock
 type conanLock struct {
 	GraphLock struct {
 		Nodes map[string]struct {
-			Ref              string `json:"ref"`
-			PackageID        string `json:"package_id"`
-			Context          string `json:"context"`
-			Prev             string `json:"prev"`
-			Requires         string `json:"requires"`
-			BuildRequires    string `json:"build_requires"`
-			PythonRequires   string `json:"py_requires"`
-			Options          string `json:"options"`
-			RevisionsEnabled string `json:"revisions_enabled"`
-			Relaxed          string `json:"relaxed"`
-			Modified         string `json:"modified"`
-			Path             string `json:"path"`
+			Ref            string `json:"ref"`
+			PackageID      string `json:"package_id"`
+			Context        string `json:"context"`
+			Prev           string `json:"prev"`
+			Requires       string `json:"requires"`
+			BuildRequires  string `json:"build_requires"`
+			PythonRequires string `json:"py_requires"`
+			Options        string `json:"options"`
+			Path           string `json:"path"`
 		} `json:"nodes"`
 	} `json:"graph_lock"`
 	Version     string `json:"version"`
@@ -59,7 +56,7 @@ func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 			Version:      pkgVersion,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanLockMetadataType,
 			Metadata:     metadata,
 		})
 	}

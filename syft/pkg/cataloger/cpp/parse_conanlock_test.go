@@ -16,7 +16,7 @@ func TestParseConanlock(t *testing.T) {
 			Version:      "1.2.12",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanLockMetadataType,
 			Metadata: pkg.ConanLockMetadata{
 				Ref: "zlib/1.2.12",
 				Options: map[string]string{

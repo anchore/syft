@@ -55,7 +55,7 @@ func parseConanfile(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 			Version:      pkgVersion,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanaMetadataType,
+			MetadataType: pkg.ConanMetadataType,
 			Metadata:     m,
 		})
 	}
