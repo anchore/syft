@@ -4,6 +4,7 @@
    "0": {
     "ref": "zlib/1.2.12",
     "options": "fPIC=True\nshared=False",
+    "requires": [],
     "path": "all/conanfile.py",
     "context": "host"
    }
