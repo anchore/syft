@@ -2,6 +2,7 @@ package rekor
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -97,6 +98,43 @@ func Test_parseAndValidateAttestation(t *testing.T) {
 			assert.ErrorContains(t, err, test.expectedErr)
 		})
 	}
+}
+
+func Test_getSbom(t *testing.T) {
+
+	tests := []struct {
+		name      string
+		sbomFile  string
+		expectErr bool
+	}{
+		{
+			name:     "simple SPDX tag-value",
+			sbomFile: "test-fixtures/sboms/sbom-1.txt",
+		},
+		{
+			name:     "simple SPDX JSON",
+			sbomFile: "test-fixtures/sboms/sbom-4.json",
+		},
+		{
+			name:      "invalid SPDX file",
+			sbomFile:  "test-fixtures/sboms/sbom-invalid.txt",
+			expectErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b, err := ioutil.ReadFile(tt.sbomFile)
+			if err != nil {
+				assert.FailNow(t, "error reading test data")
+			}
+
+			_, err = parseSbom(&b)
+			if (err != nil) != tt.expectErr {
+				assert.FailNow(t, "expected error: got %v, expected %v", err != nil, tt.expectErr)
+			}
+		})
+	}
+
 }
 
 // do validation of hash in subject
