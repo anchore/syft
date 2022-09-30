@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/sigstore/rekor/pkg/generated/models"
+	"github.com/spdx/tools-golang/jsonloader"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/tvloader"
 )
@@ -149,15 +150,29 @@ func parseAndValidateAttestation(entry *models.LogEntryAnon) (in_toto.Subject, s
 }
 
 func parseSbom(spdxBytes *[]byte) (*spdx.Document2_2, error) {
-	// remove all SHA512 hashes because spdx/tools-golang does not support
-	// PR fix is filed but not merged: https://github.com/spdx/tools-golang/pull/139
+	// Check format of SPDX document (for now assume either JSON or tag value)
+	isJson := json.Valid(*spdxBytes)
 
-	regex := regexp.MustCompile("\n.*SHA512.*")
+	var (
+		sbom *spdx.Document2_2
+		err  error
+	)
+	if isJson {
+		sbom, err = jsonloader.Load2_2(bytes.NewReader(*spdxBytes))
+		if err != nil {
+			return nil, fmt.Errorf("error loading sbomBytes into spdx.Document2_2 type: %w", err)
+		}
+	} else {
+		// remove all SHA512 hashes because spdx/tools-golang does not support
+		// PR fix is filed but not merged: https://github.com/spdx/tools-golang/pull/139
 
-	modifiedSpdxBytes := regex.ReplaceAll(*spdxBytes, nil)
-	sbom, err := tvloader.Load2_2(bytes.NewReader(modifiedSpdxBytes))
-	if err != nil {
-		return nil, fmt.Errorf("error loading sbomBytes into spdx.Document2_2 type: %w", err)
+		regex := regexp.MustCompile("\n.*SHA512.*")
+
+		modifiedSpdxBytes := regex.ReplaceAll(*spdxBytes, nil)
+		sbom, err = tvloader.Load2_2(bytes.NewReader(modifiedSpdxBytes))
+		if err != nil {
+			return nil, fmt.Errorf("error loading sbomBytes into spdx.Document2_2 type: %w", err)
+		}
 	}
 
 	return sbom, nil
