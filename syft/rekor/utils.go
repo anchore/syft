@@ -151,13 +151,13 @@ func parseAndValidateAttestation(entry *models.LogEntryAnon) (in_toto.Subject, s
 
 func parseSbom(spdxBytes *[]byte) (*spdx.Document2_2, error) {
 	// Check format of SPDX document (for now assume either JSON or tag value)
-	isJson := json.Valid(*spdxBytes)
+	isJSON := json.Valid(*spdxBytes)
 
 	var (
 		sbom *spdx.Document2_2
 		err  error
 	)
-	if isJson {
+	if isJSON {
 		sbom, err = jsonloader.Load2_2(bytes.NewReader(*spdxBytes))
 		if err != nil {
 			return nil, fmt.Errorf("error loading sbomBytes into spdx.Document2_2 type: %w", err)
