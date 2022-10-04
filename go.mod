@@ -340,7 +340,7 @@ require (
 	// we are hinting brotli to latest due to warning when installing archiver v3:
 	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/pkg/errors v0.9.1
+	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 )
 
