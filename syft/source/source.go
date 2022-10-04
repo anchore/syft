@@ -15,6 +15,7 @@ import (
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archiver/v3"
+	digest "github.com/opencontainers/go-digest"
 	"github.com/spf13/afero"
 
 	"github.com/anchore/stereoscope"
@@ -25,6 +26,7 @@ import (
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
+	id                string
 	Image             *image.Image // the image object to be cataloged (image only)
 	Metadata          Metadata
 	directoryResolver *directoryResolver
@@ -302,6 +304,50 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
 	}, nil
+}
+
+func (s *Source) ID() string {
+	return s.id
+}
+
+func (s *Source) SetID() {
+	if s.Metadata.Scheme != ImageScheme {
+		// How do we generate ID for non-image sources?
+		s.id = digest.FromString(s.Metadata.Path).String()
+		return
+	}
+
+	// calcuate chain ID for image sources
+	// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
+	s.id = calculateChainID(s.Image)
+
+	if s.id == "" {
+		// TODO what happens here if image has no layers?
+		s.id = digest.FromString(s.Metadata.ImageMetadata.UserInput).String()
+	}
+	return
+}
+
+func calculateChainID(img *image.Image) string {
+	if len(img.Layers) < 1 {
+		return ""
+	}
+
+	// DiffID(L0) = digest of layer 0
+	// https://github.com/anchore/stereoscope/blob/1b1b744a919964f38d14e1416fb3f25221b761ce/pkg/image/layer_metadata.go#L19-L32
+	chainID := img.Layers[0].Metadata.Digest
+	id := chain(chainID, img.Layers[1:])
+
+	return id
+}
+
+func chain(chainID string, layers []*image.Layer) string {
+	if len(layers) < 1 {
+		return chainID
+	}
+
+	chainID = digest.FromString(layers[0].Metadata.Digest + " " + chainID).String()
+	return chain(chainID, layers[1:])
 }
 
 func (s *Source) FileResolver(scope Scope) (FileResolver, error) {

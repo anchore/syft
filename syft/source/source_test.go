@@ -65,6 +65,44 @@ func TestNewFromImageFails(t *testing.T) {
 	})
 }
 
+func TestSetID(t *testing.T) {
+	img := imagetest.GetFixtureImage(t, "oci-archive", "image-simple")
+	tests := []struct {
+		name     string
+		input    *Source
+		expected string
+	}{
+		{
+			name: "source.SetID sets the ID for non image sources",
+			input: &Source{
+				Metadata: Metadata{
+					Scheme: FileScheme,
+					Path:   "test-fixtures/image-simple/file-1.txt",
+				},
+			},
+			expected: "sha256:fbfb0730f4306b27c118715998ba58f1ad350f0451513c36c267dc4b9d3b688d",
+		},
+		{
+			name: "source.SetID sets the ID for image sources",
+			input: &Source{
+				Image: img,
+				Metadata: Metadata{
+					Scheme:        ImageScheme,
+					ImageMetadata: NewImageMetadata(img, "image-simple"),
+				},
+			},
+			expected: "sha256:e6d9f87981af1a1007a42be43b21ba6abe7c1608b1541e877c69052af5356669",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.input.SetID()
+			assert.Equal(t, test.expected, test.input.ID())
+		})
+	}
+}
+
 func TestNewFromImage(t *testing.T) {
 	layer := image.NewLayer(nil)
 	img := image.Image{
