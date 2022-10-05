@@ -198,15 +198,16 @@ func processChecksum(value string) *file.Digest {
 func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.Relationship) {
 	// map["provides" string] -> packages that provide the "p" key
 	lookup := make(map[string][]*pkg.Package)
-	// read "Provides" (p) and add as keys for lookup keys
+	// read "Provides" (p) and add as keys for lookup keys as well as package names
 	for _, p := range pkgs {
 		apkg, ok := p.Metadata.(pkg.ApkMetadata)
 		if !ok {
 			log.Warnf("cataloger failed to extract apk 'provides' metadata for package %+v", p.Name)
 			continue
 		}
+		lookup[p.Name] = append(lookup[p.Name], &p)
 		for _, provides := range apkg.Provides {
-			k := strings.Split(provides, "=")[0]
+			k := stripVersionSpecifier(provides)
 			lookup[k] = append(lookup[k], &p)
 		}
 	}
@@ -219,8 +220,9 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 			continue
 		}
 
-		for _, dep := range apkg.PullDependencies {
+		for _, depSpecifier := range apkg.Dependencies {
 			// use the lookup to find what pkg we depend on
+			dep := stripVersionSpecifier(depSpecifier)
 			for _, depPkg := range lookup[dep] {
 				// this is a pkg that package "p" depends on... make a relationship
 				relationships = append(relationships, artifact.Relationship{
@@ -232,4 +234,18 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 		}
 	}
 	return relationships
+}
+
+func splitAny(s string, seps string) []string {
+	splitter := func(r rune) bool {
+		return strings.ContainsRune(seps, r)
+	}
+	return strings.FieldsFunc(s, splitter)
+}
+
+func stripVersionSpecifier(s string) string {
+	// examples:
+	// musl>=1                 --> musl
+	// cmd:scanelf=1.3.4-r0    --> cmd:scanelf
+	return splitAny(s, "<>=")[0]
 }

@@ -18,21 +18,21 @@ var _ FileOwner = (*ApkMetadata)(nil)
 // - https://git.alpinelinux.org/apk-tools/tree/src/package.c
 // - https://git.alpinelinux.org/apk-tools/tree/src/database.c
 type ApkMetadata struct {
-	Package          string          `mapstructure:"P" json:"package"`
-	OriginPackage    string          `mapstructure:"o" json:"originPackage" cyclonedx:"originPackage"`
-	Maintainer       string          `mapstructure:"m" json:"maintainer"`
-	Version          string          `mapstructure:"V" json:"version"`
-	License          string          `mapstructure:"L" json:"license"`
-	Architecture     string          `mapstructure:"A" json:"architecture"`
-	URL              string          `mapstructure:"U" json:"url"`
-	Description      string          `mapstructure:"T" json:"description"`
-	Size             int             `mapstructure:"S" json:"size" cyclonedx:"size"`
-	InstalledSize    int             `mapstructure:"I" json:"installedSize" cyclonedx:"installedSize"`
-	PullDependencies []string        `mapstructure:"D" json:"pullDependencies" cyclonedx:"pullDependencies"`
-	Provides         []string        `mapstructure:"p" json:"provides" cyclonedx:"provides"`
-	PullChecksum     string          `mapstructure:"C" json:"pullChecksum" cyclonedx:"pullChecksum"`
-	GitCommitOfAport string          `mapstructure:"c" json:"gitCommitOfApkPort" cyclonedx:"gitCommitOfApkPort"`
-	Files            []ApkFileRecord `json:"files"`
+	Package       string          `mapstructure:"P" json:"package"`
+	OriginPackage string          `mapstructure:"o" json:"originPackage" cyclonedx:"originPackage"`
+	Maintainer    string          `mapstructure:"m" json:"maintainer"`
+	Version       string          `mapstructure:"V" json:"version"`
+	License       string          `mapstructure:"L" json:"license"`
+	Architecture  string          `mapstructure:"A" json:"architecture"`
+	URL           string          `mapstructure:"U" json:"url"`
+	Description   string          `mapstructure:"T" json:"description"`
+	Size          int             `mapstructure:"S" json:"size" cyclonedx:"size"`
+	InstalledSize int             `mapstructure:"I" json:"installedSize" cyclonedx:"installedSize"`
+	Dependencies  []string        `mapstructure:"D" json:"dependencies" cyclonedx:"dependencies"`
+	Provides      []string        `mapstructure:"p" json:"provides" cyclonedx:"provides"`
+	Checksum      string          `mapstructure:"C" json:"checksum" cyclonedx:"checksum"`
+	GitCommit     string          `mapstructure:"c" json:"gitCommit" cyclonedx:"gitCommit"`
+	Files         []ApkFileRecord `json:"files"`
 }
 
 // ApkFileRecord represents a single file listing and metadata from a APK DB entry (which may have many of these file records).
