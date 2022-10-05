@@ -51,22 +51,23 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 		return nil, fmt.Errorf("no content defined in CycloneDX BOM")
 	}
 
+	idMap := make(map[string]interface{})
+
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:     pkg.NewCatalog(),
 			LinuxDistributions: linuxReleasesFromComponents(*bom.Components),
 		},
-		Sources:    extractSources(bom.Metadata),
+		Sources:    extractSources(bom.Metadata, idMap),
 		Descriptor: extractDescriptor(bom.Metadata),
 	}
-
-	idMap := make(map[string]interface{})
 
 	if err := collectBomPackages(bom, s, idMap); err != nil {
 		return nil, err
 	}
 
-	collectRelationships(bom, s, idMap)
+	collectDependencyRelationships(bom, s, idMap)
+	collectCompositionRelationships(bom, s, idMap)
 
 	return s, nil
 }
@@ -86,11 +87,11 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 	case cyclonedx.ComponentTypeOS:
 	case cyclonedx.ComponentTypeContainer:
 	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary:
-		p := decodeComponent(component)
-		idMap[component.BOMRef] = p
+		p := *decodeComponent(component)
 		// TODO there must be a better way than needing to call this manually:
 		p.SetID()
-		s.Artifacts.PackageCatalog.Add(*p)
+		idMap[component.BOMRef] = p
+		s.Artifacts.PackageCatalog.Add(p)
 	}
 
 	if component.Components != nil {
@@ -188,23 +189,63 @@ func getPropertyValue(component *cyclonedx.Component, name string) string {
 	return ""
 }
 
-func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) {
+func collectDependencyRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) {
 	if bom.Dependencies == nil {
 		return
 	}
 	for _, d := range *bom.Dependencies {
+		if d.Dependencies == nil {
+			continue
+		}
 		from, fromOk := idMap[d.Ref].(artifact.Identifiable)
-		if fromOk {
-			if d.Dependencies == nil {
+		if !fromOk {
+			continue
+		}
+		for _, t := range *d.Dependencies {
+			to, toOk := idMap[t.Ref].(artifact.Identifiable)
+			if !toOk {
 				continue
 			}
-			for _, t := range *d.Dependencies {
-				to, toOk := idMap[t.Ref].(artifact.Identifiable)
-				if toOk {
+			// FIXME the relationshipType information is lost
+			relationshipType := artifact.DependencyOfRelationship
+			if _, ok := to.(*source.Metadata); ok {
+				relationshipType = artifact.SourceRelationship
+			}
+			s.Relationships = append(s.Relationships, artifact.Relationship{
+				From: from,
+				To:   to,
+				Type: relationshipType,
+			})
+		}
+	}
+}
+
+func collectCompositionRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) {
+	if bom.Compositions != nil {
+		for _, c := range *bom.Compositions {
+			// if c.Aggregate == cyclonedx.CompositionAggregateComplete
+			if c.Assemblies == nil || c.Dependencies == nil {
+				continue
+			}
+			for _, f := range *c.Assemblies {
+				from, fromOk := idMap[string(f)].(artifact.Identifiable)
+				if !fromOk {
+					continue
+				}
+				for _, t := range *c.Dependencies {
+					to, toOk := idMap[string(t)].(artifact.Identifiable)
+					if !toOk {
+						continue
+					}
+					// FIXME the relationshipType information is lost
+					relationshipType := artifact.DependencyOfRelationship
+					if _, ok := to.(*source.Metadata); ok {
+						relationshipType = artifact.SourceRelationship
+					}
 					s.Relationships = append(s.Relationships, artifact.Relationship{
 						From: from,
 						To:   to,
-						Type: artifact.DependencyOfRelationship, // FIXME this information is lost
+						Type: relationshipType,
 					})
 				}
 			}
@@ -212,36 +253,47 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 	}
 }
 
-func extractSources(meta *cyclonedx.Metadata) []source.Metadata {
+func extractSources(meta *cyclonedx.Metadata, idMap map[string]interface{}) []source.Metadata {
 	if meta == nil || meta.Component == nil {
 		return nil
 	}
-	c := meta.Component
+	return extractComponentSources(*meta.Component, idMap)
+}
 
+func extractComponentSources(c cyclonedx.Component, idMap map[string]interface{}) []source.Metadata {
 	image := source.ImageMetadata{
 		UserInput:      c.Name,
-		ID:             c.BOMRef,
+		ID:             c.Description,
 		ManifestDigest: c.Version,
 	}
 
+	var sources []source.Metadata
+
 	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
-		return []source.Metadata{
-			{
-				Scheme:        source.ImageScheme,
-				ImageMetadata: image,
-			},
-		}
+		sources = append(sources, source.Metadata{
+			Scheme:        source.ImageScheme,
+			ImageMetadata: image,
+		})
 	case cyclonedx.ComponentTypeFile:
-		return []source.Metadata{
-			{
-				Scheme:        source.FileScheme, // or source.DirectoryScheme
-				Path:          c.Name,
-				ImageMetadata: image,
-			},
+		sources = append(sources, source.Metadata{
+			Scheme:        source.FileScheme, // or source.DirectoryScheme
+			Path:          c.Name,
+			ImageMetadata: image,
+		})
+	}
+
+	for i := range sources {
+		idMap[c.BOMRef] = &sources[i]
+	}
+
+	if c.Components != nil {
+		for _, child := range *c.Components {
+			sources = append(sources, extractComponentSources(child, idMap)...)
 		}
 	}
-	return nil
+
+	return sources
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used

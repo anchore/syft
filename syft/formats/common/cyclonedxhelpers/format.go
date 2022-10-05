@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -42,23 +43,16 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 func encodeSource(srcMetadata source.Metadata) *cyclonedx.Component {
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
-		if err != nil {
-			log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
-		}
 		return &cyclonedx.Component{
-			BOMRef:  string(bomRef),
-			Type:    cyclonedx.ComponentTypeContainer,
-			Name:    srcMetadata.ImageMetadata.UserInput,
-			Version: srcMetadata.ImageMetadata.ManifestDigest,
+			BOMRef:      getBOMRef(&srcMetadata),
+			Type:        cyclonedx.ComponentTypeContainer,
+			Name:        srcMetadata.ImageMetadata.UserInput,
+			Version:     srcMetadata.ImageMetadata.ManifestDigest,
+			Description: srcMetadata.ImageMetadata.ID,
 		}
 	case source.DirectoryScheme, source.FileScheme:
-		bomRef, err := artifact.IDByHash(srcMetadata.Path)
-		if err != nil {
-			log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)
-		}
 		return &cyclonedx.Component{
-			BOMRef: string(bomRef),
+			BOMRef: getBOMRef(&srcMetadata),
 			Type:   cyclonedx.ComponentTypeFile,
 			Name:   srcMetadata.Path,
 		}
@@ -106,7 +100,8 @@ func toOSComponent(distros []linux.Release) []cyclonedx.Component {
 			properties = &props
 		}
 		out = append(out, cyclonedx.Component{
-			Type: cyclonedx.ComponentTypeOS,
+			BOMRef: string(distro.ID()),
+			Type:   cyclonedx.ComponentTypeOS,
 			// FIXME is it idiomatic to be using SWID here for specific name and version information?
 			SWID: &cyclonedx.SWID{
 				TagID:   distro.OSID,
@@ -171,13 +166,34 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 		}
 
 		innerDeps := []cyclonedx.Dependency{}
-		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: string(r.From.ID())})
+		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: getBOMRef(r.To)})
 		result = append(result, cyclonedx.Dependency{
-			Ref:          string(r.To.ID()),
+			Ref:          getBOMRef(r.From),
 			Dependencies: &innerDeps,
 		})
 	}
 	return result
+}
+
+func getBOMRef(o artifact.Identifiable) string {
+	var id string
+	if p, ok := o.(pkg.Package); ok {
+		id = deriveBomRef(p)
+	} else if p, ok := o.(*pkg.Package); ok {
+		id = deriveBomRef(*p)
+	} else if meta, ok := o.(*source.Metadata); ok {
+		switch meta.Scheme {
+		case source.ImageScheme:
+			id = meta.ImageMetadata.UserInput
+		case source.DirectoryScheme, source.FileScheme:
+			id = meta.Path
+		default:
+			id = string(meta.ID())
+		}
+	} else {
+		id = string(o.ID())
+	}
+	return id
 }
 
 func toBomDescriptorComponent(srcMetadata []source.Metadata) *cyclonedx.Component {
