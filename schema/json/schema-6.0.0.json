@@ -140,9 +140,10 @@
         "description",
         "size",
         "installedSize",
-        "pullDependencies",
-        "pullChecksum",
-        "gitCommitOfApkPort",
+        "dependencies",
+        "provides",
+        "checksum",
+        "gitCommit",
         "files"
       ],
       "properties": {
@@ -176,13 +177,22 @@
         "installedSize": {
           "type": "integer"
         },
-        "pullDependencies": {
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "checksum": {
           "type": "string"
         },
-        "pullChecksum": {
-          "type": "string"
-        },
-        "gitCommitOfApkPort": {
+        "gitCommit": {
           "type": "string"
         },
         "files": {
@@ -247,6 +257,18 @@
             }
           },
           "type": "object"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "CocoapodsMetadata": {
+      "required": [
+        "checksum"
+      ],
+      "properties": {
+        "checksum": {
+          "type": "string"
         }
       },
       "additionalProperties": true,
@@ -935,6 +957,9 @@
             },
             {
               "$ref": "#/definitions/CargoPackageMetadata"
+            },
+            {
+              "$ref": "#/definitions/CocoapodsMetadata"
             },
             {
               "$ref": "#/definitions/ConanLockMetadata"
