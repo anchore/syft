@@ -350,7 +350,6 @@ func (s *Source) SetID() {
 	}
 
 	s.id = artifact.ID(strings.TrimPrefix(d, "sha256:"))
-	return
 }
 
 func calculateChainID(img *image.Image) string {
