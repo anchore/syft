@@ -27,7 +27,7 @@ import (
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
-	id                artifact.ID
+	id                artifact.ID  `hash:"ignore"`
 	Image             *image.Image // the image object to be cataloged (image only)
 	Metadata          Metadata
 	directoryResolver *directoryResolver
