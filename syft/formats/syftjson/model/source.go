@@ -10,14 +10,14 @@ import (
 
 // Source object represents the thing that was cataloged
 type Source struct {
-	ID     string      `json:"id"`
+	ID     string      `json:"id,omitempty"`
 	Type   string      `json:"type"`
 	Target interface{} `json:"target"`
 }
 
 // sourceUnpacker is used to unmarshal Source objects
 type sourceUnpacker struct {
-	ID     string          `json:"id"`
+	ID     string          `json:"id,omitempty"`
 	Type   string          `json:"type"`
 	Target json.RawMessage `json:"target"`
 }
