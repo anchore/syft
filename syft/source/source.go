@@ -307,7 +307,10 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 	}, nil
 }
 
-func (s *Source) ID() artifact.ID {
+func (s Source) ID() artifact.ID {
+	if s.id == "" {
+		s.SetID()
+	}
 	return s.id
 }
 
