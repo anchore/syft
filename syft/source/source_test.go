@@ -18,6 +18,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 func TestParseInput(t *testing.T) {
@@ -63,6 +64,72 @@ func TestNewFromImageFails(t *testing.T) {
 			t.Errorf("expected an error condition but none was given")
 		}
 	})
+}
+
+func TestSetID(t *testing.T) {
+	layer := image.NewLayer(nil)
+	layer.Metadata = image.LayerMetadata{
+		Digest: "sha256:6f4fb385d4e698647bf2a450749dfbb7bc2831ec9a730ef4046c78c08d468e89",
+	}
+	img := image.Image{
+		Layers: []*image.Layer{layer},
+	}
+
+	tests := []struct {
+		name     string
+		input    *Source
+		expected artifact.ID
+	}{
+		{
+			name: "source.SetID sets the ID for FileScheme",
+			input: &Source{
+				Metadata: Metadata{
+					Scheme: FileScheme,
+					Path:   "test-fixtures/image-simple/file-1.txt",
+				},
+			},
+			expected: artifact.ID("55096713247489add592ce977637be868497132b36d1e294a3831925ec64319a"),
+		},
+		{
+			name: "source.SetID sets the ID for ImageScheme",
+			input: &Source{
+				Image: &img,
+				Metadata: Metadata{
+					Scheme: ImageScheme,
+				},
+			},
+			expected: artifact.ID("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+		},
+		{
+			name: "source.SetID sets the ID for DirectoryScheme",
+			input: &Source{
+				Image: &img,
+				Metadata: Metadata{
+					Scheme: DirectoryScheme,
+					Path:   "test-fixtures/image-simple",
+				},
+			},
+			expected: artifact.ID("91db61e5e0ae097ef764796ce85e442a93f2a03e5313d4c7307e9b413f62e8c4"),
+		},
+		{
+			name: "source.SetID sets the ID for UnknownScheme",
+			input: &Source{
+				Image: &img,
+				Metadata: Metadata{
+					Scheme: UnknownScheme,
+					Path:   "test-fixtures/image-simple",
+				},
+			},
+			expected: artifact.ID("febd2d6148dc327d"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.input.SetID()
+			assert.Equal(t, test.expected, test.input.ID())
+		})
+	}
 }
 
 func TestNewFromImage(t *testing.T) {
