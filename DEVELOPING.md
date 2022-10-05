@@ -3,6 +3,7 @@
 ## Getting started
 
 In order to test and develop in this repo you will need the following dependencies installed:
+- Golang
 - docker
 - make
 
@@ -15,6 +16,7 @@ After cloning the following step can help you get setup:
 5. view the README or syft help output for more output options
 
 #### Make output
+The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
 ```
 all                      Run all linux-based checks (linting, license check, unit, integration, and linux compare tests)
 benchmark                Run benchmark tests and compare against the baseline (if available)
@@ -39,13 +41,105 @@ test                     Run all tests (currently unit, integration, linux compa
 unit                     Run unit tests (with coverage)
 ```
 
-The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
+## Architecture
 
-## Levels of testing
+Syft is used to generate a Software Bill of Materials (SBOM) from different kinds of input.
+
+### Code organization for the cmd package
+Syft's entrypoint can be found in the `cmd` package at `cmd/syft/main.go`. `main.go` builds a new syft `cli` via `cli.New()` 
+and then executes the `cli` via `cli.Execute()`. The `cli` package is responsible for parsing command line arguments, 
+setting up the application context and configuration, and executing the application. Each of syft's commands 
+(e.g. `packages`, `attest`, `version`) are implemented as a `cobra.Command` in their respective `<command>.go` files. 
+They are registered in `syft/cli/commands/go`.
+```
+.
+└── syft/
+    ├── cli/
+    │   ├── attest/
+    │   ├── attest.go
+    │   ├── commands.go
+    │   ├── completion.go
+    │   ├── convert/
+    │   ├── convert.go
+    │   ├── eventloop/
+    │   ├── options/
+    │   ├── packages/
+    │   ├── packages.go
+    │   ├── poweruser/
+    │   ├── poweruser.go
+    │   └── version.go
+    └── main.go
+```
+
+#### Execution flow
+```mermaid
+sequenceDiagram
+    participant main as cmd/syft/main
+    participant cli as cli.New()
+    participant root as root.Execute()
+    participant cmd as <command>.Execute()
+
+    main->>+cli: 
+
+    Note right of cli: wire ALL CLI commands
+    Note right of cli: add flags for ALL commands
+
+    cli-->>-main:  root command 
+
+    main->>+root: 
+    root->>+cmd: 
+    cmd-->>-root: (error)  
+
+    root-->>-main: (error) 
+
+    Note right of cmd: Execute SINGLE command from USER
+```
+
+### Code organization for syft library
+
+Syft's core library (see, exported) functionality is implemented in the `syft` package. The `syft` package is responsible for organizing the core
+SBOM data model, it's translated output formats, and the core SBOM generation logic.
+
+#### Organization and design notes for the syft library
+- analysis creates a static SBOM which can be encoded and decoded
+- format objects, should strive to not add or enrich data in encoding that could otherwise be done during analysis
+- package catalogers and their organization can be viewed/added to the `syft/pkg/cataloger` package 
+- file catalogers and their organization can be viewed/added to the `syft/file` package
+- The source package provides an abstraction to allow a user to loosely define a data source that can be cataloged
+- Logging Abstraction ...
+
+#### Code example of syft as a library
+Here is a gist of using syft as a library to generate a SBOM from a docker image: [link](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b).
+The execution flow for the example is detailed below.
+
+#### Execution flow examples for the syft library
+```mermaid
+sequenceDiagram
+    participant source as source.New(ubuntu:latest)
+    participant sbom as sbom.SBOM
+    participant catalog as syft.CatalogPackages(src)
+    participant encoder as syft.Encode(sbom, format)
+
+    Note right of source: use "ubuntu:latest" as SBOM input
+
+    source-->>+sbom: add source to SBOM struct
+    source-->>+catalog: pass src to generate catalog
+    catalog-->-sbom: add cataloging results onto SBOM
+    sbom-->>encoder: pass SBOM and format desiered to syft encoder
+    encoder-->>source: return bytes that are the SBOM of the original input 
+
+    Note right of catalog: cataloger configuration is done based on src
+```
+
+
+
+## Testing
+
+### Levels of testing
 
 - `unit`: The default level of test which is distributed throughout the repo are unit tests. Any `_test.go` file that 
   does not reside somewhere within the `/test` directory is a unit test. Other forms of testing should be organized in 
-  the `/test` directory. These tests should focus on correctness of functionality in depth. % Test coverage metrics 
+  the `/test` directory. These tests should focus on correctness of functionality in depth. % test coverage metrics 
   only considers unit tests and no other forms of testing.
 
 - `integration`: located within `test/integration`, these tests focus on the behavior surfaced by the common library 
@@ -193,14 +287,4 @@ These flags are defined at the top of the test files that have tests that use th
 Snapshot testing is only as good as the manual verification of the golden snapshot file saved to the repo! Be careful 
 and diligent when updating these files.
 
-## Architecture
 
-TODO: outline:
-- analysis creates a static SBOM which can be encoded and decoded.
-- format objects, should strive to not add or enrich data in encoding that could otherwise be done during analysis
-- pkg.Catalogers
-- file catalogers
-- source.Source
-- file.Resolvers
-- logger abstraction 
-- events / bus abstraction 

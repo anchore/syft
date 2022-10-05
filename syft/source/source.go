@@ -15,16 +15,19 @@ import (
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archiver/v3"
+	digest "github.com/opencontainers/go-digest"
 	"github.com/spf13/afero"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
+	id                artifact.ID
 	Image             *image.Image // the image object to be cataloged (image only)
 	Metadata          Metadata
 	directoryResolver *directoryResolver
@@ -302,6 +305,76 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
 	}, nil
+}
+
+func (s Source) ID() artifact.ID {
+	if s.id == "" {
+		s.SetID()
+	}
+	return s.id
+}
+
+func (s *Source) SetID() {
+	var d string
+	switch s.Metadata.Scheme {
+	case DirectoryScheme:
+		d = digest.FromString(s.Metadata.Path).String()
+	case FileScheme:
+		// attempt to use the digest of the contents of the file as the ID
+		file, err := os.Open(s.Metadata.Path)
+		if err != nil {
+			d = digest.FromString(s.Metadata.Path).String()
+			break
+		}
+		di, err := digest.FromReader(file)
+		if err != nil {
+			d = digest.FromString(s.Metadata.Path).String()
+			break
+		}
+		d = di.String()
+	case ImageScheme:
+		manifestDigest := digest.FromBytes(s.Image.Metadata.RawManifest).String()
+		if manifestDigest != "" {
+			d = manifestDigest
+			break
+		}
+
+		// calcuate chain ID for image sources where manifestDigest is not available
+		// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
+		d = calculateChainID(s.Image)
+		if d == "" {
+			// TODO what happens here if image has no layers?
+			// Is this case possible
+			d = digest.FromString(s.Metadata.ImageMetadata.UserInput).String()
+		}
+	default: // for UnknownScheme we hash the struct
+		id, _ := artifact.IDByHash(s)
+		d = string(id)
+	}
+
+	s.id = artifact.ID(strings.TrimPrefix(d, "sha256:"))
+}
+
+func calculateChainID(img *image.Image) string {
+	if len(img.Layers) < 1 {
+		return ""
+	}
+
+	// DiffID(L0) = digest of layer 0
+	// https://github.com/anchore/stereoscope/blob/1b1b744a919964f38d14e1416fb3f25221b761ce/pkg/image/layer_metadata.go#L19-L32
+	chainID := img.Layers[0].Metadata.Digest
+	id := chain(chainID, img.Layers[1:])
+
+	return id
+}
+
+func chain(chainID string, layers []*image.Layer) string {
+	if len(layers) < 1 {
+		return chainID
+	}
+
+	chainID = digest.FromString(layers[0].Metadata.Digest + " " + chainID).String()
+	return chain(chainID, layers[1:])
 }
 
 func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
