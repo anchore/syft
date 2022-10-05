@@ -100,16 +100,6 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.NotEqual,
 		},
 		{
-			name: "location is reflected",
-			transform: func(pkg Package) Package {
-				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
-				locations.Add(source.NewLocation("/somewhere/new"))
-				pkg.Locations = locations
-				return pkg
-			},
-			expectedIDComparison: assert.NotEqual,
-		},
-		{
 			name: "same path for different filesystem is NOT reflected",
 			transform: func(pkg Package) Package {
 				newLocation := originalLocation
