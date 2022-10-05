@@ -21,12 +21,13 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
-	id                string
+	id                artifact.ID
 	Image             *image.Image // the image object to be cataloged (image only)
 	Metadata          Metadata
 	directoryResolver *directoryResolver
@@ -306,25 +307,49 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 	}, nil
 }
 
-func (s *Source) ID() string {
+func (s *Source) ID() artifact.ID {
 	return s.id
 }
 
 func (s *Source) SetID() {
-	if s.Metadata.Scheme != ImageScheme {
-		// How do we generate ID for non-image sources?
-		s.id = digest.FromString(s.Metadata.Path).String()
-		return
+	var d string
+	switch s.Metadata.Scheme {
+	case DirectoryScheme:
+		d = digest.FromString(s.Metadata.Path).String()
+	case FileScheme:
+		// attempt to use the digest of the contents of the file as the ID
+		file, err := os.Open(s.Metadata.Path)
+		if err != nil {
+			d = digest.FromString(s.Metadata.Path).String()
+			break
+		}
+		di, err := digest.FromReader(file)
+		if err != nil {
+			d = digest.FromString(s.Metadata.Path).String()
+			break
+		}
+		d = di.String()
+	case ImageScheme:
+		manifestDigest := digest.FromBytes(s.Image.Metadata.RawManifest).String()
+		if manifestDigest != "" {
+			d = manifestDigest
+			break
+		}
+
+		// calcuate chain ID for image sources where manifestDigest is not available
+		// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
+		d = calculateChainID(s.Image)
+		if d == "" {
+			// TODO what happens here if image has no layers?
+			// Is this case possible
+			d = digest.FromString(s.Metadata.ImageMetadata.UserInput).String()
+		}
+	default: // for UnknownScheme we hash the struct
+		id, _ := artifact.IDByHash(s)
+		d = string(id)
 	}
 
-	// calcuate chain ID for image sources
-	// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
-	s.id = calculateChainID(s.Image)
-
-	if s.id == "" {
-		// TODO what happens here if image has no layers?
-		s.id = digest.FromString(s.Metadata.ImageMetadata.UserInput).String()
-	}
+	s.id = artifact.ID(strings.TrimPrefix(d, "sha256:"))
 	return
 }
 

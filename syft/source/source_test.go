@@ -18,6 +18,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 func TestParseInput(t *testing.T) {
@@ -66,32 +67,60 @@ func TestNewFromImageFails(t *testing.T) {
 }
 
 func TestSetID(t *testing.T) {
-	img := imagetest.GetFixtureImage(t, "oci-archive", "image-simple")
+	layer := image.NewLayer(nil)
+	layer.Metadata = image.LayerMetadata{
+		Digest: "sha256:6f4fb385d4e698647bf2a450749dfbb7bc2831ec9a730ef4046c78c08d468e89",
+	}
+	img := image.Image{
+		Layers: []*image.Layer{layer},
+	}
+
 	tests := []struct {
 		name     string
 		input    *Source
-		expected string
+		expected artifact.ID
 	}{
 		{
-			name: "source.SetID sets the ID for non image sources",
+			name: "source.SetID sets the ID for FileScheme",
 			input: &Source{
 				Metadata: Metadata{
 					Scheme: FileScheme,
 					Path:   "test-fixtures/image-simple/file-1.txt",
 				},
 			},
-			expected: "sha256:fbfb0730f4306b27c118715998ba58f1ad350f0451513c36c267dc4b9d3b688d",
+			expected: artifact.ID("55096713247489add592ce977637be868497132b36d1e294a3831925ec64319a"),
 		},
 		{
-			name: "source.SetID sets the ID for image sources",
+			name: "source.SetID sets the ID for ImageScheme",
 			input: &Source{
-				Image: img,
+				Image: &img,
 				Metadata: Metadata{
-					Scheme:        ImageScheme,
-					ImageMetadata: NewImageMetadata(img, "image-simple"),
+					Scheme: ImageScheme,
 				},
 			},
-			expected: "sha256:e6d9f87981af1a1007a42be43b21ba6abe7c1608b1541e877c69052af5356669",
+			expected: artifact.ID("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+		},
+		{
+			name: "source.SetID sets the ID for DirectoryScheme",
+			input: &Source{
+				Image: &img,
+				Metadata: Metadata{
+					Scheme: DirectoryScheme,
+					Path:   "test-fixtures/image-simple",
+				},
+			},
+			expected: artifact.ID("91db61e5e0ae097ef764796ce85e442a93f2a03e5313d4c7307e9b413f62e8c4"),
+		},
+		{
+			name: "source.SetID sets the ID for UnknownScheme",
+			input: &Source{
+				Image: &img,
+				Metadata: Metadata{
+					Scheme: UnknownScheme,
+					Path:   "test-fixtures/image-simple",
+				},
+			},
+			expected: artifact.ID("febd2d6148dc327d"),
 		},
 	}
 
