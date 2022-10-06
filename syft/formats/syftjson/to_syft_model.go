@@ -113,9 +113,7 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 	typ := artifact.RelationshipType(relationship.Type)
 
 	switch typ {
-	case artifact.OwnershipByFileOverlapRelationship:
-		fallthrough
-	case artifact.ContainsRelationship:
+	case artifact.OwnershipByFileOverlapRelationship, artifact.ContainsRelationship, artifact.RuntimeDependencyOfRelationship, artifact.DevDependencyOfRelationship, artifact.DependencyOfRelationship, artifact.BuildDependencyOfRelationship:
 	default:
 		log.Warnf("unknown relationship type: %s", typ)
 		return nil
