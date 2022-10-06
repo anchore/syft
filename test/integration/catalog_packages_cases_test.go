@@ -191,9 +191,11 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:       "find apkdb packages",
-		pkgType:    pkg.ApkPkg,
-		duplicates: 2, // when the directory is cataloged we have duplicates between lib/ and pkgs/lib
+		name:    "find apkdb packages",
+		pkgType: pkg.ApkPkg,
+		// when the directory is cataloged we have duplicates between lib/ and pkgs/lib however
+		// we don't want to count them since location data is merged, showing the same package in both locations
+		duplicates: 0,
 		pkgInfo: map[string]string{
 			"musl-utils": "1.1.24-r2",
 			"libc-utils": "0.7.2-r0",

@@ -124,7 +124,7 @@ func TestPkgCoverageImage(t *testing.T) {
 				for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
 					t.Log("   ", a)
 				}
-				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
+				t.Fatalf("unexpected package count: %d!=%d + duplicates:%d", pkgCount, len(c.pkgInfo), c.duplicates)
 			}
 
 		})
