@@ -201,11 +201,6 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
 			if pkgs[i].Version == pkgs[j].Version {
-				// very niche case for Jenkins plugins to be sorted when the only
-				// difference between the packages is the VirtualPath
-				if pkgs[i].Type == JenkinsPluginPkg && pkgs[j].Type == JenkinsPluginPkg {
-					return pkgs[i].Metadata.(JavaMetadata).VirtualPath < pkgs[j].Metadata.(JavaMetadata).VirtualPath
-				}
 				iLocations := pkgs[i].Locations.ToSlice()
 				jLocations := pkgs[j].Locations.ToSlice()
 				if pkgs[i].Type == pkgs[j].Type && len(iLocations) > 0 && len(jLocations) > 0 {
