@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:a259c072-aaaf-4a3f-a707-49f691b1e9d9" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:ff838d64-bc9b-40f8-ada8-b2a86efbf7c1" version="1">
   <metadata>
-    <timestamp>2022-05-23T12:02:41-07:00</timestamp>
+    <timestamp>2022-10-05T21:14:00-04:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -14,7 +14,7 @@
     </component>
   </metadata>
   <components>
-    <component bom-ref="b85dbb4e6ece5082" type="library">
+    <component bom-ref="2a90c3effff7fb4f" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
@@ -32,7 +32,7 @@
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
     </component>
-    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=ceda99598967ae8d" type="library">
+    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=982bd655c9957788" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>

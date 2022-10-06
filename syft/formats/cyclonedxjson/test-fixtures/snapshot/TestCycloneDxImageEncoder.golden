@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:c825402b-bbfa-4ad5-81b1-6a8332a6a8b6",
+  "serialNumber": "urn:uuid:49ee8684-f17f-4b27-b652-08700616a46c",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-05-23T12:05:01-07:00",
+    "timestamp": "2022-10-05T21:08:02-04:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -13,7 +13,7 @@
       }
     ],
     "component": {
-      "bom-ref": "e779c1ed804ba529",
+      "bom-ref": "e7c509028e64e19d",
       "type": "container",
       "name": "user-image-input",
       "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
@@ -21,7 +21,7 @@
   },
   "components": [
     {
-      "bom-ref": "2a46171f91c8d4bc",
+      "bom-ref": "2a56b96c604f3ab3",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -53,7 +53,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:cd8f3884f1211d65c19ce5bbc5174bcd2ce8ba96b63e5b3693969a53279c4405"
+          "value": "sha256:4965affaf42a7174561882c5fd87e2db6f0b07df532459ba86f98a8bd2af11de"
         },
         {
           "name": "syft:location:0:path",
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=ae77680e9b1d087e",
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=982bd655c9957788",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
@@ -83,7 +83,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:42d2ea51c688e6dc7be81a305acbe006d27a6ef0c26ae3888fd0d4ce44f69265"
+          "value": "sha256:460c3e27be163efe75df048c4d4cf3a22e7e363f02521fa2e82a3bd257a682d4"
         },
         {
           "name": "syft:location:0:path",
