@@ -240,7 +240,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: "/opt/jboss/keycloak/modules/system/layers/base/org/apache/cxf/impl/main/cxf-rt-bindings-xml-3.3.10.jar",
+					VirtualPath: []string{"/opt/jboss/keycloak/modules/system/layers/base/org/apache/cxf/impl/main/cxf-rt-bindings-xml-3.3.10.jar"},
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Automatic-Module-Name":    "org.apache.cxf.binding.xml",

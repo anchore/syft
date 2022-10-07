@@ -21,7 +21,7 @@ func Test_packageURL(t *testing.T) {
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: []string{"test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar"},
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Manifest-Version": "1.0",

@@ -101,7 +101,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JenkinsPluginPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
+						VirtualPath: []string{"test-fixtures/java-builds/packages/example-jenkins-plugin.hpi"},
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
 								"Manifest-Version":       "1.0",
@@ -152,7 +152,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
+						VirtualPath: []string{"test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar"},
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
 								"Manifest-Version": "1.0",
@@ -177,7 +177,7 @@ func TestParseJar(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+						VirtualPath: []string{"test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar"},
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
 								"Manifest-Version": "1.0",
@@ -208,7 +208,7 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time",
+						VirtualPath: []string{"test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time"},
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -602,7 +602,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -613,7 +613,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -626,7 +626,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: []string{virtualPath + ":" + "some-artifact-id"},
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -637,7 +637,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						Name:    "some-parent-name",
 						Version: "2.0",
 						Metadata: pkg.JavaMetadata{
-							VirtualPath:   "some-parent-virtual-path",
+							VirtualPath:   []string{"some-parent-virtual-path"},
 							Manifest:      nil,
 							PomProperties: nil,
 							Parent:        nil,
@@ -671,7 +671,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -682,7 +682,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -695,7 +695,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: []string{virtualPath + ":" + "some-artifact-id"},
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -719,7 +719,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						Name:    "some-parent-name",
 						Version: "2.0",
 						Metadata: pkg.JavaMetadata{
-							VirtualPath:   "some-parent-virtual-path",
+							VirtualPath:   []string{"some-parent-virtual-path"},
 							Manifest:      nil,
 							PomProperties: nil,
 							Parent:        nil,
@@ -740,7 +740,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -751,7 +751,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -764,7 +764,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JenkinsPluginPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: []string{virtualPath + ":" + "some-artifact-id"},
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "com.cloudbees.jenkins.plugins",
@@ -775,7 +775,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						Name:    "some-parent-name",
 						Version: "2.0",
 						Metadata: pkg.JavaMetadata{
-							VirtualPath:   "some-parent-virtual-path",
+							VirtualPath:   []string{"some-parent-virtual-path"},
 							Manifest:      nil,
 							PomProperties: nil,
 							Parent:        nil,
@@ -797,7 +797,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -809,7 +809,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: "some-parent-virtual-path",
+					VirtualPath: []string{"some-parent-virtual-path"},
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
 					PomProperties: &pkg.PomProperties{
@@ -836,7 +836,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   "some-parent-virtual-path",
+					VirtualPath:   []string{"some-parent-virtual-path"},
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -847,7 +847,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "2.0",
 				Type:    pkg.JenkinsPluginPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: "some-parent-virtual-path",
+					VirtualPath: []string{"some-parent-virtual-path"},
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
 					PomProperties: &pkg.PomProperties{
@@ -874,7 +874,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "", // note: empty, so should not be matched on
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   virtualPath, // note: matching virtual path
+					VirtualPath:   []string{virtualPath}, // note: matching virtual path
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -885,7 +885,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "3.0",
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath,
+					VirtualPath: []string{virtualPath},
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
 					PomProperties: &pkg.PomProperties{
@@ -912,7 +912,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath:   virtualPath + ":NEW_VIRTUAL_PATH", // note: DOES NOT match the existing virtual path
+					VirtualPath:   []string{virtualPath + ":NEW_VIRTUAL_PATH"}, // note: DOES NOT match the existing virtual path
 					Manifest:      nil,
 					PomProperties: nil,
 					Parent:        nil,
@@ -924,7 +924,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version: "NOT_THE_PARENT_VERSION", // note: the version is updated from pom properties
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":NEW_VIRTUAL_PATH",
+					VirtualPath: []string{virtualPath + ":NEW_VIRTUAL_PATH"},
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
 					PomProperties: &pkg.PomProperties{

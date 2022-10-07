@@ -186,7 +186,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
-			VirtualPath:    j.virtualPath,
+			VirtualPath:    []string{j.virtualPath},
 			Manifest:       manifest,
 			ArchiveDigests: digests,
 		},
@@ -373,7 +373,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 		Type:         pomProperties.PkgTypeIndicated(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
-			VirtualPath:   virtualPath,
+			VirtualPath:   []string{virtualPath},
 			PomProperties: &pomProperties,
 			PomProject:    pomProject,
 			Parent:        parentPkg,
@@ -397,7 +397,7 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	metadata := p.Metadata.(pkg.JavaMetadata)
 
 	// the virtual path matches...
-	if parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == metadata.VirtualPath {
+	if len(metadata.VirtualPath) > 0 && metadata.VirtualPath[0] == parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath[0] {
 		return true
 	}
 
