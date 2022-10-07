@@ -110,6 +110,8 @@ func (c *Catalog) Add(p Package) {
 		if err := existing.merge(p); err != nil {
 			log.Warnf("failed to merge packages: %+v", err)
 		} else {
+			// TODO should we update the map to be pointer so modifications are reflected?
+			c.byID[id] = existing // existing is a copy; update catalog with merged package
 			c.addPathsToIndex(p)
 		}
 		return
