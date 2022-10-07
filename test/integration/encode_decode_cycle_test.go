@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"testing"
@@ -48,13 +47,13 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				// unstable values
 				in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref)": "[^"]+",`).ReplaceAll(in, []byte{})
 
-				// dependencies are not supported (edge types cannot be encoded or inferred during decoding)
-				var det map[string]interface{}
-				require.NoError(t, json.Unmarshal(in, &det))
-				delete(det, "dependencies")
-				inCopy, err := json.Marshal(det)
-				require.NoError(t, err)
-				in = inCopy
+				//// dependencies are not supported (edge types cannot be encoded or inferred during decoding)
+				//var det map[string]interface{}
+				//require.NoError(t, json.Unmarshal(in, &det))
+				//delete(det, "dependencies")
+				//inCopy, err := json.Marshal(det)
+				//require.NoError(t, err)
+				//in = inCopy
 
 				return in
 			},
@@ -65,19 +64,9 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			redactor: func(in []byte) []byte {
 				// unstable values
 				in = regexp.MustCompile(`(serialNumber|bom-ref)="[^"]+"`).ReplaceAll(in, []byte{})
-				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
+				in = regexp.MustCompile(`<timestamp>[^<]+</timestamp>`).ReplaceAll(in, []byte{})
+				//in = regexp.MustCompile(`(?m:(\n\s+)*<dependencies>[\s\S]*?</dependencies>)`).ReplaceAll(in, []byte{})
 
-				// dependencies are not supported (edge types cannot be encoded or inferred during decoding)
-				start := bytes.Index(in, []byte("  <dependencies>")) // important: mind the prefix whitespace
-				endVal := "</dependencies>\n"                        // important: mind the postfix whitespace
-				stop := bytes.Index(in, []byte(endVal))
-				if start != -1 && stop != -1 {
-					stopAfterVal := stop + len(endVal)
-					inCopy := make([]byte, 0)
-					inCopy = append(inCopy, in[:start]...)
-					inCopy = append(inCopy, in[stopAfterVal:]...)
-					in = inCopy
-				}
 				return in
 			},
 		},

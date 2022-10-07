@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"github.com/anchore/packageurl-go"
 	"io"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -88,6 +89,10 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary:
 		p := decodeComponent(component)
 		idMap[component.BOMRef] = p
+		syftID := extractSyftPacakgeID(component.BOMRef)
+		if syftID != "" {
+			idMap[syftID] = p
+		}
 		// TODO there must be a better way than needing to call this manually:
 		p.SetID()
 		s.Artifacts.PackageCatalog.Add(*p)
@@ -98,6 +103,19 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 			collectPackages(&(*component.Components)[i], s, idMap)
 		}
 	}
+}
+
+func extractSyftPacakgeID(i string) string {
+	instance, err := packageurl.FromString(i)
+	if err != nil {
+		return ""
+	}
+	for _, q := range instance.Qualifiers {
+		if q.Key == "package-id" {
+			return q.Value
+		}
+	}
+	return ""
 }
 
 func linuxReleaseFromComponents(components []cyclonedx.Component) *linux.Release {
@@ -188,21 +206,25 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		return
 	}
 	for _, d := range *bom.Dependencies {
-		from, fromOk := idMap[d.Ref].(artifact.Identifiable)
-		if fromOk {
-			if d.Dependencies == nil {
+		from, fromExists := idMap[d.Ref].(artifact.Identifiable)
+		if !fromExists {
+			continue
+		}
+
+		if d.Dependencies == nil {
+			continue
+		}
+
+		for _, t := range *d.Dependencies {
+			to, toExists := idMap[t.Ref].(artifact.Identifiable)
+			if !toExists {
 				continue
 			}
-			for _, t := range *d.Dependencies {
-				to, toOk := idMap[t.Ref].(artifact.Identifiable)
-				if toOk {
-					s.Relationships = append(s.Relationships, artifact.Relationship{
-						From: from,
-						To:   to,
-						Type: artifact.DependencyOfRelationship, // FIXME this information is lost
-					})
-				}
-			}
+			s.Relationships = append(s.Relationships, artifact.Relationship{
+				From: from,
+				To:   to,
+				Type: artifact.DependencyOfRelationship, // FIXME this information is lost
+			})
 		}
 	}
 }

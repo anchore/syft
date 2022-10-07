@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -141,10 +142,21 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 			continue
 		}
 
+		// we only capture package-to-package relationships for now
+		fromPkg, ok := r.From.(*pkg.Package)
+		if !ok {
+			continue
+		}
+
+		toPkg, ok := r.To.(*pkg.Package)
+		if !ok {
+			continue
+		}
+
 		innerDeps := []cyclonedx.Dependency{}
-		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: string(r.From.ID())})
+		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: deriveBomRef(*fromPkg)})
 		result = append(result, cyclonedx.Dependency{
-			Ref:          string(r.To.ID()),
+			Ref:          deriveBomRef(*toPkg),
 			Dependencies: &innerDeps,
 		})
 	}
