@@ -133,48 +133,6 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
-			name: "attempt-upload-on-cli-switches",
-			args: []string{"packages", "-vv", "-H", "localhost:8080", "-u", "the-username", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", "--overwrite-existing-image", coverageImage},
-			env: map[string]string{
-				"SYFT_ANCHORE_PATH":     "path/to/api",
-				"SYFT_ANCHORE_PASSWORD": "the-password",
-			},
-			assertions: []traitAssertion{
-				// we cannot easily assert a successful upload behavior, so instead we are doing the next best thing
-				// and asserting that the parsed configuration has the expected values and we see log entries
-				// indicating an upload attempt.
-				assertNotInOutput("the-username"),
-				assertNotInOutput("the-password"),
-				assertInOutput("uploading results to localhost:8080"),
-				assertInOutput(`dockerfile: test-fixtures/image-pkg-coverage/Dockerfile`),
-				assertInOutput(`overwrite-existing-image: true`),
-				assertInOutput(`path: path/to/api`),
-				assertInOutput(`host: localhost:8080`),
-				assertFailingReturnCode, // upload can't go anywhere, so if this passes that would be surprising
-			},
-		},
-		{
-			name: "dockerfile-without-upload-is-invalid",
-			args: []string{"packages", "-vv", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", coverageImage},
-			assertions: []traitAssertion{
-
-				assertNotInOutput("uploading results to localhost:8080"),
-				assertInOutput("invalid application config: cannot provide dockerfile option without enabling upload"),
-				assertFailingReturnCode,
-			},
-		},
-		{
-			name: "attempt-upload-with-env-host-set",
-			args: []string{"packages", "-vv", coverageImage},
-			env: map[string]string{
-				"SYFT_ANCHORE_HOST": "localhost:8080",
-			},
-			assertions: []traitAssertion{
-				assertInOutput("uploading results to localhost:8080"),
-				assertFailingReturnCode, // upload can't go anywhere, so if this passes that would be surprising
-			},
-		},
-		{
 			// we want to make certain that syft can catalog a single go binary and get a SBOM report that is not empty
 			name: "catalog-single-go-binary",
 			args: []string{"packages", "-o", "json", getSyftBinaryLocation(t)},

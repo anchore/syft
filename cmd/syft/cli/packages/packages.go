@@ -3,8 +3,6 @@ package packages
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/wagoodman/go-partybus"
 
@@ -12,7 +10,6 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/anchore"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
@@ -88,13 +85,6 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
 		}
 
-		if app.Anchore.Host != "" {
-			if err := runPackageSbomUpload(src, *s, app); err != nil {
-				errs <- err
-				return
-			}
-		}
-
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
 			Value: func() error { return writer.Write(*s) },
@@ -142,55 +132,6 @@ func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []art
 	}
 
 	return relationships
-}
-
-func runPackageSbomUpload(src *source.Source, s sbom.SBOM, app *config.Application) error {
-	log.Infof("uploading results to %s", app.Anchore.Host)
-
-	if src.Metadata.Scheme != source.ImageScheme {
-		return fmt.Errorf("unable to upload results: only images are supported")
-	}
-
-	var dockerfileContents []byte
-	if app.Anchore.Dockerfile != "" {
-		if _, err := os.Stat(app.Anchore.Dockerfile); os.IsNotExist(err) {
-			return fmt.Errorf("unable dockerfile=%q does not exist: %w", app.Anchore.Dockerfile, err)
-		}
-
-		fh, err := os.Open(app.Anchore.Dockerfile)
-		if err != nil {
-			return fmt.Errorf("unable to open dockerfile=%q: %w", app.Anchore.Dockerfile, err)
-		}
-
-		dockerfileContents, err = io.ReadAll(fh)
-		if err != nil {
-			return fmt.Errorf("unable to read dockerfile=%q: %w", app.Anchore.Dockerfile, err)
-		}
-	}
-
-	c, err := anchore.NewClient(anchore.Configuration{
-		BaseURL:  app.Anchore.Host,
-		Username: app.Anchore.Username,
-		Password: app.Anchore.Password,
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to create anchore client: %w", err)
-	}
-
-	importCfg := anchore.ImportConfig{
-		ImageMetadata:           src.Image.Metadata,
-		SBOM:                    s,
-		Dockerfile:              dockerfileContents,
-		OverwriteExistingUpload: app.Anchore.OverwriteExistingImage,
-		Timeout:                 app.Anchore.ImportTimeout,
-	}
-
-	if err := c.Import(context.Background(), importCfg); err != nil {
-		return fmt.Errorf("failed to upload results to host=%s: %+v", app.Anchore.Host, err)
-	}
-
-	return nil
 }
 
 func validateOutputOptions(app *config.Application) error {
