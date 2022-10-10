@@ -8,12 +8,10 @@ require (
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.3.3
 	github.com/alecthomas/jsonschema v0.0.0-20210301060011-54c507b6f074
-	github.com/anchore/client-go v0.0.0-20210222170800-9c70f9b80bcf
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20220428202044-a072fa3cb6d7
-	github.com/antihax/optional v1.0.0
 	github.com/bmatcuk/doublestar/v4 v4.0.2
 	github.com/dustin/go-humanize v1.0.0
 	github.com/facebookincubator/nvdtools v0.1.4

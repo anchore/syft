@@ -611,28 +611,6 @@ log:
   # location to write the log file (default is not to have a log file)
   # same as SYFT_LOG_FILE env var
   file: ""
-
-# uploading package SBOM is exposed through the packages subcommand
-anchore:
-  # (feature-preview) the Anchore Enterprise Host or URL to upload results to (supported on Enterprise 3.0+)
-  # same as -H ; SYFT_ANCHORE_HOST env var
-  host: ""
-
-  # (feature-preview) the path after the host to the Anchore External API (supported on Enterprise 3.0+)
-  # same as SYFT_ANCHORE_PATH env var
-  path: ""
-
-  # (feature-preview) the username to authenticate against Anchore Enterprise (supported on Enterprise 3.0+)
-  # same as -u ; SYFT_ANCHORE_USERNAME env var
-  username: ""
-
-  # (feature-preview) the password to authenticate against Anchore Enterprise (supported on Enterprise 3.0+)
-  # same as -p ; SYFT_ANCHORE_PASSWORD env var
-  password: ""
-
-  # (feature-preview) path to dockerfile to be uploaded with the syft results to Anchore Enterprise (supported on Enterprise 3.0+)
-  # same as -d ; SYFT_ANCHORE_DOCKERFILE env var
-  dockerfile: ""
 ```
 
 ### Adding an SBOM to an image as an attestation using Syft

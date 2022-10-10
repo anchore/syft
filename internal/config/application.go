@@ -43,7 +43,6 @@ type Application struct {
 	OutputTemplatePath string             `yaml:"output-template-path" json:"output-template-path" mapstructure:"output-template-path"` // -t template file to use for output
 	File               string             `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
 	CheckForAppUpdate  bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
-	Anchore            anchore            `yaml:"anchore" json:"anchore" mapstructure:"anchore"`                                        // options for interacting with Anchore Engine/Enterprise
 	Dev                development        `yaml:"dev" json:"dev" mapstructure:"dev"`
 	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
 	Catalogers         []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
@@ -113,7 +112,6 @@ func (cfg *Application) parseConfigValues() error {
 
 	// parse application config options
 	for _, optionFn := range []func() error{
-		cfg.parseUploadOptions,
 		cfg.parseLogLevelOption,
 		cfg.parseFile,
 	} {
@@ -133,13 +131,6 @@ func (cfg *Application) parseConfigValues() error {
 				return err
 			}
 		}
-	}
-	return nil
-}
-
-func (cfg *Application) parseUploadOptions() error {
-	if cfg.Anchore.Host == "" && cfg.Anchore.Dockerfile != "" {
-		return fmt.Errorf("cannot provide dockerfile option without enabling upload")
 	}
 	return nil
 }
