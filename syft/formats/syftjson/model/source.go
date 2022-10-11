@@ -10,7 +10,7 @@ import (
 
 // Source object represents the thing that was cataloged
 type Source struct {
-	ID     string      `json:"id,omitempty"`
+	ID     string      `json:"id"`
 	Type   string      `json:"type"`
 	Target interface{} `json:"target"`
 }

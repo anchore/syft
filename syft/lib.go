@@ -88,6 +88,7 @@ func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Catalog) []art
 			Type: artifact.ContainsRelationship,
 		})
 	}
+
 	return relationships
 }
 

@@ -1556,6 +1556,7 @@
     },
     "Source": {
       "required": [
+        "id",
         "type",
         "target"
       ],
