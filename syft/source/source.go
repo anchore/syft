@@ -241,28 +241,33 @@ func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
 func NewFromDirectory(path string) (Source, error) {
-	return Source{
+	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Scheme: DirectoryScheme,
 			Path:   path,
 		},
 		path: path,
-	}, nil
+	}
+	s.SetID()
+	return s, nil
 }
 
 // NewFromFile creates a new source object tailored to catalog a file.
 func NewFromFile(path string) (Source, func()) {
 	analysisPath, cleanupFn := fileAnalysisPath(path)
 
-	return Source{
+	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Scheme: FileScheme,
 			Path:   path,
 		},
 		path: analysisPath,
-	}, cleanupFn
+	}
+
+	s.SetID()
+	return s, cleanupFn
 }
 
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
@@ -298,13 +303,15 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 		return Source{}, fmt.Errorf("no image given")
 	}
 
-	return Source{
+	s := Source{
 		Image: img,
 		Metadata: Metadata{
 			Scheme:        ImageScheme,
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
-	}, nil
+	}
+	s.SetID()
+	return s, nil
 }
 
 func (s *Source) ID() artifact.ID {

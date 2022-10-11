@@ -67,7 +67,7 @@
  ],
  "artifactRelationships": [],
  "source": {
-  "id": "",
+  "id": "eda6cf0b63f1a1d2eaf7792a2a98c832c21a18e6992bcebffe6381781cc85cbc",
   "type": "directory",
   "target": "/some/path"
  },
