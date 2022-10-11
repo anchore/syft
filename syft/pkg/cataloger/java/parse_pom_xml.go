@@ -57,6 +57,7 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 }
 
 func newPackageFromPom(dep gopom.Dependency) *pkg.Package {
+	vp := make([]string, 0)
 	p := &pkg.Package{
 		Name:         dep.ArtifactID,
 		Version:      dep.Version,
@@ -65,13 +66,21 @@ func newPackageFromPom(dep gopom.Dependency) *pkg.Package {
 		MetadataType: pkg.JavaMetadataType,
 		FoundBy:      javaPomCataloger,
 		Metadata: pkg.JavaMetadata{
+			VirtualPath: vp,
 			PomProperties: &pkg.PomProperties{
 				GroupID: dep.GroupID,
 			},
 		},
 	}
 
-	p.Metadata = pkg.JavaMetadata{PURL: packageURL(*p)}
+	p.Metadata = pkg.JavaMetadata{
+		VirtualPath: vp,
+		PURL:        packageURL(*p),
+		PomProperties: &pkg.PomProperties{
+			GroupID: dep.GroupID,
+			Extra:   make(map[string]string),
+		},
+	}
 
 	return p
 }

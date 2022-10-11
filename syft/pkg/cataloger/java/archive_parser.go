@@ -179,6 +179,11 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
 
+	vp := make([]string, 0)
+	if j.virtualPath != "" {
+		vp = append(vp, j.virtualPath)
+	}
+
 	return &pkg.Package{
 		Name:         selectName(manifest, j.fileInfo),
 		Version:      selectVersion(manifest, j.fileInfo),
@@ -186,7 +191,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
-			VirtualPath:    []string{j.virtualPath},
+			VirtualPath:    vp,
 			Manifest:       manifest,
 			ArchiveDigests: digests,
 		},
@@ -365,6 +370,11 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	}
 	virtualPath += vPathSuffix
 
+	vp := make([]string, 0)
+	if virtualPath != "" {
+		vp = append(vp, virtualPath)
+	}
+
 	// discovered props = new package
 	p := pkg.Package{
 		Name:         pomProperties.ArtifactID,
@@ -373,7 +383,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 		Type:         pomProperties.PkgTypeIndicated(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
-			VirtualPath:   []string{virtualPath},
+			VirtualPath:   vp,
 			PomProperties: &pomProperties,
 			PomProject:    pomProject,
 			Parent:        parentPkg,
