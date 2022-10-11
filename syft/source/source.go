@@ -30,7 +30,7 @@ type Source struct {
 	id                artifact.ID  `hash:"ignore"`
 	Image             *image.Image // the image object to be cataloged (image only)
 	Metadata          Metadata
-	directoryResolver *directoryResolver
+	directoryResolver *directoryResolver `hash:"ignore"`
 	path              string
 	mutex             *sync.Mutex
 	Exclusions        []string

@@ -120,7 +120,7 @@ func TestSetID(t *testing.T) {
 					Path:   "test-fixtures/image-simple",
 				},
 			},
-			expected: artifact.ID("841b3d20fb723404"),
+			expected: artifact.ID("febd2d6148dc327d"),
 		},
 	}
 
