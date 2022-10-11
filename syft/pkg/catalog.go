@@ -110,6 +110,7 @@ func (c *Catalog) Add(p Package) {
 		if err := existing.merge(p); err != nil {
 			log.Warnf("failed to merge packages: %+v", err)
 		} else {
+			c.byID[id] = existing
 			c.addPathsToIndex(p)
 		}
 		return
