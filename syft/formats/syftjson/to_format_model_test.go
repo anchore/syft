@@ -26,10 +26,12 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "directory",
 			src: source.Metadata{
+				ID:     "test-id",
 				Scheme: source.DirectoryScheme,
 				Path:   "some/path",
 			},
 			expected: model.Source{
+				ID:     "test-id",
 				Type:   "directory",
 				Target: "some/path",
 			},
@@ -37,10 +39,12 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "file",
 			src: source.Metadata{
+				ID:     "test-id",
 				Scheme: source.FileScheme,
 				Path:   "some/path",
 			},
 			expected: model.Source{
+				ID:     "test-id",
 				Type:   "file",
 				Target: "some/path",
 			},
@@ -48,6 +52,7 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "image",
 			src: source.Metadata{
+				ID:     "test-id",
 				Scheme: source.ImageScheme,
 				ImageMetadata: source.ImageMetadata{
 					UserInput:      "user-input",
@@ -57,6 +62,7 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 			expected: model.Source{
+				ID:   "test-id",
 				Type: "image",
 				Target: source.ImageMetadata{
 					UserInput:      "user-input",

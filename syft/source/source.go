@@ -28,12 +28,12 @@ import (
 // in cataloging (based on the data source and configuration)
 type Source struct {
 	id                artifact.ID  `hash:"ignore"`
-	Image             *image.Image // the image object to be cataloged (image only)
+	Image             *image.Image `hash:"ignore"` // the image object to be cataloged (image only)
 	Metadata          Metadata
 	directoryResolver *directoryResolver `hash:"ignore"`
 	path              string
 	mutex             *sync.Mutex
-	Exclusions        []string
+	Exclusions        []string `hash:"ignore"`
 }
 
 // Input is an object that captures the detected user input regarding source location, scheme, and provider type.
@@ -96,7 +96,6 @@ func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusion
 	source, cleanupFn, err := generateImageSource(in, registryOptions)
 	if source != nil {
 		source.Exclusions = exclusions
-		source.SetID()
 	}
 	return source, cleanupFn, err
 }
@@ -121,7 +120,6 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 
 	if err == nil {
 		source.Exclusions = exclusions
-		source.SetID()
 	}
 
 	return source, cleanupFn, err
@@ -343,7 +341,7 @@ func (s *Source) SetID() {
 
 		// calcuate chain ID for image sources where manifestDigest is not available
 		// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
-		d = calculateChainID(s.Metadata.ImageMetadata)
+		d = calculateChainID(s.Metadata.ImageMetadata.Layers)
 		if d == "" {
 			// TODO what happens here if image has no layers?
 			// Is this case possible
@@ -358,15 +356,15 @@ func (s *Source) SetID() {
 	s.Metadata.ID = strings.TrimPrefix(d, "sha256:")
 }
 
-func calculateChainID(m ImageMetadata) string {
-	if len(m.Layers) < 1 {
+func calculateChainID(lm []LayerMetadata) string {
+	if len(lm) < 1 {
 		return ""
 	}
 
 	// DiffID(L0) = digest of layer 0
 	// https://github.com/anchore/stereoscope/blob/1b1b744a919964f38d14e1416fb3f25221b761ce/pkg/image/layer_metadata.go#L19-L32
-	chainID := m.Layers[0].Digest
-	id := chain(chainID, m.Layers[1:])
+	chainID := lm[0].Digest
+	id := chain(chainID, lm[1:])
 
 	return id
 }
