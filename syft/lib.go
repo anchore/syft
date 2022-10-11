@@ -74,7 +74,22 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 		return nil, nil, nil, err
 	}
 
+	relationships = append(relationships, newSourceRelationshipsFromCatalog(src, catalog)...)
+
 	return catalog, relationships, release, nil
+}
+
+func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Catalog) []artifact.Relationship {
+	relationships := make([]artifact.Relationship, 0) // Should we pre-allocate this by giving catalog a Len() method?
+	for p := range c.Enumerate() {
+		relationships = append(relationships, artifact.Relationship{
+			From: src,
+			To:   p,
+			Type: artifact.ContainsRelationship,
+		})
+	}
+
+	return relationships
 }
 
 // SetLogger sets the logger object used for all syft logging calls.

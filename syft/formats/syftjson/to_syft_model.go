@@ -64,6 +64,9 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationship
 		}
 	}
 
+	// set source metadata in identifier map
+	idMap[doc.Source.ID] = toSyftSource(doc.Source)
+
 	for _, f := range doc.Files {
 		idMap[f.ID] = f.Location
 	}
@@ -78,6 +81,14 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationship
 	return out
 }
 
+func toSyftSource(s model.Source) *source.Source {
+	newSrc := &source.Source{
+		Metadata: *toSyftSourceData(s),
+	}
+	newSrc.SetID()
+	return newSrc
+}
+
 func toSyftRelationship(idMap map[string]interface{}, relationship model.Relationship, idAliases map[string]string) *artifact.Relationship {
 	id := func(id string) string {
 		aliased, ok := idAliases[id]
@@ -86,16 +97,19 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 		}
 		return id
 	}
+
 	from, ok := idMap[id(relationship.Parent)].(artifact.Identifiable)
 	if !ok {
 		log.Warnf("relationship mapping from key %s is not a valid artifact.Identifiable type: %+v", relationship.Parent, idMap[relationship.Parent])
 		return nil
 	}
+
 	to, ok := idMap[id(relationship.Child)].(artifact.Identifiable)
 	if !ok {
 		log.Warnf("relationship mapping to key %s is not a valid artifact.Identifiable type: %+v", relationship.Child, idMap[relationship.Child])
 		return nil
 	}
+
 	typ := artifact.RelationshipType(relationship.Type)
 
 	switch typ {
@@ -126,16 +140,19 @@ func toSyftSourceData(s model.Source) *source.Metadata {
 	switch s.Type {
 	case "directory":
 		return &source.Metadata{
+			ID:     s.ID,
 			Scheme: source.DirectoryScheme,
 			Path:   s.Target.(string),
 		}
 	case "file":
 		return &source.Metadata{
+			ID:     s.ID,
 			Scheme: source.FileScheme,
 			Path:   s.Target.(string),
 		}
 	case "image":
 		return &source.Metadata{
+			ID:            s.ID,
 			Scheme:        source.ImageScheme,
 			ImageMetadata: s.Target.(source.ImageMetadata),
 		}
