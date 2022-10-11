@@ -126,7 +126,7 @@ func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 
 	for _, pattern := range patterns {
 		for idx, layerIdx := range r.layers {
-			results, err := r.img.Layers[layerIdx].Tree.FilesByGlob(pattern, filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
+			results, err := r.img.Layers[layerIdx].SquashedTree.FilesByGlob(pattern, filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 			}
