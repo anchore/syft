@@ -139,6 +139,7 @@
   }
  ],
  "source": {
+  "id": "",
   "type": "image",
   "target": {
    "userInput": "user-image-input",
