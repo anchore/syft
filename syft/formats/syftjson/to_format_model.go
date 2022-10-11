@@ -17,8 +17,6 @@ import (
 )
 
 // ToFormatModel transforms the sbom import a format-specific model.
-// note: this is needed for anchore import functionality
-// TODO: unexport this when/if anchore import functionality is removed
 func ToFormatModel(s sbom.SBOM) model.Document {
 	src, err := toSourceModel(s.Source)
 	if err != nil {
@@ -236,16 +234,19 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 			metadata.Tags = []string{}
 		}
 		return model.Source{
+			ID:     src.ID,
 			Type:   "image",
 			Target: metadata,
 		}, nil
 	case source.DirectoryScheme:
 		return model.Source{
+			ID:     src.ID,
 			Type:   "directory",
 			Target: src.Path,
 		}, nil
 	case source.FileScheme:
 		return model.Source{
+			ID:     src.ID,
 			Type:   "file",
 			Target: src.Path,
 		}, nil

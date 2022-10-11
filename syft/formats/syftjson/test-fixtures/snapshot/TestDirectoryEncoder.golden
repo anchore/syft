@@ -67,6 +67,7 @@
  ],
  "artifactRelationships": [],
  "source": {
+  "id": "eda6cf0b63f1a1d2eaf7792a2a98c832c21a18e6992bcebffe6381781cc85cbc",
   "type": "directory",
   "target": "/some/path"
  },
@@ -88,7 +89,7 @@
   }
  },
  "schema": {
-  "version": "4.0.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-4.0.0.json"
+  "version": "4.1.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-4.1.0.json"
  }
 }

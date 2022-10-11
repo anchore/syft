@@ -20,10 +20,12 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		{
 			name: "directory",
 			input: []byte(`{
+				"id": "foobar",
 				"type": "directory",
 				"target":"/var/lib/foo"
 			}`),
 			expectedSource: &Source{
+				ID:     "foobar",
 				Type:   "directory",
 				Target: "/var/lib/foo",
 			},
@@ -32,6 +34,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		{
 			name: "image",
 			input: []byte(`{
+				"id": "foobar",
 				"type": "image",
 				"target": {
 					"userInput": "alpine:3.10",
@@ -55,6 +58,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 				}
 			}`),
 			expectedSource: &Source{
+				ID:   "foobar",
 				Type: "image",
 				Target: source.ImageMetadata{
 					UserInput:      "alpine:3.10",
@@ -98,10 +102,12 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		{
 			name: "file",
 			input: []byte(`{
+				"id": "foobar",
 				"type": "file",
 				"target":"/var/lib/foo/go.mod"
 			}`),
 			expectedSource: &Source{
+				ID:     "foobar",
 				Type:   "file",
 				Target: "/var/lib/foo/go.mod",
 			},
@@ -110,10 +116,12 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		{
 			name: "unknown source type",
 			input: []byte(`{
+				"id": "foobar",
 				"type": "unknown-thing",
 				"target":"/var/lib/foo"
 			}`),
 			expectedSource: &Source{
+				ID:   "foobar",
 				Type: "unknown-thing",
 			},
 			errAssertion: assert.Error,

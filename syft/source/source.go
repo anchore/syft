@@ -27,13 +27,13 @@ import (
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
-	id                artifact.ID
-	Image             *image.Image // the image object to be cataloged (image only)
+	id                artifact.ID  `hash:"ignore"`
+	Image             *image.Image `hash:"ignore"` // the image object to be cataloged (image only)
 	Metadata          Metadata
-	directoryResolver *directoryResolver
+	directoryResolver *directoryResolver `hash:"ignore"`
 	path              string
 	mutex             *sync.Mutex
-	Exclusions        []string
+	Exclusions        []string `hash:"ignore"`
 }
 
 // Input is an object that captures the detected user input regarding source location, scheme, and provider type.
@@ -241,28 +241,33 @@ func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
 func NewFromDirectory(path string) (Source, error) {
-	return Source{
+	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Scheme: DirectoryScheme,
 			Path:   path,
 		},
 		path: path,
-	}, nil
+	}
+	s.SetID()
+	return s, nil
 }
 
 // NewFromFile creates a new source object tailored to catalog a file.
 func NewFromFile(path string) (Source, func()) {
 	analysisPath, cleanupFn := fileAnalysisPath(path)
 
-	return Source{
+	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Scheme: FileScheme,
 			Path:   path,
 		},
 		path: analysisPath,
-	}, cleanupFn
+	}
+
+	s.SetID()
+	return s, cleanupFn
 }
 
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
@@ -298,16 +303,18 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 		return Source{}, fmt.Errorf("no image given")
 	}
 
-	return Source{
+	s := Source{
 		Image: img,
 		Metadata: Metadata{
 			Scheme:        ImageScheme,
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
-	}, nil
+	}
+	s.SetID()
+	return s, nil
 }
 
-func (s Source) ID() artifact.ID {
+func (s *Source) ID() artifact.ID {
 	if s.id == "" {
 		s.SetID()
 	}
@@ -333,7 +340,7 @@ func (s *Source) SetID() {
 		}
 		d = di.String()
 	case ImageScheme:
-		manifestDigest := digest.FromBytes(s.Image.Metadata.RawManifest).String()
+		manifestDigest := digest.FromBytes(s.Metadata.ImageMetadata.RawManifest).String()
 		if manifestDigest != "" {
 			d = manifestDigest
 			break
@@ -341,7 +348,7 @@ func (s *Source) SetID() {
 
 		// calcuate chain ID for image sources where manifestDigest is not available
 		// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
-		d = calculateChainID(s.Image)
+		d = calculateChainID(s.Metadata.ImageMetadata.Layers)
 		if d == "" {
 			// TODO what happens here if image has no layers?
 			// Is this case possible
@@ -353,27 +360,28 @@ func (s *Source) SetID() {
 	}
 
 	s.id = artifact.ID(strings.TrimPrefix(d, "sha256:"))
+	s.Metadata.ID = strings.TrimPrefix(d, "sha256:")
 }
 
-func calculateChainID(img *image.Image) string {
-	if len(img.Layers) < 1 {
+func calculateChainID(lm []LayerMetadata) string {
+	if len(lm) < 1 {
 		return ""
 	}
 
 	// DiffID(L0) = digest of layer 0
 	// https://github.com/anchore/stereoscope/blob/1b1b744a919964f38d14e1416fb3f25221b761ce/pkg/image/layer_metadata.go#L19-L32
-	chainID := img.Layers[0].Metadata.Digest
-	id := chain(chainID, img.Layers[1:])
+	chainID := lm[0].Digest
+	id := chain(chainID, lm[1:])
 
 	return id
 }
 
-func chain(chainID string, layers []*image.Layer) string {
+func chain(chainID string, layers []LayerMetadata) string {
 	if len(layers) < 1 {
 		return chainID
 	}
 
-	chainID = digest.FromString(layers[0].Metadata.Digest + " " + chainID).String()
+	chainID = digest.FromString(layers[0].Digest + " " + chainID).String()
 	return chain(chainID, layers[1:])
 }
 
