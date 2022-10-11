@@ -70,9 +70,7 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewCatalog(pkgs...)
-
 			assertIndexes(t, c, test.expectedIndexes)
-
 		})
 	}
 }
@@ -178,11 +176,13 @@ func TestCatalog_MergeRecords(t *testing.T) {
 		name              string
 		pkgs              []Package
 		expectedLocations []source.Location
+		expectedCPECount  int
 	}{
 		{
 			name: "multiple Locations with shared path",
 			pkgs: []Package{
 				{
+					CPEs: []CPE{MustCPE("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
 						source.Location{
 							Coordinates: source.Coordinates{
@@ -195,6 +195,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					Type: RpmPkg,
 				},
 				{
+					CPEs: []CPE{MustCPE("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
 						source.Location{
 							Coordinates: source.Coordinates{
@@ -223,6 +224,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					VirtualPath: "/another/path",
 				},
 			},
+			expectedCPECount: 2,
 		},
 	}
 
@@ -231,6 +233,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			actual := NewCatalog(tt.pkgs...).PackagesByPath("/b/path")
 			require.Len(t, actual, 1)
 			assert.Equal(t, tt.expectedLocations, actual[0].Locations.ToSlice())
+			require.Len(t, actual[0].CPEs, tt.expectedCPECount)
 		})
 	}
 }
