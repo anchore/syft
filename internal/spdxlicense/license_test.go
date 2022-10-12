@@ -29,7 +29,7 @@ func TestIDParse(t *testing.T) {
 		},
 		{
 			"GPL-3-with-autoconf-exception",
-			"GPL-3.0-with-autoconf-exception",
+			"GPL-3.0-only WITH Autoconf-exception-3.0",
 		},
 		{
 			"CC-by-nc-3-de",
