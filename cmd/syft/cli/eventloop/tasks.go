@@ -64,7 +64,7 @@ func generateCatalogPackagesTask(app *config.Application) (Task, error) {
 }
 
 func generateRekorCatalogerTask(app *config.Application) (Task, error) {
-	if !app.ExternalSources.ExternalSourcesEnabled {
+	if !app.ExternalSources.Enabled {
 		log.Debugf("skipping rekor cataloger task because external sources are disabled")
 		return nil, nil
 	}

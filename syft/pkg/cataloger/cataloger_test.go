@@ -24,6 +24,10 @@ func (d dummy) Catalog(_ source.FileResolver) ([]pkg.Package, []artifact.Relatio
 	panic("not implemented")
 }
 
+func (d dummy) UsesExternalSources() bool {
+	return false
+}
+
 func Test_filterCatalogers(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -151,7 +155,8 @@ func Test_filterCatalogers(t *testing.T) {
 			for _, n := range tt.catalogers {
 				catalogers = append(catalogers, dummy{name: n})
 			}
-			got := filterCatalogers(catalogers, tt.patterns)
+			cfg := Config{Catalogers: tt.patterns}
+			got := filterCatalogers(catalogers, cfg)
 			var gotNames []string
 			for _, g := range got {
 				gotNames = append(gotNames, g.Name())
