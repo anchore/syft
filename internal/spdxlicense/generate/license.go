@@ -25,8 +25,61 @@ func (l License) canReplace(other License) bool {
 		return false
 	}
 
-	if l.Name != other.Name {
-		return false
+	// Some hacks needed until the licenses.json file is updated
+	// See https://github.com/spdx/license-list-XML/issues/1676
+	if (l.Name == "GNU Lesser General Public License v2.1 or later") && (other.Name == "GNU Library General Public License v2.1 or later") {
+        	return true;
+	}
+
+	if other.ID == "GFDL-1.1" {
+        	return l.ID == "GFDL-1.1-only";
+	}
+
+	if other.ID == "GFDL-1.2" {
+        	return l.ID == "GFDL-1.2-only";
+	}
+
+	if other.ID == "GFDL-1.3" {
+		return l.ID == "GFDL-1.3-only";
+	}
+
+	if other.ID == "GPL-1.0+" {
+		return l.ID == "GPL-1.0-or-later";
+	}
+
+	if other.ID == "GPL-2.0+" {
+		return l.ID == "GPL-2.0-or-later";
+	}
+
+	if other.ID == "GPL-3.0+" {
+		return l.ID == "GPL-3.0-or-later";
+	}
+	if other.ID == "LGPL-2.0+" {
+		return l.ID == "LGPL-2.0-or-later";
+	}
+
+	if other.ID == "LGPL-2.1+" {
+		return l.ID == "LGPL-2.1-or-later";
+	}
+
+	if other.ID == "LGPL-3.0+" {
+		return l.ID == "LGPL-3.0-or-later";
+	}
+
+	if (l.ID == "BSD-2-Clause") && (other.ID == "BSD-2-Clause-NetBSD") {
+        	return true;
+	}
+
+	if (l.ID == "BSD-2-Clause-Views") && (other.ID == "BSD-2-Clause-FreeBSD") {
+		return true;
+	}
+
+	if (l.ID == "bzip2-1.0.6") && (other.ID == "bzip2-1.0.5") {
+ 		return true;
+	}
+
+	if l.Name == other.Name {
+		return true
 	}
 
 	if l.OSIApproved != other.OSIApproved {
