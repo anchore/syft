@@ -34,6 +34,11 @@ func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string
 	}
 }
 
+// UsesExternalSources indicates that the alpmdb cataloger does not use external sources
+func (c *GenericCataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Name returns a string that uniquely describes the upstream cataloger that this Generic Cataloger represents.
 func (c *GenericCataloger) Name() string {
 	return c.upstreamCataloger

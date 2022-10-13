@@ -23,6 +23,11 @@ func NewFileCataloger() *FileCataloger {
 	return &FileCataloger{}
 }
 
+// UsesExternalSources indicates that the alpmdb cataloger does not use external sources
+func (c *FileCataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Name returns a string that uniquely describes a cataloger
 func (c *FileCataloger) Name() string {
 	return "rpm-file-cataloger"

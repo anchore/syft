@@ -6,6 +6,7 @@ type SearchConfig struct {
 	IncludeIndexedArchives   bool
 	IncludeUnindexedArchives bool
 	Scope                    source.Scope
+	ExternalSourcesEnabled   bool
 }
 
 func DefaultSearchConfig() SearchConfig {

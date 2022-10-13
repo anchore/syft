@@ -28,6 +28,11 @@ func (c *Cataloger) Name() string {
 	return catalogerName
 }
 
+// UsesExternalSources indicates that the alpmdb cataloger does not use external sources
+func (c *Cataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Catalog identifies executables then attempts to read Rust dependency information from them
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package

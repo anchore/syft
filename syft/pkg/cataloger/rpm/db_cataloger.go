@@ -22,6 +22,11 @@ func NewRpmdbCataloger() *DBCataloger {
 	return &DBCataloger{}
 }
 
+// UsesExternalSources indicates that the alpmdb cataloger does not use external sources
+func (c *DBCataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Name returns a string that uniquely describes a cataloger
 func (c *DBCataloger) Name() string {
 	return dbCatalogerName

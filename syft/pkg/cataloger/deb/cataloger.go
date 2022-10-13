@@ -30,6 +30,11 @@ func NewDpkgdbCataloger() *Cataloger {
 	return &Cataloger{}
 }
 
+// UsesExternalSources indicates that the alpmdb cataloger does not use external sources
+func (c *Cataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Name returns a string that uniquely describes a cataloger
 func (c *Cataloger) Name() string {
 	return "dpkgdb-cataloger"

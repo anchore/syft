@@ -14,13 +14,14 @@ import (
 )
 
 type PackagesOptions struct {
-	Scope              string
-	Output             []string
-	OutputTemplatePath string
-	File               string
-	Platform           string
-	Exclude            []string
-	Catalogers         []string
+	Scope                  string
+	Output                 []string
+	OutputTemplatePath     string
+	File                   string
+	Platform               string
+	Exclude                []string
+	Catalogers             []string
+	ExternalSourcesEnabled bool
 }
 
 var _ Interface = (*PackagesOptions)(nil)
@@ -47,12 +48,14 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.Flags().StringArrayVarP(&o.Catalogers, "catalogers", "", nil,
 		"enable one or more package catalogers")
 
+	cmd.Flags().BoolVarP(&o.ExternalSourcesEnabled, "external-sources-enabled", "", false,
+		"shut off any use of external sources during sbom generation (default false")
+
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
 
 func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	// Formatting & Input options //////////////////////////////////////////////
-
 	if err := v.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
 		return err
 	}
@@ -78,6 +81,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("external_sources.external-sources-enabled", flags.Lookup("external-sources-enabled")); err != nil {
 		return err
 	}
 

@@ -27,6 +27,11 @@ func NewPythonPackageCataloger() *PackageCataloger {
 	return &PackageCataloger{}
 }
 
+// UsesExternalSources indicates that the alpmdb cataloger does not use external sources
+func (c *PackageCataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Name returns a string that uniquely describes a cataloger
 func (c *PackageCataloger) Name() string {
 	return "python-package-cataloger"
