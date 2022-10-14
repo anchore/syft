@@ -56,15 +56,10 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 		license := spdxhelpers.License(p)
 		packageSpdxID := model.ElementID(p.ID()).String()
 
-		// we generate digest for some Java packages
-		// see page 33 of the spdx specification for 2.2
-		// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
-		var checksums []model.Checksum
-		checksums = toPackageChecksums(p)
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
 		packages = append(packages, model.Package{
-			Checksums:        checksums,
+			Checksums:        toPackageChecksums(p),
 			Description:      spdxhelpers.Description(p),
 			DownloadLocation: spdxhelpers.DownloadLocation(p),
 			ExternalRefs:     spdxhelpers.ExternalRefs(p),
@@ -93,6 +88,9 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 func toPackageChecksums(p pkg.Package) []model.Checksum {
 	var checksums []model.Checksum
 	switch meta := p.Metadata.(type) {
+	// we generate digest for some Java packages
+	// see page 33 of the spdx specification for 2.2
+	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
 	case pkg.JavaMetadata:
 		if len(meta.ArchiveDigests) > 0 {
 			for _, digest := range meta.ArchiveDigests {
