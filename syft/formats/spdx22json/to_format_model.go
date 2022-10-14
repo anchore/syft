@@ -1,6 +1,8 @@
 package spdx22json
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -53,24 +55,12 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 	for _, p := range catalog.Sorted() {
 		license := spdxhelpers.License(p)
 		packageSpdxID := model.ElementID(p.ID()).String()
-		filesAnalyzed := false
 
 		// we generate digest for some Java packages
 		// see page 33 of the spdx specification for 2.2
 		// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
 		var checksums []model.Checksum
-		if p.MetadataType == pkg.JavaMetadataType {
-			javaMetadata := p.Metadata.(pkg.JavaMetadata)
-			if len(javaMetadata.ArchiveDigests) > 0 {
-				filesAnalyzed = true
-				for _, digest := range javaMetadata.ArchiveDigests {
-					checksums = append(checksums, model.Checksum{
-						Algorithm:     strings.ToUpper(digest.Algorithm),
-						ChecksumValue: digest.Value,
-					})
-				}
-			}
-		}
+		checksums = toPackageChecksums(p)
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
 		packages = append(packages, model.Package{
@@ -78,7 +68,7 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 			Description:      spdxhelpers.Description(p),
 			DownloadLocation: spdxhelpers.DownloadLocation(p),
 			ExternalRefs:     spdxhelpers.ExternalRefs(p),
-			FilesAnalyzed:    filesAnalyzed,
+			FilesAnalyzed:    false, // this directly relates to packageVerificationCode
 			HasFiles:         fileIDsForPackage(packageSpdxID, relationships),
 			Homepage:         spdxhelpers.Homepage(p),
 			// The Declared License is what the authors of a project believe govern the package
@@ -98,6 +88,46 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 	}
 
 	return packages
+}
+
+func toPackageChecksums(p pkg.Package) []model.Checksum {
+	var checksums []model.Checksum
+	switch meta := p.Metadata.(type) {
+	case pkg.JavaMetadata:
+		if len(meta.ArchiveDigests) > 0 {
+			for _, digest := range meta.ArchiveDigests {
+				checksums = append(checksums, model.Checksum{
+					Algorithm:     strings.ToUpper(digest.Algorithm),
+					ChecksumValue: digest.Value,
+				})
+			}
+		}
+	case pkg.GolangBinMetadata:
+		// hash is base64, but we need hex encode
+		digest := strings.Split(meta.H1Digest, ":")
+		if len(digest) == 2 {
+			algo := digest[0]
+			hash := digest[1]
+			checksum, err := base64.StdEncoding.DecodeString(hash)
+			if err != nil {
+				log.Debugf("invalid base64 encoded digest: %v", err)
+				break
+			}
+
+			hexStr := hex.EncodeToString(checksum)
+
+			// golang h1 hash == sha256
+			if algo == "h1" {
+				algo = "sha256"
+			}
+
+			checksums = append(checksums, model.Checksum{
+				Algorithm:     strings.ToUpper(algo),
+				ChecksumValue: hexStr,
+			})
+		}
+	}
+	return checksums
 }
 
 func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationship) (fileIDs []string) {
