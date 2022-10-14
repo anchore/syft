@@ -1,7 +1,10 @@
 package spdxhelpers
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -293,6 +296,7 @@ func toSyftPackage(p *spdx.Package2_2) *pkg.Package {
 	return &sP
 }
 
+//nolint:funlen
 func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interface{}) {
 	arch := info.qualifierValue(pkg.PURLQualifierArch)
 	upstreamValue := info.qualifierValue(pkg.PURLQualifierUpstream)
@@ -351,6 +355,25 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 		}
 		return pkg.JavaMetadataType, pkg.JavaMetadata{
 			ArchiveDigests: digests,
+		}
+	case pkg.GoModulePkg:
+		var h1Digest string
+		for _, value := range p.PackageChecksums {
+			// golang h1 hash == sha256
+			if value.Algorithm != "SHA256" {
+				break
+			}
+			checksum, err := hex.DecodeString(value.Value)
+			if err != nil {
+				log.Debugf("invalid hex encoded digest: %v", err)
+				break
+			}
+			// hash is base64, but we need hex encode
+			h1Digest = base64.StdEncoding.EncodeToString(checksum)
+		}
+
+		return pkg.GolangBinMetadataType, pkg.GolangBinMetadata{
+			H1Digest: fmt.Sprintf("h1:%s", h1Digest),
 		}
 	}
 	return pkg.UnknownMetadataType, nil

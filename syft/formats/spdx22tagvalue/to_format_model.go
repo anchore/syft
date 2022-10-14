@@ -1,12 +1,16 @@
 package spdx22tagvalue
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/pkg"
@@ -102,24 +106,6 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 		// the Comments on License field (section 3.16) is preferred.
 		license := spdxhelpers.License(p)
 
-		filesAnalyzed := false
-		checksums := make(map[spdx.ChecksumAlgorithm]spdx.Checksum)
-
-		// If the pkg type is Java we have attempted to generated a digest
-		// FilesAnalyzed should be true in this case
-		if p.MetadataType == pkg.JavaMetadataType {
-			javaMetadata := p.Metadata.(pkg.JavaMetadata)
-			if len(javaMetadata.ArchiveDigests) > 0 {
-				filesAnalyzed = true
-				for _, digest := range javaMetadata.ArchiveDigests {
-					checksums[spdx.ChecksumAlgorithm(digest.Algorithm)] = spdx.Checksum{
-						Algorithm: spdx.ChecksumAlgorithm(digest.Algorithm),
-						Value:     digest.Value,
-					}
-				}
-			}
-		}
-
 		results[spdx.ElementID(id)] = &spdx.Package2_2{
 
 			// NOT PART OF SPEC
@@ -176,7 +162,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 
 			// Intent: A package can refer to a project, product, artifact, distribution or a component that is
 			// external to the SPDX document.
-			FilesAnalyzed: filesAnalyzed,
+			FilesAnalyzed: false,
 			// NOT PART OF SPEC: did FilesAnalyzed tag appear?
 			IsFilesAnalyzedTagPresent: true,
 
@@ -197,7 +183,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 			// to determine if any file in the original package has been changed. If the SPDX file is to be included
 			// in a package, this value should not be calculated. The SHA-1 algorithm will be used to provide the
 			// checksum by default.
-			PackageChecksums: checksums,
+			PackageChecksums: toPackageChecksums(p),
 
 			// note: based on the purpose above no discovered checksums should be provided, but instead, only
 			// tool-derived checksums.
@@ -278,6 +264,49 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 		}
 	}
 	return results
+}
+
+func toPackageChecksums(p pkg.Package) map[spdx.ChecksumAlgorithm]spdx.Checksum {
+	checksums := map[spdx.ChecksumAlgorithm]spdx.Checksum{}
+	switch meta := p.Metadata.(type) {
+	// we generate digest for some Java packages
+	// see page 33 of the spdx specification for 2.2
+	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
+	case pkg.JavaMetadata:
+		if len(meta.ArchiveDigests) > 0 {
+			for _, digest := range meta.ArchiveDigests {
+				checksums[spdx.ChecksumAlgorithm(digest.Algorithm)] = spdx.Checksum{
+					Algorithm: spdx.ChecksumAlgorithm(digest.Algorithm),
+					Value:     digest.Value,
+				}
+			}
+		}
+	case pkg.GolangBinMetadata:
+		// hash is base64, but we need hex encode
+		digest := strings.Split(meta.H1Digest, ":")
+		if len(digest) == 2 {
+			algo := digest[0]
+			hash := digest[1]
+			checksum, err := base64.StdEncoding.DecodeString(hash)
+			if err != nil {
+				log.Debugf("invalid base64 encoded digest: %v", err)
+				break
+			}
+
+			hexStr := hex.EncodeToString(checksum)
+
+			// golang h1 hash == sha256
+			if algo == "h1" {
+				algo = "sha256"
+			}
+
+			checksums[spdx.ChecksumAlgorithm(algo)] = spdx.Checksum{
+				Algorithm: spdx.ChecksumAlgorithm(algo),
+				Value:     hexStr,
+			}
+		}
+	}
+	return checksums
 }
 
 func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReference2_2) {
