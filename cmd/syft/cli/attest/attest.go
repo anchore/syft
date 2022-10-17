@@ -359,8 +359,7 @@ func formatPredicateType(format sbom.Format) string {
 	case spdx22json.ID:
 		return in_toto.PredicateSPDX
 	case cyclonedxjson.ID:
-		// Tentative see https://github.com/in-toto/attestation/issues/82
-		return "https://cyclonedx.org/bom"
+		return in_toto.PredicateCycloneDX
 	case syftjson.ID:
 		return "https://syft.dev/bom"
 	default:
