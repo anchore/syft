@@ -15,7 +15,7 @@ var (
 	}
 
 	license2 = License{
-		ID:   "ABC-1.0-Or-later",
+		ID:   "ABC-1.0-or-later",
 		Name: "The ABC License 1.0",
 	}
 
@@ -26,7 +26,7 @@ var (
 	}
 
 	license4 = License{
-		ID:   "ABC-1.0-Only",
+		ID:   "ABC-1.0-only",
 		Name: "The ABC License 1.0 Only",
 	}
 	license5 = License{
@@ -53,7 +53,9 @@ func TestLicense_canReplace(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.expected, tt.l1.canReplace(tt.l2))
+		t.Run(tt.l1.ID+" - "+tt.l2.ID, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.l1.canReplace(tt.l2))
+		})
 	}
 }
 
