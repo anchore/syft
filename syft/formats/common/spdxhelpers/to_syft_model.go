@@ -1,10 +1,7 @@
 package spdxhelpers
 
 import (
-	"encoding/base64"
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -15,6 +12,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -359,21 +357,16 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 	case pkg.GoModulePkg:
 		var h1Digest string
 		for _, value := range p.PackageChecksums {
-			// golang h1 hash == sha256
-			if value.Algorithm != "SHA256" {
-				break
-			}
-			checksum, err := hex.DecodeString(value.Value)
+			digest, err := util.HDigestFromSHA(string(value.Algorithm), value.Value)
 			if err != nil {
-				log.Debugf("invalid hex encoded digest: %v", err)
-				break
+				log.Debugf("invalid h1digest: %v %v", value, err)
+				continue
 			}
-			// hash is base64, but we need hex encode
-			h1Digest = base64.StdEncoding.EncodeToString(checksum)
+			h1Digest = digest
+			break
 		}
-
 		return pkg.GolangBinMetadataType, pkg.GolangBinMetadata{
-			H1Digest: fmt.Sprintf("h1:%s", h1Digest),
+			H1Digest: h1Digest,
 		}
 	}
 	return pkg.UnknownMetadataType, nil

@@ -1,8 +1,6 @@
 package spdx22json
 
 import (
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -14,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
+	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/formats/spdx22json/model"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -101,29 +100,16 @@ func toPackageChecksums(p pkg.Package) []model.Checksum {
 			}
 		}
 	case pkg.GolangBinMetadata:
-		// hash is base64, but we need hex encode
-		digest := strings.Split(meta.H1Digest, ":")
-		if len(digest) == 2 {
-			algo := digest[0]
-			hash := digest[1]
-			checksum, err := base64.StdEncoding.DecodeString(hash)
-			if err != nil {
-				log.Debugf("invalid base64 encoded digest: %v", err)
-				break
-			}
-
-			hexStr := hex.EncodeToString(checksum)
-
-			// golang h1 hash == sha256
-			if algo == "h1" {
-				algo = "sha256"
-			}
-
-			checksums = append(checksums, model.Checksum{
-				Algorithm:     strings.ToUpper(algo),
-				ChecksumValue: hexStr,
-			})
+		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
+		if err != nil {
+			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
+			break
 		}
+		algo = strings.ToUpper(algo)
+		checksums = append(checksums, model.Checksum{
+			Algorithm:     strings.ToUpper(algo),
+			ChecksumValue: hexStr,
+		})
 	}
 	return checksums
 }
