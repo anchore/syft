@@ -1020,7 +1020,7 @@ func Test_processSPDXLicense(t *testing.T) {
 				"sspl-1":                                   "SSPL-1.0",
 				"sspl-1.0":                                 "SSPL-1.0",
 				"sspl-1.0.0":                               "SSPL-1.0",
-				"standardml-nj":                            "StandardML-NJ",
+				"standardml-nj":                            "SMLNJ",
 				"sugarcrm-1":                               "SugarCRM-1.1.3",
 				"sugarcrm-1.1":                             "SugarCRM-1.1.3",
 				"sugarcrm-1.1.3":                           "SugarCRM-1.1.3",

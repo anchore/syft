@@ -39,6 +39,8 @@ func (l License) canReplace(other License) bool {
 			return true
 		case l.ID == "bzip2-1.0.6" && other.ID == "bzip2-1.0.5":
 			return true
+		case l.ID == "SMLNJ" && other.ID == "StandardML-NJ":
+			return true
 		}
 	}
 
