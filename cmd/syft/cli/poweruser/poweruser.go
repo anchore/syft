@@ -46,7 +46,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	}()
 
 	userInput := args[0]
-	si, err := source.ParseInput(userInput, app.Platform, true)
+	si, err := source.ParseInputWithName(userInput, app.Platform, true, app.Name)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}
