@@ -7,6 +7,8 @@ LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=5m --config .gola
 GOIMPORTS_CMD = $(TEMPDIR)/gosimports -local github.com/anchore
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
+
+# tool versions
 GOLANGCILINT_VERSION = v1.50.1
 GOSIMPORTS_VERSION = v0.3.4
 BOUNCER_VERSION = v0.4.0
@@ -14,6 +16,7 @@ CHRONICLE_VERSION = v0.4.2
 GORELEASER_VERSION = v1.12.3
 YAJSV_VERSION = v1.4.1
 COSIGN_VERSION = v1.13.1
+QUILL_VERSION = v0.2.0
 
 # formatting variables
 BOLD := $(shell tput -T linux bold)
@@ -114,6 +117,7 @@ $(TEMPDIR):
 
 .PHONY: bootstrap-tools
 bootstrap-tools: $(TEMPDIR)
+	curl -sSfL https://raw.githubusercontent.com/anchore/quill/main/install.sh | sh -s -- -b $(TEMPDIR)/ $(QUILL_VERSION)
 	GO111MODULE=off GOBIN=$(realpath $(TEMPDIR)) go get -u golang.org/x/perf/cmd/benchstat
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TEMPDIR)/ $(GOLANGCILINT_VERSION)
 	curl -sSfL https://raw.githubusercontent.com/wagoodman/go-bouncer/master/bouncer.sh | sh -s -- -b $(TEMPDIR)/ $(BOUNCER_VERSION)
@@ -373,19 +377,6 @@ release: clean-dist CHANGELOG.md
 	# TODO: turn this into a post-release hook
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DISTDIR)" "$(VERSION)"
-
-.PHONY: release-docker-assets
-release-docker-assets:
-	$(call title,Publishing docker release assets)
-
-	# create a config with the dist dir overridden
-	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
-
-	bash -c "\
-		$(RELEASE_CMD) \
-			--config $(TEMPDIR)/goreleaser.yaml \
-			--parallelism 1"
 
 .PHONY: clean
 clean: clean-dist clean-snapshot clean-test-image-cache ## Remove previous builds, result reports, and test cache

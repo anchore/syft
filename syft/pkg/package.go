@@ -55,6 +55,7 @@ func (p *Package) merge(other Package) error {
 	if p.id != other.id {
 		return fmt.Errorf("cannot merge packages with different IDs: %q vs %q", p.id, other.id)
 	}
+
 	if p.PURL != other.PURL {
 		log.Warnf("merging packages have with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
 	}
