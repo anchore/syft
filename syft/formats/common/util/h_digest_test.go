@@ -81,6 +81,12 @@ func Test_HDigestFromSHA(t *testing.T) {
 			sha:      "sha1:f10a9c0e0ceb52a9546ff1b63d04d68ae786a33b91d7cf3881d74ccb093a88b5",
 			error:    true,
 		},
+		{
+			name:     "empty sha",
+			expected: "",
+			sha:      "sha256:",
+			error:    true,
+		},
 	}
 
 	for _, test := range tests {

@@ -39,6 +39,9 @@ func HDigestToSHA(digest string) (string, string, error) {
 // HDigestFromSHA converts an algorithm, such sha256 with a hex encoded digest to a
 // h# value such as h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 func HDigestFromSHA(algorithm string, digest string) (string, error) {
+	if digest == "" {
+		return "", fmt.Errorf("no digest value provided")
+	}
 	// digest is hex, but we need to base64 encode
 	algorithm = strings.ToLower(algorithm)
 	if algorithm == "sha256" {

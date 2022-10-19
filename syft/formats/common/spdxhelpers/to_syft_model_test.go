@@ -234,3 +234,84 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 		require.Equal(t, tt.expected, extractSchemeFromNamespace(tt.namespace))
 	}
 }
+
+func TestH1Digest(t *testing.T) {
+	tests := []struct {
+		name           string
+		pkg            spdx.Package2_2
+		expectedDigest string
+	}{
+		{
+			name: "valid h1digest",
+			pkg: spdx.Package2_2{
+				PackageName:    "github.com/googleapis/gnostic",
+				PackageVersion: "v0.5.5",
+				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+					{
+						Category: "PACKAGE_MANAGER",
+						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
+						RefType:  "purl",
+					},
+				},
+				PackageChecksums: map[spdx.ChecksumAlgorithm]spdx.Checksum{
+					spdx.SHA256: {
+						Algorithm: spdx.SHA256,
+						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+					},
+				},
+			},
+			expectedDigest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
+		},
+		{
+			name: "invalid h1digest algorithm",
+			pkg: spdx.Package2_2{
+				PackageName:    "github.com/googleapis/gnostic",
+				PackageVersion: "v0.5.5",
+				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+					{
+						Category: "PACKAGE_MANAGER",
+						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
+						RefType:  "purl",
+					},
+				},
+				PackageChecksums: map[spdx.ChecksumAlgorithm]spdx.Checksum{
+					spdx.SHA256: {
+						Algorithm: spdx.SHA1,
+						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+					},
+				},
+			},
+			expectedDigest: "",
+		},
+		{
+			name: "invalid h1digest digest",
+			pkg: spdx.Package2_2{
+				PackageName:    "github.com/googleapis/gnostic",
+				PackageVersion: "v0.5.5",
+				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+					{
+						Category: "PACKAGE_MANAGER",
+						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
+						RefType:  "purl",
+					},
+				},
+				PackageChecksums: map[spdx.ChecksumAlgorithm]spdx.Checksum{
+					spdx.SHA256: {
+						Algorithm: spdx.SHA256,
+						Value:     "",
+					},
+				},
+			},
+			expectedDigest: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := toSyftPackage(&test.pkg)
+			require.Equal(t, pkg.GolangBinMetadataType, p.MetadataType)
+			meta := p.Metadata.(pkg.GolangBinMetadata)
+			require.Equal(t, test.expectedDigest, meta.H1Digest)
+		})
+	}
+}
