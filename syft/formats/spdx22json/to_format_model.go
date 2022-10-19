@@ -54,15 +54,16 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 	for _, p := range catalog.Sorted() {
 		license := spdxhelpers.License(p)
 		packageSpdxID := model.ElementID(p.ID()).String()
+		checksums, filesAnalyzed := toPackageChecksums(p)
 
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
 		packages = append(packages, model.Package{
-			Checksums:        toPackageChecksums(p),
+			Checksums:        checksums,
 			Description:      spdxhelpers.Description(p),
 			DownloadLocation: spdxhelpers.DownloadLocation(p),
 			ExternalRefs:     spdxhelpers.ExternalRefs(p),
-			FilesAnalyzed:    false, // this directly relates to packageVerificationCode
+			FilesAnalyzed:    filesAnalyzed,
 			HasFiles:         fileIDsForPackage(packageSpdxID, relationships),
 			Homepage:         spdxhelpers.Homepage(p),
 			// The Declared License is what the authors of a project believe govern the package
@@ -84,7 +85,8 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 	return packages
 }
 
-func toPackageChecksums(p pkg.Package) []model.Checksum {
+func toPackageChecksums(p pkg.Package) ([]model.Checksum, bool) {
+	filesAnalyzed := false
 	var checksums []model.Checksum
 	switch meta := p.Metadata.(type) {
 	// we generate digest for some Java packages
@@ -92,6 +94,7 @@ func toPackageChecksums(p pkg.Package) []model.Checksum {
 	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
 	case pkg.JavaMetadata:
 		if len(meta.ArchiveDigests) > 0 {
+			filesAnalyzed = true
 			for _, digest := range meta.ArchiveDigests {
 				checksums = append(checksums, model.Checksum{
 					Algorithm:     strings.ToUpper(digest.Algorithm),
@@ -111,7 +114,7 @@ func toPackageChecksums(p pkg.Package) []model.Checksum {
 			ChecksumValue: hexStr,
 		})
 	}
-	return checksums
+	return checksums, filesAnalyzed
 }
 
 func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationship) (fileIDs []string) {
