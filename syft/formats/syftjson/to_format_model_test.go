@@ -1,15 +1,23 @@
 package syftjson
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/source"
 )
+
+func Test_SyftJsonID_Compatibility(t *testing.T) {
+	jsonMajorVersion := strings.Split(internal.JSONSchemaVersion, ".")[0]
+	syftJsonIDVersion := strings.Split(string(ID), "-")[1]
+	assert.Equal(t, jsonMajorVersion, syftJsonIDVersion)
+}
 
 func Test_toSourceModel(t *testing.T) {
 	allSchemes := strset.New()
