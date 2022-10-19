@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
+	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/formats/spdx22json/model"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -53,24 +54,8 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 	for _, p := range catalog.Sorted() {
 		license := spdxhelpers.License(p)
 		packageSpdxID := model.ElementID(p.ID()).String()
-		filesAnalyzed := false
+		checksums, filesAnalyzed := toPackageChecksums(p)
 
-		// we generate digest for some Java packages
-		// see page 33 of the spdx specification for 2.2
-		// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
-		var checksums []model.Checksum
-		if p.MetadataType == pkg.JavaMetadataType {
-			javaMetadata := p.Metadata.(pkg.JavaMetadata)
-			if len(javaMetadata.ArchiveDigests) > 0 {
-				filesAnalyzed = true
-				for _, digest := range javaMetadata.ArchiveDigests {
-					checksums = append(checksums, model.Checksum{
-						Algorithm:     strings.ToUpper(digest.Algorithm),
-						ChecksumValue: digest.Value,
-					})
-				}
-			}
-		}
 		// note: the license concluded and declared should be the same since we are collecting license information
 		// from the project data itself (the installed package files).
 		packages = append(packages, model.Package{
@@ -98,6 +83,38 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) []m
 	}
 
 	return packages
+}
+
+func toPackageChecksums(p pkg.Package) ([]model.Checksum, bool) {
+	filesAnalyzed := false
+	var checksums []model.Checksum
+	switch meta := p.Metadata.(type) {
+	// we generate digest for some Java packages
+	// see page 33 of the spdx specification for 2.2
+	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
+	case pkg.JavaMetadata:
+		if len(meta.ArchiveDigests) > 0 {
+			filesAnalyzed = true
+			for _, digest := range meta.ArchiveDigests {
+				checksums = append(checksums, model.Checksum{
+					Algorithm:     strings.ToUpper(digest.Algorithm),
+					ChecksumValue: digest.Value,
+				})
+			}
+		}
+	case pkg.GolangBinMetadata:
+		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
+		if err != nil {
+			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
+			break
+		}
+		algo = strings.ToUpper(algo)
+		checksums = append(checksums, model.Checksum{
+			Algorithm:     strings.ToUpper(algo),
+			ChecksumValue: hexStr,
+		})
+	}
+	return checksums, filesAnalyzed
 }
 
 func fileIDsForPackage(packageSpdxID string, relationships []artifact.Relationship) (fileIDs []string) {

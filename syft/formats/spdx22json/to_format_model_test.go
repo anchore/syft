@@ -1,9 +1,11 @@
 package spdx22json
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -250,6 +252,67 @@ func Test_fileIDsForPackage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, fileIDsForPackage(test.id, test.relationships))
+		})
+	}
+}
+
+func Test_H1Digest(t *testing.T) {
+	tests := []struct {
+		name           string
+		pkg            pkg.Package
+		expectedDigest string
+	}{
+		{
+			name: "valid h1digest",
+			pkg: pkg.Package{
+				Name:         "github.com/googleapis/gnostic",
+				Version:      "v0.5.5",
+				MetadataType: pkg.GolangBinMetadataType,
+				Metadata: pkg.GolangBinMetadata{
+					H1Digest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
+				},
+			},
+			expectedDigest: "SHA256:f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+		},
+		{
+			name: "invalid h1digest",
+			pkg: pkg.Package{
+				Name:         "github.com/googleapis/gnostic",
+				Version:      "v0.5.5",
+				MetadataType: pkg.GolangBinMetadataType,
+				Metadata: pkg.GolangBinMetadata{
+					H1Digest: "h1:9fHAtK0uzzz",
+				},
+			},
+			expectedDigest: "",
+		},
+		{
+			name: "unsupported h-digest",
+			pkg: pkg.Package{
+				Name:         "github.com/googleapis/gnostic",
+				Version:      "v0.5.5",
+				MetadataType: pkg.GolangBinMetadataType,
+				Metadata: pkg.GolangBinMetadata{
+					H1Digest: "h12:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
+				},
+			},
+			expectedDigest: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			catalog := pkg.NewCatalog(test.pkg)
+			pkgs := toPackages(catalog, nil)
+			require.Len(t, pkgs, 1)
+			p := pkgs[0]
+			if test.expectedDigest == "" {
+				require.Len(t, p.Checksums, 0)
+			} else {
+				require.Len(t, p.Checksums, 1)
+				c := p.Checksums[0]
+				require.Equal(t, test.expectedDigest, fmt.Sprintf("%s:%s", c.Algorithm, c.ChecksumValue))
+			}
 		})
 	}
 }
