@@ -24,6 +24,10 @@ func parserPomXML(path string, content io.Reader) ([]*pkg.Package, []artifact.Re
 
 	var pkgs []*pkg.Package
 	for _, dep := range pom.Dependencies {
+		if strings.HasPrefix(dep.Version, "${") {
+			versionProperty := dep.Version[2 : len(dep.Version)-1]
+			dep.Version = pom.Properties.Entries[versionProperty]
+		}
 		p := newPackageFromPom(dep)
 		if p.Name == "" {
 			continue
