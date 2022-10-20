@@ -92,6 +92,13 @@ func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, r
 	}
 }
 
+func (l Location) AccessPath() string {
+	if l.VirtualPath != "" {
+		return l.VirtualPath
+	}
+	return l.RealPath
+}
+
 func (l Location) String() string {
 	str := ""
 	if l.ref.ID() != 0 {
