@@ -9,13 +9,14 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/source"
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/client/entries"
 	"github.com/sigstore/rekor/pkg/generated/client/index"
 	"github.com/sigstore/rekor/pkg/generated/models"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/source"
 )
 
 // getSbom attempts to retrieve the SBOM from the URI.

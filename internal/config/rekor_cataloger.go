@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/anchore/syft/syft/source"
 	"github.com/spf13/viper"
+
+	"github.com/anchore/syft/syft/source"
 )
 
-var rekorCatalogerEnabledDefault bool = false
+var rekorCatalogerEnabledDefault = false
 
 type rekorCataloger struct {
 	Cataloger catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`

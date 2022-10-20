@@ -157,7 +157,6 @@ require (
 	github.com/go-openapi/spec v0.20.6 // indirect
 =======
 	github.com/go-openapi/loads v0.21.2 // indirect
-	github.com/go-openapi/runtime v0.24.1 // indirect
 	github.com/go-openapi/spec v0.20.7 // indirect
 >>>>>>> 2c882f6 (Update syft bootstrap tools to latest versions. (#1176))
 	github.com/go-openapi/strfmt v0.21.3 // indirect

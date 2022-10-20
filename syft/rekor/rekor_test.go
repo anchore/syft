@@ -10,9 +10,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source"
 	"github.com/go-openapi/runtime"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/client/entries"
@@ -22,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/source"
 )
 
 type testCase struct {

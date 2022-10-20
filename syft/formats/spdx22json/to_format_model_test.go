@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/rekor"
-	"github.com/anchore/syft/syft/sbom"
-
-	"github.com/anchore/syft/syft/file"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/formats/spdx22json/model"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/rekor"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 

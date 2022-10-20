@@ -8,17 +8,18 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/spdx/tools-golang/jsonloader"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/tvloader"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 var (
-	GoogleSbomPredicateType string = "google.com/sbom"
-	sha256Check                    = regexp.MustCompile(`^[a-fA-F0-9]{64}$`)
+	GoogleSbomPredicateType = "google.com/sbom"
+	sha256Check             = regexp.MustCompile(`^[a-fA-F0-9]{64}$`)
 )
 
 type digest struct {
