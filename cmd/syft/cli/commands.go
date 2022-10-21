@@ -6,17 +6,18 @@ import (
 
 	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
 	"github.com/gookit/color"
+	logrusUpstream "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wagoodman/go-partybus"
 
+	"github.com/anchore/go-logger/adapter/logrus"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/logger"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
@@ -118,7 +119,7 @@ func validateArgs(cmd *cobra.Command, args []string) error {
 }
 
 func checkForApplicationUpdate() {
-	log.Debugf("checking if new vesion of %s is available", internal.ApplicationName)
+	log.Debugf("checking if a new version of %s is available", internal.ApplicationName)
 	isAvailable, newVersion, err := version.IsUpdateAvailable()
 	if err != nil {
 		// this should never stop the application
@@ -138,22 +139,33 @@ func checkForApplicationUpdate() {
 
 func logApplicationConfig(app *config.Application) {
 	versionInfo := version.FromBuild()
-	log.Infof("syft version: %+v", versionInfo.Version)
+	log.Infof("%s version: %+v", internal.ApplicationName, versionInfo.Version)
 	log.Debugf("application config:\n%+v", color.Magenta.Sprint(app.String()))
 }
 
 func newLogWrapper(app *config.Application) {
-	cfg := logger.LogrusConfig{
+	cfg := logrus.Config{
 		EnableConsole: (app.Log.FileLocation == "" || app.Verbosity > 0) && !app.Quiet,
-		EnableFile:    app.Log.FileLocation != "",
-		Level:         app.Log.LevelOpt,
-		Structured:    app.Log.Structured,
 		FileLocation:  app.Log.FileLocation,
+		Level:         app.Log.Level,
 	}
 
-	logWrapper := logger.NewLogrusLogger(cfg)
+	if app.Log.Structured {
+		cfg.Formatter = &logrusUpstream.JSONFormatter{
+			TimestampFormat:   "2006-01-02 15:04:05",
+			DisableTimestamp:  false,
+			DisableHTMLEscape: false,
+			PrettyPrint:       false,
+		}
+	}
+
+	logWrapper, err := logrus.New(cfg)
+	if err != nil {
+		// this is kinda circular, but we can't return an error... ¯\_(ツ)_/¯
+		// I'm going to leave this here in case we one day have a different default logger other than the "discard" logger
+		log.Error("unable to initialize logger: %+v", err)
+		return
+	}
 	syft.SetLogger(logWrapper)
-	stereoscope.SetLogger(&logger.LogrusNestedLogger{
-		Logger: logWrapper.Logger.WithField("from-lib", "stereoscope"),
-	})
+	stereoscope.SetLogger(logWrapper.Nested("from-lib", "stereoscope"))
 }
