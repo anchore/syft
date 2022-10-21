@@ -14,8 +14,8 @@ import (
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/jotframe/pkg/frame"
 
+	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/logger"
 	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/ui"
 )
@@ -60,9 +60,9 @@ func (h *ephemeralTerminalUI) Setup(unsubscribe func() error) error {
 
 	// prep the logger to not clobber the screen from now on (logrus only)
 	h.logBuffer = bytes.NewBufferString("")
-	logWrapper, ok := log.Log.(*logger.LogrusLogger)
+	logController, ok := log.Log.(logger.Controller)
 	if ok {
-		logWrapper.Logger.SetOutput(h.logBuffer)
+		logController.SetOutput(h.logBuffer)
 	}
 
 	return h.openScreen()
@@ -130,10 +130,10 @@ func (h *ephemeralTerminalUI) closeScreen(force bool) {
 
 func (h *ephemeralTerminalUI) flushLog() {
 	// flush any errors to the screen before the report
-	logWrapper, ok := log.Log.(*logger.LogrusLogger)
+	logController, ok := log.Log.(logger.Controller)
 	if ok {
-		fmt.Fprint(logWrapper.Output, h.logBuffer.String())
-		logWrapper.Logger.SetOutput(h.uiOutput)
+		fmt.Fprint(logController.GetOutput(), h.logBuffer.String())
+		logController.SetOutput(h.uiOutput)
 	} else {
 		fmt.Fprint(h.uiOutput, h.logBuffer.String())
 	}
