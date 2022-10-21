@@ -41,7 +41,7 @@ func Test_Cataloger(t *testing.T) {
 
 	expectedSelection := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt", "test-fixtures/empty.txt"}
 	resolver := source.NewMockResolverForPaths(expectedSelection...)
-	cataloger := NewGenericCataloger(upstream).
+	cataloger := NewCataloger(upstream).
 		WithParserByPath(parser, "test-fixtures/another-path.txt", "test-fixtures/last/path.txt").
 		WithParserByGlobs(parser, "**/a-path.txt", "**/empty.txt")
 

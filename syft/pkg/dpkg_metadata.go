@@ -65,7 +65,7 @@ func (m DpkgMetadata) PackageURL(distro *linux.Release) string {
 		namespace,
 		m.Package,
 		m.Version,
-		purlQualifiers(
+		PURLQualifiers(
 			qualifiers,
 			distro,
 		),

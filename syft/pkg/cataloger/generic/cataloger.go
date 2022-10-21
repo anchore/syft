@@ -91,8 +91,8 @@ func makeRequests(parser Parser, locations []source.Location) []request {
 	return requests
 }
 
-// NewGenericCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a Cataloger
-func NewGenericCataloger(upstreamCataloger string) *Cataloger {
+// NewCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a Cataloger
+func NewCataloger(upstreamCataloger string) *Cataloger {
 	return &Cataloger{
 		upstreamCataloger: upstreamCataloger,
 	}
