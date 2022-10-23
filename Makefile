@@ -7,8 +7,8 @@ LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=5m --config .gola
 GOIMPORTS_CMD = $(TEMPDIR)/gosimports -local github.com/anchore
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
-GOLANGCILINT_VERSION = v1.50.0
-GOSIMPORTS_VERSION = v0.3.3
+GOLANGCILINT_VERSION = v1.50.1
+GOSIMPORTS_VERSION = v0.3.4
 BOUNCER_VERSION = v0.4.0
 CHRONICLE_VERSION = v0.4.2
 GORELEASER_VERSION = v1.12.3
