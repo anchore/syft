@@ -5,15 +5,18 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseConanlock(t *testing.T) {
-	expected := []*pkg.Package{
+	expected := []pkg.Package{
 		{
 			Name:         "zlib",
 			Version:      "1.2.12",
+			PURL:         "pkg:conan/zlib@1.2.12",
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanLockMetadataType,
@@ -30,15 +33,14 @@ func TestParseConanlock(t *testing.T) {
 	}
 
 	fixture, err := os.Open("test-fixtures/conan.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
+	require.NoError(t, err)
 
 	// TODO: no relationships are under test yet
-	actual, _, err := parseConanlock(fixture.Name(), fixture)
-	if err != nil {
-		t.Error(err)
-	}
+	actual, _, err := parseConanlock(nil, nil, source.LocationReadCloser{
+		Location:   source.NewLocation(fixture.Name()),
+		ReadCloser: fixture,
+	})
+	require.NoError(t, err)
 
 	differences := deep.Equal(expected, actual)
 	if differences != nil {
