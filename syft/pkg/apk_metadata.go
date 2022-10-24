@@ -65,7 +65,7 @@ func (m ApkMetadata) PackageURL(distro *linux.Release) string {
 		"",
 		m.Package,
 		m.Version,
-		purlQualifiers(
+		PURLQualifiers(
 			qualifiers,
 			distro,
 		),

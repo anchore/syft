@@ -191,14 +191,6 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.NotEqual,
 		},
 		{
-			name: "foundBy is reflected",
-			transform: func(pkg Package) Package {
-				pkg.FoundBy = "new!"
-				return pkg
-			},
-			expectedIDComparison: assert.NotEqual,
-		},
-		{
 			name: "metadata mutation is reflected",
 			transform: func(pkg Package) Package {
 				metadata := pkg.Metadata.(PythonPackageMetadata)

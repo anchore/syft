@@ -1,4 +1,4 @@
-package pkg
+package alpm
 
 import (
 	"testing"
@@ -7,18 +7,32 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 )
 
-func TestAlpmMetadata_pURL(t *testing.T) {
+func Test_PackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata AlpmMetadata
+		metadata pkg.AlpmMetadata
 		distro   linux.Release
 		expected string
 	}{
 		{
+			name: "bad distro id",
+			metadata: pkg.AlpmMetadata{
+				Package:      "p",
+				Version:      "v",
+				Architecture: "a",
+			},
+			distro: linux.Release{
+				ID:      "something-else",
+				BuildID: "rolling",
+			},
+			expected: "",
+		},
+		{
 			name: "gocase",
-			metadata: AlpmMetadata{
+			metadata: pkg.AlpmMetadata{
 				Package:      "p",
 				Version:      "v",
 				Architecture: "a",
@@ -31,7 +45,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 		},
 		{
 			name: "missing architecture",
-			metadata: AlpmMetadata{
+			metadata: pkg.AlpmMetadata{
 				Package: "p",
 				Version: "v",
 			},
@@ -41,7 +55,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 			expected: "pkg:alpm/arch/p@v?distro=arch",
 		},
 		{
-			metadata: AlpmMetadata{
+			metadata: pkg.AlpmMetadata{
 				Package:      "python",
 				Version:      "3.10.0",
 				Architecture: "any",
@@ -53,7 +67,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 			expected: "pkg:alpm/arch/python@3.10.0?arch=any&distro=arch-rolling",
 		},
 		{
-			metadata: AlpmMetadata{
+			metadata: pkg.AlpmMetadata{
 				Package:      "g plus plus",
 				Version:      "v84",
 				Architecture: "x86_64",
@@ -66,7 +80,7 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: AlpmMetadata{
+			metadata: pkg.AlpmMetadata{
 				Package:      "p",
 				Version:      "v",
 				Architecture: "a",
@@ -82,12 +96,17 @@ func TestAlpmMetadata_pURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := test.metadata.PackageURL(&test.distro)
+			actual := packageURL(test.metadata, &test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)
 				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 			}
+
+			if test.expected == "" {
+				return
+			}
+
 			// verify packageurl can parse
 			purl, err := packageurl.FromString(actual)
 			if err != nil {

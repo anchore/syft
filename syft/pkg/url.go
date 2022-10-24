@@ -67,7 +67,7 @@ func URL(p Package, release *linux.Release) string {
 	).ToString()
 }
 
-func purlQualifiers(vars map[string]string, release *linux.Release) (q packageurl.Qualifiers) {
+func PURLQualifiers(vars map[string]string, release *linux.Release) (q packageurl.Qualifiers) {
 	keys := make([]string, 0, len(vars))
 	for k := range vars {
 		keys = append(keys, k)
