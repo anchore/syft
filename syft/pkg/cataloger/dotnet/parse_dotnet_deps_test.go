@@ -1,23 +1,23 @@
 package dotnet
 
 import (
-	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
-func assertPackagesEqual(t *testing.T, actual []*pkg.Package, expected map[string]*pkg.Package) {
-	assert.Len(t, actual, len(expected))
-}
-
 func TestParseDotnetDeps(t *testing.T) {
-	expected := map[string]*pkg.Package{
-		"AWSSDK.Core": {
+	fixture := "test-fixtures/TestLibrary.deps.json"
+	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	expected := []pkg.Package{
+		{
 			Name:         "AWSSDK.Core",
 			Version:      "3.7.10.6",
+			PURL:         "pkg:dotnet/AWSSDK.Core@3.7.10.6",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -29,9 +29,27 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "awssdk.core.3.7.10.6.nupkg.sha512",
 			},
 		},
-		"Microsoft.Extensions.DependencyInjection": {
+		{
+			Name:         "Microsoft.Extensions.DependencyInjection.Abstractions",
+			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/Microsoft.Extensions.DependencyInjection.Abstractions@6.0.0",
+			Locations:    fixtureLocationSet,
+			Language:     pkg.Dotnet,
+			Type:         pkg.DotnetPkg,
+			MetadataType: pkg.DotnetDepsMetadataType,
+			Metadata: pkg.DotnetDepsMetadata{
+				Name:     "Microsoft.Extensions.DependencyInjection.Abstractions",
+				Version:  "6.0.0",
+				Sha512:   "sha512-xlzi2IYREJH3/m6+lUrQlujzX8wDitm4QGnUu6kUXTQAWPuZY8i+ticFJbzfqaetLA6KR/rO6Ew/HuYD+bxifg==",
+				Path:     "microsoft.extensions.dependencyinjection.abstractions/6.0.0",
+				HashPath: "microsoft.extensions.dependencyinjection.abstractions.6.0.0.nupkg.sha512",
+			},
+		},
+		{
 			Name:         "Microsoft.Extensions.DependencyInjection",
 			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/Microsoft.Extensions.DependencyInjection@6.0.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -43,23 +61,27 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "microsoft.extensions.dependencyinjection.6.0.0.nupkg.sha512",
 			},
 		},
-		"Microsoft.Extensions.DependencyInjection.Abstractions": {
-			Name:         "Microsoft.Extensions.DependencyInjection.Abstractions",
+		{
+			Name:         "Microsoft.Extensions.Logging.Abstractions",
 			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/Microsoft.Extensions.Logging.Abstractions@6.0.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
 			Metadata: pkg.DotnetDepsMetadata{
-				Name:     "Microsoft.Extensions.DependencyInjection",
+				Name:     "Microsoft.Extensions.Logging.Abstractions",
 				Version:  "6.0.0",
-				Sha512:   "sha512-xlzi2IYREJH3/m6+lUrQlujzX8wDitm4QGnUu6kUXTQAWPuZY8i+ticFJbzfqaetLA6KR/rO6Ew/HuYD+bxifg==",
-				Path:     "microsoft.extensions.dependencyinjection.abstractions/6.0.0",
-				HashPath: "microsoft.extensions.dependencyinjection.abstractions.6.0.0.nupkg.sha512",
+				Sha512:   "sha512-/HggWBbTwy8TgebGSX5DBZ24ndhzi93sHUBDvP1IxbZD7FDokYzdAr6+vbWGjw2XAfR2EJ1sfKUotpjHnFWPxA==",
+				Path:     "microsoft.extensions.logging.abstractions/6.0.0",
+				HashPath: "microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512",
 			},
 		},
-		"Microsoft.Extensions.Logging": {
+		{
 			Name:         "Microsoft.Extensions.Logging",
 			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/Microsoft.Extensions.Logging@6.0.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -71,23 +93,12 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "microsoft.extensions.logging.6.0.0.nupkg.sha512",
 			},
 		},
-		"Microsoft.Extensions.Logging.Abstractions": {
-			Name:         "Microsoft.Extensions.Logging.Abstractions",
-			Version:      "6.0.0",
-			Language:     pkg.Dotnet,
-			Type:         pkg.DotnetPkg,
-			MetadataType: pkg.DotnetDepsMetadataType,
-			Metadata: pkg.DotnetDepsMetadata{
-				Name:     "Microsoft.Extensions.Logging",
-				Version:  "6.0.0",
-				Sha512:   "sha512-/HggWBbTwy8TgebGSX5DBZ24ndhzi93sHUBDvP1IxbZD7FDokYzdAr6+vbWGjw2XAfR2EJ1sfKUotpjHnFWPxA==",
-				Path:     "microsoft.extensions.logging.abstractions/6.0.0",
-				HashPath: "microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512",
-			},
-		},
-		"Microsoft.Extensions.Options": {
+
+		{
 			Name:         "Microsoft.Extensions.Options",
 			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/Microsoft.Extensions.Options@6.0.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -99,9 +110,11 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "microsoft.extensions.options.6.0.0.nupkg.sha512",
 			},
 		},
-		"Microsoft.Extensions.Primitives": {
+		{
 			Name:         "Microsoft.Extensions.Primitives",
 			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/Microsoft.Extensions.Primitives@6.0.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -113,9 +126,11 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "microsoft.extensions.primitives.6.0.0.nupkg.sha512",
 			},
 		},
-		"Newtonsoft.Json": {
+		{
 			Name:         "Newtonsoft.Json",
 			Version:      "13.0.1",
+			PURL:         "pkg:dotnet/Newtonsoft.Json@13.0.1",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -127,23 +142,11 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "newtonsoft.json.13.0.1.nupkg.sha512",
 			},
 		},
-		"Serilog": {
-			Name:         "Serilog",
-			Version:      "2.10.0",
-			Language:     pkg.Dotnet,
-			Type:         pkg.DotnetPkg,
-			MetadataType: pkg.DotnetDepsMetadataType,
-			Metadata: pkg.DotnetDepsMetadata{
-				Name:     "Serilog",
-				Version:  "2.10.0",
-				Sha512:   "sha512-+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA==",
-				Path:     "serilog/2.10.0",
-				HashPath: "serilog.2.10.0.nupkg.sha512",
-			},
-		},
-		"Serilog.Sinks.Console": {
+		{
 			Name:         "Serilog.Sinks.Console",
 			Version:      "4.0.1",
+			PURL:         "pkg:dotnet/Serilog.Sinks.Console@4.0.1",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -155,9 +158,27 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "serilog.sinks.console.4.0.1.nupkg.sha512",
 			},
 		},
-		"System.Diagnostics.DiagnosticSource": {
+		{
+			Name:         "Serilog",
+			Version:      "2.10.0",
+			PURL:         "pkg:dotnet/Serilog@2.10.0",
+			Locations:    fixtureLocationSet,
+			Language:     pkg.Dotnet,
+			Type:         pkg.DotnetPkg,
+			MetadataType: pkg.DotnetDepsMetadataType,
+			Metadata: pkg.DotnetDepsMetadata{
+				Name:     "Serilog",
+				Version:  "2.10.0",
+				Sha512:   "sha512-+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA==",
+				Path:     "serilog/2.10.0",
+				HashPath: "serilog.2.10.0.nupkg.sha512",
+			},
+		},
+		{
 			Name:         "System.Diagnostics.DiagnosticSource",
 			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/System.Diagnostics.DiagnosticSource@6.0.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -169,9 +190,11 @@ func TestParseDotnetDeps(t *testing.T) {
 				HashPath: "system.diagnostics.diagnosticsource.6.0.0.nupkg.sha512",
 			},
 		},
-		"System.Runtime.CompilerServices.Unsafe": {
+		{
 			Name:         "System.Runtime.CompilerServices.Unsafe",
 			Version:      "6.0.0",
+			PURL:         "pkg:dotnet/System.Runtime.CompilerServices.Unsafe@6.0.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			MetadataType: pkg.DotnetDepsMetadataType,
@@ -185,15 +208,6 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 
-	fixture, err := os.Open("test-fixtures/TestLibrary.deps.json")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
-
-	actual, _, err := parseDotnetDeps(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse deps.json: %+v", err)
-	}
-
-	assertPackagesEqual(t, actual, expected)
+	var expectedRelationships []artifact.Relationship
+	pkgtest.TestGenericParser(t, fixture, parseDotnetDeps, expected, expectedRelationships)
 }
