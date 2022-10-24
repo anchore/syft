@@ -14,10 +14,12 @@ import (
 )
 
 func TestGenericParser(t *testing.T, fixturePath string, parser generic.Parser, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
+	t.Helper()
 	TestGenericParserWithEnv(t, fixturePath, parser, nil, expectedPkgs, expectedRelationships)
 }
 
 func TestGenericParserWithEnv(t *testing.T, fixturePath string, parser generic.Parser, env *generic.Environment, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
+	t.Helper()
 	fixture, err := os.Open(fixturePath)
 	require.NoError(t, err)
 
