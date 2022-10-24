@@ -7,9 +7,13 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestExtraFileAttributes(t *testing.T) {
@@ -617,23 +621,14 @@ func TestSinglePackageDetails(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			file, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatal("Unable to read fixture: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open(test.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { f.Close() })
 
-			reader := bufio.NewReader(file)
+			reader := bufio.NewReader(f)
 
 			entry, err := parseApkDBEntry(reader)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
+			require.NoError(t, err)
 
 			if diff := deep.Equal(*entry, test.expected); diff != nil {
 				for _, d := range diff {
@@ -647,16 +642,17 @@ func TestSinglePackageDetails(t *testing.T) {
 func TestMultiplePackages(t *testing.T) {
 	tests := []struct {
 		fixture  string
-		expected []*pkg.Package
+		expected []pkg.Package
 	}{
 		{
 			fixture: "test-fixtures/multiple",
-			expected: []*pkg.Package{
+			expected: []pkg.Package{
 				{
 					Name:         "libc-utils",
 					Version:      "0.7.2-r0",
 					Licenses:     []string{"BSD"},
 					Type:         pkg.ApkPkg,
+					PURL:         "pkg:alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine",
 					MetadataType: pkg.ApkMetadataType,
 					Metadata: pkg.ApkMetadata{
 						Package:          "libc-utils",
@@ -680,6 +676,7 @@ func TestMultiplePackages(t *testing.T) {
 					Version:      "1.1.24-r2",
 					Licenses:     []string{"MIT", "BSD", "GPL2+"},
 					Type:         pkg.ApkPkg,
+					PURL:         "pkg:alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine",
 					MetadataType: pkg.ApkMetadataType,
 					Metadata: pkg.ApkMetadata{
 						Package:          "musl-utils",
@@ -764,22 +761,20 @@ func TestMultiplePackages(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			file, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatal("Unable to read: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open(test.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { f.Close() })
 
 			// TODO: no relationships are under test yet
-			pkgs, _, err := parseApkDB(file.Name(), file)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
+			pkgs, _, err := parseApkDB(nil, &generic.Environment{
+				LinuxRelease: &linux.Release{
+					ID: "alpine",
+				},
+			}, source.LocationReadCloser{
+				Location:   source.NewLocation(f.Name()),
+				ReadCloser: f,
+			})
+			require.NoError(t, err)
 
 			if len(pkgs) != 2 {
 				t.Fatalf("unexpected number of entries: %d", len(pkgs))
