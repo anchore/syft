@@ -142,24 +142,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:cargo/name@v0.1.0",
 		},
 		{
-			name: "apk",
-			distro: &linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    ApkPkg,
-				Metadata: ApkMetadata{
-					Package:      "name",
-					Version:      "v0.1.0",
-					Architecture: "amd64",
-				},
-			},
-			expected: "pkg:alpine/name@v0.1.0?arch=amd64&distro=alpine-3.4.6",
-		},
-		{
 			name: "php-composer",
 			pkg: Package{
 				Name:    "bad-name",
@@ -271,6 +253,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(PortagePkg))
 	expectedTypes.Remove(string(AlpmPkg))
+	expectedTypes.Remove(string(ApkPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

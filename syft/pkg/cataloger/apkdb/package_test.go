@@ -1,4 +1,4 @@
-package pkg
+package apkdb
 
 import (
 	"strings"
@@ -9,18 +9,32 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 )
 
-func TestApkMetadata_pURL(t *testing.T) {
+func Test_PackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata ApkMetadata
+		metadata pkg.ApkMetadata
 		distro   linux.Release
 		expected string
 	}{
 		{
+			name: "bad distro",
+			metadata: pkg.ApkMetadata{
+				Package:      "p",
+				Version:      "v",
+				Architecture: "a",
+			},
+			distro: linux.Release{
+				ID:        "something else",
+				VersionID: "3.4.6",
+			},
+			expected: "",
+		},
+		{
 			name: "gocase",
-			metadata: ApkMetadata{
+			metadata: pkg.ApkMetadata{
 				Package:      "p",
 				Version:      "v",
 				Architecture: "a",
@@ -33,7 +47,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 		},
 		{
 			name: "missing architecture",
-			metadata: ApkMetadata{
+			metadata: pkg.ApkMetadata{
 				Package: "p",
 				Version: "v",
 			},
@@ -45,7 +59,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 		},
 		// verify #351
 		{
-			metadata: ApkMetadata{
+			metadata: pkg.ApkMetadata{
 				Package:      "g++",
 				Version:      "v84",
 				Architecture: "am86",
@@ -57,7 +71,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 			expected: "pkg:alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
-			metadata: ApkMetadata{
+			metadata: pkg.ApkMetadata{
 				Package:      "g plus plus",
 				Version:      "v84",
 				Architecture: "am86",
@@ -70,7 +84,7 @@ func TestApkMetadata_pURL(t *testing.T) {
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: ApkMetadata{
+			metadata: pkg.ApkMetadata{
 				Package:       "p",
 				Version:       "v",
 				Architecture:  "a",
@@ -86,12 +100,17 @@ func TestApkMetadata_pURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := test.metadata.PackageURL(&test.distro)
+			actual := packageURL(test.metadata, &test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)
 				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 			}
+
+			if test.expected == "" {
+				return
+			}
+
 			// verify packageurl can parse
 			purl, err := packageurl.FromString(actual)
 			if err != nil {
@@ -118,12 +137,12 @@ func TestApkMetadata_pURL(t *testing.T) {
 
 func TestApkMetadata_FileOwner(t *testing.T) {
 	tests := []struct {
-		metadata ApkMetadata
+		metadata pkg.ApkMetadata
 		expected []string
 	}{
 		{
-			metadata: ApkMetadata{
-				Files: []ApkFileRecord{
+			metadata: pkg.ApkMetadata{
+				Files: []pkg.ApkFileRecord{
 					{Path: "/somewhere"},
 					{Path: "/else"},
 				},
@@ -134,8 +153,8 @@ func TestApkMetadata_FileOwner(t *testing.T) {
 			},
 		},
 		{
-			metadata: ApkMetadata{
-				Files: []ApkFileRecord{
+			metadata: pkg.ApkMetadata{
+				Files: []pkg.ApkFileRecord{
 					{Path: "/somewhere"},
 					{Path: ""},
 				},
