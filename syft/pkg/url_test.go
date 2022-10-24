@@ -197,36 +197,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
 		},
 		{
-			name: "conan",
-			pkg: Package{
-				Name:         "catch2",
-				Version:      "2.13.8",
-				Type:         ConanPkg,
-				Language:     CPP,
-				MetadataType: ConanMetadataType,
-				Metadata: ConanMetadata{
-					Ref: "catch2/2.13.8",
-				},
-			},
-			expected: "pkg:conan/catch2@2.13.8",
-		},
-		// note both Ref should parse the same for conan ecosystem
-		{
-			name: "conan lock",
-			pkg: Package{
-				Name:         "catch2",
-				Version:      "2.13.8",
-				Type:         ConanPkg,
-				Language:     CPP,
-				MetadataType: ConanLockMetadataType,
-				Metadata: ConanLockMetadata{
-					Ref: "catch2/2.13.8",
-				},
-			},
-			expected: "pkg:conan/catch2@2.13.8",
-		},
-
-		{
 			name: "hackage",
 			pkg: Package{
 				Name:         "HTTP",
@@ -254,6 +224,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(PortagePkg))
 	expectedTypes.Remove(string(AlpmPkg))
 	expectedTypes.Remove(string(ApkPkg))
+	expectedTypes.Remove(string(ConanPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

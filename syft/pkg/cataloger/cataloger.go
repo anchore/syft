@@ -82,7 +82,7 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		swift.NewCocoapodsCataloger(),
-		cpp.NewConanfileCataloger(),
+		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 	}, cfg.Catalogers)
@@ -113,7 +113,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		php.NewPHPComposerInstalledCataloger(),
 		php.NewPHPComposerLockCataloger(),
 		swift.NewCocoapodsCataloger(),
-		cpp.NewConanfileCataloger(),
+		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 	}, cfg.Catalogers)
