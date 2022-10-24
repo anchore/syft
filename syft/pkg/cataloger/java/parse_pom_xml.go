@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/vifraa/gopom"
@@ -24,9 +25,8 @@ func parserPomXML(path string, content io.Reader) ([]*pkg.Package, []artifact.Re
 
 	var pkgs []*pkg.Package
 	for _, dep := range pom.Dependencies {
-		if strings.HasPrefix(dep.Version, "${") {
-			versionProperty := dep.Version[2 : len(dep.Version)-1]
-			dep.Version = pom.Properties.Entries[versionProperty]
+		if strings.Contains(dep.Version, "${") {
+			dep.Version = propertyReplacer(pom.Properties, dep.Version)
 		}
 		p := newPackageFromPom(dep)
 		if p.Name == "" {
@@ -112,4 +112,12 @@ func cleanDescription(original string) (cleaned string) {
 		cleaned += line + " "
 	}
 	return strings.TrimSpace(cleaned)
+}
+
+func propertyReplacer(pomProperties gopom.Properties, stringWithVariablesToReplace string) string {
+	propertyMatcher := regexp.MustCompile("[$][{][^}]+[}]")
+	return propertyMatcher.ReplaceAllStringFunc(stringWithVariablesToReplace, func(match string) string {
+		prop := match[2 : len(match)-1]
+		return pomProperties.Entries[prop]
+	})
 }
