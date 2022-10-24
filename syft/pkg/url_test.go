@@ -36,21 +36,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:golang/go.opencensus.io@v0.23.0",
 		},
 		{
-			name: "pub",
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "0.1.0",
-				Type:    DartPubPkg,
-				Metadata: DartPubMetadata{
-					Name:      "name",
-					Version:   "0.2.0",
-					HostedURL: "pub.hosted.org",
-				},
-			},
-			expected: "pkg:pub/name@0.2.0?hosted_url=pub.hosted.org",
-		},
-
-		{
 			name: "dotnet",
 			pkg: Package{
 				Name:    "Microsoft.CodeAnalysis.Razor",
@@ -225,6 +210,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(AlpmPkg))
 	expectedTypes.Remove(string(ApkPkg))
 	expectedTypes.Remove(string(ConanPkg))
+	expectedTypes.Remove(string(DartPubPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
