@@ -80,7 +80,7 @@ func (m RpmMetadata) PackageURL(distro *linux.Release) string {
 		// for purl the epoch is a qualifier, not part of the version
 		// see https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst under the RPM section
 		fmt.Sprintf("%s-%s", m.Version, m.Release),
-		purlQualifiers(
+		PURLQualifiers(
 			qualifiers,
 			distro,
 		),

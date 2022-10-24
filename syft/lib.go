@@ -21,11 +21,11 @@ import (
 
 	"github.com/wagoodman/go-partybus"
 
+	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/logger"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"

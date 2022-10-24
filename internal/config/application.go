@@ -10,10 +10,10 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/mitchellh/go-homedir"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 
+	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -140,33 +140,23 @@ func (cfg *Application) parseLogLevelOption() error {
 		// TODO: this is bad: quiet option trumps all other logging options (such as to a file on disk)
 		// we should be able to quiet the console logging and leave file logging alone...
 		// ... this will be an enhancement for later
-		cfg.Log.LevelOpt = logrus.PanicLevel
+		cfg.Log.Level = logger.DisabledLevel
 
 	case cfg.Verbosity > 0:
-		switch v := cfg.Verbosity; {
-		case v == 1:
-			cfg.Log.LevelOpt = logrus.InfoLevel
-		case v >= 2:
-			cfg.Log.LevelOpt = logrus.DebugLevel
-		default:
-			cfg.Log.LevelOpt = logrus.ErrorLevel
-		}
+		cfg.Log.Level = logger.LevelFromVerbosity(int(cfg.Verbosity), logger.WarnLevel, logger.InfoLevel, logger.DebugLevel, logger.TraceLevel)
+
 	case cfg.Log.Level != "":
-		lvl, err := logrus.ParseLevel(strings.ToLower(cfg.Log.Level))
+		var err error
+		cfg.Log.Level, err = logger.LevelFromString(string(cfg.Log.Level))
 		if err != nil {
-			return fmt.Errorf("bad log level configured (%q): %w", cfg.Log.Level, err)
+			return err
 		}
 
-		cfg.Log.LevelOpt = lvl
-		if cfg.Log.LevelOpt >= logrus.InfoLevel {
+		if logger.IsVerbose(cfg.Log.Level) {
 			cfg.Verbosity = 1
 		}
 	default:
-		cfg.Log.LevelOpt = logrus.WarnLevel
-	}
-
-	if cfg.Log.Level == "" {
-		cfg.Log.Level = cfg.Log.LevelOpt.String()
+		cfg.Log.Level = logger.WarnLevel
 	}
 
 	return nil

@@ -7,13 +7,13 @@ LINTCMD = $(TEMPDIR)/golangci-lint run --tests=false --timeout=5m --config .gola
 GOIMPORTS_CMD = $(TEMPDIR)/gosimports -local github.com/anchore
 RELEASE_CMD=$(TEMPDIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD=$(RELEASE_CMD) --skip-publish --snapshot
-GOLANGCILINT_VERSION = v1.50.0
-GOSIMPORTS_VERSION = v0.3.2
+GOLANGCILINT_VERSION = v1.50.1
+GOSIMPORTS_VERSION = v0.3.4
 BOUNCER_VERSION = v0.4.0
-CHRONICLE_VERSION = v0.4.1
-GORELEASER_VERSION = v1.11.5
+CHRONICLE_VERSION = v0.4.2
+GORELEASER_VERSION = v1.12.3
 YAJSV_VERSION = v1.4.1
-COSIGN_VERSION = v1.13.0
+COSIGN_VERSION = v1.13.1
 
 # formatting variables
 BOLD := $(shell tput -T linux bold)

@@ -25,6 +25,25 @@ func (l License) canReplace(other License) bool {
 		return false
 	}
 
+	// We want to replace deprecated licenses with non-deprecated counterparts
+	// For more information, see: https://github.com/spdx/license-list-XML/issues/1676
+	if other.Deprecated {
+		switch {
+		case strings.ReplaceAll(l.ID, "-only", "") == other.ID:
+			return true
+		case strings.ReplaceAll(l.ID, "-or-later", "+") == other.ID:
+			return true
+		case l.ID == "BSD-2-Clause" && other.ID == "BSD-2-Clause-NetBSD":
+			return true
+		case l.ID == "BSD-2-Clause-Views" && other.ID == "BSD-2-Clause-FreeBSD":
+			return true
+		case l.ID == "bzip2-1.0.6" && other.ID == "bzip2-1.0.5":
+			return true
+		case l.ID == "SMLNJ" && other.ID == "StandardML-NJ":
+			return true
+		}
+	}
+
 	if l.Name != other.Name {
 		return false
 	}
@@ -43,7 +62,7 @@ func (l License) canReplace(other License) bool {
 		}
 	}
 
-	return l.ID != other.ID
+	return l.ID == other.ID
 }
 
 func (ll LicenseList) findReplacementLicense(deprecated License) *License {

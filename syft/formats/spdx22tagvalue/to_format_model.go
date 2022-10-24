@@ -2,13 +2,16 @@ package spdx22tagvalue
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
+	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -101,24 +104,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 		// in the Comments on License field (section 3.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 3.16) is preferred.
 		license := spdxhelpers.License(p)
-
-		filesAnalyzed := false
-		checksums := make(map[spdx.ChecksumAlgorithm]spdx.Checksum)
-
-		// If the pkg type is Java we have attempted to generated a digest
-		// FilesAnalyzed should be true in this case
-		if p.MetadataType == pkg.JavaMetadataType {
-			javaMetadata := p.Metadata.(pkg.JavaMetadata)
-			if len(javaMetadata.ArchiveDigests) > 0 {
-				filesAnalyzed = true
-				for _, digest := range javaMetadata.ArchiveDigests {
-					checksums[spdx.ChecksumAlgorithm(digest.Algorithm)] = spdx.Checksum{
-						Algorithm: spdx.ChecksumAlgorithm(digest.Algorithm),
-						Value:     digest.Value,
-					}
-				}
-			}
-		}
+		checksums, filesAnalyzed := toPackageChecksums(p)
 
 		results[spdx.ElementID(id)] = &spdx.Package2_2{
 
@@ -181,7 +167,7 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 			IsFilesAnalyzedTagPresent: true,
 
 			// 3.9: Package Verification Code
-			// Cardinality: mandatory, one if filesAnalyzed is true / omitted;
+			// Cardinality: optional, one if filesAnalyzed is true / omitted;
 			//              zero (must be omitted) if filesAnalyzed is false
 			PackageVerificationCode: "",
 			// Spec also allows specifying a single file to exclude from the
@@ -278,6 +264,38 @@ func toFormatPackages(catalog *pkg.Catalog) map[spdx.ElementID]*spdx.Package2_2 
 		}
 	}
 	return results
+}
+
+func toPackageChecksums(p pkg.Package) (map[spdx.ChecksumAlgorithm]spdx.Checksum, bool) {
+	filesAnalyzed := false
+	checksums := map[spdx.ChecksumAlgorithm]spdx.Checksum{}
+	switch meta := p.Metadata.(type) {
+	// we generate digest for some Java packages
+	// see page 33 of the spdx specification for 2.2
+	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
+	case pkg.JavaMetadata:
+		if len(meta.ArchiveDigests) > 0 {
+			filesAnalyzed = true
+			for _, digest := range meta.ArchiveDigests {
+				checksums[spdx.ChecksumAlgorithm(digest.Algorithm)] = spdx.Checksum{
+					Algorithm: spdx.ChecksumAlgorithm(digest.Algorithm),
+					Value:     digest.Value,
+				}
+			}
+		}
+	case pkg.GolangBinMetadata:
+		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
+		if err != nil {
+			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
+			break
+		}
+		algo = strings.ToUpper(algo)
+		checksums[spdx.ChecksumAlgorithm(algo)] = spdx.Checksum{
+			Algorithm: spdx.ChecksumAlgorithm(algo),
+			Value:     hexStr,
+		}
+	}
+	return checksums, filesAnalyzed
 }
 
 func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReference2_2) {

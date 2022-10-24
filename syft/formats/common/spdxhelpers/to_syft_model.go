@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -293,6 +294,7 @@ func toSyftPackage(p *spdx.Package2_2) *pkg.Package {
 	return &sP
 }
 
+//nolint:funlen
 func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interface{}) {
 	arch := info.qualifierValue(pkg.PURLQualifierArch)
 	upstreamValue := info.qualifierValue(pkg.PURLQualifierUpstream)
@@ -351,6 +353,20 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 		}
 		return pkg.JavaMetadataType, pkg.JavaMetadata{
 			ArchiveDigests: digests,
+		}
+	case pkg.GoModulePkg:
+		var h1Digest string
+		for _, value := range p.PackageChecksums {
+			digest, err := util.HDigestFromSHA(string(value.Algorithm), value.Value)
+			if err != nil {
+				log.Debugf("invalid h1digest: %v %v", value, err)
+				continue
+			}
+			h1Digest = digest
+			break
+		}
+		return pkg.GolangBinMetadataType, pkg.GolangBinMetadata{
+			H1Digest: h1Digest,
 		}
 	}
 	return pkg.UnknownMetadataType, nil
