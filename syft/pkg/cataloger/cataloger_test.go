@@ -3,18 +3,11 @@ package cataloger
 import (
 	"testing"
 
-<<<<<<< HEAD
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-=======
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
->>>>>>> 1329688 (External sources configuration (#1158))
 )
 
 var _ pkg.Cataloger = (*dummy)(nil)
