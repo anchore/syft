@@ -67,24 +67,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:npm/name@v0.1.0",
 		},
 		{
-			name: "deb",
-			distro: &linux.Release{
-				ID:        "ubuntu",
-				VersionID: "20.04",
-			},
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    DebPkg,
-				Metadata: DpkgMetadata{
-					Package:      "name",
-					Version:      "v0.1.0",
-					Architecture: "amd64",
-				},
-			},
-			expected: "pkg:deb/ubuntu/name@v0.1.0?arch=amd64&distro=ubuntu-20.04",
-		},
-		{
 			name: "rpm",
 			distro: &linux.Release{
 				ID:        "centos",
@@ -199,6 +181,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(ConanPkg))
 	expectedTypes.Remove(string(DartPubPkg))
 	expectedTypes.Remove(string(DotnetPkg))
+	expectedTypes.Remove(string(DebPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -42,7 +42,7 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
 // request.
-func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ...Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
+func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 

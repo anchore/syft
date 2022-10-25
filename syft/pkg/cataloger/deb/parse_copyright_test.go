@@ -4,7 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseLicensesFromCopyright(t *testing.T) {
@@ -38,31 +39,15 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			file, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatal("Unable to read: ", err)
+			f, err := os.Open(test.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
+
+			actual := parseLicensesFromCopyright(f)
+
+			if diff := cmp.Diff(test.expected, actual); diff != "" {
+				t.Errorf("unexpected package licenses (-want +got):\n%s", diff)
 			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
-
-			actual := parseLicensesFromCopyright(file)
-
-			if len(actual) != len(test.expected) {
-				for _, a := range actual {
-					t.Logf("   %+v", a)
-				}
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(test.expected))
-			}
-
-			diffs := deep.Equal(actual, test.expected)
-			for _, d := range diffs {
-				t.Errorf("diff: %+v", d)
-			}
-
 		})
 	}
 }

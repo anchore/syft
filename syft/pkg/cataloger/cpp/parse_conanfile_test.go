@@ -90,5 +90,5 @@ func TestParseConanfile(t *testing.T) {
 	// TODO: relationships are not under test
 	var expectedRelationships []artifact.Relationship
 
-	pkgtest.TestGenericParser(t, fixture, parseConanfile, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseConanfile, expected, expectedRelationships)
 }

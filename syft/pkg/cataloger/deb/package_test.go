@@ -1,20 +1,19 @@
-package pkg
+package deb
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/go-test/deep"
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 )
 
-func TestDpkgMetadata_pURL(t *testing.T) {
+func Test_packageURL(t *testing.T) {
 	tests := []struct {
 		name     string
 		distro   *linux.Release
-		metadata DpkgMetadata
+		metadata pkg.DpkgMetadata
 		expected string
 	}{
 		{
@@ -22,8 +21,23 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 			distro: &linux.Release{
 				ID:        "debian",
 				VersionID: "11",
+				IDLike: []string{
+					"debian",
+				},
 			},
-			metadata: DpkgMetadata{
+			metadata: pkg.DpkgMetadata{
+				Package: "p",
+				Version: "v",
+			},
+			expected: "pkg:deb/debian/p@v?distro=debian-11",
+		},
+		{
+			name: "missing ID_LIKE",
+			distro: &linux.Release{
+				ID:        "debian",
+				VersionID: "11",
+			},
+			metadata: pkg.DpkgMetadata{
 				Package: "p",
 				Version: "v",
 			},
@@ -32,10 +46,13 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 		{
 			name: "with arch info",
 			distro: &linux.Release{
-				ID:        "ubuntu",
+				ID: "ubuntu",
+				IDLike: []string{
+					"debian",
+				},
 				VersionID: "16.04",
 			},
-			metadata: DpkgMetadata{
+			metadata: pkg.DpkgMetadata{
 				Package:      "p",
 				Version:      "v",
 				Architecture: "a",
@@ -44,19 +61,22 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 		},
 		{
 			name: "missing distro",
-			metadata: DpkgMetadata{
+			metadata: pkg.DpkgMetadata{
 				Package: "p",
 				Version: "v",
 			},
-			expected: "pkg:deb/p@v",
+			expected: "",
 		},
 		{
 			name: "with upstream qualifier with source pkg name info",
 			distro: &linux.Release{
 				ID:        "debian",
 				VersionID: "11",
+				IDLike: []string{
+					"debian",
+				},
 			},
-			metadata: DpkgMetadata{
+			metadata: pkg.DpkgMetadata{
 				Package: "p",
 				Source:  "s",
 				Version: "v",
@@ -68,8 +88,11 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 			distro: &linux.Release{
 				ID:        "debian",
 				VersionID: "11",
+				IDLike: []string{
+					"debian",
+				},
 			},
-			metadata: DpkgMetadata{
+			metadata: pkg.DpkgMetadata{
 				Package:       "p",
 				Source:        "s",
 				Version:       "v",
@@ -81,51 +104,9 @@ func TestDpkgMetadata_pURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := test.metadata.PackageURL(test.distro)
-			if actual != test.expected {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(test.expected, actual, true)
-				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
-			}
-		})
-	}
-}
-
-func TestDpkgMetadata_FileOwner(t *testing.T) {
-	tests := []struct {
-		metadata DpkgMetadata
-		expected []string
-	}{
-		{
-			metadata: DpkgMetadata{
-				Files: []DpkgFileRecord{
-					{Path: "/somewhere"},
-					{Path: "/else"},
-				},
-			},
-			expected: []string{
-				"/else",
-				"/somewhere",
-			},
-		},
-		{
-			metadata: DpkgMetadata{
-				Files: []DpkgFileRecord{
-					{Path: "/somewhere"},
-					{Path: ""},
-				},
-			},
-			expected: []string{
-				"/somewhere",
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(strings.Join(test.expected, ","), func(t *testing.T) {
-			actual := test.metadata.OwnedFiles()
-			for _, d := range deep.Equal(test.expected, actual) {
-				t.Errorf("diff: %+v", d)
+			actual := packageURL(test.metadata, test.distro)
+			if diff := cmp.Diff(test.expected, actual); diff != "" {
+				t.Errorf("unexpected packageURL (-want +got):\n%s", diff)
 			}
 		})
 	}
