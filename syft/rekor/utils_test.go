@@ -2,7 +2,6 @@ package rekor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -117,15 +116,15 @@ func Test_getSbom(t *testing.T) {
 		},
 		{
 			name:      "invalid SPDX file",
-			sbomFile:  "test-fixtures/sboms/sbom-invalid.txt",
+			sbomFile:  "test-fixtures/sboms/sbom-invalid.json",
 			expectErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := ioutil.ReadFile(tt.sbomFile)
+			b, err := os.ReadFile(tt.sbomFile)
 			if err != nil {
-				assert.FailNow(t, "error reading test data")
+				assert.FailNowf(t, "error reading test data; err:", err.Error())
 			}
 
 			_, err = parseSbom(&b)
