@@ -10,15 +10,18 @@ import (
 	"os"
 	"testing"
 
+	adapter "github.com/anchore/go-logger/adapter/logrus"
 	"github.com/go-openapi/runtime"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/client/entries"
 	"github.com/sigstore/rekor/pkg/generated/client/index"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
 )
@@ -37,6 +40,11 @@ func Test_CreateRekorSbomRels(t *testing.T) {
 	defaultTc := &http.Client{
 		Transport: roundTripperMock{sbomFile: "test-fixtures/sboms/sbom-1.txt"},
 	}
+
+	testLogger, hook := test.NewNullLogger()
+	l, err := adapter.Use(testLogger, adapter.DefaultConfig())
+	assert.NoError(t, err)
+	log.Log = l
 
 	tests := []testCase{
 		{
