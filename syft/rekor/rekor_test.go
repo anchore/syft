@@ -16,11 +16,9 @@ import (
 	"github.com/sigstore/rekor/pkg/generated/client/index"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
 )
@@ -39,9 +37,6 @@ func Test_CreateRekorSbomRels(t *testing.T) {
 	defaultTc := &http.Client{
 		Transport: roundTripperMock{sbomFile: "test-fixtures/sboms/sbom-1.txt"},
 	}
-
-	testLogger, hook := test.NewNullLogger()
-	log.Log = testLogger
 
 	tests := []testCase{
 		{
