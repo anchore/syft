@@ -1,19 +1,22 @@
 package cpp
 
 import (
-	"os"
 	"testing"
 
-	"github.com/go-test/deep"
-
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseConanlock(t *testing.T) {
-	expected := []*pkg.Package{
+	fixture := "test-fixtures/conan.lock"
+	expected := []pkg.Package{
 		{
 			Name:         "zlib",
 			Version:      "1.2.12",
+			PURL:         "pkg:conan/zlib@1.2.12",
+			Locations:    source.NewLocationSet(source.NewLocation(fixture)),
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanLockMetadataType,
@@ -29,19 +32,8 @@ func TestParseConanlock(t *testing.T) {
 		},
 	}
 
-	fixture, err := os.Open("test-fixtures/conan.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
+	// TODO: relationships are not under test
+	var expectedRelationships []artifact.Relationship
 
-	// TODO: no relationships are under test yet
-	actual, _, err := parseConanlock(fixture.Name(), fixture)
-	if err != nil {
-		t.Error(err)
-	}
-
-	differences := deep.Equal(expected, actual)
-	if differences != nil {
-		t.Errorf("returned package list differed from expectation: %+v", differences)
-	}
+	pkgtest.TestFileParser(t, fixture, parseConanlock, expected, expectedRelationships)
 }

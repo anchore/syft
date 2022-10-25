@@ -123,18 +123,18 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		goCompiledVersion = "1.18"
 		archDetails       = "amd64"
 	)
-	buildSettings := map[string]string{
+	defaultBuildSettings := map[string]string{
 		"GOARCH":  "amd64",
 		"GOOS":    "darwin",
 		"GOAMD64": "v1",
 	}
 
-	expectedMain := pkg.Package{
+	unmodifiedMain := pkg.Package{
 		Name:     "github.com/anchore/syft",
-		FoundBy:  catalogerName,
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
 		Version:  "(devel)",
+		PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
 		Locations: source.NewLocationSet(
 			source.Location{
 				Coordinates: source.Coordinates{
@@ -147,7 +147,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Metadata: pkg.GolangBinMetadata{
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
-			BuildSettings:     buildSettings,
+			BuildSettings:     defaultBuildSettings,
 			MainModule:        "github.com/anchore/syft",
 		},
 	}
@@ -159,7 +159,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			name:     "buildGoPkgInfo parses a nil mod",
+			name:     "parse an empty mod",
 			mod:      nil,
 			expected: []pkg.Package(nil),
 		},
@@ -179,7 +179,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/adrg/xdg",
-					FoundBy:  catalogerName,
+					PURL:     "pkg:golang/github.com/adrg/xdg",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -201,7 +201,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package(nil),
 		},
 		{
-			name: "buildGoPkgInfo parses a mod without main module",
+			name: "parse a mod without main module",
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
@@ -221,8 +221,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/adrg/xdg",
-					FoundBy:  catalogerName,
 					Version:  "v0.2.1",
+					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -243,7 +243,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			},
 		},
 		{
-			name: "buildGoPkgInfo parses a mod without packages",
+			name: "parse a mod without packages",
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
@@ -254,10 +254,55 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					{Key: "GOAMD64", Value: "v1"},
 				},
 			},
-			expected: []pkg.Package{expectedMain},
+			expected: []pkg.Package{unmodifiedMain},
 		},
 		{
-			name: "buildGoPkgInfo parses a populated mod string and returns packages but no source info",
+			name: "parse main mod and replace devel version",
+			arch: archDetails,
+			mod: &debug.BuildInfo{
+				GoVersion: goCompiledVersion,
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+				Settings: []debug.BuildSetting{
+					{Key: "GOARCH", Value: archDetails},
+					{Key: "GOOS", Value: "darwin"},
+					{Key: "GOAMD64", Value: "v1"},
+					{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+					{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+				},
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/anchore/syft",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v0.0.0-20221014195457-41bc6bb41035",
+					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
+					Locations: source.NewLocationSet(
+						source.Location{
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						},
+					),
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						BuildSettings: map[string]string{
+							"GOARCH":       archDetails,
+							"GOOS":         "darwin",
+							"GOAMD64":      "v1",
+							"vcs.revision": "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							"vcs.time":     "2022-10-14T19:54:57Z",
+						},
+						MainModule: "github.com/anchore/syft",
+					},
+				},
+			},
+		},
+		{
+			name: "parse a populated mod string and returns packages but no source info",
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
@@ -283,8 +328,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/adrg/xdg",
-					FoundBy:  catalogerName,
 					Version:  "v0.2.1",
+					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -305,8 +350,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 				{
 					Name:     "github.com/anchore/client-go",
-					FoundBy:  catalogerName,
 					Version:  "v0.0.0-20210222170800-9c70f9b80bcf",
+					PURL:     "pkg:golang/github.com/anchore/client-go@v0.0.0-20210222170800-9c70f9b80bcf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -325,11 +370,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						MainModule:        "github.com/anchore/syft",
 					},
 				},
-				expectedMain,
+				unmodifiedMain,
 			},
 		},
 		{
-			name: "buildGoPkgInfo parses a populated mod string and returns packages when a replace directive exists",
+			name: "parse a populated mod string and returns packages when a replace directive exists",
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
@@ -360,8 +405,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "golang.org/x/sys",
-					FoundBy:  catalogerName,
 					Version:  "v0.0.0-20211006194710-c8a6f5223071",
+					PURL:     "pkg:golang/golang.org/x/sys@v0.0.0-20211006194710-c8a6f5223071",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -381,8 +426,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					}},
 				{
 					Name:     "golang.org/x/term",
-					FoundBy:  catalogerName,
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
+					PURL:     "pkg:golang/golang.org/x/term@v0.0.0-20210916214954-140adaaadfaf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -401,7 +446,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						MainModule:        "github.com/anchore/syft",
 					},
 				},
-				expectedMain,
+				unmodifiedMain,
 			},
 		},
 	}

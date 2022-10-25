@@ -6,10 +6,10 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/linux"
 )
+
+var _ FileOwner = (*AlpmMetadata)(nil)
 
 const AlpmDBGlob = "**/var/lib/pacman/local/**/desc"
 
@@ -38,34 +38,6 @@ type AlpmFileRecord struct {
 	Size    string        `mapstructure:"size" json:"size,omitempty"`
 	Link    string        `mapstructure:"link" json:"link,omitempty"`
 	Digests []file.Digest `mapstructure:"digests" json:"digest,omitempty"`
-}
-
-// PackageURL returns the PURL for the specific Arch Linux package (see https://github.com/package-url/purl-spec)
-func (m AlpmMetadata) PackageURL(distro *linux.Release) string {
-	qualifiers := map[string]string{
-		PURLQualifierArch: m.Architecture,
-	}
-
-	if m.BasePackage != "" {
-		qualifiers[PURLQualifierUpstream] = m.BasePackage
-	}
-
-	distroID := ""
-	if distro != nil {
-		distroID = distro.ID
-	}
-
-	return packageurl.NewPackageURL(
-		"alpm",
-		distroID,
-		m.Package,
-		m.Version,
-		purlQualifiers(
-			qualifiers,
-			distro,
-		),
-		"",
-	).ToString()
 }
 
 func (m AlpmMetadata) OwnedFiles() (result []string) {

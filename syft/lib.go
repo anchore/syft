@@ -49,7 +49,7 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 	}
 
 	// if the catalogers have been configured, use them regardless of input type
-	var catalogers []cataloger.Cataloger
+	var catalogers []pkg.Cataloger
 	if len(cfg.Catalogers) > 0 {
 		catalogers = cataloger.AllCatalogers(cfg)
 	} else {

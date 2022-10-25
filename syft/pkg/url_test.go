@@ -18,52 +18,6 @@ func TestPackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "golang",
-			pkg: Package{
-				Name:    "github.com/anchore/syft",
-				Version: "v0.1.0",
-				Type:    GoModulePkg,
-			},
-			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
-		},
-		{
-			name: "golang short name",
-			pkg: Package{
-				Name:    "go.opencensus.io",
-				Version: "v0.23.0",
-				Type:    GoModulePkg,
-			},
-			expected: "pkg:golang/go.opencensus.io@v0.23.0",
-		},
-		{
-			name: "pub",
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "0.1.0",
-				Type:    DartPubPkg,
-				Metadata: DartPubMetadata{
-					Name:      "name",
-					Version:   "0.2.0",
-					HostedURL: "pub.hosted.org",
-				},
-			},
-			expected: "pkg:pub/name@0.2.0?hosted_url=pub.hosted.org",
-		},
-
-		{
-			name: "dotnet",
-			pkg: Package{
-				Name:    "Microsoft.CodeAnalysis.Razor",
-				Version: "2.2.0",
-				Type:    DotnetPkg,
-				Metadata: DotnetDepsMetadata{
-					Name:    "Microsoft.CodeAnalysis.Razor",
-					Version: "2.2.0",
-				},
-			},
-			expected: "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
-		},
-		{
 			name: "python",
 			pkg: Package{
 				Name:    "bad-name",
@@ -95,24 +49,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:npm/name@v0.1.0",
 		},
 		{
-			name: "deb",
-			distro: &linux.Release{
-				ID:        "ubuntu",
-				VersionID: "20.04",
-			},
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    DebPkg,
-				Metadata: DpkgMetadata{
-					Package:      "name",
-					Version:      "v0.1.0",
-					Architecture: "amd64",
-				},
-			},
-			expected: "pkg:deb/ubuntu/name@v0.1.0?arch=amd64&distro=ubuntu-20.04",
-		},
-		{
 			name: "rpm",
 			distro: &linux.Release{
 				ID:        "centos",
@@ -140,24 +76,6 @@ func TestPackageURL(t *testing.T) {
 				Type:    RustPkg,
 			},
 			expected: "pkg:cargo/name@v0.1.0",
-		},
-		{
-			name: "apk",
-			distro: &linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    ApkPkg,
-				Metadata: ApkMetadata{
-					Package:      "name",
-					Version:      "v0.1.0",
-					Architecture: "amd64",
-				},
-			},
-			expected: "pkg:alpine/name@v0.1.0?arch=amd64&distro=alpine-3.4.6",
 		},
 		{
 			name: "php-composer",
@@ -201,24 +119,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:maven/g.id/a@v",
 		},
 		{
-			name: "alpm",
-			distro: &linux.Release{
-				ID:      "arch",
-				BuildID: "rolling",
-			},
-			pkg: Package{
-				Name:    "linux",
-				Version: "5.10.0",
-				Type:    AlpmPkg,
-				Metadata: AlpmMetadata{
-					Package: "linux",
-					Version: "5.10.0",
-				},
-			},
-
-			expected: "pkg:alpm/arch/linux@5.10.0?distro=arch-rolling",
-		},
-		{
 			name: "cocoapods",
 			pkg: Package{
 				Name:     "GlossButtonNode",
@@ -232,36 +132,6 @@ func TestPackageURL(t *testing.T) {
 			},
 			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
 		},
-		{
-			name: "conan",
-			pkg: Package{
-				Name:         "catch2",
-				Version:      "2.13.8",
-				Type:         ConanPkg,
-				Language:     CPP,
-				MetadataType: ConanMetadataType,
-				Metadata: ConanMetadata{
-					Ref: "catch2/2.13.8",
-				},
-			},
-			expected: "pkg:conan/catch2@2.13.8",
-		},
-		// note both Ref should parse the same for conan ecosystem
-		{
-			name: "conan lock",
-			pkg: Package{
-				Name:         "catch2",
-				Version:      "2.13.8",
-				Type:         ConanPkg,
-				Language:     CPP,
-				MetadataType: ConanLockMetadataType,
-				Metadata: ConanLockMetadata{
-					Ref: "catch2/2.13.8",
-				},
-			},
-			expected: "pkg:conan/catch2@2.13.8",
-		},
-
 		{
 			name: "hackage",
 			pkg: Package{
@@ -288,6 +158,13 @@ func TestPackageURL(t *testing.T) {
 	// testing microsoft packages is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(PortagePkg))
+	expectedTypes.Remove(string(AlpmPkg))
+	expectedTypes.Remove(string(ApkPkg))
+	expectedTypes.Remove(string(ConanPkg))
+	expectedTypes.Remove(string(DartPubPkg))
+	expectedTypes.Remove(string(DotnetPkg))
+	expectedTypes.Remove(string(DebPkg))
+	expectedTypes.Remove(string(GoModulePkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

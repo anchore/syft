@@ -5,11 +5,17 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestExtraFileAttributes(t *testing.T) {
@@ -53,28 +59,17 @@ func TestExtraFileAttributes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/extra-file-attributes")
-			if err != nil {
-				t.Fatal("Unable to read test-fixtures/extra-file-attributes: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open("test-fixtures/extra-file-attributes")
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			reader := bufio.NewReader(file)
+			reader := bufio.NewReader(f)
 
 			entry, err := parseApkDBEntry(reader)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
+			require.NoError(t, err)
 
-			if diff := deep.Equal(entry.Files, test.expected.Files); diff != nil {
-				for _, d := range diff {
-					t.Errorf("diff: %+v", d)
-				}
+			if diff := cmp.Diff(entry.Files, test.expected.Files); diff != "" {
+				t.Errorf("Files mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -617,144 +612,133 @@ func TestSinglePackageDetails(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			file, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatal("Unable to read fixture: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open(test.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			reader := bufio.NewReader(file)
+			reader := bufio.NewReader(f)
 
 			entry, err := parseApkDBEntry(reader)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
+			require.NoError(t, err)
+			require.NotNil(t, entry)
 
-			if diff := deep.Equal(*entry, test.expected); diff != nil {
-				for _, d := range diff {
-					t.Errorf("diff: %+v", d)
-				}
+			if diff := cmp.Diff(*entry, test.expected); diff != "" {
+				t.Errorf("Entry mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
 }
 
 func TestMultiplePackages(t *testing.T) {
-	tests := []struct {
-		fixture  string
-		expected []*pkg.Package
-	}{
+
+	fixture := "test-fixtures/multiple"
+	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	expected := []pkg.Package{
 		{
-			fixture: "test-fixtures/multiple",
-			expected: []*pkg.Package{
-				{
-					Name:         "libc-utils",
-					Version:      "0.7.2-r0",
-					Licenses:     []string{"BSD"},
-					Type:         pkg.ApkPkg,
-					MetadataType: pkg.ApkMetadataType,
-					Metadata: pkg.ApkMetadata{
-						Package:          "libc-utils",
-						OriginPackage:    "libc-dev",
-						Maintainer:       "Natanael Copa <ncopa@alpinelinux.org>",
-						Version:          "0.7.2-r0",
-						License:          "BSD",
-						Architecture:     "x86_64",
-						URL:              "http://alpinelinux.org",
-						Description:      "Meta package to pull in correct libc",
-						Size:             1175,
-						InstalledSize:    4096,
-						PullChecksum:     "Q1p78yvTLG094tHE1+dToJGbmYzQE=",
-						GitCommitOfAport: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479",
-						PullDependencies: "musl-utils",
-						Files:            []pkg.ApkFileRecord{},
+			Name:         "libc-utils",
+			Version:      "0.7.2-r0",
+			Licenses:     []string{"BSD"},
+			Type:         pkg.ApkPkg,
+			PURL:         "pkg:alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
+			Locations:    fixtureLocationSet,
+			MetadataType: pkg.ApkMetadataType,
+			Metadata: pkg.ApkMetadata{
+				Package:          "libc-utils",
+				OriginPackage:    "libc-dev",
+				Maintainer:       "Natanael Copa <ncopa@alpinelinux.org>",
+				Version:          "0.7.2-r0",
+				License:          "BSD",
+				Architecture:     "x86_64",
+				URL:              "http://alpinelinux.org",
+				Description:      "Meta package to pull in correct libc",
+				Size:             1175,
+				InstalledSize:    4096,
+				PullChecksum:     "Q1p78yvTLG094tHE1+dToJGbmYzQE=",
+				GitCommitOfAport: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479",
+				PullDependencies: "musl-utils",
+				Files:            []pkg.ApkFileRecord{},
+			},
+		},
+		{
+			Name:         "musl-utils",
+			Version:      "1.1.24-r2",
+			Licenses:     []string{"MIT", "BSD", "GPL2+"},
+			Type:         pkg.ApkPkg,
+			PURL:         "pkg:alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
+			Locations:    fixtureLocationSet,
+			MetadataType: pkg.ApkMetadataType,
+			Metadata: pkg.ApkMetadata{
+				Package:          "musl-utils",
+				OriginPackage:    "musl",
+				Version:          "1.1.24-r2",
+				Description:      "the musl c library (libc) implementation",
+				Maintainer:       "Timo Teräs <timo.teras@iki.fi>",
+				License:          "MIT BSD GPL2+",
+				Architecture:     "x86_64",
+				URL:              "https://musl.libc.org/",
+				Size:             37944,
+				InstalledSize:    151552,
+				PullDependencies: "scanelf so:libc.musl-x86_64.so.1",
+				PullChecksum:     "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
+				GitCommitOfAport: "4024cc3b29ad4c65544ad068b8f59172b5494306",
+				Files: []pkg.ApkFileRecord{
+					{
+						Path: "/sbin",
 					},
-				},
-				{
-					Name:         "musl-utils",
-					Version:      "1.1.24-r2",
-					Licenses:     []string{"MIT", "BSD", "GPL2+"},
-					Type:         pkg.ApkPkg,
-					MetadataType: pkg.ApkMetadataType,
-					Metadata: pkg.ApkMetadata{
-						Package:          "musl-utils",
-						OriginPackage:    "musl",
-						Version:          "1.1.24-r2",
-						Description:      "the musl c library (libc) implementation",
-						Maintainer:       "Timo Teräs <timo.teras@iki.fi>",
-						License:          "MIT BSD GPL2+",
-						Architecture:     "x86_64",
-						URL:              "https://musl.libc.org/",
-						Size:             37944,
-						InstalledSize:    151552,
-						PullDependencies: "scanelf so:libc.musl-x86_64.so.1",
-						PullChecksum:     "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
-						GitCommitOfAport: "4024cc3b29ad4c65544ad068b8f59172b5494306",
-						Files: []pkg.ApkFileRecord{
-							{
-								Path: "/sbin",
-							},
-							{
-								Path:        "/sbin/ldconfig",
-								OwnerUID:    "0",
-								OwnerGID:    "0",
-								Permissions: "755",
-								Digest: &file.Digest{
-									Algorithm: "'Q1'+base64(sha1)",
-									Value:     "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
-								},
-							},
-							{
-								Path: "/usr",
-							},
-							{
-								Path: "/usr/bin",
-							},
-							{
-								Path:        "/usr/bin/iconv",
-								OwnerUID:    "0",
-								OwnerGID:    "0",
-								Permissions: "755",
-								Digest: &file.Digest{
-									Algorithm: "'Q1'+base64(sha1)",
-									Value:     "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
-								},
-							},
-							{
-								Path:        "/usr/bin/ldd",
-								OwnerUID:    "0",
-								OwnerGID:    "0",
-								Permissions: "755",
-								Digest: &file.Digest{
-									Algorithm: "'Q1'+base64(sha1)",
-									Value:     "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
-								},
-							},
-							{
-								Path:        "/usr/bin/getconf",
-								OwnerUID:    "0",
-								OwnerGID:    "0",
-								Permissions: "755",
-								Digest: &file.Digest{
-									Algorithm: "'Q1'+base64(sha1)",
-									Value:     "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
-								},
-							},
-							{
-								Path:        "/usr/bin/getent",
-								OwnerUID:    "0",
-								OwnerGID:    "0",
-								Permissions: "755",
-								Digest: &file.Digest{
-									Algorithm: "'Q1'+base64(sha1)",
-									Value:     "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
-								},
-							},
+					{
+						Path:        "/sbin/ldconfig",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "755",
+						Digest: &file.Digest{
+							Algorithm: "'Q1'+base64(sha1)",
+							Value:     "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
+						},
+					},
+					{
+						Path: "/usr",
+					},
+					{
+						Path: "/usr/bin",
+					},
+					{
+						Path:        "/usr/bin/iconv",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "755",
+						Digest: &file.Digest{
+							Algorithm: "'Q1'+base64(sha1)",
+							Value:     "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
+						},
+					},
+					{
+						Path:        "/usr/bin/ldd",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "755",
+						Digest: &file.Digest{
+							Algorithm: "'Q1'+base64(sha1)",
+							Value:     "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
+						},
+					},
+					{
+						Path:        "/usr/bin/getconf",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "755",
+						Digest: &file.Digest{
+							Algorithm: "'Q1'+base64(sha1)",
+							Value:     "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
+						},
+					},
+					{
+						Path:        "/usr/bin/getent",
+						OwnerUID:    "0",
+						OwnerGID:    "0",
+						Permissions: "755",
+						Digest: &file.Digest{
+							Algorithm: "'Q1'+base64(sha1)",
+							Value:     "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
 						},
 					},
 				},
@@ -762,39 +746,16 @@ func TestMultiplePackages(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.fixture, func(t *testing.T) {
-			file, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatal("Unable to read: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+	// TODO: relationships are not under test
+	var expectedRelationships []artifact.Relationship
 
-			// TODO: no relationships are under test yet
-			pkgs, _, err := parseApkDB(file.Name(), file)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
+	env := generic.Environment{LinuxRelease: &linux.Release{
+		ID:        "alpine",
+		VersionID: "3.12",
+	}}
 
-			if len(pkgs) != 2 {
-				t.Fatalf("unexpected number of entries: %d", len(pkgs))
-			}
+	pkgtest.TestFileParserWithEnv(t, fixture, parseApkDB, &env, expected, expectedRelationships)
 
-			for idx, entry := range pkgs {
-				if diff := deep.Equal(entry, test.expected[idx]); diff != nil {
-					for _, d := range diff {
-						t.Errorf("diff: %+v", d)
-					}
-				}
-			}
-
-		})
-	}
 }
 
 func Test_processChecksum(t *testing.T) {

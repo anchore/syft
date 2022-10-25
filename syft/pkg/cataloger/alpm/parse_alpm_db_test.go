@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -89,33 +90,21 @@ func TestDatabaseParser(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/files")
-			if err != nil {
-				t.Fatal("Unable to read test-fixtures/file: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open("test-fixtures/files")
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			reader := bufio.NewReader(file)
+			reader := bufio.NewReader(f)
 
 			entry, err := parseAlpmDBEntry(reader)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
+			require.NoError(t, err)
+
+			if diff := cmp.Diff(entry.Files, test.expected.Files); diff != "" {
+				t.Errorf("Files mismatch (-want +got):\n%s", diff)
 			}
 
-			if diff := deep.Equal(entry.Files, test.expected.Files); diff != nil {
-				for _, d := range diff {
-					t.Errorf("files diff: %+v", d)
-				}
-			}
-			if diff := deep.Equal(entry.Backup, test.expected.Backup); diff != nil {
-				for _, d := range diff {
-					t.Errorf("backup diff: %+v", d)
-				}
+			if diff := cmp.Diff(entry.Backup, test.expected.Backup); diff != "" {
+				t.Errorf("Backup mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -167,28 +156,17 @@ func TestMtreeParse(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/mtree")
-			if err != nil {
-				t.Fatal("Unable to read test-fixtures/mtree: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open("test-fixtures/mtree")
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			reader := bufio.NewReader(file)
+			reader := bufio.NewReader(f)
 
 			entry, err := parseMtree(reader)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
+			require.NoError(t, err)
 
-			if diff := deep.Equal(entry, test.expected); diff != nil {
-				for _, d := range diff {
-					t.Errorf("files diff: %+v", d)
-				}
+			if diff := cmp.Diff(entry, test.expected); diff != "" {
+				t.Errorf("Files mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

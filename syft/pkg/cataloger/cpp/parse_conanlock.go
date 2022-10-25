@@ -2,16 +2,15 @@ package cpp
 
 import (
 	"encoding/json"
-	"io"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseConanlock
+var _ generic.Parser = parseConanlock
 
 type conanLock struct {
 	GraphLock struct {
@@ -31,8 +30,8 @@ type conanLock struct {
 }
 
 // parseConanlock is a parser function for conan.lock contents, returning all packages discovered.
-func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	pkgs := []*pkg.Package{}
+func parseConanlock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
 	var cl conanLock
 	if err := json.NewDecoder(reader).Decode(&cl); err != nil {
 		return nil, nil, err
@@ -45,19 +44,11 @@ func parseConanlock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 			Context: node.Context,
 		}
 
-		pkgName, pkgVersion := metadata.NameAndVersion()
-		if pkgName == "" || pkgVersion == "" {
-			continue
-		}
+		p := newConanlockPackage(metadata, reader.Location)
 
-		pkgs = append(pkgs, &pkg.Package{
-			Name:         pkgName,
-			Version:      pkgVersion,
-			Language:     pkg.CPP,
-			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanLockMetadataType,
-			Metadata:     metadata,
-		})
+		if p != nil {
+			pkgs = append(pkgs, *p)
+		}
 	}
 
 	return pkgs, nil, nil

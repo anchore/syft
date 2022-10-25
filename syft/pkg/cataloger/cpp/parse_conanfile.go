@@ -9,21 +9,21 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseConanfile
+var _ generic.Parser = parseConanfile
 
 type Conanfile struct {
 	Requires []string `toml:"requires"`
 }
 
 // parseConanfile is a parser function for conanfile.txt contents, returning all packages discovered.
-func parseConanfile(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseConanfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	inRequirements := false
-	pkgs := []*pkg.Package{}
+	var pkgs []pkg.Package
 	for {
 		line, err := r.ReadString('\n')
 		switch {
@@ -44,19 +44,15 @@ func parseConanfile(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 			Ref: strings.Trim(line, "\n"),
 		}
 
-		pkgName, pkgVersion := m.NameAndVersion()
-
-		if pkgName == "" || pkgVersion == "" || !inRequirements {
+		if !inRequirements {
 			continue
 		}
 
-		pkgs = append(pkgs, &pkg.Package{
-			Name:         pkgName,
-			Version:      pkgVersion,
-			Language:     pkg.CPP,
-			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanMetadataType,
-			Metadata:     m,
-		})
+		p := newConanfilePackage(m, reader.Location)
+		if p == nil {
+			continue
+		}
+
+		pkgs = append(pkgs, *p)
 	}
 }

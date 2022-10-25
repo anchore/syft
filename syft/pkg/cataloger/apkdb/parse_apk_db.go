@@ -13,32 +13,23 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
-var _ common.ParserFn = parseApkDB
-
-func newApkDBPackage(d *pkg.ApkMetadata) *pkg.Package {
-	return &pkg.Package{
-		Name:         d.Package,
-		Version:      d.Version,
-		Licenses:     strings.Split(d.License, " "),
-		Type:         pkg.ApkPkg,
-		MetadataType: pkg.ApkMetadataType,
-		Metadata:     *d,
-	}
-}
+var _ generic.Parser = parseApkDB
 
 // parseApkDb parses individual packages from a given Alpine DB file. For more information on specific fields
 // see https://wiki.alpinelinux.org/wiki/Apk_spec .
-func parseApkDB(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// larger capacity for the scanner.
 	const maxScannerCapacity = 1024 * 1024
 	// a new larger buffer for the scanner
 	bufScan := make([]byte, maxScannerCapacity)
-	packages := make([]*pkg.Package, 0)
+	pkgs := make([]pkg.Package, 0)
 
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(bufScan, maxScannerCapacity)
@@ -55,6 +46,11 @@ func parseApkDB(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relation
 		return 0, data, bufio.ErrFinalToken
 	}
 
+	var r *linux.Release
+	if env != nil {
+		r = env.LinuxRelease
+	}
+
 	scanner.Split(onDoubleLF)
 	for scanner.Scan() {
 		metadata, err := parseApkDBEntry(strings.NewReader(scanner.Text()))
@@ -62,7 +58,7 @@ func parseApkDB(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relation
 			return nil, nil, err
 		}
 		if metadata != nil {
-			packages = append(packages, newApkDBPackage(metadata))
+			pkgs = append(pkgs, newPackage(*metadata, r, reader.Location))
 		}
 	}
 
@@ -70,7 +66,7 @@ func parseApkDB(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relation
 		return nil, nil, fmt.Errorf("failed to parse APK DB file: %w", err)
 	}
 
-	return packages, nil, nil
+	return pkgs, nil, nil
 }
 
 // parseApkDBEntry reads and parses a single pkg.ApkMetadata element from the stream, returning nil if their are no more entries.

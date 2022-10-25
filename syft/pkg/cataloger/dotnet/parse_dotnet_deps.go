@@ -3,16 +3,15 @@ package dotnet
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"strings"
+	"sort"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseDotnetDeps
+var _ generic.Parser = parseDotnetDeps
 
 type dotnetDeps struct {
 	Libraries map[string]dotnetDepsLibrary `json:"libraries"`
@@ -25,8 +24,8 @@ type dotnetDepsLibrary struct {
 	HashPath string `json:"hashPath"`
 }
 
-func parseDotnetDeps(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	var packages []*pkg.Package
+func parseDotnetDeps(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
 
 	dec := json.NewDecoder(reader)
 
@@ -35,38 +34,23 @@ func parseDotnetDeps(path string, reader io.Reader) ([]*pkg.Package, []artifact.
 		return nil, nil, fmt.Errorf("failed to parse deps.json file: %w", err)
 	}
 
-	for nameVersion, lib := range p.Libraries {
-		dotnetPkg := newDotnetDepsPackage(nameVersion, lib)
+	var names []string
+
+	for nameVersion := range p.Libraries {
+		names = append(names, nameVersion)
+	}
+
+	// sort the names so that the order of the packages is deterministic
+	sort.Strings(names)
+
+	for _, nameVersion := range names {
+		lib := p.Libraries[nameVersion]
+		dotnetPkg := newDotnetDepsPackage(nameVersion, lib, reader.Location)
 
 		if dotnetPkg != nil {
-			packages = append(packages, dotnetPkg)
+			pkgs = append(pkgs, *dotnetPkg)
 		}
 	}
 
-	return packages, nil, nil
-}
-
-func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary) *pkg.Package {
-	if lib.Type != "package" {
-		return nil
-	}
-
-	splitted := strings.Split(nameVersion, "/")
-	name := splitted[0]
-	version := splitted[1]
-
-	return &pkg.Package{
-		Name:         name,
-		Version:      version,
-		Language:     pkg.Dotnet,
-		Type:         pkg.DotnetPkg,
-		MetadataType: pkg.DotnetDepsMetadataType,
-		Metadata: &pkg.DotnetDepsMetadata{
-			Name:     name,
-			Version:  version,
-			Path:     lib.Path,
-			Sha512:   lib.Sha512,
-			HashPath: lib.HashPath,
-		},
-	}
+	return pkgs, nil, nil
 }

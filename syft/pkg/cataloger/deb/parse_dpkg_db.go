@@ -13,7 +13,10 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 var (
@@ -21,20 +24,24 @@ var (
 	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 )
 
-func newDpkgPackage(d pkg.DpkgMetadata) *pkg.Package {
-	return &pkg.Package{
-		Name:         d.Package,
-		Version:      d.Version,
-		Type:         pkg.DebPkg,
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata:     d,
+func parseDpkgDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	metadata, err := parseDpkgStatus(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
 	}
+
+	var pkgs []pkg.Package
+	for _, m := range metadata {
+		pkgs = append(pkgs, newDpkgPackage(m, reader.Location, resolver, env.LinuxRelease))
+	}
+
+	return pkgs, nil, nil
 }
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
-func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
+func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgMetadata, error) {
 	buffedReader := bufio.NewReader(reader)
-	var packages []pkg.Package
+	var metadata []pkg.DpkgMetadata
 
 	continueProcessing := true
 	for continueProcessing {
@@ -46,40 +53,44 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 				return nil, err
 			}
 		}
-
-		p := newDpkgPackage(entry)
-		if pkg.IsValid(p) {
-			packages = append(packages, *p)
+		if entry == nil {
+			continue
 		}
+
+		metadata = append(metadata, *entry)
 	}
 
-	return packages, nil
+	return metadata, nil
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
-func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
+func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgMetadata, error) {
 	var retErr error
 	dpkgFields, err := extractAllFields(reader)
 	if err != nil {
 		if !errors.Is(err, errEndOfPackages) {
-			return pkg.DpkgMetadata{}, err
+			return nil, err
+		}
+		if len(dpkgFields) == 0 {
+			return nil, err
 		}
 		retErr = err
 	}
 
-	entry := pkg.DpkgMetadata{
-		// ensure the default value for a collection is never nil since this may be shown as JSON
-		Files: make([]pkg.DpkgFileRecord, 0),
-	}
+	entry := pkg.DpkgMetadata{}
 	err = mapstructure.Decode(dpkgFields, &entry)
 	if err != nil {
-		return pkg.DpkgMetadata{}, err
+		return nil, err
 	}
 
-	name, version := extractSourceVersion(entry.Source)
-	if version != "" {
-		entry.SourceVersion = version
-		entry.Source = name
+	sourceName, sourceVersion := extractSourceVersion(entry.Source)
+	if sourceVersion != "" {
+		entry.SourceVersion = sourceVersion
+		entry.Source = sourceName
+	}
+
+	if entry.Package == "" {
+		return nil, retErr
 	}
 
 	// there may be an optional conffiles section that we should persist as files
@@ -89,7 +100,12 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (pkg.DpkgMetadata, error) {
 		}
 	}
 
-	return entry, retErr
+	if entry.Files == nil {
+		// ensure the default value for a collection is never nil since this may be shown as JSON
+		entry.Files = make([]pkg.DpkgFileRecord, 0)
+	}
+
+	return &entry, retErr
 }
 
 func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {

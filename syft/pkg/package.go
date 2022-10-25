@@ -17,7 +17,7 @@ type Package struct {
 	id           artifact.ID        `hash:"ignore"`
 	Name         string             // the package name
 	Version      string             // the version of the package
-	FoundBy      string             `cyclonedx:"foundBy"` // the specific cataloger that discovered this package
+	FoundBy      string             `hash:"ignore" cyclonedx:"foundBy"` // the specific cataloger that discovered this package
 	Locations    source.LocationSet // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
 	Licenses     []string           // licenses discovered with the package metadata
 	Language     Language           `cyclonedx:"language"`     // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
@@ -55,6 +55,7 @@ func (p *Package) merge(other Package) error {
 	if p.id != other.id {
 		return fmt.Errorf("cannot merge packages with different IDs: %q vs %q", p.id, other.id)
 	}
+
 	if p.PURL != other.PURL {
 		log.Warnf("merging packages have with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
 	}

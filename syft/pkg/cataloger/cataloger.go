@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
@@ -28,24 +27,13 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"github.com/anchore/syft/syft/pkg/cataloger/swift"
-	"github.com/anchore/syft/syft/source"
 )
 
 const AllCatalogersPattern = "all"
 
-// Cataloger describes behavior for an object to participate in parsing container image or file system
-// contents for the purpose of discovering Packages. Each concrete implementation should focus on discovering Packages
-// for a specific Package Type or ecosystem.
-type Cataloger interface {
-	// Name returns a string that uniquely describes a cataloger
-	Name() string
-	// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-	Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error)
-}
-
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
-func ImageCatalogers(cfg Config) []Cataloger {
-	return filterCatalogers([]Cataloger{
+func ImageCatalogers(cfg Config) []pkg.Cataloger {
+	return filterCatalogers([]pkg.Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
@@ -62,8 +50,8 @@ func ImageCatalogers(cfg Config) []Cataloger {
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
-func DirectoryCatalogers(cfg Config) []Cataloger {
-	return filterCatalogers([]Cataloger{
+func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
+	return filterCatalogers([]pkg.Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
@@ -82,15 +70,15 @@ func DirectoryCatalogers(cfg Config) []Cataloger {
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		swift.NewCocoapodsCataloger(),
-		cpp.NewConanfileCataloger(),
+		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 	}, cfg.Catalogers)
 }
 
 // AllCatalogers returns all implemented catalogers
-func AllCatalogers(cfg Config) []Cataloger {
-	return filterCatalogers([]Cataloger{
+func AllCatalogers(cfg Config) []pkg.Cataloger {
+	return filterCatalogers([]pkg.Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
@@ -113,7 +101,7 @@ func AllCatalogers(cfg Config) []Cataloger {
 		php.NewPHPComposerInstalledCataloger(),
 		php.NewPHPComposerLockCataloger(),
 		swift.NewCocoapodsCataloger(),
-		cpp.NewConanfileCataloger(),
+		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 	}, cfg.Catalogers)
@@ -128,7 +116,7 @@ func RequestedAllCatalogers(cfg Config) bool {
 	return false
 }
 
-func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string) []Cataloger {
+func filterCatalogers(catalogers []pkg.Cataloger, enabledCatalogerPatterns []string) []pkg.Cataloger {
 	// if cataloger is not set, all applicable catalogers are enabled by default
 	if len(enabledCatalogerPatterns) == 0 {
 		return catalogers
@@ -138,7 +126,7 @@ func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string)
 			return catalogers
 		}
 	}
-	var keepCatalogers []Cataloger
+	var keepCatalogers []pkg.Cataloger
 	for _, cataloger := range catalogers {
 		if contains(enabledCatalogerPatterns, cataloger.Name()) {
 			keepCatalogers = append(keepCatalogers, cataloger)
