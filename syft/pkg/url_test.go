@@ -18,24 +18,6 @@ func TestPackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "golang",
-			pkg: Package{
-				Name:    "github.com/anchore/syft",
-				Version: "v0.1.0",
-				Type:    GoModulePkg,
-			},
-			expected: "pkg:golang/github.com/anchore/syft@v0.1.0",
-		},
-		{
-			name: "golang short name",
-			pkg: Package{
-				Name:    "go.opencensus.io",
-				Version: "v0.23.0",
-				Type:    GoModulePkg,
-			},
-			expected: "pkg:golang/go.opencensus.io@v0.23.0",
-		},
-		{
 			name: "python",
 			pkg: Package{
 				Name:    "bad-name",
@@ -182,6 +164,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(DartPubPkg))
 	expectedTypes.Remove(string(DotnetPkg))
 	expectedTypes.Remove(string(DebPkg))
+	expectedTypes.Remove(string(GoModulePkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

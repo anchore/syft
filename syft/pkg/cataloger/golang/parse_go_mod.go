@@ -9,38 +9,44 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// parseGoMod takes a go.mod and lists all packages discovered.
-func parseGoMod(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	packages := make(map[string]*pkg.Package)
+// parseGoModFile takes a go.mod and lists all packages discovered.
+func parseGoModFile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	packages := make(map[string]pkg.Package)
 
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read go module: %w", err)
 	}
 
-	file, err := modfile.Parse(path, contents, nil)
+	file, err := modfile.Parse(reader.RealPath, contents, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse go module: %w", err)
 	}
 
 	for _, m := range file.Require {
-		packages[m.Mod.Path] = &pkg.Package{
-			Name:     m.Mod.Path,
-			Version:  m.Mod.Version,
-			Language: pkg.Go,
-			Type:     pkg.GoModulePkg,
+		packages[m.Mod.Path] = pkg.Package{
+			Name:      m.Mod.Path,
+			Version:   m.Mod.Version,
+			Locations: source.NewLocationSet(reader.Location),
+			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg,
 		}
 	}
 
 	// remove any old packages and replace with new ones...
 	for _, m := range file.Replace {
-		packages[m.New.Path] = &pkg.Package{
-			Name:     m.New.Path,
-			Version:  m.New.Version,
-			Language: pkg.Go,
-			Type:     pkg.GoModulePkg,
+		packages[m.New.Path] = pkg.Package{
+			Name:      m.New.Path,
+			Version:   m.New.Version,
+			Locations: source.NewLocationSet(reader.Location),
+			PURL:      packageURL(m.New.Path, m.New.Version),
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg,
 		}
 	}
 
@@ -49,9 +55,10 @@ func parseGoMod(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relat
 		delete(packages, m.Mod.Path)
 	}
 
-	pkgsSlice := make([]*pkg.Package, len(packages))
+	pkgsSlice := make([]pkg.Package, len(packages))
 	idx := 0
 	for _, p := range packages {
+		p.SetID()
 		pkgsSlice[idx] = p
 		idx++
 	}
