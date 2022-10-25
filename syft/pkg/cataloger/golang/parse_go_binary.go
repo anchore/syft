@@ -14,9 +14,13 @@ import (
 
 	"golang.org/x/mod/module"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -34,9 +38,27 @@ var (
 
 const devel = "(devel)"
 
+// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
+func parseGoBinary(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
+
+	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	mods, archs := scanFile(unionReader, reader.RealPath)
+	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
+
+	for i, mod := range mods {
+		pkgs = append(pkgs, buildGoPkgInfo(reader.Location, mod, archs[i])...)
+	}
+	return pkgs, nil, nil
+}
+
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
-	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, location, gbs)
+	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, gbs, location)
 	if main.Version == devel {
 		if version, ok := gbs["vcs.revision"]; ok {
 			if timestamp, ok := gbs["vcs.time"]; ok {
@@ -50,37 +72,12 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 				version = module.PseudoVersion("", "", ts, version)
 			}
 			main.Version = version
+			main.PURL = packageURL(main.Name, main.Version)
+			main.SetID()
 		}
 	}
 
 	return main
-}
-
-func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, location source.Location, buildSettings map[string]string) pkg.Package {
-	if dep.Replace != nil {
-		dep = dep.Replace
-	}
-
-	p := pkg.Package{
-		FoundBy:      catalogerName,
-		Name:         dep.Path,
-		Version:      dep.Version,
-		Language:     pkg.Go,
-		Type:         pkg.GoModulePkg,
-		Locations:    source.NewLocationSet(location),
-		MetadataType: pkg.GolangBinMetadataType,
-		Metadata: pkg.GolangBinMetadata{
-			GoCompiledVersion: goVersion,
-			H1Digest:          dep.Sum,
-			Architecture:      architecture,
-			BuildSettings:     buildSettings,
-			MainModule:        mainModule,
-		},
-	}
-
-	p.SetID()
-
-	return p
 }
 
 // getArchs finds a binary architecture by two ways:
@@ -192,7 +189,7 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		if dep == nil {
 			continue
 		}
-		p := newGoBinaryPackage(dep, mod.Main.Path, mod.GoVersion, arch, location, nil)
+		p := newGoBinaryPackage(dep, mod.Main.Path, mod.GoVersion, arch, nil, location)
 		if pkg.IsValid(&p) {
 			pkgs = append(pkgs, p)
 		}
