@@ -98,5 +98,5 @@ func TestParsePubspecLock(t *testing.T) {
 	// TODO: relationships are not under test
 	var expectedRelationships []artifact.Relationship
 
-	pkgtest.TestGenericParser(t, fixture, parsePubspecLock, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parsePubspecLock, expected, expectedRelationships)
 }

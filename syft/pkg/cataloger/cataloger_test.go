@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var _ Cataloger = (*dummy)(nil)
+var _ pkg.Cataloger = (*dummy)(nil)
 
 type dummy struct {
 	name string
@@ -147,7 +147,7 @@ func Test_filterCatalogers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var catalogers []Cataloger
+			var catalogers []pkg.Cataloger
 			for _, n := range tt.catalogers {
 				catalogers = append(catalogers, dummy{name: n})
 			}

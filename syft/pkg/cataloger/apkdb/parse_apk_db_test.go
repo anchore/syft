@@ -754,7 +754,7 @@ func TestMultiplePackages(t *testing.T) {
 		VersionID: "3.12",
 	}}
 
-	pkgtest.TestGenericParserWithEnv(t, fixture, parseApkDB, &env, expected, expectedRelationships)
+	pkgtest.TestFileParserWithEnv(t, fixture, parseApkDB, &env, expected, expectedRelationships)
 
 }
 

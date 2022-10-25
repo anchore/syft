@@ -5,41 +5,37 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
-func compareEntries(t *testing.T, left, right pkg.DpkgMetadata) {
-	t.Helper()
-	if diff := deep.Equal(left, right); diff != nil {
-		t.Error(diff)
-	}
-}
-
-func TestSinglePackage(t *testing.T) {
+func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
 		name        string
-		expected    pkg.DpkgMetadata
+		expected    []pkg.DpkgMetadata
 		fixturePath string
 	}{
 		{
-			name:        "Test Single Package",
-			fixturePath: filepath.Join("test-fixtures", "status", "single"),
-			expected: pkg.DpkgMetadata{
-				Package:       "apt",
-				Source:        "apt-dev",
-				Version:       "1.8.2",
-				Architecture:  "amd64",
-				InstalledSize: 4064,
-				Maintainer:    "APT Development Team <deity@lists.debian.org>",
-				Description: `commandline package manager
+			name:        "single package",
+			fixturePath: "test-fixtures/status/single",
+			expected: []pkg.DpkgMetadata{
+				{
+					Package:       "apt",
+					Source:        "apt-dev",
+					Version:       "1.8.2",
+					Architecture:  "amd64",
+					InstalledSize: 4064,
+					Maintainer:    "APT Development Team <deity@lists.debian.org>",
+					Description: `commandline package manager
  This package provides commandline tools for searching and
  managing as well as querying information about packages
  as a low-level access to all features of the libapt-pkg library.
@@ -53,53 +49,55 @@ func TestSinglePackage(t *testing.T) {
  * apt-cdrom to use removable media as a source for packages
  * apt-config as an interface to the configuration settings
  * apt-key as an interface to manage authentication keys`,
-				Files: []pkg.DpkgFileRecord{
-					{
-						Path: "/etc/apt/apt.conf.d/01autoremove",
-						Digest: &file.Digest{
-							Algorithm: "md5",
-							Value:     "76120d358bc9037bb6358e737b3050b5",
+					Files: []pkg.DpkgFileRecord{
+						{
+							Path: "/etc/apt/apt.conf.d/01autoremove",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "76120d358bc9037bb6358e737b3050b5",
+							},
+							IsConfigFile: true,
 						},
-						IsConfigFile: true,
-					},
-					{
-						Path: "/etc/cron.daily/apt-compat",
-						Digest: &file.Digest{
-							Algorithm: "md5",
-							Value:     "49e9b2cfa17849700d4db735d04244f3",
+						{
+							Path: "/etc/cron.daily/apt-compat",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "49e9b2cfa17849700d4db735d04244f3",
+							},
+							IsConfigFile: true,
 						},
-						IsConfigFile: true,
-					},
-					{
-						Path: "/etc/kernel/postinst.d/apt-auto-removal",
-						Digest: &file.Digest{
-							Algorithm: "md5",
-							Value:     "4ad976a68f045517cf4696cec7b8aa3a",
+						{
+							Path: "/etc/kernel/postinst.d/apt-auto-removal",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "4ad976a68f045517cf4696cec7b8aa3a",
+							},
+							IsConfigFile: true,
 						},
-						IsConfigFile: true,
-					},
-					{
-						Path: "/etc/logrotate.d/apt",
-						Digest: &file.Digest{
-							Algorithm: "md5",
-							Value:     "179f2ed4f85cbaca12fa3d69c2a4a1c3",
+						{
+							Path: "/etc/logrotate.d/apt",
+							Digest: &file.Digest{
+								Algorithm: "md5",
+								Value:     "179f2ed4f85cbaca12fa3d69c2a4a1c3",
+							},
+							IsConfigFile: true,
 						},
-						IsConfigFile: true,
 					},
 				},
 			},
 		},
 		{
-			name:        "parse storage notation",
-			fixturePath: filepath.Join("test-fixtures", "status", "installed-size-4KB"),
-			expected: pkg.DpkgMetadata{
-				Package:       "apt",
-				Source:        "apt-dev",
-				Version:       "1.8.2",
-				Architecture:  "amd64",
-				InstalledSize: 4000,
-				Maintainer:    "APT Development Team <deity@lists.debian.org>",
-				Description: `commandline package manager
+			name:        "single package with installed size",
+			fixturePath: "test-fixtures/status/installed-size-4KB",
+			expected: []pkg.DpkgMetadata{
+				{
+					Package:       "apt",
+					Source:        "apt-dev",
+					Version:       "1.8.2",
+					Architecture:  "amd64",
+					InstalledSize: 4000,
+					Maintainer:    "APT Development Team <deity@lists.debian.org>",
+					Description: `commandline package manager
  This package provides commandline tools for searching and
  managing as well as querying information about packages
  as a low-level access to all features of the libapt-pkg library.
@@ -113,41 +111,13 @@ func TestSinglePackage(t *testing.T) {
  * apt-cdrom to use removable media as a source for packages
  * apt-config as an interface to the configuration settings
  * apt-key as an interface to manage authentication keys`,
+					Files: []pkg.DpkgFileRecord{},
+				},
 			},
-		}}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open(test.fixturePath)
-			if err != nil {
-				t.Fatal("Unable to read test_fixtures/single: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
-
-			reader := bufio.NewReader(file)
-
-			entry, err := parseDpkgStatusEntry(reader)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
-
-			compareEntries(t, entry, test.expected)
-		})
-	}
-}
-
-func TestMultiplePackages(t *testing.T) {
-	tests := []struct {
-		name     string
-		expected []pkg.DpkgMetadata
-	}{
+		},
 		{
-			name: "Test Multiple Package",
+			name:        "multiple entries",
+			fixturePath: "test-fixtures/status/multiple",
 			expected: []pkg.DpkgMetadata{
 				{
 					Package: "no-version",
@@ -237,30 +207,18 @@ func TestMultiplePackages(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			file, err := os.Open("test-fixtures/status/multiple")
-			if err != nil {
-				t.Fatal("Unable to read: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open(test.fixturePath)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			pkgs, err := parseDpkgStatus(file)
-			if err != nil {
-				t.Fatal("Unable to read file contents: ", err)
-			}
+			reader := bufio.NewReader(f)
 
-			if len(pkgs) != 3 {
-				t.Fatalf("unexpected number of entries: %d", len(pkgs))
-			}
+			entries, err := parseDpkgStatus(reader)
+			require.NoError(t, err)
 
-			for idx, entry := range pkgs {
-				compareEntries(t, entry.Metadata.(pkg.DpkgMetadata), test.expected[idx])
+			if diff := cmp.Diff(test.expected, entries); diff != "" {
+				t.Errorf("unexpected entry (-want +got):\n%s", diff)
 			}
-
 		})
 	}
 }
@@ -304,23 +262,23 @@ func TestSourceVersionExtract(t *testing.T) {
 	}
 }
 
-func assertAs(expected error) assert.ErrorAssertionFunc {
-	return func(t assert.TestingT, err error, i ...interface{}) bool {
-		return assert.ErrorAs(t, err, &expected)
+func requireAs(expected error) require.ErrorAssertionFunc {
+	return func(t require.TestingT, err error, i ...interface{}) {
+		require.ErrorAs(t, err, &expected)
 	}
 }
 
-func Test_parseDpkgStatus(t *testing.T) {
+func Test_parseDpkgStatus_negativeCases(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
 		want    []pkg.Package
-		wantErr assert.ErrorAssertionFunc
+		wantErr require.ErrorAssertionFunc
 	}{
 		{
 			name:    "no more packages",
 			input:   `Package: apt`,
-			wantErr: assert.NoError,
+			wantErr: require.NoError,
 		},
 		{
 			name: "duplicated key",
@@ -328,14 +286,14 @@ func Test_parseDpkgStatus(t *testing.T) {
 Package: apt-get
 
 `,
-			wantErr: assertAs(errors.New("duplicate key discovered: Package")),
+			wantErr: requireAs(errors.New("duplicate key discovered: Package")),
 		},
 		{
 			name: "no match for continuation",
 			input: `  Package: apt
 
 `,
-			wantErr: assertAs(errors.New("no match for continuation: line: '  Package: apt'")),
+			wantErr: requireAs(errors.New("no match for continuation: line: '  Package: apt'")),
 		},
 		{
 			name: "find keys",
@@ -348,6 +306,8 @@ Installed-Size: 10kib
 				{
 					Name:         "apt",
 					Type:         "deb",
+					PURL:         "pkg:deb/debian/apt?distro=debian-10",
+					Locations:    source.NewLocationSet(source.NewLocation("place")),
 					MetadataType: "DpkgMetadata",
 					Metadata: pkg.DpkgMetadata{
 						Package:       "apt",
@@ -356,16 +316,18 @@ Installed-Size: 10kib
 					},
 				},
 			},
-			wantErr: assert.NoError,
+			wantErr: require.NoError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := bufio.NewReader(strings.NewReader(tt.input))
-			got, err := parseDpkgStatus(r)
-			tt.wantErr(t, err, fmt.Sprintf("parseDpkgStatus"))
-			assert.Equal(t, tt.want, got)
+			pkgtest.NewCatalogTester().
+				FromString("place", tt.input).
+				WithErrorAssertion(tt.wantErr).
+				WithLinuxRelease(linux.Release{ID: "debian", VersionID: "10"}).
+				Expects(tt.want, nil).
+				TestParser(t, parseDpkgDB)
 		})
 	}
 }
@@ -376,53 +338,53 @@ func Test_handleNewKeyValue(t *testing.T) {
 		line    string
 		wantKey string
 		wantVal interface{}
-		wantErr assert.ErrorAssertionFunc
+		wantErr require.ErrorAssertionFunc
 	}{
 		{
 			name:    "cannot parse field",
 			line:    "blabla",
-			wantErr: assertAs(errors.New("cannot parse field from line: 'blabla'")),
+			wantErr: requireAs(errors.New("cannot parse field from line: 'blabla'")),
 		},
 		{
 			name:    "parse field",
 			line:    "key: val",
 			wantKey: "key",
 			wantVal: "val",
-			wantErr: assert.NoError,
+			wantErr: require.NoError,
 		},
 		{
 			name:    "parse installed size",
 			line:    "InstalledSize: 128",
 			wantKey: "InstalledSize",
 			wantVal: 128,
-			wantErr: assert.NoError,
+			wantErr: require.NoError,
 		},
 		{
 			name:    "parse installed kib size",
 			line:    "InstalledSize: 1kib",
 			wantKey: "InstalledSize",
 			wantVal: 1024,
-			wantErr: assert.NoError,
+			wantErr: require.NoError,
 		},
 		{
 			name:    "parse installed kb size",
 			line:    "InstalledSize: 1kb",
 			wantKey: "InstalledSize",
 			wantVal: 1000,
-			wantErr: assert.NoError,
+			wantErr: require.NoError,
 		},
 		{
 			name:    "parse installed-size mb",
 			line:    "Installed-Size: 1 mb",
 			wantKey: "InstalledSize",
 			wantVal: 1000000,
-			wantErr: assert.NoError,
+			wantErr: require.NoError,
 		},
 		{
 			name:    "fail parsing installed-size",
 			line:    "Installed-Size: 1bla",
 			wantKey: "",
-			wantErr: assertAs(fmt.Errorf("unhandled size name: %s", "bla")),
+			wantErr: requireAs(fmt.Errorf("unhandled size name: %s", "bla")),
 		},
 	}
 	for _, tt := range tests {

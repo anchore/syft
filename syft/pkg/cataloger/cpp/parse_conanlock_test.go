@@ -35,5 +35,5 @@ func TestParseConanlock(t *testing.T) {
 	// TODO: relationships are not under test
 	var expectedRelationships []artifact.Relationship
 
-	pkgtest.TestGenericParser(t, fixture, parseConanlock, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseConanlock, expected, expectedRelationships)
 }

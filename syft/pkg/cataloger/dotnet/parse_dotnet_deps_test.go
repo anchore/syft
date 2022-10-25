@@ -209,5 +209,5 @@ func TestParseDotnetDeps(t *testing.T) {
 	}
 
 	var expectedRelationships []artifact.Relationship
-	pkgtest.TestGenericParser(t, fixture, parseDotnetDeps, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseDotnetDeps, expected, expectedRelationships)
 }
