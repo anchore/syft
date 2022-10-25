@@ -276,7 +276,7 @@ func Test_pomParent(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, pomParent(test.input))
+			assert.Equal(t, test.expected, pomParent(gopom.Project{}, test.input))
 		})
 	}
 }
@@ -300,6 +300,53 @@ func Test_cleanDescription(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.expected, cleanDescription(test.input))
+		})
+	}
+}
+
+func Test_resolveProperty(t *testing.T) {
+	tests := []struct {
+		name     string
+		property string
+		pom      gopom.Project
+		expected string
+	}{
+		{
+			name:     "property",
+			property: "${version.number}",
+			pom: gopom.Project{
+				Properties: gopom.Properties{
+					Entries: map[string]string{
+						"version.number": "12.5.0",
+					},
+				},
+			},
+			expected: "12.5.0",
+		},
+		{
+			name:     "groupId",
+			property: "${project.groupId}",
+			pom: gopom.Project{
+				GroupID: "org.some.group",
+			},
+			expected: "org.some.group",
+		},
+		{
+			name:     "parent groupId",
+			property: "${project.parent.groupId}",
+			pom: gopom.Project{
+				Parent: gopom.Parent{
+					GroupID: "org.some.parent",
+				},
+			},
+			expected: "org.some.parent",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			resolved := resolveProperty(test.pom, test.property)
+			assert.Equal(t, test.expected, resolved)
 		})
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -17,6 +18,8 @@ import (
 const pomXMLGlob = "*pom.xml"
 const pomXMLDirGlob = "**/pom.xml"
 
+var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
+
 func parserPomXML(path string, content io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(content)
 	if err != nil {
@@ -25,10 +28,7 @@ func parserPomXML(path string, content io.Reader) ([]*pkg.Package, []artifact.Re
 
 	var pkgs []*pkg.Package
 	for _, dep := range pom.Dependencies {
-		if strings.Contains(dep.Version, "${") {
-			dep.Version = propertyReplacer(pom.Properties, dep.Version)
-		}
-		p := newPackageFromPom(dep)
+		p := newPackageFromPom(pom, dep)
 		if p.Name == "" {
 			continue
 		}
@@ -50,27 +50,27 @@ func parsePomXMLProject(path string, reader io.Reader) (*pkg.PomProject, error) 
 func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 	return &pkg.PomProject{
 		Path:        path,
-		Parent:      pomParent(p.Parent),
-		GroupID:     p.GroupID,
+		Parent:      pomParent(p, p.Parent),
+		GroupID:     resolveProperty(p, p.GroupID),
 		ArtifactID:  p.ArtifactID,
-		Version:     p.Version,
+		Version:     resolveProperty(p, p.Version),
 		Name:        p.Name,
 		Description: cleanDescription(p.Description),
 		URL:         p.URL,
 	}
 }
 
-func newPackageFromPom(dep gopom.Dependency) *pkg.Package {
+func newPackageFromPom(pom gopom.Project, dep gopom.Dependency) *pkg.Package {
 	p := &pkg.Package{
 		Name:         dep.ArtifactID,
-		Version:      dep.Version,
+		Version:      resolveProperty(pom, dep.Version),
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
 		MetadataType: pkg.JavaMetadataType,
 		FoundBy:      javaPomCataloger,
 		Metadata: pkg.JavaMetadata{
 			PomProperties: &pkg.PomProperties{
-				GroupID: dep.GroupID,
+				GroupID: resolveProperty(pom, dep.GroupID),
 			},
 		},
 	}
@@ -91,12 +91,12 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 	return project, nil
 }
 
-func pomParent(parent gopom.Parent) (result *pkg.PomParent) {
+func pomParent(pom gopom.Project, parent gopom.Parent) (result *pkg.PomParent) {
 	if parent.ArtifactID != "" || parent.GroupID != "" || parent.Version != "" {
 		result = &pkg.PomParent{
-			GroupID:    parent.GroupID,
+			GroupID:    resolveProperty(pom, parent.GroupID),
 			ArtifactID: parent.ArtifactID,
-			Version:    parent.Version,
+			Version:    resolveProperty(pom, parent.Version),
 		}
 	}
 	return result
@@ -114,10 +114,41 @@ func cleanDescription(original string) (cleaned string) {
 	return strings.TrimSpace(cleaned)
 }
 
-func propertyReplacer(pomProperties gopom.Properties, stringWithVariablesToReplace string) string {
-	propertyMatcher := regexp.MustCompile("[$][{][^}]+[}]")
-	return propertyMatcher.ReplaceAllStringFunc(stringWithVariablesToReplace, func(match string) string {
-		prop := match[2 : len(match)-1]
-		return pomProperties.Entries[prop]
+// resolveProperty emulates some maven property resolution logic by looking in the project's variables
+// as well as supporting the project expressions like ${project.parent.groupId}.
+// If no match is found, the entire expression including ${} is returned
+func resolveProperty(pom gopom.Project, property string) string {
+	return propertyMatcher.ReplaceAllStringFunc(property, func(match string) string {
+		propertyName := strings.TrimSpace(match[2 : len(match)-1])
+		if value, ok := pom.Properties.Entries[propertyName]; ok {
+			return value
+		}
+		// if we don't find anything directly in the pom properties,
+		// see if we have a project.x expression and process this based
+		// on the xml tags in gopom
+		parts := strings.Split(propertyName, ".")
+		numParts := len(parts)
+		if numParts > 1 && strings.TrimSpace(parts[0]) == "project" {
+			pomValue := reflect.ValueOf(pom)
+			pomValueType := pomValue.Type()
+			for partNum := 1; partNum < numParts; partNum++ {
+				if pomValueType.Kind() != reflect.Struct {
+					break
+				}
+				part := parts[partNum]
+				for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
+					f := pomValueType.Field(fieldNum)
+					if part == f.Tag.Get("xml") {
+						pomValue = pomValue.Field(fieldNum)
+						pomValueType = pomValue.Type()
+						if partNum == numParts-1 {
+							return fmt.Sprintf("%v", pomValue.Interface())
+						}
+						break
+					}
+				}
+			}
+		}
+		return match
 	})
 }
