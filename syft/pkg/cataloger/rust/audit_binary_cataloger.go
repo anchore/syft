@@ -86,7 +86,7 @@ func scanFile(reader unionreader.UnionReader, filename string) []rustaudit.Versi
 				return nil
 			}
 			// Use an Info level log here like golang/scan_bin.go
-			log.Infof("rust cataloger: unable to read dependency information (file=%q): %v", filename, err)
+			log.Debugf("rust cataloger: unable to read dependency information (file=%q): %v", filename, err)
 			return nil
 		}
 

@@ -2,7 +2,6 @@ package rekor
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
@@ -17,20 +16,20 @@ import (
 const (
 	DefaultRekorAddr = "https://rekor.sigstore.dev"
 	InfoForUser      = `
-			[EXPERIMENTAL FEATURE: Rekor-cataloger] 
-			
-			This SBOM contains a relationship that references an external document. This 
-			document is not present in the cataloged image or directory; rather it has 
-			been found by searching the Rekor transparency log (https://www.sigstore.dev/).  
-			
-			Trusting this external document relationship requires trusting several entities: 
+			[Rekor-cataloger]
+
+			This SBOM contains a relationship that references an external document. This
+			document is not present in the cataloged image or directory; rather it has
+			been found by searching the Rekor transparency log (https://www.sigstore.dev/).
+
+			Trusting this external document relationship requires trusting several entities:
 				- the user or CI/CD action that uploaded an entry to Rekor
 				- Rekor transparency log
 				- Fulcio CA
 
 			The Rekor entry(s) that were used to create the external document relationship(s)
-			are listed below by UUID. See https://github.com/sigstore/rekor for 
-			information on how to query Rekor. 
+			are listed below by UUID. See https://github.com/sigstore/rekor for
+			information on how to query Rekor.
 			`
 )
 
@@ -111,7 +110,7 @@ func CreateRekorSbomRels(resolver source.FileResolver, location source.Location,
 		log.Debugf("relationship created for SBOM found on rekor: %+v", *rel)
 	}
 	if len(rels) > 0 {
-		log.Warn(fmt.Sprintf("%s\t%v\n", InfoForUser, usedRekorEntries))
+		log.Infof("%s\t%v\n", InfoForUser, usedRekorEntries)
 	}
 	return rels, nil
 }
