@@ -10,7 +10,6 @@ import (
 	"os"
 	"testing"
 
-	adapter "github.com/anchore/go-logger/adapter/logrus"
 	"github.com/go-openapi/runtime"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/client/entries"
@@ -21,6 +20,7 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 
+	adapter "github.com/anchore/go-logger/adapter/logrus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
