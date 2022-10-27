@@ -132,21 +132,6 @@ func TestPackageURL(t *testing.T) {
 			},
 			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
 		},
-		{
-			name: "hackage",
-			pkg: Package{
-				Name:         "HTTP",
-				Version:      "4000.3.16",
-				Type:         HackagePkg,
-				Language:     Haskell,
-				MetadataType: HackageMetadataType,
-				Metadata: HackageMetadata{
-					Name:    "HTTP",
-					Version: "4000.3.16",
-				},
-			},
-			expected: "pkg:hackage/HTTP@4000.3.16",
-		},
 	}
 
 	var pkgTypes []string
@@ -165,6 +150,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(DotnetPkg))
 	expectedTypes.Remove(string(DebPkg))
 	expectedTypes.Remove(string(GoModulePkg))
+	expectedTypes.Remove(string(HackagePkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
