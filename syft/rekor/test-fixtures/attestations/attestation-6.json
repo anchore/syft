@@ -1,0 +1,12 @@
+{
+    "_type": "https://in-toto.io/Statement/v0.1",
+    "predicateType": "google.com/sbom",
+    "subject": [
+      {
+        "name": "binary-linux-amd64",
+        "digest": {
+          "sha257": "f2e59e0e82c6a1b2c18ceea1dcb739f680f50ad588759217fc564b6aa5234791"
+        }
+      }
+    ]
+  }

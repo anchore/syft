@@ -28,6 +28,11 @@ func (c *Cataloger) Name() string {
 	return catalogerName
 }
 
+// UsesExternalSources indicates that the audit binary cataloger does not use external sources
+func (c *Cataloger) UsesExternalSources() bool {
+	return false
+}
+
 // Catalog identifies executables then attempts to read Rust dependency information from them
 func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
@@ -81,7 +86,7 @@ func scanFile(reader unionreader.UnionReader, filename string) []rustaudit.Versi
 				return nil
 			}
 			// Use an Info level log here like golang/scan_bin.go
-			log.Infof("rust cataloger: unable to read dependency information (file=%q): %v", filename, err)
+			log.Debugf("rust cataloger: unable to read dependency information (file=%q): %v", filename, err)
 			return nil
 		}
 

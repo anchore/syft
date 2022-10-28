@@ -14,13 +14,20 @@ import (
 )
 
 type PackagesOptions struct {
-	Scope              string
-	Output             []string
-	OutputTemplatePath string
-	File               string
-	Platform           string
-	Exclude            []string
-	Catalogers         []string
+	Scope                  string
+	Output                 []string
+	OutputTemplatePath     string
+	File                   string
+	Platform               string
+	Host                   string
+	Username               string
+	Password               string
+	Dockerfile             string
+	Exclude                []string
+	OverwriteExistingImage bool
+	ImportTimeout          uint
+	Catalogers             []string
+	ExternalSourcesEnabled bool
 }
 
 var _ Interface = (*PackagesOptions)(nil)
@@ -46,6 +53,15 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 	cmd.Flags().StringArrayVarP(&o.Catalogers, "catalogers", "", nil,
 		"enable one or more package catalogers")
+
+	cmd.Flags().BoolVarP(&o.OverwriteExistingImage, "overwrite-existing-image", "", false,
+		"overwrite an existing image during the upload to Anchore Enterprise")
+
+	cmd.Flags().UintVarP(&o.ImportTimeout, "import-timeout", "", 30,
+		"set a timeout duration (in seconds) for the upload to Anchore Enterprise")
+
+	cmd.Flags().BoolVarP(&o.ExternalSourcesEnabled, "external-sources-enabled", "", false,
+		"shut off any use of external sources during sbom generation (default false")
 
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
@@ -78,6 +94,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("external_sources.external-sources-enabled", flags.Lookup("external-sources-enabled")); err != nil {
 		return err
 	}
 
