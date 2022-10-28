@@ -41,6 +41,16 @@ var DefaultClassifiers = []Classifier{
 		},
 	},
 	{
+		Class: "nodejs-binary",
+		FilepathPatterns: []*regexp.Regexp{
+			regexp.MustCompile(`(.*/|^)node$`),
+		},
+		EvidencePatternTemplates: []string{
+			// regex that matches node.js/vx.y.z
+			`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+		},
+	},
+	{
 		Class: "go-binary-hint",
 		FilepathPatterns: []*regexp.Regexp{
 			regexp.MustCompile(`(.*/|^)VERSION$`),
