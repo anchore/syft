@@ -45,10 +45,7 @@ func TestParseWheelEggRecord(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseWheelOrEggRecord(fixture)
-			if err != nil {
-				t.Fatalf("failed to parse: %+v", err)
-			}
+			actual := parseWheelOrEggRecord(fixture)
 
 			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
 				t.Errorf("diff: %+v", d)

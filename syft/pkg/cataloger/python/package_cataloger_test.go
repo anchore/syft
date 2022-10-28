@@ -104,6 +104,37 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			},
 		},
 		{
+			name: "malformed-record",
+			fixtures: []string{
+				"test-fixtures/malformed-record/dist-info/METADATA",
+				"test-fixtures/malformed-record/dist-info/RECORD",
+			},
+			expectedPackage: pkg.Package{
+				Name:         "Pygments",
+				Version:      "2.6.1",
+				Type:         pkg.PythonPkg,
+				Language:     pkg.Python,
+				Licenses:     []string{"BSD License"},
+				FoundBy:      "python-package-cataloger",
+				MetadataType: pkg.PythonPackageMetadataType,
+				Metadata: pkg.PythonPackageMetadata{
+					Name:                 "Pygments",
+					Version:              "2.6.1",
+					License:              "BSD License",
+					Platform:             "any",
+					Author:               "Georg Brandl",
+					AuthorEmail:          "georg@python.org",
+					SitePackagesRootPath: "test-fixtures/malformed-record",
+					Files: []pkg.PythonFileRecord{
+						{Path: "flask/json/tag.py", Digest: &pkg.PythonFileDigest{"sha256", "9ehzrmt5k7hxf7ZEK0NOs3swvQyU9fWNe-pnYe69N60"}, Size: "8223"},
+						{Path: "../../Scripts/flask.exe", Digest: &pkg.PythonFileDigest{"sha256", "mPrbVeZCDX20himZ_bRai1nCs_tgr7jHIOGZlcgn-T4"}, Size: "93063"},
+						{Path: "../../Scripts/flask.exe", Size: "89470", Digest: &pkg.PythonFileDigest{"sha256", "jvqh4N3qOqXLlq40i6ZOLCY9tAOwfwdzIpLDYhRjoqQ"}},
+						{Path: "Flask-1.0.2.dist-info/INSTALLER", Size: "4", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}},
+					},
+				},
+			},
+		},
+		{
 			// in cases where the metadata file is available and the record is not we should still record there is a package
 			// additionally empty top_level.txt files should not result in an error
 			name:     "partial dist-info directory",
@@ -171,7 +202,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 				t.Fatalf("unexpected number of packages: %d", len(actual))
 			}
 
-			for _, d := range deep.Equal(actual[0], test.expectedPackage) {
+			for _, d := range deep.Equal(test.expectedPackage, actual[0]) {
 				t.Errorf("diff: %+v", d)
 			}
 		})
