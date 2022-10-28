@@ -60,7 +60,7 @@ var DefaultClassifiers = []Classifier{
 		},
 	},
 	{
-		Class: "busybox-binary",
+		Class: "busybox",
 		FilepathPatterns: []*regexp.Regexp{
 			regexp.MustCompile(`(.*/|^)busybox$`),
 		},
@@ -83,7 +83,7 @@ type Classification struct {
 }
 
 func (c Classifier) Classify(resolver source.FileResolver, location source.Location) (*Classification, error) {
-	doesFilepathMatch, filepathNamedGroupValues := filepathMatches(c.FilepathPatterns, location)
+	doesFilepathMatch, filepathNamedGroupValues := FilepathMatches(c.FilepathPatterns, location)
 	if !doesFilepathMatch {
 		return nil, nil
 	}
@@ -141,7 +141,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 	return result, nil
 }
 
-func filepathMatches(patterns []*regexp.Regexp, location source.Location) (bool, map[string]string) {
+func FilepathMatches(patterns []*regexp.Regexp, location source.Location) (bool, map[string]string) {
 	for _, path := range []string{location.RealPath, location.VirtualPath} {
 		if path == "" {
 			continue

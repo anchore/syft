@@ -93,7 +93,8 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			location:   "[", // note: busybox is a link to [
 			expected: []Classification{
 				{
-					Class: "busybox-binary",
+					Class:       "busybox",
+					VirtualPath: "busybox",
 					Metadata: map[string]string{
 						"version": "3.33.3",
 					},
@@ -148,7 +149,8 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 			location:     "/bin/[",
 			expected: []Classification{
 				{
-					Class: "busybox-binary",
+					Class:       "busybox",
+					VirtualPath: "/bin/busybox",
 					Metadata: map[string]string{
 						"version": "1.35.0",
 					},
