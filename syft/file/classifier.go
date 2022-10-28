@@ -77,8 +77,9 @@ type Classifier struct {
 }
 
 type Classification struct {
-	Class    string            `json:"class"`
-	Metadata map[string]string `json:"metadata"`
+	Class       string            `json:"class"`
+	VirtualPath string            `json:"virtual_path"`
+	Metadata    map[string]string `json:"metadata"`
 }
 
 func (c Classifier) Classify(resolver source.FileResolver, location source.Location) (*Classification, error) {
@@ -121,11 +122,15 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 			continue
 		}
 
+		// TODO: it looks like we're getting two duplicate classificationns in some cases where
+		// VirtualPath differs from RealPath. The classifications don't show this difference
+		// Should we update the classifications to identify the virtual path that linked to the realpath?
 		matchMetadata := internal.MatchNamedCaptureGroups(pattern, string(contents))
 		if result == nil {
 			result = &Classification{
-				Class:    c.Class,
-				Metadata: matchMetadata,
+				Class:       c.Class,
+				VirtualPath: location.VirtualPath,
+				Metadata:    matchMetadata,
 			}
 		} else {
 			for key, value := range matchMetadata {
