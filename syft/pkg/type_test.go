@@ -87,10 +87,12 @@ func TestTypeFromPURL(t *testing.T) {
 		expectedTypes.Add(string(ty))
 	}
 
-	// testing microsoft packages and jenkins-plugins is not valid for purl at this time
+	// testing microsoft packages and jenkins-plugins and custom binary type
+	// is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(JenkinsPluginPkg))
 	expectedTypes.Remove(string(PortagePkg))
+	expectedTypes.Remove(string(BinaryPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

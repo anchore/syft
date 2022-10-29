@@ -60,7 +60,7 @@ var DefaultClassifiers = []Classifier{
 		},
 	},
 	{
-		Class: "busybox",
+		Class: "busybox-binary",
 		FilepathPatterns: []*regexp.Regexp{
 			regexp.MustCompile(`(.*/|^)busybox$`),
 		},
@@ -122,9 +122,6 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 			continue
 		}
 
-		// TODO: it looks like we're getting two duplicate classificationns in some cases where
-		// VirtualPath differs from RealPath. The classifications don't show this difference
-		// Should we update the classifications to identify the virtual path that linked to the realpath?
 		matchMetadata := internal.MatchNamedCaptureGroups(pattern, string(contents))
 		if result == nil {
 			result = &Classification{

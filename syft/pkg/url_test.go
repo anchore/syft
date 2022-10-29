@@ -151,6 +151,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(DebPkg))
 	expectedTypes.Remove(string(GoModulePkg))
 	expectedTypes.Remove(string(HackagePkg))
+	expectedTypes.Remove(string(BinaryPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

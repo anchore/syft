@@ -1,9 +1,9 @@
 package javascript
 
 import (
-	"github.com/anchore/syft/internal/log"
 	"regexp"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"

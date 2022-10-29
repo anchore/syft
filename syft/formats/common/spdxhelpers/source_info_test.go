@@ -183,6 +183,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from cabal or stack manifest files",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.BinaryPkg,
+			},
+			expected: []string{
+				"acquired package info from the following paths",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {
