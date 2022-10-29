@@ -26,8 +26,8 @@ var nodeLookup = generic.Lookup{
 func parseNodeBinary(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	p, _, err := nodeLookup.Find(reader)
 	if err != nil {
-		log.Debugf("unable to find node.js package for file:%s; err: %+v", reader.VirtualPath, err)
-		return nil, nil, err
+		log.Trace("failed to find node.js package: %+v", err)
+		return nil, nil, nil // we can silently fail here to reduce warning noise
 	}
 	// TODO add node specific metadata to the packages to help with vulnerability matching
 	if p != nil {
