@@ -29,8 +29,9 @@ func parseNodeBinary(_ source.FileResolver, _ *generic.Environment, reader sourc
 		log.Debugf("unable to find node.js package for file:%s; err: %+v", reader.VirtualPath, err)
 		return nil, nil, err
 	}
-	// TODO add node specific metadata to the packages
+	// TODO add node specific metadata to the packages to help with vulnerability matching
 	if p != nil {
+		p.Language = pkg.JavaScript
 		return []pkg.Package{*p}, nil, nil
 	}
 	return nil, nil, nil
