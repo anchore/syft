@@ -623,14 +623,14 @@ Note for the following example replace `docker.io/image:latest` with an image yo
 its remote reference. Replace `$MY_PRIVATE_KEY` with a private key you own or have generated with cosign.
 
 ```bash
-syft attest --key $MY_PRIVATE_KEY docker.io/image:latest > image_latest_sbom_attestation.json
+syft attest --key $MY_PRIVATE_KEY -o spdx-json docker.io/image:latest > image_latest_sbom_attestation.json
 cosign attach attestation --attestation image_latest_sbom_attestation.json docker.io/image:latest
 ```
 
 Verify the new attestation exists on your image.
 
 ```bash
-cosign verify-attestation -key $MY_PUBLIC_KEY docker.io/image:latest | jq '.payload | @base64d | .payload | fromjson | .predicate'
+cosign verify-attestation --key $MY_PUBLIC_KEY --type spdxjson docker.io/image:latest | jq '.payload | @base64d | .payload | fromjson | .predicate'
 ```
 
 You should see this output along with the attached SBOM:
@@ -644,3 +644,10 @@ The following checks were performed on each of these signatures:
 ```
 
 Consumers of your image can now trust that the SBOM associated with your image is correct and from a trusted source.
+
+The SBOM can be piped to Grype:
+
+
+```bash
+cosign verify-attestation --key $MY_PUBLIC_KEY --type spdxjson docker.io/image:latest | jq '.payload | @base64d | .payload | fromjson | .predicate' | grype
+```
