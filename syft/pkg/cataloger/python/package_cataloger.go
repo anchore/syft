@@ -143,10 +143,7 @@ func (c *PackageCataloger) fetchRecordFiles(resolver source.FileResolver, metada
 		defer internal.CloseAndLogError(recordContents, recordPath)
 
 		// parse the record contents
-		records, err := parseWheelOrEggRecord(recordContents)
-		if err != nil {
-			return nil, nil, err
-		}
+		records := parseWheelOrEggRecord(recordContents)
 
 		files = append(files, records...)
 	}

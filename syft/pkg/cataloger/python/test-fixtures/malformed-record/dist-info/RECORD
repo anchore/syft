@@ -1,0 +1,8 @@
+flask/json/tag.py,sha256=9ehzrmt5k7hxf7ZEK0NOs3swvQyU9fWNe-pnYe69N60,8223
+<<<<<<< HEAD
+../../Scripts/flask.exe,sha256=mPrbVeZCDX20himZ_bRai1nCs_tgr7jHIOGZlcgn-T4,93063
+=======
+../../Scripts/flask.exe,sha256=jvqh4N3qOqXLlq40i6ZOLCY9tAOwfwdzIpLDYhRjoqQ,89470
+>>>>>>> 69c24e18ea630ec869a32ad7b0b0d9647714cd5d
+Flask-1.0.2.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+app/venv/Lib/site-packages/Flask-1.0.2.dist-info/WHEEL0100777000000000000000000000015613752730745020435 0ustar0000000000000000Wheel-Version: 1.0

@@ -14,7 +14,7 @@ import (
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
+func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 	var records []pkg.PythonFileRecord
 	r := csv.NewReader(reader)
 
@@ -24,11 +24,13 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("unable to read python record file: %w", err)
+			log.Warnf("unable to read python record file: %w", err)
+			continue
 		}
 
 		if len(recordList) != 3 {
-			return nil, fmt.Errorf("python record an unexpected length=%d: %q", len(recordList), recordList)
+			log.Warnf("python record an unexpected length=%d: %q", len(recordList), recordList)
+			continue
 		}
 
 		var record pkg.PythonFileRecord
@@ -59,7 +61,7 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 		records = append(records, record)
 	}
 
-	return records, nil
+	return records
 }
 
 func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string) ([]pkg.PythonFileRecord, error) {
