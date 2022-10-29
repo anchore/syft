@@ -16,22 +16,29 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-// Lookup is a generic package lookup that can be used to match a package definition
-// To a file that meets the given content criteria of the EvidencePatternTemplates.
-type Lookup struct {
+// Classifier is a generic package classifier that can be used to match a package definition
+// to a file that meets the given content criteria of the EvidencePatternTemplates.
+type Classifier struct {
 	Package string
 	// FilepathPatterns is a list of regular expressions that will be used to match against the file path of a given
 	// source location. If any of the patterns match, the file will be considered a candidate for parsing.
+	// If no patterns are provided, the reader is automatically considered a candidate.
 	FilepathPatterns []*regexp.Regexp
 	// EvidencePatternTemplates is a list of regular expressions that will be used to match against the file contents of a
 	// given file in the source location. If any of the patterns match, the file will be considered a candidate for parsing.
 	EvidencePatternTemplates []string
 }
 
-func (l Lookup) Find(reader source.LocationReadCloser) (p *pkg.Package, r *artifact.Relationship, err error) {
-	doesFilepathMatch, filepathNamedGroupValues := file.FilepathMatches(l.FilepathPatterns, reader.Location)
+func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r *artifact.Relationship, err error) {
+	var filepathNamedGroupValues map[string]string
+
+	doesFilepathMatch := true
+	if len(c.FilepathPatterns) > 0 {
+		doesFilepathMatch, filepathNamedGroupValues = file.FilepathMatches(c.FilepathPatterns, reader.Location)
+	}
+
 	if !doesFilepathMatch {
-		return nil, nil, fmt.Errorf("location: %s did not match any patterns for package=%q", reader.Location, l.Package)
+		return nil, nil, fmt.Errorf("location: %s did not match any patterns for package=%q", reader.Location, c.Package)
 	}
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
@@ -44,8 +51,8 @@ func (l Lookup) Find(reader source.LocationReadCloser) (p *pkg.Package, r *artif
 		return nil, nil, fmt.Errorf("unable to get read contents for file: %+v", err)
 	}
 
-	var lookupPkg *pkg.Package
-	for _, patternTemplate := range l.EvidencePatternTemplates {
+	var classifiedPackage *pkg.Package
+	for _, patternTemplate := range c.EvidencePatternTemplates {
 		tmpl, err := template.New("").Parse(patternTemplate)
 		if err != nil {
 			log.Debugf("unable to parse template: %+v", err)
@@ -70,16 +77,15 @@ func (l Lookup) Find(reader source.LocationReadCloser) (p *pkg.Package, r *artif
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pattern, string(contents))
-		if lookupPkg == nil {
-			lookupPkg = &pkg.Package{
-				Name:      l.Package,
+		if classifiedPackage == nil {
+			classifiedPackage = &pkg.Package{
+				Name:      c.Package,
 				Version:   matchMetadata["version"],
 				Language:  pkg.UnknownLanguage,
 				Locations: source.NewLocationSet(reader.Location),
 				Type:      pkg.BinaryPkg,
 			}
-			lookupPkg.SetID()
 		}
 	}
-	return lookupPkg, nil, nil
+	return classifiedPackage, nil, nil
 }
