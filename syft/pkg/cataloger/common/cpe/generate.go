@@ -50,12 +50,6 @@ func Generate(p pkg.Package) []pkg.CPE {
 			if cpe := newCPE(product, vendor, p.Version, wfn.Any); cpe != nil {
 				cpes = append(cpes, *cpe)
 			}
-
-			if p.Type == pkg.UnknownPkg {
-				if cpe := newCPE(product, vendor, wfn.Any, wfn.Any); cpe != nil {
-					cpes = append(cpes, *cpe)
-				}
-			}
 		}
 	}
 
@@ -91,7 +85,7 @@ func candidateVendors(p pkg.Package) []string {
 	// some ecosystems do not have enough metadata to determine the vendor accurately, in which case we selectively
 	// allow * as a candidate. Note: do NOT allow Java packages to have * vendors.
 	switch p.Language {
-	case pkg.Ruby, pkg.JavaScript, pkg.UnknownLanguage:
+	case pkg.Ruby, pkg.JavaScript:
 		vendors.addValue(wfn.Any)
 	}
 

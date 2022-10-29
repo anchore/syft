@@ -9,9 +9,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -33,6 +35,11 @@ func NewJavascriptLockCataloger() *common.GenericCataloger {
 	}
 
 	return common.NewGenericCataloger(nil, globParsers, "javascript-lock-cataloger", addLicenses)
+}
+
+func NewNodeBinaryCataloger() *generic.Cataloger {
+	return generic.NewCataloger("node-binary-cataloger").
+		WithParserByMimeTypes(parseNodeBinary, internal.ExecutableMIMETypeSet.List()...)
 }
 
 func addLicenses(resolver source.FileResolver, location source.Location, p *pkg.Package) error {

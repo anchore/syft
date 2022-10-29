@@ -8,6 +8,7 @@ type Type string
 const (
 	// the full set of supported packages
 	UnknownPkg       Type = "UnknownPackage"
+	BinaryPkg        Type = "binary"
 	ApkPkg           Type = "apk"
 	AlpmPkg          Type = "alpm"
 	GemPkg           Type = "gem"
@@ -33,6 +34,7 @@ const (
 var AllPkgs = []Type{
 	ApkPkg,
 	AlpmPkg,
+	BinaryPkg,
 	GemPkg,
 	DebPkg,
 	RpmPkg,
