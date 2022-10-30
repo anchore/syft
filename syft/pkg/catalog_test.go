@@ -16,6 +16,31 @@ type expectedIndexes struct {
 	byPath map[string]*strset.Set
 }
 
+func TestCatalogDeleteRemovesPackages(t *testing.T) {
+	c := NewCatalog()
+	pkg1 := Package{
+		id:   artifact.ID("pkg1"),
+		Name: "pkg1",
+		Type: RpmPkg,
+	}
+	pkg2 := Package{
+		id:   artifact.ID("pkg2"),
+		Name: "pkg2",
+		Type: RpmPkg,
+	}
+	pkg3 := Package{
+		id:   artifact.ID("pkg3"),
+		Name: "pkg3",
+		Type: RpmPkg,
+	}
+	c.Add(pkg1, pkg2, pkg3)
+
+	c.Delete(pkg1.ID(), pkg2.ID())
+
+	assert.Equal(t, 1, c.PackageCount())
+	assert.Equal(t, []Package{pkg3}, c.Sorted())
+}
+
 func TestCatalogAddPopulatesIndex(t *testing.T) {
 
 	var pkgs = []Package{
