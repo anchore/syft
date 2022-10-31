@@ -279,13 +279,8 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	echo "dist: $(SNAPSHOTDIR)" > $(TEMPDIR)/goreleaser.yaml
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
-	rm -f .github/scripts/apple-signing/log/*.txt
-
 	# build release snapshots
-	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml || (cat .github/scripts/apple-signing/log/*.txt && false)"
-
-	# remove the keychain with the trusted self-signed cert automatically
-	.github/scripts/apple-signing/cleanup.sh
+	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml"
 
 snapshot-docker-assets: # Build snapshot images of docker images that will be published on release
 	$(call title,Building snapshot docker release assets)
@@ -362,17 +357,12 @@ release: clean-dist CHANGELOG.md
 	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
-	rm -f .github/scripts/apple-signing/log/*.txt
-
 	# note: notarization cannot be done in parallel, thus --parallelism 1
 	bash -c "\
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
 			--parallelism 1 \
-			--release-notes <(cat CHANGELOG.md)\
-				 || (cat .github/scripts/apple-signing/log/*.txt && false)"
-
-	cat .github/scripts/apple-signing/log/*.txt
+			--release-notes <(cat CHANGELOG.md)
 
 	# TODO: turn this into a post-release hook
 	# upload the version file that supports the application version update check (excluding pre-releases)
