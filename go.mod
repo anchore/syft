@@ -57,7 +57,7 @@ require (
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/google/go-containerregistry v0.11.0
 	github.com/in-toto/in-toto-golang v0.4.1-0.20221018183522-731d0640b65f
-	github.com/knqyf263/go-rpmdb v0.0.0-20220629110411-9a3bd2ebb923
+	github.com/knqyf263/go-rpmdb v0.0.0-20221030135625-4082a22221ce
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/sassoftware/go-rpmutils v0.2.0
 	github.com/sigstore/cosign v1.13.1
