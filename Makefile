@@ -362,7 +362,7 @@ release: clean-dist CHANGELOG.md
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
 			--parallelism 1 \
-			--release-notes <(cat CHANGELOG.md)
+			--release-notes <(cat CHANGELOG.md)"
 
 	# TODO: turn this into a post-release hook
 	# upload the version file that supports the application version update check (excluding pre-releases)
