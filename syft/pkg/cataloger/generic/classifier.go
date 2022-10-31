@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
 	"text/template"
 
@@ -27,11 +28,12 @@ type Classifier struct {
 	// EvidencePatternTemplates is a list of regular expressions that will be used to match against the file contents of a
 	// given file in the source location. If any of the patterns match, the file will be considered a candidate for parsing.
 	EvidencePatternTemplates []string
+	// CPE is the CPE we want to match against
+	CPEs []pkg.CPE
 }
 
 func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r *artifact.Relationship, err error) {
 	var filepathNamedGroupValues map[string]string
-
 	doesFilepathMatch := true
 	if len(c.FilepathPatterns) > 0 {
 		doesFilepathMatch, filepathNamedGroupValues = file.FilepathMatches(c.FilepathPatterns, reader.Location)
@@ -41,12 +43,7 @@ func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r
 		return nil, nil, fmt.Errorf("location: %s did not match any patterns for package=%q", reader.Location, c.Package)
 	}
 
-	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get union reader for file: %+v", err)
-	}
-
-	contents, err := io.ReadAll(unionReader)
+	contents, err := getContents(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get read contents for file: %+v", err)
 	}
@@ -79,13 +76,35 @@ func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r
 		matchMetadata := internal.MatchNamedCaptureGroups(pattern, string(contents))
 		if classifiedPackage == nil {
 			classifiedPackage = &pkg.Package{
-				Name:      c.Package,
-				Version:   matchMetadata["version"],
-				Language:  pkg.UnknownLanguage,
-				Locations: source.NewLocationSet(reader.Location),
-				Type:      pkg.BinaryPkg,
+				Name:         path.Base(reader.VirtualPath),
+				Version:      matchMetadata["version"],
+				Language:     pkg.Binary,
+				Locations:    source.NewLocationSet(reader.Location),
+				Type:         pkg.BinaryPkg,
+				CPEs:         c.CPEs,
+				MetadataType: pkg.BinaryMetadataType,
+				Metadata: pkg.BinaryMetadata{
+					Classifier:  c.Package,
+					RealPath:    reader.RealPath,
+					VirtualPath: reader.VirtualPath,
+				},
 			}
+			break
 		}
 	}
 	return classifiedPackage, nil, nil
+}
+
+func getContents(reader source.LocationReadCloser) ([]byte, error) {
+	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get union reader for file: %+v", err)
+	}
+
+	contents, err := io.ReadAll(unionReader)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get contents for file: %+v", err)
+	}
+
+	return contents, nil
 }

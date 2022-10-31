@@ -24,6 +24,7 @@ const (
 	Swift           Language = "swift"
 	CPP             Language = "c++"
 	Haskell         Language = "haskell"
+	Binary          Language = "binary"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.

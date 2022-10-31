@@ -66,7 +66,8 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 
 		for _, p := range packages {
 			// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
-			p.CPEs = cpe.Generate(p)
+			// we might have binary classified CPE already with the package so we want to append here
+			p.CPEs = append(p.CPEs, cpe.Generate(p)...)
 
 			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
 			p.PURL = pkg.URL(p, release)
@@ -85,7 +86,6 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 			} else {
 				allRelationships = append(allRelationships, owningRelationships...)
 			}
-
 			// add to catalog
 			catalog.Add(p)
 		}
