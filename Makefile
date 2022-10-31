@@ -280,19 +280,10 @@ snapshot-with-signing: ## Build snapshot release binaries and packages (with dum
 	cat .goreleaser.yaml >> $(TEMPDIR)/goreleaser.yaml
 
 	# build release snapshots
-	bash -c "$(SNAPSHOT_CMD) --config $(TEMPDIR)/goreleaser.yaml"
-
-snapshot-docker-assets: # Build snapshot images of docker images that will be published on release
-	$(call title,Building snapshot docker release assets)
-
-	# create a config with the dist dir overridden
-	echo "dist: $(DISTDIR)" > $(TEMPDIR)/goreleaser.yaml
-	cat .goreleaser_docker.yaml >> $(TEMPDIR)/goreleaser.yaml
-
 	bash -c "\
 		$(SNAPSHOT_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
-			--parallelism 1"
+				 || (cat /tmp/quill-*.log && false)"
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
@@ -362,7 +353,8 @@ release: clean-dist CHANGELOG.md
 		$(RELEASE_CMD) \
 			--config $(TEMPDIR)/goreleaser.yaml \
 			--parallelism 1 \
-			--release-notes <(cat CHANGELOG.md)"
+			--release-notes <(cat CHANGELOG.md) \
+				 || (cat /tmp/quill-*.log && false)"
 
 	# TODO: turn this into a post-release hook
 	# upload the version file that supports the application version update check (excluding pre-releases)
