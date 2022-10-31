@@ -17,9 +17,9 @@ var nodeClassifier = generic.Classifier{
 		// regexp that matches node binary
 		regexp.MustCompile(`(.*/|^)node$`),
 	},
-	EvidencePatternTemplates: []string{
+	EvidencePatterns: []*regexp.Regexp{
 		// regex that matches node.js/vx.y.z
-		`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+		regexp.MustCompile(`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 	},
 	CPEs: []pkg.CPE{
 		pkg.MustCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*"),

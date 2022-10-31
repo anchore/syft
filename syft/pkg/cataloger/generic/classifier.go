@@ -1,15 +1,12 @@
 package generic
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"path"
 	"regexp"
-	"text/template"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -25,18 +22,17 @@ type Classifier struct {
 	// source location. If any of the patterns match, the file will be considered a candidate for parsing.
 	// If no patterns are provided, the reader is automatically considered a candidate.
 	FilepathPatterns []*regexp.Regexp
-	// EvidencePatternTemplates is a list of regular expressions that will be used to match against the file contents of a
+	// EvidencePattern is a list of regular expressions that will be used to match against the file contents of a
 	// given file in the source location. If any of the patterns match, the file will be considered a candidate for parsing.
-	EvidencePatternTemplates []string
+	EvidencePatterns []*regexp.Regexp
 	// CPE is the CPE we want to match against
 	CPEs []pkg.CPE
 }
 
 func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r *artifact.Relationship, err error) {
-	var filepathNamedGroupValues map[string]string
 	doesFilepathMatch := true
 	if len(c.FilepathPatterns) > 0 {
-		doesFilepathMatch, filepathNamedGroupValues = file.FilepathMatches(c.FilepathPatterns, reader.Location)
+		doesFilepathMatch, _ = file.FilepathMatches(c.FilepathPatterns, reader.Location)
 	}
 
 	if !doesFilepathMatch {
@@ -49,31 +45,12 @@ func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r
 	}
 
 	var classifiedPackage *pkg.Package
-	for _, patternTemplate := range c.EvidencePatternTemplates {
-		tmpl, err := template.New("").Parse(patternTemplate)
-		if err != nil {
-			log.Debugf("unable to parse template: %+v", err)
+	for _, patternTemplate := range c.EvidencePatterns {
+		if !patternTemplate.Match(contents) {
 			continue
 		}
 
-		patternBuf := &bytes.Buffer{}
-		err = tmpl.Execute(patternBuf, filepathNamedGroupValues)
-		if err != nil {
-			log.Debugf("unable to execute template: %+v", err)
-			continue
-		}
-
-		pattern, err := regexp.Compile(patternBuf.String())
-		if err != nil {
-			log.Debugf("unable to compile pattern: %+v", err)
-			continue
-		}
-
-		if !pattern.Match(contents) {
-			continue
-		}
-
-		matchMetadata := internal.MatchNamedCaptureGroups(pattern, string(contents))
+		matchMetadata := internal.MatchNamedCaptureGroups(patternTemplate, string(contents))
 		if classifiedPackage == nil {
 			classifiedPackage = &pkg.Package{
 				Name:         path.Base(reader.VirtualPath),
