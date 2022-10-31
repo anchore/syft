@@ -1,7 +1,7 @@
 package pkg
 
 type BinaryMetadata struct {
-	Classifier  string
-	RealPath    string
-	VirtualPath string
+	Classifier  string `mapstructure:"Classifier" json:"classifier"`
+	RealPath    string `mapstructure:"RealPath" json:"realPath"`
+	VirtualPath string `mapstructure:"VirtualPath" json:"virtualPath"`
 }
