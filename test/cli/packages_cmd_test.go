@@ -10,6 +10,7 @@ import (
 func TestPackagesCmdFlags(t *testing.T) {
 	hiddenPackagesImage := "docker-archive:" + getFixtureImage(t, "image-hidden-packages")
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+	nodeBinaryImage := "docker-archive:" + getFixtureImage(t, "image-node-binary")
 	//badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
 	tmp := t.TempDir() + "/"
 
@@ -139,6 +140,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertStdoutLengthGreaterThan(1000),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "catalog-node-js-binary",
+			args: []string{"packages", "-o", "json", nodeBinaryImage},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertInOutput("node.js"),
 				assertSuccessfulReturnCode,
 			},
 		},

@@ -70,6 +70,11 @@ func candidateVendors(p pkg.Package) []string {
 	vendors := newFieldCandidateSet(candidateProducts(p)...)
 
 	switch p.Language {
+	case pkg.JavaScript:
+		// for JavaScript if we find node.js as a package then the vendor is "nodejs"
+		if p.Name == "node.js" {
+			vendors.addValue("nodejs")
+		}
 	case pkg.Ruby:
 		vendors.addValue("ruby-lang")
 	case pkg.Go:

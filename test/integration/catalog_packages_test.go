@@ -85,6 +85,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.CocoapodsPkg))
 	definedPkgs.Remove(string(pkg.ConanPkg))
 	definedPkgs.Remove(string(pkg.HackagePkg))
+	definedPkgs.Remove(string(pkg.BinaryPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -206,6 +207,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	observedLanguages.Remove(pkg.UnknownLanguage.String())
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.BinaryPkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// for directory scans we should not expect to see any of the following package types

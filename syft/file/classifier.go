@@ -41,6 +41,16 @@ var DefaultClassifiers = []Classifier{
 		},
 	},
 	{
+		Class: "nodejs-binary",
+		FilepathPatterns: []*regexp.Regexp{
+			regexp.MustCompile(`(.*/|^)node$`),
+		},
+		EvidencePatternTemplates: []string{
+			// regex that matches node.js/vx.y.z
+			`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+		},
+	},
+	{
 		Class: "go-binary-hint",
 		FilepathPatterns: []*regexp.Regexp{
 			regexp.MustCompile(`(.*/|^)VERSION$`),
@@ -67,12 +77,13 @@ type Classifier struct {
 }
 
 type Classification struct {
-	Class    string            `json:"class"`
-	Metadata map[string]string `json:"metadata"`
+	Class       string            `json:"class"`
+	VirtualPath string            `json:"virtual_path"`
+	Metadata    map[string]string `json:"metadata"`
 }
 
 func (c Classifier) Classify(resolver source.FileResolver, location source.Location) (*Classification, error) {
-	doesFilepathMatch, filepathNamedGroupValues := filepathMatches(c.FilepathPatterns, location)
+	doesFilepathMatch, filepathNamedGroupValues := FilepathMatches(c.FilepathPatterns, location)
 	if !doesFilepathMatch {
 		return nil, nil
 	}
@@ -114,8 +125,9 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 		matchMetadata := internal.MatchNamedCaptureGroups(pattern, string(contents))
 		if result == nil {
 			result = &Classification{
-				Class:    c.Class,
-				Metadata: matchMetadata,
+				Class:       c.Class,
+				VirtualPath: location.VirtualPath,
+				Metadata:    matchMetadata,
 			}
 		} else {
 			for key, value := range matchMetadata {
@@ -126,7 +138,7 @@ func (c Classifier) Classify(resolver source.FileResolver, location source.Locat
 	return result, nil
 }
 
-func filepathMatches(patterns []*regexp.Regexp, location source.Location) (bool, map[string]string) {
+func FilepathMatches(patterns []*regexp.Regexp, location source.Location) (bool, map[string]string) {
 	for _, path := range []string{location.RealPath, location.VirtualPath} {
 		if path == "" {
 			continue

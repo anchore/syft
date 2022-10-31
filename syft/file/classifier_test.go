@@ -89,7 +89,7 @@ func TestFilepathMatches(t *testing.T) {
 			for _, p := range test.patterns {
 				patterns = append(patterns, regexp.MustCompile(p))
 			}
-			actualMatches, actualNamedGroups := filepathMatches(patterns, test.location)
+			actualMatches, actualNamedGroups := FilepathMatches(patterns, test.location)
 			assert.Equal(t, test.expectedMatches, actualMatches)
 			assert.Equal(t, test.expectedNamedGroups, actualNamedGroups)
 		})
