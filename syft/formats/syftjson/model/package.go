@@ -94,5 +94,9 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 		p.Metadata = val
 	}
 
-	return errUnknownMetadataType
+	if p.MetadataType != "" {
+		return errUnknownMetadataType
+	}
+
+	return nil
 }
