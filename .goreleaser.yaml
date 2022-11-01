@@ -86,6 +86,7 @@ brews:
   - tap:
       owner: anchore
       name: homebrew-syft
+      token: "{{.Env.GITHUB_BREW_TOKEN}}"
     ids:
       - darwin-archives
       - linux-archives
