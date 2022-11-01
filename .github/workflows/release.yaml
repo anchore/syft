@@ -141,7 +141,7 @@ jobs:
         run: make release
         env:
           QUILL_SIGN_P12: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_CHAIN }}
-          QUILL_SIGN_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }}
+          QUILL_SIGN_PASSWORD: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_PASS }}
           QUILL_NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER }}
           QUILL_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
           QUILL_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
