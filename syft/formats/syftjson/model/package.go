@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -71,130 +72,27 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-//nolint:funlen,gocognit,gocyclo
 func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	p.MetadataType = pkg.CleanMetadataType(unpacker.MetadataType)
 
-	switch p.MetadataType {
-	case "":
-		// there is no metadata, skip
-		break
-	case pkg.AlpmMetadataType:
-		var payload pkg.AlpmMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
+	typ, ok := pkg.MetadataTypeByName[p.MetadataType]
+	if ok {
+		val := reflect.New(typ).Interface()
+		if err := json.Unmarshal(unpacker.Metadata, val); err != nil {
 			return err
 		}
-		p.Metadata = payload
-	case pkg.ApkMetadataType:
-		var payload pkg.ApkMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.RpmMetadataType:
-		var payload pkg.RpmMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.DpkgMetadataType:
-		var payload pkg.DpkgMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.JavaMetadataType:
-		var payload pkg.JavaMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.RustCargoPackageMetadataType:
-		var payload pkg.CargoPackageMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.GemMetadataType:
-		var payload pkg.GemMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.KbPackageMetadataType:
-		var payload pkg.KbPackageMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.PythonPackageMetadataType:
-		var payload pkg.PythonPackageMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.NpmPackageJSONMetadataType:
-		var payload pkg.NpmPackageJSONMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.PhpComposerJSONMetadataType:
-		var payload pkg.PhpComposerJSONMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.GolangBinMetadataType:
-		var payload pkg.GolangBinMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.DartPubMetadataType:
-		var payload pkg.DartPubMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.CocoapodsMetadataType:
-		var payload pkg.CocoapodsMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.ConanMetadataType:
-		var payload pkg.ConanMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.ConanLockMetadataType:
-		var payload pkg.ConanLockMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.DotnetDepsMetadataType:
-		var payload pkg.DotnetDepsMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.PortageMetadataType:
-		var payload pkg.PortageMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	case pkg.HackageMetadataType:
-		var payload pkg.HackageMetadata
-		if err := json.Unmarshal(unpacker.Metadata, &payload); err != nil {
-			return err
-		}
-		p.Metadata = payload
-	default:
-		return errUnknownMetadataType
+		p.Metadata = reflect.ValueOf(val).Elem().Interface()
+		return nil
 	}
-	return nil
+
+	// capture unknown metadata as a generic struct
+	if len(unpacker.Metadata) > 0 {
+		var val interface{}
+		if err := json.Unmarshal(unpacker.Metadata, &val); err != nil {
+			return err
+		}
+		p.Metadata = val
+	}
+
+	return errUnknownMetadataType
 }
