@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -22,10 +23,10 @@ type Classifier struct {
 	// source location. If any of the patterns match, the file will be considered a candidate for parsing.
 	// If no patterns are provided, the reader is automatically considered a candidate.
 	FilepathPatterns []*regexp.Regexp
-	// EvidencePattern is a list of regular expressions that will be used to match against the file contents of a
+	// EvidencePatterns is a list of regular expressions that will be used to match against the file contents of a
 	// given file in the source location. If any of the patterns match, the file will be considered a candidate for parsing.
 	EvidencePatterns []*regexp.Regexp
-	// CPE is the CPE we want to match against
+	// CPEs are the specific CPEs we want to include for this binary with updated version information
 	CPEs []pkg.CPE
 }
 
@@ -45,29 +46,41 @@ func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r
 	}
 
 	var classifiedPackage *pkg.Package
-	for _, patternTemplate := range c.EvidencePatterns {
-		if !patternTemplate.Match(contents) {
+	for _, evidencePattern := range c.EvidencePatterns {
+		if !evidencePattern.Match(contents) {
 			continue
 		}
 
-		matchMetadata := internal.MatchNamedCaptureGroups(patternTemplate, string(contents))
-		if classifiedPackage == nil {
-			classifiedPackage = &pkg.Package{
-				Name:         path.Base(reader.VirtualPath),
-				Version:      matchMetadata["version"],
-				Language:     pkg.Binary,
-				Locations:    source.NewLocationSet(reader.Location),
-				Type:         pkg.BinaryPkg,
-				CPEs:         c.CPEs,
-				MetadataType: pkg.BinaryMetadataType,
-				Metadata: pkg.BinaryMetadata{
-					Classifier:  c.Package,
-					RealPath:    reader.RealPath,
-					VirtualPath: reader.VirtualPath,
-				},
-			}
-			break
+		matchMetadata := internal.MatchNamedCaptureGroups(evidencePattern, string(contents))
+		version, ok := matchMetadata["version"]
+		if !ok {
+			log.Debugf("no version found in binary from pattern %v", evidencePattern)
+			continue
 		}
+
+		var cpes []pkg.CPE
+		for _, cpe := range c.CPEs {
+			cpe.Version = version
+			if err == nil {
+				cpes = append(cpes, cpe)
+			}
+		}
+
+		classifiedPackage = &pkg.Package{
+			Name:         path.Base(reader.VirtualPath),
+			Version:      version,
+			Language:     pkg.Binary,
+			Locations:    source.NewLocationSet(reader.Location),
+			Type:         pkg.BinaryPkg,
+			CPEs:         cpes,
+			MetadataType: pkg.BinaryMetadataType,
+			Metadata: pkg.BinaryMetadata{
+				Classifier:  c.Package,
+				RealPath:    reader.RealPath,
+				VirtualPath: reader.VirtualPath,
+			},
+		}
+		break
 	}
 	return classifiedPackage, nil, nil
 }
