@@ -1,157 +1,142 @@
 package javascript
 
 import (
-	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
-func assertPkgsEqual(t *testing.T, actual []*pkg.Package, expected map[string]pkg.Package) {
-	t.Helper()
-	if len(actual) != len(expected) {
-		for _, a := range actual {
-			t.Log("   ", a)
-		}
-		t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expected))
-	}
-
-	for _, a := range actual {
-		expectedPkg, ok := expected[a.Name]
-		assert.True(t, ok)
-		assert.Equal(t, expectedPkg.Version, a.Version, "bad version")
-		assert.Equal(t, expectedPkg.Language, a.Language, "bad language")
-		assert.Equal(t, expectedPkg.Type, a.Type, "bad type")
-		assert.Equal(t, expectedPkg.Licenses, a.Licenses, "bad license count")
-	}
-}
-
 func TestParsePackageLock(t *testing.T) {
-	expected := map[string]pkg.Package{
-		"@actions/core": {
+	var expectedRelationships []artifact.Relationship
+	expectedPkgs := []pkg.Package{
+		{
 			Name:     "@actions/core",
 			Version:  "1.6.0",
+			PURL:     "pkg:npm/%40actions/core@1.6.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 		},
-		"wordwrap": {
-			Name:     "wordwrap",
-			Version:  "0.0.3",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"get-stdin": {
-			Name:     "get-stdin",
-			Version:  "5.0.1",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"minimist": {
-			Name:     "minimist",
-			Version:  "0.0.10",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"optimist": {
-			Name:     "optimist",
-			Version:  "0.6.1",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"string-width": {
-			Name:     "string-width",
-			Version:  "2.1.1",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"strip-ansi": {
-			Name:     "strip-ansi",
-			Version:  "4.0.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"strip-eof": {
-			Name:     "wordwrap",
-			Version:  "1.0.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"ansi-regex": {
+		{
 			Name:     "ansi-regex",
 			Version:  "3.0.0",
+			PURL:     "pkg:npm/ansi-regex@3.0.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 		},
-		"is-fullwidth-code-point": {
-			Name:     "is-fullwidth-code-point",
-			Version:  "2.0.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"cowsay": {
+		{
 			Name:     "cowsay",
 			Version:  "1.4.0",
+			PURL:     "pkg:npm/cowsay@1.4.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "get-stdin",
+			Version:  "5.0.1",
+			PURL:     "pkg:npm/get-stdin@5.0.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "is-fullwidth-code-point",
+			Version:  "2.0.0",
+			PURL:     "pkg:npm/is-fullwidth-code-point@2.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "minimist",
+			Version:  "0.0.10",
+			PURL:     "pkg:npm/minimist@0.0.10",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "optimist",
+			Version:  "0.6.1",
+			PURL:     "pkg:npm/optimist@0.6.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "string-width",
+			Version:  "2.1.1",
+			PURL:     "pkg:npm/string-width@2.1.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "strip-ansi",
+			Version:  "4.0.0",
+			PURL:     "pkg:npm/strip-ansi@4.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "strip-eof",
+			Version:  "1.0.0",
+			PURL:     "pkg:npm/strip-eof@1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "wordwrap",
+			Version:  "0.0.3",
+			PURL:     "pkg:npm/wordwrap@0.0.3",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 		},
 	}
-	fixture, err := os.Open("test-fixtures/pkg-lock/package-lock.json")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
+	fixture := "test-fixtures/pkg-lock/package-lock.json"
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
 	}
 
-	// TODO: no relationships are under test yet
-	actual, _, err := parsePackageLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse package-lock.json: %+v", err)
-	}
-
-	assertPkgsEqual(t, actual, expected)
-
+	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePackageLockV2(t *testing.T) {
-	expected := map[string]pkg.Package{
-		"@types/prop-types": {
+	fixture := "test-fixtures/pkg-lock/package-lock-2.json"
+	var expectedRelationships []artifact.Relationship
+	expectedPkgs := []pkg.Package{
+		{
 			Name:     "@types/prop-types",
 			Version:  "15.7.5",
+			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []string{"MIT"},
 		},
-		"@types/react": {
-			Name:     "@types/prop-types",
+		{
+			Name:     "@types/react",
 			Version:  "18.0.17",
+			PURL:     "pkg:npm/%40types/react@18.0.17",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []string{"MIT"},
 		},
-		"@types/scheduler": {
+		{
 			Name:     "@types/scheduler",
 			Version:  "0.16.2",
+			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []string{"MIT"},
 		},
-		"csstype": {
+		{
 			Name:     "csstype",
 			Version:  "3.1.0",
+			PURL:     "pkg:npm/csstype@3.1.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []string{"MIT"},
 		},
 	}
-	fixture, err := os.Open("test-fixtures/pkg-lock/package-lock-2.json")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
 	}
-
-	actual, _, err := parsePackageLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse package-lock.json: %+v", err)
-	}
-
-	assertPkgsEqual(t, actual, expected)
+	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
 }

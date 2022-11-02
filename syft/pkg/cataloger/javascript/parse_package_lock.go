@@ -8,28 +8,29 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
-var _ common.ParserFn = parsePackageLock
+var _ generic.Parser = parsePackageLock
 
-// PackageLock represents a JavaScript package.lock json file
-type PackageLock struct {
+// packageLock represents a JavaScript package.lock json file
+type packageLock struct {
 	Requires        bool `json:"requires"`
 	LockfileVersion int  `json:"lockfileVersion"`
-	Dependencies    map[string]Dependency
-	Packages        map[string]Package
+	Dependencies    map[string]lockDependency
+	Packages        map[string]lockPackage
 }
 
-// Dependency represents a single package dependency listed in the package.lock json file
-type Dependency struct {
+// lockDependency represents a single package dependency listed in the package.lock json file
+type lockDependency struct {
 	Version   string `json:"version"`
 	Resolved  string `json:"resolved"`
 	Integrity string `json:"integrity"`
 }
 
-type Package struct {
+type lockPackage struct {
 	Version   string `json:"version"`
 	Resolved  string `json:"resolved"`
 	Integrity string `json:"integrity"`
@@ -37,18 +38,18 @@ type Package struct {
 }
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
-func parsePackageLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the root project
-	if pathContainsNodeModulesDirectory(path) {
+	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
 		return nil, nil, nil
 	}
 
-	var packages []*pkg.Package
+	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
 	for {
-		var lock PackageLock
+		var lock packageLock
 		if err := dec.Decode(&lock); err == io.EOF {
 			break
 		} else if err != nil {
@@ -63,22 +64,11 @@ func parsePackageLock(path string, reader io.Reader) ([]*pkg.Package, []artifact
 		}
 
 		for name, pkgMeta := range lock.Dependencies {
-			var sb strings.Builder
-			sb.WriteString(pkgMeta.Resolved)
-			sb.WriteString(pkgMeta.Integrity)
-			var licenses []string
-			if license, exists := licenseMap[sb.String()]; exists {
-				licenses = append(licenses, license)
-			}
-			packages = append(packages, &pkg.Package{
-				Name:     name,
-				Version:  pkgMeta.Version,
-				Language: pkg.JavaScript,
-				Type:     pkg.NpmPkg,
-				Licenses: licenses,
-			})
+			pkgs = append(pkgs, newPackageLockPackage(resolver, reader.Location, name, pkgMeta, licenseMap))
 		}
 	}
 
-	return packages, nil, nil
+	pkg.Sort(pkgs)
+
+	return pkgs, nil, nil
 }

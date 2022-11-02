@@ -3,17 +3,17 @@ package javascript
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"regexp"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
-var _ common.ParserFn = parseYarnLock
+var _ generic.Parser = parseYarnLock
 
 var (
 	// packageNameExp matches the name of the dependency in yarn.lock
@@ -42,14 +42,14 @@ const (
 	noVersion = ""
 )
 
-func parseYarnLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseYarnLock(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
-	if pathContainsNodeModulesDirectory(path) {
+	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
 		return nil, nil, nil
 	}
 
-	var packages []*pkg.Package
+	var pkgs []pkg.Package
 	scanner := bufio.NewScanner(reader)
 	parsedPackages := internal.NewStringSet()
 	currentPackage := noPackage
@@ -61,7 +61,7 @@ func parseYarnLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 		if packageName := findPackageName(line); packageName != noPackage {
 			// When we find a new package, check if we have unsaved identifiers
 			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Contains(currentPackage+"@"+currentVersion) {
-				packages = append(packages, newYarnLockPackage(currentPackage, currentVersion))
+				pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
 
@@ -69,7 +69,7 @@ func parseYarnLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 		} else if version := findPackageVersion(line); version != noVersion {
 			currentVersion = version
 		} else if packageName, version := findPackageAndVersion(line); packageName != noPackage && version != noVersion && !parsedPackages.Contains(packageName+"@"+version) {
-			packages = append(packages, newYarnLockPackage(packageName, version))
+			pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, packageName, version))
 			parsedPackages.Add(packageName + "@" + version)
 
 			// Cleanup to indicate no unsaved identifiers
@@ -80,7 +80,7 @@ func parseYarnLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 
 	// check if we have valid unsaved data after end-of-file has reached
 	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Contains(currentPackage+"@"+currentVersion) {
-		packages = append(packages, newYarnLockPackage(currentPackage, currentVersion))
+		pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}
 
@@ -88,7 +88,9 @@ func parseYarnLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 		return nil, nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
 	}
 
-	return packages, nil, nil
+	pkg.Sort(pkgs)
+
+	return pkgs, nil, nil
 }
 
 func findPackageName(line string) string {
@@ -113,13 +115,4 @@ func findPackageAndVersion(line string) (string, string) {
 	}
 
 	return noPackage, noVersion
-}
-
-func newYarnLockPackage(name, version string) *pkg.Package {
-	return &pkg.Package{
-		Name:     name,
-		Version:  version,
-		Language: pkg.JavaScript,
-		Type:     pkg.NpmPkg,
-	}
 }

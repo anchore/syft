@@ -1,13 +1,13 @@
 package javascript
 
 import (
-	"os"
 	"testing"
 
-	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePackageJSON(t *testing.T) {
@@ -20,6 +20,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
 				Version:      "6.14.6",
+				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
 				Licenses:     []string{"Artistic-2.0"},
 				Language:     pkg.JavaScript,
@@ -39,6 +40,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
 				Version:      "6.14.6",
+				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
 				Licenses:     []string{"ISC"},
 				Language:     pkg.JavaScript,
@@ -58,6 +60,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
 				Version:      "6.14.6",
+				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
 				Licenses:     []string{"MIT", "Apache-2.0"},
 				Language:     pkg.JavaScript,
@@ -77,6 +80,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
 				Version:      "6.14.6",
+				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
 				Licenses:     nil,
 				Language:     pkg.JavaScript,
@@ -96,6 +100,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
 				Version:      "6.14.6",
+				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
 				Licenses:     []string{},
 				Language:     pkg.JavaScript,
@@ -115,6 +120,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
 				Version:      "6.14.6",
+				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
 				Licenses:     []string{"Artistic-2.0"},
 				Language:     pkg.JavaScript,
@@ -134,6 +140,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "function-bind",
 				Version:      "1.1.1",
+				PURL:         "pkg:npm/function-bind@1.1.1",
 				Type:         pkg.NpmPkg,
 				Licenses:     []string{"MIT"},
 				Language:     pkg.JavaScript,
@@ -153,6 +160,7 @@ func TestParsePackageJSON(t *testing.T) {
 			ExpectedPkg: pkg.Package{
 				Name:         "npm",
 				Version:      "6.14.6",
+				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
 				Licenses:     []string{"Artistic-2.0"},
 				Language:     pkg.JavaScript,
@@ -172,46 +180,16 @@ func TestParsePackageJSON(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Fixture, func(t *testing.T) {
-			fixture, err := os.Open(test.Fixture)
-			if err != nil {
-				t.Fatalf("failed to open fixture: %+v", err)
-			}
-
-			actual, _, err := parsePackageJSON("", fixture)
-			if err != nil {
-				t.Fatalf("failed to parse package-lock.json: %+v", err)
-			}
-			if len(actual) != 1 {
-				for _, a := range actual {
-					t.Log("   ", a)
-				}
-				t.Fatalf("unexpected package count: %d!=1", len(actual))
-			}
-
-			for _, d := range deep.Equal(actual[0], &test.ExpectedPkg) {
-
-				t.Errorf("diff: %+v", d)
-			}
+			test.ExpectedPkg.Locations.Add(source.NewLocation(test.Fixture))
+			pkgtest.TestFileParser(t, test.Fixture, parsePackageJSON, []pkg.Package{test.ExpectedPkg}, nil)
 		})
 	}
 }
 
 func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
 	const fixtureFile = "test-fixtures/pkg-json/package-partial.json"
-	fixture, err := os.Open(fixtureFile)
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
 
-	// TODO: no relationships are under test yet
-	actual, _, err := parsePackageJSON("", fixture)
-	if err != nil {
-		t.Fatalf("failed to parse package-lock.json: %+v", err)
-	}
-
-	if actualCount := len(actual); actualCount != 0 {
-		t.Errorf("no packages should've been returned (but got %d packages)", actualCount)
-	}
+	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, nil, nil)
 }
 
 func Test_pathContainsNodeModulesDirectory(t *testing.T) {

@@ -13,11 +13,12 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
-var _ common.ParserFn = parsePackageJSON
+var _ generic.Parser = parsePackageJSON
 
 // packageJSON represents a JavaScript package.json file
 type packageJSON struct {
@@ -48,6 +49,32 @@ type repository struct {
 // match example: "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)"
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
+
+// parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
+func parsePackageJSON(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
+	dec := json.NewDecoder(reader)
+
+	for {
+		var p packageJSON
+		if err := dec.Decode(&p); err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
+		}
+
+		if !p.hasNameAndVersionValues() {
+			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", reader.AccessPath())
+			return nil, nil, nil
+		}
+
+		pkgs = append(pkgs, newPackageJSONPackage(p, reader.Location))
+	}
+
+	pkg.Sort(pkgs)
+
+	return pkgs, nil, nil
+}
 
 func (a *author) UnmarshalJSON(b []byte) error {
 	var authorStr string
@@ -170,55 +197,6 @@ func licensesFromJSON(b []byte) ([]license, error) {
 	}
 
 	return nil, errors.New("unmarshal failed")
-}
-
-// parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	var packages []*pkg.Package
-	dec := json.NewDecoder(reader)
-
-	for {
-		var p packageJSON
-		if err := dec.Decode(&p); err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
-		}
-
-		if !p.hasNameAndVersionValues() {
-			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", path)
-			return nil, nil, nil
-		}
-
-		packages = append(packages, newPackageJSONPackage(p))
-	}
-
-	return packages, nil, nil
-}
-
-func newPackageJSONPackage(p packageJSON) *pkg.Package {
-	licenses, err := p.licensesFromJSON()
-	if err != nil {
-		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
-	}
-
-	return &pkg.Package{
-		Name:         p.Name,
-		Version:      p.Version,
-		Licenses:     licenses,
-		Language:     pkg.JavaScript,
-		Type:         pkg.NpmPkg,
-		MetadataType: pkg.NpmPackageJSONMetadataType,
-		Metadata: pkg.NpmPackageJSONMetadata{
-			Name:     p.Name,
-			Version:  p.Version,
-			Author:   p.Author.AuthorString(),
-			Homepage: p.Homepage,
-			URL:      p.Repository.URL,
-			Licenses: licenses,
-			Private:  p.Private,
-		},
-	}
 }
 
 func (p packageJSON) hasNameAndVersionValues() bool {
