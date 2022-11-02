@@ -9,9 +9,11 @@ import (
 // Originator needs to conform to the SPDX spec here:
 // https://spdx.github.io/spdx-spec/package-information/#76-package-originator-field
 // Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
-func Originator(p pkg.Package) string {
+// return values are: <type>, <value>
+func Originator(p pkg.Package) (string, string) {
+	typ := ""
+	author := ""
 	if hasMetadata(p) {
-		author := ""
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
 			author = metadata.Maintainer
@@ -29,13 +31,14 @@ func Originator(p pkg.Package) string {
 				author = metadata.Authors[0]
 			}
 		case pkg.RpmMetadata:
-			return "Organization: " + metadata.Vendor
+			typ = "Organization"
+			author = metadata.Vendor
 		case pkg.DpkgMetadata:
 			author = metadata.Maintainer
 		}
-		if author != "" {
-			return "Person: " + author
+		if typ == "" && author != "" {
+			typ = "Person"
 		}
 	}
-	return ""
+	return typ, author
 }

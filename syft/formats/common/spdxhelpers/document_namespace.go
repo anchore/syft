@@ -11,6 +11,12 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+const (
+	inputImage     = "image"
+	inputDirectory = "dir"
+	inputFile      = "file"
+)
+
 func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string) {
 	name := DocumentName(srcMetadata)
 	return name, DocumentNamespace(name, srcMetadata)
@@ -20,11 +26,11 @@ func DocumentNamespace(name string, srcMetadata source.Metadata) string {
 	input := "unknown-source-type"
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		input = "image"
+		input = inputImage
 	case source.DirectoryScheme:
-		input = "dir"
+		input = inputDirectory
 	case source.FileScheme:
-		input = "file"
+		input = inputFile
 	}
 
 	uniqueID := uuid.Must(uuid.NewRandom())

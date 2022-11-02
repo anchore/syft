@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/spdx/tools-golang/jsonloader"
+	spdx "github.com/spdx/tools-golang/json"
 
 	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/sbom"
@@ -19,7 +19,7 @@ func decoder(reader io.Reader) (s *sbom.SBOM, err error) {
 		}
 	}()
 
-	doc, err := jsonloader.Load2_2(reader)
+	doc, err := spdx.Load2_3(reader)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode spdx-json: %w", err)
 	}

@@ -5,10 +5,11 @@ import (
 
 	"github.com/spdx/tools-golang/tvsaver"
 
+	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
 	"github.com/anchore/syft/syft/sbom"
 )
 
 func encoder(output io.Writer, s sbom.SBOM) error {
-	model := toFormatModel(s)
-	return tvsaver.Save2_2(model, output)
+	model := spdxhelpers.ToFormatModel(s)
+	return tvsaver.Save2_3(model, output)
 }

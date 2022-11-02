@@ -1,16 +1,15 @@
-package spdx22json
+package spdxhelpers
 
 import (
 	"fmt"
 	"testing"
 
+	"github.com/spdx/tools-golang/spdx/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/formats/common/spdxhelpers"
-	"github.com/anchore/syft/syft/formats/spdx22json/model"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -28,7 +27,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/vnd.unknown",
 			},
 			expected: []string{
-				string(spdxhelpers.ApplicationFileType),
+				string(ApplicationFileType),
 			},
 		},
 		{
@@ -37,8 +36,8 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/zip",
 			},
 			expected: []string{
-				string(spdxhelpers.ApplicationFileType),
-				string(spdxhelpers.ArchiveFileType),
+				string(ApplicationFileType),
+				string(ArchiveFileType),
 			},
 		},
 		{
@@ -47,7 +46,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "audio/ogg",
 			},
 			expected: []string{
-				string(spdxhelpers.AudioFileType),
+				string(AudioFileType),
 			},
 		},
 		{
@@ -56,7 +55,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "video/3gpp",
 			},
 			expected: []string{
-				string(spdxhelpers.VideoFileType),
+				string(VideoFileType),
 			},
 		},
 		{
@@ -65,7 +64,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "text/html",
 			},
 			expected: []string{
-				string(spdxhelpers.TextFileType),
+				string(TextFileType),
 			},
 		},
 		{
@@ -74,7 +73,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "image/png",
 			},
 			expected: []string{
-				string(spdxhelpers.ImageFileType),
+				string(ImageFileType),
 			},
 		},
 		{
@@ -83,8 +82,8 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/x-sharedlib",
 			},
 			expected: []string{
-				string(spdxhelpers.ApplicationFileType),
-				string(spdxhelpers.BinaryFileType),
+				string(ApplicationFileType),
+				string(BinaryFileType),
 			},
 		},
 	}
@@ -100,18 +99,18 @@ func Test_lookupRelationship(t *testing.T) {
 	tests := []struct {
 		input   artifact.RelationshipType
 		exists  bool
-		ty      spdxhelpers.RelationshipType
+		ty      RelationshipType
 		comment string
 	}{
 		{
 			input:  artifact.ContainsRelationship,
 			exists: true,
-			ty:     spdxhelpers.ContainsRelationship,
+			ty:     ContainsRelationship,
 		},
 		{
 			input:   artifact.OwnershipByFileOverlapRelationship,
 			exists:  true,
-			ty:      spdxhelpers.OtherRelationship,
+			ty:      OtherRelationship,
 			comment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
 		},
 		{
@@ -133,7 +132,7 @@ func Test_toFileChecksums(t *testing.T) {
 	tests := []struct {
 		name     string
 		digests  []file.Digest
-		expected []model.Checksum
+		expected []common.Checksum
 	}{
 		{
 			name: "empty",
@@ -150,14 +149,14 @@ func Test_toFileChecksums(t *testing.T) {
 					Value:     "meh",
 				},
 			},
-			expected: []model.Checksum{
+			expected: []common.Checksum{
 				{
-					Algorithm:     "SHA256",
-					ChecksumValue: "deadbeefcafe",
+					Algorithm: "SHA256",
+					Value:     "deadbeefcafe",
 				},
 				{
-					Algorithm:     "MD5",
-					ChecksumValue: "meh",
+					Algorithm: "MD5",
+					Value:     "meh",
 				},
 			},
 		},
@@ -175,6 +174,8 @@ func Test_fileIDsForPackage(t *testing.T) {
 		Name: "bogus",
 	}
 
+	p.SetID()
+
 	c := source.Coordinates{
 		RealPath:     "/path",
 		FileSystemID: "nowhere",
@@ -182,13 +183,13 @@ func Test_fileIDsForPackage(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		id            string
+		id            common.ElementID
 		relationships []artifact.Relationship
-		expected      []string
+		expected      []common.ElementID
 	}{
 		{
 			name: "find file IDs for packages with package-file relationships",
-			id:   model.ElementID(p.ID()).String(),
+			id:   toSPDXID(p),
 			relationships: []artifact.Relationship{
 				{
 					From: p,
@@ -196,13 +197,13 @@ func Test_fileIDsForPackage(t *testing.T) {
 					Type: artifact.ContainsRelationship,
 				},
 			},
-			expected: []string{
-				model.ElementID(c.ID()).String(),
+			expected: []common.ElementID{
+				toSPDXID(c),
 			},
 		},
 		{
 			name: "ignore package-to-package",
-			id:   model.ElementID(p.ID()).String(),
+			id:   toSPDXID(p),
 			relationships: []artifact.Relationship{
 				{
 					From: p,
@@ -210,11 +211,11 @@ func Test_fileIDsForPackage(t *testing.T) {
 					Type: artifact.ContainsRelationship,
 				},
 			},
-			expected: []string{},
+			expected: []common.ElementID{},
 		},
 		{
 			name: "ignore file-to-file",
-			id:   model.ElementID(p.ID()).String(),
+			id:   toSPDXID(p),
 			relationships: []artifact.Relationship{
 				{
 					From: c,
@@ -222,11 +223,11 @@ func Test_fileIDsForPackage(t *testing.T) {
 					Type: artifact.ContainsRelationship,
 				},
 			},
-			expected: []string{},
+			expected: []common.ElementID{},
 		},
 		{
 			name: "ignore file-to-package",
-			id:   model.ElementID(p.ID()).String(),
+			id:   toSPDXID(p),
 			relationships: []artifact.Relationship{
 				{
 					From: c,
@@ -234,11 +235,11 @@ func Test_fileIDsForPackage(t *testing.T) {
 					Type: artifact.ContainsRelationship,
 				},
 			},
-			expected: []string{},
+			expected: []common.ElementID{},
 		},
 		{
 			name: "filter by relationship type",
-			id:   model.ElementID(p.ID()).String(),
+			id:   toSPDXID(p),
 			relationships: []artifact.Relationship{
 				{
 					From: p,
@@ -246,12 +247,16 @@ func Test_fileIDsForPackage(t *testing.T) {
 					Type: artifact.OwnershipByFileOverlapRelationship,
 				},
 			},
-			expected: []string{},
+			expected: []common.ElementID{},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.ElementsMatch(t, test.expected, fileIDsForPackage(test.id, test.relationships))
+			var ids []common.ElementID
+			for _, f := range filesForPackage(test.id, test.relationships) {
+				ids = append(ids, f.FileSPDXIdentifier)
+			}
+			assert.ElementsMatch(t, test.expected, ids)
 		})
 	}
 }
@@ -303,15 +308,17 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCatalog(test.pkg)
-			pkgs := toPackages(catalog, nil)
+			pkgs := toFormatPackages(catalog, nil)
 			require.Len(t, pkgs, 1)
-			p := pkgs[0]
-			if test.expectedDigest == "" {
-				require.Len(t, p.Checksums, 0)
-			} else {
-				require.Len(t, p.Checksums, 1)
-				c := p.Checksums[0]
-				require.Equal(t, test.expectedDigest, fmt.Sprintf("%s:%s", c.Algorithm, c.ChecksumValue))
+			for _, p := range pkgs {
+				if test.expectedDigest == "" {
+					require.Len(t, p.PackageChecksums, 0)
+				} else {
+					require.Len(t, p.PackageChecksums, 1)
+					for _, c := range p.PackageChecksums {
+						require.Equal(t, test.expectedDigest, fmt.Sprintf("%s:%s", c.Algorithm, c.Value))
+					}
+				}
 			}
 		})
 	}
