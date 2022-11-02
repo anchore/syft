@@ -5,6 +5,7 @@ package pkg
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -79,4 +80,25 @@ func (p *Package) merge(other Package) error {
 // * https://cyclonedx.org/docs/1.4/json/#components_items_name
 func IsValid(p *Package) bool {
 	return p != nil && p.Name != ""
+}
+
+func Sort(pkgs []Package) {
+	sort.SliceStable(pkgs, func(i, j int) bool {
+		if pkgs[i].Name == pkgs[j].Name {
+			if pkgs[i].Version == pkgs[j].Version {
+				iLocations := pkgs[i].Locations.ToSlice()
+				jLocations := pkgs[j].Locations.ToSlice()
+				if pkgs[i].Type == pkgs[j].Type && len(iLocations) > 0 && len(jLocations) > 0 {
+					if iLocations[0].String() == jLocations[0].String() {
+						// compare IDs as a final fallback
+						return pkgs[i].ID() < pkgs[j].ID()
+					}
+					return iLocations[0].String() < jLocations[0].String()
+				}
+				return pkgs[i].Type < pkgs[j].Type
+			}
+			return pkgs[i].Version < pkgs[j].Version
+		}
+		return pkgs[i].Name < pkgs[j].Name
+	})
 }
