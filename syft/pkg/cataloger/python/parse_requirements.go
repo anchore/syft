@@ -3,21 +3,21 @@ package python
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseRequirementsTxt
+var _ generic.Parser = parseRequirementsTxt
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	packages := make([]*pkg.Package, 0)
+func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
@@ -42,14 +42,14 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifac
 
 		// parse a new requirement
 		parts := strings.Split(line, "==")
+		if len(parts) < 2 {
+			// this should never happen, but just in case
+			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
+			continue
+		}
 		name := strings.TrimSpace(parts[0])
 		version := strings.TrimSpace(parts[1])
-		packages = append(packages, &pkg.Package{
-			Name:     name,
-			Version:  version,
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-		})
+		packages = append(packages, newPackageForIndex(name, version, reader.Location))
 	}
 
 	if err := scanner.Err(); err != nil {

@@ -18,19 +18,6 @@ func TestPackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "python",
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    PythonPkg,
-				Metadata: PythonPackageMetadata{
-					Name:    "name",
-					Version: "v0.1.0",
-				},
-			},
-			expected: "pkg:pypi/name@v0.1.0",
-		},
-		{
 			name: "gem",
 			pkg: Package{
 				Name:    "name",
@@ -140,6 +127,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(HackagePkg))
 	expectedTypes.Remove(string(BinaryPkg))
 	expectedTypes.Remove(string(PhpComposerPkg))
+	expectedTypes.Remove(string(PythonPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

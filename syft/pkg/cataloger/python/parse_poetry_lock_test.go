@@ -1,59 +1,54 @@
 package python
 
 import (
-	"os"
 	"testing"
 
-	"github.com/go-test/deep"
-
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePoetryLock(t *testing.T) {
-	expected := []*pkg.Package{
+	fixture := "test-fixtures/poetry/poetry.lock"
+	locations := source.NewLocationSet(source.NewLocation(fixture))
+	expectedPkgs := []pkg.Package{
 		{
-			Name:     "added-value",
-			Version:  "0.14.2",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-			Licenses: nil,
+			Name:      "added-value",
+			Version:   "0.14.2",
+			PURL:      "pkg:pypi/added-value@0.14.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 		},
 		{
-			Name:     "alabaster",
-			Version:  "0.7.12",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-			Licenses: nil,
+			Name:      "alabaster",
+			Version:   "0.7.12",
+			PURL:      "pkg:pypi/alabaster@0.7.12",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 		},
 		{
-			Name:     "appnope",
-			Version:  "0.1.0",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-			Licenses: nil,
+			Name:      "appnope",
+			Version:   "0.1.0",
+			PURL:      "pkg:pypi/appnope@0.1.0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 		},
 		{
-			Name:     "asciitree",
-			Version:  "0.3.3",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-			Licenses: nil,
+			Name:      "asciitree",
+			Version:   "0.3.3",
+			PURL:      "pkg:pypi/asciitree@0.3.3",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 		},
 	}
 
-	fixture, err := os.Open("test-fixtures/poetry/poetry.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
+	// TODO: relationships are not under test
+	var expectedRelationships []artifact.Relationship
 
-	// TODO: no relationships are under test yet
-	actual, _, err := parsePoetryLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Error(err)
-	}
-
-	differences := deep.Equal(expected, actual)
-	if differences != nil {
-		t.Errorf("returned package list differed from expectation: %+v", differences)
-	}
+	pkgtest.TestFileParser(t, fixture, parsePoetryLock, expectedPkgs, expectedRelationships)
 }

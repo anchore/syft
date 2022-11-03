@@ -3,13 +3,12 @@ package python
 import (
 	"testing"
 
-	"github.com/go-test/deep"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
 )
 
-func TestPythonPackageWheelCataloger(t *testing.T) {
+func Test_PackageCataloger(t *testing.T) {
 	tests := []struct {
 		name            string
 		fixtures        []string
@@ -20,6 +19,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			fixtures: []string{"test-fixtures/no-version-py3.8.egg-info"},
 			expectedPackage: pkg.Package{
 				Name:         "no-version",
+				PURL:         "pkg:pypi/no-version",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
 				FoundBy:      "python-package-cataloger",
@@ -40,6 +40,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:         "requests",
 				Version:      "2.22.0",
+				PURL:         "pkg:pypi/requests@2.22.0",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
 				Licenses:     []string{"Apache 2.0"},
@@ -76,6 +77,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:         "Pygments",
 				Version:      "2.6.1",
+				PURL:         "pkg:pypi/Pygments@2.6.1?vcs_url=git+https://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
 				Licenses:     []string{"BSD License"},
@@ -112,6 +114,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:         "Pygments",
 				Version:      "2.6.1",
+				PURL:         "pkg:pypi/Pygments@2.6.1",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
 				Licenses:     []string{"BSD License"},
@@ -142,6 +145,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:         "Pygments",
 				Version:      "2.6.1",
+				PURL:         "pkg:pypi/Pygments@2.6.1",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
 				Licenses:     []string{"BSD License"},
@@ -164,6 +168,7 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:         "requests",
 				Version:      "2.22.0",
+				PURL:         "pkg:pypi/requests@2.22.0",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
 				Licenses:     []string{"Apache 2.0"},
@@ -193,23 +198,15 @@ func TestPythonPackageWheelCataloger(t *testing.T) {
 
 			test.expectedPackage.Locations = source.NewLocationSet(locations...)
 
-			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
-			if err != nil {
-				t.Fatalf("failed to catalog python package: %+v", err)
-			}
-
-			if len(actual) != 1 {
-				t.Fatalf("unexpected number of packages: %d", len(actual))
-			}
-
-			for _, d := range deep.Equal(test.expectedPackage, actual[0]) {
-				t.Errorf("diff: %+v", d)
-			}
+			pkgtest.NewCatalogTester().
+				WithResolver(resolver).
+				Expects([]pkg.Package{test.expectedPackage}, nil).
+				TestCataloger(t, NewPythonPackageCataloger())
 		})
 	}
 }
 
-func TestIgnorePackage(t *testing.T) {
+func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 	tests := []struct {
 		MetadataFixture string
 	}{
