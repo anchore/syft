@@ -70,7 +70,9 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 			p.CPEs = append(p.CPEs, cpe.Generate(p)...)
 
 			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
-			p.PURL = pkg.URL(p, release)
+			if p.PURL == "" {
+				p.PURL = pkg.URL(p, release)
+			}
 
 			// if we were not able to identify the language we have an opportunity
 			// to try and get this value from the PURL. Worst case we assert that
