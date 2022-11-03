@@ -36,7 +36,7 @@ func parseNodeBinary(_ source.FileResolver, _ *generic.Environment, reader sourc
 	// TODO add node specific metadata to the packages to help with vulnerability matching
 	if p != nil {
 		p.Language = pkg.JavaScript
-        p.SetID()
+		p.SetID()
 		return []pkg.Package{*p}, nil, nil
 	}
 	return nil, nil, nil
