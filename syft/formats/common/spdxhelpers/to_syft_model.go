@@ -355,7 +355,6 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			ArchiveDigests: digests,
 			VirtualPath: p.PackageSourceInfo
 		}
-		
 	case pkg.GoModulePkg:
 		var h1Digest string
 		for _, value := range p.PackageChecksums {
