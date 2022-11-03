@@ -19,35 +19,7 @@
       "SPDXID": "SPDXRef-3d8071c3d70438ff",
       "name": "nashorn",
       "licenseConcluded": "NONE",
-      "checksums": [
-        {
-          "algorithm": "SHA1",
-          "checksumValue": "9e42986307c8341ff4c244668822615b5a909138"
-        }
-      ],
       "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:oracle-corporation:nashorn:1.8.0_312-8u312-b07\\~18.04-b07:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:oracle_corporation:nashorn:1.8.0_312-8u312-b07\\~18.04-b07:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:nashorn:nashorn:1.8.0_312-8u312-b07\\~18.04-b07:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "PACKAGE_MANAGER",
-          "referenceLocator": "pkg:maven/nashorn/nashorn@1.8.0_312-8u312-b07~18.04-b07",
-          "referenceType": "purl"
-        }
-      ],
       "filesAnalyzed": true,
       "licenseDeclared": "NONE",
       "sourceInfo": "acquired package info from installed java archive: /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext/nashorn.jar",
