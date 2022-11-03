@@ -353,7 +353,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 		}
 		return pkg.JavaMetadataType, pkg.JavaMetadata{
 			ArchiveDigests: digests,
-			VirtualPath: p.PackageSourceInfo,
+			VirtualPath:    p.PackageSourceInfo,
 		}
 	case pkg.GoModulePkg:
 		var h1Digest string
