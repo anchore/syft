@@ -45,9 +45,7 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
-
 	filesProcessed, packagesDiscovered := newMonitor()
-
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
 	for _, c := range catalogers {
@@ -88,7 +86,6 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 			} else {
 				allRelationships = append(allRelationships, owningRelationships...)
 			}
-			// add to catalog
 			catalog.Add(p)
 		}
 
