@@ -78,19 +78,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:cargo/name@v0.1.0",
 		},
 		{
-			name: "php-composer",
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    PhpComposerPkg,
-				Metadata: PhpComposerJSONMetadata{
-					Name:    "vendor/name",
-					Version: "2.0.1",
-				},
-			},
-			expected: "pkg:composer/vendor/name@2.0.1",
-		},
-		{
 			name: "java",
 			pkg: Package{
 				Name:    "bad-name",
@@ -152,6 +139,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(GoModulePkg))
 	expectedTypes.Remove(string(HackagePkg))
 	expectedTypes.Remove(string(BinaryPkg))
+	expectedTypes.Remove(string(PhpComposerPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
