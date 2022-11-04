@@ -83,10 +83,7 @@ func TestSPDXJSONDecoder(t *testing.T) {
 						switch p.Type {
 						case pkg.JavaPkg:
 							if p.Metadata.(pkg.JavaMetadata).VirtualPath != "acquired package info from installed java archive: /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext/nashorn.jar" {
-								assert.NoError(t, fmt.Errorf("Mismatch in jar for package: %s. "+
-									"Expected `acquired package info from installed java archive: "+
-									"/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext/nashorn.jar` and "+
-									"received VirtualPath: %s ", pkgName, p.Metadata.(pkg.JavaMetadata).VirtualPath))
+								assert.Equal(t, "acquired package info from installed java archive: /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext/nashorn.jar", p.Metadata.(pkg.JavaMetadata).VirtualPath)
 							}
 						}
 					}
