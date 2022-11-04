@@ -9,16 +9,19 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 )
 
 // parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
-func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, reader io.Reader) ([]pkg.Package, error) {
+func parseRpmDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	f, err := os.CreateTemp("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
+		return nil, nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
 	}
 
 	defer func() {
@@ -30,26 +33,40 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 
 	_, err = io.Copy(f, reader)
 	if err != nil {
-		return nil, fmt.Errorf("failed to copy rpmdb contents to temp file: %w", err)
+		return nil, nil, fmt.Errorf("failed to copy rpmdb contents to temp file: %w", err)
 	}
 
 	db, err := rpmdb.Open(f.Name())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	pkgList, err := db.ListPackages()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var allPkgs []pkg.Package
 
+	var distro *linux.Release
+	if env != nil {
+		distro = env.LinuxRelease
+	}
+
 	for _, entry := range pkgList {
-		p := newPkg(resolver, dbLocation, entry)
+		if entry == nil {
+			continue
+		}
+
+		p := newPackage(
+			reader.Location,
+			newMetadataFromEntry(*entry, extractRpmdbFileRecords(resolver, *entry)),
+			distro,
+		)
 
 		if !pkg.IsValid(&p) {
-			log.Warnf("ignoring invalid package found in RPM DB: location=%q name=%q version=%q", dbLocation, entry.Name, entry.Version)
+			log.WithFields("location", reader.RealPath, "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).
+				Warn("ignoring invalid package found in RPM DB")
 			continue
 		}
 
@@ -57,40 +74,7 @@ func parseRpmDB(resolver source.FilePathResolver, dbLocation source.Location, re
 		allPkgs = append(allPkgs, p)
 	}
 
-	return allPkgs, nil
-}
-
-func newPkg(resolver source.FilePathResolver, dbLocation source.Location, entry *rpmdb.PackageInfo) pkg.Package {
-	metadata := pkg.RpmMetadata{
-		Name:            entry.Name,
-		Version:         entry.Version,
-		Epoch:           entry.Epoch,
-		Arch:            entry.Arch,
-		Release:         entry.Release,
-		SourceRpm:       entry.SourceRpm,
-		Vendor:          entry.Vendor,
-		License:         entry.License,
-		Size:            entry.Size,
-		ModularityLabel: entry.Modularitylabel,
-		Files:           extractRpmdbFileRecords(resolver, entry),
-	}
-
-	p := pkg.Package{
-		Name:         entry.Name,
-		Version:      toELVersion(metadata),
-		Locations:    source.NewLocationSet(dbLocation),
-		FoundBy:      dbCatalogerName,
-		Type:         pkg.RpmPkg,
-		MetadataType: pkg.RpmMetadataType,
-		Metadata:     metadata,
-	}
-
-	if entry.License != "" {
-		p.Licenses = append(p.Licenses, entry.License)
-	}
-
-	p.SetID()
-	return p
+	return allPkgs, nil, nil
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].
@@ -106,7 +90,7 @@ func toELVersion(metadata pkg.RpmMetadata) string {
 	return fmt.Sprintf("%s-%s", metadata.Version, metadata.Release)
 }
 
-func extractRpmdbFileRecords(resolver source.FilePathResolver, entry *rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
+func extractRpmdbFileRecords(resolver source.FilePathResolver, entry rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
 	var records = make([]pkg.RpmdbFileRecord, 0)
 
 	files, err := entry.InstalledFiles()

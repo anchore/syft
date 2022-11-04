@@ -2,19 +2,36 @@ package rpm
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"testing"
 
-	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
 )
 
+var _ source.FileResolver = (*rpmdbTestFileResolverMock)(nil)
+
 type rpmdbTestFileResolverMock struct {
 	ignorePaths bool
+}
+
+func (r rpmdbTestFileResolverMock) FileContentsByLocation(location source.Location) (io.ReadCloser, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r rpmdbTestFileResolverMock) AllLocations() <-chan source.Location {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r rpmdbTestFileResolverMock) FileMetadataByLocation(location source.Location) (source.FileMetadata, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func newTestFileResolver(ignorePaths bool) *rpmdbTestFileResolverMock {
@@ -54,23 +71,21 @@ func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]source.Locatio
 }
 
 func TestParseRpmDB(t *testing.T) {
-	dbLocation := source.NewLocation("test-path")
-
 	tests := []struct {
 		fixture     string
-		expected    map[string]pkg.Package
+		expected    []pkg.Package
 		ignorePaths bool
 	}{
 		{
 			fixture: "test-fixtures/Packages",
 			// we only surface package paths for files that exist (here we DO NOT expect a path)
 			ignorePaths: true,
-			expected: map[string]pkg.Package{
-				"dive": {
+			expected: []pkg.Package{
+				{
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Locations:    source.NewLocationSet(dbLocation),
-					FoundBy:      dbCatalogerName,
+					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
+					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"MIT"},
@@ -93,12 +108,12 @@ func TestParseRpmDB(t *testing.T) {
 			fixture: "test-fixtures/Packages",
 			// we only surface package paths for files that exist (here we expect a path)
 			ignorePaths: false,
-			expected: map[string]pkg.Package{
-				"dive": {
+			expected: []pkg.Package{
+				{
 					Name:         "dive",
 					Version:      "0.9.2-1",
-					Locations:    source.NewLocationSet(dbLocation),
-					FoundBy:      dbCatalogerName,
+					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
+					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"MIT"},
@@ -132,34 +147,11 @@ func TestParseRpmDB(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			fixture, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatalf("failed to open fixture: %+v", err)
-			}
-
-			fileResolver := newTestFileResolver(test.ignorePaths)
-
-			actual, err := parseRpmDB(fileResolver, dbLocation, fixture)
-			if err != nil {
-				t.Fatalf("failed to parse rpmdb: %+v", err)
-			}
-
-			if len(actual) != len(test.expected) {
-				for _, a := range actual {
-					t.Log("   ", a)
-				}
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(test.expected))
-			}
-
-			for _, a := range actual {
-				e := test.expected[a.Name]
-				diffs := deep.Equal(a, e)
-				if len(diffs) > 0 {
-					for _, d := range diffs {
-						t.Errorf("diff: %+v", d)
-					}
-				}
-			}
+			pkgtest.NewCatalogTester().
+				WithResolver(newTestFileResolver(test.ignorePaths)).
+				FromFile(t, test.fixture).
+				Expects(test.expected, nil).
+				TestParser(t, parseRpmDB)
 		})
 	}
 

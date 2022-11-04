@@ -36,26 +36,6 @@ func TestPackageURL(t *testing.T) {
 			expected: "pkg:npm/name@v0.1.0",
 		},
 		{
-			name: "rpm",
-			distro: &linux.Release{
-				ID:        "centos",
-				VersionID: "7",
-			},
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    RpmPkg,
-				Metadata: RpmMetadata{
-					Name:    "name",
-					Version: "0.1.0",
-					Epoch:   intRef(2),
-					Arch:    "amd64",
-					Release: "3",
-				},
-			},
-			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64&epoch=2&distro=centos-7",
-		},
-		{
 			name: "cargo",
 			pkg: Package{
 				Name:    "name",
@@ -128,6 +108,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(BinaryPkg))
 	expectedTypes.Remove(string(PhpComposerPkg))
 	expectedTypes.Remove(string(PythonPkg))
+	expectedTypes.Remove(string(RpmPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
