@@ -1,6 +1,5 @@
 CHANGELOG.md
 /test/results
-/dist
 /snapshot
 .server/
 .vscode/
