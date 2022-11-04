@@ -28,24 +28,25 @@ can be extended to include specific package metadata struct shapes in the future
 // When a new package metadata definition is created it will need to be manually added here. The variable name does
 // not matter as long as it is exported.
 type artifactMetadataContainer struct {
-	Apk       pkg.ApkMetadata
-	Alpm      pkg.AlpmMetadata
-	Dpkg      pkg.DpkgMetadata
-	Gem       pkg.GemMetadata
-	Java      pkg.JavaMetadata
-	Npm       pkg.NpmPackageJSONMetadata
-	Python    pkg.PythonPackageMetadata
-	Rpm       pkg.RpmMetadata
-	Cargo     pkg.CargoPackageMetadata
-	Go        pkg.GolangBinMetadata
-	Php       pkg.PhpComposerJSONMetadata
-	Dart      pkg.DartPubMetadata
-	Dotnet    pkg.DotnetDepsMetadata
-	Portage   pkg.PortageMetadata
-	Conan     pkg.ConanMetadata
-	ConanLock pkg.ConanLockMetadata
-	KbPackage pkg.KbPackageMetadata
-	Hackage   pkg.HackageMetadata
+	Apk           pkg.ApkMetadata
+	Alpm          pkg.AlpmMetadata
+	Dpkg          pkg.DpkgMetadata
+	Gem           pkg.GemMetadata
+	Java          pkg.JavaMetadata
+	Npm           pkg.NpmPackageJSONMetadata
+	Python        pkg.PythonPackageMetadata
+	Rpm           pkg.RpmMetadata
+	Cargo         pkg.CargoPackageMetadata
+	Go            pkg.GolangBinMetadata
+	Php           pkg.PhpComposerJSONMetadata
+	Dart          pkg.DartPubMetadata
+	Dotnet        pkg.DotnetDepsMetadata
+	Portage       pkg.PortageMetadata
+	Conan         pkg.ConanMetadata
+	ConanLock     pkg.ConanLockMetadata
+	KbPackage     pkg.KbPackageMetadata
+	Hackage       pkg.HackageMetadata
+	SwiftCocopods pkg.CocoapodsMetadata
 }
 
 func main() {

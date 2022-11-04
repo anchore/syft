@@ -45,20 +45,6 @@ func TestPackageURL(t *testing.T) {
 
 			expected: "pkg:maven/g.id/a@v",
 		},
-		{
-			name: "cocoapods",
-			pkg: Package{
-				Name:     "GlossButtonNode",
-				Version:  "3.1.2",
-				Language: Swift,
-				Type:     CocoapodsPkg,
-				Metadata: CocoapodsMetadata{
-					Name:    "GlossButtonNode",
-					Version: "3.1.2",
-				},
-			},
-			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
-		},
 	}
 
 	var pkgTypes []string
@@ -85,6 +71,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(GemPkg))
 	expectedTypes.Remove(string(NpmPkg))
 	expectedTypes.Remove(string(RustPkg))
+	expectedTypes.Remove(string(CocoapodsPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
