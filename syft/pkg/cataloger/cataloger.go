@@ -98,7 +98,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		golang.NewGoModFileCataloger(),
 		rust.NewCargoLockCataloger(),
-		rust.NewRustAuditBinaryCataloger(),
+		rust.NewAuditBinaryCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
