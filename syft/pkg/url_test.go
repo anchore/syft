@@ -18,15 +18,6 @@ func TestPackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "cargo",
-			pkg: Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    RustPkg,
-			},
-			expected: "pkg:cargo/name@v0.1.0",
-		},
-		{
 			name: "java",
 			pkg: Package{
 				Name:    "bad-name",
@@ -93,6 +84,7 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(RpmPkg))
 	expectedTypes.Remove(string(GemPkg))
 	expectedTypes.Remove(string(NpmPkg))
+	expectedTypes.Remove(string(RustPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

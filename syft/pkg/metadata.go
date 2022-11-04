@@ -68,7 +68,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	DartPubMetadataType:          reflect.TypeOf(DartPubMetadata{}),
 	DotnetDepsMetadataType:       reflect.TypeOf(DotnetDepsMetadata{}),
 	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
-	RustCargoPackageMetadataType: reflect.TypeOf(CargoMetadata{}),
+	RustCargoPackageMetadataType: reflect.TypeOf(CargoPackageMetadata{}),
 	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),
 	GolangBinMetadataType:        reflect.TypeOf(GolangBinMetadata{}),
 	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
