@@ -9,36 +9,34 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parsePodfileLock
+var _ generic.Parser = parsePodfileLock
+
+type podfileLock struct {
+	Pods            []interface{}       `yaml:"PODS"`
+	Dependencies    []string            `yaml:"DEPENDENCIES"`
+	SpecRepos       map[string][]string `yaml:"SPEC REPOS"`
+	SpecChecksums   map[string]string   `yaml:"SPEC CHECKSUMS"`
+	PodfileChecksum string              `yaml:"PODFILE CHECKSUM"`
+	Cocopods        string              `yaml:"COCOAPODS"`
+}
 
 // parsePodfileLock is a parser function for Podfile.lock contents, returning all cocoapods pods discovered.
-func parsePodfileLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parsePodfileLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
 	}
-	var podfile map[string]interface{}
+	var podfile podfileLock
 	if err = yaml.Unmarshal(bytes, &podfile); err != nil {
 		return nil, nil, fmt.Errorf("unable to parse yaml: %w", err)
 	}
 
-	c, exists := podfile["SPEC CHECKSUMS"]
-	if !exists {
-		return nil, nil, fmt.Errorf("malformed podfile.lock: missing checksums")
-	}
-	checksums := c.(map[string]interface{})
-	p, exists := podfile["PODS"]
-	if !exists {
-		return nil, nil, fmt.Errorf("malformed podfile.lock: missing checksums")
-	}
-	pods := p.([]interface{})
-
-	pkgs := []*pkg.Package{}
-	for _, podInterface := range pods {
+	var pkgs []pkg.Package
+	for _, podInterface := range podfile.Pods {
 		var podBlob string
 		switch v := podInterface.(type) {
 		case map[string]interface{}:
@@ -54,22 +52,14 @@ func parsePodfileLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 		podName := splits[0]
 		podVersion := strings.TrimSuffix(strings.TrimPrefix(splits[1], "("), ")")
 		podRootPkg := strings.Split(podName, "/")[0]
-		pkgHash, exists := checksums[podRootPkg]
+
+		var pkgHash string
+		pkgHash, exists := podfile.SpecChecksums[podRootPkg]
 		if !exists {
 			return nil, nil, fmt.Errorf("malformed podfile.lock: incomplete checksums")
 		}
-		pkgs = append(pkgs, &pkg.Package{
-			Name:         podName,
-			Version:      podVersion,
-			Type:         pkg.CocoapodsPkg,
-			Language:     pkg.Swift,
-			MetadataType: pkg.CocoapodsMetadataType,
-			Metadata: pkg.CocoapodsMetadata{
-				Name:    podName,
-				Version: podVersion,
-				PkgHash: pkgHash.(string),
-			},
-		})
+
+		pkgs = append(pkgs, newPackage(podName, podVersion, pkgHash, reader.Location))
 	}
 
 	return pkgs, nil, nil

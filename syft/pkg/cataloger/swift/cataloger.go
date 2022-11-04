@@ -4,14 +4,11 @@ Package swift provides a concrete Cataloger implementation for Podfile.lock file
 package swift
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewCocoapodsCataloger returns a new Swift Cocoapods lock file cataloger object.
-func NewCocoapodsCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/Podfile.lock": parsePodfileLock,
-	}
-
-	return common.NewGenericCataloger(nil, globParsers, "cocoapods-cataloger")
+func NewCocoapodsCataloger() *generic.Cataloger {
+	return generic.NewCataloger("cocoapods-cataloger").
+		WithParserByGlobs(parsePodfileLock, "**/Podfile.lock")
 }
