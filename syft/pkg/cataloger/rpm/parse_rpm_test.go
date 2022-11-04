@@ -3,26 +3,25 @@ package rpm
 import (
 	"testing"
 
-	"github.com/go-test/deep"
-	"github.com/stretchr/testify/require"
-
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseRpmFiles(t *testing.T) {
 	tests := []struct {
 		fixture  string
-		expected map[string]pkg.Package
+		expected []pkg.Package
 	}{
 		{
 			fixture: "test-fixtures/rpms",
-			expected: map[string]pkg.Package{
-				"abc": {
+			expected: []pkg.Package{
+				{
 					Name:         "abc",
-					Version:      "1.01",
-					Locations:    source.NewLocationSet(),
+					Version:      "0:1.01-9.hg20160905.el7",
+					PURL:         "pkg:rpm/abc@1.01-9.hg20160905.el7?arch=x86_64&epoch=0&upstream=abc-1.01-9.hg20160905.el7.src.rpm",
+					Locations:    source.NewLocationSet(source.NewLocation("abc-1.01-9.hg20160905.el7.x86_64.rpm")),
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
@@ -46,10 +45,11 @@ func TestParseRpmFiles(t *testing.T) {
 						},
 					},
 				},
-				"zork": {
+				{
 					Name:         "zork",
-					Version:      "1.0.3",
-					Locations:    source.NewLocationSet(),
+					Version:      "0:1.0.3-1.el7",
+					PURL:         "pkg:rpm/zork@1.0.3-1.el7?arch=x86_64&epoch=0&upstream=zork-1.0.3-1.el7.src.rpm",
+					Locations:    source.NewLocationSet(source.NewLocation("zork-1.0.3-1.el7.x86_64.rpm")),
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
@@ -86,24 +86,10 @@ func TestParseRpmFiles(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			s, err := source.NewFromDirectory(test.fixture)
-			require.NoError(t, err)
-
-			r, err := s.FileResolver(source.SquashedScope)
-			require.NoError(t, err)
-
-			packages, _, err := NewFileCataloger().Catalog(r)
-			require.NoError(t, err)
-
-			for _, a := range packages {
-				e := test.expected[a.Name]
-				diffs := deep.Equal(e, a)
-				if len(diffs) > 0 {
-					for _, d := range diffs {
-						t.Errorf("diff: %+v", d)
-					}
-				}
-			}
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				Expects(test.expected, nil).
+				TestCataloger(t, NewFileCataloger())
 		})
 	}
 }

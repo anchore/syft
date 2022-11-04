@@ -1,15 +1,11 @@
 package pkg
 
 import (
-	"fmt"
 	"sort"
-	"strconv"
 
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/linux"
 )
 
 // Packages is the legacy Berkely db based format
@@ -20,10 +16,7 @@ const RpmDBGlob = "**/var/lib/rpm/{Packages,Packages.db,rpmdb.sqlite}"
 // Used in CBL-Mariner distroless images
 const RpmManifestGlob = "**/var/lib/rpmmanifest/container-manifest-2"
 
-var (
-	_ FileOwner     = (*RpmMetadata)(nil)
-	_ urlIdentifier = (*RpmMetadata)(nil)
-)
+var _ FileOwner = (*RpmMetadata)(nil)
 
 // RpmMetadata represents all captured data for a RPM DB package entry.
 type RpmMetadata struct {
@@ -53,40 +46,6 @@ type RpmdbFileRecord struct {
 
 // RpmdbFileMode is the raw file mode for a single file. This can be interpreted as the linux stat.h mode (see https://pubs.opengroup.org/onlinepubs/007908799/xsh/sysstat.h.html)
 type RpmdbFileMode uint16
-
-// PackageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
-func (m RpmMetadata) PackageURL(distro *linux.Release) string {
-	var namespace string
-	if distro != nil {
-		namespace = distro.ID
-	}
-
-	qualifiers := map[string]string{
-		PURLQualifierArch: m.Arch,
-	}
-
-	if m.Epoch != nil {
-		qualifiers[PURLQualifierEpoch] = strconv.Itoa(*m.Epoch)
-	}
-
-	if m.SourceRpm != "" {
-		qualifiers[PURLQualifierUpstream] = m.SourceRpm
-	}
-
-	return packageurl.NewPackageURL(
-		packageurl.TypeRPM,
-		namespace,
-		m.Name,
-		// for purl the epoch is a qualifier, not part of the version
-		// see https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst under the RPM section
-		fmt.Sprintf("%s-%s", m.Version, m.Release),
-		PURLQualifiers(
-			qualifiers,
-			distro,
-		),
-		"",
-	).ToString()
-}
 
 func (m RpmMetadata) OwnedFiles() (result []string) {
 	s := strset.New()
