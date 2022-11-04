@@ -18,24 +18,6 @@ func TestPackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "gem",
-			pkg: Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    GemPkg,
-			},
-			expected: "pkg:gem/name@v0.1.0",
-		},
-		{
-			name: "npm",
-			pkg: Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    NpmPkg,
-			},
-			expected: "pkg:npm/name@v0.1.0",
-		},
-		{
 			name: "cargo",
 			pkg: Package{
 				Name:    "name",
@@ -109,6 +91,8 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(PhpComposerPkg))
 	expectedTypes.Remove(string(PythonPkg))
 	expectedTypes.Remove(string(RpmPkg))
+	expectedTypes.Remove(string(GemPkg))
+	expectedTypes.Remove(string(NpmPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
