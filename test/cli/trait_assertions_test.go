@@ -46,7 +46,7 @@ func assertTableReport(tb testing.TB, stdout, _ string, _ int) {
 	}
 }
 
-//func assertScope(scope source.Scope) traitAssertion {
+// func assertScope(scope source.Scope) traitAssertion {
 //	return func(tb testing.TB, stdout, stderr string, rc int) {
 //		tb.Helper()
 //		// we can only verify source with the json report
@@ -115,7 +115,6 @@ func assertPackageCount(length uint) traitAssertion {
 
 		if uint(len(data.Artifacts)) != length {
 			tb.Errorf("expected package count of %d, but found %d", length, len(data.Artifacts))
-
 		}
 	}
 }

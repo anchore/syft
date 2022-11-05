@@ -90,5 +90,4 @@ func TestParseRpmManifest(t *testing.T) {
 		FromFile(t, fixture).
 		Expects(expected, nil).
 		TestParser(t, parseRpmManifest)
-
 }

@@ -202,9 +202,7 @@ func TestNewFromDirectory(t *testing.T) {
 			}
 			if len(refs) != test.expectedRefs {
 				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expectedRefs)
-
 			}
-
 		})
 	}
 }
@@ -240,7 +238,6 @@ func TestNewFromFile(t *testing.T) {
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			require.NoError(t, err)
 			assert.Len(t, refs, test.expRefs)
-
 		})
 	}
 }
@@ -278,7 +275,6 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			require.NoError(t, err)
 			assert.Len(t, refs, test.expRefs)
-
 		})
 	}
 }
@@ -338,9 +334,7 @@ func TestNewFromDirectoryShared(t *testing.T) {
 			}
 			if len(refs) != test.expRefs {
 				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expRefs)
-
 			}
-
 		})
 	}
 }
@@ -376,7 +370,6 @@ func TestFilesByPathDoesNotExist(t *testing.T) {
 			if len(refs) != 0 {
 				t.Errorf("didnt' expect a ref, but got: %d", len(refs))
 			}
-
 		})
 	}
 }
@@ -424,7 +417,6 @@ func TestFilesByGlob(t *testing.T) {
 			if len(contents) != test.expected {
 				t.Errorf("unexpected number of files found by glob (%s): %d != %d", test.glob, len(contents), test.expected)
 			}
-
 		})
 	}
 }
@@ -748,7 +740,6 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
 			t.Fatalf("unable to get generate fixture script result: %+v", err)
 		}
 	}
-
 }
 
 // setupArchiveTest encapsulates common test setup work for tar file tests. It returns a cleanup function,

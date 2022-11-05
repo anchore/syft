@@ -51,13 +51,11 @@ func TestNewCPE(t *testing.T) {
 			if CPEString(actual) != CPEString(test.expected) {
 				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", CPEString(test.expected), CPEString(actual))
 			}
-
 		})
 	}
 }
 
 func Test_normalizeCpeField(t *testing.T) {
-
 	tests := []struct {
 		field    string
 		expected string

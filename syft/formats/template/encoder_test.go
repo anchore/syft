@@ -20,7 +20,6 @@ func TestFormatWithOption(t *testing.T) {
 		testutils.DirectoryInput(t),
 		*updateTmpl,
 	)
-
 }
 
 func TestFormatWithoutOptions(t *testing.T) {

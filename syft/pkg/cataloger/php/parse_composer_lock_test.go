@@ -104,7 +104,7 @@ func TestParseComposerFileLock(t *testing.T) {
 						Email: "olivier.lechevalier@gmail.com",
 					},
 				},
-				Description: "Adapter to provide ext-mongo interface on top of mongo-php-libary",
+				Description: "Adapter to provide ext-mongo interface on top of mongo-php-library",
 				Keywords: []string{
 					"database",
 					"mongodb",

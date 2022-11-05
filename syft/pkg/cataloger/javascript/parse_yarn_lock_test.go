@@ -92,7 +92,6 @@ func TestParseYarnBerry(t *testing.T) {
 	}
 
 	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
-
 }
 
 func TestParseYarnLock(t *testing.T) {
@@ -178,7 +177,6 @@ func TestParseYarnLock(t *testing.T) {
 	}
 
 	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
-
 }
 
 func TestParseYarnFindPackageNames(t *testing.T) {

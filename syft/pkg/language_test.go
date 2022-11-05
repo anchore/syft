@@ -8,7 +8,6 @@ import (
 )
 
 func TestLanguageFromPURL(t *testing.T) {
-
 	tests := []struct {
 		purl string
 		want Language
@@ -83,7 +82,6 @@ func TestLanguageFromPURL(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, expectedLanguages.List(), languages, "missing one or more languages to test against (maybe a package type was added?)")
-
 }
 
 func TestLanguageByName(t *testing.T) {

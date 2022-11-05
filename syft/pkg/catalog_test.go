@@ -17,7 +17,6 @@ type expectedIndexes struct {
 }
 
 func TestCatalogAddPopulatesIndex(t *testing.T) {
-
 	var pkgs = []Package{
 		{
 			Locations: source.NewLocationSet(
@@ -168,7 +167,6 @@ func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestCatalog_MergeRecords(t *testing.T) {

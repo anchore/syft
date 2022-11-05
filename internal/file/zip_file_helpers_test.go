@@ -57,7 +57,6 @@ func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string
 			t.Fatalf("unable to get generate fixture script result: %+v", err)
 		}
 	}
-
 }
 
 func assertNoError(t testing.TB, fn func() error) func() {

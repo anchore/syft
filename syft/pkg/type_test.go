@@ -8,7 +8,6 @@ import (
 )
 
 func TestTypeFromPURL(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		purl     string
@@ -107,5 +106,4 @@ func TestTypeFromPURL(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes, "missing one or more package types to test against (maybe a package type was added?)")
-
 }

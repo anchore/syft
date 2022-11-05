@@ -106,7 +106,6 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			c, err := NewClassificationCataloger(DefaultClassifiers)
 			test.expectedErr(t, err)
 
@@ -130,7 +129,6 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			if !ok {
 				t.Fatalf("could not find test location=%q", test.location)
 			}
-
 		})
 	}
 }
@@ -162,7 +160,6 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			c, err := NewClassificationCataloger(DefaultClassifiers)
 			test.expectedErr(t, err)
 
@@ -187,13 +184,11 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 			if !ok {
 				t.Fatalf("could not find test location=%q", test.location)
 			}
-
 		})
 	}
 }
 
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
-
 	c, err := NewClassificationCataloger(DefaultClassifiers)
 	assert.NoError(t, err)
 
@@ -206,5 +201,4 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	actualResults, err := c.Catalog(resolver)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(actualResults))
-
 }

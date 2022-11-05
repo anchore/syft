@@ -199,5 +199,4 @@ func TestParseCargoLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
-
 }

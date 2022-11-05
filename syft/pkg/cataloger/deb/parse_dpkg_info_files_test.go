@@ -50,7 +50,6 @@ func TestMD5SumInfoParsing(t *testing.T) {
 			if diff := cmp.Diff(test.expected, actual); diff != "" {
 				t.Errorf("unexpected md5 files (-want +got):\n%s", diff)
 			}
-
 		})
 	}
 }
@@ -84,7 +83,6 @@ func TestConffileInfoParsing(t *testing.T) {
 			if diff := cmp.Diff(test.expected, actual); diff != "" {
 				t.Errorf("unexpected md5 files (-want +got):\n%s", diff)
 			}
-
 		})
 	}
 }

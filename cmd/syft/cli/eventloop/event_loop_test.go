@@ -45,7 +45,6 @@ func (u *uiMock) Teardown(_ bool) error {
 
 func Test_EventLoop_gracefulExit(t *testing.T) {
 	test := func(t *testing.T) {
-
 		testBus := partybus.NewBus()
 		subscription := testBus.Subscribe()
 		t.Cleanup(testBus.Close)
@@ -112,7 +111,6 @@ func Test_EventLoop_gracefulExit(t *testing.T) {
 
 func Test_EventLoop_workerError(t *testing.T) {
 	test := func(t *testing.T) {
-
 		testBus := partybus.NewBus()
 		subscription := testBus.Subscribe()
 		t.Cleanup(testBus.Close)
@@ -177,7 +175,6 @@ func Test_EventLoop_workerError(t *testing.T) {
 
 func Test_EventLoop_unsubscribeError(t *testing.T) {
 	test := func(t *testing.T) {
-
 		testBus := partybus.NewBus()
 		subscription := testBus.Subscribe()
 		t.Cleanup(testBus.Close)
@@ -246,14 +243,13 @@ func Test_EventLoop_unsubscribeError(t *testing.T) {
 
 func Test_EventLoop_handlerError(t *testing.T) {
 	test := func(t *testing.T) {
-
 		testBus := partybus.NewBus()
 		subscription := testBus.Subscribe()
 		t.Cleanup(testBus.Close)
 
 		finalEvent := partybus.Event{
 			Type:  event.Exit,
-			Error: fmt.Errorf("an exit error occured"),
+			Error: fmt.Errorf("an exit error occurred"),
 		}
 
 		worker := func() <-chan error {
@@ -318,7 +314,6 @@ func Test_EventLoop_handlerError(t *testing.T) {
 
 func Test_EventLoop_signalsStopExecution(t *testing.T) {
 	test := func(t *testing.T) {
-
 		testBus := partybus.NewBus()
 		subscription := testBus.Subscribe()
 		t.Cleanup(testBus.Close)
@@ -371,7 +366,6 @@ func Test_EventLoop_signalsStopExecution(t *testing.T) {
 
 func Test_EventLoop_uiTeardownError(t *testing.T) {
 	test := func(t *testing.T) {
-
 		testBus := partybus.NewBus()
 		subscription := testBus.Subscribe()
 		t.Cleanup(testBus.Close)

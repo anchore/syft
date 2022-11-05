@@ -118,5 +118,4 @@ func Test_JavascriptCataloger(t *testing.T) {
 		FromDirectory(t, "test-fixtures/pkg-lock").
 		Expects(expectedPkgs, nil).
 		TestCataloger(t, NewJavascriptLockCataloger())
-
 }

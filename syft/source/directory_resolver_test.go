@@ -260,7 +260,6 @@ func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		fixture string

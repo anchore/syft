@@ -70,7 +70,6 @@ func TestFormats_EmptyInput(t *testing.T) {
 }
 
 func TestFormatByName(t *testing.T) {
-
 	tests := []struct {
 		name string
 		want sbom.FormatID

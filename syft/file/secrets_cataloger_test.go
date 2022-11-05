@@ -417,7 +417,6 @@ j4f668YfhUbKdRF6S6734856
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-
 			c, err := NewSecretsCataloger(regexObjs, true, 10*file.MB)
 			if err != nil {
 				t.Fatalf("could not create cataloger: %+v", err)

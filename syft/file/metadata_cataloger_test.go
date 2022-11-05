@@ -138,8 +138,6 @@ func TestFileMetadataCataloger(t *testing.T) {
 			l := source.NewLocationFromImage(test.path, *ref, img)
 
 			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
-
 		})
 	}
-
 }

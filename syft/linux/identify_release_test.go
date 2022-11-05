@@ -337,7 +337,6 @@ func TestIdentifyRelease(t *testing.T) {
 }
 
 func TestParseOsRelease(t *testing.T) {
-
 	tests := []struct {
 		fixture string
 		release *Release
@@ -441,7 +440,6 @@ func TestParseOsRelease(t *testing.T) {
 					release)
 			})
 	}
-
 }
 
 func TestParseSystemReleaseCPE(t *testing.T) {

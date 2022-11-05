@@ -45,5 +45,4 @@ func TestRemoveDuplicateRows(t *testing.T) {
 			t.Errorf("   diff: %+v", d)
 		}
 	}
-
 }

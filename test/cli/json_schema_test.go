@@ -16,7 +16,6 @@ import (
 const jsonSchemaPath = "schema/json"
 
 func TestJSONSchema(t *testing.T) {
-
 	imageFixture := func(t *testing.T) string {
 		fixtureImageName := "image-pkg-coverage"
 		imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)

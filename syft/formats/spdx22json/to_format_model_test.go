@@ -16,7 +16,6 @@ import (
 )
 
 func Test_toFileTypes(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		metadata source.FileMetadata
@@ -96,7 +95,6 @@ func Test_toFileTypes(t *testing.T) {
 }
 
 func Test_lookupRelationship(t *testing.T) {
-
 	tests := []struct {
 		input   artifact.RelationshipType
 		exists  bool
@@ -170,7 +168,6 @@ func Test_toFileChecksums(t *testing.T) {
 }
 
 func Test_fileIDsForPackage(t *testing.T) {
-
 	p := pkg.Package{
 		Name: "bogus",
 	}

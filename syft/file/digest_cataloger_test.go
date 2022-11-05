@@ -49,7 +49,6 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 }
 
 func TestDigestsCataloger(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		digests  []crypto.Hash
@@ -158,7 +157,6 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 				if test.expected != "" {
 					t.Fatalf("no digest found, but expected one")
 				}
-
 			} else {
 				assert.Equal(t, actual[l.Coordinates][0].Value, test.expected, "mismatched digests")
 			}

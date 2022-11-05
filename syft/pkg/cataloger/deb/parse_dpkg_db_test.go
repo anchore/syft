@@ -257,7 +257,6 @@ func TestSourceVersionExtract(t *testing.T) {
 			if version != test.expected[1] {
 				t.Errorf("mismatch version for %q : %q!=%q", test.input, version, test.expected[1])
 			}
-
 		})
 	}
 }

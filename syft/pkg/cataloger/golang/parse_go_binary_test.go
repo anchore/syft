@@ -115,7 +115,6 @@ func Test_getGOARCHFromBin(t *testing.T) {
 		require.NoError(t, err, "test name: %s", tt.name)
 		assert.Equal(t, tt.expected, arch)
 	}
-
 }
 
 func TestBuildGoPkgInfo(t *testing.T) {

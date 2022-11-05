@@ -14,7 +14,6 @@ import (
 var updateSpdxTagValue = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv encoders")
 
 func TestSPDXTagValueDirectoryEncoder(t *testing.T) {
-
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		testutils.DirectoryInput(t),

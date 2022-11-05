@@ -110,22 +110,22 @@ func TestParseJar(t *testing.T) {
 								"Implementation-Title":   "Example Jenkins Plugin",
 								"Implementation-Version": "1.0-SNAPSHOT",
 								// extra fields...
-								//"Archiver-Version":    "Plexus Archiver",
+								// "Archiver-Version":    "Plexus Archiver",
 								"Plugin-License-Url":  "https://opensource.org/licenses/MIT",
 								"Plugin-License-Name": "MIT License",
 								"Created-By":          "Maven Archiver 3.6.0",
-								//"Built-By":            "?",
-								//"Build-Jdk":            "14.0.1",
+								// "Built-By":            "?",
+								// "Build-Jdk":            "14.0.1",
 								"Build-Jdk-Spec":  "18",
 								"Jenkins-Version": "2.204",
-								//"Minimum-Java-Version": "1.8",
+								// "Minimum-Java-Version": "1.8",
 								"Plugin-Developers": "",
 								"Plugin-ScmUrl":     "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin",
-								//"Extension-Name":      "example-jenkins-plugin",
+								// "Extension-Name":      "example-jenkins-plugin",
 								"Short-Name":          "example-jenkins-plugin",
 								"Group-Id":            "io.jenkins.plugins",
 								"Plugin-Dependencies": "structs:1.20",
-								//"Plugin-Version": "1.0-SNAPSHOT (private-07/09/2020 13:30-?)",
+								// "Plugin-Version": "1.0-SNAPSHOT (private-07/09/2020 13:30-?)",
 								"Hudson-Version": "2.204",
 								"Long-Name":      "Example Jenkins Plugin",
 							},
@@ -184,8 +184,8 @@ func TestParseJar(t *testing.T) {
 								// extra fields...
 								"Archiver-Version": "Plexus Archiver",
 								"Created-By":       "Apache Maven 3.8.6",
-								//"Built-By":         "?",
-								//"Build-Jdk":        "14.0.1",
+								// "Built-By":         "?",
+								// "Build-Jdk":        "14.0.1",
 								"Main-Class": "hello.HelloWorld",
 							},
 						},
@@ -234,7 +234,6 @@ func TestParseJar(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(path.Base(test.fixture), func(t *testing.T) {
-
 			generateJavaBuildFixture(t, test.fixture)
 
 			fixture, err := os.Open(test.fixture)
@@ -508,7 +507,6 @@ func TestParseNestedJar(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-
 			generateJavaBuildFixture(t, test.fixture)
 
 			fixture, err := os.Open(test.fixture)

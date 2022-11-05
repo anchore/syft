@@ -630,7 +630,6 @@ func TestSinglePackageDetails(t *testing.T) {
 }
 
 func TestMultiplePackages(t *testing.T) {
-
 	fixture := "test-fixtures/multiple"
 	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
 	expected := []pkg.Package{
@@ -755,7 +754,6 @@ func TestMultiplePackages(t *testing.T) {
 	}}
 
 	pkgtest.TestFileParserWithEnv(t, fixture, parseApkDB, &env, expected, expectedRelationships)
-
 }
 
 func Test_processChecksum(t *testing.T) {

@@ -77,12 +77,12 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			hasPath := resolver.HasPath(c.linkPath)
 			if !c.forcePositiveHasPath {
 				if c.resolvePath != "" && !hasPath {
-					t.Errorf("expected HasPath() to indicate existance, but did not")
+					t.Errorf("expected HasPath() to indicate existence, but did not")
 				} else if c.resolvePath == "" && hasPath {
-					t.Errorf("expeced HasPath() to NOT indicate existance, but does")
+					t.Errorf("expected HasPath() to NOT indicate existence, but does")
 				}
 			} else if !hasPath {
-				t.Errorf("expected HasPath() to indicate existance, but did not (force path)")
+				t.Errorf("expected HasPath() to indicate existence, but did not (force path)")
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)
@@ -232,7 +232,6 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 }
 
 func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
-
 	tests := []struct {
 		fixtureName   string
 		mimeType      string
@@ -289,11 +288,9 @@ func Test_imageSquashResolver_hasFilesystemIDInLocation(t *testing.T) {
 	for _, location := range locations {
 		assert.NotEmpty(t, location.FileSystemID)
 	}
-
 }
 
 func TestSquashImageResolver_FilesContents(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		fixture  string
@@ -332,7 +329,6 @@ func TestSquashImageResolver_FilesContents(t *testing.T) {
 			assert.Len(t, refs, len(test.contents))
 
 			for idx, loc := range refs {
-
 				reader, err := resolver.FileContentsByLocation(loc)
 				require.NoError(t, err)
 
@@ -472,7 +468,6 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := newImageSquashResolver(img)
@@ -496,5 +491,4 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			assert.Equal(t, expectedMap, actualMap)
 		})
 	}
-
 }

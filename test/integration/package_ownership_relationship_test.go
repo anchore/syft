@@ -11,7 +11,6 @@ import (
 )
 
 func TestPackageOwnershipRelationships(t *testing.T) {
-
 	// ensure that the json encoder is applying artifact ownership with an image that has expected ownership relationships
 	tests := []struct {
 		fixture string
@@ -40,8 +39,6 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 			if len(doc.ArtifactRelationships) == 0 {
 				t.Errorf("expected to find relationships between packages but found none")
 			}
-
 		})
 	}
-
 }

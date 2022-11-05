@@ -87,7 +87,6 @@ func TestParseInstalledFiles(t *testing.T) {
 			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
 				t.Errorf("diff: %+v", d)
 			}
-
 		})
 	}
 }

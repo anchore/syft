@@ -82,7 +82,6 @@ func TestPackageDeduplication(t *testing.T) {
 					assert.Len(t, p.Locations.CoordinateSet().Paths(), 1)
 				}
 			}
-
 		})
 	}
 }

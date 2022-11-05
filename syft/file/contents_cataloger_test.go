@@ -74,7 +74,6 @@ func TestContentsCataloger(t *testing.T) {
 			actual, err := c.Catalog(resolver)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, actual, "mismatched contents")
-
 		})
 	}
 }

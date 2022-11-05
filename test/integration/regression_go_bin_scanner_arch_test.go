@@ -30,7 +30,6 @@ func TestRegressionGoArchDiscovery(t *testing.T) {
 			case strings.Contains(l.RealPath, "macos"):
 				actualMACOS++
 			default:
-
 			}
 		}
 	}

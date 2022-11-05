@@ -10,7 +10,6 @@ import (
 )
 
 func TestParsePipFileLock(t *testing.T) {
-
 	fixture := "test-fixtures/pipfile-lock/Pipfile.lock"
 	locations := source.NewLocationSet(source.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{

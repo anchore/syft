@@ -9,7 +9,6 @@ import (
 )
 
 func TestNewAuditBinaryCataloger(t *testing.T) {
-
 	expectedPkgs := []pkg.Package{
 		{
 			Name:         "auditable",

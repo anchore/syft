@@ -26,7 +26,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 					regexp.MustCompile(".*/version.txt"),
 				},
 				EvidencePatterns: []*regexp.Regexp{
-					regexp.MustCompile(`(?m)my-verison:(?P<version>[0-9.]+)`),
+					regexp.MustCompile(`(?m)my-version:(?P<version>[0-9.]+)`),
 				},
 				CPEs: []pkg.CPE{},
 			},
@@ -41,7 +41,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 					regexp.MustCompile(".*/version.txt"),
 				},
 				EvidencePatterns: []*regexp.Regexp{
-					regexp.MustCompile(`(?m)my-verison:(?P<version>[0-9.]+)`),
+					regexp.MustCompile(`(?m)my-version:(?P<version>[0-9.]+)`),
 				},
 				CPEs: []pkg.CPE{
 					pkg.MustCPE("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
@@ -60,7 +60,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 					regexp.MustCompile(".*/version.txt"),
 				},
 				EvidencePatterns: []*regexp.Regexp{
-					regexp.MustCompile(`(?m)my-verison:(?P<version>[0-9.]+)`),
+					regexp.MustCompile(`(?m)my-version:(?P<version>[0-9.]+)`),
 				},
 				CPEs: []pkg.CPE{
 					pkg.MustCPE("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),

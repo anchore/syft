@@ -281,7 +281,6 @@ func Test_cpeFieldCandidateSet_uniqueValues(t *testing.T) {
 	)
 
 	assert.ElementsMatch(t, []string{"1", "2", "3"}, set.uniqueValues())
-
 }
 
 func Test_cpeFieldCandidateSet_removeByValue(t *testing.T) {

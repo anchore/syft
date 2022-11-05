@@ -15,7 +15,6 @@ import (
 const spdxJsonSchemaPath = "schema/spdx-json"
 
 func TestSPDXJSONSchema(t *testing.T) {
-
 	imageFixture := func(t *testing.T) string {
 		fixtureImageName := "image-pkg-coverage"
 		imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)

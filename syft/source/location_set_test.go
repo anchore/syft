@@ -10,7 +10,6 @@ import (
 )
 
 func TestLocationSet(t *testing.T) {
-
 	etcHostsLinkVar := Location{
 		Coordinates: Coordinates{
 			RealPath:     "/etc/hosts",

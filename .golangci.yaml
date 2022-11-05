@@ -1,58 +1,32 @@
-# TODO: enable this when we have coverage on docstring comments
-#issues:
-#  # The list of ids of default excludes to include or disable.
-#  include:
-#    - EXC0002 # disable excluding of issues about comments from golint
-
 linters:
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: true
   enable:
     - asciicheck
-    - bodyclose
-    - depguard
-    - dogsled
-    - dupl
-    - errcheck
-    - exportloopref
-    - funlen
-    - gocognit
-    - goconst
-    - gocritic
-    - gocyclo
-    - gofmt
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - govet
-    - ineffassign
-    - misspell
-    - nakedret
-    - nolintlint
-    - revive
-    - staticcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
     - unused
+    - depguard
+    - errcheck
+    - errorlint
+    - gofmt
+    - gosec
+    - gocritic
+    - importas
+#   - prealloc
+    - revive
+    - stylecheck
+    - unconvert
+    - misspell
+    - tparallel
+    - unparam
     - whitespace
-
-# do not enable...
-#    - gochecknoglobals
-#    - gochecknoinits    # this is too aggressive
-#    - rowserrcheck disabled per generics https://github.com/golangci/golangci-lint/issues/2649
-#    - godot
-#    - godox
-#    - goerr113
-#    - goimports   # we're using gosimports now instead to account for extra whitespaces (see https://github.com/golang/go/issues/20818)
-#    - golint      # deprecated
-#    - gomnd       # this is too aggressive
-#    - interfacer  # this is a good idea, but is no longer supported and is prone to false positives
-#    - lll         # without a way to specify per-line exception cases, this is not usable
-#    - maligned    # this is an excellent linter, but tricky to optimize and we are not sensitive to memory layout optimizations
-#    - nestif
-#    - prealloc    # following this rule isn't consistently a good idea, as it sometimes forces unnecessary allocations that result in less idiomatic code
-#    - scopelint   # deprecated
-#    - testpackage
-#    - wsl         # this doens't have an auto-fixer yet and is pretty noisy (https://github.com/bombsimon/wsl/issues/90)
+output:
+  uniq-by-line: false
+issues:
+  exclude-rules:
+  - path: _test\.go
+    linters:
+    - errcheck
+    - gosec
+  max-issues-per-linter: 0
+  max-same-issues: 0
+run:
+  issues-exit-code: 1
+  timeout: 10m

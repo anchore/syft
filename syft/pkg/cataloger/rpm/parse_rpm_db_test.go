@@ -20,17 +20,17 @@ type rpmdbTestFileResolverMock struct {
 }
 
 func (r rpmdbTestFileResolverMock) FileContentsByLocation(location source.Location) (io.ReadCloser, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (r rpmdbTestFileResolverMock) AllLocations() <-chan source.Location {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (r rpmdbTestFileResolverMock) FileMetadataByLocation(location source.Location) (source.FileMetadata, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -154,7 +154,6 @@ func TestParseRpmDB(t *testing.T) {
 				TestParser(t, parseRpmDB)
 		})
 	}
-
 }
 
 func TestToElVersion(t *testing.T) {

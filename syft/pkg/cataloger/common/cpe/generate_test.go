@@ -883,11 +883,11 @@ func Test_addSeparatorVariations(t *testing.T) {
 	}{
 		{
 			input:    []string{"jenkins-ci"},
-			expected: []string{"jenkins-ci", "jenkins_ci"}, //, "jenkinsci"},
+			expected: []string{"jenkins-ci", "jenkins_ci"}, // , "jenkinsci"},
 		},
 		{
 			input:    []string{"jenkins_ci"},
-			expected: []string{"jenkins_ci", "jenkins-ci"}, //, "jenkinsci"},
+			expected: []string{"jenkins_ci", "jenkins-ci"}, // , "jenkinsci"},
 		},
 		{
 			input:    []string{"jenkins"},
@@ -895,7 +895,7 @@ func Test_addSeparatorVariations(t *testing.T) {
 		},
 		{
 			input:    []string{"jenkins-ci", "circle-ci"},
-			expected: []string{"jenkins-ci", "jenkins_ci", "circle-ci", "circle_ci"}, //, "jenkinsci", "circleci"},
+			expected: []string{"jenkins-ci", "jenkins_ci", "circle-ci", "circle_ci"}, // , "jenkinsci", "circleci"},
 		},
 	}
 	for _, test := range tests {

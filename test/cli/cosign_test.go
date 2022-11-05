@@ -113,7 +113,6 @@ func TestCosignWorkflow(t *testing.T) {
 				cmd = exec.Command("make", "push")
 				cmd.Dir = fixturesPath
 				runAndShow(t, cmd)
-
 			},
 			cleanup: func() {
 				cwd, err := os.Getwd()
@@ -162,7 +161,6 @@ func TestCosignWorkflow(t *testing.T) {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
 			checkCmdFailure(t, stdout, stderr, cmd)
-
 		})
 	}
 }

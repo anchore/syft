@@ -8,7 +8,6 @@ import (
 )
 
 func Test_packageURL(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		version string

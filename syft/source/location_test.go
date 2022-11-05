@@ -44,5 +44,4 @@ func TestLocation_ID(t *testing.T) {
 			assert.Equal(t, l.ID(), test.coordinates.ID())
 		})
 	}
-
 }

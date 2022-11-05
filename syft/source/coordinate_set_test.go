@@ -10,7 +10,6 @@ import (
 )
 
 func TestCoordinatesSet(t *testing.T) {
-
 	binA := Coordinates{
 		RealPath:     "/bin",
 		FileSystemID: "a",

@@ -7,7 +7,6 @@ import (
 )
 
 func Test_IsArchive(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		mimeType string
@@ -32,7 +31,6 @@ func Test_IsArchive(t *testing.T) {
 }
 
 func Test_IsExecutable(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		mimeType string

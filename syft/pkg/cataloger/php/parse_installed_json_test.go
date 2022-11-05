@@ -137,5 +137,4 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			pkgtest.TestFileParser(t, fixture, parseInstalledJSON, expectedPkgs, expectedRelationships)
 		})
 	}
-
 }

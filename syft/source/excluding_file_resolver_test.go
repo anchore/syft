@@ -11,7 +11,6 @@ import (
 )
 
 func TestExcludingResolver(t *testing.T) {
-
 	tests := []struct {
 		name      string
 		locations []string

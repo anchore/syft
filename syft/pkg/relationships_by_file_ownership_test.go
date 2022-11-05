@@ -10,7 +10,6 @@ import (
 )
 
 func TestOwnershipByFilesRelationship(t *testing.T) {
-
 	tests := []struct {
 		name  string
 		setup func(t testing.TB) ([]Package, []artifact.Relationship)

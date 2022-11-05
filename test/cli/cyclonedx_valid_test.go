@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
-// We have schema validation mechanims in schema/cyclonedx/
+// We have schema validation mechanism in schema/cyclonedx/
 // This test allows us to double check that validation against the cyclonedx-cli tool
 func TestValidCycloneDX(t *testing.T) {
 	imageFixture := func(t *testing.T) string {

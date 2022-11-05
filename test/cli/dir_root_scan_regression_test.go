@@ -42,5 +42,4 @@ func TestDirectoryScanCompletesWithinTimeout(t *testing.T) {
 		t.Log("STDERR:\n", stderr)
 		t.Log("COMMAND:", strings.Join(cmd.Args, " "))
 	}
-
 }

@@ -127,7 +127,6 @@ func TestPkgCoverageImage(t *testing.T) {
 				}
 				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
 			}
-
 		})
 	}
 
@@ -200,7 +199,6 @@ func TestPkgCoverageDirectory(t *testing.T) {
 				}
 				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
 			}
-
 		})
 	}
 

@@ -96,12 +96,12 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			hasPath := resolver.HasPath(c.linkPath)
 			if !c.forcePositiveHasPath {
 				if len(c.resolutions) > 0 && !hasPath {
-					t.Errorf("expected HasPath() to indicate existance, but did not")
+					t.Errorf("expected HasPath() to indicate existence, but did not")
 				} else if len(c.resolutions) == 0 && hasPath {
-					t.Errorf("expeced HasPath() to NOT indicate existance, but does")
+					t.Errorf("expected HasPath() to NOT indicate existence, but does")
 				}
 			} else if !hasPath {
-				t.Errorf("expected HasPath() to indicate existance, but did not (force path)")
+				t.Errorf("expected HasPath() to indicate existence, but did not (force path)")
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)
@@ -245,7 +245,6 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 }
 
 func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
-
 	tests := []struct {
 		fixtureName   string
 		mimeType      string
@@ -301,11 +300,9 @@ func Test_imageAllLayersResolver_hasFilesystemIDInLocation(t *testing.T) {
 	for _, location := range locations {
 		assert.NotEmpty(t, location.FileSystemID)
 	}
-
 }
 
 func TestAllLayersImageResolver_FilesContents(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		fixture  string
@@ -356,7 +353,6 @@ func TestAllLayersImageResolver_FilesContents(t *testing.T) {
 
 				assert.Equal(t, test.contents[idx], string(actual))
 			}
-
 		})
 	}
 }
@@ -525,7 +521,6 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := newAllLayersResolver(img)
@@ -539,5 +534,4 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 			}
 		})
 	}
-
 }

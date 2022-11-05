@@ -116,5 +116,4 @@ func TestParseStackYaml(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.TestFileParser(t, fixture, parseStackYaml, expectedPkgs, expectedRelationships)
-
 }

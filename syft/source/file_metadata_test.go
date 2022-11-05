@@ -12,7 +12,6 @@ import (
 )
 
 func Test_fileMetadataFromPath(t *testing.T) {
-
 	tests := []struct {
 		path             string
 		withMIMEType     bool

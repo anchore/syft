@@ -11,7 +11,6 @@ import (
 )
 
 func TestPortageCataloger(t *testing.T) {
-
 	expectedPkgs := []pkg.Package{
 		{
 			Name:    "app-containers/skopeo",
@@ -69,5 +68,4 @@ func TestPortageCataloger(t *testing.T) {
 		FromDirectory(t, "test-fixtures/image-portage").
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewPortageCataloger())
-
 }

@@ -11,7 +11,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 	hiddenPackagesImage := "docker-archive:" + getFixtureImage(t, "image-hidden-packages")
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
 	nodeBinaryImage := "docker-archive:" + getFixtureImage(t, "image-node-binary")
-	//badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
+	// badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
 	tmp := t.TempDir() + "/"
 
 	tests := []struct {
@@ -65,7 +65,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		//		assertInOutput("could not parse possible go binary"),
 		//		assertSuccessfulReturnCode,
 		//	},
-		//},
+		// },
 		{
 			name: "output-env-binding",
 			env: map[string]string{

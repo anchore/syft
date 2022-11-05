@@ -99,5 +99,4 @@ func TestCPESpecificity(t *testing.T) {
 			assert.Equal(t, test.expected, test.input)
 		})
 	}
-
 }
