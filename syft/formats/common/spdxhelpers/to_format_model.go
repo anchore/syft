@@ -103,7 +103,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
-		Packages:      toFormatPackages(s.Artifacts.PackageCatalog, s.Relationships),
+		Packages:      toPackages(s.Artifacts.PackageCatalog, s.Relationships),
 		Files:         toFiles(s),
 		Relationships: toRelationships(s.Relationships),
 	}
@@ -150,13 +150,14 @@ func toSPDXID(v interface{}) common.ElementID {
 		// FIXME don't panic here
 		panic(fmt.Sprintf("Invalid ID type: %+v", v))
 	}
-	return common.ElementID("SPDXRef-" + id)
+	// NOTE: the spdx libraries prepend SPDXRef-
+	return common.ElementID(id)
 }
 
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toFormatPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (results []*spdx.Package) {
+func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
@@ -371,7 +372,13 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 		exists, relationshipType, comment := lookupRelationship(r.Type)
 
 		if !exists {
-			log.Warnf("unable to convert relationship from SPDX 2.2 JSON, dropping: %+v", r)
+			log.Debugf("unable to convert relationship to SPDX, dropping: %+v", r)
+			continue
+		}
+
+		// FIXME: we are only currently including Package -> File CONTAINS relationships
+		if _, ok := r.From.(pkg.Package); !ok {
+			log.Debugf("skipping non-package relationship: %+v", r)
 			continue
 		}
 

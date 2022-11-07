@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -60,15 +61,15 @@ func TestSPDXJSONDecoder(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
 			f, err := os.Open("test-fixtures/spdx/" + test.path)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			sbom, err := decoder(f)
 
 			if test.fail {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			if test.packages != nil {

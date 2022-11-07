@@ -45,7 +45,7 @@ func TestToSyftModel(t *testing.T) {
 						RefType:  "cpe23Type",
 					},
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:alpine/pkg-1@5.4.3?arch=x86_64&upstream=p1-origin&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
@@ -75,7 +75,7 @@ func TestToSyftModel(t *testing.T) {
 						RefType:  "cpe23Type",
 					},
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:deb/pkg-2@7.3.1?arch=x86_64&upstream=p2-origin@9.1.3&distro=debian-3.10.9",
 						RefType:  "purl",
 					},
@@ -123,7 +123,7 @@ func Test_extractMetadata(t *testing.T) {
 				PackageVersion: "43.1.235",
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:deb/pkg-2@7.3.1?arch=x86_64&upstream=somedebpkg-origin@9.1.3&distro=debian-3.10.9",
 						RefType:  "purl",
 					},
@@ -144,7 +144,7 @@ func Test_extractMetadata(t *testing.T) {
 				PackageVersion: "3.2.9",
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:alpine/pkg-2@7.3.1?arch=x86_64&upstream=apk-origin@9.1.3&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
@@ -164,7 +164,7 @@ func Test_extractMetadata(t *testing.T) {
 				PackageVersion: "13.2.79",
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:rpm/pkg-2@7.3.1?arch=x86_64&epoch=1234&upstream=some-rpm-origin-1.16.3&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
@@ -241,7 +241,7 @@ func TestH1Digest(t *testing.T) {
 				PackageVersion: "v0.5.5",
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
 						RefType:  "purl",
 					},
@@ -262,7 +262,7 @@ func TestH1Digest(t *testing.T) {
 				PackageVersion: "v0.5.5",
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
 						RefType:  "purl",
 					},
@@ -283,7 +283,7 @@ func TestH1Digest(t *testing.T) {
 				PackageVersion: "v0.5.5",
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
 						RefType:  "purl",
 					},

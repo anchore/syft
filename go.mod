@@ -340,3 +340,5 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+replace github.com/spdx/tools-golang => github.com/kzantow-anchore/tools-golang v0.2.1-0.20221107194605-afbe4b189cc5

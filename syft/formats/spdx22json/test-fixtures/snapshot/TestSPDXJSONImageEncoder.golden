@@ -1,61 +1,66 @@
 {
+ "spdxVersion": "SPDX-2.3",
+ "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "spdxVersion": "SPDX-2.2",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-f5d59060-d6a8-4f56-a012-260d2c4b645a",
  "creationInfo": {
-  "created": "2022-10-24T13:54:19.477217Z",
+  "licenseListVersion": "3.18",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "licenseListVersion": "3.18"
+  "created": "2022-11-04T18:01:32Z",
+  "comment": ""
  },
- "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-0b40ce75-7e54-4760-bd9d-4fa833b352dd",
  "packages": [
   {
-   "SPDXID": "SPDXRef-5ffee24fb164cffc",
    "name": "package-1",
-   "licenseConcluded": "MIT",
+   "SPDXID": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
+   "versionInfo": "1.0.1",
    "downloadLocation": "NOASSERTION",
+   "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
+   "licenseConcluded": "MIT",
+   "licenseDeclared": "MIT",
+   "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
      "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
      "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-     "referenceType": "cpe23Type"
+     "comment": ""
     },
     {
-     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
      "referenceLocator": "a-purl-1",
-     "referenceType": "purl"
+     "comment": ""
     }
-   ],
-   "filesAnalyzed": false,
-   "licenseDeclared": "MIT",
-   "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
-   "versionInfo": "1.0.1"
+   ]
   },
   {
-   "SPDXID": "SPDXRef-8b16570b2b4155c3",
    "name": "package-2",
-   "licenseConcluded": "NONE",
+   "SPDXID": "SPDXRef-Package-deb-package-2-8b16570b2b4155c3",
+   "versionInfo": "2.0.1",
    "downloadLocation": "NOASSERTION",
+   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "licenseConcluded": "NONE",
+   "licenseDeclared": "NONE",
+   "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
      "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
      "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-     "referenceType": "cpe23Type"
+     "comment": ""
     },
     {
-     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
      "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
-     "referenceType": "purl"
+     "comment": ""
     }
-   ],
-   "filesAnalyzed": false,
-   "licenseDeclared": "NONE",
-   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
-   "versionInfo": "2.0.1"
+   ]
   }
  ]
 }
