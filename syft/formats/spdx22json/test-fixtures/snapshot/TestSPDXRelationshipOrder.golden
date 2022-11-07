@@ -3,14 +3,14 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-495ef349-4c46-42e1-b47d-67c567eface9",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-3d81df33-f6f3-4c3c-89ba-2c2777a4b66b",
  "creationInfo": {
   "licenseListVersion": "3.18",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2022-11-04T18:01:32Z",
+  "created": "2022-11-07T23:14:00Z",
   "comment": ""
  },
  "packages": [
@@ -35,44 +35,6 @@
      "referenceType": "purl",
      "referenceLocator": "a-purl-1",
      "comment": ""
-    }
-   ],
-   "files": [
-    {
-     "fileName": "",
-     "SPDXID": "SPDXRef-5265a4dde3edbf7c",
-     "checksums": null,
-     "copyrightText": ""
-    },
-    {
-     "fileName": "",
-     "SPDXID": "SPDXRef-f9e49132a4b96ccd",
-     "checksums": null,
-     "copyrightText": ""
-    },
-    {
-     "fileName": "",
-     "SPDXID": "SPDXRef-c6f5b29dca12661f",
-     "checksums": null,
-     "copyrightText": ""
-    },
-    {
-     "fileName": "",
-     "SPDXID": "SPDXRef-c641caa71518099f",
-     "checksums": null,
-     "copyrightText": ""
-    },
-    {
-     "fileName": "",
-     "SPDXID": "SPDXRef-839d99ee67d9d174",
-     "checksums": null,
-     "copyrightText": ""
-    },
-    {
-     "fileName": "",
-     "SPDXID": "SPDXRef-9c2f7510199b17f6",
-     "checksums": null,
-     "copyrightText": ""
     }
    ]
   },

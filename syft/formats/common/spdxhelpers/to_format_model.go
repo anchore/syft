@@ -103,7 +103,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
-		Packages:      toPackages(s.Artifacts.PackageCatalog, s.Relationships),
+		Packages:      toPackages(s.Artifacts.PackageCatalog),
 		Files:         toFiles(s),
 		Relationships: toRelationships(s.Relationships),
 	}
@@ -131,7 +131,7 @@ func toSPDXID(v interface{}) common.ElementID {
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (results []*spdx.Package) {
+func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
