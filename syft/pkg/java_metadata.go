@@ -5,10 +5,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/linux"
 )
-
-var _ urlIdentifier = (*JavaMetadata)(nil)
 
 var jenkinsPluginPomPropertiesGroupIDs = []string{
 	"io.jenkins.plugins",
@@ -71,9 +68,4 @@ func (p PomProperties) PkgTypeIndicated() Type {
 type JavaManifest struct {
 	Main          map[string]string            `json:"main,omitempty"`
 	NamedSections map[string]map[string]string `json:"namedSections,omitempty"`
-}
-
-// PackageURL returns the PURL for the specific Maven package (see https://github.com/package-url/purl-spec)
-func (m JavaMetadata) PackageURL(_ *linux.Release) string {
-	return m.PURL
 }
