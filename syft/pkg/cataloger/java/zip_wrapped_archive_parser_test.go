@@ -1,6 +1,7 @@
 package java
 
 import (
+	"github.com/anchore/syft/syft/source"
 	"os"
 	"path"
 	"testing"
@@ -31,7 +32,10 @@ func Test_parseZipWrappedJavaArchive(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actualPkgs, _, err := parseZipWrappedJavaArchive(test.fixture, fixture)
+			actualPkgs, _, err := parseZipWrappedJavaArchive(nil, nil, source.LocationReadCloser{
+				Location:   source.NewLocation(test.fixture),
+				ReadCloser: fixture,
+			})
 			require.NoError(t, err)
 
 			var actualNames []string

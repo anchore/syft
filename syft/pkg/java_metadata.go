@@ -22,7 +22,6 @@ type JavaMetadata struct {
 	PomProperties  *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
 	PomProject     *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
 	ArchiveDigests []file.Digest  `hash:"ignore" json:"digest,omitempty"`
-	PURL           string         `hash:"ignore" json:"-"` // pURLs and CPEs are ignored for package IDs
 	Parent         *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
 

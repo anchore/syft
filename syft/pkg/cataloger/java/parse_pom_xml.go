@@ -3,6 +3,8 @@ package java
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 	"io"
 	"reflect"
 	"regexp"
@@ -20,15 +22,15 @@ const pomXMLDirGlob = "**/pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func parserPomXML(path string, content io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	pom, err := decodePomXML(content)
+func parserPomXML(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var pkgs []*pkg.Package
+	var pkgs []pkg.Package
 	for _, dep := range pom.Dependencies {
-		p := newPackageFromPom(pom, dep)
+		p := newPackageFromPom(pom, dep, reader.Location)
 		if p.Name == "" {
 			continue
 		}
@@ -60,22 +62,28 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 	}
 }
 
-func newPackageFromPom(pom gopom.Project, dep gopom.Dependency) *pkg.Package {
-	p := &pkg.Package{
-		Name:         dep.ArtifactID,
-		Version:      resolveProperty(pom, dep.Version),
-		Language:     pkg.Java,
-		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
-		MetadataType: pkg.JavaMetadataType,
-		FoundBy:      javaPomCataloger,
-		Metadata: pkg.JavaMetadata{
-			PomProperties: &pkg.PomProperties{
-				GroupID: resolveProperty(pom, dep.GroupID),
-			},
+func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...source.Location) pkg.Package {
+	m := pkg.JavaMetadata{
+		PomProperties: &pkg.PomProperties{
+			GroupID: resolveProperty(pom, dep.GroupID),
 		},
 	}
 
-	p.Metadata = pkg.JavaMetadata{PURL: packageURL(*p)}
+	name := dep.ArtifactID
+	version := resolveProperty(pom, dep.Version)
+
+	p := pkg.Package{
+		Name:         name,
+		Version:      version,
+		Locations:    source.NewLocationSet(locations...),
+		PURL:         packageURL(name, version, m),
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
+		MetadataType: pkg.JavaMetadataType,
+		Metadata:     m,
+	}
+
+	p.SetID()
 
 	return p
 }

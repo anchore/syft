@@ -33,11 +33,13 @@ type CatalogTester struct {
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
-		wantErr: require.NoError,
-		locationComparer: func(x, y source.Location) bool {
-			return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
-		},
+		wantErr:          require.NoError,
+		locationComparer: DefaultLocationComparer,
 	}
+}
+
+func DefaultLocationComparer(x, y source.Location) bool {
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 }
 
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
@@ -185,4 +187,33 @@ func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Pars
 	t.Helper()
 
 	NewCatalogTester().FromFile(t, fixturePath).WithEnv(env).Expects(expectedPkgs, expectedRelationships).TestParser(t, parser)
+}
+
+func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
+	t.Helper()
+	opts := []cmp.Option{
+		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
+		cmp.Comparer(
+			func(x, y source.LocationSet) bool {
+				xs := x.ToSlice()
+				ys := y.ToSlice()
+
+				if len(xs) != len(ys) {
+					return false
+				}
+				for i, xe := range xs {
+					ye := ys[i]
+					if !DefaultLocationComparer(xe, ye) {
+						return false
+					}
+				}
+
+				return true
+			},
+		),
+	}
+
+	if diff := cmp.Diff(a, b, opts...); diff != "" {
+		t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
+	}
 }
