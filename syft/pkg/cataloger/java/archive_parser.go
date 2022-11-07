@@ -3,8 +3,6 @@ package java
 import (
 	"crypto"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 	"os"
 	"path"
 	"strings"
@@ -14,6 +12,8 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	syftFile "github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseJavaArchive

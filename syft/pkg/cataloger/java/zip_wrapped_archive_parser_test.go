@@ -1,13 +1,14 @@
 package java
 
 import (
-	"github.com/anchore/syft/syft/source"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_parseZipWrappedJavaArchive(t *testing.T) {

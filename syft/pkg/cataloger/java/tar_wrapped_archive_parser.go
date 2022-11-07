@@ -2,6 +2,7 @@ package java
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"

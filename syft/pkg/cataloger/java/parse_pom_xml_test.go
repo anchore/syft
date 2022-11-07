@@ -1,8 +1,6 @@
 package java
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 	"os"
 	"testing"
 
@@ -10,6 +8,8 @@ import (
 	"github.com/vifraa/gopom"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_parserPomXML(t *testing.T) {

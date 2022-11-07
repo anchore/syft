@@ -3,9 +3,6 @@ package java
 import (
 	"bufio"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"os/exec"
@@ -15,9 +12,13 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gookit/color"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/gookit/color"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {

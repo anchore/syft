@@ -3,8 +3,6 @@ package java
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 	"io"
 	"reflect"
 	"regexp"
@@ -15,6 +13,8 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 const pomXMLGlob = "*pom.xml"

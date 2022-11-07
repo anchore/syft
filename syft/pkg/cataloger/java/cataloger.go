@@ -9,7 +9,6 @@ import (
 
 // NewJavaCataloger returns a new Java archive cataloger object.
 func NewJavaCataloger(cfg Config) *generic.Cataloger {
-
 	c := generic.NewCataloger("java-cataloger").
 		WithParserByGlobs(parseJavaArchive, archiveFormatGlobs...)
 
