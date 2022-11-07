@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,6 +88,7 @@ func Test_unpackMetadata(t *testing.T) {
 		name         string
 		packageData  []byte
 		metadataType pkg.MetadataType
+		wantMetadata interface{}
 		wantErr      require.ErrorAssertionFunc
 	}{
 		{
@@ -196,6 +198,20 @@ func Test_unpackMetadata(t *testing.T) {
 				"metadataType": "BOGOSITY"
 			}`),
 		},
+		{
+			name: "unknown metadata type",
+			packageData: []byte(`{
+				"metadataType": "NewMetadataType",
+				"metadata": {
+					"thing": "thing-1"
+				}
+			}`),
+			wantErr:      require.Error,
+			metadataType: "NewMetadataType",
+			wantMetadata: map[string]interface{}{
+				"thing": "thing-1",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -215,6 +231,10 @@ func Test_unpackMetadata(t *testing.T) {
 			err := unpackMetadata(p, unpacker)
 			assert.Equal(t, test.metadataType, p.MetadataType)
 			test.wantErr(t, err)
+
+			if test.wantMetadata != nil {
+				assert.True(t, reflect.DeepEqual(test.wantMetadata, p.Metadata))
+			}
 		})
 	}
 }

@@ -1,0 +1,1 @@
+FROM docker.io/tofay/hello-rust-auditable:latest@sha256:1d35d1e007180b3f7500aae5e27560697909132ca9a6d480c4c825534c1c47a9

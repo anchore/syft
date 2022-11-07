@@ -2,23 +2,22 @@ package ruby
 
 import (
 	"bufio"
-	"io"
 	"strings"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseGemFileLockEntries
+var _ generic.Parser = parseGemFileLockEntries
 
 var sectionsOfInterest = internal.NewStringSet("GEM")
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
-func parseGemFileLockEntries(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	pkgs := make([]*pkg.Package, 0)
+func parseGemFileLockEntries(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
 	scanner := bufio.NewScanner(reader)
 
 	var currentSection string
@@ -41,12 +40,13 @@ func parseGemFileLockEntries(_ string, reader io.Reader) ([]*pkg.Package, []arti
 			if len(candidate) != 2 {
 				continue
 			}
-			pkgs = append(pkgs, &pkg.Package{
-				Name:     candidate[0],
-				Version:  strings.Trim(candidate[1], "()"),
-				Language: pkg.Ruby,
-				Type:     pkg.GemPkg,
-			})
+			pkgs = append(pkgs,
+				newGemfileLockPackage(
+					candidate[0],
+					strings.Trim(candidate[1], "()"),
+					reader.Location,
+				),
+			)
 		}
 	}
 	if err := scanner.Err(); err != nil {

@@ -18,79 +18,6 @@ func TestPackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "python",
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    PythonPkg,
-				Metadata: PythonPackageMetadata{
-					Name:    "name",
-					Version: "v0.1.0",
-				},
-			},
-			expected: "pkg:pypi/name@v0.1.0",
-		},
-		{
-			name: "gem",
-			pkg: Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    GemPkg,
-			},
-			expected: "pkg:gem/name@v0.1.0",
-		},
-		{
-			name: "npm",
-			pkg: Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    NpmPkg,
-			},
-			expected: "pkg:npm/name@v0.1.0",
-		},
-		{
-			name: "rpm",
-			distro: &linux.Release{
-				ID:        "centos",
-				VersionID: "7",
-			},
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    RpmPkg,
-				Metadata: RpmMetadata{
-					Name:    "name",
-					Version: "0.1.0",
-					Epoch:   intRef(2),
-					Arch:    "amd64",
-					Release: "3",
-				},
-			},
-			expected: "pkg:rpm/centos/name@0.1.0-3?arch=amd64&epoch=2&distro=centos-7",
-		},
-		{
-			name: "cargo",
-			pkg: Package{
-				Name:    "name",
-				Version: "v0.1.0",
-				Type:    RustPkg,
-			},
-			expected: "pkg:cargo/name@v0.1.0",
-		},
-		{
-			name: "php-composer",
-			pkg: Package{
-				Name:    "bad-name",
-				Version: "bad-v0.1.0",
-				Type:    PhpComposerPkg,
-				Metadata: PhpComposerJSONMetadata{
-					Name:    "vendor/name",
-					Version: "2.0.1",
-				},
-			},
-			expected: "pkg:composer/vendor/name@2.0.1",
-		},
-		{
 			name: "java",
 			pkg: Package{
 				Name:    "bad-name",
@@ -118,20 +45,6 @@ func TestPackageURL(t *testing.T) {
 
 			expected: "pkg:maven/g.id/a@v",
 		},
-		{
-			name: "cocoapods",
-			pkg: Package{
-				Name:     "GlossButtonNode",
-				Version:  "3.1.2",
-				Language: Swift,
-				Type:     CocoapodsPkg,
-				Metadata: CocoapodsMetadata{
-					Name:    "GlossButtonNode",
-					Version: "3.1.2",
-				},
-			},
-			expected: "pkg:cocoapods/GlossButtonNode@3.1.2",
-		},
 	}
 
 	var pkgTypes []string
@@ -152,6 +65,13 @@ func TestPackageURL(t *testing.T) {
 	expectedTypes.Remove(string(GoModulePkg))
 	expectedTypes.Remove(string(HackagePkg))
 	expectedTypes.Remove(string(BinaryPkg))
+	expectedTypes.Remove(string(PhpComposerPkg))
+	expectedTypes.Remove(string(PythonPkg))
+	expectedTypes.Remove(string(RpmPkg))
+	expectedTypes.Remove(string(GemPkg))
+	expectedTypes.Remove(string(NpmPkg))
+	expectedTypes.Remove(string(RustPkg))
+	expectedTypes.Remove(string(CocoapodsPkg))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

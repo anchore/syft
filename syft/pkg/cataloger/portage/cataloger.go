@@ -18,71 +18,63 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 )
 
 var (
-	cpvRe = regexp.MustCompile(`/([^/]*/[\w+][\w+-]*)-((\d+)((\.\d+)*)([a-z]?)((_(pre|p|beta|alpha|rc)\d*)*)(-r\d+)?)/CONTENTS$`)
+	cpvRe                = regexp.MustCompile(`/([^/]*/[\w+][\w+-]*)-((\d+)((\.\d+)*)([a-z]?)((_(pre|p|beta|alpha|rc)\d*)*)(-r\d+)?)/CONTENTS$`)
+	_     generic.Parser = parsePortageContents
 )
 
-type Cataloger struct{}
-
-// NewPortageCataloger returns a new Portage package cataloger object.
-func NewPortageCataloger() *Cataloger {
-	return &Cataloger{}
+func NewPortageCataloger() *generic.Cataloger {
+	return generic.NewCataloger("portage-cataloger").
+		WithParserByGlobs(parsePortageContents, "**/var/db/pkg/*/*/CONTENTS")
 }
 
-// Name returns a string that uniquely describes a cataloger
-func (c *Cataloger) Name() string {
-	return "portage-cataloger"
-}
-
-// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing portage support files.
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
-	dbFileMatches, err := resolver.FilesByGlob(pkg.PortageDBGlob)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to find portage files by glob: %w", err)
+func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	cpvMatch := cpvRe.FindStringSubmatch(reader.Location.RealPath)
+	if cpvMatch == nil {
+		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.Location.RealPath)
 	}
-	var allPackages []pkg.Package
-	for _, dbLocation := range dbFileMatches {
-		cpvMatch := cpvRe.FindStringSubmatch(dbLocation.RealPath)
-		if cpvMatch == nil {
-			return nil, nil, fmt.Errorf("failed to match package and version in %s", dbLocation.RealPath)
-		}
-		entry := pkg.PortageMetadata{
+
+	name, version := cpvMatch[1], cpvMatch[2]
+	if name == "" || version == "" {
+		log.WithFields("path", reader.Location.RealPath).Warnf("failed to parse portage name and version")
+		return nil, nil, nil
+	}
+
+	p := pkg.Package{
+		Name:         name,
+		Version:      version,
+		PURL:         packageURL(name, version),
+		Locations:    source.NewLocationSet(),
+		Type:         pkg.PortagePkg,
+		MetadataType: pkg.PortageMetadataType,
+		Metadata: pkg.PortageMetadata{
 			// ensure the default value for a collection is never nil since this may be shown as JSON
-			Files:   make([]pkg.PortageFileRecord, 0),
-			Package: cpvMatch[1],
-			Version: cpvMatch[2],
-		}
-
-		err = addFiles(resolver, dbLocation, &entry)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		addSize(resolver, dbLocation, &entry)
-
-		p := pkg.Package{
-			Name:         entry.Package,
-			Version:      entry.Version,
-			Type:         pkg.PortagePkg,
-			MetadataType: pkg.PortageMetadataType,
-			Metadata:     entry,
-		}
-		addLicenses(resolver, dbLocation, &p)
-		p.FoundBy = c.Name()
-		p.Locations.Add(dbLocation)
-		p.SetID()
-		allPackages = append(allPackages, p)
+			Files: make([]pkg.PortageFileRecord, 0),
+		},
 	}
-	return allPackages, nil, nil
+	addLicenses(resolver, reader.Location, &p)
+	addSize(resolver, reader.Location, &p)
+	addFiles(resolver, reader.Location, &p)
+
+	p.SetID()
+
+	return []pkg.Package{p}, nil, nil
 }
 
-func addFiles(resolver source.FileResolver, dbLocation source.Location, entry *pkg.PortageMetadata) error {
+func addFiles(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
 	contentsReader, err := resolver.FileContentsByLocation(dbLocation)
 	if err != nil {
-		return err
+		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage contents (package=%s): %+v", p.Name, err)
+		return
+	}
+
+	entry, ok := p.Metadata.(pkg.PortageMetadata)
+	if !ok {
+		return
 	}
 
 	scanner := bufio.NewScanner(contentsReader)
@@ -101,7 +93,9 @@ func addFiles(resolver source.FileResolver, dbLocation source.Location, entry *p
 			entry.Files = append(entry.Files, record)
 		}
 	}
-	return nil
+
+	p.Metadata = entry
+	p.Locations.Add(dbLocation)
 }
 
 func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
@@ -109,43 +103,60 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
 
-	if location != nil {
-		licenseReader, err := resolver.FileContentsByLocation(*location)
-		if err == nil {
-			findings := internal.NewStringSet()
-			scanner := bufio.NewScanner(licenseReader)
-			scanner.Split(bufio.ScanWords)
-			for scanner.Scan() {
-				token := scanner.Text()
-				if token != "||" && token != "(" && token != ")" {
-					findings.Add(token)
-				}
-			}
-			p.Licenses = findings.ToSlice()
+	if location == nil {
+		return
+	}
 
-			sort.Strings(p.Licenses)
+	licenseReader, err := resolver.FileContentsByLocation(*location)
+	if err != nil {
+		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage LICENSE: %+v", err)
+		return
+	}
+
+	findings := internal.NewStringSet()
+	scanner := bufio.NewScanner(licenseReader)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		token := scanner.Text()
+		if token != "||" && token != "(" && token != ")" {
+			findings.Add(token)
 		}
 	}
+	licenses := findings.ToSlice()
+	sort.Strings(licenses)
+	p.Licenses = licenses
+	p.Locations.Add(*location)
 }
 
-func addSize(resolver source.FileResolver, dbLocation source.Location, entry *pkg.PortageMetadata) {
+func addSize(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
 	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "SIZE"))
 
-	if location != nil {
-		sizeReader, err := resolver.FileContentsByLocation(*location)
-		if err != nil {
-			log.Warnf("failed to fetch portage SIZE (package=%s): %+v", entry.Package, err)
-		} else {
-			scanner := bufio.NewScanner(sizeReader)
-			for scanner.Scan() {
-				line := strings.Trim(scanner.Text(), "\n")
-				size, err := strconv.Atoi(line)
-				if err == nil {
-					entry.InstalledSize = size
-				}
-			}
+	if location == nil {
+		return
+	}
+
+	entry, ok := p.Metadata.(pkg.PortageMetadata)
+	if !ok {
+		return
+	}
+
+	sizeReader, err := resolver.FileContentsByLocation(*location)
+	if err != nil {
+		log.WithFields("name", p.Name).Warnf("failed to fetch portage SIZE: %+v", err)
+		return
+	}
+
+	scanner := bufio.NewScanner(sizeReader)
+	for scanner.Scan() {
+		line := strings.Trim(scanner.Text(), "\n")
+		size, err := strconv.Atoi(line)
+		if err == nil {
+			entry.InstalledSize = size
 		}
 	}
+
+	p.Metadata = entry
+	p.Locations.Add(*location)
 }

@@ -1,25 +1,22 @@
 package rpm
 
 import (
-	"os"
 	"testing"
 
-	"github.com/go-test/deep"
-
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseRpmManifest(t *testing.T) {
-	location := source.NewLocation("test-path")
-
-	fixture_path := "test-fixtures/container-manifest-2"
-	expected := map[string]pkg.Package{
-		"mariner-release": {
+	fixture := "test-fixtures/container-manifest-2"
+	location := source.NewLocation(fixture)
+	expected := []pkg.Package{
+		{
 			Name:         "mariner-release",
 			Version:      "2.0-12.cm2",
+			PURL:         "pkg:rpm/mariner-release@2.0-12.cm2?arch=noarch&upstream=mariner-release-2.0-12.cm2.src.rpm",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{
@@ -33,11 +30,11 @@ func TestParseRpmManifest(t *testing.T) {
 				Vendor:    "Microsoft Corporation",
 			},
 		},
-		"filesystem": {
+		{
 			Name:         "filesystem",
 			Version:      "1.1-9.cm2",
+			PURL:         "pkg:rpm/filesystem@1.1-9.cm2?arch=x86_64&upstream=filesystem-1.1-9.cm2.src.rpm",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{
@@ -51,11 +48,11 @@ func TestParseRpmManifest(t *testing.T) {
 				Vendor:    "Microsoft Corporation",
 			},
 		},
-		"glibc": {
+		{
 			Name:         "glibc",
 			Version:      "2.35-2.cm2",
+			PURL:         "pkg:rpm/glibc@2.35-2.cm2?arch=x86_64&upstream=glibc-2.35-2.cm2.src.rpm",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{
@@ -69,11 +66,11 @@ func TestParseRpmManifest(t *testing.T) {
 				Vendor:    "Microsoft Corporation",
 			},
 		},
-		"openssl-libs": {
+		{
 			Name:         "openssl-libs",
 			Version:      "1.1.1k-15.cm2",
+			PURL:         "pkg:rpm/openssl-libs@1.1.1k-15.cm2?arch=x86_64&upstream=openssl-1.1.1k-15.cm2.src.rpm",
 			Locations:    source.NewLocationSet(location),
-			FoundBy:      dbCatalogerName,
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{
@@ -89,30 +86,9 @@ func TestParseRpmManifest(t *testing.T) {
 		},
 	}
 
-	fixture, err := os.Open(fixture_path)
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
+	pkgtest.NewCatalogTester().
+		FromFile(t, fixture).
+		Expects(expected, nil).
+		TestParser(t, parseRpmManifest)
 
-	actual, err := parseRpmManifest(location, fixture)
-	if err != nil {
-		t.Fatalf("failed to parse rpm manifest: %+v", err)
-	}
-
-	if len(actual) != 12 {
-		for _, a := range actual {
-			t.Log("   ", a)
-		}
-		t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expected))
-	}
-
-	for _, a := range actual[0:4] {
-		e := expected[a.Name]
-		diffs := deep.Equal(a, e)
-		if len(diffs) > 0 {
-			for _, d := range diffs {
-				t.Errorf("diff: %+v", d)
-			}
-		}
-	}
 }

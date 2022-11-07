@@ -4,7 +4,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "syft-4-json"
+const ID sbom.FormatID = "syft-5-json"
 
 func Format() sbom.Format {
 	return sbom.NewFormat(

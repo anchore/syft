@@ -40,6 +40,19 @@ func NewCatalogTester() *CatalogTester {
 	}
 }
 
+func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
+	t.Helper()
+
+	s, err := source.NewFromDirectory(path)
+	require.NoError(t, err)
+
+	resolver, err := s.FileResolver(source.AllLayersScope)
+	require.NoError(t, err)
+
+	p.resolver = resolver
+	return p
+}
+
 func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 	t.Helper()
 
