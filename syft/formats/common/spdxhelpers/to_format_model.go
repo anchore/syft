@@ -33,23 +33,23 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := DocumentNameAndNamespace(s.Source)
 
 	return &spdx.Document{
-		// 2.1: SPDX Version; should be in the format "SPDX-2.3"
+		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
 		// Cardinality: mandatory, one
 		SPDXVersion: spdxVersion,
 
-		// 2.2: Data License; should be "CC0-1.0"
+		// 6.2: Data License; should be "CC0-1.0"
 		// Cardinality: mandatory, one
 		DataLicense: "CC0-1.0",
 
-		// 2.3: SPDX Identifier; should be "DOCUMENT" to represent mandatory identifier of SPDXRef-DOCUMENT
+		// 6.3: SPDX Identifier; should be "DOCUMENT" to represent mandatory identifier of SPDXRef-DOCUMENT
 		// Cardinality: mandatory, one
 		SPDXIdentifier: "DOCUMENT",
 
-		// 2.4: Document Name
+		// 6.4: Document Name
 		// Cardinality: mandatory, one
 		DocumentName: name,
 
-		// 2.5: Document Namespace
+		// 6.5: Document Namespace
 		// Cardinality: mandatory, one
 		// Purpose: Provide an SPDX document specific namespace as a unique absolute Uniform Resource
 		// Identifier (URI) as specified in RFC-3986, with the exception of the ‘#’ delimiter. The SPDX
@@ -68,20 +68,20 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 
 		DocumentNamespace: namespace,
 
-		// 2.6: External Document References
+		// 6.6: External Document References
 		// Cardinality: optional, one or many
 		ExternalDocumentReferences: nil,
 
-		// 2.11: Document Comment
+		// 6.11: Document Comment
 		// Cardinality: optional, one
 		DocumentComment: "",
 
 		CreationInfo: &spdx.CreationInfo{
-			// 2.7: License List Version
+			// 6.7: License List Version
 			// Cardinality: optional, one
 			LicenseListVersion: spdxlicense.Version,
 
-			// 2.8: Creators: may have multiple keys for Person, Organization
+			// 6.8: Creators: may have multiple keys for Person, Organization
 			//      and/or Tool
 			// Cardinality: mandatory, one or many
 			Creators: []common.Creator{
@@ -95,11 +95,11 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 				},
 			},
 
-			// 2.9: Created: data format YYYY-MM-DDThh:mm:ssZ
+			// 6.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
 			Created: time.Now().UTC().Format(time.RFC3339),
 
-			// 2.10: Creator Comment
+			// 6.10: Creator Comment
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
@@ -107,32 +107,6 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		Files:         toFiles(s),
 		Relationships: toRelationships(s.Relationships),
 	}
-}
-
-func filesForPackage(packageSpdxID common.ElementID, relationships []artifact.Relationship) (files []*spdx.File) {
-	for _, relationship := range relationships {
-		if relationship.Type != artifact.ContainsRelationship {
-			continue
-		}
-
-		if _, ok := relationship.From.(pkg.Package); !ok {
-			continue
-		}
-
-		if _, ok := relationship.To.(source.Coordinates); !ok {
-			continue
-		}
-
-		from := toSPDXID(relationship.From)
-		if from == packageSpdxID {
-			to := toSPDXID(relationship.To)
-			files = append(files, &spdx.File{
-				// TODO should we fill out more information here?
-				FileSPDXIdentifier: to,
-			})
-		}
-	}
-	return files
 }
 
 func toSPDXID(v interface{}) common.ElementID {
@@ -163,8 +137,8 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (re
 		id := toSPDXID(p)
 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
-		// in the Comments on License field (section 3.16). With respect to NOASSERTION, a written explanation in
-		// the Comments on License field (section 3.16) is preferred.
+		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
+		// the Comments on License field (section 7.16) is preferred.
 		license := License(p)
 		checksums, filesAnalyzed := toPackageChecksums(p)
 
@@ -174,34 +148,34 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (re
 			// e.g. included directly in the Document without being in a Package?
 			IsUnpackaged: false,
 
-			// 3.1: Package Name
+			// 7.1: Package Name
 			// Cardinality: mandatory, one
 			PackageName: p.Name,
 
-			// 3.2: Package SPDX Identifier: "SPDXRef-[idstring]"
+			// 7.2: Package SPDX Identifier: "SPDXRef-[idstring]"
 			// Cardinality: mandatory, one
 			PackageSPDXIdentifier: id,
 
-			// 3.3: Package Version
+			// 7.3: Package Version
 			// Cardinality: optional, one
 			PackageVersion: p.Version,
 
-			// 3.4: Package File Name
+			// 7.4: Package File Name
 			// Cardinality: optional, one
 			PackageFileName: "",
 
-			// 3.5: Package Supplier: may have single result for either Person or Organization,
+			// 7.5: Package Supplier: may have single result for either Person or Organization,
 			//                        or NOASSERTION
 			// Cardinality: optional, one
 
-			// 3.6: Package Originator: may have single result for either Person or Organization,
+			// 7.6: Package Originator: may have single result for either Person or Organization,
 			//                          or NOASSERTION
 			// Cardinality: optional, one
 			PackageSupplier: nil,
 
 			PackageOriginator: toPackageOriginator(p),
 
-			// 3.7: Package Download Location
+			// 7.7: Package Download Location
 			// Cardinality: mandatory, one
 			// NONE if there is no download location whatsoever.
 			// NOASSERTION if:
@@ -210,7 +184,7 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (re
 			//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 			PackageDownloadLocation: DownloadLocation(p),
 
-			// 3.8: FilesAnalyzed
+			// 7.8: FilesAnalyzed
 			// Cardinality: optional, one; default value is "true" if omitted
 
 			// Purpose: Indicates whether the file content of this package has been available for or subjected to
@@ -224,52 +198,52 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (re
 			// NOT PART OF SPEC: did FilesAnalyzed tag appear?
 			IsFilesAnalyzedTagPresent: true,
 
-			// 3.9: Package Verification Code
+			// 7.9: Package Verification Code
 			// Cardinality: optional, one if filesAnalyzed is true / omitted;
 			//              zero (must be omitted) if filesAnalyzed is false
 			PackageVerificationCode: nil,
 
-			// 3.10: Package Checksum: may have keys for SHA1, SHA256 and/or MD5
+			// 7.10: Package Checksum: may have keys for SHA1, SHA256 and/or MD5
 			// Cardinality: optional, one or many
 
-			// 3.10.1 Purpose: Provide an independently reproducible mechanism that permits unique identification of
+			// 7.10.1 Purpose: Provide an independently reproducible mechanism that permits unique identification of
 			// a specific package that correlates to the data in this SPDX file. This identifier enables a recipient
 			// to determine if any file in the original package has been changed. If the SPDX file is to be included
 			// in a package, this value should not be calculated. The SHA-1 algorithm will be used to provide the
 			// checksum by default.
 			PackageChecksums: checksums,
 
-			// 3.11: Package Home Page
+			// 7.11: Package Home Page
 			// Cardinality: optional, one
 			PackageHomePage: Homepage(p),
 
-			// 3.12: Source Information
+			// 7.12: Source Information
 			// Cardinality: optional, one
 			PackageSourceInfo: SourceInfo(p),
 
-			// 3.13: Concluded License: SPDX License Expression, "NONE" or "NOASSERTION"
+			// 7.13: Concluded License: SPDX License Expression, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one
 			// Purpose: Contain the license the SPDX file creator has concluded as governing the
 			// package or alternative values, if the governing license cannot be determined.
 			PackageLicenseConcluded: license,
 
-			// 3.14: All Licenses Info from Files: SPDX License Expression, "NONE" or "NOASSERTION"
+			// 7.14: All Licenses Info from Files: SPDX License Expression, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one or many if filesAnalyzed is true / omitted;
 			//              zero (must be omitted) if filesAnalyzed is false
 			PackageLicenseInfoFromFiles: nil,
 
-			// 3.15: Declared License: SPDX License Expression, "NONE" or "NOASSERTION"
+			// 7.15: Declared License: SPDX License Expression, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one
 			// Purpose: List the licenses that have been declared by the authors of the package.
 			// Any license information that does not originate from the package authors, e.g. license
 			// information from a third party repository, should not be included in this field.
 			PackageLicenseDeclared: license,
 
-			// 3.16: Comments on License
+			// 7.16: Comments on License
 			// Cardinality: optional, one
 			PackageLicenseComments: "",
 
-			// 3.17: Copyright Text: copyright notice(s) text, "NONE" or "NOASSERTION"
+			// 7.17: Copyright Text: copyright notice(s) text, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one
 			// Purpose: IdentifyFormat the copyright holders of the package, as well as any dates present. This will be a free form text field extracted from package information files. The options to populate this field are limited to:
 			//
@@ -281,32 +255,29 @@ func toPackages(catalog *pkg.Catalog, relationships []artifact.Relationship) (re
 			//
 			PackageCopyrightText: noAssertion,
 
-			// 3.18: Package Summary Description
+			// 7.18: Package Summary Description
 			// Cardinality: optional, one
 			PackageSummary: "",
 
-			// 3.19: Package Detailed Description
+			// 7.19: Package Detailed Description
 			// Cardinality: optional, one
 			PackageDescription: Description(p),
 
-			// 3.20: Package Comment
+			// 7.20: Package Comment
 			// Cardinality: optional, one
 			PackageComment: "",
 
-			// 3.21: Package External Reference
+			// 7.21: Package External Reference
 			// Cardinality: optional, one or many
 			PackageExternalReferences: formatSPDXExternalRefs(p),
 
-			// 3.22: Package External Reference Comment
+			// 7.22: Package External Reference Comment
 			// Cardinality: conditional (optional, one) for each External Reference
 			// contained within PackageExternalReference2_1 struct, if present
 
-			// 3.23: Package Attribution Text
+			// 7.23: Package Attribution Text
 			// Cardinality: optional, one or many
 			PackageAttributionTexts: nil,
-
-			// Files contained in this Package
-			Files: filesForPackage(id, relationships),
 		})
 	}
 	return results
@@ -328,7 +299,6 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 	var checksums []common.Checksum
 	switch meta := p.Metadata.(type) {
 	// we generate digest for some Java packages
-	// see page 33 of the spdx specification for 2.2
 	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
 	case pkg.JavaMetadata:
 		if len(meta.ArchiveDigests) > 0 {
@@ -459,8 +429,7 @@ func toFileChecksums(digests []file.Digest) (checksums []common.Checksum) {
 }
 
 func toChecksumAlgorithm(algorithm string) common.ChecksumAlgorithm {
-	// basically, we need an uppercase version of our algorithm:
-	// https://github.com/spdx/spdx-spec/blob/development/v2.2.2/schemas/spdx-schema.json#L165
+	// this needs to be an uppercase version of our algorithm
 	return common.ChecksumAlgorithm(strings.ToUpper(algorithm))
 }
 
