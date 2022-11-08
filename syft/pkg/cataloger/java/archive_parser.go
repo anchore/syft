@@ -290,8 +290,10 @@ func discoverPkgsFromOpener(location source.Location, pathWithinArchive string, 
 	}()
 
 	nestedPath := fmt.Sprintf("%s:%s", location.AccessPath(), pathWithinArchive)
+	nestedLocation := source.NewLocationFromCoordinates(location.Coordinates)
+	nestedLocation.VirtualPath = nestedPath
 	nestedPkgs, nestedRelationships, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
-		Location:   source.NewLocation(nestedPath),
+		Location:   nestedLocation,
 		ReadCloser: archiveReadCloser,
 	})
 	if err != nil {

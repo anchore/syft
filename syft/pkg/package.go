@@ -6,6 +6,7 @@ package pkg
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -82,18 +83,35 @@ func IsValid(p *Package) bool {
 	return p != nil && p.Name != ""
 }
 
+//nolint:gocognit
 func Sort(pkgs []Package) {
 	sort.SliceStable(pkgs, func(i, j int) bool {
 		if pkgs[i].Name == pkgs[j].Name {
 			if pkgs[i].Version == pkgs[j].Version {
 				iLocations := pkgs[i].Locations.ToSlice()
 				jLocations := pkgs[j].Locations.ToSlice()
-				if pkgs[i].Type == pkgs[j].Type && len(iLocations) > 0 && len(jLocations) > 0 {
-					if iLocations[0].String() == jLocations[0].String() {
-						// compare IDs as a final fallback
-						return pkgs[i].ID() < pkgs[j].ID()
+				if pkgs[i].Type == pkgs[j].Type {
+					maxLen := len(iLocations)
+					if len(jLocations) > maxLen {
+						maxLen = len(jLocations)
 					}
-					return iLocations[0].String() < jLocations[0].String()
+					for l := 0; l < maxLen; l++ {
+						if len(iLocations) < l+1 || len(jLocations) < l+1 {
+							if len(iLocations) == len(jLocations) {
+								break
+							}
+							return len(iLocations) < len(jLocations)
+						}
+						if iLocations[l].RealPath == jLocations[l].RealPath {
+							continue
+						}
+						return iLocations[l].RealPath < jLocations[l].RealPath
+					}
+					// compare remaining metadata as a final fallback
+					// note: we cannot guarantee that IDs (which digests the metadata) are stable enough to sort on
+					// when there are potentially missing elements there is too much reduction in the dimensions to
+					// lean on ID comparison. The best fallback is to look at the string representation of the metadata.
+					return strings.Compare(fmt.Sprintf("%#v", pkgs[i].Metadata), fmt.Sprintf("%#v", pkgs[j].Metadata)) < 0
 				}
 				return pkgs[i].Type < pkgs[j].Type
 			}

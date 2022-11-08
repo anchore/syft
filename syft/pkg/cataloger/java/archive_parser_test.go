@@ -307,14 +307,6 @@ func TestParseJar(t *testing.T) {
 				a.Metadata = metadata
 
 				pkgtest.AssertPackagesEqual(t, e, a)
-
-				//diffs := deep.Equal(e, a)
-				//if len(diffs) > 0 {
-				//	t.Errorf("diffs found for %q", a.Name)
-				//	for _, d := range diffs {
-				//		t.Errorf("diff: %+v", d)
-				//	}
-				//}
 			}
 		})
 	}
