@@ -168,99 +168,6 @@ func Test_toFileChecksums(t *testing.T) {
 	}
 }
 
-func Test_fileIDsForPackage(t *testing.T) {
-
-	p := pkg.Package{
-		Name: "bogus",
-	}
-
-	p.SetID()
-
-	c := source.Coordinates{
-		RealPath:     "/path",
-		FileSystemID: "nowhere",
-	}
-
-	tests := []struct {
-		name          string
-		id            common.ElementID
-		relationships []artifact.Relationship
-		expected      []common.ElementID
-	}{
-		{
-			name: "find file IDs for packages with package-file relationships",
-			id:   toSPDXID(p),
-			relationships: []artifact.Relationship{
-				{
-					From: p,
-					To:   c,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: []common.ElementID{
-				toSPDXID(c),
-			},
-		},
-		{
-			name: "ignore package-to-package",
-			id:   toSPDXID(p),
-			relationships: []artifact.Relationship{
-				{
-					From: p,
-					To:   p,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: []common.ElementID{},
-		},
-		{
-			name: "ignore file-to-file",
-			id:   toSPDXID(p),
-			relationships: []artifact.Relationship{
-				{
-					From: c,
-					To:   c,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: []common.ElementID{},
-		},
-		{
-			name: "ignore file-to-package",
-			id:   toSPDXID(p),
-			relationships: []artifact.Relationship{
-				{
-					From: c,
-					To:   p,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: []common.ElementID{},
-		},
-		{
-			name: "filter by relationship type",
-			id:   toSPDXID(p),
-			relationships: []artifact.Relationship{
-				{
-					From: p,
-					To:   c,
-					Type: artifact.OwnershipByFileOverlapRelationship,
-				},
-			},
-			expected: []common.ElementID{},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var ids []common.ElementID
-			for _, f := range filesForPackage(test.id, test.relationships) {
-				ids = append(ids, f.FileSPDXIdentifier)
-			}
-			assert.ElementsMatch(t, test.expected, ids)
-		})
-	}
-}
-
 func Test_H1Digest(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -308,7 +215,7 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCatalog(test.pkg)
-			pkgs := toPackages(catalog, nil)
+			pkgs := toPackages(catalog)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
 				if test.expectedDigest == "" {
