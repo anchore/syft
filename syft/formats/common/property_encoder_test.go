@@ -37,6 +37,10 @@ type T4 struct {
 	IntPtr *int
 }
 
+type T5 struct {
+	Map map[string]string
+}
+
 func Test_EncodeDecodeCycle(t *testing.T) {
 	val := 99
 
@@ -116,6 +120,15 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 			value: &[]T2{
 				{"t2 elem 0"},
 				{"t2 elem 1"},
+			},
+		},
+		{
+			name: "map of strings",
+			value: &T5{
+				Map: map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+				},
 			},
 		},
 	}
