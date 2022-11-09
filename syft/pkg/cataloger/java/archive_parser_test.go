@@ -137,7 +137,6 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "io.jenkins.plugins",
 							ArtifactID: "example-jenkins-plugin",
 							Version:    "1.0-SNAPSHOT",
-							Extra:      map[string]string{},
 						},
 					},
 				},
@@ -196,7 +195,6 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "org.anchore",
 							ArtifactID: "example-java-app-maven",
 							Version:    "0.1.0",
-							Extra:      map[string]string{},
 						},
 					},
 				},
@@ -216,7 +214,6 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "joda-time",
 							ArtifactID: "joda-time",
 							Version:    "2.9.2",
-							Extra:      map[string]string{},
 						},
 						PomProject: &pkg.PomProject{
 							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",

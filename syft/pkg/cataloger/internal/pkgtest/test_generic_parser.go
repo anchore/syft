@@ -149,6 +149,7 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 
 	p.compareOptions = append(p.compareOptions,
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
+		cmpopts.SortSlices(pkg.Less),
 		cmp.Comparer(
 			func(x, y source.LocationSet) bool {
 				xs := x.ToSlice()

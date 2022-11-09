@@ -32,7 +32,7 @@ type PomProperties struct {
 	GroupID    string            `mapstructure:"groupId" json:"groupId" cyclonedx:"groupID"`
 	ArtifactID string            `mapstructure:"artifactId" json:"artifactId" cyclonedx:"artifactID"`
 	Version    string            `mapstructure:"version" json:"version"`
-	Extra      map[string]string `mapstructure:",remain" json:"extraFields"`
+	Extra      map[string]string `mapstructure:",remain" json:"extraFields,omitempty"`
 }
 
 // PomProject represents fields of interest extracted from a Java archive's pom.xml file. See https://maven.apache.org/ref/3.6.3/maven-model/maven.html for more details.
