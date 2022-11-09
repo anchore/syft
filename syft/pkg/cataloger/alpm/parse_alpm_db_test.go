@@ -141,7 +141,7 @@ func TestMtreeParse(t *testing.T) {
 					Time: parseTime("2022-04-10T14:59:52+02:00"),
 					Digests: []file.Digest{
 						{
-							Algorithm: "md5digest",
+							Algorithm: "md5",
 							Value:     "81c39827e38c759d7e847f05db62c233",
 						},
 						{
