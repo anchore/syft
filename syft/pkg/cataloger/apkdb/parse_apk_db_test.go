@@ -5,19 +5,18 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestExtraFileAttributes(t *testing.T) {
@@ -634,10 +633,9 @@ func TestSinglePackageDetails(t *testing.T) {
 }
 
 func TestMultiplePackages(t *testing.T) {
-
 	fixture := "test-fixtures/multiple"
 	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
-	expected := []pkg.Package{
+	expectedPkgs := []pkg.Package{
 		{
 			Name:         "libc-utils",
 			Version:      "0.7.2-r0",
@@ -683,6 +681,7 @@ func TestMultiplePackages(t *testing.T) {
 				URL:           "https://musl.libc.org/",
 				Size:          37944,
 				InstalledSize: 151552,
+				GitCommit:     "4024cc3b29ad4c65544ad068b8f59172b5494306",
 				Dependencies:  []string{"scanelf", "so:libc.musl-x86_64.so.1"},
 				Provides:      []string{"cmd:getconf", "cmd:getent", "cmd:iconv", "cmd:ldconfig", "cmd:ldd"},
 				Checksum:      "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
@@ -751,15 +750,21 @@ func TestMultiplePackages(t *testing.T) {
 		},
 	}
 
-	// TODO: relationships are not under test
-	var expectedRelationships []artifact.Relationship
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[1], // musl-utils
+			To:   expectedPkgs[0], // libc-utils
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+	}
 
 	env := generic.Environment{LinuxRelease: &linux.Release{
 		ID:        "alpine",
 		VersionID: "3.12",
 	}}
 
-	pkgtest.TestFileParserWithEnv(t, fixture, parseApkDB, &env, expected, expectedRelationships)
+	pkgtest.TestFileParserWithEnv(t, fixture, parseApkDB, &env, expectedPkgs, expectedRelationships)
 
 }
 
@@ -842,7 +847,7 @@ func Test_discoverPackageDependencies(t *testing.T) {
 					{
 						From: b,
 						To:   a,
-						Type: artifact.RuntimeDependencyOfRelationship,
+						Type: artifact.DependencyOfRelationship,
 					},
 				}
 			},
@@ -869,7 +874,7 @@ func Test_discoverPackageDependencies(t *testing.T) {
 					{
 						From: b,
 						To:   a,
-						Type: artifact.RuntimeDependencyOfRelationship,
+						Type: artifact.DependencyOfRelationship,
 					},
 				}
 			},
@@ -896,7 +901,7 @@ func Test_discoverPackageDependencies(t *testing.T) {
 					{
 						From: b,
 						To:   a,
-						Type: artifact.RuntimeDependencyOfRelationship,
+						Type: artifact.DependencyOfRelationship,
 					},
 				}
 			},
@@ -923,7 +928,7 @@ func Test_discoverPackageDependencies(t *testing.T) {
 					{
 						From: b,
 						To:   a,
-						Type: artifact.RuntimeDependencyOfRelationship,
+						Type: artifact.DependencyOfRelationship,
 					},
 				}
 			},
@@ -976,17 +981,17 @@ func TestPackageDbDependenciesByParse(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			pkgsByID := make(map[artifact.ID]*pkg.Package)
+			pkgsByID := make(map[artifact.ID]pkg.Package)
 			for _, p := range pkgs {
 				p.SetID()
-				pkgsByID[p.ID()] = &p
+				pkgsByID[p.ID()] = p
 			}
 
 			actualDependencies := make(map[string][]string)
 
 			for _, r := range relationships {
 				switch r.Type {
-				case artifact.RuntimeDependencyOfRelationship:
+				case artifact.DependencyOfRelationship:
 					to := pkgsByID[r.To.ID()]
 					from := pkgsByID[r.From.ID()]
 					actualDependencies[to.Name] = append(actualDependencies[to.Name], from.Name)

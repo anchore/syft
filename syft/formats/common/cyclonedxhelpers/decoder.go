@@ -2,11 +2,11 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
-	"github.com/anchore/packageurl-go"
 	"io"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/formats/common"
 	"github.com/anchore/syft/syft/linux"

@@ -1,7 +1,6 @@
 package cyclonedxhelpers
 
 import (
-	"github.com/anchore/syft/syft/pkg"
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -11,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -121,16 +121,11 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 // An example of a relationship to not include would be: OwnershipByFileOverlapRelationship.
 func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
-	case artifact.RuntimeDependencyOfRelationship:
-		return true
-	case artifact.DevDependencyOfRelationship:
-		return true
-	case artifact.BuildDependencyOfRelationship:
-		return true
 	case artifact.DependencyOfRelationship:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {

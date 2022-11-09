@@ -197,7 +197,7 @@ func processChecksum(value string) *file.Digest {
 
 func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.Relationship) {
 	// map["provides" string] -> packages that provide the "p" key
-	lookup := make(map[string][]*pkg.Package)
+	lookup := make(map[string][]pkg.Package)
 	// read "Provides" (p) and add as keys for lookup keys as well as package names
 	for _, p := range pkgs {
 		apkg, ok := p.Metadata.(pkg.ApkMetadata)
@@ -205,10 +205,10 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 			log.Warnf("cataloger failed to extract apk 'provides' metadata for package %+v", p.Name)
 			continue
 		}
-		lookup[p.Name] = append(lookup[p.Name], &p)
+		lookup[p.Name] = append(lookup[p.Name], p)
 		for _, provides := range apkg.Provides {
 			k := stripVersionSpecifier(provides)
-			lookup[k] = append(lookup[k], &p)
+			lookup[k] = append(lookup[k], p)
 		}
 	}
 
@@ -228,7 +228,7 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 				relationships = append(relationships, artifact.Relationship{
 					From: depPkg,
 					To:   p,
-					Type: "runtime-dependency-of", // depPkg IS A runtime dependency OF p
+					Type: artifact.DependencyOfRelationship,
 				})
 			}
 		}
