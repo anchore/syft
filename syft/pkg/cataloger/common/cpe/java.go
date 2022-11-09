@@ -181,6 +181,10 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 		return nil
 	}
 
+	return GroupIDsFromJavaMetadata(metadata)
+}
+
+func GroupIDsFromJavaMetadata(metadata pkg.JavaMetadata) (groupIDs []string) {
 	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
 	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
 	groupIDs = append(groupIDs, groupIDsFromJavaManifest(metadata.Manifest)...)

@@ -86,7 +86,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 					s1 := string(by1)
 					s2 := string(by2)
 					if diff := cmp.Diff(s1, s2); diff != "" {
-						t.Errorf("Encode/Decode mismatch (-want +got):\n%s", diff)
+						t.Errorf("Encode/Decode mismatch (-want +got) [image %q]:\n%s", image, diff)
 					}
 				} else if !assert.True(t, bytes.Equal(by1, by2)) {
 					dmp := diffmatchpatch.New()

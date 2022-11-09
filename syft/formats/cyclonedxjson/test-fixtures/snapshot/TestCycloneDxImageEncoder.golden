@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:41bbbcc7-694d-4b07-a678-0afb67dabdf9",
+  "serialNumber": "urn:uuid:ced49687-6384-48fa-a930-ef83a258bf77",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-10-24T09:54:37-04:00",
+    "timestamp": "2022-11-07T09:11:21-05:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -21,7 +21,7 @@
   },
   "components": [
     {
-      "bom-ref": "5ffee24fb164cffc",
+      "bom-ref": "66ba429119b8bec6",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=8b16570b2b4155c3",
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=958443e2d9304af4",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",

@@ -3,7 +3,7 @@
  "name": "user-image-input",
  "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "created": "2022-10-24T13:54:19.48428Z",
+  "created": "2022-11-07T14:11:33.947742Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
@@ -11,10 +11,10 @@
   "licenseListVersion": "3.18"
  },
  "dataLicense": "CC0-1.0",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-1a4dc179-1222-463c-b4e9-619131af7e97",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-30117c3a-546f-45b7-a1a8-91f2ecd8d2aa",
  "packages": [
   {
-   "SPDXID": "SPDXRef-5ffee24fb164cffc",
+   "SPDXID": "SPDXRef-66ba429119b8bec6",
    "name": "package-1",
    "licenseConcluded": "MIT",
    "downloadLocation": "NOASSERTION",
@@ -44,7 +44,7 @@
    "versionInfo": "1.0.1"
   },
   {
-   "SPDXID": "SPDXRef-8b16570b2b4155c3",
+   "SPDXID": "SPDXRef-958443e2d9304af4",
    "name": "package-2",
    "licenseConcluded": "NONE",
    "downloadLocation": "NOASSERTION",
@@ -118,32 +118,32 @@
  ],
  "relationships": [
   {
-   "spdxElementId": "SPDXRef-5ffee24fb164cffc",
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
    "relationshipType": "CONTAINS",
    "relatedSpdxElement": "SPDXRef-5265a4dde3edbf7c"
   },
   {
-   "spdxElementId": "SPDXRef-5ffee24fb164cffc",
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
    "relationshipType": "CONTAINS",
    "relatedSpdxElement": "SPDXRef-839d99ee67d9d174"
   },
   {
-   "spdxElementId": "SPDXRef-5ffee24fb164cffc",
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
    "relationshipType": "CONTAINS",
    "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6"
   },
   {
-   "spdxElementId": "SPDXRef-5ffee24fb164cffc",
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
    "relationshipType": "CONTAINS",
    "relatedSpdxElement": "SPDXRef-c641caa71518099f"
   },
   {
-   "spdxElementId": "SPDXRef-5ffee24fb164cffc",
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
    "relationshipType": "CONTAINS",
    "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f"
   },
   {
-   "spdxElementId": "SPDXRef-5ffee24fb164cffc",
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
    "relationshipType": "CONTAINS",
    "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd"
   }

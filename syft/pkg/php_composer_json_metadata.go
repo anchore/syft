@@ -1,14 +1,5 @@
 package pkg
 
-import (
-	"strings"
-
-	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/syft/linux"
-)
-
-var _ urlIdentifier = (*PhpComposerJSONMetadata)(nil)
-
 // PhpComposerJSONMetadata represents information found from composer v1/v2 "installed.json" files as well as composer.lock files
 type PhpComposerJSONMetadata struct {
 	Name            string                       `json:"name"`
@@ -41,30 +32,4 @@ type PhpComposerAuthors struct {
 	Name     string `json:"name"`
 	Email    string `json:"email,omitempty"`
 	Homepage string `json:"homepage,omitempty"`
-}
-
-func (m PhpComposerJSONMetadata) PackageURL(_ *linux.Release) string {
-	var name, vendor string
-	fields := strings.Split(m.Name, "/")
-	switch len(fields) {
-	case 0:
-		return ""
-	case 1:
-		name = m.Name
-	case 2:
-		vendor = fields[0]
-		name = fields[1]
-	default:
-		vendor = fields[0]
-		name = strings.Join(fields[1:], "-")
-	}
-
-	pURL := packageurl.NewPackageURL(
-		packageurl.TypeComposer,
-		vendor,
-		name,
-		m.Version,
-		nil,
-		"")
-	return pURL.ToString()
 }
