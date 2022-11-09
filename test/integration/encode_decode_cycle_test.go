@@ -36,7 +36,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		{
 			formatOption: syftjson.ID,
 			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("\"(id|parent)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
+				// no redactions necessary
 				return in
 			},
 			json: true,
@@ -44,7 +44,9 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		{
 			formatOption: cyclonedxjson.ID,
 			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("\"(timestamp|serialNumber|bom-ref)\": \"[^\"]+\",").ReplaceAll(in, []byte{})
+				// unstable values
+				in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref)": "[^"]+",`).ReplaceAll(in, []byte{})
+
 				return in
 			},
 			json: true,
@@ -52,8 +54,10 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		{
 			formatOption: cyclonedxxml.ID,
 			redactor: func(in []byte) []byte {
-				in = regexp.MustCompile("(serialNumber|bom-ref)=\"[^\"]+\"").ReplaceAll(in, []byte{})
-				in = regexp.MustCompile("<timestamp>[^<]+</timestamp>").ReplaceAll(in, []byte{})
+				// unstable values
+				in = regexp.MustCompile(`(serialNumber|bom-ref)="[^"]+"`).ReplaceAll(in, []byte{})
+				in = regexp.MustCompile(`<timestamp>[^<]+</timestamp>`).ReplaceAll(in, []byte{})
+
 				return in
 			},
 		},

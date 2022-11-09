@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -120,16 +121,11 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 // An example of a relationship to not include would be: OwnershipByFileOverlapRelationship.
 func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
-	case artifact.RuntimeDependencyOfRelationship:
-		return true
-	case artifact.DevDependencyOfRelationship:
-		return true
-	case artifact.BuildDependencyOfRelationship:
-		return true
 	case artifact.DependencyOfRelationship:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
@@ -141,10 +137,21 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 			continue
 		}
 
+		// we only capture package-to-package relationships for now
+		fromPkg, ok := r.From.(*pkg.Package)
+		if !ok {
+			continue
+		}
+
+		toPkg, ok := r.To.(*pkg.Package)
+		if !ok {
+			continue
+		}
+
 		innerDeps := []cyclonedx.Dependency{}
-		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: string(r.From.ID())})
+		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: deriveBomRef(*fromPkg)})
 		result = append(result, cyclonedx.Dependency{
-			Ref:          string(r.To.ID()),
+			Ref:          deriveBomRef(*toPkg),
 			Dependencies: &innerDeps,
 		})
 	}

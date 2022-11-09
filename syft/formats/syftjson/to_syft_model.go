@@ -1,6 +1,8 @@
 package syftjson
 
 import (
+	"strings"
+
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/syft/internal/log"
@@ -113,12 +115,15 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 	typ := artifact.RelationshipType(relationship.Type)
 
 	switch typ {
-	case artifact.OwnershipByFileOverlapRelationship:
-		fallthrough
-	case artifact.ContainsRelationship:
+	case artifact.OwnershipByFileOverlapRelationship, artifact.ContainsRelationship, artifact.DependencyOfRelationship:
 	default:
-		log.Warnf("unknown relationship type: %s", typ)
-		return nil
+		if !strings.Contains(string(typ), "dependency-of") {
+			log.Warnf("unknown relationship type: %s", typ)
+			return nil
+		}
+		// lets try to stay as compatible as possible with similar relationship types without dropping the relationship
+		log.Warnf("assuming %q for relationship type %q", artifact.DependencyOfRelationship, typ)
+		typ = artifact.DependencyOfRelationship
 	}
 	return &artifact.Relationship{
 		From: from,
