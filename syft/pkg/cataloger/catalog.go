@@ -67,11 +67,6 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 			// we might have binary classified CPE already with the package so we want to append here
 			p.CPEs = append(p.CPEs, cpe.Generate(p)...)
 
-			// generate PURL (note: this is excluded from package ID, so is safe to mutate)
-			if p.PURL == "" {
-				p.PURL = pkg.URL(p, release)
-			}
-
 			// if we were not able to identify the language we have an opportunity
 			// to try and get this value from the PURL. Worst case we assert that
 			// we could not identify the language at either stage and set UnknownLanguage

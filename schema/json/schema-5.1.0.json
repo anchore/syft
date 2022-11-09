@@ -157,16 +157,7 @@
           "type": "integer"
         },
         "pullDependencies": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "provides": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "string"
         },
         "pullChecksum": {
           "type": "string"
@@ -194,7 +185,6 @@
         "size",
         "installedSize",
         "pullDependencies",
-        "provides",
         "pullChecksum",
         "gitCommitOfApkPort",
         "files"

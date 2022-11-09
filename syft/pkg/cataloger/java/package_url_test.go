@@ -41,7 +41,7 @@ func Test_packageURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.expect, func(t *testing.T) {
-			assert.Equal(t, tt.expect, packageURL(tt.pkg))
+			assert.Equal(t, tt.expect, packageURL(tt.pkg.Name, tt.pkg.Version, tt.pkg.Metadata.(pkg.JavaMetadata)))
 		})
 	}
 }

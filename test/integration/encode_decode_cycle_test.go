@@ -47,14 +47,6 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				// unstable values
 				in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref)": "[^"]+",`).ReplaceAll(in, []byte{})
 
-				//// dependencies are not supported (edge types cannot be encoded or inferred during decoding)
-				//var det map[string]interface{}
-				//require.NoError(t, json.Unmarshal(in, &det))
-				//delete(det, "dependencies")
-				//inCopy, err := json.Marshal(det)
-				//require.NoError(t, err)
-				//in = inCopy
-
 				return in
 			},
 			json: true,
@@ -65,7 +57,6 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				// unstable values
 				in = regexp.MustCompile(`(serialNumber|bom-ref)="[^"]+"`).ReplaceAll(in, []byte{})
 				in = regexp.MustCompile(`<timestamp>[^<]+</timestamp>`).ReplaceAll(in, []byte{})
-				//in = regexp.MustCompile(`(?m:(\n\s+)*<dependencies>[\s\S]*?</dependencies>)`).ReplaceAll(in, []byte{})
 
 				return in
 			},
@@ -99,7 +90,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 					s1 := string(by1)
 					s2 := string(by2)
 					if diff := cmp.Diff(s1, s2); diff != "" {
-						t.Errorf("Encode/Decode mismatch (-want +got):\n%s", diff)
+						t.Errorf("Encode/Decode mismatch (-want +got) [image %q]:\n%s", image, diff)
 					}
 				} else if !assert.True(t, bytes.Equal(by1, by2)) {
 					dmp := diffmatchpatch.New()
