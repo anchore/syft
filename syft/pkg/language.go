@@ -42,7 +42,6 @@ var AllLanguages = []Language{
 	Swift,
 	CPP,
 	Haskell,
-	File,
 }
 
 // String returns the string representation of the language.
