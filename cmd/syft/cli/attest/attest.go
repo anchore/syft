@@ -124,7 +124,7 @@ func parseAttestationOutput(outputs []string) (format string) {
 }
 
 func parseImageSource(userInput string, app *config.Application) (s *source.Input, err error) {
-	si, err := source.ParseInput(userInput, app.Platform, false)
+	si, err := source.ParseInputWithName(userInput, app.Platform, false, app.Name)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate source input for attest command: %w", err)
 	}
