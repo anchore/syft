@@ -48,7 +48,8 @@ func (c fileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []a
 			for _, newPkg := range newPkgs {
 				for i := range packages {
 					p := &packages[i]
-					if packagesMatch(p, &newPkg) {
+					p2 := &newPkg
+					if packagesMatch(p, p2) {
 						p.Locations.Add(newPkg.Locations.ToSlice()...)
 						continue newPackages
 					}
