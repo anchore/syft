@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
@@ -33,7 +32,7 @@ type Classifier struct {
 func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r *artifact.Relationship, err error) {
 	doesFilepathMatch := true
 	if len(c.FilepathPatterns) > 0 {
-		doesFilepathMatch, _ = file.FilepathMatches(c.FilepathPatterns, reader.Location)
+		doesFilepathMatch, _ = FilepathMatches(c.FilepathPatterns, reader.Location)
 	}
 
 	if !doesFilepathMatch {
@@ -97,4 +96,18 @@ func getContents(reader source.LocationReadCloser) ([]byte, error) {
 	}
 
 	return contents, nil
+}
+
+func FilepathMatches(patterns []*regexp.Regexp, location source.Location) (bool, map[string]string) {
+	for _, p := range []string{location.RealPath, location.VirtualPath} {
+		if p == "" {
+			continue
+		}
+		for _, pattern := range patterns {
+			if pattern.MatchString(p) {
+				return true, internal.MatchNamedCaptureGroups(pattern, p)
+			}
+		}
+	}
+	return false, nil
 }

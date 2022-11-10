@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
+	"github.com/anchore/syft/syft/pkg/cataloger/file"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -39,7 +40,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		python.NewPythonPackageCataloger(),
 		php.NewPHPComposerInstalledCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
-		javascript.NewNodeBinaryCataloger(),
+		// javascript.NewNodeBinaryCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpm.NewRpmDBCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
@@ -47,6 +48,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		golang.NewGoModuleBinaryCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		portage.NewPortageCataloger(),
+		file.NewFileCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -59,7 +61,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		python.NewPythonPackageCataloger(),
 		php.NewPHPComposerLockCataloger(),
 		javascript.NewJavascriptLockCataloger(),
-		javascript.NewNodeBinaryCataloger(),
+		// javascript.NewNodeBinaryCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpm.NewRpmDBCataloger(),
 		rpm.NewFileCataloger(),
@@ -75,6 +77,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
+		file.NewFileCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -88,7 +91,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		python.NewPythonPackageCataloger(),
 		javascript.NewJavascriptLockCataloger(),
 		javascript.NewJavascriptPackageCataloger(),
-		javascript.NewNodeBinaryCataloger(),
+		// javascript.NewNodeBinaryCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpm.NewRpmDBCataloger(),
 		rpm.NewFileCataloger(),
@@ -107,6 +110,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
+		file.NewFileCataloger(),
 	}, cfg.Catalogers)
 }
 

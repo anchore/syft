@@ -102,23 +102,17 @@ func toFile(s sbom.SBOM) []model.File {
 			digests = digestsForLocation
 		}
 
-		var classifications []file.Classification
-		if classificationsForLocation, exists := artifacts.FileClassifications[coordinates]; exists {
-			classifications = classificationsForLocation
-		}
-
 		var contents string
 		if contentsForLocation, exists := artifacts.FileContents[coordinates]; exists {
 			contents = contentsForLocation
 		}
 
 		results = append(results, model.File{
-			ID:              string(coordinates.ID()),
-			Location:        coordinates,
-			Metadata:        toFileMetadataEntry(coordinates, metadata),
-			Digests:         digests,
-			Classifications: classifications,
-			Contents:        contents,
+			ID:       string(coordinates.ID()),
+			Location: coordinates,
+			Metadata: toFileMetadataEntry(coordinates, metadata),
+			Digests:  digests,
+			Contents: contents,
 		})
 	}
 

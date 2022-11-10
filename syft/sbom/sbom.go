@@ -18,13 +18,12 @@ type SBOM struct {
 }
 
 type Artifacts struct {
-	PackageCatalog      *pkg.Catalog
-	FileMetadata        map[source.Coordinates]source.FileMetadata
-	FileDigests         map[source.Coordinates][]file.Digest
-	FileClassifications map[source.Coordinates][]file.Classification
-	FileContents        map[source.Coordinates]string
-	Secrets             map[source.Coordinates][]file.SearchResult
-	LinuxDistribution   *linux.Release
+	PackageCatalog    *pkg.Catalog
+	FileMetadata      map[source.Coordinates]source.FileMetadata
+	FileDigests       map[source.Coordinates][]file.Digest
+	FileContents      map[source.Coordinates]string
+	Secrets           map[source.Coordinates][]file.SearchResult
+	LinuxDistribution *linux.Release
 }
 
 type Descriptor struct {
@@ -53,9 +52,6 @@ func (s SBOM) AllCoordinates() []source.Coordinates {
 		set.Add(coordinates)
 	}
 	for coordinates := range s.Artifacts.FileContents {
-		set.Add(coordinates)
-	}
-	for coordinates := range s.Artifacts.FileClassifications {
 		set.Add(coordinates)
 	}
 	for coordinates := range s.Artifacts.FileDigests {

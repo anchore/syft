@@ -22,7 +22,6 @@ func Tasks(app *config.Application) ([]Task, error) {
 		generateCatalogFileMetadataTask,
 		generateCatalogFileDigestsTask,
 		generateCatalogSecretsTask,
-		generateCatalogFileClassificationsTask,
 		generateCatalogContentsTask,
 	}
 
@@ -156,34 +155,6 @@ func generateCatalogSecretsTask(app *config.Application) (Task, error) {
 			return nil, err
 		}
 		results.Secrets = result
-		return nil, nil
-	}
-
-	return task, nil
-}
-
-func generateCatalogFileClassificationsTask(app *config.Application) (Task, error) {
-	if !app.FileClassification.Cataloger.Enabled {
-		return nil, nil
-	}
-
-	// TODO: in the future we could expose out the classifiers via configuration
-	classifierCataloger, err := file.NewClassificationCataloger(file.DefaultClassifiers)
-	if err != nil {
-		return nil, err
-	}
-
-	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(app.FileClassification.Cataloger.ScopeOpt)
-		if err != nil {
-			return nil, err
-		}
-
-		result, err := classifierCataloger.Catalog(resolver)
-		if err != nil {
-			return nil, err
-		}
-		results.FileClassifications = result
 		return nil, nil
 	}
 
