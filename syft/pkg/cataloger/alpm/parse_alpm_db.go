@@ -218,7 +218,7 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 				})
 			case "md5digest":
 				entry.Digests = append(entry.Digests, file.Digest{
-					Algorithm: "md5digest",
+					Algorithm: "md5",
 					Value:     kv.Value(),
 				})
 			default:

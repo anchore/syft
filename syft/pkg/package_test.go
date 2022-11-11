@@ -183,12 +183,12 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.Equal,
 		},
 		{
-			name: "language is reflected",
+			name: "language is NOT reflected",
 			transform: func(pkg Package) Package {
 				pkg.Language = Rust
 				return pkg
 			},
-			expectedIDComparison: assert.NotEqual,
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "metadata mutation is reflected",

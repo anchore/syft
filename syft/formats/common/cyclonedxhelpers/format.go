@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -120,16 +121,11 @@ func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclone
 // An example of a relationship to not include would be: OwnershipByFileOverlapRelationship.
 func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 	switch ty {
-	case artifact.RuntimeDependencyOfRelationship:
-		return true
-	case artifact.DevDependencyOfRelationship:
-		return true
-	case artifact.BuildDependencyOfRelationship:
-		return true
 	case artifact.DependencyOfRelationship:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
@@ -141,10 +137,21 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 			continue
 		}
 
+		// we only capture package-to-package relationships for now
+		fromPkg, ok := r.From.(*pkg.Package)
+		if !ok {
+			continue
+		}
+
+		toPkg, ok := r.To.(*pkg.Package)
+		if !ok {
+			continue
+		}
+
 		innerDeps := []cyclonedx.Dependency{}
-		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: string(r.From.ID())})
+		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: deriveBomRef(*fromPkg)})
 		result = append(result, cyclonedx.Dependency{
-			Ref:          string(r.To.ID()),
+			Ref:          deriveBomRef(*toPkg),
 			Dependencies: &innerDeps,
 		})
 	}
@@ -152,8 +159,12 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 }
 
 func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component {
+	name := srcMetadata.Name
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
+		if name == "" {
+			name = srcMetadata.ImageMetadata.UserInput
+		}
 		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
 		if err != nil {
 			log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
@@ -161,10 +172,13 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 		return &cyclonedx.Component{
 			BOMRef:  string(bomRef),
 			Type:    cyclonedx.ComponentTypeContainer,
-			Name:    srcMetadata.ImageMetadata.UserInput,
+			Name:    name,
 			Version: srcMetadata.ImageMetadata.ManifestDigest,
 		}
 	case source.DirectoryScheme, source.FileScheme:
+		if name == "" {
+			name = srcMetadata.Path
+		}
 		bomRef, err := artifact.IDByHash(srcMetadata.Path)
 		if err != nil {
 			log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)
@@ -172,7 +186,7 @@ func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component 
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
 			Type:   cyclonedx.ComponentTypeFile,
-			Name:   srcMetadata.Path,
+			Name:   name,
 		}
 	}
 

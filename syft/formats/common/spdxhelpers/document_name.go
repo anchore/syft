@@ -8,6 +8,10 @@ import (
 )
 
 func DocumentName(srcMetadata source.Metadata) string {
+	if srcMetadata.Name != "" {
+		return cleanName(srcMetadata.Name)
+	}
+
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
 		return cleanName(srcMetadata.ImageMetadata.UserInput)

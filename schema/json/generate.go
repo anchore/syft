@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/alecthomas/jsonschema"
+	"github.com/invopop/jsonschema"
 
 	"github.com/anchore/syft/internal"
 	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
@@ -56,7 +56,7 @@ func main() {
 func build() *jsonschema.Schema {
 	reflector := &jsonschema.Reflector{
 		AllowAdditionalProperties: true,
-		TypeNamer: func(r reflect.Type) string {
+		Namer: func(r reflect.Type) string {
 			return strings.TrimPrefix(r.Name(), "JSON")
 		},
 	}
@@ -88,7 +88,7 @@ func build() *jsonschema.Schema {
 	}
 	for _, name := range metadataNames {
 		metadataTypes = append(metadataTypes, map[string]string{
-			"$ref": fmt.Sprintf("#/definitions/%s", name),
+			"$ref": fmt.Sprintf("#/$defs/%s", name),
 		})
 	}
 

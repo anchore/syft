@@ -21,44 +21,6 @@ const (
 	purlGradlePkgType = "gradle"
 )
 
-type urlIdentifier interface {
-	PackageURL(*linux.Release) string
-}
-
-func URL(p Package, release *linux.Release) string {
-	if p.Metadata != nil {
-		if i, ok := p.Metadata.(urlIdentifier); ok {
-			return i.PackageURL(release)
-		}
-	}
-
-	// the remaining cases are primarily reserved for packages without metadata struct instances
-
-	var purlType = p.Type.PackageURLType()
-	var name = p.Name
-	var namespace = ""
-
-	switch {
-	case purlType == "":
-		purlType = packageurl.TypeGeneric
-	case p.Type == NpmPkg:
-		fields := strings.SplitN(p.Name, "/", 2)
-		if len(fields) > 1 {
-			namespace = fields[0]
-			name = fields[1]
-		}
-	}
-	// generate a purl from the package data
-	return packageurl.NewPackageURL(
-		purlType,
-		namespace,
-		name,
-		p.Version,
-		nil,
-		"",
-	).ToString()
-}
-
 func PURLQualifiers(vars map[string]string, release *linux.Release) (q packageurl.Qualifiers) {
 	keys := make([]string, 0, len(vars))
 	for k := range vars {

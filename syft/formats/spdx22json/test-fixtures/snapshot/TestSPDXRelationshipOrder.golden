@@ -1,160 +1,151 @@
 {
- "spdxVersion": "SPDX-2.3",
- "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-3d81df33-f6f3-4c3c-89ba-2c2777a4b66b",
+ "spdxVersion": "SPDX-2.2",
  "creationInfo": {
-  "licenseListVersion": "3.18",
+  "created": "2022-11-07T14:11:33.947742Z",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2022-11-07T23:14:00Z",
-  "comment": ""
+  "licenseListVersion": "3.18"
  },
+ "dataLicense": "CC0-1.0",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-30117c3a-546f-45b7-a1a8-91f2ecd8d2aa",
  "packages": [
   {
+   "SPDXID": "SPDXRef-66ba429119b8bec6",
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
-   "versionInfo": "1.0.1",
-   "downloadLocation": "NOASSERTION",
-   "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
    "licenseConcluded": "MIT",
-   "licenseDeclared": "MIT",
-   "copyrightText": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
    "externalRefs": [
     {
      "referenceCategory": "SECURITY",
-     "referenceType": "cpe23Type",
      "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-     "comment": ""
+     "referenceType": "cpe23Type"
     },
     {
-     "referenceCategory": "PACKAGE-MANAGER",
-     "referenceType": "purl",
+     "referenceCategory": "PACKAGE_MANAGER",
      "referenceLocator": "a-purl-1",
-     "comment": ""
+     "referenceType": "purl"
     }
-   ]
+   ],
+   "filesAnalyzed": false,
+   "hasFiles": [
+    "SPDXRef-5265a4dde3edbf7c",
+    "SPDXRef-839d99ee67d9d174",
+    "SPDXRef-9c2f7510199b17f6",
+    "SPDXRef-c641caa71518099f",
+    "SPDXRef-c6f5b29dca12661f",
+    "SPDXRef-f9e49132a4b96ccd"
+   ],
+   "licenseDeclared": "MIT",
+   "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
+   "versionInfo": "1.0.1"
   },
   {
+   "SPDXID": "SPDXRef-958443e2d9304af4",
    "name": "package-2",
-   "SPDXID": "SPDXRef-Package-deb-package-2-8b16570b2b4155c3",
-   "versionInfo": "2.0.1",
-   "downloadLocation": "NOASSERTION",
-   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
    "licenseConcluded": "NONE",
-   "licenseDeclared": "NONE",
-   "copyrightText": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
    "externalRefs": [
     {
      "referenceCategory": "SECURITY",
-     "referenceType": "cpe23Type",
      "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-     "comment": ""
+     "referenceType": "cpe23Type"
     },
     {
-     "referenceCategory": "PACKAGE-MANAGER",
-     "referenceType": "purl",
+     "referenceCategory": "PACKAGE_MANAGER",
      "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
-     "comment": ""
+     "referenceType": "purl"
     }
-   ]
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "NONE",
+   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "versionInfo": "2.0.1"
   }
  ],
  "files": [
   {
-   "fileName": "/a1/f6",
    "SPDXID": "SPDXRef-9c2f7510199b17f6",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/a1/f6",
    "fileTypes": [
     "OTHER"
-   ],
-   "checksums": null,
-   "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   ]
   },
   {
-   "fileName": "/d1/f3",
    "SPDXID": "SPDXRef-c6f5b29dca12661f",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/d1/f3",
    "fileTypes": [
     "OTHER"
-   ],
-   "checksums": null,
-   "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   ]
   },
   {
-   "fileName": "/d2/f4",
    "SPDXID": "SPDXRef-c641caa71518099f",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/d2/f4",
    "fileTypes": [
     "OTHER"
-   ],
-   "checksums": null,
-   "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   ]
   },
   {
-   "fileName": "/f1",
    "SPDXID": "SPDXRef-5265a4dde3edbf7c",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/f1",
    "fileTypes": [
     "OTHER"
-   ],
-   "checksums": null,
-   "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   ]
   },
   {
-   "fileName": "/f2",
    "SPDXID": "SPDXRef-f9e49132a4b96ccd",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/f2",
    "fileTypes": [
     "OTHER"
-   ],
-   "checksums": null,
-   "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   ]
   },
   {
-   "fileName": "/z1/f5",
    "SPDXID": "SPDXRef-839d99ee67d9d174",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/z1/f5",
    "fileTypes": [
     "OTHER"
-   ],
-   "checksums": null,
-   "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   ]
   }
  ],
  "relationships": [
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
-   "relatedSpdxElement": "SPDXRef-5265a4dde3edbf7c",
-   "relationshipType": "CONTAINS"
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-5265a4dde3edbf7c"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
-   "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd",
-   "relationshipType": "CONTAINS"
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-839d99ee67d9d174"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
-   "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f",
-   "relationshipType": "CONTAINS"
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
-   "relatedSpdxElement": "SPDXRef-c641caa71518099f",
-   "relationshipType": "CONTAINS"
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-c641caa71518099f"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
-   "relatedSpdxElement": "SPDXRef-839d99ee67d9d174",
-   "relationshipType": "CONTAINS"
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-5ffee24fb164cffc",
-   "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6",
-   "relationshipType": "CONTAINS"
+   "spdxElementId": "SPDXRef-66ba429119b8bec6",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd"
   }
  ]
 }
