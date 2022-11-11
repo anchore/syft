@@ -1,12 +1,12 @@
-SPDXVersion: SPDX-2.2
+SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-32ec506e-82d8-4da6-991d-e1000e4e562e
+DocumentNamespace: https://anchore.com/syft/image/user-image-input-258730be-7925-4ef3-9009-d9dc532d2fec
 LicenseListVersion: 3.18
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2022-11-07T14:11:42Z
+Created: 2022-11-11T19:25:16Z
 
 ##### Package: package-2
 
@@ -15,11 +15,12 @@ SPDXID: SPDXRef-Package-deb-package-2-958443e2d9304af4
 PackageVersion: 2.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
+PackageSourceInfo: acquired package info from DPKG DB: /somefile-2.txt
 PackageLicenseConcluded: NONE
 PackageLicenseDeclared: NONE
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
-ExternalRef: PACKAGE_MANAGER purl pkg:deb/debian/package-2@2.0.1
+ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 
 ##### Package: package-1
 
@@ -28,9 +29,10 @@ SPDXID: SPDXRef-Package-python-package-1-66ba429119b8bec6
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
+PackageSourceInfo: acquired package info from installed python package manifest file: /somefile-1.txt
 PackageLicenseConcluded: MIT
 PackageLicenseDeclared: MIT
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:1:*:*:*:*:*:*:*
-ExternalRef: PACKAGE_MANAGER purl a-purl-1
+ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
