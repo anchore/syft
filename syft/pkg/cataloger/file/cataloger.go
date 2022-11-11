@@ -45,16 +45,16 @@ func (c fileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []a
 				return nil, nil, err
 			}
 		newPackages:
-			for _, newPkg := range newPkgs {
-				for i := range packages {
-					p := &packages[i]
-					p2 := &newPkg
-					if packagesMatch(p, p2) {
+			for i := range newPkgs {
+				newPkg := &newPkgs[i]
+				for j := range packages {
+					p := &packages[j]
+					if packagesMatch(p, newPkg) {
 						p.Locations.Add(newPkg.Locations.ToSlice()...)
 						continue newPackages
 					}
 				}
-				packages = append(packages, newPkg)
+				packages = append(packages, *newPkg)
 			}
 		}
 	}

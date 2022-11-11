@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -21,7 +22,7 @@ func TestPackageDeduplication(t *testing.T) {
 	}{
 		{
 			scope:        source.AllLayersScope,
-			packageCount: 172, // without deduplication this would be 618
+			packageCount: 173, // without deduplication this would be 618
 			instanceCount: map[string]int{
 				"basesystem": 1,
 				"wget":       1,
@@ -40,7 +41,7 @@ func TestPackageDeduplication(t *testing.T) {
 		},
 		{
 			scope:        source.SquashedScope,
-			packageCount: 170,
+			packageCount: 171,
 			instanceCount: map[string]int{
 				"basesystem": 1,
 				"wget":       1,
@@ -61,6 +62,12 @@ func TestPackageDeduplication(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.scope), func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope, nil)
+
+			for _, p := range sbom.Artifacts.PackageCatalog.Sorted() {
+				if p.Type == pkg.BinaryPkg {
+					assert.NotEmpty(t, p.Name)
+				}
+			}
 
 			assert.Equal(t, tt.packageCount, sbom.Artifacts.PackageCatalog.PackageCount())
 			for name, expectedInstanceCount := range tt.instanceCount {
