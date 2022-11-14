@@ -338,7 +338,7 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 			continue
 		}
 
-		// FIXME: we are only currently including Package -> File CONTAINS relationships
+		// FIXME: we are only currently including Package -> * relationships
 		if _, ok := r.From.(pkg.Package); !ok {
 			log.Debugf("skipping non-package relationship: %+v", r)
 			continue
