@@ -364,7 +364,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 
 func PtrToStruct(ptr interface{}) interface{} {
 	v := reflect.ValueOf(ptr)
-	if v.IsZero() {
+	if v.IsZero() && v.Type().Kind() != reflect.Struct {
 		return nil
 	}
 	switch v.Type().Kind() {
