@@ -78,8 +78,10 @@ func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	typ, ok := pkg.MetadataTypeByName[p.MetadataType]
 	if ok {
 		val := reflect.New(typ).Interface()
-		if err := json.Unmarshal(unpacker.Metadata, val); err != nil {
-			return err
+		if len(unpacker.Metadata) > 0 {
+			if err := json.Unmarshal(unpacker.Metadata, val); err != nil {
+				return err
+			}
 		}
 		p.Metadata = reflect.ValueOf(val).Elem().Interface()
 		return nil
