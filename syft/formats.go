@@ -7,8 +7,8 @@ import (
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/github"
-	"github.com/anchore/syft/syft/formats/spdx22json"
-	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/spdxjson"
+	"github.com/anchore/syft/syft/formats/spdxtagvalue"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/template"
@@ -24,8 +24,8 @@ const (
 	CycloneDxXMLFormatID  = cyclonedxxml.ID
 	CycloneDxJSONFormatID = cyclonedxjson.ID
 	GitHubID              = github.ID
-	SPDXTagValueFormatID  = spdx22tagvalue.ID
-	SPDXJSONFormatID      = spdx22json.ID
+	SPDXTagValueFormatID  = spdxtagvalue.ID
+	SPDXJSONFormatID      = spdxjson.ID
 	TemplateFormatID      = template.ID
 )
 
@@ -37,8 +37,8 @@ func init() {
 		cyclonedxxml.Format(),
 		cyclonedxjson.Format(),
 		github.Format(),
-		spdx22tagvalue.Format(),
-		spdx22json.Format(),
+		spdxtagvalue.Format(),
+		spdxjson.Format(),
 		table.Format(),
 		text.Format(),
 		template.Format(),
@@ -80,9 +80,9 @@ func FormatByName(name string) sbom.Format {
 	case "github", "githubjson":
 		return FormatByID(github.ID)
 	case "spdx", "spdxtv", "spdxtagvalue":
-		return FormatByID(spdx22tagvalue.ID)
+		return FormatByID(spdxtagvalue.ID)
 	case "spdxjson":
-		return FormatByID(spdx22json.ID)
+		return FormatByID(spdxjson.ID)
 	case "table":
 		return FormatByID(table.ID)
 	case "text":

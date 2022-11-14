@@ -1,4 +1,4 @@
-package spdx22tagvalue
+package spdxtagvalue
 
 import (
 	"io"

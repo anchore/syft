@@ -109,22 +109,14 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	}
 }
 
-func toSPDXID(v interface{}) common.ElementID {
+func toSPDXID(identifiable artifact.Identifiable) common.ElementID {
 	id := ""
-	switch v := v.(type) {
-	case pkg.Package:
-		id = SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", v.Type, v.Name, v.ID()))
-	case artifact.Identifiable:
-		id = string(v.ID())
-	case artifact.ID:
-		id = string(v)
-	case string:
-		id = v
-	default:
-		// FIXME don't panic here
-		panic(fmt.Sprintf("Invalid ID type: %+v", v))
+	if p, ok := identifiable.(pkg.Package); ok {
+		id = SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID()))
+	} else {
+		id = string(identifiable.ID())
 	}
-	// NOTE: the spdx libraries prepend SPDXRef-
+	// NOTE: the spdx libraries prepend SPDXRef-, so we don't do it here
 	return common.ElementID(id)
 }
 
@@ -398,7 +390,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 		}
 
 		results = append(results, &spdx.File{
-			FileSPDXIdentifier: common.ElementID(coordinates.ID()),
+			FileSPDXIdentifier: toSPDXID(coordinates),
 			FileComment:        comment,
 			// required, no attempt made to determine license information
 			LicenseConcluded: noAssertion,
