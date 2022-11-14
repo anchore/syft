@@ -92,11 +92,20 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 			Name:        distro.ID,
 			Version:     distro.VersionID,
 			// TODO should we add a PURL?
-			CPE:                distro.CPEName,
+			CPE:                formatCPE(distro.CPEName),
 			ExternalReferences: eRefs,
 			Properties:         properties,
 		},
 	}
+}
+
+func formatCPE(cpeString string) string {
+	cpe, err := pkg.NewCPE(cpeString)
+	if err != nil {
+		log.Debugf("skipping invalid CPE: %s", cpeString)
+		return ""
+	}
+	return pkg.CPEString(cpe)
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
