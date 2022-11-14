@@ -124,6 +124,11 @@ func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
 	return p
 }
 
+func (p *CatalogTester) IgnorePackageFields(fields ...string) *CatalogTester {
+	p.compareOptions = append(p.compareOptions, cmpopts.IgnoreFields(pkg.Package{}, fields...))
+	return p
+}
+
 func (p *CatalogTester) Expects(pkgs []pkg.Package, relationships []artifact.Relationship) *CatalogTester {
 	p.expectedPkgs = pkgs
 	p.expectedRelationships = relationships

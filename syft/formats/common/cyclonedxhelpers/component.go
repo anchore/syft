@@ -98,9 +98,8 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 func decodeName(group string, name string) string {
 	if group != "" {
 		return group + "/" + name
-	} else {
-		return name
 	}
+	return name
 }
 
 func decodeLocations(vals map[string]string) source.LocationSet {

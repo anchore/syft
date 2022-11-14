@@ -1,53 +1,55 @@
 package sbom
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/spdx22json"
 	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
 	"github.com/anchore/syft/syft/formats/syftjson"
-	"io"
-
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
+const catalogerName = "sbom-cataloger"
+
 // NewSBOMCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
-func NewSBOMCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/*.syft.json": makeParser(syftjson.Format()),
-		"**/bom.json":    makeParser(cyclonedxjson.Format()),
-		"**/bom.xml":     makeParser(cyclonedxxml.Format()),
-		"**/*.cdx.json":  makeParser(cyclonedxjson.Format()),
-		"**/*.cdx.xml":   makeParser(cyclonedxxml.Format()),
-		"**/*.spdx.json": makeParser(spdx22json.Format()),
-		"**/*.spdx":      makeParser(spdx22tagvalue.Format()),
-	}
-	return common.NewGenericCataloger(nil, globParsers, "sbom-cataloger")
+func NewSBOMCataloger() *generic.Cataloger {
+	return generic.NewCataloger(catalogerName).
+		WithParserByGlobs(makeParser(syftjson.Format()), "**/*.syft.json").
+		WithParserByGlobs(makeParser(cyclonedxjson.Format()), "**/bom.json", "**/*.cdx.json").
+		WithParserByGlobs(makeParser(cyclonedxxml.Format()), "**/bom.xml", "**/*.cdx.xml").
+		WithParserByGlobs(makeParser(spdx22json.Format()), "**/*.spdx.json").
+		WithParserByGlobs(makeParser(spdx22tagvalue.Format()), "**/*.spdx", "**/*.spdx.tv")
 }
 
-func makeParser(format sbom.Format) func(string, io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	return func(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-		by, err := io.ReadAll(reader)
+func makeParser(format sbom.Format) generic.Parser {
+	return func(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+		s, err := format.Decode(reader)
 		if err != nil {
-			return nil, nil, fmt.Errorf("unable to read sbom: %w", err)
+			return nil, nil, err
 		}
 
-		s, err := format.Decode(bytes.NewReader(by))
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to decode sbom: %w", err)
-		}
-
-		var packages []*pkg.Package
+		var pkgs []pkg.Package
+		var relationships []artifact.Relationship
 		for _, p := range s.Artifacts.PackageCatalog.Sorted() {
-			x := p // copy
-			packages = append(packages, &x)
+			// replace all locations on the package with the location of the SBOM file.
+			// Why not keep the original list of locations? Since the "locations" field is meant to capture
+			// where there is evidence of this file, and the catalogers have not run against any file other than,
+			// the SBOM, this is the only location that is relevant for this cataloger.
+			p.Locations = source.NewLocationSet(reader.Location)
+			p.FoundBy = catalogerName
+
+			pkgs = append(pkgs, p)
+			relationships = append(relationships, artifact.Relationship{
+				From: p,
+				To:   reader.Location.Coordinates,
+				Type: artifact.DescribedByRelationship,
+			})
 		}
 
-		return packages, nil, nil
+		return pkgs, relationships, nil
 	}
 }
