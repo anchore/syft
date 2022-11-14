@@ -169,6 +169,110 @@ func Test_toFileChecksums(t *testing.T) {
 	}
 }
 
+func Test_fileIDsForPackage(t *testing.T) {
+	p := pkg.Package{
+		Name: "bogus",
+	}
+
+	c := source.Coordinates{
+		RealPath:     "/path",
+		FileSystemID: "nowhere",
+	}
+
+	docElementId := func(identifiable artifact.Identifiable) common.DocElementID {
+		return common.DocElementID{
+			ElementRefID: toSPDXID(identifiable),
+		}
+	}
+
+	tests := []struct {
+		name          string
+		relationships []artifact.Relationship
+		expected      []*spdx.Relationship
+	}{
+		{
+			name: "package-to-file contains relationships",
+			relationships: []artifact.Relationship{
+				{
+					From: p,
+					To:   c,
+					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []*spdx.Relationship{
+				{
+					Relationship: "CONTAINS",
+					RefA:         docElementId(p),
+					RefB:         docElementId(c),
+				},
+			},
+		},
+		{
+			name: "package-to-package",
+			relationships: []artifact.Relationship{
+				{
+					From: p,
+					To:   p,
+					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []*spdx.Relationship{
+				{
+					Relationship: "CONTAINS",
+					RefA:         docElementId(p),
+					RefB:         docElementId(p),
+				},
+			},
+		},
+		{
+			name: "ignore file-to-file",
+			relationships: []artifact.Relationship{
+				{
+					From: c,
+					To:   c,
+					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "ignore file-to-package",
+			relationships: []artifact.Relationship{
+				{
+					From: c,
+					To:   p,
+					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "include package-to-file overlap relationships",
+			relationships: []artifact.Relationship{
+				{
+					From: p,
+					To:   c,
+					Type: artifact.OwnershipByFileOverlapRelationship,
+				},
+			},
+			expected: []*spdx.Relationship{
+				{
+					Relationship:        "OTHER",
+					RefA:                docElementId(p),
+					RefB:                docElementId(c),
+					RelationshipComment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			relationships := toRelationships(test.relationships)
+			assert.Equal(t, test.expected, relationships)
+		})
+	}
+}
+
 func Test_H1Digest(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -228,116 +332,6 @@ func Test_H1Digest(t *testing.T) {
 					}
 				}
 			}
-		})
-	}
-}
-
-func Test_fileIDsForPackage(t *testing.T) {
-	p := pkg.Package{
-		Name: "bogus",
-	}
-
-	c := source.Coordinates{
-		RealPath:     "/path",
-		FileSystemID: "nowhere",
-	}
-
-	docElementId := func(identifiable artifact.Identifiable) common.DocElementID {
-		return common.DocElementID{
-			ElementRefID: toSPDXID(identifiable),
-		}
-	}
-
-	tests := []struct {
-		name          string
-		id            artifact.ID
-		relationships []artifact.Relationship
-		expected      []*spdx.Relationship
-	}{
-		{
-			name: "package-to-file contains relationships",
-			id:   p.ID(),
-			relationships: []artifact.Relationship{
-				{
-					From: p,
-					To:   c,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: []*spdx.Relationship{
-				{
-					Relationship: "CONTAINS",
-					RefA:         docElementId(p),
-					RefB:         docElementId(c),
-				},
-			},
-		},
-		{
-			name: "package-to-package",
-			id:   p.ID(),
-			relationships: []artifact.Relationship{
-				{
-					From: p,
-					To:   p,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: []*spdx.Relationship{
-				{
-					Relationship: "CONTAINS",
-					RefA:         docElementId(p),
-					RefB:         docElementId(p),
-				},
-			},
-		},
-		{
-			name: "ignore file-to-file",
-			id:   p.ID(),
-			relationships: []artifact.Relationship{
-				{
-					From: c,
-					To:   c,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: nil,
-		},
-		{
-			name: "ignore file-to-package",
-			id:   p.ID(),
-			relationships: []artifact.Relationship{
-				{
-					From: c,
-					To:   p,
-					Type: artifact.ContainsRelationship,
-				},
-			},
-			expected: nil,
-		},
-		{
-			name: "include package-to-file overlap relationships",
-			id:   p.ID(),
-			relationships: []artifact.Relationship{
-				{
-					From: p,
-					To:   c,
-					Type: artifact.OwnershipByFileOverlapRelationship,
-				},
-			},
-			expected: []*spdx.Relationship{
-				{
-					Relationship:        "OTHER",
-					RefA:                docElementId(p),
-					RefB:                docElementId(c),
-					RelationshipComment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
-				},
-			},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			relationships := toRelationships(test.relationships)
-			assert.Equal(t, test.expected, relationships)
 		})
 	}
 }
