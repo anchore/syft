@@ -74,9 +74,9 @@ func (cfg *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 
 	// check if user specified config; otherwise read all possible paths
 	if err := loadConfig(v, configPath); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Not Found; ignore this error
-			log.Debug("no config file found; proceeding with defaults")
+		var notFound *viper.ConfigFileNotFoundError
+		if errors.As(err, &notFound) {
+			log.Debugf("no config file found, using defaults: %w", notFound)
 		}
 	}
 

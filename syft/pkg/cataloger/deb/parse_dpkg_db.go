@@ -115,7 +115,7 @@ func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return dpkgFields, errEndOfPackages
 			}
 			return nil, err

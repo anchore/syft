@@ -1,6 +1,8 @@
 package rust
 
 import (
+	"errors"
+
 	rustaudit "github.com/microsoft/go-rustaudit"
 
 	"github.com/anchore/syft/internal/log"
@@ -42,13 +44,13 @@ func parseAuditBinaryEntry(reader unionreader.UnionReader, filename string) []ru
 		versionInfo, err := rustaudit.GetDependencyInfo(r)
 
 		if err != nil {
-			if err == rustaudit.ErrNoRustDepInfo {
+			if errors.Is(err, rustaudit.ErrNoRustDepInfo) {
 				// since the cataloger can only select executables and not distinguish if they are a Rust-compiled
 				// binary, we should not show warnings/logs in this case.
 				return nil
 			}
 			// Use an Info level log here like golang/scan_bin.go
-			log.Infof("rust cataloger: unable to read dependency information (file=%q): %v", filename, err)
+			log.Infof("rust cataloger: unable to read dependency information (file=%q): %w", filename, err)
 			return nil
 		}
 

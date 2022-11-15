@@ -32,9 +32,9 @@ func IsErrPath(err error) bool {
 }
 
 func IsErrPathPermission(err error) bool {
-	pathErr, ok := err.(ErrPath)
-	if ok {
+	var pathErr *ErrPath
+	if errors.As(err, &pathErr) {
 		return os.IsPermission(pathErr.Err)
 	}
-	return ok
+	return false
 }

@@ -19,7 +19,7 @@ import (
 func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	rpm, err := rpmutils.ReadRpm(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%v)", reader.Location.RealPath, err)
+		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.Location.RealPath, err)
 	}
 
 	nevra, err := rpm.Header.GetNEVRA()

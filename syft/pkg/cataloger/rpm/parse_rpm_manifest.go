@@ -2,6 +2,7 @@ package rpm
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"strings"
 
@@ -20,7 +21,7 @@ func parseRpmManifest(_ source.FileResolver, _ *generic.Environment, reader sour
 	for {
 		line, err := r.ReadString('\n')
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return nil, nil, err

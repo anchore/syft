@@ -19,7 +19,7 @@ func IDByHash(obj interface{}) (ID, error) {
 		SlicesAsSets: true,
 	})
 	if err != nil {
-		return "", fmt.Errorf("could not build ID for object=%+v: %+v", obj, err)
+		return "", fmt.Errorf("could not build ID for object=%+v: %w", obj, err)
 	}
 
 	return ID(fmt.Sprintf("%x", f)), nil
