@@ -261,6 +261,8 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, spdxhelpers.Relatio
 	switch ty {
 	case artifact.ContainsRelationship:
 		return true, spdxhelpers.ContainsRelationship, ""
+	case artifact.DependencyOfRelationship:
+		return true, spdxhelpers.DependencyOfRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, spdxhelpers.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
 	}
