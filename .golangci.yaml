@@ -1,6 +1,14 @@
 linters:
   enable:
     - asciicheck
+    - dupl
+    - exportloopref
+    - funlen
+    - gocognit
+    - gocyclo
+    - goconst
+    - govet
+    - ineffassign
     - unused
     - depguard
     - errcheck
@@ -9,13 +17,13 @@ linters:
     - gosec
     - gocritic
     - importas
-#   - prealloc
     - revive
     - stylecheck
     - unconvert
     - misspell
     - tparallel
     - unparam
+    - typecheck
     - whitespace
 output:
   uniq-by-line: false
@@ -30,3 +38,22 @@ issues:
 run:
   issues-exit-code: 1
   timeout: 10m
+
+# do not enable...
+#    - gochecknoglobals
+#    - gochecknoinits    # this is too aggressive
+#    - rowserrcheck disabled per generics https://github.com/golangci/golangci-lint/issues/2649
+#    - godot
+#    - godox
+#    - goerr113
+#    - goimports   # we're using gosimports now instead to account for extra whitespaces (see https://github.com/golang/go/issues/20818)
+#    - golint      # deprecated
+#    - gomnd       # this is too aggressive
+#    - interfacer  # this is a good idea, but is no longer supported and is prone to false positives
+#    - lll         # without a way to specify per-line exception cases, this is not usable
+#    - maligned    # this is an excellent linter, but tricky to optimize and we are not sensitive to memory layout optimizations
+#    - nestif
+#    - prealloc    # following this rule isn't consistently a good idea, as it sometimes forces unnecessary allocations that result in less idiomatic code
+#    - scopelint   # deprecated
+#    - testpackage
+#    - wsl         # this doens't have an auto-fixer yet and is pretty noisy (https://github.com/bombsimon/wsl/issues/90)

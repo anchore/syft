@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -26,8 +27,8 @@ func (e ErrPath) Error() string {
 }
 
 func IsErrPath(err error) bool {
-	_, ok := err.(ErrPath)
-	return ok
+	var pathErr *ErrPath
+	return errors.As(err, &pathErr)
 }
 
 func IsErrPathPermission(err error) bool {
