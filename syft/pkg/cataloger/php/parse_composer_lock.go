@@ -2,6 +2,7 @@ package php
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -25,7 +26,7 @@ func parseComposerLock(_ source.FileResolver, _ *generic.Environment, reader sou
 
 	for {
 		var lock composerLock
-		if err := dec.Decode(&lock); err == io.EOF {
+		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse composer.lock file: %w", err)

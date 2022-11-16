@@ -39,7 +39,7 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *c
 			// run to unmarshal viper object onto app config
 			// the viper object correctly
 			if err := app.LoadAllValues(v, ro.Config); err != nil {
-				return fmt.Errorf("invalid application config: %v", err)
+				return fmt.Errorf("invalid application config: %w", err)
 			}
 			// configure logging for command
 			newLogWrapper(app)

@@ -6,7 +6,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-//nolint:funlen
 func SourceInfo(p pkg.Package) string {
 	answer := ""
 	switch p.Type {

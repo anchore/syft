@@ -17,8 +17,6 @@ import (
 )
 
 // toFormatModel creates and populates a new JSON document struct that follows the SPDX 2.2 spec from the given cataloging results.
-//
-//nolint:funlen
 func toFormatModel(s sbom.SBOM) *spdx.Document2_2 {
 	name, namespace := spdxhelpers.DocumentNameAndNamespace(s.Source)
 
