@@ -11,7 +11,6 @@ linters:
     - asciicheck
     - bodyclose
     - depguard
-    - dogsled
     - dupl
     - errcheck
     - exportloopref
@@ -21,13 +20,13 @@ linters:
     - gocritic
     - gocyclo
     - gofmt
-    - goprintffuncname
+    - tparallel
+    - importas
     - gosec
     - gosimple
     - govet
     - ineffassign
     - misspell
-    - nakedret
     - nolintlint
     - revive
     - staticcheck
@@ -37,6 +36,12 @@ linters:
     - unparam
     - unused
     - whitespace
+linters-settings:
+output:
+  uniq-by-line: false
+run:
+  issues-exit-code: 1
+  timeout: 10m
 
 # do not enable...
 #    - gochecknoglobals
