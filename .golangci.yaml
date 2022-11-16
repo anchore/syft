@@ -53,6 +53,9 @@ run:
   timeout: 10m
 
 # do not enable...
+#    - dogsled           # found to be to niche and ineffective
+#    - goprintffuncname  # does not catch all cases and there are exceptions
+#    - nakedret          # does not catch all cases and should not fail a build
 #    - gochecknoglobals
 #    - gochecknoinits    # this is too aggressive
 #    - rowserrcheck disabled per generics https://github.com/golangci/golangci-lint/issues/2649
