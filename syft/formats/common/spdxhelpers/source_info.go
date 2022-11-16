@@ -46,6 +46,9 @@ func SourceInfo(p pkg.Package) string {
 	default:
 		answer = "acquired package info from the following paths"
 	}
+	if p.FoundBy == "sbom-cataloger" {
+		answer = "acquired package info from SBOM"
+	}
 	var paths []string
 	for _, l := range p.Locations.ToSlice() {
 		paths = append(paths, l.RealPath)
