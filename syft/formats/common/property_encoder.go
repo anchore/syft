@@ -85,7 +85,6 @@ func Sorted(values map[string]string) (out []NameValue) {
 	return
 }
 
-//nolint:funlen
 func encode(out map[string]string, value reflect.Value, prefix string, fn FieldName) {
 	if !value.IsValid() || value.Type() == nil {
 		return
