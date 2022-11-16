@@ -70,7 +70,7 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	}
 
 	p := &pkg.Package{
-		Name:      decodeName(c.Group, c.Name),
+		Name:      c.Name,
 		Version:   c.Version,
 		Locations: decodeLocations(values),
 		Licenses:  decodeLicenses(c),
@@ -93,13 +93,6 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	}
 
 	return p
-}
-
-func decodeName(group string, name string) string {
-	if group != "" {
-		return group + "/" + name
-	}
-	return name
 }
 
 func decodeLocations(vals map[string]string) source.LocationSet {
