@@ -41,7 +41,6 @@ linters-settings:
 output:
   uniq-by-line: false
 run:
-  issues-exit-code: 1
   timeout: 10m
 
 # do not enable...
