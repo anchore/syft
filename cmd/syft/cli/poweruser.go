@@ -28,7 +28,7 @@ func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions)
 		}),
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := app.LoadAllValues(v, ro.Config); err != nil {
-				return fmt.Errorf("invalid application config: %v", err)
+				return fmt.Errorf("invalid application config: %w", err)
 			}
 			// configure logging for command
 			newLogWrapper(app)

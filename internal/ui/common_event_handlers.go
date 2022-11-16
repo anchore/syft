@@ -18,7 +18,7 @@ func handleExit(event partybus.Event) error {
 	}
 
 	if err := fn(); err != nil {
-		return fmt.Errorf("unable to show package catalog report: %v", err)
+		return fmt.Errorf("unable to show package catalog report: %w", err)
 	}
 	return nil
 }
