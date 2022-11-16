@@ -44,12 +44,19 @@ type Input struct {
 	ImageSource                     image.Source
 	Location                        string
 	Platform                        string
+	Name                            string
 	autoDetectAvailableImageSources bool
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry.
 func ParseInput(userInput string, platform string, detectAvailableImageSources bool) (*Input, error) {
+	return ParseInputWithName(userInput, platform, detectAvailableImageSources, "")
+}
+
+// ParseInputWithName generates a source Input that can be used as an argument to generate a new source
+// from specific providers including a registry, with an explicit name.
+func ParseInputWithName(userInput string, platform string, detectAvailableImageSources bool, name string) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -86,6 +93,7 @@ func ParseInput(userInput string, platform string, detectAvailableImageSources b
 		ImageSource:                     source,
 		Location:                        location,
 		Platform:                        platform,
+		Name:                            name,
 		autoDetectAvailableImageSources: detectAvailableImageSources,
 	}, nil
 }
@@ -109,9 +117,9 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 
 	switch in.Scheme {
 	case FileScheme:
-		source, cleanupFn, err = generateFileSource(fs, in.Location)
+		source, cleanupFn, err = generateFileSource(fs, in)
 	case DirectoryScheme:
-		source, cleanupFn, err = generateDirectorySource(fs, in.Location)
+		source, cleanupFn, err = generateDirectorySource(fs, in)
 	case ImageScheme:
 		source, cleanupFn, err = generateImageSource(in, registryOptions)
 	default:
@@ -131,7 +139,7 @@ func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Sou
 		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
 
-	s, err := NewFromImage(img, in.Location)
+	s, err := NewFromImageWithName(img, in.Location, in.Name)
 	if err != nil {
 		return nil, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 	}
@@ -206,44 +214,50 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 	return img, cleanup, err
 }
 
-func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {
-	fileMeta, err := fs.Stat(location)
+func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
+	fileMeta, err := fs.Stat(in.Location)
 	if err != nil {
-		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", in.Location, err)
 	}
 
 	if !fileMeta.IsDir() {
-		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, err := NewFromDirectory(location)
+	s, err := NewFromDirectoryWithName(in.Location, in.Name)
 	if err != nil {
-		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", in.Location, err)
 	}
 
 	return &s, func() {}, nil
 }
 
-func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
-	fileMeta, err := fs.Stat(location)
+func generateFileSource(fs afero.Fs, in Input) (*Source, func(), error) {
+	fileMeta, err := fs.Stat(in.Location)
 	if err != nil {
-		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", in.Location, err)
 	}
 
 	if fileMeta.IsDir() {
-		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, cleanupFn := NewFromFile(location)
+	s, cleanupFn := NewFromFileWithName(in.Location, in.Name)
 
 	return &s, cleanupFn, nil
 }
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
 func NewFromDirectory(path string) (Source, error) {
+	return NewFromDirectoryWithName(path, "")
+}
+
+// NewFromDirectoryWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryWithName(path string, name string) (Source, error) {
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
+			Name:   name,
 			Scheme: DirectoryScheme,
 			Path:   path,
 		},
@@ -255,11 +269,17 @@ func NewFromDirectory(path string) (Source, error) {
 
 // NewFromFile creates a new source object tailored to catalog a file.
 func NewFromFile(path string) (Source, func()) {
+	return NewFromFileWithName(path, "")
+}
+
+// NewFromFileWithName creates a new source object tailored to catalog a file, with an explicitly provided name.
+func NewFromFileWithName(path string, name string) (Source, func()) {
 	analysisPath, cleanupFn := fileAnalysisPath(path)
 
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
+			Name:   name,
 			Scheme: FileScheme,
 			Path:   path,
 		},
@@ -299,6 +319,12 @@ func fileAnalysisPath(path string) (string, func()) {
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the
 // option given (e.g. all-layers, squashed, etc)
 func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
+	return NewFromImageWithName(img, userImageStr, "")
+}
+
+// NewFromImageWithName creates a new source object tailored to catalog a given container image, relative to the
+// option given (e.g. all-layers, squashed, etc), with an explicit name.
+func NewFromImageWithName(img *image.Image, userImageStr string, name string) (Source, error) {
 	if img == nil {
 		return Source{}, fmt.Errorf("no image given")
 	}
@@ -306,6 +332,7 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 	s := Source{
 		Image: img,
 		Metadata: Metadata{
+			Name:          name,
 			Scheme:        ImageScheme,
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},

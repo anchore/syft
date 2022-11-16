@@ -55,6 +55,7 @@ type Application struct {
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
 	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
+	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {

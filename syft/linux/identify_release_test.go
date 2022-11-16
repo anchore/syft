@@ -321,6 +321,16 @@ func TestIdentifyRelease(t *testing.T) {
 				CPEName:      "cpe:/o:almalinux:almalinux:8.4:GA",
 			},
 		},
+		{
+			fixture: "test-fixtures/os/wolfi",
+			release: &Release{
+				PrettyName: "Wolfi",
+				Name:       "Wolfi",
+				ID:         "wolfi",
+				VersionID:  "20220914",
+				HomeURL:    "https://wolfi.dev",
+			},
+		},
 	}
 
 	for _, test := range tests {

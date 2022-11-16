@@ -66,7 +66,7 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 		return nil, nil, fmt.Errorf("failed to parse APK DB file: %w", err)
 	}
 
-	return pkgs, nil, nil
+	return pkgs, discoverPackageDependencies(pkgs), nil
 }
 
 // parseApkDBEntry reads and parses a single pkg.ApkMetadata element from the stream, returning nil if their are no more entries.
@@ -75,6 +75,10 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 	var entry pkg.ApkMetadata
 	pkgFields := make(map[string]interface{})
+
+	// We want sane defaults for collections, i.e. an empty array instead of null.
+	pkgFields["D"] = []string{}
+	pkgFields["p"] = []string{}
 	files := make([]pkg.ApkFileRecord, 0)
 
 	var fileRecord *pkg.ApkFileRecord
@@ -92,6 +96,9 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 		value := strings.TrimSpace(fields[1])
 
 		switch key {
+		case "D", "p":
+			entries := strings.Split(value, " ")
+			pkgFields[key] = entries
 		case "F":
 			currentFile := "/" + value
 
@@ -143,7 +150,20 @@ func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
 		}
 	}
 
-	if err := mapstructure.Decode(pkgFields, &entry); err != nil {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		// By default, mapstructure compares field names in a *case-insensitive* manner.
+		// That would be the wrong approach here, since these apk files use case
+		// *sensitive* field names (e.g. 'P' vs. 'p').
+		MatchName: func(mapKey, fieldName string) bool {
+			return mapKey == fieldName
+		},
+		Result: &entry,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := decoder.Decode(pkgFields); err != nil {
 		return nil, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
 	if entry.Package == "" {
@@ -173,4 +193,59 @@ func processChecksum(value string) *file.Digest {
 		Algorithm: algorithm,
 		Value:     value,
 	}
+}
+
+func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.Relationship) {
+	// map["provides" string] -> packages that provide the "p" key
+	lookup := make(map[string][]pkg.Package)
+	// read "Provides" (p) and add as keys for lookup keys as well as package names
+	for _, p := range pkgs {
+		apkg, ok := p.Metadata.(pkg.ApkMetadata)
+		if !ok {
+			log.Warnf("cataloger failed to extract apk 'provides' metadata for package %+v", p.Name)
+			continue
+		}
+		lookup[p.Name] = append(lookup[p.Name], p)
+		for _, provides := range apkg.Provides {
+			k := stripVersionSpecifier(provides)
+			lookup[k] = append(lookup[k], p)
+		}
+	}
+
+	// read "Pull Dependencies" (D) and match with keys
+	for _, p := range pkgs {
+		apkg, ok := p.Metadata.(pkg.ApkMetadata)
+		if !ok {
+			log.Warnf("cataloger failed to extract apk dependency metadata for package %+v", p.Name)
+			continue
+		}
+
+		for _, depSpecifier := range apkg.Dependencies {
+			// use the lookup to find what pkg we depend on
+			dep := stripVersionSpecifier(depSpecifier)
+			for _, depPkg := range lookup[dep] {
+				// this is a pkg that package "p" depends on... make a relationship
+				relationships = append(relationships, artifact.Relationship{
+					From: depPkg,
+					To:   p,
+					Type: artifact.DependencyOfRelationship,
+				})
+			}
+		}
+	}
+	return relationships
+}
+
+func splitAny(s string, seps string) []string {
+	splitter := func(r rune) bool {
+		return strings.ContainsRune(seps, r)
+	}
+	return strings.FieldsFunc(s, splitter)
+}
+
+func stripVersionSpecifier(s string) string {
+	// examples:
+	// musl>=1                 --> musl
+	// cmd:scanelf=1.3.4-r0    --> cmd:scanelf
+	return splitAny(s, "<>=")[0]
 }

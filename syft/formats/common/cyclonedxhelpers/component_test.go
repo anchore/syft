@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -31,20 +32,21 @@ func Test_encodeComponentProperties(t *testing.T) {
 					source.Location{Coordinates: source.Coordinates{RealPath: "test"}},
 				),
 				Metadata: pkg.ApkMetadata{
-					Package:          "libc-utils",
-					OriginPackage:    "libc-dev",
-					Maintainer:       "Natanael Copa <ncopa@alpinelinux.org>",
-					Version:          "0.7.2-r0",
-					License:          "BSD",
-					Architecture:     "x86_64",
-					URL:              "http://alpinelinux.org",
-					Description:      "Meta package to pull in correct libc",
-					Size:             0,
-					InstalledSize:    4096,
-					PullDependencies: "musl-utils",
-					PullChecksum:     "Q1p78yvTLG094tHE1+dToJGbmYzQE=",
-					GitCommitOfAport: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479",
-					Files:            []pkg.ApkFileRecord{},
+					Package:       "libc-utils",
+					OriginPackage: "libc-dev",
+					Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+					Version:       "0.7.2-r0",
+					License:       "BSD",
+					Architecture:  "x86_64",
+					URL:           "http://alpinelinux.org",
+					Description:   "Meta package to pull in correct libc",
+					Size:          0,
+					InstalledSize: 4096,
+					Dependencies:  []string{"musl-utils"},
+					Provides:      []string{"so:libc.so.1"},
+					Checksum:      "Q1p78yvTLG094tHE1+dToJGbmYzQE=",
+					GitCommit:     "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479",
+					Files:         []pkg.ApkFileRecord{},
 				},
 			},
 			expected: &[]cyclonedx.Property{
@@ -53,8 +55,9 @@ func Test_encodeComponentProperties(t *testing.T) {
 				{Name: "syft:metadata:gitCommitOfApkPort", Value: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479"},
 				{Name: "syft:metadata:installedSize", Value: "4096"},
 				{Name: "syft:metadata:originPackage", Value: "libc-dev"},
+				{Name: "syft:metadata:provides:0", Value: "so:libc.so.1"},
 				{Name: "syft:metadata:pullChecksum", Value: "Q1p78yvTLG094tHE1+dToJGbmYzQE="},
-				{Name: "syft:metadata:pullDependencies", Value: "musl-utils"},
+				{Name: "syft:metadata:pullDependencies:0", Value: "musl-utils"},
 				{Name: "syft:metadata:size", Value: "0"},
 			},
 		},
@@ -198,6 +201,7 @@ func Test_decodeComponent(t *testing.T) {
 		component        cyclonedx.Component
 		wantLanguage     pkg.Language
 		wantMetadataType pkg.MetadataType
+		wantMetadata     interface{}
 	}{
 		{
 			name: "derive language from pURL if missing",
@@ -211,7 +215,7 @@ func Test_decodeComponent(t *testing.T) {
 			wantLanguage: pkg.Java,
 		},
 		{
-			name: "handle existing RpmdbMetadata type",
+			name: "handle RpmdbMetadata type without properties",
 			component: cyclonedx.Component{
 				Name:       "acl",
 				Version:    "2.2.53-1.el8",
@@ -226,6 +230,31 @@ func Test_decodeComponent(t *testing.T) {
 				},
 			},
 			wantMetadataType: pkg.RpmMetadataType,
+			wantMetadata:     pkg.RpmMetadata{},
+		},
+		{
+			name: "handle RpmdbMetadata type with properties",
+			component: cyclonedx.Component{
+				Name:       "acl",
+				Version:    "2.2.53-1.el8",
+				PackageURL: "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+				Type:       "library",
+				BOMRef:     "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:metadataType",
+						Value: "RpmMetadata",
+					},
+					{
+						Name:  "syft:metadata:release",
+						Value: "some-release",
+					},
+				},
+			},
+			wantMetadataType: pkg.RpmMetadataType,
+			wantMetadata: pkg.RpmMetadata{
+				Release: "some-release",
+			},
 		},
 	}
 
@@ -237,6 +266,9 @@ func Test_decodeComponent(t *testing.T) {
 			}
 			if tt.wantMetadataType != "" {
 				assert.Equal(t, tt.wantMetadataType, p.MetadataType)
+			}
+			if tt.wantMetadata != nil {
+				assert.Truef(t, reflect.DeepEqual(tt.wantMetadata, p.Metadata), "metadata should match: %+v != %+v", tt.wantMetadata, p.Metadata)
 			}
 		})
 	}

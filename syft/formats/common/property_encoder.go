@@ -85,6 +85,7 @@ func Sorted(values map[string]string) (out []NameValue) {
 	return
 }
 
+//nolint:funlen
 func encode(out map[string]string, value reflect.Value, prefix string, fn FieldName) {
 	if !value.IsValid() || value.Type() == nil {
 		return
@@ -129,6 +130,11 @@ func encode(out map[string]string, value reflect.Value, prefix string, fn FieldN
 				continue
 			}
 			encode(out, pv, name, fn)
+		}
+	case reflect.Map:
+		// currently only map[string]string is really supported
+		for _, key := range value.MapKeys() {
+			encode(out, value.MapIndex(key), fmt.Sprintf("%s:%v", prefix, key.Interface()), fn)
 		}
 	default:
 		log.Warnf("skipping encoding of unsupported property: %s", prefix)
@@ -284,6 +290,55 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 		} else {
 			return false
 		}
+	case reflect.Map:
+		values := false
+		keyType := typ.Key()
+		valueType := typ.Elem()
+		outMap := reflect.MakeMap(typ)
+		str := fmt.Sprintf("%s:", prefix)
+		keyVals := map[string]string{}
+		// iterate through all keys to find those prefixed with a reference to this map
+		// NOTE: this will not work for nested maps
+		for key := range vals {
+			// test for map prefix
+			if strings.HasPrefix(key, str) {
+				keyVals[key] = strings.TrimPrefix(key, str)
+				// create new placeholder and decode key
+				newKeyType := keyType
+				if keyType.Kind() == reflect.Ptr {
+					newKeyType = keyType.Elem()
+				}
+				k := reflect.New(newKeyType)
+				if !decode(keyVals, k.Elem(), key, fn) {
+					log.Debugf("unable to decode key for: %s", key)
+					continue
+				}
+				if keyType.Kind() != reflect.Ptr {
+					k = k.Elem()
+				}
+
+				// create new placeholder and decode value
+				newValueType := valueType
+				if valueType.Kind() == reflect.Ptr {
+					newValueType = valueType.Elem()
+				}
+				v := reflect.New(newValueType)
+				if decode(vals, v.Elem(), key, fn) {
+					if valueType.Kind() != reflect.Ptr {
+						v = v.Elem()
+					}
+
+					// set in map
+					outMap.SetMapIndex(k, v)
+					values = true
+				}
+			}
+		}
+		if values {
+			value.Set(outMap)
+		} else {
+			return false
+		}
 	case reflect.Struct:
 		values := false
 		for i := 0; i < typ.NumField(); i++ {
@@ -309,7 +364,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 
 func PtrToStruct(ptr interface{}) interface{} {
 	v := reflect.ValueOf(ptr)
-	if v.IsZero() {
+	if v.IsZero() && v.Type().Kind() != reflect.Struct {
 		return nil
 	}
 	switch v.Type().Kind() {

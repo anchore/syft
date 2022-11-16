@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -83,19 +84,20 @@ func TestSinglePackageDetails(t *testing.T) {
 		{
 			fixture: "test-fixtures/single",
 			expected: pkg.ApkMetadata{
-				Package:          "musl-utils",
-				OriginPackage:    "musl",
-				Version:          "1.1.24-r2",
-				Description:      "the musl c library (libc) implementation",
-				Maintainer:       "Timo Teräs <timo.teras@iki.fi>",
-				License:          "MIT BSD GPL2+",
-				Architecture:     "x86_64",
-				URL:              "https://musl.libc.org/",
-				Size:             37944,
-				InstalledSize:    151552,
-				PullDependencies: "scanelf so:libc.musl-x86_64.so.1",
-				PullChecksum:     "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
-				GitCommitOfAport: "4024cc3b29ad4c65544ad068b8f59172b5494306",
+				Package:       "musl-utils",
+				OriginPackage: "musl",
+				Version:       "1.1.24-r2",
+				Description:   "the musl c library (libc) implementation",
+				Maintainer:    "Timo Teräs <timo.teras@iki.fi>",
+				License:       "MIT BSD GPL2+",
+				Architecture:  "x86_64",
+				URL:           "https://musl.libc.org/",
+				Size:          37944,
+				InstalledSize: 151552,
+				Dependencies:  []string{"scanelf", "so:libc.musl-x86_64.so.1"},
+				Provides:      []string{"cmd:getconf", "cmd:getent", "cmd:iconv", "cmd:ldconfig", "cmd:ldd"},
+				Checksum:      "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
+				GitCommit:     "4024cc3b29ad4c65544ad068b8f59172b5494306",
 				Files: []pkg.ApkFileRecord{
 					{
 						Path: "/sbin",
@@ -162,19 +164,20 @@ func TestSinglePackageDetails(t *testing.T) {
 		{
 			fixture: "test-fixtures/base",
 			expected: pkg.ApkMetadata{
-				Package:          "alpine-baselayout",
-				OriginPackage:    "alpine-baselayout",
-				Version:          "3.2.0-r6",
-				Description:      "Alpine base dir structure and init scripts",
-				Maintainer:       "Natanael Copa <ncopa@alpinelinux.org>",
-				License:          "GPL-2.0-only",
-				Architecture:     "x86_64",
-				URL:              "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
-				Size:             19917,
-				InstalledSize:    409600,
-				PullDependencies: "/bin/sh so:libc.musl-x86_64.so.1",
-				PullChecksum:     "Q1myMNfd7u5v5UTgNHeq1e31qTjZU=",
-				GitCommitOfAport: "e1c51734fa96fa4bac92e9f14a474324c67916fc",
+				Package:       "alpine-baselayout",
+				OriginPackage: "alpine-baselayout",
+				Version:       "3.2.0-r6",
+				Description:   "Alpine base dir structure and init scripts",
+				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+				License:       "GPL-2.0-only",
+				Architecture:  "x86_64",
+				URL:           "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
+				Size:          19917,
+				InstalledSize: 409600,
+				Dependencies:  []string{"/bin/sh", "so:libc.musl-x86_64.so.1"},
+				Provides:      []string{"cmd:mkmntdirs"},
+				Checksum:      "Q1myMNfd7u5v5UTgNHeq1e31qTjZU=",
+				GitCommit:     "e1c51734fa96fa4bac92e9f14a474324c67916fc",
 				Files: []pkg.ApkFileRecord{
 					{
 						Path: "/dev",
@@ -632,7 +635,7 @@ func TestSinglePackageDetails(t *testing.T) {
 func TestMultiplePackages(t *testing.T) {
 	fixture := "test-fixtures/multiple"
 	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
-	expected := []pkg.Package{
+	expectedPkgs := []pkg.Package{
 		{
 			Name:         "libc-utils",
 			Version:      "0.7.2-r0",
@@ -642,20 +645,21 @@ func TestMultiplePackages(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
-				Package:          "libc-utils",
-				OriginPackage:    "libc-dev",
-				Maintainer:       "Natanael Copa <ncopa@alpinelinux.org>",
-				Version:          "0.7.2-r0",
-				License:          "BSD",
-				Architecture:     "x86_64",
-				URL:              "http://alpinelinux.org",
-				Description:      "Meta package to pull in correct libc",
-				Size:             1175,
-				InstalledSize:    4096,
-				PullChecksum:     "Q1p78yvTLG094tHE1+dToJGbmYzQE=",
-				GitCommitOfAport: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479",
-				PullDependencies: "musl-utils",
-				Files:            []pkg.ApkFileRecord{},
+				Package:       "libc-utils",
+				OriginPackage: "libc-dev",
+				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+				Version:       "0.7.2-r0",
+				License:       "BSD",
+				Architecture:  "x86_64",
+				URL:           "http://alpinelinux.org",
+				Description:   "Meta package to pull in correct libc",
+				Size:          1175,
+				InstalledSize: 4096,
+				Checksum:      "Q1p78yvTLG094tHE1+dToJGbmYzQE=",
+				GitCommit:     "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479",
+				Dependencies:  []string{"musl-utils"},
+				Provides:      []string{},
+				Files:         []pkg.ApkFileRecord{},
 			},
 		},
 		{
@@ -667,19 +671,20 @@ func TestMultiplePackages(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
-				Package:          "musl-utils",
-				OriginPackage:    "musl",
-				Version:          "1.1.24-r2",
-				Description:      "the musl c library (libc) implementation",
-				Maintainer:       "Timo Teräs <timo.teras@iki.fi>",
-				License:          "MIT BSD GPL2+",
-				Architecture:     "x86_64",
-				URL:              "https://musl.libc.org/",
-				Size:             37944,
-				InstalledSize:    151552,
-				PullDependencies: "scanelf so:libc.musl-x86_64.so.1",
-				PullChecksum:     "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
-				GitCommitOfAport: "4024cc3b29ad4c65544ad068b8f59172b5494306",
+				Package:       "musl-utils",
+				OriginPackage: "musl",
+				Version:       "1.1.24-r2",
+				Description:   "the musl c library (libc) implementation",
+				Maintainer:    "Timo Teräs <timo.teras@iki.fi>",
+				License:       "MIT BSD GPL2+",
+				Architecture:  "x86_64",
+				URL:           "https://musl.libc.org/",
+				Size:          37944,
+				InstalledSize: 151552,
+				GitCommit:     "4024cc3b29ad4c65544ad068b8f59172b5494306",
+				Dependencies:  []string{"scanelf", "so:libc.musl-x86_64.so.1"},
+				Provides:      []string{"cmd:getconf", "cmd:getent", "cmd:iconv", "cmd:ldconfig", "cmd:ldd"},
+				Checksum:      "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
 				Files: []pkg.ApkFileRecord{
 					{
 						Path: "/sbin",
@@ -745,8 +750,14 @@ func TestMultiplePackages(t *testing.T) {
 		},
 	}
 
-	// TODO: relationships are not under test
-	var expectedRelationships []artifact.Relationship
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[1], // musl-utils
+			To:   expectedPkgs[0], // libc-utils
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+	}
 
 	env := generic.Environment{LinuxRelease: &linux.Release{
 		ID:        "alpine",
@@ -782,6 +793,216 @@ func Test_processChecksum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, &tt.want, processChecksum(tt.value))
+		})
+	}
+}
+
+func Test_discoverPackageDependencies(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		genFn func() ([]pkg.Package, []artifact.Relationship)
+	}{
+		{
+			name: "has no dependency",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"a-thing"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"b-thing"},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, nil
+			},
+		},
+		{
+			name: "has 1 dependency",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"b-thing"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"b-thing"},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, []artifact.Relationship{
+					{
+						From: b,
+						To:   a,
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+			},
+		},
+		{
+			name: "strip version specifiers",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"so:libc.musl-x86_64.so.1"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"so:libc.musl-x86_64.so.1=1"},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, []artifact.Relationship{
+					{
+						From: b,
+						To:   a,
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+			},
+		},
+		{
+			name: "depends on package name",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"musl>=1.2"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "musl",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"so:libc.musl-x86_64.so.1=1"},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, []artifact.Relationship{
+					{
+						From: b,
+						To:   a,
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+			},
+		},
+		{
+			name: "depends on package file",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "alpine-baselayout",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"/bin/sh"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "busybox",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{"/bin/sh"},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, []artifact.Relationship{
+					{
+						From: b,
+						To:   a,
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgs, wantRelationships := tt.genFn()
+			gotRelationships := discoverPackageDependencies(pkgs)
+			d := cmp.Diff(wantRelationships, gotRelationships, cmpopts.IgnoreUnexported(pkg.Package{}, source.LocationSet{}))
+			if d != "" {
+				t.Fail()
+				t.Log(d)
+			}
+		})
+	}
+}
+
+func TestPackageDbDependenciesByParse(t *testing.T) {
+	tests := []struct {
+		fixture  string
+		expected map[string][]string
+	}{
+		{
+			fixture: "test-fixtures/installed",
+			expected: map[string][]string{
+				"alpine-baselayout": {"alpine-baselayout-data", "busybox", "musl"},
+				"apk-tools":         {"musl", "ca-certificates-bundle", "musl", "libcrypto1.1", "libssl1.1", "zlib"},
+				"busybox":           {"musl"},
+				"libc-utils":        {"musl-utils"},
+				"libcrypto1.1":      {"musl"},
+				"libssl1.1":         {"musl", "libcrypto1.1"},
+				"musl-utils":        {"scanelf", "musl"},
+				"scanelf":           {"musl"},
+				"ssl_client":        {"musl", "libcrypto1.1", "libssl1.1"},
+				"zlib":              {"musl"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.fixture, func(t *testing.T) {
+			f, err := os.Open(test.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
+
+			pkgs, relationships, err := parseApkDB(nil, nil, source.LocationReadCloser{
+				Location:   source.NewLocation(test.fixture),
+				ReadCloser: f,
+			})
+			require.NoError(t, err)
+
+			pkgsByID := make(map[artifact.ID]pkg.Package)
+			for _, p := range pkgs {
+				p.SetID()
+				pkgsByID[p.ID()] = p
+			}
+
+			actualDependencies := make(map[string][]string)
+
+			for _, r := range relationships {
+				switch r.Type {
+				case artifact.DependencyOfRelationship:
+					to := pkgsByID[r.To.ID()]
+					from := pkgsByID[r.From.ID()]
+					actualDependencies[to.Name] = append(actualDependencies[to.Name], from.Name)
+				default:
+					t.Fatalf("unexpected relationship type: %+v", r.Type)
+				}
+			}
+
+			if d := cmp.Diff(test.expected, actualDependencies); d != "" {
+				t.Fail()
+				t.Log(d)
+			}
 		})
 	}
 }

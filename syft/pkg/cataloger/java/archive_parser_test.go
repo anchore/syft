@@ -12,12 +12,13 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/go-test/deep"
 	"github.com/gookit/color"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {
@@ -97,6 +98,7 @@ func TestParseJar(t *testing.T) {
 				"example-jenkins-plugin": {
 					Name:         "example-jenkins-plugin",
 					Version:      "1.0-SNAPSHOT",
+					PURL:         "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					Language:     pkg.Java,
 					Type:         pkg.JenkinsPluginPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -135,9 +137,7 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "io.jenkins.plugins",
 							ArtifactID: "example-jenkins-plugin",
 							Version:    "1.0-SNAPSHOT",
-							Extra:      map[string]string{},
 						},
-						PURL: "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					},
 				},
 			},
@@ -148,6 +148,7 @@ func TestParseJar(t *testing.T) {
 				"example-java-app-gradle": {
 					Name:         "example-java-app-gradle",
 					Version:      "0.1.0",
+					PURL:         "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -158,7 +159,6 @@ func TestParseJar(t *testing.T) {
 								"Manifest-Version": "1.0",
 							},
 						},
-						PURL: "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
 					},
 				},
 			},
@@ -173,6 +173,7 @@ func TestParseJar(t *testing.T) {
 				"example-java-app-maven": {
 					Name:         "example-java-app-maven",
 					Version:      "0.1.0",
+					PURL:         "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -194,14 +195,13 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "org.anchore",
 							ArtifactID: "example-java-app-maven",
 							Version:    "0.1.0",
-							Extra:      map[string]string{},
 						},
-						PURL: "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
 					},
 				},
 				"joda-time": {
 					Name:         "joda-time",
 					Version:      "2.9.2",
+					PURL:         "pkg:maven/joda-time/joda-time@2.9.2",
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -214,7 +214,6 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "joda-time",
 							ArtifactID: "joda-time",
 							Version:    "2.9.2",
-							Extra:      map[string]string{},
 						},
 						PomProject: &pkg.PomProject{
 							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",
@@ -225,7 +224,6 @@ func TestParseJar(t *testing.T) {
 							Description: "Date and time library to replace JDK date handling",
 							URL:         "http://www.joda.org/joda-time/",
 						},
-						PURL: "pkg:maven/joda-time/joda-time@2.9.2",
 					},
 				},
 			},
@@ -237,20 +235,23 @@ func TestParseJar(t *testing.T) {
 			generateJavaBuildFixture(t, test.fixture)
 
 			fixture, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatalf("failed to open fixture: %+v", err)
+			require.NoError(t, err)
+
+			for k := range test.expected {
+				p := test.expected[k]
+				p.Locations.Add(source.NewLocation(test.fixture))
+				test.expected[k] = p
 			}
 
-			parser, cleanupFn, err := newJavaArchiveParser(fixture.Name(), fixture, false)
+			parser, cleanupFn, err := newJavaArchiveParser(source.LocationReadCloser{
+				Location:   source.NewLocation(fixture.Name()),
+				ReadCloser: fixture,
+			}, false)
 			defer cleanupFn()
-			if err != nil {
-				t.Fatalf("should not have filed... %+v", err)
-			}
+			require.NoError(t, err)
 
 			actual, _, err := parser.parse()
-			if err != nil {
-				t.Fatalf("failed to parse java archive: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(actual) != len(test.expected) {
 				for _, a := range actual {
@@ -261,8 +262,9 @@ func TestParseJar(t *testing.T) {
 
 			var parent *pkg.Package
 			for _, a := range actual {
+				a := a
 				if strings.Contains(a.Name, "example-") {
-					parent = a
+					parent = &a
 				}
 			}
 
@@ -300,13 +302,7 @@ func TestParseJar(t *testing.T) {
 				// write censored data back
 				a.Metadata = metadata
 
-				diffs := deep.Equal(&e, a)
-				if len(diffs) > 0 {
-					t.Errorf("diffs found for %q", a.Name)
-					for _, d := range diffs {
-						t.Errorf("diff: %+v", d)
-					}
-				}
+				pkgtest.AssertPackagesEqual(t, e, a)
 			}
 		})
 	}
@@ -510,14 +506,13 @@ func TestParseNestedJar(t *testing.T) {
 			generateJavaBuildFixture(t, test.fixture)
 
 			fixture, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatalf("failed to open fixture: %+v", err)
-			}
+			require.NoError(t, err)
 
-			actual, _, err := parseJavaArchive(fixture.Name(), fixture)
-			if err != nil {
-				t.Fatalf("failed to parse java archive: %+v", err)
-			}
+			actual, _, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
+				Location:   source.NewLocation(fixture.Name()),
+				ReadCloser: fixture,
+			})
+			require.NoError(t, err)
 
 			expectedNameVersionPairSet := internal.NewStringSet()
 
@@ -534,7 +529,8 @@ func TestParseNestedJar(t *testing.T) {
 
 			actualNameVersionPairSet := internal.NewStringSet()
 			for _, a := range actual {
-				key := makeKey(a)
+				a := a
+				key := makeKey(&a)
 				actualNameVersionPairSet.Add(key)
 				if !expectedNameVersionPairSet.Contains(key) {
 					t.Errorf("extra package: %s", a)
@@ -552,7 +548,8 @@ func TestParseNestedJar(t *testing.T) {
 			}
 
 			for _, a := range actual {
-				actualKey := makeKey(a)
+				a := a
+				actualKey := makeKey(&a)
 
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				if actualKey == "spring-boot|0.0.1-SNAPSHOT" {
@@ -940,9 +937,26 @@ func Test_newPackageFromMavenData(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, virtualPath)
-			assert.Equal(t, test.expectedPackage, actualPackage, "new package doesn't match")
-			assert.Equal(t, test.expectedParent, *test.parent, "parent doesn't match")
+			locations := source.NewLocationSet(source.NewLocation(virtualPath))
+			if test.expectedPackage != nil {
+				test.expectedPackage.Locations = locations
+				if test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent != nil {
+					test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent.Locations = locations
+				}
+			}
+			if test.parent != nil {
+				test.parent.Locations = locations
+			}
+			test.expectedParent.Locations = locations
+
+			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, source.NewLocation(virtualPath))
+			if test.expectedPackage == nil {
+				require.Nil(t, actualPackage)
+			} else {
+				pkgtest.AssertPackagesEqual(t, *test.expectedPackage, *actualPackage)
+			}
+
+			pkgtest.AssertPackagesEqual(t, test.expectedParent, *test.parent)
 		})
 	}
 }

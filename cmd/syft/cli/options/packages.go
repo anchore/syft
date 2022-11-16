@@ -21,6 +21,7 @@ type PackagesOptions struct {
 	Platform           string
 	Exclude            []string
 	Catalogers         []string
+	Name               string
 }
 
 var _ Interface = (*PackagesOptions)(nil)
@@ -47,6 +48,9 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.Flags().StringArrayVarP(&o.Catalogers, "catalogers", "", nil,
 		"enable one or more package catalogers")
 
+	cmd.Flags().StringVarP(&o.Name, "name", "", "",
+		"set the name of the target being analyzed")
+
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
 
@@ -66,6 +70,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("catalogers", flags.Lookup("catalogers")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("name", flags.Lookup("name")); err != nil {
 		return err
 	}
 

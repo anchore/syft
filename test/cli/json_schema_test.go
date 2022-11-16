@@ -72,6 +72,7 @@ func TestJSONSchema(t *testing.T) {
 }
 
 func validateJsonAgainstSchema(t testing.TB, json string) {
+	t.Helper()
 	fullSchemaPath := path.Join(repoRoot(t), jsonSchemaPath, fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
 	documentLoader := gojsonschema.NewStringLoader(json)
