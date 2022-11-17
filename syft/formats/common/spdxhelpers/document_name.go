@@ -9,14 +9,14 @@ import (
 
 func DocumentName(srcMetadata source.Metadata) string {
 	if srcMetadata.Name != "" {
-		return cleanName(srcMetadata.Name)
+		return srcMetadata.Name
 	}
 
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
-		return cleanName(srcMetadata.ImageMetadata.UserInput)
+		return srcMetadata.ImageMetadata.UserInput
 	case source.DirectoryScheme, source.FileScheme:
-		return cleanName(srcMetadata.Path)
+		return srcMetadata.Path
 	default:
 		return "unknown"
 	}
