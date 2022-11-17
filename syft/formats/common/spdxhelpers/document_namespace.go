@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -17,6 +18,7 @@ func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string) {
 }
 
 func DocumentNamespace(name string, srcMetadata source.Metadata) string {
+	name = cleanName(name)
 	input := "unknown-source-type"
 	switch srcMetadata.Scheme {
 	case source.ImageScheme:
@@ -40,4 +42,14 @@ func DocumentNamespace(name string, srcMetadata source.Metadata) string {
 	}
 
 	return u.String()
+}
+
+// see: https://spdx.github.io/spdx-spec/v2.3/document-creation-information/#65-spdx-document-namespace-field
+func cleanName(name string) string {
+	// remove # according to specification
+	name = strings.ReplaceAll(name, "#", "-")
+	// remove : for url construction
+	name = strings.ReplaceAll(name, ":", "-")
+	// clean relative pathing
+	return path.Clean(name)
 }
