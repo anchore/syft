@@ -52,6 +52,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 			Relationships: nil,
 			Source: source.Metadata{
 				Scheme: source.DirectoryScheme,
+				Path:   "foobar/baz", // in this case, foobar is used as the spdx docment name
 			},
 			Descriptor: sbom.Descriptor{
 				Name:    "syft",

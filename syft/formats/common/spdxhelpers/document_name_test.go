@@ -35,7 +35,7 @@ func Test_DocumentName(t *testing.T) {
 					ManifestDigest: "digest",
 				},
 			},
-			expected: "image-repo/name-tag",
+			expected: "image-repo/name:tag",
 		},
 		{
 			name:      "directory",

@@ -1,12 +1,12 @@
 SPDXVersion: SPDX-2.2
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
-DocumentName: .
-DocumentNamespace: https://anchore.com/syft/dir/a4820ad7-d106-497f-bda7-e694e9ad1050
+DocumentName: foobar/baz
+DocumentNamespace: https://anchore.com/syft/dir/foobar/baz-a14903df-e75d-40cd-8cad-de3e92720d85
 LicenseListVersion: 3.18
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2022-11-07T14:11:42Z
+Created: 2022-11-17T22:30:30Z
 
 ##### Package: @at-sign
 
