@@ -13,8 +13,8 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
-	"github.com/anchore/syft/syft/formats/spdx22json"
-	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/spdxjson"
+	"github.com/anchore/syft/syft/formats/spdxtagvalue"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/sbom"
@@ -23,8 +23,8 @@ import (
 
 var convertibleFormats = []sbom.Format{
 	syftjson.Format(),
-	spdx22json.Format(),
-	spdx22tagvalue.Format(),
+	spdxjson.Format(),
+	spdxtagvalue.Format(),
 	cyclonedxjson.Format(),
 	cyclonedxxml.Format(),
 }

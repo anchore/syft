@@ -4,7 +4,7 @@ type ReferenceCategory string
 
 const (
 	SecurityReferenceCategory       ReferenceCategory = "SECURITY"
-	PackageManagerReferenceCategory ReferenceCategory = "PACKAGE_MANAGER"
+	PackageManagerReferenceCategory ReferenceCategory = "PACKAGE-MANAGER"
 	OtherReferenceCategory          ReferenceCategory = "OTHER"
 )
 

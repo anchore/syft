@@ -12,8 +12,8 @@ import (
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/github"
-	"github.com/anchore/syft/syft/formats/spdx22json"
-	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/spdxjson"
+	"github.com/anchore/syft/syft/formats/spdxtagvalue"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/template"
@@ -78,41 +78,41 @@ func TestByName(t *testing.T) {
 		// SPDX Tag-Value
 		{
 			name: "spdx",
-			want: spdx22tagvalue.ID,
+			want: spdxtagvalue.ID,
 		},
 		{
 			name: "spdx-tag-value",
-			want: spdx22tagvalue.ID,
+			want: spdxtagvalue.ID,
 		},
 		{
 			name: "spdx-tv",
-			want: spdx22tagvalue.ID,
+			want: spdxtagvalue.ID,
 		},
 		{
 			name: "spdxtv", // clean variant
-			want: spdx22tagvalue.ID,
+			want: spdxtagvalue.ID,
 		},
 		{
 			name: "spdx-2-tag-value", // clean variant
-			want: spdx22tagvalue.ID,
+			want: spdxtagvalue.ID,
 		},
 		{
 			name: "spdx-2-tagvalue", // clean variant
-			want: spdx22tagvalue.ID,
+			want: spdxtagvalue.ID,
 		},
 		{
 			name: "spdx2-tagvalue", // clean variant
-			want: spdx22tagvalue.ID,
+			want: spdxtagvalue.ID,
 		},
 
 		// SPDX JSON
 		{
 			name: "spdx-json",
-			want: spdx22json.ID,
+			want: spdxjson.ID,
 		},
 		{
 			name: "spdx-2-json",
-			want: spdx22json.ID,
+			want: spdxjson.ID,
 		},
 
 		// Cyclonedx JSON

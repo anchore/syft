@@ -5,8 +5,8 @@ import (
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/github"
-	"github.com/anchore/syft/syft/formats/spdx22json"
-	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/spdxjson"
+	"github.com/anchore/syft/syft/formats/spdxtagvalue"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/template"
@@ -23,8 +23,8 @@ const (
 	CycloneDxXMLFormatID  = cyclonedxxml.ID
 	CycloneDxJSONFormatID = cyclonedxjson.ID
 	GitHubFormatID        = github.ID
-	SPDXTagValueFormatID  = spdx22tagvalue.ID
-	SPDXJSONFormatID      = spdx22json.ID
+	SPDXTagValueFormatID  = spdxtagvalue.ID
+	SPDXJSONFormatID      = spdxjson.ID
 	TemplateFormatID      = template.ID
 )
 

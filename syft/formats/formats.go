@@ -9,8 +9,8 @@ import (
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/github"
-	"github.com/anchore/syft/syft/formats/spdx22json"
-	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/spdxjson"
+	"github.com/anchore/syft/syft/formats/spdxtagvalue"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/template"
@@ -24,8 +24,8 @@ func Formats() []sbom.Format {
 		cyclonedxxml.Format(),
 		cyclonedxjson.Format(),
 		github.Format(),
-		spdx22tagvalue.Format(),
-		spdx22json.Format(),
+		spdxtagvalue.Format(),
+		spdxjson.Format(),
 		table.Format(),
 		text.Format(),
 		template.Format(),
@@ -61,9 +61,9 @@ func ByName(name string) sbom.Format {
 	case "github", "githubjson":
 		return ByID(github.ID)
 	case "spdx", "spdxtv", "spdxtagvalue":
-		return ByID(spdx22tagvalue.ID)
+		return ByID(spdxtagvalue.ID)
 	case "spdxjson":
-		return ByID(spdx22json.ID)
+		return ByID(spdxjson.ID)
 	case "table":
 		return ByID(table.ID)
 	case "text":

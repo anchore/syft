@@ -3,7 +3,8 @@ package spdxhelpers
 import (
 	"testing"
 
-	"github.com/spdx/tools-golang/spdx"
+	"github.com/spdx/tools-golang/spdx/common"
+	spdx "github.com/spdx/tools-golang/spdx/v2_3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -12,32 +13,27 @@ import (
 )
 
 func TestToSyftModel(t *testing.T) {
-	sbom, err := ToSyftModel(&spdx.Document2_2{
-		CreationInfo: &spdx.CreationInfo2_2{
-			SPDXVersion:                "1",
-			DataLicense:                "GPL",
-			SPDXIdentifier:             "id-doc-1",
-			DocumentName:               "docName",
-			DocumentNamespace:          "docNamespace",
-			ExternalDocumentReferences: nil,
-			LicenseListVersion:         "",
-			CreatorPersons:             nil,
-			CreatorOrganizations:       nil,
-			CreatorTools:               nil,
-			Created:                    "",
-			CreatorComment:             "",
-			DocumentComment:            "",
+	sbom, err := ToSyftModel(&spdx.Document{
+		SPDXVersion:                "1",
+		DataLicense:                "GPL",
+		SPDXIdentifier:             "id-doc-1",
+		DocumentName:               "docName",
+		DocumentNamespace:          "docNamespace",
+		ExternalDocumentReferences: nil,
+		DocumentComment:            "",
+		CreationInfo: &spdx.CreationInfo{
+			LicenseListVersion: "",
+			Created:            "",
+			CreatorComment:     "",
 		},
-		Packages: map[spdx.ElementID]*spdx.Package2_2{
-			"id-pkg-1": {
-				PackageName:                 "pkg-1",
-				PackageSPDXIdentifier:       "id-pkg-1",
-				PackageVersion:              "5.4.3",
-				PackageSupplierPerson:       "",
-				PackageSupplierOrganization: "",
-				PackageLicenseDeclared:      "",
-				PackageDescription:          "",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+		Packages: []*spdx.Package{
+			{
+				PackageName:            "pkg-1",
+				PackageSPDXIdentifier:  "id-pkg-1",
+				PackageVersion:         "5.4.3",
+				PackageLicenseDeclared: "",
+				PackageDescription:     "",
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
 						Category: "SECURITY",
 						Locator:  "cpe:2.3:a:pkg-1:pkg-1:5.4.3:*:*:*:*:*:*:*",
@@ -49,22 +45,20 @@ func TestToSyftModel(t *testing.T) {
 						RefType:  "cpe23Type",
 					},
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:alpine/pkg-1@5.4.3?arch=x86_64&upstream=p1-origin&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
 				},
 				Files: nil,
 			},
-			"id-pkg-2": {
-				PackageName:                 "pkg-2",
-				PackageSPDXIdentifier:       "id-pkg-2",
-				PackageVersion:              "7.3.1",
-				PackageSupplierPerson:       "",
-				PackageSupplierOrganization: "",
-				PackageLicenseDeclared:      "",
-				PackageDescription:          "",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+			{
+				PackageName:            "pkg-2",
+				PackageSPDXIdentifier:  "id-pkg-2",
+				PackageVersion:         "7.3.1",
+				PackageLicenseDeclared: "",
+				PackageDescription:     "",
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
 						Category: "SECURITY",
 						Locator:  "cpe:2.3:a:pkg-2:pkg-2:7.3.1:*:*:*:*:*:*:*",
@@ -81,7 +75,7 @@ func TestToSyftModel(t *testing.T) {
 						RefType:  "cpe23Type",
 					},
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:deb/pkg-2@7.3.1?arch=x86_64&upstream=p2-origin@9.1.3&distro=debian-3.10.9",
 						RefType:  "purl",
 					},
@@ -89,8 +83,7 @@ func TestToSyftModel(t *testing.T) {
 				Files: nil,
 			},
 		},
-		UnpackagedFiles: map[spdx.ElementID]*spdx.File2_2{},
-		Relationships:   []*spdx.Relationship2_2{},
+		Relationships: []*spdx.Relationship{},
 	})
 
 	assert.NoError(t, err)
@@ -120,17 +113,17 @@ func TestToSyftModel(t *testing.T) {
 func Test_extractMetadata(t *testing.T) {
 	oneTwoThreeFour := 1234
 	tests := []struct {
-		pkg      spdx.Package2_2
+		pkg      spdx.Package
 		metaType pkg.MetadataType
 		meta     interface{}
 	}{
 		{
-			pkg: spdx.Package2_2{
+			pkg: spdx.Package{
 				PackageName:    "SomeDebPkg",
 				PackageVersion: "43.1.235",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:deb/pkg-2@7.3.1?arch=x86_64&upstream=somedebpkg-origin@9.1.3&distro=debian-3.10.9",
 						RefType:  "purl",
 					},
@@ -146,12 +139,12 @@ func Test_extractMetadata(t *testing.T) {
 			},
 		},
 		{
-			pkg: spdx.Package2_2{
+			pkg: spdx.Package{
 				PackageName:    "SomeApkPkg",
 				PackageVersion: "3.2.9",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:alpine/pkg-2@7.3.1?arch=x86_64&upstream=apk-origin@9.1.3&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
@@ -166,12 +159,12 @@ func Test_extractMetadata(t *testing.T) {
 			},
 		},
 		{
-			pkg: spdx.Package2_2{
+			pkg: spdx.Package{
 				PackageName:    "SomeRpmPkg",
 				PackageVersion: "13.2.79",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:rpm/pkg-2@7.3.1?arch=x86_64&epoch=1234&upstream=some-rpm-origin-1.16.3&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
@@ -238,24 +231,24 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 func TestH1Digest(t *testing.T) {
 	tests := []struct {
 		name           string
-		pkg            spdx.Package2_2
+		pkg            spdx.Package
 		expectedDigest string
 	}{
 		{
 			name: "valid h1digest",
-			pkg: spdx.Package2_2{
+			pkg: spdx.Package{
 				PackageName:    "github.com/googleapis/gnostic",
 				PackageVersion: "v0.5.5",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: map[spdx.ChecksumAlgorithm]spdx.Checksum{
-					spdx.SHA256: {
-						Algorithm: spdx.SHA256,
+				PackageChecksums: []common.Checksum{
+					{
+						Algorithm: common.SHA256,
 						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
 					},
 				},
@@ -264,19 +257,19 @@ func TestH1Digest(t *testing.T) {
 		},
 		{
 			name: "invalid h1digest algorithm",
-			pkg: spdx.Package2_2{
+			pkg: spdx.Package{
 				PackageName:    "github.com/googleapis/gnostic",
 				PackageVersion: "v0.5.5",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: map[spdx.ChecksumAlgorithm]spdx.Checksum{
-					spdx.SHA256: {
-						Algorithm: spdx.SHA1,
+				PackageChecksums: []common.Checksum{
+					{
+						Algorithm: common.SHA1,
 						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
 					},
 				},
@@ -285,19 +278,19 @@ func TestH1Digest(t *testing.T) {
 		},
 		{
 			name: "invalid h1digest digest",
-			pkg: spdx.Package2_2{
+			pkg: spdx.Package{
 				PackageName:    "github.com/googleapis/gnostic",
 				PackageVersion: "v0.5.5",
-				PackageExternalReferences: []*spdx.PackageExternalReference2_2{
+				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
-						Category: "PACKAGE_MANAGER",
+						Category: "PACKAGE-MANAGER",
 						Locator:  "pkg:golang/github.com/googleapis/gnostic@v0.5.5",
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: map[spdx.ChecksumAlgorithm]spdx.Checksum{
-					spdx.SHA256: {
-						Algorithm: spdx.SHA256,
+				PackageChecksums: []common.Checksum{
+					{
+						Algorithm: common.SHA256,
 						Value:     "",
 					},
 				},

@@ -1,0 +1,43 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: foobar/baz
+DocumentNamespace: https://anchore.com/syft/dir/foobar/baz-3d730196-4510-4ee4-9743-9322dd27cee7
+LicenseListVersion: 3.18
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-v0.42.0-bogus
+Created: 2022-11-18T14:21:45Z
+
+##### Package: @at-sign
+
+PackageName: @at-sign
+SPDXID: SPDXRef-Package---at-sign-3732f7a5679bdec4
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+
+##### Package: some/slashes
+
+PackageName: some/slashes
+SPDXID: SPDXRef-Package--some-slashes-1345166d4801153b
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+
+##### Package: under_scores
+
+PackageName: under_scores
+SPDXID: SPDXRef-Package--under-scores-290d5c77210978c1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+
