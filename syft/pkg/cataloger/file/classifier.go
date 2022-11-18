@@ -50,21 +50,6 @@ type Classifier struct {
 // EvidenceMatcher is a function called to catalog Packages that match some sort of evidence
 type EvidenceMatcher func(classifier Classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
 
-func MultiMatcher(matchers ...EvidenceMatcher) EvidenceMatcher {
-	return func(classifier Classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
-		for _, matcher := range matchers {
-			p, err := matcher(classifier, reader)
-			if err != nil {
-				return nil, err
-			}
-			if p != nil {
-				return p, nil
-			}
-		}
-		return nil, nil
-	}
-}
-
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
 	return func(classifier Classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
@@ -92,7 +77,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 
 		contents, err := getContents(reader)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get read contents for file: %+v", err)
+			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
@@ -111,7 +96,7 @@ func fileContentsVersionMatcher(pattern string) EvidenceMatcher {
 	return func(classifier Classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		contents, err := getContents(reader)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get read contents for file: %+v", err)
+			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
@@ -175,13 +160,13 @@ func singlePackage(classifier Classifier, reader source.LocationReadCloser, vers
 func getContents(reader source.LocationReadCloser) ([]byte, error) {
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get union reader for file: %+v", err)
+		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
 
 	// TODO: there may be room for improvement here, as this may use an excessive amount of memory. Alternate approach is to leverage a RuneReader.
 	contents, err := io.ReadAll(unionReader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get contents for file: %+v", err)
+		return nil, fmt.Errorf("unable to get contents for file: %w", err)
 	}
 
 	return contents, nil
