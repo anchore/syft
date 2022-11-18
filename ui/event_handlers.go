@@ -76,8 +76,6 @@ func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 }
 
 // formatDockerImagePullStatus writes the docker image pull status summarized into a single line for the given state.
-//
-//nolint:funlen
 func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *components.Spinner, line *frame.Line) {
 	var size, current uint64
 

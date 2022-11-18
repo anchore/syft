@@ -12,6 +12,9 @@ const (
 
 	// DependencyOfRelationship is a proxy for the SPDX 2.2.1 DEPENDENCY_OF	relationship.
 	DependencyOfRelationship RelationshipType = "dependency-of"
+
+	// DescribedByRelationship is a proxy for the SPDX 2.2.2 DESCRIBED_BY relationship.
+	DescribedByRelationship RelationshipType = "described-by"
 )
 
 type RelationshipType string

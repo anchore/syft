@@ -47,12 +47,12 @@ func main() {
 func run() error {
 	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("unable to get licenses list: %+v", err)
+		return fmt.Errorf("unable to get licenses list: %w", err)
 	}
 
 	var result LicenseList
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return fmt.Errorf("unable to decode license list: %+v", err)
+		return fmt.Errorf("unable to decode license list: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -62,7 +62,7 @@ func run() error {
 
 	f, err := os.Create(source)
 	if err != nil {
-		return fmt.Errorf("unable to create %q: %+v", source, err)
+		return fmt.Errorf("unable to create %q: %w", source, err)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -85,7 +85,7 @@ func run() error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("unable to generate template: %+v", err)
+		return fmt.Errorf("unable to generate template: %w", err)
 	}
 	return nil
 }

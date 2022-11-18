@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spdx/tools-golang/spdx"
+	spdx "github.com/spdx/tools-golang/spdx/v2_3"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
@@ -19,7 +19,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
+func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 	if doc == nil {
 		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
 	}
@@ -27,9 +27,7 @@ func ToSyftModel(doc *spdx.Document2_2) (*sbom.SBOM, error) {
 	spdxIDMap := make(map[string]interface{})
 
 	src := source.Metadata{Scheme: source.UnknownScheme}
-	if doc.CreationInfo != nil {
-		src.Scheme = extractSchemeFromNamespace(doc.CreationInfo.DocumentNamespace)
-	}
+	src.Scheme = extractSchemeFromNamespace(doc.DocumentNamespace)
 
 	s := &sbom.SBOM{
 		Source: src,
@@ -63,18 +61,18 @@ func extractSchemeFromNamespace(ns string) source.Scheme {
 	parts := strings.Split(u.Path, "/")
 	for _, p := range parts {
 		switch p {
-		case "file":
+		case inputFile:
 			return source.FileScheme
-		case "image":
+		case inputImage:
 			return source.ImageScheme
-		case "dir":
+		case inputDirectory:
 			return source.DirectoryScheme
 		}
 	}
 	return source.UnknownScheme
 }
 
-func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
+func findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
 	for _, p := range doc.Packages {
 		purlValue := findPURLValue(p)
 		if purlValue == "" {
@@ -107,7 +105,7 @@ func findLinuxReleaseByPURL(doc *spdx.Document2_2) *linux.Release {
 	return nil
 }
 
-func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
+func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document) {
 	for _, p := range doc.Packages {
 		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
@@ -115,8 +113,8 @@ func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *sp
 	}
 }
 
-func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document2_2) {
-	for _, f := range doc.UnpackagedFiles {
+func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document) {
+	for _, f := range doc.Files {
 		l := toSyftLocation(f)
 		spdxIDMap[string(f.FileSPDXIdentifier)] = l
 
@@ -125,8 +123,8 @@ func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.
 	}
 }
 
-func toFileDigests(f *spdx.File2_2) (digests []file.Digest) {
-	for _, digest := range f.FileChecksums {
+func toFileDigests(f *spdx.File) (digests []file.Digest) {
+	for _, digest := range f.Checksums {
 		digests = append(digests, file.Digest{
 			Algorithm: string(digest.Algorithm),
 			Value:     digest.Value,
@@ -135,9 +133,9 @@ func toFileDigests(f *spdx.File2_2) (digests []file.Digest) {
 	return digests
 }
 
-func toFileMetadata(f *spdx.File2_2) (meta source.FileMetadata) {
+func toFileMetadata(f *spdx.File) (meta source.FileMetadata) {
 	// FIXME Syft is currently lossy due to the SPDX 2.2.1 spec not supporting arbitrary mimetypes
-	for _, typ := range f.FileType {
+	for _, typ := range f.FileTypes {
 		switch FileType(typ) {
 		case ImageFileType:
 			meta.MIMEType = "image/"
@@ -157,11 +155,11 @@ func toFileMetadata(f *spdx.File2_2) (meta source.FileMetadata) {
 	return meta
 }
 
-func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2) []artifact.Relationship {
+func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document) []artifact.Relationship {
 	var out []artifact.Relationship
 	for _, r := range doc.Relationships {
 		// FIXME what to do with r.RefA.DocumentRefID and  r.RefA.SpecialID
-		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.CreationInfo.SPDXIdentifier) {
+		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
 			log.Debugf("ignoring relationship to external document: %+v", r)
 			continue
 		}
@@ -205,7 +203,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document2_2
 	return out
 }
 
-func toSyftCoordinates(f *spdx.File2_2) source.Coordinates {
+func toSyftCoordinates(f *spdx.File) source.Coordinates {
 	const layerIDPrefix = "layerID: "
 	var fileSystemID string
 	if strings.Index(f.FileComment, layerIDPrefix) == 0 {
@@ -220,7 +218,7 @@ func toSyftCoordinates(f *spdx.File2_2) source.Coordinates {
 	}
 }
 
-func toSyftLocation(f *spdx.File2_2) *source.Location {
+func toSyftLocation(f *spdx.File) *source.Location {
 	return &source.Location{
 		Coordinates: toSyftCoordinates(f),
 		VirtualPath: f.FileName,
@@ -255,7 +253,7 @@ func findQualifierValue(purl packageurl.PackageURL, qualifier string) string {
 	return ""
 }
 
-func extractPkgInfo(p *spdx.Package2_2) pkgInfo {
+func extractPkgInfo(p *spdx.Package) pkgInfo {
 	pu := findPURLValue(p)
 	purl, err := packageurl.FromString(pu)
 	if err != nil {
@@ -268,7 +266,7 @@ func extractPkgInfo(p *spdx.Package2_2) pkgInfo {
 	}
 }
 
-func toSyftPackage(p *spdx.Package2_2) *pkg.Package {
+func toSyftPackage(p *spdx.Package) *pkg.Package {
 	info := extractPkgInfo(p)
 	metadataType, metadata := extractMetadata(p, info)
 	sP := pkg.Package{
@@ -289,7 +287,7 @@ func toSyftPackage(p *spdx.Package2_2) *pkg.Package {
 }
 
 //nolint:funlen
-func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interface{}) {
+func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface{}) {
 	arch := info.qualifierValue(pkg.PURLQualifierArch)
 	upstreamValue := info.qualifierValue(pkg.PURLQualifierUpstream)
 	upstream := strings.SplitN(upstreamValue, "@", 2)
@@ -298,12 +296,20 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 	if len(upstream) > 1 {
 		upstreamVersion = upstream[1]
 	}
+	supplier := ""
+	if p.PackageSupplier != nil {
+		supplier = p.PackageSupplier.Supplier
+	}
+	originator := ""
+	if p.PackageOriginator != nil {
+		originator = p.PackageOriginator.Originator
+	}
 	switch info.typ {
 	case pkg.ApkPkg:
 		return pkg.ApkMetadataType, pkg.ApkMetadata{
 			Package:       p.PackageName,
 			OriginPackage: upstreamName,
-			Maintainer:    p.PackageSupplierPerson,
+			Maintainer:    supplier,
 			Version:       p.PackageVersion,
 			License:       p.PackageLicenseDeclared,
 			Architecture:  arch,
@@ -329,7 +335,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Arch:      arch,
 			SourceRpm: upstreamValue,
 			License:   license,
-			Vendor:    p.PackageOriginatorOrganization,
+			Vendor:    originator,
 		}
 	case pkg.DebPkg:
 		return pkg.DpkgMetadataType, pkg.DpkgMetadata{
@@ -338,12 +344,12 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 			Version:       p.PackageVersion,
 			SourceVersion: upstreamVersion,
 			Architecture:  arch,
-			Maintainer:    p.PackageOriginatorPerson,
+			Maintainer:    originator,
 		}
 	case pkg.JavaPkg:
 		var digests []file.Digest
-		for algorithm, value := range p.PackageChecksums {
-			digests = append(digests, file.Digest{Algorithm: string(algorithm), Value: value.Value})
+		for _, value := range p.PackageChecksums {
+			digests = append(digests, file.Digest{Algorithm: string(value.Algorithm), Value: value.Value})
 		}
 		return pkg.JavaMetadataType, pkg.JavaMetadata{
 			ArchiveDigests: digests,
@@ -366,7 +372,7 @@ func extractMetadata(p *spdx.Package2_2, info pkgInfo) (pkg.MetadataType, interf
 	return pkg.UnknownMetadataType, nil
 }
 
-func findPURLValue(p *spdx.Package2_2) string {
+func findPURLValue(p *spdx.Package) string {
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(PurlExternalRefType) {
 			return r.Locator
@@ -375,7 +381,7 @@ func findPURLValue(p *spdx.Package2_2) string {
 	return ""
 }
 
-func extractCPEs(p *spdx.Package2_2) (cpes []pkg.CPE) {
+func extractCPEs(p *spdx.Package) (cpes []pkg.CPE) {
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(Cpe23ExternalRefType) {
 			cpe, err := pkg.NewCPE(r.Locator)

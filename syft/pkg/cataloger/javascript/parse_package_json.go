@@ -57,7 +57,7 @@ func parsePackageJSON(_ source.FileResolver, _ *generic.Environment, reader sour
 
 	for {
 		var p packageJSON
-		if err := dec.Decode(&p); err == io.EOF {
+		if err := dec.Decode(&p); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)

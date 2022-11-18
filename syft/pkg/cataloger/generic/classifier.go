@@ -41,7 +41,7 @@ func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r
 
 	contents, err := getContents(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get read contents for file: %+v", err)
+		return nil, nil, fmt.Errorf("unable to get read contents for file: %w", err)
 	}
 
 	var classifiedPackage *pkg.Package
@@ -87,12 +87,12 @@ func (c Classifier) Examine(reader source.LocationReadCloser) (p *pkg.Package, r
 func getContents(reader source.LocationReadCloser) ([]byte, error) {
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get union reader for file: %+v", err)
+		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
 
 	contents, err := io.ReadAll(unionReader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get contents for file: %+v", err)
+		return nil, fmt.Errorf("unable to get contents for file: %w", err)
 	}
 
 	return contents, nil

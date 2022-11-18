@@ -21,13 +21,13 @@ type cargoLockFile struct {
 func parseCargoLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %v", err)
+		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %w", err)
 	}
 
 	m := cargoLockFile{}
 	err = tree.Unmarshal(&m)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse Cargo.lock: %v", err)
+		return nil, nil, fmt.Errorf("unable to parse Cargo.lock: %w", err)
 	}
 
 	var pkgs []pkg.Package

@@ -1,0 +1,66 @@
+{
+ "spdxVersion": "SPDX-2.3",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "/some/path",
+ "documentNamespace": "https://anchore.com/syft/dir/some/path-0f9b165e-1819-43cb-bd58-f61c1c23d6cf",
+ "creationInfo": {
+  "licenseListVersion": "3.18",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-v0.42.0-bogus"
+  ],
+  "created": "2022-11-11T19:24:55Z",
+  "comment": ""
+ },
+ "packages": [
+  {
+   "name": "package-1",
+   "SPDXID": "SPDXRef-Package-python-package-1-1b1d0be59ac59d2c",
+   "versionInfo": "1.0.1",
+   "downloadLocation": "NOASSERTION",
+   "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
+   "licenseConcluded": "MIT",
+   "licenseDeclared": "MIT",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "comment": ""
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "a-purl-2",
+     "comment": ""
+    }
+   ]
+  },
+  {
+   "name": "package-2",
+   "SPDXID": "SPDXRef-Package-deb-package-2-db4abfe497c180d3",
+   "versionInfo": "2.0.1",
+   "downloadLocation": "NOASSERTION",
+   "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
+   "licenseConcluded": "NONE",
+   "licenseDeclared": "NONE",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "comment": ""
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
+     "comment": ""
+    }
+   ]
+  }
+ ]
+}
