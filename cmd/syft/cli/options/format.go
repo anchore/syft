@@ -4,8 +4,8 @@ import (
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/github"
-	"github.com/anchore/syft/syft/formats/spdx22json"
-	"github.com/anchore/syft/syft/formats/spdx22tagvalue"
+	"github.com/anchore/syft/syft/formats/spdxjson"
+	"github.com/anchore/syft/syft/formats/spdxtagvalue"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/text"
@@ -21,9 +21,9 @@ func FormatAliases(ids ...sbom.FormatID) (aliases []string) {
 			aliases = append(aliases, "text")
 		case table.ID:
 			aliases = append(aliases, "table")
-		case spdx22json.ID:
+		case spdxjson.ID:
 			aliases = append(aliases, "spdx-json")
-		case spdx22tagvalue.ID:
+		case spdxtagvalue.ID:
 			aliases = append(aliases, "spdx-tag-value")
 		case cyclonedxxml.ID:
 			aliases = append(aliases, "cyclonedx-xml")

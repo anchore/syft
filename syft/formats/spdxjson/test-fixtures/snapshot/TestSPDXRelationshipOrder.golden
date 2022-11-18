@@ -1,0 +1,160 @@
+{
+ "spdxVersion": "SPDX-2.3",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "user-image-input",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-8755f340-f205-4bf2-a909-94c623670734",
+ "creationInfo": {
+  "licenseListVersion": "3.18",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-v0.42.0-bogus"
+  ],
+  "created": "2022-11-11T19:24:55Z",
+  "comment": ""
+ },
+ "packages": [
+  {
+   "name": "package-1",
+   "SPDXID": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "versionInfo": "1.0.1",
+   "downloadLocation": "NOASSERTION",
+   "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
+   "licenseConcluded": "MIT",
+   "licenseDeclared": "MIT",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+     "comment": ""
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "a-purl-1",
+     "comment": ""
+    }
+   ]
+  },
+  {
+   "name": "package-2",
+   "SPDXID": "SPDXRef-Package-deb-package-2-958443e2d9304af4",
+   "versionInfo": "2.0.1",
+   "downloadLocation": "NOASSERTION",
+   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "licenseConcluded": "NONE",
+   "licenseDeclared": "NONE",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "comment": ""
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
+     "comment": ""
+    }
+   ]
+  }
+ ],
+ "files": [
+  {
+   "fileName": "/a1/f6",
+   "SPDXID": "SPDXRef-9c2f7510199b17f6",
+   "fileTypes": [
+    "OTHER"
+   ],
+   "checksums": null,
+   "licenseConcluded": "NOASSERTION",
+   "copyrightText": ""
+  },
+  {
+   "fileName": "/d1/f3",
+   "SPDXID": "SPDXRef-c6f5b29dca12661f",
+   "fileTypes": [
+    "OTHER"
+   ],
+   "checksums": null,
+   "licenseConcluded": "NOASSERTION",
+   "copyrightText": ""
+  },
+  {
+   "fileName": "/d2/f4",
+   "SPDXID": "SPDXRef-c641caa71518099f",
+   "fileTypes": [
+    "OTHER"
+   ],
+   "checksums": null,
+   "licenseConcluded": "NOASSERTION",
+   "copyrightText": ""
+  },
+  {
+   "fileName": "/f1",
+   "SPDXID": "SPDXRef-5265a4dde3edbf7c",
+   "fileTypes": [
+    "OTHER"
+   ],
+   "checksums": null,
+   "licenseConcluded": "NOASSERTION",
+   "copyrightText": ""
+  },
+  {
+   "fileName": "/f2",
+   "SPDXID": "SPDXRef-f9e49132a4b96ccd",
+   "fileTypes": [
+    "OTHER"
+   ],
+   "checksums": null,
+   "licenseConcluded": "NOASSERTION",
+   "copyrightText": ""
+  },
+  {
+   "fileName": "/z1/f5",
+   "SPDXID": "SPDXRef-839d99ee67d9d174",
+   "fileTypes": [
+    "OTHER"
+   ],
+   "checksums": null,
+   "licenseConcluded": "NOASSERTION",
+   "copyrightText": ""
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "relatedSpdxElement": "SPDXRef-5265a4dde3edbf7c",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "relatedSpdxElement": "SPDXRef-c641caa71518099f",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "relatedSpdxElement": "SPDXRef-839d99ee67d9d174",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6",
+   "relationshipType": "CONTAINS"
+  }
+ ]
+}

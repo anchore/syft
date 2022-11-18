@@ -1,0 +1,43 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: .
+DocumentNamespace: https://anchore.com/syft/dir/b51d2446-85b4-4b22-9762-12fc135730a7
+LicenseListVersion: 3.18
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-v0.42.0-bogus
+Created: 2022-11-11T19:25:16Z
+
+##### Package: @at-sign
+
+PackageName: @at-sign
+SPDXID: SPDXRef-Package---at-sign-3732f7a5679bdec4
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+
+##### Package: some/slashes
+
+PackageName: some/slashes
+SPDXID: SPDXRef-Package--some-slashes-1345166d4801153b
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+
+##### Package: under_scores
+
+PackageName: under_scores
+SPDXID: SPDXRef-Package--under-scores-290d5c77210978c1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+

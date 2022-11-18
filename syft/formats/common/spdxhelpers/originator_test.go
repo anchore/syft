@@ -109,7 +109,11 @@ func Test_Originator(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Originator(test.input))
+			typ, value := Originator(test.input)
+			if typ != "" {
+				value = typ + ": " + value
+			}
+			assert.Equal(t, test.expected, value)
 		})
 	}
 }
