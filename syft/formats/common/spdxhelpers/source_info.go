@@ -6,7 +6,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-//nolint:funlen
 func SourceInfo(p pkg.Package) string {
 	answer := ""
 	switch p.Type {
@@ -46,6 +45,9 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from cabal or stack manifest files"
 	default:
 		answer = "acquired package info from the following paths"
+	}
+	if p.FoundBy == "sbom-cataloger" {
+		answer = "acquired package info from SBOM"
 	}
 	var paths []string
 	for _, l := range p.Locations.ToSlice() {

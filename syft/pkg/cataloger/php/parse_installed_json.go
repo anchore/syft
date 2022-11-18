@@ -2,6 +2,7 @@ package php
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -46,7 +47,7 @@ func parseInstalledJSON(_ source.FileResolver, _ *generic.Environment, reader so
 
 	for {
 		var lock installedJSONComposerV2
-		if err := dec.Decode(&lock); err == io.EOF {
+		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse installed.json file: %w", err)

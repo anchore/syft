@@ -3,6 +3,7 @@ package python
 import (
 	"bufio"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -20,7 +21,7 @@ func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 
 	for {
 		recordList, err := r.Read()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -70,7 +71,7 @@ func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string
 
 	for {
 		line, err := r.ReadString('\n')
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

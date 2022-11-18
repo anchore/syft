@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -200,6 +201,7 @@ func Test_decodeComponent(t *testing.T) {
 		component        cyclonedx.Component
 		wantLanguage     pkg.Language
 		wantMetadataType pkg.MetadataType
+		wantMetadata     interface{}
 	}{
 		{
 			name: "derive language from pURL if missing",
@@ -213,7 +215,7 @@ func Test_decodeComponent(t *testing.T) {
 			wantLanguage: pkg.Java,
 		},
 		{
-			name: "handle existing RpmdbMetadata type",
+			name: "handle RpmdbMetadata type without properties",
 			component: cyclonedx.Component{
 				Name:       "acl",
 				Version:    "2.2.53-1.el8",
@@ -228,6 +230,31 @@ func Test_decodeComponent(t *testing.T) {
 				},
 			},
 			wantMetadataType: pkg.RpmMetadataType,
+			wantMetadata:     pkg.RpmMetadata{},
+		},
+		{
+			name: "handle RpmdbMetadata type with properties",
+			component: cyclonedx.Component{
+				Name:       "acl",
+				Version:    "2.2.53-1.el8",
+				PackageURL: "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+				Type:       "library",
+				BOMRef:     "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:metadataType",
+						Value: "RpmMetadata",
+					},
+					{
+						Name:  "syft:metadata:release",
+						Value: "some-release",
+					},
+				},
+			},
+			wantMetadataType: pkg.RpmMetadataType,
+			wantMetadata: pkg.RpmMetadata{
+				Release: "some-release",
+			},
 		},
 	}
 
@@ -239,6 +266,9 @@ func Test_decodeComponent(t *testing.T) {
 			}
 			if tt.wantMetadataType != "" {
 				assert.Equal(t, tt.wantMetadataType, p.MetadataType)
+			}
+			if tt.wantMetadata != nil {
+				assert.Truef(t, reflect.DeepEqual(tt.wantMetadata, p.Metadata), "metadata should match: %+v != %+v", tt.wantMetadata, p.Metadata)
 			}
 		})
 	}
