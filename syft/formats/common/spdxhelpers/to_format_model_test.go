@@ -15,6 +15,101 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// TODO: Add ToFormatModel tests
+func Test_toPackageChecksums(t *testing.T) {
+	tests := []struct {
+		name          string
+		pkg           pkg.Package
+		expected      []common.Checksum
+		filesAnalyzed bool
+	}{
+		{
+			name: "Java Package",
+			pkg: pkg.Package{
+				Name:     "test",
+				Version:  "1.0.0",
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					ArchiveDigests: []file.Digest{
+						{
+							Algorithm: "sha1", // SPDX expects these to be uppercase
+							Value:     "1234",
+						},
+					},
+				},
+			},
+			expected: []common.Checksum{
+				{
+					Algorithm: "SHA1",
+					Value:     "1234",
+				},
+			},
+			filesAnalyzed: true,
+		},
+		{
+			name: "Java Package with no archive digests",
+			pkg: pkg.Package{
+				Name:     "test",
+				Version:  "1.0.0",
+				Language: pkg.Java,
+				Metadata: pkg.JavaMetadata{
+					ArchiveDigests: []file.Digest{},
+				},
+			},
+			expected:      []common.Checksum{},
+			filesAnalyzed: false,
+		},
+		{
+			name: "Java Package with no metadata",
+			pkg: pkg.Package{
+				Name:     "test",
+				Version:  "1.0.0",
+				Language: pkg.Java,
+			},
+			expected:      []common.Checksum{},
+			filesAnalyzed: false,
+		},
+		{
+			name: "Go Binary Package",
+			pkg: pkg.Package{
+				Name:         "test",
+				Version:      "1.0.0",
+				Language:     pkg.Go,
+				MetadataType: pkg.GolangBinMetadataType,
+				Metadata: pkg.GolangBinMetadata{
+					H1Digest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
+				},
+			},
+			expected: []common.Checksum{
+				{
+					Algorithm: "SHA256",
+					Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+				},
+			},
+			filesAnalyzed: false,
+		},
+		{
+			name: "Package with no metadata type",
+			pkg: pkg.Package{
+				Name:     "test",
+				Version:  "1.0.0",
+				Language: pkg.Java,
+				Metadata: struct{}{},
+			},
+			expected:      []common.Checksum{},
+			filesAnalyzed: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			commonSum, filesAnalyzed := toPackageChecksums(test.pkg)
+			assert.ElementsMatch(t, test.expected, commonSum)
+			assert.Equal(t, test.filesAnalyzed, filesAnalyzed)
+		})
+	}
+}
+
 func Test_toFileTypes(t *testing.T) {
 
 	tests := []struct {
