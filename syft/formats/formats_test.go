@@ -1,4 +1,4 @@
-package syft
+package formats
 
 import (
 	"bytes"
@@ -37,7 +37,7 @@ func TestIdentify(t *testing.T) {
 			assert.NoError(t, err)
 			by, err := io.ReadAll(f)
 			assert.NoError(t, err)
-			frmt := IdentifyFormat(by)
+			frmt := Identify(by)
 			assert.NotNil(t, frmt)
 			assert.Equal(t, test.expected, frmt.ID())
 		})
@@ -45,7 +45,7 @@ func TestIdentify(t *testing.T) {
 }
 
 func TestFormats_EmptyInput(t *testing.T) {
-	for _, format := range formats {
+	for _, format := range Formats() {
 		t.Run(format.ID().String(), func(t *testing.T) {
 			t.Run("format.Decode", func(t *testing.T) {
 				input := bytes.NewReader(nil)
@@ -69,7 +69,7 @@ func TestFormats_EmptyInput(t *testing.T) {
 	}
 }
 
-func TestFormatByName(t *testing.T) {
+func TestByName(t *testing.T) {
 
 	tests := []struct {
 		name string
@@ -190,7 +190,7 @@ func TestFormatByName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := FormatByName(tt.name)
+			f := ByName(tt.name)
 			if tt.want == "" {
 				require.Nil(t, f)
 				return

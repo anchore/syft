@@ -212,6 +212,37 @@ func Test_unpackMetadata(t *testing.T) {
 				"thing": "thing-1",
 			},
 		},
+		{
+			name: "can handle package with metadata type but missing metadata",
+			packageData: []byte(`{
+				"metadataType": "GolangBinMetadata"
+			}`),
+			metadataType: pkg.GolangBinMetadataType,
+			wantMetadata: pkg.GolangBinMetadata{},
+		},
+		{
+			name: "can handle package with unknonwn metadata type and missing metadata",
+			packageData: []byte(`{
+				"metadataType": "BadMetadata"
+			}`),
+			wantErr:      require.Error,
+			metadataType: "BadMetadata",
+			wantMetadata: nil,
+		},
+		{
+			name: "can handle package with unknonwn metadata type and metadata",
+			packageData: []byte(`{
+				"metadataType": "BadMetadata",
+				"metadata": {
+					"random": "thing"
+				}
+			}`),
+			wantErr:      require.Error,
+			metadataType: "BadMetadata",
+			wantMetadata: map[string]interface{}{
+				"random": "thing",
+			},
+		},
 	}
 
 	for _, test := range tests {
