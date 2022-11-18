@@ -32,10 +32,11 @@ type lockDependency struct {
 }
 
 type lockPackage struct {
+	Name      string `json:"name"` // only present in the root package entry (named "")
 	Version   string `json:"version"`
 	Resolved  string `json:"resolved"`
 	Integrity string `json:"integrity"`
-	License   string `json:""`
+	License   string `json:"license"`
 }
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
@@ -49,27 +50,41 @@ func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, read
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
+	var lock packageLock
 	for {
-		var lock packageLock
 		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)
 		}
-		licenseMap := make(map[string]string)
-		for _, pkgMeta := range lock.Packages {
-			var sb strings.Builder
-			sb.WriteString(pkgMeta.Resolved)
-			sb.WriteString(pkgMeta.Integrity)
-			licenseMap[sb.String()] = pkgMeta.License
-		}
+	}
 
+	if lock.LockfileVersion == 1 {
 		for name, pkgMeta := range lock.Dependencies {
-			pkgs = append(pkgs, newPackageLockPackage(resolver, reader.Location, name, pkgMeta, licenseMap))
+			pkgs = append(pkgs, newPackageLockV1Package(resolver, reader.Location, name, pkgMeta))
+		}
+	}
+
+	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {
+		for name, pkgMeta := range lock.Packages {
+			if name == "" {
+				if pkgMeta.Name == "" {
+					continue
+				} else {
+					name = pkgMeta.Name
+				}
+			}
+
+			pkgs = append(pkgs, newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta))
 		}
 	}
 
 	pkg.Sort(pkgs)
 
 	return pkgs, nil, nil
+}
+
+func getNameFromPath(path string) string {
+	parts := strings.Split(path, "node_modules/")
+	return parts[len(parts)-1]
 }
