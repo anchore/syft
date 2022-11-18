@@ -22,7 +22,7 @@ const (
 	TableFormatID         = table.ID
 	CycloneDxXMLFormatID  = cyclonedxxml.ID
 	CycloneDxJSONFormatID = cyclonedxjson.ID
-	GitHubFormatID              = github.ID
+	GitHubFormatID        = github.ID
 	SPDXTagValueFormatID  = spdxtagvalue.ID
 	SPDXJSONFormatID      = spdxjson.ID
 	TemplateFormatID      = template.ID
