@@ -296,8 +296,9 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 		if len(meta.ArchiveDigests) > 0 {
 			filesAnalyzed = true
 			for _, digest := range meta.ArchiveDigests {
+				algo := strings.ToUpper(digest.Algorithm)
 				checksums = append(checksums, common.Checksum{
-					Algorithm: common.ChecksumAlgorithm(digest.Algorithm),
+					Algorithm: common.ChecksumAlgorithm(algo),
 					Value:     digest.Value,
 				})
 			}
