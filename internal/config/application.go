@@ -56,6 +56,7 @@ type Application struct {
 	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
+	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // --parallelism the number of catalog workers to run in parallel
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
@@ -65,7 +66,8 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 			IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 			Scope:                    cfg.Package.Cataloger.ScopeOpt,
 		},
-		Catalogers: cfg.Catalogers,
+		Catalogers:  cfg.Catalogers,
+		Parallelism: cfg.Parallelism,
 	}
 }
 

@@ -534,6 +534,9 @@ file-metadata:
   # SYFT_FILE_METADATA_DIGESTS env var
   digests: ["sha256"]
 
+# maximum number of workers used to process the list of package catalogers in parallel
+parallelism: 1
+
 # cataloging secrets is exposed through the power-user subcommand
 secrets:
   cataloger:

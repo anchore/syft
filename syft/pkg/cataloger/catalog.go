@@ -2,6 +2,7 @@ package cataloger
 
 import (
 	"fmt"
+	"math"
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
@@ -24,11 +25,13 @@ type Monitor struct {
 	PackagesDiscovered progress.Monitorable // the number of packages discovered from all registered catalogers
 }
 
-// CatalogResult provides the result of running a single cataloger against source
-type CatalogResult struct {
+// catalogResult provides the result of running a single cataloger against source
+type catalogResult struct {
 	Packages      []pkg.Package
 	Relationships []artifact.Relationship
-	Error         error
+	// Discovered may sometimes be more than len(packages)
+	Discovered int64
+	Error      error
 }
 
 // newMonitor creates a new Monitor object and publishes the object on the bus as a PackageCatalogerStarted event.
@@ -46,23 +49,21 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver, results chan CatalogResult, progress *progress.Manual) {
-	catalogerResult := new(CatalogResult)
+func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catalogResult, error) {
+	catalogerResult := new(catalogResult)
 
 	// find packages from the underlying raw data
 	log.Debugf("cataloging with %q", cataloger.Name())
 	packages, relationships, err := cataloger.Catalog(resolver)
 	if err != nil {
-		catalogerResult.Error = err
-		results <- *catalogerResult
 		log.Debugf("cataloger=%q error in handling", cataloger.Name())
-		return
+		return catalogerResult, err
 	}
 
 	catalogedPackages := len(packages)
 
 	log.Debugf("cataloger=%q discovered %d packages", cataloger.Name(), catalogedPackages)
-	progress.N += int64(catalogedPackages)
+	catalogerResult.Discovered = int64(catalogedPackages)
 
 	for _, p := range packages {
 		// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
@@ -86,41 +87,61 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver, results
 		catalogerResult.Packages = append(catalogerResult.Packages, p)
 	}
 	catalogerResult.Relationships = append(catalogerResult.Relationships, relationships...)
-	results <- *catalogerResult
 	log.Debugf("cataloger=%q done handling", cataloger.Name())
+	return catalogerResult, nil
 }
 
 // Catalog a given source (container image or filesystem) with the given catalogers, returning all discovered packages.
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
 // request.
-func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
+//
+//nolint:funlen
+func Catalog(resolver source.FileResolver, release *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 	filesProcessed, packagesDiscovered := newMonitor()
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
 
-	// TODO - expose workers as a flag to the cli
-	workers := 1
+	nCatalogers := len(catalogers)
 
-	jobs := make(chan pkg.Cataloger, len(catalogers))
-	results := make(chan CatalogResult, len(catalogers)+1)
+	// we do not need more parallelism than there are `catalogers`.
+	parallelism = int(math.Min(float64(nCatalogers), math.Max(1.0, float64(parallelism))))
+	log.Debugf("Using parallelism=%d for catalogs=%d", parallelism, nCatalogers)
+
+	jobs := make(chan pkg.Cataloger, nCatalogers)
+	results := make(chan *catalogResult, nCatalogers)
+	discoveredPackages := make(chan int64, nCatalogers)
 
 	waitGroup := sync.WaitGroup{}
 
-	for catalogWorkerIdx := 0; catalogWorkerIdx < workers; catalogWorkerIdx++ {
+	for i := 0; i < parallelism; i++ {
 		waitGroup.Add(1)
 
 		go func() {
 			defer waitGroup.Done()
 
-			// run each job
+			// wait for / get the next cataloger job available.
 			for cataloger := range jobs {
-				runCataloger(cataloger, resolver, results, packagesDiscovered)
+				catalogResult, err := runCataloger(cataloger, resolver)
+
+				// ensure we set the error to be aggregated
+				catalogResult.Error = err
+
+				discoveredPackages <- catalogResult.Discovered
+
+				results <- catalogResult
 			}
 		}()
 	}
+
+	// dynamically show updated discovered package status
+	go func() {
+		for discovered := range discoveredPackages {
+			packagesDiscovered.N += discovered
+		}
+	}()
 
 	// Enqueue the jobs
 	for _, cataloger := range catalogers {
@@ -128,10 +149,10 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 	}
 	close(jobs)
 
-
 	// Wait for the jobs to finish
 	waitGroup.Wait()
 	close(results)
+	close(discoveredPackages)
 
 	// collect the results
 	for catalogResult := range results {

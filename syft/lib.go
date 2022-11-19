@@ -69,7 +69,7 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 		}
 	}
 
-	catalog, relationships, err := cataloger.Catalog(resolver, release, catalogers...)
+	catalog, relationships, err := cataloger.Catalog(resolver, release, cfg.Parallelism, catalogers...)
 	if err != nil {
 		return nil, nil, nil, err
 	}
