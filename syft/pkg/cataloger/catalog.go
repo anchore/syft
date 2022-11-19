@@ -2,6 +2,7 @@ package cataloger
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
@@ -23,6 +24,13 @@ type Monitor struct {
 	PackagesDiscovered progress.Monitorable // the number of packages discovered from all registered catalogers
 }
 
+// CatalogResult provides the result of running a single cataloger against source
+type CatalogResult struct {
+	Packages      []pkg.Package
+	Relationships []artifact.Relationship
+	Error         error
+}
+
 // newMonitor creates a new Monitor object and publishes the object on the bus as a PackageCatalogerStarted event.
 func newMonitor() (*progress.Manual, *progress.Manual) {
 	filesProcessed := progress.Manual{}
@@ -38,6 +46,50 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
+func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver, results chan CatalogResult, progress *progress.Manual) {
+	catalogerResult := new(CatalogResult)
+
+	// find packages from the underlying raw data
+	log.Debugf("cataloging with %q", cataloger.Name())
+	packages, relationships, err := cataloger.Catalog(resolver)
+	if err != nil {
+		catalogerResult.Error = err
+		results <- *catalogerResult
+		log.Debugf("cataloger=%q error in handling", cataloger.Name())
+		return
+	}
+
+	catalogedPackages := len(packages)
+
+	log.Debugf("cataloger=%q discovered %d packages", cataloger.Name(), catalogedPackages)
+	progress.N += int64(catalogedPackages)
+
+	for _, p := range packages {
+		// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
+		// we might have binary classified CPE already with the package so we want to append here
+		p.CPEs = append(p.CPEs, cpe.Generate(p)...)
+
+		// if we were not able to identify the language we have an opportunity
+		// to try and get this value from the PURL. Worst case we assert that
+		// we could not identify the language at either stage and set UnknownLanguage
+		if p.Language == "" {
+			p.Language = pkg.LanguageFromPURL(p.PURL)
+		}
+
+		// create file-to-package relationships for files owned by the package
+		owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
+		if err != nil {
+			log.Warnf("cataloger=%q unable to create any package-file relationships for package name=%q: %w", cataloger.Name(), p.Name, err)
+		} else {
+			catalogerResult.Relationships = append(catalogerResult.Relationships, owningRelationships...)
+		}
+		catalogerResult.Packages = append(catalogerResult.Packages, p)
+	}
+	catalogerResult.Relationships = append(catalogerResult.Relationships, relationships...)
+	results <- *catalogerResult
+	log.Debugf("cataloger=%q done handling", cataloger.Name())
+}
+
 // Catalog a given source (container image or filesystem) with the given catalogers, returning all discovered packages.
 // In order to efficiently retrieve contents from a underlying container image the content fetch requests are
 // done in bulk. Specifically, all files of interest are collected from each catalogers and accumulated into a single
@@ -48,43 +100,49 @@ func Catalog(resolver source.FileResolver, release *linux.Release, catalogers ..
 	filesProcessed, packagesDiscovered := newMonitor()
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
-	for _, c := range catalogers {
-		// find packages from the underlying raw data
-		log.Debugf("cataloging with %q", c.Name())
-		packages, relationships, err := c.Catalog(resolver)
-		if err != nil {
-			errs = multierror.Append(errs, err)
+
+	// TODO - expose workers as a flag to the cli
+	workers := 1
+
+	jobs := make(chan pkg.Cataloger, len(catalogers))
+	results := make(chan CatalogResult, len(catalogers)+1)
+
+	waitGroup := sync.WaitGroup{}
+
+	for catalogWorkerIdx := 0; catalogWorkerIdx < workers; catalogWorkerIdx++ {
+		waitGroup.Add(1)
+
+		go func() {
+			defer waitGroup.Done()
+
+			// run each job
+			for cataloger := range jobs {
+				runCataloger(cataloger, resolver, results, packagesDiscovered)
+			}
+		}()
+	}
+
+	// Enqueue the jobs
+	for _, cataloger := range catalogers {
+		jobs <- cataloger
+	}
+	close(jobs)
+
+
+	// Wait for the jobs to finish
+	waitGroup.Wait()
+	close(results)
+
+	// collect the results
+	for catalogResult := range results {
+		if catalogResult.Error != nil {
+			errs = multierror.Append(errs, catalogResult.Error)
 			continue
 		}
-
-		catalogedPackages := len(packages)
-
-		log.Debugf("discovered %d packages", catalogedPackages)
-		packagesDiscovered.N += int64(catalogedPackages)
-
-		for _, p := range packages {
-			// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
-			// we might have binary classified CPE already with the package so we want to append here
-			p.CPEs = append(p.CPEs, cpe.Generate(p)...)
-
-			// if we were not able to identify the language we have an opportunity
-			// to try and get this value from the PURL. Worst case we assert that
-			// we could not identify the language at either stage and set UnknownLanguage
-			if p.Language == "" {
-				p.Language = pkg.LanguageFromPURL(p.PURL)
-			}
-
-			// create file-to-package relationships for files owned by the package
-			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
-			if err != nil {
-				log.Warnf("unable to create any package-file relationships for package name=%q: %w", p.Name, err)
-			} else {
-				allRelationships = append(allRelationships, owningRelationships...)
-			}
-			catalog.Add(p)
+		for _, pkg := range catalogResult.Packages {
+			catalog.Add(pkg)
 		}
-
-		allRelationships = append(allRelationships, relationships...)
+		allRelationships = append(allRelationships, catalogResult.Relationships...)
 	}
 
 	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
