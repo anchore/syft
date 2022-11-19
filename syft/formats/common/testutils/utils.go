@@ -2,8 +2,10 @@ package testutils
 
 import (
 	"bytes"
+	"math/rand"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
@@ -12,6 +14,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -275,4 +278,26 @@ func newDirectoryCatalog() *pkg.Catalog {
 	})
 
 	return catalog
+}
+
+//nolint:gosec
+func AddSampleFileRelationships(s *sbom.SBOM) {
+	catalog := s.Artifacts.PackageCatalog.Sorted()
+	s.Artifacts.FileMetadata = map[source.Coordinates]source.FileMetadata{}
+
+	files := []string{"/f1", "/f2", "/d1/f3", "/d2/f4", "/z1/f5", "/a1/f6"}
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rnd.Shuffle(len(files), func(i, j int) { files[i], files[j] = files[j], files[i] })
+
+	for _, f := range files {
+		meta := source.FileMetadata{}
+		coords := source.Coordinates{RealPath: f}
+		s.Artifacts.FileMetadata[coords] = meta
+
+		s.Relationships = append(s.Relationships, artifact.Relationship{
+			From: catalog[0],
+			To:   coords,
+			Type: artifact.ContainsRelationship,
+		})
+	}
 }

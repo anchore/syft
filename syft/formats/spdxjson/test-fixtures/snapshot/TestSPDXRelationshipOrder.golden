@@ -3,14 +3,14 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-8755f340-f205-4bf2-a909-94c623670734",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-55ad4afc-ecdc-46a4-8bc3-36b3e72da5d1",
  "creationInfo": {
   "licenseListVersion": "3.18",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2022-11-11T19:24:55Z",
+  "created": "2022-11-19T13:46:57Z",
   "comment": ""
  },
  "packages": [
@@ -133,12 +133,12 @@
   },
   {
    "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
-   "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd",
+   "relatedSpdxElement": "SPDXRef-839d99ee67d9d174",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
-   "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f",
+   "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6",
    "relationshipType": "CONTAINS"
   },
   {
@@ -148,12 +148,12 @@
   },
   {
    "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
-   "relatedSpdxElement": "SPDXRef-839d99ee67d9d174",
+   "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
-   "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6",
+   "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd",
    "relationshipType": "CONTAINS"
   }
  ]
