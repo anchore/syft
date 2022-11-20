@@ -44,14 +44,29 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 }
 
 func newPackageLockV1Package(resolver source.FileResolver, location source.Location, name string, u lockDependency) pkg.Package {
+	version := u.Version
+
+	const aliasPrefixPackageLockV1 = "npm:"
+
+	// Handles type aliases https://github.com/npm/rfcs/blob/main/implemented/0001-package-aliases.md
+	if strings.HasPrefix(version, aliasPrefixPackageLockV1) {
+		// this is an alias.
+		// `"version": "npm:canonical-name@X.Y.Z"`
+		canonicalPackageAndVersion := version[len(aliasPrefixPackageLockV1):]
+		versionSeparator := strings.LastIndex(canonicalPackageAndVersion, "@")
+
+		name = canonicalPackageAndVersion[:versionSeparator]
+		version = canonicalPackageAndVersion[versionSeparator+1:]
+	}
+
 	return finalizeLockPkg(
 		resolver,
 		location,
 		pkg.Package{
 			Name:      name,
-			Version:   u.Version,
+			Version:   version,
 			Locations: source.NewLocationSet(location),
-			PURL:      packageURL(name, u.Version),
+			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 		},

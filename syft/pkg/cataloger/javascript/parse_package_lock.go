@@ -75,6 +75,11 @@ func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, read
 				}
 			}
 
+			// handles alias names
+			if pkgMeta.Name != "" {
+				name = pkgMeta.Name
+			}
+
 			pkgs = append(pkgs, newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta))
 		}
 	}

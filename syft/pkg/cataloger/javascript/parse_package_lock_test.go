@@ -193,3 +193,57 @@ func TestParsePackageLockV3(t *testing.T) {
 	}
 	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
 }
+
+func TestParsePackageLockAlias(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	commonPkgs := []pkg.Package{
+		{
+			Name:     "case",
+			Version:  "1.6.2",
+			PURL:     "pkg:npm/case@1.6.2",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "case",
+			Version:  "1.6.3",
+			PURL:     "pkg:npm/case@1.6.3",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+		{
+			Name:     "@bundled-es-modules/chai",
+			Version:  "4.2.2",
+			PURL:     "pkg:npm/%40bundled-es-modules/chai@4.2.2",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+		},
+	}
+
+	v2Pkg := pkg.Package{
+		Name:     "alias-check",
+		Version:  "1.0.0",
+		PURL:     "pkg:npm/alias-check@1.0.0",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: []string{"ISC"},
+	}
+
+	packageLockV1 := "test-fixtures/pkg-lock/alias-package-lock-1.json"
+	packageLockV2 := "test-fixtures/pkg-lock/alias-package-lock-2.json"
+	packageLocks := []string{packageLockV1, packageLockV2}
+
+	for _, packageLock := range packageLocks {
+		expected := make([]pkg.Package, len(commonPkgs))
+		copy(expected, commonPkgs)
+
+		if packageLock == packageLockV2 {
+			expected = append(expected, v2Pkg)
+		}
+
+		for i := range expected {
+			expected[i].Locations.Add(source.NewLocation(packageLock))
+		}
+		pkgtest.TestFileParser(t, packageLock, parsePackageLock, expected, expectedRelationships)
+	}
+}
