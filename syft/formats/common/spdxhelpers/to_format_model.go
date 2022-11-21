@@ -105,7 +105,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		},
 		Packages:      toPackages(s.Artifacts.PackageCatalog),
 		Files:         toFiles(s),
-		Relationships: toRelationships(s.Relationships),
+		Relationships: toRelationships(s.RelationshipsSorted()),
 	}
 }
 
