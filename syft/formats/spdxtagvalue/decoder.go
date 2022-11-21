@@ -13,7 +13,7 @@ import (
 func decoder(reader io.Reader) (*sbom.SBOM, error) {
 	doc, err := tvloader.Load2_3(reader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode spdx-json: %w", err)
+		return nil, fmt.Errorf("unable to decode spdx-tag-value: %w", err)
 	}
 
 	return spdxhelpers.ToSyftModel(doc)
