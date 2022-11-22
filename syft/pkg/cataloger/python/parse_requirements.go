@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -48,7 +49,9 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 			continue
 		}
 		name := strings.TrimSpace(parts[0])
-		version := strings.TrimSpace(parts[1])
+		version := strings.TrimFunc(parts[1], func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+		})
 		packages = append(packages, newPackageForIndex(name, version, reader.Location))
 	}
 
