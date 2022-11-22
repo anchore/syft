@@ -37,6 +37,14 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
 		},
+		{
+			Name:      "argh",
+			Version:   "0.26.2",
+			PURL:      "pkg:pypi/argh@0.26.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+		},
 	}
 
 	var expectedRelationships []artifact.Relationship
