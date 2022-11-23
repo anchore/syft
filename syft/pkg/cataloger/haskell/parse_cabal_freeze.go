@@ -34,6 +34,14 @@ func parseCabalFreeze(_ source.FileResolver, _ *generic.Environment, reader sour
 
 		line = strings.TrimSpace(line)
 		startPkgEncoding, endPkgEncoding := strings.Index(line, "any.")+4, strings.Index(line, ",")
+		// case where comma not found for last package in constraint list
+		if endPkgEncoding == -1 {
+			endPkgEncoding = len(line)
+		}
+		if startPkgEncoding >= endPkgEncoding || startPkgEncoding < 0 {
+			continue
+		}
+
 		line = line[startPkgEncoding:endPkgEncoding]
 		fields := strings.Split(line, " ==")
 
