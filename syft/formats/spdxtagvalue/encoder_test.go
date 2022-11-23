@@ -67,6 +67,19 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 	)
 }
 
+func TestSPDXRelationshipOrder(t *testing.T) {
+	testImage := "image-simple"
+	s := testutils.ImageInput(t, testImage, testutils.FromSnapshot())
+	testutils.AddSampleFileRelationships(&s)
+	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
+		Format(),
+		s,
+		testImage,
+		*updateSpdxTagValue,
+		spdxTagValueRedactor,
+	)
+}
+
 func spdxTagValueRedactor(s []byte) []byte {
 	// each SBOM reports the time it was generated, which is not useful during snapshot testing
 	s = regexp.MustCompile(`Created: .*`).ReplaceAll(s, []byte("redacted"))

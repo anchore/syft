@@ -2,10 +2,12 @@ package formats
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/github"
@@ -35,6 +37,9 @@ func Formats() []sbom.Format {
 func Identify(by []byte) sbom.Format {
 	for _, f := range Formats() {
 		if err := f.Validate(bytes.NewReader(by)); err != nil {
+			if !errors.Is(err, sbom.ErrValidationNotSupported) {
+				log.Debugf("format %s returned err: %+v", f.ID(), err)
+			}
 			continue
 		}
 		return f

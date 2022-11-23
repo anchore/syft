@@ -5,10 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/formats/common/testutils"
-	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 var updateSpdxJson = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json encoders")
@@ -36,7 +33,7 @@ func TestSPDXJSONImageEncoder(t *testing.T) {
 func TestSPDXRelationshipOrder(t *testing.T) {
 	testImage := "image-simple"
 	s := testutils.ImageInput(t, testImage, testutils.FromSnapshot())
-	addRelationships(&s)
+	testutils.AddSampleFileRelationships(&s)
 	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
 		Format(),
 		s,
@@ -44,23 +41,6 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 		*updateSpdxJson,
 		spdxJsonRedactor,
 	)
-}
-
-func addRelationships(s *sbom.SBOM) {
-	catalog := s.Artifacts.PackageCatalog.Sorted()
-	s.Artifacts.FileMetadata = map[source.Coordinates]source.FileMetadata{}
-
-	for _, f := range []string{"/f1", "/f2", "/d1/f3", "/d2/f4", "/z1/f5", "/a1/f6"} {
-		meta := source.FileMetadata{}
-		coords := source.Coordinates{RealPath: f}
-		s.Artifacts.FileMetadata[coords] = meta
-
-		s.Relationships = append(s.Relationships, artifact.Relationship{
-			From: catalog[0],
-			To:   coords,
-			Type: artifact.ContainsRelationship,
-		})
-	}
 }
 
 func spdxJsonRedactor(s []byte) []byte {

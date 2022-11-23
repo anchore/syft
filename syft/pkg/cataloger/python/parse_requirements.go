@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -47,8 +48,14 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
 			continue
 		}
+
+		// check if the version contains hash declarations on the same line
+		version, _ := parseVersionAndHashes(parts[1])
+
 		name := strings.TrimSpace(parts[0])
-		version := strings.TrimSpace(parts[1])
+		version = strings.TrimFunc(version, func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+		})
 		packages = append(packages, newPackageForIndex(name, version, reader.Location))
 	}
 
@@ -57,6 +64,15 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 	}
 
 	return packages, nil, nil
+}
+
+func parseVersionAndHashes(version string) (string, []string) {
+	parts := strings.Split(version, "--hash=")
+	if len(parts) < 2 {
+		return version, nil
+	}
+
+	return parts[0], parts[1:]
 }
 
 // trimRequirementsTxtLine removes content from the given requirements.txt line

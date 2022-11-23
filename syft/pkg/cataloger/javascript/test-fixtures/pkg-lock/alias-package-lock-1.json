@@ -1,0 +1,23 @@
+{
+  "name": "alias-check",
+  "version": "1.0.0",
+  "lockfileVersion": 1,
+  "requires": true,
+  "dependencies": {
+    "case": {
+      "version": "1.6.2",
+      "resolved": "https://registry.npmjs.org/case/-/case-1.6.2.tgz",
+      "integrity": "sha512-ll380ZRoraT7mUK2G92UbH+FJVD5AwdVIAYk9xhV1tauh0carDgYByUD1HhjCWsWgxrfQvCeHvtfj7IYR6TKeg=="
+    },
+    "case-alias": {
+      "version": "npm:case@1.6.3",
+      "resolved": "https://registry.npmjs.org/case/-/case-1.6.3.tgz",
+      "integrity": "sha512-mzDSXIPaFwVDvZAHqZ9VlbyF4yyXRuX6IvB06WvPYkqJVO24kX1PPhv9bfpKNFZyxYFmmgo03HUiD8iklmJYRQ=="
+    },
+    "chai": {
+      "version": "npm:@bundled-es-modules/chai@4.2.2",
+      "resolved": "https://registry.npmjs.org/@bundled-es-modules/chai/-/chai-4.2.2.tgz",
+      "integrity": "sha512-iGmVYw2/zJCoqyKTtWEYCtFmMyi8WmACQKtky0lpNyEKWX0YIOpKWGD7saMXL+tPpllss0otilxV0SLwyi3Ytg=="
+    }
+  }
+}

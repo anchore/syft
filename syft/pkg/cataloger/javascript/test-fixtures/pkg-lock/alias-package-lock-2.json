@@ -1,0 +1,58 @@
+{
+  "name": "alias-check",
+  "version": "1.0.0",
+  "lockfileVersion": 2,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "alias-check",
+      "version": "1.0.0",
+      "license": "ISC",
+      "dependencies": {
+        "case": "1.6.2",
+        "case-alias": "npm:case@^1.6.3",
+        "chai": "npm:@bundled-es-modules/chai@^4.2.2"
+      }
+    },
+    "node_modules/case": {
+      "version": "1.6.2",
+      "resolved": "https://registry.npmjs.org/case/-/case-1.6.2.tgz",
+      "integrity": "sha512-ll380ZRoraT7mUK2G92UbH+FJVD5AwdVIAYk9xhV1tauh0carDgYByUD1HhjCWsWgxrfQvCeHvtfj7IYR6TKeg==",
+      "engines": {
+        "node": ">= 0.8.0"
+      }
+    },
+    "node_modules/case-alias": {
+      "name": "case",
+      "version": "1.6.3",
+      "resolved": "https://registry.npmjs.org/case/-/case-1.6.3.tgz",
+      "integrity": "sha512-mzDSXIPaFwVDvZAHqZ9VlbyF4yyXRuX6IvB06WvPYkqJVO24kX1PPhv9bfpKNFZyxYFmmgo03HUiD8iklmJYRQ==",
+      "engines": {
+        "node": ">= 0.8.0"
+      }
+    },
+    "node_modules/chai": {
+      "name": "@bundled-es-modules/chai",
+      "version": "4.2.2",
+      "resolved": "https://registry.npmjs.org/@bundled-es-modules/chai/-/chai-4.2.2.tgz",
+      "integrity": "sha512-iGmVYw2/zJCoqyKTtWEYCtFmMyi8WmACQKtky0lpNyEKWX0YIOpKWGD7saMXL+tPpllss0otilxV0SLwyi3Ytg=="
+    }
+  },
+  "dependencies": {
+    "case": {
+      "version": "1.6.2",
+      "resolved": "https://registry.npmjs.org/case/-/case-1.6.2.tgz",
+      "integrity": "sha512-ll380ZRoraT7mUK2G92UbH+FJVD5AwdVIAYk9xhV1tauh0carDgYByUD1HhjCWsWgxrfQvCeHvtfj7IYR6TKeg=="
+    },
+    "case-alias": {
+      "version": "npm:case@1.6.3",
+      "resolved": "https://registry.npmjs.org/case/-/case-1.6.3.tgz",
+      "integrity": "sha512-mzDSXIPaFwVDvZAHqZ9VlbyF4yyXRuX6IvB06WvPYkqJVO24kX1PPhv9bfpKNFZyxYFmmgo03HUiD8iklmJYRQ=="
+    },
+    "chai": {
+      "version": "npm:@bundled-es-modules/chai@4.2.2",
+      "resolved": "https://registry.npmjs.org/@bundled-es-modules/chai/-/chai-4.2.2.tgz",
+      "integrity": "sha512-iGmVYw2/zJCoqyKTtWEYCtFmMyi8WmACQKtky0lpNyEKWX0YIOpKWGD7saMXL+tPpllss0otilxV0SLwyi3Ytg=="
+    }
+  }
+}
