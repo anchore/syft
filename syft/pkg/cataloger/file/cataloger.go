@@ -36,10 +36,7 @@ func (c fileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []a
 			if err != nil {
 				return nil, nil, err
 			}
-			locationReader := source.LocationReadCloser{
-				Location:   location,
-				ReadCloser: reader,
-			}
+			locationReader := source.NewLocationReadCloser(location, reader)
 			newPkgs, err := classifier.EvidenceMatcher(classifier, locationReader)
 			if err != nil {
 				return nil, nil, err
