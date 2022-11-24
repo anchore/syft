@@ -3,12 +3,9 @@ package apkdb
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"path"
 	"strconv"
 	"strings"
-
-	"github.com/mitchellh/mapstructure"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -22,28 +19,73 @@ import (
 // integrity check
 var _ generic.Parser = parseApkDB
 
-// parseApkDb parses individual packages from a given Alpine DB file. For more information on specific fields
-// see https://wiki.alpinelinux.org/wiki/Apk_spec .
+// parseApkDB parses packages from a given APK installed DB file. For more
+// information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
+//
+//nolint:funlen
 func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	// larger capacity for the scanner.
-	const maxScannerCapacity = 1024 * 1024
-	// a new larger buffer for the scanner
-	bufScan := make([]byte, maxScannerCapacity)
-	pkgs := make([]pkg.Package, 0)
-
 	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(bufScan, maxScannerCapacity)
-	onDoubleLF := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		for i := 0; i < len(data); i++ {
-			if i > 0 && data[i-1] == '\n' && data[i] == '\n' {
-				return i + 1, data[:i-1], nil
+
+	var apks []pkg.ApkMetadata
+	var currentEntry pkg.ApkMetadata
+	entryParsingInProgress := false
+	fileParsingCtx := newApkFileParsingContext()
+
+	// creating a dedicated append-like function here instead of using `append(...)`
+	// below since there is nontrivial logic to be performed for each finalized apk
+	// entry.
+	appendApk := func(p pkg.ApkMetadata) {
+		if files := fileParsingCtx.files; len(files) >= 1 {
+			// attached accumulated files to current package
+			p.Files = files
+
+			// reset file parsing for next use
+			fileParsingCtx = newApkFileParsingContext()
+		}
+
+		nilFieldsToEmptySlice(&p)
+		apks = append(apks, p)
+	}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if line == "" {
+			// i.e. apk entry separator
+
+			if entryParsingInProgress {
+				// current entry is complete
+				appendApk(currentEntry)
 			}
+
+			entryParsingInProgress = false
+
+			// zero-out currentEntry for use by any future entry
+			currentEntry = pkg.ApkMetadata{}
+
+			continue
 		}
-		if !atEOF {
-			return 0, nil, nil
+
+		field := parseApkField(line)
+		if field == nil {
+			log.Warnf("unable to parse field data from line %q", line)
+			continue
 		}
-		// deliver the last token (which could be an empty string)
-		return 0, data, bufio.ErrFinalToken
+
+		entryParsingInProgress = true
+
+		field.apply(&currentEntry, fileParsingCtx)
+	}
+
+	if entryParsingInProgress {
+		// There was no final empty line, so currentEntry hasn't been added to the
+		// collection yet; but we've now reached the end of scanning, so let's be sure to
+		// add currentEntry to the collection.
+		appendApk(currentEntry)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, nil, fmt.Errorf("failed to parse APK installed DB file: %w", err)
 	}
 
 	var r *linux.Release
@@ -51,128 +93,192 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 		r = env.LinuxRelease
 	}
 
-	scanner.Split(onDoubleLF)
-	for scanner.Scan() {
-		metadata, err := parseApkDBEntry(strings.NewReader(scanner.Text()))
-		if err != nil {
-			return nil, nil, err
-		}
-		if metadata != nil {
-			pkgs = append(pkgs, newPackage(*metadata, r, reader.Location))
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse APK DB file: %w", err)
+	pkgs := make([]pkg.Package, 0, len(apks))
+	for _, apk := range apks {
+		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
 	}
 
 	return pkgs, discoverPackageDependencies(pkgs), nil
 }
 
-// parseApkDBEntry reads and parses a single pkg.ApkMetadata element from the stream, returning nil if their are no more entries.
-//
+func parseApkField(line string) *apkField {
+	parts := strings.SplitN(line, ":", 2)
+	if len(parts) != 2 {
+		return nil
+	}
+
+	f := apkField{
+		name:  parts[0],
+		value: parts[1],
+	}
+
+	return &f
+}
+
+type apkField struct {
+	name  string
+	value string
+}
+
 //nolint:funlen
-func parseApkDBEntry(reader io.Reader) (*pkg.ApkMetadata, error) {
-	var entry pkg.ApkMetadata
-	pkgFields := make(map[string]interface{})
+func (f apkField) apply(p *pkg.ApkMetadata, ctx *apkFileParsingContext) {
+	switch f.name {
+	// APKINDEX field parsing
 
-	// We want sane defaults for collections, i.e. an empty array instead of null.
-	pkgFields["D"] = []string{}
-	pkgFields["p"] = []string{}
-	files := make([]pkg.ApkFileRecord, 0)
-
-	var fileRecord *pkg.ApkFileRecord
-	lastFile := "/"
-
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		fields := strings.SplitN(line, ":", 2)
-		if len(fields) != 2 {
-			continue
+	case "P":
+		p.Package = f.value
+	case "o":
+		p.OriginPackage = f.value
+	case "m":
+		p.Maintainer = f.value
+	case "V":
+		p.Version = f.value
+	case "L":
+		p.License = f.value
+	case "A":
+		p.Architecture = f.value
+	case "U":
+		p.URL = f.value
+	case "T":
+		p.Description = f.value
+	case "S":
+		i, err := strconv.Atoi(f.value)
+		if err != nil {
+			log.Warnf("unable to parse value %q for field %q: %w", f.value, f.name, err)
+			return
 		}
 
-		key := fields[0]
-		value := strings.TrimSpace(fields[1])
-
-		switch key {
-		case "D", "p":
-			entries := strings.Split(value, " ")
-			pkgFields[key] = entries
-		case "F":
-			currentFile := "/" + value
-
-			newFileRecord := pkg.ApkFileRecord{
-				Path: currentFile,
-			}
-			files = append(files, newFileRecord)
-			fileRecord = &files[len(files)-1]
-
-			// future aux references are relative to previous "F" records
-			lastFile = currentFile
-			continue
-		case "R":
-			newFileRecord := pkg.ApkFileRecord{
-				Path: path.Join(lastFile, value),
-			}
-			files = append(files, newFileRecord)
-			fileRecord = &files[len(files)-1]
-		case "a", "M":
-			ownershipFields := strings.Split(value, ":")
-			if len(ownershipFields) < 3 {
-				log.Warnf("unexpected APK ownership field: %q", value)
-				continue
-			}
-			if fileRecord == nil {
-				log.Warnf("ownership field with no parent record: %q", value)
-				continue
-			}
-			fileRecord.OwnerUID = ownershipFields[0]
-			fileRecord.OwnerGID = ownershipFields[1]
-			fileRecord.Permissions = ownershipFields[2]
-			// note: there are more optional fields available that we are not capturing, e.g.:
-			// "0:0:755:Q1JaDEHQHBbizhEzoWK1YxuraNU/4="
-		case "Z":
-			if fileRecord == nil {
-				log.Warnf("checksum field with no parent record: %q", value)
-				continue
-			}
-			fileRecord.Digest = processChecksum(value)
-		case "I", "S":
-			// coerce to integer
-			iVal, err := strconv.Atoi(value)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse APK int: '%+v'", value)
-			}
-			pkgFields[key] = iVal
-		default:
-			pkgFields[key] = value
+		p.Size = i
+	case "I":
+		i, err := strconv.Atoi(f.value)
+		if err != nil {
+			log.Warnf("unable to parse value %q for field %q: %w", f.value, f.name, err)
+			return
 		}
+
+		p.InstalledSize = i
+	case "D":
+		deps := parseListValue(f.value)
+		p.Dependencies = deps
+	case "p":
+		provides := parseListValue(f.value)
+		p.Provides = provides
+	case "C":
+		p.Checksum = f.value
+	case "c":
+		p.GitCommit = f.value
+
+	// File/directory field parsing:
+
+	case "F":
+		directory := path.Join("/", f.value)
+
+		ctx.files = append(ctx.files, pkg.ApkFileRecord{Path: directory})
+		ctx.indexOfLatestDirectory = len(ctx.files) - 1
+	case "M":
+		i := ctx.indexOfLatestDirectory
+		latest := ctx.files[i]
+
+		var ok bool
+		latest.OwnerUID, latest.OwnerGID, latest.Permissions, ok = processFileInfo(f.value)
+		if !ok {
+			log.Warnf("unexpected value for APK ACL field %q: %q", f.name, f.value)
+			return
+		}
+
+		// save updated directory
+		ctx.files[i] = latest
+	case "R":
+		var regularFile string
+
+		dirIndex := ctx.indexOfLatestDirectory
+		if dirIndex < 0 {
+			regularFile = path.Join("/", f.value)
+		} else {
+			latestDirPath := ctx.files[dirIndex].Path
+			regularFile = path.Join(latestDirPath, f.value)
+		}
+
+		ctx.files = append(ctx.files, pkg.ApkFileRecord{Path: regularFile})
+		ctx.indexOfLatestRegularFile = len(ctx.files) - 1
+	case "a":
+		i := ctx.indexOfLatestRegularFile
+		latest := ctx.files[i]
+
+		var ok bool
+		latest.OwnerUID, latest.OwnerGID, latest.Permissions, ok = processFileInfo(f.value)
+		if !ok {
+			log.Warnf("unexpected value for APK ACL field %q: %q", f.name, f.value)
+			return
+		}
+
+		// save updated file
+		ctx.files[i] = latest
+	case "Z":
+		i := ctx.indexOfLatestRegularFile
+		latest := ctx.files[i]
+		latest.Digest = processChecksum(f.value)
+
+		// save updated file
+		ctx.files[i] = latest
+	}
+}
+
+func processFileInfo(v string) (uid, gid, perms string, ok bool) {
+	ok = false
+
+	fileInfo := strings.Split(v, ":")
+	if len(fileInfo) < 3 {
+		return
 	}
 
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		// By default, mapstructure compares field names in a *case-insensitive* manner.
-		// That would be the wrong approach here, since these apk files use case
-		// *sensitive* field names (e.g. 'P' vs. 'p').
-		MatchName: func(mapKey, fieldName string) bool {
-			return mapKey == fieldName
-		},
-		Result: &entry,
-	})
-	if err != nil {
-		return nil, err
+	uid = fileInfo[0]
+	gid = fileInfo[1]
+	perms = fileInfo[2]
+
+	// note: there are more optional fields available that we are not capturing,
+	// e.g.: "0:0:755:Q1JaDEHQHBbizhEzoWK1YxuraNU/4="
+
+	ok = true
+	return
+}
+
+// apkFileParsingContext helps keep track of what file data has been captured so far for the APK currently being parsed.
+type apkFileParsingContext struct {
+	files                    []pkg.ApkFileRecord
+	indexOfLatestDirectory   int
+	indexOfLatestRegularFile int
+}
+
+func newApkFileParsingContext() *apkFileParsingContext {
+	return &apkFileParsingContext{
+		indexOfLatestDirectory:   -1, // no directories yet
+		indexOfLatestRegularFile: -1, // no regular files yet
+	}
+}
+
+// parseListValue parses a space-separated list from an apk entry field value.
+func parseListValue(value string) []string {
+	items := strings.Split(value, " ")
+	if len(items) >= 1 {
+		return items
 	}
 
-	if err := decoder.Decode(pkgFields); err != nil {
-		return nil, fmt.Errorf("unable to parse APK metadata: %w", err)
-	}
-	if entry.Package == "" {
-		return nil, nil
+	return []string{}
+}
+
+func nilFieldsToEmptySlice(p *pkg.ApkMetadata) {
+	if p.Dependencies == nil {
+		p.Dependencies = []string{}
 	}
 
-	entry.Files = files
+	if p.Provides == nil {
+		p.Provides = []string{}
+	}
 
-	return &entry, nil
+	if p.Files == nil {
+		p.Files = []pkg.ApkFileRecord{}
+	}
 }
 
 func processChecksum(value string) *file.Digest {
