@@ -264,7 +264,7 @@ func parseListValue(value string) []string {
 		return items
 	}
 
-	return []string{}
+	return nil
 }
 
 func nilFieldsToEmptySlice(p *pkg.ApkMetadata) {
