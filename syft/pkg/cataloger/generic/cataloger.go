@@ -118,6 +118,8 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	for _, req := range c.selectFiles(resolver) {
 		location, parser := req.Location, req.Parser
 
+		log.WithFields("path", location.RealPath).Trace("parsing file contents")
+
 		contentReader, err := resolver.FileContentsByLocation(location)
 		if err != nil {
 			logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
