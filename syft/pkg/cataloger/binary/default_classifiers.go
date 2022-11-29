@@ -2,7 +2,7 @@ package binary
 
 import "github.com/anchore/syft/syft/pkg"
 
-var defaultClassifiers = []binaryClassifier{
+var defaultClassifiers = []classifier{
 	{
 		Class:    "python-binary",
 		FileGlob: "**/python*",

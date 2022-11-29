@@ -17,9 +17,9 @@ import (
 
 var emptyPURL = packageurl.PackageURL{}
 
-// binaryClassifier is a generic package classifier that can be used to match a package definition
+// classifier is a generic package classifier that can be used to match a package definition
 // to a file that meets the given content criteria of the evidenceMatcher.
-type binaryClassifier struct {
+type classifier struct {
 	Class string
 
 	// FileGlob is a selector to narrow down file inspection using the **/glob* syntax
@@ -48,11 +48,11 @@ type binaryClassifier struct {
 }
 
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(classifier binaryClassifier, reader source.LocationReadCloser) ([]pkg.Package, error)
+type evidenceMatcher func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
 
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(classifier binaryClassifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		if !pat.MatchString(reader.RealPath) {
 			return nil, nil
 		}
@@ -93,7 +93,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(classifier binaryClassifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		contents, err := getContents(reader)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
@@ -116,7 +116,7 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func singlePackage(classifier binaryClassifier, reader source.LocationReadCloser, version string) []pkg.Package {
+func singlePackage(classifier classifier, reader source.LocationReadCloser, version string) []pkg.Package {
 	var cpes []pkg.CPE
 	for _, cpe := range classifier.CPEs {
 		cpe.Version = version
