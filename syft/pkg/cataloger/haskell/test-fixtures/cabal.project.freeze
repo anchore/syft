@@ -12,6 +12,6 @@ constraints: any.Cabal ==3.2.1.0,
              any.RSA ==2.4.1,
              any.SHA ==1.6.4.4,
              void -safe,
-             any.Spock ==0.14.0.0,
-             
+             any.Spock ==0.14.0.0
+
 index-state: hackage.haskell.org 2022-07-07T01:01:53Z

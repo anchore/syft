@@ -42,10 +42,12 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 	if err != nil {
 		return nil, nil, err
 	}
+
 	pkgFiles, err := parseMtree(r)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	// The replace the files found the the pacman database with the files from the mtree These contain more metadata and
 	// thus more useful.
 	metadata.Files = pkgFiles
@@ -105,6 +107,10 @@ func getFileReader(path string, resolver source.FileResolver) (io.Reader, error)
 	locs, err := resolver.FilesByPath(path)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(locs) == 0 {
+		return nil, fmt.Errorf("could not find file: %s", path)
 	}
 	// TODO: Should we maybe check if we found the file
 	dbContentReader, err := resolver.FileContentsByLocation(locs[0])
