@@ -1,8 +1,8 @@
 package apkdb
 
 import (
-	"bufio"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -60,16 +60,15 @@ func TestExtraFileAttributes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f, err := os.Open("test-fixtures/extra-file-attributes")
-			require.NoError(t, err)
-			t.Cleanup(func() { require.NoError(t, f.Close()) })
+			fixturePath := "test-fixtures/extra-file-attributes"
+			lrc := newLocationReadCloser(t, fixturePath)
 
-			reader := bufio.NewReader(f)
+			pkgs, _, err := parseApkDB(nil, new(generic.Environment), lrc)
+			assert.NoError(t, err)
+			require.Len(t, pkgs, 1)
+			metadata := pkgs[0].Metadata.(pkg.ApkMetadata)
 
-			entry, err := parseApkDBEntry(reader)
-			require.NoError(t, err)
-
-			if diff := cmp.Diff(entry.Files, test.expected.Files); diff != "" {
+			if diff := cmp.Diff(test.expected.Files, metadata.Files); diff != "" {
 				t.Errorf("Files mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -615,17 +614,14 @@ func TestSinglePackageDetails(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			f, err := os.Open(test.fixture)
+			lrc := newLocationReadCloser(t, test.fixture)
+
+			pkgs, _, err := parseApkDB(nil, new(generic.Environment), lrc)
 			require.NoError(t, err)
-			t.Cleanup(func() { require.NoError(t, f.Close()) })
+			require.Len(t, pkgs, 1)
+			metadata := pkgs[0].Metadata.(pkg.ApkMetadata)
 
-			reader := bufio.NewReader(f)
-
-			entry, err := parseApkDBEntry(reader)
-			require.NoError(t, err)
-			require.NotNil(t, entry)
-
-			if diff := cmp.Diff(*entry, test.expected); diff != "" {
+			if diff := cmp.Diff(test.expected, metadata); diff != "" {
 				t.Errorf("Entry mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -765,7 +761,6 @@ func TestMultiplePackages(t *testing.T) {
 	}}
 
 	pkgtest.TestFileParserWithEnv(t, fixture, parseApkDB, &env, expectedPkgs, expectedRelationships)
-
 }
 
 func Test_processChecksum(t *testing.T) {
@@ -791,15 +786,15 @@ func Test_processChecksum(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, &tt.want, processChecksum(tt.value))
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, &test.want, processChecksum(test.value))
 		})
 	}
 }
 
 func Test_discoverPackageDependencies(t *testing.T) {
-
 	tests := []struct {
 		name  string
 		genFn func() ([]pkg.Package, []artifact.Relationship)
@@ -934,9 +929,10 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pkgs, wantRelationships := tt.genFn()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgs, wantRelationships := test.genFn()
 			gotRelationships := discoverPackageDependencies(pkgs)
 			d := cmp.Diff(wantRelationships, gotRelationships, cmpopts.IgnoreUnexported(pkg.Package{}, source.LocationSet{}))
 			if d != "" {
@@ -1006,4 +1002,90 @@ func TestPackageDbDependenciesByParse(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_parseApkDB_expectedPkgNames(t *testing.T) {
+	tests := []struct {
+		fixture      string
+		wantPkgNames []string
+		wantErr      assert.ErrorAssertionFunc
+	}{
+		{
+			fixture: "very-large-entries",
+			wantPkgNames: []string{
+				"ca-certificates-bundle",
+				"glibc-locale-posix",
+				"wolfi-baselayout",
+				"glibc",
+				"libcrypto3",
+				"libssl3",
+				"zlib",
+				"apk-tools",
+				"ncurses-terminfo-base",
+				"ncurses",
+				"bash",
+				"libcap",
+				"bubblewrap",
+				"busybox",
+				"libbrotlicommon1",
+				"libbrotlidec1",
+				"libnghttp2-14",
+				"libcurl4",
+				"curl",
+				"expat",
+				"libpcre2-8-0",
+				"git",
+				"binutils",
+				"libstdc++-dev",
+				"libgcc",
+				"libstdc++",
+				"gmp",
+				"isl",
+				"mpfr",
+				"mpc",
+				"gcc",
+				"linux-headers",
+				"glibc-dev",
+				"make",
+				"pkgconf",
+				"build-base",
+				"go",
+				"tree",
+				"sdk",
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.fixture, func(t *testing.T) {
+			fixturePath := filepath.Join("test-fixtures", test.fixture)
+			lrc := newLocationReadCloser(t, fixturePath)
+
+			pkgs, _, err := parseApkDB(nil, new(generic.Environment), lrc)
+			test.wantErr(t, err)
+
+			names := toPackageNames(pkgs)
+			if diff := cmp.Diff(test.wantPkgNames, names); diff != "" {
+				t.Errorf("Packages mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func toPackageNames(pkgs []pkg.Package) []string {
+	names := make([]string, 0, len(pkgs))
+	for _, p := range pkgs {
+		names = append(names, p.Name)
+	}
+
+	return names
+}
+
+func newLocationReadCloser(t *testing.T, path string) source.LocationReadCloser {
+	f, err := os.Open(path)
+	require.NoError(t, err)
+	t.Cleanup(func() { f.Close() })
+
+	return source.NewLocationReadCloser(source.NewLocation(path), f)
 }
