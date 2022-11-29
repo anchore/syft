@@ -1,4 +1,4 @@
-package file
+package binary
 
 import (
 	"github.com/anchore/syft/syft/artifact"
@@ -6,23 +6,27 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const catalogerName = "file-cataloger"
+const catalogerName = "binary-cataloger"
 
-func NewFileCataloger() pkg.Cataloger {
-	return &fileCataloger{}
+func NewBinaryCataloger() pkg.Cataloger {
+	return &binaryCataloger{}
 }
 
-// fileCataloger is the cataloger responsible for cataloging files classified by the classifiers into packages
-type fileCataloger struct{}
+// binaryCataloger is the cataloger responsible for surfacing evidence of a very limited set of binary files,
+// which have been identified by the classifiers. The binaryCataloger is _NOT_ a place to catalog any and every
+// binary, but rather the specific set that has been curated to be important, predominantly related to toolchain-
+// related runtimes like Python, Go, Java, or Node. Some exceptions can be made for widely-used binaries such
+// as busybox.
+type binaryCataloger struct{}
 
-// Name returns a string that uniquely describes a cataloger
-func (c fileCataloger) Name() string {
+// Name returns a string that uniquely describes the cataloger
+func (c binaryCataloger) Name() string {
 	return catalogerName
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages
 // after analyzing the catalog source.
-func (c fileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c binaryCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -46,6 +50,8 @@ func (c fileCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []a
 				newPkg := &newPkgs[i]
 				for j := range packages {
 					p := &packages[j]
+					// consolidate identical packages found in different locations,
+					// but continue to track each location
 					if packagesMatch(p, newPkg) {
 						p.Locations.Add(newPkg.Locations.ToSlice()...)
 						continue newPackages

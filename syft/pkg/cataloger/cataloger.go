@@ -12,11 +12,11 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
-	"github.com/anchore/syft/syft/pkg/cataloger/file"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -49,7 +49,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		dotnet.NewDotnetDepsCataloger(),
 		portage.NewPortageCataloger(),
 		sbom.NewSBOMCataloger(),
-		file.NewFileCataloger(),
+		binary.NewBinaryCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -78,7 +78,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
-		file.NewFileCataloger(),
+		binary.NewBinaryCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -111,7 +111,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
-		file.NewFileCataloger(),
+		binary.NewBinaryCataloger(),
 	}, cfg.Catalogers)
 }
 
