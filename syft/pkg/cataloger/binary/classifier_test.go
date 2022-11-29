@@ -13,13 +13,13 @@ func Test_ClassifierCPEs(t *testing.T) {
 	tests := []struct {
 		name       string
 		fixture    string
-		classifier Classifier
+		classifier binaryClassifier
 		cpes       []string
 	}{
 		{
 			name:    "no CPEs",
 			fixture: "test-fixtures/version.txt",
-			classifier: Classifier{
+			classifier: binaryClassifier{
 				Package:         "some-app",
 				FileGlob:        ".*/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
@@ -30,7 +30,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 		{
 			name:    "one CPE",
 			fixture: "test-fixtures/version.txt",
-			classifier: Classifier{
+			classifier: binaryClassifier{
 				Package:         "some-app",
 				FileGlob:        ".*/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
@@ -45,7 +45,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 		{
 			name:    "multiple CPEs",
 			fixture: "test-fixtures/version.txt",
-			classifier: Classifier{
+			classifier: binaryClassifier{
 				Package:         "some-app",
 				FileGlob:        ".*/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),

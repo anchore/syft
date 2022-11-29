@@ -49,7 +49,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		dotnet.NewDotnetDepsCataloger(),
 		portage.NewPortageCataloger(),
 		sbom.NewSBOMCataloger(),
-		binary.NewBinaryCataloger(),
+		binary.NewCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -78,7 +78,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
-		binary.NewBinaryCataloger(),
+		binary.NewCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -111,7 +111,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
-		binary.NewBinaryCataloger(),
+		binary.NewCataloger(),
 	}, cfg.Catalogers)
 }
 

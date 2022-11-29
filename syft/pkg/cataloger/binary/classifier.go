@@ -17,9 +17,9 @@ import (
 
 var emptyPURL = packageurl.PackageURL{}
 
-// Classifier is a generic package classifier that can be used to match a package definition
-// to a file that meets the given content criteria of the EvidenceMatcher.
-type Classifier struct {
+// binaryClassifier is a generic package classifier that can be used to match a package definition
+// to a file that meets the given content criteria of the evidenceMatcher.
+type binaryClassifier struct {
 	Class string
 
 	// FileGlob is a selector to narrow down file inspection using the **/glob* syntax
@@ -27,7 +27,7 @@ type Classifier struct {
 
 	// EvidenceMatcher is what will be used to match against the file in the source
 	// location. If the matcher returns a package, the file will be considered a candidate.
-	EvidenceMatcher EvidenceMatcher
+	EvidenceMatcher evidenceMatcher
 
 	// Information below is used to specify the Package information when returned
 
@@ -47,12 +47,12 @@ type Classifier struct {
 	CPEs []pkg.CPE
 }
 
-// EvidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type EvidenceMatcher func(classifier Classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
+// evidenceMatcher is a function called to catalog Packages that match some sort of evidence
+type evidenceMatcher func(classifier binaryClassifier, reader source.LocationReadCloser) ([]pkg.Package, error)
 
-func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
+func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(classifier Classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+	return func(classifier binaryClassifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		if !pat.MatchString(reader.RealPath) {
 			return nil, nil
 		}
@@ -91,9 +91,9 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 	}
 }
 
-func fileContentsVersionMatcher(pattern string) EvidenceMatcher {
+func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(classifier Classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+	return func(classifier binaryClassifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		contents, err := getContents(reader)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
@@ -116,7 +116,7 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func singlePackage(classifier Classifier, reader source.LocationReadCloser, version string) []pkg.Package {
+func singlePackage(classifier binaryClassifier, reader source.LocationReadCloser, version string) []pkg.Package {
 	var cpes []pkg.CPE
 	for _, cpe := range classifier.CPEs {
 		cpe.Version = version

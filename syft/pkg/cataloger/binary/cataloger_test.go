@@ -94,7 +94,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewBinaryCataloger()
+			c := NewCataloger()
 
 			src, err := source.NewFromDirectory(test.fixtureDir)
 			require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewBinaryCataloger()
+			c := NewCataloger()
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
 			src, err := source.NewFromImage(img, "test-img")
@@ -173,7 +173,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T
 }
 
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
-	c := NewBinaryCataloger()
+	c := NewCataloger()
 
 	src, err := source.NewFromDirectory("test-fixtures/classifiers/negative")
 	assert.NoError(t, err)
