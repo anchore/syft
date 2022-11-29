@@ -4,7 +4,6 @@ Package javascript provides a concrete Cataloger implementation for JavaScript e
 package javascript
 
 import (
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
@@ -19,9 +18,4 @@ func NewJavascriptLockCataloger() *generic.Cataloger {
 		WithParserByGlobs(parsePackageLock, "**/package-lock.json").
 		WithParserByGlobs(parseYarnLock, "**/yarn.lock").
 		WithParserByGlobs(parsePnpmLock, "**/pnpm-lock.yaml")
-}
-
-func NewNodeBinaryCataloger() *generic.Cataloger {
-	return generic.NewCataloger("node-binary-cataloger").
-		WithParserByMimeTypes(parseNodeBinary, internal.ExecutableMIMETypeSet.List()...)
 }

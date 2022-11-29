@@ -1,7 +1,6 @@
-package generic
+package binary
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,35 +13,27 @@ func Test_ClassifierCPEs(t *testing.T) {
 	tests := []struct {
 		name       string
 		fixture    string
-		classifier Classifier
+		classifier classifier
 		cpes       []string
 	}{
 		{
 			name:    "no CPEs",
 			fixture: "test-fixtures/version.txt",
-			classifier: Classifier{
-				Package: "some-app",
-				FilepathPatterns: []*regexp.Regexp{
-					regexp.MustCompile(".*/version.txt"),
-				},
-				EvidencePatterns: []*regexp.Regexp{
-					regexp.MustCompile(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				},
-				CPEs: []pkg.CPE{},
+			classifier: classifier{
+				Package:         "some-app",
+				FileGlob:        ".*/version.txt",
+				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
+				CPEs:            []pkg.CPE{},
 			},
 			cpes: nil,
 		},
 		{
 			name:    "one CPE",
 			fixture: "test-fixtures/version.txt",
-			classifier: Classifier{
-				Package: "some-app",
-				FilepathPatterns: []*regexp.Regexp{
-					regexp.MustCompile(".*/version.txt"),
-				},
-				EvidencePatterns: []*regexp.Regexp{
-					regexp.MustCompile(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				},
+			classifier: classifier{
+				Package:         "some-app",
+				FileGlob:        ".*/version.txt",
+				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []pkg.CPE{
 					pkg.MustCPE("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
 				},
@@ -54,14 +45,10 @@ func Test_ClassifierCPEs(t *testing.T) {
 		{
 			name:    "multiple CPEs",
 			fixture: "test-fixtures/version.txt",
-			classifier: Classifier{
-				Package: "some-app",
-				FilepathPatterns: []*regexp.Regexp{
-					regexp.MustCompile(".*/version.txt"),
-				},
-				EvidencePatterns: []*regexp.Regexp{
-					regexp.MustCompile(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				},
+			classifier: classifier{
+				Package:         "some-app",
+				FileGlob:        ".*/version.txt",
+				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []pkg.CPE{
 					pkg.MustCPE("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
 					pkg.MustCPE("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*"),
@@ -83,8 +70,12 @@ func Test_ClassifierCPEs(t *testing.T) {
 			location := locations[0]
 			readCloser, err := resolver.FileContentsByLocation(location)
 			require.NoError(t, err)
-			p, _, err := test.classifier.Examine(source.NewLocationReadCloser(location, readCloser))
+			pkgs, err := test.classifier.EvidenceMatcher(test.classifier, source.NewLocationReadCloser(location, readCloser))
 			require.NoError(t, err)
+
+			require.Len(t, pkgs, 1)
+
+			p := pkgs[0]
 
 			var cpes []string
 			for _, c := range p.CPEs {
