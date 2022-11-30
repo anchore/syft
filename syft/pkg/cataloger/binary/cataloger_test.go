@@ -66,6 +66,18 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-node",
+			fixtureDir: "test-fixtures/classifiers/positive",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "19.2.1",
+				Locations: singleLocation("node"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "nodejs-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-go-hint",
 			fixtureDir: "test-fixtures/classifiers/positive",
 			expected: pkg.Package{
