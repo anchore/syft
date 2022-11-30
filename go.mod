@@ -52,7 +52,7 @@ require (
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
-	github.com/anchore/stereoscope v0.0.0-20221006201143-d24c9d626b33
+	github.com/anchore/stereoscope v0.0.0-20221130153459-3b80d983223f
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/google/go-containerregistry v0.11.0
 	github.com/in-toto/in-toto-golang v0.4.1-0.20221018183522-731d0640b65f
