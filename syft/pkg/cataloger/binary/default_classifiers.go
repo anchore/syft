@@ -38,7 +38,7 @@ var defaultClassifiers = []classifier{
 		FileGlob: "**/node",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-		Package:  "node.js",
+		Package:  "node",
 		Language: pkg.JavaScript,
 		PURL:     mustPURL("pkg:generic/node@version"),
 		CPEs:     singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*"),
