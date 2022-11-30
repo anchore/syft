@@ -21,6 +21,8 @@ type request struct {
 type Cataloger struct {
 	processor         []processor
 	upstreamCataloger string
+	globPatterns      []string
+	mimeTypePatterns  []string
 }
 
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
@@ -39,6 +41,7 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 			return requests
 		},
 	)
+	c.globPatterns = append(c.globPatterns, globs...)
 	return c
 }
 
@@ -58,6 +61,7 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 			return requests
 		},
 	)
+	c.mimeTypePatterns = append(c.mimeTypePatterns, types...)
 	return c
 }
 
@@ -108,8 +112,6 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
-	logger := log.Nested("cataloger", c.upstreamCataloger)
-
 	env := Environment{
 		// TODO: consider passing into the cataloger, this would affect the cataloger interface (and all implementations). This can be deferred until later.
 		LinuxRelease: linux.IdentifyRelease(resolver),
@@ -118,18 +120,9 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	for _, req := range c.selectFiles(resolver) {
 		location, parser := req.Location, req.Parser
 
-		log.WithFields("path", location.RealPath).Trace("parsing file contents")
+		discoveredPackages, discoveredRelationships, err := c.parseRequest(resolver, location, parser, env)
 
-		contentReader, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
-			continue
-		}
-
-		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, source.NewLocationReadCloser(location, contentReader))
-		internal.CloseAndLogError(contentReader, location.VirtualPath)
-		if err != nil {
-			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
 			continue
 		}
 
@@ -150,4 +143,26 @@ func (c *Cataloger) selectFiles(resolver source.FileResolver) []request {
 		requests = append(requests, proc(resolver, Environment{})...)
 	}
 	return requests
+}
+
+func (c *Cataloger) parseRequest(resolver source.FileResolver, location source.Location, parser Parser, env Environment) ([]pkg.Package, []artifact.Relationship, error) {
+	logger := log.Nested("cataloger", c.upstreamCataloger)
+
+	log.WithFields("path", location.RealPath).Trace("parsing file contents")
+
+	contentReader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
+		return nil, nil, err
+	}
+
+	discoveredPackages, discoveredRelationships, err := parser(resolver, &env, source.NewLocationReadCloser(location, contentReader))
+	internal.CloseAndLogError(contentReader, location.VirtualPath)
+	if err != nil {
+		logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
+		return nil, nil, err
+	}
+
+	return discoveredPackages, discoveredRelationships, nil
+
 }
