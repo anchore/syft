@@ -1,6 +1,9 @@
 package generic
 
 import (
+	"regexp"
+	"strings"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -21,11 +24,12 @@ type request struct {
 type Cataloger struct {
 	processor         []processor
 	upstreamCataloger string
-	globPatterns      []string
 	mimeTypePatterns  []string
+	globRegExp        []*regexp.Regexp
+	paths             []string
 }
 
-func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
+func (c *Cataloger) WithParserByGlobs(parser Parser, globs... string) *Cataloger {
 	c.processor = append(c.processor,
 		func(resolver source.FileResolver, env Environment) []request {
 			var requests []request
@@ -41,7 +45,21 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 			return requests
 		},
 	)
-	c.globPatterns = append(c.globPatterns, globs...)
+
+	// rDir -> "(.*/)*"
+	// A placeholder value to allow replacement of other * in the glob with different meaning
+	const rDir = "R-DIR"
+	for _, glob := range globs {
+		regexPattern := strings.ReplaceAll(glob, "**/", rDir)
+		regexPattern = strings.ReplaceAll(regexPattern, "*", ".*")
+		regexPattern = strings.ReplaceAll(regexPattern, "{", "(")
+		regexPattern = strings.ReplaceAll(regexPattern, "}", ")")
+		regexPattern = strings.ReplaceAll(regexPattern, ",", "|")
+		regexPattern = strings.ReplaceAll(regexPattern, rDir, "(.*/)*")
+		regex, _ := regexp.Compile(regexPattern)
+		c.globRegExp = append(c.globRegExp, regex)
+	}
+
 	return c
 }
 
@@ -81,6 +99,7 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 			return requests
 		},
 	)
+	c.paths = append(c.paths, paths...)
 	return c
 }
 
@@ -146,6 +165,43 @@ func (c *Cataloger) selectFiles(resolver source.FileResolver) []request {
 }
 
 func (c *Cataloger) parseRequest(resolver source.FileResolver, location source.Location, parser Parser, env Environment) ([]pkg.Package, []artifact.Relationship, error) {
+	// check if the `location` is read by the cataloger.
+
+	isRegexMatch, isMimeTypeMatch, isPathMatch := false, false, false
+
+	// check glob match first
+	for _, regex := range c.globRegExp {
+		if isRegexMatch {
+			break
+		}
+		regexMatch := location.MatchesRePattern(regex)
+		isRegexMatch = regexMatch
+		// isRegexMatch = true
+	}
+
+	// check for mime type match
+	for _, mimeType := range c.mimeTypePatterns {
+		if isRegexMatch || isMimeTypeMatch {
+			break
+		}
+
+		isMimeTypeMatch = resolver.HasMimeTypeAtLocation(mimeType, location)
+	}
+
+	// check for path match
+	for _, expectedPath := range c.paths {
+		if isRegexMatch || isMimeTypeMatch || isPathMatch {
+			break
+		}
+
+		isPathMatch = resolver.HasPath(expectedPath)
+	}
+
+	if !(isRegexMatch || isMimeTypeMatch || isPathMatch) {
+		// no matches - lets return
+		return []pkg.Package{}, []artifact.Relationship{}, nil
+	}
+
 	logger := log.Nested("cataloger", c.upstreamCataloger)
 
 	log.WithFields("path", location.RealPath).Trace("parsing file contents")

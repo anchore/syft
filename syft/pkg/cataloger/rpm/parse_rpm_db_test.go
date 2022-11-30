@@ -70,6 +70,11 @@ func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]source.Locatio
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (r *rpmdbTestFileResolverMock) HasMimeTypeAtLocation(mimeType string, location source.Location) bool {
+	panic(fmt.Errorf("not implemented"))
+	return false
+}
+
 func TestParseRpmDB(t *testing.T) {
 	tests := []struct {
 		fixture     string

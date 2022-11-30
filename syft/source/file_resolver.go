@@ -34,6 +34,8 @@ type FilePathResolver interface {
 	// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 	// This is helpful when attempting to find a file that is in the same layer or lower as another file.
 	RelativeFileByPath(_ Location, path string) *Location
+	// HasMimeTypeAtLocation indicates if mimetype exist at the location in the underlying source
+	HasMimeTypeAtLocation(mimeType string, location Location) bool
 }
 
 type FileLocationResolver interface {

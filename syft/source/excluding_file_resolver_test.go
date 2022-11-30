@@ -176,6 +176,10 @@ func (r *mockResolver) FilesByMIMEType(_ ...string) ([]Location, error) {
 	return r.getLocations()
 }
 
+func (r *mockResolver) HasMimeTypeAtLocation(mimeType string, location Location) bool {
+	return true
+}
+
 func (r *mockResolver) RelativeFileByPath(_ Location, path string) *Location {
 	return &Location{
 		Coordinates: Coordinates{

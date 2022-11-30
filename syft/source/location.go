@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -121,4 +122,13 @@ func (l Location) Equals(other Location) bool {
 	return l.RealPath == other.RealPath &&
 		l.VirtualPath == other.VirtualPath &&
 		l.FileSystemID == other.FileSystemID
+}
+
+func (l Location) MatchesRePattern(re *regexp.Regexp) bool {
+	match := re.MatchString(l.RealPath)
+	// if !match {
+	// 	panic(fmt.Sprintf("re <%s>: %s", re, l.RealPath))
+	// }
+
+	return match
 }

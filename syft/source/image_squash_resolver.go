@@ -189,6 +189,25 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 	return locations, nil
 }
 
+func (r *imageSquashResolver) HasMimeTypeAtLocation(mimeType string, location Location) bool {
+	mimeMatch := false
+
+	refs, err := r.img.FilesByMIMETypeFromSquash([]string{mimeType}...)
+
+	if err != nil {
+		return false
+	}
+
+	for _, ref := range refs {
+		if string(ref.RealPath) == location.RealPath {
+			mimeMatch = true
+			break
+		}
+	}
+
+	return mimeMatch
+}
+
 func (r *imageSquashResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
 	return fileMetadataByLocation(r.img, location)
 }

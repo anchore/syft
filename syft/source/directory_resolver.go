@@ -319,6 +319,22 @@ func (r *directoryResolver) HasPath(userPath string) bool {
 	return r.fileTree.HasPath(file.Path(requestPath))
 }
 
+// HasMimeTypeAtLocation indicates if mimetype exist at the location in the underlying source
+func (r *directoryResolver) HasMimeTypeAtLocation(mimeType string, location Location) bool {
+	mimeMatch := false
+
+	if refs, ok := r.refsByMIMEType[mimeType]; ok {
+		for _, ref := range refs {
+			if r.responsePath(string(ref.RealPath)) == location.RealPath {
+				mimeMatch = true
+				break
+			}
+		}
+	}
+
+	return mimeMatch
+}
+
 // Stringer to represent a directory path data source
 func (r directoryResolver) String() string {
 	return fmt.Sprintf("dir:%s", r.path)

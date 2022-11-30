@@ -221,6 +221,34 @@ func (r *allLayersResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
+// HasMimeTypeAtLocation indicates if mimetype exist at the location in the underlying source
+func (r *allLayersResolver) HasMimeTypeAtLocation(mimeType string, location Location) bool {
+	mimeMatch := false
+
+	for _, layerIdx := range r.layers {
+		layer := r.img.Layers[layerIdx]
+
+		refs, err := layer.FilesByMIMEType([]string{mimeType}...)
+
+		if err != nil {
+			continue
+		}
+
+		for _, ref := range refs {
+			if string(ref.RealPath) == location.RealPath {
+				mimeMatch = true
+				break
+			}
+		}
+
+		if mimeMatch {
+			break
+		}
+	}
+
+	return mimeMatch
+}
+
 func (r *allLayersResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {

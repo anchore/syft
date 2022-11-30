@@ -160,3 +160,18 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 	}
 	return locations, nil
 }
+
+func (r MockResolver) HasMimeTypeAtLocation(mimeType string, location Location) bool {
+	mimeMatch := false
+
+	if locations, ok := r.mimeTypeIndex[mimeType]; ok {
+		for _, loc := range locations {
+			if loc.RealPath == location.RealPath {
+				mimeMatch = true
+				break
+			}
+		}
+	}
+
+	return mimeMatch
+}

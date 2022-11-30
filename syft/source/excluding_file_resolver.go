@@ -59,6 +59,23 @@ func (r *excludingResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return filterLocations(locations, err, r.excludeFn)
 }
 
+func (r *excludingResolver) HasMimeTypeAtLocation(mimeType string, location Location) bool {
+	mimeMatch := r.delegate.HasMimeTypeAtLocation(mimeType, location)
+
+	if !mimeMatch {
+		return false
+	}
+
+	// check if location is to be excluded
+	locationMatch := locationMatches(&location, r.excludeFn)
+
+	if locationMatch {
+		return mimeMatch
+	}
+
+	return false
+}
+
 func (r *excludingResolver) RelativeFileByPath(location Location, path string) *Location {
 	l := r.delegate.RelativeFileByPath(location, path)
 	if l != nil && locationMatches(l, r.excludeFn) {
