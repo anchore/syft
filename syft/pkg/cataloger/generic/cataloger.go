@@ -12,50 +12,33 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type processor func(resolver source.FileResolver, env Environment) []request
-
-type request struct {
-	source.Location
-	Parser
-}
-
 // Cataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
 type Cataloger struct {
-	processor         []processor
 	upstreamCataloger string
 	mimeTypePatterns  []string
 	globRegExp        []*regexp.Regexp
 	paths             []string
+	parser            map[string]Parser
 }
 
-func (c *Cataloger) WithParserByGlobs(parser Parser, globs... string) *Cataloger {
-	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
-			var requests []request
-			for _, g := range globs {
-				// TODO: add more trace logging here
-				matches, err := resolver.FilesByGlob(g)
-				if err != nil {
-					log.Warnf("unable to process glob=%q: %+v", g, err)
-					continue
-				}
-				requests = append(requests, makeRequests(parser, matches)...)
-			}
-			return requests
-		},
-	)
-
+func globToRegexPattern(glob string) string {
 	// rDir -> "(.*/)*"
 	// A placeholder value to allow replacement of other * in the glob with different meaning
 	const rDir = "R-DIR"
+	rPattern := strings.ReplaceAll(glob, "**/", rDir)
+	rPattern = strings.ReplaceAll(rPattern, "*", ".*")
+	rPattern = strings.ReplaceAll(rPattern, "{", "(")
+	rPattern = strings.ReplaceAll(rPattern, "}", ")")
+	rPattern = strings.ReplaceAll(rPattern, ",", "|")
+	rPattern = strings.ReplaceAll(rPattern, rDir, "(.*/)*")
+	return rPattern
+}
+
+func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
 	for _, glob := range globs {
-		regexPattern := strings.ReplaceAll(glob, "**/", rDir)
-		regexPattern = strings.ReplaceAll(regexPattern, "*", ".*")
-		regexPattern = strings.ReplaceAll(regexPattern, "{", "(")
-		regexPattern = strings.ReplaceAll(regexPattern, "}", ")")
-		regexPattern = strings.ReplaceAll(regexPattern, ",", "|")
-		regexPattern = strings.ReplaceAll(regexPattern, rDir, "(.*/)*")
+		regexPattern := globToRegexPattern(glob)
+		c.parser[regexPattern] = parser
 		regex, _ := regexp.Compile(regexPattern)
 		c.globRegExp = append(c.globRegExp, regex)
 	}
@@ -64,60 +47,27 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs... string) *Cataloger
 }
 
 func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Cataloger {
-	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
-			var requests []request
-			for _, t := range types {
-				// TODO: add more trace logging here
-				matches, err := resolver.FilesByMIMEType(t)
-				if err != nil {
-					log.Warnf("unable to process mimetype=%q: %+v", t, err)
-					continue
-				}
-				requests = append(requests, makeRequests(parser, matches)...)
-			}
-			return requests
-		},
-	)
-	c.mimeTypePatterns = append(c.mimeTypePatterns, types...)
+	for _, mimeType := range types {
+		c.parser[mimeType] = parser
+		c.mimeTypePatterns = append(c.mimeTypePatterns, mimeType)
+	}
 	return c
 }
 
 func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger {
-	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
-			var requests []request
-			for _, g := range paths {
-				// TODO: add more trace logging here
-				matches, err := resolver.FilesByPath(g)
-				if err != nil {
-					log.Warnf("unable to process path=%q: %+v", g, err)
-					continue
-				}
-				requests = append(requests, makeRequests(parser, matches)...)
-			}
-			return requests
-		},
-	)
-	c.paths = append(c.paths, paths...)
-	return c
-}
-
-func makeRequests(parser Parser, locations []source.Location) []request {
-	var requests []request
-	for _, l := range locations {
-		requests = append(requests, request{
-			Location: l,
-			Parser:   parser,
-		})
+	for _, path := range paths {
+		c.parser[path] = parser
+		c.paths = append(c.paths, path)
 	}
-	return requests
+
+	return c
 }
 
 // NewCataloger if provided path-to-parser-function and glob-to-parser-function lookups creates a Cataloger
 func NewCataloger(upstreamCataloger string) *Cataloger {
 	return &Cataloger{
 		upstreamCataloger: upstreamCataloger,
+		parser:            map[string]Parser{},
 	}
 }
 
@@ -136,10 +86,8 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 		LinuxRelease: linux.IdentifyRelease(resolver),
 	}
 
-	for _, req := range c.selectFiles(resolver) {
-		location, parser := req.Location, req.Parser
-
-		discoveredPackages, discoveredRelationships, err := c.parseRequest(resolver, location, parser, env)
+	for location := range resolver.AllLocations() {
+		discoveredPackages, discoveredRelationships, err := c.parseRequest(resolver, location, env)
 
 		if err != nil {
 			continue
@@ -155,28 +103,21 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 	return packages, relationships, nil
 }
 
-// selectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *Cataloger) selectFiles(resolver source.FileResolver) []request {
-	var requests []request
-	for _, proc := range c.processor {
-		requests = append(requests, proc(resolver, Environment{})...)
-	}
-	return requests
-}
+func (c *Cataloger) parseRequest(resolver source.FileResolver, location source.Location, env Environment) ([]pkg.Package, []artifact.Relationship, error) {
+	var parser Parser
 
-func (c *Cataloger) parseRequest(resolver source.FileResolver, location source.Location, parser Parser, env Environment) ([]pkg.Package, []artifact.Relationship, error) {
 	// check if the `location` is read by the cataloger.
 
 	isRegexMatch, isMimeTypeMatch, isPathMatch := false, false, false
 
 	// check glob match first
 	for _, regex := range c.globRegExp {
-		if isRegexMatch {
-			break
-		}
 		regexMatch := location.MatchesRePattern(regex)
 		isRegexMatch = regexMatch
-		// isRegexMatch = true
+		if isRegexMatch {
+			parser = c.parser[regex.String()]
+			break
+		}
 	}
 
 	// check for mime type match
@@ -184,8 +125,11 @@ func (c *Cataloger) parseRequest(resolver source.FileResolver, location source.L
 		if isRegexMatch || isMimeTypeMatch {
 			break
 		}
-
 		isMimeTypeMatch = resolver.HasMimeTypeAtLocation(mimeType, location)
+		if isMimeTypeMatch {
+			parser = c.parser[mimeType]
+			break
+		}
 	}
 
 	// check for path match
@@ -195,6 +139,10 @@ func (c *Cataloger) parseRequest(resolver source.FileResolver, location source.L
 		}
 
 		isPathMatch = resolver.HasPath(expectedPath)
+		if isPathMatch {
+			parser = c.parser[expectedPath]
+			break
+		}
 	}
 
 	if !(isRegexMatch || isMimeTypeMatch || isPathMatch) {
