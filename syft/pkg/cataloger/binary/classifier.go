@@ -91,6 +91,12 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 	}
 }
 
+func patternEndingWithNull(pattern string) string {
+	bytes := []byte(pattern)
+	bytes = append(bytes, 0)
+	return string(bytes)
+}
+
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
 	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
@@ -130,6 +136,7 @@ func singlePackage(classifier classifier, reader source.LocationReadCloser, vers
 		Locations:    source.NewLocationSet(reader.Location),
 		Type:         pkg.BinaryPkg,
 		CPEs:         cpes,
+		FoundBy:      catalogerName,
 		MetadataType: pkg.BinaryMetadataType,
 		Metadata: pkg.BinaryMetadata{
 			Classifier:  classifier.Class,
