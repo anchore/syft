@@ -29,9 +29,10 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "go-binary",
 		FileGlob: "**/go",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`),
+		EvidenceMatcher: fileContentsVersionMatcher(patternEndingWithNull(
+			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`)),
 		Package: "go",
+		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "nodejs-binary",
