@@ -181,6 +181,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	return &pkg.Package{
 		Name:         selectName(manifest, j.fileInfo),
 		Version:      selectVersion(manifest, j.fileInfo),
+		Licenses:     selectLicense(manifest, j.fileInfo),
 		Language:     pkg.Java,
 		Locations:    source.NewLocationSet(j.location),
 		Type:         j.fileInfo.pkgType(),
