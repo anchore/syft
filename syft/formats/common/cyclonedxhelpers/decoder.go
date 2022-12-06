@@ -216,7 +216,7 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		}
 
 		for _, t := range *d.Dependencies {
-			to, toExists := idMap[t.Ref].(artifact.Identifiable)
+			to, toExists := idMap[t].(artifact.Identifiable)
 			if !toExists {
 				continue
 			}
