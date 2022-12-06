@@ -39,7 +39,7 @@ type lockPackage struct {
 	License   string `json:"license"`
 }
 
-type Metadata struct {
+type NpmMetadata struct {
 	Resolved string
 }
 
