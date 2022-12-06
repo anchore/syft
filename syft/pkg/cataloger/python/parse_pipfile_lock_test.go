@@ -21,6 +21,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  Metadata{Index: "https://pypi.org/simple"},
 		},
 		{
 			Name:      "aiodns",
@@ -29,6 +30,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  Metadata{Index: "https://test.pypi.org/simple"},
 		},
 		{
 			Name:      "aiohttp",
@@ -37,6 +39,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  Metadata{Index: "https://pypi.org/simple"},
 		},
 		{
 			Name:      "aiohttp-jinja2",
@@ -45,6 +48,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  Metadata{Index: "https://pypi.org/simple"},
 		},
 	}
 

@@ -20,6 +20,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Licenses:  []string{"MIT"},
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz"},
 		},
 		{
 			Name:      "ansi-regex",
@@ -29,6 +30,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz"},
 		},
 		{
 			Name:      "cowsay",
@@ -39,6 +41,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Licenses:  []string{"MIT"},
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz"},
 		},
 		{
 			Name:      "get-stdin",
@@ -48,6 +51,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/get-stdin/-/get-stdin-5.0.1.tgz"},
 		},
 		{
 			Name:      "is-fullwidth-code-point",
@@ -57,6 +61,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz"},
 		},
 		{
 			Name:      "minimist",
@@ -66,6 +71,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz"},
 		},
 		{
 			Name:      "optimist",
@@ -75,6 +81,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/optimist/-/optimist-0.6.1.tgz"},
 		},
 		{
 			Name:      "string-width",
@@ -84,6 +91,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz"},
 		},
 		{
 			Name:      "strip-ansi",
@@ -93,6 +101,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/strip-ansi/-/strip-ansi-4.0.0.tgz"},
 		},
 		{
 			Name:      "strip-eof",
@@ -102,6 +111,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/strip-eof/-/strip-eof-1.0.0.tgz"},
 		},
 		{
 			Name:      "wordwrap",
@@ -111,6 +121,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz"},
 		},
 	}
 

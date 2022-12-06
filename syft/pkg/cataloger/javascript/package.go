@@ -69,6 +69,7 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  Metadata{Resolved: u.Resolved},
 		},
 	)
 }
@@ -91,6 +92,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Licenses:  licenses,
+			Metadata:  Metadata{Resolved: u.Resolved},
 		},
 	)
 }

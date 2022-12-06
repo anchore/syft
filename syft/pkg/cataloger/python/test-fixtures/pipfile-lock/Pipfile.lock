@@ -12,6 +12,11 @@
                 "name": "pypi",
                 "url": "https://pypi.org/simple",
                 "verify_ssl": true
+            },
+            {
+                "name": "test",
+                "url": "https://test.pypi.org/simple",
+                "verify_ssl": true
             }
         ]
     },
@@ -29,7 +34,7 @@
                 "sha256:815fdef4607474295d68da46978a54481dd1e7be153c7d60f9e72773cd38d77d",
                 "sha256:aaa5ac584f40fe778013df0aa6544bf157799bd3f608364b451840ed2c8688de"
             ],
-            "index": "pypi",
+            "index": "test",
             "version": "==2.0.0"
         },
         "aiohttp": {
