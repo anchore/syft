@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -182,6 +183,7 @@ func loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("quiet", false)
 	v.SetDefault("check-for-app-update", true)
 	v.SetDefault("catalogers", nil)
+	v.SetDefault("platform", runtime.GOARCH)
 
 	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
 	value := reflect.ValueOf(Application{})
