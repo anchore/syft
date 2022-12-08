@@ -1,5 +1,5 @@
 # LAYER 0:
-FROM busybox:latest
+FROM busybox:1.34.0
 
 # LAYER 1:
 ADD file-1.txt .
