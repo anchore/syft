@@ -489,17 +489,6 @@ package:
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
 
-# cataloging file classifications is exposed through the power-user subcommand
-file-classification:
-  cataloger:
-    # enable/disable cataloging of file classifications
-    # SYFT_FILE_CLASSIFICATION_CATALOGER_ENABLED env var
-    enabled: true
-
-    # the search space to look for file classifications (options: all-layers, squashed)
-    # SYFT_FILE_CLASSIFICATION_CATALOGER_SCOPE env var
-    scope: "squashed"
-
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:
   cataloger:
