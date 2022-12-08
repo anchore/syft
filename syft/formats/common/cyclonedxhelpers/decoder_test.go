@@ -173,12 +173,8 @@ func Test_decode(t *testing.T) {
 				},
 				Dependencies: &[]cyclonedx.Dependency{
 					{
-						Ref: "p1",
-						Dependencies: &[]cyclonedx.Dependency{
-							{
-								Ref: "p2",
-							},
-						},
+						Ref:          "p1",
+						Dependencies: &[]string{"p2"},
 					},
 				},
 			},
@@ -263,8 +259,9 @@ func Test_decode(t *testing.T) {
 
 func Test_missingDataDecode(t *testing.T) {
 	bom := &cyclonedx.BOM{
-		Metadata:   nil,
-		Components: &[]cyclonedx.Component{},
+		Metadata:    nil,
+		Components:  &[]cyclonedx.Component{},
+		SpecVersion: cyclonedx.SpecVersion1_4,
 	}
 
 	_, err := ToSyftModel(bom)
@@ -287,7 +284,9 @@ func Test_missingDataDecode(t *testing.T) {
 }
 
 func Test_missingComponentsDecode(t *testing.T) {
-	bom := &cyclonedx.BOM{}
+	bom := &cyclonedx.BOM{
+		SpecVersion: cyclonedx.SpecVersion1_4,
+	}
 	bomBytes, _ := json.Marshal(&bom)
 	decode := GetDecoder(cyclonedx.BOMFileFormatJSON)
 

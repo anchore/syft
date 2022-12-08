@@ -157,8 +157,10 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 			continue
 		}
 
-		innerDeps := []cyclonedx.Dependency{}
-		innerDeps = append(innerDeps, cyclonedx.Dependency{Ref: deriveBomRef(*fromPkg)})
+		// ind dep
+
+		innerDeps := []string{}
+		innerDeps = append(innerDeps, deriveBomRef(*fromPkg))
 		result = append(result, cyclonedx.Dependency{
 			Ref:          deriveBomRef(*toPkg),
 			Dependencies: &innerDeps,
