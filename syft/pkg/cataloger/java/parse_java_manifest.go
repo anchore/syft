@@ -157,7 +157,7 @@ func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) stri
 	return ""
 }
 
-func selectLicense(manifest *pkg.JavaManifest, filenameObj archiveFilename) []string {
+func selectLicense(manifest *pkg.JavaManifest) []string {
 	result := []string{}
 	if manifest == nil {
 		return result
