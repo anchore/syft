@@ -29,10 +29,38 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "go-binary",
 		FileGlob: "**/go",
-		EvidenceMatcher: fileContentsVersionMatcher(patternEndingWithNull(
-			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`)),
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 		Package: "go",
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "java-binary-openjdk",
+		FileGlob: "**/java",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
+			`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
+		Package: "java",
+		// TODO the updates might need to be part of the CPE, like: 1.8.0:update152
+		CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "java-binary-ibm",
+		FileGlob: "**/java",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]java[NUL]1.8[NUL][NUL][NUL][NUL]1.8.0-foreman_2022_09_22_15_30-b00[NUL]
+			`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
+		Package: "java",
+		CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "java-binary-oracle",
+		FileGlob: "**/java",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]19.0.1+10-21[NUL]
+			`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
+		Package: "java",
+		CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "nodejs-binary",

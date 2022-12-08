@@ -102,6 +102,62 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:       "positive-java-openjdk",
+			fixtureDir: "test-fixtures/classifiers/positive/openjdk",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "1.8.0_352-b08",
+				Type:      "binary",
+				Locations: singleLocation("java"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier:  "java-binary-openjdk",
+					VirtualPath: "java",
+				},
+			},
+		},
+		{
+			name:       "positive-java-oracle",
+			fixtureDir: "test-fixtures/classifiers/positive/oracle",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "19.0.1+10-21",
+				Type:      "binary",
+				Locations: singleLocation("java"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier:  "java-binary-oracle",
+					VirtualPath: "java",
+				},
+			},
+		},
+		{
+			name:       "positive-java-oracle-macos",
+			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "19.0.1+10-21",
+				Type:      "binary",
+				Locations: singleLocation("java"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier:  "java-binary-oracle",
+					VirtualPath: "java",
+				},
+			},
+		},
+		{
+			name:       "positive-java-ibm",
+			fixtureDir: "test-fixtures/classifiers/positive/ibm",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "1.8.0-foreman_2022_09_22_15_30-b00",
+				Type:      "binary",
+				Locations: singleLocation("java"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier:  "java-binary-ibm",
+					VirtualPath: "java",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

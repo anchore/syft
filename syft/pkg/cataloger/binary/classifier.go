@@ -81,20 +81,8 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
-
-		version, ok := matchMetadata["version"]
-		if ok {
-			return singlePackage(classifier, reader, version), nil
-		}
-
-		return nil, nil
+		return singlePackage(classifier, reader, matchMetadata), nil
 	}
-}
-
-func patternEndingWithNull(pattern string) string {
-	bytes := []byte(pattern)
-	bytes = append(bytes, 0)
-	return string(bytes)
 }
 
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
@@ -106,11 +94,7 @@ func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
-		version, ok := matchMetadata["version"]
-		if ok {
-			return singlePackage(classifier, reader, version), nil
-		}
-		return nil, nil
+		return singlePackage(classifier, reader, matchMetadata), nil
 	}
 }
 
@@ -122,10 +106,18 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func singlePackage(classifier classifier, reader source.LocationReadCloser, version string) []pkg.Package {
+func singlePackage(classifier classifier, reader source.LocationReadCloser, matchMetadata map[string]string) []pkg.Package {
+	version, ok := matchMetadata["version"]
+	if !ok {
+		return nil
+	}
+
+	update := matchMetadata["update"]
+
 	var cpes []pkg.CPE
 	for _, cpe := range classifier.CPEs {
 		cpe.Version = version
+		cpe.Update = update
 		cpes = append(cpes, cpe)
 	}
 
