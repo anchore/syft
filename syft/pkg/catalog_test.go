@@ -17,28 +17,145 @@ type expectedIndexes struct {
 }
 
 func TestCatalogDeleteRemovesPackages(t *testing.T) {
-	c := NewCatalog()
-	pkg1 := Package{
-		id:   artifact.ID("pkg1"),
-		Name: "pkg1",
-		Type: RpmPkg,
+	tests := []struct {
+		name            string
+		pkgs            []Package
+		deleteIDs       []artifact.ID
+		expectedIndexes expectedIndexes
+	}{
+		{
+			name: "delete one package",
+			pkgs: []Package{
+				{
+					id:      "pkg:deb/debian/1",
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+				{
+					id:      "pkg:deb/debian/2",
+					Name:    "debian",
+					Version: "2",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/d/path", "/another/path2"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/1"),
+			},
+			expectedIndexes: expectedIndexes{
+				byType: map[Type]*strset.Set{
+					DebPkg: strset.New("pkg:deb/debian/2"),
+				},
+				byPath: map[string]*strset.Set{
+					"/d/path":        strset.New("pkg:deb/debian/2"),
+					"/another/path2": strset.New("pkg:deb/debian/2"),
+				},
+			},
+		},
+		{
+			name: "delete multiple packages",
+			pkgs: []Package{
+				{
+					id:      "pkg:deb/debian/1",
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+				{
+					id:      "pkg:deb/debian/2",
+					Name:    "debian",
+					Version: "2",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/d/path", "/another/path2"),
+					),
+				},
+				{
+					id:      "pkg:deb/debian/3",
+					Name:    "debian",
+					Version: "3",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/e/path", "/another/path3"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/1"),
+				artifact.ID("pkg:deb/debian/3"),
+			},
+			expectedIndexes: expectedIndexes{
+				byType: map[Type]*strset.Set{
+					DebPkg: strset.New("pkg:deb/debian/2"),
+				},
+				byPath: map[string]*strset.Set{
+					"/d/path":        strset.New("pkg:deb/debian/2"),
+					"/another/path2": strset.New("pkg:deb/debian/2"),
+				},
+			},
+		},
+		{
+			name: "delete non-existent package",
+			pkgs: []Package{
+				{
+					id:      artifact.ID("pkg:deb/debian/1"),
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+				{
+					id:      artifact.ID("pkg:deb/debian/2"),
+					Name:    "debian",
+					Version: "2",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/d/path", "/another/path2"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/3"),
+			},
+			expectedIndexes: expectedIndexes{
+				byType: map[Type]*strset.Set{
+					DebPkg: strset.New("pkg:deb/debian/1", "pkg:deb/debian/2"),
+				},
+				byPath: map[string]*strset.Set{
+					"/c/path":        strset.New("pkg:deb/debian/1"),
+					"/another/path1": strset.New("pkg:deb/debian/1"),
+					"/d/path":        strset.New("pkg:deb/debian/2"),
+					"/another/path2": strset.New("pkg:deb/debian/2"),
+				},
+			},
+		},
 	}
-	pkg2 := Package{
-		id:   artifact.ID("pkg2"),
-		Name: "pkg2",
-		Type: RpmPkg,
-	}
-	pkg3 := Package{
-		id:   artifact.ID("pkg3"),
-		Name: "pkg3",
-		Type: RpmPkg,
-	}
-	c.Add(pkg1, pkg2, pkg3)
 
-	c.Delete(pkg1.ID(), pkg2.ID())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := NewCatalog()
+			for _, p := range test.pkgs {
+				c.Add(p)
+			}
 
-	assert.Equal(t, 1, c.PackageCount())
-	assert.Equal(t, []Package{pkg3}, c.Sorted())
+			for _, id := range test.deleteIDs {
+				c.Delete(id)
+			}
+
+			assertIndexes(t, c, test.expectedIndexes)
+		})
+	}
 }
 
 func TestCatalogAddPopulatesIndex(t *testing.T) {

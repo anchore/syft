@@ -214,7 +214,11 @@ func (c *Catalog) deletePathsFromIndex(p Package) {
 func (c *Catalog) deletePathFromIndex(id artifact.ID, path string) {
 	pathIndex := c.idsByPath[path]
 	pathIndex.delete(id)
-	c.idsByPath[path] = pathIndex
+	if len(pathIndex.slice) == 0 {
+		delete(c.idsByPath, path)
+	} else {
+		c.idsByPath[path] = pathIndex
+	}
 }
 
 // Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
