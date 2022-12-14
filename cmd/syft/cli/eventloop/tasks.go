@@ -3,6 +3,7 @@ package eventloop
 import (
 	"crypto"
 	"fmt"
+	"strings"
 
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/syft"
@@ -10,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"golang.org/x/exp/slices"
 )
 
 type Task func(*sbom.Artifacts, *source.Source) ([]artifact.Relationship, error)
@@ -83,9 +85,17 @@ func generateCatalogFileMetadataTask(app *config.Application) (Task, error) {
 	return task, nil
 }
 
+// SPDX requires that a SHA1 digest be present for all files in the SBOM.
+// This task checks for the config, but also cases where the format is spdx
 func generateCatalogFileDigestsTask(app *config.Application) (Task, error) {
-	if !app.FileMetadata.Cataloger.Enabled {
+	containsSPDX := slices.IndexFunc(app.Outputs, func(o string) bool { return strings.Contains(o, "spdx") })
+	if !app.FileMetadata.Cataloger.Enabled && containsSPDX == -1 {
 		return nil, nil
+	}
+
+	// if the user is requesting an spdx document sha1 is required
+	if containsSPDX != -1 {
+		app.FileMetadata.Digests = append(app.FileMetadata.Digests, "sha1")
 	}
 
 	supportedHashAlgorithms := make(map[string]crypto.Hash)
