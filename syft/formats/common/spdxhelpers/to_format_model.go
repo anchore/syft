@@ -414,6 +414,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 }
 
 func toFileChecksums(digests []file.Digest) (checksums []common.Checksum) {
+	checksums = make([]common.Checksum, 0, len(digests))
 	for _, digest := range digests {
 		checksums = append(checksums, common.Checksum{
 			Algorithm: toChecksumAlgorithm(digest.Algorithm),
