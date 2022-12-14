@@ -134,6 +134,10 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 		license := License(p)
 		checksums, filesAnalyzed := toPackageChecksums(p)
 
+		if _, ok := p.Metadata.(pkg.FileOwner); ok {
+			filesAnalyzed = true
+		}
+
 		results = append(results, &spdx.Package{
 			// NOT PART OF SPEC
 			// flag: does this "package" contain files that were in fact "unpackaged",
