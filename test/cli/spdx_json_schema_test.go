@@ -15,7 +15,6 @@ import (
 const spdxJsonSchemaPath = "schema/spdx-json"
 
 func TestSPDXJSONSchema(t *testing.T) {
-
 	imageFixture := func(t *testing.T) string {
 		fixtureImageName := "image-pkg-coverage"
 		imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
@@ -33,11 +32,6 @@ func TestSPDXJSONSchema(t *testing.T) {
 			name:       "packages:image:docker-archive:pkg-coverage",
 			subcommand: "packages",
 			args:       []string{"-o", "spdx-json"},
-			fixture:    imageFixture,
-		},
-		{
-			name:       "power-user:image:docker-archive:pkg-coverage",
-			subcommand: "power-user",
 			fixture:    imageFixture,
 		},
 		{
@@ -72,7 +66,7 @@ func TestSPDXJSONSchema(t *testing.T) {
 }
 
 func validateSpdxJsonAgainstSchema(t testing.TB, json string) {
-	fullSchemaPath := path.Join(repoRoot(t), spdxJsonSchemaPath, fmt.Sprintf("spdx-schema-2.2.json"))
+	fullSchemaPath := path.Join(repoRoot(t), spdxJsonSchemaPath, fmt.Sprintf("spdx-schema-2.3.json"))
 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
 	documentLoader := gojsonschema.NewStringLoader(json)
 
