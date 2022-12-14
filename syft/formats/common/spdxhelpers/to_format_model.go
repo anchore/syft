@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"sort"
 	"strings"
@@ -8,13 +9,13 @@ import (
 
 	"github.com/spdx/tools-golang/spdx/common"
 	spdx "github.com/spdx/tools-golang/spdx/v2_3"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -103,7 +104,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
-		Packages:      toPackages(s.Artifacts.PackageCatalog),
+		Packages:      toPackages(s.Artifacts.PackageCatalog, s),
 		Files:         toFiles(s),
 		Relationships: toRelationships(s.RelationshipsSorted()),
 	}
@@ -123,7 +124,7 @@ func toSPDXID(identifiable artifact.Identifiable) common.ElementID {
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
+func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
@@ -132,10 +133,12 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
 		license := License(p)
-		checksums, filesAnalyzed := toPackageChecksums(p)
-
-		if _, ok := p.Metadata.(pkg.FileOwner); ok {
+		filesAnalyzed := false
+		var packageVerificationCode *common.PackageVerificationCode
+		if owner, ok := p.Metadata.(pkg.FileOwner); ok {
 			filesAnalyzed = true
+			filesOwned := owner.OwnedFiles()
+			packageVerificationCode = newPackageVerificationCode(filesOwned, sbom)
 		}
 
 		results = append(results, &spdx.Package{
@@ -192,12 +195,12 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 			// external to the SPDX document.
 			FilesAnalyzed: filesAnalyzed,
 			// NOT PART OF SPEC: did FilesAnalyzed tag appear?
-			IsFilesAnalyzedTagPresent: true,
+			IsFilesAnalyzedTagPresent: false,
 
 			// 7.9: Package Verification Code
 			// Cardinality: optional, one if filesAnalyzed is true / omitted;
 			//              zero (must be omitted) if filesAnalyzed is false
-			PackageVerificationCode: nil,
+			PackageVerificationCode: packageVerificationCode,
 
 			// 7.10: Package Checksum: may have keys for SHA1, SHA256 and/or MD5
 			// Cardinality: optional, one or many
@@ -207,7 +210,7 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 			// to determine if any file in the original package has been changed. If the SPDX file is to be included
 			// in a package, this value should not be calculated. The SHA-1 algorithm will be used to provide the
 			// checksum by default.
-			PackageChecksums: checksums,
+			// PackageChecksums: checksums,
 
 			// 7.11: Package Home Page
 			// Cardinality: optional, one
@@ -288,38 +291,6 @@ func toPackageOriginator(p pkg.Package) *common.Originator {
 		Originator:     originator,
 		OriginatorType: kind,
 	}
-}
-
-func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
-	filesAnalyzed := false
-	var checksums []common.Checksum
-	switch meta := p.Metadata.(type) {
-	// we generate digest for some Java packages
-	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
-	case pkg.JavaMetadata:
-		if len(meta.ArchiveDigests) > 0 {
-			filesAnalyzed = true
-			for _, digest := range meta.ArchiveDigests {
-				algo := strings.ToUpper(digest.Algorithm)
-				checksums = append(checksums, common.Checksum{
-					Algorithm: common.ChecksumAlgorithm(algo),
-					Value:     digest.Value,
-				})
-			}
-		}
-	case pkg.GolangBinMetadata:
-		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
-		if err != nil {
-			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
-			break
-		}
-		algo = strings.ToUpper(algo)
-		checksums = append(checksums, common.Checksum{
-			Algorithm: common.ChecksumAlgorithm(algo),
-			Value:     hexStr,
-		})
-	}
-	return checksums, filesAnalyzed
 }
 
 func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReference) {
@@ -467,3 +438,60 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 
 	return ty
 }
+
+// handle excludes case
+func newPackageVerificationCode(files []string, sbom sbom.SBOM) *common.PackageVerificationCode {
+	var digests []file.Digest
+	for _, c := range sbom.AllCoordinates() {
+		idx := slices.IndexFunc(files, func(f string) bool { return c.RealPath == f })
+		if idx == -1 {
+			continue
+		}
+
+		digest := sbom.Artifacts.FileDigests[c]
+		if len(digest) == 0 {
+			continue
+		}
+		var d file.Digest
+		for _, digest := range digest {
+			if digest.Algorithm == "sha1" {
+				d = digest
+				break
+			}
+		}
+		digests = append(digests, d)
+	}
+
+	if len(digests) == 0 {
+		return nil
+	}
+
+	sort.SliceStable(digests, func(i, j int) bool {
+		return digests[i].Value < digests[j].Value
+	})
+
+	var b strings.Builder
+	for _, digest := range digests {
+		b.WriteString(digest.Value)
+	}
+
+	hasher := sha1.New()
+	_, _ = hasher.Write([]byte(b.String()))
+	return &common.PackageVerificationCode{
+		// 7.9.1: Package Verification Code Value
+		// Cardinality: mandatory, one
+		Value: fmt.Sprintf("%+x", hasher.Sum(nil)),
+	}
+}
+
+/*
+verificationcode = 0
+filelist = templist = ""
+for all files in the package {
+    if file is an "excludes" file, skip it /* exclude SPDX analysis file(s)
+        append templist with "SHA1(file)/n"
+    }
+sort templist in ascending order by SHA1 value
+filelist = templist with "/n"s removed. /* ordered sequence of SHA1 values with no separators
+verificationcode = SHA1(filelist)
+*/
