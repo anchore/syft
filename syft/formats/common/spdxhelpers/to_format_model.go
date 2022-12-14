@@ -303,7 +303,7 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 				})
 			}
 		}
-	case pkg.GolangBinMetadata:
+	case pkg.GolangMetadata:
 		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
 		if err != nil {
 			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)

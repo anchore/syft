@@ -24,7 +24,7 @@ const (
 	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
 	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
 	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
-	GolangBinMetadataType        MetadataType = "GolangBinMetadata"
+	GolangMetadataType           MetadataType = "GolangMetadata"
 	PhpComposerJSONMetadataType  MetadataType = "PhpComposerJsonMetadata"
 	CocoapodsMetadataType        MetadataType = "CocoapodsMetadataType"
 	ConanMetadataType            MetadataType = "ConanMetadataType"
@@ -47,7 +47,7 @@ var AllMetadataTypes = []MetadataType{
 	PythonPackageMetadataType,
 	RustCargoPackageMetadataType,
 	KbPackageMetadataType,
-	GolangBinMetadataType,
+	GolangMetadataType,
 	PhpComposerJSONMetadataType,
 	CocoapodsMetadataType,
 	ConanMetadataType,
@@ -70,7 +70,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
 	RustCargoPackageMetadataType: reflect.TypeOf(CargoPackageMetadata{}),
 	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),
-	GolangBinMetadataType:        reflect.TypeOf(GolangBinMetadata{}),
+	GolangMetadataType:           reflect.TypeOf(GolangMetadata{}),
 	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
 	CocoapodsMetadataType:        reflect.TypeOf(CocoapodsMetadata{}),
 	ConanMetadataType:            reflect.TypeOf(ConanMetadata{}),
@@ -82,6 +82,9 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 func CleanMetadataType(typ MetadataType) MetadataType {
 	if typ == "RpmdbMetadata" {
 		return RpmMetadataType
+	}
+	if typ == "GolangBinMetadata" {
+		return GolangMetadataType
 	}
 	return typ
 }

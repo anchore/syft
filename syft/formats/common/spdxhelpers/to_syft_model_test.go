@@ -302,8 +302,8 @@ func TestH1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := toSyftPackage(&test.pkg)
-			require.Equal(t, pkg.GolangBinMetadataType, p.MetadataType)
-			meta := p.Metadata.(pkg.GolangBinMetadata)
+			require.Equal(t, pkg.GolangMetadataType, p.MetadataType)
+			meta := p.Metadata.(pkg.GolangMetadata)
 			require.Equal(t, test.expectedDigest, meta.H1Digest)
 		})
 	}

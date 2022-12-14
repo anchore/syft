@@ -365,7 +365,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 			h1Digest = digest
 			break
 		}
-		return pkg.GolangBinMetadataType, pkg.GolangBinMetadata{
+		return pkg.GolangMetadataType, pkg.GolangMetadata{
 			H1Digest: h1Digest,
 		}
 	}

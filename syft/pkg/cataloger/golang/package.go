@@ -22,8 +22,8 @@ func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture s
 		Language:     pkg.Go,
 		Type:         pkg.GoModulePkg,
 		Locations:    source.NewLocationSet(locations...),
-		MetadataType: pkg.GolangBinMetadataType,
-		Metadata: pkg.GolangBinMetadata{
+		MetadataType: pkg.GolangMetadataType,
+		Metadata: pkg.GolangMetadata{
 			GoCompiledVersion: goVersion,
 			H1Digest:          dep.Sum,
 			Architecture:      architecture,
