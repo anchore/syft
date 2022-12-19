@@ -134,15 +134,24 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
 		license := License(p)
-		filesAnalyzed := false
-		packageChecksums := packageChecksums(p)
+
+		// two ways to get filesAnalyzed == true:
+		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
+		// 2. syft has generated a sha1 digest for the package's contents
+		packageChecksums, filesAnalyzed := toPackageChecksums(p)
 
 		packageVerificationCode := newPackageVerificationCode(p, sbom)
-		if packageVerificationCode == nil {
-			// if the package verification code is nil, then we should not analyze the files
-			filesAnalyzed = false
-		} else {
+		if packageVerificationCode != nil {
 			filesAnalyzed = true
+		}
+
+		// invalid SPDX document state
+		if filesAnalyzed == true && packageVerificationCode == nil {
+			// this is an invalid document state
+			// we reset the filesAnalyzed flag to false to avoid
+			// cases where a package digest was generated but there was
+			// not enough metadata to generate a verification code regarding the files
+			filesAnalyzed = false
 		}
 
 		results = append(results, &spdx.Package{
@@ -443,7 +452,8 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	return ty
 }
 
-func packageChecksums(p pkg.Package) []common.Checksum {
+func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
+	filesAnalyzed := false
 	var checksums []common.Checksum
 	switch meta := p.Metadata.(type) {
 	// we generate digest for some Java packages
@@ -451,6 +461,7 @@ func packageChecksums(p pkg.Package) []common.Checksum {
 	case pkg.JavaMetadata:
 		// if syft has generated the digest here then filesAnalyzed is true
 		if len(meta.ArchiveDigests) > 0 {
+			filesAnalyzed = true
 			for _, digest := range meta.ArchiveDigests {
 				algo := strings.ToUpper(digest.Algorithm)
 				checksums = append(checksums, common.Checksum{
@@ -472,7 +483,7 @@ func packageChecksums(p pkg.Package) []common.Checksum {
 			Value:     hexStr,
 		})
 	}
-	return checksums
+	return checksums, filesAnalyzed
 }
 
 // TODO: handle SPDX excludes file case
@@ -484,7 +495,7 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *common.PackageVe
 	// spdx validator will fail if a package claims to contain a file but no sha1 provided
 	// if a sha1 for a file is provided then the validator will fail if the package does not have
 	// a package verification code
-	coordinates := sbom.CoordinatesForPackage(p, []artifact.RelationshipType{artifact.ContainsRelationship, artifact.DescribedByRelationship})
+	coordinates := sbom.CoordinatesForPackage(p, []artifact.RelationshipType{artifact.ContainsRelationship})
 	var digests []file.Digest
 	for _, c := range coordinates {
 		digest := sbom.Artifacts.FileDigests[c]
