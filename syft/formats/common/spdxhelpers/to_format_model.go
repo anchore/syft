@@ -146,7 +146,7 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 		}
 
 		// invalid SPDX document state
-		if filesAnalyzed == true && packageVerificationCode == nil {
+		if filesAnalyzed && packageVerificationCode == nil {
 			// this is an invalid document state
 			// we reset the filesAnalyzed flag to false to avoid
 			// cases where a package digest was generated but there was
