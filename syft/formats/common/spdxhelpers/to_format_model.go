@@ -136,9 +136,16 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 		filesAnalyzed := false
 		var packageVerificationCode *common.PackageVerificationCode
 		if owner, ok := p.Metadata.(pkg.FileOwner); ok {
-			filesAnalyzed = true
 			filesOwned := owner.OwnedFiles()
-			packageVerificationCode = newPackageVerificationCode(filesOwned, sbom)
+			if len(filesOwned) > 0 {
+				packageVerificationCode = newPackageVerificationCode(filesOwned, sbom)
+				if packageVerificationCode == nil {
+					// if the package verification code is nil, then we should not analyze the files
+					filesAnalyzed = false
+				} else {
+					filesAnalyzed = true
+				}
+			}
 		}
 
 		results = append(results, &spdx.Package{
@@ -195,7 +202,7 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 			// external to the SPDX document.
 			FilesAnalyzed: filesAnalyzed,
 			// NOT PART OF SPEC: did FilesAnalyzed tag appear?
-			IsFilesAnalyzedTagPresent: false,
+			IsFilesAnalyzedTagPresent: true,
 
 			// 7.9: Package Verification Code
 			// Cardinality: optional, one if filesAnalyzed is true / omitted;
