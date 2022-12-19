@@ -16,6 +16,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 		name       string
 		syftArgs   []string
 		images     []string
+		setup      func(t *testing.T)
 		env        map[string]string
 		assertions []traitAssertion
 	}{
@@ -27,6 +28,15 @@ func TestSpdxValidationTooling(t *testing.T) {
 				"SYFT_FILE_METADATA_CATALOGER_ENABLED": "true",
 				"SYFT_FILE_METADATA_DIGESTS":           "sha1",
 			},
+			setup: func(t *testing.T) {
+				cwd, err := os.Getwd()
+				require.NoError(t, err)
+				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
+				buildCmd := exec.Command("make", "build")
+				buildCmd.Dir = fixturesPath
+				err = buildCmd.Run()
+				require.NoError(t, err)
+			},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
 			},
@@ -35,6 +45,9 @@ func TestSpdxValidationTooling(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// build the validation image
+			test.setup(t)
+		
 			for _, image := range test.images {
 				args := append(test.syftArgs, image)
 				cmd, stdout, stderr := runSyft(t, test.env, args...)
@@ -58,17 +71,11 @@ func TestSpdxValidationTooling(t *testing.T) {
 				require.NoError(t, err)
 
 				// validate against spdx java tooling
-				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
 				fileArg := fmt.Sprintf("FILE=%s", rename)
 				mountArg := fmt.Sprintf("BASE=%s", path.Base(rename))
 
-				buildCmd := exec.Command("make", "build")
-				buildCmd.Dir = fixturesPath
-				err = buildCmd.Run()
-				require.NoError(t, err)
-
 				validateCmd := exec.Command("make", "validate", fileArg, mountArg)
-				validateCmd.Dir = fixturesPath
+				validateCmd.Dir = filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
 				err = validateCmd.Run()
 				require.NoError(t, err)
 				assertSuccessfulReturnCode(t, "", "", validateCmd.ProcessState.ExitCode())
