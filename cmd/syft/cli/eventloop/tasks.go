@@ -83,8 +83,6 @@ func generateCatalogFileMetadataTask(app *config.Application) (Task, error) {
 	return task, nil
 }
 
-// SPDX requires that a SHA1 digest be present for all files in the SBOM.
-// This task checks for the config, but also cases where the format is spdx
 func generateCatalogFileDigestsTask(app *config.Application) (Task, error) {
 	if !app.FileMetadata.Cataloger.Enabled {
 		return nil, nil
