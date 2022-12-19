@@ -76,9 +76,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 
 				validateCmd := exec.Command("make", "validate", fileArg, mountArg)
 				validateCmd.Dir = filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
-				err = validateCmd.Run()
-				require.NoError(t, err)
-				assertSuccessfulReturnCode(t, "", "", validateCmd.ProcessState.ExitCode())
+				runAndShow(t, validateCmd)
 			}
 		})
 	}
