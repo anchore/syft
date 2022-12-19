@@ -78,7 +78,9 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package) []artifact.Relationship {
 func (s SBOM) CoordinatesForPackage(p pkg.Package) []source.Coordinates {
 	var coordinates []source.Coordinates
 	for _, relationship := range s.RelationshipsForPackage(p) {
-		coordinates = append(coordinates, extractCoordinates(relationship)...)
+		if relationship.Type == artifact.ContainsRelationship {
+			coordinates = append(coordinates, extractCoordinates(relationship)...)
+		}
 	}
 	return coordinates
 }

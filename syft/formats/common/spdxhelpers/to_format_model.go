@@ -1,3 +1,4 @@
+//nolint:gosec // sha1 is used as a hash function for SPDX, not a crypto function
 package spdxhelpers
 
 import (
@@ -9,7 +10,6 @@ import (
 
 	"github.com/spdx/tools-golang/spdx/common"
 	spdx "github.com/spdx/tools-golang/spdx/v2_3"
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -138,7 +138,7 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 		if owner, ok := p.Metadata.(pkg.FileOwner); ok {
 			filesOwned := owner.OwnedFiles()
 			if len(filesOwned) > 0 {
-				packageVerificationCode = newPackageVerificationCode(filesOwned, sbom)
+				packageVerificationCode = newPackageVerificationCode(p, sbom)
 				if packageVerificationCode == nil {
 					// if the package verification code is nil, then we should not analyze the files
 					filesAnalyzed = false
@@ -447,18 +447,16 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 }
 
 // handle excludes case
-func newPackageVerificationCode(files []string, sbom sbom.SBOM) *common.PackageVerificationCode {
+func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *common.PackageVerificationCode {
+	coordinates := sbom.CoordinatesForPackage(p)
+	fmt.Println(coordinates)
 	var digests []file.Digest
-	for _, c := range sbom.AllCoordinates() {
-		idx := slices.IndexFunc(files, func(f string) bool { return c.RealPath == f })
-		if idx == -1 {
-			continue
-		}
-
+	for _, c := range coordinates {
 		digest := sbom.Artifacts.FileDigests[c]
 		if len(digest) == 0 {
 			continue
 		}
+
 		var d file.Digest
 		for _, digest := range digest {
 			if digest.Algorithm == "sha1" {
@@ -482,6 +480,7 @@ func newPackageVerificationCode(files []string, sbom sbom.SBOM) *common.PackageV
 		b.WriteString(digest.Value)
 	}
 
+	//nolint:gosec
 	hasher := sha1.New()
 	_, _ = hasher.Write([]byte(b.String()))
 	return &common.PackageVerificationCode{
