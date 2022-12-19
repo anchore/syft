@@ -2,12 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"log"
+	"github.com/stretchr/testify/require"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -43,42 +42,28 @@ func TestSpdxValidationTooling(t *testing.T) {
 				}
 
 				cwd, err := os.Getwd()
-				if err != nil {
-					t.Fatalf("failed to get working directory: %+v", err)
-				}
+				require.NoError(t, err)
 
-				var rename string
-				if strings.Contains(test.name, "json") {
-					rename = "test.json"
-				} else {
-					rename = "test.spdx"
-				}
-
-				f, err := os.CreateTemp(path.Join(cwd, "test-fixtures", "image-java-spdx-tools"), rename)
-				if err != nil {
-					log.Fatal(err)
-				}
+				f, err := os.CreateTemp("", "temp")
+				require.NoError(t, err)
+				rename := path.Join(path.Dir(f.Name()), "test.spdx")
 
 				// spdx tooling only takes a file with suffix spdx
-				err = os.Rename(f.Name(), filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools", rename))
-				if err != nil {
-					log.Fatal(err)
-				}
+				err = os.Rename(f.Name(), rename)
+				require.NoError(t, err)
 
 				// write file to validate
 				_, err = f.Write([]byte(stdout))
-				if err != nil {
-					t.Fatalf("could not write to temp file: %v", err)
-				}
+				require.NoError(t, err)
 
 				// validate against spdx java tooling
 				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
-				fileArg := fmt.Sprintf("FILE=%s", filepath.Join(fixturesPath, rename))
-				mountArg := fmt.Sprintf("BASE=%s", rename)
+				fileArg := fmt.Sprintf("FILE=%s", rename)
+				mountArg := fmt.Sprintf("BASE=%s", path.Base(rename))
 				cmd = exec.Command("make", "validate", fileArg, mountArg)
 				cmd.Dir = fixturesPath
 				runAndShow(t, cmd)
-				os.Remove(filepath.Join(fixturesPath, rename))
+				assertSuccessfulReturnCode(t, "", "", cmd.ProcessState.ExitCode())
 			}
 		})
 	}
