@@ -38,8 +38,9 @@ var defaultClassifiers = []classifier{
 		Class:    "java-binary-openjdk",
 		FileGlob: "**/java",
 		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
 			// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
-			`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
+			`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
 		Package: "java",
 		// TODO the updates might need to be part of the CPE, like: 1.8.0:update152
 		CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),

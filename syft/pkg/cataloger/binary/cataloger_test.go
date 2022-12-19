@@ -117,6 +117,20 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-java-openjdk-lts",
+			fixtureDir: "test-fixtures/classifiers/positive/openjdk-lts",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "11.0.17+8-LTS",
+				Type:      "binary",
+				Locations: singleLocation("java"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier:  "java-binary-openjdk",
+					VirtualPath: "java",
+				},
+			},
+		},
+		{
 			name:       "positive-java-oracle",
 			fixtureDir: "test-fixtures/classifiers/positive/oracle",
 			expected: pkg.Package{
