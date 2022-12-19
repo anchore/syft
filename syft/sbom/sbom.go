@@ -69,7 +69,7 @@ func (s SBOM) AllCoordinates() []source.Coordinates {
 
 // RelationshipsForPackage returns all relationships for the provided types.
 // If no types are provided, all relationships for the package are returned.
-func (s SBOM) RelationshipsForPackage(p pkg.Package, rt []artifact.RelationshipType) []artifact.Relationship {
+func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.RelationshipType) []artifact.Relationship {
 	if len(rt) == 0 {
 		rt = artifact.AllRelationshipTypes()
 	}
@@ -88,9 +88,9 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package, rt []artifact.RelationshipT
 
 // CoordinatesForPackage returns all coordinates for the provided package for provided relationship types
 // If no types are provided, all relationship types are considered.
-func (s SBOM) CoordinatesForPackage(p pkg.Package, rt []artifact.RelationshipType) []source.Coordinates {
+func (s SBOM) CoordinatesForPackage(p pkg.Package, rt ...artifact.RelationshipType) []source.Coordinates {
 	var coordinates []source.Coordinates
-	for _, relationship := range s.RelationshipsForPackage(p, rt) {
+	for _, relationship := range s.RelationshipsForPackage(p, rt...) {
 		cords := extractCoordinates(relationship)
 		coordinates = append(coordinates, cords...)
 	}

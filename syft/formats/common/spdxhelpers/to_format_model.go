@@ -495,7 +495,7 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *common.PackageVe
 	// spdx validator will fail if a package claims to contain a file but no sha1 provided
 	// if a sha1 for a file is provided then the validator will fail if the package does not have
 	// a package verification code
-	coordinates := sbom.CoordinatesForPackage(p, []artifact.RelationshipType{artifact.ContainsRelationship})
+	coordinates := sbom.CoordinatesForPackage(p, artifact.ContainsRelationship)
 	var digests []file.Digest
 	for _, c := range coordinates {
 		digest := sbom.Artifacts.FileDigests[c]

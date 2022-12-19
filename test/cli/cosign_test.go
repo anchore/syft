@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"bufio"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -14,30 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func runAndShow(t *testing.T, cmd *exec.Cmd) {
-	t.Helper()
-
-	stderr, err := cmd.StderrPipe()
-	require.NoErrorf(t, err, "could not get stderr: +v", err)
-
-	stdout, err := cmd.StdoutPipe()
-	require.NoErrorf(t, err, "could not get stdout: +v", err)
-
-	err = cmd.Start()
-	require.NoErrorf(t, err, "failed to start cmd: %+v", err)
-
-	show := func(label string, reader io.ReadCloser) {
-		scanner := bufio.NewScanner(reader)
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			t.Logf("%s: %s", label, scanner.Text())
-		}
-	}
-
-	show("out", stdout)
-	show("err", stderr)
-}
 
 func TestCosignWorkflow(t *testing.T) {
 	// found under test-fixtures/registry/Makefile
@@ -113,7 +87,6 @@ func TestCosignWorkflow(t *testing.T) {
 				cmd = exec.Command("make", "push")
 				cmd.Dir = fixturesPath
 				runAndShow(t, cmd)
-
 			},
 			cleanup: func() {
 				cwd, err := os.Getwd()

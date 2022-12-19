@@ -1,8 +1,11 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/require"
+	"io"
 	"math"
 	"os"
 	"os/exec"
@@ -16,6 +19,30 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
+
+func runAndShow(t *testing.T, cmd *exec.Cmd) {
+	t.Helper()
+
+	stderr, err := cmd.StderrPipe()
+	require.NoErrorf(t, err, "could not get stderr: +v", err)
+
+	stdout, err := cmd.StdoutPipe()
+	require.NoErrorf(t, err, "could not get stdout: +v", err)
+
+	err = cmd.Start()
+	require.NoErrorf(t, err, "failed to start cmd: %+v", err)
+
+	show := func(label string, reader io.ReadCloser) {
+		scanner := bufio.NewScanner(reader)
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			t.Logf("%s: %s", label, scanner.Text())
+		}
+	}
+
+	show("out", stdout)
+	show("err", stderr)
+}
 
 func setupPKI(t *testing.T, pw string) func() {
 	err := os.Setenv("COSIGN_PASSWORD", pw)
