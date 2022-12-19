@@ -45,17 +45,13 @@ func TestSpdxValidationTooling(t *testing.T) {
 				cwd, err := os.Getwd()
 				require.NoError(t, err)
 
-				f, err := os.CreateTemp("", "temp")
+				f, err := os.CreateTemp(t.TempDir(), "temp")
 				require.NoError(t, err)
 
 				// spdx tooling only takes a file with suffix spdx
 				rename := path.Join(path.Dir(f.Name()), fmt.Sprintf("%s.spdx", path.Base(f.Name())))
 				err = os.Rename(f.Name(), rename)
 				require.NoError(t, err)
-				t.Cleanup(func() {
-					err := os.Remove(rename)
-					require.NoError(t, err)
-				})
 
 				// write file for validation
 				_, err = f.Write([]byte(stdout))
@@ -67,6 +63,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 				mountArg := fmt.Sprintf("BASE=%s", path.Base(rename))
 				makeCmd := exec.Command("make", "validate", fileArg, mountArg)
 				makeCmd.Dir = fixturesPath
+			
 				err = makeCmd.Run()
 				require.NoError(t, err)
 			}
