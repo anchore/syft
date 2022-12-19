@@ -47,7 +47,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// build the validation image
 			test.setup(t)
-		
+
 			for _, image := range test.images {
 				args := append(test.syftArgs, image)
 				cmd, stdout, stderr := runSyft(t, test.env, args...)
