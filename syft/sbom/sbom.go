@@ -65,6 +65,24 @@ func (s SBOM) AllCoordinates() []source.Coordinates {
 	return set.ToSlice()
 }
 
+func (s SBOM) RelationshipsForPackage(p pkg.Package) []artifact.Relationship {
+	var relationships []artifact.Relationship
+	for _, relationship := range s.Relationships {
+		if relationship.From.ID() == p.ID() {
+			relationships = append(relationships, relationship)
+		}
+	}
+	return relationships
+}
+
+func (s SBOM) CoordinatesForPackage(p pkg.Package) []source.Coordinates {
+	var coordinates []source.Coordinates
+	for _, relationship := range s.RelationshipsForPackage(p) {
+		coordinates = append(coordinates, extractCoordinates(relationship)...)
+	}
+	return coordinates
+}
+
 func extractCoordinates(relationship artifact.Relationship) (results []source.Coordinates) {
 	if coordinates, exists := relationship.From.(source.Coordinates); exists {
 		results = append(results, coordinates)
