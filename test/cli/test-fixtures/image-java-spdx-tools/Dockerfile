@@ -4,4 +4,3 @@ FROM cgr.dev/chainguard/jdk
 ADD tools-java-1.1.3-jar-with-dependencies.jar /usr/local/bin/tools-java.jar
 
 ENTRYPOINT ["java", "-jar", "/usr/local/bin/tools-java.jar"]
-

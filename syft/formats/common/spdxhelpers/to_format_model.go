@@ -295,6 +295,40 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 	return results
 }
 
+func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
+	filesAnalyzed := false
+	var checksums []common.Checksum
+	switch meta := p.Metadata.(type) {
+	// we generate digest for some Java packages
+	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
+	case pkg.JavaMetadata:
+		// if syft has generated the digest here then filesAnalyzed is true
+		if len(meta.ArchiveDigests) > 0 {
+			filesAnalyzed = true
+			for _, digest := range meta.ArchiveDigests {
+				algo := strings.ToUpper(digest.Algorithm)
+				checksums = append(checksums, common.Checksum{
+					Algorithm: common.ChecksumAlgorithm(algo),
+					Value:     digest.Value,
+				})
+			}
+		}
+	case pkg.GolangBinMetadata:
+		// because the H1 digest is found in the Golang metadata we cannot claim that the files were analyzed
+		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
+		if err != nil {
+			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
+			break
+		}
+		algo = strings.ToUpper(algo)
+		checksums = append(checksums, common.Checksum{
+			Algorithm: common.ChecksumAlgorithm(algo),
+			Value:     hexStr,
+		})
+	}
+	return checksums, filesAnalyzed
+}
+
 func toPackageOriginator(p pkg.Package) *common.Originator {
 	kind, originator := Originator(p)
 	if kind == "" || originator == "" {
@@ -450,40 +484,6 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	}
 
 	return ty
-}
-
-func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
-	filesAnalyzed := false
-	var checksums []common.Checksum
-	switch meta := p.Metadata.(type) {
-	// we generate digest for some Java packages
-	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
-	case pkg.JavaMetadata:
-		// if syft has generated the digest here then filesAnalyzed is true
-		if len(meta.ArchiveDigests) > 0 {
-			filesAnalyzed = true
-			for _, digest := range meta.ArchiveDigests {
-				algo := strings.ToUpper(digest.Algorithm)
-				checksums = append(checksums, common.Checksum{
-					Algorithm: common.ChecksumAlgorithm(algo),
-					Value:     digest.Value,
-				})
-			}
-		}
-	case pkg.GolangBinMetadata:
-		// because the H1 digest is found in the Golang metadata we cannot claim that the files were analyzed
-		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
-		if err != nil {
-			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
-			break
-		}
-		algo = strings.ToUpper(algo)
-		checksums = append(checksums, common.Checksum{
-			Algorithm: common.ChecksumAlgorithm(algo),
-			Value:     hexStr,
-		})
-	}
-	return checksums, filesAnalyzed
 }
 
 // TODO: handle SPDX excludes file case
