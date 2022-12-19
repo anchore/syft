@@ -63,9 +63,10 @@ func TestSpdxValidationTooling(t *testing.T) {
 				mountArg := fmt.Sprintf("BASE=%s", path.Base(rename))
 				makeCmd := exec.Command("make", "validate", fileArg, mountArg)
 				makeCmd.Dir = fixturesPath
-			
+
 				err = makeCmd.Run()
 				require.NoError(t, err)
+				assertSuccessfulReturnCode(t, "", "", makeCmd.ProcessState.ExitCode())
 			}
 		})
 	}
