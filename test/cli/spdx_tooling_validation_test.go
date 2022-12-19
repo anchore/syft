@@ -2,12 +2,13 @@ package cli
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSpdxValidationTooling(t *testing.T) {
@@ -46,13 +47,17 @@ func TestSpdxValidationTooling(t *testing.T) {
 
 				f, err := os.CreateTemp("", "temp")
 				require.NoError(t, err)
-				rename := path.Join(path.Dir(f.Name()), "test.spdx")
 
 				// spdx tooling only takes a file with suffix spdx
+				rename := path.Join(path.Dir(f.Name()), fmt.Sprintf("%s.spdx", path.Base(f.Name())))
 				err = os.Rename(f.Name(), rename)
 				require.NoError(t, err)
+				t.Cleanup(func() {
+					err := os.Remove(rename)
+					require.NoError(t, err)
+				})
 
-				// write file to validate
+				// write file for validation
 				_, err = f.Write([]byte(stdout))
 				require.NoError(t, err)
 
@@ -60,10 +65,10 @@ func TestSpdxValidationTooling(t *testing.T) {
 				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
 				fileArg := fmt.Sprintf("FILE=%s", rename)
 				mountArg := fmt.Sprintf("BASE=%s", path.Base(rename))
-				cmd = exec.Command("make", "validate", fileArg, mountArg)
-				cmd.Dir = fixturesPath
-				runAndShow(t, cmd)
-				assertSuccessfulReturnCode(t, "", "", cmd.ProcessState.ExitCode())
+				makeCmd := exec.Command("make", "validate", fileArg, mountArg)
+				makeCmd.Dir = fixturesPath
+				err = makeCmd.Run()
+				require.NoError(t, err)
 			}
 		})
 	}
