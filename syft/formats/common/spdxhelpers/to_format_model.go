@@ -529,7 +529,6 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *common.PackageVe
 	}
 
 	//nolint:gosec
-	// verificationcode = SHA1(filelist)
 	hasher := sha1.New()
 	_, _ = hasher.Write([]byte(b.String()))
 	return &common.PackageVerificationCode{

@@ -29,19 +29,6 @@ func TestSpdxValidationTooling(t *testing.T) {
 			},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
-				assertInOutput("SPDXVersion: SPDX-2.3"),
-			},
-		},
-		{
-			name:     "spdx validation tooling json",
-			syftArgs: []string{"packages", "-o", "spdx-json"},
-			images:   []string{"alpine:latest"},
-			env: map[string]string{
-				"SYFT_FILE_METADATA_CATALOGER_ENABLED": "true",
-				"SYFT_FILE_METADATA_DIGESTS":           "sha1",
-			},
-			assertions: []traitAssertion{
-				assertSuccessfulReturnCode,
 			},
 		},
 	}
@@ -91,6 +78,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 				cmd = exec.Command("make", "validate", fileArg, mountArg)
 				cmd.Dir = fixturesPath
 				runAndShow(t, cmd)
+				os.Remove(filepath.Join(fixturesPath, rename))
 			}
 		})
 	}
