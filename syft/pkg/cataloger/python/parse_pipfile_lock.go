@@ -33,12 +33,14 @@ type pipfileLock struct {
 }
 
 type Dependency struct {
-	Version string `json:"version"`
-	Index   string `json:"index"`
+	Hashes  []string `json:"hashes"`
+	Version string   `json:"version"`
+	Index   string   `json:"index"`
 }
 
 type PipfileMetadata struct {
-	Index string
+	Hashes []string
+	Index  string
 }
 
 var _ generic.Parser = parsePipfileLock
@@ -68,7 +70,7 @@ func parsePipfileLock(_ source.FileResolver, _ *generic.Environment, reader sour
 				index = "https://pypi.org/simple"
 			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			pkgs = append(pkgs, newPackageForIndexWithMetadata(name, version, PipfileMetadata{Index: index}, reader.Location))
+			pkgs = append(pkgs, newPackageForIndexWithMetadata(name, version, PipfileMetadata{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
 		}
 	}
 

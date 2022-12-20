@@ -40,7 +40,8 @@ type lockPackage struct {
 }
 
 type NpmMetadata struct {
-	Resolved string
+	Resolved  string
+	Integrity string
 }
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
