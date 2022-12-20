@@ -37,7 +37,7 @@ type artifactMetadataContainer struct {
 	Python        pkg.PythonPackageMetadata
 	Rpm           pkg.RpmMetadata
 	Cargo         pkg.CargoPackageMetadata
-	Go            pkg.GolangBinMetadata
+	Go            pkg.GolangMetadata
 	Php           pkg.PhpComposerJSONMetadata
 	Dart          pkg.DartPubMetadata
 	Dotnet        pkg.DotnetDepsMetadata

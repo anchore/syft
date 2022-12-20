@@ -90,8 +90,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Version:      "v0.0.0-20211006190231-62292e806868",
 				Language:     pkg.Go,
 				Type:         pkg.GoModulePkg,
-				MetadataType: pkg.GolangBinMetadataType,
-				Metadata: pkg.GolangBinMetadata{
+				MetadataType: pkg.GolangMetadataType,
+				Metadata: pkg.GolangMetadata{
 					GoCompiledVersion: "1.17",
 					Architecture:      "amd64",
 					H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
@@ -99,7 +99,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 			},
 			expected: &[]cyclonedx.Property{
 				{Name: "syft:package:language", Value: pkg.Go.String()},
-				{Name: "syft:package:metadataType", Value: "GolangBinMetadata"},
+				{Name: "syft:package:metadataType", Value: "GolangMetadata"},
 				{Name: "syft:package:type", Value: "go-module"},
 				{Name: "syft:metadata:architecture", Value: "amd64"},
 				{Name: "syft:metadata:goCompiledVersion", Value: "1.17"},
