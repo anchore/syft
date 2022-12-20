@@ -66,7 +66,7 @@ func TestSPDXJSONSchema(t *testing.T) {
 }
 
 func validateSpdxJsonAgainstSchema(t testing.TB, json string) {
-	fullSchemaPath := path.Join(repoRoot(t), spdxJsonSchemaPath, fmt.Sprintf("spdx-schema-2.2.json"))
+	fullSchemaPath := path.Join(repoRoot(t), spdxJsonSchemaPath, fmt.Sprintf("spdx-schema-2.3.json"))
 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
 	documentLoader := gojsonschema.NewStringLoader(json)
 
