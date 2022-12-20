@@ -1,6 +1,8 @@
+//nolint:gosec // sha1 is used as a required hash function for SPDX, not a crypto function
 package spdxhelpers
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"sort"
 	"strings"
@@ -103,7 +105,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
-		Packages:      toPackages(s.Artifacts.PackageCatalog),
+		Packages:      toPackages(s.Artifacts.PackageCatalog, s),
 		Files:         toFiles(s),
 		Relationships: toRelationships(s.RelationshipsSorted()),
 	}
@@ -123,7 +125,7 @@ func toSPDXID(identifiable artifact.Identifiable) common.ElementID {
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
+func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
@@ -132,7 +134,25 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
 		license := License(p)
-		checksums, filesAnalyzed := toPackageChecksums(p)
+
+		// two ways to get filesAnalyzed == true:
+		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
+		// 2. syft has generated a sha1 digest for the package's contents
+		packageChecksums, filesAnalyzed := toPackageChecksums(p)
+
+		packageVerificationCode := newPackageVerificationCode(p, sbom)
+		if packageVerificationCode != nil {
+			filesAnalyzed = true
+		}
+
+		// invalid SPDX document state
+		if filesAnalyzed && packageVerificationCode == nil {
+			// this is an invalid document state
+			// we reset the filesAnalyzed flag to false to avoid
+			// cases where a package digest was generated but there was
+			// not enough metadata to generate a verification code regarding the files
+			filesAnalyzed = false
+		}
 
 		results = append(results, &spdx.Package{
 			// NOT PART OF SPEC
@@ -193,7 +213,7 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 			// 7.9: Package Verification Code
 			// Cardinality: optional, one if filesAnalyzed is true / omitted;
 			//              zero (must be omitted) if filesAnalyzed is false
-			PackageVerificationCode: nil,
+			PackageVerificationCode: packageVerificationCode,
 
 			// 7.10: Package Checksum: may have keys for SHA1, SHA256 and/or MD5
 			// Cardinality: optional, one or many
@@ -203,7 +223,7 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 			// to determine if any file in the original package has been changed. If the SPDX file is to be included
 			// in a package, this value should not be calculated. The SHA-1 algorithm will be used to provide the
 			// checksum by default.
-			PackageChecksums: checksums,
+			PackageChecksums: packageChecksums,
 
 			// 7.11: Package Home Page
 			// Cardinality: optional, one
@@ -275,17 +295,6 @@ func toPackages(catalog *pkg.Catalog) (results []*spdx.Package) {
 	return results
 }
 
-func toPackageOriginator(p pkg.Package) *common.Originator {
-	kind, originator := Originator(p)
-	if kind == "" || originator == "" {
-		return nil
-	}
-	return &common.Originator{
-		Originator:     originator,
-		OriginatorType: kind,
-	}
-}
-
 func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 	filesAnalyzed := false
 	var checksums []common.Checksum
@@ -293,6 +302,7 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 	// we generate digest for some Java packages
 	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
 	case pkg.JavaMetadata:
+		// if syft has generated the digest here then filesAnalyzed is true
 		if len(meta.ArchiveDigests) > 0 {
 			filesAnalyzed = true
 			for _, digest := range meta.ArchiveDigests {
@@ -304,6 +314,7 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 			}
 		}
 	case pkg.GolangBinMetadata:
+		// because the H1 digest is found in the Golang metadata we cannot claim that the files were analyzed
 		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
 		if err != nil {
 			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
@@ -316,6 +327,17 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 		})
 	}
 	return checksums, filesAnalyzed
+}
+
+func toPackageOriginator(p pkg.Package) *common.Originator {
+	kind, originator := Originator(p)
+	if kind == "" || originator == "" {
+		return nil
+	}
+	return &common.Originator{
+		Originator:     originator,
+		OriginatorType: kind,
+	}
 }
 
 func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReference) {
@@ -414,6 +436,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 }
 
 func toFileChecksums(digests []file.Digest) (checksums []common.Checksum) {
+	checksums = make([]common.Checksum, 0, len(digests))
 	for _, digest := range digests {
 		checksums = append(checksums, common.Checksum{
 			Algorithm: toChecksumAlgorithm(digest.Algorithm),
@@ -461,4 +484,56 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	}
 
 	return ty
+}
+
+// TODO: handle SPDX excludes file case
+// f file is an "excludes" file, skip it /* exclude SPDX analysis file(s) */
+// see: https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
+// the above link contains the SPDX algorithm for a package verification code
+func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *common.PackageVerificationCode {
+	// key off of the contains relationship;
+	// spdx validator will fail if a package claims to contain a file but no sha1 provided
+	// if a sha1 for a file is provided then the validator will fail if the package does not have
+	// a package verification code
+	coordinates := sbom.CoordinatesForPackage(p, artifact.ContainsRelationship)
+	var digests []file.Digest
+	for _, c := range coordinates {
+		digest := sbom.Artifacts.FileDigests[c]
+		if len(digest) == 0 {
+			continue
+		}
+
+		var d file.Digest
+		for _, digest := range digest {
+			if digest.Algorithm == "sha1" {
+				d = digest
+				break
+			}
+		}
+		digests = append(digests, d)
+	}
+
+	if len(digests) == 0 {
+		return nil
+	}
+
+	// sort templist in ascending order by SHA1 value
+	sort.SliceStable(digests, func(i, j int) bool {
+		return digests[i].Value < digests[j].Value
+	})
+
+	// filelist = templist with "/n"s removed. /* ordered sequence of SHA1 values with no separators
+	var b strings.Builder
+	for _, digest := range digests {
+		b.WriteString(digest.Value)
+	}
+
+	//nolint:gosec
+	hasher := sha1.New()
+	_, _ = hasher.Write([]byte(b.String()))
+	return &common.PackageVerificationCode{
+		// 7.9.1: Package Verification Code Value
+		// Cardinality: mandatory, one
+		Value: fmt.Sprintf("%+x", hasher.Sum(nil)),
+	}
 }

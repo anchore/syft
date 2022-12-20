@@ -92,13 +92,9 @@ func DigestsFromFile(closer io.ReadCloser, hashes []crypto.Hash) ([]Digest, erro
 		writers[idx] = hashers[idx]
 	}
 
-	size, err := io.Copy(io.MultiWriter(writers...), closer)
+	_, err := io.Copy(io.MultiWriter(writers...), closer)
 	if err != nil {
 		return nil, err
-	}
-
-	if size == 0 {
-		return make([]Digest, 0), nil
 	}
 
 	result := make([]Digest, len(hashes))
