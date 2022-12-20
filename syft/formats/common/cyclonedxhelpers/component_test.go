@@ -144,6 +144,60 @@ func Test_encodeComponentProperties(t *testing.T) {
 	}
 }
 
+func Test_encodeCompomentType(t *testing.T) {
+	tests := []struct {
+		name string
+		pkg  pkg.Package
+		want cyclonedx.Component
+	}{
+		{
+			name: "non-binary package",
+			pkg: pkg.Package{
+				Name:    "pkg1",
+				Version: "1.9.2",
+				Type:    pkg.GoModulePkg,
+			},
+			want: cyclonedx.Component{
+				Name:    "pkg1",
+				Version: "1.9.2",
+				Type:    cyclonedx.ComponentTypeLibrary,
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:type",
+						Value: "go-module",
+					},
+				},
+			},
+		},
+		{
+			name: "non-binary package",
+			pkg: pkg.Package{
+				Name:    "pkg1",
+				Version: "3.1.2",
+				Type:    pkg.BinaryPkg,
+			},
+			want: cyclonedx.Component{
+				Name:    "pkg1",
+				Version: "3.1.2",
+				Type:    cyclonedx.ComponentTypeApplication,
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:type",
+						Value: "binary",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.pkg.ID()
+			p := encodeComponent(tt.pkg)
+			assert.Equal(t, tt.want, p)
+		})
+	}
+}
+
 func Test_deriveBomRef(t *testing.T) {
 	pkgWithPurl := pkg.Package{
 		Name:    "django",
