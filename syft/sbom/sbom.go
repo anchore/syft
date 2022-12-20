@@ -3,6 +3,8 @@ package sbom
 import (
 	"sort"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -63,6 +65,36 @@ func (s SBOM) AllCoordinates() []source.Coordinates {
 		}
 	}
 	return set.ToSlice()
+}
+
+// RelationshipsForPackage returns all relationships for the provided types.
+// If no types are provided, all relationships for the package are returned.
+func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.RelationshipType) []artifact.Relationship {
+	if len(rt) == 0 {
+		rt = artifact.AllRelationshipTypes()
+	}
+
+	var relationships []artifact.Relationship
+	for _, relationship := range s.Relationships {
+		// check if the relationship is one we're searching for; rt is inclusive
+		idx := slices.IndexFunc(rt, func(r artifact.RelationshipType) bool { return relationship.Type == r })
+		if relationship.From.ID() == p.ID() && idx != -1 {
+			relationships = append(relationships, relationship)
+		}
+	}
+
+	return relationships
+}
+
+// CoordinatesForPackage returns all coordinates for the provided package for provided relationship types
+// If no types are provided, all relationship types are considered.
+func (s SBOM) CoordinatesForPackage(p pkg.Package, rt ...artifact.RelationshipType) []source.Coordinates {
+	var coordinates []source.Coordinates
+	for _, relationship := range s.RelationshipsForPackage(p, rt...) {
+		cords := extractCoordinates(relationship)
+		coordinates = append(coordinates, cords...)
+	}
+	return coordinates
 }
 
 func extractCoordinates(relationship artifact.Relationship) (results []source.Coordinates) {

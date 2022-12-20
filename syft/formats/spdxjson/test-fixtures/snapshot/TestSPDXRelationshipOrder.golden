@@ -3,14 +3,14 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-55ad4afc-ecdc-46a4-8bc3-36b3e72da5d1",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-ace88a38-4633-4bff-8fa3-8ae929dab37d",
  "creationInfo": {
-  "licenseListVersion": "3.18",
+  "licenseListVersion": "3.19",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2022-11-19T13:46:57Z",
+  "created": "2022-12-14T18:21:40Z",
   "comment": ""
  },
  "packages": [
@@ -70,7 +70,7 @@
    "fileTypes": [
     "OTHER"
    ],
-   "checksums": null,
+   "checksums": [],
    "licenseConcluded": "NOASSERTION",
    "copyrightText": ""
   },
@@ -80,7 +80,7 @@
    "fileTypes": [
     "OTHER"
    ],
-   "checksums": null,
+   "checksums": [],
    "licenseConcluded": "NOASSERTION",
    "copyrightText": ""
   },
@@ -90,7 +90,7 @@
    "fileTypes": [
     "OTHER"
    ],
-   "checksums": null,
+   "checksums": [],
    "licenseConcluded": "NOASSERTION",
    "copyrightText": ""
   },
@@ -100,7 +100,7 @@
    "fileTypes": [
     "OTHER"
    ],
-   "checksums": null,
+   "checksums": [],
    "licenseConcluded": "NOASSERTION",
    "copyrightText": ""
   },
@@ -110,7 +110,7 @@
    "fileTypes": [
     "OTHER"
    ],
-   "checksums": null,
+   "checksums": [],
    "licenseConcluded": "NOASSERTION",
    "copyrightText": ""
   },
@@ -120,7 +120,7 @@
    "fileTypes": [
     "OTHER"
    ],
-   "checksums": null,
+   "checksums": [],
    "licenseConcluded": "NOASSERTION",
    "copyrightText": ""
   }

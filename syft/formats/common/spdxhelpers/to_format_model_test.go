@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -369,6 +370,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 }
 
 func Test_H1Digest(t *testing.T) {
+	sbom := sbom.SBOM{}
 	tests := []struct {
 		name           string
 		pkg            pkg.Package
@@ -415,7 +417,7 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCatalog(test.pkg)
-			pkgs := toPackages(catalog)
+			pkgs := toPackages(catalog, sbom)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
 				if test.expectedDigest == "" {

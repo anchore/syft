@@ -27,8 +27,13 @@ func encodeComponent(p pkg.Package) cyclonedx.Component {
 		properties = &props
 	}
 
+	componentType := cyclonedx.ComponentTypeLibrary
+	if p.Type == pkg.BinaryPkg {
+		componentType = cyclonedx.ComponentTypeApplication
+	}
+
 	return cyclonedx.Component{
-		Type:               cyclonedx.ComponentTypeLibrary,
+		Type:               componentType,
 		Name:               p.Name,
 		Group:              encodeGroup(p),
 		Version:            p.Version,
