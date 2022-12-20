@@ -353,6 +353,16 @@ func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReferenc
 }
 
 func toRelationships(relationships []artifact.Relationship) (result []*spdx.Relationship) {
+	primaryDocumentDescribes := &spdx.Relationship{
+		RefA: common.DocElementID{
+			ElementRefID: "SPDXRef-DOCUMENT",
+		},
+		RefB: common.DocElementID{
+			ElementRefID: "SPDXRef-DOCUMENT",
+		},
+		Relationship: string(DescribesRelationship),
+	}
+
 	for _, r := range relationships {
 		exists, relationshipType, comment := lookupRelationship(r.Type)
 
@@ -378,6 +388,8 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 			RelationshipComment: comment,
 		})
 	}
+
+	result = append(result, primaryDocumentDescribes)
 	return result
 }
 
@@ -389,6 +401,8 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, RelationshipType, s
 		return true, DependencyOfRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
+	case artifact.DescribesRelationship:
+		return true, DescribesRelationship, ""
 	}
 	return false, "", ""
 }
@@ -405,6 +419,13 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 		var digests []file.Digest
 		if digestsForLocation, exists := artifacts.FileDigests[coordinates]; exists {
 			digests = digestsForLocation
+		}
+
+		// if we don't have any metadata or digests for this location
+		// then the file is most likely a symlink or non-regular file
+		// for now we include a 0 sha1 digest as requested by the spdx spec
+		if len(digests) == 0 {
+			digests = append(digests, file.Digest{Algorithm: "sha1", Value: "0"})
 		}
 
 		// TODO: add file classifications (?) and content as a snippet
