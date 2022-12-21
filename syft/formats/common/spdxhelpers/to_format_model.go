@@ -33,6 +33,24 @@ const (
 //nolint:funlen
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := DocumentNameAndNamespace(s.Source)
+	relationships := toRelationships(s.RelationshipsSorted())
+
+	// for valid SPDX we need a document describes relationship
+	// TODO: remove this placeholder after deciding on correct behavior
+	// for the primary package purpose field:
+	// https://spdx.github.io/spdx-spec/v2.3/package-information/#724-primary-package-purpose-field
+	documentDescribesRelationship := &spdx.Relationship{
+		RefA: common.DocElementID{
+			ElementRefID: "DOCUMENT",
+		},
+		Relationship: string(DescribesRelationship),
+		RefB: common.DocElementID{
+			ElementRefID: "DOCUMENT",
+		},
+		RelationshipComment: "",
+	}
+
+	relationships = append(relationships, documentDescribesRelationship)
 
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
@@ -107,7 +125,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		},
 		Packages:      toPackages(s.Artifacts.PackageCatalog, s),
 		Files:         toFiles(s),
-		Relationships: toRelationships(s.RelationshipsSorted()),
+		Relationships: relationships,
 	}
 }
 
@@ -405,6 +423,15 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 		var digests []file.Digest
 		if digestsForLocation, exists := artifacts.FileDigests[coordinates]; exists {
 			digests = digestsForLocation
+		}
+
+		// if we don't have any metadata or digests for this location
+		// then the file is most likely a symlink or non-regular file
+		// for now we include a 0 sha1 digest as requested by the spdx spec
+		// TODO: update location code in core SBOM so that we can map complex links
+		// back to their real file digest location.
+		if len(digests) == 0 {
+			digests = append(digests, file.Digest{Algorithm: "sha1", Value: "0000000000000000000000000000000000000000"})
 		}
 
 		// TODO: add file classifications (?) and content as a snippet

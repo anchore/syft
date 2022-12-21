@@ -3,14 +3,14 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "/some/path",
- "documentNamespace": "https://anchore.com/syft/dir/some/path-4bf54cdd-0a0f-4560-bf4f-39cac2ef7a5b",
+ "documentNamespace": "https://anchore.com/syft/dir/some/path-116e86ba-a976-48ed-909d-9278807ee7fe",
  "creationInfo": {
-  "licenseListVersion": "3.18",
+  "licenseListVersion": "3.19",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2022-11-19T13:46:57Z",
+  "created": "2022-12-21T03:39:05Z",
   "comment": ""
  },
  "packages": [
@@ -61,6 +61,13 @@
      "comment": ""
     }
    ]
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DOCUMENT",
+   "relationshipType": "DESCRIBES"
   }
  ]
 }

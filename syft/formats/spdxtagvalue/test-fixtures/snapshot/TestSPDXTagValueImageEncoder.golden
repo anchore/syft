@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-baff7ada-85cb-403e-90d7-05b0c6d79490
-LicenseListVersion: 3.18
+DocumentNamespace: https://anchore.com/syft/image/user-image-input-559af225-63af-4bc0-94fb-bce94913bcfa
+LicenseListVersion: 3.19
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2022-11-19T13:48:30Z
+Created: 2022-12-21T03:39:05Z
 
 ##### Package: package-2
 
@@ -35,4 +35,8 @@ PackageLicenseDeclared: MIT
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:1:*:*:*:*:*:*:*
 ExternalRef: PACKAGE-MANAGER purl a-purl-1
+
+##### Relationships
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
 

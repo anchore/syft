@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,29 @@ func TestSpdxValidationTooling(t *testing.T) {
 			images:   []string{"alpine:latest", "photon:3.0", "debian:latest"},
 			env: map[string]string{
 				"SYFT_FILE_METADATA_CATALOGER_ENABLED": "true",
+				"SYFT_FILE_CONTENTS_CATALOGER_ENABLED": "true",
+				"SYFT_FILE_METADATA_DIGESTS":           "sha1",
+			},
+			setup: func(t *testing.T) {
+				cwd, err := os.Getwd()
+				require.NoError(t, err)
+				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
+				buildCmd := exec.Command("make", "build")
+				buildCmd.Dir = fixturesPath
+				err = buildCmd.Run()
+				require.NoError(t, err)
+			},
+			assertions: []traitAssertion{
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name:     "spdx validation tooling json",
+			syftArgs: []string{"packages", "-o", "spdx-json"},
+			images:   []string{"alpine:latest", "photon:3.0", "debian:latest"},
+			env: map[string]string{
+				"SYFT_FILE_METADATA_CATALOGER_ENABLED": "true",
+				"SYFT_FILE_CONTENTS_CATALOGER_ENABLED": "true",
 				"SYFT_FILE_METADATA_DIGESTS":           "sha1",
 			},
 			setup: func(t *testing.T) {
@@ -61,8 +85,15 @@ func TestSpdxValidationTooling(t *testing.T) {
 				f, err := os.CreateTemp(t.TempDir(), "temp")
 				require.NoError(t, err)
 
+				var suffix string
+				if strings.Contains(test.name, "json") {
+					suffix = ".json"
+				} else {
+					suffix = ".spdx"
+				}
+
 				// spdx tooling only takes a file with suffix spdx
-				rename := path.Join(path.Dir(f.Name()), fmt.Sprintf("%s.spdx", path.Base(f.Name())))
+				rename := path.Join(path.Dir(f.Name()), fmt.Sprintf("%s.%s", path.Base(f.Name()), suffix))
 				err = os.Rename(f.Name(), rename)
 				require.NoError(t, err)
 
