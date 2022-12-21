@@ -353,16 +353,6 @@ func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReferenc
 }
 
 func toRelationships(relationships []artifact.Relationship) (result []*spdx.Relationship) {
-	primaryDocumentDescribes := &spdx.Relationship{
-		RefA: common.DocElementID{
-			ElementRefID: "SPDXRef-DOCUMENT",
-		},
-		RefB: common.DocElementID{
-			ElementRefID: "SPDXRef-DOCUMENT",
-		},
-		Relationship: string(DescribesRelationship),
-	}
-
 	for _, r := range relationships {
 		exists, relationshipType, comment := lookupRelationship(r.Type)
 
@@ -388,8 +378,16 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 			RelationshipComment: comment,
 		})
 	}
-
-	result = append(result, primaryDocumentDescribes)
+	result = append(result, &spdx.Relationship{
+		RefA: common.DocElementID{
+			ElementRefID: "DOCUMENT",
+		},
+		Relationship: string(DescribesRelationship),
+		RefB: common.DocElementID{
+			ElementRefID: "DOCUMENT",
+		},
+		RelationshipComment: "",
+	})
 	return result
 }
 
@@ -425,7 +423,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 		// then the file is most likely a symlink or non-regular file
 		// for now we include a 0 sha1 digest as requested by the spdx spec
 		if len(digests) == 0 {
-			digests = append(digests, file.Digest{Algorithm: "sha1", Value: "0"})
+			digests = append(digests, file.Digest{Algorithm: "sha1", Value: "0000000000000000000000000000000000000000"})
 		}
 
 		// TODO: add file classifications (?) and content as a snippet
