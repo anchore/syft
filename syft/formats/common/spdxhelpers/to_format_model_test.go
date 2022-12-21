@@ -364,7 +364,6 @@ func Test_fileIDsForPackage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			relationships := toRelationships(test.relationships)
-			test.expected = append(test.expected, DocumentDescribesRelationship) // always include this relationship
 			assert.Equal(t, test.expected, relationships)
 		})
 	}
