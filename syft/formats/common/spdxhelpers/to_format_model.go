@@ -27,17 +27,6 @@ const (
 	noAssertion = "NOASSERTION"
 )
 
-var DocumentDescribesRelationship = &spdx.Relationship{
-	RefA: common.DocElementID{
-		ElementRefID: "DOCUMENT",
-	},
-	Relationship: string(DescribesRelationship),
-	RefB: common.DocElementID{
-		ElementRefID: "DOCUMENT",
-	},
-	RelationshipComment: "",
-}
-
 // ToFormatModel creates and populates a new SPDX document struct that follows the SPDX 2.3
 // spec from the given SBOM model.
 //
@@ -50,7 +39,18 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	// TODO: remove this placeholder after deciding on correct behavior
 	// for the primary package purpose field:
 	// https://spdx.github.io/spdx-spec/v2.3/package-information/#724-primary-package-purpose-field
-	relationships = append(relationships, DocumentDescribesRelationship)
+	documentDescribesRelationship := &spdx.Relationship{
+		RefA: common.DocElementID{
+			ElementRefID: "DOCUMENT",
+		},
+		Relationship: string(DescribesRelationship),
+		RefB: common.DocElementID{
+			ElementRefID: "DOCUMENT",
+		},
+		RelationshipComment: "",
+	}
+
+	relationships = append(relationships, documentDescribesRelationship)
 
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
