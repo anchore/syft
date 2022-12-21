@@ -15,9 +15,6 @@ const (
 
 	// DescribedByRelationship is a proxy for the SPDX 2.2.2 DESCRIBED_BY relationship.
 	DescribedByRelationship RelationshipType = "described-by"
-
-	// DescribesRelationship is a proxy for the SPDX 2.3.0 DESCRIBES relationship.
-	DescribesRelationship RelationshipType = "describes"
 )
 
 func AllRelationshipTypes() []RelationshipType {
@@ -26,7 +23,6 @@ func AllRelationshipTypes() []RelationshipType {
 		ContainsRelationship,
 		DependencyOfRelationship,
 		DescribedByRelationship,
-		DescribesRelationship,
 	}
 }
 
