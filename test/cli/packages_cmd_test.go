@@ -206,7 +206,10 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "override-default-parallelism",
-			args: []string{"packages", "-vvv", "-o", "json", "--parallelism", "2", coverageImage},
+			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			env: map[string]string{
+				"SYFT_PARALLELISM": "2",
+			},
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),

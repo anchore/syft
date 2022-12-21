@@ -22,7 +22,6 @@ type PackagesOptions struct {
 	Exclude            []string
 	Catalogers         []string
 	Name               string
-	Parallelism        int
 }
 
 var _ Interface = (*PackagesOptions)(nil)
@@ -51,14 +50,6 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 	cmd.Flags().StringVarP(&o.Name, "name", "", "",
 		"set the name of the target being analyzed")
-
-	cmd.Flags().IntVarP(&o.Parallelism, "parallelism", "", 1,
-		"number of workers to use to process the catalogers in parallel")
-
-	// Lets not expose this as a cli option
-	if err := cmd.Flags().MarkHidden("parallelism"); err != nil {
-		return err
-	}
 
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
@@ -95,10 +86,6 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("parallelism", flags.Lookup("parallelism")); err != nil {
 		return err
 	}
 
