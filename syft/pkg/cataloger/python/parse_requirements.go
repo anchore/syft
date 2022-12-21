@@ -56,6 +56,11 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 		version = strings.TrimFunc(version, func(r rune) bool {
 			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
 		})
+
+		if name == "" || version == "" {
+			log.WithFields("path", reader.RealPath).Debugf("found empty package in requirements.txt line: %q", line)
+			continue
+		}
 		packages = append(packages, newPackageForIndex(name, version, reader.Location))
 	}
 
