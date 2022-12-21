@@ -27,6 +27,17 @@ const (
 	noAssertion = "NOASSERTION"
 )
 
+var DocumentDescribesRelationship = &spdx.Relationship{
+	RefA: common.DocElementID{
+		ElementRefID: "DOCUMENT",
+	},
+	Relationship: string(DescribesRelationship),
+	RefB: common.DocElementID{
+		ElementRefID: "DOCUMENT",
+	},
+	RelationshipComment: "",
+}
+
 // ToFormatModel creates and populates a new SPDX document struct that follows the SPDX 2.3
 // spec from the given SBOM model.
 //
@@ -378,16 +389,7 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 			RelationshipComment: comment,
 		})
 	}
-	result = append(result, &spdx.Relationship{
-		RefA: common.DocElementID{
-			ElementRefID: "DOCUMENT",
-		},
-		Relationship: string(DescribesRelationship),
-		RefB: common.DocElementID{
-			ElementRefID: "DOCUMENT",
-		},
-		RelationshipComment: "",
-	})
+	result = append(result, DocumentDescribesRelationship)
 	return result
 }
 
