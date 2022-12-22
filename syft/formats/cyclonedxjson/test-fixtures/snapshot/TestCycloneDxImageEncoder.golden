@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:ced49687-6384-48fa-a930-ef83a258bf77",
+  "serialNumber": "urn:uuid:542fc1a1-81ac-4b76-b9e2-8e6b9d8c840a",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-11-07T09:11:21-05:00",
+    "timestamp": "2022-12-22T18:33:51-05:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -13,7 +13,7 @@
       }
     ],
     "component": {
-      "bom-ref": "522dc6b135a55bb4",
+      "bom-ref": "ffd645a093c0fe70",
       "type": "container",
       "name": "user-image-input",
       "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
@@ -53,7 +53,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"
+          "value": "sha256:62058900d4ce269c900160b8dd255fe310c3a459dda236d041102fa070f84406"
         },
         {
           "name": "syft:location:0:path",
@@ -83,7 +83,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec"
+          "value": "sha256:623ad97366f39ae279f1925673cdacb4851ddf2e3266f04e63010ec080a098c1"
         },
         {
           "name": "syft:location:0:path",
