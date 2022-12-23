@@ -26,8 +26,9 @@ import (
 const indent = "  "
 
 // New constructs the `syft packages` command, aliases the root command to `syft packages`,
-// and constructs the `syft power-user` and `syft attest` commands. It is also responsible for
+// and constructs the `syft power-user` command. It is also responsible for
 // organizing flag usage and injecting the application config for each command.
+
 // Because of how the `cobra` library behaves, the application's configuration is initialized
 // at this level. Values from the config should only be used after `app.LoadAllValues` has been called.
 // Cobra does not have knowledge of the user provided flags until the `RunE` block of each command.
@@ -46,7 +47,6 @@ func New() (*cobra.Command, error) {
 	packagesCmd := Packages(v, app, ro, po)
 
 	// root options are also passed to the attestCmd so that a user provided config location can be discovered
-	attestCmd := Attest(v, app, ro)
 	poweruserCmd := PowerUser(v, app, ro)
 	convertCmd := Convert(v, app, ro, po)
 
@@ -73,11 +73,7 @@ func New() (*cobra.Command, error) {
 	if err != nil {
 		return nil, err
 	}
-	// attest also uses flags from the packagesCmd since it generates an sbom
-	err = po.AddFlags(attestCmd, v)
-	if err != nil {
-		return nil, err
-	}
+
 	// poweruser also uses the packagesCmd flags since it is a specialized version of the command
 	err = po.AddFlags(poweruserCmd, v)
 	if err != nil {
@@ -87,13 +83,10 @@ func New() (*cobra.Command, error) {
 	// commands to add to root
 	cmds := []*cobra.Command{
 		packagesCmd,
-		attestCmd,
+		poweruserCmd,
 		convertCmd,
-		poweruserCmd,
-		poweruserCmd,
-		Completion(),
 		Version(v, app),
-		cranecmd.NewCmdAuthLogin("syft"),
+		cranecmd.NewCmdAuthLogin("syft"), // syft login uses the same command as crane
 	}
 
 	// Add sub-commands.
