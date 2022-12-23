@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/sigstore/cosign/cmd/cosign/cli/options"
 	"github.com/spf13/viper"
 )
 
@@ -49,8 +48,8 @@ func (cfg *attest) parseConfigValues() error {
 func (cfg attest) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("attest.key", "")
 	v.SetDefault("attest.password", "")
-	v.SetDefault("attest.fulcio_url", options.DefaultFulcioURL)
-	v.SetDefault("attest.rekor_url", options.DefaultRekorURL)
-	v.SetDefault("attest.oidc_issuer", options.DefaultOIDCIssuerURL)
+	v.SetDefault("attest.fulcio_url", "")
+	v.SetDefault("attest.rekor_url", "")
+	v.SetDefault("attest.oidc_issuer", "")
 	v.SetDefault("attest.oidc_client_id", "sigstore")
 }
