@@ -24,7 +24,7 @@ import (
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
-	err := validateOutputOptions(app)
+	err := ValidateOutputOptions(app)
 	if err != nil {
 		return err
 	}
@@ -113,17 +113,6 @@ func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) 
 	return &s, nil
 }
 
-func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
-	var relationships []<-chan artifact.Relationship
-	for _, task := range tasks {
-		c := make(chan artifact.Relationship)
-		relationships = append(relationships, c)
-		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
-	}
-
-	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
-}
-
 func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
 	for _, c := range cs {
 		for n := range c {
@@ -134,7 +123,7 @@ func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []art
 	return relationships
 }
 
-func validateOutputOptions(app *config.Application) error {
+func ValidateOutputOptions(app *config.Application) error {
 	var usesTemplateOutput bool
 	for _, o := range app.Outputs {
 		if o == template.ID.String() {
@@ -148,4 +137,15 @@ func validateOutputOptions(app *config.Application) error {
 	}
 
 	return nil
+}
+
+func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
+	var relationships []<-chan artifact.Relationship
+	for _, task := range tasks {
+		c := make(chan artifact.Relationship)
+		relationships = append(relationships, c)
+		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
+	}
+
+	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
 }
