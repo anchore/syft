@@ -14,6 +14,7 @@ func TestTextDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateTextEncoderGoldenFiles,
+		false,
 	)
 }
 
@@ -24,5 +25,6 @@ func TestTextImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateTextEncoderGoldenFiles,
+		false,
 	)
 }

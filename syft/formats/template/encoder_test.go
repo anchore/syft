@@ -19,6 +19,7 @@ func TestFormatWithOption(t *testing.T) {
 		f,
 		testutils.DirectoryInput(t),
 		*updateTmpl,
+		false,
 	)
 
 }

@@ -19,6 +19,7 @@ func TestSPDXTagValueDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }
@@ -30,6 +31,7 @@ func TestSPDXTagValueImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }
@@ -63,6 +65,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 			},
 		},
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }
@@ -76,6 +79,7 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 		s,
 		testImage,
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }

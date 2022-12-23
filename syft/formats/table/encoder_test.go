@@ -15,6 +15,7 @@ func TestTableEncoder(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		Format(),
 		testutils.DirectoryInput(t),
+		false,
 		*updateTableGoldenFiles,
 	)
 }

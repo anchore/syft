@@ -9,6 +9,7 @@ import (
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -35,7 +36,7 @@ func FromSnapshot() ImageOption {
 	}
 }
 
-func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, json bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	// grab the latest image contents and persist
@@ -61,15 +62,17 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, s
 		expected = r(expected)
 	}
 
-	// assert that the golden file snapshot matches the actual contents
-	if !bytes.Equal(expected, actual) {
+	if json {
+		require.JSONEq(t, string(expected), string(actual))
+	} else if !bytes.Equal(expected, actual) {
+		// assert that the golden file snapshot matches the actual contents
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }
 
-func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, json bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	err := format.Encode(&buffer, sbom)
@@ -90,7 +93,9 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 		expected = r(expected)
 	}
 
-	if !bytes.Equal(expected, actual) {
+	if json {
+		require.JSONEq(t, string(expected), string(actual))
+	} else if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Logf("len: %d\nexpected: %s", len(expected), expected)
