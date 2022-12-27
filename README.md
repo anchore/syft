@@ -75,7 +75,6 @@ choco install syft -y
 
 ### Homebrew
 ```bash
-brew tap anchore/syft
 brew install syft
 ```
 
