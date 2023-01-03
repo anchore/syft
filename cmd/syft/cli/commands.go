@@ -49,6 +49,7 @@ func New() (*cobra.Command, error) {
 	// root options are also passed to the attestCmd so that a user provided config location can be discovered
 	poweruserCmd := PowerUser(v, app, ro)
 	convertCmd := Convert(v, app, ro, po)
+	attestCmd := Attest(v, app, ro)
 
 	// rootCmd is currently an alias for the packages command
 	rootCmd := &cobra.Command{
@@ -85,6 +86,7 @@ func New() (*cobra.Command, error) {
 		packagesCmd,
 		poweruserCmd,
 		convertCmd,
+		attestCmd,
 		Version(v, app),
 		cranecmd.NewCmdAuthLogin("syft"), // syft login uses the same command as crane
 	}
