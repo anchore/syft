@@ -50,7 +50,7 @@ type directoryResolver struct {
 func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
 	currentWD, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("could not gret CWD: %w", err)
+		return nil, fmt.Errorf("could not get CWD: %w", err)
 	}
 	// we have to account for the root being accessed through a symlink path and always resolve the real path. Otherwise
 	// we will not be able to normalize given paths that fall under the resolver
