@@ -99,6 +99,18 @@ func (m *multiWriter) Write(s SBOM) (errs error) {
 	return errs
 }
 
+// Bytes returns the bytes of the SBOM that would be written
+func (m *multiWriter) Bytes(s SBOM) (bytes []byte, err error) {
+	for _, w := range m.writers {
+		b, err := w.Bytes(s)
+		if err != nil {
+			return nil, err
+		}
+		bytes = append(bytes, b...)
+	}
+	return bytes, nil
+}
+
 // Close closes all writers
 func (m *multiWriter) Close() (errs error) {
 	for _, w := range m.writers {
