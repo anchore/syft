@@ -23,6 +23,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.7.4a-vZ9",
+				PURL:      "pkg:generic/python@3.7.4a-vZ9",
 				Locations: singleLocation("libpython3.7.so"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "python-binary-lib",
@@ -35,6 +36,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.6.3a-vZ9",
+				PURL:      "pkg:generic/python@3.6.3a-vZ9",
 				Locations: singleLocation("python3.6"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "python-binary",
@@ -47,6 +49,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.9-aZ5",
+				PURL:      "pkg:generic/python@3.9-aZ5",
 				Locations: singleLocation("patchlevel.h"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "cpython-source",
@@ -59,6 +62,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.14",
+				PURL:      "pkg:generic/go@1.14",
 				Locations: singleLocation("go"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "go-binary",
@@ -71,6 +75,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "node",
 				Version:   "19.2.1",
+				PURL:      "pkg:generic/node@19.2.1",
 				Locations: singleLocation("node"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "nodejs-binary",
@@ -83,6 +88,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.15",
+				PURL:      "pkg:generic/go@1.15",
 				Locations: singleLocation("VERSION"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "go-binary-hint",
@@ -109,6 +115,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Name:      "java",
 				Version:   "1.8.0_352-b08",
 				Type:      "binary",
+				PURL:      "pkg:generic/java@1.8.0_352-b08",
 				Locations: singleLocation("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-openjdk",
@@ -123,6 +130,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Name:      "java",
 				Version:   "11.0.17+8-LTS",
 				Type:      "binary",
+				PURL:      "pkg:generic/java@11.0.17+8-LTS",
 				Locations: singleLocation("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-openjdk",
@@ -137,6 +145,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Name:      "java",
 				Version:   "19.0.1+10-21",
 				Type:      "binary",
+				PURL:      "pkg:generic/java@19.0.1+10-21",
 				Locations: singleLocation("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-oracle",
@@ -151,6 +160,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Name:      "java",
 				Version:   "19.0.1+10-21",
 				Type:      "binary",
+				PURL:      "pkg:generic/java@19.0.1+10-21",
 				Locations: singleLocation("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-oracle",
@@ -165,6 +175,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Name:      "java",
 				Version:   "1.8.0-foreman_2022_09_22_15_30-b00",
 				Type:      "binary",
+				PURL:      "pkg:generic/java@1.8.0-foreman_2022_09_22_15_30-b00",
 				Locations: singleLocation("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-ibm",
@@ -277,6 +288,7 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 	meta2 := p.Metadata.(pkg.BinaryMetadata)
 	if expected.Name != p.Name ||
 		expected.Version != p.Version ||
+		expected.PURL != p.PURL ||
 		meta1.Classifier != meta2.Classifier {
 		assert.Failf(t, "packages not equal", "%v != %v", expected, p)
 	}
