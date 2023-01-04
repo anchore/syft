@@ -116,7 +116,7 @@ func TypeByName(name string) Type {
 		return RpmPkg
 	case "alpm":
 		return AlpmPkg
-	case packageurl.TypeAlpine:
+	case packageurl.TypeAlpine, "alpine":
 		return ApkPkg
 	case packageurl.TypeMaven:
 		return JavaPkg
