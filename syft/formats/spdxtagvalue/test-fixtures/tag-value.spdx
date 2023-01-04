@@ -21,7 +21,7 @@ PackageLicenseDeclared: GPL-2.0-only
 PackageCopyrightText: NOASSERTION
 PackageDescription: Size optimized toolbox of many common UNIX utilities
 ExternalRef: SECURITY cpe23Type cpe:2.3:a:busybox:busybox:1.31.1-r19:*:*:*:*:*:*:*
-ExternalRef: PACKAGE-MANAGER purl pkg:alpine/busybox@1.31.1-r19?arch=x86_64&upstream=busybox&distro=alpine-3.12.5
+ExternalRef: PACKAGE-MANAGER purl pkg:apk/alpine/busybox@1.31.1-r19?arch=x86_64&upstream=busybox&distro=alpine-3.12.5
 
 ##### Package: my-app
 

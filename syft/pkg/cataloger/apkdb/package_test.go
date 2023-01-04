@@ -43,7 +43,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/p@v?arch=a&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/p@v?arch=a&distro=alpine-3.4.6",
 		},
 		{
 			name: "missing architecture",
@@ -55,7 +55,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/p@v?distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/p@v?distro=alpine-3.4.6",
 		},
 		// verify #351
 		{
@@ -68,7 +68,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
 			metadata: pkg.ApkMetadata{
@@ -80,7 +80,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.15.0",
 			},
-			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
+			expected: "pkg:apk/alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
 		},
 		{
 			name: "add source information as qualifier",
@@ -94,7 +94,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
 		},
 	}
 

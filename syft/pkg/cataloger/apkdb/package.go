@@ -42,10 +42,8 @@ func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 	}
 
 	return packageurl.NewPackageURL(
-		// note: this is currently a candidate and not technically within spec
-		// see https://github.com/package-url/purl-spec#other-candidate-types-to-define
+		packageurl.TypeAlpine,
 		"alpine",
-		"",
 		m.Package,
 		m.Version,
 		pkg.PURLQualifiers(
