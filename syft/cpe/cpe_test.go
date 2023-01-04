@@ -1,4 +1,4 @@
-package pkg
+package cpe
 
 import (
 	"encoding/json"
@@ -11,14 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func must(c CPE, e error) CPE {
-	if e != nil {
-		panic(e)
-	}
-	return c
-}
-
-func TestNewCPE(t *testing.T) {
+func Test_New(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -27,29 +20,29 @@ func TestNewCPE(t *testing.T) {
 		{
 			name:     "gocase",
 			input:    `cpe:/a:10web:form_maker:1.0.0::~~~wordpress~~`,
-			expected: must(NewCPE(`cpe:2.3:a:10web:form_maker:1.0.0:*:*:*:*:wordpress:*:*`)),
+			expected: Must(`cpe:2.3:a:10web:form_maker:1.0.0:*:*:*:*:wordpress:*:*`),
 		},
 		{
 			name:     "dashes",
 			input:    `cpe:/a:7-zip:7-zip:4.56:beta:~~~windows~~`,
-			expected: must(NewCPE(`cpe:2.3:a:7-zip:7-zip:4.56:beta:*:*:*:windows:*:*`)),
+			expected: Must(`cpe:2.3:a:7-zip:7-zip:4.56:beta:*:*:*:windows:*:*`),
 		},
 		{
 			name:     "URL escape characters",
 			input:    `cpe:/a:%240.99_kindle_books_project:%240.99_kindle_books:6::~~~android~~`,
-			expected: must(NewCPE(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`)),
+			expected: Must(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := NewCPE(test.input)
+			actual, err := New(test.input)
 			if err != nil {
 				t.Fatalf("got an error while creating CPE: %+v", err)
 			}
 
-			if CPEString(actual) != CPEString(test.expected) {
-				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", CPEString(test.expected), CPEString(actual))
+			if String(actual) != String(test.expected) {
+				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", String(test.expected), String(actual))
 			}
 
 		})
@@ -81,7 +74,7 @@ func Test_normalizeCpeField(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.field, func(t *testing.T) {
-			assert.Equal(t, test.expected, normalizeCpeField(test.field))
+			assert.Equal(t, test.expected, normalizeField(test.field))
 		})
 	}
 }
@@ -98,14 +91,14 @@ func Test_CPEParser(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.CPEString, func(t *testing.T) {
-			c1, err := NewCPE(test.CPEString)
+			c1, err := New(test.CPEString)
 			assert.NoError(t, err)
-			c2, err := NewCPE(test.CPEUrl)
+			c2, err := New(test.CPEUrl)
 			assert.NoError(t, err)
 			assert.Equal(t, c1, c2)
 			assert.Equal(t, c1, test.WFN)
 			assert.Equal(t, c2, test.WFN)
-			assert.Equal(t, CPEString(test.WFN), test.CPEString)
+			assert.Equal(t, String(test.WFN), test.CPEString)
 		})
 	}
 }
@@ -167,16 +160,16 @@ func Test_InvalidCPE(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, err := NewCPE(test.in)
+			c, err := New(test.in)
 			if test.expectedErr {
 				assert.Error(t, err)
 				if t.Failed() {
-					t.Logf("got CPE: %q details: %+v", CPEString(c), c)
+					t.Logf("got CPE: %q details: %+v", String(c), c)
 				}
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, test.expected, CPEString(c))
+			assert.Equal(t, test.expected, String(c))
 		})
 	}
 }
@@ -222,13 +215,13 @@ func Test_RoundTrip(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// CPE string must be preserved through a round trip
-			assert.Equal(t, test.cpe, CPEString(MustCPE(test.cpe)))
+			assert.Equal(t, test.cpe, String(Must(test.cpe)))
 			// The parsed CPE must be the same after a round trip
-			assert.Equal(t, MustCPE(test.cpe), MustCPE(CPEString(MustCPE(test.cpe))))
+			assert.Equal(t, Must(test.cpe), Must(String(Must(test.cpe))))
 			// The test case parsed CPE must be the same after parsing the input string
-			assert.Equal(t, test.parsedCPE, MustCPE(test.cpe))
+			assert.Equal(t, test.parsedCPE, Must(test.cpe))
 			// The test case parsed CPE must produce the same string as the input cpe
-			assert.Equal(t, CPEString(test.parsedCPE), test.cpe)
+			assert.Equal(t, String(test.parsedCPE), test.cpe)
 		})
 	}
 }

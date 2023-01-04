@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -23,7 +23,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        ".*/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs:            []pkg.CPE{},
+				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
 		},
@@ -34,8 +34,8 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        ".*/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs: []pkg.CPE{
-					pkg.MustCPE("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
+				CPEs: []cpe.CPE{
+					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
 				},
 			},
 			cpes: []string{
@@ -49,9 +49,9 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        ".*/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs: []pkg.CPE{
-					pkg.MustCPE("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
-					pkg.MustCPE("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*"),
+				CPEs: []cpe.CPE{
+					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
+					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*"),
 				},
 			},
 			cpes: []string{
@@ -79,7 +79,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 
 			var cpes []string
 			for _, c := range p.CPEs {
-				cpes = append(cpes, pkg.CPEString(c))
+				cpes = append(cpes, cpe.String(c))
 			}
 			require.Equal(t, test.cpes, cpes)
 		})

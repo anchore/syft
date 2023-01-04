@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -13,17 +14,17 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func mustCPEs(s ...string) (c []pkg.CPE) {
+func mustCPEs(s ...string) (c []cpe.CPE) {
 	for _, i := range s {
 		c = append(c, mustCPE(i))
 	}
 	return
 }
 
-func mustCPE(c string) pkg.CPE {
-	return must(pkg.NewCPE(c))
+func mustCPE(c string) cpe.CPE {
+	return must(cpe.New(c))
 }
-func must(c pkg.CPE, e error) pkg.CPE {
+func must(c cpe.CPE, e error) cpe.CPE {
 	if e != nil {
 		panic(e)
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/testutils"
 	"github.com/anchore/syft/syft/linux"
@@ -59,8 +60,8 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			Files:   []pkg.PythonFileRecord{},
 		},
 		PURL: "a-purl-1",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
 		},
 	}
 
@@ -83,8 +84,8 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			Files:   []pkg.DpkgFileRecord{},
 		},
 		PURL: "a-purl-2",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	}
 

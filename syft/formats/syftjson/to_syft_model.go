@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -174,9 +175,9 @@ func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Catal
 }
 
 func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
-	var cpes []pkg.CPE
+	var cpes []cpe.CPE
 	for _, c := range p.CPEs {
-		value, err := pkg.NewCPE(c)
+		value, err := cpe.New(c)
 		if err != nil {
 			log.Warnf("excluding invalid CPE %q: %v", c, err)
 			continue

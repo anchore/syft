@@ -1,10 +1,10 @@
-package pkg
+package cpe
 
 import (
 	"sort"
 )
 
-func mergeCPEs(a, b []CPE) (result []CPE) {
+func Merge(a, b []CPE) (result []CPE) {
 	aCPEs := make(map[string]CPE)
 
 	// keep all CPEs from a and create a quick string-based lookup
@@ -20,6 +20,6 @@ func mergeCPEs(a, b []CPE) (result []CPE) {
 		}
 	}
 
-	sort.Sort(CPEBySpecificity(result))
+	sort.Sort(BySpecificity(result))
 	return result
 }
