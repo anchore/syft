@@ -10,6 +10,7 @@ var defaultClassifiers = []classifier{
 			`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`,
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
 		Package: "python",
+		PURL:    mustPURL("pkg:generic/python@version"),
 	},
 	{
 		Class:    "python-binary-lib",
@@ -18,6 +19,7 @@ var defaultClassifiers = []classifier{
 			`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
 		Package: "python",
+		PURL:    mustPURL("pkg:generic/python@version"),
 	},
 	{
 		Class:    "cpython-source",
@@ -25,6 +27,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`),
 		Package: "python",
+		PURL:    mustPURL("pkg:generic/python@version"),
 	},
 	{
 		Class:    "go-binary",
@@ -32,6 +35,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 		Package: "go",
+		PURL:    mustPURL("pkg:generic/go@version"),
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
@@ -42,6 +46,7 @@ var defaultClassifiers = []classifier{
 			// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
 			`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
 		Package: "java",
+		PURL:    mustPURL("pkg:generic/java@version"),
 		// TODO the updates might need to be part of the CPE, like: 1.8.0:update152
 		CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
 	},
@@ -52,6 +57,7 @@ var defaultClassifiers = []classifier{
 			// [NUL]java[NUL]1.8[NUL][NUL][NUL][NUL]1.8.0-foreman_2022_09_22_15_30-b00[NUL]
 			`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
 		Package: "java",
+		PURL:    mustPURL("pkg:generic/java@version"),
 		CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*"),
 	},
 	{
@@ -61,6 +67,7 @@ var defaultClassifiers = []classifier{
 			// [NUL]19.0.1+10-21[NUL]
 			`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
 		Package: "java",
+		PURL:    mustPURL("pkg:generic/java@version"),
 		CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
 	},
 	{
@@ -79,6 +86,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`),
 		Package: "go",
+		PURL:    mustPURL("pkg:generic/go@version"),
 	},
 	{
 		Class:    "busybox-binary",
