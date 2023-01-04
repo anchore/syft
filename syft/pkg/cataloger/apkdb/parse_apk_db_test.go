@@ -637,7 +637,7 @@ func TestMultiplePackages(t *testing.T) {
 			Version:      "0.7.2-r0",
 			Licenses:     []string{"BSD"},
 			Type:         pkg.ApkPkg,
-			PURL:         "pkg:alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
+			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
@@ -663,7 +663,7 @@ func TestMultiplePackages(t *testing.T) {
 			Version:      "1.1.24-r2",
 			Licenses:     []string{"MIT", "BSD", "GPL2+"},
 			Type:         pkg.ApkPkg,
-			PURL:         "pkg:alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
+			PURL:         "pkg:apk/alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{

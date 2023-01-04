@@ -46,7 +46,7 @@ func TestToSyftModel(t *testing.T) {
 					},
 					{
 						Category: "PACKAGE-MANAGER",
-						Locator:  "pkg:alpine/pkg-1@5.4.3?arch=x86_64&upstream=p1-origin&distro=alpine-3.10.9",
+						Locator:  "pkg:apk/alpine/pkg-1@5.4.3?arch=x86_64&upstream=p1-origin&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
 				},
@@ -145,7 +145,7 @@ func Test_extractMetadata(t *testing.T) {
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
 						Category: "PACKAGE-MANAGER",
-						Locator:  "pkg:alpine/pkg-2@7.3.1?arch=x86_64&upstream=apk-origin@9.1.3&distro=alpine-3.10.9",
+						Locator:  "pkg:apk/alpine/pkg-2@7.3.1?arch=x86_64&upstream=apk-origin@9.1.3&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
 				},

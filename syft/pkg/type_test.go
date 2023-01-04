@@ -19,7 +19,7 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: RpmPkg,
 		},
 		{
-			purl:     "pkg:alpine/util-linux@2.32.1",
+			purl:     "pkg:apk/alpine/util-linux@2.32.1",
 			expected: ApkPkg,
 		},
 		{
