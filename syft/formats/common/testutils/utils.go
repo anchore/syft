@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -179,8 +180,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Version: "1.0.1",
 		},
 		PURL: "a-purl-1", // intentionally a bad pURL for test fixtures
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -197,8 +198,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Version: "2.0.1",
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 }
@@ -259,8 +260,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 			},
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -277,8 +278,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 			Version: "2.0.1",
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -324,7 +325,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			name: "multiple Locations with shared path",
 			pkgs: []Package{
 				{
-					CPEs: []CPE{MustCPE("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
 						source.Location{
 							Coordinates: source.Coordinates{
@@ -337,7 +338,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					Type: RpmPkg,
 				},
 				{
-					CPEs: []CPE{MustCPE("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
 						source.Location{
 							Coordinates: source.Coordinates{

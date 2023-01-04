@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -696,7 +697,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
 			for _, a := range actual {
-				actualCpeSet.Add(pkg.CPEString(a))
+				actualCpeSet.Add(cpe.String(a))
 			}
 
 			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()

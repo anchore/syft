@@ -1,4 +1,4 @@
-package pkg
+package cpe
 
 import (
 	"fmt"
@@ -24,17 +24,17 @@ const cpeRegexString = ((`^([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\._\-~%]*){0,6})`)
 
 var cpeRegex = regexp.MustCompile(cpeRegexString)
 
-// NewCPE will parse a formatted CPE string and return a CPE object. Some input, such as the existence of whitespace
+// New will parse a formatted CPE string and return a CPE object. Some input, such as the existence of whitespace
 // characters is allowed, however, a more strict validation is done after this sanitization process.
-func NewCPE(cpeStr string) (CPE, error) {
+func New(cpeStr string) (CPE, error) {
 	// get a CPE object based on the given string --don't validate yet since it may be possible to escape select cases on the callers behalf
-	c, err := newCPEWithoutValidation(cpeStr)
+	c, err := newWithoutValidation(cpeStr)
 	if err != nil {
 		return CPE{}, fmt.Errorf("unable to parse CPE string: %w", err)
 	}
 
 	// ensure that this CPE can be validated after being fully sanitized
-	if ValidateCPEString(CPEString(c)) != nil {
+	if ValidateString(String(c)) != nil {
 		return CPE{}, err
 	}
 
@@ -43,7 +43,16 @@ func NewCPE(cpeStr string) (CPE, error) {
 	return c, nil
 }
 
-func ValidateCPEString(cpeStr string) error {
+// Must returns a CPE or panics if the provided string is not valid
+func Must(cpeStr string) CPE {
+	c, err := New(cpeStr)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
+func ValidateString(cpeStr string) error {
 	// We should filter out all CPEs that do not match the official CPE regex
 	// The facebook nvdtools parser can sometimes incorrectly parse invalid CPE strings
 	if !cpeRegex.MatchString(cpeStr) {
@@ -52,7 +61,7 @@ func ValidateCPEString(cpeStr string) error {
 	return nil
 }
 
-func newCPEWithoutValidation(cpeStr string) (CPE, error) {
+func newWithoutValidation(cpeStr string) (CPE, error) {
 	value, err := wfn.Parse(cpeStr)
 	if err != nil {
 		return CPE{}, fmt.Errorf("failed to parse CPE=%q: %w", cpeStr, err)
@@ -63,30 +72,22 @@ func newCPEWithoutValidation(cpeStr string) (CPE, error) {
 	}
 
 	// we need to compare the raw data since we are constructing CPEs in other locations
-	value.Vendor = normalizeCpeField(value.Vendor)
-	value.Product = normalizeCpeField(value.Product)
-	value.Language = normalizeCpeField(value.Language)
-	value.Version = normalizeCpeField(value.Version)
-	value.TargetSW = normalizeCpeField(value.TargetSW)
-	value.Part = normalizeCpeField(value.Part)
-	value.Edition = normalizeCpeField(value.Edition)
-	value.Other = normalizeCpeField(value.Other)
-	value.SWEdition = normalizeCpeField(value.SWEdition)
-	value.TargetHW = normalizeCpeField(value.TargetHW)
-	value.Update = normalizeCpeField(value.Update)
+	value.Vendor = normalizeField(value.Vendor)
+	value.Product = normalizeField(value.Product)
+	value.Language = normalizeField(value.Language)
+	value.Version = normalizeField(value.Version)
+	value.TargetSW = normalizeField(value.TargetSW)
+	value.Part = normalizeField(value.Part)
+	value.Edition = normalizeField(value.Edition)
+	value.Other = normalizeField(value.Other)
+	value.SWEdition = normalizeField(value.SWEdition)
+	value.TargetHW = normalizeField(value.TargetHW)
+	value.Update = normalizeField(value.Update)
 
 	return *value, nil
 }
 
-func MustCPE(cpeStr string) CPE {
-	c, err := NewCPE(cpeStr)
-	if err != nil {
-		panic(err)
-	}
-	return c
-}
-
-func normalizeCpeField(field string) string {
+func normalizeField(field string) string {
 	// replace spaces with underscores (per section 5.3.2 of the CPE spec v 2.3)
 	field = strings.ReplaceAll(field, " ", "_")
 
@@ -112,7 +113,7 @@ func stripSlashes(s string) string {
 	return sb.String()
 }
 
-func CPEString(c CPE) string {
+func String(c CPE) string {
 	output := CPE{}
 	output.Vendor = sanitize(c.Vendor)
 	output.Product = sanitize(c.Product)

@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -10,7 +11,7 @@ func ExternalRefs(p pkg.Package) (externalRefs []ExternalRef) {
 	for _, c := range p.CPEs {
 		externalRefs = append(externalRefs, ExternalRef{
 			ReferenceCategory: SecurityReferenceCategory,
-			ReferenceLocator:  pkg.CPEString(c),
+			ReferenceLocator:  cpe.String(c),
 			ReferenceType:     Cpe23ExternalRefType,
 		})
 	}

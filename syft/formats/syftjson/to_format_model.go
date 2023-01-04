@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/linux"
@@ -159,7 +160,7 @@ func toPackageModels(catalog *pkg.Catalog) []model.Package {
 func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = pkg.CPEString(c)
+		cpes[i] = cpe.String(c)
 	}
 
 	var licenses = make([]string, 0)

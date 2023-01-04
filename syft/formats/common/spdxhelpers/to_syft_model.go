@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/linux"
@@ -381,15 +382,15 @@ func findPURLValue(p *spdx.Package) string {
 	return ""
 }
 
-func extractCPEs(p *spdx.Package) (cpes []pkg.CPE) {
+func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(Cpe23ExternalRefType) {
-			cpe, err := pkg.NewCPE(r.Locator)
+			c, err := cpe.New(r.Locator)
 			if err != nil {
 				log.Warnf("unable to extract SPDX CPE=%q: %+v", r.Locator, err)
 				continue
 			}
-			cpes = append(cpes, cpe)
+			cpes = append(cpes, c)
 		}
 	}
 	return cpes

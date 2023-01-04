@@ -10,26 +10,27 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
-	cpe := *(wfn.NewAttributesWithAny())
-	cpe.Part = "a"
-	cpe.Product = product
-	cpe.Vendor = vendor
-	cpe.Version = version
-	cpe.TargetSW = targetSW
-	if pkg.ValidateCPEString(pkg.CPEString(cpe)) != nil {
+	c := *(wfn.NewAttributesWithAny())
+	c.Part = "a"
+	c.Product = product
+	c.Vendor = vendor
+	c.Version = version
+	c.TargetSW = targetSW
+	if cpe.ValidateString(cpe.String(c)) != nil {
 		return nil
 	}
-	return &cpe
+	return &c
 }
 
 // Generate Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
-func Generate(p pkg.Package) []pkg.CPE {
+func Generate(p pkg.Package) []cpe.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 	if len(products) == 0 {
@@ -37,7 +38,7 @@ func Generate(p pkg.Package) []pkg.CPE {
 	}
 
 	keys := internal.NewStringSet()
-	cpes := make([]pkg.CPE, 0)
+	cpes := make([]cpe.CPE, 0)
 	for _, product := range products {
 		for _, vendor := range vendors {
 			// prevent duplicate entries...
@@ -47,8 +48,8 @@ func Generate(p pkg.Package) []pkg.CPE {
 			}
 			keys.Add(key)
 			// add a new entry...
-			if cpe := newCPE(product, vendor, p.Version, wfn.Any); cpe != nil {
-				cpes = append(cpes, *cpe)
+			if c := newCPE(product, vendor, p.Version, wfn.Any); c != nil {
+				cpes = append(cpes, *c)
 			}
 		}
 	}
@@ -56,7 +57,7 @@ func Generate(p pkg.Package) []pkg.CPE {
 	// filter out any known combinations that don't accurately represent this package
 	cpes = filter(cpes, p, cpeFilters...)
 
-	sort.Sort(pkg.CPEBySpecificity(cpes))
+	sort.Sort(cpe.BySpecificity(cpes))
 
 	return cpes
 }
