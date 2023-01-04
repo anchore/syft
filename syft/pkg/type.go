@@ -1,6 +1,8 @@
 package pkg
 
-import "github.com/anchore/packageurl-go"
+import (
+	"github.com/anchore/packageurl-go"
+)
 
 // Type represents a Package Type for or within a language ecosystem (there may be multiple package types within a language ecosystem)
 type Type string
@@ -58,7 +60,7 @@ var AllPkgs = []Type{
 func (t Type) PackageURLType() string {
 	switch t {
 	case ApkPkg:
-		return "alpine"
+		return packageurl.TypeAlpine
 	case AlpmPkg:
 		return "alpm"
 	case GemPkg:
@@ -114,7 +116,7 @@ func TypeByName(name string) Type {
 		return RpmPkg
 	case "alpm":
 		return AlpmPkg
-	case "alpine":
+	case packageurl.TypeAlpine:
 		return ApkPkg
 	case packageurl.TypeMaven:
 		return JavaPkg
