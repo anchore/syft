@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
@@ -45,9 +46,11 @@ type directoryResolver struct {
 	pathFilterFns  []pathFilterFn
 	refsByMIMEType map[string][]file.Reference
 	errPaths       map[string]error
+	// add catalogers glob patterns
+	globPatterns *[]string
 }
 
-func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
+func newDirectoryResolver(root string, globPatterns *[]string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
 	currentWD, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("could not get CWD: %w", err)
@@ -83,6 +86,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
 		refsByMIMEType:          make(map[string][]file.Reference),
 		errPaths:                make(map[string]error),
+		globPatterns:            globPatterns,
 	}
 
 	return &resolver, indexAllRoots(cleanRoot, resolver.indexTree)
@@ -117,6 +121,13 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
+			if r.globPatterns != nil {
+				// skip path if does not match any glob patterns
+				if !r.AnyGlobMatches(path) {
+					return nil
+				}
+			}
+
 			newRoot, err := r.indexPath(path, info, err)
 
 			if err != nil {
@@ -129,6 +140,17 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 
 			return nil
 		})
+}
+
+func (r *directoryResolver) AnyGlobMatches(path string) bool {
+	for _, g := range *r.globPatterns {
+		if match, err := doublestar.PathMatch(g, path); err != nil {
+			continue
+		} else if match {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {

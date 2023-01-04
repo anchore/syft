@@ -24,6 +24,55 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 )
 
+var (
+	catalogerGlobPatterns = map[string][]string{
+		"alpmdb-cataloger": {"**/var/lib/pacman/local/**/desc"},
+		"apkdb-cataloger":  {"**/lib/apk/db/installed"},
+
+		"conan-cataloger":         {"**/conanfile.txt", "**/conan.lock"},
+		"dartlang-lock-cataloger": {"**/pubspec.lock"},
+		"dpkgdb-cataloger":        {"**/var/lib/dpkg/{status,status.d/**}"},
+		"dotnet-deps-cataloger":   {"**/*.deps.json"},
+		"go-mod-file-cataloger":   {"**/go.mod"},
+		"haskell-cataloger":       {"**/stack.yaml", "**/stack.yaml.lock", "**/cabal.project.freeze"},
+		"java-cataloger": {
+			// java archive
+			"**/*.jar", "**/*.war", "**/*.ear", "**/*.par",
+			"**/*.sar", "**/*.jpi", "**/*.hpi", "**/*.lpkg",
+			// zip java archive
+			"**/*.zip",
+			// tar java archive
+			"**/*.tar", "**/*.tar.gz", "**/*.tgz", "**/*.tar.bz", "**/*.tar.bz2",
+			"**/*.tbz", "**/*.tbz2", "**/*.tar.br", "**/*.tbr", "**/*.tar.lz4", "**/*.tlz4",
+			"**/*.tar.sz", "**/*.tsz", "**/*.tar.xz", "**/*.txz", "**/*.tar.zst",
+		},
+		"java-pom-cataloger":               {"**/pom.xml"},
+		"javascript-package-cataloger":     {"**/package.json"},
+		"javascript-lock-cataloger":        {"**/package-lock.json", "**/yarn.lock", "**/pnpm-lock.yaml"},
+		"php-composer-installed-cataloger": {"**/installed.json"},
+		"php-composer-lock-cataloger":      {"**/composer.lock"},
+		"portage-cataloger":                {"**/var/db/pkg/*/*/CONTENTS"},
+		"python-index-cataloger":           {"**/*requirements*.txt", "**/poetry.lock", "**/Pipfile.lock", "**/setup.py"},
+		"python-package-cataloger":         {"**/*egg-info/PKG-INFO", "**/*.egg-info", "**/*dist-info/METADATA"}, // parseWheelOrEgg is a parser
+		"rpm-db-cataloger":                 {"**/var/lib/rpm/{Packages,Packages.db,rpmdb.sqlite}", "**/var/lib/rpmmanifest/container-manifest-2"},
+		"rpm-file-cataloger":               {"**/*.rpm"},
+		"ruby-gemfile-cataloger":           {"**/Gemfile.lock"},
+		"ruby-gemspec-cataloger":           {"**/specifications/**/*.gemspec"},
+		"rust-cargo-lock-cataloger":        {"**/Cargo.lock"},
+		"sbom-cataloger": {
+			"**/*.syft.json", "**/*.bom.*", "**/*.bom",
+			"**/bom", "**/*.sbom.*", "**/*.sbom", "**/sbom",
+			"**/*.cdx.*", "**/*.cdx", "**/*.spdx.*", "**/*.spdx",
+		},
+		"cocoapods-cataloger": {"**/Podfile.lock"},
+
+		// TODO: binary cataloger needs different handling
+		"binary-cataloger":                 {},
+		"go-module-binary-cataloger":       {},
+		"cargo-auditable-binary-cataloger": {},
+	}
+)
+
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
@@ -34,6 +83,7 @@ type Source struct {
 	path              string
 	mutex             *sync.Mutex
 	Exclusions        []string `hash:"ignore"`
+	GlobPatterns      []string
 }
 
 // Input is an object that captures the detected user input regarding source location, scheme, and provider type.
@@ -109,7 +159,7 @@ func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusion
 }
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, catalogers []string) (*Source, func(), error) {
 	var err error
 	fs := afero.NewOsFs()
 	var source *Source
@@ -129,6 +179,18 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 	if err == nil {
 		source.Exclusions = exclusions
 	}
+
+	if len(catalogers) > 0 {
+		for _, c := range catalogers {
+			source.GlobPatterns = append(source.GlobPatterns, catalogerGlobPatterns[c]...)
+		}
+	} else {
+		for _, c := range catalogerGlobPatterns {
+			source.GlobPatterns = append(source.GlobPatterns, c...)
+		}
+	}
+
+	log.Debugf("number of glob patterns %d", len(source.GlobPatterns))
 
 	return source, cleanupFn, err
 }
@@ -422,7 +484,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			resolver, err := newDirectoryResolver(s.path, exclusionFunctions...)
+			resolver, err := newDirectoryResolver(s.path, &s.GlobPatterns, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}

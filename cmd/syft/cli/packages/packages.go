@@ -66,7 +66,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 	go func() {
 		defer close(errs)
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions, app.Catalogers)
 		if cleanup != nil {
 			defer cleanup()
 		}

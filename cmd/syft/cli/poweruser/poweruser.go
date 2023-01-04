@@ -80,7 +80,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			return
 		}
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions, app.Catalogers)
 		if err != nil {
 			errs <- err
 			return
