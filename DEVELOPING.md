@@ -132,6 +132,48 @@ sequenceDiagram
 ```
 
 
+### Syft Catalogers
+
+##### Summary
+Catalogers are the way in which syft is able to identify and construct packages given some amount of source metadata.
+For example, Syft can locate and process `package-lock.json` files when performing filesystem scans. 
+See: [how to specify file globs](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21)
+and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) fora quick review.
+
+#### Building a new Cataloger
+Catalogers must fulfill the interface [found here](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger.go). 
+This means that when building a new cataloger, the new struct must implement both method signatures of `Catalog` and `Name`.
+
+A top level view of the functions that construct all the catalogers can be found [here](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/cataloger.go).
+When an author has finished writing a new cataloger this is the spot to plug in the new catalog constructor.
+
+For a top level view of how the catalogers are used see [this function](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/catalog.go#L41-L100) as a reference. It ranges over all catalogers passed as an argument and invokes the `Catalog` method:
+
+Each cataloger has its own `Catalog` method, but this does not mean that they are all vastly different.
+Take a look at the `apkdb` cataloger for alpine to see how it [constructs a generic.NewCataloger](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/apkdb/cataloger.go).
+
+`generic.NewCataloger` is an abstraction syft uses to make writing common components easier. First, it takes the `catalogerName` to identify the cataloger.
+On the other side of the call it uses two key pieces which inform the cataloger how to identify and return packages, the `globPatterns` and the `parseFunction`:
+- The first piece is a `parseByGlob` matching pattern used to identify the files that contain the package metadata.
+See [here for the APK example](https://github.com/anchore/syft/blob/main/syft/pkg/apk_metadata.go#L16-L41).
+- The other is a `parseFunction` which informs the cataloger what to do when it has found one of the above matches files.
+See this [link for an example](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/apkdb/parse_apk_db.go#L22-L102).
+
+If you're unsure about using the `Generic Cataloger` and think the use case being filled requires something more custom
+just file an issue or ask in our slack, and we'd be more than happy to help on the design.
+
+Identified packages share a common struct so be sure that when the new cataloger is constructing a new package it is using the [`Package` struct](https://github.com/anchore/syft/blob/main/syft/pkg/package.go#L16-L31).
+
+Metadata Note: Identified packages are also assigned specific metadata that can be unique to their environment. 
+See [this folder](https://github.com/anchore/syft/tree/main/syft/pkg) for examples of the different metadata types.
+These are plugged into the `MetadataType` and `Metadata` fields in the above struct. `MetadataType` informs which type is being used. `Metadata` is an interface converted to that type.
+
+Finally, here is an example of where the package construction is done in the apk cataloger. The first link is where `newPackage` is called in the `parseFunction`. The second link shows the package construction:
+- [Call for new package](https://github.com/anchore/syft/blob/6a7d6e6071829c7ce2943266c0e187b27c0b325c/syft/pkg/cataloger/apkdb/parse_apk_db.go#L96-L99)
+- [APK Package Constructor](https://github.com/anchore/syft/blob/6a7d6e6071829c7ce2943266c0e187b27c0b325c/syft/pkg/cataloger/apkdb/package.go#L12-L27)
+
+If you have more questions about implementing a cataloger or questions about one you might be currently working
+always feel free to file an issue or reach out to us [on slack](https://anchore.com/slack).
 
 ## Testing
 
