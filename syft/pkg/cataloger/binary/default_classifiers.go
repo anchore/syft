@@ -39,6 +39,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "redis-binary",
+		FileGlob: "**/redis-server",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?s)redis_version:.+?(?P<version>\d+\.\d+\.\d+)`),
+		Package: "redis",
+		PURL:    mustPURL("pkg:generic/redis@version"),
+		CPEs:    singleCPE("cpe:2.3:a:redis:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "java-binary-openjdk",
 		FileGlob: "**/java",
 		EvidenceMatcher: fileContentsVersionMatcher(
