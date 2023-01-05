@@ -18,6 +18,20 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		expected   pkg.Package
 	}{
 		{
+			name:       "positive-redis-2.6.17",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-2.6.17",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "2.6.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@2.6.17",
+				Locations: singleLocation("redis-cli"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "redis-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-redis-5.0.14",
 			fixtureDir: "test-fixtures/classifiers/positive/redis-5.0.14",
 			expected: pkg.Package{
