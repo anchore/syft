@@ -136,7 +136,7 @@ sequenceDiagram
 
 ##### Summary
 Catalogers are the way in which syft is able to identify and construct packages given some amount of source metadata.
-For example, Syft can locate and process package-lock.json files when performing filesystem scans. 
+For example, Syft can locate and process `package-lock.json` files when performing filesystem scans. 
 See: [how to specify file globs](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21)
 and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) fora quick review.
 
@@ -165,9 +165,8 @@ just file an issue or ask in our slack, and we'd be more than happy to help on t
 Identified packages share a common struct so be sure that when the new cataloger is constructing a new package it is using the [`Package` struct](https://github.com/anchore/syft/blob/main/syft/pkg/package.go#L16-L31).
 
 Metadata Note: Identified packages are also assigned specific metadata that can be unique to their environment. 
-See this folder for examples of the different metadata types.
+See [this folder](https://github.com/anchore/syft/tree/main/syft/pkg) for examples of the different metadata types.
 These are plugged into the `MetadataType` and `Metadata` fields in the above struct. `MetadataType` informs which type is being used. `Metadata` is an interface converted to that type.
-Here is a grouping of [metadata examples](https://github.com/anchore/syft/tree/main/syft/pkg) for reference.
 
 Finally, here is an example of where the package construction is done in the apk cataloger. The first link is where `newPackage` is called in the `parseFunction`. The second link shows the package construction:
 - [Call for new package](https://github.com/anchore/syft/blob/6a7d6e6071829c7ce2943266c0e187b27c0b325c/syft/pkg/cataloger/apkdb/parse_apk_db.go#L96-L99)
