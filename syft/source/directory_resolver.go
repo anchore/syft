@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
@@ -121,11 +120,8 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
-			if r.globPatterns != nil {
-				// skip path if does not match any glob patterns
-				if !r.AnyGlobMatches(path) {
-					return nil
-				}
+			if !AnyGlobMatches(r.globPatterns, path) {
+				return nil
 			}
 
 			newRoot, err := r.indexPath(path, info, err)
@@ -140,17 +136,6 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 
 			return nil
 		})
-}
-
-func (r *directoryResolver) AnyGlobMatches(path string) bool {
-	for _, g := range *r.globPatterns {
-		if match, err := doublestar.PathMatch(g, path); err != nil {
-			continue
-		} else if match {
-			return true
-		}
-	}
-	return false
 }
 
 func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {

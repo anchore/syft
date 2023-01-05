@@ -15,12 +15,13 @@ var _ FileResolver = (*allLayersResolver)(nil)
 
 // allLayersResolver implements path and content access for the AllLayers source option for container image data sources.
 type allLayersResolver struct {
-	img    *image.Image
-	layers []int
+	img          *image.Image
+	layers       []int
+	globPatterns *[]string
 }
 
 // newAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
-func newAllLayersResolver(img *image.Image) (*allLayersResolver, error) {
+func newAllLayersResolver(img *image.Image, globPatterns *[]string) (*allLayersResolver, error) {
 	if len(img.Layers) == 0 {
 		return nil, fmt.Errorf("the image does not contain any layers")
 	}
@@ -29,10 +30,13 @@ func newAllLayersResolver(img *image.Image) (*allLayersResolver, error) {
 	for idx := range img.Layers {
 		layers = append(layers, idx)
 	}
-	return &allLayersResolver{
-		img:    img,
-		layers: layers,
-	}, nil
+	allLayers := &allLayersResolver{
+		img:          img,
+		layers:       layers,
+		globPatterns: globPatterns,
+	}
+
+	return allLayers, nil
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -228,7 +232,9 @@ func (r *allLayersResolver) AllLocations() <-chan Location {
 		for _, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
 			for _, ref := range tree.AllFiles(file.AllTypes...) {
-				results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
+				if AnyGlobMatches(r.globPatterns, string(ref.RealPath)) {
+					results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
+				}
 			}
 		}
 	}()

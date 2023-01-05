@@ -14,18 +14,22 @@ var _ FileResolver = (*imageSquashResolver)(nil)
 
 // imageSquashResolver implements path and content access for the Squashed source option for container image data sources.
 type imageSquashResolver struct {
-	img *image.Image
+	img          *image.Image
+	globPatterns *[]string
 }
 
 // newImageSquashResolver returns a new resolver from the perspective of the squashed representation for the given image.
-func newImageSquashResolver(img *image.Image) (*imageSquashResolver, error) {
+func newImageSquashResolver(img *image.Image, globPatterns *[]string) (*imageSquashResolver, error) {
 	if img.SquashedTree() == nil {
 		return nil, fmt.Errorf("the image does not have have a squashed tree")
 	}
 
-	return &imageSquashResolver{
-		img: img,
-	}, nil
+	imgSquash := &imageSquashResolver{
+		img:          img,
+		globPatterns: globPatterns,
+	}
+
+	return imgSquash, nil
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -169,7 +173,9 @@ func (r *imageSquashResolver) AllLocations() <-chan Location {
 	go func() {
 		defer close(results)
 		for _, ref := range r.img.SquashedTree().AllFiles(file.AllTypes...) {
-			results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
+			if AnyGlobMatches(r.globPatterns, string(ref.RealPath)) {
+				results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
+			}
 		}
 	}()
 	return results

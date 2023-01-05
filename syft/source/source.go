@@ -25,10 +25,13 @@ import (
 )
 
 var (
+	binarySearchPaths = []string{
+		"/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin",
+		"/usr/lib64", "/usr/lib", "/usr/share", "/usr/local/lib64", "/usr/local/lib",
+	}
 	catalogerGlobPatterns = map[string][]string{
-		"alpmdb-cataloger": {"**/var/lib/pacman/local/**/desc"},
-		"apkdb-cataloger":  {"**/lib/apk/db/installed"},
-
+		"alpmdb-cataloger":        {"**/var/lib/pacman/local/**/desc"},
+		"apkdb-cataloger":         {"**/lib/apk/db/installed"},
 		"conan-cataloger":         {"**/conanfile.txt", "**/conan.lock"},
 		"dartlang-lock-cataloger": {"**/pubspec.lock"},
 		"dpkgdb-cataloger":        {"**/var/lib/dpkg/{status,status.d/**}"},
@@ -52,24 +55,28 @@ var (
 		"php-composer-installed-cataloger": {"**/installed.json"},
 		"php-composer-lock-cataloger":      {"**/composer.lock"},
 		"portage-cataloger":                {"**/var/db/pkg/*/*/CONTENTS"},
-		"python-index-cataloger":           {"**/*requirements*.txt", "**/poetry.lock", "**/Pipfile.lock", "**/setup.py"},
-		"python-package-cataloger":         {"**/*egg-info/PKG-INFO", "**/*.egg-info", "**/*dist-info/METADATA"}, // parseWheelOrEgg is a parser
 		"rpm-db-cataloger":                 {"**/var/lib/rpm/{Packages,Packages.db,rpmdb.sqlite}", "**/var/lib/rpmmanifest/container-manifest-2"},
 		"rpm-file-cataloger":               {"**/*.rpm"},
 		"ruby-gemfile-cataloger":           {"**/Gemfile.lock"},
 		"ruby-gemspec-cataloger":           {"**/specifications/**/*.gemspec"},
 		"rust-cargo-lock-cataloger":        {"**/Cargo.lock"},
+		"cocoapods-cataloger":              {"**/Podfile.lock"},
+
 		"sbom-cataloger": {
 			"**/*.syft.json", "**/*.bom.*", "**/*.bom",
 			"**/bom", "**/*.sbom.*", "**/*.sbom", "**/sbom",
 			"**/*.cdx.*", "**/*.cdx", "**/*.spdx.*", "**/*.spdx",
 		},
-		"cocoapods-cataloger": {"**/Podfile.lock"},
+
+		"python-index-cataloger": {"**/*requirements*.txt", "**/poetry.lock", "**/Pipfile.lock", "**/setup.py"},
+		"python-package-cataloger": {"**/*egg-info/PKG-INFO", "**/*.egg-info", "**/*dist-info/METADATA",
+			"**/*.egg", "**/*.whl", // python egg and whl files
+		},
 
 		// TODO: binary cataloger needs different handling
-		"binary-cataloger":                 {},
-		"go-module-binary-cataloger":       {},
-		"cargo-auditable-binary-cataloger": {},
+		"binary-cataloger":                 binarySearchPaths,
+		"go-module-binary-cataloger":       binarySearchPaths,
+		"cargo-auditable-binary-cataloger": binarySearchPaths,
 	}
 )
 
@@ -182,7 +189,11 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, 
 
 	if len(catalogers) > 0 {
 		for _, c := range catalogers {
-			source.GlobPatterns = append(source.GlobPatterns, catalogerGlobPatterns[c]...)
+			for k := range catalogerGlobPatterns {
+				if strings.Contains(k, c) {
+					source.GlobPatterns = append(source.GlobPatterns, catalogerGlobPatterns[k]...)
+				}
+			}
 		}
 	} else {
 		for _, c := range catalogerGlobPatterns {
@@ -496,9 +507,9 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		var err error
 		switch scope {
 		case SquashedScope:
-			resolver, err = newImageSquashResolver(s.Image)
+			resolver, err = newImageSquashResolver(s.Image, &s.GlobPatterns)
 		case AllLayersScope:
-			resolver, err = newAllLayersResolver(s.Image)
+			resolver, err = newAllLayersResolver(s.Image, &s.GlobPatterns)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}
@@ -600,4 +611,16 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 			return false
 		},
 	}, nil
+}
+
+func AnyGlobMatches(patterns *[]string, path string) bool {
+	for _, p := range *patterns {
+		match, err := doublestar.PathMatch(p, path)
+		if err != nil {
+			continue
+		} else if match {
+			return true
+		}
+	}
+	return false
 }
