@@ -40,12 +40,12 @@ var defaultClassifiers = []classifier{
 	},
 	{
 		Class:    "redis-binary",
-		FileGlob: "**/redis-server",
+		FileGlob: "**/redis-cli",
 		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?s)redis_version:.+?(?P<version>\d+\.\d+\.\d+)`),
+			`(?m)(?P<version>\d+\.\d+\.\d+)\W\W\(git:%s\W-dirty`),
 		Package: "redis",
 		PURL:    mustPURL("pkg:generic/redis@version"),
-		CPEs:    singleCPE("cpe:2.3:a:redis:*:*:*:*:*:*:*:*"),
+		CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "java-binary-openjdk",
