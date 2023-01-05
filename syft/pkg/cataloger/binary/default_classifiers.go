@@ -40,9 +40,9 @@ var defaultClassifiers = []classifier{
 	},
 	{
 		Class:    "redis-binary",
-		FileGlob: "**/redis-cli",
+		FileGlob: "**/redis-server",
 		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)(?P<version>\d+\.\d+\.\d+)\W\W\(git:%s\W-dirty`),
+			`(?s)payload %5.*(?P<version>\d.\d\.\d\d*?)[a-z0-9]{12}-[0-9]{19}`),
 		Package: "redis",
 		PURL:    mustPURL("pkg:generic/redis@version"),
 		CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),

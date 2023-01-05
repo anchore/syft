@@ -18,56 +18,70 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		expected   pkg.Package
 	}{
 		{
-			name:       "positive-redis-2.6.17",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-2.6.17",
+			name:       "positive-redis-2.8.23",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-2.8.23",
 			expected: pkg.Package{
 				Name:      "redis",
-				Version:   "2.6.17",
+				Version:   "2.8.23",
 				Type:      "binary",
-				PURL:      "pkg:generic/redis@2.6.17",
-				Locations: singleLocation("redis-cli"),
+				PURL:      "pkg:generic/redis@2.8.23",
+				Locations: singleLocation("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
 			},
 		},
 		{
-			name:       "positive-redis-5.0.14",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-5.0.14",
+			name:       "positive-redis-4.0.11",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-4.0.11",
 			expected: pkg.Package{
 				Name:      "redis",
-				Version:   "5.0.14",
+				Version:   "4.0.11",
 				Type:      "binary",
-				PURL:      "pkg:generic/redis@5.0.14",
-				Locations: singleLocation("redis-cli"),
+				PURL:      "pkg:generic/redis@4.0.11",
+				Locations: singleLocation("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
 			},
 		},
 		{
-			name:       "positive-redis-6.2.8",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-6.2.8",
+			name:       "positive-redis-5.0.0",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-5.0.0",
 			expected: pkg.Package{
 				Name:      "redis",
-				Version:   "6.2.8",
+				Version:   "5.0.0",
 				Type:      "binary",
-				PURL:      "pkg:generic/redis@6.2.8",
-				Locations: singleLocation("redis-cli"),
+				PURL:      "pkg:generic/redis@5.0.0",
+				Locations: singleLocation("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
 			},
 		},
 		{
-			name:       "positive-redis-7.0.7",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-7.0.7",
+			name:       "positive-redis-6.0.16",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-6.0.16",
 			expected: pkg.Package{
 				Name:      "redis",
-				Version:   "7.0.7",
+				Version:   "6.0.16",
 				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.0.7",
-				Locations: singleLocation("redis-cli"),
+				PURL:      "pkg:generic/redis@6.0.16",
+				Locations: singleLocation("redis-server"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "redis-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-redis-7.0.0",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.0",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.0",
+				Locations: singleLocation("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
