@@ -40,7 +40,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Objective-C (cocoapods)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar)
+- Java (jar, ear, war, par, sar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
 - PHP (composer)
