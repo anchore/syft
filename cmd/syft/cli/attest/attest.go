@@ -26,8 +26,6 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	if err != nil {
 		return err
 	}
-	app.Outputs = []string{"json"}
-	app.File = "sbom.json"
 
 	writer, err := options.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
 	if err != nil {
@@ -41,6 +39,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	}()
 
 	// could be an image or a directory, with or without a scheme
+	// TODO: validate that source is image
 	userInput := args[0]
 	si, err := source.ParseInputWithName(userInput, app.Platform, true, app.Name)
 	if err != nil {
@@ -83,37 +82,52 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 
 		if s == nil {
 			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
+			return
 		}
 
-		err = writer.Write(*s)
+		// only works for single format no multi writer
+		sBytes, err := writer.Bytes(*s)
 		if err != nil {
 			errs <- fmt.Errorf("unable to write SBOM: %w", err)
 			return
 		}
 
-		// TODO: return error if cannot stat cosign
-		// TODO: validate that source is image
-		// TODO: cleanup ephemeral file
+		// TODO: add multi writer support
+		for _, o := range app.Outputs {
+			f, err := os.CreateTemp("", o)
+			if err != nil {
+				errs <- fmt.Errorf("unable to create temp file: %w", err)
+			}
 
-		cmd := "cosign"
-		args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", "sbom.json"}
-		execCmd := exec.Command(cmd, args...)
-		execCmd.Env = os.Environ()
-		// bus adapter for ui to hook into stdout
-		execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
-		r, w, err := os.Pipe()
-		defer w.Close()
-		b := &busWriter{r: r, w: w}
-		execCmd.Stdout = b
-		execCmd.Stderr = b
-		err = execCmd.Run()
-		// attest the SBOM
-		if err != nil {
-			errs <- fmt.Errorf("unable to attest SBOM: %w", err)
-			return
+			defer f.Close()
+			defer os.Remove(f.Name())
+
+			if _, err := f.Write(sBytes); err != nil {
+				errs <- fmt.Errorf("unable to write SBOM to temp file: %w", err)
+			}
+
+			cmd := "cosign"
+			args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", "sbom.json"}
+			execCmd := exec.Command(cmd, args...)
+			execCmd.Env = os.Environ()
+			execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
+
+			// bus adapter for ui to hook into stdout
+			r, w, err := os.Pipe()
+			defer w.Close()
+
+			b := &busWriter{r: r, w: w}
+			execCmd.Stdout = b
+			execCmd.Stderr = b
+
+			// attest the SBOM
+			err = execCmd.Run()
+			if err != nil {
+				errs <- fmt.Errorf("unable to attest SBOM: %w", err)
+				return
+			}
 		}
-		// TODO: make sure we validate published attestation is same sbom as what we have on :17
-
+		// TODO: make sure we warn validate published attestation is on user
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
 			Value: func() error { return nil },
