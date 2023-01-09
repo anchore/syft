@@ -1,33 +1,36 @@
 package pkg
 
-import "github.com/anchore/packageurl-go"
+import (
+	"github.com/anchore/packageurl-go"
+)
 
 // Type represents a Package Type for or within a language ecosystem (there may be multiple package types within a language ecosystem)
 type Type string
 
 const (
 	// the full set of supported packages
-	UnknownPkg       Type = "UnknownPackage"
-	BinaryPkg        Type = "binary"
-	ApkPkg           Type = "apk"
-	AlpmPkg          Type = "alpm"
-	GemPkg           Type = "gem"
-	DebPkg           Type = "deb"
-	RpmPkg           Type = "rpm"
-	NpmPkg           Type = "npm"
-	PythonPkg        Type = "python"
-	PhpComposerPkg   Type = "php-composer"
-	JavaPkg          Type = "java-archive"
-	JenkinsPluginPkg Type = "jenkins-plugin"
-	GoModulePkg      Type = "go-module"
-	RustPkg          Type = "rust-crate"
-	KbPkg            Type = "msrc-kb"
-	DartPubPkg       Type = "dart-pub"
-	DotnetPkg        Type = "dotnet"
-	CocoapodsPkg     Type = "pod"
-	ConanPkg         Type = "conan"
-	PortagePkg       Type = "portage"
-	HackagePkg       Type = "hackage"
+	UnknownPkg            Type = "UnknownPackage"
+	BinaryPkg             Type = "binary"
+	ApkPkg                Type = "apk"
+	AlpmPkg               Type = "alpm"
+	GemPkg                Type = "gem"
+	DebPkg                Type = "deb"
+	RpmPkg                Type = "rpm"
+	NpmPkg                Type = "npm"
+	PythonPkg             Type = "python"
+	PhpComposerPkg        Type = "php-composer"
+	JavaPkg               Type = "java-archive"
+	GraalVMNativeImagePkg Type = "graalvm-native-image"
+	JenkinsPluginPkg      Type = "jenkins-plugin"
+	GoModulePkg           Type = "go-module"
+	RustPkg               Type = "rust-crate"
+	KbPkg                 Type = "msrc-kb"
+	DartPubPkg            Type = "dart-pub"
+	DotnetPkg             Type = "dotnet"
+	CocoapodsPkg          Type = "pod"
+	ConanPkg              Type = "conan"
+	PortagePkg            Type = "portage"
+	HackagePkg            Type = "hackage"
 )
 
 // AllPkgs represents all supported package types
@@ -58,7 +61,7 @@ var AllPkgs = []Type{
 func (t Type) PackageURLType() string {
 	switch t {
 	case ApkPkg:
-		return "alpine"
+		return packageurl.TypeAlpine
 	case AlpmPkg:
 		return "alpm"
 	case GemPkg:
@@ -114,7 +117,7 @@ func TypeByName(name string) Type {
 		return RpmPkg
 	case "alpm":
 		return AlpmPkg
-	case "alpine":
+	case packageurl.TypeAlpine, "alpine":
 		return ApkPkg
 	case packageurl.TypeMaven:
 		return JavaPkg

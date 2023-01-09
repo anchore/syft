@@ -9,12 +9,14 @@ import (
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -35,7 +37,7 @@ func FromSnapshot() ImageOption {
 	}
 }
 
-func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, json bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	// grab the latest image contents and persist
@@ -61,15 +63,17 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, s
 		expected = r(expected)
 	}
 
-	// assert that the golden file snapshot matches the actual contents
-	if !bytes.Equal(expected, actual) {
+	if json {
+		require.JSONEq(t, string(expected), string(actual))
+	} else if !bytes.Equal(expected, actual) {
+		// assert that the golden file snapshot matches the actual contents
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
 }
 
-func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, json bool, redactors ...redactor) {
 	var buffer bytes.Buffer
 
 	err := format.Encode(&buffer, sbom)
@@ -90,7 +94,9 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 		expected = r(expected)
 	}
 
-	if !bytes.Equal(expected, actual) {
+	if json {
+		require.JSONEq(t, string(expected), string(actual))
+	} else if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(string(expected), string(actual), true)
 		t.Logf("len: %d\nexpected: %s", len(expected), expected)
@@ -174,8 +180,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Version: "1.0.1",
 		},
 		PURL: "a-purl-1", // intentionally a bad pURL for test fixtures
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -192,8 +198,8 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 			Version: "2.0.1",
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 }
@@ -254,8 +260,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 			},
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -272,8 +278,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 			Version: "2.0.1",
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
-		CPEs: []pkg.CPE{
-			pkg.MustCPE("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
 		},
 	})
 

@@ -1,4 +1,4 @@
-package pkg
+package cpe
 
 import (
 	"sort"
@@ -6,15 +6,15 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-var _ sort.Interface = (*CPEBySpecificity)(nil)
+var _ sort.Interface = (*BySpecificity)(nil)
 
-type CPEBySpecificity []wfn.Attributes
+type BySpecificity []wfn.Attributes
 
-func (c CPEBySpecificity) Len() int { return len(c) }
+func (c BySpecificity) Len() int { return len(c) }
 
-func (c CPEBySpecificity) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
+func (c BySpecificity) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
 
-func (c CPEBySpecificity) Less(i, j int) bool {
+func (c BySpecificity) Less(i, j int) bool {
 	iScore := weightedCountForSpecifiedFields(c[i])
 	jScore := weightedCountForSpecifiedFields(c[j])
 
@@ -29,7 +29,7 @@ func (c CPEBySpecificity) Less(i, j int) bool {
 	}
 
 	// if score and length are equal then text sort
-	// note that we are not using CPEString from the syft pkg
+	// note that we are not using String from the syft pkg
 	// as we are not encoding/decoding this CPE string so we don't
 	// need the proper quoted version of the CPE.
 	return c[i].BindToFmtString() < c[j].BindToFmtString()
