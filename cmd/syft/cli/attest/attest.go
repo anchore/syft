@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/wagoodman/go-partybus"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -18,7 +20,6 @@ import (
 	"github.com/anchore/syft/syft/formats/template"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/wagoodman/go-partybus"
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
@@ -60,35 +61,40 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	)
 }
 
+func buildSBOM(app *config.Application, si source.Input, writer sbom.Writer, errs chan error) ([]byte, error) {
+	src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+	if cleanup != nil {
+		defer cleanup()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
+	}
+
+	s, err := packages.GenerateSBOM(src, errs, app)
+	if err != nil {
+		return nil, err
+	}
+
+	if s == nil {
+		return nil, fmt.Errorf("no SBOM produced for %q", si.UserInput)
+	}
+
+	// note: only works for single format no multi writer support
+	sBytes, err := writer.Bytes(*s)
+	if err != nil {
+		return nil, fmt.Errorf("unable to build SBOM bytes: %w", err)
+	}
+
+	return sBytes, nil
+}
+
 func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
-		if cleanup != nil {
-			defer cleanup()
-		}
+		sBytes, err := buildSBOM(app, si, writer, errs)
 		if err != nil {
-			errs <- fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
-			return
-		}
-
-		s, err := packages.GenerateSBOM(src, errs, app)
-		if err != nil {
-			errs <- err
-			return
-		}
-
-		if s == nil {
-			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
-			return
-		}
-
-		// only works for single format no multi writer
-		sBytes, err := writer.Bytes(*s)
-		if err != nil {
-			errs <- fmt.Errorf("unable to write SBOM: %w", err)
+			errs <- fmt.Errorf("unable to build SBOM: %w", err)
 			return
 		}
 
@@ -97,6 +103,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			f, err := os.CreateTemp("", o)
 			if err != nil {
 				errs <- fmt.Errorf("unable to create temp file: %w", err)
+				return
 			}
 
 			defer f.Close()
@@ -104,19 +111,27 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 
 			if _, err := f.Write(sBytes); err != nil {
 				errs <- fmt.Errorf("unable to write SBOM to temp file: %w", err)
+				return
 			}
 
+			// TODO: what other validation here besides binary name?
 			cmd := "cosign"
 			if !commandExists(cmd) {
 				errs <- fmt.Errorf("unable to find cosign in PATH; make sure you have it installed")
+				return
 			}
+
 			args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", f.Name()}
 			execCmd := exec.Command(cmd, args...)
 			execCmd.Env = os.Environ()
 			execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
 
-			// bus adapter for ui to hook into stdout
+			// bus adapter for ui to hook into stdout via an os pipe
 			r, w, err := os.Pipe()
+			if err != nil {
+				errs <- fmt.Errorf("unable to create os pipe: %w", err)
+				return
+			}
 			defer w.Close()
 
 			b := &busWriter{r: r, w: w}
@@ -130,7 +145,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 				return
 			}
 		}
-		// TODO: make sure we warn validate published attestation is on user
+
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
 			Value: func() error { return nil },
@@ -162,7 +177,7 @@ type busWriter struct {
 }
 
 func (b *busWriter) Write(p []byte) (n int, err error) {
-	if b.hasWritten == false {
+	if !b.hasWritten {
 		event := partybus.Event{
 			Type:   event.ShellOutput,
 			Source: "cosign",

@@ -3,11 +3,12 @@ package cli
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/anchore/syft/cmd/syft/cli/attest"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal/config"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *cobra.Command {

@@ -549,13 +549,16 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 			if l.Len() > 5 {
 				elem := l.Front()
 				line := elem.Value.(*frame.Line)
-				line.Remove()
+				err = line.Remove()
+				if err != nil {
+					return
+				}
 				l.Remove(elem)
 			}
 			l.PushBack(line)
 			_, err = line.Write([]byte(fmt.Sprintf("%s: %s", source, s.Text())))
 			if err != nil {
-				// TODO
+				return
 			}
 		}
 
@@ -565,7 +568,10 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 		_, err = tlogLine.Read(tlogText)
 		for e := l.Front(); e != nil; e = e.Next() {
 			line := e.Value.(*frame.Line)
-			line.Remove()
+			err = line.Remove()
+			if err != nil {
+				return
+			}
 		}
 		line, _ := fr.Append()
 		spin := color.Green.Sprint(completedStatus)
