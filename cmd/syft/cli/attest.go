@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,11 +12,11 @@ import (
 	"github.com/anchore/syft/internal/config"
 )
 
-func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *cobra.Command {
+func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "attest",
-		Short: "Foo bar Baz",
-		Long:  "Foo bar Baz",
+		Short: "Generate an SBOM and sign it with a private/keyless key",
+		Long:  "Generate an SBOM and sign it with a private/keyless key",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := app.LoadAllValues(v, ro.Config); err != nil {
 				return fmt.Errorf("unable to load configuration: %w", err)
@@ -34,6 +35,12 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions) *c
 
 			return attest.Run(cmd.Context(), app, args)
 		},
+	}
+
+	// syft attest is an enhancment of the packages command, so it should have the same flags
+	err := po.AddFlags(cmd, v)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return cmd
