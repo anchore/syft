@@ -107,7 +107,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			}
 
 			cmd := "cosign"
-			args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", "sbom.json"}
+			args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", f.Name()}
 			execCmd := exec.Command(cmd, args...)
 			execCmd.Env = os.Environ()
 			execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
