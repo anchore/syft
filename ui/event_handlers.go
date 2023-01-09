@@ -558,6 +558,15 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 				// TODO
 			}
 		}
+		b := l.Back()
+		tlogLine := b.Value.(*frame.Line)
+		tEntry := tlogLine.String()
+		for e := l.Front(); e != nil; e = e.Next() {
+			line := e.Value.(*frame.Line)
+			line.Remove()
+		}
+		line, _ := fr.Append()
+		_, _ = line.Write([]byte(fmt.Sprintf("finished cosign execution; %s", tEntry)))
 	}()
 	return nil
 }
