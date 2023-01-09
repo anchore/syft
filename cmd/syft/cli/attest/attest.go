@@ -26,6 +26,8 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	if err != nil {
 		return err
 	}
+	app.Outputs = []string{"json"}
+	app.File = "sbom.json"
 
 	writer, err := options.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
 	if err != nil {
@@ -83,29 +85,38 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
 		}
 
-		b, err := writer.Bytes(*s)
+		err = writer.Write(*s)
 		if err != nil {
 			errs <- fmt.Errorf("unable to write SBOM: %w", err)
 			return
 		}
 
-		// attest the SBOM
-		os.Setenv("$SBOM_PREDICATE", string(b))
+		// TODO: return error if cannot stat cosign
+		// TODO: validate that source is image
+		// TODO: cleanup ephemeral file
+
 		cmd := "cosign"
-		args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", "-", "<", "$SBOM_PREDICATE"}
+		args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", "sbom.json"}
 		execCmd := exec.Command(cmd, args...)
-		execCmd.Stdout = os.Stdout
-		execCmd.Stderr = os.Stderr
-		execCmd.Env = []string{"COSIGN_EXPERIMENTAL=1"}
+		execCmd.Env = os.Environ()
+		// bus adapter for ui to hook into stdout
+		execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
+		r, w, err := os.Pipe()
+		defer w.Close()
+		b := &busWriter{r: r, w: w}
+		execCmd.Stdout = b
+		execCmd.Stderr = b
 		err = execCmd.Run()
+		// attest the SBOM
 		if err != nil {
 			errs <- fmt.Errorf("unable to attest SBOM: %w", err)
 			return
 		}
+		// TODO: make sure we validate published attestation is same sbom as what we have on :17
 
 		bus.Publish(partybus.Event{
 			Type:  event.Exit,
-			Value: func() error { return writer.Write(*s) },
+			Value: func() error { return nil },
 		})
 	}()
 	return errs
@@ -125,4 +136,23 @@ func ValidateOutputOptions(app *config.Application) error {
 	}
 
 	return nil
+}
+
+type busWriter struct {
+	w          *os.File
+	r          *os.File
+	hasWritten bool
+}
+
+func (b *busWriter) Write(p []byte) (n int, err error) {
+	if b.hasWritten == false {
+		event := partybus.Event{
+			Type:   event.ShellOutput,
+			Source: "cosign",
+			Value:  b.r,
+		}
+		b.hasWritten = true
+		bus.Publish(event)
+	}
+	return b.w.Write(p)
 }

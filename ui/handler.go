@@ -31,13 +31,13 @@ func (r *Handler) RespondsTo(event partybus.Event) bool {
 	case stereoscopeEvent.PullDockerImage,
 		stereoscopeEvent.ReadImage,
 		stereoscopeEvent.FetchImage,
-		syftEvent.UploadAttestation,
 		syftEvent.PackageCatalogerStarted,
 		syftEvent.SecretsCatalogerStarted,
 		syftEvent.FileDigestsCatalogerStarted,
 		syftEvent.FileMetadataCatalogerStarted,
 		syftEvent.FileIndexingStarted,
-		syftEvent.ImportStarted:
+		syftEvent.ImportStarted,
+		syftEvent.ShellOutput:
 		return true
 	default:
 		return false
@@ -56,9 +56,6 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 	case stereoscopeEvent.FetchImage:
 		return FetchImageHandler(ctx, fr, event, wg)
 
-	case syftEvent.UploadAttestation:
-		return UploadAttestationHandler(ctx, fr, event, wg)
-
 	case syftEvent.PackageCatalogerStarted:
 		return PackageCatalogerStartedHandler(ctx, fr, event, wg)
 
@@ -76,6 +73,9 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 
 	case syftEvent.ImportStarted:
 		return ImportStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.ShellOutput:
+		return ShellOutputHandler(ctx, fr, event, wg)
 	}
 	return nil
 }

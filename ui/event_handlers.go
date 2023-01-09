@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"bufio"
+	"container/list"
 	"context"
 	"fmt"
 	"io"
@@ -221,48 +223,6 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 
 		spin := color.Green.Sprint(completedStatus)
 		title = tileFormat.Sprint("Loaded image")
-		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
-	}()
-	return err
-}
-
-func UploadAttestationHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	prog, err := syftEventParsers.ParseUploadAttestation(event)
-	if err != nil {
-		return fmt.Errorf("bad %s event: %w", event.Type, err)
-	}
-
-	line, err := fr.Append()
-	if err != nil {
-		return err
-	}
-	wg.Add(1)
-
-	formatter, spinner := startProcess()
-	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Uploading attestation")
-
-	formatFn := func(p progress.Progress) {
-		progStr, err := formatter.Format(p)
-		spin := color.Magenta.Sprint(spinner.Next())
-		if err != nil {
-			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
-		} else {
-			auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
-			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
-		}
-	}
-
-	go func() {
-		defer wg.Done()
-
-		formatFn(progress.Progress{})
-		for p := range stream {
-			formatFn(p)
-		}
-
-		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Uploaded attestation")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 	return err
@@ -569,4 +529,35 @@ func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.E
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
 	return err
+}
+
+// ShellOutputHandler takes bytes from a event.ShellOutput and publishes them to the frame.
+func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	reader, source, err := syftEventParsers.ParseShellOutputEvent(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+	wg.Add(1)
+
+	s := bufio.NewScanner(reader)
+	l := list.New()
+
+	go func() {
+		defer wg.Done()
+		for s.Scan() {
+			line, _ := fr.Append()
+			if l.Len() > 5 {
+				elem := l.Front()
+				line := elem.Value.(*frame.Line)
+				line.Remove()
+				l.Remove(elem)
+			}
+			l.PushBack(line)
+			_, err = line.Write([]byte(fmt.Sprintf("%s: %s", source, s.Text())))
+			if err != nil {
+				// TODO
+			}
+		}
+	}()
+	return nil
 }

@@ -5,6 +5,7 @@ package parsers
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -153,15 +154,20 @@ func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, 
 	return host, prog, nil
 }
 
-func ParseUploadAttestation(e partybus.Event) (progress.StagedProgressable, error) {
-	if err := checkEventType(e.Type, event.UploadAttestation); err != nil {
-		return nil, err
+func ParseShellOutputEvent(e partybus.Event) (io.Reader, string, error) {
+	if err := checkEventType(e.Type, event.ShellOutput); err != nil {
+		return nil, "", err
 	}
 
-	prog, ok := e.Value.(progress.StagedProgressable)
+	source, ok := e.Source.(string)
 	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
+		return nil, "", newPayloadErr(e.Type, "Source", e.Source)
 	}
 
-	return prog, nil
+	reader, ok := e.Value.(io.Reader)
+	if !ok {
+		return nil, "", newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return reader, source, nil
 }
