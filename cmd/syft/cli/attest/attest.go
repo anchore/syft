@@ -107,6 +107,9 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			}
 
 			cmd := "cosign"
+			if !commandExists(cmd) {
+				errs <- fmt.Errorf("unable to find cosign in PATH; make sure you have it installed")
+			}
 			args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", f.Name()}
 			execCmd := exec.Command(cmd, args...)
 			execCmd.Env = os.Environ()
@@ -169,4 +172,9 @@ func (b *busWriter) Write(p []byte) (n int, err error) {
 		bus.Publish(event)
 	}
 	return b.w.Write(p)
+}
+
+func commandExists(cmd string) bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
 }
