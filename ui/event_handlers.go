@@ -537,14 +537,32 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 	if err != nil {
 		return fmt.Errorf("bad %s event: %w", event.Type, err)
 	}
+
+	titleLine, err := fr.Append()
+	if err != nil {
+		return err
+	}
 	wg.Add(1)
 
+	_, spinner := startProcess()
+	title := tileFormat.Sprintf("Running %s shell command...", source)
 	s := bufio.NewScanner(reader)
 	l := list.New()
 
+	formatFn := func(_ progress.Progress) {
+		spin := color.Magenta.Sprint(spinner.Next())
+		_, _ = io.WriteString(titleLine, fmt.Sprintf(statusTitleTemplate, spin, title))
+	}
+
+	var tlogEntry string
 	go func() {
 		defer wg.Done()
+
+		formatFn(progress.Progress{})
+
+		// only show the last 5 lines of the shell output
 		for s.Scan() {
+			formatFn(progress.Progress{})
 			line, _ := fr.Append()
 			if l.Len() > 5 {
 				elem := l.Front()
@@ -556,16 +574,17 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 				l.Remove(elem)
 			}
 			l.PushBack(line)
-			_, err = line.Write([]byte(fmt.Sprintf("%s: %s", source, s.Text())))
+			text := s.Text()
+			if strings.Contains(text, "tlog entry created with index") {
+				tlogEntry = text
+			}
+			_, err = line.Write([]byte(fmt.Sprintf("  => %s: %s", source, text)))
 			if err != nil {
 				return
 			}
 		}
 
-		b := l.Back()
-		tlogLine := b.Value.(*frame.Line)
-		var tlogText []byte
-		_, err = tlogLine.Read(tlogText)
+		// roll up logs into completed status
 		for e := l.Front(); e != nil; e = e.Next() {
 			line := e.Value.(*frame.Line)
 			err = line.Remove()
@@ -573,10 +592,18 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 				return
 			}
 		}
+
+		err := titleLine.Remove()
+		if err != nil {
+			return
+		}
+
 		line, _ := fr.Append()
+		// finalize the status line
 		spin := color.Green.Sprint(completedStatus)
-		title := tileFormat.Sprint("Executed Cosign Attest")
-		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+		title := tileFormat.Sprintf("Finished %s shell command", source)
+		auxInfo := auxInfoFormat.Sprintf("[%s]", tlogEntry)
+		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
 	return nil
 }
