@@ -4,6 +4,7 @@
 package source
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -252,6 +253,8 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 		expString  string
 		inputPaths []string
 		expRefs    int
+		layer2     bool
+		contents   string
 	}{
 		{
 			desc:       "path detected",
@@ -259,10 +262,18 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 			inputPaths: []string{"/.vimrc"},
 			expRefs:    1,
 		},
+		{
+			desc:       "lest entry for duplicate paths",
+			input:      "test-fixtures/path-detected",
+			inputPaths: []string{"/.vimrc"},
+			expRefs:    1,
+			layer2:     true,
+			contents:   "Another .vimrc file",
+		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			archivePath := setupArchiveTest(t, test.input)
+			archivePath := setupArchiveTest(t, test.input, test.layer2)
 
 			src, cleanup := NewFromFile(archivePath)
 			if cleanup != nil {
@@ -278,6 +289,16 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 			refs, err := resolver.FilesByPath(test.inputPaths...)
 			require.NoError(t, err)
 			assert.Len(t, refs, test.expRefs)
+
+			if test.contents != "" {
+				reader, err := resolver.FileContentsByLocation(refs[0])
+				require.NoError(t, err)
+
+				data, err := io.ReadAll(reader)
+				require.NoError(t, err)
+
+				assert.Equal(t, test.contents, string(data))
+			}
 
 		})
 	}
@@ -716,7 +737,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 }
 
 // createArchive creates a new archive file at destinationArchivePath based on the directory found at sourceDirPath.
-func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
+func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, layer2 bool) {
 	t.Helper()
 
 	cwd, err := os.Getwd()
@@ -749,13 +770,21 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string) {
 		}
 	}
 
+	if layer2 {
+		cmd = exec.Command("tar", "-rvf", destinationArchivePath, ".")
+		cmd.Dir = filepath.Join(cwd, "test-fixtures", path.Base(sourceDirPath+"-2"))
+		if err := cmd.Start(); err != nil {
+			t.Fatalf("unable to start tar appending fixture script: %+v", err)
+		}
+		_ = cmd.Wait()
+	}
 }
 
 // setupArchiveTest encapsulates common test setup work for tar file tests. It returns a cleanup function,
 // which should be called (typically deferred) by the caller, the path of the created tar archive, and an error,
 // which should trigger a fatal test failure in the consuming test. The returned cleanup function will never be nil
 // (even if there's an error), and it should always be called.
-func setupArchiveTest(t testing.TB, sourceDirPath string) string {
+func setupArchiveTest(t testing.TB, sourceDirPath string, layer2 bool) string {
 	t.Helper()
 
 	archivePrefix, err := ioutil.TempFile("", "syft-archive-TEST-")
@@ -771,7 +800,7 @@ func setupArchiveTest(t testing.TB, sourceDirPath string) string {
 
 	destinationArchiveFilePath := archivePrefix.Name() + ".tar"
 	t.Logf("archive path: %s", destinationArchiveFilePath)
-	createArchive(t, sourceDirPath, destinationArchiveFilePath)
+	createArchive(t, sourceDirPath, destinationArchiveFilePath, layer2)
 
 	t.Cleanup(
 		assertNoError(t,

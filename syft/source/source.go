@@ -301,6 +301,12 @@ func fileAnalysisPath(path string) (string, func()) {
 	// unarchived.
 	envelopedUnarchiver, err := archiver.ByExtension(path)
 	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
+		if tar, ok := unarchiver.(*archiver.Tar); ok {
+			// when tar files are extracted, if there are multiple entries at the same
+			// location, the last entry wins
+			// NOTE: this currently does not display any messages if an overwrite happens
+			tar.OverwriteExisting = true
+		}
 		unarchivedPath, tmpCleanup, err := unarchiveToTmp(path, unarchiver)
 		if err != nil {
 			log.Warnf("file could not be unarchived: %+v", err)
