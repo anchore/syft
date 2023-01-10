@@ -206,6 +206,7 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, 
 
 	if err == nil {
 		source.Exclusions = exclusions
+		source.GlobFilter = filter
 	}
 
 	return source, cleanupFn, err
