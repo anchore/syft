@@ -16,6 +16,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -45,11 +46,11 @@ type directoryResolver struct {
 	pathFilterFns  []pathFilterFn
 	refsByMIMEType map[string][]file.Reference
 	errPaths       map[string]error
-	// add catalogers glob patterns
-	globPatterns *[]string
+	// add catalogers glob patterns filter
+	globFilter image.PathFilter
 }
 
-func newDirectoryResolver(root string, globPatterns *[]string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
+func newDirectoryResolver(root string, globFilter image.PathFilter, pathFilters ...pathFilterFn) (*directoryResolver, error) {
 	currentWD, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("could not get CWD: %w", err)
@@ -85,7 +86,7 @@ func newDirectoryResolver(root string, globPatterns *[]string, pathFilters ...pa
 		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
 		refsByMIMEType:          make(map[string][]file.Reference),
 		errPaths:                make(map[string]error),
-		globPatterns:            globPatterns,
+		globFilter:              globFilter,
 	}
 
 	return &resolver, indexAllRoots(cleanRoot, resolver.indexTree)
@@ -120,7 +121,7 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
-			if !AnyGlobMatches(r.globPatterns, path) {
+			if !r.globFilter(path) {
 				return nil
 			}
 

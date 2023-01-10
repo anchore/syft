@@ -156,7 +156,10 @@ func execWorker(app *config.Application, sourceInput source.Input, format sbom.F
 	go func() {
 		defer close(errs)
 
-		src, cleanup, err := source.NewFromRegistry(sourceInput, app.Registry.ToOptions(), app.Exclusions)
+		// TODO: check if filter is realy required
+		filter := func(path string) bool { return true }
+
+		src, cleanup, err := source.NewFromRegistry(sourceInput, app.Registry.ToOptions(), filter, app.Exclusions)
 		if cleanup != nil {
 			defer cleanup()
 		}

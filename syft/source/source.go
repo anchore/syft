@@ -91,7 +91,7 @@ type Source struct {
 	path              string
 	mutex             *sync.Mutex
 	Exclusions        []string `hash:"ignore"`
-	GlobPatterns      []string
+	GlobFilter        image.PathFilter
 }
 
 // Input is an object that captures the detected user input regarding source location, scheme, and provider type.
@@ -158,8 +158,8 @@ func ParseInputWithName(userInput string, platform string, detectAvailableImageS
 
 type sourceDetector func(string) (image.Source, string, error)
 
-func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
-	source, cleanupFn, err := generateImageSource(in, registryOptions)
+func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, filter image.PathFilter, exclusions []string) (*Source, func(), error) {
+	source, cleanupFn, err := generateImageSource(in, registryOptions, filter)
 	if source != nil {
 		source.Exclusions = exclusions
 	}
@@ -173,13 +173,33 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, 
 	var source *Source
 	cleanupFn := func() {}
 
+	patterns := []string{}
+	if len(catalogers) > 0 {
+		for _, c := range catalogers {
+			for k := range catalogerGlobPatterns {
+				if strings.Contains(k, c) {
+					patterns = append(patterns, catalogerGlobPatterns[k]...)
+				}
+			}
+		}
+	} else {
+		for _, c := range catalogerGlobPatterns {
+			patterns = append(patterns, c...)
+		}
+	}
+	log.Debugf("number of glob patterns %d", len(patterns))
+
+	filter := func(path string) bool {
+		return AnyGlobMatches(&patterns, path)
+	}
+
 	switch in.Scheme {
 	case FileScheme:
 		source, cleanupFn, err = generateFileSource(fs, in)
 	case DirectoryScheme:
 		source, cleanupFn, err = generateDirectorySource(fs, in)
 	case ImageScheme:
-		source, cleanupFn, err = generateImageSource(in, registryOptions)
+		source, cleanupFn, err = generateImageSource(in, registryOptions, filter)
 	default:
 		err = fmt.Errorf("unable to process input for scanning: %q", in.UserInput)
 	}
@@ -188,27 +208,11 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, 
 		source.Exclusions = exclusions
 	}
 
-	if len(catalogers) > 0 {
-		for _, c := range catalogers {
-			for k := range catalogerGlobPatterns {
-				if strings.Contains(k, c) {
-					source.GlobPatterns = append(source.GlobPatterns, catalogerGlobPatterns[k]...)
-				}
-			}
-		}
-	} else {
-		for _, c := range catalogerGlobPatterns {
-			source.GlobPatterns = append(source.GlobPatterns, c...)
-		}
-	}
-
-	log.Debugf("number of glob patterns %d", len(source.GlobPatterns))
-
 	return source, cleanupFn, err
 }
 
-func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Source, func(), error) {
-	img, cleanup, err := getImageWithRetryStrategy(in, registryOptions)
+func generateImageSource(in Input, registryOptions *image.RegistryOptions, filter image.PathFilter) (*Source, func(), error) {
+	img, cleanup, err := getImageWithRetryStrategy(in, registryOptions, filter)
 	if err != nil || img == nil {
 		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
@@ -230,7 +234,7 @@ func parseScheme(userInput string) string {
 	return parts[0]
 }
 
-func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions) (*image.Image, func(), error) {
+func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions, filter image.PathFilter) (*image.Image, func(), error) {
 	ctx := context.TODO()
 
 	var opts []stereoscope.Option
@@ -242,7 +246,7 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 		opts = append(opts, stereoscope.WithPlatform(in.Platform))
 	}
 
-	img, err := stereoscope.GetImageFromSource(ctx, in.Location, in.ImageSource, opts...)
+	img, err := stereoscope.GetImageFromSource(ctx, in.Location, in.ImageSource, filter, opts...)
 	cleanup := func() {
 		if err := img.Cleanup(); err != nil {
 			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
@@ -279,7 +283,7 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 	if in.autoDetectAvailableImageSources {
 		in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
 	}
-	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
+	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, filter, opts...)
 	cleanup = func() {
 		if err := img.Cleanup(); err != nil {
 			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
@@ -496,7 +500,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			resolver, err := newDirectoryResolver(s.path, &s.GlobPatterns, exclusionFunctions...)
+			resolver, err := newDirectoryResolver(s.path, s.GlobFilter, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}
@@ -508,9 +512,9 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		var err error
 		switch scope {
 		case SquashedScope:
-			resolver, err = newImageSquashResolver(s.Image, &s.GlobPatterns)
+			resolver, err = newImageSquashResolver(s.Image, s.GlobFilter)
 		case AllLayersScope:
-			resolver, err = newAllLayersResolver(s.Image, &s.GlobPatterns)
+			resolver, err = newAllLayersResolver(s.Image, s.GlobFilter)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}
