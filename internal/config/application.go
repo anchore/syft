@@ -56,6 +56,7 @@ type Application struct {
 	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
+	Inclusions         []string           `yaml:"include" json:"include" mapstructure:"include"`
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {

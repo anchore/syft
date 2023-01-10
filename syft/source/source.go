@@ -167,13 +167,16 @@ func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, filter im
 }
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, catalogers []string) (*Source, func(), error) {
+func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, inclusions []string, catalogers []string) (*Source, func(), error) {
 	var err error
 	fs := afero.NewOsFs()
 	var source *Source
 	cleanupFn := func() {}
 
 	patterns := []string{}
+	if len(inclusions) > 0 {
+		patterns = append(patterns, inclusions...)
+	}
 	if len(catalogers) > 0 {
 		for _, c := range catalogers {
 			for k := range catalogerGlobPatterns {
