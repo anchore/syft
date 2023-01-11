@@ -56,6 +56,7 @@ type Application struct {
 	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
+	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
@@ -65,7 +66,8 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 			IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 			Scope:                    cfg.Package.Cataloger.ScopeOpt,
 		},
-		Catalogers: cfg.Catalogers,
+		Catalogers:  cfg.Catalogers,
+		Parallelism: cfg.Parallelism,
 	}
 }
 
@@ -182,6 +184,7 @@ func loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("quiet", false)
 	v.SetDefault("check-for-app-update", true)
 	v.SetDefault("catalogers", nil)
+	v.SetDefault("parallelism", 1)
 
 	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
 	value := reflect.ValueOf(Application{})

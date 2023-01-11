@@ -204,6 +204,31 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
+		{
+			name: "override-default-parallelism",
+			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			env: map[string]string{
+				"SYFT_PARALLELISM": "2",
+			},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured.
+				assertInOutput("parallelism: 2"),
+				assertInOutput("parallelism=2"),
+				assertPackageCount(34),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "default-parallelism",
+			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured.
+				assertInOutput("parallelism: 1"),
+				assertInOutput("parallelism=1"),
+				assertPackageCount(34),
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {

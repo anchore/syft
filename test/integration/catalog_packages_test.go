@@ -41,7 +41,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 
 		b.Run(c.Name(), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				pc, _, err = cataloger.Catalog(resolver, theDistro, c)
+				pc, _, err = cataloger.Catalog(resolver, theDistro, 1, c)
 				if err != nil {
 					b.Fatalf("failure during benchmark: %+v", err)
 				}
