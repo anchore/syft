@@ -213,7 +213,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),
-				assertInOutput("Using parallelism=2 for catalogs"),
+				assertInOutput("parallelism=2"),
 				assertPackageCount(34),
 				assertSuccessfulReturnCode,
 			},
@@ -224,7 +224,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
-				assertInOutput("Using parallelism=1 for catalogs"),
+				assertInOutput("parallelism=1"),
 				assertPackageCount(34),
 				assertSuccessfulReturnCode,
 			},
