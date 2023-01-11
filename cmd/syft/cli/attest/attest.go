@@ -50,6 +50,10 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}
 
+	if si.Scheme != source.ImageScheme {
+		return fmt.Errorf("attestations are only supported for oci images at this time")
+	}
+
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
 	syft.SetBus(eventBus)
