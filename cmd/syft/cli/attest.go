@@ -14,14 +14,10 @@ import (
 )
 
 const (
-	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] <IMAGE>
-  Attest supports the following image sources:
-    {{.appName}} {{.command}} yourrepo/yourimage:tag     defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry.
-    {{.appName}} {{.command}} yourrepo/yourimage:tag     users of this command must have write access to the image repository for the attestation upload
+	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] alpine:latest defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry
 `
 	attestSchemeHelp = "\n" + indent + schemeHelpHeader + "\n" + imageSchemeHelp
-
-	attestHelp = attestExample + attestSchemeHelp
+	attestHelp       = attestExample + attestSchemeHelp
 )
 
 //nolint:dupl
