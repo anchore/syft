@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"container/list"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -27,6 +28,7 @@ import (
 const maxBarWidth = 50
 const statusSet = components.SpinnerDotSet
 const completedStatus = "✔"
+const failedStatus = "✘"
 const tileFormat = color.Bold
 const interval = 150 * time.Millisecond
 
@@ -531,11 +533,11 @@ func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.E
 	return err
 }
 
-// ShellOutputHandler takes bytes from a event.ShellOutput and publishes them to the frame.
+// AttestationStartedHandler takes bytes from a event.ShellOutput and publishes them to the frame.
 //
 //nolint:funlen
-func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	reader, source, err := syftEventParsers.ParseShellOutputEvent(event)
+func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	reader, prog, taskInfo, err := syftEventParsers.ParseAttestationStartedEvent(event)
 	if err != nil {
 		return fmt.Errorf("bad %s event: %w", event.Type, err)
 	}
@@ -544,27 +546,61 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 	if err != nil {
 		return err
 	}
-	wg.Add(1)
+	wg.Add(2)
 
 	_, spinner := startProcess()
-	title := tileFormat.Sprintf("Running %s shell command...", source)
+
+	title := tileFormat.Sprintf(taskInfo.Title.WhileRunning)
+
 	s := bufio.NewScanner(reader)
 	l := list.New()
 
-	formatFn := func(_ progress.Progress) {
+	formatFn := func() {
+		auxInfo := auxInfoFormat.Sprintf("[running %s]", taskInfo.Context)
 		spin := color.Magenta.Sprint(spinner.Next())
-		_, _ = io.WriteString(titleLine, fmt.Sprintf(statusTitleTemplate, spin, title))
+		_, _ = io.WriteString(titleLine, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}
 
-	var tlogEntry string
+	formatFn()
+	var failed bool
+	formatComplete := func(aux string) {
+		spin := color.Green.Sprint(completedStatus)
+		if failed {
+			spin = color.Red.Sprint(failedStatus)
+			aux = prog.Error().Error()
+		} else {
+			title = tileFormat.Sprintf(taskInfo.Title.OnSuccess)
+		}
+
+		auxInfo := auxInfoFormat.Sprintf("[%s]", aux)
+
+		_, _ = io.WriteString(titleLine, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
+	}
+
+	endWg := &sync.WaitGroup{}
+	endWg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		defer endWg.Done()
+
+		stream := progress.Stream(ctx, prog, interval)
+		for range stream {
+			formatFn()
+		}
+		err := prog.Error()
+		if err != nil && !errors.Is(err, io.EOF) {
+			failed = true
+		}
+	}()
+
 	go func() {
 		defer wg.Done()
 
-		formatFn(progress.Progress{})
+		var tlogEntry string
 
 		// only show the last 5 lines of the shell output
 		for s.Scan() {
-			formatFn(progress.Progress{})
 			line, _ := fr.Append()
 			if l.Len() > 5 {
 				elem := l.Front()
@@ -580,32 +616,26 @@ func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Eve
 			if strings.Contains(text, "tlog entry created with index") {
 				tlogEntry = text
 			}
-			_, err = line.Write([]byte(fmt.Sprintf("  => %s: %s", source, text)))
+			_, err = line.Write([]byte(fmt.Sprintf("     %s %s", auxInfoFormat.Sprintf("░░"), text)))
 			if err != nil {
 				return
 			}
 		}
 
-		// roll up logs into completed status
-		for e := l.Front(); e != nil; e = e.Next() {
-			line := e.Value.(*frame.Line)
-			err = line.Remove()
-			if err != nil {
-				return
+		endWg.Wait()
+
+		if !failed {
+			// roll up logs into completed status (only if successful)
+			for e := l.Back(); e != nil; e = e.Prev() {
+				line := e.Value.(*frame.Line)
+				err = line.Remove()
+				if err != nil {
+					return
+				}
 			}
 		}
 
-		err := titleLine.Remove()
-		if err != nil {
-			return
-		}
-
-		line, _ := fr.Append()
-		// finalize the status line
-		spin := color.Green.Sprint(completedStatus)
-		title := tileFormat.Sprintf("Finished %s shell command", source)
-		auxInfo := auxInfoFormat.Sprintf("[%s]", tlogEntry)
-		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
+		formatComplete(tlogEntry)
 	}()
 	return nil
 }

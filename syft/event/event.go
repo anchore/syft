@@ -32,6 +32,6 @@ const (
 	// ImportStarted is a partybus event that occurs when an SBOM upload process has begun
 	ImportStarted partybus.EventType = "syft-import-started-event"
 
-	// ShellOutput is a partybus event that occurs when output from an os.Exec command is ready for final presentation
-	ShellOutput partybus.EventType = "syft-shell-output-event"
+	// AttestationStarted is a partybus event that occurs when starting an SBOM attestation process
+	AttestationStarted partybus.EventType = "syft-attestation-started-event"
 )

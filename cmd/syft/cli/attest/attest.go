@@ -3,6 +3,8 @@ package attest
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/wagoodman/go-progress"
 	"os"
 	"os/exec"
 
@@ -141,13 +143,15 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			}
 			defer w.Close()
 
-			b := &busWriter{r: r, w: w}
+			b := &busWriter{r: r, w: w, mon: &progress.Manual{N: -1}}
 			execCmd.Stdout = b
 			execCmd.Stderr = b
+			defer b.mon.SetCompleted()
 
 			// attest the SBOM
 			err = execCmd.Run()
 			if err != nil {
+				b.mon.Err = err
 				errs <- fmt.Errorf("unable to attest SBOM: %w", err)
 				return
 			}
@@ -190,17 +194,29 @@ type busWriter struct {
 	w          *os.File
 	r          *os.File
 	hasWritten bool
+	mon        *progress.Manual
 }
 
 func (b *busWriter) Write(p []byte) (n int, err error) {
 	if !b.hasWritten {
-		event := partybus.Event{
-			Type:   event.ShellOutput,
-			Source: "cosign",
-			Value:  b.r,
-		}
 		b.hasWritten = true
-		bus.Publish(event)
+		bus.Publish(
+			partybus.Event{
+				Type: event.AttestationStarted,
+				Source: monitor.GenericTask{
+					Title: monitor.Title{
+						Default:      "Create attestation",
+						WhileRunning: "Creating attestation",
+						OnSuccess:    "Created attestation",
+					},
+					Context: "cosign",
+				},
+				Value: &monitor.ShellProgress{
+					Reader: b.r,
+					Manual: b.mon,
+				},
+			},
+		)
 	}
 	return b.w.Write(p)
 }

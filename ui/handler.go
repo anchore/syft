@@ -37,7 +37,7 @@ func (r *Handler) RespondsTo(event partybus.Event) bool {
 		syftEvent.FileMetadataCatalogerStarted,
 		syftEvent.FileIndexingStarted,
 		syftEvent.ImportStarted,
-		syftEvent.ShellOutput:
+		syftEvent.AttestationStarted:
 		return true
 	default:
 		return false
@@ -74,8 +74,8 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 	case syftEvent.ImportStarted:
 		return ImportStartedHandler(ctx, fr, event, wg)
 
-	case syftEvent.ShellOutput:
-		return ShellOutputHandler(ctx, fr, event, wg)
+	case syftEvent.AttestationStarted:
+		return AttestationStartedHandler(ctx, fr, event, wg)
 	}
 	return nil
 }

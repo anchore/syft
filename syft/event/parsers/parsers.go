@@ -5,6 +5,7 @@ package parsers
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/event/monitor"
 	"io"
 
 	"github.com/wagoodman/go-partybus"
@@ -154,20 +155,20 @@ func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, 
 	return host, prog, nil
 }
 
-func ParseShellOutputEvent(e partybus.Event) (io.Reader, string, error) {
-	if err := checkEventType(e.Type, event.ShellOutput); err != nil {
-		return nil, "", err
+func ParseAttestationStartedEvent(e partybus.Event) (io.Reader, progress.Progressable, *monitor.GenericTask, error) {
+	if err := checkEventType(e.Type, event.AttestationStarted); err != nil {
+		return nil, nil, nil, err
 	}
 
-	source, ok := e.Source.(string)
+	source, ok := e.Source.(monitor.GenericTask)
 	if !ok {
-		return nil, "", newPayloadErr(e.Type, "Source", e.Source)
+		return nil, nil, nil, newPayloadErr(e.Type, "Source", e.Source)
 	}
 
-	reader, ok := e.Value.(io.Reader)
+	sp, ok := e.Value.(*monitor.ShellProgress)
 	if !ok {
-		return nil, "", newPayloadErr(e.Type, "Value", e.Value)
+		return nil, nil, nil, newPayloadErr(e.Type, "Value", e.Value)
 	}
 
-	return reader, source, nil
+	return sp.Reader, sp.Manual, &source, nil
 }
