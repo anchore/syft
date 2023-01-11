@@ -110,26 +110,26 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileNameTemplateVersionMatcher(
 			`(.*/|^)php[0-9]*$`,
 			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-		Package:  "php-cli",
-		PURL:     mustPURL("pkg:generic/php-cli@version"),
-		CPEs:     singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+		Package: "php-cli",
+		PURL:    mustPURL("pkg:generic/php-cli@version"),
+		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "php-fpm-binary",
 		FileGlob: "**/php-fpm*",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-		Package:  "php-fpm",
-		PURL:     mustPURL("pkg:generic/php-fpm@version"),
-		CPEs:     singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+		Package: "php-fpm",
+		PURL:    mustPURL("pkg:generic/php-fpm@version"),
+		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "php-apache-binary",
 		FileGlob: "**/libphp*.so",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-		Package:  "libphp",
-		PURL:     mustPURL("pkg:generic/php@version"),
-		CPEs:     singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+		Package: "libphp",
+		PURL:    mustPURL("pkg:generic/php@version"),
+		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 }
