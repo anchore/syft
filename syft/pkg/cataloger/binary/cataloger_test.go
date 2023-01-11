@@ -18,6 +18,48 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		expected   pkg.Package
 	}{
 		{
+			name:       "positive-php-cli-8.2.1",
+			fixtureDir: "test-fixtures/classifiers/positive/php-cli-8.2.1",
+			expected: pkg.Package{
+				Name:      "php-cli",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php-cli@8.2.1",
+				Locations: singleLocation("php"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "php-cli-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-php-fpm-8.2.1",
+			fixtureDir: "test-fixtures/classifiers/positive/php-fpm-8.2.1",
+			expected: pkg.Package{
+				Name:      "php-fpm",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php-fpm@8.2.1",
+				Locations: singleLocation("php-fpm"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "php-fpm-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-php-apache-8.2.1",
+			fixtureDir: "test-fixtures/classifiers/positive/php-apache-8.2.1",
+			expected: pkg.Package{
+				Name:      "libphp",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php@8.2.1",
+				Locations: singleLocation("libphp.so"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "php-apache-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-redis-2.8.23",
 			fixtureDir: "test-fixtures/classifiers/positive/redis-server-2.8.23",
 			expected: pkg.Package{
