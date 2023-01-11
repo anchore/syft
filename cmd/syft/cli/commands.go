@@ -28,6 +28,7 @@ const indent = "  "
 // New constructs the `syft packages` command, aliases the root command to `syft packages`,
 // and constructs the `syft power-user` command. It is also responsible for
 // organizing flag usage and injecting the application config for each command.
+// It also constructs the syft attest command and the syft version command.
 
 // Because of how the `cobra` library behaves, the application's configuration is initialized
 // at this level. Values from the config should only be used after `app.LoadAllValues` has been called.

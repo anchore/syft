@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/wagoodman/go-partybus"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
@@ -17,6 +18,8 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/formats/syftjson"
+	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/template"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -165,6 +168,15 @@ func ValidateOutputOptions(app *config.Application) error {
 
 	if usesTemplateOutput && app.OutputTemplatePath == "" {
 		return fmt.Errorf(`must specify path to template file when using "template" output format`)
+	}
+
+	if len(app.Outputs) > 1 {
+		return fmt.Errorf("multiple SBOM format is not supported for attest at this time")
+	}
+
+	// cannot use table as default output format when using template output
+	if slices.Contains(app.Outputs, table.ID.String()) {
+		app.Outputs = []string{syftjson.ID.String()}
 	}
 
 	return nil

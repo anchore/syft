@@ -113,6 +113,17 @@ func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) 
 	return &s, nil
 }
 
+func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
+	var relationships []<-chan artifact.Relationship
+	for _, task := range tasks {
+		c := make(chan artifact.Relationship)
+		relationships = append(relationships, c)
+		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
+	}
+
+	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
+}
+
 func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
 	for _, c := range cs {
 		for n := range c {
@@ -137,15 +148,4 @@ func ValidateOutputOptions(app *config.Application) error {
 	}
 
 	return nil
-}
-
-func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
-	var relationships []<-chan artifact.Relationship
-	for _, task := range tasks {
-		c := make(chan artifact.Relationship)
-		relationships = append(relationships, c)
-		go eventloop.RunTask(task, &s.Artifacts, src, c, errs)
-	}
-
-	s.Relationships = append(s.Relationships, MergeRelationships(relationships...)...)
 }

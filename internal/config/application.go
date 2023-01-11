@@ -53,7 +53,6 @@ type Application struct {
 	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
 	Registry           registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
-	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
 }

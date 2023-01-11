@@ -532,6 +532,8 @@ func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.E
 }
 
 // ShellOutputHandler takes bytes from a event.ShellOutput and publishes them to the frame.
+//
+//nolint:funlen
 func ShellOutputHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	reader, source, err := syftEventParsers.ParseShellOutputEvent(event)
 	if err != nil {
