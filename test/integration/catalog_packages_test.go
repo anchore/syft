@@ -26,7 +26,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 		userInput := "docker-archive:" + tarPath
 		sourceInput, err := source.ParseInput(userInput, "", false)
 		require.NoError(b, err)
-		theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, nil)
+		theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, nil, nil)
 		b.Cleanup(cleanupSource)
 		if err != nil {
 			b.Fatalf("unable to get source: %+v", err)

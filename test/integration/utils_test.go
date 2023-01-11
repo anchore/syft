@@ -18,7 +18,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	userInput := "docker-archive:" + tarPath
 	sourceInput, err := source.ParseInput(userInput, "", false)
 	require.NoError(t, err)
-	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, nil)
+	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, nil, nil)
 	t.Cleanup(cleanupSource)
 	require.NoError(t, err)
 
@@ -54,7 +54,7 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 	userInput := "dir:" + dir
 	sourceInput, err := source.ParseInput(userInput, "", false)
 	require.NoError(t, err)
-	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, nil)
+	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, nil, nil)
 	t.Cleanup(cleanupSource)
 	require.NoError(t, err)
 
