@@ -53,16 +53,16 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catal
 	catalogerResult := new(catalogResult)
 
 	// find packages from the underlying raw data
-	log.Debugf("cataloging with %q", cataloger.Name())
+	log.WithFields("cataloger", cataloger.Name()).Trace("cataloging started")
 	packages, relationships, err := cataloger.Catalog(resolver)
 	if err != nil {
-		log.Debugf("cataloger=%q error in handling", cataloger.Name())
+		log.WithFields("cataloger", cataloger.Name()).Warn("error while cataloging")
 		return catalogerResult, err
 	}
 
 	catalogedPackages := len(packages)
 
-	log.Debugf("cataloger=%q discovered %d packages", cataloger.Name(), catalogedPackages)
+	log.WithFields("cataloger", cataloger.Name()).Debugf("discovered %d packages", catalogedPackages)
 	catalogerResult.Discovered = int64(catalogedPackages)
 
 	for _, p := range packages {
@@ -80,14 +80,14 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catal
 		// create file-to-package relationships for files owned by the package
 		owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
 		if err != nil {
-			log.Warnf("cataloger=%q unable to create any package-file relationships for package name=%q: %w", cataloger.Name(), p.Name, err)
+			log.WithFields("cataloger", cataloger.Name(), "package", p.Name, "error", err).Warnf("unable to create any package-file relationships")
 		} else {
 			catalogerResult.Relationships = append(catalogerResult.Relationships, owningRelationships...)
 		}
 		catalogerResult.Packages = append(catalogerResult.Packages, p)
 	}
 	catalogerResult.Relationships = append(catalogerResult.Relationships, relationships...)
-	log.Debugf("cataloger=%q done handling", cataloger.Name())
+	log.WithFields("cataloger", cataloger.Name()).Trace("cataloging complete")
 	return catalogerResult, nil
 }
 
@@ -108,7 +108,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 
 	// we do not need more parallelism than there are `catalogers`.
 	parallelism = int(math.Min(float64(nCatalogers), math.Max(1.0, float64(parallelism))))
-	log.Debugf("Using parallelism=%d for catalogs=%d", parallelism, nCatalogers)
+	log.WithFields("parallelism", parallelism, "catalogers", nCatalogers).Debug("cataloging packages")
 
 	jobs := make(chan pkg.Cataloger, nCatalogers)
 	results := make(chan *catalogResult, nCatalogers)
@@ -124,14 +124,14 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 
 			// wait for / get the next cataloger job available.
 			for cataloger := range jobs {
-				catalogResult, err := runCataloger(cataloger, resolver)
+				result, err := runCataloger(cataloger, resolver)
 
 				// ensure we set the error to be aggregated
-				catalogResult.Error = err
+				result.Error = err
 
-				discoveredPackages <- catalogResult.Discovered
+				discoveredPackages <- result.Discovered
 
-				results <- catalogResult
+				results <- result
 			}
 		}()
 	}
@@ -155,15 +155,15 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 	close(discoveredPackages)
 
 	// collect the results
-	for catalogResult := range results {
-		if catalogResult.Error != nil {
-			errs = multierror.Append(errs, catalogResult.Error)
+	for result := range results {
+		if result.Error != nil {
+			errs = multierror.Append(errs, result.Error)
 			continue
 		}
-		for _, pkg := range catalogResult.Packages {
-			catalog.Add(pkg)
+		for _, p := range result.Packages {
+			catalog.Add(p)
 		}
-		allRelationships = append(allRelationships, catalogResult.Relationships...)
+		allRelationships = append(allRelationships, result.Relationships...)
 	}
 
 	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
