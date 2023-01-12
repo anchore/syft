@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/facebookincubator/nvdtools/wfn"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/cpe"
@@ -16,7 +17,7 @@ import (
 
 // knownVendors contains vendor strings that are known to exist in
 // the CPE database, so they will be preferred over other candidates:
-var knownVendors = [1]string{"apache"}
+var knownVendors = strset.New("apache")
 
 func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
 	c := *(wfn.NewAttributesWithAny())
@@ -126,12 +127,10 @@ func candidateVendors(p pkg.Package) []string {
 
 	uniqueVendors := vendors.uniqueValues()
 
-	// if any known vendor was detected, pick that one
-	for _, knownVendor := range knownVendors {
-		for _, vendor := range uniqueVendors {
-			if vendor == knownVendor {
-				return []string{vendor}
-			}
+	// if any known vendor was detected, pick that one.
+	for _, vendor := range uniqueVendors {
+		if knownVendors.Has(vendor) {
+			return []string{vendor}
 		}
 	}
 
