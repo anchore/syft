@@ -237,6 +237,8 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 		exportSymbolsDataDirectory = h.DataDirectory[0]
 	case *pe.OptionalHeader64:
 		exportSymbolsDataDirectory = h.DataDirectory[0]
+	default:
+		return nil, fmt.Errorf("unable to get exportSymbolsDataDirectory from binary: %s", filename)
 	}
 	// If we have no exported symbols it is not a Native Image
 	if exportSymbolsDataDirectory.Size == 0 {
