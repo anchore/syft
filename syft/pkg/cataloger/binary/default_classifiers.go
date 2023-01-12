@@ -132,4 +132,13 @@ var defaultClassifiers = []classifier{
 		PURL:    mustPURL("pkg:generic/php@version"),
 		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
+	{
+		Class:    "httpd-binary",
+		FileGlob: "**/httpd",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)Apache\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "httpd",
+		PURL:    mustPURL("pkg:generic/httpd@version"),
+		CPEs:    singleCPE("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"),
+	},
 }
