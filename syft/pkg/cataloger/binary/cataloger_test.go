@@ -18,6 +18,19 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		expected   pkg.Package
 	}{
 		{
+			name:       "positive-httpd-2.4.54",
+			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54",
+			expected: pkg.Package{
+				Name:      "httpd",
+				Version:   "2.4.54",
+				Type:      "binary",
+				PURL:      "pkg:generic/httpd@2.4.54",
+				Locations: singleLocation("httpd"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "httpd-binary",
+				},
+			},
+		}, {
 			name:       "positive-php-cli-8.2.1",
 			fixtureDir: "test-fixtures/classifiers/positive/php-cli-8.2.1",
 			expected: pkg.Package{
