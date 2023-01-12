@@ -367,6 +367,8 @@ syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to Cyc
 ### Keyless support
 Syft supports generating attestations using cosign's [keyless](https://github.com/sigstore/cosign/blob/main/KEYLESS.md) signatures.
 
+Note: users need to have >= v1.12.0 of cosign installed for this command to function
+
 To use this feature with a format like CycloneDX json simply run:
 ```
 syft attest --output cyclonedx-json <IMAGE WITH OCI WRITE ACCESS>
