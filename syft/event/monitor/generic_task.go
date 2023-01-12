@@ -1,8 +1,9 @@
 package monitor
 
 import (
-	"github.com/wagoodman/go-progress"
 	"io"
+
+	"github.com/wagoodman/go-progress"
 )
 
 type ShellProgress struct {

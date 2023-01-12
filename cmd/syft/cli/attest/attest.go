@@ -3,12 +3,11 @@ package attest
 import (
 	"context"
 	"fmt"
-	"github.com/anchore/syft/syft/event/monitor"
-	"github.com/wagoodman/go-progress"
 	"os"
 	"os/exec"
 
 	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 	"golang.org/x/exp/slices"
 
 	"github.com/anchore/stereoscope"
@@ -20,6 +19,7 @@ import (
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/template"

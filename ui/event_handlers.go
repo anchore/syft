@@ -535,7 +535,7 @@ func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.E
 
 // AttestationStartedHandler takes bytes from a event.ShellOutput and publishes them to the frame.
 //
-//nolint:funlen
+//nolint:funlen,gocognit
 func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	reader, prog, taskInfo, err := syftEventParsers.ParseAttestationStartedEvent(event)
 	if err != nil {
