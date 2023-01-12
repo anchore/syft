@@ -9,74 +9,79 @@ type MetadataType string
 
 const (
 	// this is the full set of data shapes that can be represented within the pkg.Package.Metadata field
-
-	UnknownMetadataType          MetadataType = "UnknownMetadata"
-	ApkMetadataType              MetadataType = "ApkMetadata"
 	AlpmMetadataType             MetadataType = "AlpmMetadata"
+	ApkMetadataType              MetadataType = "ApkMetadata"
 	BinaryMetadataType           MetadataType = "BinaryMetadata"
-	DpkgMetadataType             MetadataType = "DpkgMetadata"
-	GemMetadataType              MetadataType = "GemMetadata"
-	JavaMetadataType             MetadataType = "JavaMetadata"
-	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
-	RpmMetadataType              MetadataType = "RpmMetadata"
+	CocoapodsMetadataType        MetadataType = "CocoapodsMetadataType"
+	ConanLockMetadataType        MetadataType = "ConanLockMetadataType"
+	ConanMetadataType            MetadataType = "ConanMetadataType"
 	DartPubMetadataType          MetadataType = "DartPubMetadata"
 	DotnetDepsMetadataType       MetadataType = "DotnetDepsMetadata"
-	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
-	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
-	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
+	DpkgMetadataType             MetadataType = "DpkgMetadata"
+	GemMetadataType              MetadataType = "GemMetadata"
 	GolangMetadataType           MetadataType = "GolangMetadata"
-	PhpComposerJSONMetadataType  MetadataType = "PhpComposerJsonMetadata"
-	CocoapodsMetadataType        MetadataType = "CocoapodsMetadataType"
-	ConanMetadataType            MetadataType = "ConanMetadataType"
-	ConanLockMetadataType        MetadataType = "ConanLockMetadataType"
-	PortageMetadataType          MetadataType = "PortageMetadata"
 	HackageMetadataType          MetadataType = "HackageMetadataType"
+	JavaMetadataType             MetadataType = "JavaMetadata"
+	KbPackageMetadataType        MetadataType = "KbPackageMetadata"
+	MixLockMetadataType          MetadataType = "MixLockMetadataType"
+	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
+	PhpComposerJSONMetadataType  MetadataType = "PhpComposerJsonMetadata"
+	PortageMetadataType          MetadataType = "PortageMetadata"
+	PythonPackageMetadataType    MetadataType = "PythonPackageMetadata"
+	RebarLockMetadataType        MetadataType = "RebarLockMetadataType"
+	RpmMetadataType              MetadataType = "RpmMetadata"
+	RustCargoPackageMetadataType MetadataType = "RustCargoPackageMetadata"
+	UnknownMetadataType          MetadataType = "UnknownMetadata"
 )
 
 var AllMetadataTypes = []MetadataType{
-	ApkMetadataType,
 	AlpmMetadataType,
+	ApkMetadataType,
 	BinaryMetadataType,
-	DpkgMetadataType,
-	GemMetadataType,
-	JavaMetadataType,
-	NpmPackageJSONMetadataType,
-	RpmMetadataType,
+	CocoapodsMetadataType,
+	ConanLockMetadataType,
+	ConanMetadataType,
 	DartPubMetadataType,
 	DotnetDepsMetadataType,
-	PythonPackageMetadataType,
-	RustCargoPackageMetadataType,
-	KbPackageMetadataType,
+	DpkgMetadataType,
+	GemMetadataType,
 	GolangMetadataType,
-	PhpComposerJSONMetadataType,
-	CocoapodsMetadataType,
-	ConanMetadataType,
-	ConanLockMetadataType,
-	PortageMetadataType,
 	HackageMetadataType,
+	JavaMetadataType,
+	KbPackageMetadataType,
+	MixLockMetadataType,
+	NpmPackageJSONMetadataType,
+	PhpComposerJSONMetadataType,
+	PortageMetadataType,
+	PythonPackageMetadataType,
+	RebarLockMetadataType,
+	RpmMetadataType,
+	RustCargoPackageMetadataType,
 }
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
-	ApkMetadataType:              reflect.TypeOf(ApkMetadata{}),
 	AlpmMetadataType:             reflect.TypeOf(AlpmMetadata{}),
+	ApkMetadataType:              reflect.TypeOf(ApkMetadata{}),
 	BinaryMetadataType:           reflect.TypeOf(BinaryMetadata{}),
-	DpkgMetadataType:             reflect.TypeOf(DpkgMetadata{}),
-	GemMetadataType:              reflect.TypeOf(GemMetadata{}),
-	JavaMetadataType:             reflect.TypeOf(JavaMetadata{}),
-	NpmPackageJSONMetadataType:   reflect.TypeOf(NpmPackageJSONMetadata{}),
-	RpmMetadataType:              reflect.TypeOf(RpmMetadata{}),
+	CocoapodsMetadataType:        reflect.TypeOf(CocoapodsMetadata{}),
+	ConanLockMetadataType:        reflect.TypeOf(ConanLockMetadata{}),
+	ConanMetadataType:            reflect.TypeOf(ConanMetadata{}),
 	DartPubMetadataType:          reflect.TypeOf(DartPubMetadata{}),
 	DotnetDepsMetadataType:       reflect.TypeOf(DotnetDepsMetadata{}),
-	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
-	RustCargoPackageMetadataType: reflect.TypeOf(CargoPackageMetadata{}),
-	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),
+	DpkgMetadataType:             reflect.TypeOf(DpkgMetadata{}),
+	GemMetadataType:              reflect.TypeOf(GemMetadata{}),
 	GolangMetadataType:           reflect.TypeOf(GolangMetadata{}),
-	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
-	CocoapodsMetadataType:        reflect.TypeOf(CocoapodsMetadata{}),
-	ConanMetadataType:            reflect.TypeOf(ConanMetadata{}),
-	ConanLockMetadataType:        reflect.TypeOf(ConanLockMetadata{}),
-	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
 	HackageMetadataType:          reflect.TypeOf(HackageMetadata{}),
+	JavaMetadataType:             reflect.TypeOf(JavaMetadata{}),
+	KbPackageMetadataType:        reflect.TypeOf(KbPackageMetadata{}),
+	MixLockMetadataType:          reflect.TypeOf(MixLockMetadata{}),
+	NpmPackageJSONMetadataType:   reflect.TypeOf(NpmPackageJSONMetadata{}),
+	PhpComposerJSONMetadataType:  reflect.TypeOf(PhpComposerJSONMetadata{}),
+	PortageMetadataType:          reflect.TypeOf(PortageMetadata{}),
+	PythonPackageMetadataType:    reflect.TypeOf(PythonPackageMetadata{}),
+	RebarLockMetadataType:        reflect.TypeOf(RebarLockMetadata{}),
+	RpmMetadataType:              reflect.TypeOf(RpmMetadata{}),
+	RustCargoPackageMetadataType: reflect.TypeOf(CargoPackageMetadata{}),
 }
 
 func CleanMetadataType(typ MetadataType) MetadataType {

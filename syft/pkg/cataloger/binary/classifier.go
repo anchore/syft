@@ -125,7 +125,6 @@ func singlePackage(classifier classifier, reader source.LocationReadCloser, matc
 	p := pkg.Package{
 		Name:         classifier.Package,
 		Version:      version,
-		Language:     pkg.Binary,
 		Locations:    source.NewLocationSet(reader.Location),
 		Type:         pkg.BinaryPkg,
 		CPEs:         cpes,

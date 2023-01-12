@@ -191,6 +191,14 @@ func Test_SourceInfo(t *testing.T) {
 				"acquired package info from the following paths",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.HexPkg,
+			},
+			expected: []string{
+				"from rebar3 or mix manifest file",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

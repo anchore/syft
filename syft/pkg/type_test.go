@@ -79,6 +79,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:hackage/HTTP@4000.3.16",
 			expected: HackagePkg,
 		},
+		{
+			purl:     "pkg:hex/hpax/hpax@0.1.1",
+			expected: HexPkg,
+		},
 	}
 
 	var pkgTypes []string

@@ -17,6 +17,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
+	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
+	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -81,6 +83,8 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		elixir.NewMixLockCataloger(),
+		erlang.NewRebarLockCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -115,6 +119,8 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		elixir.NewMixLockCataloger(),
+		erlang.NewRebarLockCataloger(),
 	}, cfg.Catalogers)
 }
 

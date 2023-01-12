@@ -10,90 +10,94 @@ type Type string
 const (
 	// the full set of supported packages
 	UnknownPkg            Type = "UnknownPackage"
-	BinaryPkg             Type = "binary"
-	ApkPkg                Type = "apk"
 	AlpmPkg               Type = "alpm"
-	GemPkg                Type = "gem"
-	DebPkg                Type = "deb"
-	RpmPkg                Type = "rpm"
-	NpmPkg                Type = "npm"
-	PythonPkg             Type = "python"
-	PhpComposerPkg        Type = "php-composer"
-	JavaPkg               Type = "java-archive"
-	GraalVMNativeImagePkg Type = "graalvm-native-image"
-	JenkinsPluginPkg      Type = "jenkins-plugin"
-	GoModulePkg           Type = "go-module"
-	RustPkg               Type = "rust-crate"
-	KbPkg                 Type = "msrc-kb"
-	DartPubPkg            Type = "dart-pub"
-	DotnetPkg             Type = "dotnet"
+	ApkPkg                Type = "apk"
+	BinaryPkg             Type = "binary"
 	CocoapodsPkg          Type = "pod"
 	ConanPkg              Type = "conan"
-	PortagePkg            Type = "portage"
+	DartPubPkg            Type = "dart-pub"
+	DebPkg                Type = "deb"
+	DotnetPkg             Type = "dotnet"
+	GemPkg                Type = "gem"
+	GoModulePkg           Type = "go-module"
+	GraalVMNativeImagePkg Type = "graalvm-native-image"
 	HackagePkg            Type = "hackage"
+	HexPkg                Type = "hex"
+	JavaPkg               Type = "java-archive"
+	JenkinsPluginPkg      Type = "jenkins-plugin"
+	KbPkg                 Type = "msrc-kb"
+	NpmPkg                Type = "npm"
+	PhpComposerPkg        Type = "php-composer"
+	PortagePkg            Type = "portage"
+	PythonPkg             Type = "python"
+	RpmPkg                Type = "rpm"
+	RustPkg               Type = "rust-crate"
 )
 
 // AllPkgs represents all supported package types
 var AllPkgs = []Type{
-	ApkPkg,
 	AlpmPkg,
+	ApkPkg,
 	BinaryPkg,
-	GemPkg,
-	DebPkg,
-	RpmPkg,
-	NpmPkg,
-	PythonPkg,
-	PhpComposerPkg,
-	JavaPkg,
-	JenkinsPluginPkg,
-	GoModulePkg,
-	RustPkg,
-	KbPkg,
-	DartPubPkg,
-	DotnetPkg,
 	CocoapodsPkg,
 	ConanPkg,
-	PortagePkg,
+	DartPubPkg,
+	DebPkg,
+	DotnetPkg,
+	GemPkg,
+	GoModulePkg,
 	HackagePkg,
+	HexPkg,
+	JavaPkg,
+	JenkinsPluginPkg,
+	KbPkg,
+	NpmPkg,
+	PhpComposerPkg,
+	PortagePkg,
+	PythonPkg,
+	RpmPkg,
+	RustPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
 func (t Type) PackageURLType() string {
 	switch t {
-	case ApkPkg:
-		return packageurl.TypeAlpine
 	case AlpmPkg:
 		return "alpm"
-	case GemPkg:
-		return packageurl.TypeGem
-	case DebPkg:
-		return "deb"
-	case PythonPkg:
-		return packageurl.TypePyPi
-	case PhpComposerPkg:
-		return packageurl.TypeComposer
-	case NpmPkg:
-		return packageurl.TypeNPM
-	case JavaPkg, JenkinsPluginPkg:
-		return packageurl.TypeMaven
-	case RpmPkg:
-		return packageurl.TypeRPM
-	case GoModulePkg:
-		return packageurl.TypeGolang
-	case RustPkg:
-		return "cargo"
-	case DartPubPkg:
-		return packageurl.TypePub
-	case DotnetPkg:
-		return packageurl.TypeDotnet
+	case ApkPkg:
+		return packageurl.TypeAlpine
 	case CocoapodsPkg:
 		return packageurl.TypeCocoapods
 	case ConanPkg:
 		return packageurl.TypeConan
-	case PortagePkg:
-		return "portage"
+	case DartPubPkg:
+		return packageurl.TypePub
+	case DebPkg:
+		return "deb"
+	case DotnetPkg:
+		return packageurl.TypeDotnet
+	case GemPkg:
+		return packageurl.TypeGem
+	case HexPkg:
+		return packageurl.TypeHex
+	case GoModulePkg:
+		return packageurl.TypeGolang
 	case HackagePkg:
 		return packageurl.TypeHackage
+	case JavaPkg, JenkinsPluginPkg:
+		return packageurl.TypeMaven
+	case PhpComposerPkg:
+		return packageurl.TypeComposer
+	case PythonPkg:
+		return packageurl.TypePyPi
+	case PortagePkg:
+		return "portage"
+	case NpmPkg:
+		return packageurl.TypeNPM
+	case RpmPkg:
+		return packageurl.TypeRPM
+	case RustPkg:
+		return "cargo"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -111,7 +115,7 @@ func TypeFromPURL(p string) Type {
 
 func TypeByName(name string) Type {
 	switch name {
-	case packageurl.TypeDebian, "deb":
+	case packageurl.TypeDebian:
 		return DebPkg
 	case packageurl.TypeRPM:
 		return RpmPkg
@@ -145,6 +149,8 @@ func TypeByName(name string) Type {
 		return HackagePkg
 	case "portage":
 		return PortagePkg
+	case packageurl.TypeHex:
+		return HexPkg
 	default:
 		return UnknownPkg
 	}

@@ -12,36 +12,38 @@ type Language string
 const (
 	// the full set of supported programming languages
 	UnknownLanguage Language = ""
-	Java            Language = "java"
-	JavaScript      Language = "javascript"
-	Python          Language = "python"
-	PHP             Language = "php"
-	Ruby            Language = "ruby"
-	Go              Language = "go"
-	Rust            Language = "rust"
+	CPP             Language = "c++"
 	Dart            Language = "dart"
 	Dotnet          Language = "dotnet"
-	Swift           Language = "swift"
-	CPP             Language = "c++"
+	Elixir          Language = "elixir"
+	Erlang          Language = "erlang"
+	Go              Language = "go"
 	Haskell         Language = "haskell"
-	Binary          Language = "binary"
-	File            Language = "file"
+	Java            Language = "java"
+	JavaScript      Language = "javascript"
+	PHP             Language = "php"
+	Python          Language = "python"
+	Ruby            Language = "ruby"
+	Rust            Language = "rust"
+	Swift           Language = "swift"
 )
 
 // AllLanguages is a set of all programming languages detected by syft.
 var AllLanguages = []Language{
-	Java,
-	JavaScript,
-	Python,
-	PHP,
-	Ruby,
-	Go,
-	Rust,
+	CPP,
 	Dart,
 	Dotnet,
-	Swift,
-	CPP,
+	Elixir,
+	Erlang,
+	Go,
 	Haskell,
+	Java,
+	JavaScript,
+	PHP,
+	Python,
+	Ruby,
+	Rust,
+	Swift,
 }
 
 // String returns the string representation of the language.
@@ -84,6 +86,11 @@ func LanguageByName(name string) Language {
 		return CPP
 	case packageurl.TypeHackage, string(Haskell):
 		return Haskell
+	case packageurl.TypeHex, "beam", "elixir", "erlang":
+		// should we support returning multiple languages to support this case?
+		// answer: no. We want this to definitively answer "which language does this package represent?"
+		// which might not be possible in all cases. See for more context: https://github.com/package-url/purl-spec/pull/178
+		return UnknownLanguage
 	default:
 		return UnknownLanguage
 	}
