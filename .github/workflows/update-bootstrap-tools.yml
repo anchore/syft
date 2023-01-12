@@ -39,10 +39,6 @@ jobs:
           sed -r -i -e 's/^(YAJSV_VERSION = ).*/\1'${YAJSV_LATEST_VERSION}'/' Makefile
           sed -r -i -e 's/^(COSIGN_VERSION = ).*/\1'${COSIGN_LATEST_VERSION}'/' Makefile
           
-          # update cosign in go.mod as well
-          go get github.com/sigstore/cosign@$COSIGN_LATEST_VERSION
-          go mod tidy
-          
           # export the versions for use with create-pull-request
           echo "::set-output name=GOLANGCILINT::$GOLANGCILINT_LATEST_VERSION"
           echo "::set-output name=BOUNCER::$BOUNCER_LATEST_VERSION"
