@@ -27,26 +27,33 @@ can be extended to include specific package metadata struct shapes in the future
 // This should represent all possible metadatas represented in the pkg.Package.Metadata field (an interface{}).
 // When a new package metadata definition is created it will need to be manually added here. The variable name does
 // not matter as long as it is exported.
+
+// TODO: this should be generated from reflection of whats in the pkg package
 type artifactMetadataContainer struct {
-	Apk           pkg.ApkMetadata
-	Alpm          pkg.AlpmMetadata
-	Dpkg          pkg.DpkgMetadata
-	Gem           pkg.GemMetadata
-	Java          pkg.JavaMetadata
-	Npm           pkg.NpmPackageJSONMetadata
-	Python        pkg.PythonPackageMetadata
-	Rpm           pkg.RpmMetadata
-	Cargo         pkg.CargoPackageMetadata
-	Go            pkg.GolangMetadata
-	Php           pkg.PhpComposerJSONMetadata
-	Dart          pkg.DartPubMetadata
-	Dotnet        pkg.DotnetDepsMetadata
-	Portage       pkg.PortageMetadata
-	Conan         pkg.ConanMetadata
-	ConanLock     pkg.ConanLockMetadata
-	KbPackage     pkg.KbPackageMetadata
-	Hackage       pkg.HackageMetadata
-	SwiftCocopods pkg.CocoapodsMetadata
+	Alpm              pkg.AlpmMetadata
+	Apk               pkg.ApkMetadata
+	Binary            pkg.BinaryMetadata
+	Cocopods          pkg.CocoapodsMetadata
+	Conan             pkg.ConanMetadata
+	ConanLock         pkg.ConanLockMetadata
+	Dart              pkg.DartPubMetadata
+	Dotnet            pkg.DotnetDepsMetadata
+	Dpkg              pkg.DpkgMetadata
+	Gem               pkg.GemMetadata
+	Go                pkg.GolangMetadata
+	Hackage           pkg.HackageMetadata
+	Java              pkg.JavaMetadata
+	KbPackage         pkg.KbPackageMetadata
+	NpmPackage        pkg.NpmPackageJSONMetadata
+	NpmPackageLock    pkg.NpmPackageLockJSONMetadata
+	MixLock           pkg.MixLockMetadata
+	Php               pkg.PhpComposerJSONMetadata
+	Portage           pkg.PortageMetadata
+	PythonPackage     pkg.PythonPackageMetadata
+	PythonPipfilelock pkg.PythonPipfileLockMetadata
+	Rebar             pkg.RebarLockMetadata
+	Rpm               pkg.RpmMetadata
+	RustCargo         pkg.CargoPackageMetadata
 }
 
 func main() {
