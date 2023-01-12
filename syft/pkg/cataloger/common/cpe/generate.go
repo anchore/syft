@@ -8,11 +8,16 @@ import (
 	"strings"
 
 	"github.com/facebookincubator/nvdtools/wfn"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+// knownVendors contains vendor strings that are known to exist in
+// the CPE database, so they will be preferred over other candidates:
+var knownVendors = strset.New("apache")
 
 func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
 	c := *(wfn.NewAttributesWithAny())
@@ -120,7 +125,16 @@ func candidateVendors(p pkg.Package) []string {
 	// remove known mis
 	vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
 
-	return vendors.uniqueValues()
+	uniqueVendors := vendors.uniqueValues()
+
+	// if any known vendor was detected, pick that one.
+	for _, vendor := range uniqueVendors {
+		if knownVendors.Has(vendor) {
+			return []string{vendor}
+		}
+	}
+
+	return uniqueVendors
 }
 
 func candidateProducts(p pkg.Package) []string {
