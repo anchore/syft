@@ -38,11 +38,6 @@ type Dependency struct {
 	Index   string   `json:"index"`
 }
 
-type PipfileMetadata struct {
-	Hashes []string
-	Index  string
-}
-
 var _ generic.Parser = parsePipfileLock
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
@@ -70,7 +65,7 @@ func parsePipfileLock(_ source.FileResolver, _ *generic.Environment, reader sour
 				index = "https://pypi.org/simple"
 			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			pkgs = append(pkgs, newPackageForIndexWithMetadata(name, version, PipfileMetadata{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
+			pkgs = append(pkgs, newPackageForIndexWithMetadata(name, version, pkg.PythonPipfileLockMetadata{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
 		}
 	}
 

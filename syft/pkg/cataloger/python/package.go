@@ -23,7 +23,7 @@ func newPackageForIndex(name, version string, locations ...source.Location) pkg.
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata PipfileMetadata, locations ...source.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockMetadata, locations ...source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         name,
 		Version:      version,
@@ -31,7 +31,7 @@ func newPackageForIndexWithMetadata(name, version string, metadata PipfileMetada
 		PURL:         packageURL(name, version, nil),
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
-		MetadataType: pkg.PythonPackagePipfileMetadataType,
+		MetadataType: pkg.PythonPipfileLockMetadataType,
 		Metadata:     metadata,
 	}
 

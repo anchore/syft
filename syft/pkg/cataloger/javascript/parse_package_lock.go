@@ -39,11 +39,6 @@ type lockPackage struct {
 	License   string `json:"license"`
 }
 
-type NpmMetadata struct {
-	Resolved  string
-	Integrity string
-}
-
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
 func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those

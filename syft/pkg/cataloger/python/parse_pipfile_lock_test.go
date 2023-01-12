@@ -21,8 +21,8 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			MetadataType: "PythonPackagePipfileMetadata",
-			Metadata: PipfileMetadata{
+			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
 					"sha256:1d4305a5f78af3857310b4fe48348cdcf6c097e0e275ea88c2cd08570531a369",
@@ -36,8 +36,8 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			MetadataType: "PythonPackagePipfileMetadata",
-			Metadata: PipfileMetadata{
+			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://test.pypi.org/simple",
 				Hashes: []string{
 					"sha256:815fdef4607474295d68da46978a54481dd1e7be153c7d60f9e72773cd38d77d",
@@ -52,8 +52,8 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			MetadataType: "PythonPackagePipfileMetadata",
-			Metadata: PipfileMetadata{
+			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
 					"sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe",
@@ -68,8 +68,8 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			MetadataType: "PythonPackagePipfileMetadata",
-			Metadata: PipfileMetadata{
+			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
 					"sha256:860da7582efa866744bad5883947557d0f82e457d69903ea65d666b66f8a69ca",

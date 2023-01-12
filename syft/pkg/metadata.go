@@ -30,6 +30,7 @@ const (
 	PhpComposerJSONMetadataType    MetadataType = "PhpComposerJsonMetadata"
 	PortageMetadataType            MetadataType = "PortageMetadata"
 	PythonPackageMetadataType      MetadataType = "PythonPackageMetadata"
+	PythonPipfileLockMetadataType  MetadataType = "PythonPipfileLockMetadata"
 	RebarLockMetadataType          MetadataType = "RebarLockMetadataType"
 	RpmMetadataType                MetadataType = "RpmMetadata"
 	RustCargoPackageMetadataType   MetadataType = "RustCargoPackageMetadata"
@@ -56,6 +57,7 @@ var AllMetadataTypes = []MetadataType{
 	PhpComposerJSONMetadataType,
 	PortageMetadataType,
 	PythonPackageMetadataType,
+	PythonPipfileLockMetadataType,
 	RebarLockMetadataType,
 	RpmMetadataType,
 	RustCargoPackageMetadataType,
@@ -82,6 +84,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	PhpComposerJSONMetadataType:    reflect.TypeOf(PhpComposerJSONMetadata{}),
 	PortageMetadataType:            reflect.TypeOf(PortageMetadata{}),
 	PythonPackageMetadataType:      reflect.TypeOf(PythonPackageMetadata{}),
+	PythonPipfileLockMetadataType:  reflect.TypeOf(PythonPipfileLockMetadata{}),
 	RebarLockMetadataType:          reflect.TypeOf(RebarLockMetadata{}),
 	RpmMetadataType:                reflect.TypeOf(RpmMetadata{}),
 	RustCargoPackageMetadataType:   reflect.TypeOf(CargoPackageMetadata{}),

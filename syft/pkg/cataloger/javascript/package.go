@@ -70,7 +70,7 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     NpmMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }
@@ -94,7 +94,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 			Type:         pkg.NpmPkg,
 			Licenses:     licenses,
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     NpmMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }

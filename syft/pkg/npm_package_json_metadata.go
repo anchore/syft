@@ -1,6 +1,6 @@
 package pkg
 
-// NpmPackageJSONMetadata holds extra information that is used in pkg.Package
+// NpmPackageJSONMetadata holds parsing information for a javascript package.json file
 type NpmPackageJSONMetadata struct {
 	Name        string   `mapstructure:"name" json:"name"`
 	Version     string   `mapstructure:"version" json:"version"`
