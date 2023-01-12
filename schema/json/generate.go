@@ -136,7 +136,7 @@ func write(schema []byte) {
 		}
 
 		// the generated schema is different, bail with error :(
-		fmt.Printf("Cowardly refusing to overwrite existing schema (%s)!\nSee the scheam/json/README.md for how to increment\n", filename)
+		fmt.Printf("Cowardly refusing to overwrite existing schema (%s)!\nSee the schema/json/README.md for how to increment\n", filename)
 		os.Exit(1)
 	}
 
