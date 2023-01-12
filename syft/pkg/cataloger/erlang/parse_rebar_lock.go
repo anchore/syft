@@ -1,4 +1,4 @@
-package beam
+package erlang
 
 import (
 	"bufio"
@@ -9,28 +9,31 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
-var _ common.ParserFn = parseRebarLock
+var _ generic.Parser = parseRebarLock
 
 var rebarLockDelimiter = regexp.MustCompile(`[\[{<">},: \]\n]+`)
 
 // parseMixLock parses a mix.lock and returns the discovered Elixir packages.
-func parseRebarLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseRebarLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 
 	pkgMap := make(map[string]*pkg.Package)
 
-	var packages []*pkg.Package
+	var names []string
+loop:
 	for {
 		line, err := r.ReadString('\n')
 		switch {
 		case errors.Is(io.EOF, err):
-			return packages, nil, nil
+			break loop
 		case err != nil:
-			return nil, nil, fmt.Errorf("failed to parse mix.lock file: %w", err)
+			// TODO: return partial result and warn
+			return nil, nil, fmt.Errorf("failed to parse rebar.lock file: %w", err)
 		}
 		tokens := rebarLockDelimiter.Split(line, -1)
 		if len(tokens) < 4 {
@@ -39,7 +42,7 @@ func parseRebarLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 		if len(tokens) < 5 {
 			name, hash := tokens[1], tokens[2]
 			sourcePkg := pkgMap[name]
-			metadata := sourcePkg.Metadata.(pkg.HexMetadata)
+			metadata := sourcePkg.Metadata.(pkg.RebarLockMetadata)
 			if metadata.PkgHash == "" {
 				metadata.PkgHash = hash
 			} else {
@@ -53,18 +56,25 @@ func parseRebarLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 		sourcePkg := pkg.Package{
 			Name:         name,
 			Version:      version,
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
-				Name:       name,
-				Version:    version,
-				PkgHash:    "",
-				PkgHashExt: "",
-			},
+			MetadataType: pkg.RebarLockMetadataType,
 		}
 
-		packages = append(packages, &sourcePkg)
-		pkgMap[sourcePkg.Name] = &sourcePkg
+		p := newPackage(pkg.RebarLockMetadata{
+			Name:    name,
+			Version: version,
+		})
+
+		names = append(names, name)
+		pkgMap[sourcePkg.Name] = &p
 	}
+
+	var packages []pkg.Package
+	for _, name := range names {
+		p := pkgMap[name]
+		p.SetID()
+		packages = append(packages, *p)
+	}
+	return packages, nil, nil
 }

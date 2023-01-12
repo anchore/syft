@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -69,7 +70,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(string(pkg.Swift.String()))
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
-	definedLanguages.Remove(pkg.Beam.String())
+	definedLanguages.Remove(pkg.Erlang.String())
+	definedLanguages.Remove(pkg.Elixir.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -186,7 +188,14 @@ func TestPkgCoverageDirectory(t *testing.T) {
 					t.Errorf("unexpected package version (pkg=%s): %s", actualPkg.Name, actualPkg.Version)
 				}
 
-				if actualPkg.Language != test.pkgLanguage {
+				var foundLang bool
+				for _, lang := range strings.Split(test.pkgLanguage.String(), ",") {
+					if actualPkg.Language.String() == lang {
+						foundLang = true
+						break
+					}
+				}
+				if !foundLang {
 					t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)
 				}
 

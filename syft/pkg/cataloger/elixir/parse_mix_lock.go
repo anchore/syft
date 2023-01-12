@@ -1,4 +1,4 @@
-package beam
+package elixir
 
 import (
 	"bufio"
@@ -7,21 +7,23 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
-var _ common.ParserFn = parseMixLock
+var _ generic.Parser = parseMixLock
 
 var mixLockDelimiter = regexp.MustCompile(`[%{}\n" ,:]+`)
 
 // parseMixLock parses a mix.lock and returns the discovered Elixir packages.
-func parseMixLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseMixLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 
-	var packages []*pkg.Package
+	var packages []pkg.Package
 	for {
 		line, err := r.ReadString('\n')
 		switch {
@@ -36,18 +38,16 @@ func parseMixLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relati
 		}
 		name, version, hash, hashExt := tokens[1], tokens[4], tokens[5], tokens[len(tokens)-2]
 
-		packages = append(packages, &pkg.Package{
-			Name:         name,
-			Version:      version,
-			Language:     pkg.Beam,
-			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
-				Name:       name,
-				Version:    version,
-				PkgHash:    hash,
-				PkgHashExt: hashExt,
-			},
-		})
+		if name == "" {
+			log.WithFields("path", reader.RealPath).Debug("skipping empty package name from mix.lock file")
+			continue
+		}
+
+		packages = append(packages, newPackage(pkg.MixLockMetadata{
+			Name:       name,
+			Version:    version,
+			PkgHash:    hash,
+			PkgHashExt: hashExt,
+		}))
 	}
 }

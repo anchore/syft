@@ -26,7 +26,6 @@ const (
 	JavaPkg               Type = "java-archive"
 	JenkinsPluginPkg      Type = "jenkins-plugin"
 	KbPkg                 Type = "msrc-kb"
-	MixPkg                Type = "mix"
 	NpmPkg                Type = "npm"
 	PhpComposerPkg        Type = "php-composer"
 	PortagePkg            Type = "portage"
@@ -43,9 +42,7 @@ var AllPkgs = []Type{
 	CocoapodsPkg,
 	ConanPkg,
 	DartPubPkg,
-	DartPubPkg,
 	DebPkg,
-	DotnetPkg,
 	DotnetPkg,
 	GemPkg,
 	GoModulePkg,

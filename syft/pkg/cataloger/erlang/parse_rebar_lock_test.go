@@ -1,22 +1,23 @@
-package beam
+package erlang
 
 import (
-	"os"
 	"testing"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func TestParseRebarLock(t *testing.T) {
-	expected := []*pkg.Package{
+	expected := []pkg.Package{
 		{
 			Name:         "certifi",
 			Version:      "2.9.0",
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
+			PURL:         "pkg:hex/certifi@2.9.0",
+			MetadataType: pkg.RebarLockMetadataType,
+			Metadata: pkg.RebarLockMetadata{
 				Name:       "certifi",
 				Version:    "2.9.0",
 				PkgHash:    "6F2A475689DD47F19FB74334859D460A2DC4E3252A3324BD2111B8F0429E7E21",
@@ -26,10 +27,11 @@ func TestParseRebarLock(t *testing.T) {
 		{
 			Name:         "idna",
 			Version:      "6.1.1",
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
+			PURL:         "pkg:hex/idna@6.1.1",
+			MetadataType: pkg.RebarLockMetadataType,
+			Metadata: pkg.RebarLockMetadata{
 				Name:       "idna",
 				Version:    "6.1.1",
 				PkgHash:    "8A63070E9F7D0C62EB9D9FCB360A7DE382448200FBBD1B106CC96D3D8099DF8D",
@@ -39,10 +41,11 @@ func TestParseRebarLock(t *testing.T) {
 		{
 			Name:         "metrics",
 			Version:      "1.0.1",
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
+			PURL:         "pkg:hex/metrics@1.0.1",
+			MetadataType: pkg.RebarLockMetadataType,
+			Metadata: pkg.RebarLockMetadata{
 				Name:       "metrics",
 				Version:    "1.0.1",
 				PkgHash:    "25F094DEA2CDA98213CECC3AEFF09E940299D950904393B2A29D191C346A8486",
@@ -52,10 +55,11 @@ func TestParseRebarLock(t *testing.T) {
 		{
 			Name:         "mimerl",
 			Version:      "1.2.0",
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
+			PURL:         "pkg:hex/mimerl@1.2.0",
+			MetadataType: pkg.RebarLockMetadataType,
+			Metadata: pkg.RebarLockMetadata{
 				Name:       "mimerl",
 				Version:    "1.2.0",
 				PkgHash:    "67E2D3F571088D5CFD3E550C383094B47159F3EEE8FFA08E64106CDF5E981BE3",
@@ -65,10 +69,11 @@ func TestParseRebarLock(t *testing.T) {
 		{
 			Name:         "parse_trans",
 			Version:      "3.3.1",
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
+			PURL:         "pkg:hex/parse_trans@3.3.1",
+			MetadataType: pkg.RebarLockMetadataType,
+			Metadata: pkg.RebarLockMetadata{
 				Name:       "parse_trans",
 				Version:    "3.3.1",
 				PkgHash:    "16328AB840CC09919BD10DAB29E431DA3AF9E9E7E7E6F0089DD5A2D2820011D8",
@@ -78,10 +83,11 @@ func TestParseRebarLock(t *testing.T) {
 		{
 			Name:         "ssl_verify_fun",
 			Version:      "1.1.6",
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
+			PURL:         "pkg:hex/ssl_verify_fun@1.1.6",
+			MetadataType: pkg.RebarLockMetadataType,
+			Metadata: pkg.RebarLockMetadata{
 				Name:       "ssl_verify_fun",
 				Version:    "1.1.6",
 				PkgHash:    "CF344F5692C82D2CD7554F5EC8FD961548D4FD09E7D22F5B62482E5AEAEBD4B0",
@@ -91,10 +97,11 @@ func TestParseRebarLock(t *testing.T) {
 		{
 			Name:         "unicode_util_compat",
 			Version:      "0.7.0",
-			Language:     pkg.Beam,
+			Language:     pkg.Erlang,
 			Type:         pkg.HexPkg,
-			MetadataType: pkg.BeamHexMetadataType,
-			Metadata: pkg.HexMetadata{
+			PURL:         "pkg:hex/unicode_util_compat@0.7.0",
+			MetadataType: pkg.RebarLockMetadataType,
+			Metadata: pkg.RebarLockMetadata{
 				Name:       "unicode_util_compat",
 				Version:    "0.7.0",
 				PkgHash:    "BC84380C9AB48177092F43AC89E4DFA2C6D62B40B8BD132B1059ECC7232F9A78",
@@ -103,18 +110,10 @@ func TestParseRebarLock(t *testing.T) {
 		},
 	}
 
-	fixture, err := os.Open("test-fixtures/rebar.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
+	fixture := "test-fixtures/rebar.lock"
 
-	actual, _, err := parseRebarLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Error(err)
-	}
+	// TODO: relationships are not under test
+	var expectedRelationships []artifact.Relationship
 
-	differences := deep.Equal(expected, actual)
-	if differences != nil {
-		t.Errorf("returned package list differed from expectation: %+v", differences)
-	}
+	pkgtest.TestFileParser(t, fixture, parseRebarLock, expected, expectedRelationships)
 }
