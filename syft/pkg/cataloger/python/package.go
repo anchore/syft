@@ -23,6 +23,23 @@ func newPackageForIndex(name, version string, locations ...source.Location) pkg.
 	return p
 }
 
+func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockMetadata, locations ...source.Location) pkg.Package {
+	p := pkg.Package{
+		Name:         name,
+		Version:      version,
+		Locations:    source.NewLocationSet(locations...),
+		PURL:         packageURL(name, version, nil),
+		Language:     pkg.Python,
+		Type:         pkg.PythonPkg,
+		MetadataType: pkg.PythonPipfileLockMetadataType,
+		Metadata:     metadata,
+	}
+
+	p.SetID()
+
+	return p
+}
+
 func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...source.Location) pkg.Package {
 	var licenses []string
 	if m.License != "" {
