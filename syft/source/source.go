@@ -25,6 +25,11 @@ import (
 )
 
 var (
+	osIdPaths = []string{
+		"/etc/os-release", "/usr/lib/os-release", "/etc/lsb-release",
+		"/etc/centos-release", "/etc/redhat-release", "/etc/system-release-cpe",
+		"/bin/busybox",
+	}
 	binarySearchPaths = []string{
 		"/usr/lib/jvm/**", "/usr/share/java/**",
 		"/usr/local/sbin/*", "/usr/local/bin/*", "/usr/sbin/*", "/usr/bin/*", "/sbin/*", "/bin/*",
@@ -174,6 +179,7 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, 
 	cleanupFn := func() {}
 
 	patterns := []string{}
+	patterns = append(patterns, osIdPaths...)
 	if len(inclusions) > 0 {
 		patterns = append(patterns, inclusions...)
 	}
