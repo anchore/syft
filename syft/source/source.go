@@ -26,9 +26,9 @@ import (
 
 var (
 	osIdPaths = []string{
-		"/etc/os-release", "/usr/lib/os-release", "/etc/lsb-release",
-		"/etc/centos-release", "/etc/redhat-release", "/etc/system-release-cpe",
-		"/bin/busybox",
+		"**/etc/os-release", "**/usr/lib/os-release", "**/etc/lsb-release",
+		"**/etc/centos-release", "**/etc/redhat-release", "**/etc/system-release-cpe",
+		"**/bin/busybox",
 	}
 	binarySearchPaths = []string{
 		"/usr/lib/jvm/**", "/usr/share/java/**",
