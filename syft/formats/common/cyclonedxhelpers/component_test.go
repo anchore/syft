@@ -90,8 +90,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Version:      "v0.0.0-20211006190231-62292e806868",
 				Language:     pkg.Go,
 				Type:         pkg.GoModulePkg,
-				MetadataType: pkg.GolangMetadataType,
-				Metadata: pkg.GolangMetadata{
+				MetadataType: pkg.GolangBinMetadataType,
+				Metadata: pkg.GolangBinMetadata{
 					GoCompiledVersion: "1.17",
 					Architecture:      "amd64",
 					H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
@@ -99,10 +99,29 @@ func Test_encodeComponentProperties(t *testing.T) {
 			},
 			expected: &[]cyclonedx.Property{
 				{Name: "syft:package:language", Value: pkg.Go.String()},
-				{Name: "syft:package:metadataType", Value: "GolangMetadata"},
+				{Name: "syft:package:metadataType", Value: "GolangBinMetadata"},
 				{Name: "syft:package:type", Value: "go-module"},
 				{Name: "syft:metadata:architecture", Value: "amd64"},
 				{Name: "syft:metadata:goCompiledVersion", Value: "1.17"},
+				{Name: "syft:metadata:h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
+			},
+		},
+		{
+			name: "from go mod",
+			input: pkg.Package{
+				Name:         "golang.org/x/net",
+				Version:      "v0.0.0-20211006190231-62292e806868",
+				Language:     pkg.Go,
+				Type:         pkg.GoModulePkg,
+				MetadataType: pkg.GolangModMetadataType,
+				Metadata: pkg.GolangModMetadata{
+					H1Digest: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
+				},
+			},
+			expected: &[]cyclonedx.Property{
+				{Name: "syft:package:language", Value: pkg.Go.String()},
+				{Name: "syft:package:metadataType", Value: "GolangModMetadata"},
+				{Name: "syft:package:type", Value: "go-module"},
 				{Name: "syft:metadata:h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
 			},
 		},

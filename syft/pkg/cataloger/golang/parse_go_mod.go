@@ -43,8 +43,8 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 			PURL:         packageURL(m.Mod.Path, m.Mod.Version),
 			Language:     pkg.Go,
 			Type:         pkg.GoModulePkg,
-			MetadataType: pkg.GolangMetadataType,
-			Metadata: pkg.GolangMetadata{
+			MetadataType: pkg.GolangModMetadataType,
+			Metadata: pkg.GolangModMetadata{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
 			},
 		}
@@ -59,8 +59,8 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 			PURL:         packageURL(m.New.Path, m.New.Version),
 			Language:     pkg.Go,
 			Type:         pkg.GoModulePkg,
-			MetadataType: pkg.GolangMetadataType,
-			Metadata: pkg.GolangMetadata{
+			MetadataType: pkg.GolangModMetadataType,
+			Metadata: pkg.GolangModMetadata{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
 			},
 		}

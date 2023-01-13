@@ -34,7 +34,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0",
-				"metadataType": "GolangMetadata",
+				"metadataType": "GolangBinMetadata",
 				"metadata": {
 				  "goCompiledVersion": "go1.18",
 				  "architecture": "amd64",
@@ -43,7 +43,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 			}`),
 			assert: func(p *Package) {
 				assert.NotNil(t, p.Metadata)
-				golangMetadata := p.Metadata.(pkg.GolangMetadata)
+				golangMetadata := p.Metadata.(pkg.GolangBinMetadata)
 				assert.NotEmpty(t, golangMetadata)
 				assert.Equal(t, "go1.18", golangMetadata.GoCompiledVersion)
 			},
@@ -93,7 +93,7 @@ func Test_unpackMetadata(t *testing.T) {
 	}{
 		{
 			name:         "unmarshal package metadata",
-			metadataType: pkg.GolangMetadataType,
+			metadataType: pkg.GolangBinMetadataType,
 			packageData: []byte(`{
 				"id": "8b594519bc23da50",
 				"name": "gopkg.in/square/go-jose.v2",
@@ -109,7 +109,7 @@ func Test_unpackMetadata(t *testing.T) {
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0",
-				"metadataType": "GolangMetadata",
+				"metadataType": "GolangBinMetadata",
 				"metadata": {
 				  "goCompiledVersion": "go1.18",
 				  "architecture": "amd64",
@@ -215,18 +215,18 @@ func Test_unpackMetadata(t *testing.T) {
 		{
 			name: "can handle package with metadata type but missing metadata",
 			packageData: []byte(`{
-				"metadataType": "GolangMetadata"
+				"metadataType": "GolangBinMetadata"
 			}`),
-			metadataType: pkg.GolangMetadataType,
-			wantMetadata: pkg.GolangMetadata{},
+			metadataType: pkg.GolangBinMetadataType,
+			wantMetadata: pkg.GolangBinMetadata{},
 		},
 		{
 			name: "can handle package with golang bin metadata type",
 			packageData: []byte(`{
 				"metadataType": "GolangBinMetadata"
 			}`),
-			metadataType: pkg.GolangMetadataType,
-			wantMetadata: pkg.GolangMetadata{},
+			metadataType: pkg.GolangBinMetadataType,
+			wantMetadata: pkg.GolangBinMetadata{},
 		},
 		{
 			name: "can handle package with unknonwn metadata type and missing metadata",

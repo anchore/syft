@@ -40,7 +40,8 @@ type artifactMetadataContainer struct {
 	Dotnet            pkg.DotnetDepsMetadata
 	Dpkg              pkg.DpkgMetadata
 	Gem               pkg.GemMetadata
-	Go                pkg.GolangMetadata
+	GoBin             pkg.GolangBinMetadata
+	GoMod             pkg.GolangModMetadata
 	Hackage           pkg.HackageMetadata
 	Java              pkg.JavaMetadata
 	KbPackage         pkg.KbPackageMetadata
