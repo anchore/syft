@@ -20,7 +20,8 @@ const (
 	DotnetDepsMetadataType         MetadataType = "DotnetDepsMetadata"
 	DpkgMetadataType               MetadataType = "DpkgMetadata"
 	GemMetadataType                MetadataType = "GemMetadata"
-	GolangMetadataType             MetadataType = "GolangMetadata"
+	GolangBinMetadataType          MetadataType = "GolangBinMetadata"
+	GolangModMetadataType          MetadataType = "GolangModMetadata"
 	HackageMetadataType            MetadataType = "HackageMetadataType"
 	JavaMetadataType               MetadataType = "JavaMetadata"
 	KbPackageMetadataType          MetadataType = "KbPackageMetadata"
@@ -47,7 +48,8 @@ var AllMetadataTypes = []MetadataType{
 	DotnetDepsMetadataType,
 	DpkgMetadataType,
 	GemMetadataType,
-	GolangMetadataType,
+	GolangBinMetadataType,
+	GolangModMetadataType,
 	HackageMetadataType,
 	JavaMetadataType,
 	KbPackageMetadataType,
@@ -74,7 +76,8 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	DotnetDepsMetadataType:         reflect.TypeOf(DotnetDepsMetadata{}),
 	DpkgMetadataType:               reflect.TypeOf(DpkgMetadata{}),
 	GemMetadataType:                reflect.TypeOf(GemMetadata{}),
-	GolangMetadataType:             reflect.TypeOf(GolangMetadata{}),
+	GolangBinMetadataType:          reflect.TypeOf(GolangBinMetadata{}),
+	GolangModMetadataType:          reflect.TypeOf(GolangModMetadata{}),
 	HackageMetadataType:            reflect.TypeOf(HackageMetadata{}),
 	JavaMetadataType:               reflect.TypeOf(JavaMetadata{}),
 	KbPackageMetadataType:          reflect.TypeOf(KbPackageMetadata{}),
@@ -94,8 +97,8 @@ func CleanMetadataType(typ MetadataType) MetadataType {
 	if typ == "RpmdbMetadata" {
 		return RpmMetadataType
 	}
-	if typ == "GolangBinMetadata" {
-		return GolangMetadataType
+	if typ == "GolangMetadata" {
+		return GolangBinMetadataType
 	}
 	return typ
 }

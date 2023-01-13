@@ -331,7 +331,7 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 				})
 			}
 		}
-	case pkg.GolangMetadata:
+	case pkg.GolangBinMetadata:
 		// because the H1 digest is found in the Golang metadata we cannot claim that the files were analyzed
 		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
 		if err != nil {
