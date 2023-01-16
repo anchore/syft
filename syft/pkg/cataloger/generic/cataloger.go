@@ -32,6 +32,7 @@ func globToRegexPattern(glob string) string {
 	rPattern = strings.ReplaceAll(rPattern, "}", ")")
 	rPattern = strings.ReplaceAll(rPattern, ",", "|")
 	rPattern = strings.ReplaceAll(rPattern, rDir, "(.*/)*")
+	rPattern += "$"
 	return rPattern
 }
 
