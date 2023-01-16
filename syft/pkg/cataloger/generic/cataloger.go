@@ -168,5 +168,4 @@ func (c *Cataloger) parseRequest(resolver source.FileResolver, location source.L
 	}
 
 	return discoveredPackages, discoveredRelationships, nil
-
 }
