@@ -1,14 +1,11 @@
 name: "Validations"
+
 on:
   workflow_dispatch:
+  pull_request:
   push:
     branches:
       - main
-  pull_request:
-
-env:
-  GO_VERSION: "1.18.x"
-  GO_STABLE_VERSION: true
 
 jobs:
 
@@ -17,100 +14,42 @@ jobs:
     name: "Static analysis"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          stable: ${{ env.GO_STABLE_VERSION }}
+      - uses: actions/checkout@v3
 
-      - uses: actions/checkout@v2
-
-      - name: Restore tool cache
-        id: tool-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
-
-      - name: Restore go cache
-        id: go-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-      - name: (cache-miss) Bootstrap all project dependencies
-        if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
-        run: make bootstrap
-
-      - name: Bootstrap CI environment dependencies
-        run: make ci-bootstrap
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
 
       - name: Run static analysis
         run: make static-analysis
+
 
   Unit-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          stable: ${{ env.GO_STABLE_VERSION }}
+      - uses: actions/checkout@v3
 
-      - uses: actions/checkout@v2
-
-      - name: Restore tool cache
-        id: tool-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
-
-      - name: Restore go cache
-        id: go-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-      - name: (cache-miss) Bootstrap all project dependencies
-        if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
-        run: make bootstrap
-
-      - name: Bootstrap CI environment dependencies
-        run: make ci-bootstrap
-
-      - name: Build cache key for java test-fixture blobs (for unit tests)
-        run: make java-packages-fingerprint
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
 
       - name: Restore Java test-fixture cache
         id: unit-java-cache
-        uses: actions/cache@v2.1.3
+        uses: actions/cache@v3
         with:
           path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
           key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/packages.fingerprint' ) }}
 
-      - name: Build cache key for rpm test-fixture blobs (for unit tests)
-        run: make rpm-binaries-fingerprint
-
       - name: Restore RPM test-fixture cache
         id: unit-rpm-cache
-        uses: actions/cache@v2.1.3
+        uses: actions/cache@v3
         with:
           path: syft/pkg/cataloger/rpm/test-fixtures/rpms
           key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/rpm/test-fixtures/rpms.fingerprint' ) }}
 
-      - name: Build cache key for go binary test-fixture blobs (for unit tests)
-        run: make go-binaries-fingerprint
-
-      - name: Restore Go binary test-fixture cache
+      - name: Restore go binary test-fixture cache
         id: unit-go-binary-cache
-        uses: actions/cache@v2.1.3
+        uses: actions/cache@v3
         with:
           path: syft/pkg/cataloger/golang/test-fixtures/archs/binaries
           key: ${{ runner.os }}-unit-go-binaries-cache-${{ hashFiles( 'syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint' ) }}
@@ -118,54 +57,22 @@ jobs:
       - name: Run unit tests
         run: make unit
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: unit-test-results
-          path: test/results/**/*
 
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          stable: ${{ env.GO_STABLE_VERSION }}
+      - uses: actions/checkout@v3
 
-      - uses: actions/checkout@v2
-
-      - name: Restore tool cache
-        id: tool-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
-
-      - name: Restore go cache
-        id: go-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-      - name: (cache-miss) Bootstrap all project dependencies
-        if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
-        run: make bootstrap
-
-      - name: Bootstrap CI environment dependencies
-        run: make ci-bootstrap
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
 
       - name: Validate syft output against the CycloneDX schema
         run: make validate-cyclonedx-schema
 
-      - name: Build key for tar cache
-        run: make integration-fingerprint
-
       - name: Restore integration test cache
-        uses: actions/cache@v2.1.3
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/test/integration/test-fixtures/cache
           key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('test/integration/test-fixtures/cache.fingerprint') }}
@@ -173,123 +80,35 @@ jobs:
       - name: Run integration tests
         run: make integration
 
-  Benchmark-Test:
-    name: "Benchmark tests"
-    runs-on: ubuntu-20.04
-    # note: we want benchmarks to run on pull_request events in order to publish results to a sticky comment, and
-    # we also want to run on push such that merges to main are recorded to the cache. For this reason we don't filter
-    # the job by event.
-    steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          stable: ${{ env.GO_STABLE_VERSION }}
-
-      - uses: actions/checkout@v2
-
-      - name: Restore tool cache
-        id: tool-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
-
-      - name: Restore go cache
-        id: go-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-      - name: (cache-miss) Bootstrap all project dependencies
-        if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
-        run: make bootstrap
-
-      - name: Bootstrap CI environment dependencies
-        run: make ci-bootstrap
-
-      - name: Restore base benchmark result
-        uses: actions/cache@v2
-        with:
-          path: test/results/benchmark-main.txt
-          # use base sha for PR or new commit hash for main push in benchmark result key
-          key: ${{ runner.os }}-bench-${{ (github.event.pull_request.base.sha != github.event.after) && github.event.pull_request.base.sha || github.event.after }}
-
-      - name: Run benchmark tests
-        id: benchmark
-        run: |
-          REF_NAME=${GITHUB_REF##*/} make benchmark
-          OUTPUT=$(make show-benchstat)
-          OUTPUT="${OUTPUT//'%'/'%25'}"   # URL encode all '%' characters
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}" # URL encode all '\n' characters
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}" # URL encode all '\r' characters
-          echo "::set-output name=result::$OUTPUT"
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: benchmark-test-results
-          path: test/results/**/*
-
-      - name: Update PR benchmark results comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        continue-on-error: true
-        with:
-          header: benchmark
-          message: |
-            ### Benchmark Test Results
-
-            <details>
-              <summary>Benchmark results from the latest changes vs base branch</summary>
-
-            ```
-            ${{ steps.benchmark.outputs.result }}
-            ```
-
-            </details>
 
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
         with:
-          go-version: ${{ env.GO_VERSION }}
-          stable: ${{ env.GO_STABLE_VERSION }}
-
-      - uses: actions/checkout@v2
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Restore tool cache
-        id: tool-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
-
-      - name: Restore go cache
-        id: go-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-      - name: (cache-miss) Bootstrap all project dependencies
-        if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
-        run: make bootstrap
+          # why have another build cache key? We don't want unit/integration/etc test build caches to replace
+          # the snapshot build cache, which includes builds for all OSs and architectures. As long as this key is
+          # unique from the build-cache-key-prefix in other CI jobs, we should be fine.
+          #
+          # note: ideally this value should match what is used in release (just to help with build times).
+          build-cache-key-prefix: "snapshot"
+          bootstrap-apt-packages: ""
 
       - name: Build snapshot artifacts
         run: make snapshot
 
-      - uses: actions/upload-artifact@v2
+      # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
+      # see https://github.com/actions/upload-artifact/issues/199 for more info
+      - name: Upload snapshot artifacts
+        uses: actions/cache/save@v3
         with:
-          name: artifacts
-          path: snapshot/**/*
+          path: snapshot
+          key: snapshot-build-${{ github.run_id }}
+
 
   Acceptance-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
@@ -297,22 +116,20 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/download-artifact@v2
+      - name: Download snapshot build
+        uses: actions/cache/restore@v3
         with:
-          name: artifacts
           path: snapshot
+          key: snapshot-build-${{ github.run_id }}
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
 
-      - name: Build key for image cache
-        run: make install-fingerprint
-
       - name: Restore install.sh test image cache
         id: install-test-image-cache
-        uses: actions/cache@v2.1.3
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/test/install/cache
           key: ${{ runner.os }}-install-test-image-cache-${{ hashFiles('test/install/cache.fingerprint') }}
@@ -335,16 +152,17 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/download-artifact@v2
+      - name: Download snapshot build
+        uses: actions/cache/restore@v3
         with:
-          name: artifacts
           path: snapshot
+          key: snapshot-build-${{ github.run_id }}
 
       - name: Restore docker image cache for compare testing
         id: mac-compare-testing-cache
-        uses: actions/cache@v2.1.3
+        uses: actions/cache@v3
         with:
           path: image.tar
           key: ${{ runner.os }}-${{ hashFiles('test/compare/mac.sh') }}
@@ -355,52 +173,29 @@ jobs:
       - name: Run install.sh tests (Mac)
         run: make install-test-ci-mac
 
+
   Cli-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          stable: ${{ env.GO_STABLE_VERSION }}
+      - uses: actions/checkout@v3
 
-      - uses: actions/checkout@v2
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
 
-      - name: Restore go cache
-        id: go-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
-
-      - name: Restore tool cache
-        id: tool-cache
-        uses: actions/cache@v2.1.3
-        with:
-          path: ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
-
-      - name: (cache-miss) Bootstrap all project dependencies
-        if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
-        run: make bootstrap
-
-      - name: Build key for tar cache
-        run: make cli-fingerprint
-
-      - name: Restore CLI test cache
-        uses: actions/cache@v2.1.3
+      - name: Restore CLI test-fixture cache
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/test/cli/test-fixtures/cache
           key: ${{ runner.os }}-cli-test-cache-${{ hashFiles('test/cli/test-fixtures/cache.fingerprint') }}
 
-      - uses: actions/download-artifact@v2
+      - name: Download snapshot build
+        uses: actions/cache/restore@v3
         with:
-          name: artifacts
           path: snapshot
+          key: snapshot-build-${{ github.run_id }}
 
       - name: Run CLI Tests (Linux)
         run: make cli

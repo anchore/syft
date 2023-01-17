@@ -15,37 +15,16 @@ After cloning the following step can help you get setup:
 	- this command `go run cmd/syft/main.go alpine:latest` will compile and run syft against `alpine:latest`
 5. view the README or syft help output for more output options
 
-#### Make output
 The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
-```
-all                      Run all linux-based checks (linting, license check, unit, integration, and linux compare tests)
-benchmark                Run benchmark tests and compare against the baseline (if available)
-bootstrap                Download and install all tooling dependencies (+ prep tooling in the ./tmp dir)
-build                    Build release snapshot binaries and packages
-check-licenses           Ensure transitive dependencies are compliant with the current license policy
-clean-test-image-cache   Clean test image cache
-clean                    Remove previous builds, result reports, and test cache
-cli                      Run CLI tests
-compare-linux            Run compare tests on build snapshot binaries and packages (Linux)
-compare-mac              Run compare tests on build snapshot binaries and packages (Mac)
-generate-json-schema     Generate a new json schema
-generate-license-list    Generate an updated spdx license list
-help                     Display this help
-integration              Run integration tests
-lint-fix                 Auto-format all source code + run golangci lint fixers
-lint                     Run gofmt + golangci lint checks
-show-test-image-cache    Show all docker and image tar cache
-show-test-snapshots      Show all test snapshots
-snapshot-with-signing    Build snapshot release binaries and packages (with dummy signing)
-test                     Run all tests (currently unit, integration, linux compare, and cli tests)
-unit                     Run unit tests (with coverage)
-```
+
+See `make help` for all the current make tasks.
 
 ## Architecture
 
 Syft is used to generate a Software Bill of Materials (SBOM) from different kinds of input.
 
 ### Code organization for the cmd package
+
 Syft's entrypoint can be found in the `cmd` package at `cmd/syft/main.go`. `main.go` builds a new syft `cli` via `cli.New()` 
 and then executes the `cli` via `cli.Execute()`. The `cli` package is responsible for parsing command line arguments, 
 setting up the application context and configuration, and executing the application. Each of syft's commands 
@@ -55,23 +34,24 @@ They are registered in `syft/cli/commands/go`.
 .
 └── syft/
     ├── cli/
-    │   ├── attest/
-    │   ├── attest.go
-    │   ├── commands.go
-    │   ├── completion.go
-    │   ├── convert/
-    │   ├── convert.go
-    │   ├── eventloop/
-    │   ├── options/
-    │   ├── packages/
-    │   ├── packages.go
-    │   ├── poweruser/
-    │   ├── poweruser.go
-    │   └── version.go
+    │   ├── attest/
+    │   ├── attest.go
+    │   ├── commands.go
+    │   ├── completion.go
+    │   ├── convert/
+    │   ├── convert.go
+    │   ├── eventloop/
+    │   ├── options/
+    │   ├── packages/
+    │   ├── packages.go
+    │   ├── poweruser/
+    │   ├── poweruser.go
+    │   └── version.go
     └── main.go
 ```
 
 #### Execution flow
+
 ```mermaid
 sequenceDiagram
     participant main as cmd/syft/main
@@ -100,19 +80,19 @@ sequenceDiagram
 Syft's core library (see, exported) functionality is implemented in the `syft` package. The `syft` package is responsible for organizing the core
 SBOM data model, it's translated output formats, and the core SBOM generation logic.
 
-#### Organization and design notes for the syft library
 - analysis creates a static SBOM which can be encoded and decoded
 - format objects, should strive to not add or enrich data in encoding that could otherwise be done during analysis
 - package catalogers and their organization can be viewed/added to the `syft/pkg/cataloger` package 
 - file catalogers and their organization can be viewed/added to the `syft/file` package
 - The source package provides an abstraction to allow a user to loosely define a data source that can be cataloged
-- Logging Abstraction ...
 
 #### Code example of syft as a library
-Here is a gist of using syft as a library to generate a SBOM from a docker image: [link](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b).
+
+Here is a gist of using syft as a library to generate a SBOM for a docker image: [link](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b).
 The execution flow for the example is detailed below.
 
 #### Execution flow examples for the syft library
+
 ```mermaid
 sequenceDiagram
     participant source as source.New(ubuntu:latest)
@@ -135,12 +115,14 @@ sequenceDiagram
 ### Syft Catalogers
 
 ##### Summary
+
 Catalogers are the way in which syft is able to identify and construct packages given some amount of source metadata.
 For example, Syft can locate and process `package-lock.json` files when performing filesystem scans. 
 See: [how to specify file globs](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21)
 and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) fora quick review.
 
 #### Building a new Cataloger
+
 Catalogers must fulfill the interface [found here](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger.go). 
 This means that when building a new cataloger, the new struct must implement both method signatures of `Catalog` and `Name`.
 
