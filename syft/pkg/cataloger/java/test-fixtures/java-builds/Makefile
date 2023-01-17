@@ -17,7 +17,7 @@ jars: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gr
 
 archives: $(PKGSDIR)/example-java-app-maven-0.1.0.zip $(PKGSDIR)/example-java-app-maven-0.1.0.tar $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz
 
-native-image: $(PKGSDIR)/example-java-app
+native-image: $(PKGSDIR)/example-java-app $(PKGSDIR)/gcc-amd64-darwin-exec-debug
 
 # jars within archives...
 
@@ -67,6 +67,9 @@ clean-jenkins:
 # Native Image...
 $(PKGSDIR)/example-java-app: $(PKGSDIR)/example-java-app-maven-0.1.0.jar
 	./build-example-java-app-native-image.sh $(PKGSDIR)
+
+$(PKGSDIR)/gcc-amd64-darwin-exec-debug:
+	./build-example-macho-binary.sh $(PKGSDIR)
 
 # we need a way to determine if CI should bust the test cache based on the source material
 $(PKGSDIR).fingerprint: clean-examples
