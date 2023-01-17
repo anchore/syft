@@ -139,59 +139,59 @@ func getPackage(component nativeImageComponent) pkg.Package {
 }
 
 // decompressSbom returns the packages given within a native image executable's SBOM.
-func decompressSbom(databuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg.Package, error) {
+func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg.Package, error) {
 	var pkgs []pkg.Package
 
 	lengthEnd := lengthStart + 8
-	buflen := len(databuf)
-	if lengthEnd > uint64(buflen) {
-		return nil, errors.New("the sbom_length symbol overflows the binary")
+	bufLen := len(dataBuf)
+	if lengthEnd > uint64(bufLen) {
+		return nil, errors.New("the 'sbom_length' symbol overflows the binary")
 	}
 
-	length := databuf[lengthStart:lengthEnd]
+	length := dataBuf[lengthStart:lengthEnd]
 	p := bytes.NewBuffer(length)
 	var storedLength uint64
 	err := binary.Read(p, binary.LittleEndian, &storedLength)
 	if err != nil {
-		log.Debugf("native-image-cataloger: could not read from binary file.")
-		return nil, err
+		return nil, fmt.Errorf("could not read from binary file: %w", err)
 	}
-	log.Tracef("native-image cataloger: found SBOM of length %d.", storedLength)
+
+	log.WithFields("len", storedLength).Trace("native-image cataloger: found SBOM")
 	sbomEnd := sbomStart + storedLength
-	if sbomEnd > uint64(buflen) {
+	if sbomEnd > uint64(bufLen) {
 		return nil, errors.New("the sbom symbol overflows the binary")
 	}
-	sbomCompressed := databuf[sbomStart:sbomEnd]
+
+	sbomCompressed := dataBuf[sbomStart:sbomEnd]
 	p = bytes.NewBuffer(sbomCompressed)
 	gzreader, err := gzip.NewReader(p)
 	if err != nil {
-		log.Debugf("native-image cataloger: could not decompress the SBOM.")
-		return nil, err
+		return nil, fmt.Errorf("could not decompress the native-image SBOM: %w", err)
 	}
+
 	output, err := io.ReadAll(gzreader)
 	if err != nil {
-		log.Debugf("native-image cataloger: could not read the decompressed SBOM.")
-		return nil, err
+		return nil, fmt.Errorf("could not read the native-image SBOM: %w", err)
 	}
+
 	var sbomContent nativeImageCycloneDX
 	err = json.Unmarshal(output, &sbomContent)
 	if err != nil {
-		log.Debugf("native-image cataloger: could not unmarshal JSON.")
-		return nil, err
+		return nil, fmt.Errorf("could not unmarshal the native-image SBOM: %w", err)
 	}
 
 	for _, component := range sbomContent.Components {
 		p := getPackage(component)
 		pkgs = append(pkgs, p)
 	}
+
 	return pkgs, nil
 }
 
 // fileError logs an error message when an executable cannot be read.
 func fileError(filename string, err error) (nativeImage, error) {
 	// We could not read the file as a binary for the desired platform, but it may still be a native-image executable.
-	log.Debugf("native-image cataloger: unable to read executable (file=%q): %v.", filename, err)
-	return nil, err
+	return nil, fmt.Errorf("unable to read executable (file=%q): %w", filename, err)
 }
 
 // newElf reads a Native Image from an ELF executable.
@@ -238,7 +238,7 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 	case *pe.OptionalHeader64:
 		exportSymbolsDataDirectory = h.DataDirectory[0]
 	default:
-		return nil, fmt.Errorf("unable to get exportSymbolsDataDirectory from binary: %s", filename)
+		return nil, fmt.Errorf("unable to get 'exportSymbolsDataDirectory' from binary: %s", filename)
 	}
 	// If we have no exported symbols it is not a Native Image
 	if exportSymbolsDataDirectory.Size == 0 {
@@ -248,8 +248,7 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 	exports := make([]byte, exportSymbolsDataDirectory.Size)
 	_, err = r.ReadAt(exports, int64(exportSymbolsOffset))
 	if err != nil {
-		log.Debugf("native-image cataloger: could not read the exported symbols data directory: %v.", err)
-		return fileError(filename, err)
+		return fileError(filename, fmt.Errorf("could not read the exported symbols data directory: %w", err))
 	}
 	return nativeImagePE{
 		file:          bi,
@@ -273,7 +272,15 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 }
 
 // fetchPkgs obtains the packages given in the binary.
-func (ni nativeImageElf) fetchPkgs() ([]pkg.Package, error) {
+func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
+			// used without error later down the line.
+			retErr = fmt.Errorf("recovered from panic: %v", r)
+		}
+	}()
+
 	bi := ni.file
 	if bi == nil {
 		log.Debugf("native-image cataloger: file is nil")
@@ -285,11 +292,9 @@ func (ni nativeImageElf) fetchPkgs() ([]pkg.Package, error) {
 
 	si, err := bi.Symbols()
 	if err != nil {
-		log.Debugf("native-image cataloger: no symbols found.")
-		return nil, err
+		return nil, fmt.Errorf("no symbols found in binary: %w", err)
 	}
 	if si == nil {
-		log.Debugf("native-image cataloger: %v.", nativeImageMissingSymbolsError)
 		return nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	for _, s := range si {
@@ -303,19 +308,16 @@ func (ni nativeImageElf) fetchPkgs() ([]pkg.Package, error) {
 		}
 	}
 	if sbom.Value == 0 || sbomLength.Value == 0 || svmVersion.Value == 0 {
-		log.Debugf("native-image cataloger: %v", nativeImageMissingSymbolsError)
 		return nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	dataSection := bi.Section(".data")
 	if dataSection == nil {
-		log.Debugf("native-image cataloger: .data section missing from ELF file.")
-		return nil, err
+		return nil, fmt.Errorf("no .data section found in binary: %w", err)
 	}
 	dataSectionBase := dataSection.SectionHeader.Addr
 	data, err := dataSection.Data()
 	if err != nil {
-		log.Debugf("native-image cataloger: cannot read the .data section.")
-		return nil, err
+		return nil, fmt.Errorf("cannot read the .data section: %w", err)
 	}
 	sbomLocation := sbom.Value - dataSectionBase
 	lengthLocation := sbomLength.Value - dataSectionBase
@@ -324,7 +326,15 @@ func (ni nativeImageElf) fetchPkgs() ([]pkg.Package, error) {
 }
 
 // fetchPkgs obtains the packages from a Native Image given as a Mach O file.
-func (ni nativeImageMachO) fetchPkgs() ([]pkg.Package, error) {
+func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
+			// used without error later down the line.
+			retErr = fmt.Errorf("recovered from panic: %v", r)
+		}
+	}()
+
 	var sbom macho.Symbol
 	var sbomLength macho.Symbol
 	var svmVersion macho.Symbol
@@ -335,7 +345,6 @@ func (ni nativeImageMachO) fetchPkgs() ([]pkg.Package, error) {
 		return nil, nil
 	}
 	if bi.Symtab == nil {
-		log.Debugf("native-image cataloger: %v.", nativeImageMissingSymbolsError)
 		return nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	for _, s := range bi.Symtab.Syms {
@@ -349,7 +358,6 @@ func (ni nativeImageMachO) fetchPkgs() ([]pkg.Package, error) {
 		}
 	}
 	if sbom.Value == 0 || sbomLength.Value == 0 || svmVersion.Value == 0 {
-		log.Debugf("native-image cataloger: %v.", nativeImageMissingSymbolsError)
 		return nil, errors.New(nativeImageMissingSymbolsError)
 	}
 
@@ -357,7 +365,7 @@ func (ni nativeImageMachO) fetchPkgs() ([]pkg.Package, error) {
 	if dataSegment == nil {
 		return nil, nil
 	}
-	databuf, err := dataSegment.Data()
+	dataBuf, err := dataSegment.Data()
 	if err != nil {
 		log.Debugf("native-image cataloger: cannot obtain buffer from data segment.")
 		return nil, nil
@@ -365,7 +373,7 @@ func (ni nativeImageMachO) fetchPkgs() ([]pkg.Package, error) {
 	sbomLocation := sbom.Value - dataSegment.Addr
 	lengthLocation := sbomLength.Value - dataSegment.Addr
 
-	return decompressSbom(databuf, sbomLocation, lengthLocation)
+	return decompressSbom(dataBuf, sbomLocation, lengthLocation)
 }
 
 // fetchExportAttribute obtains an attribute from the exported symbols directory entry.
@@ -412,23 +420,19 @@ func (ni nativeImagePE) fetchExportContent() (*exportContentPE, error) {
 	var err error
 	content.numberOfFunctions, err = ni.fetchExportAttribute(0)
 	if err != nil {
-		log.Debugf("native-image cataloger: could not find the number of exported functions attribute: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("could not find the number of exported 'number of functions' attribute: %w", err)
 	}
 	content.numberOfNames, err = ni.fetchExportAttribute(1)
 	if err != nil {
-		log.Debugf("native-image cataloger: could not find the number of exported names attribute: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("could not find the number of exported 'number of names' attribute: %w", err)
 	}
 	content.addressOfFunctions, err = ni.fetchExportAttribute(2)
 	if err != nil {
-		log.Debugf("native-image cataloger: could not find the exported functions attribute: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("could not find the exported 'address of functions' attribute: %w", err)
 	}
 	content.addressOfNames, err = ni.fetchExportAttribute(3)
 	if err != nil {
-		log.Debugf("native-image cataloger: could not find the exported names attribute: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("could not find the exported 'address of names' attribute: %w", err)
 	}
 	return content, nil
 }
@@ -476,7 +480,15 @@ func (ni nativeImagePE) fetchSbomSymbols(content *exportContentPE) {
 }
 
 // fetchPkgs obtains the packages from a Native Image given as a PE file.
-func (ni nativeImagePE) fetchPkgs() ([]pkg.Package, error) {
+func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
+			// used without error later down the line.
+			retErr = fmt.Errorf("recovered from panic: %v", r)
+		}
+	}()
+
 	content, err := ni.fetchExportContent()
 	if err != nil {
 		log.Debugf("native-image cataloger: could not fetch the content of the export directory entry: %v.", err)
@@ -484,28 +496,25 @@ func (ni nativeImagePE) fetchPkgs() ([]pkg.Package, error) {
 	}
 	ni.fetchSbomSymbols(content)
 	if content.addressOfSbom == uint32(0) || content.addressOfSbomLength == uint32(0) || content.addressOfSvmVersion == uint32(0) {
-		log.Debugf("native-image cataloger: %v.", nativeImageMissingSymbolsError)
 		return nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	functionsBase := content.addressOfFunctions - ni.exportSymbols.VirtualAddress
 	sbomOffset := content.addressOfSbom
 	sbomAddress, err := ni.fetchExportFunctionPointer(functionsBase, sbomOffset)
 	if err != nil {
-		log.Debugf("native-image cataloger: cannot fetch SBOM pointer from exported functions: %v.", err)
-		return nil, err
+		return nil, fmt.Errorf("could not fetch SBOM pointer from exported functions: %w", err)
 	}
 	sbomLengthOffset := content.addressOfSbomLength
 	sbomLengthAddress, err := ni.fetchExportFunctionPointer(functionsBase, sbomLengthOffset)
 	if err != nil {
-		log.Debugf("native-image cataloger: cannot fetch SBOM length pointer from exported functions: %v.", err)
-		return nil, err
+		return nil, fmt.Errorf("could not fetch SBOM length pointer from exported functions: %w", err)
 	}
 	bi := ni.file
 	dataSection := bi.Section(".data")
 	if dataSection == nil {
 		return nil, nil
 	}
-	databuf, err := dataSection.Data()
+	dataBuf, err := dataSection.Data()
 	if err != nil {
 		log.Debugf("native-image cataloger: cannot obtain buffer from .data section.")
 		return nil, nil
@@ -513,7 +522,7 @@ func (ni nativeImagePE) fetchPkgs() ([]pkg.Package, error) {
 	sbomLocation := sbomAddress - dataSection.VirtualAddress
 	lengthLocation := sbomLengthAddress - dataSection.VirtualAddress
 
-	return decompressSbom(databuf, uint64(sbomLocation), uint64(lengthLocation))
+	return decompressSbom(dataBuf, uint64(sbomLocation), uint64(lengthLocation))
 }
 
 // fetchPkgs provides the packages available in a UnionReader.
