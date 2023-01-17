@@ -134,7 +134,11 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 	// note: since package information may change after initial creation when parsing multiple locations within the
 	// jar, we wait until the conclusion of the parsing process before synthesizing pURLs.
 	for i, p := range pkgs {
-		pkgs[i].PURL = packageURL(p.Name, p.Version, p.Metadata.(pkg.JavaMetadata))
+		if m, ok := p.Metadata.(pkg.JavaMetadata); ok {
+			pkgs[i].PURL = packageURL(p.Name, p.Version, m)
+		} else {
+			log.WithFields("package", p.String()).Warn("unable to extract java metadata to generate purl")
+		}
 	}
 
 	return pkgs, relationships, nil
@@ -401,10 +405,20 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 		return true
 	}
 
-	metadata := p.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		log.WithFields("package", p.String()).Warn("unable to extract java metadata to check for matching package identity")
+		return false
+	}
+
+	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		log.WithFields("package", p.String()).Warn("unable to extract java metadata from parent for verifying virtual path")
+		return false
+	}
 
 	// the virtual path matches...
-	if parentPkg.Metadata.(pkg.JavaMetadata).VirtualPath == metadata.VirtualPath {
+	if parentMetadata.VirtualPath == metadata.VirtualPath {
 		return true
 	}
 

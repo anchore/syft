@@ -366,10 +366,10 @@
             "type" : "string"
           },
           "licenseInfoFromFiles" : {
-            "description" : "The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of alllicenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same pacakge is true or omitted, it implies an equivalent meaning to NOASSERTION.",
+            "description" : "The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of alllicenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same package is true or omitted, it implies an equivalent meaning to NOASSERTION.",
             "type" : "array",
             "items" : {
-              "description" : "License expression for licenseInfoFromFiles. See SPDX Annex D for the license expression syntax.  The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of alllicenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same pacakge is true or omitted, it implies an equivalent meaning to NOASSERTION.",
+              "description" : "License expression for licenseInfoFromFiles. See SPDX Annex D for the license expression syntax.  The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of alllicenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same package is true or omitted, it implies an equivalent meaning to NOASSERTION.",
               "type" : "string"
             }
           },
