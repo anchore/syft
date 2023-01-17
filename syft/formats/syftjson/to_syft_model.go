@@ -145,22 +145,37 @@ func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
 func toSyftSourceData(s model.Source) *source.Metadata {
 	switch s.Type {
 	case "directory":
+		path, ok := s.Target.(string)
+		if !ok {
+			log.Warnf("unable to parse source target as string: %+v", s.Target)
+			return nil
+		}
 		return &source.Metadata{
 			ID:     s.ID,
 			Scheme: source.DirectoryScheme,
-			Path:   s.Target.(string),
+			Path:   path,
 		}
 	case "file":
+		path, ok := s.Target.(string)
+		if !ok {
+			log.Warnf("unable to parse source target as string: %+v", s.Target)
+			return nil
+		}
 		return &source.Metadata{
 			ID:     s.ID,
 			Scheme: source.FileScheme,
-			Path:   s.Target.(string),
+			Path:   path,
 		}
 	case "image":
+		metadata, ok := s.Target.(source.ImageMetadata)
+		if !ok {
+			log.Warnf("unable to parse source target as image metadata: %+v", s.Target)
+			return nil
+		}
 		return &source.Metadata{
 			ID:            s.ID,
 			Scheme:        source.ImageScheme,
-			ImageMetadata: s.Target.(source.ImageMetadata),
+			ImageMetadata: metadata,
 		}
 	}
 	return nil

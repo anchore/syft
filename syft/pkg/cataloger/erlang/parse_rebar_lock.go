@@ -7,6 +7,7 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -42,7 +43,12 @@ loop:
 		if len(tokens) < 5 {
 			name, hash := tokens[1], tokens[2]
 			sourcePkg := pkgMap[name]
-			metadata := sourcePkg.Metadata.(pkg.RebarLockMetadata)
+			metadata, ok := sourcePkg.Metadata.(pkg.RebarLockMetadata)
+			if !ok {
+				log.WithFields("package", name).Warn("unable to extract rebar.lock metadata to add hash metadata")
+				continue
+			}
+
 			if metadata.PkgHash == "" {
 				metadata.PkgHash = hash
 			} else {

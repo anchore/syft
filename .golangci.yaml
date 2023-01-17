@@ -1,8 +1,11 @@
-# TODO: enable this when we have coverage on docstring comments
-#issues:
+issues:
+  max-same-issues: 25
+
+  # TODO: enable this when we have coverage on docstring comments
 #  # The list of ids of default excludes to include or disable.
 #  include:
 #    - EXC0002 # disable excluding of issues about comments from golint
+
 
 linters:
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
@@ -15,6 +18,7 @@ linters:
     - errcheck
     - errorlint
     - exportloopref
+    - forcetypeassert
     - funlen
     - gocognit
     - goconst

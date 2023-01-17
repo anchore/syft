@@ -604,7 +604,10 @@ func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event party
 			line, _ := fr.Append()
 			if l.Len() > 5 {
 				elem := l.Front()
-				line := elem.Value.(*frame.Line)
+				line, ok := elem.Value.(*frame.Line)
+				if !ok {
+					continue
+				}
 				err = line.Remove()
 				if err != nil {
 					return
@@ -627,7 +630,10 @@ func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event party
 		if !failed {
 			// roll up logs into completed status (only if successful)
 			for e := l.Back(); e != nil; e = e.Prev() {
-				line := e.Value.(*frame.Line)
+				line, ok := e.Value.(*frame.Line)
+				if !ok {
+					continue
+				}
 				err = line.Remove()
 				if err != nil {
 					return

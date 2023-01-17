@@ -81,7 +81,11 @@ func packageURL(m pkg.DpkgMetadata, distro *linux.Release) string {
 }
 
 func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
-	metadata := p.Metadata.(pkg.DpkgMetadata)
+	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
+	if !ok {
+		log.WithFields("package", p.String()).Warn("unable to extract DPKG metadata to add licenses")
+		return
+	}
 
 	// get license information from the copyright file
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, metadata)
@@ -97,7 +101,11 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 }
 
 func mergeFileListing(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
-	metadata := p.Metadata.(pkg.DpkgMetadata)
+	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
+	if !ok {
+		log.WithFields("package", p.String()).Warn("unable to extract DPKG metadata to file listing")
+		return
+	}
 
 	// get file listing (package files + additional config files)
 	files, infoLocations := getAdditionalFileListing(resolver, dbLocation, metadata)
