@@ -21,14 +21,20 @@ import (
 func TestParseNativeImage(t *testing.T) {
 	tests := []struct {
 		fixture string
+		newFn   func(filename string, r io.ReaderAt) (nativeImage, error)
 	}{
 		{
-			fixture: "test-fixtures/java-builds/packages/example-java-app",
+			fixture: "example-java-app",
+			newFn:   newElf,
+		},
+		{
+			fixture: "gcc-amd64-darwin-exec-debug",
+			newFn:   newMachO,
 		},
 	}
 	for _, test := range tests {
-		t.Run(path.Base(test.fixture), func(t *testing.T) {
-			f, err := os.Open(test.fixture)
+		t.Run(test.fixture, func(t *testing.T) {
+			f, err := os.Open("test-fixtures/java-builds/packages/" + test.fixture)
 			assert.NoError(t, err)
 			readerCloser := io.ReadCloser(ioutil.NopCloser(f))
 			reader, err := unionreader.GetUnionReader(readerCloser)
@@ -36,7 +42,7 @@ func TestParseNativeImage(t *testing.T) {
 			parsed := false
 			readers, err := unionreader.GetReaders(reader)
 			for _, r := range readers {
-				ni, err := newElf(test.fixture, r)
+				ni, err := test.newFn(test.fixture, r)
 				assert.NoError(t, err)
 				_, err = ni.fetchPkgs()
 				if err == nil {
@@ -108,12 +114,12 @@ func TestParseNativeImageSbom(t *testing.T) {
 			z := gzip.NewWriter(writebytes)
 			_, err = z.Write(sbom)
 			assert.NoError(t, err)
-			z.Close()
-			writebytes.Flush()
+			_ = z.Close()
+			_ = writebytes.Flush()
 			compressedsbom := b.Bytes()
 			sbomlength := uint64(len(compressedsbom))
-			binary.Write(writebytes, binary.LittleEndian, sbomlength)
-			writebytes.Flush()
+			_ = binary.Write(writebytes, binary.LittleEndian, sbomlength)
+			_ = writebytes.Flush()
 			compressedsbom = b.Bytes()
 			actual, err := decompressSbom(compressedsbom, 0, sbomlength)
 			assert.NoError(t, err)

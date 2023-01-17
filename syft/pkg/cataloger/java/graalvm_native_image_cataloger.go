@@ -115,12 +115,12 @@ func (c *NativeImageCataloger) Name() string {
 func getPackage(component nativeImageComponent) pkg.Package {
 	var cpes []cpe.CPE
 	for _, property := range component.Properties {
-		cpe, err := cpe.New(property.Value)
+		c, err := cpe.New(property.Value)
 		if err != nil {
 			log.Debugf("native-image cataloger: could not parse CPE: %v.", err)
 			continue
 		}
-		cpes = append(cpes, cpe)
+		cpes = append(cpes, c)
 	}
 	return pkg.Package{
 		Name:         component.Name,
@@ -275,6 +275,10 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 // fetchPkgs obtains the packages given in the binary.
 func (ni nativeImageElf) fetchPkgs() ([]pkg.Package, error) {
 	bi := ni.file
+	if bi == nil {
+		log.Debugf("native-image cataloger: file is nil")
+		return nil, nil
+	}
 	var sbom elf.Symbol
 	var sbomLength elf.Symbol
 	var svmVersion elf.Symbol
@@ -283,6 +287,10 @@ func (ni nativeImageElf) fetchPkgs() ([]pkg.Package, error) {
 	if err != nil {
 		log.Debugf("native-image cataloger: no symbols found.")
 		return nil, err
+	}
+	if si == nil {
+		log.Debugf("native-image cataloger: %v.", nativeImageMissingSymbolsError)
+		return nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	for _, s := range si {
 		switch s.Name {
@@ -322,6 +330,14 @@ func (ni nativeImageMachO) fetchPkgs() ([]pkg.Package, error) {
 	var svmVersion macho.Symbol
 
 	bi := ni.file
+	if bi == nil {
+		log.Debugf("native-image cataloger: file is nil")
+		return nil, nil
+	}
+	if bi.Symtab == nil {
+		log.Debugf("native-image cataloger: %v.", nativeImageMissingSymbolsError)
+		return nil, errors.New(nativeImageMissingSymbolsError)
+	}
 	for _, s := range bi.Symtab.Syms {
 		switch s.Name {
 		case "_" + nativeImageSbomSymbol:
