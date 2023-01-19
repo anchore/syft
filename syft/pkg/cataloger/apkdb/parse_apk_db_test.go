@@ -912,6 +912,27 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			},
 		},
 		{
+			name: "strip version specifiers with empty provides value",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"so:libc.musl-x86_64.so.1"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{""},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, nil
+			},
+		},
+		{
 			name: "depends on package name",
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
