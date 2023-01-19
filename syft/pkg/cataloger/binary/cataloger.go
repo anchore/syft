@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -30,39 +31,50 @@ func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artif
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
-	for _, classifier := range defaultClassifiers {
-		locations, err := resolver.FilesByGlob(classifier.FileGlob)
+	for _, cls := range defaultClassifiers {
+		pkgs, err := catalog(resolver, cls)
 		if err != nil {
-			return nil, nil, err
+			log.WithFields("error", err, "classifier", cls.Class).Warn("unable to catalog binary package: %w", err)
+			continue
 		}
-		for _, location := range locations {
-			reader, err := resolver.FileContentsByLocation(location)
-			if err != nil {
-				return nil, nil, err
-			}
-			locationReader := source.NewLocationReadCloser(location, reader)
-			newPkgs, err := classifier.EvidenceMatcher(classifier, locationReader)
-			if err != nil {
-				return nil, nil, err
-			}
-		newPackages:
-			for i := range newPkgs {
-				newPkg := &newPkgs[i]
-				for j := range packages {
-					p := &packages[j]
-					// consolidate identical packages found in different locations,
-					// but continue to track each location
-					if packagesMatch(p, newPkg) {
-						p.Locations.Add(newPkg.Locations.ToSlice()...)
-						continue newPackages
-					}
-				}
-				packages = append(packages, *newPkg)
-			}
-		}
+		packages = append(packages, pkgs...)
 	}
 
 	return packages, relationships, nil
+}
+
+func catalog(resolver source.FileResolver, cls classifier) ([]pkg.Package, error) {
+	var pkgs []pkg.Package
+	locations, err := resolver.FilesByGlob(cls.FileGlob)
+	if err != nil {
+		return nil, err
+	}
+	for _, location := range locations {
+		reader, err := resolver.FileContentsByLocation(location)
+		if err != nil {
+			return nil, err
+		}
+		locationReader := source.NewLocationReadCloser(location, reader)
+		newPkgs, err := cls.EvidenceMatcher(cls, locationReader)
+		if err != nil {
+			return nil, err
+		}
+	newPackages:
+		for i := range newPkgs {
+			newPkg := &newPkgs[i]
+			for j := range pkgs {
+				p := &pkgs[j]
+				// consolidate identical packages found in different locations,
+				// but continue to track each location
+				if packagesMatch(p, newPkg) {
+					p.Locations.Add(newPkg.Locations.ToSlice()...)
+					continue newPackages
+				}
+			}
+			pkgs = append(pkgs, *newPkg)
+		}
+	}
+	return pkgs, nil
 }
 
 // packagesMatch returns true if the binary packages "match" based on basic criteria

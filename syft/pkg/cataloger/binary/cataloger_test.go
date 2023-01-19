@@ -1,6 +1,8 @@
 package binary
 
 import (
+	"errors"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -432,4 +434,50 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 		meta1.Classifier != meta2.Classifier {
 		assert.Failf(t, "packages not equal", "%v != %v", expected, p)
 	}
+}
+
+type panicyResolver struct {
+	globCalled bool
+}
+
+func (p panicyResolver) FileContentsByLocation(location source.Location) (io.ReadCloser, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (p panicyResolver) HasPath(s string) bool {
+	return true
+}
+
+func (p panicyResolver) FilesByPath(paths ...string) ([]source.Location, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (p *panicyResolver) FilesByGlob(patterns ...string) ([]source.Location, error) {
+	p.globCalled = true
+	return nil, errors.New("not implemented")
+}
+
+func (p panicyResolver) FilesByMIMEType(types ...string) ([]source.Location, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (p panicyResolver) RelativeFileByPath(_ source.Location, path string) *source.Location {
+	return nil
+}
+
+func (p panicyResolver) AllLocations() <-chan source.Location {
+	return nil
+}
+
+func (p panicyResolver) FileMetadataByLocation(location source.Location) (source.FileMetadata, error) {
+	return source.FileMetadata{}, errors.New("not implemented")
+}
+
+func Test_Cataloger_ResilientToErrors(t *testing.T) {
+	c := NewCataloger()
+
+	resolver := &panicyResolver{}
+	_, _, err := c.Catalog(resolver)
+	assert.NoError(t, err)
+	assert.True(t, resolver.globCalled)
 }
