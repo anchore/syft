@@ -141,4 +141,12 @@ var defaultClassifiers = []classifier{
 		PURL:    mustPURL("pkg:generic/httpd@version"),
 		CPEs:    singleCPE("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"),
 	},
+	{
+		Class:    "memcached-binary",
+		FileGlob: "**/memcached",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)memcached\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "memcached",
+		PURL:    mustPURL("pkg:generic/memcached@version"),
+	},
 }
