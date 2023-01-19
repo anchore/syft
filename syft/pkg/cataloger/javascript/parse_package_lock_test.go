@@ -297,3 +297,44 @@ func TestParsePackageLockAlias(t *testing.T) {
 		pkgtest.TestFileParser(t, packageLock, parsePackageLock, expected, expectedRelationships)
 	}
 }
+
+func TestParsePackageLockLicenseWithArray(t *testing.T) {
+	fixture := "test-fixtures/pkg-lock/array-license-package-lock.json"
+	var expectedRelationships []artifact.Relationship
+	expectedPkgs := []pkg.Package{
+		{
+			Name:         "tmp",
+			Version:      "1.0.0",
+			Licenses:     []string{"ISC"},
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			PURL:         "pkg:npm/tmp@1.0.0",
+			MetadataType: "NpmPackageLockJsonMetadata",
+			Metadata:     pkg.NpmPackageLockJSONMetadata{},
+		},
+		{
+			Name:         "pause-stream",
+			Version:      "0.0.11",
+			Licenses:     []string{"MIT", "Apache2"},
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			PURL:         "pkg:npm/pause-stream@0.0.11",
+			MetadataType: "NpmPackageLockJsonMetadata",
+			Metadata:     pkg.NpmPackageLockJSONMetadata{},
+		},
+		{
+			Name:         "through",
+			Version:      "2.3.8",
+			Licenses:     []string{"MIT"},
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			PURL:         "pkg:npm/through@2.3.8",
+			MetadataType: "NpmPackageLockJsonMetadata",
+			Metadata:     pkg.NpmPackageLockJSONMetadata{},
+		},
+	}
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
+	}
+	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+}
