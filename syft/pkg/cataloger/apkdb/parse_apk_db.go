@@ -321,6 +321,9 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 		}
 		lookup[p.Name] = append(lookup[p.Name], p)
 		for _, provides := range apkg.Provides {
+			if provides == "" {
+				continue
+			}
 			k := stripVersionSpecifier(provides)
 			lookup[k] = append(lookup[k], p)
 		}
