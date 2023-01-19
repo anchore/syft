@@ -364,7 +364,7 @@ func stripVersionSpecifier(s string) string {
 	// examples:
 	// musl>=1                 --> musl
 	// cmd:scanelf=1.3.4-r0    --> cmd:scanelf
-	
+
 	items := splitAny(s, "<>=")
 	if len(items) == 0 {
 		return s
