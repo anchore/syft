@@ -13,7 +13,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.0.2
 	github.com/dustin/go-humanize v1.0.0
 	github.com/facebookincubator/nvdtools v0.1.4
-	github.com/go-test/deep v1.0.8
+	github.com/go-test/deep v1.1.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/gookit/color v1.4.2
