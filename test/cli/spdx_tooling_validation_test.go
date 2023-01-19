@@ -36,6 +36,8 @@ func TestSpdxValidationTooling(t *testing.T) {
 				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
 				buildCmd := exec.Command("make", "build")
 				buildCmd.Dir = fixturesPath
+				buildCmd.Stdout = os.Stdout
+				buildCmd.Stderr = os.Stderr
 				err = buildCmd.Run()
 				require.NoError(t, err)
 			},
