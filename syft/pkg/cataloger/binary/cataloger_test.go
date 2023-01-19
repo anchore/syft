@@ -18,6 +18,20 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		expected   pkg.Package
 	}{
 		{
+			name:       "positive-memcached-1.6.18",
+			fixtureDir: "test-fixtures/classifiers/positive/memcached-1.6.18",
+			expected: pkg.Package{
+				Name:      "memcached",
+				Version:   "1.6.18",
+				Type:      "binary",
+				PURL:      "pkg:generic/memcached@1.6.18",
+				Locations: singleLocation("memcached"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "memcached-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-httpd-2.4.54",
 			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54",
 			expected: pkg.Package{
@@ -30,7 +44,8 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 					Classifier: "httpd-binary",
 				},
 			},
-		}, {
+		},
+		{
 			name:       "positive-php-cli-8.2.1",
 			fixtureDir: "test-fixtures/classifiers/positive/php-cli-8.2.1",
 			expected: pkg.Package{
