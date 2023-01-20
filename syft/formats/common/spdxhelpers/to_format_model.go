@@ -8,8 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spdx/tools-golang/spdx/common"
-	spdx "github.com/spdx/tools-golang/spdx/v2_3"
+	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -23,7 +22,6 @@ import (
 )
 
 const (
-	spdxVersion = "SPDX-2.3"
 	noAssertion = "NOASSERTION"
 )
 
@@ -40,11 +38,11 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	// for the primary package purpose field:
 	// https://spdx.github.io/spdx-spec/v2.3/package-information/#724-primary-package-purpose-field
 	documentDescribesRelationship := &spdx.Relationship{
-		RefA: common.DocElementID{
+		RefA: spdx.DocElementID{
 			ElementRefID: "DOCUMENT",
 		},
 		Relationship: string(DescribesRelationship),
-		RefB: common.DocElementID{
+		RefB: spdx.DocElementID{
 			ElementRefID: "DOCUMENT",
 		},
 		RelationshipComment: "",
@@ -55,11 +53,11 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
 		// Cardinality: mandatory, one
-		SPDXVersion: spdxVersion,
+		SPDXVersion: spdx.Version,
 
 		// 6.2: Data License; should be "CC0-1.0"
 		// Cardinality: mandatory, one
-		DataLicense: "CC0-1.0",
+		DataLicense: spdx.DataLicense,
 
 		// 6.3: SPDX Identifier; should be "DOCUMENT" to represent mandatory identifier of SPDXRef-DOCUMENT
 		// Cardinality: mandatory, one
@@ -104,7 +102,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// 6.8: Creators: may have multiple keys for Person, Organization
 			//      and/or Tool
 			// Cardinality: mandatory, one or many
-			Creators: []common.Creator{
+			Creators: []spdx.Creator{
 				{
 					Creator:     "Anchore, Inc",
 					CreatorType: "Organization",
@@ -129,7 +127,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	}
 }
 
-func toSPDXID(identifiable artifact.Identifiable) common.ElementID {
+func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 	id := ""
 	if p, ok := identifiable.(pkg.Package); ok {
 		id = SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID()))
@@ -137,7 +135,7 @@ func toSPDXID(identifiable artifact.Identifiable) common.ElementID {
 		id = string(identifiable.ID())
 	}
 	// NOTE: the spdx libraries prepend SPDXRef-, so we don't do it here
-	return common.ElementID(id)
+	return spdx.ElementID(id)
 }
 
 // packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
@@ -313,9 +311,9 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 	return results
 }
 
-func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
+func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 	filesAnalyzed := false
-	var checksums []common.Checksum
+	var checksums []spdx.Checksum
 	switch meta := p.Metadata.(type) {
 	// we generate digest for some Java packages
 	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
@@ -325,8 +323,8 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 			filesAnalyzed = true
 			for _, digest := range meta.ArchiveDigests {
 				algo := strings.ToUpper(digest.Algorithm)
-				checksums = append(checksums, common.Checksum{
-					Algorithm: common.ChecksumAlgorithm(algo),
+				checksums = append(checksums, spdx.Checksum{
+					Algorithm: spdx.ChecksumAlgorithm(algo),
 					Value:     digest.Value,
 				})
 			}
@@ -339,20 +337,20 @@ func toPackageChecksums(p pkg.Package) ([]common.Checksum, bool) {
 			break
 		}
 		algo = strings.ToUpper(algo)
-		checksums = append(checksums, common.Checksum{
-			Algorithm: common.ChecksumAlgorithm(algo),
+		checksums = append(checksums, spdx.Checksum{
+			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
 	}
 	return checksums, filesAnalyzed
 }
 
-func toPackageOriginator(p pkg.Package) *common.Originator {
+func toPackageOriginator(p pkg.Package) *spdx.Originator {
 	kind, originator := Originator(p)
 	if kind == "" || originator == "" {
 		return nil
 	}
-	return &common.Originator{
+	return &spdx.Originator{
 		Originator:     originator,
 		OriginatorType: kind,
 	}
@@ -386,11 +384,11 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 		}
 
 		result = append(result, &spdx.Relationship{
-			RefA: common.DocElementID{
+			RefA: spdx.DocElementID{
 				ElementRefID: toSPDXID(r.From),
 			},
 			Relationship: string(relationshipType),
-			RefB: common.DocElementID{
+			RefB: spdx.DocElementID{
 				ElementRefID: toSPDXID(r.To),
 			},
 			RelationshipComment: comment,
@@ -462,10 +460,10 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	return results
 }
 
-func toFileChecksums(digests []file.Digest) (checksums []common.Checksum) {
-	checksums = make([]common.Checksum, 0, len(digests))
+func toFileChecksums(digests []file.Digest) (checksums []spdx.Checksum) {
+	checksums = make([]spdx.Checksum, 0, len(digests))
 	for _, digest := range digests {
-		checksums = append(checksums, common.Checksum{
+		checksums = append(checksums, spdx.Checksum{
 			Algorithm: toChecksumAlgorithm(digest.Algorithm),
 			Value:     digest.Value,
 		})
@@ -473,9 +471,9 @@ func toFileChecksums(digests []file.Digest) (checksums []common.Checksum) {
 	return checksums
 }
 
-func toChecksumAlgorithm(algorithm string) common.ChecksumAlgorithm {
+func toChecksumAlgorithm(algorithm string) spdx.ChecksumAlgorithm {
 	// this needs to be an uppercase version of our algorithm
-	return common.ChecksumAlgorithm(strings.ToUpper(algorithm))
+	return spdx.ChecksumAlgorithm(strings.ToUpper(algorithm))
 }
 
 func toFileTypes(metadata *source.FileMetadata) (ty []string) {
@@ -517,7 +515,7 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 // f file is an "excludes" file, skip it /* exclude SPDX analysis file(s) */
 // see: https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
 // the above link contains the SPDX algorithm for a package verification code
-func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *common.PackageVerificationCode {
+func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
 	// key off of the contains relationship;
 	// spdx validator will fail if a package claims to contain a file but no sha1 provided
 	// if a sha1 for a file is provided then the validator will fail if the package does not have
@@ -558,7 +556,7 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *common.PackageVe
 	//nolint:gosec
 	hasher := sha1.New()
 	_, _ = hasher.Write([]byte(b.String()))
-	return &common.PackageVerificationCode{
+	return &spdx.PackageVerificationCode{
 		// 7.9.1: Package Verification Code Value
 		// Cardinality: mandatory, one
 		Value: fmt.Sprintf("%+x", hasher.Sum(nil)),
