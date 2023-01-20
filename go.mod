@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gookit/color v1.4.2
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jinzhu/copier v0.3.2
+	github.com/jinzhu/copier v0.3.5
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/microsoft/go-rustaudit v0.0.0-20220730194248-4b17361d90a5
