@@ -885,3 +885,76 @@ func TestDirectoryResolver_indexPath(t *testing.T) {
 		})
 	})
 }
+
+func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
+	cases := []struct {
+		name     string
+		root     string
+		input    string
+		expected []string
+	}{
+		{
+			name:  "should find the base file",
+			root:  "./test-fixtures/symlinks-base/",
+			input: "./base",
+			expected: []string{
+				"base",
+			},
+		},
+		{
+			name:  "should follow a link with a pivoted root",
+			root:  "./test-fixtures/symlinks-base/",
+			input: "./foo",
+			expected: []string{
+				"base",
+			},
+		},
+		{
+			name:  "should follow a relative link with extra parents",
+			root:  "./test-fixtures/symlinks-base/",
+			input: "./bar",
+			expected: []string{
+				"base",
+			},
+		},
+		{
+			name:  "should follow an absolute link with extra parents",
+			root:  "./test-fixtures/symlinks-base/",
+			input: "./baz",
+			expected: []string{
+				"base",
+			},
+		},
+		{
+			name:  "should follow an absolute link with extra parents",
+			root:  "./test-fixtures/symlinks-base/",
+			input: "./sub/link",
+			expected: []string{
+				"sub/item",
+			},
+		},
+		{
+			name:  "should follow chained pivoted link",
+			root:  "./test-fixtures/symlinks-base/",
+			input: "./chain",
+			expected: []string{
+				"base",
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			resolver, err := newDirectoryResolver(c.root, c.root)
+			assert.NoError(t, err)
+
+			refs, err := resolver.FilesByPath(c.input)
+			require.NoError(t, err)
+			assert.Len(t, refs, len(c.expected))
+			s := strset.New()
+			for _, actual := range refs {
+				s.Add(actual.RealPath)
+			}
+			assert.ElementsMatch(t, c.expected, s.List())
+		})
+	}
+}
