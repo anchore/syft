@@ -1147,3 +1147,42 @@ func newLocationReadCloser(t *testing.T, path string) source.LocationReadCloser 
 
 	return source.NewLocationReadCloser(source.NewLocation(path), f)
 }
+
+func Test_stripVersionSpecifier(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		want    string
+	}{
+		{
+			name:    "empty expression",
+			version: "",
+			want:    "",
+		},
+		{
+			name:    "no expression",
+			version: "cmd:foo",
+			want:    "cmd:foo",
+		},
+		{
+			name:    "=",
+			version: "cmd:scanelf=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    ">=",
+			version: "cmd:scanelf>=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    "<",
+			version: "cmd:scanelf<1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stripVersionSpecifier(tt.version))
+		})
+	}
+}
