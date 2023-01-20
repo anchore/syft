@@ -3,15 +3,14 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-a1cc9d58-830a-4a4b-9dcd-f41ea3001216",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-33759ac3-6006-4f2c-bdc4-f40b9287a7f0",
  "creationInfo": {
   "licenseListVersion": "3.19",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2022-12-22T23:33:53Z",
-  "comment": ""
+  "created": "2023-01-20T21:41:03Z"
  },
  "packages": [
   {
@@ -27,14 +26,12 @@
     {
      "referenceCategory": "SECURITY",
      "referenceType": "cpe23Type",
-     "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-     "comment": ""
+     "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
     },
     {
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
-     "referenceLocator": "a-purl-1",
-     "comment": ""
+     "referenceLocator": "a-purl-1"
     }
    ]
   },
@@ -51,14 +48,12 @@
     {
      "referenceCategory": "SECURITY",
      "referenceType": "cpe23Type",
-     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-     "comment": ""
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
     },
     {
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
-     "referenceLocator": "pkg:deb/debian/package-2@2.0.1",
-     "comment": ""
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
    ]
   }
