@@ -97,6 +97,7 @@ func buildSBOM(app *config.Application, si source.Input, writer sbom.Writer, err
 	return sBytes, nil
 }
 
+//nolint:funlen
 func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {

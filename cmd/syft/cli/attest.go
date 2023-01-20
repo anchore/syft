@@ -20,7 +20,6 @@ const (
 	attestHelp       = attestExample + attestSchemeHelp
 )
 
-//nolint:dupl
 func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions, ao *options.AttestOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "attest --output [FORMAT] <IMAGE>",
