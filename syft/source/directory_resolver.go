@@ -37,6 +37,7 @@ type pathFilterFn func(string, os.FileInfo) bool
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
 	path                    string
+	base                    string
 	currentWdRelativeToRoot string
 	currentWd               string
 	fileTree                *filetree.FileTree
@@ -47,7 +48,7 @@ type directoryResolver struct {
 	errPaths       map[string]error
 }
 
-func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
+func newDirectoryResolver(root string, base string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
 	currentWD, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("could not get CWD: %w", err)
@@ -64,6 +65,18 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 		return nil, fmt.Errorf("could not evaluate root=%q symlinks: %w", root, err)
 	}
 
+	cleanBase := ""
+	if base != "" {
+		cleanBase, err = filepath.EvalSymlinks(base)
+		if err != nil {
+			return nil, fmt.Errorf("could not evaluate base=%q symlinks: %w", base, err)
+		}
+		cleanBase, err = filepath.Abs(cleanBase)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var currentWdRelRoot string
 	if path.IsAbs(cleanRoot) {
 		currentWdRelRoot, err = filepath.Rel(cleanCWD, cleanRoot)
@@ -76,6 +89,7 @@ func newDirectoryResolver(root string, pathFilters ...pathFilterFn) (*directoryR
 
 	resolver := directoryResolver{
 		path:                    cleanRoot,
+		base:                    cleanBase,
 		currentWd:               cleanCWD,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
@@ -244,10 +258,25 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 		return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
 	}
 
-	// note: if the link is not absolute (e.g, /dev/stderr -> fd/2 ) we need to resolve it relative to the directory
-	// in question (e.g. resolve to /dev/fd/2)
-	if !filepath.IsAbs(linkTarget) {
-		linkTarget = filepath.Join(filepath.Dir(p), linkTarget)
+	if filepath.IsAbs(linkTarget) {
+		// if the link is absolute (e.g, /bin/ls -> /bin/busybox) we need to
+		// resolve relative to the root of the base directory
+		linkTarget = filepath.Join(r.base, filepath.Clean(linkTarget))
+	} else {
+		// if the link is not absolute (e.g, /dev/stderr -> fd/2 ) we need to
+		// resolve it relative to the directory in question (e.g. resolve to
+		// /dev/fd/2)
+		if r.base == "" {
+			linkTarget = filepath.Join(filepath.Dir(p), linkTarget)
+		} else {
+			// if the base is set, then we first need to resolve the link,
+			// before finding it's location in the base
+			dir, err := filepath.Rel(r.base, filepath.Dir(p))
+			if err != nil {
+				return "", fmt.Errorf("unable to resolve relative path for path=%q: %w", p, err)
+			}
+			linkTarget = filepath.Join(r.base, filepath.Clean(filepath.Join("/", dir, linkTarget)))
+		}
 	}
 
 	ref, err := r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
@@ -371,12 +400,12 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			userStrPath = windowsToPosix(userStrPath)
 		}
 
-			loc := NewVirtualLocationFromDirectory(
-				r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
-				r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
-				*ref,
-			)
-			references = append(references, loc)
+		loc := NewVirtualLocationFromDirectory(
+			r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
+			r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
+			*ref,
+		)
+		references = append(references, loc)
 	}
 
 	return references, nil

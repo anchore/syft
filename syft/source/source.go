@@ -32,6 +32,7 @@ type Source struct {
 	Metadata          Metadata
 	directoryResolver *directoryResolver `hash:"ignore"`
 	path              string
+	base              string
 	mutex             *sync.Mutex
 	Exclusions        []string `hash:"ignore"`
 }
@@ -252,6 +253,11 @@ func NewFromDirectory(path string) (Source, error) {
 	return NewFromDirectoryWithName(path, "")
 }
 
+// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
+func NewFromDirectoryRoot(path string) (Source, error) {
+	return NewFromDirectoryRootWithName(path, "")
+}
+
 // NewFromDirectoryWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
 func NewFromDirectoryWithName(path string, name string) (Source, error) {
 	s := Source{
@@ -262,6 +268,23 @@ func NewFromDirectoryWithName(path string, name string) (Source, error) {
 			Path:   path,
 		},
 		path: path,
+	}
+	s.SetID()
+	return s, nil
+}
+
+// NewFromDirectoryRootWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryRootWithName(path string, name string) (Source, error) {
+	s := Source{
+		mutex: &sync.Mutex{},
+		Metadata: Metadata{
+			Name:   name,
+			Scheme: DirectoryScheme,
+			Path:   path,
+			Base:   path,
+		},
+		path: path,
+		base: path,
 	}
 	s.SetID()
 	return s, nil
@@ -428,7 +451,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			resolver, err := newDirectoryResolver(s.path, exclusionFunctions...)
+			resolver, err := newDirectoryResolver(s.path, s.base, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}

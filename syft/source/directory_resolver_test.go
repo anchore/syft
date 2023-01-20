@@ -57,7 +57,7 @@ func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, err := newDirectoryResolver(c.relativeRoot)
+			resolver, err := newDirectoryResolver(c.relativeRoot, "")
 			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(c.input)
@@ -111,7 +111,7 @@ func TestDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 			absRoot, err := filepath.Abs(c.relativeRoot)
 			require.NoError(t, err)
 
-			resolver, err := newDirectoryResolver(absRoot)
+			resolver, err := newDirectoryResolver(absRoot, "")
 			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(c.input)
@@ -172,7 +172,7 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, err := newDirectoryResolver(c.root)
+			resolver, err := newDirectoryResolver(c.root, "")
 			assert.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.input)
@@ -220,7 +220,7 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, err := newDirectoryResolver("./test-fixtures")
+			resolver, err := newDirectoryResolver("./test-fixtures", "")
 			assert.NoError(t, err)
 			refs, err := resolver.FilesByPath(c.input...)
 			assert.NoError(t, err)
@@ -233,7 +233,7 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures")
+	resolver, err := newDirectoryResolver("./test-fixtures", "")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
 	assert.NoError(t, err)
@@ -242,7 +242,7 @@ func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/image-symlinks")
+	resolver, err := newDirectoryResolver("./test-fixtures/image-symlinks", "")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
@@ -250,7 +250,7 @@ func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures")
+	resolver, err := newDirectoryResolver("./test-fixtures", "")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
 	assert.NoError(t, err)
@@ -277,7 +277,7 @@ func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple")
+			resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", "")
 			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(test.fixture)
@@ -300,7 +300,7 @@ func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
 
 func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// let's make certain that "dev/place" is not ignored, since it is not "/dev/place"
-	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target")
+	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target", "")
 	assert.NoError(t, err)
 	// ensure the correct filter function is wired up by default
 	expectedFn := reflect.ValueOf(isUnallowableFileType)
@@ -431,7 +431,7 @@ func Test_isUnallowableFileType(t *testing.T) {
 
 func Test_directoryResolver_index(t *testing.T) {
 	// note: this test is testing the effects from newDirectoryResolver, indexTree, and addPathToIndex
-	r, err := newDirectoryResolver("test-fixtures/system_paths/target")
+	r, err := newDirectoryResolver("test-fixtures/system_paths/target", "")
 	if err != nil {
 		t.Fatalf("unable to get indexed dir resolver: %+v", err)
 	}
@@ -608,7 +608,7 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.fixturePath, func(t *testing.T) {
-			resolver, err := newDirectoryResolver(test.fixturePath)
+			resolver, err := newDirectoryResolver(test.fixturePath, "")
 			assert.NoError(t, err)
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
 			assert.NoError(t, err)
@@ -621,7 +621,7 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinks(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple")
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", "")
 	require.NoError(t, err)
 
 	// check that we can get the real path
@@ -674,7 +674,7 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 		return strings.HasSuffix(path, string(filepath.Separator)+"readme")
 	}
 
-	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", filterFn)
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", "", filterFn)
 	require.NoError(t, err)
 
 	// the path to the real file is PRUNED from the index, so we should NOT expect a location returned
@@ -694,7 +694,7 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-multiple-roots/root")
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-multiple-roots/root", "")
 	require.NoError(t, err)
 
 	// check that we can get the real path
@@ -712,7 +712,7 @@ func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
 }
 
 func Test_RootViaSymlink(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/symlinked-root/nested/link-root")
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinked-root/nested/link-root", "")
 	require.NoError(t, err)
 
 	locations, err := resolver.FilesByPath("./file1.txt")
@@ -753,7 +753,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r, err := newDirectoryResolver(".")
+			r, err := newDirectoryResolver(".", "")
 			require.NoError(t, err)
 
 			actual, err := r.FileContentsByLocation(test.location)
@@ -819,7 +819,7 @@ func Test_isUnixSystemRuntimePath(t *testing.T) {
 
 func Test_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
 	test := func(t *testing.T) {
-		resolver, err := newDirectoryResolver("./test-fixtures/symlinks-loop")
+		resolver, err := newDirectoryResolver("./test-fixtures/symlinks-loop", "")
 		require.NoError(t, err)
 
 		locations, err := resolver.FilesByGlob("**/file.target")
@@ -853,7 +853,7 @@ func Test_IncludeRootPathInIndex(t *testing.T) {
 		return path != "/"
 	}
 
-	resolver, err := newDirectoryResolver("/", filterFn)
+	resolver, err := newDirectoryResolver("/", "", filterFn)
 	require.NoError(t, err)
 
 	exists, ref, err := resolver.fileTree.File(file.Path("/"))
@@ -870,7 +870,7 @@ func TestDirectoryResolver_indexPath(t *testing.T) {
 	tempFile, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 
-	resolver, err := newDirectoryResolver(tempFile.Name())
+	resolver, err := newDirectoryResolver(tempFile.Name(), "")
 	require.NoError(t, err)
 
 	t.Run("filtering path with nil os.FileInfo", func(t *testing.T) {
