@@ -277,6 +277,10 @@ func TestParseJar(t *testing.T) {
 			}
 
 			for _, a := range actual {
+				if a.ID() == "" {
+					t.Fatalf("empty package ID: %+v", a)
+				}
+
 				e, ok := test.expected[a.Name]
 				if !ok {
 					t.Errorf("entry not found: %s", a.Name)

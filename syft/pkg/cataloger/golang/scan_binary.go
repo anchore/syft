@@ -53,7 +53,8 @@ func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
 	if err != nil {
 		if err.Error() == "not a Go executable" {
 			// since the cataloger can only select executables and not distinguish if they are a go-compiled
-			// binary, we should not show warnings/logs in this case.
+			// binary, we should not show warnings/logs in this case. For this reason we nil-out err here.
+			err = nil
 			return
 		}
 		// in this case we could not read the or parse the file, but not explicitly because it is not a

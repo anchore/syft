@@ -71,6 +71,14 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 			log.Warnf("unable to parse field data from line %q", line)
 			continue
 		}
+		if len(field.name) == 0 {
+			log.Warnf("failed to parse field name from line %q", line)
+			continue
+		}
+		if len(field.value) == 0 {
+			log.Debugf("line %q: parsed field %q appears to have an empty value, skipping", line, field.name)
+			continue
+		}
 
 		entryParsingInProgress = true
 
@@ -353,5 +361,11 @@ func stripVersionSpecifier(s string) string {
 	// examples:
 	// musl>=1                 --> musl
 	// cmd:scanelf=1.3.4-r0    --> cmd:scanelf
-	return splitAny(s, "<>=")[0]
+
+	items := splitAny(s, "<>=")
+	if len(items) == 0 {
+		return s
+	}
+
+	return items[0]
 }

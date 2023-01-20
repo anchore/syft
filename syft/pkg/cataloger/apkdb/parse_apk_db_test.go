@@ -161,6 +161,43 @@ func TestSinglePackageDetails(t *testing.T) {
 			},
 		},
 		{
+			fixture: "test-fixtures/empty-deps-and-provides",
+			expected: pkg.ApkMetadata{
+				Package:       "alpine-baselayout-data",
+				OriginPackage: "alpine-baselayout",
+				Version:       "3.4.0-r0",
+				Description:   "Alpine base dir structure and init scripts",
+				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+				License:       "GPL-2.0-only",
+				Architecture:  "x86_64",
+				URL:           "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
+				Size:          11664,
+				InstalledSize: 77824,
+				Dependencies:  []string{},
+				Provides:      []string{},
+				Checksum:      "Q15ffjKT28lB7iSXjzpI/eDdYRCwM=",
+				GitCommit:     "bd965a7ebf7fd8f07d7a0cc0d7375bf3e4eb9b24",
+				Files: []pkg.ApkFileRecord{
+					{Path: "/etc"},
+					{Path: "/etc/fstab"},
+					{Path: "/etc/group"},
+					{Path: "/etc/hostname"},
+					{Path: "/etc/hosts"},
+					{Path: "/etc/inittab"},
+					{Path: "/etc/modules"},
+					{Path: "/etc/mtab", OwnerUID: "0", OwnerGID: "0", Permissions: "0777"},
+					{Path: "/etc/nsswitch.conf"},
+					{Path: "/etc/passwd"},
+					{Path: "/etc/profile"},
+					{Path: "/etc/protocols"},
+					{Path: "/etc/services"},
+					{Path: "/etc/shadow", OwnerUID: "0", OwnerGID: "148", Permissions: "0640"},
+					{Path: "/etc/shells"},
+					{Path: "/etc/sysctl.conf"},
+				},
+			},
+		},
+		{
 			fixture: "test-fixtures/base",
 			expected: pkg.ApkMetadata{
 				Package:       "alpine-baselayout",
@@ -875,6 +912,27 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			},
 		},
 		{
+			name: "strip version specifiers with empty provides value",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"so:libc.musl-x86_64.so.1"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{""},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, nil
+			},
+		},
+		{
 			name: "depends on package name",
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
@@ -1088,4 +1146,43 @@ func newLocationReadCloser(t *testing.T, path string) source.LocationReadCloser 
 	t.Cleanup(func() { f.Close() })
 
 	return source.NewLocationReadCloser(source.NewLocation(path), f)
+}
+
+func Test_stripVersionSpecifier(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		want    string
+	}{
+		{
+			name:    "empty expression",
+			version: "",
+			want:    "",
+		},
+		{
+			name:    "no expression",
+			version: "cmd:foo",
+			want:    "cmd:foo",
+		},
+		{
+			name:    "=",
+			version: "cmd:scanelf=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    ">=",
+			version: "cmd:scanelf>=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    "<",
+			version: "cmd:scanelf<1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stripVersionSpecifier(tt.version))
+		})
+	}
 }

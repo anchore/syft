@@ -78,8 +78,8 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 func newPackageLockV2Package(resolver source.FileResolver, location source.Location, name string, u lockPackage) pkg.Package {
 	var licenses []string
 
-	if u.License != "" {
-		licenses = append(licenses, u.License)
+	if u.License != nil {
+		licenses = u.License
 	}
 
 	return finalizeLockPkg(

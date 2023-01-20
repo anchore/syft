@@ -1,0 +1,13 @@
+secs_since_last_cmd
+listen
+memcached 1.6.18
+udp-port
+memcached 1.6.18
+Failed to allocate memory
+%s,%s
+--
+bget
+flush_all
+VERSION 1.6.18
+quit
+BADCLASS invalid class id

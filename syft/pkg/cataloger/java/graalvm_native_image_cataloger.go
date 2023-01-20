@@ -117,7 +117,7 @@ func getPackage(component nativeImageComponent) pkg.Package {
 	for _, property := range component.Properties {
 		c, err := cpe.New(property.Value)
 		if err != nil {
-			log.Debugf("native-image cataloger: could not parse CPE: %v.", err)
+			log.Debugf("unable to parse CPE: %v", err)
 			continue
 		}
 		cpes = append(cpes, c)
@@ -156,7 +156,7 @@ func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg
 		return nil, fmt.Errorf("could not read from binary file: %w", err)
 	}
 
-	log.WithFields("len", storedLength).Trace("native-image cataloger: found SBOM")
+	log.WithFields("len", storedLength).Trace("found java native-image SBOM")
 	sbomEnd := sbomStart + storedLength
 	if sbomEnd > uint64(bufLen) {
 		return nil, errors.New("the sbom symbol overflows the binary")
@@ -166,18 +166,18 @@ func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg
 	p = bytes.NewBuffer(sbomCompressed)
 	gzreader, err := gzip.NewReader(p)
 	if err != nil {
-		return nil, fmt.Errorf("could not decompress the native-image SBOM: %w", err)
+		return nil, fmt.Errorf("could not decompress the java native-image SBOM: %w", err)
 	}
 
 	output, err := io.ReadAll(gzreader)
 	if err != nil {
-		return nil, fmt.Errorf("could not read the native-image SBOM: %w", err)
+		return nil, fmt.Errorf("could not read the java native-image SBOM: %w", err)
 	}
 
 	var sbomContent nativeImageCycloneDX
 	err = json.Unmarshal(output, &sbomContent)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal the native-image SBOM: %w", err)
+		return nil, fmt.Errorf("could not unmarshal the java native-image SBOM: %w", err)
 	}
 
 	for _, component := range sbomContent.Components {
@@ -199,9 +199,17 @@ func newElf(filename string, r io.ReaderAt) (nativeImage, error) {
 	// First attempt to read an ELF file.
 	bi, err := elf.NewFile(r)
 
-	// The reader does not refer to an ELF file.
 	if err != nil {
+		var fmtErr *elf.FormatError
+		if errors.As(err, &fmtErr) {
+			// this is not an elf file
+			log.WithFields("filename", filename, "error", err).Trace("not an ELF binary")
+			return nil, nil
+		}
 		return fileError(filename, err)
+	}
+	if bi == nil {
+		return nil, nil
 	}
 	return nativeImageElf{
 		file: bi,
@@ -213,9 +221,16 @@ func newMachO(filename string, r io.ReaderAt) (nativeImage, error) {
 	// First attempt to read an ELF file.
 	bi, err := macho.NewFile(r)
 
-	// The reader does not refer to an MachO file.
 	if err != nil {
-		return fileError(filename, err)
+		var fmtErr *macho.FormatError
+		if errors.As(err, &fmtErr) {
+			// this is not a MachO file
+			log.WithFields("filename", filename, "error", err).Trace("not a MachO binary")
+			return nil, nil
+		}
+	}
+	if bi == nil {
+		return nil, nil
 	}
 	return nativeImageMachO{
 		file: bi,
@@ -224,13 +239,19 @@ func newMachO(filename string, r io.ReaderAt) (nativeImage, error) {
 
 // newPE reads a Native Image from a Portable Executable file.
 func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
-	// First attempt to read an ELF file.
+	// First attempt to read an PE file.
 	bi, err := pe.NewFile(r)
 
-	// The reader does not refer to an MachO file.
+	// The reader does not refer to a PE file.
 	if err != nil {
-		return fileError(filename, err)
+		// note: there isn't a good way to distinguish between a format error and other kinds of errors
+		log.WithFields("filename", filename, "error", err).Trace("not a PE binary")
+		return nil, nil
 	}
+	if bi == nil {
+		return nil, nil
+	}
+
 	var exportSymbolsDataDirectory pe.DataDirectory
 	switch h := bi.OptionalHeader.(type) {
 	case *pe.OptionalHeader32:
@@ -282,10 +303,6 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 	}()
 
 	bi := ni.file
-	if bi == nil {
-		log.Debugf("native-image cataloger: file is nil")
-		return nil, nil
-	}
 	var sbom elf.Symbol
 	var sbomLength elf.Symbol
 	var svmVersion elf.Symbol
@@ -340,10 +357,6 @@ func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 	var svmVersion macho.Symbol
 
 	bi := ni.file
-	if bi == nil {
-		log.Debugf("native-image cataloger: file is nil")
-		return nil, nil
-	}
 	if bi.Symtab == nil {
 		return nil, errors.New(nativeImageMissingSymbolsError)
 	}
@@ -367,7 +380,7 @@ func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 	}
 	dataBuf, err := dataSegment.Data()
 	if err != nil {
-		log.Debugf("native-image cataloger: cannot obtain buffer from data segment.")
+		log.Tracef("cannot obtain buffer from data segment")
 		return nil, nil
 	}
 	sbomLocation := sbom.Value - dataSegment.Addr
@@ -382,13 +395,13 @@ func (ni nativeImagePE) fetchExportAttribute(i int) (uint32, error) {
 	n := len(ni.exports)
 	j := int(unsafe.Sizeof(ni.header)) + i*int(unsafe.Sizeof(ni.t.headerAttribute))
 	if j+4 >= n {
-		log.Debugf("native-image cataloger: invalid index to export directory entry attribute: %v.", j)
+		log.Tracef("invalid index to export directory entry attribute: %v", j)
 		return uint32(0), errors.New(nativeImageInvalidIndexError)
 	}
 	p := bytes.NewBuffer(ni.exports[j : j+4])
 	err := binary.Read(p, binary.LittleEndian, &attribute)
 	if err != nil {
-		log.Debugf("native-image cataloger: error fetching export directory entry attribute: %v.", err)
+		log.Tracef("error fetching export directory entry attribute: %v", err)
 		return uint32(0), err
 	}
 	return attribute, nil
@@ -402,13 +415,13 @@ func (ni nativeImagePE) fetchExportFunctionPointer(functionsBase uint32, i uint3
 	sz := uint32(unsafe.Sizeof(ni.t.functionPointer))
 	j := functionsBase + i*sz
 	if j+sz >= n {
-		log.Debugf("native-image cataloger: invalid index to exported function: %v.", j)
+		log.Tracef("invalid index to exported function: %v", j)
 		return uint32(0), errors.New(nativeImageInvalidIndexError)
 	}
 	p := bytes.NewBuffer(ni.exports[j : j+sz])
 	err := binary.Read(p, binary.LittleEndian, &pointer)
 	if err != nil {
-		log.Debugf("native-image cataloger: error fetching exported function: %v.", err)
+		log.Tracef("error fetching exported function: %v", err)
 		return uint32(0), err
 	}
 	return pointer, nil
@@ -452,7 +465,7 @@ func (ni nativeImagePE) fetchSbomSymbols(content *exportContentPE) {
 		k := addressBase + j
 		sz := uint32(unsafe.Sizeof(ni.t.namePointer))
 		if k+sz >= n {
-			log.Debugf("native-image cataloger: invalid index to exported function: %v.", k)
+			log.Tracef("invalid index to exported function: %v", k)
 			// If we are at the end of exports, stop looking
 			return
 		}
@@ -460,12 +473,12 @@ func (ni nativeImagePE) fetchSbomSymbols(content *exportContentPE) {
 		p := bytes.NewBuffer(ni.exports[k : k+sz])
 		err := binary.Read(p, binary.LittleEndian, &symbolAddress)
 		if err != nil {
-			log.Debugf("native-image cataloger: error fetching address of symbol %v.", err)
+			log.Tracef("error fetching address of symbol %v", err)
 			return
 		}
 		symbolBase := symbolAddress - ni.exportSymbols.VirtualAddress
 		if symbolBase >= n {
-			log.Debugf("native-image cataloger: invalid index to exported symbol: %v.", symbolBase)
+			log.Tracef("invalid index to exported symbol: %v", symbolBase)
 			return
 		}
 		switch {
@@ -491,7 +504,7 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 
 	content, err := ni.fetchExportContent()
 	if err != nil {
-		log.Debugf("native-image cataloger: could not fetch the content of the export directory entry: %v.", err)
+		log.Debugf("could not fetch the content of the export directory entry: %v", err)
 		return nil, err
 	}
 	ni.fetchSbomSymbols(content)
@@ -516,7 +529,7 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 	}
 	dataBuf, err := dataSection.Data()
 	if err != nil {
-		log.Debugf("native-image cataloger: cannot obtain buffer from .data section.")
+		log.Tracef("cannot obtain buffer from the java native-image .data section")
 		return nil, nil
 	}
 	sbomLocation := sbomAddress - dataSection.VirtualAddress
@@ -528,27 +541,30 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 // fetchPkgs provides the packages available in a UnionReader.
 func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 	var pkgs []pkg.Package
-	imageformats := []func(string, io.ReaderAt) (nativeImage, error){newElf, newMachO, newPE}
+	imageFormats := []func(string, io.ReaderAt) (nativeImage, error){newElf, newMachO, newPE}
 
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, err := unionreader.GetReaders(reader)
 	if err != nil {
-		log.Debugf("native-image cataloger: failed to open a binary: %v.", err)
+		log.Debugf("failed to open the java native-image binary: %v", err)
 		return nil
 	}
 	for _, r := range readers {
-		for _, makeNativeImage := range imageformats {
+		for _, makeNativeImage := range imageFormats {
 			ni, err := makeNativeImage(filename, r)
 			if err != nil {
 				continue
 			}
-			newpkgs, err := ni.fetchPkgs()
-			if err != nil {
-				log.Debugf("native-image cataloger: error extracting SBOM from %s: %v.", filename, err)
+			if ni == nil {
 				continue
 			}
-			pkgs = append(pkgs, newpkgs...)
+			newPkgs, err := ni.fetchPkgs()
+			if err != nil {
+				log.Tracef("unable to extract SBOM from possible java native-image %s: %v", filename, err)
+				continue
+			}
+			pkgs = append(pkgs, newPkgs...)
 		}
 	}
 	return pkgs
@@ -565,16 +581,16 @@ func (c *NativeImageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Pack
 	for _, location := range fileMatches {
 		readerCloser, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			log.Debugf("native-image cataloger: error opening file: %v.", err)
+			log.Debugf("error opening file: %v", err)
 			continue
 		}
-		log.Tracef("native-image cataloger: found an executable file %v.", location)
+
 		reader, err := unionreader.GetUnionReader(readerCloser)
 		if err != nil {
 			return nil, nil, err
 		}
-		newpkgs := fetchPkgs(reader, location.RealPath)
-		pkgs = append(pkgs, newpkgs...)
+		newPkgs := fetchPkgs(reader, location.RealPath)
+		pkgs = append(pkgs, newPkgs...)
 		internal.CloseAndLogError(readerCloser, location.RealPath)
 	}
 
