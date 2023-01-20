@@ -133,12 +133,14 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 	// add pURLs to all packages found
 	// note: since package information may change after initial creation when parsing multiple locations within the
 	// jar, we wait until the conclusion of the parsing process before synthesizing pURLs.
-	for i, p := range pkgs {
+	for i := range pkgs {
+		p := &pkgs[i]
 		if m, ok := p.Metadata.(pkg.JavaMetadata); ok {
-			pkgs[i].PURL = packageURL(p.Name, p.Version, m)
+			p.PURL = packageURL(p.Name, p.Version, m)
 		} else {
 			log.WithFields("package", p.String()).Warn("unable to extract java metadata to generate purl")
 		}
+		p.SetID()
 	}
 
 	return pkgs, relationships, nil
