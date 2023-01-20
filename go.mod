@@ -59,7 +59,7 @@ require (
 	github.com/knqyf263/go-rpmdb v0.0.0-20221030135625-4082a22221ce
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/sassoftware/go-rpmutils v0.2.0
-	github.com/vbatts/go-mtree v0.5.0
+	github.com/vbatts/go-mtree v0.5.2
 	golang.org/x/exp v0.0.0-20220823124025-807a23277127
 	gopkg.in/yaml.v3 v3.0.1
 )
