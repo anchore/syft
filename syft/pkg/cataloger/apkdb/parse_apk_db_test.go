@@ -912,6 +912,27 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			},
 		},
 		{
+			name: "strip version specifiers with empty provides value",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"so:libc.musl-x86_64.so.1"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{""},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, nil
+			},
+		},
+		{
 			name: "depends on package name",
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
@@ -1125,4 +1146,43 @@ func newLocationReadCloser(t *testing.T, path string) source.LocationReadCloser 
 	t.Cleanup(func() { f.Close() })
 
 	return source.NewLocationReadCloser(source.NewLocation(path), f)
+}
+
+func Test_stripVersionSpecifier(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		want    string
+	}{
+		{
+			name:    "empty expression",
+			version: "",
+			want:    "",
+		},
+		{
+			name:    "no expression",
+			version: "cmd:foo",
+			want:    "cmd:foo",
+		},
+		{
+			name:    "=",
+			version: "cmd:scanelf=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    ">=",
+			version: "cmd:scanelf>=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    "<",
+			version: "cmd:scanelf<1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stripVersionSpecifier(tt.version))
+		})
+	}
 }
