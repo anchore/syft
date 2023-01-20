@@ -16,7 +16,7 @@ require (
 	github.com/go-test/deep v1.1.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
-	github.com/gookit/color v1.4.2
+	github.com/gookit/color v1.5.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jinzhu/copier v0.3.2
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
