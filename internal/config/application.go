@@ -47,6 +47,7 @@ type Application struct {
 	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
 	Catalogers         []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Package            pkg                `yaml:"package" json:"package" mapstructure:"package"`
+	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
 	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
