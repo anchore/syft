@@ -336,14 +336,17 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 		}
 
 		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
-		evaluatedPath, err := filepath.EvalSymlinks(userStrPath)
+		exists, ref, err := r.fileTree.File(file.Path(userStrPath), filetree.FollowBasenameLinks)
 		if err != nil {
 			log.Debugf("directory resolver unable to evaluate symlink for path=%q : %+v", userPath, err)
 			continue
 		}
+		if !exists {
+			continue
+		}
 
 		// TODO: why not use stored metadata?
-		fileMeta, err := os.Stat(evaluatedPath)
+		fileMeta, err := os.Stat(string(ref.RealPath))
 		if errors.Is(err, os.ErrNotExist) {
 			// note: there are other kinds of errors other than os.ErrNotExist that may be given that is platform
 			// specific, but essentially hints at the same overall problem (that the path does not exist). Such an
@@ -354,7 +357,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			// invalid paths. This logging statement is meant to raise IO or permissions related problems.
 			var pathErr *os.PathError
 			if !errors.As(err, &pathErr) {
-				log.Warnf("path is not valid (%s): %+v", evaluatedPath, err)
+				log.Warnf("path is not valid (%s): %+v", ref.RealPath, err)
 			}
 			continue
 		}
@@ -368,15 +371,12 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			userStrPath = windowsToPosix(userStrPath)
 		}
 
-		exists, ref, err := r.fileTree.File(file.Path(userStrPath), filetree.FollowBasenameLinks)
-		if err == nil && exists {
 			loc := NewVirtualLocationFromDirectory(
 				r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
 				r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
 				*ref,
 			)
 			references = append(references, loc)
-		}
 	}
 
 	return references, nil
