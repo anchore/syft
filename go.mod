@@ -53,7 +53,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
 	github.com/anchore/stereoscope v0.0.0-20221208011002-c5ff155d72f1
-	github.com/docker/docker v20.10.20+incompatible
+	github.com/docker/docker v20.10.23+incompatible
 	github.com/google/go-containerregistry v0.12.1
 	github.com/invopop/jsonschema v0.7.0
 	github.com/knqyf263/go-rpmdb v0.0.0-20221030135625-4082a22221ce
