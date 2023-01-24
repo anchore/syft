@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
@@ -27,10 +28,15 @@ func encodeComponent(p pkg.Package) cyclonedx.Component {
 		properties = &props
 	}
 
+	name, group := encodeName(p.Name)
+	if group == "" {
+		group = encodeGroup(p)
+	}
+
 	return cyclonedx.Component{
 		Type:               cyclonedx.ComponentTypeLibrary,
-		Name:               p.Name,
-		Group:              encodeGroup(p),
+		Name:               name,
+		Group:              group,
 		Version:            p.Version,
 		PackageURL:         p.PURL,
 		Licenses:           encodeLicenses(p),
@@ -41,6 +47,13 @@ func encodeComponent(p pkg.Package) cyclonedx.Component {
 		ExternalReferences: encodeExternalReferences(p),
 		Properties:         properties,
 		BOMRef:             deriveBomRef(p),
+	}
+}
+
+func encodeName(name string) (string, string) {
+	if strings.Contains(name, "/") {
+		parts := strings.Split(name, "/")
+		return parts[0], parts[1]
 	}
 }
 
