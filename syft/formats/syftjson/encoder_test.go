@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"flag"
+	"regexp"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -22,6 +23,7 @@ func TestDirectoryEncoder(t *testing.T) {
 		testutils.DirectoryInput(t),
 		*updateJson,
 		true,
+		schemaVersionRedactor,
 	)
 }
 
@@ -33,7 +35,14 @@ func TestImageEncoder(t *testing.T) {
 		testImage,
 		*updateJson,
 		true,
+		schemaVersionRedactor,
 	)
+}
+
+func schemaVersionRedactor(s []byte) []byte {
+	pattern := regexp.MustCompile(`(?m),?\s*"schema":\s*\{[^}]*}`)
+	out := pattern.ReplaceAll(s, []byte(""))
+	return out
 }
 
 func TestEncodeFullJSONDocument(t *testing.T) {
