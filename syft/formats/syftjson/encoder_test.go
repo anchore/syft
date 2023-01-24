@@ -40,7 +40,7 @@ func TestImageEncoder(t *testing.T) {
 }
 
 func schemaVersionRedactor(s []byte) []byte {
-	pattern := regexp.MustCompile(`(?m),?\s*"schema":\s*\{[^}]*}`)
+	pattern := regexp.MustCompile(`,?\s*"schema":\s*\{[^}]*}`)
 	out := pattern.ReplaceAll(s, []byte(""))
 	return out
 }
