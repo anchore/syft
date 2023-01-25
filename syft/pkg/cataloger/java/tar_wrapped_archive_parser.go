@@ -10,30 +10,30 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var genericTarGlobs = []string{
-	"**/*.tar",
+var genericTarExtensions = []string{
+	".tar",
 	// gzipped tar
-	"**/*.tar.gz",
-	"**/*.tgz",
+	".tar.gz",
+	".tgz",
 	// bzip2
-	"**/*.tar.bz",
-	"**/*.tar.bz2",
-	"**/*.tbz",
-	"**/*.tbz2",
+	".tar.bz",
+	".tar.bz2",
+	".tbz",
+	".tbz2",
 	// brotli
-	"**/*.tar.br",
-	"**/*.tbr",
+	".tar.br",
+	".tbr",
 	// lz4
-	"**/*.tar.lz4",
-	"**/*.tlz4",
+	".tar.lz4",
+	".tlz4",
 	// sz
-	"**/*.tar.sz",
-	"**/*.tsz",
+	".tar.sz",
+	".tsz",
 	// xz
-	"**/*.tar.xz",
-	"**/*.txz",
-	// zst
-	"**/*.tar.zst",
+	".tar.xz",
+	".txz",
+	// zstandard
+	".tar.zst",
 }
 
 // TODO: when the generic archive cataloger is implemented, this should be removed (https://github.com/anchore/syft/issues/246)

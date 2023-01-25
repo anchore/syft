@@ -11,7 +11,7 @@ import (
 // NewGoModFileCataloger returns a new Go module cataloger object.
 func NewGoModFileCataloger() *generic.Cataloger {
 	return generic.NewCataloger("go-mod-file-cataloger").
-		WithParserByGlobs(parseGoModFile, "**/go.mod")
+		WithParserByBasename(parseGoModFile, "go.mod")
 }
 
 // NewGoModuleBinaryCataloger returns a new Golang cataloger object.

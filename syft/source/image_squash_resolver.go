@@ -189,6 +189,48 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 	return locations, nil
 }
 
+func (r *imageSquashResolver) FilesByExtension(extension string) ([]Location, error) {
+	refs, err := r.img.FilesByExtensionFromSquash(extension)
+	if err != nil {
+		return nil, err
+	}
+
+	var locations []Location
+	for _, ref := range refs {
+		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+	}
+
+	return locations, nil
+}
+
+func (r *imageSquashResolver) FilesByBasename(filename string) ([]Location, error) {
+	refs, err := r.img.FilesByBasenameFromSquash(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	var locations []Location
+	for _, ref := range refs {
+		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+	}
+
+	return locations, nil
+}
+
+func (r *imageSquashResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
+	refs, err := r.img.FilesByBasenameGlobFromSquash(glob)
+	if err != nil {
+		return nil, err
+	}
+
+	var locations []Location
+	for _, ref := range refs {
+		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+	}
+
+	return locations, nil
+}
+
 func (r *imageSquashResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
 	return fileMetadataByLocation(r.img, location)
 }

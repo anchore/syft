@@ -59,6 +59,21 @@ func (r *excludingResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return filterLocations(locations, err, r.excludeFn)
 }
 
+func (r *excludingResolver) FilesByExtension(extension string) ([]Location, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *excludingResolver) FilesByBasename(filename string) ([]Location, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *excludingResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
 func (r *excludingResolver) RelativeFileByPath(location Location, path string) *Location {
 	l := r.delegate.RelativeFileByPath(location, path)
 	if l != nil && locationMatches(l, r.excludeFn) {

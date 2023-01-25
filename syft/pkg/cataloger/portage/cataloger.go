@@ -29,7 +29,7 @@ var (
 
 func NewPortageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("portage-cataloger").
-		WithParserByGlobs(parsePortageContents, "**/var/db/pkg/*/*/CONTENTS")
+		WithParser(parsePortageContents, generic.NewSearch().ByBasename("CONTENTS").MustMatchGlob("**/var/db/pkg/*/*/CONTENTS"))
 }
 
 func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {

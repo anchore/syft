@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -17,34 +18,53 @@ type MockResolver struct {
 	locations     []Location
 	metadata      map[Location]FileMetadata
 	mimeTypeIndex map[string][]Location
+	extension     map[string][]Location
+	basename      map[string][]Location
 }
 
 // NewMockResolverForPaths creates a new MockResolver, where the only resolvable
 // files are those specified by the supplied paths.
 func NewMockResolverForPaths(paths ...string) *MockResolver {
 	var locations []Location
+	extension := make(map[string][]Location)
+	basename := make(map[string][]Location)
 	for _, p := range paths {
-		locations = append(locations, NewLocation(p))
+		loc := NewLocation(p)
+		locations = append(locations, loc)
+		ext := path.Ext(p)
+		extension[ext] = append(extension[ext], loc)
+		bn := path.Base(p)
+		basename[bn] = append(basename[bn], loc)
 	}
 
 	return &MockResolver{
 		locations: locations,
 		metadata:  make(map[Location]FileMetadata),
+		extension: extension,
+		basename:  basename,
 	}
 }
 
 func NewMockResolverForPathsWithMetadata(metadata map[Location]FileMetadata) *MockResolver {
 	var locations []Location
 	var mimeTypeIndex = make(map[string][]Location)
+	extension := make(map[string][]Location)
+	basename := make(map[string][]Location)
 	for l, m := range metadata {
 		locations = append(locations, l)
 		mimeTypeIndex[m.MIMEType] = append(mimeTypeIndex[m.MIMEType], l)
+		ext := path.Ext(l.RealPath)
+		extension[ext] = append(extension[ext], l)
+		bn := path.Base(l.RealPath)
+		basename[bn] = append(basename[bn], l)
 	}
 
 	return &MockResolver{
 		locations:     locations,
 		metadata:      metadata,
 		mimeTypeIndex: mimeTypeIndex,
+		extension:     extension,
+		basename:      basename,
 	}
 }
 
@@ -159,4 +179,18 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 		locations = append(r.mimeTypeIndex[ty], locations...)
 	}
 	return locations, nil
+}
+
+func (r MockResolver) FilesByExtension(extension string) ([]Location, error) {
+	return r.extension[extension], nil
+
+}
+
+func (r MockResolver) FilesByBasename(filename string) ([]Location, error) {
+	return r.basename[filename], nil
+}
+
+func (r MockResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
+	// TODO implement me
+	panic("implement me")
 }

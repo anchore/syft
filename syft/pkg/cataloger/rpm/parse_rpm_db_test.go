@@ -19,19 +19,28 @@ type rpmdbTestFileResolverMock struct {
 	ignorePaths bool
 }
 
+func (r rpmdbTestFileResolverMock) FilesByExtension(extension string) ([]source.Location, error) {
+	panic("not implemented")
+}
+
+func (r rpmdbTestFileResolverMock) FilesByBasename(filename string) ([]source.Location, error) {
+	panic("not implemented")
+}
+
+func (r rpmdbTestFileResolverMock) FilesByBasenameGlob(glob string) ([]source.Location, error) {
+	panic("not implemented")
+}
+
 func (r rpmdbTestFileResolverMock) FileContentsByLocation(location source.Location) (io.ReadCloser, error) {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func (r rpmdbTestFileResolverMock) AllLocations() <-chan source.Location {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func (r rpmdbTestFileResolverMock) FileMetadataByLocation(location source.Location) (source.FileMetadata, error) {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func newTestFileResolver(ignorePaths bool) *rpmdbTestFileResolverMock {

@@ -11,16 +11,16 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-var _ FileResolver = (*allLayersResolver)(nil)
+var _ FileResolver = (*imageAllLayersResolver)(nil)
 
-// allLayersResolver implements path and content access for the AllLayers source option for container image data sources.
-type allLayersResolver struct {
+// imageAllLayersResolver implements path and content access for the AllLayers source option for container image data sources.
+type imageAllLayersResolver struct {
 	img    *image.Image
 	layers []int
 }
 
 // newAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
-func newAllLayersResolver(img *image.Image) (*allLayersResolver, error) {
+func newAllLayersResolver(img *image.Image) (*imageAllLayersResolver, error) {
 	if len(img.Layers) == 0 {
 		return nil, fmt.Errorf("the image does not contain any layers")
 	}
@@ -29,14 +29,14 @@ func newAllLayersResolver(img *image.Image) (*allLayersResolver, error) {
 	for idx := range img.Layers {
 		layers = append(layers, idx)
 	}
-	return &allLayersResolver{
+	return &imageAllLayersResolver{
 		img:    img,
 		layers: layers,
 	}, nil
 }
 
 // HasPath indicates if the given path exists in the underlying source.
-func (r *allLayersResolver) HasPath(path string) bool {
+func (r *imageAllLayersResolver) HasPath(path string) bool {
 	p := file.Path(path)
 	for _, layerIdx := range r.layers {
 		tree := r.img.Layers[layerIdx].Tree
@@ -47,7 +47,7 @@ func (r *allLayersResolver) HasPath(path string) bool {
 	return false
 }
 
-func (r *allLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.ReferenceSet, layerIdx int) ([]file.Reference, error) {
+func (r *imageAllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.ReferenceSet, layerIdx int) ([]file.Reference, error) {
 	uniqueFiles := make([]file.Reference, 0)
 
 	// since there is potentially considerable work for each symlink/hardlink that needs to be resolved, let's check to see if this is a symlink/hardlink first
@@ -78,7 +78,7 @@ func (r *allLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 }
 
 // FilesByPath returns all file.References that match the given paths from any layer in the image.
-func (r *allLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
+func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
@@ -120,7 +120,7 @@ func (r *allLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
+func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
@@ -161,7 +161,7 @@ func (r *allLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
-func (r *allLayersResolver) RelativeFileByPath(location Location, path string) *Location {
+func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path string) *Location {
 	entry, err := r.img.FileCatalog.Get(location.ref)
 	if err != nil {
 		return nil
@@ -183,7 +183,7 @@ func (r *allLayersResolver) RelativeFileByPath(location Location, path string) *
 
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
-func (r *allLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	entry, err := r.img.FileCatalog.Get(location.ref)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
@@ -203,7 +203,7 @@ func (r *allLayersResolver) FileContentsByLocation(location Location) (io.ReadCl
 	return r.img.FileContentsByRef(location.ref)
 }
 
-func (r *allLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 	var locations []Location
 	for _, layerIdx := range r.layers {
 		layer := r.img.Layers[layerIdx]
@@ -221,7 +221,61 @@ func (r *allLayersResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return locations, nil
 }
 
-func (r *allLayersResolver) AllLocations() <-chan Location {
+func (r *imageAllLayersResolver) FilesByExtension(extension string) ([]Location, error) {
+	var locations []Location
+	for _, layerIdx := range r.layers {
+		layer := r.img.Layers[layerIdx]
+
+		refs, err := layer.FilesByExtension(extension)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+		}
+	}
+
+	return locations, nil
+}
+
+func (r *imageAllLayersResolver) FilesByBasename(filename string) ([]Location, error) {
+	var locations []Location
+	for _, layerIdx := range r.layers {
+		layer := r.img.Layers[layerIdx]
+
+		refs, err := layer.FilesByBasename(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+		}
+	}
+
+	return locations, nil
+}
+
+func (r *imageAllLayersResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
+	var locations []Location
+	for _, layerIdx := range r.layers {
+		layer := r.img.Layers[layerIdx]
+
+		refs, err := layer.FilesByBasenameGlob(glob)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+		}
+	}
+
+	return locations, nil
+}
+
+func (r *imageAllLayersResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
@@ -235,6 +289,6 @@ func (r *allLayersResolver) AllLocations() <-chan Location {
 	return results
 }
 
-func (r *allLayersResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
+func (r *imageAllLayersResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
 	return fileMetadataByLocation(r.img, location)
 }

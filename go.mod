@@ -52,7 +52,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1-0.20221222100750-41a1ac565cce
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
-	github.com/anchore/stereoscope v0.0.0-20221208011002-c5ff155d72f1
+	github.com/anchore/stereoscope v0.0.0-20230125132855-afdd50afaddb
 	github.com/docker/docker v20.10.23+incompatible
 	github.com/google/go-containerregistry v0.13.0
 	github.com/invopop/jsonschema v0.7.0
@@ -69,6 +69,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
+	github.com/becheran/wildmatch-go v1.0.0 // indirect
 	github.com/containerd/containerd v1.6.12 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.12.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

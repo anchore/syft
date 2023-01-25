@@ -433,6 +433,67 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	return result, nil
 }
 
+func (r directoryResolver) FilesByExtension(extension string) ([]Location, error) {
+	result := make([]Location, 0)
+
+	// TODO: is there a faster way to do this?
+	globResults, err := r.fileTree.FilesByGlob("**/*"+extension, filetree.FollowBasenameLinks)
+	if err != nil {
+		return nil, err
+	}
+	for _, globResult := range globResults {
+		loc := NewVirtualLocationFromDirectory(
+			r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+			r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+			globResult.Reference,
+		)
+		result = append(result, loc)
+	}
+
+	return result, nil
+}
+
+func (r directoryResolver) FilesByBasename(filename string) ([]Location, error) {
+	result := make([]Location, 0)
+
+	// TODO: is there a faster way to do this?
+	globResults, err := r.fileTree.FilesByGlob("**/"+filename, filetree.FollowBasenameLinks)
+	if err != nil {
+		return nil, err
+	}
+	for _, globResult := range globResults {
+		loc := NewVirtualLocationFromDirectory(
+			r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+			r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+			globResult.Reference,
+		)
+		result = append(result, loc)
+	}
+
+	return result, nil
+}
+
+// TODO: duplicate code with FilesByBasename
+func (r directoryResolver) FilesByBasenameGlob(filename string) ([]Location, error) {
+	result := make([]Location, 0)
+
+	// TODO: is there a faster way to do this?
+	globResults, err := r.fileTree.FilesByGlob("**/"+filename, filetree.FollowBasenameLinks)
+	if err != nil {
+		return nil, err
+	}
+	for _, globResult := range globResults {
+		loc := NewVirtualLocationFromDirectory(
+			r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+			r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+			globResult.Reference,
+		)
+		result = append(result, loc)
+	}
+
+	return result, nil
+}
+
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file. For the
 // directoryResolver, this is a simple path lookup.

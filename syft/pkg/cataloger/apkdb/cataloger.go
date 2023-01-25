@@ -13,5 +13,7 @@ const catalogerName = "apkdb-cataloger"
 // NewApkdbCataloger returns a new Alpine DB cataloger object.
 func NewApkdbCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
-		WithParserByGlobs(parseApkDB, pkg.ApkDBGlob)
+		WithParser(parseApkDB,
+			generic.NewSearch().ByBasename("installed").MustMatchGlob(pkg.ApkDBGlob),
+		)
 }

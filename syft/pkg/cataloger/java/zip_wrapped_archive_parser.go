@@ -10,8 +10,8 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var genericZipGlobs = []string{
-	"**/*.zip",
+var genericZipExtensions = []string{
+	".zip",
 }
 
 // TODO: when the generic archive cataloger is implemented, this should be removed (https://github.com/anchore/syft/issues/246)

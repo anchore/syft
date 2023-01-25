@@ -13,5 +13,7 @@ const catalogerName = "dpkgdb-cataloger"
 // NewDpkgdbCataloger returns a new Deb package cataloger capable of parsing DPKG status DB files.
 func NewDpkgdbCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
+		// TODO: split up and re-write the glob search patterns
+		// WithParser(parseDpkgDB, generic.NewSearch().ByBasename("status").MustMatchGlob(pkg.DpkgDBGlob))
 		WithParserByGlobs(parseDpkgDB, pkg.DpkgDBGlob)
 }

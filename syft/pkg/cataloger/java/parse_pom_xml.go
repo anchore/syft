@@ -18,7 +18,6 @@ import (
 )
 
 const pomXMLGlob = "*pom.xml"
-const pomXMLDirGlob = "**/pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 

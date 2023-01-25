@@ -18,15 +18,15 @@ import (
 
 var _ generic.Parser = parseJavaArchive
 
-var archiveFormatGlobs = []string{
-	"**/*.jar",
-	"**/*.war",
-	"**/*.ear",
-	"**/*.par",
-	"**/*.sar",
-	"**/*.jpi",
-	"**/*.hpi",
-	"**/*.lpkg", // Zip-compressed package used to deploy applications
+var archiveFormatExtensions = []string{
+	".jar",
+	".war",
+	".ear",
+	".par",
+	".sar",
+	".jpi",
+	".hpi",
+	".lpkg", // Zip-compressed package used to deploy applications
 	// (aka plugins) to Liferay Portal server. Those files contains .JAR(s) and a .PROPERTIES file, the latter
 	// has information about the application and installation requirements.
 	// NOTE(jonasagx): If you would like to test it with lpkg file,
@@ -34,6 +34,15 @@ var archiveFormatGlobs = []string{
 	// LifeRay makes it pretty cumbersome to make a such plugins; their docs are
 	// out of date, and they charge for their IDE. If you find an example
 	// project that we can build in CI feel free to include it
+}
+
+// note: this mirrors 'archiveFormatExtensions' as a glob pattern for each element
+var archiveFormatGlobs []string
+
+func init() {
+	for _, ext := range archiveFormatExtensions {
+		archiveFormatGlobs = append(archiveFormatGlobs, fmt.Sprintf("**/*%s", ext))
+	}
 }
 
 // javaArchiveHashes are all the current hash algorithms used to calculate archive digests

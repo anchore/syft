@@ -9,5 +9,7 @@ const catalogerName = "alpmdb-cataloger"
 
 func NewAlpmdbCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
-		WithParserByGlobs(parseAlpmDB, pkg.AlpmDBGlob)
+		WithParser(parseAlpmDB,
+			generic.NewSearch().ByBasename("desc").MustMatchGlob(pkg.AlpmDBGlob),
+		)
 }

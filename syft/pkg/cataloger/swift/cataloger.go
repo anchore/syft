@@ -10,5 +10,5 @@ import (
 // NewCocoapodsCataloger returns a new Swift Cocoapods lock file cataloger object.
 func NewCocoapodsCataloger() *generic.Cataloger {
 	return generic.NewCataloger("cocoapods-cataloger").
-		WithParserByGlobs(parsePodfileLock, "**/Podfile.lock")
+		WithParserByBasename(parsePodfileLock, "Podfile.lock")
 }
