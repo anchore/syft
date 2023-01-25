@@ -34,6 +34,7 @@ var genericTarExtensions = []string{
 	".txz",
 	// zstandard
 	".tar.zst",
+	".tzst",
 }
 
 // TODO: when the generic archive cataloger is implemented, this should be removed (https://github.com/anchore/syft/issues/246)
