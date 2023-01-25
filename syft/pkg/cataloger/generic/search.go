@@ -147,23 +147,32 @@ func (s SearchRequest) Execute(resolver source.FileResolver) ([]source.Location,
 	}
 
 	if s.matchGlob != "" {
-		var globMatches []source.Location
-	forMatches:
-		for _, m := range locations {
-			var matchesGlob bool
-			for _, path := range []string{m.RealPath, m.VirtualPath} {
-				matchesGlob, err = doublestar.Match(s.matchGlob, path)
-				if err != nil {
-					return nil, fmt.Errorf("unable to validate glob requirement=%q: %w", s.matchGlob, err)
-				}
-				if matchesGlob {
-					globMatches = append(globMatches, m)
-					continue forMatches
-				}
-			}
+		// overwrite the locations with the filtered set
+		locations, err = s.matchRequirementGlob(locations)
+		if err != nil {
+			return nil, err
 		}
-		locations = globMatches
 	}
 
 	return locations, nil
+}
+
+func (s SearchRequest) matchRequirementGlob(locations []source.Location) ([]source.Location, error) {
+	var globMatches []source.Location
+	var err error
+forMatches:
+	for _, m := range locations {
+		var matchesGlob bool
+		for _, path := range []string{m.RealPath, m.VirtualPath} {
+			matchesGlob, err = doublestar.Match(s.matchGlob, path)
+			if err != nil {
+				return nil, fmt.Errorf("unable to validate glob requirement=%q: %w", s.matchGlob, err)
+			}
+			if matchesGlob {
+				globMatches = append(globMatches, m)
+				continue forMatches
+			}
+		}
+	}
+	return globMatches, nil
 }

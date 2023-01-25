@@ -68,16 +68,13 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 	c.processor = append(c.processor,
 		func(resolver source.FileResolver, env Environment) []request {
 			var requests []request
-			for _, t := range types {
-				log.WithFields("mimetype", t).Trace("searching for paths matching mimetype")
-
-				matches, err := resolver.FilesByMIMEType(t)
-				if err != nil {
-					log.Warnf("unable to process mimetype=%q: %+v", t, err)
-					continue
-				}
-				requests = append(requests, makeRequests(parser, matches)...)
+			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
+			matches, err := resolver.FilesByMIMEType(types...)
+			if err != nil {
+				log.Warnf("unable to process mimetypes=%+v: %+v", types, err)
+				return nil
 			}
+			requests = append(requests, makeRequests(parser, matches)...)
 			return requests
 		},
 	)
