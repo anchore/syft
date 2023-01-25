@@ -1,12 +1,12 @@
 package binary
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 )
 
