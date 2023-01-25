@@ -139,6 +139,58 @@ func Test_JavascriptCataloger(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-lock").
 		Expects(expectedPkgs, nil).
-		TestCataloger(t, NewJavascriptLockCataloger())
+		TestCataloger(t, NewLockCataloger())
 
+}
+
+func Test_PackageCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain package files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"src/package.json",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsContentQueries(test.expected).
+				TestCataloger(t, NewPackageCataloger())
+		})
+	}
+}
+
+func Test_LockCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain package files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"src/package-lock.json",
+				"src/pnpm-lock.yaml",
+				"src/yarn.lock",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsContentQueries(test.expected).
+				TestCataloger(t, NewLockCataloger())
+		})
+	}
 }
