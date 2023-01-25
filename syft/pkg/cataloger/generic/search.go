@@ -2,6 +2,7 @@ package generic
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 
@@ -133,6 +134,9 @@ func (s SearchRequest) Execute(resolver source.FileResolver) ([]source.Location,
 			return nil, fmt.Errorf("unable to process search basis basename=%q: %w", s.basename, err)
 		}
 	case s.extension != "":
+		if strings.HasPrefix(s.extension, "*") {
+			return nil, fmt.Errorf("extensions must not include a leading wildcard: %q", s.extension)
+		}
 		locations, err = resolver.FilesByExtension(s.extension)
 		if err != nil {
 			return nil, fmt.Errorf("unable to process search basis extension=%q: %w", s.extension, err)

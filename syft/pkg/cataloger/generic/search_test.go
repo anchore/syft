@@ -155,6 +155,29 @@ func TestSearchRequest_Execute(t *testing.T) {
 	}
 }
 
+func TestSearchRequest_Execute_ExceptionWithWildcard(t *testing.T) {
+
+	tests := []struct {
+		name            string
+		request         SearchRequest
+		responsePath    string
+		wantPathQueries map[string][]string
+		wantLocations   []source.Location
+	}{
+		{
+			name:    "search by extension",
+			request: NewSearch().ByExtension("*.txt").Request(),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resolver := srctest.NewObservingResolver(&nopResolver{})
+			_, err := tt.request.Execute(resolver)
+			require.Error(t, err)
+		})
+	}
+}
+
 var _ source.FileResolver = (*nopResolver)(nil)
 
 type nopResolver struct {
