@@ -17,6 +17,6 @@ func NewGemFileLockCataloger() *generic.Cataloger {
 func NewGemSpecCataloger() *generic.Cataloger {
 	return generic.NewCataloger("ruby-gemspec-cataloger").
 		WithParser(parseGemSpecEntries,
-			generic.NewSearch().ByExtension("*.gemspec").MustMatchGlob("**/specifications/**/*.gemspec"),
+			generic.NewSearch().ByExtension(".gemspec").MustMatchGlob("**/specifications/**/*.gemspec"),
 		)
 }
