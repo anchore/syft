@@ -1,6 +1,9 @@
 package binary
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/pkg"
+)
 
 var defaultClassifiers = []classifier{
 	{
@@ -11,6 +14,10 @@ var defaultClassifiers = []classifier{
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
 		Package: "python",
 		PURL:    mustPURL("pkg:generic/python@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+		},
 	},
 	{
 		Class:    "python-binary-lib",
@@ -20,6 +27,10 @@ var defaultClassifiers = []classifier{
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
 		Package: "python",
 		PURL:    mustPURL("pkg:generic/python@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+		},
 	},
 	{
 		Class:    "cpython-source",
@@ -28,6 +39,10 @@ var defaultClassifiers = []classifier{
 			`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`),
 		Package: "python",
 		PURL:    mustPURL("pkg:generic/python@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+		},
 	},
 	{
 		Class:    "go-binary",
@@ -103,6 +118,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "busybox",
+		CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "php-cli-binary",

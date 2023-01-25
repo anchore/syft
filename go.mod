@@ -11,7 +11,7 @@ require (
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501
 	github.com/bmatcuk/doublestar/v4 v4.6.0
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/facebookincubator/nvdtools v0.1.5
 	github.com/go-test/deep v1.1.0
 	github.com/google/go-cmp v0.5.9
@@ -42,7 +42,7 @@ require (
 	github.com/wagoodman/go-progress v0.0.0-20200731105512-1020f39e6240
 	github.com/wagoodman/jotframe v0.0.0-20211129225309-56b0d0a4aebb
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/mod v0.6.0
+	golang.org/x/mod v0.7.0
 	golang.org/x/net v0.5.0
 	golang.org/x/term v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -50,11 +50,11 @@ require (
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1-0.20221222100750-41a1ac565cce
-	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
 	github.com/anchore/stereoscope v0.0.0-20221208011002-c5ff155d72f1
-	github.com/docker/docker v20.10.20+incompatible
-	github.com/google/go-containerregistry v0.12.1
+	github.com/docker/docker v20.10.23+incompatible
+	github.com/google/go-containerregistry v0.13.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/knqyf263/go-rpmdb v0.0.0-20221030135625-4082a22221ce
 	github.com/opencontainers/go-digest v1.0.0
@@ -67,7 +67,7 @@ require (
 require (
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
 	github.com/containerd/containerd v1.6.12 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
@@ -150,7 +150,7 @@ require (
 	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/crypto v0.3.0 // indirect
 )
 
 retract (
