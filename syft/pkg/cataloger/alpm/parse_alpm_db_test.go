@@ -16,10 +16,12 @@ import (
 func TestDatabaseParser(t *testing.T) {
 	tests := []struct {
 		name     string
+		fixture  string
 		expected pkg.AlpmMetadata
 	}{
 		{
-			name: "test alpm database parsing",
+			name:    "test alpm database parsing",
+			fixture: "test-fixtures/files",
 			expected: pkg.AlpmMetadata{
 				Backup: []pkg.AlpmFileRecord{
 					{

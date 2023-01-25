@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -350,19 +351,12 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 	return relationships
 }
 
-func splitAny(s string, seps string) []string {
-	splitter := func(r rune) bool {
-		return strings.ContainsRune(seps, r)
-	}
-	return strings.FieldsFunc(s, splitter)
-}
-
 func stripVersionSpecifier(s string) string {
 	// examples:
 	// musl>=1                 --> musl
 	// cmd:scanelf=1.3.4-r0    --> cmd:scanelf
 
-	items := splitAny(s, "<>=")
+	items := internal.SplitAny(s, "<>=")
 	if len(items) == 0 {
 		return s
 	}

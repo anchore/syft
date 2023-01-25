@@ -129,6 +129,11 @@ func (p *CatalogTester) IgnorePackageFields(fields ...string) *CatalogTester {
 	return p
 }
 
+func (p *CatalogTester) WithCompareOptions(opts ...cmp.Option) *CatalogTester {
+	p.compareOptions = append(p.compareOptions, opts...)
+	return p
+}
+
 func (p *CatalogTester) Expects(pkgs []pkg.Package, relationships []artifact.Relationship) *CatalogTester {
 	p.expectedPkgs = pkgs
 	p.expectedRelationships = relationships
