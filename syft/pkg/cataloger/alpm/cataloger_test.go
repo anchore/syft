@@ -201,8 +201,8 @@ func TestCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
-				IgnoreUnfulfilledContentQueries("var/lib/pacman/local/base-1.0/mtree", "var/lib/pacman/local/dive-0.10.0/mtree").
+				ExpectsResolverContentQueries(test.expected).
+				IgnoreUnfulfilledPathResponses("var/lib/pacman/local/base-1.0/mtree", "var/lib/pacman/local/dive-0.10.0/mtree").
 				TestCataloger(t, NewAlpmdbCataloger())
 		})
 	}

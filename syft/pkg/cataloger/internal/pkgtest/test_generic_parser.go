@@ -17,32 +17,33 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/srctest"
 	"github.com/anchore/syft/syft/source"
 )
 
 type locationComparer func(x, y source.Location) bool
 
 type CatalogTester struct {
-	expectedPkgs             []pkg.Package
-	expectedRelationships    []artifact.Relationship
-	assertResultExpectations bool
-	expectedPathQueries      []string // this is a minimum set, the resolver may return more that just this list
-	expectedContentQueries   []string // this is a full set, any other queries are unexpected (and will fail the test)
-	ignoreUnfulfilledQueries map[string][]string
-	ignoreUnfulfilledPaths   []string
-	env                      *generic.Environment
-	reader                   source.LocationReadCloser
-	resolver                 source.FileResolver
-	wantErr                  require.ErrorAssertionFunc
-	compareOptions           []cmp.Option
-	locationComparer         locationComparer
+	expectedPkgs                   []pkg.Package
+	expectedRelationships          []artifact.Relationship
+	assertResultExpectations       bool
+	expectedPathResponses          []string // this is a minimum set, the resolver may return more that just this list
+	expectedContentQueries         []string // this is a full set, any other queries are unexpected (and will fail the test)
+	ignoreUnfulfilledPathResponses map[string][]string
+	ignoreAnyUnfulfilledPaths      []string
+	env                            *generic.Environment
+	reader                         source.LocationReadCloser
+	resolver                       source.FileResolver
+	wantErr                        require.ErrorAssertionFunc
+	compareOptions                 []cmp.Option
+	locationComparer               locationComparer
 }
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
 		wantErr:          require.NoError,
 		locationComparer: DefaultLocationComparer,
-		ignoreUnfulfilledQueries: map[string][]string{
+		ignoreUnfulfilledPathResponses: map[string][]string{
 			"FilesByPath": {
 				// most catalogers search for a linux release, which will not be fulfilled in testing
 				"/etc/os-release",
@@ -159,18 +160,18 @@ func (p *CatalogTester) Expects(pkgs []pkg.Package, relationships []artifact.Rel
 	return p
 }
 
-func (p *CatalogTester) ExpectsPathQueries(locations []string) *CatalogTester {
-	p.expectedPathQueries = locations
+func (p *CatalogTester) ExpectsResolverPathResponses(locations []string) *CatalogTester {
+	p.expectedPathResponses = locations
 	return p
 }
 
-func (p *CatalogTester) ExpectsContentQueries(locations []string) *CatalogTester {
+func (p *CatalogTester) ExpectsResolverContentQueries(locations []string) *CatalogTester {
 	p.expectedContentQueries = locations
 	return p
 }
 
-func (p *CatalogTester) IgnoreUnfulfilledContentQueries(paths ...string) *CatalogTester {
-	p.ignoreUnfulfilledPaths = append(p.ignoreUnfulfilledPaths, paths...)
+func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *CatalogTester {
+	p.ignoreAnyUnfulfilledPaths = append(p.ignoreAnyUnfulfilledPaths, paths...)
 	return p
 }
 
@@ -184,28 +185,28 @@ func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	t.Helper()
 
-	resolver := newObservingResolver(p.resolver)
+	resolver := srctest.NewObservingResolver(p.resolver)
 
 	pkgs, relationships, err := cataloger.Catalog(resolver)
 
 	// this is a minimum set, the resolver may return more that just this list
-	for _, path := range p.expectedPathQueries {
-		assert.Truef(t, resolver.observedPathQuery(path), "expected path query for %q was not observed", path)
+	for _, path := range p.expectedPathResponses {
+		assert.Truef(t, resolver.ObservedPathResponses(path), "expected path query for %q was not observed", path)
 	}
 
 	// this is a full set, any other queries are unexpected (and will fail the test)
 	if len(p.expectedContentQueries) > 0 {
-		assert.ElementsMatchf(t, p.expectedContentQueries, resolver.observedContentQueries(), "unexpected content queries observed: diff %s", cmp.Diff(p.expectedContentQueries, resolver.observedContentQueries()))
+		assert.ElementsMatchf(t, p.expectedContentQueries, resolver.AllContentQueries(), "unexpected content queries observed: diff %s", cmp.Diff(p.expectedContentQueries, resolver.AllContentQueries()))
 	}
 
 	if p.assertResultExpectations {
 		p.wantErr(t, err)
 		p.assertPkgs(t, pkgs, relationships)
 	} else {
-		resolver.pruneUnfulfilledPathQueries(p.ignoreUnfulfilledQueries, p.ignoreUnfulfilledPaths...)
+		resolver.PruneUnfulfilledPathResponses(p.ignoreUnfulfilledPathResponses, p.ignoreAnyUnfulfilledPaths...)
 
 		// if we aren't testing the results, we should focus on what was searched for (for glob-centric tests)
-		assert.Falsef(t, resolver.hasUnfulfilledPathRequests(), "unfulfilled path requests: \n%v", resolver.prettyUnfulfilledPathRequests())
+		assert.Falsef(t, resolver.HasUnfulfilledPathRequests(), "unfulfilled path requests: \n%v", resolver.PrettyUnfulfilledPathRequests())
 	}
 }
 

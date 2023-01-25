@@ -259,7 +259,7 @@ func Test_IndexCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewPythonIndexCataloger())
 		})
 	}
@@ -286,7 +286,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewPythonPackageCataloger())
 		})
 	}

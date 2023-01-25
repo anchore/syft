@@ -28,7 +28,7 @@ func Test_DBCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewRpmDBCataloger())
 		})
 	}
@@ -53,7 +53,7 @@ func Test_RPMFileCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewFileCataloger())
 		})
 	}

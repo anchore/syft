@@ -50,7 +50,7 @@ func Test_ArchiveCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewJavaCataloger(Config{
 					SearchUnindexedArchives: true,
 					SearchIndexedArchives:   true,
@@ -78,7 +78,7 @@ func Test_POMCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewJavaPomCataloger())
 		})
 	}

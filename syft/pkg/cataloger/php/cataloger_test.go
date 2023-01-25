@@ -25,7 +25,7 @@ func Test_ComposerInstalledCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewComposerInstalledCataloger())
 		})
 	}
@@ -50,7 +50,7 @@ func Test_ComposerLockCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsContentQueries(test.expected).
+				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewComposerLockCataloger())
 		})
 	}
