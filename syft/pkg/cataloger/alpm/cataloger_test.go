@@ -180,3 +180,30 @@ func TestAlpmCataloger(t *testing.T) {
 		TestCataloger(t, NewAlpmdbCataloger())
 
 }
+
+func TestCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain description files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"var/lib/pacman/local/base-1.0/desc",
+				"var/lib/pacman/local/dive-0.10.0/desc",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsContentQueries(test.expected).
+				IgnoreUnfulfilledContentQueries("var/lib/pacman/local/base-1.0/mtree", "var/lib/pacman/local/dive-0.10.0/mtree").
+				TestCataloger(t, NewAlpmdbCataloger())
+		})
+	}
+}
