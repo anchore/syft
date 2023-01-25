@@ -183,7 +183,6 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 
 func (r MockResolver) FilesByExtension(extension string) ([]Location, error) {
 	return r.extension[extension], nil
-
 }
 
 func (r MockResolver) FilesByBasename(filename string) ([]Location, error) {
