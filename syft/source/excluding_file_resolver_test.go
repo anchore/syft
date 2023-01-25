@@ -67,6 +67,15 @@ func TestExcludingResolver(t *testing.T) {
 			locations, _ = er.FilesByMIMEType()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
+			locations, _ = er.FilesByExtension()
+			assert.ElementsMatch(t, locationPaths(locations), test.expected)
+
+			locations, _ = er.FilesByBasename()
+			assert.ElementsMatch(t, locationPaths(locations), test.expected)
+
+			locations, _ = er.FilesByBasenameGlob()
+			assert.ElementsMatch(t, locationPaths(locations), test.expected)
+
 			locations = []Location{}
 
 			channel := er.AllLocations()
@@ -142,18 +151,6 @@ type mockResolver struct {
 	locations []string
 }
 
-func (r *mockResolver) FilesByExtension(extension string) ([]Location, error) {
-	panic("not implemented")
-}
-
-func (r *mockResolver) FilesByBasename(filename string) ([]Location, error) {
-	panic("not implemented")
-}
-
-func (r *mockResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
-	panic("not implemented")
-}
-
 func (r *mockResolver) getLocations() ([]Location, error) {
 	out := []Location{}
 	for _, path := range r.locations {
@@ -185,6 +182,18 @@ func (r *mockResolver) FilesByGlob(_ ...string) ([]Location, error) {
 }
 
 func (r *mockResolver) FilesByMIMEType(_ ...string) ([]Location, error) {
+	return r.getLocations()
+}
+
+func (r *mockResolver) FilesByExtension(_ ...string) ([]Location, error) {
+	return r.getLocations()
+}
+
+func (r *mockResolver) FilesByBasename(_ ...string) ([]Location, error) {
+	return r.getLocations()
+}
+
+func (r *mockResolver) FilesByBasenameGlob(_ ...string) ([]Location, error) {
 	return r.getLocations()
 }
 

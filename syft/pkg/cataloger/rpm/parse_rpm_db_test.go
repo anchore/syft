@@ -19,15 +19,15 @@ type rpmdbTestFileResolverMock struct {
 	ignorePaths bool
 }
 
-func (r rpmdbTestFileResolverMock) FilesByExtension(extension string) ([]source.Location, error) {
+func (r rpmdbTestFileResolverMock) FilesByExtension(extensions ...string) ([]source.Location, error) {
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) FilesByBasename(filename string) ([]source.Location, error) {
+func (r rpmdbTestFileResolverMock) FilesByBasename(filenames ...string) ([]source.Location, error) {
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) FilesByBasenameGlob(glob string) ([]source.Location, error) {
+func (r rpmdbTestFileResolverMock) FilesByBasenameGlob(globs ...string) ([]source.Location, error) {
 	panic("not implemented")
 }
 

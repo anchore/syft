@@ -177,15 +177,15 @@ func (n nopResolver) FilesByGlob(_ ...string) ([]source.Location, error) {
 	return n.loc, nil
 }
 
-func (n nopResolver) FilesByExtension(_ string) ([]source.Location, error) {
+func (n nopResolver) FilesByExtension(_ ...string) ([]source.Location, error) {
 	return n.loc, nil
 }
 
-func (n nopResolver) FilesByBasename(_ string) ([]source.Location, error) {
+func (n nopResolver) FilesByBasename(_ ...string) ([]source.Location, error) {
 	return n.loc, nil
 }
 
-func (n nopResolver) FilesByBasenameGlob(_ string) ([]source.Location, error) {
+func (n nopResolver) FilesByBasenameGlob(_ ...string) ([]source.Location, error) {
 	return n.loc, nil
 }
 

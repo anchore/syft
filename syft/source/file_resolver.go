@@ -30,11 +30,11 @@ type FilePathResolver interface {
 	// FilesByGlob fetches a set of file references for the given glob matches
 	FilesByGlob(patterns ...string) ([]Location, error)
 	// FilesByExtension fetches a set of file references for the given file extensions
-	FilesByExtension(extension string) ([]Location, error)
+	FilesByExtension(extensions ...string) ([]Location, error)
 	// FilesByBasename fetches a set of file references for the given filenames
-	FilesByBasename(filename string) ([]Location, error)
+	FilesByBasename(basenames ...string) ([]Location, error)
 	// FilesByBasenameGlob fetches a set of file references for the given filename glob patterns (e.g. *requirements*.txt)
-	FilesByBasenameGlob(glob string) ([]Location, error)
+	FilesByBasenameGlob(patterns ...string) ([]Location, error)
 	// FilesByMIMEType fetches a set of file references which the contents have been classified as one of the given MIME Types
 	FilesByMIMEType(types ...string) ([]Location, error)
 	// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.

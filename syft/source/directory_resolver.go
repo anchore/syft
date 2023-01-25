@@ -433,62 +433,68 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	return result, nil
 }
 
-func (r directoryResolver) FilesByExtension(extension string) ([]Location, error) {
+func (r directoryResolver) FilesByExtension(extensions ...string) ([]Location, error) {
 	result := make([]Location, 0)
 
-	// TODO: is there a faster way to do this?
-	globResults, err := r.fileTree.FilesByGlob("**/*"+extension, filetree.FollowBasenameLinks)
-	if err != nil {
-		return nil, err
-	}
-	for _, globResult := range globResults {
-		loc := NewVirtualLocationFromDirectory(
-			r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
-			r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
-			globResult.Reference,
-		)
-		result = append(result, loc)
+	for _, extension := range extensions {
+		// TODO: is there a faster way to do this?
+		globResults, err := r.fileTree.FilesByGlob("**/*"+extension, filetree.FollowBasenameLinks)
+		if err != nil {
+			return nil, err
+		}
+		for _, globResult := range globResults {
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+				globResult.Reference,
+			)
+			result = append(result, loc)
+		}
 	}
 
 	return result, nil
 }
 
-func (r directoryResolver) FilesByBasename(filename string) ([]Location, error) {
+func (r directoryResolver) FilesByBasename(filenames ...string) ([]Location, error) {
 	result := make([]Location, 0)
 
-	// TODO: is there a faster way to do this?
-	globResults, err := r.fileTree.FilesByGlob("**/"+filename, filetree.FollowBasenameLinks)
-	if err != nil {
-		return nil, err
-	}
-	for _, globResult := range globResults {
-		loc := NewVirtualLocationFromDirectory(
-			r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
-			r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
-			globResult.Reference,
-		)
-		result = append(result, loc)
+	for _, filename := range filenames {
+		// TODO: is there a faster way to do this?
+		globResults, err := r.fileTree.FilesByGlob("**/"+filename, filetree.FollowBasenameLinks)
+		if err != nil {
+			return nil, err
+		}
+		for _, globResult := range globResults {
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+				globResult.Reference,
+			)
+			result = append(result, loc)
+		}
 	}
 
 	return result, nil
 }
 
 // TODO: duplicate code with FilesByBasename
-func (r directoryResolver) FilesByBasenameGlob(filename string) ([]Location, error) {
+func (r directoryResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
 	result := make([]Location, 0)
 
-	// TODO: is there a faster way to do this?
-	globResults, err := r.fileTree.FilesByGlob("**/"+filename, filetree.FollowBasenameLinks)
-	if err != nil {
-		return nil, err
-	}
-	for _, globResult := range globResults {
-		loc := NewVirtualLocationFromDirectory(
-			r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
-			r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
-			globResult.Reference,
-		)
-		result = append(result, loc)
+	for _, glob := range globs {
+		// TODO: is there a faster way to do this?
+		globResults, err := r.fileTree.FilesByGlob("**/"+glob, filetree.FollowBasenameLinks)
+		if err != nil {
+			return nil, err
+		}
+		for _, globResult := range globResults {
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
+				globResult.Reference,
+			)
+			result = append(result, loc)
+		}
 	}
 
 	return result, nil

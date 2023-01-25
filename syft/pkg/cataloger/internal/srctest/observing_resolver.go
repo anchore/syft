@@ -172,36 +172,36 @@ func (r *ObservingResolver) FilesByGlob(patterns ...string) ([]source.Location, 
 	return locs, err
 }
 
-func (r *ObservingResolver) FilesByExtension(extension string) ([]source.Location, error) {
+func (r *ObservingResolver) FilesByExtension(extensions ...string) ([]source.Location, error) {
 	name := "FilesByExtension"
-	r.addPathQuery(name, extension)
+	r.addPathQuery(name, extensions...)
 
-	locs, err := r.decorated.FilesByExtension(extension)
+	locs, err := r.decorated.FilesByExtension(extensions...)
 
 	r.addPathResponse(locs...)
-	r.addEmptyPathResponse(name, locs, extension)
+	r.addEmptyPathResponse(name, locs, extensions...)
 	return locs, err
 }
 
-func (r *ObservingResolver) FilesByBasename(filename string) ([]source.Location, error) {
+func (r *ObservingResolver) FilesByBasename(filenames ...string) ([]source.Location, error) {
 	name := "FilesByBasename"
-	r.addPathQuery(name, filename)
+	r.addPathQuery(name, filenames...)
 
-	locs, err := r.decorated.FilesByBasename(filename)
+	locs, err := r.decorated.FilesByBasename(filenames...)
 
 	r.addPathResponse(locs...)
-	r.addEmptyPathResponse(name, locs, filename)
+	r.addEmptyPathResponse(name, locs, filenames...)
 	return locs, err
 }
 
-func (r *ObservingResolver) FilesByBasenameGlob(glob string) ([]source.Location, error) {
+func (r *ObservingResolver) FilesByBasenameGlob(globs ...string) ([]source.Location, error) {
 	name := "FilesByBasenameGlob"
-	r.addPathQuery(name, glob)
+	r.addPathQuery(name, globs...)
 
-	locs, err := r.decorated.FilesByBasenameGlob(glob)
+	locs, err := r.decorated.FilesByBasenameGlob(globs...)
 
 	r.addPathResponse(locs...)
-	r.addEmptyPathResponse(name, locs, glob)
+	r.addEmptyPathResponse(name, locs, globs...)
 	return locs, err
 }
 

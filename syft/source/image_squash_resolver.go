@@ -189,43 +189,50 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 	return locations, nil
 }
 
-func (r *imageSquashResolver) FilesByExtension(extension string) ([]Location, error) {
-	refs, err := r.img.FilesByExtensionFromSquash(extension)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *imageSquashResolver) FilesByExtension(extensions ...string) ([]Location, error) {
 	var locations []Location
-	for _, ref := range refs {
-		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+	for _, extension := range extensions {
+		refs, err := r.img.FilesByExtensionFromSquash(extension)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+		}
 	}
 
 	return locations, nil
 }
 
-func (r *imageSquashResolver) FilesByBasename(filename string) ([]Location, error) {
-	refs, err := r.img.FilesByBasenameFromSquash(filename)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *imageSquashResolver) FilesByBasename(basenames ...string) ([]Location, error) {
 	var locations []Location
-	for _, ref := range refs {
-		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+	for _, basename := range basenames {
+		refs, err := r.img.FilesByBasenameFromSquash(basename)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+		}
 	}
 
 	return locations, nil
 }
 
-func (r *imageSquashResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
-	refs, err := r.img.FilesByBasenameGlobFromSquash(glob)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *imageSquashResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
 	var locations []Location
-	for _, ref := range refs {
-		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+
+	for _, glob := range globs {
+		refs, err := r.img.FilesByBasenameGlobFromSquash(glob)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+		}
 	}
 
 	return locations, nil

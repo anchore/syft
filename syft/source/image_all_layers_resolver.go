@@ -221,54 +221,60 @@ func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, e
 	return locations, nil
 }
 
-func (r *imageAllLayersResolver) FilesByExtension(extension string) ([]Location, error) {
+func (r *imageAllLayersResolver) FilesByExtension(extensions ...string) ([]Location, error) {
 	var locations []Location
-	for _, layerIdx := range r.layers {
-		layer := r.img.Layers[layerIdx]
+	for _, extension := range extensions {
+		for _, layerIdx := range r.layers {
+			layer := r.img.Layers[layerIdx]
 
-		refs, err := layer.FilesByExtension(extension)
-		if err != nil {
-			return nil, err
-		}
+			refs, err := layer.FilesByExtension(extension)
+			if err != nil {
+				return nil, err
+			}
 
-		for _, ref := range refs {
-			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			for _, ref := range refs {
+				locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			}
 		}
 	}
 
 	return locations, nil
 }
 
-func (r *imageAllLayersResolver) FilesByBasename(filename string) ([]Location, error) {
+func (r *imageAllLayersResolver) FilesByBasename(filenames ...string) ([]Location, error) {
 	var locations []Location
-	for _, layerIdx := range r.layers {
-		layer := r.img.Layers[layerIdx]
+	for _, filename := range filenames {
+		for _, layerIdx := range r.layers {
+			layer := r.img.Layers[layerIdx]
 
-		refs, err := layer.FilesByBasename(filename)
-		if err != nil {
-			return nil, err
-		}
+			refs, err := layer.FilesByBasename(filename)
+			if err != nil {
+				return nil, err
+			}
 
-		for _, ref := range refs {
-			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			for _, ref := range refs {
+				locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			}
 		}
 	}
 
 	return locations, nil
 }
 
-func (r *imageAllLayersResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
+func (r *imageAllLayersResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
 	var locations []Location
-	for _, layerIdx := range r.layers {
-		layer := r.img.Layers[layerIdx]
+	for _, glob := range globs {
+		for _, layerIdx := range r.layers {
+			layer := r.img.Layers[layerIdx]
 
-		refs, err := layer.FilesByBasenameGlob(glob)
-		if err != nil {
-			return nil, err
-		}
+			refs, err := layer.FilesByBasenameGlob(glob)
+			if err != nil {
+				return nil, err
+			}
 
-		for _, ref := range refs {
-			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			for _, ref := range refs {
+				locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			}
 		}
 	}
 

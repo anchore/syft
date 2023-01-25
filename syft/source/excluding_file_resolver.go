@@ -59,19 +59,19 @@ func (r *excludingResolver) FilesByMIMEType(types ...string) ([]Location, error)
 	return filterLocations(locations, err, r.excludeFn)
 }
 
-func (r *excludingResolver) FilesByExtension(extension string) ([]Location, error) {
-	// TODO implement me
-	panic("implement me")
+func (r *excludingResolver) FilesByExtension(extensions ...string) ([]Location, error) {
+	locations, err := r.delegate.FilesByExtension(extensions...)
+	return filterLocations(locations, err, r.excludeFn)
 }
 
-func (r *excludingResolver) FilesByBasename(filename string) ([]Location, error) {
-	// TODO implement me
-	panic("implement me")
+func (r *excludingResolver) FilesByBasename(filenames ...string) ([]Location, error) {
+	locations, err := r.delegate.FilesByBasename(filenames...)
+	return filterLocations(locations, err, r.excludeFn)
 }
 
-func (r *excludingResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
-	// TODO implement me
-	panic("implement me")
+func (r *excludingResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
+	locations, err := r.delegate.FilesByBasenameGlob(globs...)
+	return filterLocations(locations, err, r.excludeFn)
 }
 
 func (r *excludingResolver) RelativeFileByPath(location Location, path string) *Location {

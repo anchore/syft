@@ -440,22 +440,22 @@ type panicyResolver struct {
 	searchCalled bool
 }
 
-func (p *panicyResolver) FilesByExtension(extension string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByExtension(_ ...string) ([]source.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByBasename(filename string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByBasename(_ ...string) ([]source.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByBasenameGlob(glob string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByBasenameGlob(_ ...string) ([]source.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FileContentsByLocation(location source.Location) (io.ReadCloser, error) {
+func (p *panicyResolver) FileContentsByLocation(_ source.Location) (io.ReadCloser, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
@@ -464,22 +464,22 @@ func (p *panicyResolver) HasPath(s string) bool {
 	return true
 }
 
-func (p *panicyResolver) FilesByPath(paths ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByPath(_ ...string) ([]source.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByGlob(patterns ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByGlob(_ ...string) ([]source.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByMIMEType(types ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]source.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) RelativeFileByPath(_ source.Location, path string) *source.Location {
+func (p *panicyResolver) RelativeFileByPath(_ source.Location, _ string) *source.Location {
 	return nil
 }
 
@@ -487,7 +487,7 @@ func (p *panicyResolver) AllLocations() <-chan source.Location {
 	return nil
 }
 
-func (p *panicyResolver) FileMetadataByLocation(location source.Location) (source.FileMetadata, error) {
+func (p *panicyResolver) FileMetadataByLocation(_ source.Location) (source.FileMetadata, error) {
 	return source.FileMetadata{}, errors.New("not implemented")
 }
 

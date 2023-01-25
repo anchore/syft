@@ -181,15 +181,23 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 	return locations, nil
 }
 
-func (r MockResolver) FilesByExtension(extension string) ([]Location, error) {
-	return r.extension[extension], nil
+func (r MockResolver) FilesByExtension(extensions ...string) ([]Location, error) {
+	var results []Location
+	for _, ext := range extensions {
+		results = append(results, r.extension[ext]...)
+	}
+	return results, nil
 }
 
-func (r MockResolver) FilesByBasename(filename string) ([]Location, error) {
-	return r.basename[filename], nil
+func (r MockResolver) FilesByBasename(filenames ...string) ([]Location, error) {
+	var results []Location
+	for _, filename := range filenames {
+		results = append(results, r.basename[filename]...)
+	}
+	return results, nil
 }
 
-func (r MockResolver) FilesByBasenameGlob(glob string) ([]Location, error) {
+func (r MockResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
 	// TODO implement me
 	panic("implement me")
 }
