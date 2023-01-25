@@ -83,7 +83,7 @@ func packageURL(m pkg.DpkgMetadata, distro *linux.Release) string {
 func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
 	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract DPKG metadata to add licenses")
+		log.WithFields("package", p).Warn("unable to extract DPKG metadata to add licenses")
 		return
 	}
 
@@ -103,7 +103,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 func mergeFileListing(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
 	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract DPKG metadata to file listing")
+		log.WithFields("package", p).Warn("unable to extract DPKG metadata to file listing")
 		return
 	}
 
