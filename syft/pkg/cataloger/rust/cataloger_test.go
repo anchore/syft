@@ -49,3 +49,53 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Expects(expectedPkgs, nil).
 		TestCataloger(t, NewAuditBinaryCataloger())
 }
+
+func Test_CargoLockCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain Cargo.lock files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"src/Cargo.lock",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsContentQueries(test.expected).
+				TestCataloger(t, NewCargoLockCataloger())
+		})
+	}
+}
+
+func Test_AuditBinaryCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain audit binary files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"partial-binary",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsContentQueries(test.expected).
+				TestCataloger(t, NewAuditBinaryCataloger())
+		})
+	}
+}
