@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,13 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type conversion struct {
-	To   string
-	From string
-}
-
 func TestConvertCmdFlags(t *testing.T) {
-	commonAssertions := []traitAssertion{
+	assertions := []traitAssertion{
 		func(tb testing.TB, stdout, _ string, _ int) {
 			tb.Helper()
 			if len(stdout) < 1000 {
@@ -26,52 +22,48 @@ func TestConvertCmdFlags(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		conversions []conversion
-		env         map[string]string
-		assertions  []traitAssertion
+		to       string
+		from     string
+		template string
+		env      map[string]string
 	}{
-		{
-			name: "syft-format convertable to spdx-json",
-			conversions: []conversion{
-				{To: "syft-json", From: "spdx-json"},
-				{To: "syft-json", From: "cyclonedx-json"},
-				{To: "spdx-json", From: "syft-json"},
-				{To: "spdx-json", From: "cyclonedx-json"},
-				{To: "cyclonedx-json", From: "syft-json"},
-				{To: "cyclonedx-json", From: "spdx-json"},
-			},
-			assertions: commonAssertions,
-		},
+		{to: "syft-json", from: "spdx-json"},
+		{to: "syft-json", from: "cyclonedx-json"},
+		{to: "spdx-json", from: "syft-json"},
+		{to: "template", from: "syft-json", template: "test-fixtures/csv.template"},
+		{to: "spdx-json", from: "cyclonedx-json"},
+		{to: "cyclonedx-json", from: "syft-json"},
+		{to: "cyclonedx-json", from: "spdx-json"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			for _, c := range test.conversions {
-				sbomArgs := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", c.From}
-				cmd, stdout, stderr := runSyft(t, test.env, sbomArgs...)
-				if cmd.ProcessState.ExitCode() != 0 {
-					t.Fatalf("failure executing syft creating an sbom")
-					t.Log("STDOUT:\n", stdout)
-					t.Log("STDERR:\n", stderr)
-					t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-					return
-				}
+		t.Run(fmt.Sprintf("from %s to %s", test.from, test.to), func(t *testing.T) {
+			sbomArgs := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", test.from}
+			cmd, stdout, stderr := runSyft(t, test.env, sbomArgs...)
+			if cmd.ProcessState.ExitCode() != 0 {
+				t.Log("STDOUT:\n", stdout)
+				t.Log("STDERR:\n", stderr)
+				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
+				t.Fatalf("failure executing syft creating an sbom")
+				return
+			}
 
-				tempDir := t.TempDir()
-				sbomFile := filepath.Join(tempDir, "sbom.json")
-				require.NoError(t, os.WriteFile(sbomFile, []byte(stdout), 0666))
+			tempDir := t.TempDir()
+			sbomFile := filepath.Join(tempDir, "sbom.json")
+			require.NoError(t, os.WriteFile(sbomFile, []byte(stdout), 0666))
 
-				convertArgs := []string{"convert", sbomFile, "-o", c.To}
-				cmd, stdout, stderr = runSyft(t, test.env, convertArgs...)
-				for _, traitFn := range test.assertions {
-					traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
-				}
-				if t.Failed() {
-					t.Log("STDOUT:\n", stdout)
-					t.Log("STDERR:\n", stderr)
-					t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-				}
+			convertArgs := []string{"convert", sbomFile, "-o", test.to}
+			if test.template != "" {
+				convertArgs = append(convertArgs, "--template", test.template)
+			}
+			cmd, stdout, stderr = runSyft(t, test.env, convertArgs...)
+			for _, traitFn := range assertions {
+				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
+			}
+			if t.Failed() {
+				t.Log("STDOUT:\n", stdout)
+				t.Log("STDERR:\n", stderr)
+				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
 			}
 		})
 	}
