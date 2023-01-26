@@ -45,12 +45,13 @@ func New() (*cobra.Command, error) {
 	// we also need the command to have information about the `root` options because of this alias
 	ro := &options.RootOptions{}
 	po := &options.PackagesOptions{}
+	ao := &options.AttestOptions{}
 	packagesCmd := Packages(v, app, ro, po)
 
 	// root options are also passed to the attestCmd so that a user provided config location can be discovered
 	poweruserCmd := PowerUser(v, app, ro)
 	convertCmd := Convert(v, app, ro, po)
-	attestCmd := Attest(v, app, ro, po)
+	attestCmd := Attest(v, app, ro, po, ao)
 
 	// rootCmd is currently an alias for the packages command
 	rootCmd := &cobra.Command{

@@ -20,8 +20,7 @@ const (
 	attestHelp       = attestExample + attestSchemeHelp
 )
 
-//nolint:dupl
-func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
+func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions, ao *options.AttestOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "attest --output [FORMAT] <IMAGE>",
 		Short: "Generate an SBOM as an attestation for the given [SOURCE] container image",
@@ -50,8 +49,14 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po
 		},
 	}
 
-	// syft attest is an enhancment of the packages command, so it should have the same flags
+	// syft attest is an enhancement of the packages command, so it should have the same flags
 	err := po.AddFlags(cmd, v)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// syft attest has its own options not included as part of the packages command
+	err = ao.AddFlags(cmd, v)
 	if err != nil {
 		log.Fatal(err)
 	}
