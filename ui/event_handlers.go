@@ -618,6 +618,9 @@ func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event party
 			text := s.Text()
 			if strings.Contains(text, "tlog entry created with index") {
 				tlogEntry = text
+			} else {
+				// no tlog entry create so user used personal PKI
+				tlogEntry = "signed attestation using provided key"
 			}
 			_, err = line.Write([]byte(fmt.Sprintf("     %s %s", auxInfoFormat.Sprintf("░░"), text)))
 			if err != nil {
