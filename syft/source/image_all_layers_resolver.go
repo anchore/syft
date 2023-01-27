@@ -64,9 +64,9 @@ func (r *imageAllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs fil
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve link from layer (layer=%d ref=%+v): %w", subLayerIdx, ref, err)
 			}
-			if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
-				uniqueFileIDs.Add(*resolvedRef)
-				uniqueFiles = append(uniqueFiles, *resolvedRef)
+			if resolvedRef.HasReference() && !uniqueFileIDs.Contains(*resolvedRef.Reference) {
+				uniqueFileIDs.Add(*resolvedRef.Reference)
+				uniqueFiles = append(uniqueFiles, *resolvedRef.Reference)
 			}
 		}
 	} else if !uniqueFileIDs.Contains(ref) {
@@ -89,7 +89,7 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 			if err != nil {
 				return nil, err
 			}
-			if ref == nil {
+			if !ref.HasReference() {
 				// no file found, keep looking through layers
 				continue
 			}
@@ -97,8 +97,8 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 			// don't consider directories (special case: there is no path information for /)
 			if ref.RealPath == "/" {
 				continue
-			} else if r.img.FileCatalog.Exists(*ref) {
-				metadata, err := r.img.FileCatalog.Get(*ref)
+			} else if r.img.FileCatalog.Exists(*ref.Reference) {
+				metadata, err := r.img.FileCatalog.Get(*ref.Reference)
 				if err != nil {
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 				}
@@ -107,7 +107,7 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 				}
 			}
 
-			results, err := r.fileByRef(*ref, uniqueFileIDs, idx)
+			results, err := r.fileByRef(*ref.Reference, uniqueFileIDs, idx)
 			if err != nil {
 				return nil, err
 			}
@@ -172,11 +172,11 @@ func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path stri
 		log.Errorf("failed to find path=%q in squash: %+w", path, err)
 		return nil
 	}
-	if !exists && relativeRef == nil {
+	if !exists && !relativeRef.HasReference() {
 		return nil
 	}
 
-	relativeLocation := NewLocationFromImage(path, *relativeRef, r.img)
+	relativeLocation := NewLocationFromImage(path, *relativeRef.Reference, r.img)
 
 	return &relativeLocation
 }
@@ -214,7 +214,9 @@ func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, e
 		}
 
 		for _, ref := range refs {
-			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			if ref.HasReference() {
+				locations = append(locations, NewLocationFromImage(string(ref.RealPath), *ref.Reference, r.img))
+			}
 		}
 	}
 
@@ -233,7 +235,9 @@ func (r *imageAllLayersResolver) FilesByExtension(extensions ...string) ([]Locat
 			}
 
 			for _, ref := range refs {
-				locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+				if ref.HasReference() {
+					locations = append(locations, NewLocationFromImage(string(ref.RealPath), *ref.Reference, r.img))
+				}
 			}
 		}
 	}
@@ -253,7 +257,9 @@ func (r *imageAllLayersResolver) FilesByBasename(filenames ...string) ([]Locatio
 			}
 
 			for _, ref := range refs {
-				locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+				if ref.HasReference() {
+					locations = append(locations, NewLocationFromImage(string(ref.RealPath), *ref.Reference, r.img))
+				}
 			}
 		}
 	}
@@ -273,7 +279,9 @@ func (r *imageAllLayersResolver) FilesByBasenameGlob(globs ...string) ([]Locatio
 			}
 
 			for _, ref := range refs {
-				locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+				if ref.HasReference() {
+					locations = append(locations, NewLocationFromImage(string(ref.RealPath), *ref.Reference, r.img))
+				}
 			}
 		}
 	}

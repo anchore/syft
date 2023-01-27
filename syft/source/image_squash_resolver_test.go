@@ -2,12 +2,16 @@ package source
 
 import (
 	"io"
+	"sort"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
@@ -344,6 +348,7 @@ func TestSquashImageResolver_FilesContents(t *testing.T) {
 		})
 	}
 }
+
 func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -404,7 +409,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			},
 		},
 		{
-			name: "by glob",
+			name: "by glob to links",
 			runner: func(resolver FileResolver) []Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("*ink-*")
@@ -414,9 +419,9 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			expected: []Location{
 				{
 					Coordinates: Coordinates{
-						RealPath: "/file-3.txt",
+						RealPath: "/file-1.txt",
 					},
-					VirtualPath: "/link-within",
+					VirtualPath: "/link-1",
 				},
 				{
 					Coordinates: Coordinates{
@@ -426,9 +431,141 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 				},
 				{
 					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/link-indirect",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-3.txt",
+					},
+					VirtualPath: "/link-within",
+				},
+			},
+		},
+		{
+			name: "by basename",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				actualLocations, err := resolver.FilesByBasename("file-2.txt")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				// this has two copies in the base image, which overwrites the same location
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/file-2.txt",
+				},
+			},
+		},
+		{
+			name: "by basename glob",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				actualLocations, err := resolver.FilesByBasenameGlob("file-?.txt")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-1.txt",
+					},
+					VirtualPath: "/file-1.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/file-2.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-3.txt",
+					},
+					VirtualPath: "/file-3.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/parent/file-4.txt",
+					},
+					VirtualPath: "/parent/file-4.txt",
+				},
+			},
+		},
+		{
+			name: "by basename glob to links",
+			runner: func(resolver FileResolver) []Location {
+				actualLocations, err := resolver.FilesByBasenameGlob("link-*")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
 						RealPath: "/file-1.txt",
 					},
 					VirtualPath: "/link-1",
+					ref:         file.Reference{RealPath: "/file-1.txt"},
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/link-2",
+					ref:         file.Reference{RealPath: "/file-2.txt"},
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/link-indirect",
+					ref:         file.Reference{RealPath: "/file-2.txt"},
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-3.txt",
+					},
+					VirtualPath: "/link-within",
+					ref:         file.Reference{RealPath: "/file-3.txt"},
+				},
+			},
+		},
+		{
+			name: "by extension",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				actualLocations, err := resolver.FilesByExtension(".txt")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-1.txt",
+					},
+					VirtualPath: "/file-1.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-2.txt",
+					},
+					VirtualPath: "/file-2.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/file-3.txt",
+					},
+					VirtualPath: "/file-3.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "/parent/file-4.txt",
+					},
+					VirtualPath: "/parent/file-4.txt",
 				},
 			},
 		},
@@ -478,23 +615,27 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			resolver, err := newImageSquashResolver(img)
 			assert.NoError(t, err)
 
-			actualLocations := test.runner(resolver)
-			require.Len(t, actualLocations, len(test.expected))
+			actual := test.runner(resolver)
 
-			// some operations on this resolver do not return stable results (order may be different across runs)
-
-			expectedMap := make(map[string]string)
-			for _, e := range test.expected {
-				expectedMap[e.VirtualPath] = e.RealPath
-			}
-
-			actualMap := make(map[string]string)
-			for _, a := range test.expected {
-				actualMap[a.VirtualPath] = a.RealPath
-			}
-
-			assert.Equal(t, expectedMap, actualMap)
+			compareLocations(t, test.expected, actual)
 		})
+	}
+
+}
+
+func compareLocations(t *testing.T, expected, actual []Location) {
+	ignoreUnexported := cmpopts.IgnoreFields(Location{}, "ref")
+	ignoreFS := cmpopts.IgnoreFields(Coordinates{}, "FileSystemID")
+
+	sort.Sort(Locations(expected))
+	sort.Sort(Locations(actual))
+
+	if d := cmp.Diff(expected, actual,
+		ignoreUnexported,
+		ignoreFS,
+	); d != "" {
+
+		t.Errorf("unexpected locations (-want +got):\n%s", d)
 	}
 
 }

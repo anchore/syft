@@ -9,6 +9,7 @@ RUN ln -s ./file-1.txt link-1
 
 # LAYER 3: link with future data
 RUN ln -s ./file-2.txt link-2
+
 # LAYER 4:
 ADD file-2.txt .
 
@@ -32,3 +33,17 @@ RUN ln -s /parent parent-link
 
 # LAYER 11: parent is a symlink and the child target is overridden
 COPY new-file-4.txt /parent-link/file-4.txt
+
+# squash representation
+#  .
+#  ├── file-1.txt
+#  ├── file-2.txt
+#  ├── file-3.txt
+#  ├── link-1  ->  ./file-1.txt
+#  ├── link-2  ->  ./file-2.txt
+#  ├── link-dead  ->  [./i-dont-exist.txt] (dead link)
+#  ├── link-indirect  ->  ./link-2
+#  ├── link-within  ->  ./file-3.txt
+#  ├── parent
+#  │   └── file-4.txt
+#  └── parent-link -> /parent

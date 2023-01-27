@@ -44,7 +44,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 		if err != nil {
 			return nil, err
 		}
-		if ref == nil {
+		if !ref.HasReference() {
 			// no file found, keep looking through layers
 			continue
 		}
@@ -52,8 +52,8 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 		// don't consider directories (special case: there is no path information for /)
 		if ref.RealPath == "/" {
 			continue
-		} else if r.img.FileCatalog.Exists(*ref) {
-			metadata, err := r.img.FileCatalog.Get(*ref)
+		} else if r.img.FileCatalog.Exists(*ref.Reference) {
+			metadata, err := r.img.FileCatalog.Get(*ref.Reference)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 			}
@@ -63,14 +63,14 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 		}
 
 		// a file may be a symlink, process it as such and resolve it
-		resolvedRef, err := r.img.ResolveLinkByImageSquash(*ref)
+		resolvedRef, err := r.img.ResolveLinkByImageSquash(*ref.Reference)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve link from img (ref=%+v): %w", ref, err)
 		}
 
-		if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
-			uniqueFileIDs.Add(*resolvedRef)
-			uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, *resolvedRef, r.img))
+		if resolvedRef.HasReference() && !uniqueFileIDs.Contains(*resolvedRef.Reference) {
+			uniqueFileIDs.Add(*resolvedRef.Reference)
+			uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, *resolvedRef.Reference, r.img))
 		}
 	}
 
@@ -79,9 +79,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 // FilesByGlob returns all file.References that match the given path glob pattern within the squashed representation of the image.
 func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
-	uniqueLocations := make([]Location, 0)
-
+	var locations []Location
 	for _, pattern := range patterns {
 		results, err := r.img.SquashedTree().FilesByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
@@ -108,16 +106,11 @@ func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 			if err != nil {
 				return nil, fmt.Errorf("failed to find files by path (result=%+v): %w", result, err)
 			}
-			for _, resolvedLocation := range resolvedLocations {
-				if !uniqueFileIDs.Contains(resolvedLocation.ref) {
-					uniqueFileIDs.Add(resolvedLocation.ref)
-					uniqueLocations = append(uniqueLocations, resolvedLocation)
-				}
-			}
+			locations = append(locations, resolvedLocations...)
 		}
 	}
 
-	return uniqueLocations, nil
+	return locations, nil
 }
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
@@ -183,7 +176,9 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 
 	var locations []Location
 	for _, ref := range refs {
-		locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+		if ref.HasReference() {
+			locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
+		}
 	}
 
 	return locations, nil
@@ -198,7 +193,9 @@ func (r *imageSquashResolver) FilesByExtension(extensions ...string) ([]Location
 		}
 
 		for _, ref := range refs {
-			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			if ref.HasReference() {
+				locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
+			}
 		}
 	}
 
@@ -214,7 +211,9 @@ func (r *imageSquashResolver) FilesByBasename(basenames ...string) ([]Location, 
 		}
 
 		for _, ref := range refs {
-			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			if ref.HasReference() {
+				locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
+			}
 		}
 	}
 
@@ -231,7 +230,9 @@ func (r *imageSquashResolver) FilesByBasenameGlob(globs ...string) ([]Location, 
 		}
 
 		for _, ref := range refs {
-			locations = append(locations, NewLocationFromImage(string(ref.RealPath), ref, r.img))
+			if ref.HasReference() {
+				locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
+			}
 		}
 	}
 

@@ -957,4 +957,281 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 			assert.ElementsMatch(t, c.expected, s.List())
 		})
 	}
+
+}
+
+func Test_directoryResolver_resolvesLinks(t *testing.T) {
+	tests := []struct {
+		name     string
+		runner   func(FileResolver) []Location
+		expected []Location
+	}{
+		{
+			name: "by mimetype",
+			runner: func(resolver FileResolver) []Location {
+				// links should not show up when searching mimetype
+				actualLocations, err := resolver.FilesByMIMEType("text/plain")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-1.txt",
+					},
+					//VirtualPath: "file-1.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-3.txt",
+					},
+					//VirtualPath: "file-3.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					//VirtualPath: "file-2.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "parent/file-4.txt",
+					},
+					//VirtualPath: "parent/file-4.txt",
+				},
+			},
+		},
+		{
+			name: "by glob to links",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				// for that reason we need to place **/ in front (which is not the same for other resolvers)
+				actualLocations, err := resolver.FilesByGlob("**/*ink-*")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-1.txt",
+					},
+					VirtualPath: "link-1",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					VirtualPath: "link-2",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					VirtualPath: "link-indirect",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-3.txt",
+					},
+					VirtualPath: "link-within",
+				},
+			},
+		},
+		{
+			name: "by basename",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				actualLocations, err := resolver.FilesByBasename("file-2.txt")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				// this has two copies in the base image, which overwrites the same location
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					//VirtualPath: "file-2.txt",
+				},
+			},
+		},
+		{
+			name: "by basename glob",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				actualLocations, err := resolver.FilesByBasenameGlob("file-?.txt")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-1.txt",
+					},
+					//VirtualPath: "file-1.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					//VirtualPath: "file-2.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-3.txt",
+					},
+					//VirtualPath: "file-3.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "parent/file-4.txt",
+					},
+					//VirtualPath: "parent/file-4.txt",
+				},
+				// note: this is a unique entry relative to the other resolvers. The other resolvers by nature
+				// do not walk full paths with symlinks, they treat symlinks as a single file. This resolver
+				// walks a real filsystem thus symlinks are followed and the same file can be found twice.
+
+				// TODO: this is NOT good, since we should not be following symlinks in this case. This needs to be fixed.
+				{
+					Coordinates: Coordinates{
+						RealPath: "parent/file-4.txt",
+					},
+					VirtualPath: "parent-link/file-4.txt",
+				},
+			},
+		},
+		{
+			name: "by basename glob to links",
+			runner: func(resolver FileResolver) []Location {
+				actualLocations, err := resolver.FilesByBasenameGlob("link-*")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-1.txt",
+					},
+					VirtualPath: "link-1",
+					ref:         file.Reference{RealPath: "file-1.txt"},
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					VirtualPath: "link-2",
+					ref:         file.Reference{RealPath: "file-2.txt"},
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					VirtualPath: "link-indirect",
+					ref:         file.Reference{RealPath: "file-2.txt"},
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-3.txt",
+					},
+					VirtualPath: "link-within",
+					ref:         file.Reference{RealPath: "file-3.txt"},
+				},
+			},
+		},
+		{
+			name: "by extension",
+			runner: func(resolver FileResolver) []Location {
+				// links are searched, but resolve to the real files
+				actualLocations, err := resolver.FilesByExtension(".txt")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-1.txt",
+					},
+					//VirtualPath: "file-1.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					//VirtualPath: "file-2.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-3.txt",
+					},
+					//VirtualPath: "file-3.txt",
+				},
+				{
+					Coordinates: Coordinates{
+						RealPath: "parent/file-4.txt",
+					},
+					//VirtualPath: "parent/file-4.txt",
+				},
+				// note: this is a unique entry relative to the other resolvers. The other resolvers by nature
+				// do not walk full paths with symlinks, they treat symlinks as a single file. This resolver
+				// walks a real filsystem thus symlinks are followed and the same file can be found twice.
+
+				// TODO: this is NOT good, since we should not be following symlinks in this case. This needs to be fixed.
+				{
+					Coordinates: Coordinates{
+						RealPath: "parent/file-4.txt",
+					},
+					VirtualPath: "parent-link/file-4.txt",
+				},
+			},
+		},
+		{
+			name: "by path to degree 1 link",
+			runner: func(resolver FileResolver) []Location {
+				// links resolve to the final file
+				actualLocations, err := resolver.FilesByPath("/link-2")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				// we have multiple copies across layers
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					VirtualPath: "link-2",
+				},
+			},
+		},
+		{
+			name: "by path to degree 2 link",
+			runner: func(resolver FileResolver) []Location {
+				// multiple links resolves to the final file
+				actualLocations, err := resolver.FilesByPath("/link-indirect")
+				assert.NoError(t, err)
+				return actualLocations
+			},
+			expected: []Location{
+				// we have multiple copies across layers
+				{
+					Coordinates: Coordinates{
+						RealPath: "file-2.txt",
+					},
+					VirtualPath: "link-indirect",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			resolver, err := newDirectoryResolver("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
+			require.NoError(t, err)
+			assert.NoError(t, err)
+
+			actual := test.runner(resolver)
+
+			compareLocations(t, test.expected, actual)
+		})
+	}
 }

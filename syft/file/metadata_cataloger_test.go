@@ -135,7 +135,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 				t.Fatalf("unable to get file: %+v", err)
 			}
 
-			l := source.NewLocationFromImage(test.path, *ref, img)
+			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
 
 			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
 

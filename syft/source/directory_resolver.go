@@ -214,7 +214,7 @@ func (r directoryResolver) hasBeenIndexed(p string) bool {
 	}
 
 	exists, ref, err := r.fileTree.File(filePath)
-	if err != nil || !exists || ref == nil {
+	if err != nil || !exists || !ref.HasReference() {
 		return false
 	}
 
@@ -279,10 +279,18 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 		}
 	}
 
+	// previouslyIndexedDestination := r.hasBeenIndexed(linkTarget)
+
 	ref, err := r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
 	if err != nil {
 		return "", err
 	}
+
+	// if previouslyIndexedDestination {
+	//	// this symlink is pointing to a spot on the filesystem that has already been indexed. We don't want to continue
+	//	// searching this branch
+	//	return "", nil
+	//}
 
 	targetAbsPath := linkTarget
 	if !filepath.IsAbs(targetAbsPath) {
@@ -291,7 +299,7 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 
 	location := NewLocationFromDirectory(p, *ref)
 	location.VirtualPath = p
-	metadata := fileMetadataFromPath(p, usedInfo, r.isInIndex(location))
+	metadata := fileMetadataFromPath(p, usedInfo, false) // note: to be consistent with other resolvers, don't record mime type for symlink destinations
 	metadata.LinkDestination = linkTarget
 	r.addFileMetadataToIndex(ref, metadata)
 
@@ -400,12 +408,15 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 			userStrPath = windowsToPosix(userStrPath)
 		}
 
-		loc := NewVirtualLocationFromDirectory(
-			r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
-			r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
-			*ref,
-		)
-		references = append(references, loc)
+		if ref.HasReference() {
+			references = append(references,
+				NewVirtualLocationFromDirectory(
+					r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
+					r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
+					*ref.Reference,
+				),
+			)
+		}
 	}
 
 	return references, nil
@@ -477,7 +488,6 @@ func (r directoryResolver) FilesByBasename(filenames ...string) ([]Location, err
 	return result, nil
 }
 
-// TODO: duplicate code with FilesByBasename
 func (r directoryResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
 	result := make([]Location, 0)
 

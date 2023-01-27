@@ -146,7 +146,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unable to get file=%q : %+v", test.path, err)
 			}
-			l := source.NewLocationFromImage(test.path, *ref, img)
+			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
 
 			if len(actual[l.Coordinates]) == 0 {
 				if test.expected != "" {
