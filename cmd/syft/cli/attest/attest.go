@@ -97,6 +97,7 @@ func buildSBOM(app *config.Application, si source.Input, writer sbom.Writer, err
 	return sBytes, nil
 }
 
+//nolint:funlen
 func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
@@ -131,9 +132,18 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			}
 
 			args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", f.Name()}
+			if app.Attest.Key != "" {
+				args = append(args, "--key", app.Attest.Key)
+			}
+
 			execCmd := exec.Command(cmd, args...)
 			execCmd.Env = os.Environ()
-			execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
+			if app.Attest.Key != "" {
+				execCmd.Env = append(execCmd.Env, fmt.Sprintf("COSIGN_PASSWORD=%s", app.Attest.Password))
+			} else {
+				// no key provided, use cosign's keyless mode
+				execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
+			}
 
 			// bus adapter for ui to hook into stdout via an os pipe
 			r, w, err := os.Pipe()

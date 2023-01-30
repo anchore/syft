@@ -11,9 +11,9 @@ import (
 	"github.com/anchore/syft/syft"
 )
 
-func Run(ctx context.Context, app *config.Application, args []string) error {
+func Run(_ context.Context, app *config.Application, args []string) error {
 	log.Warn("convert is an experimental feature, run `syft convert -h` for help")
-	writer, err := options.MakeWriter(app.Outputs, app.File, "")
+	writer, err := options.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,9 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open SBOM file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	sbom, _, err := syft.Decode(f)
 	if err != nil {
