@@ -1,6 +1,7 @@
 package file
 
 import (
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
 )
@@ -20,7 +21,7 @@ func allRegularFiles(resolver source.FileResolver) (locations []source.Location)
 				continue
 			}
 
-			if metadata.Type != source.RegularFile {
+			if metadata.Type != file.TypeReg {
 				continue
 			}
 			locations = append(locations, resolvedLocation)

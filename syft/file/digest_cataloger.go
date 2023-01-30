@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"errors"
 	"fmt"
+	"github.com/anchore/stereoscope/pkg/file"
 	"hash"
 	"io"
 	"strings"
@@ -65,7 +66,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	}
 
 	// we should only attempt to report digests for files that are regular files (don't attempt to resolve links)
-	if meta.Type != source.RegularFile {
+	if meta.Type != file.TypeReg {
 		return nil, errUndigestableFile
 	}
 

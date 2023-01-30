@@ -157,3 +157,5 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+replace github.com/anchore/stereoscope => ../stereoscope
