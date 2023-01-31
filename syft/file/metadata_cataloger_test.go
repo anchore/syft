@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
@@ -50,8 +51,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/file-1.txt",
 			exists: true,
 			expected: source.FileMetadata{
+				Path:     "/file-1.txt",
 				Mode:     0644,
-				Type:     "RegularFile",
+				Type:     file.TypeReg,
 				UserID:   1,
 				GroupID:  2,
 				Size:     7,
@@ -62,8 +64,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/hardlink-1",
 			exists: true,
 			expected: source.FileMetadata{
+				Path:            "/hardlink-1",
 				Mode:            0644,
-				Type:            "HardLink",
+				Type:            file.TypeHardLink,
 				LinkDestination: "file-1.txt",
 				UserID:          1,
 				GroupID:         2,
@@ -74,8 +77,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/symlink-1",
 			exists: true,
 			expected: source.FileMetadata{
+				Path:            "/symlink-1",
 				Mode:            0777 | os.ModeSymlink,
-				Type:            "SymbolicLink",
+				Type:            file.TypeSymlink,
 				LinkDestination: "file-1.txt",
 				UserID:          0,
 				GroupID:         0,
@@ -86,8 +90,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/char-device-1",
 			exists: true,
 			expected: source.FileMetadata{
+				Path:     "/char-device-1",
 				Mode:     0644 | os.ModeDevice | os.ModeCharDevice,
-				Type:     "CharacterDevice",
+				Type:     file.TypeCharacterDevice,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -97,8 +102,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/block-device-1",
 			exists: true,
 			expected: source.FileMetadata{
+				Path:     "/block-device-1",
 				Mode:     0644 | os.ModeDevice,
-				Type:     "BlockDevice",
+				Type:     file.TypeBlockDevice,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -108,8 +114,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/fifo-1",
 			exists: true,
 			expected: source.FileMetadata{
+				Path:     "/fifo-1",
 				Mode:     0644 | os.ModeNamedPipe,
-				Type:     "FIFONode",
+				Type:     file.TypeFifo,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -119,8 +126,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/bin",
 			exists: true,
 			expected: source.FileMetadata{
+				Path:     "/bin",
 				Mode:     0755 | os.ModeDir,
-				Type:     "Directory",
+				Type:     file.TypeDir,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -130,10 +138,8 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			_, ref, err := img.SquashedTree().File(file.Path(test.path))
-			if err != nil {
-				t.Fatalf("unable to get file: %+v", err)
-			}
+			ref, err := img.SquashedSearchContext().SearchByPath(test.path)
+			require.NoError(t, err)
 
 			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
 

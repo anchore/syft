@@ -41,6 +41,7 @@ type directoryResolver struct {
 	currentWdRelativeToRoot string
 	currentWd               string
 	fileTree                *filetree.FileTree
+	fileTreeIndex           filetree.Index
 	metadata                map[file.ID]FileMetadata
 	// TODO: wire up to report these paths in the json report
 	pathFilterFns  []pathFilterFn
@@ -93,6 +94,7 @@ func newDirectoryResolver(root string, base string, pathFilters ...pathFilterFn)
 		currentWd:               cleanCWD,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		fileTree:                filetree.NewFileTree(),
+		fileTreeIndex:           filetree.NewIndex(),
 		metadata:                make(map[file.ID]FileMetadata),
 		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
 		refsByMIMEType:          make(map[string][]file.Reference),
@@ -103,7 +105,7 @@ func newDirectoryResolver(root string, base string, pathFilters ...pathFilterFn)
 }
 
 func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {
-	log.Debugf("indexing filesystem path=%q", root)
+	log.WithFields("path", root).Trace("indexing filetree")
 
 	var roots []string
 	var err error
@@ -195,12 +197,12 @@ func (r *directoryResolver) isFileAccessErr(path string, err error) bool {
 }
 
 func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, error) {
-	switch t := newFileTypeFromMode(info.Mode()); t {
-	case SymbolicLink:
+	switch t := file.TypeFromMode(info.Mode()); t {
+	case file.TypeSymlink:
 		return r.addSymlinkToIndex(p, info)
-	case Directory:
+	case file.TypeDir:
 		return "", r.addDirectoryToIndex(p, info)
-	case RegularFile:
+	case file.TypeReg:
 		return "", r.addFileToIndex(p, info)
 	default:
 		return "", fmt.Errorf("unsupported file type: %s", t)
@@ -220,8 +222,10 @@ func (r directoryResolver) hasBeenIndexed(p string) bool {
 
 	// cases like "/" will be in the tree, but not been indexed yet (a special case). We want to capture
 	// these cases as new paths to index.
-	_, exists = r.metadata[ref.ID()]
-	return exists
+	if !ref.HasReference() {
+		return false
+	}
+	return r.fileTreeIndex.Exists(*ref.Reference)
 }
 
 func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error {
@@ -232,7 +236,7 @@ func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error
 
 	location := NewLocationFromDirectory(p, *ref)
 	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
-	r.addFileMetadataToIndex(ref, metadata)
+	r.addFileToFileTreeIndex(ref, metadata)
 
 	return nil
 }
@@ -245,7 +249,8 @@ func (r directoryResolver) addFileToIndex(p string, info os.FileInfo) error {
 
 	location := NewLocationFromDirectory(p, *ref)
 	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
-	r.addFileMetadataToIndex(ref, metadata)
+	r.addFileToFileTreeIndex(ref, metadata)
+	r.fileTreeIndex.Add(*ref, metadata)
 
 	return nil
 }
@@ -301,12 +306,12 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 	location.VirtualPath = p
 	metadata := fileMetadataFromPath(p, usedInfo, false) // note: to be consistent with other resolvers, don't record mime type for symlink destinations
 	metadata.LinkDestination = linkTarget
-	r.addFileMetadataToIndex(ref, metadata)
+	r.addFileToFileTreeIndex(ref, metadata)
 
 	return targetAbsPath, nil
 }
 
-func (r directoryResolver) addFileMetadataToIndex(ref *file.Reference, metadata FileMetadata) {
+func (r directoryResolver) addFileToFileTreeIndex(ref *file.Reference, metadata FileMetadata) {
 	if ref != nil {
 		if metadata.MIMEType != "" {
 			r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
@@ -373,16 +378,19 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 		}
 
 		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
-		exists, ref, err := r.fileTree.File(file.Path(userStrPath), filetree.FollowBasenameLinks)
+		searchContext := filetree.NewSearchContext(r.fileTree, r.fileTreeIndex)
+		ref, err := searchContext.SearchByPath(userStrPath, filetree.FollowBasenameLinks)
 		if err != nil {
 			log.Tracef("unable to evaluate symlink for path=%q : %+v", userPath, err)
 			continue
 		}
-		if !exists {
+		// TODO: alex: is this the same as "exists"?
+		if !ref.HasReference() {
 			continue
 		}
 
 		// TODO: why not use stored metadata?
+		// TODO: today we don't store directory metadata while indexing, which would make the index much larger too
 		fileMeta, err := os.Stat(string(ref.RealPath))
 		if errors.Is(err, os.ErrNotExist) {
 			// note: there are other kinds of errors other than os.ErrNotExist that may be given that is platform
@@ -427,83 +435,20 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	result := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		globResults, err := r.fileTree.FilesByGlob(pattern, filetree.FollowBasenameLinks)
+		searchContext := filetree.NewSearchContext(r.fileTree, r.fileTreeIndex)
+		refVias, err := searchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
-		for _, globResult := range globResults {
-			loc := NewVirtualLocationFromDirectory(
-				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
-				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
-				globResult.Reference,
-			)
-			result = append(result, loc)
-		}
-	}
-
-	return result, nil
-}
-
-func (r directoryResolver) FilesByExtension(extensions ...string) ([]Location, error) {
-	result := make([]Location, 0)
-
-	for _, extension := range extensions {
-		// TODO: is there a faster way to do this?
-		globResults, err := r.fileTree.FilesByGlob("**/*"+extension, filetree.FollowBasenameLinks)
-		if err != nil {
-			return nil, err
-		}
-		for _, globResult := range globResults {
-			loc := NewVirtualLocationFromDirectory(
-				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
-				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
-				globResult.Reference,
-			)
-			result = append(result, loc)
-		}
-	}
-
-	return result, nil
-}
-
-func (r directoryResolver) FilesByBasename(filenames ...string) ([]Location, error) {
-	result := make([]Location, 0)
-
-	for _, filename := range filenames {
-		// TODO: is there a faster way to do this?
-		globResults, err := r.fileTree.FilesByGlob("**/"+filename, filetree.FollowBasenameLinks)
-		if err != nil {
-			return nil, err
-		}
-		for _, globResult := range globResults {
-			loc := NewVirtualLocationFromDirectory(
-				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
-				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
-				globResult.Reference,
-			)
-			result = append(result, loc)
-		}
-	}
-
-	return result, nil
-}
-
-func (r directoryResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
-	result := make([]Location, 0)
-
-	for _, glob := range globs {
-		// TODO: is there a faster way to do this?
-		globResults, err := r.fileTree.FilesByGlob("**/"+glob, filetree.FollowBasenameLinks)
-		if err != nil {
-			return nil, err
-		}
-		for _, globResult := range globResults {
-			loc := NewVirtualLocationFromDirectory(
-				r.responsePath(string(globResult.Reference.RealPath)), // the actual path relative to the resolver root
-				r.responsePath(string(globResult.MatchPath)),          // the path used to access this file, relative to the resolver root
-				globResult.Reference,
-			)
-			result = append(result, loc)
+		for _, refVia := range refVias {
+			if refVia.HasReference() {
+				loc := NewVirtualLocationFromDirectory(
+					r.responsePath(string(refVia.Reference.RealPath)), // the actual path relative to the resolver root
+					r.responsePath(string(refVia.RequestPath)),        // the path used to access this file, relative to the resolver root
+					*refVia.Reference,
+				)
+				result = append(result, loc)
+			}
 		}
 	}
 
@@ -622,8 +567,8 @@ func isUnallowableFileType(_ string, info os.FileInfo) bool {
 		// we can't filter out by filetype for non-existent files
 		return false
 	}
-	switch newFileTypeFromMode(info.Mode()) {
-	case CharacterDevice, Socket, BlockDevice, FIFONode, IrregularFile:
+	switch file.TypeFromMode(info.Mode()) {
+	case file.TypeCharacterDevice, file.TypeSocket, file.TypeBlockDevice, file.TypeFifo, file.TypeIrregular:
 		return true
 		// note: symlinks that point to these files may still get by.
 		// We handle this later in processing to help prevent against infinite links traversal.

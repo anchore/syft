@@ -10,11 +10,11 @@ import (
 // NewComposerInstalledCataloger returns a new cataloger for PHP installed.json files.
 func NewComposerInstalledCataloger() *generic.Cataloger {
 	return generic.NewCataloger("php-composer-installed-cataloger").
-		WithParserByBasename(parseInstalledJSON, "installed.json")
+		WithParserByGlobs(parseInstalledJSON, "**/installed.json")
 }
 
 // NewComposerLockCataloger returns a new cataloger for PHP composer.lock files.
 func NewComposerLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger("php-composer-lock-cataloger").
-		WithParserByBasename(parseComposerLock, "composer.lock")
+		WithParserByGlobs(parseComposerLock, "**/composer.lock")
 }

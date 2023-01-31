@@ -10,13 +10,13 @@ import (
 // NewPackageCataloger returns a new JavaScript cataloger object based on detection of npm based packages.
 func NewPackageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("javascript-package-cataloger").
-		WithParserByBasename(parsePackageJSON, "package.json")
+		WithParserByGlobs(parsePackageJSON, "**/package.json")
 }
 
 // NewLockCataloger returns a new JavaScript cataloger object based on detection of lock files.
 func NewLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger("javascript-lock-cataloger").
-		WithParserByBasename(parsePackageLock, "package-lock.json").
-		WithParserByBasename(parseYarnLock, "yarn.lock").
-		WithParserByBasename(parsePnpmLock, "pnpm-lock.yaml")
+		WithParserByGlobs(parsePackageLock, "**/package-lock.json").
+		WithParserByGlobs(parseYarnLock, "**/yarn.lock").
+		WithParserByGlobs(parsePnpmLock, "**/pnpm-lock.yaml")
 }

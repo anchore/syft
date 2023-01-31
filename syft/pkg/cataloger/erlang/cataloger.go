@@ -12,5 +12,5 @@ const catalogerName = "erlang-rebar-lock-cataloger"
 // NewRebarLockCataloger returns parses rebar.lock files and returns packages.
 func NewRebarLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
-		WithParserByBasename(parseRebarLock, "rebar.lock")
+		WithParserByGlobs(parseRebarLock, "**/rebar.lock")
 }

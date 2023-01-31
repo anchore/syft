@@ -67,15 +67,6 @@ func TestExcludingResolver(t *testing.T) {
 			locations, _ = er.FilesByMIMEType()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
-			locations, _ = er.FilesByExtension()
-			assert.ElementsMatch(t, locationPaths(locations), test.expected)
-
-			locations, _ = er.FilesByBasename()
-			assert.ElementsMatch(t, locationPaths(locations), test.expected)
-
-			locations, _ = er.FilesByBasenameGlob()
-			assert.ElementsMatch(t, locationPaths(locations), test.expected)
-
 			locations = []Location{}
 
 			channel := er.AllLocations()

@@ -32,7 +32,7 @@ func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artif
 	var relationships []artifact.Relationship
 
 	for _, cls := range defaultClassifiers {
-		log.WithFields("classifier", cls.Class, "search", cls.SearchRequest.String()).Trace("cataloging binaries")
+		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
 		pkgs, err := catalog(resolver, cls)
 		if err != nil {
 			log.WithFields("error", err, "classifier", cls.Class).Warn("unable to catalog binary package: %w", err)
@@ -46,7 +46,7 @@ func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artif
 
 func catalog(resolver source.FileResolver, cls classifier) ([]pkg.Package, error) {
 	var pkgs []pkg.Package
-	locations, err := cls.SearchRequest.Execute(resolver)
+	locations, err := resolver.FilesByGlob(cls.FileGlob)
 	if err != nil {
 		return nil, err
 	}

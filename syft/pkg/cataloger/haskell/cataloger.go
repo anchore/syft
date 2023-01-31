@@ -11,7 +11,7 @@ import (
 // NewHackageCataloger returns a new Haskell cataloger object.
 func NewHackageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("haskell-cataloger").
-		WithParserByBasename(parseStackYaml, "stack.yaml").
-		WithParserByBasename(parseStackLock, "stack.yaml.lock").
-		WithParserByBasename(parseCabalFreeze, "cabal.project.freeze")
+		WithParserByGlobs(parseStackYaml, "**/stack.yaml").
+		WithParserByGlobs(parseStackLock, "**/stack.yaml.lock").
+		WithParserByGlobs(parseCabalFreeze, "**/cabal.project.freeze")
 }

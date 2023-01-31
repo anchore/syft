@@ -11,7 +11,7 @@ import (
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.
 func NewCargoLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger("rust-cargo-lock-cataloger").
-		WithParserByBasename(parseCargoLock, "Cargo.lock")
+		WithParserByGlobs(parseCargoLock, "**/Cargo.lock")
 }
 
 // NewAuditBinaryCataloger returns a new Rust auditable binary cataloger object that can detect dependencies

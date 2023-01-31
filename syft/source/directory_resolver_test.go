@@ -1041,7 +1041,7 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 			name: "by basename",
 			runner: func(resolver FileResolver) []Location {
 				// links are searched, but resolve to the real files
-				actualLocations, err := resolver.FilesByBasename("file-2.txt")
+				actualLocations, err := resolver.FilesByGlob("**/file-2.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
@@ -1059,7 +1059,7 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 			name: "by basename glob",
 			runner: func(resolver FileResolver) []Location {
 				// links are searched, but resolve to the real files
-				actualLocations, err := resolver.FilesByBasenameGlob("file-?.txt")
+				actualLocations, err := resolver.FilesByGlob("**/file-?.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
@@ -1104,7 +1104,7 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 		{
 			name: "by basename glob to links",
 			runner: func(resolver FileResolver) []Location {
-				actualLocations, err := resolver.FilesByBasenameGlob("link-*")
+				actualLocations, err := resolver.FilesByGlob("**/link-*")
 				assert.NoError(t, err)
 				return actualLocations
 			},
@@ -1143,7 +1143,7 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 			name: "by extension",
 			runner: func(resolver FileResolver) []Location {
 				// links are searched, but resolve to the real files
-				actualLocations, err := resolver.FilesByExtension(".txt")
+				actualLocations, err := resolver.FilesByGlob("**/*.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},

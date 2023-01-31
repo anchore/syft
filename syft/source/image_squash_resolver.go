@@ -1,7 +1,6 @@
 package source
 
 import (
-	"archive/tar"
 	"fmt"
 	"io"
 
@@ -39,8 +38,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 	uniqueLocations := make([]Location, 0)
 
 	for _, path := range paths {
-		tree := r.img.SquashedTree()
-		_, ref, err := tree.File(file.Path(path), filetree.FollowBasenameLinks)
+		ref, err := r.img.SquashedSearchContext().SearchByPath(path, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
@@ -81,28 +79,31 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	var locations []Location
 	for _, pattern := range patterns {
-		results, err := r.img.SquashedTree().FilesByGlob(pattern, filetree.FollowBasenameLinks)
+		results, err := r.img.SquashedSearchContext().SearchByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 		}
 
 		for _, result := range results {
+			if !result.HasReference() {
+				continue
+			}
 			// don't consider directories (special case: there is no path information for /)
-			if result.MatchPath == "/" {
+			if result.RealPath == "/" {
 				continue
 			}
 
-			if r.img.FileCatalog.Exists(result.Reference) {
-				metadata, err := r.img.FileCatalog.Get(result.Reference)
+			if r.img.FileCatalog.Exists(*result.Reference) {
+				metadata, err := r.img.FileCatalog.Get(*result.Reference)
 				if err != nil {
-					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.MatchPath, err)
+					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 				}
 				if metadata.Metadata.IsDir {
 					continue
 				}
 			}
-
-			resolvedLocations, err := r.FilesByPath(string(result.MatchPath))
+			// TODO: alex: can't we just use the result.Reference here instead?
+			resolvedLocations, err := r.FilesByPath(string(result.RequestPath))
 			if err != nil {
 				return nil, fmt.Errorf("failed to find files by path (result=%+v): %w", result, err)
 			}
@@ -136,8 +137,8 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
 	}
 
-	switch entry.Metadata.TypeFlag {
-	case tar.TypeSymlink, tar.TypeLink:
+	switch entry.Metadata.Type {
+	case file.TypeSymlink, file.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
 		locations, err := r.FilesByPath(location.RealPath)
 		if err != nil {
@@ -161,7 +162,7 @@ func (r *imageSquashResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		for _, ref := range r.img.SquashedTree().AllFiles(file.AllTypes...) {
+		for _, ref := range r.img.SquashedTree().AllFiles(file.AllTypes()...) {
 			results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
 		}
 	}()
@@ -169,7 +170,7 @@ func (r *imageSquashResolver) AllLocations() <-chan Location {
 }
 
 func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, error) {
-	refs, err := r.img.FilesByMIMETypeFromSquash(types...)
+	refs, err := r.img.SquashedSearchContext().SearchByMIMEType(types...)
 	if err != nil {
 		return nil, err
 	}
@@ -178,61 +179,6 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 	for _, ref := range refs {
 		if ref.HasReference() {
 			locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
-		}
-	}
-
-	return locations, nil
-}
-
-func (r *imageSquashResolver) FilesByExtension(extensions ...string) ([]Location, error) {
-	var locations []Location
-	for _, extension := range extensions {
-		refs, err := r.img.FilesByExtensionFromSquash(extension)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, ref := range refs {
-			if ref.HasReference() {
-				locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
-			}
-		}
-	}
-
-	return locations, nil
-}
-
-func (r *imageSquashResolver) FilesByBasename(basenames ...string) ([]Location, error) {
-	var locations []Location
-	for _, basename := range basenames {
-		refs, err := r.img.FilesByBasenameFromSquash(basename)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, ref := range refs {
-			if ref.HasReference() {
-				locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
-			}
-		}
-	}
-
-	return locations, nil
-}
-
-func (r *imageSquashResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
-	var locations []Location
-
-	for _, glob := range globs {
-		refs, err := r.img.FilesByBasenameGlobFromSquash(glob)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, ref := range refs {
-			if ref.HasReference() {
-				locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
-			}
 		}
 	}
 

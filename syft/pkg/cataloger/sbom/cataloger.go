@@ -13,24 +13,19 @@ const catalogerName = "sbom-cataloger"
 
 // NewSBOMCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
 func NewSBOMCataloger() *generic.Cataloger {
-	generic.NewSearch().ByExtension(".txt").MustMatchGlob("**/somewhere/here/*.txt")
 	return generic.NewCataloger(catalogerName).
-		WithParserByBasename(parseSBOM,
-			"bom",
-			"sbom",
-		).
-		WithParserByExtensions(parseSBOM,
-			".syft.json",
-			".bom",
-			".sbom",
-			".cdx",
-			".spdx",
-		).
-		WithParser(parseSBOM,
-			generic.NewSearch().ByBasenameGlob("*.bom.*").Request(),
-			generic.NewSearch().ByBasenameGlob("*.sbom.*").Request(),
-			generic.NewSearch().ByBasenameGlob("*.cdx.*").Request(),
-			generic.NewSearch().ByBasenameGlob("*.spdx.*").Request(),
+		WithParserByGlobs(parseSBOM,
+			"**/*.syft.json",
+			"**/*.bom.*",
+			"**/*.bom",
+			"**/bom",
+			"**/*.sbom.*",
+			"**/*.sbom",
+			"**/sbom",
+			"**/*.cdx.*",
+			"**/*.cdx",
+			"**/*.spdx.*",
+			"**/*.spdx",
 		)
 }
 

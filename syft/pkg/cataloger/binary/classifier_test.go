@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -22,7 +21,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			fixture: "test-fixtures/version.txt",
 			classifier: classifier{
 				Package:         "some-app",
-				SearchRequest:   generic.NewSearch().ByBasename("version.txt").Request(),
+				FileGlob:        "**/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs:            []cpe.CPE{},
 			},
@@ -33,7 +32,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			fixture: "test-fixtures/version.txt",
 			classifier: classifier{
 				Package:         "some-app",
-				SearchRequest:   generic.NewSearch().ByBasename("version.txt").Request(),
+				FileGlob:        "**/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
@@ -48,7 +47,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			fixture: "test-fixtures/version.txt",
 			classifier: classifier{
 				Package:         "some-app",
-				SearchRequest:   generic.NewSearch().ByBasename("version.txt").Request(),
+				FileGlob:        "**/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),

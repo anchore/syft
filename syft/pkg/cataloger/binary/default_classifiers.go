@@ -3,13 +3,12 @@ package binary
 import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 var defaultClassifiers = []classifier{
 	{
-		Class:         "python-binary",
-		SearchRequest: generic.NewSearch().ByBasenameGlob("python*").Request(),
+		Class:    "python-binary",
+		FileGlob: "**/python*",
 		EvidenceMatcher: fileNameTemplateVersionMatcher(
 			`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`,
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
@@ -21,8 +20,8 @@ var defaultClassifiers = []classifier{
 		},
 	},
 	{
-		Class:         "python-binary-lib",
-		SearchRequest: generic.NewSearch().ByBasenameGlob("libpython*.so*").Request(),
+		Class:    "python-binary-lib",
+		FileGlob: "**/libpython*.so*",
 		EvidenceMatcher: fileNameTemplateVersionMatcher(
 			`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
@@ -34,8 +33,8 @@ var defaultClassifiers = []classifier{
 		},
 	},
 	{
-		Class:         "cpython-source",
-		SearchRequest: generic.NewSearch().ByBasename("patchlevel.h").Request(),
+		Class:    "cpython-source",
+		FileGlob: "**/patchlevel.h",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`),
 		Package: "python",
@@ -46,8 +45,8 @@ var defaultClassifiers = []classifier{
 		},
 	},
 	{
-		Class:         "go-binary",
-		SearchRequest: generic.NewSearch().ByBasename("go").Request(),
+		Class:    "go-binary",
+		FileGlob: "**/go",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 		Package: "go",
@@ -55,8 +54,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "redis-binary",
-		SearchRequest: generic.NewSearch().ByBasename("redis-server").Request(),
+		Class:    "redis-binary",
+		FileGlob: "**/redis-server",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?s)payload %5.*(?P<version>\d.\d\.\d\d*?)[a-z0-9]{12}-[0-9]{19}`),
 		Package: "redis",
@@ -64,8 +63,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "java-binary-openjdk",
-		SearchRequest: generic.NewSearch().ByBasename("java").Request(),
+		Class:    "java-binary-openjdk",
+		FileGlob: "**/java",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
 			// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
@@ -76,8 +75,8 @@ var defaultClassifiers = []classifier{
 		CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "java-binary-ibm",
-		SearchRequest: generic.NewSearch().ByBasename("java").Request(),
+		Class:    "java-binary-ibm",
+		FileGlob: "**/java",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			// [NUL]java[NUL]1.8[NUL][NUL][NUL][NUL]1.8.0-foreman_2022_09_22_15_30-b00[NUL]
 			`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
@@ -86,8 +85,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "java-binary-oracle",
-		SearchRequest: generic.NewSearch().ByBasename("java").Request(),
+		Class:    "java-binary-oracle",
+		FileGlob: "**/java",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			// [NUL]19.0.1+10-21[NUL]
 			`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
@@ -96,8 +95,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "nodejs-binary",
-		SearchRequest: generic.NewSearch().ByBasename("node").Request(),
+		Class:    "nodejs-binary",
+		FileGlob: "**/node",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package:  "node",
@@ -106,24 +105,24 @@ var defaultClassifiers = []classifier{
 		CPEs:     singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "go-binary-hint",
-		SearchRequest: generic.NewSearch().ByBasename("VERSION").Request(),
+		Class:    "go-binary-hint",
+		FileGlob: "**/VERSION",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`),
 		Package: "go",
 		PURL:    mustPURL("pkg:generic/go@version"),
 	},
 	{
-		Class:         "busybox-binary",
-		SearchRequest: generic.NewSearch().ByBasename("busybox").Request(),
+		Class:    "busybox-binary",
+		FileGlob: "**/busybox",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "busybox",
 		CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "php-cli-binary",
-		SearchRequest: generic.NewSearch().ByBasenameGlob("php*").Request(),
+		Class:    "php-cli-binary",
+		FileGlob: "**/php*",
 		EvidenceMatcher: fileNameTemplateVersionMatcher(
 			`(.*/|^)php[0-9]*$`,
 			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
@@ -132,8 +131,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "php-fpm-binary",
-		SearchRequest: generic.NewSearch().ByBasenameGlob("php-fpm*").Request(),
+		Class:    "php-fpm-binary",
+		FileGlob: "**/php-fpm*",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 		Package: "php-fpm",
@@ -141,8 +140,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "php-apache-binary",
-		SearchRequest: generic.NewSearch().ByBasenameGlob("libphp*.so").Request(),
+		Class:    "php-apache-binary",
+		FileGlob: "**/libphp*.so",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 		Package: "libphp",
@@ -150,8 +149,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "httpd-binary",
-		SearchRequest: generic.NewSearch().ByBasename("httpd").Request(),
+		Class:    "httpd-binary",
+		FileGlob: "**/httpd",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)Apache\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "httpd",
@@ -159,8 +158,8 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:         "memcached-binary",
-		SearchRequest: generic.NewSearch().ByBasename("memcached").Request(),
+		Class:    "memcached-binary",
+		FileGlob: "**/memcached",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)memcached\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "memcached",

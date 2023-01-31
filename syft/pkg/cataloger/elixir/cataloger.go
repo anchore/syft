@@ -12,5 +12,5 @@ const catalogerName = "elixir-mix-lock-cataloger"
 // NewMixLockCataloger returns parses mix.lock files and returns packages
 func NewMixLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
-		WithParserByBasename(parseMixLock, "mix.lock")
+		WithParserByGlobs(parseMixLock, "**/mix.lock")
 }

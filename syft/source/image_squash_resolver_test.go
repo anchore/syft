@@ -118,13 +118,10 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 				t.Errorf("we should always prefer real paths over ones with links")
 			}
 
-			entry, err := img.FileCatalog.Get(actual.ref)
-			if err != nil {
-				t.Fatalf("failed to get metadata: %+v", err)
-			}
+			layer := img.FileCatalog.Layer(actual.ref)
 
-			if entry.Layer.Metadata.Index != c.resolveLayer {
-				t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, c.resolveLayer)
+			if layer.Metadata.Index != c.resolveLayer {
+				t.Errorf("bad resolve layer: '%d'!='%d'", layer.Metadata.Index, c.resolveLayer)
 			}
 		})
 	}
@@ -223,13 +220,10 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 				t.Errorf("we should always prefer real paths over ones with links")
 			}
 
-			entry, err := img.FileCatalog.Get(actual.ref)
-			if err != nil {
-				t.Fatalf("failed to get metadata: %+v", err)
-			}
+			layer := img.FileCatalog.Layer(actual.ref)
 
-			if entry.Layer.Metadata.Index != c.resolveLayer {
-				t.Errorf("bad resolve layer: '%d'!='%d'", entry.Layer.Metadata.Index, c.resolveLayer)
+			if layer.Metadata.Index != c.resolveLayer {
+				t.Errorf("bad resolve layer: '%d'!='%d'", layer.Metadata.Index, c.resolveLayer)
 			}
 		})
 	}
@@ -447,7 +441,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			name: "by basename",
 			runner: func(resolver FileResolver) []Location {
 				// links are searched, but resolve to the real files
-				actualLocations, err := resolver.FilesByBasename("file-2.txt")
+				actualLocations, err := resolver.FilesByGlob("**/file-2.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
@@ -465,7 +459,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			name: "by basename glob",
 			runner: func(resolver FileResolver) []Location {
 				// links are searched, but resolve to the real files
-				actualLocations, err := resolver.FilesByBasenameGlob("file-?.txt")
+				actualLocations, err := resolver.FilesByGlob("**/file-?.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
@@ -499,7 +493,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 		{
 			name: "by basename glob to links",
 			runner: func(resolver FileResolver) []Location {
-				actualLocations, err := resolver.FilesByBasenameGlob("link-*")
+				actualLocations, err := resolver.FilesByGlob("**/link-*")
 				assert.NoError(t, err)
 				return actualLocations
 			},
@@ -538,7 +532,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			name: "by extension",
 			runner: func(resolver FileResolver) []Location {
 				// links are searched, but resolve to the real files
-				actualLocations, err := resolver.FilesByExtension(".txt")
+				actualLocations, err := resolver.FilesByGlob("**/*.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},

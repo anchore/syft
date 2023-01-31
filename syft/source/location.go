@@ -5,7 +5,6 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/log"
 )
 
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
@@ -46,22 +45,11 @@ func NewLocationFromCoordinates(coordinates Coordinates) Location {
 
 // NewLocationFromImage creates a new Location representing the given path (extracted from the ref) relative to the given image.
 func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Image) Location {
-	entry, err := img.FileCatalog.Get(ref)
-	if err != nil {
-		log.Warnf("unable to find file catalog entry for ref=%+v", ref)
-		return Location{
-			Coordinates: Coordinates{
-				RealPath: string(ref.RealPath),
-			},
-			VirtualPath: virtualPath,
-			ref:         ref,
-		}
-	}
-
+	layer := img.FileCatalog.Layer(ref)
 	return Location{
 		Coordinates: Coordinates{
 			RealPath:     string(ref.RealPath),
-			FileSystemID: entry.Layer.Metadata.Digest,
+			FileSystemID: layer.Metadata.Digest,
 		},
 		VirtualPath: virtualPath,
 		ref:         ref,

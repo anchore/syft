@@ -23,27 +23,6 @@ type Cataloger struct {
 	upstreamCataloger string
 }
 
-func (c *Cataloger) WithParser(parser Parser, searchRequests ...SearchRequest) *Cataloger {
-	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
-			var requests []request
-			for _, req := range searchRequests {
-				log.Tracef("searching for: %s", req.String())
-
-				matches, err := req.Execute(resolver)
-				if err != nil {
-					log.WithFields("error", err).Warnf("unable to process search request %q", req.String())
-					continue
-				}
-
-				requests = append(requests, makeRequests(parser, matches)...)
-			}
-			return requests
-		},
-	)
-	return c
-}
-
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
 	c.processor = append(c.processor,
 		func(resolver source.FileResolver, env Environment) []request {
@@ -91,46 +70,6 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 				matches, err := resolver.FilesByPath(p)
 				if err != nil {
 					log.Warnf("unable to process path=%q: %+v", p, err)
-					continue
-				}
-				requests = append(requests, makeRequests(parser, matches)...)
-			}
-			return requests
-		},
-	)
-	return c
-}
-
-func (c *Cataloger) WithParserByExtensions(parser Parser, extensions ...string) *Cataloger {
-	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
-			var requests []request
-			for _, e := range extensions {
-				log.WithFields("extension", e).Trace("searching for paths with a matching file extension")
-
-				matches, err := resolver.FilesByExtension(e)
-				if err != nil {
-					log.Warnf("unable to process file extension=%q: %+v", e, err)
-					continue
-				}
-				requests = append(requests, makeRequests(parser, matches)...)
-			}
-			return requests
-		},
-	)
-	return c
-}
-
-func (c *Cataloger) WithParserByBasename(parser Parser, filenames ...string) *Cataloger {
-	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
-			var requests []request
-			for _, e := range filenames {
-				log.WithFields("basename", e).Trace("searching for paths with a matching basename")
-
-				matches, err := resolver.FilesByBasename(e)
-				if err != nil {
-					log.Warnf("unable to process file basename=%q: %+v", e, err)
 					continue
 				}
 				requests = append(requests, makeRequests(parser, matches)...)

@@ -9,5 +9,5 @@ import (
 
 func NewPortageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("portage-cataloger").
-		WithParser(parsePortageContents, generic.NewSearch().ByBasename("CONTENTS").MustMatchGlob("**/var/db/pkg/*/*/CONTENTS"))
+		WithParserByGlobs(parsePortageContents, "**/var/db/pkg/*/*/CONTENTS")
 }

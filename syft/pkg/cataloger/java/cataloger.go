@@ -10,16 +10,16 @@ import (
 // NewJavaCataloger returns a new Java archive cataloger object.
 func NewJavaCataloger(cfg Config) *generic.Cataloger {
 	c := generic.NewCataloger("java-cataloger").
-		WithParserByExtensions(parseJavaArchive, archiveFormatExtensions...)
+		WithParserByGlobs(parseJavaArchive, archiveFormatGlobs...)
 
 	if cfg.SearchIndexedArchives {
 		// java archives wrapped within zip files
-		c.WithParserByExtensions(parseZipWrappedJavaArchive, genericZipExtensions...)
+		c.WithParserByGlobs(parseZipWrappedJavaArchive, genericZipGlobs...)
 	}
 
 	if cfg.SearchUnindexedArchives {
 		// java archives wrapped within tar files
-		c.WithParserByExtensions(parseTarWrappedJavaArchive, genericTarExtensions...)
+		c.WithParserByGlobs(parseTarWrappedJavaArchive, genericTarGlobs...)
 	}
 	return c
 }
@@ -29,5 +29,5 @@ func NewJavaCataloger(cfg Config) *generic.Cataloger {
 // Pom files list dependencies that maybe not be locally installed yet.
 func NewJavaPomCataloger() *generic.Cataloger {
 	return generic.NewCataloger("java-pom-cataloger").
-		WithParserByBasename(parserPomXML, "pom.xml")
+		WithParserByGlobs(parserPomXML, "pom.xml")
 }

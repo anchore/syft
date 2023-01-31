@@ -12,7 +12,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
 )
@@ -24,8 +23,8 @@ var emptyPURL = packageurl.PackageURL{}
 type classifier struct {
 	Class string
 
-	// SearchRequest specifies how to search for a file (and what full path globs must match for the file to be considered)
-	generic.SearchRequest
+	// FileGlob is a selector to narrow down file inspection using the **/glob* syntax
+	FileGlob string
 
 	// EvidenceMatcher is what will be used to match against the file in the source
 	// location. If the matcher returns a package, the file will be considered a candidate.
