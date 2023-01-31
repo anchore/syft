@@ -132,6 +132,7 @@ check-go-mod-tidy:
 
 check-json-schema-drift:
 	$(call title,Ensure there is no drift between the JSON schema and the code)
+	@git update-index -q --refresh
 	@git diff-index --quiet HEAD -- || (echo "there are uncommitted changes, please commit them before running this check" && false)
 	@make generate-json-schema || (echo "$(RED)$(BOLD)JSON schema drift detected!$(RESET)" && false)
 	@git diff-index --quiet HEAD -- || (echo "$(RED)$(BOLD)JSON schema drift detected!$(RESET)" && false)
