@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	spdx "github.com/spdx/tools-golang/spdx/v2_3"
+	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
