@@ -1,4 +1,4 @@
-# Contributing to Syft
+[#](#) Contributing to Syft
 
 If you are looking to contribute to this project and want to open a GitHub pull request ("PR"), there are a few guidelines of what we are looking for in patches. Make sure you go through this document and ensure that your code proposal is aligned.
 
@@ -10,7 +10,7 @@ Before you can contribute to Syft, you need to configure your development enviro
 
 You will need to install Go. The version on https://go.dev works best, using the system golang doesn't always work the way you might expect.
 
-At the time of writing, Go 1.19 does not work correctly with Syft. Please use Go 1.18 for now.
+Refer to the go.mod file in the root of this repo for the recommended version of Go to install.
 
 You will also need Docker. There's no reason the system packages shouldn't work, but we used the official Docker package. You can find instructions for installing Docker in Debian [here](https://docs.docker.com/engine/install/debian/).
 
