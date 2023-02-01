@@ -38,7 +38,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 	uniqueLocations := make([]Location, 0)
 
 	for _, path := range paths {
-		ref, err := r.img.SquashedSearchContext().SearchByPath(path, filetree.FollowBasenameLinks)
+		ref, err := r.img.SquashedSearchContext.SearchByPath(path, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	var locations []Location
 	for _, pattern := range patterns {
-		results, err := r.img.SquashedSearchContext().SearchByGlob(pattern, filetree.FollowBasenameLinks)
+		results, err := r.img.SquashedSearchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 		}
@@ -170,7 +170,7 @@ func (r *imageSquashResolver) AllLocations() <-chan Location {
 }
 
 func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, error) {
-	refs, err := r.img.SquashedSearchContext().SearchByMIMEType(types...)
+	refs, err := r.img.SquashedSearchContext.SearchByMIMEType(types...)
 	if err != nil {
 		return nil, err
 	}

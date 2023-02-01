@@ -138,7 +138,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			ref, err := img.SquashedSearchContext().SearchByPath(test.path)
+			ref, err := img.SquashedSearchContext.SearchByPath(test.path)
 			require.NoError(t, err)
 
 			l := source.NewLocationFromImage(test.path, *ref.Reference, img)

@@ -84,7 +84,7 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 
 	for _, path := range paths {
 		for idx, layerIdx := range r.layers {
-			ref, err := r.img.Layers[layerIdx].SearchContext().SearchByPath(path, filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
+			ref, err := r.img.Layers[layerIdx].SearchContext.SearchByPath(path, filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, err
 			}
@@ -125,7 +125,7 @@ func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, er
 
 	for _, pattern := range patterns {
 		for idx, layerIdx := range r.layers {
-			results, err := r.img.Layers[layerIdx].SquashedSearchContext().SearchByGlob(pattern, filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
+			results, err := r.img.Layers[layerIdx].SquashedSearchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks, filetree.DoNotFollowDeadBasenameLinks)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve files by glob (%s): %w", pattern, err)
 			}
@@ -205,7 +205,7 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 	var locations []Location
 	for _, layerIdx := range r.layers {
-		refs, err := r.img.Layers[layerIdx].SearchContext().SearchByMIMEType(types...)
+		refs, err := r.img.Layers[layerIdx].SearchContext.SearchByMIMEType(types...)
 		if err != nil {
 			return nil, err
 		}

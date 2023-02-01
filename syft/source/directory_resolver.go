@@ -237,6 +237,7 @@ func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error
 	location := NewLocationFromDirectory(p, *ref)
 	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
 	r.addFileToFileTreeIndex(ref, metadata)
+	r.fileTreeIndex.Add(*ref, metadata)
 
 	return nil
 }
@@ -307,6 +308,7 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 	metadata := fileMetadataFromPath(p, usedInfo, false) // note: to be consistent with other resolvers, don't record mime type for symlink destinations
 	metadata.LinkDestination = linkTarget
 	r.addFileToFileTreeIndex(ref, metadata)
+	r.fileTreeIndex.Add(*ref, metadata)
 
 	return targetAbsPath, nil
 }
