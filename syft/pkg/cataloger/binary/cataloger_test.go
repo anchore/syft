@@ -20,6 +20,34 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		expected   pkg.Package
 	}{
 		{
+			name:       "positive-traefik-2.9.6",
+			fixtureDir: "test-fixtures/classifiers/positive/traefik-2.9.6",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.9.6",
+				Locations: singleLocation("traefik"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "traefik-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-traefik-1.7.34",
+			fixtureDir: "test-fixtures/classifiers/positive/traefik-1.7.34",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "1.7.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@1.7.34",
+				Locations: singleLocation("traefik"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "traefik-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-memcached-1.6.18",
 			fixtureDir: "test-fixtures/classifiers/positive/memcached-1.6.18",
 			expected: pkg.Package{
