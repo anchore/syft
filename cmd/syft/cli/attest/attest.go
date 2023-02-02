@@ -131,7 +131,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 				return
 			}
 
-			args := []string{"attest", si.UserInput, "--type", "custom", "--predicate", f.Name()}
+			args := []string{"attest", si.UserInput, "--predicate", f.Name()}
 			if app.Attest.Key != "" {
 				args = append(args, "--key", app.Attest.Key)
 			}
