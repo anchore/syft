@@ -229,6 +229,20 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
+		{
+			name: "password and key not in config output",
+			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			env: map[string]string{
+				"SYFT_ATTEST_PASSWORD": "secret_password",
+				"SYFT_ATTEST_KEY":      "secret_key_path",
+			},
+			assertions: []traitAssertion{
+				assertNotInOutput("secret_password"),
+				assertNotInOutput("secret_key_path"),
+				assertPackageCount(34),
+				assertSuccessfulReturnCode,
+			},
+		},
 	}
 
 	for _, test := range tests {
