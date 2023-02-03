@@ -3,8 +3,8 @@ package config
 import "github.com/spf13/viper"
 
 type attest struct {
-	Key      string `yaml:"key" json:"key" mapstructure:"key"`
-	Password string `yaml:"password" json:"password" mapstructure:"password"`
+	Key      string `yaml:"-" json:"-" mapstructure:"key"`
+	Password string `yaml:"-" json:"-" mapstructure:"password"`
 }
 
 func (cfg attest) loadDefaultValues(v *viper.Viper) {
