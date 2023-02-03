@@ -36,7 +36,7 @@ func TestPackageDeduplication(t *testing.T) {
 				"curl-7.29.0-59.el7_9.1":       3, // upgrade
 				"wget-1.14-18.el7_6.1":         3,
 				"vsftpd-3.0.2-29.el7_9":        2,
-				"httpd-2.4.6-97.el7.centos.5":  1,
+				"httpd-2.4.6-98.el7.centos.6":  1, // upgrade
 				"httpd-2.4.6":                  1, // binary
 			},
 		},
@@ -55,7 +55,7 @@ func TestPackageDeduplication(t *testing.T) {
 				"curl-7.29.0-59.el7_9.1":       1, // upgrade
 				"wget-1.14-18.el7_6.1":         1,
 				"vsftpd-3.0.2-29.el7_9":        1,
-				"httpd-2.4.6-97.el7.centos.5":  1,
+				"httpd-2.4.6-98.el7.centos.6":  1, // upgrade
 				"httpd-2.4.6":                  1, // binary
 			},
 		},
