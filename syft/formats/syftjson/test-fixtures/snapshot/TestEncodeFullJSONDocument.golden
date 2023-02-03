@@ -78,7 +78,7 @@
    },
    "metadata": {
     "mode": 775,
-    "type": "directory",
+    "type": "Directory",
     "userID": 0,
     "groupID": 0,
     "mimeType": ""
@@ -91,7 +91,7 @@
    },
    "metadata": {
     "mode": 775,
-    "type": "regularFile",
+    "type": "RegularFile",
     "userID": 0,
     "groupID": 0,
     "mimeType": ""
@@ -111,7 +111,7 @@
    },
    "metadata": {
     "mode": 775,
-    "type": "symbolicLink",
+    "type": "SymbolicLink",
     "linkDestination": "/c",
     "userID": 0,
     "groupID": 0,
@@ -125,7 +125,7 @@
    },
    "metadata": {
     "mode": 644,
-    "type": "regularFile",
+    "type": "RegularFile",
     "userID": 1,
     "groupID": 2,
     "mimeType": ""
