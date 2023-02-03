@@ -42,6 +42,8 @@ func Test_ArchiveCataloger_Globs(t *testing.T) {
 				"archives/example.txz",
 				"archives/example.tar.zst",
 				"archives/example.tzst",
+				"archives/example.tar.zstd",
+				"archives/example.tzstd",
 			},
 		},
 	}

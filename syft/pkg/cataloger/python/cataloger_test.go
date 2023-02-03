@@ -3,6 +3,8 @@ package python
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -192,9 +194,7 @@ func Test_PackageCataloger(t *testing.T) {
 			resolver := source.NewMockResolverForPaths(test.fixtures...)
 
 			locations, err := resolver.FilesByPath(test.fixtures...)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			test.expectedPackage.Locations = source.NewLocationSet(locations...)
 
@@ -223,9 +223,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 			resolver := source.NewMockResolverForPaths(test.MetadataFixture)
 
 			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
-			if err != nil {
-				t.Fatalf("failed to catalog python package: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(actual) != 0 {
 				t.Fatalf("Expected 0 packages but found: %d", len(actual))

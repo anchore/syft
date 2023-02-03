@@ -55,6 +55,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 			if err != nil {
 				return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 			}
+			// don't consider directories
 			if metadata.Metadata.IsDir {
 				continue
 			}
@@ -77,7 +78,9 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 // FilesByGlob returns all file.References that match the given path glob pattern within the squashed representation of the image.
 func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error) {
-	var locations []Location
+	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueLocations := make([]Location, 0)
+
 	for _, pattern := range patterns {
 		results, err := r.img.SquashedSearchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
@@ -98,6 +101,7 @@ func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 				if err != nil {
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 				}
+				// don't consider directories
 				if metadata.Metadata.IsDir {
 					continue
 				}
@@ -107,11 +111,17 @@ func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 			if err != nil {
 				return nil, fmt.Errorf("failed to find files by path (result=%+v): %w", result, err)
 			}
-			locations = append(locations, resolvedLocations...)
+			for _, resolvedLocation := range resolvedLocations {
+				if uniqueFileIDs.Contains(resolvedLocation.ref) {
+					continue
+				}
+				uniqueFileIDs.Add(resolvedLocation.ref)
+				uniqueLocations = append(uniqueLocations, resolvedLocation)
+			}
 		}
 	}
 
-	return locations, nil
+	return uniqueLocations, nil
 }
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
@@ -153,6 +163,8 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 		default:
 			return nil, fmt.Errorf("link resolution resulted in multiple results while resolving content location: %+v", location)
 		}
+	case file.TypeDir:
+		return nil, fmt.Errorf("unable to get file contents for directory: %+v", location)
 	}
 
 	return r.img.FileContentsByRef(location.ref)
@@ -175,14 +187,22 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 		return nil, err
 	}
 
-	var locations []Location
+	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueLocations := make([]Location, 0)
+
 	for _, ref := range refs {
 		if ref.HasReference() {
-			locations = append(locations, NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img))
+			if uniqueFileIDs.Contains(*ref.Reference) {
+				continue
+			}
+			location := NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img)
+
+			uniqueFileIDs.Add(*ref.Reference)
+			uniqueLocations = append(uniqueLocations, location)
 		}
 	}
 
-	return locations, nil
+	return uniqueLocations, nil
 }
 
 func (r *imageSquashResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {

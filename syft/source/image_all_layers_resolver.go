@@ -1,7 +1,6 @@
 package source
 
 import (
-	"archive/tar"
 	"fmt"
 	"io"
 
@@ -56,7 +55,7 @@ func (r *imageAllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs fil
 		return nil, fmt.Errorf("unable to fetch metadata (ref=%+v): %w", ref, err)
 	}
 
-	if entry.Metadata.Type == file.TypeHardLink || entry.Metadata.Type == tar.TypeSymlink {
+	if entry.Metadata.Type == file.TypeHardLink || entry.Metadata.Type == file.TypeSymlink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
 		// we should search all possible resolutions within the valid source
 		for _, subLayerIdx := range r.layers[layerIdx:] {
@@ -142,11 +141,12 @@ func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, er
 					if err != nil {
 						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 					}
+					// don't consider directories
 					if metadata.Metadata.IsDir {
 						continue
 					}
 				}
-				// TODO: alex: can't we just use the result.Reference here instead?
+
 				refResults, err := r.fileByRef(*result.Reference, uniqueFileIDs, idx)
 				if err != nil {
 					return nil, err
@@ -197,27 +197,39 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 			return nil, fmt.Errorf("no contents for location=%q", location.VirtualPath)
 		}
 		location = *newLocation
+	case file.TypeDir:
+		return nil, fmt.Errorf("cannot read contents of non-file %q", location.ref.RealPath)
 	}
 
 	return r.img.FileContentsByRef(location.ref)
 }
 
 func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
-	var locations []Location
-	for _, layerIdx := range r.layers {
+	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueLocations := make([]Location, 0)
+
+	for idx, layerIdx := range r.layers {
 		refs, err := r.img.Layers[layerIdx].SearchContext.SearchByMIMEType(types...)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, ref := range refs {
-			if ref.HasReference() {
-				locations = append(locations, NewLocationFromImage(string(ref.RealPath), *ref.Reference, r.img))
+			if !ref.HasReference() {
+				continue
+			}
+
+			refResults, err := r.fileByRef(*ref.Reference, uniqueFileIDs, idx)
+			if err != nil {
+				return nil, err
+			}
+			for _, refResult := range refResults {
+				uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(ref.RequestPath), refResult, r.img))
 			}
 		}
 	}
 
-	return locations, nil
+	return uniqueLocations, nil
 }
 
 func (r *imageAllLayersResolver) AllLocations() <-chan Location {

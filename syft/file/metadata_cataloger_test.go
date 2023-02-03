@@ -132,13 +132,14 @@ func TestFileMetadataCataloger(t *testing.T) {
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
+				IsDir:    true,
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			ref, err := img.SquashedSearchContext.SearchByPath(test.path)
+			_, ref, err := img.SquashedTree().File(file.Path(test.path))
 			require.NoError(t, err)
 
 			l := source.NewLocationFromImage(test.path, *ref.Reference, img)

@@ -1,7 +1,6 @@
 package model
 
 import (
-	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
@@ -15,10 +14,10 @@ type File struct {
 }
 
 type FileMetadataEntry struct {
-	Mode            int                  `json:"mode"`
-	Type            stereoscopeFile.Type `json:"type"`
-	LinkDestination string               `json:"linkDestination,omitempty"`
-	UserID          int                  `json:"userID"`
-	GroupID         int                  `json:"groupID"`
-	MIMEType        string               `json:"mimeType"`
+	Mode            int    `json:"mode"`
+	Type            string `json:"type"`
+	LinkDestination string `json:"linkDestination,omitempty"`
+	UserID          int    `json:"userID"`
+	GroupID         int    `json:"groupID"`
+	MIMEType        string `json:"mimeType"`
 }

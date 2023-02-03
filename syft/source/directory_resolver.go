@@ -30,9 +30,11 @@ var unixSystemRuntimePrefixes = []string{
 	"/sys",
 }
 
+var errSkipPath = errors.New("skip path")
+
 var _ FileResolver = (*directoryResolver)(nil)
 
-type pathFilterFn func(string, os.FileInfo) bool
+type pathIndexVisitor func(string, os.FileInfo, error) error
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
@@ -42,14 +44,23 @@ type directoryResolver struct {
 	currentWd               string
 	fileTree                *filetree.FileTree
 	fileTreeIndex           filetree.Index
+	searchContext           filetree.Searcher
 	metadata                map[file.ID]FileMetadata
 	// TODO: wire up to report these paths in the json report
-	pathFilterFns  []pathFilterFn
-	refsByMIMEType map[string][]file.Reference
-	errPaths       map[string]error
+	pathIndexVisitors []pathIndexVisitor
+	errPaths          map[string]error
 }
 
-func newDirectoryResolver(root string, base string, pathFilters ...pathFilterFn) (*directoryResolver, error) {
+func newDirectoryResolver(root string, base string, pathFilters ...pathIndexVisitor) (*directoryResolver, error) {
+	resolver, err := newDirectoryResolverWithoutIndex(root, base, pathFilters...)
+	if err != nil {
+		return nil, err
+	}
+
+	return resolver, resolver.index()
+}
+
+func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...pathIndexVisitor) (*directoryResolver, error) {
 	currentWD, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("could not get CWD: %w", err)
@@ -88,7 +99,7 @@ func newDirectoryResolver(root string, base string, pathFilters ...pathFilterFn)
 		currentWdRelRoot = filepath.Clean(cleanRoot)
 	}
 
-	resolver := directoryResolver{
+	resolver := &directoryResolver{
 		path:                    cleanRoot,
 		base:                    cleanBase,
 		currentWd:               cleanCWD,
@@ -96,12 +107,39 @@ func newDirectoryResolver(root string, base string, pathFilters ...pathFilterFn)
 		fileTree:                filetree.NewFileTree(),
 		fileTreeIndex:           filetree.NewIndex(),
 		metadata:                make(map[file.ID]FileMetadata),
-		pathFilterFns:           append([]pathFilterFn{isUnallowableFileType, isUnixSystemRuntimePath}, pathFilters...),
-		refsByMIMEType:          make(map[string][]file.Reference),
+		pathIndexVisitors:       append([]pathIndexVisitor{requireFileInfo, disallowByFileType, disallowUnixSystemRuntimePath}, pathFilters...),
 		errPaths:                make(map[string]error),
 	}
 
-	return &resolver, indexAllRoots(cleanRoot, resolver.indexTree)
+	// these additional stateful visitors should be the first thing considered when walking / indexing
+	resolver.pathIndexVisitors = append([]pathIndexVisitor{resolver.disallowRevisitingVisitor, resolver.disallowFileAccessErr}, resolver.pathIndexVisitors...)
+
+	return resolver, nil
+}
+
+func (r *directoryResolver) index() error {
+	return indexAllRoots(r.path, r.indexTree)
+}
+
+func (r *directoryResolver) disallowRevisitingVisitor(path string, _ os.FileInfo, _ error) error {
+	// this prevents visiting:
+	// - link destinations twice, once for the real file and another through the virtual path
+	// - infinite link cycles
+	if indexed, metadata := r.hasBeenIndexed(path); indexed {
+		if metadata.IsDir {
+			// signal to walk() that we should skip this directory entirely
+			return fs.SkipDir
+		}
+		return errSkipPath
+	}
+	return nil
+}
+
+func requireFileInfo(_ string, info os.FileInfo, _ error) error {
+	if info == nil {
+		return errSkipPath
+	}
+	return nil
 }
 
 func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]string, error) {
@@ -129,7 +167,7 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 		return roots, nil
 	}
 
-	return roots, filepath.Walk(root,
+	err = filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
 
@@ -145,26 +183,31 @@ func (r *directoryResolver) indexTree(root string, stager *progress.Stage) ([]st
 
 			return nil
 		})
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to index root=%q: %w", root, err)
+	}
+
+	r.searchContext = filetree.NewSearchContext(r.fileTree, r.fileTreeIndex)
+
+	return roots, nil
 }
 
 func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) (string, error) {
-	// link cycles could cause a revisit --we should not allow this
-	if r.hasBeenIndexed(path) {
-		return "", nil
-	}
-
 	// ignore any path which a filter function returns true
-	for _, filterFn := range r.pathFilterFns {
-		if filterFn != nil && filterFn(path, info) {
-			if info != nil && info.IsDir() {
-				return "", fs.SkipDir
+	for _, filterFn := range r.pathIndexVisitors {
+		if filterFn == nil {
+			continue
+		}
+
+		if filterErr := filterFn(path, info, err); filterErr != nil {
+			if errors.Is(filterErr, fs.SkipDir) {
+				// signal to walk() to skip this directory entirely (even if we're processing a file)
+				return "", filterErr
 			}
+			// skip this path but don't affect walk() trajectory
 			return "", nil
 		}
-	}
-
-	if r.isFileAccessErr(path, err) {
-		return "", nil
 	}
 
 	if info == nil {
@@ -184,6 +227,13 @@ func (r *directoryResolver) indexPath(path string, info os.FileInfo, err error) 
 	}
 
 	return newRoot, nil
+}
+
+func (r *directoryResolver) disallowFileAccessErr(path string, _ os.FileInfo, err error) error {
+	if r.isFileAccessErr(path, err) {
+		return errSkipPath
+	}
+	return nil
 }
 
 func (r *directoryResolver) isFileAccessErr(path string, err error) bool {
@@ -209,23 +259,29 @@ func (r directoryResolver) addPathToIndex(p string, info os.FileInfo) (string, e
 	}
 }
 
-func (r directoryResolver) hasBeenIndexed(p string) bool {
+func (r directoryResolver) hasBeenIndexed(p string) (bool, *file.Metadata) {
 	filePath := file.Path(p)
 	if !r.fileTree.HasPath(filePath) {
-		return false
+		return false, nil
 	}
 
 	exists, ref, err := r.fileTree.File(filePath)
 	if err != nil || !exists || !ref.HasReference() {
-		return false
+		return false, nil
 	}
 
 	// cases like "/" will be in the tree, but not been indexed yet (a special case). We want to capture
 	// these cases as new paths to index.
 	if !ref.HasReference() {
-		return false
+		return false, nil
 	}
-	return r.fileTreeIndex.Exists(*ref.Reference)
+
+	entry, err := r.fileTreeIndex.Get(*ref.Reference)
+	if err != nil {
+		return false, nil
+	}
+
+	return true, &entry.Metadata
 }
 
 func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error {
@@ -234,8 +290,7 @@ func (r directoryResolver) addDirectoryToIndex(p string, info os.FileInfo) error
 		return err
 	}
 
-	location := NewLocationFromDirectory(p, *ref)
-	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
+	metadata := file.NewMetadataFromPath(p, info)
 	r.addFileToFileTreeIndex(ref, metadata)
 	r.fileTreeIndex.Add(*ref, metadata)
 
@@ -248,8 +303,7 @@ func (r directoryResolver) addFileToIndex(p string, info os.FileInfo) error {
 		return err
 	}
 
-	location := NewLocationFromDirectory(p, *ref)
-	metadata := fileMetadataFromPath(p, info, r.isInIndex(location))
+	metadata := file.NewMetadataFromPath(p, info)
 	r.addFileToFileTreeIndex(ref, metadata)
 	r.fileTreeIndex.Add(*ref, metadata)
 
@@ -257,8 +311,6 @@ func (r directoryResolver) addFileToIndex(p string, info os.FileInfo) error {
 }
 
 func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string, error) {
-	var usedInfo = info
-
 	linkTarget, err := os.Readlink(p)
 	if err != nil {
 		return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
@@ -285,27 +337,17 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 		}
 	}
 
-	// previouslyIndexedDestination := r.hasBeenIndexed(linkTarget)
-
 	ref, err := r.fileTree.AddSymLink(file.Path(p), file.Path(linkTarget))
 	if err != nil {
 		return "", err
 	}
-
-	// if previouslyIndexedDestination {
-	//	// this symlink is pointing to a spot on the filesystem that has already been indexed. We don't want to continue
-	//	// searching this branch
-	//	return "", nil
-	//}
 
 	targetAbsPath := linkTarget
 	if !filepath.IsAbs(targetAbsPath) {
 		targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
 	}
 
-	location := NewLocationFromDirectory(p, *ref)
-	location.VirtualPath = p
-	metadata := fileMetadataFromPath(p, usedInfo, false) // note: to be consistent with other resolvers, don't record mime type for symlink destinations
+	metadata := file.NewMetadataFromPath(p, info)
 	metadata.LinkDestination = linkTarget
 	r.addFileToFileTreeIndex(ref, metadata)
 	r.fileTreeIndex.Add(*ref, metadata)
@@ -315,9 +357,6 @@ func (r directoryResolver) addSymlinkToIndex(p string, info os.FileInfo) (string
 
 func (r directoryResolver) addFileToFileTreeIndex(ref *file.Reference, metadata FileMetadata) {
 	if ref != nil {
-		if metadata.MIMEType != "" {
-			r.refsByMIMEType[metadata.MIMEType] = append(r.refsByMIMEType[metadata.MIMEType], *ref)
-		}
 		r.metadata[ref.ID()] = metadata
 	}
 }
@@ -380,37 +419,24 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 		}
 
 		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
-		searchContext := filetree.NewSearchContext(r.fileTree, r.fileTreeIndex)
-		ref, err := searchContext.SearchByPath(userStrPath, filetree.FollowBasenameLinks)
+		ref, err := r.searchContext.SearchByPath(userStrPath, filetree.FollowBasenameLinks)
 		if err != nil {
 			log.Tracef("unable to evaluate symlink for path=%q : %+v", userPath, err)
 			continue
 		}
-		// TODO: alex: is this the same as "exists"?
+
 		if !ref.HasReference() {
 			continue
 		}
 
-		// TODO: why not use stored metadata?
-		// TODO: today we don't store directory metadata while indexing, which would make the index much larger too
-		fileMeta, err := os.Stat(string(ref.RealPath))
-		if errors.Is(err, os.ErrNotExist) {
-			// note: there are other kinds of errors other than os.ErrNotExist that may be given that is platform
-			// specific, but essentially hints at the same overall problem (that the path does not exist). Such an
-			// error could be syscall.ENOTDIR (see https://github.com/golang/go/issues/18974).
-			continue
-		} else if err != nil {
-			// we don't want to consider any other syscalls that may hint at non-existence of the file/dir as
-			// invalid paths. This logging statement is meant to raise IO or permissions related problems.
-			var pathErr *os.PathError
-			if !errors.As(err, &pathErr) {
-				log.Warnf("path is not valid (%s): %+v", ref.RealPath, err)
-			}
+		entry, err := r.fileTreeIndex.Get(*ref.Reference)
+		if err != nil {
+			log.Warnf("unable to get file by path=%q : %+v", userPath, err)
 			continue
 		}
 
 		// don't consider directories
-		if fileMeta.IsDir() {
+		if entry.Metadata.IsDir {
 			continue
 		}
 
@@ -434,27 +460,39 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
-	result := make([]Location, 0)
+	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
-		searchContext := filetree.NewSearchContext(r.fileTree, r.fileTreeIndex)
-		refVias, err := searchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks)
+		refVias, err := r.searchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
 		for _, refVia := range refVias {
-			if refVia.HasReference() {
-				loc := NewVirtualLocationFromDirectory(
-					r.responsePath(string(refVia.Reference.RealPath)), // the actual path relative to the resolver root
-					r.responsePath(string(refVia.RequestPath)),        // the path used to access this file, relative to the resolver root
-					*refVia.Reference,
-				)
-				result = append(result, loc)
+			if !refVia.HasReference() || uniqueFileIDs.Contains(*refVia.Reference) {
+				continue
 			}
+			entry, err := r.fileTreeIndex.Get(*refVia.Reference)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get file metadata for reference %s: %w", refVia.Reference.RealPath, err)
+			}
+
+			// don't consider directories
+			if entry.Metadata.IsDir {
+				continue
+			}
+
+			loc := NewVirtualLocationFromDirectory(
+				r.responsePath(string(refVia.Reference.RealPath)), // the actual path relative to the resolver root
+				r.responsePath(string(refVia.RequestPath)),        // the path used to access this file, relative to the resolver root
+				*refVia.Reference,
+			)
+			uniqueFileIDs.Add(*refVia.Reference)
+			uniqueLocations = append(uniqueLocations, loc)
 		}
 	}
 
-	return result, nil
+	return uniqueLocations, nil
 }
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
@@ -478,34 +516,32 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 	if location.ref.RealPath == "" {
 		return nil, errors.New("empty path given")
 	}
-	if !r.isInIndex(location) {
-		// this is in cases where paths have been explicitly excluded from the tree index. In which case
-		// we should DENY all content requests. Why? These paths have been indicated to be inaccessible (either
-		// by preference or these files are not readable by the current user).
-		return nil, fmt.Errorf("file content is inaccessible path=%q", location.ref.RealPath)
+
+	entry, err := r.fileTreeIndex.Get(location.ref)
+	if err != nil {
+		return nil, err
 	}
+
+	// don't consider directories
+	if entry.Type == file.TypeDir {
+		return nil, fmt.Errorf("cannot read contents of non-file %q", location.ref.RealPath)
+	}
+
 	// RealPath is posix so for windows directory resolver we need to translate
 	// to its true on disk path.
 	filePath := string(location.ref.RealPath)
 	if runtime.GOOS == WindowsOS {
 		filePath = posixToWindows(filePath)
 	}
-	return file.NewLazyReadCloser(filePath), nil
-}
 
-func (r directoryResolver) isInIndex(location Location) bool {
-	if location.ref.RealPath == "" {
-		return false
-	}
-	return r.fileTree.HasPath(location.ref.RealPath, filetree.FollowBasenameLinks)
+	return file.NewLazyReadCloser(filePath), nil
 }
 
 func (r *directoryResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		// this should be all non-directory types
-		for _, ref := range r.fileTree.AllFiles(file.TypeReg, file.TypeSymlink, file.TypeHardLink, file.TypeBlockDevice, file.TypeCharacterDevice, file.TypeFifo) {
+		for _, ref := range r.fileTree.AllFiles(file.AllTypes()...) {
 			results <- NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
 		}
 	}()
@@ -522,15 +558,29 @@ func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetad
 }
 
 func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error) {
-	var locations []Location
-	for _, ty := range types {
-		if refs, ok := r.refsByMIMEType[ty]; ok {
-			for _, ref := range refs {
-				locations = append(locations, NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref))
-			}
-		}
+	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueLocations := make([]Location, 0)
+
+	refVias, err := r.searchContext.SearchByMIMEType(types...)
+	if err != nil {
+		return nil, err
 	}
-	return locations, nil
+	for _, refVia := range refVias {
+		if !refVia.HasReference() {
+			continue
+		}
+		if uniqueFileIDs.Contains(*refVia.Reference) {
+			continue
+		}
+		location := NewLocationFromDirectory(
+			r.responsePath(string(refVia.Reference.RealPath)),
+			*refVia.Reference,
+		)
+		uniqueFileIDs.Add(*refVia.Reference)
+		uniqueLocations = append(uniqueLocations, location)
+	}
+
+	return uniqueLocations, nil
 }
 
 func windowsToPosix(windowsPath string) (posixPath string) {
@@ -560,23 +610,26 @@ func posixToWindows(posixPath string) (windowsPath string) {
 	return filepath.Clean(volumeName + remainingTranslatedPath)
 }
 
-func isUnixSystemRuntimePath(path string, _ os.FileInfo) bool {
-	return internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...)
+func disallowUnixSystemRuntimePath(path string, _ os.FileInfo, _ error) error {
+	if internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...) {
+		return fs.SkipDir
+	}
+	return nil
 }
 
-func isUnallowableFileType(_ string, info os.FileInfo) bool {
+func disallowByFileType(_ string, info os.FileInfo, _ error) error {
 	if info == nil {
 		// we can't filter out by filetype for non-existent files
-		return false
+		return nil
 	}
 	switch file.TypeFromMode(info.Mode()) {
 	case file.TypeCharacterDevice, file.TypeSocket, file.TypeBlockDevice, file.TypeFifo, file.TypeIrregular:
-		return true
+		return errSkipPath
 		// note: symlinks that point to these files may still get by.
 		// We handle this later in processing to help prevent against infinite links traversal.
 	}
 
-	return false
+	return nil
 }
 
 func indexAllRoots(root string, indexer func(string, *progress.Stage) ([]string, error)) error {

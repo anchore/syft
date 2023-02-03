@@ -10,11 +10,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -302,18 +303,14 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// let's make certain that "dev/place" is not ignored, since it is not "/dev/place"
 	resolver, err := newDirectoryResolver("test-fixtures/system_paths/target", "")
 	assert.NoError(t, err)
-	// ensure the correct filter function is wired up by default
-	expectedFn := reflect.ValueOf(isUnallowableFileType)
-	actualFn := reflect.ValueOf(resolver.pathFilterFns[0])
-	assert.Equal(t, expectedFn.Pointer(), actualFn.Pointer())
 
 	// all paths should be found (non filtering matches a path)
 	locations, err := resolver.FilesByGlob("**/place")
 	assert.NoError(t, err)
 	// 4: within target/
-	// 1: target/link --> relative path to "place"
+	// 1: target/link --> relative path to "place" // NOTE: this is filtered out since it not unique relative to outside_root/link_target/place
 	// 1: outside_root/link_target/place
-	assert.Len(t, locations, 6)
+	assert.Len(t, locations, 5)
 
 	// ensure that symlink indexing outside of root worked
 	testLocation := "test-fixtures/system_paths/outside_root/link_target/place"
@@ -363,68 +360,65 @@ func Test_isUnallowableFileType(t *testing.T) {
 	tests := []struct {
 		name     string
 		info     os.FileInfo
-		expected bool
+		expected error
 	}{
 		{
 			name: "regular file",
 			info: testFileInfo{
 				mode: 0,
 			},
-			expected: false,
 		},
 		{
 			name: "dir",
 			info: testFileInfo{
 				mode: os.ModeDir,
 			},
-			expected: false,
 		},
 		{
 			name: "symlink",
 			info: testFileInfo{
 				mode: os.ModeSymlink,
 			},
-			expected: false,
 		},
 		{
 			name: "socket",
 			info: testFileInfo{
 				mode: os.ModeSocket,
 			},
-			expected: true,
+			expected: errSkipPath,
 		},
 		{
 			name: "named pipe",
 			info: testFileInfo{
 				mode: os.ModeNamedPipe,
 			},
-			expected: true,
+			expected: errSkipPath,
 		},
 		{
 			name: "char device",
 			info: testFileInfo{
 				mode: os.ModeCharDevice,
 			},
-			expected: true,
+			expected: errSkipPath,
 		},
 		{
 			name: "block device",
 			info: testFileInfo{
 				mode: os.ModeDevice,
 			},
-			expected: true,
+			expected: errSkipPath,
 		},
 		{
 			name: "irregular",
 			info: testFileInfo{
 				mode: os.ModeIrregular,
 			},
-			expected: true,
+			expected: errSkipPath,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, isUnallowableFileType("dont/care", test.info))
+			assert.Equal(t, test.expected, disallowByFileType("dont/care", test.info, nil))
 		})
 	}
 }
@@ -646,12 +640,12 @@ func Test_IndexingNestedSymLinks(t *testing.T) {
 	// check that we can access the same file via 2 symlinks
 	locations, err = resolver.FilesByGlob("**/link_*")
 	require.NoError(t, err)
-	require.Len(t, locations, 2)
+	require.Len(t, locations, 1) // you would think this is 2, however, they point to the same file, and glob only returns unique files
 
 	// returned locations can be in any order
 	expectedVirtualPaths := []string{
 		"link_to_link_to_new_readme",
-		"link_to_new_readme",
+		//"link_to_new_readme", // we filter out this one because the first symlink resolves to the same file
 	}
 
 	expectedRealPaths := []string{
@@ -670,8 +664,11 @@ func Test_IndexingNestedSymLinks(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
-	filterFn := func(path string, _ os.FileInfo) bool {
-		return strings.HasSuffix(path, string(filepath.Separator)+"readme")
+	filterFn := func(path string, _ os.FileInfo, _ error) error {
+		if strings.HasSuffix(path, string(filepath.Separator)+"readme") {
+			return errSkipPath
+		}
+		return nil
 	}
 
 	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-simple", "", filterFn)
@@ -732,6 +729,14 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 
+	r, err := newDirectoryResolver(".", "")
+	require.NoError(t, err)
+
+	exists, existingPath, err := r.fileTree.File(file.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	require.True(t, exists)
+	require.NoError(t, err)
+	require.True(t, existingPath.HasReference())
+
 	tests := []struct {
 		name     string
 		location Location
@@ -739,11 +744,9 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 		err      bool
 	}{
 		{
-			name: "use file reference for content requests",
-			location: NewLocationFromDirectory("some/place", file.Reference{
-				RealPath: file.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")),
-			}),
-			expects: "this file has contents",
+			name:     "use file reference for content requests",
+			location: NewLocationFromDirectory("some/place", *existingPath.Reference),
+			expects:  "this file has contents",
 		},
 		{
 			name:     "error on empty file reference",
@@ -753,8 +756,6 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r, err := newDirectoryResolver(".", "")
-			require.NoError(t, err)
 
 			actual, err := r.FileContentsByLocation(test.location)
 			if test.err {
@@ -775,44 +776,40 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 func Test_isUnixSystemRuntimePath(t *testing.T) {
 	tests := []struct {
 		path     string
-		expected bool
+		expected error
 	}{
 		{
-			path:     "proc/place",
-			expected: false,
+			path: "proc/place",
 		},
 		{
 			path:     "/proc/place",
-			expected: true,
+			expected: fs.SkipDir,
 		},
 		{
 			path:     "/proc",
-			expected: true,
+			expected: fs.SkipDir,
 		},
 		{
-			path:     "/pro/c",
-			expected: false,
+			path: "/pro/c",
 		},
 		{
-			path:     "/pro",
-			expected: false,
+			path: "/pro",
 		},
 		{
 			path:     "/dev",
-			expected: true,
+			expected: fs.SkipDir,
 		},
 		{
 			path:     "/sys",
-			expected: true,
+			expected: fs.SkipDir,
 		},
 		{
-			path:     "/something/sys",
-			expected: false,
+			path: "/something/sys",
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			assert.Equal(t, test.expected, isUnixSystemRuntimePath(test.path, nil))
+			assert.Equal(t, test.expected, disallowUnixSystemRuntimePath(test.path, nil, nil))
 		})
 	}
 }
@@ -824,11 +821,9 @@ func Test_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
 
 		locations, err := resolver.FilesByGlob("**/file.target")
 		require.NoError(t, err)
-		// Note: I'm not certain that this behavior is correct, but it is not an infinite loop (which is the point of the test)
-		// - block/loop0/file.target
-		// - devices/loop0/file.target
-		// - devices/loop0/subsystem/loop0/file.target
-		assert.Len(t, locations, 3)
+
+		require.Len(t, locations, 1)
+		assert.Equal(t, "devices/loop0/file.target", locations[0].RealPath)
 	}
 
 	testWithTimeout(t, 5*time.Second, test)
@@ -849,8 +844,11 @@ func testWithTimeout(t *testing.T, timeout time.Duration, test func(*testing.T))
 }
 
 func Test_IncludeRootPathInIndex(t *testing.T) {
-	filterFn := func(path string, _ os.FileInfo) bool {
-		return path != "/"
+	filterFn := func(path string, _ os.FileInfo, _ error) error {
+		if path != "/" {
+			return fs.SkipDir
+		}
+		return nil
 	}
 
 	resolver, err := newDirectoryResolver("/", "", filterFn)
@@ -865,23 +863,19 @@ func Test_IncludeRootPathInIndex(t *testing.T) {
 	require.True(t, exists)
 }
 
-func TestDirectoryResolver_indexPath(t *testing.T) {
+func TestDirectoryResolver_indexPath_skipsNilFileInfo(t *testing.T) {
 	// TODO: Ideally we can use an OS abstraction, which would obviate the need for real FS setup.
 	tempFile, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 
-	resolver, err := newDirectoryResolver(tempFile.Name(), "")
+	resolver, err := newDirectoryResolverWithoutIndex(tempFile.Name(), "")
 	require.NoError(t, err)
 
 	t.Run("filtering path with nil os.FileInfo", func(t *testing.T) {
-		// We use one of these prefixes in order to trigger a pathFilterFn
-		filteredPath := unixSystemRuntimePrefixes[0]
-
-		var fileInfo os.FileInfo = nil
-
 		assert.NotPanics(t, func() {
-			_, err := resolver.indexPath(filteredPath, fileInfo, nil)
+			_, err := resolver.indexPath("/dont-care", nil, nil)
 			assert.NoError(t, err)
+			assert.False(t, resolver.fileTree.HasPath("/dont-care"))
 		})
 	})
 }
@@ -1023,12 +1017,13 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 					},
 					VirtualPath: "link-2",
 				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					VirtualPath: "link-indirect",
-				},
+				// we already have this real file path via another link, so only one is returned
+				//{
+				//	Coordinates: Coordinates{
+				//		RealPath: "file-2.txt",
+				//	},
+				//	VirtualPath: "link-indirect",
+				//},
 				{
 					Coordinates: Coordinates{
 						RealPath: "file-3.txt",
@@ -1088,17 +1083,6 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 					},
 					//VirtualPath: "parent/file-4.txt",
 				},
-				// note: this is a unique entry relative to the other resolvers. The other resolvers by nature
-				// do not walk full paths with symlinks, they treat symlinks as a single file. This resolver
-				// walks a real filsystem thus symlinks are followed and the same file can be found twice.
-
-				// TODO: this is NOT good, since we should not be following symlinks in this case. This needs to be fixed.
-				{
-					Coordinates: Coordinates{
-						RealPath: "parent/file-4.txt",
-					},
-					VirtualPath: "parent-link/file-4.txt",
-				},
 			},
 		},
 		{
@@ -1123,13 +1107,14 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 					VirtualPath: "link-2",
 					ref:         file.Reference{RealPath: "file-2.txt"},
 				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					VirtualPath: "link-indirect",
-					ref:         file.Reference{RealPath: "file-2.txt"},
-				},
+				// we already have this real file path via another link, so only one is returned
+				//{
+				//	Coordinates: Coordinates{
+				//		RealPath: "file-2.txt",
+				//	},
+				//	VirtualPath: "link-indirect",
+				//	ref:         file.Reference{RealPath: "file-2.txt"},
+				//},
 				{
 					Coordinates: Coordinates{
 						RealPath: "file-3.txt",
@@ -1171,17 +1156,6 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 						RealPath: "parent/file-4.txt",
 					},
 					//VirtualPath: "parent/file-4.txt",
-				},
-				// note: this is a unique entry relative to the other resolvers. The other resolvers by nature
-				// do not walk full paths with symlinks, they treat symlinks as a single file. This resolver
-				// walks a real filsystem thus symlinks are followed and the same file can be found twice.
-
-				// TODO: this is NOT good, since we should not be following symlinks in this case. This needs to be fixed.
-				{
-					Coordinates: Coordinates{
-						RealPath: "parent/file-4.txt",
-					},
-					VirtualPath: "parent-link/file-4.txt",
 				},
 			},
 		},
@@ -1234,4 +1208,177 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 			compareLocations(t, test.expected, actual)
 		})
 	}
+}
+
+func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-prune-indexing", "")
+	require.NoError(t, err)
+
+	allRealPaths := resolver.fileTree.AllRealPaths()
+	pathSet := file.NewPathSet(allRealPaths...)
+
+	assert.False(t,
+		pathSet.Contains("/before-path/file.txt"),
+		"symlink destinations should only be indexed at their real path, not through their virtual (symlinked) path",
+	)
+
+	assert.False(t,
+		pathSet.Contains("/a-path/file.txt"),
+		"symlink destinations should only be indexed at their real path, not through their virtual (symlinked) path",
+	)
+
+}
+
+func TestDirectoryResolver_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
+	var observedPaths []string
+	pathObserver := func(p string, _ os.FileInfo, _ error) error {
+		fields := strings.Split(p, "test-fixtures/symlinks-prune-indexing")
+		if len(fields) != 2 {
+			t.Fatalf("unable to parse path: %s", p)
+		}
+		clean := strings.TrimLeft(fields[1], "/")
+		if clean != "" {
+			observedPaths = append(observedPaths, clean)
+		}
+		return nil
+	}
+	resolver, err := newDirectoryResolverWithoutIndex("./test-fixtures/symlinks-prune-indexing", "")
+	require.NoError(t, err)
+	// we want to cut ahead of any possible filters to see what paths are considered for indexing (closest to walking)
+	resolver.pathIndexVisitors = append([]pathIndexVisitor{pathObserver}, resolver.pathIndexVisitors...)
+
+	require.NoError(t, resolver.index())
+
+	expected := []string{
+		"before-path",
+		"c-file.txt",
+		"c-path",
+		"path",
+		"path/1",
+		"path/1/2",
+		"path/1/2/3",
+		"path/1/2/3/4",
+		"path/1/2/3/4/dont-index-me-twice.txt",
+		"path/5",
+		"path/5/6",
+		"path/5/6/7",
+		"path/5/6/7/8",
+		"path/5/6/7/8/dont-index-me-twice-either.txt",
+		"path/file.txt",
+		// everything below is after the original tree is indexed, and we are now indexing additional roots from symlinks
+		"path",                 // considered from symlink before-path, but pruned
+		"before-path/file.txt", // considered from symlink c-file.txt, but pruned
+		"before-path",          // considered from symlink c-path, but pruned
+	}
+
+	assert.Equal(t, expected, observedPaths, "visited paths differ \n %s", cmp.Diff(expected, observedPaths))
+
+}
+
+func TestDirectoryResolver_IndexesAllTypes(t *testing.T) {
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-prune-indexing", "")
+	require.NoError(t, err)
+
+	allRefs := resolver.fileTree.AllFiles(file.AllTypes()...)
+	var pathRefs []file.Reference
+	paths := strset.New()
+	for _, ref := range allRefs {
+		fields := strings.Split(string(ref.RealPath), "test-fixtures/symlinks-prune-indexing")
+		if len(fields) != 2 {
+			t.Fatalf("unable to parse path: %s", ref.RealPath)
+		}
+		clean := strings.TrimLeft(fields[1], "/")
+		if clean == "" {
+			continue
+		}
+		paths.Add(clean)
+		pathRefs = append(pathRefs, ref)
+	}
+
+	pathsList := paths.List()
+	sort.Strings(pathsList)
+
+	expected := []string{
+		"before-path",                          // link
+		"c-file.txt",                           // link
+		"c-path",                               // link
+		"path",                                 // dir
+		"path/1",                               // dir
+		"path/1/2",                             // dir
+		"path/1/2/3",                           // dir
+		"path/1/2/3/4",                         // dir
+		"path/1/2/3/4/dont-index-me-twice.txt", // file
+		"path/5",                               // dir
+		"path/5/6",                             // dir
+		"path/5/6/7",                           // dir
+		"path/5/6/7/8",                         // dir
+		"path/5/6/7/8/dont-index-me-twice-either.txt", // file
+		"path/file.txt", // file
+	}
+	expectedSet := strset.New(expected...)
+
+	// make certain all expected paths are in the tree (and no extra ones are their either)
+
+	assert.True(t, paths.IsEqual(expectedSet), "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, pathsList))
+
+	// make certain that the paths are also in the file index
+
+	for _, ref := range pathRefs {
+		_, err := resolver.fileTreeIndex.Get(ref)
+		require.NoError(t, err)
+	}
+
+}
+
+func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
+	resolver, err := newDirectoryResolver("./test-fixtures/system_paths", "")
+	assert.NoError(t, err)
+
+	var dirLoc *Location
+	for loc := range resolver.AllLocations() {
+		entry, err := resolver.fileTreeIndex.Get(loc.ref)
+		require.NoError(t, err)
+		if entry.Metadata.IsDir {
+			dirLoc = &loc
+			break
+		}
+	}
+
+	require.NotNil(t, dirLoc)
+
+	reader, err := resolver.FileContentsByLocation(*dirLoc)
+	require.Error(t, err)
+	require.Nil(t, reader)
+}
+
+func TestDirectoryResolver_AllLocations(t *testing.T) {
+	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
+	assert.NoError(t, err)
+
+	paths := strset.New()
+	for loc := range resolver.AllLocations() {
+		if strings.HasPrefix(loc.RealPath, "/") {
+			// ignore outside of the fixture root for now
+			continue
+		}
+		paths.Add(loc.RealPath)
+	}
+	expected := []string{
+		"file-1.txt",
+		"file-2.txt",
+		"file-3.txt",
+		"link-1",
+		"link-2",
+		"link-dead",
+		"link-indirect",
+		"link-within",
+		"parent",
+		"parent-link",
+		"parent/file-4.txt",
+	}
+
+	pathsList := paths.List()
+	sort.Strings(pathsList)
+
+	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
 }

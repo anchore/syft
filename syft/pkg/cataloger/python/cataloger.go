@@ -4,7 +4,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const eggInfoExtension = ".egg-info"
+const eggInfoGlob = "**/*.egg-info"
 
 // NewPythonIndexCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
 func NewPythonIndexCataloger() *generic.Cataloger {
@@ -18,5 +18,5 @@ func NewPythonIndexCataloger() *generic.Cataloger {
 // NewPythonPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
 func NewPythonPackageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("python-package-cataloger").
-		WithParserByGlobs(parseWheelOrEgg, eggInfoExtension, "**/*dist-info/METADATA", "**/*egg-info/PKG-INFO")
+		WithParserByGlobs(parseWheelOrEgg, eggInfoGlob, "**/*dist-info/METADATA", "**/*egg-info/PKG-INFO")
 }

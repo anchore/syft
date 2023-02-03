@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -137,11 +138,36 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 
 	return &model.FileMetadataEntry{
 		Mode:            mode,
-		Type:            metadata.Type,
+		Type:            toFileType(metadata.Type),
 		LinkDestination: metadata.LinkDestination,
 		UserID:          metadata.UserID,
 		GroupID:         metadata.GroupID,
 		MIMEType:        metadata.MIMEType,
+	}
+}
+
+func toFileType(ty stereoscopeFile.Type) string {
+	switch ty {
+	case stereoscopeFile.TypeSymlink:
+		return "SymbolicLink"
+	case stereoscopeFile.TypeHardLink:
+		return "HardLink"
+	case stereoscopeFile.TypeDir:
+		return "Directory"
+	case stereoscopeFile.TypeSocket:
+		return "Socket"
+	case stereoscopeFile.TypeBlockDevice:
+		return "BlockDevice"
+	case stereoscopeFile.TypeCharacterDevice:
+		return "CharacterDevice"
+	case stereoscopeFile.TypeFifo:
+		return "FIFONode"
+	case stereoscopeFile.TypeReg:
+		return "RegularFile"
+	case stereoscopeFile.TypeIrregular:
+		return "IrregularFile"
+	default:
+		return "Unknown"
 	}
 }
 
