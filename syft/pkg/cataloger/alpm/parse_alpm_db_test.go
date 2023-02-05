@@ -92,7 +92,7 @@ func TestDatabaseParser(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f, err := os.Open("test-fixtures/files")
+			f, err := os.Open(test.fixture)
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
