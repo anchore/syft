@@ -77,6 +77,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern within the squashed representation of the image.
+// nolint:gocognit
 func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	uniqueFileIDs := file.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
