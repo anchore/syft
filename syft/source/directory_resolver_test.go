@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -19,7 +18,6 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
 )
@@ -423,171 +421,6 @@ func Test_isUnallowableFileType(t *testing.T) {
 	}
 }
 
-func Test_directoryResolver_index(t *testing.T) {
-	// note: this test is testing the effects from newDirectoryResolver, indexTree, and addPathToIndex
-	r, err := newDirectoryResolver("test-fixtures/system_paths/target", "")
-	if err != nil {
-		t.Fatalf("unable to get indexed dir resolver: %+v", err)
-	}
-	tests := []struct {
-		name string
-		path string
-	}{
-		{
-			name: "has dir",
-			path: "test-fixtures/system_paths/target/home",
-		},
-		{
-			name: "has path",
-			path: "test-fixtures/system_paths/target/home/place",
-		},
-		{
-			name: "has symlink",
-			path: "test-fixtures/system_paths/target/link/a-symlink",
-		},
-		{
-			name: "has symlink target",
-			path: "test-fixtures/system_paths/outside_root/link_target/place",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			info, err := os.Stat(test.path)
-			assert.NoError(t, err)
-
-			// note: the index uses absolute paths, so assertions MUST keep this in mind
-			cwd, err := os.Getwd()
-			require.NoError(t, err)
-
-			p := file.Path(path.Join(cwd, test.path))
-			assert.Equal(t, true, r.fileTree.HasPath(p))
-			exists, ref, err := r.fileTree.File(p)
-			assert.Equal(t, true, exists)
-			if assert.NoError(t, err) {
-				return
-			}
-			assert.Equal(t, info, r.metadata[ref.ID()])
-		})
-	}
-}
-
-func Test_handleFileAccessErr(t *testing.T) {
-	tests := []struct {
-		name                string
-		input               error
-		expectedPathTracked bool
-	}{
-		{
-			name:                "permission error does not propagate",
-			input:               os.ErrPermission,
-			expectedPathTracked: true,
-		},
-		{
-			name:                "file does not exist error does not propagate",
-			input:               os.ErrNotExist,
-			expectedPathTracked: true,
-		},
-		{
-			name:                "non-permission errors are tracked",
-			input:               os.ErrInvalid,
-			expectedPathTracked: true,
-		},
-		{
-			name:                "non-errors ignored",
-			input:               nil,
-			expectedPathTracked: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			r := directoryResolver{
-				errPaths: make(map[string]error),
-			}
-			p := "a/place"
-			assert.Equal(t, r.isFileAccessErr(p, test.input), test.expectedPathTracked)
-			_, exists := r.errPaths[p]
-			assert.Equal(t, test.expectedPathTracked, exists)
-		})
-	}
-}
-
-type indexerMock struct {
-	observedRoots   []string
-	additionalRoots map[string][]string
-}
-
-func (m *indexerMock) indexer(s string, _ *progress.Stage) ([]string, error) {
-	m.observedRoots = append(m.observedRoots, s)
-	return m.additionalRoots[s], nil
-}
-
-func Test_indexAllRoots(t *testing.T) {
-	tests := []struct {
-		name          string
-		root          string
-		mock          indexerMock
-		expectedRoots []string
-	}{
-		{
-			name: "no additional roots",
-			root: "a/place",
-			mock: indexerMock{
-				additionalRoots: make(map[string][]string),
-			},
-			expectedRoots: []string{
-				"a/place",
-			},
-		},
-		{
-			name: "additional roots from a single call",
-			root: "a/place",
-			mock: indexerMock{
-				additionalRoots: map[string][]string{
-					"a/place": {
-						"another/place",
-						"yet-another/place",
-					},
-				},
-			},
-			expectedRoots: []string{
-				"a/place",
-				"another/place",
-				"yet-another/place",
-			},
-		},
-		{
-			name: "additional roots from a multiple calls",
-			root: "a/place",
-			mock: indexerMock{
-				additionalRoots: map[string][]string{
-					"a/place": {
-						"another/place",
-						"yet-another/place",
-					},
-					"yet-another/place": {
-						"a-quiet-place-2",
-						"a-final/place",
-					},
-				},
-			},
-			expectedRoots: []string{
-				"a/place",
-				"another/place",
-				"yet-another/place",
-				"a-quiet-place-2",
-				"a-final/place",
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			assert.NoError(t, indexAllRoots(test.root, test.mock.indexer))
-		})
-	}
-}
-
 func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 	tests := []struct {
 		fixturePath   string
@@ -732,7 +565,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	r, err := newDirectoryResolver(".", "")
 	require.NoError(t, err)
 
-	exists, existingPath, err := r.fileTree.File(file.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := r.tree.File(file.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -841,43 +674,6 @@ func testWithTimeout(t *testing.T, timeout time.Duration, test func(*testing.T))
 		t.Fatal("test timed out")
 	case <-done:
 	}
-}
-
-func Test_IncludeRootPathInIndex(t *testing.T) {
-	filterFn := func(path string, _ os.FileInfo, _ error) error {
-		if path != "/" {
-			return fs.SkipDir
-		}
-		return nil
-	}
-
-	resolver, err := newDirectoryResolver("/", "", filterFn)
-	require.NoError(t, err)
-
-	exists, ref, err := resolver.fileTree.File(file.Path("/"))
-	require.NoError(t, err)
-	require.NotNil(t, ref)
-	assert.True(t, exists)
-
-	_, exists = resolver.metadata[ref.ID()]
-	require.True(t, exists)
-}
-
-func TestDirectoryResolver_indexPath_skipsNilFileInfo(t *testing.T) {
-	// TODO: Ideally we can use an OS abstraction, which would obviate the need for real FS setup.
-	tempFile, err := os.CreateTemp("", "")
-	require.NoError(t, err)
-
-	resolver, err := newDirectoryResolverWithoutIndex(tempFile.Name(), "")
-	require.NoError(t, err)
-
-	t.Run("filtering path with nil os.FileInfo", func(t *testing.T) {
-		assert.NotPanics(t, func() {
-			_, err := resolver.indexPath("/dont-care", nil, nil)
-			assert.NoError(t, err)
-			assert.False(t, resolver.fileTree.HasPath("/dont-care"))
-		})
-	})
 }
 
 func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
@@ -1214,7 +1010,7 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-prune-indexing", "")
 	require.NoError(t, err)
 
-	allRealPaths := resolver.fileTree.AllRealPaths()
+	allRealPaths := resolver.tree.AllRealPaths()
 	pathSet := file.NewPathSet(allRealPaths...)
 
 	assert.False(t,
@@ -1229,114 +1025,13 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 
 }
 
-func TestDirectoryResolver_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
-	var observedPaths []string
-	pathObserver := func(p string, _ os.FileInfo, _ error) error {
-		fields := strings.Split(p, "test-fixtures/symlinks-prune-indexing")
-		if len(fields) != 2 {
-			t.Fatalf("unable to parse path: %s", p)
-		}
-		clean := strings.TrimLeft(fields[1], "/")
-		if clean != "" {
-			observedPaths = append(observedPaths, clean)
-		}
-		return nil
-	}
-	resolver, err := newDirectoryResolverWithoutIndex("./test-fixtures/symlinks-prune-indexing", "")
-	require.NoError(t, err)
-	// we want to cut ahead of any possible filters to see what paths are considered for indexing (closest to walking)
-	resolver.pathIndexVisitors = append([]pathIndexVisitor{pathObserver}, resolver.pathIndexVisitors...)
-
-	require.NoError(t, resolver.index())
-
-	expected := []string{
-		"before-path",
-		"c-file.txt",
-		"c-path",
-		"path",
-		"path/1",
-		"path/1/2",
-		"path/1/2/3",
-		"path/1/2/3/4",
-		"path/1/2/3/4/dont-index-me-twice.txt",
-		"path/5",
-		"path/5/6",
-		"path/5/6/7",
-		"path/5/6/7/8",
-		"path/5/6/7/8/dont-index-me-twice-either.txt",
-		"path/file.txt",
-		// everything below is after the original tree is indexed, and we are now indexing additional roots from symlinks
-		"path",                 // considered from symlink before-path, but pruned
-		"before-path/file.txt", // considered from symlink c-file.txt, but pruned
-		"before-path",          // considered from symlink c-path, but pruned
-	}
-
-	assert.Equal(t, expected, observedPaths, "visited paths differ \n %s", cmp.Diff(expected, observedPaths))
-
-}
-
-func TestDirectoryResolver_IndexesAllTypes(t *testing.T) {
-	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-prune-indexing", "")
-	require.NoError(t, err)
-
-	allRefs := resolver.fileTree.AllFiles(file.AllTypes()...)
-	var pathRefs []file.Reference
-	paths := strset.New()
-	for _, ref := range allRefs {
-		fields := strings.Split(string(ref.RealPath), "test-fixtures/symlinks-prune-indexing")
-		if len(fields) != 2 {
-			t.Fatalf("unable to parse path: %s", ref.RealPath)
-		}
-		clean := strings.TrimLeft(fields[1], "/")
-		if clean == "" {
-			continue
-		}
-		paths.Add(clean)
-		pathRefs = append(pathRefs, ref)
-	}
-
-	pathsList := paths.List()
-	sort.Strings(pathsList)
-
-	expected := []string{
-		"before-path",                          // link
-		"c-file.txt",                           // link
-		"c-path",                               // link
-		"path",                                 // dir
-		"path/1",                               // dir
-		"path/1/2",                             // dir
-		"path/1/2/3",                           // dir
-		"path/1/2/3/4",                         // dir
-		"path/1/2/3/4/dont-index-me-twice.txt", // file
-		"path/5",                               // dir
-		"path/5/6",                             // dir
-		"path/5/6/7",                           // dir
-		"path/5/6/7/8",                         // dir
-		"path/5/6/7/8/dont-index-me-twice-either.txt", // file
-		"path/file.txt", // file
-	}
-	expectedSet := strset.New(expected...)
-
-	// make certain all expected paths are in the tree (and no extra ones are their either)
-
-	assert.True(t, paths.IsEqual(expectedSet), "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, pathsList))
-
-	// make certain that the paths are also in the file index
-
-	for _, ref := range pathRefs {
-		_, err := resolver.fileTreeIndex.Get(ref)
-		require.NoError(t, err)
-	}
-
-}
-
 func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	resolver, err := newDirectoryResolver("./test-fixtures/system_paths", "")
 	assert.NoError(t, err)
 
 	var dirLoc *Location
 	for loc := range resolver.AllLocations() {
-		entry, err := resolver.fileTreeIndex.Get(loc.ref)
+		entry, err := resolver.index.Get(loc.ref)
 		require.NoError(t, err)
 		if entry.Metadata.IsDir {
 			dirLoc = &loc
