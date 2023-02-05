@@ -1,5 +1,5 @@
 # LAYER 0:
-FROM busybox:1.34.0
+FROM busybox:1.34.0@sha256:e8e5cca392e3cf056fcdb3093e7ac2bf83fcf28b3bcf5818fe8ae71cf360c231
 
 # LAYER 1:
 ADD file-1.txt .
