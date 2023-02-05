@@ -27,7 +27,9 @@ func Test_encodeLicense(t *testing.T) {
 					"made-up",
 				},
 			},
-			expected: nil,
+			expected: &cyclonedx.Licenses{
+				{License: &cyclonedx.License{Name: "made-up"}},
+			},
 		},
 		{
 			name: "with SPDX license",
