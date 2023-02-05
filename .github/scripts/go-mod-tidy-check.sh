@@ -4,7 +4,7 @@ set -eu
 ORIGINAL_STATE_DIR=$(mktemp -d "TEMP-original-state-XXXXXXXXX")
 TIDY_STATE_DIR=$(mktemp -d "TEMP-tidy-state-XXXXXXXXX")
 
-trap "cp ${ORIGINAL_STATE_DIR}/* ./ && rm -fR ${ORIGINAL_STATE_DIR} ${TIDY_STATE_DIR}" EXIT
+trap "cp -p ${ORIGINAL_STATE_DIR}/* ./ && git update-index -q --refresh && rm -fR ${ORIGINAL_STATE_DIR} ${TIDY_STATE_DIR}" EXIT
 
 # capturing original state of files...
 cp go.mod go.sum "${ORIGINAL_STATE_DIR}"

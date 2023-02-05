@@ -8,11 +8,11 @@ RELEASE_CMD := $(TEMP_DIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
 
 # Tool versions #################################
-GOLANGCILINT_VERSION := v1.50.1
+GOLANGCILINT_VERSION := v1.51.0
 GOSIMPORTS_VERSION := v0.3.5
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.5.1
-GORELEASER_VERSION := v1.14.1
+GORELEASER_VERSION := v1.15.1
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v1.13.1
 QUILL_VERSION := v0.2.0
@@ -132,10 +132,7 @@ check-go-mod-tidy:
 
 check-json-schema-drift:
 	$(call title,Ensure there is no drift between the JSON schema and the code)
-	@git diff-index --quiet HEAD -- || (echo "there are uncommitted changes, please commit them before running this check" && false)
-	@make generate-json-schema || (echo "$(RED)$(BOLD)JSON schema drift detected!$(RESET)" && false)
-	@git diff-index --quiet HEAD -- || (echo "$(RED)$(BOLD)JSON schema drift detected!$(RESET)" && false)
-
+	@.github/scripts/json-schema-drift-check.sh
 
 ## Testing targets #################################
 

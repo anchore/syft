@@ -4,7 +4,7 @@ inputs:
   go-version:
     description: "Go version to install"
     required: true
-    default: "1.18.x"
+    default: "1.19.x"
   use-go-cache:
     description: "Restore go cache"
     required: true

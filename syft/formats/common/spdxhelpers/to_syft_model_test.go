@@ -3,8 +3,7 @@ package spdxhelpers
 import (
 	"testing"
 
-	"github.com/spdx/tools-golang/spdx/common"
-	spdx "github.com/spdx/tools-golang/spdx/v2_3"
+	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -246,9 +245,9 @@ func TestH1Digest(t *testing.T) {
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: []common.Checksum{
+				PackageChecksums: []spdx.Checksum{
 					{
-						Algorithm: common.SHA256,
+						Algorithm: spdx.SHA256,
 						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
 					},
 				},
@@ -267,9 +266,9 @@ func TestH1Digest(t *testing.T) {
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: []common.Checksum{
+				PackageChecksums: []spdx.Checksum{
 					{
-						Algorithm: common.SHA1,
+						Algorithm: spdx.SHA1,
 						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
 					},
 				},
@@ -288,9 +287,9 @@ func TestH1Digest(t *testing.T) {
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: []common.Checksum{
+				PackageChecksums: []spdx.Checksum{
 					{
-						Algorithm: common.SHA256,
+						Algorithm: spdx.SHA256,
 						Value:     "",
 					},
 				},
