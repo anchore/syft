@@ -13,8 +13,8 @@ func Format2_1() sbom.Format {
 	return sbom.NewFormat(
 		"2.1",
 		encoder2_1,
-		nil,
-		nil,
+		decoder,
+		validator,
 		IDs...,
 	)
 }
@@ -23,8 +23,8 @@ func Format2_2() sbom.Format {
 	return sbom.NewFormat(
 		"2.2",
 		encoder2_2,
-		nil,
-		nil,
+		decoder,
+		validator,
 		IDs...,
 	)
 }

@@ -14,8 +14,8 @@ func Format2_2() sbom.Format {
 	return sbom.NewFormat(
 		"2.2",
 		encoder2_2,
-		nil,
-		nil,
+		decoder,
+		validator,
 		IDs...,
 	)
 }
