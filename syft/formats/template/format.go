@@ -1,6 +1,7 @@
 package template
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/anchore/syft/syft/formats/syftjson"
@@ -23,7 +24,19 @@ func (f OutputFormat) ID() sbom.FormatID {
 	return ID
 }
 
-func (f OutputFormat) Decode(reader io.Reader) (*sbom.SBOM, error) {
+func (f OutputFormat) IDs() []sbom.FormatID {
+	return []sbom.FormatID{ID}
+}
+
+func (f OutputFormat) Version() sbom.FormatVersion {
+	return sbom.AnyVersion
+}
+
+func (f OutputFormat) String() string {
+	return fmt.Sprintf("template: " + f.templateFilePath)
+}
+
+func (f OutputFormat) Decode(_ io.Reader) (*sbom.SBOM, error) {
 	return nil, sbom.ErrDecodingNotSupported
 }
 
@@ -37,7 +50,7 @@ func (f OutputFormat) Encode(output io.Writer, s sbom.SBOM) error {
 	return tmpl.Execute(output, doc)
 }
 
-func (f OutputFormat) Validate(reader io.Reader) error {
+func (f OutputFormat) Validate(_ io.Reader) error {
 	return sbom.ErrValidationNotSupported
 }
 
@@ -45,3 +58,5 @@ func (f OutputFormat) Validate(reader io.Reader) error {
 func (f *OutputFormat) SetTemplatePath(filePath string) {
 	f.templateFilePath = filePath
 }
+
+var _ sbom.Format = (*OutputFormat)(nil)

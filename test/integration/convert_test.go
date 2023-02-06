@@ -10,7 +10,7 @@ import (
 
 	"github.com/anchore/syft/cmd/syft/cli/convert"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/spdxjson"
@@ -38,15 +38,15 @@ func TestConvertCmd(t *testing.T) {
 	for _, format := range convertibleFormats {
 		t.Run(format.ID().String(), func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
-			format := syft.FormatByID(syftjson.ID)
+			syftFormat := syftjson.Format()
 
-			f, err := ioutil.TempFile("", "test-convert-sbom-")
+			file, err := ioutil.TempFile("", "test-convert-sbom-")
 			require.NoError(t, err)
 			defer func() {
-				os.Remove(f.Name())
+				os.Remove(file.Name())
 			}()
 
-			err = format.Encode(f, sbom)
+			err = syftFormat.Encode(file, sbom)
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -59,12 +59,12 @@ func TestConvertCmd(t *testing.T) {
 				os.Stdout = rescue
 			}()
 
-			err = convert.Run(ctx, app, []string{f.Name()})
+			err = convert.Run(ctx, app, []string{file.Name()})
 			require.NoError(t, err)
-			file, err := ioutil.ReadFile(f.Name())
+			contents, err := ioutil.ReadFile(file.Name())
 			require.NoError(t, err)
 
-			formatFound := syft.IdentifyFormat(file)
+			formatFound := formats.Identify(contents)
 			if format.ID() == table.ID {
 				require.Nil(t, formatFound)
 				return

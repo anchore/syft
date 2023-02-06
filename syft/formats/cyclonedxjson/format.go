@@ -7,13 +7,14 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "cyclonedx-1-json"
+const ID sbom.FormatID = "cyclonedx-json"
 
 func Format() sbom.Format {
 	return sbom.NewFormat(
-		ID,
+		sbom.AnyVersion,
 		encoder,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
+		ID,
 	)
 }

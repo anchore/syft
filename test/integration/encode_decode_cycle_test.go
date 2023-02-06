@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/syftjson"
@@ -68,7 +69,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, nil)
 
-				format := syft.FormatByID(test.formatOption)
+				format := formats.ByName(string(test.formatOption))
 				require.NotNil(t, format)
 
 				by1, err := syft.Encode(originalSBOM, format)

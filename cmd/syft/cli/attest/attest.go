@@ -22,7 +22,6 @@ import (
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/formats/table"
-	"github.com/anchore/syft/syft/formats/template"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -176,16 +175,9 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 }
 
 func ValidateOutputOptions(app *config.Application) error {
-	var usesTemplateOutput bool
-	for _, o := range app.Outputs {
-		if o == template.ID.String() {
-			usesTemplateOutput = true
-			break
-		}
-	}
-
-	if usesTemplateOutput && app.OutputTemplatePath == "" {
-		return fmt.Errorf(`must specify path to template file when using "template" output format`)
+	err := packages.ValidateOutputOptions(app)
+	if err != nil {
+		return err
 	}
 
 	if len(app.Outputs) > 1 {

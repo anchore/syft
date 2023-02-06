@@ -7,13 +7,14 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "cyclonedx-1-xml"
+const ID sbom.FormatID = "cyclonedx-xml"
 
 func Format() sbom.Format {
 	return sbom.NewFormat(
-		ID,
+		sbom.AnyVersion,
 		encoder,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
+		ID, "cyclonedx", "cyclone",
 	)
 }

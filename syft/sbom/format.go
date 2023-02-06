@@ -2,6 +2,7 @@ package sbom
 
 import (
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -18,18 +19,46 @@ func (f FormatID) String() string {
 	return string(f)
 }
 
+type FormatVersion string
+
+// String returns a string representation of the FormatVersion.
+func (f FormatVersion) String() string {
+	return string(f)
+}
+
+const AnyVersion FormatVersion = ""
+
 type Format interface {
 	ID() FormatID
+	IDs() []FormatID
+	Version() FormatVersion
 	Encode(io.Writer, SBOM) error
 	Decode(io.Reader) (*SBOM, error)
 	Validate(io.Reader) error
+	String() string
 }
 
 type format struct {
-	id        FormatID
+	ids       []FormatID
+	version   FormatVersion
 	encoder   Encoder
 	decoder   Decoder
 	validator Validator
+}
+
+func (f format) IDs() []FormatID {
+	return f.ids
+}
+
+func (f format) Version() FormatVersion {
+	return f.version
+}
+
+func (f format) String() string {
+	if f.version == AnyVersion {
+		return f.ID().String()
+	}
+	return fmt.Sprintf("%s@%s", f.ID(), f.version)
 }
 
 // Decoder is a function that can convert an SBOM document of a specific format from a reader into Syft native objects.
@@ -47,9 +76,10 @@ type Encoder func(io.Writer, SBOM) error
 // really represent a different format that also uses json)
 type Validator func(reader io.Reader) error
 
-func NewFormat(id FormatID, encoder Encoder, decoder Decoder, validator Validator) Format {
-	return &format{
-		id:        id,
+func NewFormat(version FormatVersion, encoder Encoder, decoder Decoder, validator Validator, ids ...FormatID) Format {
+	return format{
+		ids:       ids,
+		version:   version,
 		encoder:   encoder,
 		decoder:   decoder,
 		validator: validator,
@@ -57,7 +87,7 @@ func NewFormat(id FormatID, encoder Encoder, decoder Decoder, validator Validato
 }
 
 func (f format) ID() FormatID {
-	return f.id
+	return f.ids[0]
 }
 
 func (f format) Encode(output io.Writer, s SBOM) error {
@@ -81,3 +111,5 @@ func (f format) Validate(reader io.Reader) error {
 
 	return f.validator(reader)
 }
+
+var _ Format = (*format)(nil)
