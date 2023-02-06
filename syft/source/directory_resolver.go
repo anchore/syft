@@ -330,12 +330,19 @@ func (r directoryResolver) responsePath(path string) string {
 		path = posixToWindows(path)
 	}
 
-	// always return references relative to the request path (not absolute path)
+	// clean references to the request path (either the root, or the base if set)
 	if filepath.IsAbs(path) {
-		// we need to account for the cwd relative to the running process and the given root for the directory resolver
-		prefix := filepath.Clean(filepath.Join(r.currentWd, r.currentWdRelativeToRoot))
-		return strings.TrimPrefix(path, prefix+string(filepath.Separator))
+		var prefix string
+		if r.base != "" {
+			prefix = r.base
+		} else {
+			// we need to account for the cwd relative to the running process and the given root for the directory resolver
+			prefix = filepath.Clean(filepath.Join(r.currentWd, r.currentWdRelativeToRoot))
+			prefix += string(filepath.Separator)
+		}
+		path = strings.TrimPrefix(path, prefix)
 	}
+
 	return path
 }
 
