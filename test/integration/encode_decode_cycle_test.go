@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
@@ -72,14 +71,14 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				format := formats.ByName(string(test.formatOption))
 				require.NotNil(t, format)
 
-				by1, err := syft.Encode(originalSBOM, format)
+				by1, err := formats.Encode(originalSBOM, format)
 				assert.NoError(t, err)
 
-				newSBOM, newFormat, err := syft.Decode(bytes.NewReader(by1))
+				newSBOM, newFormat, err := formats.Decode(bytes.NewReader(by1))
 				assert.NoError(t, err)
 				assert.Equal(t, format.ID(), newFormat.ID())
 
-				by2, err := syft.Encode(*newSBOM, format)
+				by2, err := formats.Encode(*newSBOM, format)
 				assert.NoError(t, err)
 
 				if test.redactor != nil {
