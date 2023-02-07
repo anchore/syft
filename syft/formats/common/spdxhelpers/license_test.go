@@ -26,7 +26,7 @@ func Test_License(t *testing.T) {
 					"made-up",
 				},
 			},
-			expected: NOASSERTION,
+			expected: "LicenseRef-made-up",
 		},
 		{
 			name: "with SPDX license",

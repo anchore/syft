@@ -124,6 +124,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		Packages:      toPackages(s.Artifacts.PackageCatalog, s),
 		Files:         toFiles(s),
 		Relationships: relationships,
+		OtherLicenses: toOtherLicenses(s.Artifacts.PackageCatalog),
 	}
 }
 
@@ -509,6 +510,28 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	}
 
 	return ty
+}
+
+func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
+	licenses := map[string]bool{}
+	for _, pkg := range catalog.Sorted() {
+		for _, license := range parseLicenses(pkg.Licenses) {
+			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
+				licenses[license] = true
+			}
+		}
+	}
+	var result []*spdx.OtherLicense
+	for license := range licenses {
+		// separate the actual ID from the prefix
+		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
+		result = append(result, &spdx.OtherLicense{
+			LicenseIdentifier: license,
+			LicenseName:       name,
+			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
+		})
+	}
+	return result
 }
 
 // TODO: handle SPDX excludes file case
