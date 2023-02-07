@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
@@ -26,8 +29,11 @@ func Formats() []sbom.Format {
 		cyclonedxxml.Format(),
 		cyclonedxjson.Format(),
 		github.Format(),
-		spdxtagvalue.Format(),
-		spdxjson.Format(),
+		spdxtagvalue.Format2_1(),
+		spdxtagvalue.Format2_2(),
+		spdxtagvalue.Format2_3(),
+		spdxjson.Format2_2(),
+		spdxjson.Format2_3(),
 		table.Format(),
 		text.Format(),
 		template.Format(),
@@ -47,53 +53,51 @@ func Identify(by []byte) sbom.Format {
 	return nil
 }
 
+// ByName accepts a name@version string, such as:
+//
+//	spdx-json@2.1 or cyclonedx@2
 func ByName(name string) sbom.Format {
-	cleanName := cleanFormatName(name)
-	for _, f := range Formats() {
-		if cleanFormatName(string(f.ID())) == cleanName {
-			return f
-		}
+	parts := strings.SplitN(name, "@", 2)
+	version := sbom.AnyVersion
+	if len(parts) > 1 {
+		version = parts[1]
 	}
-
-	// handle any aliases for any supported format
-	switch cleanName {
-	case "json", "syftjson":
-		return ByID(syftjson.ID)
-	case "cyclonedx", "cyclone", "cyclonedxxml":
-		return ByID(cyclonedxxml.ID)
-	case "cyclonedxjson":
-		return ByID(cyclonedxjson.ID)
-	case "github", "githubjson":
-		return ByID(github.ID)
-	case "spdx", "spdxtv", "spdxtagvalue":
-		return ByID(spdxtagvalue.ID)
-	case "spdxjson":
-		return ByID(spdxjson.ID)
-	case "table":
-		return ByID(table.ID)
-	case "text":
-		return ByID(text.ID)
-	case "template":
-		ByID(template.ID)
-	}
-
-	return nil
+	return ByNameAndVersion(parts[0], version)
 }
 
-func IDs() (ids []sbom.FormatID) {
+func ByNameAndVersion(name string, version string) sbom.Format {
+	name = cleanFormatName(name)
+	var mostRecentFormat sbom.Format
 	for _, f := range Formats() {
-		ids = append(ids, f.ID())
-	}
-	return ids
-}
-
-func ByID(id sbom.FormatID) sbom.Format {
-	for _, f := range Formats() {
-		if f.ID() == id {
-			return f
+		for _, n := range f.IDs() {
+			if cleanFormatName(string(n)) == name && versionMatches(f.Version(), version) {
+				if mostRecentFormat == nil || f.Version() > mostRecentFormat.Version() {
+					mostRecentFormat = f
+				}
+			}
 		}
 	}
-	return nil
+	return mostRecentFormat
+}
+
+func versionMatches(version string, match string) bool {
+	if version == sbom.AnyVersion || match == sbom.AnyVersion {
+		return true
+	}
+
+	dots := strings.Count(match, ".")
+	if dots == 0 {
+		match += ".*"
+	}
+	match = strings.ReplaceAll(match, ".", "\\.")
+	match = strings.ReplaceAll(match, "*", ".*")
+	match = strings.ReplaceAll(match, "\\..*", "(\\..*)*")
+	match = fmt.Sprintf("^%s$", match)
+	matcher, err := regexp.Compile(match)
+	if err != nil {
+		return false
+	}
+	return matcher.MatchString(version)
 }
 
 func cleanFormatName(name string) string {
@@ -126,4 +130,14 @@ func Decode(reader io.Reader) (*sbom.SBOM, sbom.Format, error) {
 
 	s, err := f.Decode(bytes.NewReader(by))
 	return s, f, err
+}
+
+func AllIDs() (ids []sbom.FormatID) {
+	for _, f := range Formats() {
+		if slices.Contains(ids, f.ID()) {
+			continue
+		}
+		ids = append(ids, f.ID())
+	}
+	return ids
 }

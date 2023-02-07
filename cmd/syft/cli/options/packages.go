@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"
@@ -30,8 +30,8 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.Flags().StringVarP(&o.Scope, "scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
 		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
 
-	cmd.Flags().StringArrayVarP(&o.Output, "output", "o", FormatAliases(table.ID),
-		fmt.Sprintf("report output format, options=%v", FormatAliases(syft.FormatIDs()...)))
+	cmd.Flags().StringArrayVarP(&o.Output, "output", "o", []string{string(table.ID)},
+		fmt.Sprintf("report output format, options=%v", formats.AllIDs()))
 
 	cmd.Flags().StringVarP(&o.File, "file", "", "",
 		"file to write the default report output to (default is STDOUT)")

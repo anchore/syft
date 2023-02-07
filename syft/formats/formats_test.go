@@ -92,18 +92,6 @@ func TestByName(t *testing.T) {
 			name: "spdxtv", // clean variant
 			want: spdxtagvalue.ID,
 		},
-		{
-			name: "spdx-2-tag-value", // clean variant
-			want: spdxtagvalue.ID,
-		},
-		{
-			name: "spdx-2-tagvalue", // clean variant
-			want: spdxtagvalue.ID,
-		},
-		{
-			name: "spdx2-tagvalue", // clean variant
-			want: spdxtagvalue.ID,
-		},
 
 		// SPDX JSON
 		{
@@ -111,7 +99,7 @@ func TestByName(t *testing.T) {
 			want: spdxjson.ID,
 		},
 		{
-			name: "spdx-2-json",
+			name: "spdxjson", // clean variant
 			want: spdxjson.ID,
 		},
 
@@ -121,7 +109,7 @@ func TestByName(t *testing.T) {
 			want: cyclonedxjson.ID,
 		},
 		{
-			name: "cyclonedx-1-json",
+			name: "cyclonedxjson", // clean variant
 			want: cyclonedxjson.ID,
 		},
 
@@ -135,7 +123,7 @@ func TestByName(t *testing.T) {
 			want: cyclonedxxml.ID,
 		},
 		{
-			name: "cyclonedx-1-xml",
+			name: "cyclonedxxml", // clean variant
 			want: cyclonedxxml.ID,
 		},
 
@@ -144,7 +132,6 @@ func TestByName(t *testing.T) {
 			name: "table",
 			want: table.ID,
 		},
-
 		{
 			name: "syft-table",
 			want: table.ID,
@@ -155,7 +142,6 @@ func TestByName(t *testing.T) {
 			name: "text",
 			want: text.ID,
 		},
-
 		{
 			name: "syft-text",
 			want: text.ID,
@@ -166,9 +152,12 @@ func TestByName(t *testing.T) {
 			name: "json",
 			want: syftjson.ID,
 		},
-
 		{
 			name: "syft-json",
+			want: syftjson.ID,
+		},
+		{
+			name: "syftjson", // clean variant
 			want: syftjson.ID,
 		},
 
@@ -177,12 +166,12 @@ func TestByName(t *testing.T) {
 			name: "github",
 			want: github.ID,
 		},
-
 		{
 			name: "github-json",
 			want: github.ID,
 		},
 
+		// Syft template
 		{
 			name: "template",
 			want: template.ID,
@@ -197,6 +186,59 @@ func TestByName(t *testing.T) {
 			}
 			require.NotNil(t, f)
 			assert.Equal(t, tt.want, f.ID())
+		})
+	}
+}
+
+func Test_versionMatches(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		match   string
+		matches bool
+	}{
+		{
+			name:    "any version matches number",
+			version: string(sbom.AnyVersion),
+			match:   "6",
+			matches: true,
+		},
+		{
+			name:    "number matches any version",
+			version: "6",
+			match:   string(sbom.AnyVersion),
+			matches: true,
+		},
+		{
+			name:    "same number matches",
+			version: "3",
+			match:   "3",
+			matches: true,
+		},
+		{
+			name:    "same major number matches",
+			version: "3.1",
+			match:   "3",
+			matches: true,
+		},
+		{
+			name:    "same minor number matches",
+			version: "3.1",
+			match:   "3.1",
+			matches: true,
+		},
+		{
+			name:    "different number does not match",
+			version: "3",
+			match:   "4",
+			matches: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			matches := versionMatches(test.version, test.match)
+			assert.Equal(t, test.matches, matches)
 		})
 	}
 }
