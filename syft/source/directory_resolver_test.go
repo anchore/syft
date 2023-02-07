@@ -688,7 +688,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 			root:  "./test-fixtures/symlinks-base/",
 			input: "./base",
 			expected: []string{
-				"base",
+				"/base",
 			},
 		},
 		{
@@ -696,7 +696,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 			root:  "./test-fixtures/symlinks-base/",
 			input: "./foo",
 			expected: []string{
-				"base",
+				"/base",
 			},
 		},
 		{
@@ -704,7 +704,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 			root:  "./test-fixtures/symlinks-base/",
 			input: "./bar",
 			expected: []string{
-				"base",
+				"/base",
 			},
 		},
 		{
@@ -712,7 +712,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 			root:  "./test-fixtures/symlinks-base/",
 			input: "./baz",
 			expected: []string{
-				"base",
+				"/base",
 			},
 		},
 		{
@@ -720,7 +720,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 			root:  "./test-fixtures/symlinks-base/",
 			input: "./sub/link",
 			expected: []string{
-				"sub/item",
+				"/sub/item",
 			},
 		},
 		{
@@ -728,7 +728,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 			root:  "./test-fixtures/symlinks-base/",
 			input: "./chain",
 			expected: []string{
-				"base",
+				"/base",
 			},
 		},
 	}

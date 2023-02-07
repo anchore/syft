@@ -16,8 +16,7 @@ import (
 
 func Test_SyftJsonID_Compatibility(t *testing.T) {
 	jsonMajorVersion := strings.Split(internal.JSONSchemaVersion, ".")[0]
-	syftJsonIDVersion := strings.Split(string(ID), "-")[1]
-	assert.Equal(t, jsonMajorVersion, syftJsonIDVersion)
+	assert.Equal(t, jsonMajorVersion, string(Format().Version()))
 }
 
 func Test_toSourceModel(t *testing.T) {

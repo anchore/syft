@@ -7,11 +7,11 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "github-0-json"
+const ID sbom.FormatID = "github-json"
 
 func Format() sbom.Format {
 	return sbom.NewFormat(
-		ID,
+		sbom.AnyVersion,
 		func(writer io.Writer, sbom sbom.SBOM) error {
 			bom := toGithubModel(&sbom)
 
@@ -25,5 +25,6 @@ func Format() sbom.Format {
 		},
 		nil,
 		nil,
+		ID, "github",
 	)
 }

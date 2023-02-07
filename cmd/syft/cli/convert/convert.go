@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats"
 )
 
 func Run(_ context.Context, app *config.Application, args []string) error {
@@ -34,7 +34,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		_ = f.Close()
 	}()
 
-	sbom, _, err := syft.Decode(f)
+	sbom, _, err := formats.Decode(f)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}

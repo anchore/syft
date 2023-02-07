@@ -8,7 +8,7 @@ RELEASE_CMD := $(TEMP_DIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
 
 # Tool versions #################################
-GOLANGCILINT_VERSION := v1.51.0
+GOLANGCILINT_VERSION := v1.51.1
 GOSIMPORTS_VERSION := v0.3.5
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.5.1
