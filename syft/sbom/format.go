@@ -19,19 +19,12 @@ func (f FormatID) String() string {
 	return string(f)
 }
 
-type FormatVersion string
-
-// String returns a string representation of the FormatVersion.
-func (f FormatVersion) String() string {
-	return string(f)
-}
-
-const AnyVersion FormatVersion = ""
+const AnyVersion = ""
 
 type Format interface {
 	ID() FormatID
 	IDs() []FormatID
-	Version() FormatVersion
+	Version() string
 	Encode(io.Writer, SBOM) error
 	Decode(io.Reader) (*SBOM, error)
 	Validate(io.Reader) error
@@ -40,7 +33,7 @@ type Format interface {
 
 type format struct {
 	ids       []FormatID
-	version   FormatVersion
+	version   string
 	encoder   Encoder
 	decoder   Decoder
 	validator Validator
@@ -50,7 +43,7 @@ func (f format) IDs() []FormatID {
 	return f.ids
 }
 
-func (f format) Version() FormatVersion {
+func (f format) Version() string {
 	return f.version
 }
 
@@ -76,7 +69,7 @@ type Encoder func(io.Writer, SBOM) error
 // really represent a different format that also uses json)
 type Validator func(reader io.Reader) error
 
-func NewFormat(version FormatVersion, encoder Encoder, decoder Decoder, validator Validator, ids ...FormatID) Format {
+func NewFormat(version string, encoder Encoder, decoder Decoder, validator Validator, ids ...FormatID) Format {
 	return format{
 		ids:       ids,
 		version:   version,

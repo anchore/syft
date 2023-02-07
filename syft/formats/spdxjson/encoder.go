@@ -13,13 +13,7 @@ import (
 
 func encoder2_3(output io.Writer, s sbom.SBOM) error {
 	doc := spdxhelpers.ToFormatModel(s)
-
-	enc := json.NewEncoder(output)
-	// prevent > and < from being escaped in the payload
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", " ")
-
-	return enc.Encode(doc)
+	return encodeJSON(output, doc)
 }
 
 func encoder2_2(output io.Writer, s sbom.SBOM) error {
@@ -31,10 +25,14 @@ func encoder2_2(output io.Writer, s sbom.SBOM) error {
 		return err
 	}
 
+	return encodeJSON(output, out)
+}
+
+func encodeJSON(output io.Writer, doc interface{}) error {
 	enc := json.NewEncoder(output)
 	// prevent > and < from being escaped in the payload
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	return enc.Encode(out)
+	return enc.Encode(doc)
 }

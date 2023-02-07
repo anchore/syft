@@ -237,7 +237,7 @@ func Test_versionMatches(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			matches := versionMatches(sbom.FormatVersion(test.version), test.match)
+			matches := versionMatches(test.version, test.match)
 			assert.Equal(t, test.matches, matches)
 		})
 	}

@@ -60,9 +60,9 @@ func ByName(name string) sbom.Format {
 	parts := strings.SplitN(name, "@", 2)
 	version := sbom.AnyVersion
 	if len(parts) > 1 {
-		version = sbom.FormatVersion(parts[1])
+		version = parts[1]
 	}
-	return ByNameAndVersion(parts[0], string(version))
+	return ByNameAndVersion(parts[0], version)
 }
 
 func ByNameAndVersion(name string, version string) sbom.Format {
@@ -80,8 +80,8 @@ func ByNameAndVersion(name string, version string) sbom.Format {
 	return mostRecentFormat
 }
 
-func versionMatches(version sbom.FormatVersion, match string) bool {
-	if version == sbom.AnyVersion || match == string(sbom.AnyVersion) {
+func versionMatches(version string, match string) bool {
+	if version == sbom.AnyVersion || match == sbom.AnyVersion {
 		return true
 	}
 
@@ -97,7 +97,7 @@ func versionMatches(version sbom.FormatVersion, match string) bool {
 	if err != nil {
 		return false
 	}
-	return matcher.MatchString(string(version))
+	return matcher.MatchString(version)
 }
 
 func cleanFormatName(name string) string {

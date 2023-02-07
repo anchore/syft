@@ -28,7 +28,7 @@ func (f OutputFormat) IDs() []sbom.FormatID {
 	return []sbom.FormatID{ID}
 }
 
-func (f OutputFormat) Version() sbom.FormatVersion {
+func (f OutputFormat) Version() string {
 	return sbom.AnyVersion
 }
 
