@@ -52,7 +52,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1-0.20221222100750-41a1ac565cce
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
-	github.com/anchore/stereoscope v0.0.0-20230205154733-b0fc17226ef5
+	github.com/anchore/stereoscope v0.0.0-20230207160434-c5bfa9878639
 	github.com/docker/docker v23.0.0+incompatible
 	github.com/google/go-containerregistry v0.13.0
 	github.com/invopop/jsonschema v0.7.0
@@ -158,5 +158,3 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
-
-replace github.com/anchore/stereoscope => ../stereoscope
