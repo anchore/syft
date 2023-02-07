@@ -161,9 +161,9 @@ func (r MockResolver) FileMetadataByLocation(l Location) (FileMetadata, error) {
 	}
 
 	// other types not supported
-	ty := file.TypeReg
+	ty := file.TypeRegular
 	if info.IsDir() {
-		ty = file.TypeDir
+		ty = file.TypeDirectory
 	}
 
 	return FileMetadata{

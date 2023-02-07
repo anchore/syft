@@ -66,7 +66,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	}
 
 	// we should only attempt to report digests for files that are regular files (don't attempt to resolve links)
-	if meta.Type != file.TypeReg {
+	if meta.Type != file.TypeRegular {
 		return nil, errUndigestableFile
 	}
 

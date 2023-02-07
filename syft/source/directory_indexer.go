@@ -42,7 +42,13 @@ func newDirectoryIndexer(path, base string, visitors ...pathIndexVisitor) *direc
 	}
 
 	// these additional stateful visitors should be the first thing considered when walking / indexing
-	i.pathIndexVisitors = append([]pathIndexVisitor{i.disallowRevisitingVisitor, i.disallowFileAccessErr}, i.pathIndexVisitors...)
+	i.pathIndexVisitors = append(
+		[]pathIndexVisitor{
+			i.disallowRevisitingVisitor,
+			i.disallowFileAccessErr,
+		},
+		i.pathIndexVisitors...,
+	)
 
 	return i
 }
@@ -192,11 +198,11 @@ func (r *directoryIndexer) isFileAccessErr(path string, err error) bool {
 
 func (r directoryIndexer) addPathToIndex(p string, info os.FileInfo) (string, error) {
 	switch t := file.TypeFromMode(info.Mode()); t {
-	case file.TypeSymlink:
+	case file.TypeSymLink:
 		return r.addSymlinkToIndex(p, info)
-	case file.TypeDir:
+	case file.TypeDirectory:
 		return "", r.addDirectoryToIndex(p, info)
-	case file.TypeReg:
+	case file.TypeRegular:
 		return "", r.addFileToIndex(p, info)
 	default:
 		return "", fmt.Errorf("unsupported file type: %s", t)
@@ -323,7 +329,7 @@ func disallowByFileType(_ string, info os.FileInfo, _ error) error {
 		return nil
 	}
 	switch file.TypeFromMode(info.Mode()) {
-	case file.TypeCharacterDevice, file.TypeSocket, file.TypeBlockDevice, file.TypeFifo, file.TypeIrregular:
+	case file.TypeCharacterDevice, file.TypeSocket, file.TypeBlockDevice, file.TypeFIFO, file.TypeIrregular:
 		return errSkipPath
 		// note: symlinks that point to these files may still get by.
 		// We handle this later in processing to help prevent against infinite links traversal.

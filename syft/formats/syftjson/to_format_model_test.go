@@ -109,15 +109,15 @@ func Test_toFileType(t *testing.T) {
 		name string
 	}{
 		{
-			ty:   file.TypeReg,
+			ty:   file.TypeRegular,
 			name: "RegularFile",
 		},
 		{
-			ty:   file.TypeDir,
+			ty:   file.TypeDirectory,
 			name: "Directory",
 		},
 		{
-			ty:   file.TypeSymlink,
+			ty:   file.TypeSymLink,
 			name: "SymbolicLink",
 		},
 		{
@@ -137,7 +137,7 @@ func Test_toFileType(t *testing.T) {
 			name: "BlockDevice",
 		},
 		{
-			ty:   file.TypeFifo,
+			ty:   file.TypeFIFO,
 			name: "FIFONode",
 		},
 		{

@@ -108,26 +108,26 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			FileMetadata: map[source.Coordinates]source.FileMetadata{
 				source.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
-					Type:    stereoFile.TypeDir,
+					Type:    stereoFile.TypeDirectory,
 					UserID:  0,
 					GroupID: 0,
 				},
 				source.NewLocation("/a/place/a").Coordinates: {
 					Mode:    0775,
-					Type:    stereoFile.TypeReg,
+					Type:    stereoFile.TypeRegular,
 					UserID:  0,
 					GroupID: 0,
 				},
 				source.NewLocation("/b").Coordinates: {
 					Mode:            0775,
-					Type:            stereoFile.TypeSymlink,
+					Type:            stereoFile.TypeSymLink,
 					LinkDestination: "/c",
 					UserID:          0,
 					GroupID:         0,
 				},
 				source.NewLocation("/b/place/b").Coordinates: {
 					Mode:    0644,
-					Type:    stereoFile.TypeReg,
+					Type:    stereoFile.TypeRegular,
 					UserID:  1,
 					GroupID: 2,
 				},

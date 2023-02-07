@@ -149,7 +149,7 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 	}
 
 	switch entry.Metadata.Type {
-	case file.TypeSymlink, file.TypeHardLink:
+	case file.TypeSymLink, file.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
 		locations, err := r.FilesByPath(location.RealPath)
 		if err != nil {
@@ -164,7 +164,7 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 		default:
 			return nil, fmt.Errorf("link resolution resulted in multiple results while resolving content location: %+v", location)
 		}
-	case file.TypeDir:
+	case file.TypeDirectory:
 		return nil, fmt.Errorf("unable to get file contents for directory: %+v", location)
 	}
 

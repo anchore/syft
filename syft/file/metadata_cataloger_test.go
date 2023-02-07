@@ -53,7 +53,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			expected: source.FileMetadata{
 				Path:     "/file-1.txt",
 				Mode:     0644,
-				Type:     file.TypeReg,
+				Type:     file.TypeRegular,
 				UserID:   1,
 				GroupID:  2,
 				Size:     7,
@@ -79,7 +79,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			expected: source.FileMetadata{
 				Path:            "/symlink-1",
 				Mode:            0777 | os.ModeSymlink,
-				Type:            file.TypeSymlink,
+				Type:            file.TypeSymLink,
 				LinkDestination: "file-1.txt",
 				UserID:          0,
 				GroupID:         0,
@@ -116,7 +116,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			expected: source.FileMetadata{
 				Path:     "/fifo-1",
 				Mode:     0644 | os.ModeNamedPipe,
-				Type:     file.TypeFifo,
+				Type:     file.TypeFIFO,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -128,7 +128,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 			expected: source.FileMetadata{
 				Path:     "/bin",
 				Mode:     0755 | os.ModeDir,
-				Type:     file.TypeDir,
+				Type:     file.TypeDirectory,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",

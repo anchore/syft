@@ -276,7 +276,7 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 	}
 
 	// don't consider directories
-	if entry.Type == file.TypeDir {
+	if entry.Type == file.TypeDirectory {
 		return nil, fmt.Errorf("cannot read contents of non-file %q", location.ref.RealPath)
 	}
 

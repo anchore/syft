@@ -55,7 +55,7 @@ func (r *imageAllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs fil
 		return nil, fmt.Errorf("unable to fetch metadata (ref=%+v): %w", ref, err)
 	}
 
-	if entry.Metadata.Type == file.TypeHardLink || entry.Metadata.Type == file.TypeSymlink {
+	if entry.Metadata.Type == file.TypeHardLink || entry.Metadata.Type == file.TypeSymLink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
 		// we should search all possible resolutions within the valid source
 		for _, subLayerIdx := range r.layers[layerIdx:] {
@@ -190,7 +190,7 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 	}
 
 	switch entry.Metadata.Type {
-	case file.TypeSymlink, file.TypeHardLink:
+	case file.TypeSymLink, file.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
 		newLocation := r.RelativeFileByPath(location, location.VirtualPath)
 		if newLocation == nil {
@@ -198,7 +198,7 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 			return nil, fmt.Errorf("no contents for location=%q", location.VirtualPath)
 		}
 		location = *newLocation
-	case file.TypeDir:
+	case file.TypeDirectory:
 		return nil, fmt.Errorf("cannot read contents of non-file %q", location.ref.RealPath)
 	}
 

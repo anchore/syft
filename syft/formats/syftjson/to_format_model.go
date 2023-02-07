@@ -148,11 +148,11 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 
 func toFileType(ty stereoscopeFile.Type) string {
 	switch ty {
-	case stereoscopeFile.TypeSymlink:
+	case stereoscopeFile.TypeSymLink:
 		return "SymbolicLink"
 	case stereoscopeFile.TypeHardLink:
 		return "HardLink"
-	case stereoscopeFile.TypeDir:
+	case stereoscopeFile.TypeDirectory:
 		return "Directory"
 	case stereoscopeFile.TypeSocket:
 		return "Socket"
@@ -160,9 +160,9 @@ func toFileType(ty stereoscopeFile.Type) string {
 		return "BlockDevice"
 	case stereoscopeFile.TypeCharacterDevice:
 		return "CharacterDevice"
-	case stereoscopeFile.TypeFifo:
+	case stereoscopeFile.TypeFIFO:
 		return "FIFONode"
-	case stereoscopeFile.TypeReg:
+	case stereoscopeFile.TypeRegular:
 		return "RegularFile"
 	case stereoscopeFile.TypeIrregular:
 		return "IrregularFile"

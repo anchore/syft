@@ -21,7 +21,7 @@ func allRegularFiles(resolver source.FileResolver) (locations []source.Location)
 				continue
 			}
 
-			if metadata.Type != file.TypeReg {
+			if metadata.Type != file.TypeRegular {
 				continue
 			}
 			locations = append(locations, resolvedLocation)
