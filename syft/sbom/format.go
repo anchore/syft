@@ -28,7 +28,7 @@ type Format interface {
 	Encode(io.Writer, SBOM) error
 	Decode(io.Reader) (*SBOM, error)
 	Validate(io.Reader) error
-	String() string
+	fmt.Stringer
 }
 
 type format struct {
