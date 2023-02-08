@@ -13,6 +13,6 @@ const catalogerName = "dpkgdb-cataloger"
 func NewDpkgdbCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		// note: these globs have been intentionally split up in order to improve search performance,
-		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/**}"
+		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
 		WithParserByGlobs(parseDpkgDB, "**/var/lib/dpkg/status", "**/var/lib/dpkg/status.d/*")
 }
