@@ -19,6 +19,7 @@ jobs:
       - name: Check if tag already exists
         # note: this will fail if the tag already exists
         run: |
+          [[ "${{ github.event.inputs.version }}" == v* ]] || (echo "version '${{ github.event.inputs.version }}' does not have a 'v' prefix" && exit 1)
           git tag ${{ github.event.inputs.version }}
 
       - name: Check static analysis results
