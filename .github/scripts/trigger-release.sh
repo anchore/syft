@@ -16,7 +16,8 @@ gh auth status
 git fetch --tags
 
 # populates the CHANGELOG.md and VERSION files
-make changelog
+echo "${bold}Generating changelog...${normal}"
+make changelog 2> /dev/null
 
 NEXT_VERSION=$(cat VERSION)
 

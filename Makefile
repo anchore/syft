@@ -309,7 +309,7 @@ $(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 
 .PHONY: changelog
 changelog: clean-changelog  ## Generate and show the changelog for the current unreleased version
-	$(CHRONICLE_CMD) -vv -n --version-file VERSION > $(CHANGELOG)
+	$(CHRONICLE_CMD) -vvv -n --version-file VERSION > $(CHANGELOG)
 	@$(GLOW_CMD) $(CHANGELOG)
 
 $(CHANGELOG):
