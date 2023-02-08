@@ -2,16 +2,16 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: /some/path
-DocumentNamespace: https://anchore.com/syft/dir/some/path-1d303762-46d2-47b5-9c81-defa91387275
+DocumentNamespace: https://anchore.com/syft/dir/some/path-63e04b9b-c306-41a2-b2fd-1e5d376abf88
 LicenseListVersion: 3.19
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2022-12-21T03:39:05Z
+Created: 2023-02-13T18:59:10Z
 
 ##### Package: package-2
 
 PackageName: package-2
-SPDXID: SPDXRef-Package-deb-package-2-db4abfe497c180d3
+SPDXID: SPDXRef-Package-deb-package-2-342b18b33e30ed0
 PackageVersion: 2.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -25,7 +25,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-1b1d0be59ac59d2c
+SPDXID: SPDXRef-Package-python-package-1-9f56614c62f539e9
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false

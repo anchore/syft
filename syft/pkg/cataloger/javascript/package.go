@@ -18,11 +18,15 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 	if err != nil {
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
 	}
+	licenseStructure := internal.LogicalStrings{}
+	if len(licenses) > 0 {
+		licenseStructure.Simple = licenses
+	}
 
 	p := pkg.Package{
 		Name:         u.Name,
 		Version:      u.Version,
-		Licenses:     internal.LogicalStrings{Simple: licenses},
+		Licenses:     licenseStructure,
 		PURL:         packageURL(u.Name, u.Version),
 		Locations:    source.NewLocationSet(locations...),
 		Language:     pkg.JavaScript,

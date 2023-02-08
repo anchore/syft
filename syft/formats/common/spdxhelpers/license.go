@@ -1,8 +1,14 @@
 package spdxhelpers
 
 import (
+	"regexp"
+
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
+)
+
+var (
+	invalidLicenseReg = regexp.MustCompile(`[^0-9A-Za-z\.-]`)
 )
 
 func License(p pkg.Package) string {
@@ -24,12 +30,18 @@ func License(p pkg.Package) string {
 		if value, other, exists := spdxlicense.ID(s); exists {
 			parsed := value
 			if other != "" {
-				parsed = spdxlicense.LicenseRefPrefix + other
+				parsed = spdxlicense.LicenseRefPrefix + licenseScrubber(other)
 			}
 			return parsed
 		}
 		return ""
+
 	})
 
 	return parsedLicenses.String()
+}
+
+func licenseScrubber(s string) string {
+	// replace any characters that are *not* valid: alphanumeric, . -
+	return invalidLicenseReg.ReplaceAllString(s, "-")
 }

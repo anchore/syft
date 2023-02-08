@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "304a5a8e5958a49d",
+   "id": "63a4be05cd4c2eec",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -11,9 +11,7 @@
      "path": "/a/place/a"
     }
    ],
-   "licenses": [
-    "MIT"
-   ],
+   "licenses": "MIT",
    "language": "python",
    "cpes": [
     "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
@@ -31,7 +29,7 @@
    }
   },
   {
-   "id": "9fd0b9f41034991d",
+   "id": "72e7b9a70006ab6b",
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
@@ -41,7 +39,7 @@
      "path": "/b/place/b"
     }
    ],
-   "licenses": [],
+   "licenses": "",
    "language": "",
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
@@ -185,7 +183,7 @@
   }
  },
  "schema": {
-  "version": "6.2.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-6.2.0.json"
+  "version": "7.0.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-7.0.0.json"
  }
 }

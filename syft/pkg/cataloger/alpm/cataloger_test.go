@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -20,7 +21,7 @@ func TestAlpmCataloger(t *testing.T) {
 			Version:      "6.2.1-2",
 			Type:         pkg.AlpmPkg,
 			FoundBy:      "alpmdb-cataloger",
-			Licenses:     []string{"LGPL3", "GPL"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"LGPL3", "GPL"}},
 			Locations:    source.NewLocationSet(source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")),
 			CPEs:         nil,
 			PURL:         "",

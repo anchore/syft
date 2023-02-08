@@ -185,10 +185,14 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
 
+	licenses := selectLicense(manifest)
+	if len(licenses) == 0 {
+		licenses = nil
+	}
 	return &pkg.Package{
 		Name:         selectName(manifest, j.fileInfo),
 		Version:      selectVersion(manifest, j.fileInfo),
-		Licenses:     internal.LogicalStrings{Simple: selectLicense(manifest)},
+		Licenses:     internal.LogicalStrings{Simple: licenses},
 		Language:     pkg.Java,
 		Locations:    source.NewLocationSet(j.location),
 		Type:         j.fileInfo.pkgType(),

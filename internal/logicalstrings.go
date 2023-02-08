@@ -3,6 +3,8 @@ package internal
 import (
 	"fmt"
 	"strings"
+
+	"github.com/invopop/jsonschema"
 )
 
 type Joiner string
@@ -47,6 +49,20 @@ func (l LogicalStrings) String() string {
 	return strings.Join(parts, fmt.Sprintf(" %s ", joiner))
 }
 
+func (l LogicalStrings) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%s"`, l.String())), nil
+}
+
+func (l *LogicalStrings) UnmarshalJSON(data []byte) error {
+	raw := strings.Trim(string(data), `"`)
+	ls, err := ParseLogicalStrings(raw)
+	if err != nil {
+		return err
+	}
+	*l = ls
+	return nil
+}
+
 // Process processes each simple element inside the LogicalStrings through a provided function,
 // returning a new LogicalStrings with the fields replaced.
 func (l LogicalStrings) Process(f func(string) string) LogicalStrings {
@@ -68,6 +84,14 @@ func (l LogicalStrings) Elements() []string {
 		elements = append(elements, e.Elements()...)
 	}
 	return elements
+}
+
+func (l LogicalStrings) JSONSchema() *jsonschema.Schema {
+	return &jsonschema.Schema{
+		Type:        "string",
+		Title:       "Logical Strings",
+		Description: "strings with simple or complex logical combinations",
+	}
 }
 
 // ParseLogicalStrings parse strings joined by AND or OR, as well as compounded by ( and ), into a LogicalStrings struct
@@ -105,7 +129,9 @@ func ParseLogicalStrings(s string) (LogicalStrings, error) {
 	}
 	if currentExpression != "" {
 		simple, joiner := parseSimpleExpression(currentExpression)
-		currentLS.Simple = append(currentLS.Simple, simple...)
+		if len(simple) > 0 {
+			currentLS.Simple = append(currentLS.Simple, simple...)
+		}
 		currentLS.Joiner = joiner
 	}
 	return currentLS, nil

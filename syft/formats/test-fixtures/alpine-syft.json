@@ -12,9 +12,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": "GPL-2.0-only",
    "language": "",
    "cpes": [
     "cpe:2.3:a:alpine-baselayout:alpine-baselayout:3.2.0-r16:*:*:*:*:*:*:*",
@@ -492,9 +490,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "MIT"
-   ],
+   "licenses": "MIT",
    "language": "",
    "cpes": [
     "cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*",
@@ -778,9 +774,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": "GPL-2.0-only",
    "language": "",
    "cpes": [
     "cpe:2.3:a:apk-tools:apk-tools:2.12.7-r0:*:*:*:*:*:*:*",
@@ -875,9 +869,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": "GPL-2.0-only",
    "language": "",
    "cpes": [
     "cpe:2.3:a:busybox:busybox:1.33.1-r3:*:*:*:*:*:*:*"
@@ -1041,11 +1033,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "MPL-2.0",
-    "AND",
-    "MIT"
-   ],
+   "licenses": "MPL-2.0 AND MIT",
    "language": "",
    "cpes": [
     "cpe:2.3:a:ca-certificates-bundle:ca-certificates-bundle:20191127-r5:*:*:*:*:*:*:*",
@@ -1117,11 +1105,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "BSD-2-Clause",
-    "AND",
-    "BSD-3-Clause"
-   ],
+   "licenses": "BSD-2-Clause AND BSD-3-Clause",
    "language": "",
    "cpes": [
     "cpe:2.3:a:libc-utils:libc-utils:0.7.2-r3:*:*:*:*:*:*:*",
@@ -1162,9 +1146,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "OpenSSL"
-   ],
+   "licenses": "OpenSSL",
    "language": "",
    "cpes": [
     "cpe:2.3:a:libcrypto1.1:libcrypto1.1:1.1.1l-r0:*:*:*:*:*:*:*"
@@ -1336,13 +1318,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "ISC",
-    "AND",
-    "(BSD-3-Clause",
-    "OR",
-    "MIT)"
-   ],
+   "licenses": "ISC AND (BSD-3-Clause OR MIT)",
    "language": "",
    "cpes": [
     "cpe:2.3:a:libretls:libretls:3.3.3p1-r2:*:*:*:*:*:*:*"
@@ -1405,9 +1381,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "OpenSSL"
-   ],
+   "licenses": "OpenSSL",
    "language": "",
    "cpes": [
     "cpe:2.3:a:libssl1.1:libssl1.1:1.1.1l-r0:*:*:*:*:*:*:*"
@@ -1473,9 +1447,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "MIT"
-   ],
+   "licenses": "MIT",
    "language": "",
    "cpes": [
     "cpe:2.3:a:musl:musl:1.2.2-r3:*:*:*:*:*:*:*"
@@ -1535,11 +1507,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "MIT",
-    "BSD",
-    "GPL2+"
-   ],
+   "licenses": "MIT AND BSD AND GPL2+",
    "language": "",
    "cpes": [
     "cpe:2.3:a:musl-utils:musl-utils:1.2.2-r3:*:*:*:*:*:*:*",
@@ -1640,9 +1608,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": "GPL-2.0-only",
    "language": "",
    "cpes": [
     "cpe:2.3:a:scanelf:scanelf:1.3.2-r0:*:*:*:*:*:*:*"
@@ -1695,9 +1661,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": "GPL-2.0-only",
    "language": "",
    "cpes": [
     "cpe:2.3:a:ssl-client:ssl-client:1.33.1-r3:*:*:*:*:*:*:*",
@@ -1755,9 +1719,7 @@
      "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
     }
    ],
-   "licenses": [
-    "Zlib"
-   ],
+   "licenses": "Zlib",
    "language": "",
    "cpes": [
     "cpe:2.3:a:zlib:zlib:1.2.11-r3:*:*:*:*:*:*:*"

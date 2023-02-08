@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:2896b5ce-2016-49e8-a422-239d662846c7" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:5bc1ffb9-0fb4-4c08-b860-985de88d4448" version="1">
   <metadata>
-    <timestamp>2022-11-07T09:11:06-05:00</timestamp>
+    <timestamp>2023-02-13T10:59:09-08:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,13 +9,13 @@
         <version>v0.42.0-bogus</version>
       </tool>
     </tools>
-    <component bom-ref="522dc6b135a55bb4" type="container">
+    <component bom-ref="b83149da0a7fd6c5" type="container">
       <name>user-image-input</name>
       <version>sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368</version>
     </component>
   </metadata>
   <components>
-    <component bom-ref="66ba429119b8bec6" type="library">
+    <component bom-ref="de34d3845e98e85f" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
@@ -30,11 +30,11 @@
         <property name="syft:package:language">python</property>
         <property name="syft:package:metadataType">PythonPackageMetadata</property>
         <property name="syft:package:type">python</property>
-        <property name="syft:location:0:layerID">sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59</property>
+        <property name="syft:location:0:layerID">sha256:626044c9c04b634ddb1659b81debbeebf312c5e3f2e6e8a693813866aa38a381</property>
         <property name="syft:location:0:path">/somefile-1.txt</property>
       </properties>
     </component>
-    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=958443e2d9304af4" type="library">
+    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=bad230a934158ee5" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
@@ -43,7 +43,7 @@
         <property name="syft:package:foundBy">the-cataloger-2</property>
         <property name="syft:package:metadataType">DpkgMetadata</property>
         <property name="syft:package:type">deb</property>
-        <property name="syft:location:0:layerID">sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec</property>
+        <property name="syft:location:0:layerID">sha256:2e0a2ae163675ae98403ca109fdee95bed2fea62f94e7d013146ac710d77de49</property>
         <property name="syft:location:0:path">/somefile-2.txt</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>

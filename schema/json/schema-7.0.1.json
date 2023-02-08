@@ -202,21 +202,16 @@
     },
     "BinaryMetadata": {
       "properties": {
-        "classifier": {
-          "type": "string"
-        },
-        "realPath": {
-          "type": "string"
-        },
-        "virtualPath": {
-          "type": "string"
+        "matches": {
+          "items": {
+            "$ref": "#/$defs/ClassifierMatch"
+          },
+          "type": "array"
         }
       },
       "type": "object",
       "required": [
-        "classifier",
-        "realPath",
-        "virtualPath"
+        "matches"
       ]
     },
     "CargoPackageMetadata": {
@@ -247,6 +242,21 @@
         "source",
         "checksum",
         "dependencies"
+      ]
+    },
+    "ClassifierMatch": {
+      "properties": {
+        "classifier": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "type": "object",
+      "required": [
+        "classifier",
+        "location"
       ]
     },
     "CocoapodsMetadata": {
@@ -792,6 +802,23 @@
         }
       },
       "type": "object"
+    },
+    "Location": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "layerID": {
+          "type": "string"
+        },
+        "virtualPath": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ]
     },
     "LogicalStrings": {
       "type": "string",

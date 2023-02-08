@@ -83,3 +83,18 @@ func Test_License(t *testing.T) {
 		})
 	}
 }
+
+func TestLicenseScrubber(t *testing.T) {
+	tests := []struct {
+		in  string
+		out string
+	}{
+		{"A", "A"},
+		{"A-B", "A-B"},
+		{"A.B", "A.B"},
+		{"A.B:foo", "A.B-foo"},
+	}
+	for _, test := range tests {
+		assert.Equal(t, test.out, licenseScrubber(test.in))
+	}
+}

@@ -198,7 +198,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.2.3-r1",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  internal.LogicalStrings{Simple: []string{"MIT", "BSD", "GPL2+"}},
+			Licenses:  internal.LogicalStrings{Simple: []string{"MIT", "BSD", "GPL2+"}, Joiner: internal.OR},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/musl-utils@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(

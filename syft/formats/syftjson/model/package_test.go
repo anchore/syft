@@ -30,7 +30,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": "",
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0",
@@ -61,7 +61,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": "",
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
@@ -105,7 +105,7 @@ func Test_unpackMetadata(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": "",
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0",
@@ -131,7 +131,7 @@ func Test_unpackMetadata(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": "",
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
@@ -152,9 +152,7 @@ func Test_unpackMetadata(t *testing.T) {
 					 "layerID": "sha256:74ddd0ec08fa43d09f32636ba91a0a3053b02cb4627c35051aff89f853606b59"
 					}
 				],
-				"licenses": [
-					"GPLv2+"
-				],
+				"licenses": "GPLv2+",
 				"language": "",
 				"cpes": [
 					"cpe:2.3:a:centos:acl:2.2.53-1.el8:*:*:*:*:*:*:*",
@@ -191,7 +189,7 @@ func Test_unpackMetadata(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": "",
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0",

@@ -516,18 +516,19 @@ func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
 	for _, pkg := range catalog.Sorted() {
 		for _, license := range pkg.Licenses.Elements() {
-			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
-				licenses[license] = true
+			value, other, exists := spdxlicense.ID(license)
+			if !exists || value != "" || other == "" {
+				continue
 			}
+
+			licenses[other] = true
 		}
 	}
 	var result []*spdx.OtherLicense
 	for license := range licenses {
-		// separate the actual ID from the prefix
-		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: license,
-			LicenseName:       name,
+			LicenseIdentifier: fmt.Sprintf("%s%s", spdxlicense.LicenseRefPrefix, licenseScrubber(license)),
+			LicenseName:       license,
 			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
 		})
 	}
