@@ -4,8 +4,7 @@ A good release process has the following qualities:
 
 1. There is a way to plan what should be in a release
 1. There is a way to see what is actually in a release
-1. Allow for different kinds of releases (major breaking vs backwards compatible
-   enhancements vs patch updates)
+1. Allow for different kinds of releases (major breaking vs backwards compatible enhancements vs patch updates)
 1. Specify a repeatable way to build and publish software artifacts
 
 ## Planning a release
@@ -21,10 +20,7 @@ completed, would allow the release to be considered complete. A Milestone is onl
 
 Not all releases need to be planned. For instance, patch releases for fixes should be
 released when they are ready and when releasing would not interfere with another current
-release (where some partial or breaking features have already been merged). Beta releases
-and release candidates should not be independently planned from the non-beta release. That
-is, the features for a `v0.1-beta.1` release should be planned under the `v0.1` Milestone,
-not under a separate `v0.1-beta.1` Milestone.
+release (where some partial or breaking features have already been merged).
 
 Unless necessary, feature releases should be small and frequent, which may obviate the
 need for regular release planning under a Milestone.
@@ -42,9 +38,9 @@ Changelog line. Furthermore, there should be a place to see all released version
 release date for each release, the semantic version of the release, and the set of changes
 for each release.
 
-This project auto-generates the Changelog contents for each current release and posts the
-generated contents to the GitHub Release page. Leveraging the GitHub Releases feature
-allows GitHub to manage the Changelog on each release outside of the git repository while
+**This project auto-generates the Changelog contents for each current release and posts the
+generated contents to the GitHub Release page**. Leveraging the GitHub Releases feature
+allows GitHub to manage the Changelog on each release outside of the git source tree while
 still being hosted with the released assets.
 
 The Changelog is generated from the metadata from in-repository issues and PRs, using
@@ -60,8 +56,8 @@ The above suggestions imply that we should:
 - The appropriate label is applied to PRs and/or issues to drive specific change type
   sections (deprecated, breaking, security, bug, etc)
 
-With this approach as we cultivate good organization of PRs and issues we automatically
-get an equally good Changelog.
+**With this approach as we cultivate good organization of PRs and issues we automatically
+get an equally good Changelog.**
 
 ## Major, minor, and patch releases
 
@@ -69,8 +65,8 @@ The latest version of the tool is the only supported version, which implies that
 parallel release branches will not be a regular process (if ever). Multiple releases can
 be planned in parallel, however, only one can be actively developed at a time. That is, if
 PRs attached to a release Milestone have been merged into the main branch, that release is
-now the "next" release. This implies that the source of truth for release lies with the
-git log and Changelog, not with the release Milestones (which are purely for planning and
+now the "next" release. **This implies that the source of truth for release lies with the
+git log and Changelog, not with the release Milestones** (which are purely for planning and
 tracking).
 
 Semantic versioning should be used to indicate breaking changes, new features, and fixes.
@@ -81,24 +77,28 @@ instead the minor version indicates both new features and breaking changes.
 
 Ideally releasing should be done often with small increments when possible. Unless a
 breaking change is blocking the release, or no fixes/features have been merged, a good
-target release cadence is between every 2 or 4 weeks.
+target release cadence is between every 1 or 2 weeks.
 
-This release process itself should be as automated as possible, and have only a few steps:
+This release process itself should be as automated as possible, and has only a few steps:
 
-1. Tag the main branch with a full semantic-version, prefixed with a `v`. If there is a
-   milestone with a partial version, the full version should be used for the git tag (e.g.
-   with a Milestone of `v0.1` the tag should be `v0.1.0`). You can determine the changes going
-   into a release by running `make changelog-unreleased`. Use this change list to determine the 
-   release increment. After determining the release increment (major, minor, patch), create the tag.
-   Given the above example the command to create the tag would be `git tag v0.1.0`.
+1. **Trigger a new release with `make trigger-release`**. At this point you'll see a preview
+  changelog in the terminal. If you're happy with the changelog, press `y` to continue, otherwise
+  you can abort and adjust the labels on the PRs and issues to be included in the release and
+  re-run the release trigger command.
 
-1. Push the tag. Given the above example the command to push the tag would be `git push origin v0.1.0`.
-   
 1. A release admin must approve the release on the GitHub Actions release pipeline run page.
-   Once approved, the release pipeline will generate all assets and draft a GitHub Release.
-
-1. Navigate to the GitHub Release draft page to review the final changelog and publish the
-   release. Once published, a release-follow-up pipeline will publish derivative artifacts
-   (docker image to DockerHub, brew formula to the external homebrew git repo, etc).
+   Once approved, the release pipeline will generate all assets and publish a GitHub Release.
 
 1. If there is a release Milestone, close it.
+
+## Retracting a release
+
+If a release is found to be problematic, it can be retracted with the following steps:
+
+- Deleting the GitHub Release
+- Untag the docker images in the `ghcr.io` and `docker.io` registries
+- Revert the brew formula in [`anchore/homebrew-syft`](https://github.com/anchore/homebrew-syft) to point to the previous release
+
+**Note**: do not delete release tags from the git repository since there may already be references to the release
+in the go proxy, which will cause confusion when trying to reuse the tag later (the H1 hash will not match and there
+will be a warning when users try to pull the new release).
