@@ -16,11 +16,15 @@ var (
 )
 
 func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
+	license, err := internal.ParseLogicalStrings(d.License)
+	if err != nil {
+		return pkg.Package{}
+	}
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
 		Locations:    source.NewLocationSet(locations...),
-		Licenses:     strings.Split(d.License, " "),
+		Licenses:     license,
 		PURL:         packageURL(d, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,

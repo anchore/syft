@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -22,7 +23,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []string{"Artistic-2.0"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"Artistic-2.0"}},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -42,7 +43,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []string{"ISC"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"ISC"}},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -62,7 +63,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []string{"MIT", "Apache-2.0"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"MIT", "Apache-2.0"}},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -82,7 +83,6 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     nil,
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -102,7 +102,6 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []string{},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -122,7 +121,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []string{"Artistic-2.0"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"Artistic-2.0"}},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -142,7 +141,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "1.1.1",
 				PURL:         "pkg:npm/function-bind@1.1.1",
 				Type:         pkg.NpmPkg,
-				Licenses:     []string{"MIT"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -162,7 +161,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []string{"Artistic-2.0"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"Artistic-2.0"}},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{

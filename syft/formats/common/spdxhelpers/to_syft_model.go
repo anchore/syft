@@ -9,6 +9,7 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -269,12 +270,17 @@ func extractPkgInfo(p *spdx.Package) pkgInfo {
 
 func toSyftPackage(p *spdx.Package) *pkg.Package {
 	info := extractPkgInfo(p)
+	licenses, err := parseLicense(p.PackageLicenseDeclared)
+	if err != nil {
+		log.Warnf("unable to parse license for package %s: %s", p.PackageName, err)
+		return nil
+	}
 	metadataType, metadata := extractMetadata(p, info)
 	sP := pkg.Package{
 		Type:         info.typ,
 		Name:         p.PackageName,
 		Version:      p.PackageVersion,
-		Licenses:     parseLicense(p.PackageLicenseDeclared),
+		Licenses:     licenses,
 		CPEs:         extractCPEs(p),
 		PURL:         info.purl.String(),
 		Language:     info.lang,
@@ -396,9 +402,9 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 	return cpes
 }
 
-func parseLicense(l string) []string {
+func parseLicense(l string) (internal.LogicalStrings, error) {
 	if l == NOASSERTION || l == NONE {
-		return nil
+		return internal.LogicalStrings{}, nil
 	}
-	return strings.Split(l, " AND ")
+	return internal.ParseLogicalStrings(l)
 }

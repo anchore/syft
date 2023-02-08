@@ -21,7 +21,7 @@ const (
 func ID(id string) (value, other string, exists bool) {
 	id = strings.TrimSpace(id)
 	// ignore blank strings or the joiner
-	if id == "" || id == "AND" {
+	if id == "" || id == "AND" || id == "OR" {
 		return "", "", false
 	}
 	// first look for a canonical license

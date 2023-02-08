@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -97,7 +98,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"MIT"},
+					Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
@@ -125,7 +126,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"MIT"},
+					Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,

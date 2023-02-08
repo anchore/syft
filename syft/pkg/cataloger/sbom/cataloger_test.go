@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/formats/syftjson"
@@ -39,7 +40,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "3.2.0-r23",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"GPL-2.0-only"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"GPL-2.0-only"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-baselayout@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -56,7 +57,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "3.2.0-r23",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"GPL-2.0-only"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"GPL-2.0-only"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-baselayout-data@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -77,7 +78,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "2.4-r1",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"MIT"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"MIT"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-keys@2.4-r1?arch=x86_64&upstream=alpine-keys&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -94,7 +95,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "2.12.9-r3",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"GPL-2.0-only"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"GPL-2.0-only"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/apk-tools@2.12.9-r3?arch=x86_64&upstream=apk-tools&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -111,7 +112,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.35.0-r17",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"GPL-2.0-only"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"GPL-2.0-only"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -123,7 +124,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "20220614-r0",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"MPL-2.0", "AND", "MIT"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"MPL-2.0", "MIT"}, Joiner: internal.AND},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/ca-certificates-bundle@20220614-r0?arch=x86_64&upstream=ca-certificates&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -144,7 +145,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "0.7.2-r3",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"BSD-2-Clause", "AND", "BSD-3-Clause"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"BSD-2-Clause", "BSD-3-Clause"}, Joiner: internal.AND},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&upstream=libc-dev&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -161,7 +162,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.1.1s-r0",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"OpenSSL"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"OpenSSL"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/libcrypto1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -173,7 +174,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.1.1s-r0",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"OpenSSL"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"OpenSSL"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/libssl1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -185,7 +186,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.2.3-r1",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"MIT"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"MIT"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/musl@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -197,7 +198,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.2.3-r1",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"MIT", "BSD", "GPL2+"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"MIT", "BSD", "GPL2+"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/musl-utils@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -214,7 +215,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.3.4-r0",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"GPL-2.0-only"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"GPL-2.0-only"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/scanelf@1.3.4-r0?arch=x86_64&upstream=pax-utils&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -226,7 +227,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.35.0-r17",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"GPL-2.0-only"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"GPL-2.0-only"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/ssl_client@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -243,7 +244,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.2.12-r3",
 			Type:      "apk",
 			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
-			Licenses:  []string{"Zlib"},
+			Licenses:  internal.LogicalStrings{Simple: []string{"Zlib"}},
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/zlib@1.2.12-r3?arch=x86_64&upstream=zlib&distro=alpine-3.16.3",
 			CPEs: mustCPEs(

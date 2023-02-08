@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -672,7 +673,7 @@ func TestMultiplePackages(t *testing.T) {
 		{
 			Name:         "libc-utils",
 			Version:      "0.7.2-r0",
-			Licenses:     []string{"BSD"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"BSD"}},
 			Type:         pkg.ApkPkg,
 			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,
@@ -698,7 +699,7 @@ func TestMultiplePackages(t *testing.T) {
 		{
 			Name:         "musl-utils",
 			Version:      "1.1.24-r2",
-			Licenses:     []string{"MIT", "BSD", "GPL2+"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT", "BSD", "GPL2+"}},
 			Type:         pkg.ApkPkg,
 			PURL:         "pkg:apk/alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,

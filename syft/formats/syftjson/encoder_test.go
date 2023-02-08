@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -63,7 +64,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses:     []string{"MIT"},
+		Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",

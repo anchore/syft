@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -17,18 +18,18 @@ import (
 // Package represents an application or library that has been bundled into a distributable format.
 // TODO: if we ignore FoundBy for ID generation should we merge the field to show it was found in two places?
 type Package struct {
-	id           artifact.ID        `hash:"ignore"`
-	Name         string             // the package name
-	Version      string             // the version of the package
-	FoundBy      string             `hash:"ignore" cyclonedx:"foundBy"` // the specific cataloger that discovered this package
-	Locations    source.LocationSet // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
-	Licenses     []string           // licenses discovered with the package metadata
-	Language     Language           `hash:"ignore" cyclonedx:"language"` // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
-	Type         Type               `cyclonedx:"type"`                   // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
-	CPEs         []cpe.CPE          `hash:"ignore"`                      // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
-	PURL         string             `hash:"ignore"`                      // the Package URL (see https://github.com/package-url/purl-spec)
-	MetadataType MetadataType       `cyclonedx:"metadataType"`           // the shape of the additional data in the "metadata" field
-	Metadata     interface{}        // additional data found while parsing the package source
+	id           artifact.ID             `hash:"ignore"`
+	Name         string                  // the package name
+	Version      string                  // the version of the package
+	FoundBy      string                  `hash:"ignore" cyclonedx:"foundBy"` // the specific cataloger that discovered this package
+	Locations    source.LocationSet      // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
+	Licenses     internal.LogicalStrings // licenses discovered with the package metadata
+	Language     Language                `hash:"ignore" cyclonedx:"language"` // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
+	Type         Type                    `cyclonedx:"type"`                   // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
+	CPEs         []cpe.CPE               `hash:"ignore"`                      // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
+	PURL         string                  `hash:"ignore"`                      // the Package URL (see https://github.com/package-url/purl-spec)
+	MetadataType MetadataType            `cyclonedx:"metadataType"`           // the shape of the additional data in the "metadata" field
+	Metadata     interface{}             // additional data found while parsing the package source
 }
 
 func (p *Package) OverrideID(id artifact.ID) {

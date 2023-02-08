@@ -6,6 +6,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -50,7 +51,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 				Language:     pkg.Rust,
 				Type:         pkg.RustPkg,
 				MetadataType: pkg.RustCargoPackageMetadataType,
-				Licenses:     nil,
+				Licenses:     internal.LogicalStrings{},
 				Metadata: pkg.CargoPackageMetadata{
 					Name:     "ansi_term",
 					Version:  "0.12.1",

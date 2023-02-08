@@ -3,6 +3,7 @@ package javascript
 import (
 	"testing"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -19,7 +20,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     []string{"MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
 		},
@@ -42,7 +43,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     []string{"MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
 		},

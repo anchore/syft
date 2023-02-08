@@ -86,6 +86,12 @@ func TestIDParse(t *testing.T) {
 			"",
 			false,
 		},
+		{
+			"OR",
+			"",
+			"",
+			false,
+		},
 	}
 
 	for _, test := range tests {

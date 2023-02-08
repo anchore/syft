@@ -3,6 +3,7 @@ package portage
 import (
 	"testing"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -23,7 +24,7 @@ func TestPortageCataloger(t *testing.T) {
 				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE"),
 				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
 			),
-			Licenses:     []string{"Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT"}},
 			Type:         pkg.PortagePkg,
 			MetadataType: pkg.PortageMetadataType,
 			Metadata: pkg.PortageMetadata{

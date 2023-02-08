@@ -1,6 +1,8 @@
 package alpm
 
 import (
+	"strings"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/linux"
@@ -14,7 +16,7 @@ func newPackage(m pkg.AlpmMetadata, release *linux.Release, locations ...source.
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(locations...),
 		Type:         pkg.AlpmPkg,
-		Licenses:     internal.SplitAny(m.License, " \n"),
+		Licenses:     internal.LogicalStrings{Simple: strings.Split(m.License, " ")},
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,
 		Metadata:     m,

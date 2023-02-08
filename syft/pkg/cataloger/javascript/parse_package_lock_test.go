@@ -3,6 +3,7 @@ package javascript
 import (
 	"testing"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -139,7 +140,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:         "pkg:npm/%40types/prop-types@15.7.5",
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     []string{"MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
 		},
@@ -149,7 +150,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:         "pkg:npm/%40types/react@18.0.17",
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     []string{"MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
 		},
@@ -159,7 +160,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:         "pkg:npm/%40types/scheduler@0.16.2",
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     []string{"MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
 		},
@@ -169,7 +170,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:         "pkg:npm/csstype@3.1.0",
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     []string{"MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
 		},
@@ -274,7 +275,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 		PURL:         "pkg:npm/alias-check@1.0.0",
 		Language:     pkg.JavaScript,
 		Type:         pkg.NpmPkg,
-		Licenses:     []string{"ISC"},
+		Licenses:     internal.LogicalStrings{Simple: []string{"ISC"}},
 		MetadataType: "NpmPackageLockJsonMetadata",
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
@@ -305,7 +306,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 		{
 			Name:         "tmp",
 			Version:      "1.0.0",
-			Licenses:     []string{"ISC"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"ISC"}},
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
 			PURL:         "pkg:npm/tmp@1.0.0",
@@ -315,7 +316,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 		{
 			Name:         "pause-stream",
 			Version:      "0.0.11",
-			Licenses:     []string{"MIT", "Apache2"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT", "Apache2"}},
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
 			PURL:         "pkg:npm/pause-stream@0.0.11",
@@ -325,7 +326,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 		{
 			Name:         "through",
 			Version:      "2.3.8",
-			Licenses:     []string{"MIT"},
+			Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
 			PURL:         "pkg:npm/through@2.3.8",

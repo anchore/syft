@@ -1,8 +1,6 @@
 package spdxhelpers
 
 import (
-	"strings"
-
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -17,29 +15,21 @@ func License(p pkg.Package) string {
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
-	if len(p.Licenses) == 0 {
+	if p.Licenses.Size() == 0 {
 		return NONE
 	}
 
 	// take all licenses and assume an AND expression; for information about license expressions see https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
-	parsedLicenses := parseLicenses(p.Licenses)
-
-	if len(parsedLicenses) == 0 {
-		return NOASSERTION
-	}
-
-	return strings.Join(parsedLicenses, " AND ")
-}
-
-func parseLicenses(raw []string) (parsedLicenses []string) {
-	for _, l := range raw {
-		if value, other, exists := spdxlicense.ID(l); exists {
+	parsedLicenses := p.Licenses.Process(func(s string) string {
+		if value, other, exists := spdxlicense.ID(s); exists {
 			parsed := value
 			if other != "" {
 				parsed = spdxlicense.LicenseRefPrefix + other
 			}
-			parsedLicenses = append(parsedLicenses, parsed)
+			return parsed
 		}
-	}
-	return
+		return ""
+	})
+
+	return parsedLicenses.String()
 }

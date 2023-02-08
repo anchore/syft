@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -187,7 +188,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	return &pkg.Package{
 		Name:         selectName(manifest, j.fileInfo),
 		Version:      selectVersion(manifest, j.fileInfo),
-		Licenses:     selectLicense(manifest),
+		Licenses:     internal.LogicalStrings{Simple: selectLicense(manifest)},
 		Language:     pkg.Java,
 		Locations:    source.NewLocationSet(j.location),
 		Type:         j.fileInfo.pkgType(),

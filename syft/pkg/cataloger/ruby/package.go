@@ -2,6 +2,7 @@ package ruby
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -27,7 +28,7 @@ func newGemspecPackage(m pkg.GemMetadata, locations ...source.Location) pkg.Pack
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(locations...),
 		PURL:         packageURL(m.Name, m.Version),
-		Licenses:     m.Licenses,
+		Licenses:     internal.LogicalStrings{Simple: m.Licenses},
 		Language:     pkg.Ruby,
 		Type:         pkg.GemPkg,
 		MetadataType: pkg.GemMetadataType,

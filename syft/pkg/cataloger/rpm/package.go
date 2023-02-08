@@ -25,7 +25,7 @@ func newPackage(dbLocation source.Location, metadata pkg.RpmMetadata, distro *li
 	}
 
 	if metadata.License != "" {
-		p.Licenses = append(p.Licenses, metadata.License)
+		p.Licenses.Simple = append(p.Licenses.Simple, metadata.License)
 	}
 
 	p.SetID()

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -22,8 +23,10 @@ func Test_License(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: []string{
-					"made-up",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"made-up",
+					},
 				},
 			},
 			expected: "LicenseRef-made-up",
@@ -31,8 +34,10 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license",
 			input: pkg.Package{
-				Licenses: []string{
-					"MIT",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"MIT",
+					},
 				},
 			},
 			expected: "MIT",
@@ -40,9 +45,11 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license expression",
 			input: pkg.Package{
-				Licenses: []string{
-					"MIT",
-					"GPL-3.0",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"MIT",
+						"GPL-3.0-only",
+					},
 				},
 			},
 			expected: "MIT AND GPL-3.0-only",
@@ -50,8 +57,10 @@ func Test_License(t *testing.T) {
 		{
 			name: "cap insensitive",
 			input: pkg.Package{
-				Licenses: []string{
-					"gpl-3.0",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"gpl-3.0",
+					},
 				},
 			},
 			expected: "GPL-3.0-only",
@@ -59,8 +68,10 @@ func Test_License(t *testing.T) {
 		{
 			name: "debian to spdx conversion",
 			input: pkg.Package{
-				Licenses: []string{
-					"GPL-2",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"GPL-2",
+					},
 				},
 			},
 			expected: "GPL-2.0-only",

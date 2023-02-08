@@ -3,6 +3,7 @@ package rpm
 import (
 	"testing"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -25,7 +26,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"MIT"},
+					Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 					Metadata: pkg.RpmMetadata{
 						Name:      "abc",
 						Epoch:     intRef(0),
@@ -53,7 +54,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"Public Domain"},
+					Licenses:     internal.LogicalStrings{Simple: []string{"Public Domain"}},
 					Metadata: pkg.RpmMetadata{
 						Name:      "zork",
 						Epoch:     intRef(0),

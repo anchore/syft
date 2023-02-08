@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -21,16 +22,16 @@ type Package struct {
 
 // PackageBasicData contains non-ambiguous values (type-wise) from pkg.Package.
 type PackageBasicData struct {
-	ID        string               `json:"id"`
-	Name      string               `json:"name"`
-	Version   string               `json:"version"`
-	Type      pkg.Type             `json:"type"`
-	FoundBy   string               `json:"foundBy"`
-	Locations []source.Coordinates `json:"locations"`
-	Licenses  []string             `json:"licenses"`
-	Language  pkg.Language         `json:"language"`
-	CPEs      []string             `json:"cpes"`
-	PURL      string               `json:"purl"`
+	ID        string                  `json:"id"`
+	Name      string                  `json:"name"`
+	Version   string                  `json:"version"`
+	Type      pkg.Type                `json:"type"`
+	FoundBy   string                  `json:"foundBy"`
+	Locations []source.Coordinates    `json:"locations"`
+	Licenses  internal.LogicalStrings `json:"licenses"`
+	Language  pkg.Language            `json:"language"`
+	CPEs      []string                `json:"cpes"`
+	PURL      string                  `json:"purl"`
 }
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.

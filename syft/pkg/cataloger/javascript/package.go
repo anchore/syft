@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -21,7 +22,7 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 	p := pkg.Package{
 		Name:         u.Name,
 		Version:      u.Version,
-		Licenses:     licenses,
+		Licenses:     internal.LogicalStrings{Simple: licenses},
 		PURL:         packageURL(u.Name, u.Version),
 		Locations:    source.NewLocationSet(locations...),
 		Language:     pkg.JavaScript,
@@ -92,7 +93,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     licenses,
+			Licenses:     internal.LogicalStrings{Simple: licenses},
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
@@ -130,7 +131,7 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 }
 
 func finalizeLockPkg(resolver source.FileResolver, location source.Location, p pkg.Package) pkg.Package {
-	p.Licenses = append(p.Licenses, addLicenses(p.Name, resolver, location)...)
+	p.Licenses.Simple = append(p.Licenses.Simple, addLicenses(p.Name, resolver, location)...)
 	p.SetID()
 	return p
 }

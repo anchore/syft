@@ -3,6 +3,7 @@ package ruby
 import (
 	"testing"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -19,7 +20,7 @@ func TestParseGemspec(t *testing.T) {
 		PURL:         "pkg:gem/bundler@2.1.4",
 		Locations:    locations,
 		Type:         pkg.GemPkg,
-		Licenses:     []string{"MIT"},
+		Licenses:     internal.LogicalStrings{Simple: []string{"MIT"}},
 		Language:     pkg.Ruby,
 		MetadataType: pkg.GemMetadataType,
 		Metadata: pkg.GemMetadata{

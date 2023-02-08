@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -51,7 +52,7 @@ func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...source.Locatio
 		Version:      m.Version,
 		PURL:         packageURL(m.Name, m.Version, &m),
 		Locations:    source.NewLocationSet(sources...),
-		Licenses:     licenses,
+		Licenses:     internal.LogicalStrings{Simple: licenses},
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,

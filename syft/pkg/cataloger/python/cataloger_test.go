@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -45,7 +46,7 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:         "pkg:pypi/requests@2.22.0",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
-				Licenses:     []string{"Apache 2.0"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"Apache 2.0"}},
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -82,7 +83,7 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:         "pkg:pypi/Pygments@2.6.1?vcs_url=git+https://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
-				Licenses:     []string{"BSD License"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"BSD License"}},
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -119,7 +120,7 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:         "pkg:pypi/Pygments@2.6.1",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
-				Licenses:     []string{"BSD License"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"BSD License"}},
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -150,7 +151,7 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:         "pkg:pypi/Pygments@2.6.1",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
-				Licenses:     []string{"BSD License"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"BSD License"}},
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -173,7 +174,7 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:         "pkg:pypi/requests@2.22.0",
 				Type:         pkg.PythonPkg,
 				Language:     pkg.Python,
-				Licenses:     []string{"Apache 2.0"},
+				Licenses:     internal.LogicalStrings{Simple: []string{"Apache 2.0"}},
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{

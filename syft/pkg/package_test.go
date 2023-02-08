@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/source"
 )
@@ -27,9 +28,11 @@ func TestIDUniqueness(t *testing.T) {
 		Locations: source.NewLocationSet(
 			originalLocation,
 		),
-		Licenses: []string{
-			"cc0-1.0",
-			"MIT",
+		Licenses: internal.LogicalStrings{
+			Simple: []string{
+				"cc0-1.0",
+				"MIT",
+			},
 		},
 		Language: "math",
 		Type:     PythonPkg,
@@ -84,9 +87,11 @@ func TestIDUniqueness(t *testing.T) {
 			name: "licenses order is ignored",
 			transform: func(pkg Package) Package {
 				// note: same as the original package, only a different order
-				pkg.Licenses = []string{
-					"MIT",
-					"cc0-1.0",
+				pkg.Licenses = internal.LogicalStrings{
+					Simple: []string{
+						"MIT",
+						"cc0-1.0",
+					},
 				}
 				return pkg
 			},
@@ -146,7 +151,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "licenses is reflected",
 			transform: func(pkg Package) Package {
-				pkg.Licenses = []string{"new!"}
+				pkg.Licenses = internal.LogicalStrings{Simple: []string{"new!"}}
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,
@@ -264,9 +269,11 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"cc0-1.0",
+						"MIT",
+					},
 				},
 				Language: "math",
 				Type:     PythonPkg,
@@ -292,9 +299,11 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					similarLocation, // NOTE: difference; we have a different layer but the same path
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"cc0-1.0",
+						"MIT",
+					},
 				},
 				Language: "math",
 				Type:     PythonPkg,
@@ -321,9 +330,11 @@ func TestPackage_Merge(t *testing.T) {
 					originalLocation,
 					similarLocation, // NOTE: merge!
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"cc0-1.0",
+						"MIT",
+					},
 				},
 				Language: "math",
 				Type:     PythonPkg,
@@ -353,9 +364,11 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"cc0-1.0",
+						"MIT",
+					},
 				},
 				Language: "math",
 				Type:     PythonPkg,
@@ -381,9 +394,11 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
+				Licenses: internal.LogicalStrings{
+					Simple: []string{
+						"cc0-1.0",
+						"MIT",
+					},
 				},
 				Language: "math",
 				Type:     PythonPkg,
