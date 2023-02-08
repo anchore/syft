@@ -309,7 +309,7 @@ $(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 
 .PHONY: changelog
 changelog: clean-changelog  ## Generate and show the changelog for the current unreleased version
-	$(CHRONICLE_CMD) -vv -n > $(CHANGELOG)
+	$(CHRONICLE_CMD) -vv -n --version-file VERSION > $(CHANGELOG)
 	@$(GLOW_CMD) $(CHANGELOG)
 
 $(CHANGELOG):
@@ -355,7 +355,7 @@ clean-dist: clean-changelog
 
 .PHONY: clean-changelog
 clean-changelog:
-	rm -f $(CHANGELOG)
+	rm -f $(CHANGELOG) VERSION
 
 clean-test-image-cache: clean-test-image-tar-cache clean-test-image-docker-cache ## Clean test image cache
 

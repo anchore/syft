@@ -4,20 +4,29 @@ set -eu
 bold=$(tput bold)
 normal=$(tput sgr0)
 
-TEMP_DIR=.tmp
-chronicle=$TEMP_DIR/chronicle
+if ! [ -x "$(command -v gh)" ]; then
+    echo "The GitHub CLI could not be found. To continue follow the instructions at https://github.com/cli/cli#installation"
+    exit 1
+fi
+
+gh auth status
 
 # we need all of the git state to determine the next version. Since tagging is done by
 # the release pipeline it is possible to not have all of the tags from previous releases.
 git fetch --tags
 
-NEXT_VERSION=$($chronicle next-version)
-
-echo "${bold}Proposed version:${normal} $NEXT_VERSION"
+# populates the CHANGELOG.md and VERSION files
 make changelog
 
+NEXT_VERSION=$(cat VERSION)
+
+if [[ "$NEXT_VERSION" == "" ||  "${NEXT_VERSION}" == "(Unreleased)" ]]; then
+    echo "Could not determine the next version to release. Exiting..."
+    exit 1
+fi
+
 while true; do
-    read -p "${bold}Do you want to trigger a release with this version?${normal} [y/n] " yn
+    read -p "${bold}Do you want to trigger a release for version '${NEXT_VERSION}'?${normal} [y/n] " yn
     case $yn in
         [Yy]* ) echo; break;;
         [Nn]* ) echo; echo "Cancelling release..."; exit;;
