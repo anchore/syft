@@ -1,4 +1,4 @@
-package srctest
+package pkgtest
 
 import (
 	"fmt"

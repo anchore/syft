@@ -17,7 +17,6 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/srctest"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -185,7 +184,7 @@ func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	t.Helper()
 
-	resolver := srctest.NewObservingResolver(p.resolver)
+	resolver := NewObservingResolver(p.resolver)
 
 	pkgs, relationships, err := cataloger.Catalog(resolver)
 
