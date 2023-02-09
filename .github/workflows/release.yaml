@@ -1,12 +1,10 @@
 name: "Release"
 on:
-  push:
-    # take no actions on push to any branch...
-    branches-ignore:
-      - "**"
-    # ... only act on release tags
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: tag the latest commit on main with the given version (prefixed with v)
+        required: true
 
 env:
   GO_VERSION: "1.19.x"
@@ -18,12 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
-      - name: Ensure tagged commit is on main
+      - name: Check if tag already exists
+        # note: this will fail if the tag already exists
         run: |
-          echo "Tag: ${GITHUB_REF##*/}"
-          git fetch origin main
-          git merge-base --is-ancestor ${GITHUB_REF##*/} origin/main && echo "${GITHUB_REF##*/} is a commit on main!"
+          [[ "${{ github.event.inputs.version }}" == v* ]] || (echo "version '${{ github.event.inputs.version }}' does not have a 'v' prefix" && exit 1)
+          git tag ${{ github.event.inputs.version }}
 
       - name: Check static analysis results
         uses: fountainhead/action-wait-for-check@v1.1.0
@@ -119,6 +116,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag release
+        run: |
+          git tag ${{ github.event.inputs.version }}
+          git push origin --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & publish release artifacts
         run: make release

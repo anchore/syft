@@ -175,4 +175,16 @@ var defaultClassifiers = []classifier{
 		Package: "traefik",
 		PURL:    mustPURL("pkg:generic/traefik@version"),
 	},
+	{
+		Class:    "postgresql-binary",
+		FileGlob: "**/postgres",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]PostgreSQL 15beta4
+			// [NUL]PostgreSQL 15.1
+			// [NUL]PostgreSQL 9.6.24
+			// ?PostgreSQL 9.5alpha1
+			`(?m)(\x00|\?)PostgreSQL (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+		Package: "postgresql",
+		PURL:    mustPURL("pkg:generic/postgresql@version"),
+	},
 }

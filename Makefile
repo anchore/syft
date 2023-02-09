@@ -6,16 +6,19 @@ LINT_CMD := $(TEMP_DIR)/golangci-lint run --tests=false
 GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/anchore
 RELEASE_CMD := $(TEMP_DIR)/goreleaser release --rm-dist
 SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
+CHRONICLE_CMD = $(TEMP_DIR)/chronicle
+GLOW_CMD = $(TEMP_DIR)/glow
 
 # Tool versions #################################
 GOLANGCILINT_VERSION := v1.51.1
 GOSIMPORTS_VERSION := v0.3.5
 BOUNCER_VERSION := v0.4.0
-CHRONICLE_VERSION := v0.5.1
-GORELEASER_VERSION := v1.15.1
+CHRONICLE_VERSION := v0.6.0
+GORELEASER_VERSION := v1.15.2
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v1.13.1
 QUILL_VERSION := v0.2.0
+GLOW_VERSION := v1.5.0
 
 # Formatting variables #################################
 BOLD := $(shell tput -T linux bold)
@@ -88,6 +91,7 @@ bootstrap-tools: $(TEMP_DIR)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/rinchsan/gosimports/cmd/gosimports@$(GOSIMPORTS_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/neilpa/yajsv@$(YAJSV_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/sigstore/cosign/cmd/cosign@$(COSIGN_VERSION)
+	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/charmbracelet/glow@$(GLOW_VERSION)
 
 .PHONY: bootstrap-go
 bootstrap-go:
@@ -304,15 +308,16 @@ $(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 	$(SNAPSHOT_CMD) --config $(TEMP_DIR)/goreleaser.yaml
 
 .PHONY: changelog
-changelog: clean-changelog $(CHANGELOG)  ## Generate and show the changelog for the current unreleased version
-	@docker run -it --rm \
-		-v $(shell pwd)/$(CHANGELOG):/$(CHANGELOG) \
-		rawkode/mdv \
-			-t 748.5989 \
-			/$(CHANGELOG)
+changelog: clean-changelog  ## Generate and show the changelog for the current unreleased version
+	$(CHRONICLE_CMD) -vvv -n --version-file VERSION > $(CHANGELOG)
+	@$(GLOW_CMD) $(CHANGELOG)
 
 $(CHANGELOG):
-	$(TEMP_DIR)/chronicle -vv > $(CHANGELOG)
+	$(CHRONICLE_CMD) -vvv > $(CHANGELOG)
+
+.PHONY: trigger-release
+trigger-release:
+	@.github/scripts/trigger-release.sh
 
 .PHONY: release
 release: clean-dist $(CHANGELOG)
@@ -350,7 +355,7 @@ clean-dist: clean-changelog
 
 .PHONY: clean-changelog
 clean-changelog:
-	rm -f $(CHANGELOG)
+	rm -f $(CHANGELOG) VERSION
 
 clean-test-image-cache: clean-test-image-tar-cache clean-test-image-docker-cache ## Clean test image cache
 

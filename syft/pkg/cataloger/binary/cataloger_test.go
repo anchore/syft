@@ -20,6 +20,62 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		expected   pkg.Package
 	}{
 		{
+			name:       "positive-postgresql-15beta4",
+			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15beta4",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "15beta4",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@15beta4",
+				Locations: singleLocation("postgres"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "postgresql-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-postgresql-15.1",
+			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15.1",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "15.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@15.1",
+				Locations: singleLocation("postgres"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "postgresql-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-postgresql-9.6.24",
+			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.6.24",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "9.6.24",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@9.6.24",
+				Locations: singleLocation("postgres"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "postgresql-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-postgresql-9.5alpha1",
+			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.5alpha1",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "9.5alpha1",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@9.5alpha1",
+				Locations: singleLocation("postgres"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "postgresql-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-traefik-2.9.6",
 			fixtureDir: "test-fixtures/classifiers/positive/traefik-2.9.6",
 			expected: pkg.Package{
