@@ -14,11 +14,11 @@ GOLANGCILINT_VERSION := v1.51.1
 GOSIMPORTS_VERSION := v0.3.5
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.15.1
+GORELEASER_VERSION := v1.15.2
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v1.13.1
 QUILL_VERSION := v0.2.0
-GLOW_VERSION := v1.4.1
+GLOW_VERSION := v1.5.0
 
 # Formatting variables #################################
 BOLD := $(shell tput -T linux bold)
