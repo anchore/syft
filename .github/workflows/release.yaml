@@ -125,7 +125,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & publish release artifacts
-        run: make release
+        run: make ci-release
         env:
           # for mac signing and notarization...
           QUILL_SIGN_P12: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_CHAIN }}

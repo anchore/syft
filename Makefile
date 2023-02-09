@@ -315,14 +315,13 @@ changelog: clean-changelog  ## Generate and show the changelog for the current u
 $(CHANGELOG):
 	$(CHRONICLE_CMD) -vvv > $(CHANGELOG)
 
-.PHONY: trigger-release
-trigger-release:
+.PHONY: release
+release:
 	@.github/scripts/trigger-release.sh
 
-.PHONY: release
-release: clean-dist $(CHANGELOG)
+.PHONY: ci-release
+ci-release: ci-check clean-dist $(CHANGELOG)
 	$(call title,Publishing release artifacts)
-	@.github/scripts/ci-check.sh
 
 	# create a config with the dist dir overridden
 	echo "dist: $(DIST_DIR)" > $(TEMP_DIR)/goreleaser.yaml
@@ -336,6 +335,10 @@ release: clean-dist $(CHANGELOG)
 
 	# upload the version file that supports the application version update check (excluding pre-releases)
 	.github/scripts/update-version-file.sh "$(DIST_DIR)" "$(VERSION)"
+
+.PHONY: ci-check
+ci-check:
+	@.github/scripts/ci-check.sh
 
 ## Cleanup targets #################################
 
