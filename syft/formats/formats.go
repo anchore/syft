@@ -44,7 +44,7 @@ func Identify(by []byte) sbom.Format {
 	for _, f := range Formats() {
 		if err := f.Validate(bytes.NewReader(by)); err != nil {
 			if !errors.Is(err, sbom.ErrValidationNotSupported) {
-				log.Debugf("format %s returned err: %+v", f.ID(), err)
+				log.WithFields("error", err).Tracef("format validation for %s failed", f.ID())
 			}
 			continue
 		}

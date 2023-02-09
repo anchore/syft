@@ -11,6 +11,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
+	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -65,7 +66,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	}
 
 	// we should only attempt to report digests for files that are regular files (don't attempt to resolve links)
-	if meta.Type != source.RegularFile {
+	if meta.Type != file.TypeRegular {
 		return nil, errUndigestableFile
 	}
 

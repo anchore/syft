@@ -21,7 +21,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			fixture: "test-fixtures/version.txt",
 			classifier: classifier{
 				Package:         "some-app",
-				FileGlob:        ".*/version.txt",
+				FileGlob:        "**/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs:            []cpe.CPE{},
 			},
@@ -32,7 +32,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			fixture: "test-fixtures/version.txt",
 			classifier: classifier{
 				Package:         "some-app",
-				FileGlob:        ".*/version.txt",
+				FileGlob:        "**/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
@@ -47,7 +47,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			fixture: "test-fixtures/version.txt",
 			classifier: classifier{
 				Package:         "some-app",
-				FileGlob:        ".*/version.txt",
+				FileGlob:        "**/version.txt",
 				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),

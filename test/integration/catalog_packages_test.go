@@ -67,7 +67,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Rust.String())
 	definedLanguages.Remove(pkg.Dart.String())
 	definedLanguages.Remove(pkg.Dotnet.String())
-	definedLanguages.Remove(string(pkg.Swift.String()))
+	definedLanguages.Remove(pkg.Swift.String())
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
 	definedLanguages.Remove(pkg.Erlang.String())

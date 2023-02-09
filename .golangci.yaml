@@ -6,7 +6,6 @@ issues:
 #  include:
 #    - EXC0002 # disable excluding of issues about comments from golint
 
-
 linters:
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
@@ -14,25 +13,24 @@ linters:
     - asciicheck
     - bodyclose
     - depguard
+    - dogsled
     - dupl
     - errcheck
-    - errorlint
     - exportloopref
-    - forcetypeassert
     - funlen
     - gocognit
     - goconst
     - gocritic
     - gocyclo
     - gofmt
-    - tparallel
-    - importas
+    - goimports
+    - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
     - misspell
-    - nolintlint
+    - nakedret
     - revive
     - staticcheck
     - stylecheck
@@ -41,6 +39,7 @@ linters:
     - unparam
     - unused
     - whitespace
+
 linters-settings:
   funlen:
     # Checks the number of lines in a function.
@@ -57,7 +56,7 @@ run:
   timeout: 10m
 
 # do not enable...
-#    - dogsled           # found to be to niche and ineffective
+#    - deadcode          # The owner seems to have abandoned the linter. Replaced by "unused".
 #    - goprintffuncname  # does not catch all cases and there are exceptions
 #    - nakedret          # does not catch all cases and should not fail a build
 #    - gochecknoglobals
@@ -73,7 +72,11 @@ run:
 #    - lll         # without a way to specify per-line exception cases, this is not usable
 #    - maligned    # this is an excellent linter, but tricky to optimize and we are not sensitive to memory layout optimizations
 #    - nestif
-#    - prealloc    # following this rule isn't consistently a good idea, as it sometimes forces unnecessary allocations that result in less idiomatic code
-#    - scopelint   # deprecated
+#    - nolintlint   # as of go1.19 this conflicts with the behavior of gofmt, which is a deal-breaker (lint-fix will still fail when running lint)
+#    - prealloc     # following this rule isn't consistently a good idea, as it sometimes forces unnecessary allocations that result in less idiomatic code
+#    - rowserrcheck # not in a repo with sql, so this is not useful
+#    - scopelint    # deprecated
+#    - structcheck  # The owner seems to have abandoned the linter. Replaced by "unused".
 #    - testpackage
-#    - wsl         # this doens't have an auto-fixer yet and is pretty noisy (https://github.com/bombsimon/wsl/issues/90)
+#    - varcheck     # The owner seems to have abandoned the linter. Replaced by "unused".
+#    - wsl          # this doens't have an auto-fixer yet and is pretty noisy (https://github.com/bombsimon/wsl/issues/90)

@@ -81,3 +81,29 @@ func TestDpkgCataloger(t *testing.T) {
 		Expects(expected, nil).
 		TestCataloger(t, c)
 }
+
+func TestCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain db status files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"var/lib/dpkg/status",
+				"var/lib/dpkg/status.d/pkg-1.0",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewDpkgdbCataloger())
+		})
+	}
+}

@@ -518,7 +518,7 @@ func getImageExclusionFunction(exclusions []string) func(string) bool {
 	}
 }
 
-func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFilterFn, error) {
+func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}
@@ -551,20 +551,23 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 		return nil, fmt.Errorf("invalid exclusion pattern(s): '%s' (must start with one of: './', '*/', or '**/')", strings.Join(errors, "', '"))
 	}
 
-	return []pathFilterFn{
-		func(path string, _ os.FileInfo) bool {
+	return []pathIndexVisitor{
+		func(path string, info os.FileInfo, _ error) error {
 			for _, exclusion := range exclusions {
 				// this is required to handle Windows filepaths
 				path = filepath.ToSlash(path)
 				matches, err := doublestar.Match(exclusion, path)
 				if err != nil {
-					return false
+					return nil
 				}
 				if matches {
-					return true
+					if info != nil && info.IsDir() {
+						return filepath.SkipDir
+					}
+					return errSkipPath
 				}
 			}
-			return false
+			return nil
 		},
 	}, nil
 }

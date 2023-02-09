@@ -3,6 +3,8 @@ package python
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -192,9 +194,7 @@ func Test_PackageCataloger(t *testing.T) {
 			resolver := source.NewMockResolverForPaths(test.fixtures...)
 
 			locations, err := resolver.FilesByPath(test.fixtures...)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			test.expectedPackage.Locations = source.NewLocationSet(locations...)
 
@@ -223,13 +223,69 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 			resolver := source.NewMockResolverForPaths(test.MetadataFixture)
 
 			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
-			if err != nil {
-				t.Fatalf("failed to catalog python package: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(actual) != 0 {
 				t.Fatalf("Expected 0 packages but found: %d", len(actual))
 			}
+		})
+	}
+}
+
+func Test_IndexCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain index files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"src/requirements.txt",
+				"src/extra-requirements.txt",
+				"src/requirements-dev.txt",
+				"src/1-requirements-dev.txt",
+				"src/setup.py",
+				"src/poetry.lock",
+				"src/Pipfile.lock",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewPythonIndexCataloger())
+		})
+	}
+}
+
+func Test_PackageCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain index files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"site-packages/x.dist-info/METADATA",
+				"site-packages/y.egg-info/PKG-INFO",
+				"site-packages/z.egg-info",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewPythonPackageCataloger())
 		})
 	}
 }

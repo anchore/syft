@@ -5,15 +5,19 @@ package source
 
 import (
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -455,7 +459,7 @@ func TestDirectoryExclusions(t *testing.T) {
 		desc       string
 		input      string
 		glob       string
-		expected   int
+		expected   []string
 		exclusions []string
 		err        bool
 	}{
@@ -463,86 +467,128 @@ func TestDirectoryExclusions(t *testing.T) {
 			input:      "test-fixtures/system_paths",
 			desc:       "exclude everything",
 			glob:       "**",
-			expected:   0,
+			expected:   nil,
 			exclusions: []string{"**/*"},
 		},
 		{
-			input:      "test-fixtures/image-simple",
-			desc:       "a single path excluded",
-			glob:       "**",
-			expected:   3,
+			input: "test-fixtures/image-simple",
+			desc:  "a single path excluded",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				"file-1.txt",
+				"file-2.txt",
+			},
 			exclusions: []string{"**/target/**"},
 		},
 		{
-			input:      "test-fixtures/image-simple",
-			desc:       "exclude explicit directory relative to the root",
-			glob:       "**",
-			expected:   3,
+			input: "test-fixtures/image-simple",
+			desc:  "exclude explicit directory relative to the root",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				"file-1.txt",
+				"file-2.txt",
+				//"target/really/nested/file-3.txt", // explicitly skipped
+			},
 			exclusions: []string{"./target"},
 		},
 		{
-			input:      "test-fixtures/image-simple",
-			desc:       "exclude explicit file relative to the root",
-			glob:       "**",
-			expected:   3,
+			input: "test-fixtures/image-simple",
+			desc:  "exclude explicit file relative to the root",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				//"file-1.txt",  // explicitly skipped
+				"file-2.txt",
+				"target/really/nested/file-3.txt",
+			},
 			exclusions: []string{"./file-1.txt"},
 		},
 		{
-			input:      "test-fixtures/image-simple",
-			desc:       "exclude wildcard relative to the root",
-			glob:       "**",
-			expected:   2,
+			input: "test-fixtures/image-simple",
+			desc:  "exclude wildcard relative to the root",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				//"file-1.txt",  // explicitly skipped
+				//"file-2.txt", // explicitly skipped
+				"target/really/nested/file-3.txt",
+			},
 			exclusions: []string{"./*.txt"},
 		},
 		{
-			input:      "test-fixtures/image-simple",
-			desc:       "exclude files deeper",
-			glob:       "**",
-			expected:   3,
+			input: "test-fixtures/image-simple",
+			desc:  "exclude files deeper",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				"file-1.txt",
+				"file-2.txt",
+				//"target/really/nested/file-3.txt", // explicitly skipped
+			},
 			exclusions: []string{"**/really/**"},
 		},
 		{
-			input:      "test-fixtures/image-simple",
-			desc:       "files excluded with extension",
-			glob:       "**",
-			expected:   1,
+			input: "test-fixtures/image-simple",
+			desc:  "files excluded with extension",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				//"file-1.txt",  // explicitly skipped
+				//"file-2.txt", // explicitly skipped
+				//"target/really/nested/file-3.txt", // explicitly skipped
+			},
 			exclusions: []string{"**/*.txt"},
 		},
 		{
-			input:      "test-fixtures/image-simple",
-			desc:       "keep files with different extensions",
-			glob:       "**",
-			expected:   4,
+			input: "test-fixtures/image-simple",
+			desc:  "keep files with different extensions",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				"file-1.txt",
+				"file-2.txt",
+				"target/really/nested/file-3.txt",
+			},
 			exclusions: []string{"**/target/**/*.jar"},
 		},
 		{
-			input:      "test-fixtures/path-detected",
-			desc:       "file directly excluded",
-			glob:       "**",
-			expected:   1,
+			input: "test-fixtures/path-detected",
+			desc:  "file directly excluded",
+			glob:  "**",
+			expected: []string{
+				".vimrc",
+			},
 			exclusions: []string{"**/empty"},
 		},
 		{
-			input:      "test-fixtures/path-detected",
-			desc:       "pattern error containing **/",
-			glob:       "**",
-			expected:   1,
+			input: "test-fixtures/path-detected",
+			desc:  "pattern error containing **/",
+			glob:  "**",
+			expected: []string{
+				".vimrc",
+			},
 			exclusions: []string{"/**/empty"},
 			err:        true,
 		},
 		{
-			input:      "test-fixtures/path-detected",
-			desc:       "pattern error incorrect start",
-			glob:       "**",
-			expected:   1,
+			input: "test-fixtures/path-detected",
+			desc:  "pattern error incorrect start",
+			glob:  "**",
+			expected: []string{
+				".vimrc",
+			},
 			exclusions: []string{"empty"},
 			err:        true,
 		},
 		{
-			input:      "test-fixtures/path-detected",
-			desc:       "pattern error starting with /",
-			glob:       "**",
-			expected:   1,
+			input: "test-fixtures/path-detected",
+			desc:  "pattern error starting with /",
+			glob:  "**",
+			expected: []string{
+				".vimrc",
+			},
 			exclusions: []string{"/empty"},
 			err:        true,
 		},
@@ -570,13 +616,19 @@ func TestDirectoryExclusions(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not get resolver error: %+v", err)
 			}
-			contents, err := resolver.FilesByGlob(test.glob)
+			locations, err := resolver.FilesByGlob(test.glob)
 			if err != nil {
 				t.Errorf("could not get files by glob: %s+v", err)
 			}
-			if len(contents) != test.expected {
-				t.Errorf("wrong number of files after exclusions (%s): %d != %d", test.glob, len(contents), test.expected)
+			var actual []string
+			for _, l := range locations {
+				actual = append(actual, l.RealPath)
 			}
+
+			sort.Strings(test.expected)
+			sort.Strings(actual)
+
+			assert.Equal(t, test.expected, actual, "diff \n"+cmp.Diff(test.expected, actual))
 		})
 	}
 }
@@ -667,59 +719,118 @@ func TestImageExclusions(t *testing.T) {
 	}
 }
 
+type dummyInfo struct {
+	isDir bool
+}
+
+func (d dummyInfo) Name() string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d dummyInfo) Size() int64 {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d dummyInfo) Mode() fs.FileMode {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d dummyInfo) ModTime() time.Time {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d dummyInfo) IsDir() bool {
+	return d.isDir
+}
+
+func (d dummyInfo) Sys() any {
+	//TODO implement me
+	panic("implement me")
+}
+
 func Test_crossPlatformExclusions(t *testing.T) {
 	testCases := []struct {
-		desc    string
-		root    string
-		path    string
-		exclude string
-		match   bool
+		desc     string
+		root     string
+		path     string
+		finfo    os.FileInfo
+		exclude  string
+		walkHint error
 	}{
 		{
-			desc:    "linux doublestar",
-			root:    "/usr",
-			path:    "/usr/var/lib/etc.txt",
-			exclude: "**/*.txt",
-			match:   true,
+			desc:     "directory exclusion",
+			root:     "/",
+			path:     "/usr/var/lib",
+			exclude:  "**/var/lib",
+			finfo:    dummyInfo{isDir: true},
+			walkHint: fs.SkipDir,
+		},
+		{
+			desc:     "no file info",
+			root:     "/",
+			path:     "/usr/var/lib",
+			exclude:  "**/var/lib",
+			walkHint: errSkipPath,
+		},
+		// linux specific tests...
+		{
+			desc:     "linux doublestar",
+			root:     "/usr",
+			path:     "/usr/var/lib/etc.txt",
+			exclude:  "**/*.txt",
+			finfo:    dummyInfo{isDir: false},
+			walkHint: errSkipPath,
 		},
 		{
 			desc:    "linux relative",
 			root:    "/usr/var/lib",
 			path:    "/usr/var/lib/etc.txt",
 			exclude: "./*.txt",
-			match:   true,
+			finfo:   dummyInfo{isDir: false},
+
+			walkHint: errSkipPath,
 		},
 		{
-			desc:    "linux one level",
-			root:    "/usr",
-			path:    "/usr/var/lib/etc.txt",
-			exclude: "*/*.txt",
-			match:   false,
+			desc:     "linux one level",
+			root:     "/usr",
+			path:     "/usr/var/lib/etc.txt",
+			exclude:  "*/*.txt",
+			finfo:    dummyInfo{isDir: false},
+			walkHint: nil,
 		},
 		// NOTE: since these tests will run in linux and macOS, the windows paths will be
 		// considered relative if they do not start with a forward slash and paths with backslashes
 		// won't be modified by the filepath.ToSlash call, so these are emulating the result of
 		// filepath.ToSlash usage
+
+		// windows specific tests...
 		{
-			desc:    "windows doublestar",
-			root:    "/C:/User/stuff",
-			path:    "/C:/User/stuff/thing.txt",
-			exclude: "**/*.txt",
-			match:   true,
+			desc:     "windows doublestar",
+			root:     "/C:/User/stuff",
+			path:     "/C:/User/stuff/thing.txt",
+			exclude:  "**/*.txt",
+			finfo:    dummyInfo{isDir: false},
+			walkHint: errSkipPath,
 		},
 		{
-			desc:    "windows relative",
-			root:    "/C:/User/stuff",
-			path:    "/C:/User/stuff/thing.txt",
-			exclude: "./*.txt",
-			match:   true,
+			desc:     "windows relative",
+			root:     "/C:/User/stuff",
+			path:     "/C:/User/stuff/thing.txt",
+			exclude:  "./*.txt",
+			finfo:    dummyInfo{isDir: false},
+			walkHint: errSkipPath,
 		},
 		{
-			desc:    "windows one level",
-			root:    "/C:/User/stuff",
-			path:    "/C:/User/stuff/thing.txt",
-			exclude: "*/*.txt",
-			match:   false,
+			desc:     "windows one level",
+			root:     "/C:/User/stuff",
+			path:     "/C:/User/stuff/thing.txt",
+			exclude:  "*/*.txt",
+			finfo:    dummyInfo{isDir: false},
+			walkHint: nil,
 		},
 	}
 
@@ -729,8 +840,8 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, f := range fns {
-				result := f(test.path, nil)
-				require.Equal(t, test.match, result)
+				result := f(test.path, test.finfo, nil)
+				require.Equal(t, test.walkHint, result)
 			}
 		})
 	}

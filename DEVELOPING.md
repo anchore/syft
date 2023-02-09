@@ -118,44 +118,54 @@ sequenceDiagram
 
 Catalogers are the way in which syft is able to identify and construct packages given some amount of source metadata.
 For example, Syft can locate and process `package-lock.json` files when performing filesystem scans. 
-See: [how to specify file globs](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21)
-and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) fora quick review.
+See: [how to specify file globs](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21)
+and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) fora quick review.
 
 #### Building a new Cataloger
 
-Catalogers must fulfill the interface [found here](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger.go). 
+Catalogers must fulfill the interface [found here](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger.go). 
 This means that when building a new cataloger, the new struct must implement both method signatures of `Catalog` and `Name`.
 
-A top level view of the functions that construct all the catalogers can be found [here](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/cataloger.go).
+A top level view of the functions that construct all the catalogers can be found [here](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/cataloger.go).
 When an author has finished writing a new cataloger this is the spot to plug in the new catalog constructor.
 
-For a top level view of how the catalogers are used see [this function](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/catalog.go#L41-L100) as a reference. It ranges over all catalogers passed as an argument and invokes the `Catalog` method:
+For a top level view of how the catalogers are used see [this function](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/catalog.go#L41-L100) as a reference. It ranges over all catalogers passed as an argument and invokes the `Catalog` method:
 
 Each cataloger has its own `Catalog` method, but this does not mean that they are all vastly different.
-Take a look at the `apkdb` cataloger for alpine to see how it [constructs a generic.NewCataloger](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/apkdb/cataloger.go).
+Take a look at the `apkdb` cataloger for alpine to see how it [constructs a generic.NewCataloger](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/cataloger.go).
 
 `generic.NewCataloger` is an abstraction syft uses to make writing common components easier. First, it takes the `catalogerName` to identify the cataloger.
 On the other side of the call it uses two key pieces which inform the cataloger how to identify and return packages, the `globPatterns` and the `parseFunction`:
 - The first piece is a `parseByGlob` matching pattern used to identify the files that contain the package metadata.
-See [here for the APK example](https://github.com/anchore/syft/blob/main/syft/pkg/apk_metadata.go#L16-L41).
+See [here for the APK example](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/apk_metadata.go#L16-L41).
 - The other is a `parseFunction` which informs the cataloger what to do when it has found one of the above matches files.
-See this [link for an example](https://github.com/anchore/syft/blob/main/syft/pkg/cataloger/apkdb/parse_apk_db.go#L22-L102).
+See this [link for an example](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L22-L102).
 
 If you're unsure about using the `Generic Cataloger` and think the use case being filled requires something more custom
 just file an issue or ask in our slack, and we'd be more than happy to help on the design.
 
-Identified packages share a common struct so be sure that when the new cataloger is constructing a new package it is using the [`Package` struct](https://github.com/anchore/syft/blob/main/syft/pkg/package.go#L16-L31).
+Identified packages share a common struct so be sure that when the new cataloger is constructing a new package it is using the [`Package` struct](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/package.go#L16-L31).
 
 Metadata Note: Identified packages are also assigned specific metadata that can be unique to their environment. 
-See [this folder](https://github.com/anchore/syft/tree/main/syft/pkg) for examples of the different metadata types.
+See [this folder](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg) for examples of the different metadata types.
 These are plugged into the `MetadataType` and `Metadata` fields in the above struct. `MetadataType` informs which type is being used. `Metadata` is an interface converted to that type.
 
 Finally, here is an example of where the package construction is done in the apk cataloger. The first link is where `newPackage` is called in the `parseFunction`. The second link shows the package construction:
-- [Call for new package](https://github.com/anchore/syft/blob/6a7d6e6071829c7ce2943266c0e187b27c0b325c/syft/pkg/cataloger/apkdb/parse_apk_db.go#L96-L99)
-- [APK Package Constructor](https://github.com/anchore/syft/blob/6a7d6e6071829c7ce2943266c0e187b27c0b325c/syft/pkg/cataloger/apkdb/package.go#L12-L27)
+- [Call for new package](https://github.com/anchore/syft/blob/v0.70.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L106)
+- [APK Package Constructor](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/package.go#L12-L27)
 
 If you have more questions about implementing a cataloger or questions about one you might be currently working
 always feel free to file an issue or reach out to us [on slack](https://anchore.com/slack).
+
+#### Searching for files
+
+All catalogers are provided an instance of the [`source.FileResolver`](https://github.com/anchore/syft/blob/v0.70.0/syft/source/file_resolver.go#L8) to interface with the image and search for files. The implementations for these 
+abstractions leverage [`stereoscope`](https://github.com/anchore/stereoscope) in order to perform searching. Here is a 
+rough outline how that works:
+
+1. a stereoscope `file.Index` is searched based on the input given (a path, glob, or MIME type). The index is relatively fast to search, but requires results to be filtered down to the files that exist in the specific layer(s) of interest. This is done automatically by the `filetree.Searcher` abstraction. This abstraction will fallback to searching directly against the raw `filetree.FileTree` if the index does not contain the file(s) of interest. Note: the `filetree.Searcher` is used by the `source.FileResolver` abstraction.
+2. Once the set of files are returned from the `filetree.Searcher` the results are filtered down further to return the most unique file results. For example, you may have requested for files by a glob that returns multiple results. These results are filtered down to deduplicate by real files, so if a result contains two references to the same file, say one accessed via symlink and one accessed via the real path, then the real path reference is returned and the symlink reference is filtered out. If both were accessed by symlink then the first (by lexical order) is returned. This is done automatically by the `source.FileResolver` abstraction.
+3. By the time results reach the `pkg.Cataloger` you are guaranteed to have a set of unique files that exist in the layer(s) of interest (relative to what the resolver supports).
 
 ## Testing
 

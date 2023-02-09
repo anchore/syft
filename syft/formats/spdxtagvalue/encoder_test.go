@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/syft/formats/common/testutils"
+	"github.com/anchore/syft/syft/formats/internal/testutils"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"

@@ -71,3 +71,28 @@ func TestPortageCataloger(t *testing.T) {
 		TestCataloger(t, NewPortageCataloger())
 
 }
+
+func TestCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain portage contents file",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"var/db/pkg/x/y/CONTENTS",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewPortageCataloger())
+		})
+	}
+}

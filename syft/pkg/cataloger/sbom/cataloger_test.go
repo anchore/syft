@@ -290,3 +290,38 @@ func Test_parseSBOM(t *testing.T) {
 		})
 	}
 }
+
+func Test_Cataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain sbom files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"bom",
+				"sbom",
+				"app.syft.json",
+				"app.bom",
+				"app.sbom",
+				"app.cdx",
+				"app.spdx",
+				"app.bom.json",
+				"app.sbom.json",
+				"app.cdx.json",
+				"app.spdx.json",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewSBOMCataloger())
+		})
+	}
+}

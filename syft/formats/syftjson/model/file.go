@@ -14,10 +14,10 @@ type File struct {
 }
 
 type FileMetadataEntry struct {
-	Mode            int             `json:"mode"`
-	Type            source.FileType `json:"type"`
-	LinkDestination string          `json:"linkDestination,omitempty"`
-	UserID          int             `json:"userID"`
-	GroupID         int             `json:"groupID"`
-	MIMEType        string          `json:"mimeType"`
+	Mode            int    `json:"mode"`
+	Type            string `json:"type"`
+	LinkDestination string `json:"linkDestination,omitempty"`
+	UserID          int    `json:"userID"`
+	GroupID         int    `json:"groupID"`
+	MIMEType        string `json:"mimeType"`
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
+func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 	tests := []struct {
 		name       string
 		fixtureDir string
@@ -440,7 +440,7 @@ func TestClassifierCataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 	}
 }
 
-func TestClassifierCataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
+func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 	tests := []struct {
 		name         string
 		fixtureImage string
@@ -521,39 +521,57 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 }
 
 type panicyResolver struct {
-	globCalled bool
+	searchCalled bool
 }
 
-func (p panicyResolver) FileContentsByLocation(location source.Location) (io.ReadCloser, error) {
+func (p *panicyResolver) FilesByExtension(_ ...string) ([]source.Location, error) {
+	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p panicyResolver) HasPath(s string) bool {
+func (p *panicyResolver) FilesByBasename(_ ...string) ([]source.Location, error) {
+	p.searchCalled = true
+	return nil, errors.New("not implemented")
+}
+
+func (p *panicyResolver) FilesByBasenameGlob(_ ...string) ([]source.Location, error) {
+	p.searchCalled = true
+	return nil, errors.New("not implemented")
+}
+
+func (p *panicyResolver) FileContentsByLocation(_ source.Location) (io.ReadCloser, error) {
+	p.searchCalled = true
+	return nil, errors.New("not implemented")
+}
+
+func (p *panicyResolver) HasPath(s string) bool {
 	return true
 }
 
-func (p panicyResolver) FilesByPath(paths ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByPath(_ ...string) ([]source.Location, error) {
+	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByGlob(patterns ...string) ([]source.Location, error) {
-	p.globCalled = true
+func (p *panicyResolver) FilesByGlob(_ ...string) ([]source.Location, error) {
+	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p panicyResolver) FilesByMIMEType(types ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]source.Location, error) {
+	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p panicyResolver) RelativeFileByPath(_ source.Location, path string) *source.Location {
+func (p *panicyResolver) RelativeFileByPath(_ source.Location, _ string) *source.Location {
 	return nil
 }
 
-func (p panicyResolver) AllLocations() <-chan source.Location {
+func (p *panicyResolver) AllLocations() <-chan source.Location {
 	return nil
 }
 
-func (p panicyResolver) FileMetadataByLocation(location source.Location) (source.FileMetadata, error) {
+func (p *panicyResolver) FileMetadataByLocation(_ source.Location) (source.FileMetadata, error) {
 	return source.FileMetadata{}, errors.New("not implemented")
 }
 
@@ -563,5 +581,5 @@ func Test_Cataloger_ResilientToErrors(t *testing.T) {
 	resolver := &panicyResolver{}
 	_, _, err := c.Catalog(resolver)
 	assert.NoError(t, err)
-	assert.True(t, resolver.globCalled)
+	assert.True(t, resolver.searchCalled)
 }

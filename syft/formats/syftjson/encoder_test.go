@@ -5,10 +5,11 @@ import (
 	"regexp"
 	"testing"
 
+	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/formats/common/testutils"
+	"github.com/anchore/syft/syft/formats/internal/testutils"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -107,26 +108,26 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			FileMetadata: map[source.Coordinates]source.FileMetadata{
 				source.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
-					Type:    "directory",
+					Type:    stereoFile.TypeDirectory,
 					UserID:  0,
 					GroupID: 0,
 				},
 				source.NewLocation("/a/place/a").Coordinates: {
 					Mode:    0775,
-					Type:    "regularFile",
+					Type:    stereoFile.TypeRegular,
 					UserID:  0,
 					GroupID: 0,
 				},
 				source.NewLocation("/b").Coordinates: {
 					Mode:            0775,
-					Type:            "symbolicLink",
+					Type:            stereoFile.TypeSymLink,
 					LinkDestination: "/c",
 					UserID:          0,
 					GroupID:         0,
 				},
 				source.NewLocation("/b/place/b").Coordinates: {
 					Mode:    0644,
-					Type:    "regularFile",
+					Type:    stereoFile.TypeRegular,
 					UserID:  1,
 					GroupID: 2,
 				},

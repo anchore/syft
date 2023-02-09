@@ -7,13 +7,14 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewJavascriptPackageCataloger returns a new JavaScript cataloger object based on detection of npm based packages.
-func NewJavascriptPackageCataloger() *generic.Cataloger {
+// NewPackageCataloger returns a new JavaScript cataloger object based on detection of npm based packages.
+func NewPackageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("javascript-package-cataloger").
 		WithParserByGlobs(parsePackageJSON, "**/package.json")
 }
 
-func NewJavascriptLockCataloger() *generic.Cataloger {
+// NewLockCataloger returns a new JavaScript cataloger object based on detection of lock files.
+func NewLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger("javascript-lock-cataloger").
 		WithParserByGlobs(parsePackageLock, "**/package-lock.json").
 		WithParserByGlobs(parseYarnLock, "**/yarn.lock").
