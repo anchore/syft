@@ -138,6 +138,17 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "python"},
 			candidateAddition{AdditionalVendors: []string{"python_software_foundation"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nodejs"},
+			candidateAddition{AdditionalProducts: []string{"node.js"}},
+		},
+		// Binary packages
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "node"},
+			candidateAddition{AdditionalProducts: []string{"nodejs", "node.js"}},
+		},
 	})
 
 var defaultCandidateRemovals = buildCandidateRemovalLookup(
