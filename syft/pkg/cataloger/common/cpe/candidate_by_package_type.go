@@ -127,6 +127,17 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "python-rrdtool"},
 			candidateAddition{AdditionalProducts: []string{"rrdtool"}},
 		},
+		// Alpine packages
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "python3"},
+			candidateAddition{AdditionalProducts: []string{"python"}, AdditionalVendors: []string{"python", "python_software_foundation"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "python"},
+			candidateAddition{AdditionalVendors: []string{"python_software_foundation"}},
+		},
 	})
 
 var defaultCandidateRemovals = buildCandidateRemovalLookup(
