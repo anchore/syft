@@ -121,11 +121,61 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "yajl-ruby"},
 			candidateAddition{AdditionalProducts: []string{"yajl-ruby_gem"}},
 		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "cgi"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "date"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "openssl"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "rake"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "rdoc"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "rexml"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "trunk"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "webrick"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
 		// Python packages
 		{
 			pkg.PythonPkg,
 			candidateKey{PkgName: "python-rrdtool"},
 			candidateAddition{AdditionalProducts: []string{"rrdtool"}},
+		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "cryptography"},
+			candidateAddition{AdditionalProducts: []string{"python-cryptography"}, AdditionalVendors: []string{"python-cryptography_project"}},
+		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "pip"},
+			candidateAddition{AdditionalVendors: []string{"pypa"}},
 		},
 		// Alpine packages
 		{
@@ -141,6 +191,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		{
 			pkg.ApkPkg,
 			candidateKey{PkgName: "nodejs"},
+			candidateAddition{AdditionalProducts: []string{"node.js"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nodejs-current"},
 			candidateAddition{AdditionalProducts: []string{"node.js"}},
 		},
 		// Binary packages
