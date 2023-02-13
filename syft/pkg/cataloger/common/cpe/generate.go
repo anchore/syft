@@ -159,8 +159,7 @@ func candidateProducts(p pkg.Package) []string {
 		}
 	}
 
-	switch p.MetadataType {
-	case pkg.ApkMetadataType:
+	if p.MetadataType == pkg.ApkMetadataType {
 		products.union(candidateProductsForAPK(p))
 	}
 
