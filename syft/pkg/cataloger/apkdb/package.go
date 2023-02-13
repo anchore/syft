@@ -9,6 +9,10 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+var (
+	prefixes = []string{"py-", "py2-", "py3-", "ruby-"}
+)
+
 func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         d.Package,
@@ -26,6 +30,20 @@ func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.L
 	return p
 }
 
+func generateUpstream(m pkg.ApkMetadata) string {
+	if m.OriginPackage != "" && m.OriginPackage != m.Package {
+		return m.OriginPackage
+	}
+
+	for _, p := range prefixes {
+		if strings.HasPrefix(m.Package, p) {
+			return strings.TrimPrefix(m.Package, p)
+		}
+	}
+
+	return m.Package
+}
+
 // packageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
 func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 	if distro == nil || distro.ID != "alpine" {
@@ -38,7 +56,7 @@ func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 	}
 
 	if m.OriginPackage != "" {
-		qualifiers[pkg.PURLQualifierUpstream] = m.OriginPackage
+		qualifiers[pkg.PURLQualifierUpstream] = generateUpstream(m)
 	}
 
 	return packageurl.NewPackageURL(

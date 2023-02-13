@@ -96,6 +96,20 @@ func Test_PackageURL(t *testing.T) {
 			},
 			expected: "pkg:apk/alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
 		},
+		{
+			name: "upstream python package information as qualifier",
+			metadata: pkg.ApkMetadata{
+				Package:       "py3-potatoes",
+				Version:       "v",
+				Architecture:  "a",
+				OriginPackage: "py3-potatoes",
+			},
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:apk/alpine/p@v?arch=a&upstream=potatoes&distro=alpine-3.4.6",
+		},
 	}
 
 	for _, test := range tests {
