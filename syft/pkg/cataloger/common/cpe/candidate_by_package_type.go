@@ -148,6 +148,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "nodejs"},
 			candidateAddition{AdditionalProducts: []string{"node.js"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nodejs-current"},
+			candidateAddition{AdditionalProducts: []string{"node.js"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
