@@ -108,7 +108,21 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:apk/alpine/p@v?arch=a&upstream=potatoes&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/py3-potatoes@v?arch=a&upstream=potatoes&distro=alpine-3.4.6",
+		},
+		{
+			name: "python package with origin package as upstream",
+			metadata: pkg.ApkMetadata{
+				Package:       "py3-non-existant",
+				Version:       "v",
+				Architecture:  "a",
+				OriginPackage: "abcdefg",
+			},
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:apk/alpine/py3-non-existant@v?arch=a&upstream=abcdefg&distro=alpine-3.4.6",
 		},
 	}
 

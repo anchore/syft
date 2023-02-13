@@ -7,21 +7,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func additionalVendorsForPython(v string) fieldCandidateSet {
-	vendors := newFieldCandidateSet()
-
+func additionalVendorsForPython(v string) (vendors []string) {
 	if !strings.HasSuffix(v, "project") {
-		vendors.add(fieldCandidate{
-			value:                       fmt.Sprintf("%sproject", v),
-			disallowSubSelections:       true,
-			disallowDelimiterVariations: true,
-		})
-
-		vendors.add(fieldCandidate{
-			value:                       fmt.Sprintf("%s_project", v),
-			disallowSubSelections:       true,
-			disallowDelimiterVariations: true,
-		})
+		vendors = append(vendors, fmt.Sprintf("%sproject", v), fmt.Sprintf("%s_project", v))
 	}
 
 	return vendors
@@ -43,7 +31,13 @@ func candidateVendorsForPython(p pkg.Package) fieldCandidateSet {
 			disallowDelimiterVariations: true,
 		})
 
-		vendors.union(additionalVendorsForPython(name))
+		for _, v := range additionalVendorsForPython(name) {
+			vendors.add(fieldCandidate{
+				value:                       v,
+				disallowSubSelections:       true,
+				disallowDelimiterVariations: true,
+			})
+		}
 	}
 
 	if metadata.AuthorEmail != "" {
@@ -52,7 +46,14 @@ func candidateVendorsForPython(p pkg.Package) fieldCandidateSet {
 			value:                 name,
 			disallowSubSelections: true,
 		})
-		vendors.union(additionalVendorsForPython(name))
+
+		for _, v := range additionalVendorsForPython(name) {
+			vendors.add(fieldCandidate{
+				value:                       v,
+				disallowSubSelections:       true,
+				disallowDelimiterVariations: true,
+			})
+		}
 	}
 
 	return vendors

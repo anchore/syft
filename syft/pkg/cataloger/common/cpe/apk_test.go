@@ -3,6 +3,7 @@ package cpe
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +20,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					Package: "py3-cryptography",
 				},
 			},
-			expected: []string{"cryptography", "cryptographyproject", "cryptography_project"},
+			expected: []string{"python-cryptography_project", "cryptography", "cryptographyproject", "cryptography_project"},
 		},
 		{
 			name: "py2-pypdf OriginPackage",
@@ -37,13 +38,12 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					Package: "ruby-armadillo",
 				},
 			},
-			expected: []string{"armadillo", "armadilloproject", "armadillo_project"},
+			expected: []string{"armadillo"},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := candidateVendorsForAPK(test.pkg)
-			assert.ElementsMatch(t, test.expected, actual, "different vendors")
+			assert.ElementsMatch(t, test.expected, candidateVendorsForAPK(test.pkg).values(), "different vendors")
 		})
 	}
 }
@@ -61,7 +61,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 					Package: "py3-cryptography",
 				},
 			},
-			expected: []string{"cryptography"},
+			expected: []string{"cryptography", "python-cryptography"},
 		},
 		{
 			name: "py2-pypdf OriginPackage",
@@ -84,8 +84,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := candidateProductsForAPK(test.pkg)
-			assert.ElementsMatch(t, test.expected, actual, "different products")
+			assert.ElementsMatch(t, test.expected, candidateProductsForAPK(test.pkg).values(), "different products")
 		})
 	}
 }

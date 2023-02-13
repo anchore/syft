@@ -130,7 +130,7 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		{
 			pkg.PythonPkg,
 			candidateKey{PkgName: "cryptography"},
-			candidateAddition{AdditionalVendors: []string{"pypa"}},
+			candidateAddition{AdditionalProducts: []string{"python-cryptography"}, AdditionalVendors: []string{"python-cryptography_project"}},
 		},
 		// Alpine packages
 		{
