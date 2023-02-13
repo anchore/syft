@@ -109,6 +109,8 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForPython(p))
 	case pkg.JavaMetadataType:
 		vendors.union(candidateVendorsForJava(p))
+	case pkg.ApkMetadataType:
+		vendors.union(candidateVendorsForAPK(p))
 	}
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
@@ -156,6 +158,12 @@ func candidateProducts(p pkg.Package) []string {
 			products.addValue(prod)
 		}
 	}
+
+	switch p.MetadataType {
+	case pkg.ApkMetadataType:
+		products.union(candidateProductsForAPK(p))
+	}
+
 	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
 	products.removeByValue("")
 	products.removeByValue("*")
