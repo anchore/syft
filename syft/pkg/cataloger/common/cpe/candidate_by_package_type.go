@@ -127,6 +127,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "python-rrdtool"},
 			candidateAddition{AdditionalProducts: []string{"rrdtool"}},
 		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "cryptography"},
+			candidateAddition{AdditionalVendors: []string{"pypa"}},
+		},
 		// Alpine packages
 		{
 			pkg.ApkPkg,
