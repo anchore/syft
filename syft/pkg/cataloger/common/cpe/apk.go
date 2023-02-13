@@ -20,11 +20,17 @@ func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 
 	for _, p := range prefixes {
 		if strings.HasPrefix(metadata.Package, p) {
-			vendors.addValue(strings.TrimPrefix(metadata.Package, p))
+			t := strings.TrimPrefix(metadata.Package, p)
+			vendors.addValue(t)
+			vendors.addValue(t + "project")
+			vendors.addValue(t + "_project")
 		}
 
 		if strings.HasPrefix(metadata.OriginPackage, p) {
-			vendors.addValue(strings.TrimPrefix(metadata.OriginPackage, p))
+			t := strings.TrimPrefix(metadata.OriginPackage, p)
+			vendors.addValue(t)
+			vendors.addValue(t + "project")
+			vendors.addValue(t + "_project")
 		}
 	}
 

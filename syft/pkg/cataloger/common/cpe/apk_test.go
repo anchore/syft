@@ -19,7 +19,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					Package: "py3-cryptography",
 				},
 			},
-			expected: []string{"cryptography"},
+			expected: []string{"cryptography", "cryptographyproject", "cryptography_project"},
 		},
 		{
 			name: "py2-pypdf OriginPackage",
@@ -28,7 +28,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					OriginPackage: "py2-pypdf",
 				},
 			},
-			expected: []string{"pypdf"},
+			expected: []string{"pypdf", "pypdfproject", "pypdf_project"},
 		},
 		{
 			name: "ruby-armadillo Package",
@@ -37,7 +37,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					Package: "ruby-armadillo",
 				},
 			},
-			expected: []string{"armadillo"},
+			expected: []string{"armadillo", "armadilloproject", "armadillo_project"},
 		},
 	}
 	for _, test := range tests {
