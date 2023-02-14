@@ -177,7 +177,7 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 		t.Errorf("STDOUT: %s", stdout)
 		t.Errorf("STDERR: %s", stderr)
 
-		// this probably indicates a timeout
+		// this probably indicates a timeout... lets run it again with more verbosity to help debug issues
 		args = append(args, "-vv")
 		cmd = getSyftCommand(t, args...)
 
@@ -192,6 +192,48 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 	}
 
 	return cmd, stdout, stderr
+}
+
+func runCommandObj(t testing.TB, cmd *exec.Cmd, env map[string]string, expectError bool) (string, string) {
+	cancel := make(chan bool, 1)
+	defer func() {
+		cancel <- true
+	}()
+
+	if env == nil {
+		env = make(map[string]string)
+	}
+
+	// we should not have tests reaching out for app update checks
+	env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
+
+	timeout := func() {
+		select {
+		case <-cancel:
+			return
+		case <-time.After(60 * time.Second):
+		}
+
+		if cmd != nil && cmd.Process != nil {
+			// get a stack trace printed
+			err := cmd.Process.Signal(syscall.SIGABRT)
+			if err != nil {
+				t.Errorf("error aborting: %+v", err)
+			}
+		}
+	}
+
+	go timeout()
+
+	stdout, stderr, err := runCommand(cmd, env)
+
+	if !expectError && err != nil && stdout == "" {
+		t.Errorf("error running syft: %+v", err)
+		t.Errorf("STDOUT: %s", stdout)
+		t.Errorf("STDERR: %s", stderr)
+	}
+
+	return stdout, stderr
 }
 
 func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {

@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	convertExample = `  {{.appName}} {{.command}} img.syft.json -o spdx-json                      convert a syft SBOM to spdx-json, output goes to stdout in table format, by default
-  {{.appName}} {{.command}} img.syft.json -o cyclonedx-json=img.cdx.json    convert a syft SBOM to CycloneDX, output goes to a file named img.cdx.json
+	convertExample = `  {{.appName}} {{.command}} img.syft.json -o spdx-json                      convert a syft SBOM to spdx-json, output goes to stdout
+  {{.appName}} {{.command}} img.syft.json -o cyclonedx-json=img.cdx.json    convert a syft SBOM to CycloneDX, output is written to the file "img.cdx.json""
+  {{.appName}} {{.command}} - -o spdx-json                                  convert an SBOM from STDIN to spdx-json
 `
 )
 

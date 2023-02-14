@@ -10,14 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConvertCmdFlags(t *testing.T) {
+func TestAllFormatsConvertable(t *testing.T) {
 	assertions := []traitAssertion{
-		func(tb testing.TB, stdout, _ string, _ int) {
-			tb.Helper()
-			if len(stdout) < 1000 {
-				tb.Errorf("there may not be any report output (len=%d)", len(stdout))
-			}
-		},
+		assertStdoutLengthGreaterThan(1000),
 		assertSuccessfulReturnCode,
 	}
 

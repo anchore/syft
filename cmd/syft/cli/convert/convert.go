@@ -3,6 +3,7 @@ package convert
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -26,15 +27,23 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 
 	// this can only be a SBOM file
 	userInput := args[0]
-	f, err := os.Open(userInput)
-	if err != nil {
-		return fmt.Errorf("failed to open SBOM file: %w", err)
-	}
-	defer func() {
-		_ = f.Close()
-	}()
 
-	sbom, _, err := formats.Decode(f)
+	var reader io.ReadCloser
+
+	if userInput == "-" {
+		reader = os.Stdin
+	} else {
+		f, err := os.Open(userInput)
+		if err != nil {
+			return fmt.Errorf("failed to open SBOM file: %w", err)
+		}
+		defer func() {
+			_ = f.Close()
+		}()
+		reader = f
+	}
+
+	sbom, _, err := formats.Decode(reader)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}
