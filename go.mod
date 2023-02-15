@@ -43,7 +43,7 @@ require (
 	github.com/wagoodman/jotframe v0.0.0-20211129225309-56b0d0a4aebb
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/mod v0.8.0
-	golang.org/x/net v0.6.0
+	golang.org/x/net v0.7.0
 	golang.org/x/term v0.5.0
 	gopkg.in/yaml.v2 v2.4.0
 )
