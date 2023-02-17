@@ -2,6 +2,7 @@ package binary
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 
@@ -27,7 +28,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "15beta4",
 				Type:      "binary",
 				PURL:      "pkg:generic/postgresql@15beta4",
-				Locations: singleLocation("postgres"),
+				Locations: locations("postgres"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "postgresql-binary",
 				},
@@ -41,7 +42,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "15.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/postgresql@15.1",
-				Locations: singleLocation("postgres"),
+				Locations: locations("postgres"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "postgresql-binary",
 				},
@@ -55,7 +56,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "9.6.24",
 				Type:      "binary",
 				PURL:      "pkg:generic/postgresql@9.6.24",
-				Locations: singleLocation("postgres"),
+				Locations: locations("postgres"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "postgresql-binary",
 				},
@@ -69,9 +70,23 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "9.5alpha1",
 				Type:      "binary",
 				PURL:      "pkg:generic/postgresql@9.5alpha1",
-				Locations: singleLocation("postgres"),
+				Locations: locations("postgres"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "postgresql-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-python-duplicates",
+			fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.8.16",
+				Type:      "binary",
+				PURL:      "pkg:generic/python@3.8.16",
+				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so", "patchlevel.h"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "python-binary+python-binary-lib+cpython-source",
 				},
 			},
 		},
@@ -83,7 +98,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "2.9.6",
 				Type:      "binary",
 				PURL:      "pkg:generic/traefik@2.9.6",
-				Locations: singleLocation("traefik"),
+				Locations: locations("traefik"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "traefik-binary",
 				},
@@ -97,7 +112,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "1.7.34",
 				Type:      "binary",
 				PURL:      "pkg:generic/traefik@1.7.34",
-				Locations: singleLocation("traefik"),
+				Locations: locations("traefik"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "traefik-binary",
 				},
@@ -111,7 +126,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "1.6.18",
 				Type:      "binary",
 				PURL:      "pkg:generic/memcached@1.6.18",
-				Locations: singleLocation("memcached"),
+				Locations: locations("memcached"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "memcached-binary",
 				},
@@ -125,7 +140,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "2.4.54",
 				Type:      "binary",
 				PURL:      "pkg:generic/httpd@2.4.54",
-				Locations: singleLocation("httpd"),
+				Locations: locations("httpd"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "httpd-binary",
 				},
@@ -139,7 +154,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "8.2.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/php-cli@8.2.1",
-				Locations: singleLocation("php"),
+				Locations: locations("php"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "php-cli-binary",
 				},
@@ -153,7 +168,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "8.2.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/php-fpm@8.2.1",
-				Locations: singleLocation("php-fpm"),
+				Locations: locations("php-fpm"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "php-fpm-binary",
 				},
@@ -167,7 +182,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "8.2.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/php@8.2.1",
-				Locations: singleLocation("libphp.so"),
+				Locations: locations("libphp.so"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "php-apache-binary",
 				},
@@ -181,7 +196,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "2.8.23",
 				Type:      "binary",
 				PURL:      "pkg:generic/redis@2.8.23",
-				Locations: singleLocation("redis-server"),
+				Locations: locations("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
@@ -195,7 +210,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "4.0.11",
 				Type:      "binary",
 				PURL:      "pkg:generic/redis@4.0.11",
-				Locations: singleLocation("redis-server"),
+				Locations: locations("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
@@ -209,7 +224,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "5.0.0",
 				Type:      "binary",
 				PURL:      "pkg:generic/redis@5.0.0",
-				Locations: singleLocation("redis-server"),
+				Locations: locations("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
@@ -223,7 +238,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "6.0.16",
 				Type:      "binary",
 				PURL:      "pkg:generic/redis@6.0.16",
-				Locations: singleLocation("redis-server"),
+				Locations: locations("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
@@ -237,7 +252,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "7.0.0",
 				Type:      "binary",
 				PURL:      "pkg:generic/redis@7.0.0",
-				Locations: singleLocation("redis-server"),
+				Locations: locations("redis-server"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "redis-binary",
 				},
@@ -245,12 +260,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-libpython3.7.so",
-			fixtureDir: "test-fixtures/classifiers/positive",
+			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.7.4a-vZ9",
 				PURL:      "pkg:generic/python@3.7.4a-vZ9",
-				Locations: singleLocation("libpython3.7.so"),
+				Locations: locations("libpython3.7.so"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "python-binary-lib",
 				},
@@ -258,12 +273,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-python3.6",
-			fixtureDir: "test-fixtures/classifiers/positive",
+			fixtureDir: "test-fixtures/classifiers/positive/python-binary-3.6",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.6.3a-vZ9",
 				PURL:      "pkg:generic/python@3.6.3a-vZ9",
-				Locations: singleLocation("python3.6"),
+				Locations: locations("python3.6"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "python-binary",
 				},
@@ -271,12 +286,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-patchlevel.h",
-			fixtureDir: "test-fixtures/classifiers/positive",
+			fixtureDir: "test-fixtures/classifiers/positive/python-source-3.9",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.9-aZ5",
 				PURL:      "pkg:generic/python@3.9-aZ5",
-				Locations: singleLocation("patchlevel.h"),
+				Locations: locations("patchlevel.h"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "cpython-source",
 				},
@@ -284,12 +299,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-go",
-			fixtureDir: "test-fixtures/classifiers/positive",
+			fixtureDir: "test-fixtures/classifiers/positive/go-1.14",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.14",
 				PURL:      "pkg:generic/go@1.14",
-				Locations: singleLocation("go"),
+				Locations: locations("go"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "go-binary",
 				},
@@ -297,12 +312,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-node",
-			fixtureDir: "test-fixtures/classifiers/positive",
+			fixtureDir: "test-fixtures/classifiers/positive/node-19.2.1",
 			expected: pkg.Package{
 				Name:      "node",
 				Version:   "19.2.1",
 				PURL:      "pkg:generic/node@19.2.1",
-				Locations: singleLocation("node"),
+				Locations: locations("node"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "nodejs-binary",
 				},
@@ -310,12 +325,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-go-hint",
-			fixtureDir: "test-fixtures/classifiers/positive",
+			fixtureDir: "test-fixtures/classifiers/positive/go-hint-1.15",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.15",
 				PURL:      "pkg:generic/go@1.15",
-				Locations: singleLocation("VERSION"),
+				Locations: locations("VERSION"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier: "go-binary-hint",
 				},
@@ -323,11 +338,11 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-busybox",
-			fixtureDir: "test-fixtures/classifiers/positive",
+			fixtureDir: "test-fixtures/classifiers/positive/busybox-3.33.3",
 			expected: pkg.Package{
 				Name:      "busybox",
 				Version:   "3.33.3",
-				Locations: singleLocation("["), // note: busybox is a link to [
+				Locations: locations("["), // note: busybox is a link to [
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "busybox-binary",
 					VirtualPath: "busybox",
@@ -342,7 +357,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "1.8.0_352-b08",
 				Type:      "binary",
 				PURL:      "pkg:generic/java@1.8.0_352-b08",
-				Locations: singleLocation("java"),
+				Locations: locations("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-openjdk",
 					VirtualPath: "java",
@@ -357,7 +372,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "11.0.17+8-LTS",
 				Type:      "binary",
 				PURL:      "pkg:generic/java@11.0.17+8-LTS",
-				Locations: singleLocation("java"),
+				Locations: locations("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-openjdk",
 					VirtualPath: "java",
@@ -372,7 +387,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "19.0.1+10-21",
 				Type:      "binary",
 				PURL:      "pkg:generic/java@19.0.1+10-21",
-				Locations: singleLocation("java"),
+				Locations: locations("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-oracle",
 					VirtualPath: "java",
@@ -387,7 +402,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "19.0.1+10-21",
 				Type:      "binary",
 				PURL:      "pkg:generic/java@19.0.1+10-21",
-				Locations: singleLocation("java"),
+				Locations: locations("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-oracle",
 					VirtualPath: "java",
@@ -402,7 +417,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "1.8.0-foreman_2022_09_22_15_30-b00",
 				Type:      "binary",
 				PURL:      "pkg:generic/java@1.8.0-foreman_2022_09_22_15_30-b00",
-				Locations: singleLocation("java"),
+				Locations: locations("java"),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "java-binary-ibm",
 					VirtualPath: "java",
@@ -424,18 +439,20 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			packages, _, err := c.Catalog(resolver)
 			require.NoError(t, err)
 
-			ok := false
 			for _, p := range packages {
-				if test.expected.Locations.ToSlice()[0].RealPath == p.Locations.ToSlice()[0].RealPath {
-					ok = true
-					assertPackagesAreEqual(t, test.expected, p)
+				expectedLocations := test.expected.Locations.ToSlice()
+				gotLocations := p.Locations.ToSlice()
+				require.Len(t, gotLocations, len(expectedLocations))
+
+				for i, expectedLocation := range expectedLocations {
+					gotLocation := gotLocations[i]
+					if expectedLocation.RealPath != gotLocation.RealPath {
+						t.Fatalf("locations do not match; expected: %v got: %v", expectedLocations, gotLocations)
+					}
 				}
-			}
 
-			if !ok {
-				t.Fatalf("could not find test location=%q", test.expected.Locations.ToSlice()[0].RealPath)
+				assertPackagesAreEqual(t, test.expected, p)
 			}
-
 		})
 	}
 }
@@ -452,7 +469,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "busybox",
 				Version:   "1.35.0",
-				Locations: singleLocation("/bin/["),
+				Locations: locations("/bin/["),
 				Metadata: pkg.BinaryMetadata{
 					Classifier:  "busybox-binary",
 					VirtualPath: "/bin/busybox",
@@ -475,18 +492,20 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			packages, _, err := c.Catalog(resolver)
 			require.NoError(t, err)
 
-			ok := false
 			for _, p := range packages {
-				if test.expected.Locations.ToSlice()[0].RealPath == p.Locations.ToSlice()[0].RealPath {
-					ok = true
-					assertPackagesAreEqual(t, test.expected, p)
+				expectedLocations := test.expected.Locations.ToSlice()
+				gotLocations := p.Locations.ToSlice()
+				require.Len(t, gotLocations, len(expectedLocations))
+
+				for i, expectedLocation := range expectedLocations {
+					gotLocation := gotLocations[i]
+					if expectedLocation.RealPath != gotLocation.RealPath {
+						t.Fatalf("locations do not match; expected: %v got: %v", expectedLocations, gotLocations)
+					}
 				}
-			}
 
-			if !ok {
-				t.Fatalf("could not find test location=%q", test.expected.Locations.ToSlice()[0].RealPath)
+				assertPackagesAreEqual(t, test.expected, p)
 			}
-
 		})
 	}
 }
@@ -505,8 +524,12 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	assert.Equal(t, 0, len(actualResults))
 }
 
-func singleLocation(s string) source.LocationSet {
-	return source.NewLocationSet(source.NewLocation(s))
+func locations(locations ...string) source.LocationSet {
+	var locs []source.Location
+	for _, s := range locations {
+		locs = append(locs, source.NewLocation(s))
+	}
+	return source.NewLocationSet(locs...)
 }
 
 func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
@@ -516,8 +539,13 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 		expected.Version != p.Version ||
 		expected.PURL != p.PURL ||
 		meta1.Classifier != meta2.Classifier {
-		assert.Failf(t, "packages not equal", "%v != %v", expected, p)
+		assert.Failf(t, "packages not equal", "%v != %v", stringifyPkg(expected), stringifyPkg(p))
 	}
+}
+
+func stringifyPkg(p pkg.Package) string {
+	meta := p.Metadata.(pkg.BinaryMetadata)
+	return fmt.Sprintf("(name=%s, version=%s, purl=%s, classifier=%s)", p.Name, p.Version, p.PURL, meta.Classifier)
 }
 
 type panicyResolver struct {
@@ -544,7 +572,7 @@ func (p *panicyResolver) FileContentsByLocation(_ source.Location) (io.ReadClose
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) HasPath(s string) bool {
+func (p *panicyResolver) HasPath(_ string) bool {
 	return true
 }
 
