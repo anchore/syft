@@ -161,9 +161,29 @@ func contains(enabledPartial []string, catalogerName string) bool {
 		if partial == "" {
 			continue
 		}
-		if strings.Contains(catalogerName, partial) {
+		if hasFullWord(partial, catalogerName) {
 			return true
 		}
 	}
 	return false
+}
+
+func hasFullWord(targetPhrase, candidate string) bool {
+	if targetPhrase == "cataloger" || targetPhrase == "" {
+		return false
+	}
+	start := strings.Index(candidate, targetPhrase)
+	if start == -1 {
+		return false
+	}
+
+	if start > 0 && candidate[start-1] != '-' {
+		return false
+	}
+
+	end := start + len(targetPhrase)
+	if end < len(candidate) && candidate[end] != '-' {
+		return false
+	}
+	return true
 }
