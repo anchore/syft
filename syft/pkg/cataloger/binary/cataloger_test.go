@@ -244,6 +244,48 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-ruby-2.0",
+			fixtureDir: "test-fixtures/classifiers/positive/ruby-2.0",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@2.0.0",
+				Locations: singleLocation("ruby"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "ruby-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-2.5",
+			fixtureDir: "test-fixtures/classifiers/positive/ruby-2.5",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@2.5",
+				Locations: singleLocation("ruby"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "ruby-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-3.2",
+			fixtureDir: "test-fixtures/classifiers/positive/ruby-3.2",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.2",
+				Locations: singleLocation("ruby"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "ruby-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-libpython3.7.so",
 			fixtureDir: "test-fixtures/classifiers/positive",
 			expected: pkg.Package{
