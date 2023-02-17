@@ -63,6 +63,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "ruby-binary",
+		FileGlob: "**/ruby",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?s)(?:libruby\.so\.|\bruby )(?P<version>\d+(?:\.\d+){1,2})`),
+		Package: "ruby",
+		PURL:    mustPURL("pkg:generic/ruby@version"),
+		CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "java-binary-openjdk",
 		FileGlob: "**/java",
 		EvidenceMatcher: fileContentsVersionMatcher(
