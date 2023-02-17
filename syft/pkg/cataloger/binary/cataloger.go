@@ -1,9 +1,6 @@
 package binary
 
 import (
-	"fmt"
-	"regexp"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -46,21 +43,9 @@ func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artif
 			newPkg := &newPkgs[i]
 			for j := range packages {
 				p := &packages[j]
-				// consolidate identical packages found in different locations,
-				// but continue to track each location
+				// consolidate identical packages found in different locations or by different classifiers
 				if packagesMatch(p, newPkg) {
-					// add the locations
-					p.Locations.Add(newPkg.Locations.ToSlice()...)
-					// update the metadata.Classifier to indicate multiple classifiers were used
-					pMeta, pOk := p.Metadata.(pkg.BinaryMetadata)
-					newMeta, newOk := newPkg.Metadata.(pkg.BinaryMetadata)
-					if pOk && newOk {
-						matcher := regexp.MustCompile(fmt.Sprintf(`(^|\+)%s($|\+)`, newMeta.Classifier))
-						if !matcher.MatchString(pMeta.Classifier) {
-							pMeta.Classifier = fmt.Sprintf("%s+%s", pMeta.Classifier, newMeta.Classifier)
-							p.Metadata = pMeta
-						}
-					}
+					mergePackages(p, newPkg)
 					continue newPackages
 				}
 			}
@@ -69,6 +54,18 @@ func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artif
 	}
 
 	return packages, relationships, nil
+}
+
+// mergePackages merges information from the extra package into the target package
+func mergePackages(target *pkg.Package, extra *pkg.Package) {
+	// add the locations
+	target.Locations.Add(extra.Locations.ToSlice()...)
+	// update the metadata to indicate which classifiers were used
+	meta, _ := target.Metadata.(pkg.BinaryMetadata)
+	if m, ok := extra.Metadata.(pkg.BinaryMetadata); ok {
+		meta.Matches = append(meta.Matches, m.Matches...)
+	}
+	target.Metadata = meta
 }
 
 func catalog(resolver source.FileResolver, cls classifier) (packages []pkg.Package, err error) {
