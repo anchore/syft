@@ -85,14 +85,9 @@ func versionMatches(version string, match string) bool {
 		return true
 	}
 
-	dots := strings.Count(match, ".")
-	if dots == 0 {
-		match += ".*"
-	}
 	match = strings.ReplaceAll(match, ".", "\\.")
 	match = strings.ReplaceAll(match, "*", ".*")
-	match = strings.ReplaceAll(match, "\\..*", "(\\..*)*")
-	match = fmt.Sprintf("^%s$", match)
+	match = fmt.Sprintf("^%s(\\..*)*$", match)
 	matcher, err := regexp.Compile(match)
 	if err != nil {
 		return false
