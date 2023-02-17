@@ -811,14 +811,13 @@
         "layerID": {
           "type": "string"
         },
-        "VirtualPath": {
+        "virtualPath": {
           "type": "string"
         }
       },
       "type": "object",
       "required": [
-        "path",
-        "VirtualPath"
+        "path"
       ]
     },
     "MixLockMetadata": {
