@@ -174,6 +174,48 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-haproxy-1.5.14",
+			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.5.14",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "1.5.14",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@1.5.14",
+				Locations: singleLocation("haproxy"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "haproxy-binary-variant1",
+				},
+			},
+		},
+		{
+			name:       "positive-haproxy-1.8.22",
+			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.8.22",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "1.8.22",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@1.8.22",
+				Locations: singleLocation("haproxy"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "haproxy-binary-variant1",
+				},
+			},
+		},
+		{
+			name:       "positive-haproxy-2.7.3",
+			fixtureDir: "test-fixtures/classifiers/positive/haproxy-2.7.3",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "2.7.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@2.7.3",
+				Locations: singleLocation("haproxy"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "haproxy-binary-variant2",
+				},
+			},
+		},
+		{
 			name:       "positive-redis-2.8.23",
 			fixtureDir: "test-fixtures/classifiers/positive/redis-server-2.8.23",
 			expected: pkg.Package{
