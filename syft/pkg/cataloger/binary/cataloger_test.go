@@ -174,6 +174,48 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-perl-5.12.5",
+			fixtureDir: "test-fixtures/classifiers/positive/perl-5.12.5",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.12.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.12.5",
+				Locations: singleLocation("perl"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "perl-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-perl-5.20.0",
+			fixtureDir: "test-fixtures/classifiers/positive/perl-5.20.0",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.20.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.20.0",
+				Locations: singleLocation("perl"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "perl-binary",
+				},
+			},
+		},
+		{
+			name:       "positive-perl-5.37.8",
+			fixtureDir: "test-fixtures/classifiers/positive/perl-5.37.8",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.37.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.37.8",
+				Locations: singleLocation("perl"),
+				Metadata: pkg.BinaryMetadata{
+					Classifier: "perl-binary",
+				},
+			},
+		},
+		{
 			name:       "positive-redis-2.8.23",
 			fixtureDir: "test-fixtures/classifiers/positive/redis-server-2.8.23",
 			expected: pkg.Package{
