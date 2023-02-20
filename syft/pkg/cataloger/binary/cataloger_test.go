@@ -403,6 +403,42 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("java-binary-ibm", "java"),
 			},
 		},
+		{
+			name:       "positive-rust-1.50.0-macos",
+			fixtureDir: "test-fixtures/classifiers/positive/rust-1.50.0",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.50.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.50.0",
+				Locations: locations("lib/rustlib/aarch64-apple-darwin/lib/libstd-f6f9eec1635e636a.dylib"),
+				Metadata:  metadata("rust-standard-library-macos"),
+			},
+		},
+		{
+			name:       "positive-rust-1.67.1-macos",
+			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-aarch64-apple-darwin",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("lib/libstd-16f2b65e77054c42.dylib"),
+				Metadata:  metadata("rust-standard-library-macos"),
+			},
+		},
+		{
+			name:       "positive-rust-1.67.1-linux",
+			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-x86_64-unknown-linux-musl",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("lib/libstd-86aefecbddda356d.so"),
+				Metadata:  metadata("rust-standard-library-linux"),
+			},
+		},
 	}
 
 	for _, test := range tests {
