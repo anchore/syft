@@ -84,15 +84,15 @@ func parseVersion(version string) string {
 		return version
 	}
 
-	closestVersion := semver.MustParse("0.0.0")
-	filteredVersions := make(map[string]struct{})
+	filteredVersions := map[string]struct{}{}
 	for _, part := range parts {
 		if strings.Contains(part, "!=") {
 			parts := strings.Split(part, "!=")
-			filteredVersions[parts[1]] = struct{}{}
+			filteredVersions[strings.TrimSpace(parts[1])] = struct{}{}
 		}
 	}
 
+	closestVersion := semver.MustParse("0.0.0")
 	for _, part := range parts {
 		// ignore any parts that do not have '=' in them, >,<,~ are not valid semver
 		parts := strings.SplitAfter(part, "=")
@@ -109,11 +109,8 @@ func parseVersion(version string) string {
 			return parts[1]
 		}
 
-		cmp := version.Compare(closestVersion)
-		if cmp > 0 {
+		if version.GreaterThan(closestVersion) {
 			closestVersion = version
-		} else if cmp < 0 {
-			continue
 		}
 	}
 
