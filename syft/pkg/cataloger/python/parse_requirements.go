@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -35,14 +36,20 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 			continue
 		}
 
-		if !strings.Contains(line, "==") {
-			// a package without a version, or a range (unpinned) which does not tell us
-			// exactly what will be installed.
-			continue
+		var parts []string
+		if strings.Contains(line, "==") {
+			parts = strings.Split(line, "==")
+		}
+		// Using min/max version is better than ignoring the package, however, it does not provide the same level of
+		// confidence as a pinned version.
+		index := strings.IndexFunc(line, func(r rune) bool {
+			return r == '>' || r == '<' || r == '~'
+		})
+
+		if index > 0 {
+			parts = append(parts, line[:index], line[index:])
 		}
 
-		// parse a new requirement
-		parts := strings.Split(line, "==")
 		if len(parts) < 2 {
 			// this should never happen, but just in case
 			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
@@ -51,7 +58,7 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 
 		// check if the version contains hash declarations on the same line
 		version, _ := parseVersionAndHashes(parts[1])
-
+		version = parseVersion(version)
 		name := strings.TrimSpace(parts[0])
 		version = strings.TrimFunc(version, func(r rune) bool {
 			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
@@ -69,6 +76,48 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 	}
 
 	return packages, nil, nil
+}
+
+func parseVersion(version string) string {
+	parts := strings.Split(version, ",")
+	if len(parts) < 2 {
+		return version
+	}
+
+	closestVersion := semver.MustParse("0.0.0")
+	filteredVersions := make(map[string]struct{})
+	for _, part := range parts {
+		if strings.Contains(part, "!=") {
+			parts := strings.Split(part, "!=")
+			filteredVersions[parts[1]] = struct{}{}
+		}
+	}
+
+	for _, part := range parts {
+		// ignore any parts that do not have '=' in them, >,<,~ are not valid semver
+		parts := strings.SplitAfter(part, "=")
+		if len(parts) < 2 {
+			continue
+		}
+		version := semver.MustParse(strings.TrimSpace(parts[1]))
+		if _, ok := filteredVersions[version.String()]; ok {
+			continue
+		}
+
+		if strings.Contains(part, "==") {
+			parts := strings.Split(part, "==")
+			return parts[1]
+		}
+
+		cmp := version.Compare(closestVersion)
+		if cmp > 0 {
+			closestVersion = version
+		} else if cmp < 0 {
+			continue
+		}
+	}
+
+	return closestVersion.String()
 }
 
 func parseVersionAndHashes(version string) (string, []string) {
