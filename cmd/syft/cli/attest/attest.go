@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -130,7 +131,21 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 				return
 			}
 
-			args := []string{"attest", si.UserInput, "--predicate", f.Name()}
+			// Select Cosign predicate type based on defined output type
+			// As orientation, check: https://github.com/sigstore/cosign/blob/main/pkg/cosign/attestation/attestation.go
+			var predicateType string
+			switch strings.ToLower(o) {
+			case "cyclonedx-json":
+				predicateType = "cyclonedx"
+			case "spdx-tag-value":
+				predicateType = "spdx"
+			case "spdx-json":
+				predicateType = "spdxjson"
+			default:
+				predicateType = "custom"
+			}
+
+			args := []string{"attest", si.UserInput, "--predicate", f.Name(), "--type", predicateType}
 			if app.Attest.Key != "" {
 				args = append(args, "--key", app.Attest.Key)
 			}
