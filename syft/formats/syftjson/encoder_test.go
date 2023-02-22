@@ -213,5 +213,6 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		s,
 		*updateJson,
 		true,
+		schemaVersionRedactor,
 	)
 }

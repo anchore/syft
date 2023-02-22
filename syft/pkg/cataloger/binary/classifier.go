@@ -131,9 +131,12 @@ func singlePackage(classifier classifier, reader source.LocationReadCloser, matc
 		FoundBy:      catalogerName,
 		MetadataType: pkg.BinaryMetadataType,
 		Metadata: pkg.BinaryMetadata{
-			Classifier:  classifier.Class,
-			RealPath:    reader.RealPath,
-			VirtualPath: reader.VirtualPath,
+			Matches: []pkg.ClassifierMatch{
+				{
+					Classifier: classifier.Class,
+					Location:   reader.Location,
+				},
+			},
 		},
 	}
 
