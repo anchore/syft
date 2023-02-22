@@ -320,7 +320,7 @@ release:
 	@.github/scripts/trigger-release.sh
 
 .PHONY: ci-release
-ci-release: ci-check clean-dist $(CHANGELOG)
+ci-release: ci-check clean-dist
 	$(call title,Publishing release artifacts)
 
 	# create a config with the dist dir overridden
@@ -330,11 +330,7 @@ ci-release: ci-check clean-dist $(CHANGELOG)
 	bash -c "\
 		$(RELEASE_CMD) \
 			--config $(TEMP_DIR)/goreleaser.yaml \
-			--release-notes <(cat $(CHANGELOG)) \
 				 || (cat /tmp/quill-*.log && false)"
-
-	# upload the version file that supports the application version update check (excluding pre-releases)
-	.github/scripts/update-version-file.sh "$(DIST_DIR)" "$(VERSION)"
 
 .PHONY: ci-check
 ci-check:

@@ -79,23 +79,23 @@ nfpms:
       - rpm
       - deb
 
-brews:
-  - tap:
-      owner: anchore
-      name: homebrew-syft
-      token: "{{.Env.GITHUB_BREW_TOKEN}}"
-    ids:
-      - darwin-archives
-      - linux-archives
-    homepage: *website
-    description: *description
-    license: "Apache License 2.0"
+#brews:
+#  - tap:
+#      owner: anchore
+#      name: homebrew-syft
+#      token: "{{.Env.GITHUB_BREW_TOKEN}}"
+#    ids:
+#      - darwin-archives
+#      - linux-archives
+#    homepage: *website
+#    description: *description
+#    license: "Apache License 2.0"
 
 dockers:
   - image_templates:
-      - anchore/syft:debug
+#      - anchore/syft:debug
       - anchore/syft:{{.Tag}}-debug
-      - ghcr.io/anchore/syft:debug
+#      - ghcr.io/anchore/syft:debug
       - ghcr.io/anchore/syft:{{.Tag}}-debug
     goarch: amd64
     dockerfile: Dockerfile.debug
@@ -108,9 +108,9 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
   - image_templates:
-      - anchore/syft:debug-arm64v8
+#      - anchore/syft:debug-arm64v8
       - anchore/syft:{{.Tag}}-debug-arm64v8
-      - ghcr.io/anchore/syft:debug-arm64v8
+#      - ghcr.io/anchore/syft:debug-arm64v8
       - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
     goarch: arm64
     dockerfile: Dockerfile.debug
@@ -123,9 +123,9 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
   - image_templates:
-      - anchore/syft:debug-ppc64le
+#      - anchore/syft:debug-ppc64le
       - anchore/syft:{{.Tag}}-debug-ppc64le
-      - ghcr.io/anchore/syft:debug-ppc64le
+#      - ghcr.io/anchore/syft:debug-ppc64le
       - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
     goarch: ppc64le
     dockerfile: Dockerfile.debug
@@ -138,9 +138,9 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
   - image_templates:
-      - anchore/syft:debug-s390x
+#      - anchore/syft:debug-s390x
       - anchore/syft:{{.Tag}}-debug-s390x
-      - ghcr.io/anchore/syft:debug-s390x
+#      - ghcr.io/anchore/syft:debug-s390x
       - ghcr.io/anchore/syft:{{.Tag}}-debug-s390x
     goarch: s390x
     dockerfile: Dockerfile.debug
@@ -153,9 +153,9 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
   - image_templates:
-      - anchore/syft:latest
+#      - anchore/syft:latest
       - anchore/syft:{{.Tag}}
-      - ghcr.io/anchore/syft:latest
+#      - ghcr.io/anchore/syft:latest
       - ghcr.io/anchore/syft:{{.Tag}}
     goarch: amd64
     dockerfile: Dockerfile
@@ -207,18 +207,18 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
 docker_manifests:
-  - name_template: anchore/syft:latest
-    image_templates:
-      - anchore/syft:{{.Tag}}
-      - anchore/syft:{{.Tag}}-arm64v8
-      - anchore/syft:{{.Tag}}-ppc64le
-      - anchore/syft:{{.Tag}}-s390x
+#  - name_template: anchore/syft:latest
+#    image_templates:
+#      - anchore/syft:{{.Tag}}
+#      - anchore/syft:{{.Tag}}-arm64v8
+#      - anchore/syft:{{.Tag}}-ppc64le
+#      - anchore/syft:{{.Tag}}-s390x
 
-  - name_template: anchore/syft:debug
-      - anchore/syft:{{.Tag}}-debug
-      - anchore/syft:{{.Tag}}-debug-arm64v8
-      - anchore/syft:{{.Tag}}-debug-ppc64le
-      - anchore/syft:{{.Tag}}-debug-s390x
+#  - name_template: anchore/syft:debug
+#      - anchore/syft:{{.Tag}}-debug
+#      - anchore/syft:{{.Tag}}-debug-arm64v8
+#      - anchore/syft:{{.Tag}}-debug-ppc64le
+#      - anchore/syft:{{.Tag}}-debug-s390x
 
   - name_template: anchore/syft:{{.Tag}}
     image_templates:
@@ -227,19 +227,19 @@ docker_manifests:
       - anchore/syft:{{.Tag}}-ppc64le
       - anchore/syft:{{.Tag}}-s390x
 
-  - name_template: ghcr.io/anchore/syft:latest
-    image_templates:
-      - ghcr.io/anchore/syft:{{.Tag}}
-      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
-      - ghcr.io/anchore/syft:{{.Tag}}-ppc64le
-      - ghcr.io/anchore/syft:{{.Tag}}-s390x
+#  - name_template: ghcr.io/anchore/syft:latest
+#    image_templates:
+#      - ghcr.io/anchore/syft:{{.Tag}}
+#      - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
+#      - ghcr.io/anchore/syft:{{.Tag}}-ppc64le
+#      - ghcr.io/anchore/syft:{{.Tag}}-s390x
 
-  - name_template: ghcr.io/anchore/syft:debug
-    image_templates:
-      - ghcr.io/anchore/syft:{{.Tag}}-debug
-      - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
-      - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
-      - ghcr.io/anchore/syft:{{.Tag}}-debug-s390x
+#  - name_template: ghcr.io/anchore/syft:debug
+#    image_templates:
+#      - ghcr.io/anchore/syft:{{.Tag}}-debug
+#      - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
+#      - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
+#      - ghcr.io/anchore/syft:{{.Tag}}-debug-s390x
 
   - name_template: ghcr.io/anchore/syft:{{.Tag}}
     image_templates:
