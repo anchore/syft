@@ -121,6 +121,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "perl-binary",
+		FileGlob: "**/perl",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)\/usr\/local\/lib\/perl\d\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "perl",
+		PURL:    mustPURL("pkg:generic/perl@version"),
+		CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "php-cli-binary",
 		FileGlob: "**/php*",
 		EvidenceMatcher: fileNameTemplateVersionMatcher(
