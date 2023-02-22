@@ -179,10 +179,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "5.12.5",
 				Type:      "binary",
 				PURL:      "pkg:generic/perl@5.12.5",
-				Locations: singleLocation("perl"),
-				Metadata: pkg.BinaryMetadata{
-					Classifier: "perl-binary",
-				},
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
 			},
 		},
 		{
@@ -193,10 +191,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "5.20.0",
 				Type:      "binary",
 				PURL:      "pkg:generic/perl@5.20.0",
-				Locations: singleLocation("perl"),
-				Metadata: pkg.BinaryMetadata{
-					Classifier: "perl-binary",
-				},
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
 			},
 		},
 		{
@@ -207,10 +203,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "5.37.8",
 				Type:      "binary",
 				PURL:      "pkg:generic/perl@5.37.8",
-				Locations: singleLocation("perl"),
-				Metadata: pkg.BinaryMetadata{
-					Classifier: "perl-binary",
-				},
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
 			},
 		},
 		{
@@ -634,6 +628,8 @@ func (p *panicyResolver) AllLocations() <-chan source.Location {
 func (p *panicyResolver) FileMetadataByLocation(_ source.Location) (source.FileMetadata, error) {
 	return source.FileMetadata{}, errors.New("not implemented")
 }
+
+var _ source.FileResolver = (*panicyResolver)(nil)
 
 func Test_Cataloger_ResilientToErrors(t *testing.T) {
 	c := NewCataloger()
