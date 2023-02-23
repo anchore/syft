@@ -24,6 +24,7 @@ type LinuxRelease struct {
 	BugReportURL     string  `json:"bugReportURL,omitempty"`
 	PrivacyPolicyURL string  `json:"privacyPolicyURL,omitempty"`
 	CPEName          string  `json:"cpeName,omitempty"`
+	SupportEnd       string  `json:"supportEnd,omitempty"`
 }
 
 func (s *IDLikes) UnmarshalJSON(data []byte) error {

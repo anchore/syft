@@ -13,8 +13,8 @@ type Location struct {
 	Coordinates `cyclonedx:""` // Empty string here means there is no intermediate property name, e.g. syft:locations:0:path without "coordinates"
 	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
 	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
-	VirtualPath string         `hash:"ignore"` // The path to the file which may or may not have hardlinks / symlinks
-	ref         file.Reference `hash:"ignore"` // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
+	VirtualPath string         `hash:"ignore" json:"virtualPath,omitempty"` // The path to the file which may or may not have hardlinks / symlinks
+	ref         file.Reference `hash:"ignore"`                              // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
 }
 
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.

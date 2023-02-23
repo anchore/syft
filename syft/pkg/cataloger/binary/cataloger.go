@@ -33,19 +33,42 @@ func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artif
 
 	for _, cls := range defaultClassifiers {
 		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
-		pkgs, err := catalog(resolver, cls)
+		newPkgs, err := catalog(resolver, cls)
 		if err != nil {
 			log.WithFields("error", err, "classifier", cls.Class).Warn("unable to catalog binary package: %w", err)
 			continue
 		}
-		packages = append(packages, pkgs...)
+	newPackages:
+		for i := range newPkgs {
+			newPkg := &newPkgs[i]
+			for j := range packages {
+				p := &packages[j]
+				// consolidate identical packages found in different locations or by different classifiers
+				if packagesMatch(p, newPkg) {
+					mergePackages(p, newPkg)
+					continue newPackages
+				}
+			}
+			packages = append(packages, *newPkg)
+		}
 	}
 
 	return packages, relationships, nil
 }
 
-func catalog(resolver source.FileResolver, cls classifier) ([]pkg.Package, error) {
-	var pkgs []pkg.Package
+// mergePackages merges information from the extra package into the target package
+func mergePackages(target *pkg.Package, extra *pkg.Package) {
+	// add the locations
+	target.Locations.Add(extra.Locations.ToSlice()...)
+	// update the metadata to indicate which classifiers were used
+	meta, _ := target.Metadata.(pkg.BinaryMetadata)
+	if m, ok := extra.Metadata.(pkg.BinaryMetadata); ok {
+		meta.Matches = append(meta.Matches, m.Matches...)
+	}
+	target.Metadata = meta
+}
+
+func catalog(resolver source.FileResolver, cls classifier) (packages []pkg.Package, err error) {
 	locations, err := resolver.FilesByGlob(cls.FileGlob)
 	if err != nil {
 		return nil, err
@@ -56,26 +79,13 @@ func catalog(resolver source.FileResolver, cls classifier) ([]pkg.Package, error
 			return nil, err
 		}
 		locationReader := source.NewLocationReadCloser(location, reader)
-		newPkgs, err := cls.EvidenceMatcher(cls, locationReader)
+		pkgs, err := cls.EvidenceMatcher(cls, locationReader)
 		if err != nil {
 			return nil, err
 		}
-	newPackages:
-		for i := range newPkgs {
-			newPkg := &newPkgs[i]
-			for j := range pkgs {
-				p := &pkgs[j]
-				// consolidate identical packages found in different locations,
-				// but continue to track each location
-				if packagesMatch(p, newPkg) {
-					p.Locations.Add(newPkg.Locations.ToSlice()...)
-					continue newPackages
-				}
-			}
-			pkgs = append(pkgs, *newPkg)
-		}
+		packages = append(packages, pkgs...)
 	}
-	return pkgs, nil
+	return packages, nil
 }
 
 // packagesMatch returns true if the binary packages "match" based on basic criteria
