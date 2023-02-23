@@ -98,6 +98,15 @@ func TestApkMetadata_UnmarshalJSON(t *testing.T) {
 				Files:         []ApkFileRecord{{Path: "/usr"}},
 			},
 		},
+		{
+			name: "null pullDependencies",
+			input: `{
+"pullDependencies": null
+}`,
+			want: ApkMetadata{
+				Dependencies: nil,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
