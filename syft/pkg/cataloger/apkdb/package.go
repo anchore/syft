@@ -1,9 +1,11 @@
 package apkdb
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -39,6 +41,14 @@ func generateUpstream(m pkg.ApkMetadata) string {
 		if strings.HasPrefix(m.Package, p) {
 			return strings.TrimPrefix(m.Package, p)
 		}
+	}
+
+	pattern := regexp.MustCompile(`(?P<upstream>\w+?)\-?\d[\d\.]*`)
+	groups := internal.MatchNamedCaptureGroups(pattern, m.Package)
+
+	upstream, ok := groups["upstream"]
+	if ok {
+		return upstream
 	}
 
 	return m.Package
