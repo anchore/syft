@@ -51,6 +51,21 @@ type classifier struct {
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
 type evidenceMatcher func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
 
+func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
+	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+		for _, matcher := range matchers {
+			match, err := matcher(classifier, reader)
+			if err != nil {
+				return nil, err
+			}
+			if match != nil {
+				return match, nil
+			}
+		}
+		return nil, nil
+	}
+}
+
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
 	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
