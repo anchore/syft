@@ -121,19 +121,12 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:    "haproxy-binary-variant1",
+		Class:    "haproxy-binary",
 		FileGlob: "**/haproxy",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-		Package: "haproxy",
-		PURL:    mustPURL("pkg:generic/haproxy@version"),
-		CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*"),
-	},
-	{
-		Class:    "haproxy-binary-variant2",
-		FileGlob: "**/haproxy",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+		EvidenceMatcher: evidenceMatchers(
+			fileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			fileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+		),
 		Package: "haproxy",
 		PURL:    mustPURL("pkg:generic/haproxy@version"),
 		CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*"),
