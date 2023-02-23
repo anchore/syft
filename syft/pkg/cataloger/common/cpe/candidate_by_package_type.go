@@ -180,6 +180,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		// Alpine packages
 		{
 			pkg.ApkPkg,
+			candidateKey{PkgName: "curl"},
+			candidateAddition{AdditionalVendors: []string{"haxx"}},
+		},
+		{
+			pkg.ApkPkg,
 			candidateKey{PkgName: "python3"},
 			candidateAddition{AdditionalProducts: []string{"python"}, AdditionalVendors: []string{"python", "python_software_foundation"}},
 		},
