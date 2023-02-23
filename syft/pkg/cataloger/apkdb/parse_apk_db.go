@@ -3,7 +3,9 @@ package apkdb
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -20,11 +22,42 @@ import (
 // integrity check
 var _ generic.Parser = parseApkDB
 
+var (
+	repoRegex = regexp.MustCompile(`(?m)^https://.*\.alpinelinux\.org/alpine/v([^\/]+)/([a-zA-Z0-9_]+)$`)
+)
+
 // parseApkDB parses packages from a given APK installed DB file. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
-//nolint:funlen
-func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+//nolint:funlen,gocognit
+func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// find the repositories file from the the relative directory of the DB file
+	var releases []linux.Release
+	if resolver != nil {
+		reposLocation := path.Clean(path.Join(path.Dir(reader.Location.RealPath), "../../../etc/apk/repositories"))
+		paths, err := resolver.FilesByPath(reposLocation)
+		if err != nil {
+			log.Debugf("unable to find repositories file at %s: %w", reposLocation, err)
+		}
+		if err == nil && len(paths) > 0 {
+			reposContent, err := resolver.FileContentsByLocation(paths[0])
+			if err == nil {
+				reposB, err := io.ReadAll(reposContent)
+				if err == nil {
+					parts := repoRegex.FindAllStringSubmatch(string(reposB), -1)
+					for _, part := range parts {
+						if len(part) >= 3 {
+							releases = append(releases, linux.Release{
+								Name:      "Alpine Linux",
+								ID:        "alpine",
+								VersionID: part[1],
+							})
+						}
+					}
+				}
+			}
+		}
+	}
 	scanner := bufio.NewScanner(reader)
 
 	var apks []pkg.ApkMetadata
@@ -100,6 +133,14 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 	var r *linux.Release
 	if env != nil {
 		r = env.LinuxRelease
+	}
+	// this is somewhat ugly, but better than completely failing when we can't find the release,
+	// e.g. embedded deeper in the tree, like containers or chroots.
+	// but we now have no way of handling different repository sources. On the other hand,
+	// we never could before this. At least now, we can handle some.
+	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
+	if r == nil && len(releases) > 0 {
+		r = &releases[0]
 	}
 
 	pkgs := make([]pkg.Package, 0, len(apks))
