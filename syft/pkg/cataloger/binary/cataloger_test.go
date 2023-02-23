@@ -215,10 +215,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "1.5.14",
 				Type:      "binary",
 				PURL:      "pkg:generic/haproxy@1.5.14",
-				Locations: singleLocation("haproxy"),
-				Metadata: pkg.BinaryMetadata{
-					Classifier: "haproxy-binary-variant1",
-				},
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary-variant1"),
 			},
 		},
 		{
@@ -229,10 +227,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "1.8.22",
 				Type:      "binary",
 				PURL:      "pkg:generic/haproxy@1.8.22",
-				Locations: singleLocation("haproxy"),
-				Metadata: pkg.BinaryMetadata{
-					Classifier: "haproxy-binary-variant1",
-				},
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary-variant1"),
 			},
 		},
 		{
@@ -243,10 +239,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "2.7.3",
 				Type:      "binary",
 				PURL:      "pkg:generic/haproxy@2.7.3",
-				Locations: singleLocation("haproxy"),
-				Metadata: pkg.BinaryMetadata{
-					Classifier: "haproxy-binary-variant2",
-				},
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary-variant2"),
 			},
 		},
 		{

@@ -137,8 +137,8 @@ var defaultClassifiers = []classifier{
 		Package: "haproxy",
 		PURL:    mustPURL("pkg:generic/haproxy@version"),
 		CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*"),
-  },
-  {
+	},
+	{
 		Class:    "perl-binary",
 		FileGlob: "**/perl",
 		EvidenceMatcher: fileContentsVersionMatcher(
