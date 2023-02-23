@@ -154,14 +154,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # TODO: remove this when actions/cache + mac runner is fixed
-      # see https://github.com/actions/cache/issues/1110
-      - name: Downgrade zstd on macOS
-        run: |
-          brew uninstall --ignore-dependencies zstd
-          git -C "$(brew --repo homebrew/core)" checkout d3f04bd Formula/zstd.rb
-          brew install zstd
-
       - name: Download snapshot build
         uses: actions/cache/restore@v3
         with:

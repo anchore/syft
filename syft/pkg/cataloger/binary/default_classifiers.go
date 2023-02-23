@@ -137,6 +137,15 @@ var defaultClassifiers = []classifier{
 		Package: "haproxy",
 		PURL:    mustPURL("pkg:generic/haproxy@version"),
 		CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*"),
+  },
+  {
+		Class:    "perl-binary",
+		FileGlob: "**/perl",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)\/usr\/local\/lib\/perl\d\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "perl",
+		PURL:    mustPURL("pkg:generic/perl@version"),
+		CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "php-cli-binary",
