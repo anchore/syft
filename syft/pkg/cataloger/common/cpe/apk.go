@@ -146,6 +146,40 @@ func rubyCandidateProductsFromAPK(m pkg.ApkMetadata) fieldCandidateSet {
 	return products
 }
 
+func candidateVendorsFromUpstream(m pkg.ApkMetadata) fieldCandidateSet {
+	vendors := newFieldCandidateSet()
+	upstream := m.Upstream()
+	if upstream != "" {
+		vendors.add(fieldCandidate{
+			value:                       upstream,
+			disallowSubSelections:       true,
+			disallowDelimiterVariations: true,
+		})
+
+		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, pkg.ApkPkg, upstream, upstream)...)
+		vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, pkg.ApkPkg, upstream)...)
+	}
+
+	return vendors
+}
+
+func candidateProductsFromUpstream(m pkg.ApkMetadata) fieldCandidateSet {
+	products := newFieldCandidateSet()
+	upstream := m.Upstream()
+	if upstream != "" {
+		products.add(fieldCandidate{
+			value:                       upstream,
+			disallowSubSelections:       true,
+			disallowDelimiterVariations: true,
+		})
+
+		products.addValue(findAdditionalProducts(defaultCandidateAdditions, pkg.ApkPkg, upstream)...)
+		products.removeByValue(findProductsToRemove(defaultCandidateRemovals, pkg.ApkPkg, upstream)...)
+	}
+
+	return products
+}
+
 func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.ApkMetadata)
 	if !ok {
@@ -155,6 +189,7 @@ func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 	vendors.union(pythonCandidateVendorsFromAPK(metadata))
 	vendors.union(rubyCandidateVendorsFromAPK(metadata))
+	vendors.union(candidateVendorsFromUpstream(metadata))
 
 	return vendors
 }
@@ -168,6 +203,7 @@ func candidateProductsForAPK(p pkg.Package) fieldCandidateSet {
 	products := newFieldCandidateSet()
 	products.union(pythonCandidateProductsFromAPK(metadata))
 	products.union(rubyCandidateProductsFromAPK(metadata))
+	products.union(candidateProductsFromUpstream(metadata))
 
 	return products
 }

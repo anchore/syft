@@ -41,6 +41,15 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 			},
 			expected: []string{"armadillo"},
 		},
+		{
+			name: "python-3.6",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "python-3.6",
+				},
+			},
+			expected: []string{"python-3.6, python"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
