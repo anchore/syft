@@ -238,6 +238,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "glib"},
 			candidateAddition{AdditionalVendors: []string{"gnome"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bash"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
