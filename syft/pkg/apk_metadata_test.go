@@ -282,6 +282,27 @@ func TestApkMetadata_Upstream(t *testing.T) {
 			},
 			expected: "abc101-a12345",
 		},
+		{
+			name: "package starting with single digit",
+			metadata: ApkMetadata{
+				Package: "3proxy",
+			},
+			expected: "3proxy",
+		},
+		{
+			name: "package starting with multiple digits",
+			metadata: ApkMetadata{
+				Package: "356proxy",
+			},
+			expected: "356proxy",
+		},
+		{
+			name: "package composed of only digits",
+			metadata: ApkMetadata{
+				Package: "123456",
+			},
+			expected: "123456",
+		},
 	}
 
 	for _, test := range tests {

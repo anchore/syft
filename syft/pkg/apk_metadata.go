@@ -20,7 +20,7 @@ const ApkDBGlob = "**/lib/apk/db/installed"
 var (
 	_               FileOwner = (*ApkMetadata)(nil)
 	prefixes                  = []string{"py-", "py2-", "py3-", "ruby-"}
-	upstreamPattern           = regexp.MustCompile(`^(?P<upstream>[\w-]+?)\-?\d[\d\.]*$`)
+	upstreamPattern           = regexp.MustCompile(`^(?P<upstream>[a-zA-Z][\w-]*?)\-?\d[\d\.]*$`)
 )
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
