@@ -48,7 +48,27 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					Package: "python-3.6",
 				},
 			},
-			expected: []string{"python-3.6, python"},
+			expected: []string{"python-3.6", "python"},
+		},
+		{
+			name: "ruby-3.6",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "ruby-3.6",
+					URL:     "https://www.ruby-lang.org/",
+				},
+			},
+			expected: []string{"ruby-3.6", "ruby", "ruby-lang"},
+		},
+		{
+			name: "make",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "make",
+					URL:     "https://www.gnu.org/software/make",
+				},
+			},
+			expected: []string{"make", "gnu"},
 		},
 	}
 	for _, test := range tests {
