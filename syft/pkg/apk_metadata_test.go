@@ -303,6 +303,20 @@ func TestApkMetadata_Upstream(t *testing.T) {
 			},
 			expected: "123456",
 		},
+		{
+			name: "ruby-3.6 upstream ruby",
+			metadata: ApkMetadata{
+				Package: "ruby-3.6",
+			},
+			expected: "ruby",
+		},
+		{
+			name: "ruby3.6 upstream ruby",
+			metadata: ApkMetadata{
+				Package: "ruby3.6",
+			},
+			expected: "ruby",
+		},
 	}
 
 	for _, test := range tests {

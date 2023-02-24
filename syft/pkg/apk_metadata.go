@@ -126,18 +126,18 @@ func (m ApkMetadata) Upstream() string {
 		return m.OriginPackage
 	}
 
-	for _, p := range prefixes {
-		if strings.HasPrefix(m.Package, p) {
-			return strings.TrimPrefix(m.Package, p)
-		}
-	}
-
 	groups := internal.MatchNamedCaptureGroups(upstreamPattern, m.Package)
 
 	upstream, ok := groups["upstream"]
-	if ok {
-		return upstream
+	if !ok {
+		upstream = m.Package
 	}
 
-	return m.Package
+	for _, p := range prefixes {
+		if strings.HasPrefix(upstream, p) {
+			return strings.TrimPrefix(upstream, p)
+		}
+	}
+
+	return upstream
 }
