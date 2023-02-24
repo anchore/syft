@@ -223,6 +223,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "clang"},
 			candidateAddition{AdditionalVendors: []string{"llvm"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjdk"},
+			candidateAddition{AdditionalVendors: []string{"oracle"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
