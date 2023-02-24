@@ -28,8 +28,7 @@ func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.L
 
 // packageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
 func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
-	if distro == nil || distro.ID != "alpine" {
-		// note: there is no namespace variation (like with debian ID_LIKE for ubuntu ID, for example)
+	if distro == nil {
 		return ""
 	}
 
@@ -44,7 +43,7 @@ func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 
 	return packageurl.NewPackageURL(
 		packageurl.TypeAlpine,
-		"alpine",
+		strings.ToLower(distro.ID),
 		m.Package,
 		m.Version,
 		pkg.PURLQualifiers(
