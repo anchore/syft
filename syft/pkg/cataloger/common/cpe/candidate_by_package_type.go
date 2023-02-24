@@ -243,6 +243,12 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "bash"},
 			candidateAddition{AdditionalVendors: []string{"gnu"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa-lib"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
+		//
 		// Binary packages
 		{
 			pkg.BinaryPkg,
