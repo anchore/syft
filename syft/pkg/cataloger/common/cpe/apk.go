@@ -10,7 +10,10 @@ var (
 	pythonPrefixes   = []string{"py-", "py2-", "py3-"}
 	rubyPrefixes     = []string{"ruby-"}
 	urlPrefixVendors = map[string][]string{
-		"https://www.gnu.org/": []string{"gnu"},
+		"https://www.gnu.org/":         {"gnu"},
+		"https://developer.gnome.org/": {"gnome"},
+		"https://www.ruby-lang.org/":   {"ruby-lang"},
+		"https://llvm.org/":            {"llvm"},
 	}
 )
 
