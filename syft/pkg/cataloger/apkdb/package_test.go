@@ -208,6 +208,34 @@ func Test_PackageURL(t *testing.T) {
 			},
 			expected: "pkg:apk/alpine/abc101.191.23456@101.191.23456?arch=a&upstream=abc&distro=alpine-3.4.6",
 		},
+		{
+			name: "abc101-12345-1045 upstream abc101-12345",
+			metadata: pkg.ApkMetadata{
+				Package:       "abc101-12345-1045",
+				Version:       "101.191.23456",
+				Architecture:  "a",
+				OriginPackage: "abc101-12345-1045",
+			},
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:apk/alpine/abc101-12345-1045@101.191.23456?arch=a&upstream=abc101-12345&distro=alpine-3.4.6",
+		},
+		{
+			name: "abc101-a12345-1045 upstream abc101-a12345",
+			metadata: pkg.ApkMetadata{
+				Package:       "abc101-a12345-1045",
+				Version:       "101.191.23456",
+				Architecture:  "a",
+				OriginPackage: "abc101-a12345-1045",
+			},
+			distro: linux.Release{
+				ID:        "alpine",
+				VersionID: "3.4.6",
+			},
+			expected: "pkg:apk/alpine/abc101-a12345-1045@101.191.23456?arch=a&upstream=abc101-a12345&distro=alpine-3.4.6",
+		},
 	}
 
 	for _, test := range tests {

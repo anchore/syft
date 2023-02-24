@@ -1,18 +1,12 @@
 package apkdb
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-)
-
-var (
-	prefixes = []string{"py-", "py2-", "py3-", "ruby-"}
 )
 
 func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
@@ -32,28 +26,6 @@ func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.L
 	return p
 }
 
-func generateUpstream(m pkg.ApkMetadata) string {
-	if m.OriginPackage != "" && m.OriginPackage != m.Package {
-		return m.OriginPackage
-	}
-
-	for _, p := range prefixes {
-		if strings.HasPrefix(m.Package, p) {
-			return strings.TrimPrefix(m.Package, p)
-		}
-	}
-
-	pattern := regexp.MustCompile(`(?P<upstream>\w+?)\-?\d[\d\.]*`)
-	groups := internal.MatchNamedCaptureGroups(pattern, m.Package)
-
-	upstream, ok := groups["upstream"]
-	if ok {
-		return upstream
-	}
-
-	return m.Package
-}
-
 // packageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
 func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 	if distro == nil || distro.ID != "alpine" {
@@ -65,8 +37,9 @@ func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 		pkg.PURLQualifierArch: m.Architecture,
 	}
 
-	if m.OriginPackage != "" {
-		qualifiers[pkg.PURLQualifierUpstream] = generateUpstream(m)
+	upstream := m.Upstream()
+	if upstream != "" && upstream != m.Package {
+		qualifiers[pkg.PURLQualifierUpstream] = upstream
 	}
 
 	return packageurl.NewPackageURL(
