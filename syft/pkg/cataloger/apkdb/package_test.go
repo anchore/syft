@@ -20,7 +20,7 @@ func Test_PackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "bad distro",
+			name: "non-alpine distro",
 			metadata: pkg.ApkMetadata{
 				Package:      "p",
 				Version:      "v",
@@ -30,7 +30,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "something else",
 				VersionID: "3.4.6",
 			},
-			expected: "",
+			expected: "pkg:apk/something%20else/p@v?arch=a&distro=something%20else-3.4.6",
 		},
 		{
 			name: "gocase",
@@ -235,6 +235,19 @@ func Test_PackageURL(t *testing.T) {
 				VersionID: "3.4.6",
 			},
 			expected: "pkg:apk/alpine/abc101-a12345-1045@101.191.23456?arch=a&upstream=abc101-a12345&distro=alpine-3.4.6",
+		},
+		{
+			name: "wolfi distro",
+			metadata: pkg.ApkMetadata{
+				Package:      "p",
+				Version:      "v",
+				Architecture: "a",
+			},
+			distro: linux.Release{
+				ID:        "wolfi",
+				VersionID: "20221230",
+			},
+			expected: "pkg:apk/wolfi/p@v?arch=a&distro=wolfi-20221230",
 		},
 	}
 
