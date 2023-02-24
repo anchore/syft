@@ -228,6 +228,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "openjdk"},
 			candidateAddition{AdditionalVendors: []string{"oracle"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "glibc"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
