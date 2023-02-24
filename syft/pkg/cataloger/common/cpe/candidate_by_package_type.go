@@ -218,6 +218,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "bazel"},
 			candidateAddition{AdditionalVendors: []string{"google"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "clang"},
+			candidateAddition{AdditionalVendors: []string{"llvm"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
