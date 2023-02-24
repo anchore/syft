@@ -213,6 +213,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "ruby"},
 			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bazel"},
+			candidateAddition{AdditionalVendors: []string{"google"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
