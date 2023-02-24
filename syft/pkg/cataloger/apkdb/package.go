@@ -43,7 +43,7 @@ func generateUpstream(m pkg.ApkMetadata) string {
 		}
 	}
 
-	pattern := regexp.MustCompile(`(?P<upstream>\w+?)\-?\d[\d\.]*`)
+	pattern := regexp.MustCompile(`^(?P<upstream>[\w-]+?)\-?\d[\d\.]*$`)
 	groups := internal.MatchNamedCaptureGroups(pattern, m.Package)
 
 	upstream, ok := groups["upstream"]
