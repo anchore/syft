@@ -258,6 +258,21 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "make"},
 			candidateAddition{AdditionalVendors: []string{"gnu"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "git"},
+			candidateAddition{AdditionalVendors: []string{"git-scm"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bind"},
+			candidateAddition{AdditionalVendors: []string{"isc"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "libxpm"},
+			candidateAddition{AdditionalVendors: []string{"libxpm_project"}},
+		},
 		//
 		// Binary packages
 		{

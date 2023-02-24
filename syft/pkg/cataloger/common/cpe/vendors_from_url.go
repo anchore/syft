@@ -10,6 +10,7 @@ var (
 		"https://developer.gnome.org/": {"gnome"},
 		"https://www.ruby-lang.org/":   {"ruby-lang"},
 		"https://llvm.org/":            {"llvm"},
+		"https://www.isc.org/":         {"isc"},
 	}
 )
 
