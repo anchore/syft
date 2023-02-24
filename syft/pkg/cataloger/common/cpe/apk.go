@@ -7,8 +7,11 @@ import (
 )
 
 var (
-	pythonPrefixes = []string{"py-", "py2-", "py3-"}
-	rubyPrefixes   = []string{"ruby-"}
+	pythonPrefixes   = []string{"py-", "py2-", "py3-"}
+	rubyPrefixes     = []string{"ruby-"}
+	urlPrefixVendors = map[string][]string{
+		"https://www.gnu.org/": []string{"gnu"},
+	}
 )
 
 func pythonCandidateVendorsFromName(v string) fieldCandidateSet {
@@ -146,7 +149,7 @@ func rubyCandidateProductsFromAPK(m pkg.ApkMetadata) fieldCandidateSet {
 	return products
 }
 
-func candidateVendorsFromUpstream(m pkg.ApkMetadata) fieldCandidateSet {
+func candidateVendorsFromAPKUpstream(m pkg.ApkMetadata) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 	upstream := m.Upstream()
 	if upstream != "" {
@@ -163,7 +166,7 @@ func candidateVendorsFromUpstream(m pkg.ApkMetadata) fieldCandidateSet {
 	return vendors
 }
 
-func candidateProductsFromUpstream(m pkg.ApkMetadata) fieldCandidateSet {
+func candidateProductsFromAPKUpstream(m pkg.ApkMetadata) fieldCandidateSet {
 	products := newFieldCandidateSet()
 	upstream := m.Upstream()
 	if upstream != "" {
@@ -180,6 +183,24 @@ func candidateProductsFromUpstream(m pkg.ApkMetadata) fieldCandidateSet {
 	return products
 }
 
+func candidateVendorsFromAPKProjectURL(m pkg.ApkMetadata) fieldCandidateSet {
+	vendors := newFieldCandidateSet()
+
+	for urlPrefix, additionalVendors := range urlPrefixVendors {
+		if strings.HasPrefix(m.URL, urlPrefix) {
+			for _, v := range additionalVendors {
+				vendors.add(fieldCandidate{
+					value:                       v,
+					disallowSubSelections:       true,
+					disallowDelimiterVariations: true,
+				})
+			}
+		}
+	}
+
+	return vendors
+}
+
 func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.ApkMetadata)
 	if !ok {
@@ -189,7 +210,8 @@ func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 	vendors.union(pythonCandidateVendorsFromAPK(metadata))
 	vendors.union(rubyCandidateVendorsFromAPK(metadata))
-	vendors.union(candidateVendorsFromUpstream(metadata))
+	vendors.union(candidateVendorsFromAPKUpstream(metadata))
+	vendors.union(candidateVendorsFromAPKProjectURL(metadata))
 
 	return vendors
 }
@@ -203,7 +225,7 @@ func candidateProductsForAPK(p pkg.Package) fieldCandidateSet {
 	products := newFieldCandidateSet()
 	products.union(pythonCandidateProductsFromAPK(metadata))
 	products.union(rubyCandidateProductsFromAPK(metadata))
-	products.union(candidateProductsFromUpstream(metadata))
+	products.union(candidateProductsFromAPKUpstream(metadata))
 
 	return products
 }

@@ -253,6 +253,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "alsa"},
 			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "make"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
 		//
 		// Binary packages
 		{
