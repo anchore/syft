@@ -4,18 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 )
 
 const ApkDBGlob = "**/lib/apk/db/installed"
 
-var _ FileOwner = (*ApkMetadata)(nil)
+var (
+	_               FileOwner = (*ApkMetadata)(nil)
+	prefixes                  = []string{"py-", "py2-", "py3-", "ruby-"}
+	upstreamPattern           = regexp.MustCompile(`^(?P<upstream>[\w-]+?)\-?\d[\d\.]*$`)
+)
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
 // See the following sources for more information:
@@ -113,4 +119,25 @@ func (m ApkMetadata) OwnedFiles() (result []string) {
 	result = s.List()
 	sort.Strings(result)
 	return result
+}
+
+func (m ApkMetadata) Upstream() string {
+	if m.OriginPackage != "" && m.OriginPackage != m.Package {
+		return m.OriginPackage
+	}
+
+	for _, p := range prefixes {
+		if strings.HasPrefix(m.Package, p) {
+			return strings.TrimPrefix(m.Package, p)
+		}
+	}
+
+	groups := internal.MatchNamedCaptureGroups(upstreamPattern, m.Package)
+
+	upstream, ok := groups["upstream"]
+	if ok {
+		return upstream
+	}
+
+	return m.Package
 }

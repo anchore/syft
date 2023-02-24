@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -160,6 +161,137 @@ func TestSpaceDelimitedStringSlice_UnmarshalJSON(t *testing.T) {
 			element := spaceDelimitedStringSlice{}
 			tt.wantErr(t, element.UnmarshalJSON([]byte(tt.data)))
 			assert.Equal(t, tt.want, []string(element))
+		})
+	}
+}
+
+func TestApkMetadata_Upstream(t *testing.T) {
+	tests := []struct {
+		name     string
+		metadata ApkMetadata
+		expected string
+	}{
+		{
+			name: "gocase",
+			metadata: ApkMetadata{
+				Package: "p",
+			},
+			expected: "p",
+		},
+		{
+			name: "same package and origin",
+			metadata: ApkMetadata{
+				Package:       "p",
+				OriginPackage: "p",
+			},
+			expected: "p",
+		},
+		{
+			name: "different package and origin",
+			metadata: ApkMetadata{
+				Package:       "p",
+				OriginPackage: "origin",
+			},
+			expected: "origin",
+		},
+		{
+			name: "upstream python package information as qualifier",
+			metadata: ApkMetadata{
+				Package:       "py3-potatoes",
+				OriginPackage: "py3-potatoes",
+			},
+			expected: "potatoes",
+		},
+		{
+			name: "python package with distinct origin package",
+			metadata: ApkMetadata{
+				Package:       "py3-non-existant",
+				OriginPackage: "abcdefg",
+			},
+			expected: "abcdefg",
+		},
+		{
+			name: "upstream ruby package information as qualifier",
+			metadata: ApkMetadata{
+				Package:       "ruby-something",
+				OriginPackage: "ruby-something",
+			},
+			expected: "something",
+		},
+		{
+			name: "python package with distinct origin package",
+			metadata: ApkMetadata{
+				Package:       "ruby-something",
+				OriginPackage: "1234567",
+			},
+			expected: "1234567",
+		},
+		{
+			name: "postgesql-15 upstream postgresql",
+			metadata: ApkMetadata{
+				Package: "postgresql-15",
+			},
+			expected: "postgresql",
+		},
+		{
+			name: "postgesql15 upstream postgresql",
+			metadata: ApkMetadata{
+				Package: "postgresql15",
+			},
+			expected: "postgresql",
+		},
+		{
+			name: "go-1.19 upstream go",
+			metadata: ApkMetadata{
+				Package: "go-1.19",
+			},
+			expected: "go",
+		},
+		{
+			name: "go1.143 upstream go",
+			metadata: ApkMetadata{
+				Package: "go1.143",
+			},
+			expected: "go",
+		},
+		{
+			name: "abc-101.191.23456 upstream abc",
+			metadata: ApkMetadata{
+				Package: "abc-101.191.23456",
+			},
+			expected: "abc",
+		},
+		{
+			name: "abc101.191.23456 upstream abc",
+			metadata: ApkMetadata{
+				Package: "abc101.191.23456",
+			},
+			expected: "abc",
+		},
+		{
+			name: "abc101-12345-1045 upstream abc101-12345",
+			metadata: ApkMetadata{
+				Package: "abc101-12345-1045",
+			},
+			expected: "abc101-12345",
+		},
+		{
+			name: "abc101-a12345-1045 upstream abc101-a12345",
+			metadata: ApkMetadata{
+				Package: "abc101-a12345-1045",
+			},
+			expected: "abc101-a12345",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.metadata.Upstream()
+			if actual != test.expected {
+				dmp := diffmatchpatch.New()
+				diffs := dmp.DiffMain(test.expected, actual, true)
+				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
+			}
 		})
 	}
 }
