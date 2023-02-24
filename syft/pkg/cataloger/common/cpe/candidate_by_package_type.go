@@ -203,6 +203,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "nodejs-current"},
 			candidateAddition{AdditionalProducts: []string{"node.js"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "go"},
+			candidateAddition{AdditionalVendors: []string{"golang"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
