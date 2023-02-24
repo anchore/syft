@@ -248,6 +248,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "alsa-lib"},
 			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
 		//
 		// Binary packages
 		{
