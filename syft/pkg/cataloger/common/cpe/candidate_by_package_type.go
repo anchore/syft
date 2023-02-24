@@ -208,6 +208,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "go"},
 			candidateAddition{AdditionalVendors: []string{"golang"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ruby"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
