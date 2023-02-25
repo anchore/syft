@@ -27,6 +27,31 @@ func Test_candidateVendorsFromURL(t *testing.T) {
 			url:      "https://www.gnu.org/software/make",
 			expected: []string{"gnu"},
 		},
+		{
+			name:     "github username as vendor",
+			url:      "https://github.com/armadillo/abcxyz-12345",
+			expected: []string{"armadillo"},
+		},
+		{
+			name:     "github username with - as vendor",
+			url:      "https://github.com/1234-abc-xyz/hello",
+			expected: []string{"1234-abc-xyz"},
+		},
+		{
+			name:     "gitlab username as vendor",
+			url:      "https://gitlab.com/armadillo/abcxyz-12345",
+			expected: []string{"armadillo"},
+		},
+		{
+			name:     "gitlab username with - as vendor",
+			url:      "https://gitlab.com/1234-abc-xyz/hello",
+			expected: []string{"1234-abc-xyz"},
+		},
+		{
+			name:     "github username as vendor from longer url",
+			url:      "https://github.com/armadillo/abcxyz-12345/a/b/c/d/e/f/g",
+			expected: []string{"armadillo"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

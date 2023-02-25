@@ -1,23 +1,30 @@
 package cpe
 
 import (
+	"regexp"
 	"strings"
+
+	"github.com/anchore/syft/internal"
 )
 
 var (
-	urlPrefixVendors = map[string][]string{
+	urlPrefixToVendors = map[string][]string{
 		"https://www.gnu.org/":         {"gnu"},
 		"https://developer.gnome.org/": {"gnome"},
 		"https://www.ruby-lang.org/":   {"ruby-lang"},
 		"https://llvm.org/":            {"llvm"},
 		"https://www.isc.org/":         {"isc"},
 	}
+
+	vendorExtractionPatterns = []*regexp.Regexp{
+		regexp.MustCompile(`^https://(?:github|gitlab)\.com/(?P<vendor>[\w\-]*?)/.*$`),
+	}
 )
 
 func candidateVendorsFromURL(url string) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 
-	for urlPrefix, additionalVendors := range urlPrefixVendors {
+	for urlPrefix, additionalVendors := range urlPrefixToVendors {
 		if strings.HasPrefix(url, urlPrefix) {
 			for _, v := range additionalVendors {
 				vendors.add(fieldCandidate{
@@ -25,7 +32,23 @@ func candidateVendorsFromURL(url string) fieldCandidateSet {
 					disallowSubSelections:       true,
 					disallowDelimiterVariations: true,
 				})
+
+				return vendors
 			}
+		}
+	}
+
+	for _, p := range vendorExtractionPatterns {
+		groups := internal.MatchNamedCaptureGroups(p, url)
+
+		if v, ok := groups["vendor"]; ok {
+			vendors.add(fieldCandidate{
+				value:                       v,
+				disallowSubSelections:       true,
+				disallowDelimiterVariations: true,
+			})
+
+			return vendors
 		}
 	}
 
