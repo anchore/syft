@@ -24,13 +24,14 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 			expected: []string{"python-cryptography_project", "cryptography", "cryptographyproject", "cryptography_project"},
 		},
 		{
-			name: "py2-pypdf OriginPackage",
+			name: "py2-pypdf with explicit different origin",
 			pkg: pkg.Package{
 				Metadata: pkg.ApkMetadata{
-					OriginPackage: "py2-pypdf",
+					Package:       "py2-pypdf",
+					OriginPackage: "abcdefg",
 				},
 			},
-			expected: []string{"pypdf", "pypdfproject", "pypdf_project"},
+			expected: []string{"pypdf", "pypdfproject", "pypdf_project", "abcdefg"},
 		},
 		{
 			name: "ruby-armadillo Package",
@@ -41,10 +42,39 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 			},
 			expected: []string{"armadillo"},
 		},
+		{
+			name: "python-3.6",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "python-3.6",
+				},
+			},
+			expected: []string{"python", "python_software_foundation"},
+		},
+		{
+			name: "ruby-3.6",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "ruby-3.6",
+					URL:     "https://www.ruby-lang.org/",
+				},
+			},
+			expected: []string{"ruby", "ruby-lang"},
+		},
+		{
+			name: "make",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "make",
+					URL:     "https://www.gnu.org/software/make",
+				},
+			},
+			expected: []string{"gnu"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.ElementsMatch(t, test.expected, candidateVendorsForAPK(test.pkg).values(), "different vendors")
+			assert.ElementsMatch(t, test.expected, candidateVendorsForAPK(test.pkg).uniqueValues(), "different vendors")
 		})
 	}
 }
@@ -65,13 +95,14 @@ func Test_candidateProductsForAPK(t *testing.T) {
 			expected: []string{"cryptography", "python-cryptography"},
 		},
 		{
-			name: "py2-pypdf OriginPackage",
+			name: "py2-pypdf with explicit different origin",
 			pkg: pkg.Package{
 				Metadata: pkg.ApkMetadata{
-					OriginPackage: "py2-pypdf",
+					Package:       "py2-pypdf",
+					OriginPackage: "abcdefg",
 				},
 			},
-			expected: []string{"pypdf"},
+			expected: []string{"pypdf", "abcdefg"},
 		},
 		{
 			name: "ruby-armadillo Package",
@@ -82,10 +113,39 @@ func Test_candidateProductsForAPK(t *testing.T) {
 			},
 			expected: []string{"armadillo"},
 		},
+		{
+			name: "python-3.6",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "python-3.6",
+				},
+			},
+			expected: []string{"python"},
+		},
+		{
+			name: "ruby-3.6",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "ruby-3.6",
+					URL:     "https://www.ruby-lang.org/",
+				},
+			},
+			expected: []string{"ruby"},
+		},
+		{
+			name: "make",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package: "make",
+					URL:     "https://www.gnu.org/software/make",
+				},
+			},
+			expected: []string{"make"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.ElementsMatch(t, test.expected, candidateProductsForAPK(test.pkg).values(), "different products")
+			assert.ElementsMatch(t, test.expected, candidateProductsForAPK(test.pkg).uniqueValues(), "different products")
 		})
 	}
 }

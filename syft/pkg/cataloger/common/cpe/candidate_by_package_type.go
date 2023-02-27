@@ -203,6 +203,77 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "nodejs-current"},
 			candidateAddition{AdditionalProducts: []string{"node.js"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "go"},
+			candidateAddition{AdditionalVendors: []string{"golang"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ruby"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bazel"},
+			candidateAddition{AdditionalVendors: []string{"google"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "clang"},
+			candidateAddition{AdditionalVendors: []string{"llvm"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjdk"},
+			candidateAddition{AdditionalVendors: []string{"oracle"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "glibc"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "glib"},
+			candidateAddition{AdditionalVendors: []string{"gnome"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bash"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa-lib"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "make"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "git"},
+			candidateAddition{AdditionalVendors: []string{"git-scm"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bind"},
+			candidateAddition{AdditionalVendors: []string{"isc"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "libxpm"},
+			candidateAddition{AdditionalVendors: []string{"libxpm_project"}},
+		},
+		//
 		// Binary packages
 		{
 			pkg.BinaryPkg,
