@@ -53,6 +53,7 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 		BugReportURL:     d.BugReportURL,
 		PrivacyPolicyURL: d.PrivacyPolicyURL,
 		CPEName:          d.CPEName,
+		SupportEnd:       d.SupportEnd,
 	}
 }
 
