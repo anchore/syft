@@ -4,7 +4,7 @@ TEMP_DIR := ./.tmp
 # Command templates #################################
 LINT_CMD := $(TEMP_DIR)/golangci-lint run --tests=false
 GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/anchore
-RELEASE_CMD := $(TEMP_DIR)/goreleaser release --rm-dist
+RELEASE_CMD := $(TEMP_DIR)/goreleaser release --clean
 SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
 CHRONICLE_CMD = $(TEMP_DIR)/chronicle
 GLOW_CMD = $(TEMP_DIR)/glow
