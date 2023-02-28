@@ -243,6 +243,48 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			},
 		},
 		{
+			name: "parse a mod with path but no main module",
+			arch: archDetails,
+			mod: &debug.BuildInfo{
+				GoVersion: goCompiledVersion,
+				Settings: []debug.BuildSetting{
+					{Key: "GOARCH", Value: archDetails},
+					{Key: "GOOS", Value: "darwin"},
+					{Key: "GOAMD64", Value: "v1"},
+				},
+				Path: "github.com/a/b/c",
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/a/b/c",
+					Version:  "(devel)",
+					PURL:     "pkg:golang/github.com/a/b/c@(devel)",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: source.NewLocationSet(
+						source.Location{
+							Coordinates: source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						},
+					),
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "",
+						BuildSettings: map[string]string{
+							"GOAMD64": "v1",
+							"GOARCH":  "amd64",
+							"GOOS":    "darwin",
+						},
+						MainModule: "github.com/a/b/c",
+					},
+				},
+			},
+		},
+		{
 			name: "parse a mod without packages",
 			arch: archDetails,
 			mod: &debug.BuildInfo{
