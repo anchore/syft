@@ -298,6 +298,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "chromium"},
 			candidateAddition{AdditionalVendors: []string{"google"}, AdditionalProducts: []string{"chrome"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "apache"},
+			candidateAddition{AdditionalProducts: []string{"http_server"}},
+		},
 		//
 		// Binary packages
 		{
