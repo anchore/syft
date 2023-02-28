@@ -328,6 +328,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "podofo"},
 			candidateAddition{AdditionalVendors: []string{"podofo_project"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "wpa_supplicant"},
+			candidateAddition{AdditionalVendors: []string{"w1.fi"}},
+		},
 		//
 		// Binary packages
 		{
