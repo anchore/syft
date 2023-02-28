@@ -308,6 +308,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "tiff"},
 			candidateAddition{AdditionalProducts: []string{"libtiff"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ghostscript"},
+			candidateAddition{AdditionalVendors: []string{"artifex"}},
+		},
 		//
 		// Binary packages
 		{
