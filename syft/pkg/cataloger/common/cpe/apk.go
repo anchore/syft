@@ -1,158 +1,8 @@
 package cpe
 
 import (
-	"strings"
-
 	"github.com/anchore/syft/syft/pkg"
 )
-
-var (
-	pythonPrefixes = []string{"py-", "py2-", "py3-"}
-	rubyPrefixes   = []string{"ruby-"}
-)
-
-func pythonCandidateVendorsFromName(v string) fieldCandidateSet {
-	vendors := newFieldCandidateSet()
-	vendors.addValue(v)
-	vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, pkg.PythonPkg, v, v)...)
-	vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, pkg.PythonPkg, v)...)
-
-	for _, av := range additionalVendorsForPython(v) {
-		vendors.addValue(av)
-		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, pkg.PythonPkg, av, av)...)
-		vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, pkg.PythonPkg, av)...)
-	}
-
-	return vendors
-}
-
-func pythonCandidateVendorsFromAPK(m pkg.ApkMetadata) fieldCandidateSet {
-	vendors := newFieldCandidateSet()
-	upstream := m.Upstream()
-
-	for _, p := range pythonPrefixes {
-		if strings.HasPrefix(m.Package, p) {
-			t := strings.ToLower(strings.TrimPrefix(m.Package, p))
-			vendors.union(pythonCandidateVendorsFromName(t))
-		}
-
-		if upstream != m.Package && strings.HasPrefix(upstream, p) {
-			t := strings.ToLower(strings.TrimPrefix(upstream, p))
-			vendors.union(pythonCandidateVendorsFromName(t))
-		}
-	}
-
-	return vendors
-}
-
-func pythonCandidateProductsFromName(p string) fieldCandidateSet {
-	products := newFieldCandidateSet()
-	products.addValue(p)
-	products.addValue(findAdditionalProducts(defaultCandidateAdditions, pkg.PythonPkg, p)...)
-	products.removeByValue(findProductsToRemove(defaultCandidateRemovals, pkg.PythonPkg, p)...)
-	return products
-}
-
-func pythonCandidateProductsFromAPK(m pkg.ApkMetadata) fieldCandidateSet {
-	products := newFieldCandidateSet()
-	upstream := m.Upstream()
-
-	for _, p := range pythonPrefixes {
-		if strings.HasPrefix(m.Package, p) {
-			t := strings.ToLower(strings.TrimPrefix(m.Package, p))
-			products.union(pythonCandidateProductsFromName(t))
-		}
-
-		if upstream != m.Package && strings.HasPrefix(upstream, p) {
-			t := strings.ToLower(strings.TrimPrefix(upstream, p))
-			products.union(pythonCandidateProductsFromName(t))
-		}
-	}
-
-	return products
-}
-
-func rubyCandidateVendorsFromName(v string) fieldCandidateSet {
-	vendors := newFieldCandidateSet()
-	vendors.addValue(v)
-	vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, pkg.GemPkg, v, v)...)
-	vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, pkg.GemPkg, v)...)
-	return vendors
-}
-
-func rubyCandidateVendorsFromAPK(m pkg.ApkMetadata) fieldCandidateSet {
-	vendors := newFieldCandidateSet()
-	upstream := m.Upstream()
-
-	if upstream != "ruby" {
-		for _, p := range rubyPrefixes {
-			if strings.HasPrefix(m.Package, p) {
-				t := strings.ToLower(strings.TrimPrefix(m.Package, p))
-				vendors.union(rubyCandidateVendorsFromName(t))
-			}
-
-			if upstream != "" && upstream != m.Package && strings.HasPrefix(upstream, p) {
-				t := strings.ToLower(strings.TrimPrefix(upstream, p))
-				vendors.union(rubyCandidateVendorsFromName(t))
-			}
-		}
-	}
-
-	return vendors
-}
-
-func rubyCandidateProductsFromName(p string) fieldCandidateSet {
-	products := newFieldCandidateSet()
-	products.addValue(p)
-	products.addValue(findAdditionalProducts(defaultCandidateAdditions, pkg.GemPkg, p)...)
-	products.removeByValue(findProductsToRemove(defaultCandidateRemovals, pkg.GemPkg, p)...)
-	return products
-}
-
-func rubyCandidateProductsFromAPK(m pkg.ApkMetadata) fieldCandidateSet {
-	products := newFieldCandidateSet()
-	upstream := m.Upstream()
-
-	if upstream != "ruby" {
-		for _, p := range rubyPrefixes {
-			if strings.HasPrefix(m.Package, p) {
-				t := strings.ToLower(strings.TrimPrefix(m.Package, p))
-				products.union(rubyCandidateProductsFromName(t))
-			}
-
-			if upstream != "" && upstream != m.Package && strings.HasPrefix(upstream, p) {
-				t := strings.ToLower(strings.TrimPrefix(upstream, p))
-				products.union(rubyCandidateProductsFromName(t))
-			}
-		}
-	}
-
-	return products
-}
-
-func candidateVendorsFromAPKUpstream(m pkg.ApkMetadata) fieldCandidateSet {
-	vendors := newFieldCandidateSet()
-	upstream := m.Upstream()
-	if upstream != "" && upstream != m.Package {
-		vendors.addValue(upstream)
-		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, pkg.ApkPkg, upstream, upstream)...)
-		vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, pkg.ApkPkg, upstream)...)
-	}
-
-	return vendors
-}
-
-func candidateProductsFromAPKUpstream(m pkg.ApkMetadata) fieldCandidateSet {
-	products := newFieldCandidateSet()
-	upstream := m.Upstream()
-	if upstream != "" {
-		products.addValue(upstream)
-		products.addValue(findAdditionalProducts(defaultCandidateAdditions, pkg.ApkPkg, upstream)...)
-		products.removeByValue(findProductsToRemove(defaultCandidateRemovals, pkg.ApkPkg, upstream)...)
-	}
-
-	return products
-}
 
 func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.ApkMetadata)
@@ -161,9 +11,30 @@ func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	}
 
 	vendors := newFieldCandidateSet()
-	vendors.union(pythonCandidateVendorsFromAPK(metadata))
-	vendors.union(rubyCandidateVendorsFromAPK(metadata))
-	vendors.union(candidateVendorsFromAPKUpstream(metadata))
+	candidates := metadata.UpstreamCandidates()
+
+	for _, c := range candidates {
+		switch c.Type {
+		case pkg.UnknownPkg:
+			vendors.addValue(c.Name)
+			vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, pkg.ApkPkg, c.Name, c.Name)...)
+			vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, pkg.ApkPkg, c.Name)...)
+		case pkg.PythonPkg:
+			vendors.addValue(c.Name)
+			vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, c.Type, c.Name, c.Name)...)
+			vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, c.Type, c.Name)...)
+			for _, av := range additionalVendorsForPython(c.Name) {
+				vendors.addValue(av)
+				vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, pkg.PythonPkg, av, av)...)
+				vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, pkg.PythonPkg, av)...)
+			}
+		default:
+			vendors.addValue(c.Name)
+			vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, c.Type, c.Name, c.Name)...)
+			vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, c.Type, c.Name)...)
+		}
+	}
+
 	vendors.union(candidateVendorsFromURL(metadata.URL))
 
 	for v := range vendors {
@@ -181,9 +52,20 @@ func candidateProductsForAPK(p pkg.Package) fieldCandidateSet {
 	}
 
 	products := newFieldCandidateSet()
-	products.union(pythonCandidateProductsFromAPK(metadata))
-	products.union(rubyCandidateProductsFromAPK(metadata))
-	products.union(candidateProductsFromAPKUpstream(metadata))
+	candidates := metadata.UpstreamCandidates()
+
+	for _, c := range candidates {
+		switch c.Type {
+		case pkg.UnknownPkg:
+			products.addValue(c.Name)
+			products.addValue(findAdditionalProducts(defaultCandidateAdditions, pkg.ApkPkg, c.Name)...)
+			products.removeByValue(findProductsToRemove(defaultCandidateRemovals, pkg.ApkPkg, c.Name)...)
+		default:
+			products.addValue(c.Name)
+			products.addValue(findAdditionalProducts(defaultCandidateAdditions, c.Type, c.Name)...)
+			products.removeByValue(findProductsToRemove(defaultCandidateRemovals, c.Type, c.Name)...)
+		}
+	}
 
 	for p := range products {
 		p.disallowDelimiterVariations = true

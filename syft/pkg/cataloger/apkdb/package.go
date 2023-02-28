@@ -36,9 +36,14 @@ func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 		pkg.PURLQualifierArch: m.Architecture,
 	}
 
-	upstream := m.Upstream()
-	if upstream != "" && upstream != m.Package {
-		qualifiers[pkg.PURLQualifierUpstream] = upstream
+	upstreams := m.UpstreamCandidates()
+	if len(upstreams) > 0 {
+		// only room for one value so for now just take the first one
+		upstream := upstreams[0]
+
+		if upstream.Name != "" && upstream.Name != m.Package {
+			qualifiers[pkg.PURLQualifierUpstream] = upstream.Name
+		}
 	}
 
 	return packageurl.NewPackageURL(
