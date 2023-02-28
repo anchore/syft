@@ -313,6 +313,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "ghostscript"},
 			candidateAddition{AdditionalVendors: []string{"artifex"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjpeg"},
+			candidateAddition{AdditionalVendors: []string{"uclouvain"}},
+		},
 		//
 		// Binary packages
 		{
