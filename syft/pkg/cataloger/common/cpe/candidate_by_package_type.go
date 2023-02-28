@@ -293,6 +293,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "thunderbird"},
 			candidateAddition{AdditionalVendors: []string{"mozilla"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "chromium"},
+			candidateAddition{AdditionalVendors: []string{"google"}, AdditionalProducts: []string{"chrome"}},
+		},
 		//
 		// Binary packages
 		{
