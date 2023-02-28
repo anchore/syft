@@ -15,6 +15,7 @@ var (
 		"https://llvm.org/":            {"llvm"},
 		"https://www.isc.org/":         {"isc"},
 		"https://musl.libc.org/":       {"musl-libc"},
+		"https://www.mozilla.org/":     {"mozilla"},
 	}
 
 	vendorExtractionPatterns = []*regexp.Regexp{

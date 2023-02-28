@@ -278,6 +278,21 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "musl"},
 			candidateAddition{AdditionalVendors: []string{"musl-libc"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox-esr"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "thunderbird"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
 		//
 		// Binary packages
 		{
