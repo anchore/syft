@@ -323,6 +323,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "xorg-server"},
 			candidateAddition{AdditionalVendors: []string{"x.org"}, AdditionalProducts: []string{"x_server"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "podofo"},
+			candidateAddition{AdditionalVendors: []string{"podofo_project"}},
+		},
 		//
 		// Binary packages
 		{
