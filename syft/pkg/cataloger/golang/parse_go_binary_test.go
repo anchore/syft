@@ -223,6 +223,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Name:     "github.com/adrg/xdg",
 					Version:  "v0.2.1",
 					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
+					Licenses: []string{"MIT"},
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -372,6 +373,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Name:     "github.com/adrg/xdg",
 					Version:  "v0.2.1",
 					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
+					Licenses: []string{"MIT"},
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -394,6 +396,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Name:     "github.com/anchore/client-go",
 					Version:  "v0.0.0-20210222170800-9c70f9b80bcf",
 					PURL:     "pkg:golang/github.com/anchore/client-go@v0.0.0-20210222170800-9c70f9b80bcf",
+					Licenses: []string{"Apache-2.0"},
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -449,6 +452,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Name:     "golang.org/x/sys",
 					Version:  "v0.0.0-20211006194710-c8a6f5223071",
 					PURL:     "pkg:golang/golang.org/x/sys@v0.0.0-20211006194710-c8a6f5223071",
+					Licenses: []string{"BSD-3-Clause"},
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
@@ -470,6 +474,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Name:     "golang.org/x/term",
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
 					PURL:     "pkg:golang/golang.org/x/term@v0.0.0-20210916214954-140adaaadfaf",
+					Licenses: []string{"BSD-3-Clause"},
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(

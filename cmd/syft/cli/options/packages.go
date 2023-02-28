@@ -22,6 +22,8 @@ type PackagesOptions struct {
 	Exclude            []string
 	Catalogers         []string
 	Name               string
+	GoFetchPackages    bool
+	GoProxy            string
 }
 
 var _ Interface = (*PackagesOptions)(nil)
@@ -50,6 +52,12 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 	cmd.Flags().StringVarP(&o.Name, "name", "", "",
 		"set the name of the target being analyzed")
+
+	cmd.Flags().BoolVarP(&o.GoFetchPackages, "go-fetch", "", false,
+		"enable fetching of Go packages from the internet for license analysis, otherwise will look only in local")
+
+	cmd.Flags().StringVarP(&o.GoProxy, "go-proxy", "", "https://proxy.golang.org",
+		"proxy to use when fetching Go packages from the internet for license analysis; used only if --go-fetch is set")
 
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
@@ -87,6 +95,14 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("go-fetch", flags.Lookup("go-fetch")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("go-proxy", flags.Lookup("go-proxy")); err != nil {
 		return err
 	}
 

@@ -1,9 +1,15 @@
 package golang
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
+	"io"
+	"io/fs"
+	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -16,13 +22,17 @@ import (
 
 type goLicenses struct {
 	searchLocalModCacheLicenses bool
+	searchRemoteLicenses        bool
 	localModCacheResolver       source.FileResolver
+	remoteProxy                 string
 }
 
 func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	return goLicenses{
 		searchLocalModCacheLicenses: opts.SearchLocalModCacheLicenses,
 		localModCacheResolver:       modCacheResolver(opts.LocalModCacheDir),
+		searchRemoteLicenses:        opts.SearchRemoteLicenses,
+		remoteProxy:                 opts.RemoteProxy,
 	}
 }
 
@@ -94,6 +104,15 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 		)
 	}
 
+	// if we did not find it yet, and remote searching was enabled, then use that
+	if c.searchRemoteLicenses && err == nil && len(licenses) == 0 {
+		var fsys fs.FS
+		fsys, err = getModule(moduleName, moduleVersion, c.remoteProxy)
+		if err == nil {
+			licenses, err = findLicensesFS(fsys)
+		}
+	}
+
 	// always return a non-nil slice
 	if licenses == nil {
 		licenses = []string{}
@@ -131,10 +150,72 @@ func findLicenses(resolver source.FileResolver, globMatch string) (out []string,
 	return
 }
 
+func findLicensesFS(fsys fs.FS) (out []string, err error) {
+	if fsys == nil {
+		return
+	}
+	err = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		// ignore git directory
+		if path == ".git" || strings.HasPrefix(path, ".git/") {
+			return nil
+		}
+		if d.IsDir() {
+			return nil
+		}
+		basename := filepath.Base(path)
+		if !licenses.FileNameSet.Contains(basename) {
+			return nil
+		}
+		f, err := fsys.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		parsed, err := licenses.Parse(f)
+		if err != nil {
+			return err
+		}
+		out = append(out, parsed...)
+		return nil
+	})
+
+	return
+}
+
 var capReplacer = regexp.MustCompile("[A-Z]")
 
 func processCaps(s string) string {
 	return capReplacer.ReplaceAllStringFunc(s, func(s string) string {
 		return "!" + strings.ToLower(s)
 	})
+}
+
+func getModule(moduleName, moduleVersion, proxy string) (fs.FS, error) {
+	// get the module zip
+	resp, err := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		// try lowercasing it; some packages have mixed casing that really messes up the proxy
+		respLC, errLC := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion))
+		if errLC != nil {
+			return nil, err
+		}
+		defer respLC.Body.Close()
+		if respLC.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
+		}
+		resp = respLC
+	}
+	// read the zip
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return zip.NewReader(bytes.NewReader(b), resp.ContentLength)
 }
