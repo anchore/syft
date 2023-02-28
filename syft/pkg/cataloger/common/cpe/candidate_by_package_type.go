@@ -318,6 +318,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "openjpeg"},
 			candidateAddition{AdditionalVendors: []string{"uclouvain"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "xorg-server"},
+			candidateAddition{AdditionalVendors: []string{"x.org"}, AdditionalProducts: []string{"x_server"}},
+		},
 		//
 		// Binary packages
 		{
