@@ -303,6 +303,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "apache"},
 			candidateAddition{AdditionalProducts: []string{"http_server"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "tiff"},
+			candidateAddition{AdditionalProducts: []string{"libtiff"}},
+		},
 		//
 		// Binary packages
 		{
