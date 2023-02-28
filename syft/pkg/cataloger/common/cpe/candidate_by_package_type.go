@@ -273,6 +273,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "libxpm"},
 			candidateAddition{AdditionalVendors: []string{"libxpm_project"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "musl"},
+			candidateAddition{AdditionalVendors: []string{"musl-libc"}},
+		},
 		//
 		// Binary packages
 		{

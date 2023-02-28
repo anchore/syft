@@ -14,6 +14,7 @@ var (
 		"https://www.ruby-lang.org/":   {"ruby-lang"},
 		"https://llvm.org/":            {"llvm"},
 		"https://www.isc.org/":         {"isc"},
+		"https://musl.libc.org/":       {"musl-libc"},
 	}
 
 	vendorExtractionPatterns = []*regexp.Regexp{
