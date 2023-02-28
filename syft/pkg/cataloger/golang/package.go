@@ -1,14 +1,28 @@
 package golang
 
 import (
+	"archive/zip"
+	"bytes"
+	"fmt"
+	"io"
+	"io/fs"
+	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"runtime/debug"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
+
+const DefaultGoProxy = "https://proxy.golang.org"
+
+// this to be removed when we enable remote retrieval of go modules
+const disableRemotePackage = true
 
 func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings map[string]string, locations ...source.Location) pkg.Package {
 	if dep.Replace != nil {
@@ -18,6 +32,7 @@ func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture s
 	p := pkg.Package{
 		Name:         dep.Path,
 		Version:      dep.Version,
+		Licenses:     goLicenses(dep.Path, dep.Version),
 		PURL:         packageURL(dep.Path, dep.Version),
 		Language:     pkg.Go,
 		Type:         pkg.GoModulePkg,
@@ -66,4 +81,46 @@ func packageURL(moduleName, moduleVersion string) string {
 		nil,
 		subpath,
 	).ToString()
+}
+
+func goLicenses(moduleName, moduleVersion string) []string {
+	fsys, err := getModule(moduleName, moduleVersion, DefaultGoProxy)
+	if err != nil {
+		return nil
+	}
+	return licenses.ScanLicenses(fsys)
+}
+
+func getModule(module, version, proxy string) (fs.FS, error) {
+	// first see if we have it locally
+	goPath := os.Getenv("GOPATH")
+	if goPath != "" {
+		modPath := filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", module, version))
+		if fi, err := os.Stat(modPath); err == nil && fi != nil && fi.IsDir() {
+			modFS := os.DirFS(modPath)
+			return modFS, nil
+		}
+	}
+
+	if disableRemotePackage {
+		return nil, fmt.Errorf("module %s@%s not found locally", module, version)
+	}
+
+	// we could not get it locally, so get it from the proxy, but only if network is enabled
+
+	// get the module zip
+	resp, err := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, module, version))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
+	}
+	// read the zip
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return zip.NewReader(bytes.NewReader(b), resp.ContentLength)
 }
