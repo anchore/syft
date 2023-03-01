@@ -70,13 +70,10 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 	}
 
 	catalog, relationships, err := cataloger.Catalog(resolver, release, cfg.Parallelism, catalogers...)
-	if err != nil {
-		return nil, nil, nil, err
-	}
 
 	relationships = append(relationships, newSourceRelationshipsFromCatalog(src, catalog)...)
 
-	return catalog, relationships, release, nil
+	return catalog, relationships, release, err
 }
 
 func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Catalog) []artifact.Relationship {
