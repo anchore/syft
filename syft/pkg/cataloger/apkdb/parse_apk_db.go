@@ -23,7 +23,7 @@ import (
 var _ generic.Parser = parseApkDB
 
 var (
-	repoRegex = regexp.MustCompile(`(?m)^https://.*\.alpinelinux\.org/alpine/v([^\/]+)/([a-zA-Z0-9_]+)$`)
+	repoRegex = regexp.MustCompile(`(?m)^https://.*\.alpinelinux\.org/alpine/v([^/]+)/([a-zA-Z0-9_]+)$`)
 )
 
 // parseApkDB parses packages from a given APK installed DB file. For more
@@ -31,33 +31,6 @@ var (
 //
 //nolint:funlen,gocognit
 func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	// find the repositories file from the the relative directory of the DB file
-	var releases []linux.Release
-	if resolver != nil {
-		reposLocation := path.Clean(path.Join(path.Dir(reader.Location.RealPath), "../../../etc/apk/repositories"))
-		paths, err := resolver.FilesByPath(reposLocation)
-		if err != nil {
-			log.Debugf("unable to find repositories file at %s: %w", reposLocation, err)
-		}
-		if err == nil && len(paths) > 0 {
-			reposContent, err := resolver.FileContentsByLocation(paths[0])
-			if err == nil {
-				reposB, err := io.ReadAll(reposContent)
-				if err == nil {
-					parts := repoRegex.FindAllStringSubmatch(string(reposB), -1)
-					for _, part := range parts {
-						if len(part) >= 3 {
-							releases = append(releases, linux.Release{
-								Name:      "Alpine Linux",
-								ID:        "alpine",
-								VersionID: part[1],
-							})
-						}
-					}
-				}
-			}
-		}
-	}
 	scanner := bufio.NewScanner(reader)
 
 	var apks []pkg.ApkMetadata
@@ -139,8 +112,13 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 	// but we now have no way of handling different repository sources. On the other hand,
 	// we never could before this. At least now, we can handle some.
 	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
-	if r == nil && len(releases) > 0 {
-		r = &releases[0]
+	if r == nil {
+		// find the repositories file from the relative directory of the DB file
+		releases := findReleases(resolver, reader.Location.RealPath)
+
+		if len(releases) > 0 {
+			r = &releases[0]
+		}
 	}
 
 	pkgs := make([]pkg.Package, 0, len(apks))
@@ -149,6 +127,58 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 	}
 
 	return pkgs, discoverPackageDependencies(pkgs), nil
+}
+
+func findReleases(resolver source.FileResolver, dbPath string) []linux.Release {
+	if resolver == nil {
+		return nil
+	}
+
+	reposLocation := path.Clean(path.Join(path.Dir(dbPath), "../../../etc/apk/repositories"))
+	locations, err := resolver.FilesByPath(reposLocation)
+	if err != nil {
+		log.Tracef("unable to find APK repositories file %q: %+v", reposLocation, err)
+		return nil
+	}
+
+	if len(locations) == 0 {
+		return nil
+	}
+	location := locations[0]
+
+	reposReader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
+		return nil
+	}
+
+	return parseReleasesFromAPKRepository(source.LocationReadCloser{
+		Location:   location,
+		ReadCloser: reposReader,
+	})
+}
+
+func parseReleasesFromAPKRepository(reader source.LocationReadCloser) []linux.Release {
+	var releases []linux.Release
+
+	reposB, err := io.ReadAll(reader)
+	if err != nil {
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.Location.RealPath, err)
+		return nil
+	}
+
+	parts := repoRegex.FindAllStringSubmatch(string(reposB), -1)
+	for _, part := range parts {
+		if len(part) >= 3 {
+			releases = append(releases, linux.Release{
+				Name:      "Alpine Linux",
+				ID:        "alpine",
+				VersionID: part[1],
+			})
+		}
+	}
+
+	return releases
 }
 
 func parseApkField(line string) *apkField {
