@@ -1,8 +1,63 @@
 package cpe
 
 import (
+	"fmt"
+	"regexp"
+	"strings"
+
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+var (
+	prefixesToPackageType = map[string]pkg.Type{
+		"py-":   pkg.PythonPkg,
+		"ruby-": pkg.GemPkg,
+	}
+	streamVersionPkgNamePattern = regexp.MustCompile(`^(?P<stream>[a-zA-Z][\w-]*?)(?P<streamVersion>\-?\d[\d\.]*?)($|-(?P<subPackage>[a-zA-Z][\w-]*?)?)$`)
+)
+
+type upstreamCandidate struct {
+	Name string
+	Type pkg.Type
+}
+
+func upstreamCandidates(m pkg.ApkMetadata) (candidates []upstreamCandidate) {
+	// Do not consider OriginPackage variations when generating CPE candidates for the child package
+	// because doing so will result in false positives when matching to vulnerabilities in Grype since
+	// it won't know to lookup apk fix entries using the OriginPackage name.
+
+	name := m.Package
+	groups := internal.MatchNamedCaptureGroups(streamVersionPkgNamePattern, m.Package)
+	stream, ok := groups["stream"]
+
+	if ok && stream != "" {
+		sub, ok := groups["subPackage"]
+
+		if ok && sub != "" {
+			name = fmt.Sprintf("%s-%s", stream, sub)
+		} else {
+			name = stream
+		}
+	}
+
+	for prefix, typ := range prefixesToPackageType {
+		if strings.HasPrefix(name, prefix) {
+			t := strings.TrimPrefix(name, prefix)
+			if t != "" {
+				candidates = append(candidates, upstreamCandidate{Name: t, Type: typ})
+				return candidates
+			}
+		}
+	}
+
+	if name != "" {
+		candidates = append(candidates, upstreamCandidate{Name: name, Type: pkg.UnknownPkg})
+		return candidates
+	}
+
+	return candidates
+}
 
 func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	metadata, ok := p.Metadata.(pkg.ApkMetadata)
@@ -11,7 +66,7 @@ func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 	}
 
 	vendors := newFieldCandidateSet()
-	candidates := metadata.UpstreamCandidates()
+	candidates := upstreamCandidates(metadata)
 
 	for _, c := range candidates {
 		switch c.Type {
@@ -52,7 +107,7 @@ func candidateProductsForAPK(p pkg.Package) fieldCandidateSet {
 	}
 
 	products := newFieldCandidateSet()
-	candidates := metadata.UpstreamCandidates()
+	candidates := upstreamCandidates(metadata)
 
 	for _, c := range candidates {
 		switch c.Type {

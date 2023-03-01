@@ -31,7 +31,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					OriginPackage: "abcdefg",
 				},
 			},
-			expected: []string{"pypdf", "pypdfproject", "pypdf_project", "abcdefg"},
+			expected: []string{"pypdf", "pypdfproject", "pypdf_project"},
 		},
 		{
 			name: "ruby-armadillo Package",
@@ -97,7 +97,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					OriginPackage: "ruby",
 				},
 			},
-			expected: []string{"rake", "ruby-lang", "ruby"},
+			expected: []string{"rake", "ruby-lang"},
 		},
 	}
 	for _, test := range tests {
@@ -130,7 +130,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 					OriginPackage: "abcdefg",
 				},
 			},
-			expected: []string{"pypdf", "abcdefg"},
+			expected: []string{"pypdf"},
 		},
 		{
 			name: "ruby-armadillo Package",
@@ -193,12 +193,251 @@ func Test_candidateProductsForAPK(t *testing.T) {
 					OriginPackage: "ruby",
 				},
 			},
-			expected: []string{"rake", "ruby"},
+			expected: []string{"rake"},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, candidateProductsForAPK(test.pkg).uniqueValues(), "different products")
+		})
+	}
+}
+
+func Test_upstreamCandidates(t *testing.T) {
+	tests := []struct {
+		name     string
+		metadata pkg.ApkMetadata
+		expected []upstreamCandidate
+	}{
+		{
+			name: "gocase",
+			metadata: pkg.ApkMetadata{
+				Package: "p",
+			},
+			expected: []upstreamCandidate{
+				{Name: "p", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "same package and origin simple case",
+			metadata: pkg.ApkMetadata{
+				Package:       "p",
+				OriginPackage: "p",
+			},
+			expected: []upstreamCandidate{
+				{Name: "p", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "different package and origin",
+			metadata: pkg.ApkMetadata{
+				Package:       "p",
+				OriginPackage: "origin",
+			},
+			expected: []upstreamCandidate{
+				{Name: "p", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "upstream python package information as qualifier py- prefix",
+			metadata: pkg.ApkMetadata{
+				Package:       "py-potatoes",
+				OriginPackage: "py-potatoes",
+			},
+			expected: []upstreamCandidate{
+				{Name: "potatoes", Type: pkg.PythonPkg},
+			},
+		},
+		{
+			name: "upstream python package information as qualifier py3- prefix",
+			metadata: pkg.ApkMetadata{
+				Package:       "py3-potatoes",
+				OriginPackage: "py3-potatoes",
+			},
+			expected: []upstreamCandidate{
+				{Name: "potatoes", Type: pkg.PythonPkg},
+			},
+		},
+		{
+			name: "python package with distinct origin package",
+			metadata: pkg.ApkMetadata{
+				Package:       "py3-non-existant",
+				OriginPackage: "abcdefg",
+			},
+			expected: []upstreamCandidate{
+				{Name: "non-existant", Type: pkg.PythonPkg},
+			},
+		},
+		{
+			name: "upstream ruby package information as qualifier",
+			metadata: pkg.ApkMetadata{
+				Package:       "ruby-something",
+				OriginPackage: "ruby-something",
+			},
+			expected: []upstreamCandidate{
+				{Name: "something", Type: pkg.GemPkg},
+			},
+		},
+		{
+			name: "ruby package with distinct origin package",
+			metadata: pkg.ApkMetadata{
+				Package:       "ruby-something",
+				OriginPackage: "1234567",
+			},
+			expected: []upstreamCandidate{
+				{Name: "something", Type: pkg.GemPkg},
+			},
+		},
+		{
+			name: "postgesql-15 upstream postgresql",
+			metadata: pkg.ApkMetadata{
+				Package: "postgresql-15",
+			},
+			expected: []upstreamCandidate{
+				{Name: "postgresql", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "postgesql15 upstream postgresql",
+			metadata: pkg.ApkMetadata{
+				Package: "postgresql15",
+			},
+			expected: []upstreamCandidate{
+				{Name: "postgresql", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "go-1.19 upstream go",
+			metadata: pkg.ApkMetadata{
+				Package: "go-1.19",
+			},
+			expected: []upstreamCandidate{
+				{Name: "go", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "go1.143 upstream go",
+			metadata: pkg.ApkMetadata{
+				Package: "go1.143",
+			},
+			expected: []upstreamCandidate{
+				{Name: "go", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "abc-101.191.23456 upstream abc",
+			metadata: pkg.ApkMetadata{
+				Package: "abc-101.191.23456",
+			},
+			expected: []upstreamCandidate{
+				{Name: "abc", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "abc101.191.23456 upstream abc",
+			metadata: pkg.ApkMetadata{
+				Package: "abc101.191.23456",
+			},
+			expected: []upstreamCandidate{
+				{Name: "abc", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "abc101-12345-1045 upstream abc101-12345",
+			metadata: pkg.ApkMetadata{
+				Package: "abc101-12345-1045",
+			},
+			expected: []upstreamCandidate{
+				{Name: "abc101-12345", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "abc101-a12345-1045 upstream abc101-a12345",
+			metadata: pkg.ApkMetadata{
+				Package: "abc101-a12345-1045",
+			},
+			expected: []upstreamCandidate{
+				{Name: "abc-a12345-1045", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "package starting with single digit",
+			metadata: pkg.ApkMetadata{
+				Package: "3proxy",
+			},
+			expected: []upstreamCandidate{
+				{Name: "3proxy", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "package starting with multiple digits",
+			metadata: pkg.ApkMetadata{
+				Package: "356proxy",
+			},
+			expected: []upstreamCandidate{
+				{Name: "356proxy", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "package composed of only digits",
+			metadata: pkg.ApkMetadata{
+				Package: "123456",
+			},
+			expected: []upstreamCandidate{
+				{Name: "123456", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "ruby-3.6 upstream ruby",
+			metadata: pkg.ApkMetadata{
+				Package: "ruby-3.6",
+			},
+			expected: []upstreamCandidate{
+				{Name: "ruby", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "ruby3.6 upstream ruby",
+			metadata: pkg.ApkMetadata{
+				Package: "ruby3.6",
+			},
+			expected: []upstreamCandidate{
+				{Name: "ruby", Type: pkg.UnknownPkg},
+			},
+		},
+		{
+			name: "ruby3.6-tacos upstream tacos",
+			metadata: pkg.ApkMetadata{
+				Package: "ruby3.6-tacos",
+			},
+			expected: []upstreamCandidate{
+				{Name: "tacos", Type: pkg.GemPkg},
+			},
+		},
+		{
+			name: "ruby-3.6-tacos upstream tacos",
+			metadata: pkg.ApkMetadata{
+				Package: "ruby-3.6-tacos",
+			},
+			expected: []upstreamCandidate{
+				{Name: "tacos", Type: pkg.GemPkg},
+			},
+		},
+		{
+			name: "abc1234jksajflksa",
+			metadata: pkg.ApkMetadata{
+				Package: "abc1234jksajflksa",
+			},
+			expected: []upstreamCandidate{
+				{Name: "abc1234jksajflksa", Type: pkg.UnknownPkg},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := upstreamCandidates(test.metadata)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

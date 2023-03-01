@@ -4,27 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 )
 
 const ApkDBGlob = "**/lib/apk/db/installed"
 
-var (
-	_                     FileOwner = (*ApkMetadata)(nil)
-	prefixesToPackageType           = map[string]Type{
-		"py-":   PythonPkg,
-		"ruby-": GemPkg,
-	}
-	streamVersionPkgNamePattern = regexp.MustCompile(`^(?P<stream>[a-zA-Z][\w-]*?)(?P<streamVersion>\-?\d[\d\.]*?)($|-(?P<subPackage>[a-zA-Z][\w-]*?)?)$`)
-)
+var _ FileOwner = (*ApkMetadata)(nil)
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
 // See the following sources for more information:
@@ -122,46 +113,4 @@ func (m ApkMetadata) OwnedFiles() (result []string) {
 	result = s.List()
 	sort.Strings(result)
 	return result
-}
-
-type UpstreamCandidate struct {
-	Name string
-	Type Type
-}
-
-func (m ApkMetadata) UpstreamCandidates() (candidates []UpstreamCandidate) {
-	name := m.Package
-	if m.OriginPackage != "" && m.OriginPackage != m.Package {
-		candidates = append(candidates, UpstreamCandidate{Name: m.OriginPackage, Type: ApkPkg})
-	}
-
-	groups := internal.MatchNamedCaptureGroups(streamVersionPkgNamePattern, m.Package)
-	stream, ok := groups["stream"]
-
-	if ok && stream != "" {
-		sub, ok := groups["subPackage"]
-
-		if ok && sub != "" {
-			name = fmt.Sprintf("%s-%s", stream, sub)
-		} else {
-			name = stream
-		}
-	}
-
-	for prefix, typ := range prefixesToPackageType {
-		if strings.HasPrefix(name, prefix) {
-			t := strings.TrimPrefix(name, prefix)
-			if t != "" {
-				candidates = append(candidates, UpstreamCandidate{Name: t, Type: typ})
-				return candidates
-			}
-		}
-	}
-
-	if name != "" {
-		candidates = append(candidates, UpstreamCandidate{Name: name, Type: UnknownPkg})
-		return candidates
-	}
-
-	return candidates
 }
