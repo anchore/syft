@@ -273,6 +273,66 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "libxpm"},
 			candidateAddition{AdditionalVendors: []string{"libxpm_project"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "musl"},
+			candidateAddition{AdditionalVendors: []string{"musl-libc"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox-esr"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "thunderbird"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "chromium"},
+			candidateAddition{AdditionalVendors: []string{"google"}, AdditionalProducts: []string{"chrome"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "apache"},
+			candidateAddition{AdditionalProducts: []string{"http_server"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "tiff"},
+			candidateAddition{AdditionalProducts: []string{"libtiff"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ghostscript"},
+			candidateAddition{AdditionalVendors: []string{"artifex"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjpeg"},
+			candidateAddition{AdditionalVendors: []string{"uclouvain"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "xorg-server"},
+			candidateAddition{AdditionalVendors: []string{"x.org"}, AdditionalProducts: []string{"x_server"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "podofo"},
+			candidateAddition{AdditionalVendors: []string{"podofo_project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "wpa_supplicant"},
+			candidateAddition{AdditionalVendors: []string{"w1.fi"}},
+		},
 		//
 		// Binary packages
 		{
