@@ -179,10 +179,21 @@ func getBuildSettings(settings []debug.BuildSetting) map[string]string {
 	return m
 }
 
+func createMainModuleFromPath(path string) (mod debug.Module) {
+	mod.Path = path
+	mod.Version = devel
+	return
+}
+
 func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
 	var pkgs []pkg.Package
 	if mod == nil {
 		return pkgs
+	}
+
+	var empty debug.Module
+	if mod.Main == empty && mod.Path != "" {
+		mod.Main = createMainModuleFromPath(mod.Path)
 	}
 
 	for _, dep := range mod.Deps {
@@ -195,9 +206,6 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		}
 	}
 
-	// NOTE(jonasagx): this use happened originally while creating unit tests. It might never
-	// happen in the wild, but I kept it as a safeguard against empty modules.
-	var empty debug.Module
 	if mod.Main == empty {
 		return pkgs
 	}
