@@ -51,7 +51,6 @@ func parseGoBinary(_ source.FileResolver, _ *generic.Environment, reader source.
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
 	for i, mod := range mods {
-		log.Info(mod.Path)
 		pkgs = append(pkgs, buildGoPkgInfo(reader.Location, mod, archs[i])...)
 	}
 	return pkgs, nil, nil
