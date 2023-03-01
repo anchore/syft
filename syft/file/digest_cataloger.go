@@ -51,10 +51,10 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 		if err != nil {
 			return nil, err
 		}
-		prog.N++
+		prog.Increment()
 		results[location.Coordinates] = result
 	}
-	log.Debugf("file digests cataloger processed %d files", prog.N)
+	log.Debugf("file digests cataloger processed %d files", prog.Current())
 	prog.SetCompleted()
 	return results, nil
 }
@@ -123,9 +123,7 @@ func CleanDigestAlgorithmName(name string) string {
 
 func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
 	stage := &progress.Stage{}
-	prog := &progress.Manual{
-		Total: locations,
-	}
+	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{
 		Type: event.FileDigestsCatalogerStarted,

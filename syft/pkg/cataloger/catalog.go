@@ -151,7 +151,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 	// dynamically show updated discovered package status
 	go func() {
 		for discovered := range discoveredPackages {
-			packagesDiscovered.N += discovered
+			packagesDiscovered.Add(discovered)
 		}
 	}()
 
