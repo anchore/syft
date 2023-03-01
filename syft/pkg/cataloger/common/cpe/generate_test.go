@@ -707,12 +707,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:ruby_rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
-				"cpe:2.3:a:rake:ruby:2.7.6-r0:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby-lang:ruby:2.7.6-r0:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby-rake:ruby:2.7.6-r0:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby:ruby:2.7.6-r0:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby_lang:ruby:2.7.6-r0:*:*:*:*:*:*:*",
-				"cpe:2.3:a:ruby_rake:ruby:2.7.6-r0:*:*:*:*:*:*:*",
 			},
 		},
 	}
