@@ -207,4 +207,24 @@ var defaultClassifiers = []classifier{
 		Package: "postgresql",
 		PURL:    mustPURL("pkg:generic/postgresql@version"),
 	},
+	{
+		Class:    "rust-standard-library-linux",
+		FileGlob: "**/libstd-????????????????.so",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// clang LLVM (rustc version 1.48.0 (7eac88abb 2020-11-16))
+			`(?m)(\x00)clang LLVM \(rustc version (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
+		Package: "rust",
+		PURL:    mustPURL("pkg:generic/rust@version"),
+		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "rust-standard-library-macos",
+		FileGlob: "**/libstd-????????????????.dylib",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// c 1.48.0 (7eac88abb 2020-11-16)
+			`(?m)c (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
+		Package: "rust",
+		PURL:    mustPURL("pkg:generic/rust@version"),
+		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
+	},
 }
