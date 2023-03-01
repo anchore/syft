@@ -108,7 +108,11 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (catalo
 func Catalog(resolver source.FileResolver, release *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
+
 	filesProcessed, packagesDiscovered := newMonitor()
+	defer filesProcessed.SetCompleted()
+	defer packagesDiscovered.SetCompleted()
+
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
 
@@ -174,9 +178,6 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 	}
 
 	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
-
-	filesProcessed.SetCompleted()
-	packagesDiscovered.SetCompleted()
 
 	return catalog, allRelationships, errs
 }
