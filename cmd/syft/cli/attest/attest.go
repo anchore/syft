@@ -167,7 +167,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			}
 			defer w.Close()
 
-			b := &busWriter{r: r, w: w, mon: &progress.Manual{N: -1}}
+			b := &busWriter{r: r, w: w, mon: progress.NewManual(-1)}
 			execCmd.Stdout = b
 			execCmd.Stderr = b
 			defer b.mon.SetCompleted()
@@ -175,7 +175,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			// attest the SBOM
 			err = execCmd.Run()
 			if err != nil {
-				b.mon.Err = err
+				b.mon.SetError(err)
 				errs <- fmt.Errorf("unable to attest SBOM: %w", err)
 				return
 			}
