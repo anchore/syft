@@ -347,9 +347,7 @@ func requireFileInfo(_ string, info os.FileInfo, _ error) error {
 
 func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
 	stage := &progress.Stage{}
-	prog := &progress.Manual{
-		Total: -1,
-	}
+	prog := progress.NewManual(-1)
 
 	bus.Publish(partybus.Event{
 		Type:   event.FileIndexingStarted,

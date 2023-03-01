@@ -32,18 +32,16 @@ func (i *MetadataCataloger) Catalog(resolver source.FileResolver) (map[source.Co
 		}
 
 		results[location.Coordinates] = metadata
-		prog.N++
+		prog.Increment()
 	}
-	log.Debugf("file metadata cataloger processed %d files", prog.N)
+	log.Debugf("file metadata cataloger processed %d files", prog.Current())
 	prog.SetCompleted()
 	return results, nil
 }
 
 func metadataCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
 	stage := &progress.Stage{}
-	prog := &progress.Manual{
-		Total: locations,
-	}
+	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{
 		Type: event.FileMetadataCatalogerStarted,
