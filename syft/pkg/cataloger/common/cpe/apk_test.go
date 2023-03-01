@@ -69,7 +69,35 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 					URL:     "https://www.gnu.org/software/make",
 				},
 			},
-			expected: []string{"gnu"},
+			expected: []string{"gnu", "make"},
+		},
+		{
+			name: "ruby-rake with matching origin",
+			pkg: pkg.Package{
+				Name:         "ruby-rake",
+				Type:         pkg.ApkPkg,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "ruby-rake",
+					URL:           "https://github.com/ruby/rake",
+					OriginPackage: "ruby-rake",
+				},
+			},
+			expected: []string{"rake", "ruby-lang", "ruby"},
+		},
+		{
+			name: "ruby-rake with non-matching origin",
+			pkg: pkg.Package{
+				Name:         "ruby-rake",
+				Type:         pkg.ApkPkg,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "ruby-rake",
+					URL:           "https://www.ruby-lang.org/",
+					OriginPackage: "ruby",
+				},
+			},
+			expected: []string{"rake", "ruby-lang", "ruby"},
 		},
 	}
 	for _, test := range tests {
@@ -141,6 +169,31 @@ func Test_candidateProductsForAPK(t *testing.T) {
 				},
 			},
 			expected: []string{"make"},
+		},
+		{
+			name: "ruby-rake with matching origin",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkMetadata{
+					Package:       "ruby-rake",
+					URL:           "https://github.com/ruby/rake",
+					OriginPackage: "ruby-rake",
+				},
+			},
+			expected: []string{"rake"},
+		},
+		{
+			name: "ruby-rake with non-matching origin",
+			pkg: pkg.Package{
+				Name:         "ruby-rake",
+				Type:         pkg.ApkPkg,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "ruby-rake",
+					URL:           "https://www.ruby-lang.org/",
+					OriginPackage: "ruby",
+				},
+			},
+			expected: []string{"rake", "ruby"},
 		},
 	}
 	for _, test := range tests {

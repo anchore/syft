@@ -18,9 +18,12 @@ import (
 const ApkDBGlob = "**/lib/apk/db/installed"
 
 var (
-	_               FileOwner = (*ApkMetadata)(nil)
-	prefixes                  = []string{"py-", "py2-", "py3-", "ruby-"}
-	upstreamPattern           = regexp.MustCompile(`^(?P<upstream>[a-zA-Z][\w-]*?)\-?\d[\d\.]*$`)
+	_                     FileOwner = (*ApkMetadata)(nil)
+	prefixesToPackageType           = map[string]Type{
+		"py-":   PythonPkg,
+		"ruby-": GemPkg,
+	}
+	streamVersionPkgNamePattern = regexp.MustCompile(`^(?P<stream>[a-zA-Z][\w-]*?)(?P<streamVersion>\-?\d[\d\.]*?)($|-(?P<subPackage>[a-zA-Z][\w-]*?)?)$`)
 )
 
 // ApkMetadata represents all captured data for a Alpine DB package entry.
@@ -121,23 +124,44 @@ func (m ApkMetadata) OwnedFiles() (result []string) {
 	return result
 }
 
-func (m ApkMetadata) Upstream() string {
+type UpstreamCandidate struct {
+	Name string
+	Type Type
+}
+
+func (m ApkMetadata) UpstreamCandidates() (candidates []UpstreamCandidate) {
+	name := m.Package
 	if m.OriginPackage != "" && m.OriginPackage != m.Package {
-		return m.OriginPackage
+		candidates = append(candidates, UpstreamCandidate{Name: m.OriginPackage, Type: ApkPkg})
 	}
 
-	groups := internal.MatchNamedCaptureGroups(upstreamPattern, m.Package)
+	groups := internal.MatchNamedCaptureGroups(streamVersionPkgNamePattern, m.Package)
+	stream, ok := groups["stream"]
 
-	upstream, ok := groups["upstream"]
-	if !ok {
-		upstream = m.Package
-	}
+	if ok && stream != "" {
+		sub, ok := groups["subPackage"]
 
-	for _, p := range prefixes {
-		if strings.HasPrefix(upstream, p) {
-			return strings.TrimPrefix(upstream, p)
+		if ok && sub != "" {
+			name = fmt.Sprintf("%s-%s", stream, sub)
+		} else {
+			name = stream
 		}
 	}
 
-	return upstream
+	for prefix, typ := range prefixesToPackageType {
+		if strings.HasPrefix(name, prefix) {
+			t := strings.TrimPrefix(name, prefix)
+			if t != "" {
+				candidates = append(candidates, UpstreamCandidate{Name: t, Type: typ})
+				return candidates
+			}
+		}
+	}
+
+	if name != "" {
+		candidates = append(candidates, UpstreamCandidate{Name: name, Type: UnknownPkg})
+		return candidates
+	}
+
+	return candidates
 }
