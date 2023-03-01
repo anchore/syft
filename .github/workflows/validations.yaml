@@ -16,6 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - run: cat go.mod
+
+      - run: cat go.sum
+
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
