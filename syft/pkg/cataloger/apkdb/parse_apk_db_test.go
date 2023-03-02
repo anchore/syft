@@ -1,8 +1,10 @@
 package apkdb
 
 import (
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -1183,6 +1185,52 @@ func Test_stripVersionSpecifier(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, stripVersionSpecifier(tt.version))
+		})
+	}
+}
+
+func TestParseReleasesFromAPKRepository(t *testing.T) {
+	tests := []struct {
+		repos string
+		want  []linux.Release
+		desc  string
+	}{
+		{
+			"https://foo.alpinelinux.org/alpine/v3.14/main",
+			[]linux.Release{
+				{Name: "Alpine Linux", ID: "alpine", VersionID: "3.14"},
+			},
+			"single repo",
+		},
+		{
+			`https://foo.alpinelinux.org/alpine/v3.14/main
+https://foo.alpinelinux.org/alpine/v3.14/community`,
+			[]linux.Release{
+				{Name: "Alpine Linux", ID: "alpine", VersionID: "3.14"},
+				{Name: "Alpine Linux", ID: "alpine", VersionID: "3.14"},
+			},
+			"multiple repos",
+		},
+		{
+			``,
+			nil,
+			"empty",
+		},
+		{
+			`https://foo.bar.org/alpine/v3.14/main
+https://foo.them.org/alpine/v3.14/community`,
+			nil,
+			"invalid repos",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			reposReader := io.NopCloser(strings.NewReader(tt.repos))
+			got := parseReleasesFromAPKRepository(source.LocationReadCloser{
+				Location:   source.NewLocation("test"),
+				ReadCloser: reposReader,
+			})
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

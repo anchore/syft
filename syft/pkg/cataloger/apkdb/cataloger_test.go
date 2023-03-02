@@ -24,6 +24,7 @@ func TestCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
+				IgnoreUnfulfilledPathResponses("etc/apk/repositories").
 				TestCataloger(t, NewApkdbCataloger())
 		})
 	}
