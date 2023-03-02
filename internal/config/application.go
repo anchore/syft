@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"reflect"
 	"sort"
@@ -223,13 +224,16 @@ func loadConfig(v *viper.Viper, configPath string) error {
 
 	// start searching for valid configs in order...
 	// 1. look for .<appname>.yaml (in the current directory)
-	v.AddConfigPath(".")
-	v.SetConfigName("." + internal.ApplicationName)
-	if err = v.ReadInConfig(); err == nil {
-		v.Set("config", v.ConfigFileUsed())
-		return nil
-	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+	confFilePath := "." + internal.ApplicationName
+	if _, err := os.Stat(confFilePath); err == nil {
+		v.AddConfigPath(".")
+		v.SetConfigName(confFilePath)
+		if err = v.ReadInConfig(); err == nil {
+			v.Set("config", v.ConfigFileUsed())
+			return nil
+		} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+			return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+		}
 	}
 
 	// 2. look for .<appname>/config.yaml (in the current directory)
