@@ -7,6 +7,7 @@ import (
 	"debug/pe"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"regexp"
 	"text/template"
@@ -57,7 +58,14 @@ type evidenceMatcher func(resolver source.FileResolver, classifier classifier, r
 
 func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
 	return func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
-		for _, matcher := range matchers {
+		for i, matcher := range matchers {
+			if i > 0 {
+				readCloser, err := resolver.FileContentsByLocation(reader.Location)
+				if err != nil {
+					return nil, err
+				}
+				reader = source.NewLocationReadCloser(reader.Location, readCloser)
+			}
 			match, err := matcher(resolver, classifier, reader)
 			if err != nil {
 				return nil, err
@@ -118,10 +126,23 @@ func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	}
 }
 
+func isExecutable(mode os.FileMode) bool {
+	return mode&0111 != 0
+}
+
 //nolint:gocognit
 func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
 	return func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) (packages []pkg.Package, _ error) {
+		meta, err := resolver.FileMetadataByLocation(reader.Location)
+		if err != nil {
+			return nil, err
+		}
+
+		if !isExecutable(meta.Mode) {
+			return nil, nil
+		}
+
 		libs, err := sharedLibraries(reader)
 		if err != nil {
 			return nil, err
