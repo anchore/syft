@@ -52,6 +52,16 @@ func Test_candidateVendorsFromURL(t *testing.T) {
 			url:      "https://github.com/armadillo/abcxyz-12345/a/b/c/d/e/f/g",
 			expected: []string{"armadillo"},
 		},
+		{
+			name:     "github username from git://",
+			url:      "git://github.com/abc/xyz.git",
+			expected: []string{"abc"},
+		},
+		{
+			name:     "github username from http://",
+			url:      "http://github.com/abc/xyz.git",
+			expected: []string{"abc"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
