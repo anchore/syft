@@ -93,13 +93,6 @@ func candidateVendors(p pkg.Package) []string {
 		}
 	}
 
-	// some ecosystems do not have enough metadata to determine the vendor accurately, in which case we selectively
-	// allow * as a candidate. Note: do NOT allow Java packages to have * vendors.
-	switch p.Language {
-	case pkg.Ruby, pkg.JavaScript:
-		vendors.addValue(wfn.Any)
-	}
-
 	switch p.MetadataType {
 	case pkg.RpmMetadataType:
 		vendors.union(candidateVendorsForRPM(p))
@@ -111,7 +104,14 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForJava(p))
 	case pkg.ApkMetadataType:
 		vendors.union(candidateVendorsForAPK(p))
+	case pkg.NpmPackageJSONMetadataType:
+		vendors.union(candidateVendorsForJavascript(p))
 	}
+
+	// We should no longer be generating vendor candidates with these values ["" and "*"]
+	// (since CPEs will match any other value)
+	vendors.removeByValue("")
+	vendors.removeByValue("*")
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(vendors)
