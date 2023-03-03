@@ -70,7 +70,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			location := locations[0]
 			readCloser, err := resolver.FileContentsByLocation(location)
 			require.NoError(t, err)
-			pkgs, err := test.classifier.EvidenceMatcher(test.classifier, source.NewLocationReadCloser(location, readCloser))
+			pkgs, err := test.classifier.EvidenceMatcher(resolver, test.classifier, source.NewLocationReadCloser(location, readCloser))
 			require.NoError(t, err)
 
 			require.Len(t, pkgs, 1)

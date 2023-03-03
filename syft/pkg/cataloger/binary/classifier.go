@@ -2,6 +2,9 @@ package binary
 
 import (
 	"bytes"
+	"debug/elf"
+	"debug/macho"
+	"debug/pe"
 	"fmt"
 	"io"
 	"reflect"
@@ -10,6 +13,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
@@ -49,12 +53,12 @@ type classifier struct {
 }
 
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
+type evidenceMatcher func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
 
 func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
-	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+	return func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		for _, matcher := range matchers {
-			match, err := matcher(classifier, reader)
+			match, err := matcher(resolver, classifier, reader)
 			if err != nil {
 				return nil, err
 			}
@@ -68,7 +72,7 @@ func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
 
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+	return func(_ source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		if !pat.MatchString(reader.RealPath) {
 			return nil, nil
 		}
@@ -103,7 +107,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+	return func(_ source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
 		contents, err := getContents(reader)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
@@ -111,6 +115,48 @@ func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
 		return singlePackage(classifier, reader, matchMetadata), nil
+	}
+}
+
+//nolint:gocognit
+func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
+	pat := regexp.MustCompile(sharedLibraryPattern)
+	return func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) (packages []pkg.Package, _ error) {
+		libs, err := sharedLibraries(reader)
+		if err != nil {
+			return nil, err
+		}
+		for _, lib := range libs {
+			if pat.MatchString(lib) {
+				locations, err := resolver.FilesByGlob("**/" + lib)
+				if err != nil {
+					return nil, err
+				}
+				for _, location := range locations {
+					readCloser, err := resolver.FileContentsByLocation(location)
+					if err != nil {
+						return nil, err
+					}
+					if readCloser == nil {
+						log.Debug("unable to get reader for location: %+v", location)
+						continue
+					}
+					locationReader := source.NewLocationReadCloser(location, readCloser)
+					pkgs, err := sharedLibraryMatcher(resolver, classifier, locationReader)
+					if err != nil {
+						return nil, err
+					}
+					for _, p := range pkgs {
+						// set the source binary as the first location
+						locationSet := source.NewLocationSet(reader.Location)
+						locationSet.Add(p.Locations.ToSlice()...)
+						p.Locations = locationSet
+						packages = append(packages, p)
+					}
+				}
+			}
+		}
+		return packages, nil
 	}
 }
 
@@ -194,4 +240,53 @@ func singleCPE(cpeString string) []cpe.CPE {
 	return []cpe.CPE{
 		cpe.Must(cpeString),
 	}
+}
+
+// sharedLibraries returns a list of all shared libraries found within a binary, currently
+// supporting: elf, macho, and windows pe
+func sharedLibraries(reader source.LocationReadCloser) ([]string, error) {
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	r := bytes.NewReader(contents)
+
+	e, err := elf.NewFile(r)
+	if err != nil {
+		log.Debug(err)
+	}
+	if e != nil {
+		symbols, err := e.ImportedLibraries()
+		if err != nil {
+			log.Debug(err)
+		}
+		return symbols, nil
+	}
+
+	m, err := macho.NewFile(r)
+	if err != nil {
+		log.Debug(err)
+	}
+	if m != nil {
+		symbols, err := m.ImportedLibraries()
+		if err != nil {
+			log.Debug(err)
+		}
+		return symbols, nil
+	}
+
+	p, err := pe.NewFile(r)
+	if err != nil {
+		log.Debug(err)
+	}
+	if p != nil {
+		symbols, err := p.ImportedLibraries()
+		if err != nil {
+			log.Debug(err)
+		}
+		return symbols, nil
+	}
+
+	return nil, nil
 }

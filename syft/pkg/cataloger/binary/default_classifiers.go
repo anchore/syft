@@ -9,9 +9,18 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "python-binary",
 		FileGlob: "**/python*",
-		EvidenceMatcher: fileNameTemplateVersionMatcher(
-			`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`,
-			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
+		EvidenceMatcher: evidenceMatchers(
+			// first, check for version information in the binary
+			fileNameTemplateVersionMatcher(
+				`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`,
+				`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
+			// next try to find version information from libpython shared libraries
+			sharedLibraryLookup(
+				`^libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
+				fileNameTemplateVersionMatcher(
+					`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
+					`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`)),
+		),
 		Package: "python",
 		PURL:    mustPURL("pkg:generic/python@version"),
 		CPEs: []cpe.CPE{
@@ -25,18 +34,6 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileNameTemplateVersionMatcher(
 			`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
-		Package: "python",
-		PURL:    mustPURL("pkg:generic/python@version"),
-		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
-			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
-		},
-	},
-	{
-		Class:    "cpython-source",
-		FileGlob: "**/patchlevel.h",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`),
 		Package: "python",
 		PURL:    mustPURL("pkg:generic/python@version"),
 		CPEs: []cpe.CPE{

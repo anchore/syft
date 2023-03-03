@@ -76,13 +76,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "3.8.16",
 				Type:      "binary",
 				PURL:      "pkg:generic/python@3.8.16",
-				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so", "patchlevel.h"),
+				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
 				Metadata: pkg.BinaryMetadata{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "dir/python3.8"),
 						match("python-binary", "python3.8"),
 						match("python-binary-lib", "libpython3.8.so"),
-						match("cpython-source", "patchlevel.h"),
 					},
 				},
 			},
@@ -315,6 +314,22 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-python-3.11.2-from-shared-lib",
+			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-shared-lib-3.11",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.11.2",
+				PURL:      "pkg:generic/python@3.11.2",
+				Locations: locations("python3", "libpython3.11.so.1.0"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary"),
+						match("python-binary-lib"),
+					},
+				},
+			},
+		},
+		{
 			name:       "positive-python3.6",
 			fixtureDir: "test-fixtures/classifiers/positive/python-binary-3.6",
 			expected: pkg.Package{
@@ -323,17 +338,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/python@3.6.3a-vZ9",
 				Locations: locations("python3.6"),
 				Metadata:  metadata("python-binary"),
-			},
-		},
-		{
-			name:       "positive-patchlevel.h",
-			fixtureDir: "test-fixtures/classifiers/positive/python-source-3.9",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.9-aZ5",
-				PURL:      "pkg:generic/python@3.9-aZ5",
-				Locations: locations("patchlevel.h"),
-				Metadata:  metadata("cpython-source"),
 			},
 		},
 		{
