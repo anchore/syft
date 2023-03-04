@@ -237,13 +237,12 @@ func singlePackage(classifier classifier, location source.Location, matchMetadat
 }
 
 func getContents(resolver source.FileResolver, location source.Location) ([]byte, error) {
-	readCloser, err := resolver.FileContentsByLocation(location)
+	reader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, err
 	}
-	reader := source.NewLocationReadCloser(location, readCloser)
 
-	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
+	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
