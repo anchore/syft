@@ -17,6 +17,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
+	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
+	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -39,11 +41,12 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
-		php.NewPHPComposerInstalledCataloger(),
-		javascript.NewJavascriptPackageCataloger(),
+		php.NewComposerInstalledCataloger(),
+		javascript.NewPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpm.NewRpmDBCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
+		java.NewNativeImageCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
@@ -60,13 +63,14 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
-		php.NewPHPComposerLockCataloger(),
-		javascript.NewJavascriptLockCataloger(),
+		php.NewComposerLockCataloger(),
+		javascript.NewLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpm.NewRpmDBCataloger(),
 		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
+		java.NewNativeImageCataloger(),
 		java.NewJavaGradleCataloger(),
 		java.NewJavaGradleLockfileCataloger(),
 		apkdb.NewApkdbCataloger(),
@@ -81,6 +85,8 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		elixir.NewMixLockCataloger(),
+		erlang.NewRebarLockCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -92,13 +98,14 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
-		javascript.NewJavascriptLockCataloger(),
-		javascript.NewJavascriptPackageCataloger(),
+		javascript.NewLockCataloger(),
+		javascript.NewPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
 		rpm.NewRpmDBCataloger(),
 		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
+		java.NewNativeImageCataloger(),
 		java.NewJavaGradleCataloger(),
 		java.NewJavaGradleLockfileCataloger(),
 		apkdb.NewApkdbCataloger(),
@@ -108,14 +115,16 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		rust.NewAuditBinaryCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
-		php.NewPHPComposerInstalledCataloger(),
-		php.NewPHPComposerLockCataloger(),
+		php.NewComposerInstalledCataloger(),
+		php.NewComposerLockCataloger(),
 		swift.NewCocoapodsCataloger(),
 		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		elixir.NewMixLockCataloger(),
+		erlang.NewRebarLockCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -156,9 +165,29 @@ func contains(enabledPartial []string, catalogerName string) bool {
 		if partial == "" {
 			continue
 		}
-		if strings.Contains(catalogerName, partial) {
+		if hasFullWord(partial, catalogerName) {
 			return true
 		}
 	}
 	return false
+}
+
+func hasFullWord(targetPhrase, candidate string) bool {
+	if targetPhrase == "cataloger" || targetPhrase == "" {
+		return false
+	}
+	start := strings.Index(candidate, targetPhrase)
+	if start == -1 {
+		return false
+	}
+
+	if start > 0 && candidate[start-1] != '-' {
+		return false
+	}
+
+	end := start + len(targetPhrase)
+	if end < len(candidate) && candidate[end] != '-' {
+		return false
+	}
+	return true
 }

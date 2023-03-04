@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -41,7 +42,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 
 		b.Run(c.Name(), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				pc, _, err = cataloger.Catalog(resolver, theDistro, c)
+				pc, _, err = cataloger.Catalog(resolver, theDistro, 1, c)
 				if err != nil {
 					b.Fatalf("failure during benchmark: %+v", err)
 				}
@@ -66,9 +67,11 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Rust.String())
 	definedLanguages.Remove(pkg.Dart.String())
 	definedLanguages.Remove(pkg.Dotnet.String())
-	definedLanguages.Remove(string(pkg.Swift.String()))
+	definedLanguages.Remove(pkg.Swift.String())
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
+	definedLanguages.Remove(pkg.Erlang.String())
+	definedLanguages.Remove(pkg.Elixir.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -86,6 +89,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.ConanPkg))
 	definedPkgs.Remove(string(pkg.HackagePkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.HexPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -184,7 +188,14 @@ func TestPkgCoverageDirectory(t *testing.T) {
 					t.Errorf("unexpected package version (pkg=%s): %s", actualPkg.Name, actualPkg.Version)
 				}
 
-				if actualPkg.Language != test.pkgLanguage {
+				var foundLang bool
+				for _, lang := range strings.Split(test.pkgLanguage.String(), ",") {
+					if actualPkg.Language.String() == lang {
+						foundLang = true
+						break
+					}
+				}
+				if !foundLang {
 					t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)
 				}
 

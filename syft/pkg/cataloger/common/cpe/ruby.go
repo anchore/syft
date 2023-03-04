@@ -17,5 +17,10 @@ func candidateVendorsForRuby(p pkg.Package) fieldCandidateSet {
 			disallowSubSelections: true,
 		})
 	}
+
+	if metadata.Homepage != "" {
+		vendors.union(candidateVendorsFromURL(metadata.Homepage))
+	}
+
 	return vendors
 }

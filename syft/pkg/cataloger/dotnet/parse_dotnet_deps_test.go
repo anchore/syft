@@ -16,7 +16,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "AWSSDK.Core",
 			Version:      "3.7.10.6",
-			PURL:         "pkg:dotnet/AWSSDK.Core@3.7.10.6",
+			PURL:         "pkg:nuget/AWSSDK.Core@3.7.10.6",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -32,7 +32,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Microsoft.Extensions.DependencyInjection.Abstractions",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/Microsoft.Extensions.DependencyInjection.Abstractions@6.0.0",
+			PURL:         "pkg:nuget/Microsoft.Extensions.DependencyInjection.Abstractions@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -48,7 +48,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Microsoft.Extensions.DependencyInjection",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/Microsoft.Extensions.DependencyInjection@6.0.0",
+			PURL:         "pkg:nuget/Microsoft.Extensions.DependencyInjection@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -64,7 +64,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Microsoft.Extensions.Logging.Abstractions",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/Microsoft.Extensions.Logging.Abstractions@6.0.0",
+			PURL:         "pkg:nuget/Microsoft.Extensions.Logging.Abstractions@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -80,7 +80,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Microsoft.Extensions.Logging",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/Microsoft.Extensions.Logging@6.0.0",
+			PURL:         "pkg:nuget/Microsoft.Extensions.Logging@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -97,7 +97,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Microsoft.Extensions.Options",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/Microsoft.Extensions.Options@6.0.0",
+			PURL:         "pkg:nuget/Microsoft.Extensions.Options@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -113,7 +113,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Microsoft.Extensions.Primitives",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/Microsoft.Extensions.Primitives@6.0.0",
+			PURL:         "pkg:nuget/Microsoft.Extensions.Primitives@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -129,7 +129,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Newtonsoft.Json",
 			Version:      "13.0.1",
-			PURL:         "pkg:dotnet/Newtonsoft.Json@13.0.1",
+			PURL:         "pkg:nuget/Newtonsoft.Json@13.0.1",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -145,7 +145,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Serilog.Sinks.Console",
 			Version:      "4.0.1",
-			PURL:         "pkg:dotnet/Serilog.Sinks.Console@4.0.1",
+			PURL:         "pkg:nuget/Serilog.Sinks.Console@4.0.1",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -161,7 +161,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "Serilog",
 			Version:      "2.10.0",
-			PURL:         "pkg:dotnet/Serilog@2.10.0",
+			PURL:         "pkg:nuget/Serilog@2.10.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -177,7 +177,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "System.Diagnostics.DiagnosticSource",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/System.Diagnostics.DiagnosticSource@6.0.0",
+			PURL:         "pkg:nuget/System.Diagnostics.DiagnosticSource@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
@@ -193,7 +193,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		{
 			Name:         "System.Runtime.CompilerServices.Unsafe",
 			Version:      "6.0.0",
-			PURL:         "pkg:dotnet/System.Runtime.CompilerServices.Unsafe@6.0.0",
+			PURL:         "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,

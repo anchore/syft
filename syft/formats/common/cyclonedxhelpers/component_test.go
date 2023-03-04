@@ -107,6 +107,25 @@ func Test_encodeComponentProperties(t *testing.T) {
 			},
 		},
 		{
+			name: "from go mod",
+			input: pkg.Package{
+				Name:         "golang.org/x/net",
+				Version:      "v0.0.0-20211006190231-62292e806868",
+				Language:     pkg.Go,
+				Type:         pkg.GoModulePkg,
+				MetadataType: pkg.GolangModMetadataType,
+				Metadata: pkg.GolangModMetadata{
+					H1Digest: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
+				},
+			},
+			expected: &[]cyclonedx.Property{
+				{Name: "syft:package:language", Value: pkg.Go.String()},
+				{Name: "syft:package:metadataType", Value: "GolangModMetadata"},
+				{Name: "syft:package:type", Value: "go-module"},
+				{Name: "syft:metadata:h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
+			},
+		},
+		{
 			name: "from rpm",
 			input: pkg.Package{
 				Name:         "dive",
@@ -140,6 +159,60 @@ func Test_encodeComponentProperties(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := encodeComponent(test.input)
 			assert.Equal(t, test.expected, c.Properties)
+		})
+	}
+}
+
+func Test_encodeCompomentType(t *testing.T) {
+	tests := []struct {
+		name string
+		pkg  pkg.Package
+		want cyclonedx.Component
+	}{
+		{
+			name: "non-binary package",
+			pkg: pkg.Package{
+				Name:    "pkg1",
+				Version: "1.9.2",
+				Type:    pkg.GoModulePkg,
+			},
+			want: cyclonedx.Component{
+				Name:    "pkg1",
+				Version: "1.9.2",
+				Type:    cyclonedx.ComponentTypeLibrary,
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:type",
+						Value: "go-module",
+					},
+				},
+			},
+		},
+		{
+			name: "non-binary package",
+			pkg: pkg.Package{
+				Name:    "pkg1",
+				Version: "3.1.2",
+				Type:    pkg.BinaryPkg,
+			},
+			want: cyclonedx.Component{
+				Name:    "pkg1",
+				Version: "3.1.2",
+				Type:    cyclonedx.ComponentTypeApplication,
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:type",
+						Value: "binary",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.pkg.ID()
+			p := encodeComponent(tt.pkg)
+			assert.Equal(t, tt.want, p)
 		})
 	}
 }

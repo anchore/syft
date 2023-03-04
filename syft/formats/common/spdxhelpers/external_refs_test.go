@@ -5,11 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_ExternalRefs(t *testing.T) {
-	testCPE := pkg.MustCPE("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
+	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -18,7 +19,7 @@ func Test_ExternalRefs(t *testing.T) {
 		{
 			name: "cpe + purl",
 			input: pkg.Package{
-				CPEs: []pkg.CPE{
+				CPEs: []cpe.CPE{
 					testCPE,
 				},
 				PURL: "a-purl",
@@ -26,7 +27,7 @@ func Test_ExternalRefs(t *testing.T) {
 			expected: []ExternalRef{
 				{
 					ReferenceCategory: SecurityReferenceCategory,
-					ReferenceLocator:  pkg.CPEString(testCPE),
+					ReferenceLocator:  cpe.String(testCPE),
 					ReferenceType:     Cpe23ExternalRefType,
 				},
 				{

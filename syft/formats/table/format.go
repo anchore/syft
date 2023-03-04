@@ -8,9 +8,10 @@ const ID sbom.FormatID = "syft-table"
 
 func Format() sbom.Format {
 	return sbom.NewFormat(
-		ID,
+		sbom.AnyVersion,
 		encoder,
 		nil,
 		nil,
+		ID, "table",
 	)
 }

@@ -30,12 +30,12 @@ const (
 
 // TODO: deprecated, moved to syft/formats/formats.go. will be removed in v1.0.0
 func FormatIDs() (ids []sbom.FormatID) {
-	return formats.IDs()
+	return formats.AllIDs()
 }
 
 // TODO: deprecated, moved to syft/formats/formats.go. will be removed in v1.0.0
 func FormatByID(id sbom.FormatID) sbom.Format {
-	return formats.ByID(id)
+	return formats.ByNameAndVersion(string(id), "")
 }
 
 // TODO: deprecated, moved to syft/formats/formats.go. will be removed in v1.0.0

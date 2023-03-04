@@ -157,6 +157,26 @@ func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) stri
 	return ""
 }
 
+func selectLicense(manifest *pkg.JavaManifest) []string {
+	result := []string{}
+	if manifest == nil {
+		return result
+	}
+
+	fieldNames := []string{
+		"Bundle-License",
+		"Plugin-License-Name",
+	}
+
+	for _, fieldName := range fieldNames {
+		if v := fieldValueFromManifest(*manifest, fieldName); v != "" {
+			result = append(result, v)
+		}
+	}
+
+	return result
+}
+
 func fieldValueFromManifest(manifest pkg.JavaManifest, fieldName string) string {
 	if value := manifest.Main[fieldName]; value != "" {
 		return value

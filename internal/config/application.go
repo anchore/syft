@@ -47,15 +47,16 @@ type Application struct {
 	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
 	Catalogers         []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Package            pkg                `yaml:"package" json:"package" mapstructure:"package"`
+	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
 	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
 	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
 	Registry           registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
-	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
+	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
@@ -65,7 +66,8 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 			IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 			Scope:                    cfg.Package.Cataloger.ScopeOpt,
 		},
-		Catalogers: cfg.Catalogers,
+		Catalogers:  cfg.Catalogers,
+		Parallelism: cfg.Parallelism,
 	}
 }
 
@@ -182,6 +184,7 @@ func loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("quiet", false)
 	v.SetDefault("check-for-app-update", true)
 	v.SetDefault("catalogers", nil)
+	v.SetDefault("parallelism", 1)
 
 	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
 	value := reflect.ValueOf(Application{})

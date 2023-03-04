@@ -78,7 +78,7 @@
    },
    "metadata": {
     "mode": 775,
-    "type": "directory",
+    "type": "Directory",
     "userID": 0,
     "groupID": 0,
     "mimeType": ""
@@ -91,7 +91,7 @@
    },
    "metadata": {
     "mode": 775,
-    "type": "regularFile",
+    "type": "RegularFile",
     "userID": 0,
     "groupID": 0,
     "mimeType": ""
@@ -111,7 +111,7 @@
    },
    "metadata": {
     "mode": 775,
-    "type": "symbolicLink",
+    "type": "SymbolicLink",
     "linkDestination": "/c",
     "userID": 0,
     "groupID": 0,
@@ -125,7 +125,7 @@
    },
    "metadata": {
     "mode": 644,
-    "type": "regularFile",
+    "type": "RegularFile",
     "userID": 1,
     "groupID": 2,
     "mimeType": ""
@@ -185,7 +185,7 @@
   }
  },
  "schema": {
-  "version": "6.0.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-6.0.0.json"
+  "version": "6.2.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-6.2.0.json"
  }
 }

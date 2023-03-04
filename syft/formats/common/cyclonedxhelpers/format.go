@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -100,12 +101,12 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 }
 
 func formatCPE(cpeString string) string {
-	cpe, err := pkg.NewCPE(cpeString)
+	c, err := cpe.New(cpeString)
 	if err != nil {
 		log.Debugf("skipping invalid CPE: %s", cpeString)
 		return ""
 	}
-	return pkg.CPEString(cpe)
+	return cpe.String(c)
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.

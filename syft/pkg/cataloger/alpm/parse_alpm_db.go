@@ -65,6 +65,10 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 		metadata.Backup = filesMetadata.Backup
 	}
 
+	if metadata.Package == "" {
+		return nil, nil, nil
+	}
+
 	return []pkg.Package{
 		newPackage(*metadata, env.LinuxRelease, reader.Location),
 	}, nil, nil

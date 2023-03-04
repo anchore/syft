@@ -28,7 +28,8 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 		func(resolver source.FileResolver, env Environment) []request {
 			var requests []request
 			for _, g := range globs {
-				// TODO: add more trace logging here
+				log.WithFields("glob", g).Trace("searching for paths matching glob")
+
 				matches, err := resolver.FilesByGlob(g)
 				if err != nil {
 					log.Warnf("unable to process glob=%q: %+v", g, err)
@@ -46,15 +47,13 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 	c.processor = append(c.processor,
 		func(resolver source.FileResolver, env Environment) []request {
 			var requests []request
-			for _, t := range types {
-				// TODO: add more trace logging here
-				matches, err := resolver.FilesByMIMEType(t)
-				if err != nil {
-					log.Warnf("unable to process mimetype=%q: %+v", t, err)
-					continue
-				}
-				requests = append(requests, makeRequests(parser, matches)...)
+			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
+			matches, err := resolver.FilesByMIMEType(types...)
+			if err != nil {
+				log.Warnf("unable to process mimetypes=%+v: %+v", types, err)
+				return nil
 			}
+			requests = append(requests, makeRequests(parser, matches)...)
 			return requests
 		},
 	)
@@ -65,11 +64,12 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 	c.processor = append(c.processor,
 		func(resolver source.FileResolver, env Environment) []request {
 			var requests []request
-			for _, g := range paths {
-				// TODO: add more trace logging here
-				matches, err := resolver.FilesByPath(g)
+			for _, p := range paths {
+				log.WithFields("path", p).Trace("searching for path")
+
+				matches, err := resolver.FilesByPath(p)
 				if err != nil {
-					log.Warnf("unable to process path=%q: %+v", g, err)
+					log.Warnf("unable to process path=%q: %+v", p, err)
 					continue
 				}
 				requests = append(requests, makeRequests(parser, matches)...)

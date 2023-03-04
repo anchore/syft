@@ -85,12 +85,12 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 // 2) reading file headers from binaries compiled by < go1.18
 func getArchs(readers []io.ReaderAt, builds []*debug.BuildInfo) []string {
 	if len(readers) != len(builds) {
-		log.Warnf("golang cataloger: bin parsing: number of builds and readers doesn't match")
+		log.Trace("golang cataloger: bin parsing: number of builds and readers doesn't match")
 		return nil
 	}
 
 	if len(readers) == 0 || len(builds) == 0 {
-		log.Warnf("golang cataloger: bin parsing: %d readers and %d build info items", len(readers), len(builds))
+		log.Tracef("golang cataloger: bin parsing: %d readers and %d build info items", len(readers), len(builds))
 		return nil
 	}
 
@@ -107,7 +107,7 @@ func getArchs(readers []io.ReaderAt, builds []*debug.BuildInfo) []string {
 	for i, r := range readers {
 		a, err := getGOARCHFromBin(r)
 		if err != nil {
-			log.Warnf("golang cataloger: bin parsing: getting arch from binary: %v", err)
+			log.Tracef("golang cataloger: bin parsing: getting arch from binary: %v", err)
 			continue
 		}
 
@@ -179,10 +179,21 @@ func getBuildSettings(settings []debug.BuildSetting) map[string]string {
 	return m
 }
 
+func createMainModuleFromPath(path string) (mod debug.Module) {
+	mod.Path = path
+	mod.Version = devel
+	return
+}
+
 func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
 	var pkgs []pkg.Package
 	if mod == nil {
 		return pkgs
+	}
+
+	var empty debug.Module
+	if mod.Main == empty && mod.Path != "" {
+		mod.Main = createMainModuleFromPath(mod.Path)
 	}
 
 	for _, dep := range mod.Deps {
@@ -195,9 +206,6 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		}
 	}
 
-	// NOTE(jonasagx): this use happened originally while creating unit tests. It might never
-	// happen in the wild, but I kept it as a safeguard against empty modules.
-	var empty debug.Module
 	if mod.Main == empty {
 		return pkgs
 	}

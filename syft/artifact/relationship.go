@@ -17,6 +17,15 @@ const (
 	DescribedByRelationship RelationshipType = "described-by"
 )
 
+func AllRelationshipTypes() []RelationshipType {
+	return []RelationshipType{
+		OwnershipByFileOverlapRelationship,
+		ContainsRelationship,
+		DependencyOfRelationship,
+		DescribedByRelationship,
+	}
+}
+
 type RelationshipType string
 
 type Relationship struct {

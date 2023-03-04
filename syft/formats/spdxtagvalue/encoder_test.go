@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/anchore/syft/syft/formats/common/testutils"
+	"github.com/anchore/syft/syft/formats/internal/testutils"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -19,6 +19,7 @@ func TestSPDXTagValueDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }
@@ -30,6 +31,7 @@ func TestSPDXTagValueImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }
@@ -63,6 +65,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 			},
 		},
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }
@@ -76,6 +79,7 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 		s,
 		testImage,
 		*updateSpdxTagValue,
+		false,
 		spdxTagValueRedactor,
 	)
 }

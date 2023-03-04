@@ -5,13 +5,15 @@ import (
 )
 
 type Config struct {
-	Search     SearchConfig
-	Catalogers []string
+	Search      SearchConfig
+	Catalogers  []string
+	Parallelism int
 }
 
 func DefaultConfig() Config {
 	return Config{
-		Search: DefaultSearchConfig(),
+		Search:      DefaultSearchConfig(),
+		Parallelism: 1,
 	}
 }
 

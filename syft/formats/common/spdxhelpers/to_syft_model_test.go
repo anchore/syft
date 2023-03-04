@@ -3,8 +3,7 @@ package spdxhelpers
 import (
 	"testing"
 
-	"github.com/spdx/tools-golang/spdx/common"
-	spdx "github.com/spdx/tools-golang/spdx/v2_3"
+	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -46,7 +45,7 @@ func TestToSyftModel(t *testing.T) {
 					},
 					{
 						Category: "PACKAGE-MANAGER",
-						Locator:  "pkg:alpine/pkg-1@5.4.3?arch=x86_64&upstream=p1-origin&distro=alpine-3.10.9",
+						Locator:  "pkg:apk/alpine/pkg-1@5.4.3?arch=x86_64&upstream=p1-origin&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
 				},
@@ -145,7 +144,7 @@ func Test_extractMetadata(t *testing.T) {
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
 						Category: "PACKAGE-MANAGER",
-						Locator:  "pkg:alpine/pkg-2@7.3.1?arch=x86_64&upstream=apk-origin@9.1.3&distro=alpine-3.10.9",
+						Locator:  "pkg:apk/alpine/pkg-2@7.3.1?arch=x86_64&upstream=apk-origin@9.1.3&distro=alpine-3.10.9",
 						RefType:  "purl",
 					},
 				},
@@ -246,9 +245,9 @@ func TestH1Digest(t *testing.T) {
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: []common.Checksum{
+				PackageChecksums: []spdx.Checksum{
 					{
-						Algorithm: common.SHA256,
+						Algorithm: spdx.SHA256,
 						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
 					},
 				},
@@ -267,9 +266,9 @@ func TestH1Digest(t *testing.T) {
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: []common.Checksum{
+				PackageChecksums: []spdx.Checksum{
 					{
-						Algorithm: common.SHA1,
+						Algorithm: spdx.SHA1,
 						Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
 					},
 				},
@@ -288,9 +287,9 @@ func TestH1Digest(t *testing.T) {
 						RefType:  "purl",
 					},
 				},
-				PackageChecksums: []common.Checksum{
+				PackageChecksums: []spdx.Checksum{
 					{
-						Algorithm: common.SHA256,
+						Algorithm: spdx.SHA256,
 						Value:     "",
 					},
 				},

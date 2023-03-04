@@ -16,10 +16,12 @@ import (
 func TestDatabaseParser(t *testing.T) {
 	tests := []struct {
 		name     string
+		fixture  string
 		expected pkg.AlpmMetadata
 	}{
 		{
-			name: "test alpm database parsing",
+			name:    "test alpm database parsing",
+			fixture: "test-fixtures/files",
 			expected: pkg.AlpmMetadata{
 				Backup: []pkg.AlpmFileRecord{
 					{
@@ -90,7 +92,7 @@ func TestDatabaseParser(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f, err := os.Open("test-fixtures/files")
+			f, err := os.Open(test.fixture)
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, f.Close()) })
 

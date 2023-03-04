@@ -26,9 +26,10 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func Run(ctx context.Context, app *config.Application, args []string) error {
+func Run(_ context.Context, app *config.Application, args []string) error {
+	f := syftjson.Format()
 	writer, err := sbom.NewWriter(sbom.WriterOption{
-		Format: syftjson.Format(),
+		Format: f,
 		Path:   app.File,
 	})
 	if err != nil {

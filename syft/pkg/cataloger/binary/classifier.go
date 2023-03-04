@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
@@ -44,11 +45,26 @@ type classifier struct {
 	PURL packageurl.PackageURL
 
 	// CPEs are the specific CPEs we want to include for this binary with updated version information
-	CPEs []pkg.CPE
+	CPEs []cpe.CPE
 }
 
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
 type evidenceMatcher func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
+
+func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
+	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
+		for _, matcher := range matchers {
+			match, err := matcher(classifier, reader)
+			if err != nil {
+				return nil, err
+			}
+			if match != nil {
+				return match, nil
+			}
+		}
+		return nil, nil
+	}
+}
 
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
@@ -114,26 +130,28 @@ func singlePackage(classifier classifier, reader source.LocationReadCloser, matc
 
 	update := matchMetadata["update"]
 
-	var cpes []pkg.CPE
-	for _, cpe := range classifier.CPEs {
-		cpe.Version = version
-		cpe.Update = update
-		cpes = append(cpes, cpe)
+	var cpes []cpe.CPE
+	for _, c := range classifier.CPEs {
+		c.Version = version
+		c.Update = update
+		cpes = append(cpes, c)
 	}
 
 	p := pkg.Package{
 		Name:         classifier.Package,
 		Version:      version,
-		Language:     pkg.Binary,
 		Locations:    source.NewLocationSet(reader.Location),
 		Type:         pkg.BinaryPkg,
 		CPEs:         cpes,
 		FoundBy:      catalogerName,
 		MetadataType: pkg.BinaryMetadataType,
 		Metadata: pkg.BinaryMetadata{
-			Classifier:  classifier.Class,
-			RealPath:    reader.RealPath,
-			VirtualPath: reader.VirtualPath,
+			Matches: []pkg.ClassifierMatch{
+				{
+					Classifier: classifier.Class,
+					Location:   reader.Location,
+				},
+			},
 		},
 	}
 
@@ -172,8 +190,8 @@ func getContents(reader source.LocationReadCloser) ([]byte, error) {
 }
 
 // singleCPE returns a []pkg.CPE based on the cpe string or panics if the CPE is invalid
-func singleCPE(cpe string) []pkg.CPE {
-	return []pkg.CPE{
-		pkg.MustCPE(cpe),
+func singleCPE(cpeString string) []cpe.CPE {
+	return []cpe.CPE{
+		cpe.Must(cpeString),
 	}
 }

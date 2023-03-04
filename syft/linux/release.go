@@ -19,6 +19,7 @@ type Release struct {
 	BugReportURL     string
 	PrivacyPolicyURL string
 	CPEName          string // A CPE name for the operating system, in URI binding syntax
+	SupportEnd       string // The date at which support for this version of the OS ends.
 }
 
 func (r *Release) String() string {

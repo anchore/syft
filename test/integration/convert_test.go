@@ -2,7 +2,7 @@ package integration
 
 import (
 	"context"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"testing"
 
@@ -10,7 +10,7 @@ import (
 
 	"github.com/anchore/syft/cmd/syft/cli/convert"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
 	"github.com/anchore/syft/syft/formats/spdxjson"
@@ -21,36 +21,61 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var convertibleFormats = []sbom.Format{
-	syftjson.Format(),
-	spdxjson.Format(),
-	spdxtagvalue.Format(),
-	cyclonedxjson.Format(),
-	cyclonedxxml.Format(),
-}
-
 // TestConvertCmd tests if the converted SBOM is a valid document according
 // to spec.
 // TODO: This test can, but currently does not, check the converted SBOM content. It
 // might be useful to do that in the future, once we gather a better understanding of
 // what users expect from the convert command.
 func TestConvertCmd(t *testing.T) {
-	for _, format := range convertibleFormats {
-		t.Run(format.ID().String(), func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
-			format := syft.FormatByID(syftjson.ID)
+	tests := []struct {
+		name   string
+		format sbom.Format
+	}{
+		{
+			name:   "syft-json",
+			format: syftjson.Format(),
+		},
+		{
+			name:   "spdx-json",
+			format: spdxjson.Format(),
+		},
+		{
+			name:   "spdx-tag-value",
+			format: spdxtagvalue.Format(),
+		},
+		{
+			name:   "cyclonedx-json",
+			format: cyclonedxjson.Format(),
+		},
+		{
+			name:   "cyclonedx-xml",
+			format: cyclonedxxml.Format(),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			syftSbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
+			syftFormat := syftjson.Format()
 
-			f, err := ioutil.TempFile("", "test-convert-sbom-")
+			syftFile, err := os.CreateTemp("", "test-convert-sbom-")
 			require.NoError(t, err)
 			defer func() {
-				os.Remove(f.Name())
+				_ = os.Remove(syftFile.Name())
 			}()
 
-			err = format.Encode(f, sbom)
+			err = syftFormat.Encode(syftFile, syftSbom)
 			require.NoError(t, err)
 
+			formatFile, err := os.CreateTemp("", "test-convert-sbom-")
+			require.NoError(t, err)
+			defer func() {
+				_ = os.Remove(syftFile.Name())
+			}()
+
 			ctx := context.Background()
-			app := &config.Application{Outputs: []string{format.ID().String()}}
+			app := &config.Application{
+				Outputs: []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())},
+			}
 
 			// stdout reduction of test noise
 			rescue := os.Stdout // keep backup of the real stdout
@@ -59,17 +84,17 @@ func TestConvertCmd(t *testing.T) {
 				os.Stdout = rescue
 			}()
 
-			err = convert.Run(ctx, app, []string{f.Name()})
+			err = convert.Run(ctx, app, []string{syftFile.Name()})
 			require.NoError(t, err)
-			file, err := ioutil.ReadFile(f.Name())
+			contents, err := os.ReadFile(formatFile.Name())
 			require.NoError(t, err)
 
-			formatFound := syft.IdentifyFormat(file)
-			if format.ID() == table.ID {
+			formatFound := formats.Identify(contents)
+			if test.format.ID() == table.ID {
 				require.Nil(t, formatFound)
 				return
 			}
-			require.Equal(t, format.ID(), formatFound.ID())
+			require.Equal(t, test.format.ID(), formatFound.ID())
 		})
 	}
 }

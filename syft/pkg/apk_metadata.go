@@ -87,6 +87,8 @@ func (a *spaceDelimitedStringSlice) UnmarshalJSON(data []byte) error {
 		}
 		*a = s
 		return nil
+	case nil:
+		return nil
 	default:
 		return fmt.Errorf("invalid type for string array: %T", obj)
 	}

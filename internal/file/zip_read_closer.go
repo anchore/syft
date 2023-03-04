@@ -146,9 +146,7 @@ func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, e
 		if err != nil {
 			return 0, err
 		}
-		startOfArchive = 0 // Prefixed data not supported
 	}
-
 	startOfArchive = uint64(directoryEndOffset) - d.directorySize - d.directoryOffset
 
 	// Make sure directoryOffset points to somewhere in our file.

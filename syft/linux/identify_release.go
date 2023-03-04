@@ -125,6 +125,7 @@ func parseOsRelease(contents string) (*Release, error) {
 		BugReportURL:     values["BUG_REPORT_URL"],
 		PrivacyPolicyURL: values["PRIVACY_POLICY_URL"],
 		CPEName:          values["CPE_NAME"],
+		SupportEnd:       values["SUPPORT_END"],
 	}
 
 	// don't allow for empty contents to result in a Release object being created

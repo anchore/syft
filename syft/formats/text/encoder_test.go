@@ -4,7 +4,7 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/anchore/syft/syft/formats/common/testutils"
+	"github.com/anchore/syft/syft/formats/internal/testutils"
 )
 
 var updateTextEncoderGoldenFiles = flag.Bool("update-text", false, "update the *.golden files for text encoder")
@@ -14,6 +14,7 @@ func TestTextDirectoryEncoder(t *testing.T) {
 		Format(),
 		testutils.DirectoryInput(t),
 		*updateTextEncoderGoldenFiles,
+		false,
 	)
 }
 
@@ -24,5 +25,6 @@ func TestTextImageEncoder(t *testing.T) {
 		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
 		testImage,
 		*updateTextEncoderGoldenFiles,
+		false,
 	)
 }

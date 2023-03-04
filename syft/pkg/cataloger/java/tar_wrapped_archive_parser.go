@@ -34,6 +34,9 @@ var genericTarGlobs = []string{
 	"**/*.txz",
 	// zst
 	"**/*.tar.zst",
+	"**/*.tzst",
+	"**/*.tar.zstd",
+	"**/*.tzstd",
 }
 
 // TODO: when the generic archive cataloger is implemented, this should be removed (https://github.com/anchore/syft/issues/246)

@@ -33,7 +33,9 @@ type pipfileLock struct {
 }
 
 type Dependency struct {
-	Version string `json:"version"`
+	Hashes  []string `json:"hashes"`
+	Version string   `json:"version"`
+	Index   string   `json:"index"`
 }
 
 var _ generic.Parser = parsePipfileLock
@@ -50,9 +52,20 @@ func parsePipfileLock(_ source.FileResolver, _ *generic.Environment, reader sour
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse Pipfile.lock file: %w", err)
 		}
+		sourcesMap := map[string]string{}
+		for _, source := range lock.Meta.Sources {
+			sourcesMap[source.Name] = source.URL
+		}
 		for name, pkgMeta := range lock.Default {
+			var index string
+			if pkgMeta.Index != "" {
+				index = sourcesMap[pkgMeta.Index]
+			} else {
+				// https://pipenv.pypa.io/en/latest/advanced/#specifying-package-indexes
+				index = "https://pypi.org/simple"
+			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			pkgs = append(pkgs, newPackageForIndex(name, version, reader.Location))
+			pkgs = append(pkgs, newPackageForIndexWithMetadata(name, version, pkg.PythonPipfileLockMetadata{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
 		}
 	}
 

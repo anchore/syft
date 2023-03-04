@@ -8,6 +8,11 @@ const (
 	// Example: The package 'WildFly' is described by SPDX document WildFly.spdx.
 	DescribedByRelationship RelationshipType = "DESCRIBED_BY"
 
+	// Describes is to be used when SPDXRef-DOCUMENT describes SPDXRef-A.
+	// Example: An SPDX document WildFly.spdx describes package ‘WildFly’.
+	// Note this is a logical relationship to help organize related items within an SPDX document that is mandatory if more than one package or set of files (not in a package) is present.
+	DescribesRelationship RelationshipType = "DESCRIBES"
+
 	// ContainsRelationship is to be used when SPDXRef-A contains SPDXRef-B.
 	// Example: An ARCHIVE file bar.tgz contains a SOURCE file foo.c.
 	ContainsRelationship RelationshipType = "CONTAINS"

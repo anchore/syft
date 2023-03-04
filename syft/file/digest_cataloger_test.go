@@ -29,12 +29,6 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 			t.Fatalf("could not read %q : %+v", f, err)
 		}
 
-		if len(b) == 0 {
-			// we don't keep digests for empty files
-			digests[source.NewLocation(f).Coordinates] = []Digest{}
-			continue
-		}
-
 		for _, hash := range hashes {
 			h := hash.New()
 			h.Write(b)
@@ -152,7 +146,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unable to get file=%q : %+v", test.path, err)
 			}
-			l := source.NewLocationFromImage(test.path, *ref, img)
+			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
 
 			if len(actual[l.Coordinates]) == 0 {
 				if test.expected != "" {

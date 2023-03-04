@@ -1,8 +1,10 @@
 package apkdb
 
 import (
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -157,6 +159,43 @@ func TestSinglePackageDetails(t *testing.T) {
 							Value:     "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
 						},
 					},
+				},
+			},
+		},
+		{
+			fixture: "test-fixtures/empty-deps-and-provides",
+			expected: pkg.ApkMetadata{
+				Package:       "alpine-baselayout-data",
+				OriginPackage: "alpine-baselayout",
+				Version:       "3.4.0-r0",
+				Description:   "Alpine base dir structure and init scripts",
+				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+				License:       "GPL-2.0-only",
+				Architecture:  "x86_64",
+				URL:           "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
+				Size:          11664,
+				InstalledSize: 77824,
+				Dependencies:  []string{},
+				Provides:      []string{},
+				Checksum:      "Q15ffjKT28lB7iSXjzpI/eDdYRCwM=",
+				GitCommit:     "bd965a7ebf7fd8f07d7a0cc0d7375bf3e4eb9b24",
+				Files: []pkg.ApkFileRecord{
+					{Path: "/etc"},
+					{Path: "/etc/fstab"},
+					{Path: "/etc/group"},
+					{Path: "/etc/hostname"},
+					{Path: "/etc/hosts"},
+					{Path: "/etc/inittab"},
+					{Path: "/etc/modules"},
+					{Path: "/etc/mtab", OwnerUID: "0", OwnerGID: "0", Permissions: "0777"},
+					{Path: "/etc/nsswitch.conf"},
+					{Path: "/etc/passwd"},
+					{Path: "/etc/profile"},
+					{Path: "/etc/protocols"},
+					{Path: "/etc/services"},
+					{Path: "/etc/shadow", OwnerUID: "0", OwnerGID: "148", Permissions: "0640"},
+					{Path: "/etc/shells"},
+					{Path: "/etc/sysctl.conf"},
 				},
 			},
 		},
@@ -637,7 +676,7 @@ func TestMultiplePackages(t *testing.T) {
 			Version:      "0.7.2-r0",
 			Licenses:     []string{"BSD"},
 			Type:         pkg.ApkPkg,
-			PURL:         "pkg:alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
+			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
@@ -663,7 +702,7 @@ func TestMultiplePackages(t *testing.T) {
 			Version:      "1.1.24-r2",
 			Licenses:     []string{"MIT", "BSD", "GPL2+"},
 			Type:         pkg.ApkPkg,
-			PURL:         "pkg:alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
+			PURL:         "pkg:apk/alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
@@ -872,6 +911,27 @@ func Test_discoverPackageDependencies(t *testing.T) {
 						Type: artifact.DependencyOfRelationship,
 					},
 				}
+			},
+		},
+		{
+			name: "strip version specifiers with empty provides value",
+			genFn: func() ([]pkg.Package, []artifact.Relationship) {
+				a := pkg.Package{
+					Name: "package-a",
+					Metadata: pkg.ApkMetadata{
+						Dependencies: []string{"so:libc.musl-x86_64.so.1"},
+					},
+				}
+				a.SetID()
+				b := pkg.Package{
+					Name: "package-b",
+					Metadata: pkg.ApkMetadata{
+						Provides: []string{""},
+					},
+				}
+				b.SetID()
+
+				return []pkg.Package{a, b}, nil
 			},
 		},
 		{
@@ -1088,4 +1148,89 @@ func newLocationReadCloser(t *testing.T, path string) source.LocationReadCloser 
 	t.Cleanup(func() { f.Close() })
 
 	return source.NewLocationReadCloser(source.NewLocation(path), f)
+}
+
+func Test_stripVersionSpecifier(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		want    string
+	}{
+		{
+			name:    "empty expression",
+			version: "",
+			want:    "",
+		},
+		{
+			name:    "no expression",
+			version: "cmd:foo",
+			want:    "cmd:foo",
+		},
+		{
+			name:    "=",
+			version: "cmd:scanelf=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    ">=",
+			version: "cmd:scanelf>=1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+		{
+			name:    "<",
+			version: "cmd:scanelf<1.3.4-r0",
+			want:    "cmd:scanelf",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stripVersionSpecifier(tt.version))
+		})
+	}
+}
+
+func TestParseReleasesFromAPKRepository(t *testing.T) {
+	tests := []struct {
+		repos string
+		want  []linux.Release
+		desc  string
+	}{
+		{
+			"https://foo.alpinelinux.org/alpine/v3.14/main",
+			[]linux.Release{
+				{Name: "Alpine Linux", ID: "alpine", VersionID: "3.14"},
+			},
+			"single repo",
+		},
+		{
+			`https://foo.alpinelinux.org/alpine/v3.14/main
+https://foo.alpinelinux.org/alpine/v3.14/community`,
+			[]linux.Release{
+				{Name: "Alpine Linux", ID: "alpine", VersionID: "3.14"},
+				{Name: "Alpine Linux", ID: "alpine", VersionID: "3.14"},
+			},
+			"multiple repos",
+		},
+		{
+			``,
+			nil,
+			"empty",
+		},
+		{
+			`https://foo.bar.org/alpine/v3.14/main
+https://foo.them.org/alpine/v3.14/community`,
+			nil,
+			"invalid repos",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			reposReader := io.NopCloser(strings.NewReader(tt.repos))
+			got := parseReleasesFromAPKRepository(source.LocationReadCloser{
+				Location:   source.NewLocation("test"),
+				ReadCloser: reposReader,
+			})
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }

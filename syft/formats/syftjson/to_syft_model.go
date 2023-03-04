@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -52,6 +53,7 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 		BugReportURL:     d.BugReportURL,
 		PrivacyPolicyURL: d.PrivacyPolicyURL,
 		CPEName:          d.CPEName,
+		SupportEnd:       d.SupportEnd,
 	}
 }
 
@@ -144,22 +146,37 @@ func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
 func toSyftSourceData(s model.Source) *source.Metadata {
 	switch s.Type {
 	case "directory":
+		path, ok := s.Target.(string)
+		if !ok {
+			log.Warnf("unable to parse source target as string: %+v", s.Target)
+			return nil
+		}
 		return &source.Metadata{
 			ID:     s.ID,
 			Scheme: source.DirectoryScheme,
-			Path:   s.Target.(string),
+			Path:   path,
 		}
 	case "file":
+		path, ok := s.Target.(string)
+		if !ok {
+			log.Warnf("unable to parse source target as string: %+v", s.Target)
+			return nil
+		}
 		return &source.Metadata{
 			ID:     s.ID,
 			Scheme: source.FileScheme,
-			Path:   s.Target.(string),
+			Path:   path,
 		}
 	case "image":
+		metadata, ok := s.Target.(source.ImageMetadata)
+		if !ok {
+			log.Warnf("unable to parse source target as image metadata: %+v", s.Target)
+			return nil
+		}
 		return &source.Metadata{
 			ID:            s.ID,
 			Scheme:        source.ImageScheme,
-			ImageMetadata: s.Target.(source.ImageMetadata),
+			ImageMetadata: metadata,
 		}
 	}
 	return nil
@@ -174,9 +191,9 @@ func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Catal
 }
 
 func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
-	var cpes []pkg.CPE
+	var cpes []cpe.CPE
 	for _, c := range p.CPEs {
-		value, err := pkg.NewCPE(c)
+		value, err := cpe.New(c)
 		if err != nil {
 			log.Warnf("excluding invalid CPE %q: %v", c, err)
 			continue

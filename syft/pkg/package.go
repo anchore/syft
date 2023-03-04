@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -24,7 +25,7 @@ type Package struct {
 	Licenses     []string           // licenses discovered with the package metadata
 	Language     Language           `hash:"ignore" cyclonedx:"language"` // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
 	Type         Type               `cyclonedx:"type"`                   // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
-	CPEs         []CPE              `hash:"ignore"`                      // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
+	CPEs         []cpe.CPE          `hash:"ignore"`                      // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
 	PURL         string             `hash:"ignore"`                      // the Package URL (see https://github.com/package-url/purl-spec)
 	MetadataType MetadataType       `cyclonedx:"metadataType"`           // the shape of the additional data in the "metadata" field
 	Metadata     interface{}        // additional data found while parsing the package source
@@ -64,7 +65,7 @@ func (p *Package) merge(other Package) error {
 
 	p.Locations.Add(other.Locations.ToSlice()...)
 
-	p.CPEs = mergeCPEs(p.CPEs, other.CPEs)
+	p.CPEs = cpe.Merge(p.CPEs, other.CPEs)
 
 	if p.PURL == "" {
 		p.PURL = other.PURL

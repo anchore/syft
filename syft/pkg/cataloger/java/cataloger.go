@@ -1,5 +1,5 @@
 /*
-Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, par, sar, jpi, hpi formats).
+Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats).
 */
 package java
 
@@ -29,7 +29,7 @@ func NewJavaCataloger(cfg Config) *generic.Cataloger {
 // Pom files list dependencies that maybe not be locally installed yet.
 func NewJavaPomCataloger() *generic.Cataloger {
 	return generic.NewCataloger("java-pom-cataloger").
-		WithParserByGlobs(parserPomXML, pomXMLDirGlob)
+		WithParserByGlobs(parserPomXML, "**/pom.xml")
 }
 
 // NewJavaGradleCataloger returns a cataloger capable of parsing

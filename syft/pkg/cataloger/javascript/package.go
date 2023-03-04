@@ -63,12 +63,14 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 		resolver,
 		location,
 		pkg.Package{
-			Name:      name,
-			Version:   version,
-			Locations: source.NewLocationSet(location),
-			PURL:      packageURL(name, version),
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
+			Name:         name,
+			Version:      version,
+			Locations:    source.NewLocationSet(location),
+			PURL:         packageURL(name, version),
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			MetadataType: pkg.NpmPackageLockJSONMetadataType,
+			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }
@@ -76,21 +78,23 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 func newPackageLockV2Package(resolver source.FileResolver, location source.Location, name string, u lockPackage) pkg.Package {
 	var licenses []string
 
-	if u.License != "" {
-		licenses = append(licenses, u.License)
+	if u.License != nil {
+		licenses = u.License
 	}
 
 	return finalizeLockPkg(
 		resolver,
 		location,
 		pkg.Package{
-			Name:      name,
-			Version:   u.Version,
-			Locations: source.NewLocationSet(location),
-			PURL:      packageURL(name, u.Version),
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Licenses:  licenses,
+			Name:         name,
+			Version:      u.Version,
+			Locations:    source.NewLocationSet(location),
+			PURL:         packageURL(name, u.Version),
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			Licenses:     licenses,
+			MetadataType: pkg.NpmPackageLockJSONMetadataType,
+			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }

@@ -1,6 +1,9 @@
 package binary
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/pkg"
+)
 
 var defaultClassifiers = []classifier{
 	{
@@ -10,6 +13,11 @@ var defaultClassifiers = []classifier{
 			`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`,
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
 		Package: "python",
+		PURL:    mustPURL("pkg:generic/python@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+		},
 	},
 	{
 		Class:    "python-binary-lib",
@@ -18,6 +26,11 @@ var defaultClassifiers = []classifier{
 			`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
 			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
 		Package: "python",
+		PURL:    mustPURL("pkg:generic/python@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+		},
 	},
 	{
 		Class:    "cpython-source",
@@ -25,6 +38,11 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`),
 		Package: "python",
+		PURL:    mustPURL("pkg:generic/python@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+		},
 	},
 	{
 		Class:    "go-binary",
@@ -32,15 +50,27 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 		Package: "go",
+		PURL:    mustPURL("pkg:generic/go@version"),
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "redis-binary",
+		FileGlob: "**/redis-server",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?s)payload %5.*(?P<version>\d.\d\.\d\d*?)[a-z0-9]{12}-[0-9]{19}`),
+		Package: "redis",
+		PURL:    mustPURL("pkg:generic/redis@version"),
+		CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "java-binary-openjdk",
 		FileGlob: "**/java",
 		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
 			// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
-			`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
+			`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
 		Package: "java",
+		PURL:    mustPURL("pkg:generic/java@version"),
 		// TODO the updates might need to be part of the CPE, like: 1.8.0:update152
 		CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
 	},
@@ -51,6 +81,7 @@ var defaultClassifiers = []classifier{
 			// [NUL]java[NUL]1.8[NUL][NUL][NUL][NUL]1.8.0-foreman_2022_09_22_15_30-b00[NUL]
 			`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
 		Package: "java",
+		PURL:    mustPURL("pkg:generic/java@version"),
 		CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*"),
 	},
 	{
@@ -60,6 +91,7 @@ var defaultClassifiers = []classifier{
 			// [NUL]19.0.1+10-21[NUL]
 			`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
 		Package: "java",
+		PURL:    mustPURL("pkg:generic/java@version"),
 		CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
 	},
 	{
@@ -78,6 +110,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`),
 		Package: "go",
+		PURL:    mustPURL("pkg:generic/go@version"),
 	},
 	{
 		Class:    "busybox-binary",
@@ -85,5 +118,113 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "busybox",
+		CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "haproxy-binary",
+		FileGlob: "**/haproxy",
+		EvidenceMatcher: evidenceMatchers(
+			fileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			fileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+		),
+		Package: "haproxy",
+		PURL:    mustPURL("pkg:generic/haproxy@version"),
+		CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "perl-binary",
+		FileGlob: "**/perl",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)\/usr\/local\/lib\/perl\d\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "perl",
+		PURL:    mustPURL("pkg:generic/perl@version"),
+		CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "php-cli-binary",
+		FileGlob: "**/php*",
+		EvidenceMatcher: fileNameTemplateVersionMatcher(
+			`(.*/|^)php[0-9]*$`,
+			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
+		Package: "php-cli",
+		PURL:    mustPURL("pkg:generic/php-cli@version"),
+		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "php-fpm-binary",
+		FileGlob: "**/php-fpm*",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
+		Package: "php-fpm",
+		PURL:    mustPURL("pkg:generic/php-fpm@version"),
+		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "php-apache-binary",
+		FileGlob: "**/libphp*.so",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
+		Package: "libphp",
+		PURL:    mustPURL("pkg:generic/php@version"),
+		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "httpd-binary",
+		FileGlob: "**/httpd",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)Apache\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "httpd",
+		PURL:    mustPURL("pkg:generic/httpd@version"),
+		CPEs:    singleCPE("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "memcached-binary",
+		FileGlob: "**/memcached",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)memcached\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "memcached",
+		PURL:    mustPURL("pkg:generic/memcached@version"),
+	},
+	{
+		Class:    "traefik-binary",
+		FileGlob: "**/traefik",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]v1.7.34[NUL]
+			// [NUL]2.9.6[NUL]
+			`(?m)\x00v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
+		Package: "traefik",
+		PURL:    mustPURL("pkg:generic/traefik@version"),
+	},
+	{
+		Class:    "postgresql-binary",
+		FileGlob: "**/postgres",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]PostgreSQL 15beta4
+			// [NUL]PostgreSQL 15.1
+			// [NUL]PostgreSQL 9.6.24
+			// ?PostgreSQL 9.5alpha1
+			`(?m)(\x00|\?)PostgreSQL (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+		Package: "postgresql",
+		PURL:    mustPURL("pkg:generic/postgresql@version"),
+	},
+	{
+		Class:    "rust-standard-library-linux",
+		FileGlob: "**/libstd-????????????????.so",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// clang LLVM (rustc version 1.48.0 (7eac88abb 2020-11-16))
+			`(?m)(\x00)clang LLVM \(rustc version (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
+		Package: "rust",
+		PURL:    mustPURL("pkg:generic/rust@version"),
+		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "rust-standard-library-macos",
+		FileGlob: "**/libstd-????????????????.dylib",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// c 1.48.0 (7eac88abb 2020-11-16)
+			`(?m)c (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
+		Package: "rust",
+		PURL:    mustPURL("pkg:generic/rust@version"),
+		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
 	},
 }

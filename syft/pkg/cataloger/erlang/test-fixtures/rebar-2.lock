@@ -1,0 +1,32 @@
+{"1.2.0",
+[{<<"bcrypt">>,{pkg,<<"bcrypt">>,<<"1.1.5">>},0},
+ {<<"bson">>,
+  {git,"https://github.com/comtihon/bson-erlang",
+       {ref,"14308ab927cfa69324742c3de720578094e0bb19"}},
+  1},
+ {<<"certifi">>,{pkg,<<"certifi">>,<<"2.9.0">>},1},
+ {<<"stdout_formatter">>,{pkg,<<"stdout_formatter">>,<<"0.2.3">>},0},
+ {<<"swc">>,
+  {git,"https://github.com/vernemq/ServerWideClocks.git",
+       {ref,"4835239dca5a5f4ac7202dd94d7effcaa617d575"}},
+  0},
+ {<<"syslog">>,{pkg,<<"syslog">>,<<"1.1.0">>},0},
+ {<<"unicode_util_compat">>,{pkg,<<"unicode_util_compat">>,<<"0.7.0">>},1},
+ {<<"vernemq_dev">>,
+  {git,"https://github.com/vernemq/vernemq_dev.git",
+       {ref,"6d622aa8c901ae7777433aef2bd049e380c474a6"}},
+  0}]}.
+[
+{pkg_hash,[
+ {<<"bcrypt">>, <<"A6763BD4E1AF46D34776F85B7995E63A02978DE110C077E9570ED17006E03386">>},
+ {<<"certifi">>, <<"6F2A475689DD47F19FB74334859D460A2DC4E3252A3324BD2111B8F0429E7E21">>},
+ {<<"stdout_formatter">>, <<"EC24868D8619757A68F0798357C7190807A1CFC42CE90C18C23760E59249A21A">>},
+ {<<"syslog">>, <<"6419A232BEA84F07B56DC575225007FFE34D9FDC91ABE6F1B2F254FD71D8EFC2">>},
+ {<<"unicode_util_compat">>, <<"BC84380C9AB48177092F43AC89E4DFA2C6D62B40B8BD132B1059ECC7232F9A78">>}]},
+{pkg_hash_ext,[
+ {<<"bcrypt">>, <<"3418821BC17CE6E96A4A77D1A88D7485BF783E212069FACFC79510AFBFF95352">>},
+ {<<"certifi">>, <<"266DA46BDB06D6C6D35FDE799BCB28D36D985D424AD7C08B5BB48F5B5CDD4641">>},
+ {<<"stdout_formatter">>, <<"6B9CAAD8930006F9BB35680C5D3311917AC67690C3AF1BA018623324C015ABE5">>},
+ {<<"syslog">>, <<"4C6A41373C7E20587BE33EF841D3DE6F3BEBA08519809329ECC4D27B15B659E1">>},
+ {<<"unicode_util_compat">>, <<"25EEE6D67DF61960CF6A794239566599B09E17E668D3700247BC498638152521">>}]}
+].

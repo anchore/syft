@@ -19,7 +19,7 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: RpmPkg,
 		},
 		{
-			purl:     "pkg:alpine/util-linux@2.32.1",
+			purl:     "pkg:apk/alpine/util-linux@2.32.1",
 			expected: ApkPkg,
 		},
 		{
@@ -78,6 +78,10 @@ func TestTypeFromPURL(t *testing.T) {
 		{
 			purl:     "pkg:hackage/HTTP@4000.3.16",
 			expected: HackagePkg,
+		},
+		{
+			purl:     "pkg:hex/hpax/hpax@0.1.1",
+			expected: HexPkg,
 		},
 	}
 

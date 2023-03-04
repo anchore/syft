@@ -24,7 +24,7 @@ import (
 )
 
 func Run(ctx context.Context, app *config.Application, args []string) error {
-	err := validateOutputOptions(app)
+	err := ValidateOutputOptions(app)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func MergeRelationships(cs ...<-chan artifact.Relationship) (relationships []art
 	return relationships
 }
 
-func validateOutputOptions(app *config.Application) error {
+func ValidateOutputOptions(app *config.Application) error {
 	var usesTemplateOutput bool
 	for _, o := range app.Outputs {
 		if o == template.ID.String() {

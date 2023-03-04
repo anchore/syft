@@ -1,0 +1,1 @@
+// bogus go.mod

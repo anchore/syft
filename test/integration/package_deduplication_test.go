@@ -22,13 +22,13 @@ func TestPackageDeduplication(t *testing.T) {
 	}{
 		{
 			scope:        source.AllLayersScope,
-			packageCount: 173, // without deduplication this would be 618
+			packageCount: 174, // without deduplication this would be 618
 			instanceCount: map[string]int{
 				"basesystem": 1,
 				"wget":       1,
 				"curl":       2, // upgraded in the image
 				"vsftpd":     1,
-				"httpd":      1,
+				"httpd":      2, // rpm, binary
 			},
 			locationCount: map[string]int{
 				"basesystem-10.0-7.el7.centos": 4,
@@ -37,17 +37,18 @@ func TestPackageDeduplication(t *testing.T) {
 				"wget-1.14-18.el7_6.1":         3,
 				"vsftpd-3.0.2-29.el7_9":        2,
 				"httpd-2.4.6-97.el7.centos.5":  1,
+				"httpd-2.4.6":                  1, // binary
 			},
 		},
 		{
 			scope:        source.SquashedScope,
-			packageCount: 171,
+			packageCount: 172,
 			instanceCount: map[string]int{
 				"basesystem": 1,
 				"wget":       1,
 				"curl":       1, // upgraded, but the most recent
 				"vsftpd":     1,
-				"httpd":      1,
+				"httpd":      2, // rpm, binary
 			},
 			locationCount: map[string]int{
 				"basesystem-10.0-7.el7.centos": 1,
@@ -55,6 +56,7 @@ func TestPackageDeduplication(t *testing.T) {
 				"wget-1.14-18.el7_6.1":         1,
 				"vsftpd-3.0.2-29.el7_9":        1,
 				"httpd-2.4.6-97.el7.centos.5":  1,
+				"httpd-2.4.6":                  1, // binary
 			},
 		},
 	}

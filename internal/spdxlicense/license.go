@@ -12,9 +12,22 @@ import (
 // EX: gpl-2.0.0-only ---> GPL-2.0-only
 // See the debian link for more details on the spdx license differences
 
+const (
+	LicenseRefPrefix = "LicenseRef-" // prefix for non-standard licenses
+)
+
 //go:generate go run ./generate
 
-func ID(id string) (string, bool) {
-	value, exists := licenseIDs[strings.ToLower(id)]
-	return value, exists
+func ID(id string) (value, other string, exists bool) {
+	id = strings.TrimSpace(id)
+	// ignore blank strings or the joiner
+	if id == "" || id == "AND" {
+		return "", "", false
+	}
+	// first look for a canonical license
+	if value, exists := licenseIDs[strings.ToLower(id)]; exists {
+		return value, "", exists
+	}
+	// we did not find, so treat it as a separate license
+	return "", id, true
 }

@@ -27,7 +27,7 @@
     },
     {
      "referenceCategory": "PACKAGE_MANAGER",
-     "referenceLocator": "pkg:alpine/busybox@1.30.1-r5?arch=x86_64&distro=alpine-3.10.9",
+     "referenceLocator": "pkg:apk/alpine/busybox@1.30.1-r5?arch=x86_64&distro=alpine-3.10.9",
      "referenceType": "purl"
     }
    ],
@@ -51,7 +51,7 @@
     },
     {
      "referenceCategory": "PACKAGE_MANAGER",
-     "referenceLocator": "pkg:alpine/libssl1.1@1.1.1k-r0?arch=x86_64&distro=alpine-3.10.9",
+     "referenceLocator": "pkg:apk/alpine/libssl1.1@1.1.1k-r0?arch=x86_64&distro=alpine-3.10.9",
      "referenceType": "purl"
     }
    ],
@@ -100,7 +100,7 @@
     },
     {
      "referenceCategory": "PACKAGE_MANAGER",
-     "referenceLocator": "pkg:alpine/ssl_client@1.30.1-r5?arch=x86_64&upstream=busybox&distro=alpine-3.10.9",
+     "referenceLocator": "pkg:apk/alpine/ssl_client@1.30.1-r5?arch=x86_64&upstream=busybox&distro=alpine-3.10.9",
      "referenceType": "purl"
     }
    ],

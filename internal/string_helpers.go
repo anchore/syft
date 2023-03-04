@@ -28,3 +28,10 @@ func StringInSlice(a string, list []string) bool {
 	}
 	return false
 }
+
+func SplitAny(s string, seps string) []string {
+	splitter := func(r rune) bool {
+		return strings.ContainsRune(seps, r)
+	}
+	return strings.FieldsFunc(s, splitter)
+}

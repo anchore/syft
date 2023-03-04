@@ -5,6 +5,7 @@ release:
 env:
   # required to support multi architecture docker builds
   - DOCKER_CLI_EXPERIMENTAL=enabled
+  - CGO_ENABLED=0
 
 builds:
   - id: linux-build
@@ -19,8 +20,6 @@ builds:
       - s390x
     # set the modified timestamp on the output binary to the git timestamp to ensure a reproducible build
     mod_timestamp: &build-timestamp '{{ .CommitTimestamp }}'
-    env: &build-env
-      - CGO_ENABLED=0
     ldflags: &build-ldflags |
       -w
       -s
@@ -39,7 +38,6 @@ builds:
       - amd64
       - arm64
     mod_timestamp: *build-timestamp
-    env: *build-env
     ldflags: *build-ldflags
     hooks:
       post:
@@ -55,7 +53,6 @@ builds:
     goarch:
       - amd64
     mod_timestamp: *build-timestamp
-    env: *build-env
     ldflags: *build-ldflags
 
 archives:

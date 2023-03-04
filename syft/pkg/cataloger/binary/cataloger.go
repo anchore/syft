@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -30,39 +31,61 @@ func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artif
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
-	for _, classifier := range defaultClassifiers {
-		locations, err := resolver.FilesByGlob(classifier.FileGlob)
+	for _, cls := range defaultClassifiers {
+		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
+		newPkgs, err := catalog(resolver, cls)
 		if err != nil {
-			return nil, nil, err
+			log.WithFields("error", err, "classifier", cls.Class).Warn("unable to catalog binary package: %w", err)
+			continue
 		}
-		for _, location := range locations {
-			reader, err := resolver.FileContentsByLocation(location)
-			if err != nil {
-				return nil, nil, err
-			}
-			locationReader := source.NewLocationReadCloser(location, reader)
-			newPkgs, err := classifier.EvidenceMatcher(classifier, locationReader)
-			if err != nil {
-				return nil, nil, err
-			}
-		newPackages:
-			for i := range newPkgs {
-				newPkg := &newPkgs[i]
-				for j := range packages {
-					p := &packages[j]
-					// consolidate identical packages found in different locations,
-					// but continue to track each location
-					if packagesMatch(p, newPkg) {
-						p.Locations.Add(newPkg.Locations.ToSlice()...)
-						continue newPackages
-					}
+	newPackages:
+		for i := range newPkgs {
+			newPkg := &newPkgs[i]
+			for j := range packages {
+				p := &packages[j]
+				// consolidate identical packages found in different locations or by different classifiers
+				if packagesMatch(p, newPkg) {
+					mergePackages(p, newPkg)
+					continue newPackages
 				}
-				packages = append(packages, *newPkg)
 			}
+			packages = append(packages, *newPkg)
 		}
 	}
 
 	return packages, relationships, nil
+}
+
+// mergePackages merges information from the extra package into the target package
+func mergePackages(target *pkg.Package, extra *pkg.Package) {
+	// add the locations
+	target.Locations.Add(extra.Locations.ToSlice()...)
+	// update the metadata to indicate which classifiers were used
+	meta, _ := target.Metadata.(pkg.BinaryMetadata)
+	if m, ok := extra.Metadata.(pkg.BinaryMetadata); ok {
+		meta.Matches = append(meta.Matches, m.Matches...)
+	}
+	target.Metadata = meta
+}
+
+func catalog(resolver source.FileResolver, cls classifier) (packages []pkg.Package, err error) {
+	locations, err := resolver.FilesByGlob(cls.FileGlob)
+	if err != nil {
+		return nil, err
+	}
+	for _, location := range locations {
+		reader, err := resolver.FileContentsByLocation(location)
+		if err != nil {
+			return nil, err
+		}
+		locationReader := source.NewLocationReadCloser(location, reader)
+		pkgs, err := cls.EvidenceMatcher(cls, locationReader)
+		if err != nil {
+			return nil, err
+		}
+		packages = append(packages, pkgs...)
+	}
+	return packages, nil
 }
 
 // packagesMatch returns true if the binary packages "match" based on basic criteria

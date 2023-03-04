@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -99,20 +100,37 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:william_goodman:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:william_goodman:python-name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:william_goodman:python_name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodman_project:python_name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodman_project:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodman_project:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodmanproject:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodmanproject:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:alex_goodmanproject:python_name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodman_project:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodman_project:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodman_project:python_name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodmanproject:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodmanproject:python-name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:william_goodmanproject:python_name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
 			name: "javascript language",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.JavaScript,
-				Type:     pkg.DebPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Author: "jon",
+					URL:    "https://github.com/bob/npm-name",
+				},
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jon:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:bob:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -129,10 +147,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 						"someones name",
 						"someones.elses.name@gmail.com",
 					},
+					Homepage: "https://github.com/tom/ruby-name",
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:*:*:*",
@@ -141,6 +159,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:someones-name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:someones_elses_name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:someones_name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:tom:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -278,36 +297,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:apache-software-foundation:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:apache-software-foundation:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:apache-software-foundation:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:apache:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:apache:cxf:3.3.10:*:*:*:*:*:*:*",
 				"cpe:2.3:a:apache:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:apache_software_foundation:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:apache_software_foundation:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:apache_software_foundation:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt-bindings-xml:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt-bindings-xml:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt-bindings-xml:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt-bindings:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt-bindings:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt-bindings:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf-rt:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt_bindings:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt_bindings:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt_bindings:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt_bindings_xml:cxf-rt-bindings-xml:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt_bindings_xml:cxf:3.3.10:*:*:*:*:*:*:*",
-				"cpe:2.3:a:cxf_rt_bindings_xml:cxf_rt_bindings_xml:3.3.10:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -655,7 +647,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:*:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:bundler:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:bundler:2.1.4:*:*:*:*:*:*:*",
@@ -687,6 +678,42 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:python_redis:redis:2.1.4:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "regression: ruby-rake apk missing expected ruby-lang:rake CPE",
+			p: pkg.Package{
+				Name:         "ruby-rake",
+				Version:      "2.7.6-r0",
+				Type:         pkg.ApkPkg,
+				FoundBy:      "apk-db-analyzer",
+				Language:     pkg.UnknownLanguage,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "ruby-rake",
+					URL:           "https://www.ruby-lang.org/",
+					OriginPackage: "ruby",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:ruby-lang:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-lang:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-lang:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -696,7 +723,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
 			for _, a := range actual {
-				actualCpeSet.Add(pkg.CPEString(a))
+				actualCpeSet.Add(cpe.String(a))
 			}
 
 			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()
@@ -837,7 +864,7 @@ func TestCandidateVendor(t *testing.T) {
 				Name: "log4j",
 				Type: pkg.JavaPkg,
 			},
-			expected: []string{"apache" /* <-- known good names | default guess --> */, "log4j"},
+			expected: []string{"apache"},
 		},
 	}
 

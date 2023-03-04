@@ -38,9 +38,11 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Debian (dpkg)
 - Dotnet (deps.json)
 - Objective-C (cocoapods)
+- Elixir (mix)
+- Erlang (rebar3)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar)
+- Java (jar, ear, war, par, sar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
 - PHP (composer)
@@ -75,13 +77,12 @@ choco install syft -y
 
 ### Homebrew
 ```bash
-brew tap anchore/syft
 brew install syft
 ```
 
 ### Nix
 
-**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix). Syft is currently only in the [unstable channel](https://nixos.wiki/wiki/Nix_channels#The_official_channels) awaiting the `22.05` release
+**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix). Syft is available in the [stable channel](https://nixos.wiki/wiki/Nix_channels#The_official_channels) since NixOS `22.05`.
 
 ```bash
 nix-env -i syft
@@ -366,6 +367,8 @@ syft convert sbom.syft.json -o cyclonedx-json=sbom.cdx.json  # convert it to Cyc
 ### Keyless support
 Syft supports generating attestations using cosign's [keyless](https://github.com/sigstore/cosign/blob/main/KEYLESS.md) signatures.
 
+Note: users need to have >= v1.12.0 of cosign installed for this command to function
+
 To use this feature with a format like CycloneDX json simply run:
 ```
 syft attest --output cyclonedx-json <IMAGE WITH OCI WRITE ACCESS>
@@ -522,6 +525,9 @@ file-metadata:
   # the file digest algorithms to use when cataloging files (options: "sha256", "md5", "sha1")
   # SYFT_FILE_METADATA_DIGESTS env var
   digests: ["sha256"]
+
+# maximum number of workers used to process the list of package catalogers in parallel
+parallelism: 1
 
 # cataloging secrets is exposed through the power-user subcommand
 secrets:

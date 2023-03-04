@@ -221,6 +221,14 @@ func Test_unpackMetadata(t *testing.T) {
 			wantMetadata: pkg.GolangBinMetadata{},
 		},
 		{
+			name: "can handle package with golang bin metadata type",
+			packageData: []byte(`{
+				"metadataType": "GolangBinMetadata"
+			}`),
+			metadataType: pkg.GolangBinMetadataType,
+			wantMetadata: pkg.GolangBinMetadata{},
+		},
+		{
 			name: "can handle package with unknonwn metadata type and missing metadata",
 			packageData: []byte(`{
 				"metadataType": "BadMetadata"

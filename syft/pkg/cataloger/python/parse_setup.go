@@ -43,8 +43,13 @@ func parseSetup(_ source.FileResolver, _ *generic.Environment, reader source.Loc
 			version := strings.TrimSpace(parts[len(parts)-1])
 			version = strings.Trim(version, "'\"")
 
+			if hasTemplateDirective(name) || hasTemplateDirective(version) {
+				// this can happen in more dynamic setup.py where there is templating
+				continue
+			}
+
 			if name == "" || version == "" {
-				log.WithFields("path", reader.RealPath).Warnf("unable to parse package in setup.py line: %q", line)
+				log.WithFields("path", reader.RealPath).Debugf("unable to parse package in setup.py line: %q", line)
 				continue
 			}
 
@@ -53,4 +58,8 @@ func parseSetup(_ source.FileResolver, _ *generic.Environment, reader source.Loc
 	}
 
 	return packages, nil, nil
+}
+
+func hasTemplateDirective(s string) bool {
+	return strings.Contains(s, `%s`) || strings.Contains(s, `{`) || strings.Contains(s, `}`)
 }

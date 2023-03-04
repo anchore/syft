@@ -1,0 +1,35 @@
+P:alpine-baselayout-data
+V:3.4.0-r0
+A:x86_64
+L:GPL-2.0-only
+T:Alpine base dir structure and init scripts
+o:alpine-baselayout
+m:Natanael Copa <ncopa@alpinelinux.org>
+U:https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout
+D:
+p:
+c:bd965a7ebf7fd8f07d7a0cc0d7375bf3e4eb9b24
+i:[]
+t:1667573027
+S:11664
+I:77824
+k:0
+C:Q15ffjKT28lB7iSXjzpI/eDdYRCwM=
+F:etc
+R:fstab
+R:group
+R:hostname
+R:hosts
+R:inittab
+R:modules
+R:mtab
+a:0:0:0777
+R:nsswitch.conf
+R:passwd
+R:profile
+R:protocols
+R:services
+R:shadow
+a:0:148:0640
+R:shells
+R:sysctl.conf

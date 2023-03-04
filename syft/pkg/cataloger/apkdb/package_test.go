@@ -20,7 +20,7 @@ func Test_PackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "bad distro",
+			name: "non-alpine distro",
 			metadata: pkg.ApkMetadata{
 				Package:      "p",
 				Version:      "v",
@@ -30,7 +30,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "something else",
 				VersionID: "3.4.6",
 			},
-			expected: "",
+			expected: "pkg:apk/something%20else/p@v?arch=a&distro=something%20else-3.4.6",
 		},
 		{
 			name: "gocase",
@@ -43,7 +43,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/p@v?arch=a&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/p@v?arch=a&distro=alpine-3.4.6",
 		},
 		{
 			name: "missing architecture",
@@ -55,7 +55,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/p@v?distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/p@v?distro=alpine-3.4.6",
 		},
 		// verify #351
 		{
@@ -68,7 +68,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
 			metadata: pkg.ApkMetadata{
@@ -80,7 +80,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.15.0",
 			},
-			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
+			expected: "pkg:apk/alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
 		},
 		{
 			name: "add source information as qualifier",
@@ -94,7 +94,20 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
+		},
+		{
+			name: "wolfi distro",
+			metadata: pkg.ApkMetadata{
+				Package:      "p",
+				Version:      "v",
+				Architecture: "a",
+			},
+			distro: linux.Release{
+				ID:        "wolfi",
+				VersionID: "20221230",
+			},
+			expected: "pkg:apk/wolfi/p@v?arch=a&distro=wolfi-20221230",
 		},
 	}
 

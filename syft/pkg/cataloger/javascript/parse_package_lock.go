@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -24,6 +25,39 @@ type packageLock struct {
 	Packages        map[string]lockPackage
 }
 
+// packageLockLicense
+type packageLockLicense []string
+
+func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {
+	// The license field could be either a string or an array.
+
+	// 1. An array
+	var arr []string
+	if err := json.Unmarshal(data, &arr); err == nil {
+		*licenses = arr
+		return nil
+	}
+
+	// 2. A string
+	var str string
+	if err = json.Unmarshal(data, &str); err == nil {
+		*licenses = make([]string, 1)
+		(*licenses)[0] = str
+		return nil
+	}
+
+	// debug the content we did not expect
+	if len(data) > 0 {
+		log.WithFields("license", string(data)).Debug("Unable to parse the following `license` value in package-lock.json")
+	}
+
+	// 3. Unexpected
+	// In case we are unable to parse the license field,
+	// i.e if we have not covered the full specification,
+	// we do not want to throw an error, instead assign nil.
+	return nil
+}
+
 // lockDependency represents a single package dependency listed in the package.lock json file
 type lockDependency struct {
 	Version   string `json:"version"`
@@ -32,11 +66,11 @@ type lockDependency struct {
 }
 
 type lockPackage struct {
-	Name      string `json:"name"` // only present in the root package entry (named "")
-	Version   string `json:"version"`
-	Resolved  string `json:"resolved"`
-	Integrity string `json:"integrity"`
-	License   string `json:"license"`
+	Name      string             `json:"name"` // only present in the root package entry (named "")
+	Version   string             `json:"version"`
+	Resolved  string             `json:"resolved"`
+	Integrity string             `json:"integrity"`
+	License   packageLockLicense `json:"license"`
 }
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.

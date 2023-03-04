@@ -32,6 +32,7 @@ type Source struct {
 	Metadata          Metadata
 	directoryResolver *directoryResolver `hash:"ignore"`
 	path              string
+	base              string
 	mutex             *sync.Mutex
 	Exclusions        []string `hash:"ignore"`
 }
@@ -252,6 +253,11 @@ func NewFromDirectory(path string) (Source, error) {
 	return NewFromDirectoryWithName(path, "")
 }
 
+// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
+func NewFromDirectoryRoot(path string) (Source, error) {
+	return NewFromDirectoryRootWithName(path, "")
+}
+
 // NewFromDirectoryWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
 func NewFromDirectoryWithName(path string, name string) (Source, error) {
 	s := Source{
@@ -262,6 +268,23 @@ func NewFromDirectoryWithName(path string, name string) (Source, error) {
 			Path:   path,
 		},
 		path: path,
+	}
+	s.SetID()
+	return s, nil
+}
+
+// NewFromDirectoryRootWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryRootWithName(path string, name string) (Source, error) {
+	s := Source{
+		mutex: &sync.Mutex{},
+		Metadata: Metadata{
+			Name:   name,
+			Scheme: DirectoryScheme,
+			Path:   path,
+			Base:   path,
+		},
+		path: path,
+		base: path,
 	}
 	s.SetID()
 	return s, nil
@@ -301,6 +324,12 @@ func fileAnalysisPath(path string) (string, func()) {
 	// unarchived.
 	envelopedUnarchiver, err := archiver.ByExtension(path)
 	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
+		if tar, ok := unarchiver.(*archiver.Tar); ok {
+			// when tar files are extracted, if there are multiple entries at the same
+			// location, the last entry wins
+			// NOTE: this currently does not display any messages if an overwrite happens
+			tar.OverwriteExisting = true
+		}
 		unarchivedPath, tmpCleanup, err := unarchiveToTmp(path, unarchiver)
 		if err != nil {
 			log.Warnf("file could not be unarchived: %+v", err)
@@ -422,7 +451,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			resolver, err := newDirectoryResolver(s.path, exclusionFunctions...)
+			resolver, err := newDirectoryResolver(s.path, s.base, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}
@@ -489,7 +518,7 @@ func getImageExclusionFunction(exclusions []string) func(string) bool {
 	}
 }
 
-func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFilterFn, error) {
+func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}
@@ -522,20 +551,23 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 		return nil, fmt.Errorf("invalid exclusion pattern(s): '%s' (must start with one of: './', '*/', or '**/')", strings.Join(errors, "', '"))
 	}
 
-	return []pathFilterFn{
-		func(path string, _ os.FileInfo) bool {
+	return []pathIndexVisitor{
+		func(path string, info os.FileInfo, _ error) error {
 			for _, exclusion := range exclusions {
 				// this is required to handle Windows filepaths
 				path = filepath.ToSlash(path)
 				matches, err := doublestar.Match(exclusion, path)
 				if err != nil {
-					return false
+					return nil
 				}
 				if matches {
-					return true
+					if info != nil && info.IsDir() {
+						return filepath.SkipDir
+					}
+					return errSkipPath
 				}
 			}
-			return false
+			return nil
 		},
 	}, nil
 }

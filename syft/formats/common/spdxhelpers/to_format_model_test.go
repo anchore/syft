@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/spdx/tools-golang/spdx/common"
-	spdx "github.com/spdx/tools-golang/spdx/v2_3"
+	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -20,7 +20,7 @@ func Test_toPackageChecksums(t *testing.T) {
 	tests := []struct {
 		name          string
 		pkg           pkg.Package
-		expected      []common.Checksum
+		expected      []spdx.Checksum
 		filesAnalyzed bool
 	}{
 		{
@@ -38,7 +38,7 @@ func Test_toPackageChecksums(t *testing.T) {
 					},
 				},
 			},
-			expected: []common.Checksum{
+			expected: []spdx.Checksum{
 				{
 					Algorithm: "SHA1",
 					Value:     "1234",
@@ -56,7 +56,7 @@ func Test_toPackageChecksums(t *testing.T) {
 					ArchiveDigests: []file.Digest{},
 				},
 			},
-			expected:      []common.Checksum{},
+			expected:      []spdx.Checksum{},
 			filesAnalyzed: false,
 		},
 		{
@@ -66,7 +66,7 @@ func Test_toPackageChecksums(t *testing.T) {
 				Version:  "1.0.0",
 				Language: pkg.Java,
 			},
-			expected:      []common.Checksum{},
+			expected:      []spdx.Checksum{},
 			filesAnalyzed: false,
 		},
 		{
@@ -80,7 +80,7 @@ func Test_toPackageChecksums(t *testing.T) {
 					H1Digest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
 				},
 			},
-			expected: []common.Checksum{
+			expected: []spdx.Checksum{
 				{
 					Algorithm: "SHA256",
 					Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
@@ -96,7 +96,7 @@ func Test_toPackageChecksums(t *testing.T) {
 				Language: pkg.Java,
 				Metadata: struct{}{},
 			},
-			expected:      []common.Checksum{},
+			expected:      []spdx.Checksum{},
 			filesAnalyzed: false,
 		},
 	}
@@ -228,7 +228,7 @@ func Test_toFileChecksums(t *testing.T) {
 	tests := []struct {
 		name     string
 		digests  []file.Digest
-		expected []common.Checksum
+		expected []spdx.Checksum
 	}{
 		{
 			name: "empty",
@@ -245,7 +245,7 @@ func Test_toFileChecksums(t *testing.T) {
 					Value:     "meh",
 				},
 			},
-			expected: []common.Checksum{
+			expected: []spdx.Checksum{
 				{
 					Algorithm: "SHA256",
 					Value:     "deadbeefcafe",
@@ -274,8 +274,8 @@ func Test_fileIDsForPackage(t *testing.T) {
 		FileSystemID: "nowhere",
 	}
 
-	docElementId := func(identifiable artifact.Identifiable) common.DocElementID {
-		return common.DocElementID{
+	docElementId := func(identifiable artifact.Identifiable) spdx.DocElementID {
+		return spdx.DocElementID{
 			ElementRefID: toSPDXID(identifiable),
 		}
 	}
@@ -369,6 +369,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 }
 
 func Test_H1Digest(t *testing.T) {
+	sbom := sbom.SBOM{}
 	tests := []struct {
 		name           string
 		pkg            pkg.Package
@@ -415,7 +416,7 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCatalog(test.pkg)
-			pkgs := toPackages(catalog)
+			pkgs := toPackages(catalog, sbom)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
 				if test.expectedDigest == "" {

@@ -45,7 +45,17 @@ func packageURL(m pkg.DotnetDepsMetadata) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(
-		packageurl.TypeDotnet,
+		// This originally was packageurl.TypeDotnet, but this isn't a valid PURL type, according to:
+		// https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst
+		// Some history:
+		//   https://github.com/anchore/packageurl-go/pull/8 added the type to Anchore's fork
+		//   due to this PR: https://github.com/anchore/syft/pull/951
+		// There were questions about "dotnet" being the right purlType at the time, but it was
+		// acknowledged that scanning a dotnet file does not necessarily mean the packages found
+		// are nuget packages and so the alternate type was added. Since this is still an invalid
+		// PURL type, however, we will use TypeNuget and revisit at such time there is a better
+		// official PURL type available.
+		packageurl.TypeNuget,
 		"",
 		m.Name,
 		m.Version,
