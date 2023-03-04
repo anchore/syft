@@ -78,48 +78,12 @@ func parserBuildGradle(_ source.FileResolver, _ *generic.Environment, reader sou
 
 		// Check if we are in the plugins section
 		if inPluginsSection {
-			// Split the line on whitespace to extract the group, name, and version of the dependency
-			fields := strings.Fields(line)
-			// Check if the line contains at least 3 fields (group, version as a literal string, and version as the version number)
-			if len(fields) >= 3 {
-				start := strings.Index(fields[0], "(") + 1
-				end := strings.Index(fields[0], ")")
-				groupName := fields[0][start:end]
-				groupName = strings.Trim(groupName, `"`)
-				version := strings.Trim(fields[2], `"`)
-				// Create a new Dependency struct and add it to the dependencies slice
-				plugin := Plugin{Id: groupName, Version: version}
-				plugins = append(plugins, plugin)
-			}
+			plugins = extractPlugins(line, plugins)
 		}
 
 		// Check if we are in the dependencies section
 		if inDependenciesSection {
-			// Extract the group, name, and version from the function call
-			start := strings.IndexFunc(line, func(r rune) bool {
-				return r == '(' || r == ' '
-			}) + 1
-			// Extract the group, name, and version from the function call
-			end := strings.IndexFunc(line, func(r rune) bool {
-				return r == ')' || r == ' '
-			})
-			groupNameVersion := line[start:end]
-			groupNameVersion = strings.Trim(groupNameVersion, "\"")
-			parts := strings.Split(groupNameVersion, ":")
-			// if we only have 2 sections the version is probably missing
-			if len(parts) == 2 {
-				// search for the version in the plugin section
-				version := searchInPlugins(parts[0], plugins)
-				// Create a new Dependency struct and add it to the dependencies slice
-				dep := Dependency{Group: parts[0], Name: parts[1], Version: version}
-				dependencies = append(dependencies, dep)
-			}
-			// we have a version directly specified
-			if len(parts) == 3 {
-				// Create a new Dependency struct and add it to the dependencies slice
-				dep := Dependency{Group: parts[0], Name: parts[1], Version: parts[2]}
-				dependencies = append(dependencies, dep)
-			}
+			dependencies = extractDependencies(line, plugins, dependencies)
 		}
 
 		// Check if the line contains an assignment
@@ -138,11 +102,81 @@ func parserBuildGradle(_ source.FileResolver, _ *generic.Environment, reader sou
 	}
 	// map the dependencies
 	for _, dep := range dependencies {
-		mappedPkg := pkg.Package{Name: dep.Name, Version: dep.Version}
+		mappedPkg := pkg.Package{
+			Name:         dep.Name,
+			Version:      dep.Version,
+			Locations:    source.NewLocationSet(reader.Location),
+			Language:     pkg.Java,
+			Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a Gradle.xml that were not installed yet?
+			MetadataType: pkg.JavaMetadataType,
+		}
 		pkgs = append(pkgs, mappedPkg)
 	}
 
 	return pkgs, nil, nil
+}
+
+func extractPlugins(line string, plugins []Plugin) []Plugin {
+	// Split the line on whitespace to extract the group, name, and version of the dependency
+	fields := strings.Fields(line)
+	// Check if the line contains at least 3 fields (group, version as a literal string, and version as the version number)
+	if len(fields) >= 3 {
+		start := strings.Index(fields[0], "(") + 1
+		end := strings.Index(fields[0], ")")
+		groupName := fields[0][start:end]
+		groupName = strings.Trim(groupName, `"`)
+		version := strings.Trim(fields[2], `"`)
+		// Create a new Dependency struct and add it to the dependencies slice
+		plugin := Plugin{Id: groupName, Version: version}
+		plugins = append(plugins, plugin)
+	}
+	return plugins
+}
+
+func extractDependencies(line string, plugins []Plugin, dependencies []Dependency) []Dependency {
+	/*
+	 * Extract the group, name, and version from the function call
+	 * there are different strategies for groovy and kotlin in this case
+	 * for kotlin dependencies are enclosed in round brackets
+	 * for groovy they begin and end with quotation marks
+	 * so we first check for the starting line for the groovy or kotlin starting rune
+	 * after that we just check for the kotlin part and if it don't match we can expect to find the last index via the last quotation mark
+	 * we probably could just take the end of the string but it was too dangerous for me as I don't know all features gradle allows when declaring dependencies
+	 */
+	start := strings.IndexFunc(line, func(r rune) bool {
+		return r == '(' || r == ' '
+	}) + 1
+	end := strings.IndexFunc(line, func(r rune) bool {
+		return r == ')'
+	})
+	if end == -1 {
+		end = strings.LastIndexFunc(line, func(r rune) bool {
+			return r == '"'
+		})
+	}
+	// split the dependency string
+	groupNameVersion := line[start:end]
+	groupNameVersion = strings.Trim(groupNameVersion, "\"")
+	parts := strings.Split(groupNameVersion, ":")
+	// if we only have 2 sections the version is probably missing
+	// search for the version in the plugin section
+	// Create a new Dependency struct and add it to the dependencies slice
+	// we have a version directly specified
+	// Create a new Dependency struct and add it to the dependencies slice
+	if len(parts) == 2 {
+
+		version := searchInPlugins(parts[0], plugins)
+
+		dep := Dependency{Group: parts[0], Name: parts[1], Version: version}
+		dependencies = append(dependencies, dep)
+	}
+
+	if len(parts) == 3 {
+
+		dep := Dependency{Group: parts[0], Name: parts[1], Version: parts[2]}
+		dependencies = append(dependencies, dep)
+	}
+	return dependencies
 }
 
 func searchInPlugins(groupName string, plugins []Plugin) string {

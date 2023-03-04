@@ -55,7 +55,14 @@ func parserGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader 
 	}
 	// map the dependencies
 	for _, dep := range dependencies {
-		mappedPkg := pkg.Package{Name: dep.Name, Version: dep.Version}
+		mappedPkg := pkg.Package{
+			Name:         dep.Name,
+			Version:      dep.Version,
+			Locations:    source.NewLocationSet(reader.Location),
+			Language:     pkg.Java,
+			Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a Gradle.xml that were not installed yet?
+			MetadataType: pkg.JavaMetadataType,
+		}
 		pkgs = append(pkgs, mappedPkg)
 	}
 
