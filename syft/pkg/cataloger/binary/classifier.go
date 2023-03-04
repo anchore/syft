@@ -141,32 +141,34 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evide
 			return nil, err
 		}
 		for _, lib := range libs {
-			if pat.MatchString(lib) {
-				locations, err := resolver.FilesByGlob("**/" + lib)
+			if !pat.MatchString(lib) {
+				continue
+			}
+
+			locations, err := resolver.FilesByGlob("**/" + lib)
+			if err != nil {
+				return nil, err
+			}
+			for _, libraryLication := range locations {
+				pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLication)
 				if err != nil {
 					return nil, err
 				}
-				for _, libraryLication := range locations {
-					pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLication)
-					if err != nil {
-						return nil, err
+				for _, p := range pkgs {
+					// set the source binary as the first location
+					locationSet := source.NewLocationSet(location)
+					locationSet.Add(p.Locations.ToSlice()...)
+					p.Locations = locationSet
+					meta, _ := p.Metadata.(pkg.BinaryMetadata)
+					p.Metadata = pkg.BinaryMetadata{
+						Matches: append([]pkg.ClassifierMatch{
+							{
+								Classifier: classifier.Class,
+								Location:   location,
+							},
+						}, meta.Matches...),
 					}
-					for _, p := range pkgs {
-						// set the source binary as the first location
-						locationSet := source.NewLocationSet(location)
-						locationSet.Add(p.Locations.ToSlice()...)
-						p.Locations = locationSet
-						meta, _ := p.Metadata.(pkg.BinaryMetadata)
-						p.Metadata = pkg.BinaryMetadata{
-							Matches: append([]pkg.ClassifierMatch{
-								{
-									Classifier: classifier.Class,
-									Location:   location,
-								},
-							}, meta.Matches...),
-						}
-						packages = append(packages, p)
-					}
+					packages = append(packages, p)
 				}
 			}
 		}
