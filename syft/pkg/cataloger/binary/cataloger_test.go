@@ -323,8 +323,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Locations: locations("python3", "libpython3.11.so.1.0"),
 				Metadata: pkg.BinaryMetadata{
 					Matches: []pkg.ClassifierMatch{
-						match("python-binary"),
-						match("python-binary-lib"),
+						match("python-binary", "python3"),
+						match("python-binary", "libpython3.11.so.1.0"),
+						match("python-binary-lib", "libpython3.11.so.1.0"),
 					},
 				},
 			},

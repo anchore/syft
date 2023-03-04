@@ -54,19 +54,12 @@ type classifier struct {
 }
 
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
+type evidenceMatcher func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error)
 
 func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
-	return func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
-		for i, matcher := range matchers {
-			if i > 0 {
-				readCloser, err := resolver.FileContentsByLocation(reader.Location)
-				if err != nil {
-					return nil, err
-				}
-				reader = source.NewLocationReadCloser(reader.Location, readCloser)
-			}
-			match, err := matcher(resolver, classifier, reader)
+	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+		for _, matcher := range matchers {
+			match, err := matcher(resolver, classifier, location)
 			if err != nil {
 				return nil, err
 			}
@@ -80,12 +73,12 @@ func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
 
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(_ source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
-		if !pat.MatchString(reader.RealPath) {
+	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+		if !pat.MatchString(location.RealPath) {
 			return nil, nil
 		}
 
-		filepathNamedGroupValues := internal.MatchNamedCaptureGroups(pat, reader.RealPath)
+		filepathNamedGroupValues := internal.MatchNamedCaptureGroups(pat, location.RealPath)
 
 		tmpl, err := template.New("").Parse(contentTemplate)
 		if err != nil {
@@ -103,26 +96,26 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 			return nil, fmt.Errorf("unable to compile rendered regex=%q: %w", patternBuf.String(), err)
 		}
 
-		contents, err := getContents(reader)
+		contents, err := getContents(resolver, location)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
-		return singlePackage(classifier, reader, matchMetadata), nil
+		return singlePackage(classifier, location, matchMetadata), nil
 	}
 }
 
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(_ source.FileResolver, classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
-		contents, err := getContents(reader)
+	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+		contents, err := getContents(resolver, location)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
-		return singlePackage(classifier, reader, matchMetadata), nil
+		return singlePackage(classifier, location, matchMetadata), nil
 	}
 }
 
@@ -133,8 +126,8 @@ func isExecutable(mode os.FileMode) bool {
 //nolint:gocognit
 func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
-	return func(resolver source.FileResolver, classifier classifier, reader source.LocationReadCloser) (packages []pkg.Package, _ error) {
-		meta, err := resolver.FileMetadataByLocation(reader.Location)
+	return func(resolver source.FileResolver, classifier classifier, location source.Location) (packages []pkg.Package, _ error) {
+		meta, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +136,7 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evide
 			return nil, nil
 		}
 
-		libs, err := sharedLibraries(reader)
+		libs, err := sharedLibraries(resolver, location)
 		if err != nil {
 			return nil, err
 		}
@@ -153,25 +146,25 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evide
 				if err != nil {
 					return nil, err
 				}
-				for _, location := range locations {
-					readCloser, err := resolver.FileContentsByLocation(location)
-					if err != nil {
-						return nil, err
-					}
-					if readCloser == nil {
-						log.Debug("unable to get reader for location: %+v", location)
-						continue
-					}
-					locationReader := source.NewLocationReadCloser(location, readCloser)
-					pkgs, err := sharedLibraryMatcher(resolver, classifier, locationReader)
+				for _, libraryLication := range locations {
+					pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLication)
 					if err != nil {
 						return nil, err
 					}
 					for _, p := range pkgs {
 						// set the source binary as the first location
-						locationSet := source.NewLocationSet(reader.Location)
+						locationSet := source.NewLocationSet(location)
 						locationSet.Add(p.Locations.ToSlice()...)
 						p.Locations = locationSet
+						meta, _ := p.Metadata.(pkg.BinaryMetadata)
+						p.Metadata = pkg.BinaryMetadata{
+							Matches: append([]pkg.ClassifierMatch{
+								{
+									Classifier: classifier.Class,
+									Location:   location,
+								},
+							}, meta.Matches...),
+						}
 						packages = append(packages, p)
 					}
 				}
@@ -189,7 +182,7 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func singlePackage(classifier classifier, reader source.LocationReadCloser, matchMetadata map[string]string) []pkg.Package {
+func singlePackage(classifier classifier, location source.Location, matchMetadata map[string]string) []pkg.Package {
 	version, ok := matchMetadata["version"]
 	if !ok {
 		return nil
@@ -207,7 +200,7 @@ func singlePackage(classifier classifier, reader source.LocationReadCloser, matc
 	p := pkg.Package{
 		Name:         classifier.Package,
 		Version:      version,
-		Locations:    source.NewLocationSet(reader.Location),
+		Locations:    source.NewLocationSet(location),
 		Type:         pkg.BinaryPkg,
 		CPEs:         cpes,
 		FoundBy:      catalogerName,
@@ -216,7 +209,7 @@ func singlePackage(classifier classifier, reader source.LocationReadCloser, matc
 			Matches: []pkg.ClassifierMatch{
 				{
 					Classifier: classifier.Class,
-					Location:   reader.Location,
+					Location:   location,
 				},
 			},
 		},
@@ -241,7 +234,13 @@ func singlePackage(classifier classifier, reader source.LocationReadCloser, matc
 	return []pkg.Package{p}
 }
 
-func getContents(reader source.LocationReadCloser) ([]byte, error) {
+func getContents(resolver source.FileResolver, location source.Location) ([]byte, error) {
+	readCloser, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		return nil, err
+	}
+	reader := source.NewLocationReadCloser(location, readCloser)
+
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
@@ -265,8 +264,8 @@ func singleCPE(cpeString string) []cpe.CPE {
 
 // sharedLibraries returns a list of all shared libraries found within a binary, currently
 // supporting: elf, macho, and windows pe
-func sharedLibraries(reader source.LocationReadCloser) ([]string, error) {
-	contents, err := io.ReadAll(reader)
+func sharedLibraries(resolver source.FileResolver, location source.Location) ([]string, error) {
+	contents, err := getContents(resolver, location)
 	if err != nil {
 		return nil, err
 	}
