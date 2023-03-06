@@ -369,7 +369,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 }
 
 func Test_H1Digest(t *testing.T) {
-	sbom := sbom.SBOM{}
+	s := sbom.SBOM{}
 	tests := []struct {
 		name           string
 		pkg            pkg.Package
@@ -416,7 +416,7 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCatalog(test.pkg)
-			pkgs := toPackages(catalog, sbom)
+			pkgs := toPackages(catalog, s)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
 				if test.expectedDigest == "" {
@@ -428,6 +428,70 @@ func Test_H1Digest(t *testing.T) {
 					}
 				}
 			}
+		})
+	}
+}
+
+func Test_OtherLicenses(t *testing.T) {
+	tests := []struct {
+		name     string
+		pkg      pkg.Package
+		expected []*spdx.OtherLicense
+	}{
+		{
+			name: "no licenseRef",
+			pkg: pkg.Package{
+				Licenses: []string{
+					"MIT",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "single licenseRef",
+			pkg: pkg.Package{
+				Licenses: []string{
+					"un known",
+				},
+			},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-un-known",
+					LicenseName:       "un known",
+					ExtractedText:     NONE,
+				},
+			},
+		},
+		{
+			name: "multiple licenseRef",
+			pkg: pkg.Package{
+				Licenses: []string{
+					"un known",
+					"not known %s",
+					"MIT",
+				},
+			},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-un-known",
+					LicenseName:       "un known",
+					ExtractedText:     NONE,
+				},
+				{
+					LicenseIdentifier: "LicenseRef-not-known--s",
+					LicenseName:       "not known %s",
+					ExtractedText:     NONE,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			catalog := pkg.NewCatalog(test.pkg)
+			otherLicenses := toOtherLicenses(catalog)
+			require.Len(t, otherLicenses, len(test.expected))
+			require.Equal(t, test.expected, otherLicenses)
 		})
 	}
 }
