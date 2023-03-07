@@ -117,15 +117,20 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "javascript language",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.JavaScript,
-				Type:     pkg.DebPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Author: "jon",
+					URL:    "https://github.com/bob/npm-name",
+				},
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jon:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:bob:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -142,10 +147,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 						"someones name",
 						"someones.elses.name@gmail.com",
 					},
+					Homepage: "https://github.com/tom/ruby-name",
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:*:*:*",
@@ -154,6 +159,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:someones-name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:someones_elses_name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:someones_name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:tom:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -641,7 +647,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:*:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:bundler:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:bundler:2.1.4:*:*:*:*:*:*:*",

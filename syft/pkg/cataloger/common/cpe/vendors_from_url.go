@@ -21,7 +21,7 @@ var (
 	}
 
 	vendorExtractionPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`^https://(?:github|gitlab)\.com/(?P<vendor>[\w\-]*?)/.*$`),
+		regexp.MustCompile(`^(?:https|http|git)://(?:github|gitlab)\.com/(?P<vendor>[\w\-]*?)/.*$`),
 	}
 )
 

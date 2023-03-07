@@ -514,8 +514,8 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 
 func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
-	for _, pkg := range catalog.Sorted() {
-		for _, license := range parseLicenses(pkg.Licenses) {
+	for _, p := range catalog.Sorted() {
+		for _, license := range parseLicenses(p.Licenses) {
 			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
 				licenses[license] = true
 			}
@@ -526,7 +526,7 @@ func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 		// separate the actual ID from the prefix
 		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: license,
+			LicenseIdentifier: SanitizeElementID(license),
 			LicenseName:       name,
 			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
 		})

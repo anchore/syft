@@ -189,6 +189,10 @@ fingerprints:
 	cd test/integration/test-fixtures && \
 		make cache.fingerprint
 
+	# for BINARY test fixtures
+	cd syft/pkg/cataloger/binary/test-fixtures && \
+		make cache.fingerprint
+
 	# for JAVA BUILD test fixtures
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
 		make packages.fingerprint
@@ -214,6 +218,7 @@ fixtures:
 	$(call title,Generating test fixtures)
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && make
 	cd syft/pkg/cataloger/rpm/test-fixtures && make
+	cd syft/pkg/cataloger/binary/test-fixtures && make
 
 .PHONY: show-test-image-cache
 show-test-image-cache:  ## Show all docker and image tar cache
