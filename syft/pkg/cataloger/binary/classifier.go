@@ -7,7 +7,6 @@ import (
 	"debug/pe"
 	"fmt"
 	"io"
-	"os"
 	"reflect"
 	"regexp"
 	"text/template"
@@ -119,23 +118,10 @@ func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	}
 }
 
-func isExecutable(mode os.FileMode) bool {
-	return mode&0111 != 0
-}
-
 //nolint:gocognit
 func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
 	return func(resolver source.FileResolver, classifier classifier, location source.Location) (packages []pkg.Package, _ error) {
-		meta, err := resolver.FileMetadataByLocation(location)
-		if err != nil {
-			return nil, err
-		}
-
-		if !isExecutable(meta.Mode) {
-			return nil, nil
-		}
-
 		libs, err := sharedLibraries(resolver, location)
 		if err != nil {
 			return nil, err
@@ -273,38 +259,29 @@ func sharedLibraries(resolver source.FileResolver, location source.Location) ([]
 
 	r := bytes.NewReader(contents)
 
-	e, err := elf.NewFile(r)
-	if err != nil {
-		log.Debug(err)
-	}
+	e, _ := elf.NewFile(r)
 	if e != nil {
 		symbols, err := e.ImportedLibraries()
 		if err != nil {
-			log.Debug(err)
+			log.Debugf("unable to read elf binary at: %s -- %s", location.RealPath, err)
 		}
 		return symbols, nil
 	}
 
-	m, err := macho.NewFile(r)
-	if err != nil {
-		log.Debug(err)
-	}
+	m, _ := macho.NewFile(r)
 	if m != nil {
 		symbols, err := m.ImportedLibraries()
 		if err != nil {
-			log.Debug(err)
+			log.Debugf("unable to read macho binary at: %s -- %s", location.RealPath, err)
 		}
 		return symbols, nil
 	}
 
-	p, err := pe.NewFile(r)
-	if err != nil {
-		log.Debug(err)
-	}
+	p, _ := pe.NewFile(r)
 	if p != nil {
 		symbols, err := p.ImportedLibraries()
 		if err != nil {
-			log.Debug(err)
+			log.Debugf("unable to read pe binary at: %s -- %s", location.RealPath, err)
 		}
 		return symbols, nil
 	}
