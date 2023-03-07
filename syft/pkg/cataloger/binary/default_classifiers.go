@@ -10,16 +10,14 @@ var defaultClassifiers = []classifier{
 		Class:    "python-binary",
 		FileGlob: "**/python*",
 		EvidenceMatcher: evidenceMatchers(
-			// first, check for version information in the binary
-			fileNameTemplateVersionMatcher(
-				`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`,
-				`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
-			// next try to find version information from libpython shared libraries
+			// try to find version information from libpython shared libraries
 			sharedLibraryLookup(
-				`^libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
-				fileNameTemplateVersionMatcher(
-					`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
-					`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`)),
+				`^libpython[0-9]+(?:\.[0-9]+)+\.so.*$`,
+				libpythonMatcher),
+			// check for version information in the binary
+			fileNameTemplateVersionMatcher(
+				`(?:.*/|^)python(?P<version>[0-9]+(?:\.[0-9]+)+)$`,
+				pythonVersionTemplate),
 		),
 		Package: "python",
 		PURL:    mustPURL("pkg:generic/python@version"),
@@ -29,13 +27,11 @@ var defaultClassifiers = []classifier{
 		},
 	},
 	{
-		Class:    "python-binary-lib",
-		FileGlob: "**/libpython*.so*",
-		EvidenceMatcher: fileNameTemplateVersionMatcher(
-			`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
-			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
-		Package: "python",
-		PURL:    mustPURL("pkg:generic/python@version"),
+		Class:           "python-binary-lib",
+		FileGlob:        "**/libpython*.so*",
+		EvidenceMatcher: libpythonMatcher,
+		Package:         "python",
+		PURL:            mustPURL("pkg:generic/python@version"),
 		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
 			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
@@ -225,3 +221,11 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
 	},
 }
+
+// in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
+var pythonVersionTemplate = `(?m)\x00(?P<version>{{ .version }}[-._a-zA-Z0-9]*)\x00`
+
+var libpythonMatcher = fileNameTemplateVersionMatcher(
+	`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)\.so.*$`,
+	pythonVersionTemplate,
+)

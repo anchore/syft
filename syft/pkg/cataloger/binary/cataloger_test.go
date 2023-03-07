@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -66,24 +69,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/postgresql@9.5alpha1",
 				Locations: locations("postgres"),
 				Metadata:  metadata("postgresql-binary"),
-			},
-		},
-		{
-			name:       "positive-python-duplicates",
-			fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.8.16",
-				Type:      "binary",
-				PURL:      "pkg:generic/python@3.8.16",
-				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
-				Metadata: pkg.BinaryMetadata{
-					Matches: []pkg.ClassifierMatch{
-						match("python-binary", "dir/python3.8"),
-						match("python-binary", "python3.8"),
-						match("python-binary-lib", "libpython3.8.so"),
-					},
-				},
 			},
 		},
 		{
@@ -331,14 +316,64 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-python-3.9-from-shared-redhat-lib",
+			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-shared-lib-redhat-3.9",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.9.13",
+				PURL:      "pkg:generic/python@3.9.13",
+				Locations: locations("python3.9", "libpython3.9.so.1.0"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary", "python3.9"),
+						match("python-binary", "libpython3.9.so.1.0"),
+						match("python-binary-lib", "libpython3.9.so.1.0"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-python-binary-with-version-3.9",
+			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-with-version-3.9",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.9.2",
+				PURL:      "pkg:generic/python@3.9.2",
+				Locations: locations("python3.9"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary", "python3.9"),
+					},
+				},
+			},
+		},
+		{
 			name:       "positive-python3.6",
 			fixtureDir: "test-fixtures/classifiers/positive/python-binary-3.6",
 			expected: pkg.Package{
 				Name:      "python",
-				Version:   "3.6.3a-vZ9",
-				PURL:      "pkg:generic/python@3.6.3a-vZ9",
+				Version:   "3.6.3",
+				PURL:      "pkg:generic/python@3.6.3",
 				Locations: locations("python3.6"),
 				Metadata:  metadata("python-binary"),
+			},
+		},
+		{
+			name:       "positive-python-duplicates",
+			fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.8.16",
+				Type:      "binary",
+				PURL:      "pkg:generic/python@3.8.16",
+				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary", "dir/python3.8"),
+						match("python-binary", "python3.8"),
+						match("python-binary-lib", "libpython3.8.so"),
+					},
+				},
 			},
 		},
 		{
@@ -496,17 +531,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, p := range packages {
-				expectedLocations := test.expected.Locations.ToSlice()
-				gotLocations := p.Locations.ToSlice()
-				require.Len(t, gotLocations, len(expectedLocations))
-
-				for i, expectedLocation := range expectedLocations {
-					gotLocation := gotLocations[i]
-					if expectedLocation.RealPath != gotLocation.RealPath {
-						t.Fatalf("locations do not match; expected: %v got: %v", expectedLocations, gotLocations)
-					}
-				}
-
 				assertPackagesAreEqual(t, test.expected, p)
 			}
 		})
@@ -616,6 +640,21 @@ func match(classifier string, paths ...string) pkg.ClassifierMatch {
 }
 
 func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
+	var failMessages []string
+	expectedLocations := expected.Locations.ToSlice()
+	gotLocations := p.Locations.ToSlice()
+
+	if len(expectedLocations) != len(gotLocations) {
+		failMessages = append(failMessages, "locations are not equal length")
+	} else {
+		for i, expectedLocation := range expectedLocations {
+			gotLocation := gotLocations[i]
+			if expectedLocation.RealPath != gotLocation.RealPath {
+				failMessages = append(failMessages, fmt.Sprintf("locations do not match; expected: %v got: %v", expectedLocation.RealPath, gotLocation.RealPath))
+			}
+		}
+	}
+
 	m1 := expected.Metadata.(pkg.BinaryMetadata).Matches
 	m2 := p.Metadata.(pkg.BinaryMetadata).Matches
 	matches := true
@@ -638,17 +677,26 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 	} else {
 		matches = false
 	}
+
+	if !matches {
+		failMessages = append(failMessages, "classifier matches not equal")
+	}
 	if expected.Name != p.Name ||
 		expected.Version != p.Version ||
-		expected.PURL != p.PURL ||
-		!matches {
-		assert.Failf(t, "packages not equal", "%v != %v", stringifyPkg(expected), stringifyPkg(p))
+		expected.PURL != p.PURL {
+		failMessages = append(failMessages, "packages do not match")
 	}
-}
 
-func stringifyPkg(p pkg.Package) string {
-	matches := p.Metadata.(pkg.BinaryMetadata).Matches
-	return fmt.Sprintf("(name=%s, version=%s, purl=%s, matches=%+v)", p.Name, p.Version, p.PURL, matches)
+	if len(failMessages) > 0 {
+		assert.Failf(t, strings.Join(failMessages, "; "), "diff: %s",
+			cmp.Diff(expected, p,
+				cmp.Transformer("Locations", func(l source.LocationSet) []source.Location {
+					return l.ToSlice()
+				}),
+				cmpopts.IgnoreUnexported(pkg.Package{}, source.Location{}),
+				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "MetadataType", "Type"),
+			))
+	}
 }
 
 type panicyResolver struct {
