@@ -515,6 +515,48 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("rust-standard-library-linux"),
 			},
 		},
+		{
+			name:       "positive-ruby-3.2.1",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-3.2.1",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.2.1",
+				PURL:      "pkg:generic/ruby@3.2.1",
+				Locations: locations("ruby", "libruby.so.3.2.1"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-2.7.7",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.7.7",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.7.7",
+				PURL:      "pkg:generic/ruby@2.7.7",
+				Locations: locations("ruby", "libruby.so.2.7.7"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-1.9.3p551",
+			fixtureDir: "test-fixtures/classifiers/positive/ruby-1.9.3p551",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "1.9.3p551",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@1.9.3p551",
+				Locations: locations("ruby"),
+				Metadata:  metadata("ruby-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {

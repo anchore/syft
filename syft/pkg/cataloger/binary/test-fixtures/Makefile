@@ -2,7 +2,9 @@
 all: \
 	classifiers/dynamic/python-binary-shared-lib-3.11 \
 	classifiers/dynamic/python-binary-shared-lib-redhat-3.9 \
-	classifiers/dynamic/python-binary-with-version-3.9
+	classifiers/dynamic/python-binary-with-version-3.9 \
+	classifiers/dynamic/ruby-library-3.2.1 \
+	classifiers/dynamic/ruby-library-2.7.7
 
 classifiers/dynamic/python-binary-shared-lib-3.11:
 	$(eval $@_image := "python:3.11-slim@sha256:0b106e1d2bf485c2a41474bc9cd5103e9eea4e179f40f10741b53b127059221e")
@@ -27,6 +29,25 @@ classifiers/dynamic/python-binary-with-version-3.9:
 	./get-image-file.sh $($@_image) \
 		/usr/bin/python3.9 \
 		$@/python3.9
+
+classifiers/dynamic/ruby-library-3.2.1:
+	$(eval $@_image := "ruby:3.2.1-bullseye@sha256:b4a140656b0c5d26c0a80559b228b4d343f3fdbf56682fcbe88f6db1fa9afa6b")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/ruby \
+		$@/ruby
+	./get-image-file.sh $($@_image) \
+		/usr/local/lib/libruby.so.3.2.1 \
+		$@/libruby.so.3.2.1
+
+classifiers/dynamic/ruby-library-2.7.7:
+	$(eval $@_image := "ruby:2.7.7-bullseye@sha256:055191740a063f33fef1f09423e5ed8f91143aae62a3772a90910118464c5120")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/ruby \
+		$@/ruby
+	./get-image-file.sh $($@_image) \
+		/usr/local/lib/libruby.so.2.7.7 \
+		$@/libruby.so.2.7.7
+
 
 .PHONY: clean
 clean:
