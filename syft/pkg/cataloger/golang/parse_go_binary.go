@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -34,6 +35,14 @@ var (
 	// devel is used to recognize the current default version when a golang main distribution is built
 	// https://github.com/golang/go/issues/29228 this issue has more details on the progress of being able to
 	// inject the correct version into the main module of the build process
+
+	knownBuildFlagPatterns = []*regexp.Regexp{
+		regexp.MustCompile(`-X main\.[Vv]ersion=v?(?P<version>\d+\.\d+\.\d+[-\w]*?) `),
+		regexp.MustCompile(`-X .*\/version\.[Vv]ersion=v?(?P<version>\d+\.\d+\.\d+[-\w]*?) `),
+		regexp.MustCompile(`-X .*\/internal\.[Vv]ersion=v?(?P<version>\d+\.\d+\.\d+[-\w]*?) `),
+	}
+
+	//expectedVersionPattern *regexp.Regexp = regexp.MustCompile(`^v?\d+\.\d+\.\d+[-\w]*?$`)
 )
 
 const devel = "(devel)"
@@ -56,11 +65,49 @@ func parseGoBinary(_ source.FileResolver, _ *generic.Environment, reader source.
 	return pkgs, nil, nil
 }
 
+func attemptVersionExtractFromBuildFlags(p pkg.Package) (majorVersion string, fullVersion string) {
+	if p.Version == devel {
+		metadata, ok := p.Metadata.(pkg.GolangBinMetadata)
+		if !ok {
+			return "", ""
+		}
+
+		ldflags, ok := metadata.BuildSettings["-ldflags"]
+
+		if !ok {
+			return "", ""
+		}
+
+		for _, pattern := range knownBuildFlagPatterns {
+			log.Warn(ldflags)
+			groups := internal.MatchNamedCaptureGroups(pattern, ldflags)
+			v, ok := groups["version"]
+
+			if !ok {
+				continue
+			}
+
+			fullVersion = fmt.Sprintf("v%s", v)
+			components := strings.Split(".", v)
+
+			if len(components) < 1 {
+				continue
+			}
+
+			majorVersion = components[0]
+			return majorVersion, fullVersion
+		}
+	}
+
+	return "", ""
+}
+
 func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, gbs, location)
 	if main.Version == devel {
 		if version, ok := gbs["vcs.revision"]; ok {
+
 			if timestamp, ok := gbs["vcs.time"]; ok {
 				//NOTE: err is ignored, because if parsing fails
 				// we still use the empty Time{} struct to generate an empty date, like 00010101000000
@@ -69,7 +116,9 @@ func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Locati
 				if len(version) >= 12 {
 					version = version[:12]
 				}
-				version = module.PseudoVersion("", "", ts, version)
+
+				majorVersion, fullVersion := attemptVersionExtractFromBuildFlags(main)
+				version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
 			}
 			main.Version = version
 			main.PURL = packageURL(main.Name, main.Version)
