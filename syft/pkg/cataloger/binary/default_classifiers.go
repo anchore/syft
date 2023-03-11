@@ -52,7 +52,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)common\.version=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "argocd",
-		PURL:    mustPURL("pkg:golang/github.com/argoproj/argo-cd/v2@version"),
+		PURL:    mustPURL("pkg:golang/github.com/argoproj/argo-cd@version"),
 		CPEs:    singleCPE("cpe:2.3:a:argoproj:argocd:*:*:*:*:*:*:*"),
 	},
 	{
@@ -61,7 +61,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
 		Package: "helm",
-		PURL:    mustPURL("pkg:golang/helm.sh/helm/v3@version"),
+		PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
 		CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*"),
 	},
 	{
