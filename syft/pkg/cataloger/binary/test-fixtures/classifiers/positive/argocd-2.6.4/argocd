@@ -1,3 +1,0 @@
-2.6.4
-build	-ldflags="-X github.com/argoproj/argo-cd/v2/common.version=2.6.4 -X github.com/argoproj/argo-cd/v2/common.buildDate=2023-03-07T22:48:16Z -X github.com/argoproj/argo-cd/v2/common.gitCommit=7be094f38d06859b594b98eb75c7c70d39b80b1e -X github.com/argoproj/argo-cd/v2/common.gitTreeState=clean -X github.com/argoproj/argo-cd/v2/common.kubectlVersion=v0.24.2 -extldflags \"-static\""
-build	-ldflags="-X github.com/argoproj/argo-cd/v2/common.version=2.6.4 -X github.com/argoproj/argo-cd/v2/common.buildDate=2023-03-07T22:48:16Z -X github.com/argoproj/argo-cd/v2/common.gitCommit=7be094f38d06859b594b98eb75c7c70d39b80b1e -X github.com/argoproj/argo-cd/v2/common.gitTreeState=clean -X github.com/argoproj/argo-cd/v2/common.kubectlVersion=v0.24.2 -extldflags \"-static\""

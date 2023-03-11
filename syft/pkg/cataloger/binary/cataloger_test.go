@@ -241,7 +241,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-argocd-2.5.11",
-			fixtureDir: "test-fixtures/classifiers/positive/argocd-2.5.11",
+			fixtureDir: "test-fixtures/classifiers/dynamic/argocd-2.5.11",
 			expected: pkg.Package{
 				Name:      "argocd",
 				Version:   "2.5.11",
@@ -253,7 +253,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-argocd-2.6.4",
-			fixtureDir: "test-fixtures/classifiers/positive/argocd-2.6.4",
+			fixtureDir: "test-fixtures/classifiers/dynamic/argocd-2.6.4",
 			expected: pkg.Package{
 				Name:      "argocd",
 				Version:   "2.6.4",
@@ -264,20 +264,20 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-helm-2.16.10",
-			fixtureDir: "test-fixtures/classifiers/positive/helm-2.16.10",
+			name:       "positive-helm-3.11.1",
+			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.11.1",
 			expected: pkg.Package{
 				Name:      "helm",
-				Version:   "2.16.10",
+				Version:   "3.11.1",
 				Type:      "binary",
-				PURL:      "pkg:golang/helm.sh/helm@2.16.10",
+				PURL:      "pkg:golang/helm.sh/helm/v3@3.11.1",
 				Locations: locations("helm"),
 				Metadata:  metadata("helm"),
 			},
 		},
 		{
 			name:       "positive-helm-3.10.3",
-			fixtureDir: "test-fixtures/classifiers/positive/helm-3.10.3",
+			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.10.3",
 			expected: pkg.Package{
 				Name:      "helm",
 				Version:   "3.10.3",
@@ -289,7 +289,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-kubectl-1.24.11",
-			fixtureDir: "test-fixtures/classifiers/positive/kubectl-1.24.11",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.24.11",
 			expected: pkg.Package{
 				Name:      "kubectl",
 				Version:   "1.24.11",
@@ -301,7 +301,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-kubectl-1.25.7",
-			fixtureDir: "test-fixtures/classifiers/positive/kubectl-1.25.7",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.25.7",
 			expected: pkg.Package{
 				Name:      "kubectl",
 				Version:   "1.25.7",
@@ -313,7 +313,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-kubectl-1.26.2",
-			fixtureDir: "test-fixtures/classifiers/positive/kubectl-1.26.2",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.26.2",
 			expected: pkg.Package{
 				Name:      "kubectl",
 				Version:   "1.26.2",
@@ -325,7 +325,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-kustomize-4.5.7",
-			fixtureDir: "test-fixtures/classifiers/positive/kustomize-4.5.7",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kustomize-4.5.7",
 			expected: pkg.Package{
 				Name:      "kustomize",
 				Version:   "4.5.7",
@@ -337,7 +337,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-kustomize-5.0.0",
-			fixtureDir: "test-fixtures/classifiers/positive/kustomize-5.0.0",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kustomize-5.0.0",
 			expected: pkg.Package{
 				Name:      "kustomize",
 				Version:   "5.0.0",
