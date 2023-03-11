@@ -256,6 +256,20 @@ var defaultClassifiers = []classifier{
 		PURL:    mustPURL("pkg:generic/rust@version"),
 		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
 	},
+	{
+		Class:    "ruby-binary",
+		FileGlob: "**/ruby",
+		EvidenceMatcher: evidenceMatchers(
+			rubyMatcher,
+			sharedLibraryLookup(
+				// try to find version information from libruby shared libraries
+				`^libruby\.so.*$`,
+				rubyMatcher),
+		),
+		Package: "ruby",
+		PURL:    mustPURL("pkg:generic/ruby@version"),
+		CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
+	},
 }
 
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
@@ -265,3 +279,8 @@ var libpythonMatcher = fileNameTemplateVersionMatcher(
 	`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)\.so.*$`,
 	pythonVersionTemplate,
 )
+
+var rubyMatcher = fileContentsVersionMatcher(
+	// ruby 3.2.1 (2023-02-08 revision 31819e82c8) [x86_64-linux]
+	// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
+	`(?m)ruby (?P<version>[0-9]\.[0-9]\.[0-9](p[0-9]+)?) `)
