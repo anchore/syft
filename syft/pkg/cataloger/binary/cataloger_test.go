@@ -292,8 +292,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
 			expected: pkg.Package{
 				Name:      "python",
-				Version:   "3.7.4a-vZ9",
-				PURL:      "pkg:generic/python@3.7.4a-vZ9",
+				Version:   "3.7.4",
+				PURL:      "pkg:generic/python@3.7.4",
 				Locations: locations("libpython3.7.so"),
 				Metadata:  metadata("python-binary-lib"),
 			},
@@ -345,6 +345,34 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 						match("python-binary", "python3.9"),
 					},
 				},
+			},
+		},
+		{
+			name:       "positive-python-binary-3.4-alpine",
+			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-3.4-alpine",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.4.10",
+				PURL:      "pkg:generic/python@3.4.10",
+				Locations: locations("python3.4", "libpython3.4m.so.1.0"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary", "python3.4"),
+						match("python-binary", "libpython3.4m.so.1.0"),
+						match("python-binary-lib", "libpython3.4m.so.1.0"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-python-3.5-with-incorrect-match",
+			fixtureDir: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.5.3",
+				PURL:      "pkg:generic/python@3.5.3",
+				Locations: locations("python3.5"),
+				Metadata:  metadata("python-binary"),
 			},
 		},
 		{
@@ -576,9 +604,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			packages, _, err := c.Catalog(resolver)
 			require.NoError(t, err)
 
-			for _, p := range packages {
-				assertPackagesAreEqual(t, test.expected, p)
-			}
+			require.Len(t, packages, 1)
+
+			assertPackagesAreEqual(t, test.expected, packages[0])
 		})
 	}
 }

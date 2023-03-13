@@ -12,7 +12,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: evidenceMatchers(
 			// try to find version information from libpython shared libraries
 			sharedLibraryLookup(
-				`^libpython[0-9]+(?:\.[0-9]+)+\.so.*$`,
+				`^libpython[0-9]+(?:\.[0-9]+)+[a-z]?\.so.*$`,
 				libpythonMatcher),
 			// check for version information in the binary
 			fileNameTemplateVersionMatcher(
@@ -240,7 +240,7 @@ var defaultClassifiers = []classifier{
 var pythonVersionTemplate = `(?m)\x00(?P<version>{{ .version }}[-._a-zA-Z0-9]*)\x00`
 
 var libpythonMatcher = fileNameTemplateVersionMatcher(
-	`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)\.so.*$`,
+	`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)[a-z]?\.so.*$`,
 	pythonVersionTemplate,
 )
 
