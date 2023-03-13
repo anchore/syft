@@ -9,6 +9,7 @@ import (
 	"io"
 	"reflect"
 	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/anchore/packageurl-go"
@@ -78,6 +79,11 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 		}
 
 		filepathNamedGroupValues := internal.MatchNamedCaptureGroups(pat, location.RealPath)
+
+		// versions like 3.5 should not match any character, but explicit dot
+		for k, v := range filepathNamedGroupValues {
+			filepathNamedGroupValues[k] = strings.ReplaceAll(v, ".", "\\.")
+		}
 
 		tmpl, err := template.New("").Parse(contentTemplate)
 		if err != nil {

@@ -252,6 +252,11 @@ install-test-ci-mac: $(SNAPSHOT_DIR)
 	cd test/install && \
 		make ci-test-mac
 
+.PHONY: generate-compare-file
+generate-compare-file:
+	$(call title,Generating compare test file)
+	go run ./cmd/syft $(COMPARE_TEST_IMAGE) -o json > $(COMPARE_DIR)/test-fixtures/acceptance-centos-8.2.2004.json
+
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
 compare-mac: $(TEMP_DIR) $(SNAPSHOT_DIR)  ## Run compare tests on build snapshot binaries and packages (Mac)
