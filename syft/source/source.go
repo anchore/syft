@@ -385,6 +385,7 @@ func (s *Source) SetID() {
 	case FileScheme:
 		// attempt to use the digest of the contents of the file as the ID
 		file, err := os.Open(s.Metadata.Path)
+		defer file.Close()
 		if err != nil {
 			d = digest.FromString(s.Metadata.Path).String()
 			break
