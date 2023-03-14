@@ -129,7 +129,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jon:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:bob:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
