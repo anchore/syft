@@ -5,7 +5,17 @@ all: \
 	classifiers/dynamic/python-binary-with-version-3.9 \
 	classifiers/dynamic/python-binary-3.4-alpine \
 	classifiers/dynamic/ruby-library-3.2.1 \
-	classifiers/dynamic/ruby-library-2.7.7
+	classifiers/dynamic/ruby-library-2.7.7 \
+	classifiers/dynamic/argocd-2.5.11 \
+	classifiers/dynamic/argocd-2.6.4 \
+	classifiers/dynamic/helm-3.11.1 \
+	classifiers/dynamic/helm-3.10.3 \
+	classifiers/dynamic/kubectl-1.24.11 \
+	classifiers/dynamic/kubectl-1.25.7 \
+	classifiers/dynamic/kubectl-1.26.2 \
+	classifiers/dynamic/kustomize-4.5.7 \
+	classifiers/dynamic/kustomize-5.0.0
+
 
 classifiers/dynamic/python-binary-shared-lib-3.11:
 	$(eval $@_image := "python:3.11-slim@sha256:0b106e1d2bf485c2a41474bc9cd5103e9eea4e179f40f10741b53b127059221e")
@@ -63,6 +73,60 @@ classifiers/dynamic/ruby-library-2.7.7:
 	./get-image-file.sh $($@_image) \
 		/usr/local/lib/libruby.so.2.7 \
 		$@/libruby.so.2.7
+
+classifiers/dynamic/argocd-2.5.11:
+	$(eval $@_image := "argoproj/argocd:v2.5.11@sha256:d1062935b3256ec69422843ebcb50debb54fd389436961586000c8ce6ee7f249")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/argocd \
+		$@/argocd
+
+classifiers/dynamic/argocd-2.6.4:
+	$(eval $@_image := "argoproj/argocd:v2.6.4@sha256:61fcbba187ff53c00696cb580edf70cada59c45cf399d8477631acf43cf522ee")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/argocd \
+		$@/argocd
+
+classifiers/dynamic/helm-3.11.1:
+	$(eval $@_image := "alpine/helm:3.11.1@sha256:8628e3695fb743a8b9de89626f1b7a221280c2152c0e288c2504e59b68233e8b")
+	./get-image-file.sh $($@_image) \
+		/usr/bin/helm \
+		$@/helm
+
+classifiers/dynamic/helm-3.10.3:
+	$(eval $@_image := "argoproj/argocd:v2.6.4@sha256:61fcbba187ff53c00696cb580edf70cada59c45cf399d8477631acf43cf522ee")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/helm \
+		$@/helm
+
+classifiers/dynamic/kubectl-1.24.11:
+	$(eval $@_image := "bitnami/kubectl:1.24.11@sha256:79d60c5ac8a1dc84e2c39f56d8e8cc0053159b5ed88f283bdf8fbda1ee86c8bc")
+	./get-image-file.sh $($@_image) \
+		/opt/bitnami/kubectl/bin/kubectl \
+		$@/kubectl
+
+classifiers/dynamic/kubectl-1.25.7:
+	$(eval $@_image := "bitnami/kubectl:1.25.7@sha256:d7b00dbfdc6d8890aefe40edfb6c1d4c90cbb6c978794bb51a21744edc34ba7a")
+	./get-image-file.sh $($@_image) \
+		/opt/bitnami/kubectl/bin/kubectl \
+		$@/kubectl
+
+classifiers/dynamic/kubectl-1.26.2:
+	$(eval $@_image := "line/kubectl-kustomize:1.26.2-5.0.0@sha256:9ee3b4a9a21f0777fc1d8c64208290f818a2e68c5e9e892e931621bda089bf06")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/kubectl \
+		$@/kubectl
+
+classifiers/dynamic/kustomize-4.5.7:
+	$(eval $@_image := "argoproj/argocd:v2.6.4@sha256:61fcbba187ff53c00696cb580edf70cada59c45cf399d8477631acf43cf522ee")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/kustomize \
+		$@/kustomize
+
+classifiers/dynamic/kustomize-5.0.0:
+	$(eval $@_image := "line/kubectl-kustomize:1.26.2-5.0.0@sha256:9ee3b4a9a21f0777fc1d8c64208290f818a2e68c5e9e892e931621bda089bf06")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/kustomize \
+		$@/kustomize
 
 .PHONY: clean
 clean:
