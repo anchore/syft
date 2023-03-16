@@ -73,7 +73,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// build the validation image
 			test.setup(t)
-
+			dir := t.TempDir()
 			for _, image := range test.images {
 				args := append(test.syftArgs, image)
 				cmd, stdout, stderr := runSyft(t, test.env, args...)
@@ -84,7 +84,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 				cwd, err := os.Getwd()
 				require.NoError(t, err)
 
-				f, err := os.CreateTemp(t.TempDir(), "temp")
+				f, err := os.CreateTemp(dir, "temp")
 				require.NoError(t, err)
 
 				var suffix string
@@ -95,7 +95,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 				}
 
 				// spdx tooling only takes a file with suffix spdx
-				rename := path.Join(path.Dir(f.Name()), fmt.Sprintf("%s.%s", path.Base(f.Name()), suffix))
+				rename := path.Join(path.Dir(f.Name()), fmt.Sprintf("%s%s", path.Base(f.Name()), suffix))
 				err = os.Rename(f.Name(), rename)
 				require.NoError(t, err)
 
