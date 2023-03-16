@@ -151,7 +151,7 @@ func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
 			var val interface{}
 			key, val, err = handleNewKeyValue(line)
 			if err != nil {
-				log.Warnf("parsing dpkg status: extracting key-value from line: %s err: %v", line, err)
+				log.Debugf("parsing dpkg status: extracting key-value from line: %s err: %v", line, err)
 				continue
 			}
 
