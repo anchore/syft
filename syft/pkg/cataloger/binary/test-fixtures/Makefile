@@ -6,6 +6,7 @@ all: \
 	classifiers/dynamic/python-binary-3.4-alpine \
 	classifiers/dynamic/ruby-library-3.2.1 \
 	classifiers/dynamic/ruby-library-2.7.7 \
+	classifiers/dynamic/ruby-library-2.6.10 \
 	classifiers/dynamic/argocd-2.5.11 \
 	classifiers/dynamic/argocd-2.6.4 \
 	classifiers/dynamic/helm-3.11.1 \
@@ -73,6 +74,18 @@ classifiers/dynamic/ruby-library-2.7.7:
 	./get-image-file.sh $($@_image) \
 		/usr/local/lib/libruby.so.2.7 \
 		$@/libruby.so.2.7
+
+classifiers/dynamic/ruby-library-2.6.10:
+	$(eval $@_image := "ruby:2.6.10@sha256:771a810704167e55da8a19970c5dfa6eb795dfee32547adffa29ea72703f7243")
+	./get-image-file.sh $($@_image) \
+		/usr/local/bin/ruby \
+		$@/ruby
+	./get-image-file.sh $($@_image) \
+		/usr/local/lib/libruby.so.2.6.10 \
+		$@/libruby.so.2.6.10
+	./get-image-file.sh $($@_image) \
+		/usr/local/lib/libruby.so.2.6 \
+		$@/libruby.so.2.6
 
 classifiers/dynamic/argocd-2.5.11:
 	$(eval $@_image := "argoproj/argocd:v2.5.11@sha256:d1062935b3256ec69422843ebcb50debb54fd389436961586000c8ce6ee7f249")

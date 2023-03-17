@@ -283,4 +283,4 @@ var libpythonMatcher = fileNameTemplateVersionMatcher(
 var rubyMatcher = fileContentsVersionMatcher(
 	// ruby 3.2.1 (2023-02-08 revision 31819e82c8) [x86_64-linux]
 	// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
-	`(?m)ruby (?P<version>[0-9]\.[0-9]\.[0-9](p[0-9]+)?) `)
+	`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+(p[0-9]+)?) `)
