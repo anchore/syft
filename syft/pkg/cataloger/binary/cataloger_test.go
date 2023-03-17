@@ -686,6 +686,23 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-ruby-2.6.10",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.6.10",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.6.10p210",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@2.6.10p210",
+				Locations: locations("ruby", "libruby.so.2.6.10"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.2.6.10"),
+					},
+				},
+			},
+		},
+		{
 			name:       "positive-ruby-1.9.3p551",
 			fixtureDir: "test-fixtures/classifiers/positive/ruby-1.9.3p551",
 			expected: pkg.Package{
