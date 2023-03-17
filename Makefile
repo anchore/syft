@@ -11,10 +11,10 @@ GLOW_CMD = $(TEMP_DIR)/glow
 
 # Tool versions #################################
 GOLANGCILINT_VERSION := v1.51.2
-GOSIMPORTS_VERSION := v0.3.7
+GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.15.2
+GORELEASER_VERSION := v1.16.1
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v1.13.1
 QUILL_VERSION := v0.2.0
@@ -251,6 +251,11 @@ install-test-cache-load: $(SNAPSHOT_DIR)
 install-test-ci-mac: $(SNAPSHOT_DIR)
 	cd test/install && \
 		make ci-test-mac
+
+.PHONY: generate-compare-file
+generate-compare-file:
+	$(call title,Generating compare test file)
+	go run ./cmd/syft $(COMPARE_TEST_IMAGE) -o json > $(COMPARE_DIR)/test-fixtures/acceptance-centos-8.2.2004.json
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac

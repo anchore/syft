@@ -389,6 +389,7 @@ func (s *Source) SetID() {
 			d = digest.FromString(s.Metadata.Path).String()
 			break
 		}
+		defer file.Close()
 		di, err := digest.FromReader(file)
 		if err != nil {
 			d = digest.FromString(s.Metadata.Path).String()

@@ -240,6 +240,114 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-argocd-2.5.11",
+			fixtureDir: "test-fixtures/classifiers/dynamic/argocd-2.5.11",
+			expected: pkg.Package{
+				Name:      "argocd",
+				Version:   "2.5.11",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/argoproj/argo-cd@2.5.11",
+				Locations: locations("argocd"),
+				Metadata:  metadata("argocd"),
+			},
+		},
+		{
+			name:       "positive-argocd-2.6.4",
+			fixtureDir: "test-fixtures/classifiers/dynamic/argocd-2.6.4",
+			expected: pkg.Package{
+				Name:      "argocd",
+				Version:   "2.6.4",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/argoproj/argo-cd@2.6.4",
+				Locations: locations("argocd"),
+				Metadata:  metadata("argocd"),
+			},
+		},
+		{
+			name:       "positive-helm-3.11.1",
+			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.11.1",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.11.1",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.11.1",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			name:       "positive-helm-3.10.3",
+			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.10.3",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.10.3",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.10.3",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			name:       "positive-kubectl-1.24.11",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.24.11",
+			expected: pkg.Package{
+				Name:      "kubectl",
+				Version:   "1.24.11",
+				Type:      "binary",
+				PURL:      "pkg:golang/k8s.io/kubectl@1.24.11",
+				Locations: locations("kubectl"),
+				Metadata:  metadata("kubectl"),
+			},
+		},
+		{
+			name:       "positive-kubectl-1.25.7",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.25.7",
+			expected: pkg.Package{
+				Name:      "kubectl",
+				Version:   "1.25.7",
+				Type:      "binary",
+				PURL:      "pkg:golang/k8s.io/kubectl@1.25.7",
+				Locations: locations("kubectl"),
+				Metadata:  metadata("kubectl"),
+			},
+		},
+		{
+			name:       "positive-kubectl-1.26.2",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.26.2",
+			expected: pkg.Package{
+				Name:      "kubectl",
+				Version:   "1.26.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/k8s.io/kubectl@1.26.2",
+				Locations: locations("kubectl"),
+				Metadata:  metadata("kubectl"),
+			},
+		},
+		{
+			name:       "positive-kustomize-4.5.7",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kustomize-4.5.7",
+			expected: pkg.Package{
+				Name:      "kustomize",
+				Version:   "4.5.7",
+				Type:      "binary",
+				PURL:      "pkg:golang/sigs.k8s.io/kustomize@4.5.7",
+				Locations: locations("kustomize"),
+				Metadata:  metadata("kustomize"),
+			},
+		},
+		{
+			name:       "positive-kustomize-5.0.0",
+			fixtureDir: "test-fixtures/classifiers/dynamic/kustomize-5.0.0",
+			expected: pkg.Package{
+				Name:      "kustomize",
+				Version:   "5.0.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/sigs.k8s.io/kustomize@5.0.0",
+				Locations: locations("kustomize"),
+				Metadata:  metadata("kustomize"),
+			},
+		},
+		{
 			name:       "positive-redis-4.0.11",
 			fixtureDir: "test-fixtures/classifiers/positive/redis-server-4.0.11",
 			expected: pkg.Package{
@@ -292,8 +400,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
 			expected: pkg.Package{
 				Name:      "python",
-				Version:   "3.7.4a-vZ9",
-				PURL:      "pkg:generic/python@3.7.4a-vZ9",
+				Version:   "3.7.4",
+				PURL:      "pkg:generic/python@3.7.4",
 				Locations: locations("libpython3.7.so"),
 				Metadata:  metadata("python-binary-lib"),
 			},
@@ -345,6 +453,34 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 						match("python-binary", "python3.9"),
 					},
 				},
+			},
+		},
+		{
+			name:       "positive-python-binary-3.4-alpine",
+			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-3.4-alpine",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.4.10",
+				PURL:      "pkg:generic/python@3.4.10",
+				Locations: locations("python3.4", "libpython3.4m.so.1.0"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary", "python3.4"),
+						match("python-binary", "libpython3.4m.so.1.0"),
+						match("python-binary-lib", "libpython3.4m.so.1.0"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-python-3.5-with-incorrect-match",
+			fixtureDir: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.5.3",
+				PURL:      "pkg:generic/python@3.5.3",
+				Locations: locations("python3.5"),
+				Metadata:  metadata("python-binary"),
 			},
 		},
 		{
@@ -515,6 +651,69 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("rust-standard-library-linux"),
 			},
 		},
+		{
+			name:       "positive-ruby-3.2.1",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-3.2.1",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.2.1",
+				Locations: locations("ruby", "libruby.so.3.2.1"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.2.1"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-2.7.7",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.7.7",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.7.7p221",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@2.7.7p221",
+				Locations: locations("ruby", "libruby.so.2.7.7"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.2.7.7"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-2.6.10",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.6.10",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.6.10p210",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@2.6.10p210",
+				Locations: locations("ruby", "libruby.so.2.6.10"),
+				Metadata: pkg.BinaryMetadata{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.2.6.10"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-1.9.3p551",
+			fixtureDir: "test-fixtures/classifiers/positive/ruby-1.9.3p551",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "1.9.3p551",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@1.9.3p551",
+				Locations: locations("ruby"),
+				Metadata:  metadata("ruby-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -530,9 +729,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			packages, _, err := c.Catalog(resolver)
 			require.NoError(t, err)
 
-			for _, p := range packages {
-				assertPackagesAreEqual(t, test.expected, p)
-			}
+			require.Len(t, packages, 1)
+
+			assertPackagesAreEqual(t, test.expected, packages[0])
 		})
 	}
 }

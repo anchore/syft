@@ -13,13 +13,6 @@ func candidateVendorsForJavascript(p pkg.Package) fieldCandidateSet {
 		return nil
 	}
 
-	if metadata.Author != "" {
-		vendors.add(fieldCandidate{
-			value:                 normalizePersonName(stripEmailSuffix(metadata.Author)),
-			disallowSubSelections: true,
-		})
-	}
-
 	if metadata.URL != "" {
 		vendors.union(candidateVendorsFromURL(metadata.URL))
 	}
