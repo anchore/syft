@@ -8,14 +8,24 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+type GoCatalogerOpts struct {
+	SearchLocalGoModLicenses bool
+}
+
 // NewGoModFileCataloger returns a new Go module cataloger object.
-func NewGoModFileCataloger() *generic.Cataloger {
+func NewGoModFileCataloger(opts GoCatalogerOpts) *generic.Cataloger {
+	c := goModCataloger{
+		licenses: newGoLicenses(opts.SearchLocalGoModLicenses),
+	}
 	return generic.NewCataloger("go-mod-file-cataloger").
-		WithParserByGlobs(parseGoModFile, "**/go.mod")
+		WithParserByGlobs(c.parseGoModFile, "**/go.mod")
 }
 
 // NewGoModuleBinaryCataloger returns a new Golang cataloger object.
-func NewGoModuleBinaryCataloger() *generic.Cataloger {
+func NewGoModuleBinaryCataloger(opts GoCatalogerOpts) *generic.Cataloger {
+	c := goBinaryCataloger{
+		licenses: newGoLicenses(opts.SearchLocalGoModLicenses),
+	}
 	return generic.NewCataloger("go-module-binary-cataloger").
-		WithParserByMimeTypes(parseGoBinary, internal.ExecutableMIMETypeSet.List()...)
+		WithParserByMimeTypes(c.parseGoBinary, internal.ExecutableMIMETypeSet.List()...)
 }

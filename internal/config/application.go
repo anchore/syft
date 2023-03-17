@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
+	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 )
 
 var (
@@ -68,6 +69,9 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 		},
 		Catalogers:  cfg.Catalogers,
 		Parallelism: cfg.Parallelism,
+		Golang: golangCataloger.GoCatalogerOpts{
+			SearchLocalGoModLicenses: cfg.Package.Cataloger.Golang.SearchLocalGoModLicenses,
+		},
 	}
 }
 
