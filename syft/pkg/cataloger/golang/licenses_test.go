@@ -25,3 +25,31 @@ func Test_LicenseSearch(t *testing.T) {
 
 	require.Equal(t, "Apache-2.0", licenses[0])
 }
+
+func Test_processCaps(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected string
+	}{
+		{
+			name:     "CycloneDX",
+			expected: "!cyclone!d!x",
+		},
+		{
+			name:     "Azure",
+			expected: "!azure",
+		},
+		{
+			name:     "xkcd",
+			expected: "xkcd",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := processCaps(test.name)
+
+			require.Equal(t, test.expected, got)
+		})
+	}
+}
