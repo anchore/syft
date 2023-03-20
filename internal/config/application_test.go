@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -19,6 +20,14 @@ func TestApplicationConfig(t *testing.T) {
 	homedir.DisableCache = true
 	t.Cleanup(func() {
 		homedir.DisableCache = originalCacheOpt
+	})
+
+	// ensure we have no side effects for xdg package for future tests
+	originalXDG := os.Getenv("XDG_CONFIG_HOME")
+	t.Cleanup(func() {
+		// note: we're not using t.Setenv since the effect we're trying to eliminate is within the xdg package
+		require.NoError(t, os.Setenv("XDG_CONFIG_HOME", originalXDG))
+		xdg.Reload()
 	})
 
 	// config is picked up at desired configuration paths
@@ -79,7 +88,8 @@ func TestApplicationConfig(t *testing.T) {
 				wd, err := os.Getwd()
 				require.NoError(t, err)
 				configDir := path.Join(wd, "./test-fixtures/config-home-test") // set HOME to testdata
-				t.Setenv("XDG_CONFIG_DIRS", configDir)
+				// note: this explicitly has multiple XDG paths, make certain we use the first VALID one (not the first one)
+				t.Setenv("XDG_CONFIG_DIRS", fmt.Sprintf("/another/foo/bar:%s", configDir))
 				xdg.Reload()
 				return ""
 			},
@@ -108,6 +118,7 @@ func TestApplicationConfig(t *testing.T) {
 			// in your home directory... now it will be ignored. Same for XDG_CONFIG_DIRS.
 			t.Setenv("HOME", "/foo/bar")
 			t.Setenv("XDG_CONFIG_DIRS", "/foo/bar")
+			xdg.Reload()
 
 			configPath := test.setup(t)
 			err = application.LoadAllValues(viperInstance, configPath)
