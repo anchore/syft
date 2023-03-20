@@ -270,12 +270,14 @@ func loadConfig(v *viper.Viper, configPath string) error {
 		}
 	}
 
-	// 4. look for <appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
-	v.AddConfigPath(path.Join(xdg.ConfigHome, internal.ApplicationName))
-	for _, dir := range xdg.ConfigDirs {
-		v.AddConfigPath(path.Join(dir, internal.ApplicationName))
-	}
+	// 4. look for .<appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
+
 	v.SetConfigName("config")
+	configPath = path.Join(xdg.ConfigHome, "."+internal.ApplicationName)
+	v.AddConfigPath(configPath)
+	for _, dir := range xdg.ConfigDirs {
+		v.AddConfigPath(path.Join(dir, "."+internal.ApplicationName))
+	}
 	if err = v.ReadInConfig(); err == nil {
 		v.Set("config", v.ConfigFileUsed())
 		return nil
