@@ -105,8 +105,9 @@ func TestApplicationConfig(t *testing.T) {
 			viperInstance := viper.New()
 
 			// this will override home in case you are running this test locally and DO have a syft config
-			// in your home directory... now it will be ignored
+			// in your home directory... now it will be ignored. Same for XDG_CONFIG_DIRS.
 			t.Setenv("HOME", "/foo/bar")
+			t.Setenv("XDG_CONFIG_DIRS", "/foo/bar")
 
 			configPath := test.setup(t)
 			err = application.LoadAllValues(viperInstance, configPath)
