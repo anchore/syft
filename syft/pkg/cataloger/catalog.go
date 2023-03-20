@@ -105,7 +105,7 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (catalo
 // request.
 //
 //nolint:funlen
-func Catalog(resolver source.FileResolver, release *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
+func Catalog(resolver source.FileResolver, _ *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 
