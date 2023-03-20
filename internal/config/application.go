@@ -209,6 +209,7 @@ func (cfg Application) String() string {
 	return string(appaStr)
 }
 
+// nolint:funlen
 func loadConfig(v *viper.Viper, configPath string) error {
 	var err error
 	// use explicitly the given user config
