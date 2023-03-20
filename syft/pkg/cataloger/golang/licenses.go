@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/mitchellh/go-homedir"
+
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
@@ -32,7 +34,7 @@ func deferredResolverForLocalGoMod() source.FileResolver {
 		goPath := os.Getenv("GOPATH")
 
 		if goPath == "" {
-			homeDir, err := os.UserHomeDir()
+			homeDir, err := homedir.Dir()
 			if err != nil {
 				log.Debug("unable to determine user home dir: %v", err)
 			}
