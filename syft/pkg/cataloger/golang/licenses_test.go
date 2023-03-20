@@ -30,10 +30,7 @@ func Test_LicenseSearch(t *testing.T) {
 
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-
-	cleanup, err := env("GOPATH", path.Join(wd, "test-fixtures", "licenses"))
-	defer cleanup()
-	require.NoError(t, err)
+	t.Setenv("GOPATH", path.Join(wd, "test-fixtures", "licenses"))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -46,18 +43,6 @@ func Test_LicenseSearch(t *testing.T) {
 			require.Equal(t, test.expected, licenses[0])
 		})
 	}
-}
-
-func env(name, value string) (cleanup func(), err error) {
-	prev, set := os.LookupEnv(name)
-	err = os.Setenv(name, value)
-	return func() {
-		if set {
-			_ = os.Setenv(name, prev)
-		} else {
-			_ = os.Unsetenv(name)
-		}
-	}, err
 }
 
 func Test_processCaps(t *testing.T) {
