@@ -83,6 +83,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:hex/hpax/hpax@0.1.1",
 			expected: HexPkg,
 		},
+		{
+			purl:     "pkg:generic/linux-kernel@5.10.15",
+			expected: KernelPkg,
+		},
 	}
 
 	var pkgTypes []string

@@ -199,6 +199,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from rebar3 or mix manifest file",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.KernelPkg,
+			},
+			expected: []string{
+				"from kernel file or kernel modules files",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

@@ -25,6 +25,7 @@ const (
 	HackageMetadataType            MetadataType = "HackageMetadataType"
 	JavaMetadataType               MetadataType = "JavaMetadata"
 	KbPackageMetadataType          MetadataType = "KbPackageMetadata"
+	KernelPackageMetadataType      MetadataType = "KernelPackageMetadata"
 	MixLockMetadataType            MetadataType = "MixLockMetadataType"
 	NpmPackageJSONMetadataType     MetadataType = "NpmPackageJsonMetadata"
 	NpmPackageLockJSONMetadataType MetadataType = "NpmPackageLockJsonMetadata"
@@ -53,6 +54,7 @@ var AllMetadataTypes = []MetadataType{
 	HackageMetadataType,
 	JavaMetadataType,
 	KbPackageMetadataType,
+	KernelPackageMetadataType,
 	MixLockMetadataType,
 	NpmPackageJSONMetadataType,
 	NpmPackageLockJSONMetadataType,
@@ -81,6 +83,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	HackageMetadataType:            reflect.TypeOf(HackageMetadata{}),
 	JavaMetadataType:               reflect.TypeOf(JavaMetadata{}),
 	KbPackageMetadataType:          reflect.TypeOf(KbPackageMetadata{}),
+	KernelPackageMetadataType:      reflect.TypeOf(KernelPackageMetadata{}),
 	MixLockMetadataType:            reflect.TypeOf(MixLockMetadata{}),
 	NpmPackageJSONMetadataType:     reflect.TypeOf(NpmPackageJSONMetadata{}),
 	NpmPackageLockJSONMetadataType: reflect.TypeOf(NpmPackageLockJSONMetadata{}),

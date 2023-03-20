@@ -3,11 +3,13 @@ package cataloger
 import (
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 )
 
 type Config struct {
 	Search      SearchConfig
 	Golang      golang.GoCatalogerOpts
+	KernelOpts  kernel.CatalogerOpts
 	Catalogers  []string
 	Parallelism int
 }
@@ -28,4 +30,8 @@ func (c Config) Java() java.Config {
 
 func (c Config) Go() golang.GoCatalogerOpts {
 	return c.Golang
+}
+
+func (c Config) Kernel() kernel.CatalogerOpts {
+	return c.KernelOpts
 }
