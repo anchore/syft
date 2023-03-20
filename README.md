@@ -492,6 +492,12 @@ package:
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
 
+golang:
+   # search for go package licences in the GOPATH of the system running Syft, note that this is outside the
+   # container filesystem and potentially outside the root of a local directory scan
+   # SYFT_GOLANG_SEARCH_LOCAL_MOD_CACHE_LICENSES env var
+   search-local-mod-cache-licenses: false
+
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:
   cataloger:
