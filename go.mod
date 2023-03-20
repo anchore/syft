@@ -52,7 +52,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1-0.20221222100750-41a1ac565cce
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
-	github.com/anchore/stereoscope v0.0.0-20230301191755-abfb374a1122
+	github.com/anchore/stereoscope v0.0.0-20230317134707-7928713c391e
 	github.com/docker/docker v23.0.1+incompatible
 	github.com/google/go-containerregistry v0.14.0
 	github.com/google/licensecheck v0.3.1
