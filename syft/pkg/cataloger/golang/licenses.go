@@ -44,18 +44,10 @@ func deferredResolverForLocalGoMod() source.FileResolver {
 }
 
 func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, moduleVersion string) (licenses []string, err error) {
-	nameParts := strings.Split(moduleName, "/")
-
-	if len(nameParts) < 3 {
-		return nil, fmt.Errorf("unexpected go package name: %s", moduleName)
-	}
-
-	host := processCaps(nameParts[0])
-	org := processCaps(nameParts[1])
-	repo := processCaps(nameParts[2])
+	moduleName = processCaps(moduleName)
 
 	licenses, err = findLicenses(resolver,
-		fmt.Sprintf(`**/go/pkg/mod/%s/%s/%s@%s/*`, host, org, repo, moduleVersion),
+		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, moduleName, moduleVersion),
 	)
 	if err != nil {
 		return nil, err
@@ -65,7 +57,7 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 		// if we're running against a directory on the filesystem, it may not include the
 		// user's homedir / GOPATH, so we defer to using the localGoModResolver
 		licenses, err = findLicenses(c.localGoModResolver,
-			fmt.Sprintf(`**/%s/%s/%s@%s/*`, host, org, repo, moduleVersion),
+			fmt.Sprintf(`**/%s@%s/*`, moduleName, moduleVersion),
 		)
 	}
 
