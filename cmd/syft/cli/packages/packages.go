@@ -23,7 +23,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func Run(ctx context.Context, app *config.Application, args []string) error {
+func Run(_ context.Context, app *config.Application, args []string) error {
 	err := ValidateOutputOptions(app)
 	if err != nil {
 		return err

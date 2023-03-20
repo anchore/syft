@@ -161,10 +161,7 @@ func UnzipToDir(archivePath, targetDir string) error {
 			return err
 		}
 
-		if err = extractSingleFile(file, joinedPath, archivePath); err != nil {
-			return err
-		}
-		return nil
+		return extractSingleFile(file, joinedPath, archivePath)
 	}
 
 	return TraverseFilesInZip(archivePath, visitor)

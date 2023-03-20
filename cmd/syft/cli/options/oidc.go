@@ -31,6 +31,7 @@ func (o *OIDCOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	return bindOIDCConfigOptions(cmd.Flags(), v)
 }
 
+//nolint:revive
 func bindOIDCConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	if err := v.BindPFlag("attest.oidc-issuer", flags.Lookup("oidc-issuer")); err != nil {
 		return err
