@@ -81,9 +81,27 @@ func TestApplicationConfig(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "XDG file config",
+			setup: func(t *testing.T) string {
+				wd, err := os.Getwd()
+				if err != nil {
+					t.Fatalf("%s: failed to get working directory: %+v", t.Name(), err)
+				}
+				configDir := path.Join(wd, "./test-fixtures/config-home-test") // set HOME to testdata
+				t.Setenv("XDG_CONFIG_DIRS", configDir)
+				xdg.Reload()
+				return ""
+			},
+			assertions: func(t *testing.T, app *Application) {
+				assert.Equal(t, "test-home-XDG-config", app.File)
+			},
+			Cleanup: func(t *testing.T) {},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			defer test.Cleanup(t)
 			wd, err := os.Getwd()
 			if err != nil {
 				t.Fatalf("failed to get working directory: %+v", err)
@@ -98,31 +116,6 @@ func TestApplicationConfig(t *testing.T) {
 				t.Fatalf("failed to load application config: %+v", err)
 			}
 			test.assertions(t, application)
-			test.Cleanup(t)
 		})
 	}
-}
-
-// NOTE: this has to be separate for now because of t.Setenv behavior
-// if this was included in the above table test then HOMEDIR would always
-// be set; we would never fall through to the XDG case
-func TestApplication_LoadAllValues_XDG(t *testing.T) {
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get working directory: %+v", err)
-	}
-	defer os.Chdir(wd) // reset working directory after test
-	application := &Application{}
-	viperInstance := viper.New()
-
-	configDir := path.Join(wd, "./test-fixtures/config-home-test") // set HOME to testdata
-	t.Setenv("XDG_CONFIG_DIRS", configDir)
-	xdg.Reload()
-
-	err = application.LoadAllValues(viperInstance, "")
-	if err != nil {
-		t.Fatalf("failed to load application config: %+v", err)
-	}
-
-	assert.Equal(t, "test-home-XDG-config", application.File)
 }
