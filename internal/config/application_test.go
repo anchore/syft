@@ -1,12 +1,13 @@
 package config
 
 import (
-	"github.com/adrg/xdg"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/adrg/xdg"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 // TODO: set negative case when config.yaml is no longer a valid option
@@ -18,6 +19,7 @@ func TestApplicationConfig(t *testing.T) {
 		name       string
 		setup      func(t *testing.T) string
 		assertions func(t *testing.T, app *Application)
+		Cleanup    func(t *testing.T)
 	}{
 		{
 			name: "explicit config",
@@ -27,6 +29,7 @@ func TestApplicationConfig(t *testing.T) {
 			assertions: func(t *testing.T, app *Application) {
 				assert.Equal(t, "test-explicit-config", app.File)
 			},
+			Cleanup: func(t *testing.T) {},
 		},
 		{
 			name: "current working directory named config",
@@ -40,6 +43,7 @@ func TestApplicationConfig(t *testing.T) {
 			assertions: func(t *testing.T, app *Application) {
 				assert.Equal(t, "test-wd-named-config", app.File)
 			},
+			Cleanup: func(t *testing.T) {},
 		},
 		{
 			name: "current working directory syft dir config",
@@ -53,17 +57,28 @@ func TestApplicationConfig(t *testing.T) {
 			assertions: func(t *testing.T, app *Application) {
 				assert.Equal(t, "test-dir-config", app.File)
 			},
+			Cleanup: func(t *testing.T) {},
 		},
 		{
 			name: "home directory file config",
 			setup: func(t *testing.T) string {
 				// Because Setenv affects the whole process, it cannot be used in parallel tests or
 				// tests with parallel ancestors: see separate XDG test for consequence of this
-				t.Setenv("HOME", "./test-fixtures/config-home-test") // set HOME to testdata
+				t.Setenv("HOME", "./test-fixtures/config-home-test")
+				err := os.Link("./test-fixtures/config-home-test/config-file/.syft.yaml", "./test-fixtures/config-home-test/.syft.yaml")
+				if err != nil {
+					t.Fatalf("%s failed to link home config: %+v", t.Name(), err)
+				}
 				return ""
 			},
 			assertions: func(t *testing.T, app *Application) {
 				assert.Equal(t, "test-home-config", app.File)
+			},
+			Cleanup: func(t *testing.T) {
+				err := os.Remove("./test-fixtures/config-home-test/.syft.yaml") //
+				if err != nil {
+					t.Fatalf("%s failed to remove home config link: %+v", t.Name(), err)
+				}
 			},
 		},
 	}
@@ -83,6 +98,7 @@ func TestApplicationConfig(t *testing.T) {
 				t.Fatalf("failed to load application config: %+v", err)
 			}
 			test.assertions(t, application)
+			test.Cleanup(t)
 		})
 	}
 }
@@ -99,9 +115,7 @@ func TestApplication_LoadAllValues_XDG(t *testing.T) {
 	application := &Application{}
 	viperInstance := viper.New()
 
-	// NOTE: we need to temporarily unset HOME or we never reach the XDG_CONFIG_HOME check
-	t.Setenv("HOME", "/foo/bar")
-	configDir := path.Join(wd, "./test-fixtures/config-xdg-dir-test") // set HOME to testdata
+	configDir := path.Join(wd, "./test-fixtures/config-home-test") // set HOME to testdata
 	t.Setenv("XDG_CONFIG_DIRS", configDir)
 	xdg.Reload()
 
