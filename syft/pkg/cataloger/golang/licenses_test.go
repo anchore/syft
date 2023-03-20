@@ -1,12 +1,13 @@
 package golang
 
 import (
-	"github.com/anchore/syft/syft/source"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_LicenseSearch(t *testing.T) {

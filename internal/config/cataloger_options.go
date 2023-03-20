@@ -11,13 +11,11 @@ import (
 type catalogerOptions struct {
 	Enabled  bool         `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
 	Scope    string       `yaml:"scope" json:"scope" mapstructure:"scope"`
-	Golang   golang       `yaml:"golang" json:"golang" mapstructure:"golang"`
 	ScopeOpt source.Scope `yaml:"-" json:"-"`
 }
 
 func (cfg catalogerOptions) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("package.cataloger.enabled", true)
-	cfg.Golang.loadDefaultValues(v)
 }
 
 func (cfg *catalogerOptions) parseConfigValues() error {
