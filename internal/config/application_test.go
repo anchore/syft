@@ -14,7 +14,7 @@ import (
 func TestApplicationConfig(t *testing.T) {
 	// config is picked up at desired configuration paths
 	// VALID: .syft.yaml, .syft/config.yaml, ~/.syft.yaml, <XDG_CONFIG_HOME>/syft/config.yaml
-	// DEPRECATED: .config.yaml is currently supported by
+	// DEPRECATED: config.yaml is currently supported by
 	tests := []struct {
 		name       string
 		setup      func(t *testing.T) string
