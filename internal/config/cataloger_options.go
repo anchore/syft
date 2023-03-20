@@ -16,6 +16,7 @@ type catalogerOptions struct {
 
 func (cfg catalogerOptions) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("package.cataloger.enabled", true)
+	v.SetDefault("package.cataloger.scope", "squashed")
 }
 
 func (cfg *catalogerOptions) parseConfigValues() error {

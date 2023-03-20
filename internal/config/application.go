@@ -235,9 +235,10 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	// check if config.yaml exists in the current directory
 	// DEPRECATED: this will be removed in v1.0.0
 	if _, err := os.Stat("config.yaml"); err == nil {
-		log.Warn("DEPRECATED: config.yaml as a configuration file is deprecated and will be removed as an option in v1.0.0, please rename to .syft.yaml")
+		log.Warn("DEPRECATED: ./config.yaml as a configuration file is deprecated and will be removed as an option in v1.0.0, please rename to .syft.yaml")
 	}
-	if _, err := os.Stat(confFilePath); err == nil {
+
+	if _, err := os.Stat(confFilePath + ".yaml"); err == nil {
 		if err = v.ReadInConfig(); err == nil {
 			v.Set("config", v.ConfigFileUsed())
 			return nil
