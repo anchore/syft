@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"reflect"
 	"sort"
@@ -208,6 +209,7 @@ func (cfg Application) String() string {
 	return string(appaStr)
 }
 
+// nolint:funlen
 func loadConfig(v *viper.Viper, configPath string) error {
 	var err error
 	// use explicitly the given user config
@@ -223,13 +225,26 @@ func loadConfig(v *viper.Viper, configPath string) error {
 
 	// start searching for valid configs in order...
 	// 1. look for .<appname>.yaml (in the current directory)
+	confFilePath := "." + internal.ApplicationName
+
+	// TODO: Remove this before v1.0.0
+	// See syft #1634
 	v.AddConfigPath(".")
-	v.SetConfigName("." + internal.ApplicationName)
-	if err = v.ReadInConfig(); err == nil {
-		v.Set("config", v.ConfigFileUsed())
-		return nil
-	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+	v.SetConfigName(confFilePath)
+
+	// check if config.yaml exists in the current directory
+	// DEPRECATED: this will be removed in v1.0.0
+	if _, err := os.Stat("config.yaml"); err == nil {
+		log.Warn("DEPRECATED: ./config.yaml as a configuration file is deprecated and will be removed as an option in v1.0.0, please rename to .syft.yaml")
+	}
+
+	if _, err := os.Stat(confFilePath + ".yaml"); err == nil {
+		if err = v.ReadInConfig(); err == nil {
+			v.Set("config", v.ConfigFileUsed())
+			return nil
+		} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+			return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
+		}
 	}
 
 	// 2. look for .<appname>/config.yaml (in the current directory)
@@ -255,12 +270,14 @@ func loadConfig(v *viper.Viper, configPath string) error {
 		}
 	}
 
-	// 4. look for <appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
-	v.AddConfigPath(path.Join(xdg.ConfigHome, internal.ApplicationName))
-	for _, dir := range xdg.ConfigDirs {
-		v.AddConfigPath(path.Join(dir, internal.ApplicationName))
-	}
+	// 4. look for .<appname>/config.yaml in xdg locations (starting with xdg home config dir, then moving upwards)
+
 	v.SetConfigName("config")
+	configPath = path.Join(xdg.ConfigHome, "."+internal.ApplicationName)
+	v.AddConfigPath(configPath)
+	for _, dir := range xdg.ConfigDirs {
+		v.AddConfigPath(path.Join(dir, "."+internal.ApplicationName))
+	}
 	if err = v.ReadInConfig(); err == nil {
 		v.Set("config", v.ConfigFileUsed())
 		return nil
