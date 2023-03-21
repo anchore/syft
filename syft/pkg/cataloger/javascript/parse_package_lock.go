@@ -104,9 +104,8 @@ func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, read
 			if name == "" {
 				if pkgMeta.Name == "" {
 					continue
-				} else {
-					name = pkgMeta.Name
 				}
+				name = pkgMeta.Name
 			}
 
 			// handles alias names
