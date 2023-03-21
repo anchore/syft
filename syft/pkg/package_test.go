@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -27,10 +28,7 @@ func TestIDUniqueness(t *testing.T) {
 		Locations: source.NewLocationSet(
 			originalLocation,
 		),
-		Licenses: []string{
-			"cc0-1.0",
-			"MIT",
-		},
+		Licenses: license.PackageLicense{},
 		Language: "math",
 		Type:     PythonPkg,
 		CPEs: []cpe.CPE{
@@ -75,18 +73,6 @@ func TestIDUniqueness(t *testing.T) {
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
 					SitePackagesRootPath: "Pi",
-				}
-				return pkg
-			},
-			expectedIDComparison: assert.Equal,
-		},
-		{
-			name: "licenses order is ignored",
-			transform: func(pkg Package) Package {
-				// note: same as the original package, only a different order
-				pkg.Licenses = []string{
-					"MIT",
-					"cc0-1.0",
 				}
 				return pkg
 			},
@@ -139,14 +125,6 @@ func TestIDUniqueness(t *testing.T) {
 			name: "version is reflected",
 			transform: func(pkg Package) Package {
 				pkg.Version = "new!"
-				return pkg
-			},
-			expectedIDComparison: assert.NotEqual,
-		},
-		{
-			name: "licenses is reflected",
-			transform: func(pkg Package) Package {
-				pkg.Licenses = []string{"new!"}
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,
@@ -264,10 +242,7 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
+				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -292,10 +267,7 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					similarLocation, // NOTE: difference; we have a different layer but the same path
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
+				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -321,10 +293,7 @@ func TestPackage_Merge(t *testing.T) {
 					originalLocation,
 					similarLocation, // NOTE: merge!
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
+				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -353,10 +322,7 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
+				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -381,10 +347,7 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
+				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
