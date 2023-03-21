@@ -526,9 +526,11 @@ func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 	}
 	var result []*spdx.OtherLicense
 	for license := range licenses {
+		// separate the actual ID from the prefix
+		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: fmt.Sprintf("%s%s", spdxlicense.LicenseRefPrefix, licenseScrubber(license)),
-			LicenseName:       license,
+			LicenseIdentifier: SanitizeElementID(license),
+			LicenseName:       name,
 			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
 		})
 	}

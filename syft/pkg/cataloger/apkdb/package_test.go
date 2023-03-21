@@ -20,7 +20,7 @@ func Test_PackageURL(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "bad distro",
+			name: "non-alpine distro",
 			metadata: pkg.ApkMetadata{
 				Package:      "p",
 				Version:      "v",
@@ -30,7 +30,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "something else",
 				VersionID: "3.4.6",
 			},
-			expected: "",
+			expected: "pkg:apk/something%20else/p@v?arch=a&distro=something%20else-3.4.6",
 		},
 		{
 			name: "gocase",
@@ -97,116 +97,17 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:apk/alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
 		},
 		{
-			name: "upstream python package information as qualifier",
+			name: "wolfi distro",
 			metadata: pkg.ApkMetadata{
-				Package:       "py3-potatoes",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "py3-potatoes",
+				Package:      "p",
+				Version:      "v",
+				Architecture: "a",
 			},
 			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
+				ID:        "wolfi",
+				VersionID: "20221230",
 			},
-			expected: "pkg:apk/alpine/py3-potatoes@v?arch=a&upstream=potatoes&distro=alpine-3.4.6",
-		},
-		{
-			name: "python package with origin package as upstream",
-			metadata: pkg.ApkMetadata{
-				Package:       "py3-non-existant",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "abcdefg",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/py3-non-existant@v?arch=a&upstream=abcdefg&distro=alpine-3.4.6",
-		},
-		{
-			name: "postgesql-15 upstream postgresql",
-			metadata: pkg.ApkMetadata{
-				Package:       "postgresql-15",
-				Version:       "15.0",
-				Architecture:  "a",
-				OriginPackage: "postgresql-15",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/postgresql-15@15.0?arch=a&upstream=postgresql&distro=alpine-3.4.6",
-		},
-		{
-			name: "postgesql15 upstream postgresql",
-			metadata: pkg.ApkMetadata{
-				Package:       "postgresql15",
-				Version:       "15.0",
-				Architecture:  "a",
-				OriginPackage: "postgresql15",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/postgresql15@15.0?arch=a&upstream=postgresql&distro=alpine-3.4.6",
-		},
-		{
-			name: "go-1.19 upstream go",
-			metadata: pkg.ApkMetadata{
-				Package:       "go-1.19",
-				Version:       "1.19",
-				Architecture:  "a",
-				OriginPackage: "go-1.19",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/go-1.19@1.19?arch=a&upstream=go&distro=alpine-3.4.6",
-		},
-		{
-			name: "go1.19 upstream go",
-			metadata: pkg.ApkMetadata{
-				Package:       "go1.19",
-				Version:       "1.19",
-				Architecture:  "a",
-				OriginPackage: "go1.19",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/go1.19@1.19?arch=a&upstream=go&distro=alpine-3.4.6",
-		},
-		{
-			name: "abc-101.191.23456 upstream abc",
-			metadata: pkg.ApkMetadata{
-				Package:       "abc-101.191.23456",
-				Version:       "101.191.23456",
-				Architecture:  "a",
-				OriginPackage: "abc-101.191.23456",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/abc-101.191.23456@101.191.23456?arch=a&upstream=abc&distro=alpine-3.4.6",
-		},
-		{
-			name: "abc101.191.23456 upstream abc",
-			metadata: pkg.ApkMetadata{
-				Package:       "abc101.191.23456",
-				Version:       "101.191.23456",
-				Architecture:  "a",
-				OriginPackage: "abc101.191.23456",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/abc101.191.23456@101.191.23456?arch=a&upstream=abc&distro=alpine-3.4.6",
+			expected: "pkg:apk/wolfi/p@v?arch=a&distro=wolfi-20221230",
 		},
 	}
 

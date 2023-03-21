@@ -9,9 +9,16 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "python-binary",
 		FileGlob: "**/python*",
-		EvidenceMatcher: fileNameTemplateVersionMatcher(
-			`(.*/|^)python(?P<version>[0-9]+\.[0-9]+)$`,
-			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
+		EvidenceMatcher: evidenceMatchers(
+			// try to find version information from libpython shared libraries
+			sharedLibraryLookup(
+				`^libpython[0-9]+(?:\.[0-9]+)+[a-z]?\.so.*$`,
+				libpythonMatcher),
+			// check for version information in the binary
+			fileNameTemplateVersionMatcher(
+				`(?:.*/|^)python(?P<version>[0-9]+(?:\.[0-9]+)+)$`,
+				pythonVersionTemplate),
+		),
 		Package: "python",
 		PURL:    mustPURL("pkg:generic/python@version"),
 		CPEs: []cpe.CPE{
@@ -20,25 +27,11 @@ var defaultClassifiers = []classifier{
 		},
 	},
 	{
-		Class:    "python-binary-lib",
-		FileGlob: "**/libpython*.so*",
-		EvidenceMatcher: fileNameTemplateVersionMatcher(
-			`(.*/|^)libpython(?P<version>[0-9]+\.[0-9]+).so.*$`,
-			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`),
-		Package: "python",
-		PURL:    mustPURL("pkg:generic/python@version"),
-		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
-			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
-		},
-	},
-	{
-		Class:    "cpython-source",
-		FileGlob: "**/patchlevel.h",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)#define\s+PY_VERSION\s+"?(?P<version>[0-9\.\-_a-zA-Z]+)"?`),
-		Package: "python",
-		PURL:    mustPURL("pkg:generic/python@version"),
+		Class:           "python-binary-lib",
+		FileGlob:        "**/libpython*.so*",
+		EvidenceMatcher: libpythonMatcher,
+		Package:         "python",
+		PURL:            mustPURL("pkg:generic/python@version"),
 		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
 			cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
@@ -52,6 +45,42 @@ var defaultClassifiers = []classifier{
 		Package: "go",
 		PURL:    mustPURL("pkg:generic/go@version"),
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "argocd",
+		FileGlob: "**/argocd",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)common\.version=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "argocd",
+		PURL:    mustPURL("pkg:golang/github.com/argoproj/argo-cd@version"),
+		CPEs:    singleCPE("cpe:2.3:a:argoproj:argocd:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "helm",
+		FileGlob: "**/helm",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
+		Package: "helm",
+		PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
+		CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "kustomize",
+		FileGlob: "**/kustomize",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)version=kustomize/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "kustomize",
+		PURL:    mustPURL("pkg:golang/sigs.k8s.io/kustomize@version"),
+		CPEs:    singleCPE("cpe:2.3:a:kustomize:kustomize:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "kubectl",
+		FileGlob: "**/kubectl",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
+		Package: "kubectl",
+		PURL:    mustPURL("pkg:golang/k8s.io/kubectl@version"),
+		CPEs:    singleCPE("cpe:2.3:a:kubectl:kubectl:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "redis-binary",
@@ -119,6 +148,17 @@ var defaultClassifiers = []classifier{
 			`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "busybox",
 		CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "haproxy-binary",
+		FileGlob: "**/haproxy",
+		EvidenceMatcher: evidenceMatchers(
+			fileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			fileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+		),
+		Package: "haproxy",
+		PURL:    mustPURL("pkg:generic/haproxy@version"),
+		CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "perl-binary",
@@ -196,4 +236,51 @@ var defaultClassifiers = []classifier{
 		Package: "postgresql",
 		PURL:    mustPURL("pkg:generic/postgresql@version"),
 	},
+	{
+		Class:    "rust-standard-library-linux",
+		FileGlob: "**/libstd-????????????????.so",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// clang LLVM (rustc version 1.48.0 (7eac88abb 2020-11-16))
+			`(?m)(\x00)clang LLVM \(rustc version (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
+		Package: "rust",
+		PURL:    mustPURL("pkg:generic/rust@version"),
+		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "rust-standard-library-macos",
+		FileGlob: "**/libstd-????????????????.dylib",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// c 1.48.0 (7eac88abb 2020-11-16)
+			`(?m)c (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
+		Package: "rust",
+		PURL:    mustPURL("pkg:generic/rust@version"),
+		CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "ruby-binary",
+		FileGlob: "**/ruby",
+		EvidenceMatcher: evidenceMatchers(
+			rubyMatcher,
+			sharedLibraryLookup(
+				// try to find version information from libruby shared libraries
+				`^libruby\.so.*$`,
+				rubyMatcher),
+		),
+		Package: "ruby",
+		PURL:    mustPURL("pkg:generic/ruby@version"),
+		CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
+	},
 }
+
+// in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
+var pythonVersionTemplate = `(?m)\x00(?P<version>{{ .version }}[-._a-zA-Z0-9]*)\x00`
+
+var libpythonMatcher = fileNameTemplateVersionMatcher(
+	`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)[a-z]?\.so.*$`,
+	pythonVersionTemplate,
+)
+
+var rubyMatcher = fileContentsVersionMatcher(
+	// ruby 3.2.1 (2023-02-08 revision 31819e82c8) [x86_64-linux]
+	// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
+	`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+(p[0-9]+)?) `)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -26,7 +27,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func Run(ctx context.Context, app *config.Application, args []string) error {
+func Run(_ context.Context, app *config.Application, args []string) error {
 	err := ValidateOutputOptions(app)
 	if err != nil {
 		return err
@@ -130,7 +131,21 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 				return
 			}
 
-			args := []string{"attest", si.UserInput, "--predicate", f.Name()}
+			// Select Cosign predicate type based on defined output type
+			// As orientation, check: https://github.com/sigstore/cosign/blob/main/pkg/cosign/attestation/attestation.go
+			var predicateType string
+			switch strings.ToLower(o) {
+			case "cyclonedx-json":
+				predicateType = "cyclonedx"
+			case "spdx-tag-value":
+				predicateType = "spdx"
+			case "spdx-json":
+				predicateType = "spdxjson"
+			default:
+				predicateType = "custom"
+			}
+
+			args := []string{"attest", si.UserInput, "--predicate", f.Name(), "--type", predicateType}
 			if app.Attest.Key != "" {
 				args = append(args, "--key", app.Attest.Key)
 			}
@@ -152,7 +167,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			}
 			defer w.Close()
 
-			b := &busWriter{r: r, w: w, mon: &progress.Manual{N: -1}}
+			b := &busWriter{r: r, w: w, mon: progress.NewManual(-1)}
 			execCmd.Stdout = b
 			execCmd.Stderr = b
 			defer b.mon.SetCompleted()
@@ -160,7 +175,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			// attest the SBOM
 			err = execCmd.Run()
 			if err != nil {
-				b.mon.Err = err
+				b.mon.SetError(err)
 				errs <- fmt.Errorf("unable to attest SBOM: %w", err)
 				return
 			}

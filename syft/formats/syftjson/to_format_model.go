@@ -62,6 +62,7 @@ func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
 		BugReportURL:     d.BugReportURL,
 		PrivacyPolicyURL: d.PrivacyPolicyURL,
 		CPEName:          d.CPEName,
+		SupportEnd:       d.SupportEnd,
 	}
 }
 

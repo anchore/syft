@@ -35,7 +35,6 @@ func License(p pkg.Package) string {
 			return parsed
 		}
 		return ""
-
 	})
 
 	return parsedLicenses.String()

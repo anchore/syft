@@ -3,6 +3,7 @@ package cataloger
 import (
 	"fmt"
 	"math"
+	"runtime/debug"
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
@@ -49,8 +50,15 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catalogResult, error) {
-	catalogerResult := new(catalogResult)
+func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (catalogerResult *catalogResult, err error) {
+	// handle individual cataloger panics
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("%v at:\n%s", e, string(debug.Stack()))
+		}
+	}()
+
+	catalogerResult = new(catalogResult)
 
 	// find packages from the underlying raw data
 	log.WithFields("cataloger", cataloger.Name()).Trace("cataloging started")
@@ -88,7 +96,7 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catal
 	}
 	catalogerResult.Relationships = append(catalogerResult.Relationships, relationships...)
 	log.WithFields("cataloger", cataloger.Name()).Trace("cataloging complete")
-	return catalogerResult, nil
+	return catalogerResult, err
 }
 
 // Catalog a given source (container image or filesystem) with the given catalogers, returning all discovered packages.
@@ -97,10 +105,14 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catal
 // request.
 //
 //nolint:funlen
-func Catalog(resolver source.FileResolver, release *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
+func Catalog(resolver source.FileResolver, _ *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
+
 	filesProcessed, packagesDiscovered := newMonitor()
+	defer filesProcessed.SetCompleted()
+	defer packagesDiscovered.SetCompleted()
+
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
 
@@ -139,7 +151,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 	// dynamically show updated discovered package status
 	go func() {
 		for discovered := range discoveredPackages {
-			packagesDiscovered.N += discovered
+			packagesDiscovered.Add(discovered)
 		}
 	}()
 
@@ -158,7 +170,6 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 	for result := range results {
 		if result.Error != nil {
 			errs = multierror.Append(errs, result.Error)
-			continue
 		}
 		for _, p := range result.Packages {
 			catalog.Add(p)
@@ -168,14 +179,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 
 	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
 
-	if errs != nil {
-		return nil, nil, errs
-	}
-
-	filesProcessed.SetCompleted()
-	packagesDiscovered.SetCompleted()
-
-	return catalog, allRelationships, nil
+	return catalog, allRelationships, errs
 }
 
 func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathResolver) ([]artifact.Relationship, error) {

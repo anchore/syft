@@ -54,6 +54,13 @@ jobs:
           path: syft/pkg/cataloger/golang/test-fixtures/archs/binaries
           key: ${{ runner.os }}-unit-go-binaries-cache-${{ hashFiles( 'syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint' ) }}
 
+      - name: Restore binary cataloger test-fixture cache
+        id: unit-binary-cataloger-cache
+        uses: actions/cache@v3
+        with:
+          path: syft/pkg/cataloger/binary/test-fixtures/classifiers/dynamic
+          key: ${{ runner.os }}-unit-binary-cataloger-cache-${{ hashFiles( 'syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint' ) }}
+
       - name: Run unit tests
         run: make unit
 

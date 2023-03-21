@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/internal/version"
 )
 
-func Version(v *viper.Viper, app *config.Application) *cobra.Command {
+func Version(v *viper.Viper, _ *config.Application) *cobra.Command {
 	o := &options.VersionOptions{}
 	cmd := &cobra.Command{
 		Use:   "version",

@@ -17,6 +17,7 @@ func (o AttestOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	return bindAttestConfigOptions(cmd.Flags(), v)
 }
 
+//nolint:revive
 func bindAttestConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	if err := v.BindPFlag("attest.key", flags.Lookup("key")); err != nil {
 		return err

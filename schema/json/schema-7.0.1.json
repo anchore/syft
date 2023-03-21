@@ -799,6 +799,9 @@
         },
         "cpeName": {
           "type": "string"
+        },
+        "supportEnd": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -819,11 +822,6 @@
       "required": [
         "path"
       ]
-    },
-    "LogicalStrings": {
-      "type": "string",
-      "title": "Logical Strings",
-      "description": "strings with simple or complex logical combinations"
     },
     "MixLockMetadata": {
       "properties": {
@@ -935,7 +933,10 @@
           "type": "array"
         },
         "licenses": {
-          "$ref": "#/$defs/LogicalStrings"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "language": {
           "type": "string"

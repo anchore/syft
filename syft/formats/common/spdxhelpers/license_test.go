@@ -76,6 +76,17 @@ func Test_License(t *testing.T) {
 			},
 			expected: "GPL-2.0-only",
 		},
+		{
+			name: "includes valid LicenseRef-",
+			input: pkg.Package{
+				Licenses: []string{
+					"one thing first",
+					"two things/#$^second",
+					"MIT",
+				},
+			},
+			expected: "LicenseRef-one-thing-first AND LicenseRef-two-things----second AND MIT",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

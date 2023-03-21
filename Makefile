@@ -4,17 +4,17 @@ TEMP_DIR := ./.tmp
 # Command templates #################################
 LINT_CMD := $(TEMP_DIR)/golangci-lint run --tests=false
 GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/anchore
-RELEASE_CMD := $(TEMP_DIR)/goreleaser release --rm-dist
+RELEASE_CMD := $(TEMP_DIR)/goreleaser release --clean
 SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
 CHRONICLE_CMD = $(TEMP_DIR)/chronicle
 GLOW_CMD = $(TEMP_DIR)/glow
 
 # Tool versions #################################
-GOLANGCILINT_VERSION := v1.51.2
-GOSIMPORTS_VERSION := v0.3.7
+GOLANGCILINT_VERSION := v1.52.0
+GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.15.2
+GORELEASER_VERSION := v1.16.2
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v1.13.1
 QUILL_VERSION := v0.2.0
@@ -189,6 +189,10 @@ fingerprints:
 	cd test/integration/test-fixtures && \
 		make cache.fingerprint
 
+	# for BINARY test fixtures
+	cd syft/pkg/cataloger/binary/test-fixtures && \
+		make cache.fingerprint
+
 	# for JAVA BUILD test fixtures
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
 		make packages.fingerprint
@@ -214,6 +218,7 @@ fixtures:
 	$(call title,Generating test fixtures)
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && make
 	cd syft/pkg/cataloger/rpm/test-fixtures && make
+	cd syft/pkg/cataloger/binary/test-fixtures && make
 
 .PHONY: show-test-image-cache
 show-test-image-cache:  ## Show all docker and image tar cache
@@ -246,6 +251,11 @@ install-test-cache-load: $(SNAPSHOT_DIR)
 install-test-ci-mac: $(SNAPSHOT_DIR)
 	cd test/install && \
 		make ci-test-mac
+
+.PHONY: generate-compare-file
+generate-compare-file:
+	$(call title,Generating compare test file)
+	go run ./cmd/syft $(COMPARE_TEST_IMAGE) -o json > $(COMPARE_DIR)/test-fixtures/acceptance-centos-8.2.2004.json
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac

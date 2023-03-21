@@ -55,12 +55,12 @@ func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 			return nil, err
 		}
 		if len(result) > 0 {
-			secretsDiscovered.N += int64(len(result))
+			secretsDiscovered.Add(int64(len(result)))
 			results[location.Coordinates] = result
 		}
-		prog.N++
+		prog.Increment()
 	}
-	log.Debugf("secrets cataloger discovered %d secrets", secretsDiscovered.N)
+	log.Debugf("secrets cataloger discovered %d secrets", secretsDiscovered.Current())
 	prog.SetCompleted()
 	return results, nil
 }
@@ -139,9 +139,7 @@ type SecretsMonitor struct {
 func secretsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual, *progress.Manual) {
 	stage := &progress.Stage{}
 	secretsDiscovered := &progress.Manual{}
-	prog := &progress.Manual{
-		Total: locations,
-	}
+	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{
 		Type:   event.SecretsCatalogerStarted,
