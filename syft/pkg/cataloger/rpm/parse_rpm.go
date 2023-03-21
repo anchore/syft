@@ -3,7 +3,6 @@ package rpm
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 	"github.com/sassoftware/go-rpmutils"
@@ -27,12 +26,15 @@ func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.Locat
 		return nil, nil, err
 	}
 
-	licenses, _ := rpm.Header.GetStrings(rpmutils.LICENSE)
+	_, _ = rpm.Header.GetStrings(rpmutils.LICENSE)
 	sourceRpm, _ := rpm.Header.GetString(rpmutils.SOURCERPM)
 	vendor, _ := rpm.Header.GetString(rpmutils.VENDOR)
 	digestAlgorithm := getDigestAlgorithm(rpm.Header)
 	size, _ := rpm.Header.InstalledSize()
 	files, _ := rpm.Header.GetFiles()
+
+	// TODO: UPDATE THIS TO USE LATEST LICENSE PARSING AND VALIDATION TOOLING
+	// License:   strings.Join(licenses, " AND "), // TODO: AND conjunction is not necessarily correct, but we don't have a way to represent multiple licenses yet
 
 	metadata := pkg.RpmMetadata{
 		Name:      nevra.Name,
@@ -42,7 +44,6 @@ func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.Locat
 		Release:   nevra.Release,
 		SourceRpm: sourceRpm,
 		Vendor:    vendor,
-		License:   strings.Join(licenses, " AND "), // TODO: AND conjunction is not necessarily correct, but we don't have a way to represent multiple licenses yet
 		Size:      int(size),
 		Files:     mapFiles(files, digestAlgorithm),
 	}

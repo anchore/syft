@@ -31,7 +31,6 @@ type PythonDirectURLOriginInfo struct {
 type PythonPackageMetadata struct {
 	Name                 string                     `json:"name" mapstruct:"Name"`
 	Version              string                     `json:"version" mapstruct:"Version"`
-	License              string                     `json:"license" mapstruct:"License"`
 	Author               string                     `json:"author" mapstruct:"Author"`
 	AuthorEmail          string                     `json:"authorEmail" mapstruct:"Authoremail"`
 	Platform             string                     `json:"platform" mapstruct:"Platform"`

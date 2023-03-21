@@ -13,7 +13,7 @@ import (
 )
 
 func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Package {
-	licenses, err := u.licensesFromJSON()
+	_, err := u.licensesFromJSON()
 	if err != nil {
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
 	}
@@ -21,7 +21,6 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 	p := pkg.Package{
 		Name:         u.Name,
 		Version:      u.Version,
-		Licenses:     licenses,
 		PURL:         packageURL(u.Name, u.Version),
 		Locations:    source.NewLocationSet(locations...),
 		Language:     pkg.JavaScript,
@@ -33,7 +32,6 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 			Author:   u.Author.AuthorString(),
 			Homepage: u.Homepage,
 			URL:      u.Repository.URL,
-			Licenses: licenses,
 			Private:  u.Private,
 		},
 	}
@@ -76,12 +74,6 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 }
 
 func newPackageLockV2Package(resolver source.FileResolver, location source.Location, name string, u lockPackage) pkg.Package {
-	var licenses []string
-
-	if u.License != nil {
-		licenses = u.License
-	}
-
 	return finalizeLockPkg(
 		resolver,
 		location,
@@ -92,7 +84,6 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     licenses,
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
@@ -130,7 +121,6 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 }
 
 func finalizeLockPkg(resolver source.FileResolver, location source.Location, p pkg.Package) pkg.Package {
-	p.Licenses = append(p.Licenses, addLicenses(p.Name, resolver, location)...)
 	p.SetID()
 	return p
 }
@@ -139,13 +129,13 @@ func addLicenses(name string, resolver source.FileResolver, location source.Loca
 	if resolver == nil {
 		return allLicenses
 	}
+
 	dir := path.Dir(location.RealPath)
 	pkgPath := []string{dir, "node_modules"}
 	pkgPath = append(pkgPath, strings.Split(name, "/")...)
 	pkgPath = append(pkgPath, "package.json")
 	pkgFile := path.Join(pkgPath...)
 	locations, err := resolver.FilesByPath(pkgFile)
-
 	if err != nil {
 		log.Debugf("an error occurred attempting to read: %s - %+v", pkgFile, err)
 		return allLicenses

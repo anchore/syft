@@ -190,10 +190,11 @@ func toPackageModel(p pkg.Package) model.Package {
 		cpes[i] = cpe.String(c)
 	}
 
-	var licenses = make([]string, 0)
-	if p.Licenses != nil {
-		licenses = p.Licenses
-	}
+	// TODO: update user facing package to use latest license model
+	//var licenses = make([]string, 0)
+	//if p.Licenses != nil {
+	//	licenses = p.Licenses
+	//}
 
 	locations := p.Locations.ToSlice()
 	var coordinates = make([]source.Coordinates, len(locations))
@@ -209,7 +210,6 @@ func toPackageModel(p pkg.Package) model.Package {
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
 			Locations: coordinates,
-			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
 			PURL:      p.PURL,

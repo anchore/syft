@@ -9,7 +9,6 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -28,7 +27,6 @@ func TestIDUniqueness(t *testing.T) {
 		Locations: source.NewLocationSet(
 			originalLocation,
 		),
-		Licenses: license.PackageLicense{},
 		Language: "math",
 		Type:     PythonPkg,
 		CPEs: []cpe.CPE{
@@ -242,7 +240,6 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -267,7 +264,6 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					similarLocation, // NOTE: difference; we have a different layer but the same path
 				),
-				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -293,7 +289,6 @@ func TestPackage_Merge(t *testing.T) {
 					originalLocation,
 					similarLocation, // NOTE: merge!
 				),
-				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -322,7 +317,6 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -347,7 +341,6 @@ func TestPackage_Merge(t *testing.T) {
 				Locations: source.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: license.PackageLicense{},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{

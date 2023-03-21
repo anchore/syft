@@ -271,10 +271,11 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 	info := extractPkgInfo(p)
 	metadataType, metadata := extractMetadata(p, info)
 	sP := pkg.Package{
-		Type:         info.typ,
-		Name:         p.PackageName,
-		Version:      p.PackageVersion,
-		Licenses:     parseLicense(p.PackageLicenseDeclared),
+		Type:    info.typ,
+		Name:    p.PackageName,
+		Version: p.PackageVersion,
+		// TODO: this should be updated to account for concluded and declared
+		// Licenses:     parseLicense(p.PackageLicenseDeclared),
 		CPEs:         extractCPEs(p),
 		PURL:         info.purl.String(),
 		Language:     info.lang,
@@ -312,7 +313,6 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 			OriginPackage: upstreamName,
 			Maintainer:    supplier,
 			Version:       p.PackageVersion,
-			License:       p.PackageLicenseDeclared,
 			Architecture:  arch,
 			URL:           p.PackageHomePage,
 			Description:   p.PackageDescription,
@@ -335,7 +335,6 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 			Epoch:     epoch,
 			Arch:      arch,
 			SourceRpm: upstreamValue,
-			License:   license,
 			Vendor:    originator,
 		}
 	case pkg.DebPkg:

@@ -150,7 +150,8 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
-		license := License(p)
+		// TODO: package licenses are validated on construction at the cataloger level
+		// extract these correctly to the spdx license format
 
 		// two ways to get filesAnalyzed == true:
 		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
@@ -250,23 +251,7 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 			// Cardinality: optional, one
 			PackageSourceInfo: SourceInfo(p),
 
-			// 7.13: Concluded License: SPDX License Expression, "NONE" or "NOASSERTION"
-			// Cardinality: mandatory, one
-			// Purpose: Contain the license the SPDX file creator has concluded as governing the
-			// package or alternative values, if the governing license cannot be determined.
-			PackageLicenseConcluded: license,
-
-			// 7.14: All Licenses Info from Files: SPDX License Expression, "NONE" or "NOASSERTION"
-			// Cardinality: mandatory, one or many if filesAnalyzed is true / omitted;
-			//              zero (must be omitted) if filesAnalyzed is false
-			PackageLicenseInfoFromFiles: nil,
-
-			// 7.15: Declared License: SPDX License Expression, "NONE" or "NOASSERTION"
-			// Cardinality: mandatory, one
-			// Purpose: List the licenses that have been declared by the authors of the package.
-			// Any license information that does not originate from the package authors, e.g. license
-			// information from a third party repository, should not be included in this field.
-			PackageLicenseDeclared: license,
+			// TODO 7.13 ----- 7.16
 
 			// 7.16: Comments on License
 			// Cardinality: optional, one
@@ -512,26 +497,10 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	return ty
 }
 
+// TODO: other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
+// field. The expression is only filled given a validated Value field.
 func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
-	licenses := map[string]bool{}
-	for _, p := range catalog.Sorted() {
-		for _, license := range parseLicenses(p.Licenses) {
-			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
-				licenses[license] = true
-			}
-		}
-	}
-	var result []*spdx.OtherLicense
-	for license := range licenses {
-		// separate the actual ID from the prefix
-		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
-		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: SanitizeElementID(license),
-			LicenseName:       name,
-			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
-		})
-	}
-	return result
+	return nil
 }
 
 // TODO: handle SPDX excludes file case

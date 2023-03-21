@@ -24,15 +24,12 @@ func newPackage(dbLocation source.Location, metadata pkg.RpmMetadata, distro *li
 		Metadata:     metadata,
 	}
 
-	if metadata.License != "" {
-		p.Licenses = append(p.Licenses, metadata.License)
-	}
-
 	p.SetID()
 	return p
 }
 
 func newMetadataFromEntry(entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) pkg.RpmMetadata {
+	// TODO: use entry to populate the pkg.RpmMetadata struct in package constructor
 	return pkg.RpmMetadata{
 		Name:            entry.Name,
 		Version:         entry.Version,
@@ -41,7 +38,6 @@ func newMetadataFromEntry(entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) 
 		Release:         entry.Release,
 		SourceRpm:       entry.SourceRpm,
 		Vendor:          entry.Vendor,
-		License:         entry.License,
 		Size:            entry.Size,
 		ModularityLabel: entry.Modularitylabel,
 		Files:           files,

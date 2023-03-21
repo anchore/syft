@@ -27,7 +27,6 @@ type RpmMetadata struct {
 	Release         string            `json:"release" cyclonedx:"release"`
 	SourceRpm       string            `json:"sourceRpm" cyclonedx:"sourceRpm"`
 	Size            int               `json:"size" cyclonedx:"size"`
-	License         string            `json:"license"`
 	Vendor          string            `json:"vendor"`
 	ModularityLabel string            `json:"modularityLabel"`
 	Files           []RpmdbFileRecord `json:"files"`

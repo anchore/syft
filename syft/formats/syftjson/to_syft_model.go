@@ -207,12 +207,13 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		locations[i] = source.NewLocationFromCoordinates(c)
 	}
 
+	// TODO: sync pkg and user facing license struct
 	out := pkg.Package{
-		Name:         p.Name,
-		Version:      p.Version,
-		FoundBy:      p.FoundBy,
-		Locations:    source.NewLocationSet(locations...),
-		Licenses:     p.Licenses,
+		Name:      p.Name,
+		Version:   p.Version,
+		FoundBy:   p.FoundBy,
+		Locations: source.NewLocationSet(locations...),
+		// Licenses:     p.Licenses,
 		Language:     p.Language,
 		Type:         p.Type,
 		CPEs:         cpes,

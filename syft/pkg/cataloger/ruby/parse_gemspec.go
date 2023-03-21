@@ -20,6 +20,11 @@ var _ generic.Parser = parseGemFileLockEntries
 
 type postProcessor func(string) []string
 
+type gemData struct {
+	Licenses []string `mapstructure:"licenses" json:"licenses,omitempty"`
+	pkg.GemMetadata
+}
+
 // match example:      Al\u003Ex   --->   003E
 var unicodePattern = regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
 
@@ -90,7 +95,7 @@ func parseGemSpecEntries(_ source.FileResolver, _ *generic.Environment, reader s
 	}
 
 	if fields["name"] != "" && fields["version"] != "" {
-		var metadata pkg.GemMetadata
+		var metadata gemData
 		if err := mapstructure.Decode(fields, &metadata); err != nil {
 			return nil, nil, fmt.Errorf("unable to decode gem metadata: %w", err)
 		}

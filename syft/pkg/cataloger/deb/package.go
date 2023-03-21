@@ -93,8 +93,8 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 	if copyrightReader != nil && copyrightLocation != nil {
 		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.VirtualPath)
 		// attach the licenses
-		p.Licenses = parseLicensesFromCopyright(copyrightReader)
-
+		// TODO: update this to use new license model/validation
+		_ = parseLicensesFromCopyright(copyrightReader)
 		// keep a record of the file where this was discovered
 		p.Locations.Add(*copyrightLocation)
 	}

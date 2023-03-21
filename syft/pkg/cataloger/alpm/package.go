@@ -2,19 +2,17 @@ package alpm
 
 import (
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(m pkg.AlpmMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
+func newPackage(m alpmData, release *linux.Release, locations ...source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(locations...),
 		Type:         pkg.AlpmPkg,
-		Licenses:     internal.SplitAny(m.License, " \n"),
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,
 		Metadata:     m,
@@ -23,7 +21,7 @@ func newPackage(m pkg.AlpmMetadata, release *linux.Release, locations ...source.
 	return p
 }
 
-func packageURL(m pkg.AlpmMetadata, distro *linux.Release) string {
+func packageURL(m alpmData, distro *linux.Release) string {
 	if distro == nil || distro.ID != "arch" {
 		// note: there is no namespace variation (like with debian ID_LIKE for ubuntu ID, for example)
 		return ""

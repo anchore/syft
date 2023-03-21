@@ -6,7 +6,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -48,7 +47,8 @@ func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, 
 			Files: make([]pkg.PortageFileRecord, 0),
 		},
 	}
-	addLicenses(resolver, reader.Location, &p)
+	// TODO: update this to use latest license parsing and validation tooling
+	// addLicenses(resolver, reader.Location, &p)
 	addSize(resolver, reader.Location, &p)
 	addFiles(resolver, reader.Location, &p)
 
@@ -114,9 +114,8 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 			findings.Add(token)
 		}
 	}
-	licenses := findings.ToSlice()
-	sort.Strings(licenses)
-	p.Licenses = licenses
+	_ = findings.ToSlice()
+	// sort.Strings(licenses)
 	p.Locations.Add(*location)
 }
 

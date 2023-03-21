@@ -13,16 +13,19 @@ import (
 func Test_PackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata pkg.AlpmMetadata
+		metadata alpmData
 		distro   linux.Release
 		expected string
 	}{
 		{
 			name: "bad distro id",
-			metadata: pkg.AlpmMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
+			metadata: alpmData{
+				"",
+				pkg.AlpmMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
 				ID:      "something-else",
@@ -32,10 +35,13 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "gocase",
-			metadata: pkg.AlpmMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
+			metadata: alpmData{
+				"",
+				pkg.AlpmMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
 				ID:      "arch",
@@ -45,9 +51,12 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "missing architecture",
-			metadata: pkg.AlpmMetadata{
-				Package: "p",
-				Version: "v",
+			metadata: alpmData{
+				"",
+				pkg.AlpmMetadata{
+					Package: "p",
+					Version: "v",
+				},
 			},
 			distro: linux.Release{
 				ID: "arch",
@@ -55,10 +64,13 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:alpm/arch/p@v?distro=arch",
 		},
 		{
-			metadata: pkg.AlpmMetadata{
-				Package:      "python",
-				Version:      "3.10.0",
-				Architecture: "any",
+			metadata: alpmData{
+				"",
+				pkg.AlpmMetadata{
+					Package:      "python",
+					Version:      "3.10.0",
+					Architecture: "any",
+				},
 			},
 			distro: linux.Release{
 				ID:      "arch",
@@ -67,10 +79,13 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:alpm/arch/python@3.10.0?arch=any&distro=arch-rolling",
 		},
 		{
-			metadata: pkg.AlpmMetadata{
-				Package:      "g plus plus",
-				Version:      "v84",
-				Architecture: "x86_64",
+			metadata: alpmData{
+				"",
+				pkg.AlpmMetadata{
+					Package:      "g plus plus",
+					Version:      "v84",
+					Architecture: "x86_64",
+				},
 			},
 			distro: linux.Release{
 				ID:      "arch",
@@ -80,11 +95,14 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: pkg.AlpmMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
-				BasePackage:  "origin",
+			metadata: alpmData{
+				"",
+				pkg.AlpmMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+					BasePackage:  "origin",
+				},
 			},
 			distro: linux.Release{
 				ID:      "arch",

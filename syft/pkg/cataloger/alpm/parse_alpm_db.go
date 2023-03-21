@@ -31,6 +31,11 @@ var (
 	}
 )
 
+type alpmData struct {
+	License string `mapstructure:"license" json:"license"`
+	pkg.AlpmMetadata
+}
+
 func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, err := parseAlpmDBEntry(reader)
 	if err != nil {
@@ -48,7 +53,7 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 		return nil, nil, err
 	}
 
-	// The replace the files found the the pacman database with the files from the mtree These contain more metadata and
+	// The replace the files found the pacman database with the files from the mtree These contain more metadata and
 	// thus more useful.
 	metadata.Files = pkgFiles
 
@@ -74,7 +79,7 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 	}, nil, nil
 }
 
-func parseAlpmDBEntry(reader io.Reader) (*pkg.AlpmMetadata, error) {
+func parseAlpmDBEntry(reader io.Reader) (*alpmData, error) {
 	scanner := newScanner(reader)
 	metadata, err := parseDatabase(scanner)
 	if err != nil {
@@ -124,8 +129,8 @@ func getFileReader(path string, resolver source.FileResolver) (io.Reader, error)
 	return dbContentReader, nil
 }
 
-func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
-	var entry pkg.AlpmMetadata
+func parseDatabase(b *bufio.Scanner) (*alpmData, error) {
+	var entry alpmData
 	var err error
 	pkgFields := make(map[string]interface{})
 	for b.Scan() {

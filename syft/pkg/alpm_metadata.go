@@ -21,7 +21,6 @@ type AlpmMetadata struct {
 	Architecture string           `mapstructure:"arch" json:"architecture"`
 	Size         int              `mapstructure:"size" json:"size" cyclonedx:"size"`
 	Packager     string           `mapstructure:"packager" json:"packager"`
-	License      string           `mapstructure:"license" json:"license"`
 	URL          string           `mapstructure:"url" json:"url"`
 	Validation   string           `mapstructure:"validation" json:"validation"`
 	Reason       int              `mapstructure:"reason" json:"reason"`

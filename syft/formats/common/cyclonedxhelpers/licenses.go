@@ -3,44 +3,20 @@ package cyclonedxhelpers
 import (
 	"github.com/CycloneDX/cyclonedx-go"
 
-	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// TODO: update this to only return valid cyclonedx expression types
+// This should be a function that just surfaces licenses already validated in the package struct
 func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
-	lc := cyclonedx.Licenses{}
-	for _, licenseName := range p.Licenses {
-		if value, other, exists := spdxlicense.ID(licenseName); exists {
-			lc = append(lc, cyclonedx.LicenseChoice{
-				License: &cyclonedx.License{
-					ID:   value,
-					Name: other,
-				},
-			})
-		}
-	}
-	if len(lc) > 0 {
-		return &lc
-	}
 	return nil
 }
 
-func decodeLicenses(c *cyclonedx.Component) (out []string) {
+func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	if c.Licenses != nil {
-		for _, l := range *c.Licenses {
-			if l.License != nil {
-				var lic string
-				switch {
-				case l.License.ID != "":
-					lic = l.License.ID
-				case l.License.Name != "":
-					lic = l.License.Name
-				default:
-					continue
-				}
-				out = append(out, lic)
-			}
+		for range *c.Licenses {
+			// TODO: switch on if it's a license or expression
 		}
 	}
-	return
+	return nil
 }

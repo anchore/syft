@@ -41,17 +41,12 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 }
 
 func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...source.Location) pkg.Package {
-	var licenses []string
-	if m.License != "" {
-		licenses = []string{m.License}
-	}
-
+	// TODO: lift licenses out of metadata as part of construction
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
 		PURL:         packageURL(m.Name, m.Version, &m),
 		Locations:    source.NewLocationSet(sources...),
-		Licenses:     licenses,
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,

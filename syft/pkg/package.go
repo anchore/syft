@@ -16,6 +16,7 @@ import (
 
 // Package represents an application or library that has been bundled into a distributable format.
 // TODO: if we ignore FoundBy for ID generation should we merge the field to show it was found in two places?
+// TODO: should cyclonedx tags exist on the struct? Why don't we use the model.Package type?
 type Package struct {
 	id           artifact.ID        `hash:"ignore"`
 	Name         string             // the package name

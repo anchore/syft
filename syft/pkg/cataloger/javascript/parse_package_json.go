@@ -137,7 +137,7 @@ func (r *repository) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type license struct {
+type npmPackageLicense struct {
 	Type string `json:"type"`
 	URL  string `json:"url"`
 }
@@ -151,7 +151,7 @@ func licenseFromJSON(b []byte) (string, error) {
 	}
 
 	// then try as object (this format is deprecated)
-	var licenseObject license
+	var licenseObject npmPackageLicense
 	err = json.Unmarshal(b, &licenseObject)
 	if err == nil {
 		return licenseObject.Type, nil
@@ -175,7 +175,7 @@ func (p packageJSON) licensesFromJSON() ([]string, error) {
 
 	// The "licenses" field is deprecated. It should be inspected as a last resort.
 	if multiLicense != nil && err == nil {
-		mapLicenses := func(licenses []license) []string {
+		mapLicenses := func(licenses []npmPackageLicense) []string {
 			mappedLicenses := make([]string, len(licenses))
 			for i, l := range licenses {
 				mappedLicenses[i] = l.Type
@@ -189,8 +189,8 @@ func (p packageJSON) licensesFromJSON() ([]string, error) {
 	return nil, err
 }
 
-func licensesFromJSON(b []byte) ([]license, error) {
-	var licenseObject []license
+func licensesFromJSON(b []byte) ([]npmPackageLicense, error) {
+	var licenseObject []npmPackageLicense
 	err := json.Unmarshal(b, &licenseObject)
 	if err == nil {
 		return licenseObject, nil

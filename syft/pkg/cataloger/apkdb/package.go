@@ -9,12 +9,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
+func newPackage(d apkData, release *linux.Release, locations ...source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
 		Locations:    source.NewLocationSet(locations...),
-		Licenses:     strings.Split(d.License, " "),
 		PURL:         packageURL(d, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,
@@ -27,7 +26,7 @@ func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.L
 }
 
 // packageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
-func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
+func packageURL(m apkData, distro *linux.Release) string {
 	if distro == nil {
 		return ""
 	}

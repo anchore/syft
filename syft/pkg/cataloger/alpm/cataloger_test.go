@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -20,7 +21,7 @@ func TestAlpmCataloger(t *testing.T) {
 			Version:      "6.2.1-2",
 			Type:         pkg.AlpmPkg,
 			FoundBy:      "alpmdb-cataloger",
-			Licenses:     []string{"LGPL3", "GPL"},
+			Licenses:     license.PackageLicense{},
 			Locations:    source.NewLocationSet(source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")),
 			CPEs:         nil,
 			PURL:         "",
@@ -33,7 +34,6 @@ func TestAlpmCataloger(t *testing.T) {
 				Architecture: "x86_64",
 				Size:         1044438,
 				Packager:     "Antonio Rojas <arojas@archlinux.org>",
-				License:      "LGPL3\nGPL",
 				URL:          "https://gmplib.org/",
 				Validation:   "pgp",
 				Reason:       1,
