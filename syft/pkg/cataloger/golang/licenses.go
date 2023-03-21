@@ -15,21 +15,21 @@ import (
 )
 
 type goLicenses struct {
-	searchLocalGoModForLicenses bool
-	localGoModResolver          source.FileResolver
+	searchLocalModCacheLicenses bool
+	localModCacheResolver       source.FileResolver
 }
 
-func newGoLicenses(searchLocalGoModForLicenses bool) goLicenses {
+func newGoLicenses(searchLocalModCacheLicenses bool) goLicenses {
 	return goLicenses{
-		searchLocalGoModForLicenses: searchLocalGoModForLicenses,
-		localGoModResolver:          deferredResolver,
+		searchLocalModCacheLicenses: searchLocalModCacheLicenses,
+		localModCacheResolver:       deferredModCacheResolver,
 	}
 }
 
 // this needs to be shared between GoMod & GoBinary so it's only scanned once
-var deferredResolver = deferredResolverForLocalGoMod()
+var deferredModCacheResolver = newDeferredModCacheResolver()
 
-func deferredResolverForLocalGoMod() source.FileResolver {
+func newDeferredModCacheResolver() source.FileResolver {
 	return source.NewDeferredResolverFromSource(func() (source.Source, error) {
 		goPath := os.Getenv("GOPATH")
 
@@ -51,16 +51,18 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 	licenses, err = findLicenses(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, moduleName, moduleVersion),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	if len(licenses) == 0 && c.searchLocalGoModForLicenses {
+	if c.searchLocalModCacheLicenses && err == nil && len(licenses) == 0 {
 		// if we're running against a directory on the filesystem, it may not include the
-		// user's homedir / GOPATH, so we defer to using the localGoModResolver
-		licenses, err = findLicenses(c.localGoModResolver,
+		// user's homedir / GOPATH, so we defer to using the localModCacheResolver
+		licenses, err = findLicenses(c.localModCacheResolver,
 			fmt.Sprintf(`**/%s@%s/*`, moduleName, moduleVersion),
 		)
+	}
+
+	// always return a non-nil slice
+	if licenses == nil {
+		licenses = []string{}
 	}
 
 	return

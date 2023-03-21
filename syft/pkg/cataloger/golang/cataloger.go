@@ -9,13 +9,13 @@ import (
 )
 
 type GoCatalogerOpts struct {
-	SearchLocalGoModLicenses bool
+	SearchLocalModCacheLicenses bool
 }
 
 // NewGoModFileCataloger returns a new Go module cataloger object.
 func NewGoModFileCataloger(opts GoCatalogerOpts) *generic.Cataloger {
 	c := goModCataloger{
-		licenses: newGoLicenses(opts.SearchLocalGoModLicenses),
+		licenses: newGoLicenses(opts.SearchLocalModCacheLicenses),
 	}
 	return generic.NewCataloger("go-mod-file-cataloger").
 		WithParserByGlobs(c.parseGoModFile, "**/go.mod")
@@ -24,7 +24,7 @@ func NewGoModFileCataloger(opts GoCatalogerOpts) *generic.Cataloger {
 // NewGoModuleBinaryCataloger returns a new Golang cataloger object.
 func NewGoModuleBinaryCataloger(opts GoCatalogerOpts) *generic.Cataloger {
 	c := goBinaryCataloger{
-		licenses: newGoLicenses(opts.SearchLocalGoModLicenses),
+		licenses: newGoLicenses(opts.SearchLocalModCacheLicenses),
 	}
 	return generic.NewCataloger("go-module-binary-cataloger").
 		WithParserByMimeTypes(c.parseGoBinary, internal.ExecutableMIMETypeSet.List()...)

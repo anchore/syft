@@ -72,7 +72,7 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 		Catalogers:  cfg.Catalogers,
 		Parallelism: cfg.Parallelism,
 		Golang: golangCataloger.GoCatalogerOpts{
-			SearchLocalGoModLicenses: cfg.Golang.SearchLocalGoModLicenses,
+			SearchLocalModCacheLicenses: cfg.Golang.SearchLocalModCacheLicenses,
 		},
 	}
 }
