@@ -64,9 +64,15 @@ func (c *goModCataloger) parseGoModFile(resolver source.FileResolver, _ *generic
 
 	// remove any old packages and replace with new ones...
 	for _, m := range file.Replace {
+		licenses, err := c.licenses.getLicenses(resolver, m.New.Path, m.New.Version)
+		if err != nil {
+			log.Tracef("error getting licenses for package: %s %v", m.New.Path, err)
+		}
+
 		packages[m.New.Path] = pkg.Package{
 			Name:         m.New.Path,
 			Version:      m.New.Version,
+			Licenses:     licenses,
 			Locations:    source.NewLocationSet(reader.Location),
 			PURL:         packageURL(m.New.Path, m.New.Version),
 			Language:     pkg.Go,

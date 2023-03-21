@@ -497,6 +497,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			for i := range test.expected {
 				p := &test.expected[i]
+				if p.Licenses == nil {
+					p.Licenses = []string{}
+				}
 				p.SetID()
 			}
 			location := source.Location{
