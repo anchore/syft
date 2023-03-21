@@ -473,13 +473,13 @@ func Test_OtherLicenses(t *testing.T) {
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
+					LicenseIdentifier: "LicenseRef-not-known--s",
+					LicenseName:       "not known %s",
 					ExtractedText:     NONE,
 				},
 				{
-					LicenseIdentifier: "LicenseRef-not-known--s",
-					LicenseName:       "not known %s",
+					LicenseIdentifier: "LicenseRef-un-known",
+					LicenseName:       "un known",
 					ExtractedText:     NONE,
 				},
 			},
