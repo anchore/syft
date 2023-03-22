@@ -18,16 +18,20 @@ const (
 
 //go:generate go run ./generate
 
+// ID returns the canonical license ID for the given license ID
+// Note: this function is only concerned with returning a best match of an SPDX license ID
+// SPDX Expressions will be handled by a parent package which will call this function
 func ID(id string) (value, other string, exists bool) {
-	id = strings.TrimSpace(id)
-	// ignore blank strings or the joiner
-	if id == "" || id == "AND" {
-		return "", "", false
-	}
 	// first look for a canonical license
-	if value, exists := licenseIDs[strings.ToLower(id)]; exists {
+	if value, exists := licenseIDs[cleanLicenseID(id)]; exists {
 		return value, "", exists
 	}
 	// we did not find, so treat it as a separate license
 	return "", id, true
+}
+
+func cleanLicenseID(id string) string {
+	id = strings.TrimSpace(id)
+	id = strings.ToLower(id)
+	return strings.ReplaceAll(id, "-", "")
 }
