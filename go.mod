@@ -54,6 +54,7 @@ require (
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
 	github.com/anchore/stereoscope v0.0.0-20230317134707-7928713c391e
 	github.com/docker/docker v23.0.1+incompatible
+	github.com/github/go-spdx/v2 v2.1.2
 	github.com/google/go-containerregistry v0.14.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/knqyf263/go-rpmdb v0.0.0-20221030135625-4082a22221ce
@@ -158,3 +159,5 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+replace github.com/github/go-spdx/v2 => ../go-spdx

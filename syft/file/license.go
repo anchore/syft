@@ -1,6 +1,7 @@
 package file
 
 import (
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/license"
 )
 
@@ -12,10 +13,16 @@ type License struct {
 }
 
 func NewLicense(value string) License {
-	// TODO: validate value as an SPDX expression
+	// TODO: enhance license package with more helpers for validation
+	spdxExpression, err := license.ParseExpression(value)
+	if err != nil {
+		log.Trace("unable to parse license expression: %w", err)
+	}
+
 	// TODO: run location against classifier to form evidence
 	return License{
-		Value: value,
-		Type:  license.Concluded,
+		Value:          value,
+		SPDXExpression: spdxExpression,
+		Type:           license.Concluded,
 	}
 }
