@@ -53,8 +53,9 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 		return nil, nil, err
 	}
 
-	// The replace the files found the pacman database with the files from the mtree These contain more metadata and
+	// replace the files found the pacman database with the files from the mtree These contain more metadata and
 	// thus more useful.
+	// TODO: probably want to use MTREE and PKGINFO here
 	metadata.Files = pkgFiles
 
 	// We only really do this to get any backup database entries from the files database

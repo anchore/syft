@@ -10,10 +10,18 @@ import (
 )
 
 func newPackage(d apkData, release *linux.Release, locations ...source.Location) pkg.Package {
+	// apkdb only passes a single location in its constructor
+	var licenseLocation source.Location
+	if len(locations) > 0 {
+		licenseLocation = locations[0]
+	}
+	licenses := []pkg.License{pkg.NewLicense(d.License, "", licenseLocation)}
+
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
 		Locations:    source.NewLocationSet(locations...),
+		Licenses:     licenses,
 		PURL:         packageURL(d, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,

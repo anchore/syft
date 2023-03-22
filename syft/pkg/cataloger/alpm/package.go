@@ -8,10 +8,18 @@ import (
 )
 
 func newPackage(m alpmData, release *linux.Release, locations ...source.Location) pkg.Package {
+	// ALPM only passes a single location
+	// We use this as the "declared" license location
+	var licenseLocation source.Location
+	if len(locations) > 0 {
+		licenseLocation = locations[0]
+	}
+
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(locations...),
+		Licenses:     []pkg.License{pkg.NewLicense(m.License, "", licenseLocation)},
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,
