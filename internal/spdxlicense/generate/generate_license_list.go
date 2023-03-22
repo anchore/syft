@@ -11,8 +11,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/scylladb/go-set/strset"
 )
 
 // This program generates license_list.go.
@@ -35,7 +33,7 @@ var licenseIDs = map[string]string{
 }
 `))
 
-var versionMatch = regexp.MustCompile(`-([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
+var versionMatch = regexp.MustCompile(`([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
 
 func main() {
 	if err := run(); err != nil {
@@ -49,7 +47,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("unable to get licenses list: %w", err)
 	}
-
+	// open test file and decode json
 	var result LicenseList
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return fmt.Errorf("unable to decode license list: %w", err)
@@ -103,58 +101,59 @@ func run() error {
 // The third pass is for overwriting deprecated licenses with replacements, for example GPL-2.0+ is deprecated
 // and now maps to GPL-2.0-or-later.
 func processSPDXLicense(result LicenseList) map[string]string {
-	// first pass build map
-	var licenseIDs = make(map[string]string)
-	for _, l := range result.Licenses {
-		cleanID := strings.ToLower(l.ID)
-		if _, exists := licenseIDs[cleanID]; exists {
-			log.Fatalf("duplicate license ID found: %q", cleanID)
-		}
-		licenseIDs[cleanID] = l.ID
-	}
-
-	// The order of variations/permutations of a license ID matters because of we how shuffle its digits,
-	// that is because the permutation code can generate the same value for two difference licenses,
-	// for example: The licenses `ABC-1.0` and `ABC-1.1` can both map to `ABC-1`,
-	// so we need to guarantee the order they are created to avoid mapping them wrongly. So we use a sorted list.
-	// To overwrite deprecated licenses during the first pass we would later on rely on map order,
-	// [which in go is not consistent by design](https://stackoverflow.com/a/55925880).
+	// The order of variations/permutations of a license ID matter.
+	// The permutation code can generate the same value for two difference licenses,
+	// for example: The licenses `ABC-1.0` and `ABC-1.1` can both map to `ABC1`,
+	// we need to guarantee the order they are created to avoid mapping them incorrectly.
+	// To do this we use a sorted list.
 	sort.Slice(result.Licenses, func(i, j int) bool {
 		return result.Licenses[i].ID < result.Licenses[j].ID
 	})
 
-	// second pass to build exceptions and replacements
-	replaced := strset.New()
+	// keys are simplified by removing dashes and lowercasing ID
+	// this is so license declarations in the wild like: LGPL3 LGPL-3 lgpl3 and lgpl-3 can all match
+	licenseIDs := make(map[string]string)
 	for _, l := range result.Licenses {
-		var multipleID []string
-		cleanID := strings.ToLower(l.ID)
+		// licensePerms includes the cleanID in return slice
+		cleanID := cleanLicenseID(l.ID)
+		licensePerms := buildLicenseIDPermutations(cleanID)
 
-		var replacement *License
+		// if license is deprecated, find its replacement and add to licenseIDs
 		if l.Deprecated {
-			replacement = result.findReplacementLicense(l)
+			idToMap := l.ID
+			replacement := result.findReplacementLicense(l)
 			if replacement != nil {
-				licenseIDs[cleanID] = replacement.ID
+				idToMap = replacement.ID
+			}
+			// it's important to use the original licensePerms here so that the deprecated license
+			// can now point to the new correct license
+			for _, id := range licensePerms {
+				if _, exists := licenseIDs[id]; exists {
+					// can be used to debug duplicate license permutations and confirm that examples like GPL1
+					// do not point to GPL-1.1
+					// log.Println("duplicate license list permutation found when mapping deprecated license to replacement")
+					// log.Printf("already have key: %q for SPDX ID: %q; attempted to map replacement ID: %q for deprecated ID: %q\n", id, value, replacement.ID, l.ID)
+					continue
+				}
+				licenseIDs[id] = idToMap
 			}
 		}
 
-		multipleID = append(multipleID, buildLicensePermutations(cleanID)...)
-		for _, id := range multipleID {
-			// don't make replacements for IDs that have already been replaced. Since we have a sorted license list
-			// the earliest replacement is correct (any future replacements are not.
-			// e.g. replace lgpl-2 with LGPL-2.1-only is wrong, but with LGPL-2.0-only is correct)
-			if replacement == nil || replaced.Has(id) {
-				if _, exists := licenseIDs[id]; !exists {
-					licenseIDs[id] = l.ID
-				}
-			} else {
-				// a useful debugging line during builds
-				log.Printf("replacing %s with %s\n", id, replacement.ID)
-
-				licenseIDs[id] = replacement.ID
-				replaced.Add(id)
+		// if license is not deprecated, add all permutations to licenseIDs
+		for _, id := range licensePerms {
+			if _, exists := licenseIDs[id]; exists {
+				//log.Println("found duplicate license permutation key for non deprecated license")
+				// log.Printf("already have key: %q for SPDX ID: %q; tried to insert as SPDX ID:%q\n", id, value, l.ID)
+				continue
 			}
+			licenseIDs[id] = l.ID
 		}
 	}
 
 	return licenseIDs
+}
+
+func cleanLicenseID(id string) string {
+	cleanID := strings.ToLower(id)
+	return strings.ReplaceAll(cleanID, "-", "")
 }
