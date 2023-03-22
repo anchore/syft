@@ -142,7 +142,7 @@ func processSPDXLicense(result LicenseList) map[string]string {
 		// if license is not deprecated, add all permutations to licenseIDs
 		for _, id := range licensePerms {
 			if _, exists := licenseIDs[id]; exists {
-				//log.Println("found duplicate license permutation key for non deprecated license")
+				// log.Println("found duplicate license permutation key for non deprecated license")
 				// log.Printf("already have key: %q for SPDX ID: %q; tried to insert as SPDX ID:%q\n", id, value, l.ID)
 				continue
 			}
