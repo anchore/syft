@@ -21,13 +21,13 @@ const (
 // ID returns the canonical license ID for the given license ID
 // Note: this function is only concerned with returning a best match of an SPDX license ID
 // SPDX Expressions will be handled by a parent package which will call this function
-func ID(id string) (value, other string, exists bool) {
+func ID(id string) (value string, exists bool) {
 	// first look for a canonical license
 	if value, exists := licenseIDs[cleanLicenseID(id)]; exists {
-		return value, "", exists
+		return value, exists
 	}
 	// we did not find, so treat it as a separate license
-	return "", id, true
+	return "", false
 }
 
 func cleanLicenseID(id string) string {

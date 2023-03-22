@@ -47,7 +47,6 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("unable to get licenses list: %w", err)
 	}
-	// open test file and decode json
 	var result LicenseList
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return fmt.Errorf("unable to decode license list: %w", err)
