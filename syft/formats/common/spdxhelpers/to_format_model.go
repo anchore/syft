@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/spdx/tools-golang/spdx"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -521,8 +523,12 @@ func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 			}
 		}
 	}
+
 	var result []*spdx.OtherLicense
-	for license := range licenses {
+
+	sorted := maps.Keys(licenses)
+	slices.Sort(sorted)
+	for _, license := range sorted {
 		// separate the actual ID from the prefix
 		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
