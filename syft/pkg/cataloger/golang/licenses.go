@@ -122,9 +122,7 @@ func findLicenses(resolver source.FileResolver, globMatch string) (out []string,
 				return nil, err
 			}
 
-			if parsed != nil {
-				out = append(out, parsed...)
-			}
+			out = append(out, parsed...)
 		}
 	}
 
