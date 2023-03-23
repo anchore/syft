@@ -42,10 +42,10 @@ jobs:
         with:
           signoff: true
           delete-branch: true
-          branch: auto/latest
+          branch: auto/latest-stereoscope
           labels: dependencies
-          commit-message: "Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
-          title: "Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
+          commit-message: "chore(deps): update stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
+          title: "chore(deps): update stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
           body: |
             Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}
           token: ${{ steps.generate-token.outputs.token }}
