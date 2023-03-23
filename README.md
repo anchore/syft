@@ -510,8 +510,8 @@ golang:
 
    # remote proxy to use when retrieving go packages from the network,
    # if unset this defaults to $GOPROXY followed by https://proxy.golang.org
-   # SYFT_GOLANG_REMOTE_PROXY env var
-   remote-proxy: ""
+   # SYFT_GOLANG_GOPROXY env var
+   goproxy: ""
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:
