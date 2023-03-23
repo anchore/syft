@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
+	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 )
 
 var (
@@ -48,6 +49,7 @@ type Application struct {
 	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
 	Catalogers         []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Package            pkg                `yaml:"package" json:"package" mapstructure:"package"`
+	Golang             golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
@@ -69,6 +71,10 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 		},
 		Catalogers:  cfg.Catalogers,
 		Parallelism: cfg.Parallelism,
+		Golang: golangCataloger.GoCatalogerOpts{
+			SearchLocalModCacheLicenses: cfg.Golang.SearchLocalModCacheLicenses,
+			LocalModCacheDir:            cfg.Golang.LocalModCacheDir,
+		},
 	}
 }
 

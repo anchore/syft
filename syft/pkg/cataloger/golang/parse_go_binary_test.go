@@ -497,6 +497,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			for i := range test.expected {
 				p := &test.expected[i]
+				if p.Licenses == nil {
+					p.Licenses = []string{}
+				}
 				p.SetID()
 			}
 			location := source.Location{
@@ -505,7 +508,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					FileSystemID: "layer-id",
 				},
 			}
-			pkgs := buildGoPkgInfo(location, test.mod, test.arch)
+
+			c := goBinaryCataloger{}
+			pkgs := c.buildGoPkgInfo(source.NewMockResolverForPaths(), location, test.mod, test.arch)
 			assert.Equal(t, test.expected, pkgs)
 		})
 	}

@@ -55,6 +55,7 @@ require (
 	github.com/anchore/stereoscope v0.0.0-20230317134707-7928713c391e
 	github.com/docker/docker v23.0.1+incompatible
 	github.com/google/go-containerregistry v0.14.0
+	github.com/google/licensecheck v0.3.1
 	github.com/invopop/jsonschema v0.7.0
 	github.com/knqyf263/go-rpmdb v0.0.0-20221030135625-4082a22221ce
 	github.com/opencontainers/go-digest v1.0.0
