@@ -39,12 +39,12 @@ func License(p pkg.Package) string {
 
 func parseLicenses(raw []string) (parsedLicenses []string) {
 	for _, l := range raw {
-		if value, other, exists := spdxlicense.ID(l); exists {
-			parsed := value
-			if other != "" {
-				parsed = spdxlicense.LicenseRefPrefix + other
-			}
-			parsedLicenses = append(parsedLicenses, parsed)
+		if value, exists := spdxlicense.ID(l); exists {
+			parsedLicenses = append(parsedLicenses, value)
+		} else {
+			// we did not find a valid SPDX license ID so treat as separate license
+			otherLicense := spdxlicense.LicenseRefPrefix + l
+			parsedLicenses = append(parsedLicenses, otherLicense)
 		}
 	}
 	return

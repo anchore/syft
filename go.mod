@@ -52,7 +52,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1-0.20221222100750-41a1ac565cce
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
-	github.com/anchore/stereoscope v0.0.0-20230317134707-7928713c391e
+	github.com/anchore/stereoscope v0.0.0-20230323161519-d7551b7f46f5
 	github.com/docker/docker v23.0.1+incompatible
 	github.com/google/go-containerregistry v0.13.0
 	github.com/google/licensecheck v0.3.1
@@ -60,7 +60,7 @@ require (
 	github.com/knqyf263/go-rpmdb v0.0.0-20221030135625-4082a22221ce
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/sassoftware/go-rpmutils v0.2.0
-	github.com/vbatts/go-mtree v0.5.2
+	github.com/vbatts/go-mtree v0.5.3
 	golang.org/x/exp v0.0.0-20230202163644-54bba9f4231b
 	gopkg.in/yaml.v3 v3.0.1
 )
