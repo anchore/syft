@@ -14,26 +14,36 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
 )
 
+const defaultRemoteProxy = "https://proxy.golang.org"
+
 type goLicenses struct {
-	searchLocalModCacheLicenses bool
-	searchRemoteLicenses        bool
-	localModCacheResolver       source.FileResolver
-	remoteProxy                 string
+	opts                  GoCatalogerOpts
+	localModCacheResolver source.FileResolver
 }
 
 func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	return goLicenses{
-		searchLocalModCacheLicenses: opts.SearchLocalModCacheLicenses,
-		localModCacheResolver:       modCacheResolver(opts.LocalModCacheDir),
-		searchRemoteLicenses:        opts.SearchRemoteLicenses,
-		remoteProxy:                 opts.RemoteProxy,
+		opts:                  opts,
+		localModCacheResolver: modCacheResolver(opts.LocalModCacheDir),
 	}
+}
+
+func remoteProxy(proxy string) string {
+	if proxy != "" {
+		return proxy
+	}
+	proxy, ok := os.LookupEnv("GOPROXY")
+	if ok {
+		return proxy
+	}
+	return defaultRemoteProxy
 }
 
 func defaultGoPath() string {
@@ -90,24 +100,22 @@ func modCacheResolver(modCacheDir string) source.FileResolver {
 }
 
 func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, moduleVersion string) (licenses []string, err error) {
-	moduleName = processCaps(moduleName)
-
 	licenses, err = findLicenses(resolver,
-		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, moduleName, moduleVersion),
+		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
 
-	if c.searchLocalModCacheLicenses && err == nil && len(licenses) == 0 {
+	if c.opts.SearchLocalModCacheLicenses && err == nil && len(licenses) == 0 {
 		// if we're running against a directory on the filesystem, it may not include the
 		// user's homedir / GOPATH, so we defer to using the localModCacheResolver
 		licenses, err = findLicenses(c.localModCacheResolver,
-			fmt.Sprintf(`**/%s@%s/*`, moduleName, moduleVersion),
+			fmt.Sprintf(`**/%s@%s/*`, processCaps(moduleName), moduleVersion),
 		)
 	}
 
 	// if we did not find it yet, and remote searching was enabled, then use that
-	if c.searchRemoteLicenses && err == nil && len(licenses) == 0 {
+	if c.opts.SearchRemoteLicenses && err == nil && len(licenses) == 0 {
 		var fsys fs.FS
-		fsys, err = getModule(moduleName, moduleVersion, c.remoteProxy)
+		fsys, err = getModule(moduleName, moduleVersion, remoteProxy(c.opts.RemoteProxy))
 		if err == nil {
 			licenses, err = findLicensesFS(fsys)
 		}
@@ -173,16 +181,22 @@ func findLicensesFS(fsys fs.FS) (out []string, err error) {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		parsed, err := licenses.Parse(f)
 		if err != nil {
 			return err
 		}
-		out = append(out, parsed...)
+
+		for _, license := range parsed {
+			if slices.Contains(out, license) {
+				continue
+			}
+			out = append(out, license)
+		}
 		return nil
 	})
 
-	return
+	return out, err
 }
 
 var capReplacer = regexp.MustCompile("[A-Z]")
@@ -199,14 +213,14 @@ func getModule(moduleName, moduleVersion, proxy string) (fs.FS, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		// try lowercasing it; some packages have mixed casing that really messes up the proxy
 		respLC, errLC := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion))
 		if errLC != nil {
 			return nil, err
 		}
-		defer respLC.Body.Close()
+		defer func() { _ = respLC.Body.Close() }()
 		if respLC.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
 		}

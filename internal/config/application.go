@@ -60,8 +60,6 @@ type Application struct {
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
 	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
-	GoFetch            bool               `yaml:"go-fetch" json:"go-fetch" mapstructure:"go-fetch"`
-	GoProxy            string             `yaml:"go-proxy]" json:"go-proxy" mapstructure:"go-proxy"`
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
@@ -75,7 +73,7 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 		Parallelism: cfg.Parallelism,
 		Golang: golangCataloger.GoCatalogerOpts{
 			SearchLocalModCacheLicenses: cfg.Golang.SearchLocalModCacheLicenses,
-			SearchRemoteLicenses:        cfg.Golang.SearchInternetLicenses,
+			SearchRemoteLicenses:        cfg.Golang.SearchRemoteLicenses,
 			LocalModCacheDir:            cfg.Golang.LocalModCacheDir,
 			RemoteProxy:                 cfg.Golang.RemoteProxy,
 		},

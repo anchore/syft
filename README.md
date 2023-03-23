@@ -504,13 +504,14 @@ golang:
    # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
    local-mod-cache-dir: ""
 
-   # search for go package licences by retrieving the package from the Internet
-   # SYFT_GOLANG_SEARCH_INTERNET_LICENSES env var
-   search-internet-licenses: false
+   # search for go package licences by retrieving the package from a network proxy
+   # SYFT_GOLANG_SEARCH_REMOTE_LICENSES env var
+   search-remote-licenses: false
 
-   # remote proxy to use when retrieving go packages from the Internet
+   # remote proxy to use when retrieving go packages from the network,
+   # if unset this defaults to $GOPROXY followed by https://proxy.golang.org
    # SYFT_GOLANG_REMOTE_PROXY env var
-   remote-proxy: https://proxy.golang.org
+   remote-proxy: ""
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:

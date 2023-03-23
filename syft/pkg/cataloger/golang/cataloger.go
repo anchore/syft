@@ -10,9 +10,10 @@ import (
 
 type GoCatalogerOpts struct {
 	SearchLocalModCacheLicenses bool
-	SearchRemoteLicenses        bool
 	LocalModCacheDir            string
+	SearchRemoteLicenses        bool
 	RemoteProxy                 string
+	PrivateModules              string
 }
 
 // NewGoModFileCataloger returns a new Go module cataloger object.
