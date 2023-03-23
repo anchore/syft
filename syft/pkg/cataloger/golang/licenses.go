@@ -19,30 +19,62 @@ type goLicenses struct {
 	localModCacheResolver       source.FileResolver
 }
 
-func newGoLicenses(searchLocalModCacheLicenses bool) goLicenses {
+func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	return goLicenses{
-		searchLocalModCacheLicenses: searchLocalModCacheLicenses,
-		localModCacheResolver:       deferredModCacheResolver,
+		searchLocalModCacheLicenses: opts.SearchLocalModCacheLicenses,
+		localModCacheResolver:       modCacheResolver(opts.LocalModCacheDir),
 	}
 }
 
-// this needs to be shared between GoMod & GoBinary so it's only scanned once
-var deferredModCacheResolver = newDeferredModCacheResolver()
+func defaultGoPath() string {
+	goPath := os.Getenv("GOPATH")
 
-func newDeferredModCacheResolver() source.FileResolver {
-	return source.NewDeferredResolverFromSource(func() (source.Source, error) {
-		goPath := os.Getenv("GOPATH")
-
-		if goPath == "" {
-			homeDir, err := homedir.Dir()
-			if err != nil {
-				log.Debug("unable to determine user home dir: %v", err)
-			}
+	if goPath == "" {
+		homeDir, err := homedir.Dir()
+		if err != nil {
+			log.Debug("unable to determine user home dir: %v", err)
+		} else {
 			goPath = path.Join(homeDir, "go")
 		}
+	}
 
-		return source.NewFromDirectory(path.Join(goPath, "pkg", "mod"))
-	})
+	return goPath
+}
+
+// resolver needs to be shared between mod file & binary scanners so it's only scanned once
+var modCacheResolvers = map[string]source.FileResolver{}
+
+func modCacheResolver(goPath string) source.FileResolver {
+	if goPath == "" {
+		goPath = defaultGoPath()
+	}
+
+	if r, ok := modCacheResolvers[goPath]; ok {
+		return r
+	}
+
+	var r source.FileResolver
+
+	if goPath == "" {
+		log.Trace("unable to determine GOPATH, skipping mod cache resolver")
+		r = source.NewMockResolverForPaths()
+	} else {
+		modDir := path.Join(goPath, "pkg", "mod")
+		stat, err := os.Stat(modDir)
+
+		if !stat.IsDir() || os.IsNotExist(err) {
+			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modDir)
+			r = source.NewMockResolverForPaths()
+		} else {
+			r = source.NewDeferredResolverFromSource(func() (source.Source, error) {
+				return source.NewFromDirectory(modDir)
+			})
+		}
+	}
+
+	modCacheResolvers[goPath] = r
+
+	return r
 }
 
 func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, moduleVersion string) (licenses []string, err error) {

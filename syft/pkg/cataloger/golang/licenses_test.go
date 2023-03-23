@@ -30,11 +30,13 @@ func Test_LicenseSearch(t *testing.T) {
 
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-	t.Setenv("GOPATH", path.Join(wd, "test-fixtures", "licenses"))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := newGoLicenses(true)
+			l := newGoLicenses(GoCatalogerOpts{
+				SearchLocalModCacheLicenses: true,
+				LocalModCacheDir:            path.Join(wd, "test-fixtures", "licenses"),
+			})
 			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)
 			require.NoError(t, err)
 
