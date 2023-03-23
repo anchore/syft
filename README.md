@@ -500,7 +500,7 @@ golang:
    # SYFT_GOLANG_SEARCH_LOCAL_MOD_CACHE_LICENSES env var
    search-local-mod-cache-licenses: false
    
-   # specify an explicit go mod cache directory, if unset this defaults to GOPATH or $HOME/go/pkg/mod
+   # specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
    # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
    local-mod-cache-dir: ""
 
