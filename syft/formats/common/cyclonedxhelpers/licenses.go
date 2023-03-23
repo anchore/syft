@@ -13,11 +13,18 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 		if value, exists := spdxlicense.ID(licenseName); exists {
 			lc = append(lc, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{
-					ID:   value,
-					Name: licenseName,
+					ID: value,
 				},
 			})
+			continue
 		}
+
+		// not found so append the licenseName as is
+		lc = append(lc, cyclonedx.LicenseChoice{
+			License: &cyclonedx.License{
+				Name: licenseName,
+			},
+		})
 	}
 	if len(lc) > 0 {
 		return &lc

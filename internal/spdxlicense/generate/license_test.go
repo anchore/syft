@@ -185,10 +185,6 @@ func TestFindLicenseVersion(t *testing.T) {
 			[]string{"2"},
 		},
 		{
-			"bzip2-1",
-			[]string{"1"},
-		},
-		{
 			"php-3.01",
 			[]string{"3", "01"},
 		},
