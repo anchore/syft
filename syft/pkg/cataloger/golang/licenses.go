@@ -44,35 +44,37 @@ func defaultGoPath() string {
 // resolver needs to be shared between mod file & binary scanners so it's only scanned once
 var modCacheResolvers = map[string]source.FileResolver{}
 
-func modCacheResolver(goPath string) source.FileResolver {
-	if goPath == "" {
-		goPath = defaultGoPath()
+func modCacheResolver(modCacheDir string) source.FileResolver {
+	if modCacheDir == "" {
+		goPath := defaultGoPath()
+		if goPath != "" {
+			modCacheDir = path.Join(goPath, "pkg", "mod")
+		}
 	}
 
-	if r, ok := modCacheResolvers[goPath]; ok {
+	if r, ok := modCacheResolvers[modCacheDir]; ok {
 		return r
 	}
 
 	var r source.FileResolver
 
-	if goPath == "" {
-		log.Trace("unable to determine GOPATH, skipping mod cache resolver")
+	if modCacheDir == "" {
+		log.Trace("unable to determine mod cache directory, skipping mod cache resolver")
 		r = source.NewMockResolverForPaths()
 	} else {
-		modDir := path.Join(goPath, "pkg", "mod")
-		stat, err := os.Stat(modDir)
+		stat, err := os.Stat(modCacheDir)
 
-		if !stat.IsDir() || os.IsNotExist(err) {
-			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modDir)
+		if os.IsNotExist(err) || stat == nil || !stat.IsDir() {
+			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modCacheDir)
 			r = source.NewMockResolverForPaths()
 		} else {
 			r = source.NewDeferredResolverFromSource(func() (source.Source, error) {
-				return source.NewFromDirectory(modDir)
+				return source.NewFromDirectory(modCacheDir)
 			})
 		}
 	}
 
-	modCacheResolvers[goPath] = r
+	modCacheResolvers[modCacheDir] = r
 
 	return r
 }
