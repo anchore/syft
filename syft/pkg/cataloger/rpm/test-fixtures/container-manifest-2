@@ -1,0 +1,5 @@
+mariner-release	2.0-12.cm2	1653816591	1653753130	Microsoft Corporation	(none)	580	noarch	0	mariner-release-2.0-12.cm2.src.rpm
+filesystem	1.1-9.cm2	1653816591	1653628924	Microsoft Corporation	(none)	7596	x86_64	0	filesystem-1.1-9.cm2.src.rpm
+glibc	2.35-2.cm2	1653816591	1653628955	Microsoft Corporation	(none)	10855265	x86_64	0	glibc-2.35-2.cm2.src.rpm
+openssl-libs	1.1.1k-15.cm2	1653816591	1653631609	Microsoft Corporation	(none)	4365048	x86_64	0	openssl-1.1.1k-15.cm2.src.rpm
+

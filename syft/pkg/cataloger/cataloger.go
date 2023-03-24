@@ -9,112 +9,120 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
+	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
+	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
+	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/portage"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
-	"github.com/anchore/syft/syft/pkg/cataloger/rpmdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
-	"github.com/anchore/syft/syft/pkg/cataloger/nixstore"
+	"github.com/anchore/syft/syft/pkg/cataloger/sbom"
 	"github.com/anchore/syft/syft/pkg/cataloger/swift"
-	"github.com/anchore/syft/syft/source"
 )
 
 const AllCatalogersPattern = "all"
 
-// Cataloger describes behavior for an object to participate in parsing container image or file system
-// contents for the purpose of discovering Packages. Each concrete implementation should focus on discovering Packages
-// for a specific Package Type or ecosystem.
-type Cataloger interface {
-	// Name returns a string that uniquely describes a cataloger
-	Name() string
-	// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-	Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error)
-}
-
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
-func ImageCatalogers(cfg Config) []Cataloger {
-	return filterCatalogers([]Cataloger{
+func ImageCatalogers(cfg Config) []pkg.Cataloger {
+	return filterCatalogers([]pkg.Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonPackageCataloger(),
-		php.NewPHPComposerInstalledCataloger(),
-		javascript.NewJavascriptPackageCataloger(),
+		php.NewComposerInstalledCataloger(),
+		javascript.NewPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
-		rpmdb.NewRpmdbCataloger(),
+		rpm.NewRpmDBCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
+		java.NewNativeImageCataloger(),
 		apkdb.NewApkdbCataloger(),
-		golang.NewGoModuleBinaryCataloger(),
+		golang.NewGoModuleBinaryCataloger(cfg.Go()),
 		dotnet.NewDotnetDepsCataloger(),
 		portage.NewPortageCataloger(),
-		nixstore.NewNixStoreCataloger(),
+		nix.NewStoreCataloger(),
+		sbom.NewSBOMCataloger(),
+		binary.NewCataloger(),
 	}, cfg.Catalogers)
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
-func DirectoryCatalogers(cfg Config) []Cataloger {
-	return filterCatalogers([]Cataloger{
+func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
+	return filterCatalogers([]pkg.Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
-		php.NewPHPComposerLockCataloger(),
-		javascript.NewJavascriptLockCataloger(),
+		php.NewComposerLockCataloger(),
+		javascript.NewLockCataloger(),
 		deb.NewDpkgdbCataloger(),
-		rpmdb.NewRpmdbCataloger(),
+		rpm.NewRpmDBCataloger(),
+		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
+		java.NewNativeImageCataloger(),
 		apkdb.NewApkdbCataloger(),
-		golang.NewGoModuleBinaryCataloger(),
-		golang.NewGoModFileCataloger(),
+		golang.NewGoModuleBinaryCataloger(cfg.Go()),
+		golang.NewGoModFileCataloger(cfg.Go()),
 		rust.NewCargoLockCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		swift.NewCocoapodsCataloger(),
-		cpp.NewConanfileCataloger(),
+		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
+		sbom.NewSBOMCataloger(),
+		binary.NewCataloger(),
+		elixir.NewMixLockCataloger(),
+		erlang.NewRebarLockCataloger(),
 	}, cfg.Catalogers)
 }
 
 // AllCatalogers returns all implemented catalogers
-func AllCatalogers(cfg Config) []Cataloger {
-	return filterCatalogers([]Cataloger{
+func AllCatalogers(cfg Config) []pkg.Cataloger {
+	return filterCatalogers([]pkg.Cataloger{
 		alpm.NewAlpmdbCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
-		javascript.NewJavascriptLockCataloger(),
-		javascript.NewJavascriptPackageCataloger(),
+		javascript.NewLockCataloger(),
+		javascript.NewPackageCataloger(),
 		deb.NewDpkgdbCataloger(),
-		rpmdb.NewRpmdbCataloger(),
+		rpm.NewRpmDBCataloger(),
+		rpm.NewFileCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
+		java.NewNativeImageCataloger(),
 		apkdb.NewApkdbCataloger(),
-		golang.NewGoModuleBinaryCataloger(),
-		golang.NewGoModFileCataloger(),
+		golang.NewGoModuleBinaryCataloger(cfg.Go()),
+		golang.NewGoModFileCataloger(cfg.Go()),
 		rust.NewCargoLockCataloger(),
+		rust.NewAuditBinaryCataloger(),
 		dart.NewPubspecLockCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
-		php.NewPHPComposerInstalledCataloger(),
-		php.NewPHPComposerLockCataloger(),
+		php.NewComposerInstalledCataloger(),
+		php.NewComposerLockCataloger(),
 		swift.NewCocoapodsCataloger(),
-		cpp.NewConanfileCataloger(),
+		cpp.NewConanCataloger(),
 		portage.NewPortageCataloger(),
 		haskell.NewHackageCataloger(),
+		sbom.NewSBOMCataloger(),
+		binary.NewCataloger(),
+		elixir.NewMixLockCataloger(),
+		erlang.NewRebarLockCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -127,7 +135,7 @@ func RequestedAllCatalogers(cfg Config) bool {
 	return false
 }
 
-func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string) []Cataloger {
+func filterCatalogers(catalogers []pkg.Cataloger, enabledCatalogerPatterns []string) []pkg.Cataloger {
 	// if cataloger is not set, all applicable catalogers are enabled by default
 	if len(enabledCatalogerPatterns) == 0 {
 		return catalogers
@@ -137,7 +145,7 @@ func filterCatalogers(catalogers []Cataloger, enabledCatalogerPatterns []string)
 			return catalogers
 		}
 	}
-	var keepCatalogers []Cataloger
+	var keepCatalogers []pkg.Cataloger
 	for _, cataloger := range catalogers {
 		if contains(enabledCatalogerPatterns, cataloger.Name()) {
 			keepCatalogers = append(keepCatalogers, cataloger)
@@ -155,9 +163,29 @@ func contains(enabledPartial []string, catalogerName string) bool {
 		if partial == "" {
 			continue
 		}
-		if strings.Contains(catalogerName, partial) {
+		if hasFullWord(partial, catalogerName) {
 			return true
 		}
 	}
 	return false
+}
+
+func hasFullWord(targetPhrase, candidate string) bool {
+	if targetPhrase == "cataloger" || targetPhrase == "" {
+		return false
+	}
+	start := strings.Index(candidate, targetPhrase)
+	if start == -1 {
+		return false
+	}
+
+	if start > 0 && candidate[start-1] != '-' {
+		return false
+	}
+
+	end := start + len(targetPhrase)
+	if end < len(candidate) && candidate[end] != '-' {
+		return false
+	}
+	return true
 }

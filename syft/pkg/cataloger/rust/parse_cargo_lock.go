@@ -2,29 +2,42 @@ package rust
 
 import (
 	"fmt"
-	"io"
+
+	"github.com/pelletier/go-toml"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"github.com/pelletier/go-toml"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseCargoLock
+var _ generic.Parser = parseCargoLock
+
+type cargoLockFile struct {
+	Packages []pkg.CargoPackageMetadata `toml:"package"`
+}
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.
-func parseCargoLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseCargoLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %v", err)
+		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %w", err)
 	}
 
-	metadata := pkg.CargoMetadata{}
-	err = tree.Unmarshal(&metadata)
+	m := cargoLockFile{}
+	err = tree.Unmarshal(&m)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse Cargo.lock: %v", err)
+		return nil, nil, fmt.Errorf("unable to parse Cargo.lock: %w", err)
 	}
 
-	return metadata.Pkgs(), nil, nil
+	var pkgs []pkg.Package
+
+	for _, p := range m.Packages {
+		if p.Dependencies == nil {
+			p.Dependencies = make([]string, 0)
+		}
+		pkgs = append(pkgs, newPackageFromCargoMetadata(p, reader.Location))
+	}
+
+	return pkgs, nil, nil
 }

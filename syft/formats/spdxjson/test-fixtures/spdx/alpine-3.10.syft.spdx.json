@@ -1,0 +1,170 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "alpine-3.10",
+ "spdxVersion": "SPDX-2.2",
+ "creationInfo": {
+  "created": "2022-01-20T21:40:24.439211Z",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-[not provided]"
+  ],
+  "licenseListVersion": "3.15"
+ },
+ "dataLicense": "CC0-1.0",
+ "documentNamespace": "https://anchore.com/syft/image/alpine-3.10-204b304b-beb3-4413-9b38-d8a2e58e3dfb",
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-a61243292e73923",
+   "name": "busybox",
+   "licenseConcluded": "GPL-2.0",
+   "description": "Size optimized toolbox of many common UNIX utilities",
+   "downloadLocation": "https://busybox.net/",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:busybox:busybox:1.30.1-r5:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "pkg:apk/alpine/busybox@1.30.1-r5?arch=x86_64&distro=alpine-3.10.9",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "GPL-2.0",
+   "originator": "Person: Natanael Copa <ncopa@alpinelinux.org>",
+   "sourceInfo": "acquired package info from APK DB: /lib/apk/db/installed",
+   "versionInfo": "1.30.1-r5"
+  },
+  {
+   "SPDXID": "SPDXRef-d2f55e316dbe92e4",
+   "name": "libssl1.1",
+   "licenseConcluded": "OpenSSL",
+   "description": "SSL shared libraries",
+   "downloadLocation": "https://www.openssl.org",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:libssl1.1:libssl1.1:1.1.1k-r0:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "pkg:apk/alpine/libssl1.1@1.1.1k-r0?arch=x86_64&distro=alpine-3.10.9",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "OpenSSL",
+   "originator": "Person: Timo Teras <timo.teras@iki.fi>",
+   "sourceInfo": "acquired package info from APK DB: /lib/apk/db/installed",
+   "versionInfo": "1.1.1k-r0"
+  },
+  {
+   "SPDXID": "SPDXRef-2b24657ad7aaafea",
+   "name": "ssl_client",
+   "licenseConcluded": "GPL-2.0",
+   "description": "EXternal ssl_client for busybox wget",
+   "downloadLocation": "https://busybox.net/",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:ssl-client:ssl-client:1.30.1-r5:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:ssl-client:ssl_client:1.30.1-r5:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:ssl_client:ssl-client:1.30.1-r5:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:ssl_client:ssl_client:1.30.1-r5:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:ssl:ssl-client:1.30.1-r5:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:ssl:ssl_client:1.30.1-r5:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "pkg:apk/alpine/ssl_client@1.30.1-r5?arch=x86_64&upstream=busybox&distro=alpine-3.10.9",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "GPL-2.0",
+   "originator": "Person: Natanael Copa <ncopa@alpinelinux.org>",
+   "sourceInfo": "acquired package info from APK DB: /lib/apk/db/installed",
+   "versionInfo": "1.30.1-r5"
+  }
+ ],
+ "files": [
+  {
+   "SPDXID": "SPDXRef-a07392483a2d0750",
+   "comment": "layerID: sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/bin/busybox"
+  },
+  {
+   "SPDXID": "SPDXRef-aa3cfed221706d80",
+   "comment": "layerID: sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",
+   "licenseConcluded": "NOASSERTION",
+   "fileName": "/lib/libssl.so.1.1"
+  }
+  ],
+  "relationships": [
+  {
+   "spdxElementId": "SPDXRef-a61243292e73923",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-a07392483a2d0750"
+  },
+  {
+   "spdxElementId": "SPDXRef-a61243292e73923",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-a07392483a2d0750"
+  },
+  {
+   "spdxElementId": "SPDXRef-a61243292e73923",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-499bb68237b0f2b8"
+  },
+  {
+   "spdxElementId": "SPDXRef-a61243292e73923",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-df78c68c8206be69"
+  },
+  {
+   "spdxElementId": "SPDXRef-a61243292e73923",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-7c980486fc17af43"
+  },
+  {
+   "spdxElementId": "SPDXRef-a61243292e73923",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-8762661e65166719"
+  },
+  {
+   "spdxElementId": "SPDXRef-d2f55e316dbe92e4",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-aa3cfed221706d80"
+  },
+  {
+   "spdxElementId": "SPDXRef-d2f55e316dbe92e4",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-aa3cfed221706d80"
+  }
+ ]
+}

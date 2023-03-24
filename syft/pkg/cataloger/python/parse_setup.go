@@ -2,26 +2,28 @@ package python
 
 import (
 	"bufio"
-	"io"
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
-var _ common.ParserFn = parseSetup
+var _ generic.Parser = parseSetup
 
 // match examples:
-//		'pathlib3==2.2.0;python_version<"3.6"'  --> match(name=pathlib3 version=2.2.0)
-//		 "mypy==v0.770",                        --> match(name=mypy version=v0.770)
-//		" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
-var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w\.]*)`)
+//
+//	'pathlib3==2.2.0;python_version<"3.6"'  --> match(name=pathlib3 version=2.2.0)
+//	 "mypy==v0.770",                        --> match(name=mypy version=v0.770)
+//	" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
+var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w.]*)`)
 
-func parseSetup(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	packages := make([]*pkg.Package, 0)
+func parseSetup(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)
 
@@ -36,16 +38,28 @@ func parseSetup(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relation
 			}
 			name := strings.Trim(parts[0], "'\"")
 			name = strings.TrimSpace(name)
+			name = strings.Trim(name, "'\"")
 
 			version := strings.TrimSpace(parts[len(parts)-1])
-			packages = append(packages, &pkg.Package{
-				Name:     strings.Trim(name, "'\""),
-				Version:  strings.Trim(version, "'\""),
-				Language: pkg.Python,
-				Type:     pkg.PythonPkg,
-			})
+			version = strings.Trim(version, "'\"")
+
+			if hasTemplateDirective(name) || hasTemplateDirective(version) {
+				// this can happen in more dynamic setup.py where there is templating
+				continue
+			}
+
+			if name == "" || version == "" {
+				log.WithFields("path", reader.RealPath).Debugf("unable to parse package in setup.py line: %q", line)
+				continue
+			}
+
+			packages = append(packages, newPackageForIndex(name, version, reader.Location))
 		}
 	}
 
 	return packages, nil, nil
+}
+
+func hasTemplateDirective(s string) bool {
+	return strings.Contains(s, `%s`) || strings.Contains(s, `{`) || strings.Contains(s, `}`)
 }

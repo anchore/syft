@@ -3,8 +3,9 @@ package java
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/sergi/go-diff/diffmatchpatch"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
@@ -17,6 +18,20 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 	}{
 		{
 			filename:  "pkg-maven-4.3.2.blerg",
+			version:   "4.3.2",
+			extension: "blerg",
+			name:      "pkg-maven",
+			ty:        pkg.UnknownPkg,
+		},
+		{
+			filename:  "pkg-maven.4.3.2.blerg",
+			version:   "4.3.2",
+			extension: "blerg",
+			name:      "pkg-maven",
+			ty:        pkg.UnknownPkg,
+		},
+		{
+			filename:  "pkg-maven_4.3.2.blerg",
 			version:   "4.3.2",
 			extension: "blerg",
 			name:      "pkg-maven",

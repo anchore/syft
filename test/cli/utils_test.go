@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"os/exec"
@@ -14,8 +16,34 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
+
+func runAndShow(t *testing.T, cmd *exec.Cmd) {
+	t.Helper()
+
+	stderr, err := cmd.StderrPipe()
+	require.NoErrorf(t, err, "could not get stderr: +v", err)
+
+	stdout, err := cmd.StdoutPipe()
+	require.NoErrorf(t, err, "could not get stdout: +v", err)
+
+	err = cmd.Start()
+	require.NoErrorf(t, err, "failed to start cmd: %+v", err)
+
+	show := func(label string, reader io.ReadCloser) {
+		scanner := bufio.NewScanner(reader)
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			t.Logf("%s: %s", label, scanner.Text())
+		}
+	}
+
+	show("out", stdout)
+	show("err", stderr)
+}
 
 func setupPKI(t *testing.T, pw string) func() {
 	err := os.Setenv("COSIGN_PASSWORD", pw)
@@ -149,7 +177,7 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 		t.Errorf("STDOUT: %s", stdout)
 		t.Errorf("STDERR: %s", stderr)
 
-		// this probably indicates a timeout
+		// this probably indicates a timeout... lets run it again with more verbosity to help debug issues
 		args = append(args, "-vv")
 		cmd = getSyftCommand(t, args...)
 
@@ -164,6 +192,48 @@ func runSyftCommand(t testing.TB, env map[string]string, expectError bool, args 
 	}
 
 	return cmd, stdout, stderr
+}
+
+func runCommandObj(t testing.TB, cmd *exec.Cmd, env map[string]string, expectError bool) (string, string) {
+	cancel := make(chan bool, 1)
+	defer func() {
+		cancel <- true
+	}()
+
+	if env == nil {
+		env = make(map[string]string)
+	}
+
+	// we should not have tests reaching out for app update checks
+	env["SYFT_CHECK_FOR_APP_UPDATE"] = "false"
+
+	timeout := func() {
+		select {
+		case <-cancel:
+			return
+		case <-time.After(60 * time.Second):
+		}
+
+		if cmd != nil && cmd.Process != nil {
+			// get a stack trace printed
+			err := cmd.Process.Signal(syscall.SIGABRT)
+			if err != nil {
+				t.Errorf("error aborting: %+v", err)
+			}
+		}
+	}
+
+	go timeout()
+
+	stdout, stderr, err := runCommand(cmd, env)
+
+	if !expectError && err != nil && stdout == "" {
+		t.Errorf("error running syft: %+v", err)
+		t.Errorf("STDOUT: %s", stdout)
+		t.Errorf("STDERR: %s", stderr)
+	}
+
+	return stdout, stderr
 }
 
 func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
@@ -222,10 +292,16 @@ func getSyftBinaryLocation(t testing.TB) string {
 }
 
 func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
+	// note: for amd64 we need to update the snapshot location with the v1 suffix
+	// see : https://goreleaser.com/customization/build/#why-is-there-a-_v1-suffix-on-amd64-builds
+	archPath := runtime.GOARCH
+	if runtime.GOARCH == "amd64" {
+		archPath = fmt.Sprintf("%s_v1", archPath)
+	}
 	// note: there is a subtle - vs _ difference between these versions
 	switch goOS {
 	case "darwin", "linux":
-		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, runtime.GOARCH))
+		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, archPath))
 	default:
 		t.Fatalf("unsupported OS: %s", runtime.GOOS)
 	}

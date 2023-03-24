@@ -3,13 +3,9 @@ package pkg
 import (
 	"strings"
 
-	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/linux"
-
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
 )
-
-var _ urlIdentifier = (*JavaMetadata)(nil)
 
 var jenkinsPluginPomPropertiesGroupIDs = []string{
 	"io.jenkins.plugins",
@@ -26,7 +22,6 @@ type JavaMetadata struct {
 	PomProperties  *PomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
 	PomProject     *PomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
 	ArchiveDigests []file.Digest  `hash:"ignore" json:"digest,omitempty"`
-	PURL           string         `hash:"ignore" json:"-"` // pURLs and CPEs are ignored for package IDs
 	Parent         *Package       `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
 
@@ -37,7 +32,7 @@ type PomProperties struct {
 	GroupID    string            `mapstructure:"groupId" json:"groupId" cyclonedx:"groupID"`
 	ArtifactID string            `mapstructure:"artifactId" json:"artifactId" cyclonedx:"artifactID"`
 	Version    string            `mapstructure:"version" json:"version"`
-	Extra      map[string]string `mapstructure:",remain" json:"extraFields"`
+	Extra      map[string]string `mapstructure:",remain" json:"extraFields,omitempty"`
 }
 
 // PomProject represents fields of interest extracted from a Java archive's pom.xml file. See https://maven.apache.org/ref/3.6.3/maven-model/maven.html for more details.
@@ -72,9 +67,4 @@ func (p PomProperties) PkgTypeIndicated() Type {
 type JavaManifest struct {
 	Main          map[string]string            `json:"main,omitempty"`
 	NamedSections map[string]map[string]string `json:"namedSections,omitempty"`
-}
-
-// PackageURL returns the PURL for the specific Maven package (see https://github.com/package-url/purl-spec)
-func (m JavaMetadata) PackageURL(_ *linux.Release) string {
-	return m.PURL
 }

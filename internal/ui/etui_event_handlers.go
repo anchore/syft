@@ -1,5 +1,5 @@
-//go:build linux || darwin
-// +build linux darwin
+//go:build linux || darwin || netbsd
+// +build linux darwin netbsd
 
 package ui
 
@@ -9,12 +9,12 @@ import (
 	"io"
 	"sync"
 
-	"github.com/anchore/syft/internal"
 	"github.com/gookit/color"
+	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/jotframe/pkg/frame"
 
+	"github.com/anchore/syft/internal"
 	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
-	"github.com/wagoodman/go-partybus"
 )
 
 // handleAppUpdateAvailable is a UI handler function to display a new application version to the top of the screen.

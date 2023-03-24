@@ -1,0 +1,59 @@
+{
+  "name": "cowsay",
+  "version": "1.4.0",
+  "description": "cowsay is a configurable talking cow",
+  "keywords": [
+    "cow",
+    "cowsay",
+    "cowthink",
+    "figlet",
+    "talking",
+    "ASCII"
+  ],
+  "homepage": "https://github.com/piuccio/cowsay",
+  "author": {
+    "name": "Fabio Crisci",
+    "email": "piuccio@gmail.com",
+    "url": "https://github.com/piuccio/"
+  },
+  "license": "MIT",
+  "main": "./index",
+  "module": "./build/cowsay.es.js",
+  "browser": "./build/cowsay.umd.js",
+  "bin": {
+    "cowsay": "./cli.js",
+    "cowthink": "./cli.js"
+  },
+  "files": [
+    "index.js",
+    "cli.js",
+    "build/",
+    "cows/",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/piuccio/cowsay.git"
+  },
+  "scripts": {
+    "prepublish": "rollup -c",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "get-stdin": "^5.0.1",
+    "optimist": "~0.6.1",
+    "string-width": "~2.1.1",
+    "strip-eof": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodeunit": "~0.11.1",
+    "rollup": "^0.48.2",
+    "rollup-plugin-commonjs": "^8.2.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-string": "^2.0.2"
+  },
+  "preferGlobal": true,
+  "engines": {
+    "node": ">= 4"
+  }
+}

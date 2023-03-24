@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
 
-	"github.com/alecthomas/jsonschema"
+	"github.com/invopop/jsonschema"
+
 	"github.com/anchore/syft/internal"
-	syftjsonModel "github.com/anchore/syft/internal/formats/syftjson/model"
+	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -26,22 +27,35 @@ can be extended to include specific package metadata struct shapes in the future
 // This should represent all possible metadatas represented in the pkg.Package.Metadata field (an interface{}).
 // When a new package metadata definition is created it will need to be manually added here. The variable name does
 // not matter as long as it is exported.
+
+// TODO: this should be generated from reflection of whats in the pkg package
 type artifactMetadataContainer struct {
-	Apk     pkg.ApkMetadata
-	Alpm    pkg.AlpmMetadata
-	Dpkg    pkg.DpkgMetadata
-	Gem     pkg.GemMetadata
-	Java    pkg.JavaMetadata
-	Npm     pkg.NpmPackageJSONMetadata
-	Python  pkg.PythonPackageMetadata
-	Rpm     pkg.RpmdbMetadata
-	Cargo   pkg.CargoPackageMetadata
-	Go      pkg.GolangBinMetadata
-	Php     pkg.PhpComposerJSONMetadata
-	Dart    pkg.DartPubMetadata
-	Dotnet  pkg.DotnetDepsMetadata
-	Portage pkg.PortageMetadata
-	Nix    pkg.NixStoreMetadata
+	Alpm              pkg.AlpmMetadata
+	Apk               pkg.ApkMetadata
+	Binary            pkg.BinaryMetadata
+	Cocopods          pkg.CocoapodsMetadata
+	Conan             pkg.ConanMetadata
+	ConanLock         pkg.ConanLockMetadata
+	Dart              pkg.DartPubMetadata
+	Dotnet            pkg.DotnetDepsMetadata
+	Dpkg              pkg.DpkgMetadata
+	Gem               pkg.GemMetadata
+	GoBin             pkg.GolangBinMetadata
+	GoMod             pkg.GolangModMetadata
+	Hackage           pkg.HackageMetadata
+	Java              pkg.JavaMetadata
+	KbPackage         pkg.KbPackageMetadata
+	Nix               pkg.NixStoreMetadata
+	NpmPackage        pkg.NpmPackageJSONMetadata
+	NpmPackageLock    pkg.NpmPackageLockJSONMetadata
+	MixLock           pkg.MixLockMetadata
+	Php               pkg.PhpComposerJSONMetadata
+	Portage           pkg.PortageMetadata
+	PythonPackage     pkg.PythonPackageMetadata
+	PythonPipfilelock pkg.PythonPipfileLockMetadata
+	Rebar             pkg.RebarLockMetadata
+	Rpm               pkg.RpmMetadata
+	RustCargo         pkg.CargoPackageMetadata
 }
 
 func main() {
@@ -51,7 +65,7 @@ func main() {
 func build() *jsonschema.Schema {
 	reflector := &jsonschema.Reflector{
 		AllowAdditionalProperties: true,
-		TypeNamer: func(r reflect.Type) string {
+		Namer: func(r reflect.Type) string {
 			return strings.TrimPrefix(r.Name(), "JSON")
 		},
 	}
@@ -83,7 +97,7 @@ func build() *jsonschema.Schema {
 	}
 	for _, name := range metadataNames {
 		metadataTypes = append(metadataTypes, map[string]string{
-			"$ref": fmt.Sprintf("#/definitions/%s", name),
+			"$ref": fmt.Sprintf("#/$defs/%s", name),
 		})
 	}
 
@@ -119,7 +133,7 @@ func write(schema []byte) {
 			panic(err)
 		}
 
-		existingSchemaBytes, err := ioutil.ReadAll(existingFh)
+		existingSchemaBytes, err := io.ReadAll(existingFh)
 		if err != nil {
 			panic(err)
 		}
@@ -131,7 +145,7 @@ func write(schema []byte) {
 		}
 
 		// the generated schema is different, bail with error :(
-		fmt.Printf("Cowardly refusing to overwrite existing schema (%s)!\nSee the scheam/json/README.md for how to increment\n", filename)
+		fmt.Printf("Cowardly refusing to overwrite existing schema (%s)!\nSee the schema/json/README.md for how to increment\n", filename)
 		os.Exit(1)
 	}
 

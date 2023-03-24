@@ -3,21 +3,22 @@ package python
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"strings"
+	"unicode"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseRequirementsTxt
+var _ generic.Parser = parseRequirementsTxt
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	packages := make([]*pkg.Package, 0)
+func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
@@ -42,14 +43,25 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifac
 
 		// parse a new requirement
 		parts := strings.Split(line, "==")
+		if len(parts) < 2 {
+			// this should never happen, but just in case
+			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
+			continue
+		}
+
+		// check if the version contains hash declarations on the same line
+		version, _ := parseVersionAndHashes(parts[1])
+
 		name := strings.TrimSpace(parts[0])
-		version := strings.TrimSpace(parts[1])
-		packages = append(packages, &pkg.Package{
-			Name:     name,
-			Version:  version,
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
+		version = strings.TrimFunc(version, func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
 		})
+
+		if name == "" || version == "" {
+			log.WithFields("path", reader.RealPath).Debugf("found empty package in requirements.txt line: %q", line)
+			continue
+		}
+		packages = append(packages, newPackageForIndex(name, version, reader.Location))
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -57,6 +69,15 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]*pkg.Package, []artifac
 	}
 
 	return packages, nil, nil
+}
+
+func parseVersionAndHashes(version string) (string, []string) {
+	parts := strings.Split(version, "--hash=")
+	if len(parts) < 2 {
+		return version, nil
+	}
+
+	return parts[0], parts[1:]
 }
 
 // trimRequirementsTxtLine removes content from the given requirements.txt line

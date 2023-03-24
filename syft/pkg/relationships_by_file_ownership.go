@@ -1,10 +1,13 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
+	"sort"
+
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 // AltRpmDBGlob allows db matches against new locations introduced in fedora:{36,37}
@@ -34,12 +37,14 @@ func RelationshipsByFileOwnership(catalog *Catalog) []artifact.Relationship {
 	var edges []artifact.Relationship
 	for parentID, children := range relationships {
 		for childID, files := range children {
+			fs := files.List()
+			sort.Strings(fs)
 			edges = append(edges, artifact.Relationship{
 				From: catalog.byID[parentID],
 				To:   catalog.byID[childID],
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				Data: ownershipByFilesMetadata{
-					Files: files.List(),
+					Files: fs,
 				},
 			})
 		}

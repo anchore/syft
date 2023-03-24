@@ -1,23 +1,23 @@
 package dart
 
 import (
-	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
-func assertPackagesEqual(t *testing.T, actual []*pkg.Package, expected map[string]*pkg.Package) {
-	assert.Len(t, actual, len(expected))
-}
-
 func TestParsePubspecLock(t *testing.T) {
-	expected := map[string]*pkg.Package{
-		"ale": {
+	fixture := "test-fixtures/pubspec.lock"
+	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	expected := []pkg.Package{
+		{
 			Name:         "ale",
 			Version:      "3.3.0",
+			PURL:         "pkg:pub/ale@3.3.0?hosted_url=pub.hosted.org",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dart,
 			Type:         pkg.DartPubPkg,
 			MetadataType: pkg.DartPubMetadataType,
@@ -27,9 +27,11 @@ func TestParsePubspecLock(t *testing.T) {
 				HostedURL: "pub.hosted.org",
 			},
 		},
-		"analyzer": {
+		{
 			Name:         "analyzer",
 			Version:      "0.40.7",
+			PURL:         "pkg:pub/analyzer@0.40.7",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dart,
 			Type:         pkg.DartPubPkg,
 			MetadataType: pkg.DartPubMetadataType,
@@ -38,9 +40,11 @@ func TestParsePubspecLock(t *testing.T) {
 				Version: "0.40.7",
 			},
 		},
-		"ansicolor": {
+		{
 			Name:         "ansicolor",
 			Version:      "1.1.1",
+			PURL:         "pkg:pub/ansicolor@1.1.1",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dart,
 			Type:         pkg.DartPubPkg,
 			MetadataType: pkg.DartPubMetadataType,
@@ -49,9 +53,11 @@ func TestParsePubspecLock(t *testing.T) {
 				Version: "1.1.1",
 			},
 		},
-		"archive": {
+		{
 			Name:         "archive",
 			Version:      "2.0.13",
+			PURL:         "pkg:pub/archive@2.0.13",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dart,
 			Type:         pkg.DartPubPkg,
 			MetadataType: pkg.DartPubMetadataType,
@@ -60,9 +66,11 @@ func TestParsePubspecLock(t *testing.T) {
 				Version: "2.0.13",
 			},
 		},
-		"args": {
+		{
 			Name:         "args",
 			Version:      "1.6.0",
+			PURL:         "pkg:pub/args@1.6.0",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dart,
 			Type:         pkg.DartPubPkg,
 			MetadataType: pkg.DartPubMetadataType,
@@ -71,29 +79,24 @@ func TestParsePubspecLock(t *testing.T) {
 				Version: "1.6.0",
 			},
 		},
-		"key_binder": {
+		{
 			Name:         "key_binder",
 			Version:      "1.11.20",
+			PURL:         "pkg:pub/key_binder@1.11.20?vcs_url=git%40github.com:Workiva/key_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
+			Locations:    fixtureLocationSet,
 			Language:     pkg.Dart,
 			Type:         pkg.DartPubPkg,
 			MetadataType: pkg.DartPubMetadataType,
 			Metadata: pkg.DartPubMetadata{
 				Name:    "key_binder",
 				Version: "1.11.20",
-				VcsURL:  "git@github.com:Workiva/key_binder.git#3f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
+				VcsURL:  "git@github.com:Workiva/key_binder.git@3f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
 			},
 		},
 	}
 
-	fixture, err := os.Open("test-fixtures/pubspec.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
+	// TODO: relationships are not under test
+	var expectedRelationships []artifact.Relationship
 
-	actual, _, err := parsePubspecLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse pubspec.lock: %+v", err)
-	}
-
-	assertPackagesEqual(t, actual, expected)
+	pkgtest.TestFileParser(t, fixture, parsePubspecLock, expected, expectedRelationships)
 }

@@ -1,32 +1,29 @@
 name: "Release"
 on:
-  push:
-    # take no actions on push to any branch...
-    branches-ignore:
-      - "**"
-    # ... only act on release tags
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: tag the latest commit on main with the given version (prefixed with v)
+        required: true
 
 env:
-  GO_VERSION: "1.18.x"
+  GO_VERSION: "1.19.x"
 
 jobs:
   quality-gate:
     environment: release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      # we don't want to release commits that have been pushed and tagged, but not necessarily merged onto main
-      - name: Ensure tagged commit is on main
+      - name: Check if tag already exists
+        # note: this will fail if the tag already exists
         run: |
-          echo "Tag: ${GITHUB_REF##*/}"
-          git fetch origin main
-          git merge-base --is-ancestor ${GITHUB_REF##*/} origin/main && echo "${GITHUB_REF##*/} is a commit on main!"
+          [[ "${{ github.event.inputs.version }}" == v* ]] || (echo "version '${{ github.event.inputs.version }}' does not have a 'v' prefix" && exit 1)
+          git tag ${{ github.event.inputs.version }}
 
       - name: Check static analysis results
-        uses: fountainhead/action-wait-for-check@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
         id: static-analysis
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -35,7 +32,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check unit test results
-        uses: fountainhead/action-wait-for-check@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
         id: unit
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +41,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check integration test results
-        uses: fountainhead/action-wait-for-check@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
         id: integration
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -53,7 +50,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check acceptance test results (linux)
-        uses: fountainhead/action-wait-for-check@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
         id: acceptance-linux
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +59,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check acceptance test results (mac)
-        uses: fountainhead/action-wait-for-check@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
         id: acceptance-mac
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +68,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check cli test results (linux)
-        uses: fountainhead/action-wait-for-check@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
         id: cli-linux
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -92,58 +89,57 @@ jobs:
 
   release:
     needs: [quality-gate]
-    # due to our code signing process, it's vital that we run our release steps on macOS
-    runs-on: macos-latest
+    runs-on: ubuntu-20.04
     permissions:
+      contents: write
       packages: write
     steps:
-      - uses: docker-practice/actions-setup-docker@v1
-
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Restore tool cache
-        id: tool-cache
-        uses: actions/cache@v2.1.3
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
         with:
-          path: ${{ github.workspace }}/.tmp
-          key: ${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
+          # use the same cache we used for building snapshots
+          build-cache-key-prefix: "snapshot"
 
-      - name: Restore go cache
-        id: go-cache
-        uses: actions/cache@v2.1.3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+          username: ${{ secrets.TOOLBOX_DOCKER_USER }}
+          password: ${{ secrets.TOOLBOX_DOCKER_PASS }}
 
-      - name: (cache-miss) Bootstrap all project dependencies
-        if: steps.tool-cache.outputs.cache-hit != 'true' || steps.go-cache.outputs.cache-hit != 'true'
-        run: make bootstrap
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag release
+        run: |
+          git tag ${{ github.event.inputs.version }}
+          git push origin --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & publish release artifacts
-        run: make release
+        run: make ci-release
         env:
-          GHCR_USERNAME: ${{ github.actor }}
-          GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          DOCKER_USERNAME: ${{ secrets.TOOLBOX_DOCKER_USER }}
-          DOCKER_PASSWORD: ${{ secrets.TOOLBOX_DOCKER_PASS }}
-          # we use a different token than GITHUB_SECRETS to additionally allow updating the homebrew repos
-          GITHUB_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
+          # for mac signing and notarization...
+          QUILL_SIGN_P12: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_CHAIN }}
+          QUILL_SIGN_PASSWORD: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_PASS }}
+          QUILL_NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER }}
+          QUILL_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          QUILL_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+          # for creating the release (requires write access to packages and content)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # for updating brew formula in anchore/homebrew-syft
+          GITHUB_BREW_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
+          # for updating the VERSION file in S3...
           AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
-          # used during macOS code signing
-          APPLE_DEVELOPER_ID_CERT: ${{ secrets.APPLE_DEVELOPER_ID_CERT }}
-          APPLE_DEVELOPER_ID_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASS }}
-          # used during macOS notarization
-          AC_USERNAME: ${{ secrets.ENG_CI_APPLE_ID }}
-          AC_PASSWORD: ${{ secrets.ENG_CI_APPLE_ID_PASS }}
 
       - uses: anchore/sbom-action@v0
         continue-on-error: true
@@ -155,12 +151,13 @@ jobs:
         with:
           status: ${{ job.status }}
           fields: repo,workflow,action,eventName
-          text: "A new Syft release is ready to be manually published: https://github.com/anchore/syft/releases"
+          text: "A new Syft release has been published: https://github.com/anchore/syft/releases/tag/${{ github.event.inputs.version }}"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: artifacts
           path: dist/**/*
+

@@ -1,18 +1,23 @@
 package rust
 
 import (
-	"os"
 	"testing"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseCargoLock(t *testing.T) {
-	expected := []*pkg.Package{
+	fixture := "test-fixtures/Cargo.lock"
+	locations := source.NewLocationSet(source.NewLocation(fixture))
+	expectedPkgs := []pkg.Package{
 		{
 			Name:         "ansi_term",
 			Version:      "0.12.1",
+			PURL:         "pkg:cargo/ansi_term@0.12.1",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -30,6 +35,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "matches",
 			Version:      "0.1.8",
+			PURL:         "pkg:cargo/matches@0.1.8",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -45,6 +52,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "memchr",
 			Version:      "2.3.3",
+			PURL:         "pkg:cargo/memchr@2.3.3",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -60,6 +69,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "natord",
 			Version:      "1.0.9",
+			PURL:         "pkg:cargo/natord@1.0.9",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -75,6 +86,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "nom",
 			Version:      "4.2.3",
+			PURL:         "pkg:cargo/nom@4.2.3",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -93,6 +106,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "unicode-bidi",
 			Version:      "0.3.4",
+			PURL:         "pkg:cargo/unicode-bidi@0.3.4",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -110,6 +125,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "version_check",
 			Version:      "0.1.5",
+			PURL:         "pkg:cargo/version_check@0.1.5",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -125,6 +142,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "winapi",
 			Version:      "0.3.9",
+			PURL:         "pkg:cargo/winapi@0.3.9",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -143,6 +162,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "winapi-i686-pc-windows-gnu",
 			Version:      "0.4.0",
+			PURL:         "pkg:cargo/winapi-i686-pc-windows-gnu@0.4.0",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -158,6 +179,8 @@ func TestParseCargoLock(t *testing.T) {
 		{
 			Name:         "winapi-x86_64-pc-windows-gnu",
 			Version:      "0.4.0",
+			PURL:         "pkg:cargo/winapi-x86_64-pc-windows-gnu@0.4.0",
+			Locations:    locations,
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -172,19 +195,9 @@ func TestParseCargoLock(t *testing.T) {
 		},
 	}
 
-	fixture, err := os.Open("test-fixtures/Cargo.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
-
 	// TODO: no relationships are under test yet
-	actual, _, err := parseCargoLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Error(err)
-	}
+	var expectedRelationships []artifact.Relationship
 
-	differences := deep.Equal(expected, actual)
-	if differences != nil {
-		t.Errorf("returned package list differed from expectation: %+v", differences)
-	}
+	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
+
 }

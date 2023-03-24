@@ -3,8 +3,9 @@ package cpe
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_additionalProducts(t *testing.T) {
@@ -150,6 +151,84 @@ func Test_additionalVendors(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.expected, findAdditionalVendors(test.allAdditions, test.ty, test.pkgName, test.vendor))
+		})
+	}
+}
+
+func Test_findVendorsToRemove(t *testing.T) {
+	//GIVEN
+	tests := []struct {
+		name     string
+		ty       pkg.Type
+		pkgName  string
+		expected []string
+	}{
+		{
+			name:     "vendor removal match by input package name",
+			ty:       pkg.JavaPkg,
+			pkgName:  "my-package-name",
+			expected: []string{"awesome-vendor-addition"},
+		},
+		{
+			name:    "vendor removal miss by input package name",
+			ty:      pkg.JavaPkg,
+			pkgName: "my-package-name-1",
+		},
+	}
+
+	allRemovals := map[pkg.Type]map[candidateKey]candidateRemovals{
+		pkg.JavaPkg: {
+			candidateKey{
+				PkgName: "my-package-name",
+			}: {
+				VendorsToRemove: []string{"awesome-vendor-addition"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			//WHEN + THEN
+			assert.Equal(t, test.expected, findVendorsToRemove(allRemovals, test.ty, test.pkgName))
+		})
+	}
+}
+
+func Test_findProductsToRemove(t *testing.T) {
+	//GIVEN
+	tests := []struct {
+		name     string
+		ty       pkg.Type
+		pkgName  string
+		expected []string
+	}{
+		{
+			name:     "vendor removal match by input package name",
+			ty:       pkg.JavaPkg,
+			pkgName:  "my-package-name",
+			expected: []string{"awesome-vendor-addition"},
+		},
+		{
+			name:    "vendor removal miss by input package name",
+			ty:      pkg.JavaPkg,
+			pkgName: "my-package-name-1",
+		},
+	}
+
+	allRemovals := map[pkg.Type]map[candidateKey]candidateRemovals{
+		pkg.JavaPkg: {
+			candidateKey{
+				PkgName: "my-package-name",
+			}: {
+				ProductsToRemove: []string{"awesome-vendor-addition"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			//WHEN + THEN
+			assert.Equal(t, test.expected, findProductsToRemove(allRemovals, test.ty, test.pkgName))
 		})
 	}
 }

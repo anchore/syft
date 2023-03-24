@@ -3,9 +3,10 @@ package pkg
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestOwnershipByFilesRelationship(t *testing.T) {
@@ -23,8 +24,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						source.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
+					MetadataType: RpmMetadataType,
+					Metadata: RpmMetadata{
 						Files: []RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},
@@ -66,8 +67,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						source.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
+					MetadataType: RpmMetadataType,
+					Metadata: RpmMetadata{
 						Files: []RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},
@@ -108,8 +109,8 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 						source.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
-					MetadataType: RpmdbMetadataType,
-					Metadata: RpmdbMetadata{
+					MetadataType: RpmMetadataType,
+					Metadata: RpmMetadata{
 						Files: []RpmdbFileRecord{
 							{Path: "/owning/path/1"},
 							{Path: "/owning/path/2"},

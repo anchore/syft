@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/ui"
 )
 
 // eventLoop listens to worker errors (from execution path), worker events (from a partybus subscription), and
 // signal interrupts. Is responsible for handling each event relative to a given UI an to coordinate eventing until
 // an eventual graceful exit.
-// nolint:funlen
 func EventLoop(workerErrs <-chan error, signals <-chan os.Signal, subscription *partybus.Subscription, cleanupFn func(), uxs ...ui.UI) error {
 	defer cleanupFn()
 	events := subscription.Events()

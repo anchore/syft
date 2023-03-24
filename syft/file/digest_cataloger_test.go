@@ -3,18 +3,16 @@ package file
 import (
 	"crypto"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
-	"github.com/anchore/stereoscope/pkg/imagetest"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -29,12 +27,6 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 		b, err := ioutil.ReadAll(fh)
 		if err != nil {
 			t.Fatalf("could not read %q : %+v", f, err)
-		}
-
-		if len(b) == 0 {
-			// we don't keep digests for empty files
-			digests[source.NewLocation(f).Coordinates] = []Digest{}
-			continue
 		}
 
 		for _, hash := range hashes {
@@ -154,7 +146,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unable to get file=%q : %+v", test.path, err)
 			}
-			l := source.NewLocationFromImage(test.path, *ref, img)
+			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
 
 			if len(actual[l.Coordinates]) == 0 {
 				if test.expected != "" {

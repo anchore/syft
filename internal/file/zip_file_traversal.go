@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -82,7 +81,7 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 	visitor := func(file *zip.File) error {
 		tempfilePrefix := filepath.Base(filepath.Clean(file.Name)) + "-"
 
-		tempFile, err := ioutil.TempFile(dir, tempfilePrefix)
+		tempFile, err := os.CreateTemp(dir, tempfilePrefix)
 		if err != nil {
 			return fmt.Errorf("unable to create temp file: %w", err)
 		}
@@ -162,10 +161,7 @@ func UnzipToDir(archivePath, targetDir string) error {
 			return err
 		}
 
-		if err = extractSingleFile(file, joinedPath, archivePath); err != nil {
-			return err
-		}
-		return nil
+		return extractSingleFile(file, joinedPath, archivePath)
 	}
 
 	return TraverseFilesInZip(archivePath, visitor)

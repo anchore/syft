@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/source"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestIdentifyRelease(t *testing.T) {
@@ -88,19 +89,20 @@ func TestIdentifyRelease(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/fedora",
 			release: &Release{
-				PrettyName:       "Fedora 31 (Container Image)",
-				Name:             "Fedora",
+				PrettyName:       "Fedora Linux 36 (Container Image)",
+				Name:             "Fedora Linux",
 				ID:               "fedora",
 				IDLike:           nil,
-				Version:          "31 (Container Image)",
-				VersionID:        "31",
+				Version:          "36 (Container Image)",
+				VersionID:        "36",
 				Variant:          "Container Image",
 				VariantID:        "container",
 				HomeURL:          "https://fedoraproject.org/",
-				SupportURL:       "https://fedoraproject.org/wiki/Communicating_and_getting_help",
+				SupportURL:       "https://ask.fedoraproject.org/",
 				BugReportURL:     "https://bugzilla.redhat.com/",
 				PrivacyPolicyURL: "https://fedoraproject.org/wiki/Legal:PrivacyPolicy",
-				CPEName:          "cpe:/o:fedoraproject:fedora:31",
+				CPEName:          "cpe:/o:fedoraproject:fedora:36",
+				SupportEnd:       "2023-05-16",
 			},
 		},
 		{
@@ -318,6 +320,16 @@ func TestIdentifyRelease(t *testing.T) {
 				HomeURL:      "https://almalinux.org/",
 				BugReportURL: "https://bugs.almalinux.org/",
 				CPEName:      "cpe:/o:almalinux:almalinux:8.4:GA",
+			},
+		},
+		{
+			fixture: "test-fixtures/os/wolfi",
+			release: &Release{
+				PrettyName: "Wolfi",
+				Name:       "Wolfi",
+				ID:         "wolfi",
+				VersionID:  "20220914",
+				HomeURL:    "https://wolfi.dev",
 			},
 		},
 	}

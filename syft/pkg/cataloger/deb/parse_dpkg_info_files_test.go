@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/file"
-
-	"github.com/go-test/deep"
-
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -41,29 +41,14 @@ func TestMD5SumInfoParsing(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			file, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatal("Unable to read: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open(test.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			actual := parseDpkgMD5Info(file)
+			actual := parseDpkgMD5Info(f)
 
-			if len(actual) != len(test.expected) {
-				for _, a := range actual {
-					t.Logf("   %+v", a)
-				}
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(test.expected))
-			}
-
-			diffs := deep.Equal(actual, test.expected)
-			for _, d := range diffs {
-				t.Errorf("diff: %+v", d)
+			if diff := cmp.Diff(test.expected, actual); diff != "" {
+				t.Errorf("unexpected md5 files (-want +got):\n%s", diff)
 			}
 
 		})
@@ -90,29 +75,14 @@ func TestConffileInfoParsing(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			file, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatal("Unable to read: ", err)
-			}
-			defer func() {
-				err := file.Close()
-				if err != nil {
-					t.Fatal("closing file failed:", err)
-				}
-			}()
+			f, err := os.Open(test.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			actual := parseDpkgConffileInfo(file)
+			actual := parseDpkgConffileInfo(f)
 
-			if len(actual) != len(test.expected) {
-				for _, a := range actual {
-					t.Logf("   %+v", a)
-				}
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(test.expected))
-			}
-
-			diffs := deep.Equal(actual, test.expected)
-			for _, d := range diffs {
-				t.Errorf("diff: %+v", d)
+			if diff := cmp.Diff(test.expected, actual); diff != "" {
+				t.Errorf("unexpected md5 files (-want +got):\n%s", diff)
 			}
 
 		})

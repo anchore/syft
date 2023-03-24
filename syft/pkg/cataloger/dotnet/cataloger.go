@@ -1,14 +1,13 @@
 package dotnet
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewDotnetDepsCataloger returns a new Dotnet cataloger object base on deps json files.
-func NewDotnetDepsCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/*.deps.json": parseDotnetDeps,
-	}
+const catalogerName = "dotnet-deps-cataloger"
 
-	return common.NewGenericCataloger(nil, globParsers, "dotnet-deps-cataloger")
+// NewDotnetDepsCataloger returns a new Dotnet cataloger object base on deps json files.
+func NewDotnetDepsCataloger() *generic.Cataloger {
+	return generic.NewCataloger(catalogerName).
+		WithParserByGlobs(parseDotnetDeps, "**/*.deps.json")
 }

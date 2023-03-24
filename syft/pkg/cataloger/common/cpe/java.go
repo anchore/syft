@@ -3,9 +3,10 @@ package cpe
 import (
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/scylladb/go-set/strset"
 )
 
 var (
@@ -180,6 +181,10 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 		return nil
 	}
 
+	return GroupIDsFromJavaMetadata(metadata)
+}
+
+func GroupIDsFromJavaMetadata(metadata pkg.JavaMetadata) (groupIDs []string) {
 	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
 	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
 	groupIDs = append(groupIDs, groupIDsFromJavaManifest(metadata.Manifest)...)

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  GO_VERSION: "1.18.x"
+  GO_VERSION: "1.19.x"
   GO_STABLE_VERSION: true
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
           stable: ${{ env.GO_STABLE_VERSION }}
@@ -42,10 +42,10 @@ jobs:
         with:
           signoff: true
           delete-branch: true
-          branch: auto/latest
+          branch: auto/latest-stereoscope
           labels: dependencies
-          commit-message: "Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
-          title: "Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
+          commit-message: "chore(deps): update stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
+          title: "chore(deps): update stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
           body: |
             Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}
           token: ${{ steps.generate-token.outputs.token }}

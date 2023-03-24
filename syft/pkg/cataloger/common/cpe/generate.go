@@ -7,28 +7,35 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/facebookincubator/nvdtools/wfn"
+	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/pkg"
 )
 
+// knownVendors contains vendor strings that are known to exist in
+// the CPE database, so they will be preferred over other candidates:
+var knownVendors = strset.New("apache")
+
 func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
-	cpe := *(wfn.NewAttributesWithAny())
-	cpe.Part = "a"
-	cpe.Product = product
-	cpe.Vendor = vendor
-	cpe.Version = version
-	cpe.TargetSW = targetSW
-	if pkg.ValidateCPEString(pkg.CPEString(cpe)) != nil {
+	c := *(wfn.NewAttributesWithAny())
+	c.Part = "a"
+	c.Product = product
+	c.Vendor = vendor
+	c.Version = version
+	c.TargetSW = targetSW
+	if cpe.ValidateString(cpe.String(c)) != nil {
 		return nil
 	}
-	return &cpe
+	return &c
 }
 
 // Generate Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
-func Generate(p pkg.Package) []pkg.CPE {
+func Generate(p pkg.Package) []cpe.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 	if len(products) == 0 {
@@ -36,7 +43,7 @@ func Generate(p pkg.Package) []pkg.CPE {
 	}
 
 	keys := internal.NewStringSet()
-	cpes := make([]pkg.CPE, 0)
+	cpes := make([]cpe.CPE, 0)
 	for _, product := range products {
 		for _, vendor := range vendors {
 			// prevent duplicate entries...
@@ -46,8 +53,8 @@ func Generate(p pkg.Package) []pkg.CPE {
 			}
 			keys.Add(key)
 			// add a new entry...
-			if cpe := newCPE(product, vendor, p.Version, wfn.Any); cpe != nil {
-				cpes = append(cpes, *cpe)
+			if c := newCPE(product, vendor, p.Version, wfn.Any); c != nil {
+				cpes = append(cpes, *c)
 			}
 		}
 	}
@@ -55,7 +62,7 @@ func Generate(p pkg.Package) []pkg.CPE {
 	// filter out any known combinations that don't accurately represent this package
 	cpes = filter(cpes, p, cpeFilters...)
 
-	sort.Sort(pkg.CPEBySpecificity(cpes))
+	sort.Sort(cpe.BySpecificity(cpes))
 
 	return cpes
 }
@@ -69,6 +76,11 @@ func candidateVendors(p pkg.Package) []string {
 	vendors := newFieldCandidateSet(candidateProducts(p)...)
 
 	switch p.Language {
+	case pkg.JavaScript:
+		// for JavaScript if we find node.js as a package then the vendor is "nodejs"
+		if p.Name == "node.js" {
+			vendors.addValue("nodejs")
+		}
 	case pkg.Ruby:
 		vendors.addValue("ruby-lang")
 	case pkg.Go:
@@ -81,15 +93,8 @@ func candidateVendors(p pkg.Package) []string {
 		}
 	}
 
-	// some ecosystems do not have enough metadata to determine the vendor accurately, in which case we selectively
-	// allow * as a candidate. Note: do NOT allow Java packages to have * vendors.
-	switch p.Language {
-	case pkg.Ruby, pkg.JavaScript:
-		vendors.addValue(wfn.Any)
-	}
-
 	switch p.MetadataType {
-	case pkg.RpmdbMetadataType:
+	case pkg.RpmMetadataType:
 		vendors.union(candidateVendorsForRPM(p))
 	case pkg.GemMetadataType:
 		vendors.union(candidateVendorsForRuby(p))
@@ -97,7 +102,16 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForPython(p))
 	case pkg.JavaMetadataType:
 		vendors.union(candidateVendorsForJava(p))
+	case pkg.ApkMetadataType:
+		vendors.union(candidateVendorsForAPK(p))
+	case pkg.NpmPackageJSONMetadataType:
+		vendors.union(candidateVendorsForJavascript(p))
 	}
+
+	// We should no longer be generating vendor candidates with these values ["" and "*"]
+	// (since CPEs will match any other value)
+	vendors.removeByValue("")
+	vendors.removeByValue("*")
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(vendors)
@@ -110,7 +124,19 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, p.Type, p.Name, vendor)...)
 	}
 
-	return vendors.uniqueValues()
+	// remove known mis
+	vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
+
+	uniqueVendors := vendors.uniqueValues()
+
+	// if any known vendor was detected, pick that one.
+	for _, vendor := range uniqueVendors {
+		if knownVendors.Has(vendor) {
+			return []string{vendor}
+		}
+	}
+
+	return uniqueVendors
 }
 
 func candidateProducts(p pkg.Package) []string {
@@ -132,6 +158,11 @@ func candidateProducts(p pkg.Package) []string {
 			products.addValue(prod)
 		}
 	}
+
+	if p.MetadataType == pkg.ApkMetadataType {
+		products.union(candidateProductsForAPK(p))
+	}
+
 	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
 	products.removeByValue("")
 	products.removeByValue("*")
@@ -141,6 +172,9 @@ func candidateProducts(p pkg.Package) []string {
 
 	// add known candidate additions
 	products.addValue(findAdditionalProducts(defaultCandidateAdditions, p.Type, p.Name)...)
+
+	// remove known candidate removals
+	products.removeByValue(findProductsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
 
 	return products.uniqueValues()
 }

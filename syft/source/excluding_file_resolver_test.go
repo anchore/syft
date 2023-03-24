@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/stereoscope/pkg/file"
 )
 
 func TestExcludingResolver(t *testing.T) {
@@ -56,20 +56,20 @@ func TestExcludingResolver(t *testing.T) {
 			resolver := &mockResolver{
 				locations: test.locations,
 			}
-			excludingResolver := NewExcludingResolver(resolver, test.excludeFn)
+			er := NewExcludingResolver(resolver, test.excludeFn)
 
-			locations, _ := excludingResolver.FilesByPath()
+			locations, _ := er.FilesByPath()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
-			locations, _ = excludingResolver.FilesByGlob()
+			locations, _ = er.FilesByGlob()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
-			locations, _ = excludingResolver.FilesByMIMEType()
+			locations, _ = er.FilesByMIMEType()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
 			locations = []Location{}
 
-			channel := excludingResolver.AllLocations()
+			channel := er.AllLocations()
 			for location := range channel {
 				locations = append(locations, location)
 			}
@@ -78,26 +78,26 @@ func TestExcludingResolver(t *testing.T) {
 			diff := difference(test.locations, test.expected)
 
 			for _, path := range diff {
-				assert.False(t, excludingResolver.HasPath(path))
-				c, err := excludingResolver.FileContentsByLocation(makeLocation(path))
+				assert.False(t, er.HasPath(path))
+				c, err := er.FileContentsByLocation(makeLocation(path))
 				assert.Nil(t, c)
 				assert.Error(t, err)
-				m, err := excludingResolver.FileMetadataByLocation(makeLocation(path))
+				m, err := er.FileMetadataByLocation(makeLocation(path))
 				assert.Empty(t, m.LinkDestination)
 				assert.Error(t, err)
-				l := excludingResolver.RelativeFileByPath(makeLocation(""), path)
+				l := er.RelativeFileByPath(makeLocation(""), path)
 				assert.Nil(t, l)
 			}
 
 			for _, path := range test.expected {
-				assert.True(t, excludingResolver.HasPath(path))
-				c, err := excludingResolver.FileContentsByLocation(makeLocation(path))
+				assert.True(t, er.HasPath(path))
+				c, err := er.FileContentsByLocation(makeLocation(path))
 				assert.NotNil(t, c)
 				assert.Nil(t, err)
-				m, err := excludingResolver.FileMetadataByLocation(makeLocation(path))
+				m, err := er.FileMetadataByLocation(makeLocation(path))
 				assert.NotEmpty(t, m.LinkDestination)
 				assert.Nil(t, err)
-				l := excludingResolver.RelativeFileByPath(makeLocation(""), path)
+				l := er.RelativeFileByPath(makeLocation(""), path)
 				assert.NotNil(t, l)
 			}
 		})
@@ -173,6 +173,18 @@ func (r *mockResolver) FilesByGlob(_ ...string) ([]Location, error) {
 }
 
 func (r *mockResolver) FilesByMIMEType(_ ...string) ([]Location, error) {
+	return r.getLocations()
+}
+
+func (r *mockResolver) FilesByExtension(_ ...string) ([]Location, error) {
+	return r.getLocations()
+}
+
+func (r *mockResolver) FilesByBasename(_ ...string) ([]Location, error) {
+	return r.getLocations()
+}
+
+func (r *mockResolver) FilesByBasenameGlob(_ ...string) ([]Location, error) {
 	return r.getLocations()
 }
 

@@ -4,23 +4,17 @@ Package ruby bundler provides a concrete Cataloger implementation for Ruby Gemfi
 package ruby
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewGemFileLockCataloger returns a new Bundler cataloger object tailored for parsing index-oriented files (e.g. Gemfile.lock).
-func NewGemFileLockCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/Gemfile.lock": parseGemFileLockEntries,
-	}
-
-	return common.NewGenericCataloger(nil, globParsers, "ruby-gemfile-cataloger")
+func NewGemFileLockCataloger() *generic.Cataloger {
+	return generic.NewCataloger("ruby-gemfile-cataloger").
+		WithParserByGlobs(parseGemFileLockEntries, "**/Gemfile.lock")
 }
 
 // NewGemSpecCataloger returns a new Bundler cataloger object tailored for detecting installations of gems (e.g. Gemspec).
-func NewGemSpecCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/specifications/**/*.gemspec": parseGemSpecEntries,
-	}
-
-	return common.NewGenericCataloger(nil, globParsers, "ruby-gemspec-cataloger")
+func NewGemSpecCataloger() *generic.Cataloger {
+	return generic.NewCataloger("ruby-gemspec-cataloger").
+		WithParserByGlobs(parseGemSpecEntries, "**/specifications/**/*.gemspec")
 }

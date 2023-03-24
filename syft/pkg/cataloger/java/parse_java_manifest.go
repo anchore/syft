@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/syft/pkg"
 )
 
 const manifestGlob = "/META-INF/MANIFEST.MF"
 
-// nolint:funlen
 // parseJavaManifest takes MANIFEST.MF file content and returns sections of parsed key/value pairs.
 // For more information: https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest
+//
+//nolint:funlen
 func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
 	var sections []map[string]string
@@ -155,6 +155,26 @@ func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) stri
 	}
 
 	return ""
+}
+
+func selectLicense(manifest *pkg.JavaManifest) []string {
+	result := []string{}
+	if manifest == nil {
+		return result
+	}
+
+	fieldNames := []string{
+		"Bundle-License",
+		"Plugin-License-Name",
+	}
+
+	for _, fieldName := range fieldNames {
+		if v := fieldValueFromManifest(*manifest, fieldName); v != "" {
+			result = append(result, v)
+		}
+	}
+
+	return result
 }
 
 func fieldValueFromManifest(manifest pkg.JavaManifest, fieldName string) string {

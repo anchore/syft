@@ -1,0 +1,39 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "test/integration/test-fixtures/image-sbom-cataloger",
+ "spdxVersion": "SPDX-2.2",
+ "creationInfo": {
+  "created": "2022-08-18T05:23:38.066146511Z",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-0.53.0"
+  ],
+  "licenseListVersion": "3.17"
+ },
+ "dataLicense": "CC0-1.0",
+ "documentNamespace": "https://anchore.com/syft/dir/test/integration/test-fixtures/image-sbom-cataloger-057e7aa2-332c-4b50-bbd1-a17dd62ddce4",
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-45209ca0cdcbafa",
+   "name": "github.com/bmatcuk/doublestar",
+   "licenseConcluded": "NONE",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceLocator": "cpe:2.3:a:bmatcuk:doublestar:v1.3.1:*:*:*:*:*:*:*",
+     "referenceType": "cpe23Type"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceLocator": "pkg:golang/github.com/bmatcuk/doublestar@v1.3.1",
+     "referenceType": "purl"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseDeclared": "NONE",
+   "sourceInfo": "acquired package info from go module information: go.mod",
+   "versionInfo": "v1.3.1"
+  }
+ ]
+}

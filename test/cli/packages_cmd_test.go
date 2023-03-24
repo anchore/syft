@@ -10,6 +10,7 @@ import (
 func TestPackagesCmdFlags(t *testing.T) {
 	hiddenPackagesImage := "docker-archive:" + getFixtureImage(t, "image-hidden-packages")
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
+	nodeBinaryImage := "docker-archive:" + getFixtureImage(t, "image-node-binary")
 	//badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
 	tmp := t.TempDir() + "/"
 
@@ -104,7 +105,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag-hidden-packages",
 			args: []string{"packages", "-o", "json", "-s", "squashed", hiddenPackagesImage},
 			assertions: []traitAssertion{
-				assertPackageCount(162),
+				assertPackageCount(163),
 				assertNotInOutput("vsftpd"), // hidden package
 				assertSuccessfulReturnCode,
 			},
@@ -113,7 +114,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "all-layers-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "all-layers", hiddenPackagesImage},
 			assertions: []traitAssertion{
-				assertPackageCount(163), // packages are now deduplicated for this case
+				assertPackageCount(164), // packages are now deduplicated for this case
 				assertInOutput("all-layers"),
 				assertInOutput("vsftpd"), // hidden package
 				assertSuccessfulReturnCode,
@@ -126,52 +127,10 @@ func TestPackagesCmdFlags(t *testing.T) {
 				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
 			},
 			assertions: []traitAssertion{
-				assertPackageCount(163), // packages are now deduplicated for this case
+				assertPackageCount(164), // packages are now deduplicated for this case
 				assertInOutput("all-layers"),
 				assertInOutput("vsftpd"), // hidden package
 				assertSuccessfulReturnCode,
-			},
-		},
-		{
-			name: "attempt-upload-on-cli-switches",
-			args: []string{"packages", "-vv", "-H", "localhost:8080", "-u", "the-username", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", "--overwrite-existing-image", coverageImage},
-			env: map[string]string{
-				"SYFT_ANCHORE_PATH":     "path/to/api",
-				"SYFT_ANCHORE_PASSWORD": "the-password",
-			},
-			assertions: []traitAssertion{
-				// we cannot easily assert a successful upload behavior, so instead we are doing the next best thing
-				// and asserting that the parsed configuration has the expected values and we see log entries
-				// indicating an upload attempt.
-				assertNotInOutput("the-username"),
-				assertNotInOutput("the-password"),
-				assertInOutput("uploading results to localhost:8080"),
-				assertInOutput(`dockerfile: test-fixtures/image-pkg-coverage/Dockerfile`),
-				assertInOutput(`overwrite-existing-image: true`),
-				assertInOutput(`path: path/to/api`),
-				assertInOutput(`host: localhost:8080`),
-				assertFailingReturnCode, // upload can't go anywhere, so if this passes that would be surprising
-			},
-		},
-		{
-			name: "dockerfile-without-upload-is-invalid",
-			args: []string{"packages", "-vv", "-d", "test-fixtures/image-pkg-coverage/Dockerfile", coverageImage},
-			assertions: []traitAssertion{
-
-				assertNotInOutput("uploading results to localhost:8080"),
-				assertInOutput("invalid application config: cannot provide dockerfile option without enabling upload"),
-				assertFailingReturnCode,
-			},
-		},
-		{
-			name: "attempt-upload-with-env-host-set",
-			args: []string{"packages", "-vv", coverageImage},
-			env: map[string]string{
-				"SYFT_ANCHORE_HOST": "localhost:8080",
-			},
-			assertions: []traitAssertion{
-				assertInOutput("uploading results to localhost:8080"),
-				assertFailingReturnCode, // upload can't go anywhere, so if this passes that would be surprising
 			},
 		},
 		{
@@ -181,6 +140,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertStdoutLengthGreaterThan(1000),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "catalog-node-js-binary",
+			args: []string{"packages", "-o", "json", nodeBinaryImage},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertInOutput("node.js"),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -229,9 +197,49 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "catalogers-option",
+			// This will detect enable python-index-cataloger, python-package-cataloger and ruby-gemspec cataloger
 			args: []string{"packages", "-o", "json", "--catalogers", "python,ruby-gemspec", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(6),
+				assertPackageCount(13),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "override-default-parallelism",
+			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			env: map[string]string{
+				"SYFT_PARALLELISM": "2",
+			},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured.
+				assertInOutput("parallelism: 2"),
+				assertInOutput("parallelism=2"),
+				assertPackageCount(34),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "default-parallelism",
+			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured.
+				assertInOutput("parallelism: 1"),
+				assertInOutput("parallelism=1"),
+				assertPackageCount(34),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "password and key not in config output",
+			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			env: map[string]string{
+				"SYFT_ATTEST_PASSWORD": "secret_password",
+				"SYFT_ATTEST_KEY":      "secret_key_path",
+			},
+			assertions: []traitAssertion{
+				assertNotInOutput("secret_password"),
+				assertNotInOutput("secret_key_path"),
+				assertPackageCount(34),
 				assertSuccessfulReturnCode,
 			},
 		},

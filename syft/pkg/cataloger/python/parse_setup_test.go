@@ -1,68 +1,112 @@
 package python
 
 import (
-	"github.com/anchore/syft/syft/source"
-	"os"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseSetup(t *testing.T) {
-	expected := []*pkg.Package{
+	tests := []struct {
+		fixture  string
+		expected []pkg.Package
+	}{
 		{
-			Name:     "pathlib3",
-			Version:  "2.2.0",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-		},
-		{
-			Name:     "mypy",
-			Version:  "v0.770",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-		},
-		{
-			Name:     "mypy1",
-			Version:  "v0.770",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-		},
-		{
-			Name:     "mypy2",
-			Version:  "v0.770",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-		},
-		{
-			Name:     "mypy3",
-			Version:  "v0.770",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-		},
-	}
-
-	fixture, err := os.Open("test-fixtures/setup/setup.py")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
-
-	// TODO: no relationships are under test yet
-	actual, _, err := parseSetup(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse requirements: %+v", err)
-	}
-
-	if diff := cmp.Diff(expected, actual,
-		cmp.AllowUnexported(pkg.Package{}),
-		cmp.Comparer(
-			func(x, y source.LocationSet) bool {
-				return cmp.Equal(x.ToSlice(), y.ToSlice())
+			fixture: "test-fixtures/setup/setup.py",
+			expected: []pkg.Package{
+				{
+					Name:     "pathlib3",
+					Version:  "2.2.0",
+					PURL:     "pkg:pypi/pathlib3@2.2.0",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "mypy",
+					Version:  "v0.770",
+					PURL:     "pkg:pypi/mypy@v0.770",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "mypy1",
+					Version:  "v0.770",
+					PURL:     "pkg:pypi/mypy1@v0.770",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "mypy2",
+					Version:  "v0.770",
+					PURL:     "pkg:pypi/mypy2@v0.770",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "mypy3",
+					Version:  "v0.770",
+					PURL:     "pkg:pypi/mypy3@v0.770",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
 			},
-		),
-	); diff != "" {
-		t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
+		},
+		{
+			// regression... ensure we clean packages names and don't find "%s" as the name
+			fixture:  "test-fixtures/setup/dynamic-setup.py",
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.fixture, func(t *testing.T) {
+			locations := source.NewLocationSet(source.NewLocation(tt.fixture))
+			for i := range tt.expected {
+				tt.expected[i].Locations = locations
+			}
+			var expectedRelationships []artifact.Relationship
+
+			pkgtest.TestFileParser(t, tt.fixture, parseSetup, tt.expected, expectedRelationships)
+		})
+	}
+
+}
+
+func Test_hasTemplateDirective(t *testing.T) {
+
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{
+			input: "foo",
+			want:  false,
+		},
+		{
+			input: "foo %s",
+			want:  true,
+		},
+		{
+			input: "%s",
+			want:  true,
+		},
+		{
+			input: "{f_string}",
+			want:  true,
+		},
+		{
+			input: "{}", // .format() directive
+			want:  true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.want, hasTemplateDirective(tt.input))
+		})
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -36,18 +35,20 @@ import (
 // This match group covers the "version-indicating" patterns mentioned in the above description. Given the pipes (
 // '|'), this functions as a series of 'OR'-joined conditions:
 //
-//		\d.*						...	"If it starts with a numeric digit, this is a version, no matter what follows."
-//		build\d*.*					...	"If it starts with "build" and then a numeric digit immediately after, this is a version."
-//		rc?\d+(?:^[[:alpha:]].*)?	...	"If it starts with "r" or "rc" and then one or more numeric digits immediately
-//										after, but no alpha characters right after that (in the same word), this is a version."
+//	\d.*						...	"If it starts with a numeric digit, this is a version, no matter what follows."
+//	build\d*.*					...	"If it starts with "build" and then a numeric digit immediately after, this is a version."
+//	rc?\d+(?:^[[:alpha:]].*)?	...	"If it starts with "r" or "rc" and then one or more numeric digits immediately
+//									after, but no alpha characters right after that (in the same word), this is a version."
 //
 // Match examples:
-//		some-package-4.0.1		--> name="some-package", version="4.0.1"
-//		prefix.thing-4			-->	name="prefix.thing", version="4"
-//		my-http2-server-5		-->	name="my-http2-server", version="5"
-//		jetpack-build235-rc5	-->	name="jetpack", version="build2.0-rc5"
-//		ironman-r4-2009			--> name="ironman", version="r4-2009"
-var nameAndVersionPattern = regexp.MustCompile(`(?Ui)^(?P<name>(?:[[:alpha:]][[:word:].]*(?:\.[[:alpha:]][[:word:].]*)*-?)+)(?:-(?P<version>(?:\d.*|(?:build\d*.*)|(?:rc?\d+(?:^[[:alpha:]].*)?))))?$`)
+//
+//	some-package-4.0.1		--> name="some-package", version="4.0.1"
+//	prefix.thing-4			-->	name="prefix.thing", version="4"
+//	my-http2-server-5		-->	name="my-http2-server", version="5"
+//	jetpack-build235-rc5	-->	name="jetpack", version="build2.0-rc5"
+//	ironman-r4-2009			--> name="ironman", version="r4-2009"
+var nameAndVersionPattern = regexp.MustCompile(`(?Ui)^(?P<name>(?:[[:alpha:]][[:word:].]*(?:\.[[:alpha:]][[:word:].]*)*-?)+)(?:-(?P<version>(\d.*|(build\d*.*)|(rc?\d+(?:^[[:alpha:]].*)?))))?$`)
+var secondaryVersionPattern = regexp.MustCompile(`(?:[._-](?P<version>(\d.*|(build\d*.*)|(rc?\d+(?:^[[:alpha:]].*)?))))?$`)
 
 type archiveFilename struct {
 	raw     string
@@ -84,6 +85,15 @@ func newJavaArchiveFilename(raw string) archiveFilename {
 
 	name := getSubexp(matches, "name", nameAndVersionPattern, raw)
 	version := getSubexp(matches, "version", nameAndVersionPattern, raw)
+
+	// some jars get named with different conventions, like `_<version>` or `.<version>`
+	if version == "" {
+		matches = secondaryVersionPattern.FindStringSubmatch(name)
+		version = getSubexp(matches, "version", secondaryVersionPattern, raw)
+		if version != "" {
+			name = name[0 : len(name)-len(version)-1]
+		}
+	}
 
 	return archiveFilename{
 		raw:     raw,

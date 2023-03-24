@@ -9,16 +9,16 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseCabalFreeze
+var _ generic.Parser = parseCabalFreeze
 
 // parseCabalFreeze is a parser function for cabal.project.freeze contents, returning all packages discovered.
-func parseCabalFreeze(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseCabalFreeze(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
-	pkgs := []*pkg.Package{}
+	var pkgs []pkg.Package
 	for {
 		line, err := r.ReadString('\n')
 		switch {
@@ -34,20 +34,18 @@ func parseCabalFreeze(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Re
 
 		line = strings.TrimSpace(line)
 		startPkgEncoding, endPkgEncoding := strings.Index(line, "any.")+4, strings.Index(line, ",")
-		line = line[startPkgEncoding:endPkgEncoding]
-		splits := strings.Split(line, " ==")
+		// case where comma not found for last package in constraint list
+		if endPkgEncoding == -1 {
+			endPkgEncoding = len(line)
+		}
+		if startPkgEncoding >= endPkgEncoding || startPkgEncoding < 0 {
+			continue
+		}
 
-		pkgName, pkgVersion := splits[0], splits[1]
-		pkgs = append(pkgs, &pkg.Package{
-			Name:         pkgName,
-			Version:      pkgVersion,
-			Language:     pkg.Haskell,
-			Type:         pkg.HackagePkg,
-			MetadataType: pkg.HackageMetadataType,
-			Metadata: pkg.HackageMetadata{
-				Name:    pkgName,
-				Version: pkgVersion,
-			},
-		})
+		line = line[startPkgEncoding:endPkgEncoding]
+		fields := strings.Split(line, " ==")
+
+		pkgName, pkgVersion := fields[0], fields[1]
+		pkgs = append(pkgs, newPackage(pkgName, pkgVersion, nil, reader.Location))
 	}
 }

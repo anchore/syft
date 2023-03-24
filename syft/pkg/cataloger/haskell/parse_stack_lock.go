@@ -5,14 +5,15 @@ import (
 	"io"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"gopkg.in/yaml.v3"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseStackLock
+var _ generic.Parser = parseStackLock
 
 type stackLock struct {
 	Packages  []stackPackage  `yaml:"packages"`
@@ -36,19 +37,8 @@ type completedSnapshot struct {
 	Sha string `yaml:"sha256"`
 }
 
-func parseStackPackageEncoding(pkgEncoding string) (name, version, hash string) {
-	lastDashIdx := strings.LastIndex(pkgEncoding, "-")
-	name = pkgEncoding[:lastDashIdx]
-	remainingEncoding := pkgEncoding[lastDashIdx+1:]
-	encodingSplits := strings.Split(remainingEncoding, "@")
-	version = encodingSplits[0]
-	startHash, endHash := strings.Index(encodingSplits[1], ":")+1, strings.Index(encodingSplits[1], ",")
-	hash = encodingSplits[1][startHash:endHash]
-	return
-}
-
 // parseStackLock is a parser function for stack.yaml.lock contents, returning all packages discovered.
-func parseStackLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
+func parseStackLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load stack.yaml.lock file: %w", err)
@@ -61,30 +51,32 @@ func parseStackLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Rela
 	}
 
 	var (
-		pkgs        []*pkg.Package
+		pkgs        []pkg.Package
 		snapshotURL string
 	)
 
 	for _, snap := range lockFile.Snapshots {
+		// TODO: handle multiple snapshots (split the metadata struct into more distinct structs and types)
 		snapshotURL = snap.Completed.URL
 	}
 
 	for _, pack := range lockFile.Packages {
 		pkgName, pkgVersion, pkgHash := parseStackPackageEncoding(pack.Completed.Hackage)
-		pkgs = append(pkgs, &pkg.Package{
-			Name:         pkgName,
-			Version:      pkgVersion,
-			Language:     pkg.Haskell,
-			Type:         pkg.HackagePkg,
-			MetadataType: pkg.HackageMetadataType,
-			Metadata: pkg.HackageMetadata{
-				Name:        pkgName,
-				Version:     pkgVersion,
-				PkgHash:     &pkgHash,
-				SnapshotURL: &snapshotURL,
-			},
-		})
+		pkgs = append(pkgs, newPackage(pkgName, pkgVersion, &pkg.HackageMetadata{
+			PkgHash:     pkgHash,
+			SnapshotURL: snapshotURL,
+		}, reader.Location))
 	}
 
 	return pkgs, nil, nil
+}
+func parseStackPackageEncoding(pkgEncoding string) (name, version, hash string) {
+	lastDashIdx := strings.LastIndex(pkgEncoding, "-")
+	name = pkgEncoding[:lastDashIdx]
+	remainingEncoding := pkgEncoding[lastDashIdx+1:]
+	encodingSplits := strings.Split(remainingEncoding, "@")
+	version = encodingSplits[0]
+	startHash, endHash := strings.Index(encodingSplits[1], ":")+1, strings.Index(encodingSplits[1], ",")
+	hash = encodingSplits[1][startHash:endHash]
+	return
 }

@@ -4,23 +4,17 @@ Package php provides a concrete Cataloger implementation for PHP ecosystem files
 package php
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewPHPComposerInstalledCataloger returns a new cataloger for PHP installed.json files.
-func NewPHPComposerInstalledCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/installed.json": parseInstalledJSON,
-	}
-
-	return common.NewGenericCataloger(nil, globParsers, "php-composer-installed-cataloger")
+// NewComposerInstalledCataloger returns a new cataloger for PHP installed.json files.
+func NewComposerInstalledCataloger() *generic.Cataloger {
+	return generic.NewCataloger("php-composer-installed-cataloger").
+		WithParserByGlobs(parseInstalledJSON, "**/installed.json")
 }
 
-// NewPHPComposerLockCataloger returns a new cataloger for PHP composer.lock files.
-func NewPHPComposerLockCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/composer.lock": parseComposerLock,
-	}
-
-	return common.NewGenericCataloger(nil, globParsers, "php-composer-lock-cataloger")
+// NewComposerLockCataloger returns a new cataloger for PHP composer.lock files.
+func NewComposerLockCataloger() *generic.Cataloger {
+	return generic.NewCataloger("php-composer-lock-cataloger").
+		WithParserByGlobs(parseComposerLock, "**/composer.lock")
 }

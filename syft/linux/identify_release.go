@@ -2,15 +2,16 @@ package linux
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"regexp"
 	"strings"
 
 	"github.com/acobaugh/osrelease"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
-	"github.com/google/go-cmp/cmp"
 )
 
 // returns a distro or nil
@@ -54,30 +55,32 @@ var identityFiles = []parseEntry{
 
 // IdentifyRelease parses distro-specific files to discover and raise linux distribution release details.
 func IdentifyRelease(resolver source.FileResolver) *Release {
+	logger := log.Nested("operation", "identify-release")
 	for _, entry := range identityFiles {
 		locations, err := resolver.FilesByPath(entry.path)
 		if err != nil {
-			log.Warnf("unable to get path locations from %s: %+v", entry.path, err)
+			logger.WithFields("error", err, "path", entry.path).Trace("unable to get path")
 			continue
 		}
 
 		for _, location := range locations {
 			contentReader, err := resolver.FileContentsByLocation(location)
 			if err != nil {
-				log.Debugf("unable to get contents from %s: %s", entry.path, err)
+				logger.WithFields("error", err, "path", location.RealPath).Trace("unable to get contents")
 				continue
 			}
 
-			content, err := ioutil.ReadAll(contentReader)
+			content, err := io.ReadAll(contentReader)
 			internal.CloseAndLogError(contentReader, location.VirtualPath)
 			if err != nil {
-				log.Warnf("unable to read %q: %+v", location.RealPath, err)
-				break
+				logger.WithFields("error", err, "path", location.RealPath).Trace("unable to read contents")
+				continue
 			}
 
 			release, err := entry.fn(string(content))
 			if err != nil {
-				log.Warnf("unable to parse %q", location.RealPath)
+				logger.WithFields("error", err, "path", location.RealPath).Trace("unable to parse contents")
+				continue
 			}
 
 			if release != nil {
@@ -122,6 +125,7 @@ func parseOsRelease(contents string) (*Release, error) {
 		BugReportURL:     values["BUG_REPORT_URL"],
 		PrivacyPolicyURL: values["PRIVACY_POLICY_URL"],
 		CPEName:          values["CPE_NAME"],
+		SupportEnd:       values["SUPPORT_END"],
 	}
 
 	// don't allow for empty contents to result in a Release object being created

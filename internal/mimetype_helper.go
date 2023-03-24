@@ -59,6 +59,7 @@ var (
 			"application/x-elf",
 			"application/x-sharedlib",
 			"application/vnd.microsoft.portable-executable",
+			"application/x-executable",
 		}...,
 	)
 )

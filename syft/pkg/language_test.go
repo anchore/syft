@@ -62,6 +62,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:hackage/HTTP@4000.3.16",
 			want: Haskell,
 		},
+		{
+			purl: "pkg:hex/hpax/hpax@0.1.1",
+			want: UnknownLanguage,
+		},
 	}
 
 	var languages []string
@@ -69,6 +73,10 @@ func TestLanguageFromPURL(t *testing.T) {
 	for _, ty := range AllLanguages {
 		expectedLanguages.Add(string(ty))
 	}
+
+	// we cannot determine the language from these purl ecosystems (yet?)
+	expectedLanguages.Remove(Elixir.String())
+	expectedLanguages.Remove(Erlang.String())
 
 	for _, tt := range tests {
 		t.Run(tt.purl, func(t *testing.T) {

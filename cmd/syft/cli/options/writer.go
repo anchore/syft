@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/formats/table"
-	"github.com/anchore/syft/internal/formats/template"
-	"github.com/anchore/syft/syft"
-	"github.com/anchore/syft/syft/sbom"
 	"github.com/hashicorp/go-multierror"
+
+	"github.com/anchore/syft/syft/formats"
+	"github.com/anchore/syft/syft/formats/table"
+	"github.com/anchore/syft/syft/formats/template"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 // makeWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
@@ -31,7 +32,7 @@ func MakeWriter(outputs []string, defaultFile, templateFilePath string) (sbom.Wr
 func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out []sbom.WriterOption, errs error) {
 	// always should have one option -- we generally get the default of "table", but just make sure
 	if len(outputs) == 0 {
-		outputs = append(outputs, string(table.ID))
+		outputs = append(outputs, table.ID.String())
 	}
 
 	for _, name := range outputs {
@@ -51,9 +52,9 @@ func parseOutputs(outputs []string, defaultFile, templateFilePath string) (out [
 			file = parts[1]
 		}
 
-		format := syft.FormatByName(name)
+		format := formats.ByName(name)
 		if format == nil {
-			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, FormatAliases(syft.FormatIDs()...)))
+			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, formats.AllIDs()))
 			continue
 		}
 

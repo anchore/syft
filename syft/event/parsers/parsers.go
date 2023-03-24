@@ -5,12 +5,15 @@ package parsers
 
 import (
 	"fmt"
+	"io"
 
-	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
+
+	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg/cataloger"
 )
 
 type ErrBadPayload struct {
@@ -152,15 +155,20 @@ func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, 
 	return host, prog, nil
 }
 
-func ParseUploadAttestation(e partybus.Event) (progress.StagedProgressable, error) {
-	if err := checkEventType(e.Type, event.UploadAttestation); err != nil {
-		return nil, err
+func ParseAttestationStartedEvent(e partybus.Event) (io.Reader, progress.Progressable, *monitor.GenericTask, error) {
+	if err := checkEventType(e.Type, event.AttestationStarted); err != nil {
+		return nil, nil, nil, err
 	}
 
-	prog, ok := e.Value.(progress.StagedProgressable)
+	source, ok := e.Source.(monitor.GenericTask)
 	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
+		return nil, nil, nil, newPayloadErr(e.Type, "Source", e.Source)
 	}
 
-	return prog, nil
+	sp, ok := e.Value.(*monitor.ShellProgress)
+	if !ok {
+		return nil, nil, nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return sp.Reader, sp.Manual, &source, nil
 }

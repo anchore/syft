@@ -315,6 +315,38 @@ var dirOnlyTestCases = []testCase{
 			"ptr":                      "0.16.8.2",
 		},
 	},
+	{
+		name:        "find hex packages",
+		pkgType:     pkg.HexPkg,
+		pkgLanguage: pkg.Elixir + "," + pkg.Erlang,
+		pkgInfo: map[string]string{
+			// elixir
+			"castore":          "0.1.17",
+			"connection":       "1.1.0",
+			"cowboy":           "2.9.0",
+			"cowboy_telemetry": "0.4.0",
+			"cowlib":           "2.11.0",
+			"db_connection":    "2.4.2",
+			"decimal":          "2.0.0",
+			"earmark_parser":   "1.4.25",
+			"ecto":             "3.8.1",
+			"ecto_sql":         "3.8.1",
+			"esbuild":          "0.5.0",
+			"ex_doc":           "0.28.4",
+			"gettext":          "0.19.1",
+			"hpax":             "0.1.1",
+			"jason":            "1.3.0",
+
+			// erlang
+			"certifi":             "2.9.0",
+			"idna":                "6.1.1",
+			"metrics":             "1.0.1",
+			"mimerl":              "1.2.0",
+			"parse_trans":         "3.3.1",
+			"ssl_verify_fun":      "1.1.6",
+			"unicode_util_compat": "0.7.0",
+		},
+	},
 }
 
 var commonTestCases = []testCase{

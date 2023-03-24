@@ -2,17 +2,18 @@ package python
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"sort"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-type PipfileLock struct {
+type pipfileLock struct {
 	Meta struct {
 		Hash struct {
 			Sha256 string `json:"sha256"`
@@ -32,39 +33,43 @@ type PipfileLock struct {
 }
 
 type Dependency struct {
-	Version string `json:"version"`
+	Hashes  []string `json:"hashes"`
+	Version string   `json:"version"`
+	Index   string   `json:"index"`
 }
 
-// integrity check
-var _ common.ParserFn = parsePipfileLock
+var _ generic.Parser = parsePipfileLock
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
-func parsePipfileLock(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	packages := make([]*pkg.Package, 0)
+func parsePipfileLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgs := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
 	for {
-		var lock PipfileLock
-		if err := dec.Decode(&lock); err == io.EOF {
+		var lock pipfileLock
+		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse Pipfile.lock file: %w", err)
 		}
+		sourcesMap := map[string]string{}
+		for _, source := range lock.Meta.Sources {
+			sourcesMap[source.Name] = source.URL
+		}
 		for name, pkgMeta := range lock.Default {
+			var index string
+			if pkgMeta.Index != "" {
+				index = sourcesMap[pkgMeta.Index]
+			} else {
+				// https://pipenv.pypa.io/en/latest/advanced/#specifying-package-indexes
+				index = "https://pypi.org/simple"
+			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			packages = append(packages, &pkg.Package{
-				Name:     name,
-				Version:  version,
-				Language: pkg.Python,
-				Type:     pkg.PythonPkg,
-			})
+			pkgs = append(pkgs, newPackageForIndexWithMetadata(name, version, pkg.PythonPipfileLockMetadata{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
 		}
 	}
 
-	// Without sorting the packages slice, the order of packages will be unstable, due to ranging over a map.
-	sort.Slice(packages, func(i, j int) bool {
-		return packages[i].String() < packages[j].String()
-	})
+	pkg.Sort(pkgs)
 
-	return packages, nil, nil
+	return pkgs, nil, nil
 }

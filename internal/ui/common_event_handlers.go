@@ -3,8 +3,9 @@ package ui
 import (
 	"fmt"
 
-	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 	"github.com/wagoodman/go-partybus"
+
+	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 )
 
 // handleExit is a UI function for processing the Exit bus event,
@@ -17,7 +18,7 @@ func handleExit(event partybus.Event) error {
 	}
 
 	if err := fn(); err != nil {
-		return fmt.Errorf("unable to show package catalog report: %v", err)
+		return fmt.Errorf("unable to show package catalog report: %w", err)
 	}
 	return nil
 }

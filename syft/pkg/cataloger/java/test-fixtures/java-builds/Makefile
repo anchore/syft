@@ -4,7 +4,7 @@ ifndef PKGSDIR
     $(error PKGSDIR is not set)
 endif
 
-all: jars archives
+all: jars archives native-image
 
 clean: clean-examples
 	rm -f $(PKGSDIR)/*
@@ -16,6 +16,8 @@ clean-examples: clean-gradle clean-maven clean-jenkins clean-nestedjar
 jars: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar
 
 archives: $(PKGSDIR)/example-java-app-maven-0.1.0.zip $(PKGSDIR)/example-java-app-maven-0.1.0.tar $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz
+
+native-image: $(PKGSDIR)/example-java-app $(PKGSDIR)/gcc-amd64-darwin-exec-debug
 
 # jars within archives...
 
@@ -62,8 +64,15 @@ clean-jenkins:
 			example-jenkins-plugin/dependency-reduced-pom.xml \
 			example-jenkins-plugin/*.exploding
 
+# Native Image...
+$(PKGSDIR)/example-java-app: $(PKGSDIR)/example-java-app-maven-0.1.0.jar
+	./build-example-java-app-native-image.sh $(PKGSDIR)
+
+$(PKGSDIR)/gcc-amd64-darwin-exec-debug:
+	./build-example-macho-binary.sh $(PKGSDIR)
+
 # we need a way to determine if CI should bust the test cache based on the source material
 $(PKGSDIR).fingerprint: clean-examples
 	mkdir -p $(PKGSDIR)
-	find example-* -type f -exec sha256sum {} \; | sort | tee /dev/stderr | tee $(PKGSDIR).fingerprint
+	find example-* build-* Makefile -type f -exec sha256sum {} \; | sort | tee /dev/stderr | tee $(PKGSDIR).fingerprint
 	sha256sum $(PKGSDIR).fingerprint

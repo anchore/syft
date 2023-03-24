@@ -95,7 +95,8 @@ type directoryEnd struct {
 }
 
 // note: this is derived from readDirectoryEnd within the archive/zip package
-// nolint:gocognit
+//
+//nolint:gocognit
 func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, err error) {
 	// look for directoryEndSignature in the last 1k, then in the last 65k
 	var buf []byte
@@ -105,7 +106,7 @@ func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, e
 			bLen = size
 		}
 		buf = make([]byte, int(bLen))
-		if _, err := r.ReadAt(buf, size-bLen); err != nil && err != io.EOF {
+		if _, err := r.ReadAt(buf, size-bLen); err != nil && !errors.Is(err, io.EOF) {
 			return 0, err
 		}
 		if p := findSignatureInBlock(buf); p >= 0 {
@@ -145,9 +146,7 @@ func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, e
 		if err != nil {
 			return 0, err
 		}
-		startOfArchive = 0 // Prefixed data not supported
 	}
-
 	startOfArchive = uint64(directoryEndOffset) - d.directorySize - d.directoryOffset
 
 	// Make sure directoryOffset points to somewhere in our file.

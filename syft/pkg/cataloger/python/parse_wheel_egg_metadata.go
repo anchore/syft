@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anchore/syft/internal/file"
-	"github.com/anchore/syft/internal/log"
-
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -82,7 +81,7 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 // of egg metadata (as opposed to a directory that contains more metadata
 // files).
 func isEggRegularFile(path string) bool {
-	return file.GlobMatch(eggFileMetadataGlob, path)
+	return file.GlobMatch(eggInfoGlob, path)
 }
 
 // determineSitePackagesRootPath returns the path of the site packages root,

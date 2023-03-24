@@ -1,13 +1,13 @@
 package pkg
 
 import (
-	"sort"
 	"sync"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/jinzhu/copier"
 )
 
 type orderedIDSet struct {
@@ -23,6 +23,15 @@ loopNewIDs:
 			}
 		}
 		s.slice = append(s.slice, newID)
+	}
+}
+
+func (s *orderedIDSet) delete(id artifact.ID) {
+	for i, existingID := range s.slice {
+		if existingID == id {
+			s.slice = append(s.slice[:i], s.slice[i+1:]...)
+			return
+		}
 	}
 }
 
@@ -92,29 +101,32 @@ func (c *Catalog) Packages(ids []artifact.ID) (result []Package) {
 	return result
 }
 
-// Add a package to the Catalog.
-func (c *Catalog) Add(p Package) {
+// Add n packages to the catalog.
+func (c *Catalog) Add(pkgs ...Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	id := p.ID()
-	if id == "" {
-		log.Warnf("found package with empty ID while adding to the catalog: %+v", p)
-		p.SetID()
-		id = p.ID()
-	}
-
-	if existing, exists := c.byID[id]; exists {
-		// there is already a package with this fingerprint merge the existing record with the new one
-		if err := existing.merge(p); err != nil {
-			log.Warnf("failed to merge packages: %+v", err)
-		} else {
-			c.addPathsToIndex(p)
+	for _, p := range pkgs {
+		id := p.ID()
+		if id == "" {
+			log.Warnf("found package with empty ID while adding to the catalog: %+v", p)
+			p.SetID()
+			id = p.ID()
 		}
-		return
-	}
 
-	c.addToIndex(p)
+		if existing, exists := c.byID[id]; exists {
+			// there is already a package with this fingerprint merge the existing record with the new one
+			if err := existing.merge(p); err != nil {
+				log.Warnf("failed to merge packages: %+v", err)
+			} else {
+				c.byID[id] = existing
+				c.addPathsToIndex(p)
+			}
+			return
+		}
+
+		c.addToIndex(p)
+	}
 }
 
 func (c *Catalog) addToIndex(p Package) {
@@ -154,6 +166,59 @@ func (c *Catalog) addPathToIndex(id artifact.ID, path string) {
 	pathIndex := c.idsByPath[path]
 	pathIndex.add(id)
 	c.idsByPath[path] = pathIndex
+}
+
+func (c *Catalog) Delete(ids ...artifact.ID) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	for _, id := range ids {
+		p, exists := c.byID[id]
+		if !exists {
+			return
+		}
+
+		delete(c.byID, id)
+		c.deleteNameFromIndex(p)
+		c.deleteTypeFromIndex(p)
+		c.deletePathsFromIndex(p)
+	}
+}
+
+func (c *Catalog) deleteNameFromIndex(p Package) {
+	nameIndex := c.idsByName[p.Name]
+	nameIndex.delete(p.id)
+	c.idsByName[p.Name] = nameIndex
+}
+
+func (c *Catalog) deleteTypeFromIndex(p Package) {
+	typeIndex := c.idsByType[p.Type]
+	typeIndex.delete(p.id)
+	c.idsByType[p.Type] = typeIndex
+}
+
+func (c *Catalog) deletePathsFromIndex(p Package) {
+	observedPaths := internal.NewStringSet()
+	for _, l := range p.Locations.ToSlice() {
+		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
+			c.deletePathFromIndex(p.id, l.RealPath)
+			observedPaths.Add(l.RealPath)
+		}
+		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Contains(l.VirtualPath) {
+			c.deletePathFromIndex(p.id, l.VirtualPath)
+			observedPaths.Add(l.VirtualPath)
+		}
+	}
+}
+
+func (c *Catalog) deletePathFromIndex(id artifact.ID, path string) {
+	pathIndex := c.idsByPath[path]
+	pathIndex.delete(id)
+	if len(pathIndex.slice) == 0 {
+		delete(c.idsByPath, path)
+	} else {
+		c.idsByPath[path] = pathIndex
+	}
 }
 
 // Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
@@ -197,20 +262,7 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 		pkgs = append(pkgs, p)
 	}
 
-	sort.SliceStable(pkgs, func(i, j int) bool {
-		if pkgs[i].Name == pkgs[j].Name {
-			if pkgs[i].Version == pkgs[j].Version {
-				iLocations := pkgs[i].Locations.ToSlice()
-				jLocations := pkgs[j].Locations.ToSlice()
-				if pkgs[i].Type == pkgs[j].Type && len(iLocations) > 0 && len(jLocations) > 0 {
-					return iLocations[0].String() < jLocations[0].String()
-				}
-				return pkgs[i].Type < pkgs[j].Type
-			}
-			return pkgs[i].Version < pkgs[j].Version
-		}
-		return pkgs[i].Name < pkgs[j].Name
-	})
+	Sort(pkgs)
 
 	return pkgs
 }

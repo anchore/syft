@@ -1,19 +1,19 @@
 package integration
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/pkg/cataloger"
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/source"
-
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger"
+	"github.com/anchore/syft/syft/source"
 )
 
 func BenchmarkImagePackageCatalogers(b *testing.B) {
@@ -42,7 +42,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 
 		b.Run(c.Name(), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				pc, _, err = cataloger.Catalog(resolver, theDistro, c)
+				pc, _, err = cataloger.Catalog(resolver, theDistro, 1, c)
 				if err != nil {
 					b.Fatalf("failure during benchmark: %+v", err)
 				}
@@ -54,7 +54,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
 
 	observedLanguages := internal.NewStringSet()
 	definedLanguages := internal.NewStringSet()
@@ -67,9 +67,11 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Rust.String())
 	definedLanguages.Remove(pkg.Dart.String())
 	definedLanguages.Remove(pkg.Dotnet.String())
-	definedLanguages.Remove(string(pkg.Swift.String()))
+	definedLanguages.Remove(pkg.Swift.String())
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
+	definedLanguages.Remove(pkg.Erlang.String())
+	definedLanguages.Remove(pkg.Elixir.String())
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
@@ -86,6 +88,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.CocoapodsPkg))
 	definedPkgs.Remove(string(pkg.ConanPkg))
 	definedPkgs.Remove(string(pkg.HackagePkg))
+	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.HexPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -184,7 +188,14 @@ func TestPkgCoverageDirectory(t *testing.T) {
 					t.Errorf("unexpected package version (pkg=%s): %s", actualPkg.Name, actualPkg.Version)
 				}
 
-				if actualPkg.Language != test.pkgLanguage {
+				var foundLang bool
+				for _, lang := range strings.Split(test.pkgLanguage.String(), ",") {
+					if actualPkg.Language.String() == lang {
+						foundLang = true
+						break
+					}
+				}
+				if !foundLang {
 					t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)
 				}
 
@@ -207,6 +218,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	observedLanguages.Remove(pkg.UnknownLanguage.String())
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.BinaryPkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// for directory scans we should not expect to see any of the following package types
@@ -220,4 +232,25 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	if len(observedPkgs) < len(definedPkgs) {
 		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", len(definedPkgs), len(observedPkgs))
 	}
+}
+
+func TestPkgCoverageCatalogerConfiguration(t *testing.T) {
+	// Check that cataloger configuration can be used to run a cataloger on a source
+	// for which that cataloger isn't enabled by defauly
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, []string{"rust"})
+
+	observedLanguages := internal.NewStringSet()
+	definedLanguages := internal.NewStringSet()
+	definedLanguages.Add("rust")
+
+	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate() {
+		observedLanguages.Add(actualPkg.Language.String())
+	}
+
+	assert.Equal(t, definedLanguages, observedLanguages)
+
+	// Verify that rust isn't actually an image cataloger
+	c := cataloger.DefaultConfig()
+	c.Catalogers = []string{"rust"}
+	assert.Len(t, cataloger.ImageCatalogers(c), 0)
 }

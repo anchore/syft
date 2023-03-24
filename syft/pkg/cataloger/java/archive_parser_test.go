@@ -12,11 +12,13 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gookit/color"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
-	"github.com/gookit/color"
-	"github.com/stretchr/testify/assert"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {
@@ -96,6 +98,8 @@ func TestParseJar(t *testing.T) {
 				"example-jenkins-plugin": {
 					Name:         "example-jenkins-plugin",
 					Version:      "1.0-SNAPSHOT",
+					PURL:         "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
+					Licenses:     []string{"MIT License"},
 					Language:     pkg.Java,
 					Type:         pkg.JenkinsPluginPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -104,27 +108,29 @@ func TestParseJar(t *testing.T) {
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
 								"Manifest-Version":       "1.0",
-								"Specification-Title":    "The Jenkins Plugins Parent POM Project",
-								"Implementation-Title":   "example-jenkins-plugin",
+								"Specification-Title":    "Example Jenkins Plugin",
+								"Specification-Version":  "1.0",
+								"Implementation-Title":   "Example Jenkins Plugin",
 								"Implementation-Version": "1.0-SNAPSHOT",
 								// extra fields...
-								"Archiver-Version":    "Plexus Archiver",
+								//"Archiver-Version":    "Plexus Archiver",
 								"Plugin-License-Url":  "https://opensource.org/licenses/MIT",
 								"Plugin-License-Name": "MIT License",
-								"Created-By":          "Apache Maven",
+								"Created-By":          "Maven Archiver 3.6.0",
 								//"Built-By":            "?",
 								//"Build-Jdk":            "14.0.1",
-								"Jenkins-Version":      "2.164.3",
-								"Minimum-Java-Version": "1.8",
-								"Plugin-Developers":    "",
-								"Plugin-ScmUrl":        "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin",
-								"Extension-Name":       "example-jenkins-plugin",
-								"Short-Name":           "example-jenkins-plugin",
-								"Group-Id":             "io.jenkins.plugins",
-								"Plugin-Dependencies":  "structs:1.20",
+								"Build-Jdk-Spec":  "18",
+								"Jenkins-Version": "2.204",
+								//"Minimum-Java-Version": "1.8",
+								"Plugin-Developers": "",
+								"Plugin-ScmUrl":     "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin",
+								//"Extension-Name":      "example-jenkins-plugin",
+								"Short-Name":          "example-jenkins-plugin",
+								"Group-Id":            "io.jenkins.plugins",
+								"Plugin-Dependencies": "structs:1.20",
 								//"Plugin-Version": "1.0-SNAPSHOT (private-07/09/2020 13:30-?)",
-								"Hudson-Version": "2.164.3",
-								"Long-Name":      "TODO Plugin",
+								"Hudson-Version": "2.204",
+								"Long-Name":      "Example Jenkins Plugin",
 							},
 						},
 						PomProperties: &pkg.PomProperties{
@@ -132,9 +138,7 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "io.jenkins.plugins",
 							ArtifactID: "example-jenkins-plugin",
 							Version:    "1.0-SNAPSHOT",
-							Extra:      map[string]string{},
 						},
-						PURL: "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					},
 				},
 			},
@@ -145,6 +149,8 @@ func TestParseJar(t *testing.T) {
 				"example-java-app-gradle": {
 					Name:         "example-java-app-gradle",
 					Version:      "0.1.0",
+					PURL:         "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
+					Licenses:     []string{},
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -155,7 +161,6 @@ func TestParseJar(t *testing.T) {
 								"Manifest-Version": "1.0",
 							},
 						},
-						PURL: "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
 					},
 				},
 			},
@@ -170,6 +175,8 @@ func TestParseJar(t *testing.T) {
 				"example-java-app-maven": {
 					Name:         "example-java-app-maven",
 					Version:      "0.1.0",
+					PURL:         "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
+					Licenses:     []string{},
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -180,7 +187,7 @@ func TestParseJar(t *testing.T) {
 								"Manifest-Version": "1.0",
 								// extra fields...
 								"Archiver-Version": "Plexus Archiver",
-								"Created-By":       "Apache Maven 3.6.3",
+								"Created-By":       "Apache Maven 3.8.6",
 								//"Built-By":         "?",
 								//"Build-Jdk":        "14.0.1",
 								"Main-Class": "hello.HelloWorld",
@@ -191,14 +198,13 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "org.anchore",
 							ArtifactID: "example-java-app-maven",
 							Version:    "0.1.0",
-							Extra:      map[string]string{},
 						},
-						PURL: "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
 					},
 				},
 				"joda-time": {
 					Name:         "joda-time",
 					Version:      "2.9.2",
+					PURL:         "pkg:maven/joda-time/joda-time@2.9.2",
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -211,7 +217,6 @@ func TestParseJar(t *testing.T) {
 							GroupID:    "joda-time",
 							ArtifactID: "joda-time",
 							Version:    "2.9.2",
-							Extra:      map[string]string{},
 						},
 						PomProject: &pkg.PomProject{
 							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",
@@ -222,7 +227,6 @@ func TestParseJar(t *testing.T) {
 							Description: "Date and time library to replace JDK date handling",
 							URL:         "http://www.joda.org/joda-time/",
 						},
-						PURL: "pkg:maven/joda-time/joda-time@2.9.2",
 					},
 				},
 			},
@@ -235,20 +239,23 @@ func TestParseJar(t *testing.T) {
 			generateJavaBuildFixture(t, test.fixture)
 
 			fixture, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatalf("failed to open fixture: %+v", err)
+			require.NoError(t, err)
+
+			for k := range test.expected {
+				p := test.expected[k]
+				p.Locations.Add(source.NewLocation(test.fixture))
+				test.expected[k] = p
 			}
 
-			parser, cleanupFn, err := newJavaArchiveParser(fixture.Name(), fixture, false)
+			parser, cleanupFn, err := newJavaArchiveParser(source.LocationReadCloser{
+				Location:   source.NewLocation(fixture.Name()),
+				ReadCloser: fixture,
+			}, false)
 			defer cleanupFn()
-			if err != nil {
-				t.Fatalf("should not have filed... %+v", err)
-			}
+			require.NoError(t, err)
 
 			actual, _, err := parser.parse()
-			if err != nil {
-				t.Fatalf("failed to parse java archive: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(actual) != len(test.expected) {
 				for _, a := range actual {
@@ -259,8 +266,9 @@ func TestParseJar(t *testing.T) {
 
 			var parent *pkg.Package
 			for _, a := range actual {
+				a := a
 				if strings.Contains(a.Name, "example-") {
-					parent = a
+					parent = &a
 				}
 			}
 
@@ -269,6 +277,10 @@ func TestParseJar(t *testing.T) {
 			}
 
 			for _, a := range actual {
+				if a.ID() == "" {
+					t.Fatalf("empty package ID: %+v", a)
+				}
+
 				e, ok := test.expected[a.Name]
 				if !ok {
 					t.Errorf("entry not found: %s", a.Name)
@@ -298,13 +310,7 @@ func TestParseJar(t *testing.T) {
 				// write censored data back
 				a.Metadata = metadata
 
-				diffs := deep.Equal(&e, a)
-				if len(diffs) > 0 {
-					t.Errorf("diffs found for %q", a.Name)
-					for _, d := range diffs {
-						t.Errorf("diff: %+v", d)
-					}
-				}
+				pkgtest.AssertPackagesEqual(t, e, a)
 			}
 		})
 	}
@@ -509,14 +515,13 @@ func TestParseNestedJar(t *testing.T) {
 			generateJavaBuildFixture(t, test.fixture)
 
 			fixture, err := os.Open(test.fixture)
-			if err != nil {
-				t.Fatalf("failed to open fixture: %+v", err)
-			}
+			require.NoError(t, err)
 
-			actual, _, err := parseJavaArchive(fixture.Name(), fixture)
-			if err != nil {
-				t.Fatalf("failed to parse java archive: %+v", err)
-			}
+			actual, _, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
+				Location:   source.NewLocation(fixture.Name()),
+				ReadCloser: fixture,
+			})
+			require.NoError(t, err)
 
 			expectedNameVersionPairSet := internal.NewStringSet()
 
@@ -533,7 +538,8 @@ func TestParseNestedJar(t *testing.T) {
 
 			actualNameVersionPairSet := internal.NewStringSet()
 			for _, a := range actual {
-				key := makeKey(a)
+				a := a
+				key := makeKey(&a)
 				actualNameVersionPairSet.Add(key)
 				if !expectedNameVersionPairSet.Contains(key) {
 					t.Errorf("extra package: %s", a)
@@ -551,7 +557,8 @@ func TestParseNestedJar(t *testing.T) {
 			}
 
 			for _, a := range actual {
-				actualKey := makeKey(a)
+				a := a
+				actualKey := makeKey(&a)
 
 				metadata := a.Metadata.(pkg.JavaMetadata)
 				if actualKey == "spring-boot|0.0.1-SNAPSHOT" {
@@ -939,9 +946,26 @@ func Test_newPackageFromMavenData(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, virtualPath)
-			assert.Equal(t, test.expectedPackage, actualPackage, "new package doesn't match")
-			assert.Equal(t, test.expectedParent, *test.parent, "parent doesn't match")
+			locations := source.NewLocationSet(source.NewLocation(virtualPath))
+			if test.expectedPackage != nil {
+				test.expectedPackage.Locations = locations
+				if test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent != nil {
+					test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent.Locations = locations
+				}
+			}
+			if test.parent != nil {
+				test.parent.Locations = locations
+			}
+			test.expectedParent.Locations = locations
+
+			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, source.NewLocation(virtualPath))
+			if test.expectedPackage == nil {
+				require.Nil(t, actualPackage)
+			} else {
+				pkgtest.AssertPackagesEqual(t, *test.expectedPackage, *actualPackage)
+			}
+
+			pkgtest.AssertPackagesEqual(t, test.expectedParent, *test.parent)
 		})
 	}
 }

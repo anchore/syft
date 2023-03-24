@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +19,7 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: RpmPkg,
 		},
 		{
-			purl:     "pkg:alpine/util-linux@2.32.1",
+			purl:     "pkg:apk/alpine/util-linux@2.32.1",
 			expected: ApkPkg,
 		},
 		{
@@ -80,6 +79,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:hackage/HTTP@4000.3.16",
 			expected: HackagePkg,
 		},
+		{
+			purl:     "pkg:hex/hpax/hpax@0.1.1",
+			expected: HexPkg,
+		},
 	}
 
 	var pkgTypes []string
@@ -88,10 +91,12 @@ func TestTypeFromPURL(t *testing.T) {
 		expectedTypes.Add(string(ty))
 	}
 
-	// testing microsoft packages and jenkins-plugins is not valid for purl at this time
+	// testing microsoft packages and jenkins-plugins and custom binary type
+	// is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(JenkinsPluginPkg))
 	expectedTypes.Remove(string(PortagePkg))
+	expectedTypes.Remove(string(BinaryPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

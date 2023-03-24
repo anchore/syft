@@ -4,18 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"sort"
 
-	"github.com/anchore/syft/internal"
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 var DefaultSecretsPatterns = map[string]string{
@@ -56,12 +55,12 @@ func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 			return nil, err
 		}
 		if len(result) > 0 {
-			secretsDiscovered.N += int64(len(result))
+			secretsDiscovered.Add(int64(len(result)))
 			results[location.Coordinates] = result
 		}
-		prog.N++
+		prog.Increment()
 	}
-	log.Debugf("secrets cataloger discovered %d secrets", secretsDiscovered.N)
+	log.Debugf("secrets cataloger discovered %d secrets", secretsDiscovered.Current())
 	prog.SetCompleted()
 	return results, nil
 }
@@ -111,7 +110,7 @@ func extractValue(resolver source.FileResolver, location source.Location, start,
 	}
 	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
 
-	n, err := io.CopyN(ioutil.Discard, readCloser, start)
+	n, err := io.CopyN(io.Discard, readCloser, start)
 	if err != nil {
 		return "", fmt.Errorf("unable to read contents for location=%q : %w", location, err)
 	}
@@ -140,9 +139,7 @@ type SecretsMonitor struct {
 func secretsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual, *progress.Manual) {
 	stage := &progress.Stage{}
 	secretsDiscovered := &progress.Manual{}
-	prog := &progress.Manual{
-		Total: locations,
-	}
+	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{
 		Type:   event.SecretsCatalogerStarted,

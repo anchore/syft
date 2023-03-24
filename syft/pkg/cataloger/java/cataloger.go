@@ -1,34 +1,33 @@
 /*
-Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, par, sar, jpi, hpi formats).
+Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats).
 */
 package java
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewJavaCataloger returns a new Java archive cataloger object.
-func NewJavaCataloger(cfg Config) *common.GenericCataloger {
-	globParsers := make(map[string]common.ParserFn)
-
-	// java archive formats
-	for _, pattern := range archiveFormatGlobs {
-		globParsers[pattern] = parseJavaArchive
-	}
+func NewJavaCataloger(cfg Config) *generic.Cataloger {
+	c := generic.NewCataloger("java-cataloger").
+		WithParserByGlobs(parseJavaArchive, archiveFormatGlobs...)
 
 	if cfg.SearchIndexedArchives {
 		// java archives wrapped within zip files
-		for _, pattern := range genericZipGlobs {
-			globParsers[pattern] = parseZipWrappedJavaArchive
-		}
+		c.WithParserByGlobs(parseZipWrappedJavaArchive, genericZipGlobs...)
 	}
 
 	if cfg.SearchUnindexedArchives {
 		// java archives wrapped within tar files
-		for _, pattern := range genericTarGlobs {
-			globParsers[pattern] = parseTarWrappedJavaArchive
-		}
+		c.WithParserByGlobs(parseTarWrappedJavaArchive, genericTarGlobs...)
 	}
+	return c
+}
 
-	return common.NewGenericCataloger(nil, globParsers, "java-cataloger")
+// NewJavaPomCataloger returns a cataloger capable of parsing
+// dependencies from a pom.xml file.
+// Pom files list dependencies that maybe not be locally installed yet.
+func NewJavaPomCataloger() *generic.Cataloger {
+	return generic.NewCataloger("java-pom-cataloger").
+		WithParserByGlobs(parserPomXML, "**/pom.xml")
 }

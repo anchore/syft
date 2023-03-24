@@ -5,7 +5,6 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/log"
 )
 
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
@@ -14,8 +13,8 @@ type Location struct {
 	Coordinates `cyclonedx:""` // Empty string here means there is no intermediate property name, e.g. syft:locations:0:path without "coordinates"
 	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
 	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
-	VirtualPath string         `hash:"ignore"` // The path to the file which may or may not have hardlinks / symlinks
-	ref         file.Reference `hash:"ignore"` // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
+	VirtualPath string         `hash:"ignore" json:"virtualPath,omitempty"` // The path to the file which may or may not have hardlinks / symlinks
+	ref         file.Reference `hash:"ignore"`                              // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
 }
 
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
@@ -46,22 +45,11 @@ func NewLocationFromCoordinates(coordinates Coordinates) Location {
 
 // NewLocationFromImage creates a new Location representing the given path (extracted from the ref) relative to the given image.
 func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Image) Location {
-	entry, err := img.FileCatalog.Get(ref)
-	if err != nil {
-		log.Warnf("unable to find file catalog entry for ref=%+v", ref)
-		return Location{
-			Coordinates: Coordinates{
-				RealPath: string(ref.RealPath),
-			},
-			VirtualPath: virtualPath,
-			ref:         ref,
-		}
-	}
-
+	layer := img.FileCatalog.Layer(ref)
 	return Location{
 		Coordinates: Coordinates{
 			RealPath:     string(ref.RealPath),
-			FileSystemID: entry.Layer.Metadata.Digest,
+			FileSystemID: layer.Metadata.Digest,
 		},
 		VirtualPath: virtualPath,
 		ref:         ref,
@@ -90,6 +78,13 @@ func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, r
 		VirtualPath: virtualResponsePath,
 		ref:         ref,
 	}
+}
+
+func (l Location) AccessPath() string {
+	if l.VirtualPath != "" {
+		return l.VirtualPath
+	}
+	return l.RealPath
 }
 
 func (l Location) String() string {

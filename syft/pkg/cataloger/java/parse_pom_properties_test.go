@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestParseJavaPomProperties(t *testing.T) {
@@ -18,7 +19,6 @@ func TestParseJavaPomProperties(t *testing.T) {
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
-				Extra:      map[string]string{},
 			},
 		},
 		{
@@ -40,7 +40,6 @@ func TestParseJavaPomProperties(t *testing.T) {
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
-				Extra:      map[string]string{},
 			},
 		},
 		{
@@ -49,7 +48,6 @@ func TestParseJavaPomProperties(t *testing.T) {
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java:app-maven",
 				Version:    "0.1.0:something",
-				Extra:      map[string]string{},
 			},
 		},
 		{
@@ -58,7 +56,6 @@ func TestParseJavaPomProperties(t *testing.T) {
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java=app-maven",
 				Version:    "0.1.0=something",
-				Extra:      map[string]string{},
 			},
 		},
 	}

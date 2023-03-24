@@ -4,21 +4,19 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 
-	"github.com/anchore/syft/internal"
-
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parseGemFileLockEntries
+var _ generic.Parser = parseGemFileLockEntries
 
 type postProcessor func(string) []string
 
@@ -37,14 +35,14 @@ var patterns = map[string]*regexp.Regexp{
 	"homepage": regexp.MustCompile(`.*\.homepage\s*=\s*["']{1}(?P<homepage>.*)["']{1} *`),
 
 	// match example:       files = ["exe/bundle".freeze, "exe/bundler".freeze]    --->    "exe/bundle".freeze, "exe/bundler".freeze
-	"files": regexp.MustCompile(`.*\.files\s*=\s*\[(?P<files>.*)\] *`),
+	"files": regexp.MustCompile(`.*\.files\s*=\s*\[(?P<files>.*)] *`),
 
 	// match example:       authors = ["Andr\u00E9 Arko".freeze, "Samuel Giddins".freeze, "Colby Swandale".freeze,
 	//								   "Hiroshi Shibata".freeze, "David Rodr\u00EDguez".freeze, "Grey Baker".freeze...]
-	"authors": regexp.MustCompile(`.*\.authors\s*=\s*\[(?P<authors>.*)\] *`),
+	"authors": regexp.MustCompile(`.*\.authors\s*=\s*\[(?P<authors>.*)] *`),
 
 	// match example:	    licenses = ["MIT".freeze]   ----> "MIT".freeze
-	"licenses": regexp.MustCompile(`.*\.licenses\s*=\s*\[(?P<licenses>.*)\] *`),
+	"licenses": regexp.MustCompile(`.*\.licenses\s*=\s*\[(?P<licenses>.*)] *`),
 }
 
 var postProcessors = map[string]postProcessor{
@@ -61,8 +59,8 @@ func processList(s string) []string {
 	return results
 }
 
-func parseGemSpecEntries(_ string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	var pkgs []*pkg.Package
+func parseGemSpecEntries(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
 
@@ -80,8 +78,8 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]*pkg.Package, []artifact
 		for field, pattern := range patterns {
 			matchMap := internal.MatchNamedCaptureGroups(pattern, sanitizedLine)
 			if value := matchMap[field]; value != "" {
-				if postProcessor := postProcessors[field]; postProcessor != nil {
-					fields[field] = postProcessor(value)
+				if pp := postProcessors[field]; pp != nil {
+					fields[field] = pp(value)
 				} else {
 					fields[field] = value
 				}
@@ -97,15 +95,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]*pkg.Package, []artifact
 			return nil, nil, fmt.Errorf("unable to decode gem metadata: %w", err)
 		}
 
-		pkgs = append(pkgs, &pkg.Package{
-			Name:         metadata.Name,
-			Version:      metadata.Version,
-			Licenses:     metadata.Licenses,
-			Language:     pkg.Ruby,
-			Type:         pkg.GemPkg,
-			MetadataType: pkg.GemMetadataType,
-			Metadata:     metadata,
-		})
+		pkgs = append(pkgs, newGemspecPackage(metadata, reader.Location))
 	}
 
 	return pkgs, nil, nil

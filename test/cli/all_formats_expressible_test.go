@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/formats/template"
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/formats"
+	"github.com/anchore/syft/syft/formats/template"
 )
 
 func TestAllFormatsExpressible(t *testing.T) {
@@ -21,9 +21,9 @@ func TestAllFormatsExpressible(t *testing.T) {
 		},
 		assertSuccessfulReturnCode,
 	}
-	formats := syft.FormatIDs()
-	require.NotEmpty(t, formats)
-	for _, o := range formats {
+	formatNames := formats.AllIDs()
+	require.NotEmpty(t, formatNames)
+	for _, o := range formatNames {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {
 			args := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", string(o)}
 			if o == template.ID {

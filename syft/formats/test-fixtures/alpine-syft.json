@@ -1,0 +1,1846 @@
+{
+ "artifacts": [
+  {
+   "id": "880965c7-95ff-483c-80bb-22799bbbee63",
+   "name": "alpine-baselayout",
+   "version": "3.2.0-r16",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "GPL-2.0-only"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:alpine-baselayout:alpine-baselayout:3.2.0-r16:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine-baselayout:alpine_baselayout:3.2.0-r16:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine_baselayout:alpine-baselayout:3.2.0-r16:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine_baselayout:alpine_baselayout:3.2.0-r16:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine:alpine-baselayout:3.2.0-r16:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine:alpine_baselayout:3.2.0-r16:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/alpine-baselayout@3.2.0-r16?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "alpine-baselayout",
+    "originPackage": "alpine-baselayout",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "3.2.0-r16",
+    "license": "GPL-2.0-only",
+    "architecture": "x86_64",
+    "url": "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
+    "description": "Alpine base dir structure and init scripts",
+    "size": 20716,
+    "installedSize": 413696,
+    "pullDependencies": "/bin/sh so:libc.musl-x86_64.so.1",
+    "pullChecksum": "Q1UJtB9cNV4r+/VbxySkEei++qbho=",
+    "gitCommitOfApkPort": "8a8c96a0ea2fcd824c361aa4438763fa33ee8ca0",
+    "files": [
+     {
+      "path": "/dev"
+     },
+     {
+      "path": "/dev/pts"
+     },
+     {
+      "path": "/dev/shm"
+     },
+     {
+      "path": "/etc"
+     },
+     {
+      "path": "/etc/fstab",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q11Q7hNe8QpDS531guqCdrXBzoA/o="
+      }
+     },
+     {
+      "path": "/etc/group",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q13K+olJg5ayzHSVNUkggZJXuB+9Y="
+      }
+     },
+     {
+      "path": "/etc/hostname",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q16nVwYVXP/tChvUPdukVD2ifXOmc="
+      }
+     },
+     {
+      "path": "/etc/hosts",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1BD6zJKZTRWyqGnPi4tSfd3krsMU="
+      }
+     },
+     {
+      "path": "/etc/inittab",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1TsthbhW7QzWRe1E/NKwTOuD4pHc="
+      }
+     },
+     {
+      "path": "/etc/modules",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1toogjUipHGcMgECgPJX64SwUT1M="
+      }
+     },
+     {
+      "path": "/etc/motd",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1XmduVVNURHQ27TvYp1Lr5TMtFcA="
+      }
+     },
+     {
+      "path": "/etc/mtab",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1kiljhXXH1LlQroHsEJIkPZg2eiw="
+      }
+     },
+     {
+      "path": "/etc/passwd",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1TchuuLUfur0izvfZQZxgN/LJhB8="
+      }
+     },
+     {
+      "path": "/etc/profile",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1VmHPWPjjvz4oCsbmYCUB4uWpSkc="
+      }
+     },
+     {
+      "path": "/etc/protocols",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1omKlp3vgGq2ZqYzyD/KHNdo8rDc="
+      }
+     },
+     {
+      "path": "/etc/services",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q19WLCv5ItKg4MH7RWfNRh1I7byQc="
+      }
+     },
+     {
+      "path": "/etc/shadow",
+      "ownerUid": "0",
+      "ownerGid": "42",
+      "permissions": "640",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1ltrPIAW2zHeDiajsex2Bdmq3uqA="
+      }
+     },
+     {
+      "path": "/etc/shells",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1ojm2YdpCJ6B/apGDaZ/Sdb2xJkA="
+      }
+     },
+     {
+      "path": "/etc/sysctl.conf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q14upz3tfnNxZkIEsUhWn7Xoiw96g="
+      }
+     },
+     {
+      "path": "/etc/apk"
+     },
+     {
+      "path": "/etc/conf.d"
+     },
+     {
+      "path": "/etc/crontabs"
+     },
+     {
+      "path": "/etc/crontabs/root",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "600",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1vfk1apUWI4yLJGhhNRd0kJixfvY="
+      }
+     },
+     {
+      "path": "/etc/init.d"
+     },
+     {
+      "path": "/etc/modprobe.d"
+     },
+     {
+      "path": "/etc/modprobe.d/aliases.conf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1WUbh6TBYNVK7e4Y+uUvLs/7viqk="
+      }
+     },
+     {
+      "path": "/etc/modprobe.d/blacklist.conf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1xxYGU6S6TLQvb7ervPrWWwAWqMg="
+      }
+     },
+     {
+      "path": "/etc/modprobe.d/i386.conf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1pnay/njn6ol9cCssL7KiZZ8etlc="
+      }
+     },
+     {
+      "path": "/etc/modprobe.d/kms.conf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1ynbLn3GYDpvajba/ldp1niayeog="
+      }
+     },
+     {
+      "path": "/etc/modules-load.d"
+     },
+     {
+      "path": "/etc/network"
+     },
+     {
+      "path": "/etc/network/if-down.d"
+     },
+     {
+      "path": "/etc/network/if-post-down.d"
+     },
+     {
+      "path": "/etc/network/if-pre-up.d"
+     },
+     {
+      "path": "/etc/network/if-up.d"
+     },
+     {
+      "path": "/etc/opt"
+     },
+     {
+      "path": "/etc/periodic"
+     },
+     {
+      "path": "/etc/periodic/15min"
+     },
+     {
+      "path": "/etc/periodic/daily"
+     },
+     {
+      "path": "/etc/periodic/hourly"
+     },
+     {
+      "path": "/etc/periodic/monthly"
+     },
+     {
+      "path": "/etc/periodic/weekly"
+     },
+     {
+      "path": "/etc/profile.d"
+     },
+     {
+      "path": "/etc/profile.d/README",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q135OWsCzzvnB2fmFx62kbqm1Ax1k="
+      }
+     },
+     {
+      "path": "/etc/profile.d/color_prompt.sh.disabled",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q10wL23GuSCVfumMRgakabUI6EsSk="
+      }
+     },
+     {
+      "path": "/etc/profile.d/locale.sh",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1S8j+WW71mWxfVy8ythqU7HUVoBw="
+      }
+     },
+     {
+      "path": "/etc/sysctl.d"
+     },
+     {
+      "path": "/home"
+     },
+     {
+      "path": "/lib"
+     },
+     {
+      "path": "/lib/firmware"
+     },
+     {
+      "path": "/lib/mdev"
+     },
+     {
+      "path": "/lib/modules-load.d"
+     },
+     {
+      "path": "/lib/sysctl.d"
+     },
+     {
+      "path": "/lib/sysctl.d/00-alpine.conf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1HpElzW1xEgmKfERtTy7oommnq6c="
+      }
+     },
+     {
+      "path": "/media"
+     },
+     {
+      "path": "/media/cdrom"
+     },
+     {
+      "path": "/media/floppy"
+     },
+     {
+      "path": "/media/usb"
+     },
+     {
+      "path": "/mnt"
+     },
+     {
+      "path": "/opt"
+     },
+     {
+      "path": "/proc"
+     },
+     {
+      "path": "/root",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "700"
+     },
+     {
+      "path": "/run"
+     },
+     {
+      "path": "/sbin"
+     },
+     {
+      "path": "/sbin/mkmntdirs",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1VcFI6coRl6HWWVShMW+G5Sb3JH8="
+      }
+     },
+     {
+      "path": "/srv"
+     },
+     {
+      "path": "/sys"
+     },
+     {
+      "path": "/tmp",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "1777"
+     },
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/lib"
+     },
+     {
+      "path": "/usr/lib/modules-load.d"
+     },
+     {
+      "path": "/usr/local"
+     },
+     {
+      "path": "/usr/local/bin"
+     },
+     {
+      "path": "/usr/local/lib"
+     },
+     {
+      "path": "/usr/local/share"
+     },
+     {
+      "path": "/usr/sbin"
+     },
+     {
+      "path": "/usr/share"
+     },
+     {
+      "path": "/usr/share/man"
+     },
+     {
+      "path": "/usr/share/misc"
+     },
+     {
+      "path": "/var"
+     },
+     {
+      "path": "/var/run",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q11/SNZz/8cK2dSKK+cJpVrZIuF4Q="
+      }
+     },
+     {
+      "path": "/var/cache"
+     },
+     {
+      "path": "/var/cache/misc"
+     },
+     {
+      "path": "/var/empty",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "555"
+     },
+     {
+      "path": "/var/lib"
+     },
+     {
+      "path": "/var/lib/misc"
+     },
+     {
+      "path": "/var/local"
+     },
+     {
+      "path": "/var/lock"
+     },
+     {
+      "path": "/var/lock/subsys"
+     },
+     {
+      "path": "/var/log"
+     },
+     {
+      "path": "/var/mail"
+     },
+     {
+      "path": "/var/opt"
+     },
+     {
+      "path": "/var/spool"
+     },
+     {
+      "path": "/var/spool/mail",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1dzbdazYZA2nTzSIG3YyNw7d4Juc="
+      }
+     },
+     {
+      "path": "/var/spool/cron"
+     },
+     {
+      "path": "/var/spool/cron/crontabs",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1OFZt+ZMp7j0Gny0rqSKuWJyqYmA="
+      }
+     },
+     {
+      "path": "/var/tmp",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "1777"
+     }
+    ]
+   }
+  },
+  {
+   "id": "8dbd8f4d-c13f-4120-8c2b-4596e5c46fce",
+   "name": "alpine-keys",
+   "version": "2.3-r1",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "MIT"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine_keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine_keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine:alpine-keys:2.3-r1:*:*:*:*:*:*:*",
+    "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/alpine-keys@2.3-r1?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "alpine-keys",
+    "originPackage": "alpine-keys",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "2.3-r1",
+    "license": "MIT",
+    "architecture": "x86_64",
+    "url": "https://alpinelinux.org",
+    "description": "Public keys for Alpine Linux packages",
+    "size": 5988,
+    "installedSize": 118784,
+    "pullDependencies": "",
+    "pullChecksum": "Q1ZV5wTtRXerQz0CBrwtKcvErpPeY=",
+    "gitCommitOfApkPort": "0972396a79fd723a429e518120fdf7ab48407468",
+    "files": [
+     {
+      "path": "/etc"
+     },
+     {
+      "path": "/etc/apk"
+     },
+     {
+      "path": "/etc/apk/keys"
+     },
+     {
+      "path": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1OvCFSO94z97c80mIDCxqGkh2Og4="
+      }
+     },
+     {
+      "path": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-5243ef4b.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1v7YWZYzAWoclaLDI45jEguI7YN0="
+      }
+     },
+     {
+      "path": "/etc/apk/keys/alpine-devel@lists.alpinelinux.org-5261cecb.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1NnGuDsdQOx4ZNYfB3N97eLyGPkI="
+      }
+     },
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/share"
+     },
+     {
+      "path": "/usr/share/apk"
+     },
+     {
+      "path": "/usr/share/apk/keys"
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1OvCFSO94z97c80mIDCxqGkh2Og4="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-5243ef4b.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1v7YWZYzAWoclaLDI45jEguI7YN0="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-524d27bb.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1BTqS+H/UUyhQuzHwiBl47+BTKuU="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-5261cecb.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1NnGuDsdQOx4ZNYfB3N97eLyGPkI="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-58199dcc.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1Oaxdcsa6AYoPdLi0U4lO3J2we18="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-58cbb476.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1yPq+su65ksNox3uXB+DR7P18+QU="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-58e4f17d.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1MpZDNX0LeLHvSOwVUyXiXx11NN0="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-5e69ca50.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1glCQ/eJbvA5xqcswdjFrWv5Fnk0="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/alpine-devel@lists.alpinelinux.org-60ac2099.rsa.pub",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1XUdDEoNTtjlvrS+iunk6ziFgIpU="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/aarch64"
+     },
+     {
+      "path": "/usr/share/apk/keys/aarch64/alpine-devel@lists.alpinelinux.org-58199dcc.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q17j9nWJkQ+wfIuVQzIFrmFZ7fSOc="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/armhf"
+     },
+     {
+      "path": "/usr/share/apk/keys/armhf/alpine-devel@lists.alpinelinux.org-524d27bb.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1U9QtsdN+rYZ9Zh76EfXy00JZHMg="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/armv7"
+     },
+     {
+      "path": "/usr/share/apk/keys/armv7/alpine-devel@lists.alpinelinux.org-524d27bb.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1U9QtsdN+rYZ9Zh76EfXy00JZHMg="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/mips64"
+     },
+     {
+      "path": "/usr/share/apk/keys/mips64/alpine-devel@lists.alpinelinux.org-5e69ca50.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1hCZdFx+LvzbLtPs753je78gEEBQ="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/ppc64le"
+     },
+     {
+      "path": "/usr/share/apk/keys/ppc64le/alpine-devel@lists.alpinelinux.org-58cbb476.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1t21dhCLbTJmAHXSCeOMq/2vfSgo="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/riscv64"
+     },
+     {
+      "path": "/usr/share/apk/keys/riscv64/alpine-devel@lists.alpinelinux.org-60ac2099.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1NVPbZavaXpsItFwQYDWbpor7yYE="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/s390x"
+     },
+     {
+      "path": "/usr/share/apk/keys/s390x/alpine-devel@lists.alpinelinux.org-58e4f17d.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1sjbV2r2w0Ih2vwdzC4Jq6UI7cMQ="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/x86"
+     },
+     {
+      "path": "/usr/share/apk/keys/x86/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1Ii51i7Nrc4uft14HhqugaUqdH64="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/x86/alpine-devel@lists.alpinelinux.org-5243ef4b.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1Y49eVxhpvftbQ3yAdvlLfcrPLTU="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/x86_64"
+     },
+     {
+      "path": "/usr/share/apk/keys/x86_64/alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1Ii51i7Nrc4uft14HhqugaUqdH64="
+      }
+     },
+     {
+      "path": "/usr/share/apk/keys/x86_64/alpine-devel@lists.alpinelinux.org-5261cecb.rsa.pub",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1AUFY+fwSBTcrYetjT7NHvafrSQc="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "b03a5cd0-e8e4-4a0c-b283-86b4942b4cfc",
+   "name": "apk-tools",
+   "version": "2.12.7-r0",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "GPL-2.0-only"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:apk-tools:apk-tools:2.12.7-r0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:apk-tools:apk_tools:2.12.7-r0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:apk_tools:apk-tools:2.12.7-r0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:apk_tools:apk_tools:2.12.7-r0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:apk:apk-tools:2.12.7-r0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:apk:apk_tools:2.12.7-r0:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/apk-tools@2.12.7-r0?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "apk-tools",
+    "originPackage": "apk-tools",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "2.12.7-r0",
+    "license": "GPL-2.0-only",
+    "architecture": "x86_64",
+    "url": "https://gitlab.alpinelinux.org/alpine/apk-tools",
+    "description": "Alpine Package Keeper - package manager for alpine",
+    "size": 119979,
+    "installedSize": 311296,
+    "pullDependencies": "musl>=1.2 so:libc.musl-x86_64.so.1 so:libcrypto.so.1.1 so:libssl.so.1.1 so:libz.so.1",
+    "pullChecksum": "Q1VnSoy5XasRtvFODOZ9P0pZG4Hxs=",
+    "gitCommitOfApkPort": "03c6b1b0ec20f417cee0f3c1d56795b27871b1c5",
+    "files": [
+     {
+      "path": "/etc"
+     },
+     {
+      "path": "/etc/apk"
+     },
+     {
+      "path": "/etc/apk/keys"
+     },
+     {
+      "path": "/etc/apk/protected_paths.d"
+     },
+     {
+      "path": "/lib"
+     },
+     {
+      "path": "/lib/libapk.so.3.12.0",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1fg+B1BJHpxBSS5dRPU+3zeeuFI4="
+      }
+     },
+     {
+      "path": "/sbin"
+     },
+     {
+      "path": "/sbin/apk",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1LugZocafK9LifJwfELs3VqdEIxw="
+      }
+     },
+     {
+      "path": "/var"
+     },
+     {
+      "path": "/var/cache"
+     },
+     {
+      "path": "/var/cache/misc"
+     },
+     {
+      "path": "/var/lib"
+     },
+     {
+      "path": "/var/lib/apk"
+     }
+    ]
+   }
+  },
+  {
+   "id": "cb3f3296-98d8-4e88-bf0a-3bdc53f817fb",
+   "name": "busybox",
+   "version": "1.33.1-r3",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "GPL-2.0-only"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:busybox:busybox:1.33.1-r3:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/busybox@1.33.1-r3?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "busybox",
+    "originPackage": "busybox",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "1.33.1-r3",
+    "license": "GPL-2.0-only",
+    "architecture": "x86_64",
+    "url": "https://busybox.net/",
+    "description": "Size optimized toolbox of many common UNIX utilities",
+    "size": 499368,
+    "installedSize": 950272,
+    "pullDependencies": "so:libc.musl-x86_64.so.1",
+    "pullChecksum": "Q1rGvmeXEbASEg01DqEqMbxV0fts4=",
+    "gitCommitOfApkPort": "98710256acf90e670e79f32f1f0350b830979d24",
+    "files": [
+     {
+      "path": "/bin"
+     },
+     {
+      "path": "/bin/busybox",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q135CE+2ocG61L7La8CI3kfLURucU="
+      }
+     },
+     {
+      "path": "/bin/sh",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1pcfTfDNEbNKQc2s1tia7da05M8Q="
+      }
+     },
+     {
+      "path": "/etc"
+     },
+     {
+      "path": "/etc/securetty",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1mB95Hq2NUTZ599RDiSsj9w5FrOU="
+      }
+     },
+     {
+      "path": "/etc/udhcpd.conf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1UAiPZcDIW1ClRzobfggcCQ77V28="
+      }
+     },
+     {
+      "path": "/etc/logrotate.d"
+     },
+     {
+      "path": "/etc/logrotate.d/acpid",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1TylyCINVmnS+A/Tead4vZhE7Bks="
+      }
+     },
+     {
+      "path": "/etc/network"
+     },
+     {
+      "path": "/etc/network/if-down.d"
+     },
+     {
+      "path": "/etc/network/if-post-down.d"
+     },
+     {
+      "path": "/etc/network/if-post-up.d"
+     },
+     {
+      "path": "/etc/network/if-pre-down.d"
+     },
+     {
+      "path": "/etc/network/if-pre-up.d"
+     },
+     {
+      "path": "/etc/network/if-up.d"
+     },
+     {
+      "path": "/etc/network/if-up.d/dad",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "775",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1ORf+lPRKuYgdkBBcKoevR1t60Q4="
+      }
+     },
+     {
+      "path": "/sbin"
+     },
+     {
+      "path": "/tmp",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "1777"
+     },
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/sbin"
+     },
+     {
+      "path": "/usr/share"
+     },
+     {
+      "path": "/usr/share/udhcpc"
+     },
+     {
+      "path": "/usr/share/udhcpc/default.script",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1t9vir/ZrX3nbSIYT9BDLWZenkVQ="
+      }
+     },
+     {
+      "path": "/var"
+     },
+     {
+      "path": "/var/cache"
+     },
+     {
+      "path": "/var/cache/misc"
+     },
+     {
+      "path": "/var/lib"
+     },
+     {
+      "path": "/var/lib/udhcpd"
+     }
+    ]
+   }
+  },
+  {
+   "id": "bdac28cf-4448-43d1-bdb6-1b6e8df0a2d3",
+   "name": "ca-certificates-bundle",
+   "version": "20191127-r5",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "MPL-2.0",
+    "AND",
+    "MIT"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:ca-certificates-bundle:ca-certificates-bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca-certificates-bundle:ca_certificates_bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca_certificates_bundle:ca-certificates-bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca_certificates_bundle:ca_certificates_bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca-certificates:ca-certificates-bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca-certificates:ca_certificates_bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca_certificates:ca-certificates-bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca_certificates:ca_certificates_bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca:ca-certificates-bundle:20191127-r5:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ca:ca_certificates_bundle:20191127-r5:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/ca-certificates-bundle@20191127-r5?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "ca-certificates-bundle",
+    "originPackage": "ca-certificates",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "20191127-r5",
+    "license": "MPL-2.0 AND MIT",
+    "architecture": "x86_64",
+    "url": "https://www.mozilla.org/en-US/about/governance/policies/security-group/certs/",
+    "description": "Pre generated bundle of Mozilla certificates",
+    "size": 124473,
+    "installedSize": 233472,
+    "pullDependencies": "",
+    "pullChecksum": "Q1bQ4InxwFIUUNl11tjOwqrqAeAIA=",
+    "gitCommitOfApkPort": "51999ab9304ec11c68c4ea9e99350ac7570e7f21",
+    "files": [
+     {
+      "path": "/etc"
+     },
+     {
+      "path": "/etc/ssl"
+     },
+     {
+      "path": "/etc/ssl/cert.pem",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1Nj6gTBdkZpTFW/obJGdpfvK0StA="
+      }
+     },
+     {
+      "path": "/etc/ssl/certs"
+     },
+     {
+      "path": "/etc/ssl/certs/ca-certificates.crt",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1yxhc/Gjt/YEWliIZBXQz/RBrszU="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "ef75a96d-f7be-45fa-abf0-a66c2779cfee",
+   "name": "libc-utils",
+   "version": "0.7.2-r3",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "BSD-2-Clause",
+    "AND",
+    "BSD-3-Clause"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:libc-utils:libc-utils:0.7.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:libc-utils:libc_utils:0.7.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:libc_utils:libc-utils:0.7.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:libc_utils:libc_utils:0.7.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:libc:libc-utils:0.7.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:libc:libc_utils:0.7.2-r3:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "libc-utils",
+    "originPackage": "libc-dev",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "0.7.2-r3",
+    "license": "BSD-2-Clause AND BSD-3-Clause",
+    "architecture": "x86_64",
+    "url": "https://alpinelinux.org",
+    "description": "Meta package to pull in correct libc",
+    "size": 1228,
+    "installedSize": 4096,
+    "pullDependencies": "musl-utils",
+    "pullChecksum": "Q1UsLZaz0/Go44hd4Vw49UCt40Vp8=",
+    "gitCommitOfApkPort": "60424133be2e79bbfeff3d58147a22886f817ce2",
+    "files": []
+   }
+  },
+  {
+   "id": "bb1fd421-fb64-499b-bc59-fe67b8553c1d",
+   "name": "libcrypto1.1",
+   "version": "1.1.1l-r0",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "OpenSSL"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:libcrypto1.1:libcrypto1.1:1.1.1l-r0:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/libcrypto1.1@1.1.1l-r0?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "libcrypto1.1",
+    "originPackage": "openssl",
+    "maintainer": "Timo Teras <timo.teras@iki.fi>",
+    "version": "1.1.1l-r0",
+    "license": "OpenSSL",
+    "architecture": "x86_64",
+    "url": "https://www.openssl.org/",
+    "description": "Crypto library from openssl",
+    "size": 1211998,
+    "installedSize": 2768896,
+    "pullDependencies": "so:libc.musl-x86_64.so.1",
+    "pullChecksum": "Q1Sywj1TEYEdvX0+MuqC+ea+zXxR0=",
+    "gitCommitOfApkPort": "3ef1965150d5b1de4af88dc51cf407e11b20b848",
+    "files": [
+     {
+      "path": "/etc"
+     },
+     {
+      "path": "/etc/ssl"
+     },
+     {
+      "path": "/etc/ssl/ct_log_list.cnf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1olh8TpdAi2QnTl4FK3TjdUiSwTo="
+      }
+     },
+     {
+      "path": "/etc/ssl/ct_log_list.cnf.dist",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1olh8TpdAi2QnTl4FK3TjdUiSwTo="
+      }
+     },
+     {
+      "path": "/etc/ssl/openssl.cnf",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1wGuxVEOK9iGLj1i8D3BSBnT7MJA="
+      }
+     },
+     {
+      "path": "/etc/ssl/openssl.cnf.dist",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1wGuxVEOK9iGLj1i8D3BSBnT7MJA="
+      }
+     },
+     {
+      "path": "/etc/ssl/certs"
+     },
+     {
+      "path": "/etc/ssl/misc"
+     },
+     {
+      "path": "/etc/ssl/misc/CA.pl",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1IACevKhK93GYBHp96Ie26jgZ17s="
+      }
+     },
+     {
+      "path": "/etc/ssl/misc/tsget",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q13NVgfr7dQUuGYxur0tNalH6EIjU="
+      }
+     },
+     {
+      "path": "/etc/ssl/misc/tsget.pl",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1ufKVrFftKLv8K/vullp/2reEDdo="
+      }
+     },
+     {
+      "path": "/etc/ssl/private"
+     },
+     {
+      "path": "/lib"
+     },
+     {
+      "path": "/lib/libcrypto.so.1.1",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1p0rHZXV1yOM1jGs0zuNSpi951t8="
+      }
+     },
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/lib"
+     },
+     {
+      "path": "/usr/lib/libcrypto.so.1.1",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1T2si+c7ts7sgDxQYve4B3i1Dgo0="
+      }
+     },
+     {
+      "path": "/usr/lib/engines-1.1"
+     },
+     {
+      "path": "/usr/lib/engines-1.1/afalg.so",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q13GvceRRzjQ6bnB5laIGCkDOHTM0="
+      }
+     },
+     {
+      "path": "/usr/lib/engines-1.1/capi.so",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1h8YLf+3MhbqdHUhGNEabdH5MooA="
+      }
+     },
+     {
+      "path": "/usr/lib/engines-1.1/padlock.so",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1TzNLJ3/GEmO9XW9XuZ/Izoy7zPk="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "114e7b49-1001-4d72-9f2e-086e0aa5a8b7",
+   "name": "libretls",
+   "version": "3.3.3p1-r2",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "ISC",
+    "AND",
+    "(BSD-3-Clause",
+    "OR",
+    "MIT)"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:libretls:libretls:3.3.3p1-r2:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/libretls@3.3.3p1-r2?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "libretls",
+    "originPackage": "libretls",
+    "maintainer": "Ariadne Conill <ariadne@dereferenced.org>",
+    "version": "3.3.3p1-r2",
+    "license": "ISC AND (BSD-3-Clause OR MIT)",
+    "architecture": "x86_64",
+    "url": "https://git.causal.agency/libretls/",
+    "description": "port of libtls from libressl to openssl",
+    "size": 28872,
+    "installedSize": 86016,
+    "pullDependencies": "ca-certificates-bundle so:libc.musl-x86_64.so.1 so:libcrypto.so.1.1 so:libssl.so.1.1",
+    "pullChecksum": "Q1mKL75PNQ3352oQUtXLS8GfI+37M=",
+    "gitCommitOfApkPort": "161d02ee8c48f3c3cae1d2b4b5d008fa318da0e1",
+    "files": [
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/lib"
+     },
+     {
+      "path": "/usr/lib/libtls.so.2",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1nNEC9T/t6W+Ecm0DxqMUnRvcT6k="
+      }
+     },
+     {
+      "path": "/usr/lib/libtls.so.2.0.3",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1t1MtXTHs0kMZ9+GCPJLriysmtA8="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "ed01e864-9235-4b28-b69a-4c95a3c0457b",
+   "name": "libssl1.1",
+   "version": "1.1.1l-r0",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "OpenSSL"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:libssl1.1:libssl1.1:1.1.1l-r0:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/libssl1.1@1.1.1l-r0?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "libssl1.1",
+    "originPackage": "openssl",
+    "maintainer": "Timo Teras <timo.teras@iki.fi>",
+    "version": "1.1.1l-r0",
+    "license": "OpenSSL",
+    "architecture": "x86_64",
+    "url": "https://www.openssl.org/",
+    "description": "SSL shared libraries",
+    "size": 212918,
+    "installedSize": 540672,
+    "pullDependencies": "so:libc.musl-x86_64.so.1 so:libcrypto.so.1.1",
+    "pullChecksum": "Q1Fgsc0DiapwjaJHbihB9ZrLQhr7Q=",
+    "gitCommitOfApkPort": "3ef1965150d5b1de4af88dc51cf407e11b20b848",
+    "files": [
+     {
+      "path": "/lib"
+     },
+     {
+      "path": "/lib/libssl.so.1.1",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1qaeh6oI3hVHuFty7JD5ASOu8S8k="
+      }
+     },
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/lib"
+     },
+     {
+      "path": "/usr/lib/libssl.so.1.1",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q18j35pe3yp6HOgMih1wlGP1/mm2c="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "2df82ce2-fc7f-40ce-a39b-6bac545cbba8",
+   "name": "musl",
+   "version": "1.2.2-r3",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "MIT"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:musl:musl:1.2.2-r3:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/musl@1.2.2-r3?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "musl",
+    "originPackage": "musl",
+    "maintainer": "Timo Teräs <timo.teras@iki.fi>",
+    "version": "1.2.2-r3",
+    "license": "MIT",
+    "architecture": "x86_64",
+    "url": "https://musl.libc.org/",
+    "description": "the musl c library (libc) implementation",
+    "size": 382765,
+    "installedSize": 622592,
+    "pullDependencies": "",
+    "pullChecksum": "Q1n4yypJ4tpU5g+jxI7oHT0Bm4Xjo=",
+    "gitCommitOfApkPort": "1e9cba35059e3bb4635f12ee7e10dfe687df31ad",
+    "files": [
+     {
+      "path": "/lib"
+     },
+     {
+      "path": "/lib/ld-musl-x86_64.so.1",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1cZei2MQS2nixN1UwDj0FT9qWO4U="
+      }
+     },
+     {
+      "path": "/lib/libc.musl-x86_64.so.1",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q17yJ3JFNypA4mxhJJr0ou6CzsJVI="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "d8ed04e1-eccd-4441-b937-e960bfffe114",
+   "name": "musl-utils",
+   "version": "1.2.2-r3",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "MIT",
+    "BSD",
+    "GPL2+"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:musl-utils:musl-utils:1.2.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:musl-utils:musl_utils:1.2.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:musl_utils:musl-utils:1.2.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:musl_utils:musl_utils:1.2.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:musl:musl-utils:1.2.2-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:musl:musl_utils:1.2.2-r3:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/musl-utils@1.2.2-r3?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "musl-utils",
+    "originPackage": "musl",
+    "maintainer": "Timo Teräs <timo.teras@iki.fi>",
+    "version": "1.2.2-r3",
+    "license": "MIT BSD GPL2+",
+    "architecture": "x86_64",
+    "url": "https://musl.libc.org/",
+    "description": "the musl c library (libc) implementation",
+    "size": 36662,
+    "installedSize": 147456,
+    "pullDependencies": "scanelf so:libc.musl-x86_64.so.1",
+    "pullChecksum": "Q1WNvvoHVxRySUmjgvqQie71lLRd8=",
+    "gitCommitOfApkPort": "1e9cba35059e3bb4635f12ee7e10dfe687df31ad",
+    "files": [
+     {
+      "path": "/sbin"
+     },
+     {
+      "path": "/sbin/ldconfig",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1Kja2+POZKxEkUOZqwSjC6kmaED4="
+      }
+     },
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/bin"
+     },
+     {
+      "path": "/usr/bin/getconf",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1ENetcQcXKEGU2b0TD1S+WDuwAOE="
+      }
+     },
+     {
+      "path": "/usr/bin/getent",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1AtbzfYTO6GHhaimM7wXWuLGcECI="
+      }
+     },
+     {
+      "path": "/usr/bin/iconv",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1y+KPYlKOaOdDtMOapc2sTDsPKSU="
+      }
+     },
+     {
+      "path": "/usr/bin/ldd",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "96bf3afe-d927-4daa-91c5-7178e9462ac5",
+   "name": "scanelf",
+   "version": "1.3.2-r0",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "GPL-2.0-only"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:scanelf:scanelf:1.3.2-r0:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/scanelf@1.3.2-r0?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "scanelf",
+    "originPackage": "pax-utils",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "1.3.2-r0",
+    "license": "GPL-2.0-only",
+    "architecture": "x86_64",
+    "url": "https://wiki.gentoo.org/wiki/Hardened/PaX_Utilities",
+    "description": "Scan ELF binaries for stuff",
+    "size": 36511,
+    "installedSize": 94208,
+    "pullDependencies": "so:libc.musl-x86_64.so.1",
+    "pullChecksum": "Q1OWKo0fmUbClrhW0CPNjwA8AMLWo=",
+    "gitCommitOfApkPort": "4c7f72840f5052bc63af1796c3ad0021f97949f2",
+    "files": [
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/bin"
+     },
+     {
+      "path": "/usr/bin/scanelf",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1LhDyQrsweSqYTuRcjhG2d0pxhrE="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "562ec670-5625-4c25-b8a7-ebaacf04d06c",
+   "name": "ssl_client",
+   "version": "1.33.1-r3",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "GPL-2.0-only"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:ssl-client:ssl-client:1.33.1-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ssl-client:ssl_client:1.33.1-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ssl_client:ssl-client:1.33.1-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ssl_client:ssl_client:1.33.1-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ssl:ssl-client:1.33.1-r3:*:*:*:*:*:*:*",
+    "cpe:2.3:a:ssl:ssl_client:1.33.1-r3:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/ssl_client@1.33.1-r3?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "ssl_client",
+    "originPackage": "busybox",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "1.33.1-r3",
+    "license": "GPL-2.0-only",
+    "architecture": "x86_64",
+    "url": "https://busybox.net/",
+    "description": "EXternal ssl_client for busybox wget",
+    "size": 4381,
+    "installedSize": 28672,
+    "pullDependencies": "so:libc.musl-x86_64.so.1 so:libtls.so.2",
+    "pullChecksum": "Q1d7WkMOIKXIk3qxexUxSo60HOofY=",
+    "gitCommitOfApkPort": "98710256acf90e670e79f32f1f0350b830979d24",
+    "files": [
+     {
+      "path": "/usr"
+     },
+     {
+      "path": "/usr/bin"
+     },
+     {
+      "path": "/usr/bin/ssl_client",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1gPKQTCzC1isM7R89HFwb+A1XmM4="
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "52382e1a-320b-4e62-8103-39baa39d85b3",
+   "name": "zlib",
+   "version": "1.2.11-r3",
+   "type": "apk",
+   "foundBy": "apkdb-cataloger",
+   "locations": [
+    {
+     "path": "/lib/apk/db/installed",
+     "layerID": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68"
+    }
+   ],
+   "licenses": [
+    "Zlib"
+   ],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:zlib:zlib:1.2.11-r3:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:apk/alpine/zlib@1.2.11-r3?arch=x86_64",
+   "metadataType": "ApkMetadata",
+   "metadata": {
+    "package": "zlib",
+    "originPackage": "zlib",
+    "maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+    "version": "1.2.11-r3",
+    "license": "Zlib",
+    "architecture": "x86_64",
+    "url": "https://zlib.net/",
+    "description": "A compression/decompression Library",
+    "size": 51398,
+    "installedSize": 110592,
+    "pullDependencies": "so:libc.musl-x86_64.so.1",
+    "pullChecksum": "Q1Sc/5gG4ey/zvnyPPQ/Au7bXqc08=",
+    "gitCommitOfApkPort": "388a4fb3640f8ccbd18e105df3ad741dca4247e1",
+    "files": [
+     {
+      "path": "/lib"
+     },
+     {
+      "path": "/lib/libz.so.1",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "777",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q1a2H8hP24ryCAGf8fnc1Nha9IIHc="
+      }
+     },
+     {
+      "path": "/lib/libz.so.1.2.11",
+      "ownerUid": "0",
+      "ownerGid": "0",
+      "permissions": "755",
+      "digest": {
+       "algorithm": "sha1",
+       "value": "Q19Iml1N+v08tnk1ZtqGEVIEtIFJI="
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "artifactRelationships": [],
+ "source": {
+  "type": "image",
+  "target": {
+   "userInput": "alpine:latest",
+   "imageID": "sha256:14119a10abf4669e8cdbdff324a9f9605d99697215a0d21c360fe8dfa8471bab",
+   "manifestDigest": "sha256:69704ef328d05a9f806b6b8502915e6a0a4faa4d72018dc42343f511490daf8a",
+   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+   "tags": [],
+   "imageSize": 5590942,
+   "layers": [
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:e2eb06d8af8218cfec8210147357a68b7e13f7c485b991c288c2d01dc228bb68",
+     "size": 5590942
+    }
+   ],
+   "manifest": "ewogICAic2NoZW1hVmVyc2lvbiI6IDIsCiAgICJtZWRpYVR5cGUiOiAiYXBwbGljYXRpb24vdm5kLmRvY2tlci5kaXN0cmlidXRpb24ubWFuaWZlc3QudjIranNvbiIsCiAgICJjb25maWciOiB7CiAgICAgICJtZWRpYVR5cGUiOiAiYXBwbGljYXRpb24vdm5kLmRvY2tlci5jb250YWluZXIuaW1hZ2UudjEranNvbiIsCiAgICAgICJzaXplIjogMTQ3MSwKICAgICAgImRpZ2VzdCI6ICJzaGEyNTY6MTQxMTlhMTBhYmY0NjY5ZThjZGJkZmYzMjRhOWY5NjA1ZDk5Njk3MjE1YTBkMjFjMzYwZmU4ZGZhODQ3MWJhYiIKICAgfSwKICAgImxheWVycyI6IFsKICAgICAgewogICAgICAgICAibWVkaWFUeXBlIjogImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuaW1hZ2Uucm9vdGZzLmRpZmYudGFyLmd6aXAiLAogICAgICAgICAic2l6ZSI6IDI4MTQ0NDYsCiAgICAgICAgICJkaWdlc3QiOiAic2hhMjU2OmEwZDBhMGQ0NmY4YjUyNDczOTgyYTNjNDY2MzE4ZjQ3OTc2NzU3NzU1MWE1M2ZmYzkwNzRjOWZhNzAzNTk4MmUiCiAgICAgIH0KICAgXQp9",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJIb3N0bmFtZSI6IiIsIkRvbWFpbm5hbWUiOiIiLCJVc2VyIjoiIiwiQXR0YWNoU3RkaW4iOmZhbHNlLCJBdHRhY2hTdGRvdXQiOmZhbHNlLCJBdHRhY2hTdGRlcnIiOmZhbHNlLCJUdHkiOmZhbHNlLCJPcGVuU3RkaW4iOmZhbHNlLCJTdGRpbk9uY2UiOmZhbHNlLCJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiQ21kIjpbIi9iaW4vc2giXSwiSW1hZ2UiOiJzaGEyNTY6ZDNlMGI2MjU4ZWMyZjcyNWMxOTY2OGYxMWFlNTMyM2MzYjAyNDVlMTk3ZWM0Nzg0MjRlYzZhODc5MzU2OTBlYiIsIlZvbHVtZXMiOm51bGwsIldvcmtpbmdEaXIiOiIiLCJFbnRyeXBvaW50IjpudWxsLCJPbkJ1aWxkIjpudWxsLCJMYWJlbHMiOm51bGx9LCJjb250YWluZXIiOiIzMzAyODljNjQ5ZGI4NmY1ZmIxYWU1YmZlZjE4NTAxMDEyYjU1MGFkYjA2MzhiOTE5M2Q0YTNhNGI2NWEyZjliIiwiY29udGFpbmVyX2NvbmZpZyI6eyJIb3N0bmFtZSI6IjMzMDI4OWM2NDlkYiIsIkRvbWFpbm5hbWUiOiIiLCJVc2VyIjoiIiwiQXR0YWNoU3RkaW4iOmZhbHNlLCJBdHRhY2hTdGRvdXQiOmZhbHNlLCJBdHRhY2hTdGRlcnIiOmZhbHNlLCJUdHkiOmZhbHNlLCJPcGVuU3RkaW4iOmZhbHNlLCJTdGRpbk9uY2UiOmZhbHNlLCJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiQ21kIjpbIi9iaW4vc2giLCItYyIsIiMobm9wKSAiLCJDTUQgW1wiL2Jpbi9zaFwiXSJdLCJJbWFnZSI6InNoYTI1NjpkM2UwYjYyNThlYzJmNzI1YzE5NjY4ZjExYWU1MzIzYzNiMDI0NWUxOTdlYzQ3ODQyNGVjNmE4NzkzNTY5MGViIiwiVm9sdW1lcyI6bnVsbCwiV29ya2luZ0RpciI6IiIsIkVudHJ5cG9pbnQiOm51bGwsIk9uQnVpbGQiOm51bGwsIkxhYmVscyI6e319LCJjcmVhdGVkIjoiMjAyMS0wOC0yN1QxNzoxOTo0NS43NTg2MTE1MjNaIiwiZG9ja2VyX3ZlcnNpb24iOiIyMC4xMC43IiwiaGlzdG9yeSI6W3siY3JlYXRlZCI6IjIwMjEtMDgtMjdUMTc6MTk6NDUuNTUzMDkyMzYzWiIsImNyZWF0ZWRfYnkiOiIvYmluL3NoIC1jICMobm9wKSBBREQgZmlsZTphYWQ0MjkwZDI3NTgwY2MxYTA5NGZmYWY5OGMzY2EyZmM1ZDY5OWZlNjk1ZGZiOGU2ZTlmYWMyMGYxMTI5NDUwIGluIC8gIn0seyJjcmVhdGVkIjoiMjAyMS0wOC0yN1QxNzoxOTo0NS43NTg2MTE1MjNaIiwiY3JlYXRlZF9ieSI6Ii9iaW4vc2ggLWMgIyhub3ApICBDTUQgW1wiL2Jpbi9zaFwiXSIsImVtcHR5X2xheWVyIjp0cnVlfV0sIm9zIjoibGludXgiLCJyb290ZnMiOnsidHlwZSI6ImxheWVycyIsImRpZmZfaWRzIjpbInNoYTI1NjplMmViMDZkOGFmODIxOGNmZWM4MjEwMTQ3MzU3YTY4YjdlMTNmN2M0ODViOTkxYzI4OGMyZDAxZGMyMjhiYjY4Il19fQ==",
+   "repoDigests": [
+    "index.docker.io/library/alpine@sha256:e1c082e3d3c45cccac829840a25941e679c25d438cc8412c2fa221cf1a824e6a"
+   ]
+  }
+ },
+ "distro": {
+  "name": "alpine",
+  "version": "3.14.2",
+  "idLike": ""
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "[not provided]"
+ },
+ "schema": {
+  "version": "1.1.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.1.0.json"
+ }
+}

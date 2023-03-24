@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gookit/color"
+	"github.com/wagoodman/go-partybus"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
@@ -12,22 +15,21 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/formats/syftjson"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/gookit/color"
-	"github.com/wagoodman/go-partybus"
 )
 
-func Run(ctx context.Context, app *config.Application, args []string) error {
+func Run(_ context.Context, app *config.Application, args []string) error {
+	f := syftjson.Format()
 	writer, err := sbom.NewWriter(sbom.WriterOption{
-		Format: syftjson.Format(),
+		Format: f,
 		Path:   app.File,
 	})
 	if err != nil {
@@ -45,7 +47,7 @@ func Run(ctx context.Context, app *config.Application, args []string) error {
 	}()
 
 	userInput := args[0]
-	si, err := source.ParseInput(userInput, app.Platform, true)
+	si, err := source.ParseInputWithName(userInput, app.Platform, true, app.Name)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}

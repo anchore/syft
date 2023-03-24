@@ -1,14 +1,14 @@
 package cpp
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewConanfileCataloger returns a new C++ Conanfile cataloger object.
-func NewConanfileCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/conanfile.txt": parseConanfile,
-	}
+const catalogerName = "conan-cataloger"
 
-	return common.NewGenericCataloger(nil, globParsers, "conan-cataloger")
+// NewConanCataloger returns a new C++ conanfile.txt and conan.lock cataloger object.
+func NewConanCataloger() *generic.Cataloger {
+	return generic.NewCataloger(catalogerName).
+		WithParserByGlobs(parseConanfile, "**/conanfile.txt").
+		WithParserByGlobs(parseConanlock, "**/conan.lock")
 }

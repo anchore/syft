@@ -2,17 +2,13 @@ package java
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/anchore/syft/internal/file"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
-
-// integrity check
-var _ common.ParserFn = parseZipWrappedJavaArchive
 
 var genericZipGlobs = []string{
 	"**/*.zip",
@@ -21,8 +17,8 @@ var genericZipGlobs = []string{
 // TODO: when the generic archive cataloger is implemented, this should be removed (https://github.com/anchore/syft/issues/246)
 
 // parseZipWrappedJavaArchive is a parser function for java archive contents contained within arbitrary zip files.
-func parseZipWrappedJavaArchive(virtualPath string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(virtualPath, reader)
+func parseZipWrappedJavaArchive(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.AccessPath(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -39,5 +35,5 @@ func parseZipWrappedJavaArchive(virtualPath string, reader io.Reader) ([]*pkg.Pa
 	}
 
 	// look for java archives within the zip archive
-	return discoverPkgsFromZip(virtualPath, archivePath, contentPath, fileManifest, nil)
+	return discoverPkgsFromZip(reader.Location, archivePath, contentPath, fileManifest, nil)
 }

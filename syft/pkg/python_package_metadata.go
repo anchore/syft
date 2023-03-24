@@ -1,19 +1,12 @@
 package pkg
 
 import (
-	"fmt"
 	"sort"
 
-	"github.com/anchore/syft/syft/linux"
-
-	"github.com/anchore/packageurl-go"
 	"github.com/scylladb/go-set/strset"
 )
 
-var (
-	_ FileOwner     = (*PythonPackageMetadata)(nil)
-	_ urlIdentifier = (*PythonPackageMetadata)(nil)
-)
+var _ FileOwner = (*PythonPackageMetadata)(nil)
 
 // PythonFileDigest represents the file metadata for a single file attributed to a python package.
 type PythonFileDigest struct {
@@ -79,34 +72,4 @@ func (m PythonPackageMetadata) OwnedFiles() (result []string) {
 	result = s.List()
 	sort.Strings(result)
 	return result
-}
-
-func (m PythonPackageMetadata) PackageURL(_ *linux.Release) string {
-	// generate a purl from the package data
-	pURL := packageurl.NewPackageURL(
-		packageurl.TypePyPi,
-		"",
-		m.Name,
-		m.Version,
-		m.purlQualifiers(),
-		"")
-
-	return pURL.ToString()
-}
-
-func (m PythonPackageMetadata) purlQualifiers() packageurl.Qualifiers {
-	q := packageurl.Qualifiers{}
-	if m.DirectURLOrigin != nil {
-		q = append(q, m.DirectURLOrigin.vcsURLQualifier()...)
-	}
-	return q
-}
-
-func (p PythonDirectURLOriginInfo) vcsURLQualifier() packageurl.Qualifiers {
-	if p.VCS != "" {
-		// Taken from https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst#known-qualifiers-keyvalue-pairs
-		// packageurl-go still doesn't support all qualifier names
-		return packageurl.Qualifiers{{Key: PURLQualifierVCSURL, Value: fmt.Sprintf("%s+%s@%s", p.VCS, p.URL, p.CommitID)}}
-	}
-	return nil
 }

@@ -10,12 +10,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 	"github.com/mitchellh/mapstructure"
 	"github.com/vbatts/go-mtree"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
+
+var _ generic.Parser = parseAlpmDB
 
 var (
 	ignoredFiles = map[string]bool{
@@ -26,16 +31,56 @@ var (
 	}
 )
 
-func newAlpmDBPackage(d *pkg.AlpmMetadata) *pkg.Package {
-	return &pkg.Package{
-		Name:         d.Package,
-		Version:      d.Version,
-		FoundBy:      catalogerName,
-		Type:         "alpm",
-		Licenses:     strings.Split(d.License, " "),
-		MetadataType: pkg.AlpmMetadataType,
-		Metadata:     *d,
+func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	metadata, err := parseAlpmDBEntry(reader)
+	if err != nil {
+		return nil, nil, err
 	}
+
+	base := filepath.Dir(reader.RealPath)
+	r, err := getFileReader(filepath.Join(base, "mtree"), resolver)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pkgFiles, err := parseMtree(r)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// The replace the files found the the pacman database with the files from the mtree These contain more metadata and
+	// thus more useful.
+	metadata.Files = pkgFiles
+
+	// We only really do this to get any backup database entries from the files database
+	files := filepath.Join(base, "files")
+	_, err = getFileReader(files, resolver)
+	if err != nil {
+		return nil, nil, err
+	}
+	filesMetadata, err := parseAlpmDBEntry(reader)
+	if err != nil {
+		return nil, nil, err
+	} else if filesMetadata != nil {
+		metadata.Backup = filesMetadata.Backup
+	}
+
+	if metadata.Package == "" {
+		return nil, nil, nil
+	}
+
+	return []pkg.Package{
+		newPackage(*metadata, env.LinuxRelease, reader.Location),
+	}, nil, nil
+}
+
+func parseAlpmDBEntry(reader io.Reader) (*pkg.AlpmMetadata, error) {
+	scanner := newScanner(reader)
+	metadata, err := parseDatabase(scanner)
+	if err != nil {
+		return nil, err
+	}
+	return metadata, nil
 }
 
 func newScanner(reader io.Reader) *bufio.Scanner {
@@ -67,6 +112,10 @@ func getFileReader(path string, resolver source.FileResolver) (io.Reader, error)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(locs) == 0 {
+		return nil, fmt.Errorf("could not find file: %s", path)
+	}
 	// TODO: Should we maybe check if we found the file
 	dbContentReader, err := resolver.FileContentsByLocation(locs[0])
 	if err != nil {
@@ -75,7 +124,6 @@ func getFileReader(path string, resolver source.FileResolver) (io.Reader, error)
 	return dbContentReader, nil
 }
 
-// nolint:funlen
 func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 	var entry pkg.AlpmMetadata
 	var err error
@@ -179,7 +227,7 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 				})
 			case "md5digest":
 				entry.Digests = append(entry.Digests, file.Digest{
-					Algorithm: "md5digest",
+					Algorithm: "md5",
 					Value:     kv.Value(),
 				})
 			default:
@@ -192,54 +240,4 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 		entries = append(entries, entry)
 	}
 	return entries, nil
-}
-
-func parseAlpmDBEntry(reader io.Reader) (*pkg.AlpmMetadata, error) {
-	scanner := newScanner(reader)
-	metadata, err := parseDatabase(scanner)
-	if err != nil {
-		return nil, err
-	}
-	if metadata == nil {
-		return nil, nil
-	}
-	return metadata, nil
-}
-
-func parseAlpmDB(resolver source.FileResolver, desc string, reader io.Reader) ([]pkg.Package, error) {
-	metadata, err := parseAlpmDBEntry(reader)
-	if err != nil {
-		return nil, err
-	}
-
-	base := filepath.Dir(desc)
-	mtree := filepath.Join(base, "mtree")
-	r, err := getFileReader(mtree, resolver)
-	if err != nil {
-		return nil, err
-	}
-	pkgFiles, err := parseMtree(r)
-	if err != nil {
-		return nil, err
-	}
-	// The replace the files found the the pacman database with the files from the mtree These contain more metadata and
-	// thus more useful.
-	metadata.Files = pkgFiles
-
-	// We only really do this to get any backup database entries from the files database
-	files := filepath.Join(base, "files")
-	_, err = getFileReader(files, resolver)
-	if err != nil {
-		return nil, err
-	}
-	filesMetadata, err := parseAlpmDBEntry(reader)
-	if err != nil {
-		return nil, err
-	} else if filesMetadata != nil {
-		metadata.Backup = filesMetadata.Backup
-	}
-
-	p := *newAlpmDBPackage(metadata)
-	p.SetID()
-	return []pkg.Package{p}, nil
 }

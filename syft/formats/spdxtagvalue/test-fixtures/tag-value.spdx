@@ -1,0 +1,105 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentNamespace: https://anchore.com/syft/image
+LicenseListVersion: 3.18
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-
+Created: 2022-11-18T16:48:55Z
+
+##### Package: busybox
+
+PackageName: busybox
+SPDXID: SPDXRef-Package-apk-busybox-9d15fb154d2c566a
+PackageVersion: 1.31.1-r19
+PackageOriginator: Person: Natanael Copa <ncopa@alpinelinux.org>
+PackageDownloadLocation: https://busybox.net/
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from APK DB: /lib/apk/db/installed
+PackageLicenseConcluded: GPL-2.0-only
+PackageLicenseDeclared: GPL-2.0-only
+PackageCopyrightText: NOASSERTION
+PackageDescription: Size optimized toolbox of many common UNIX utilities
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:busybox:busybox:1.31.1-r19:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:apk/alpine/busybox@1.31.1-r19?arch=x86_64&upstream=busybox&distro=alpine-3.12.5
+
+##### Package: my-app
+
+PackageName: my-app
+SPDXID: SPDXRef-Package-java-archive-my-app-4e39fdbdf089a141
+PackageVersion: 1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: true
+PackageChecksum: SHA1: 11d42fc32de6a699c5705f6e58d2e387c5e9c8b5
+PackageSourceInfo: acquired package info from installed java archive: /sandbox/target/my-app-1.jar
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:mycompany:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:mycompany:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my-app:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my-app:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my_app:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my_app:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:mycompany:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:app:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:app:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my-app:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my_app:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:app:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my:app:1:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:maven/com.mycompany.app/my-app@1
+
+##### Package: my-app
+
+PackageName: my-app
+SPDXID: SPDXRef-Package-java-archive-my-app-ad62c29113227c17
+PackageVersion: 1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from installed java archive: /sandbox/target/original-my-app-1.jar
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:mycompany:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:mycompany:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my-app:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my-app:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my_app:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my_app:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:mycompany:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:app:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:app:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my-app:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my_app:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my:my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my:my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:app:app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:my:app:1:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:maven/com.mycompany.app/my-app@1
+
+##### Package: original-my-app
+
+PackageName: original-my-app
+SPDXID: SPDXRef-Package-java-archive-original-my-app-57464fff85325201
+PackageVersion: 1
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: true
+PackageChecksum: SHA1: 11d42fc32de6a699c5705f6e58d2e387c5e9c8b5
+PackageSourceInfo: acquired package info from installed java archive: /sandbox/target/original-my-app-1.jar
+PackageLicenseConcluded: NONE
+PackageLicenseDeclared: NONE
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original-my-app:original-my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original-my-app:original_my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original_my_app:original-my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original_my_app:original_my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original-my:original-my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original-my:original_my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original_my:original-my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original_my:original_my_app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original:original-my-app:1:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:original:original_my_app:1:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:maven/original-my-app/original-my-app@1

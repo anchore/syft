@@ -104,3 +104,37 @@ func TestTruncateMiddleEllipsis(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitAny(t *testing.T) {
+
+	tests := []struct {
+		name   string
+		input  string
+		fields string
+		want   []string
+	}{
+		{
+			name:   "simple",
+			input:  "a,b,c",
+			fields: ",",
+			want:   []string{"a", "b", "c"},
+		},
+		{
+			name:   "empty",
+			input:  "",
+			fields: ",",
+			want:   []string{},
+		},
+		{
+			name:   "multiple separators",
+			input:  "a,b\nc:d",
+			fields: ",:\n",
+			want:   []string{"a", "b", "c", "d"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, SplitAny(tt.input, tt.fields))
+		})
+	}
+}

@@ -4,24 +4,19 @@ Package javascript provides a concrete Cataloger implementation for JavaScript e
 package javascript
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewJavascriptPackageCataloger returns a new JavaScript cataloger object based on detection of npm based packages.
-func NewJavascriptPackageCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/package.json": parsePackageJSON,
-	}
-
-	return common.NewGenericCataloger(nil, globParsers, "javascript-package-cataloger")
+// NewPackageCataloger returns a new JavaScript cataloger object based on detection of npm based packages.
+func NewPackageCataloger() *generic.Cataloger {
+	return generic.NewCataloger("javascript-package-cataloger").
+		WithParserByGlobs(parsePackageJSON, "**/package.json")
 }
 
-// NewJavascriptLockCataloger returns a new Javascript cataloger object base on package lock files.
-func NewJavascriptLockCataloger() *common.GenericCataloger {
-	globParsers := map[string]common.ParserFn{
-		"**/package-lock.json": parsePackageLock,
-		"**/yarn.lock":         parseYarnLock,
-	}
-
-	return common.NewGenericCataloger(nil, globParsers, "javascript-lock-cataloger")
+// NewLockCataloger returns a new JavaScript cataloger object based on detection of lock files.
+func NewLockCataloger() *generic.Cataloger {
+	return generic.NewCataloger("javascript-lock-cataloger").
+		WithParserByGlobs(parsePackageLock, "**/package-lock.json").
+		WithParserByGlobs(parseYarnLock, "**/yarn.lock").
+		WithParserByGlobs(parsePnpmLock, "**/pnpm-lock.yaml")
 }

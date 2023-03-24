@@ -3,9 +3,9 @@ package config
 import (
 	"os"
 
-	"github.com/anchore/stereoscope/pkg/image"
-
 	"github.com/spf13/viper"
+
+	"github.com/anchore/stereoscope/pkg/image"
 )
 
 type RegistryCredentials struct {
@@ -30,7 +30,7 @@ func (cfg registry) loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("registry.auth", []RegistryCredentials{})
 }
 
-// nolint:unparam
+//nolint:unparam
 func (cfg *registry) parseConfigValues() error {
 	// there may be additional credentials provided by env var that should be appended to the set of credentials
 	authority, username, password, token :=

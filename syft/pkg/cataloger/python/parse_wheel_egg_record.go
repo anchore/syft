@@ -1,9 +1,12 @@
 package python
 
 import (
+	"bufio"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -12,21 +15,23 @@ import (
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
+func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 	var records []pkg.PythonFileRecord
 	r := csv.NewReader(reader)
 
 	for {
 		recordList, err := r.Read()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("unable to read python record file: %w", err)
+			log.Warnf("unable to read python record file: %w", err)
+			continue
 		}
 
 		if len(recordList) != 3 {
-			return nil, fmt.Errorf("python record an unexpected length=%d: %q", len(recordList), recordList)
+			log.Warnf("python record an unexpected length=%d: %q", len(recordList), recordList)
+			continue
 		}
 
 		var record pkg.PythonFileRecord
@@ -57,5 +62,36 @@ func parseWheelOrEggRecord(reader io.Reader) ([]pkg.PythonFileRecord, error) {
 		records = append(records, record)
 	}
 
-	return records, nil
+	return records
+}
+
+func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string) ([]pkg.PythonFileRecord, error) {
+	var installedFiles []pkg.PythonFileRecord
+	r := bufio.NewReader(reader)
+
+	for {
+		line, err := r.ReadString('\n')
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("unable to read python installed-files file: %w", err)
+		}
+
+		if location != "" && sitePackagesRootPath != "" {
+			joinedPath := filepath.Join(filepath.Dir(location), line)
+			line, err = filepath.Rel(sitePackagesRootPath, joinedPath)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		installedFile := pkg.PythonFileRecord{
+			Path: strings.ReplaceAll(line, "\n", ""),
+		}
+
+		installedFiles = append(installedFiles, installedFile)
+	}
+
+	return installedFiles, nil
 }

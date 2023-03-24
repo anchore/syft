@@ -11,8 +11,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/scylladb/go-set/strset"
 )
 
 // This program generates license_list.go.
@@ -35,19 +33,7 @@ var licenseIDs = map[string]string{
 }
 `))
 
-var versionMatch = regexp.MustCompile(`-([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
-
-type LicenseList struct {
-	Version  string `json:"licenseListVersion"`
-	Licenses []struct {
-		ID          string   `json:"licenseId"`
-		Name        string   `json:"name"`
-		Text        string   `json:"licenseText"`
-		Deprecated  bool     `json:"isDeprecatedLicenseId"`
-		OSIApproved bool     `json:"isOsiApproved"`
-		SeeAlso     []string `json:"seeAlso"`
-	} `json:"licenses"`
-}
+var versionMatch = regexp.MustCompile(`([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
 
 func main() {
 	if err := run(); err != nil {
@@ -59,12 +45,11 @@ func main() {
 func run() error {
 	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("unable to get licenses list: %+v", err)
+		return fmt.Errorf("unable to get licenses list: %w", err)
 	}
-
 	var result LicenseList
 	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return fmt.Errorf("unable to decode license list: %+v", err)
+		return fmt.Errorf("unable to decode license list: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -74,7 +59,7 @@ func run() error {
 
 	f, err := os.Create(source)
 	if err != nil {
-		return fmt.Errorf("unable to create %q: %+v", source, err)
+		return fmt.Errorf("unable to create %q: %w", source, err)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -97,13 +82,14 @@ func run() error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("unable to generate template: %+v", err)
+		return fmt.Errorf("unable to generate template: %w", err)
 	}
 	return nil
 }
 
-// Parsing the provided SPDX license list necessitates a two pass approach.
-// The first pass is only related to what SPDX considers the truth. These K:V pairs will never be overwritten.
+// Parsing the provided SPDX license list necessitates a three pass approach.
+// The first pass is only related to what SPDX considers the truth. We use license info to
+// find replacements for deprecated licenses.
 // The second pass attempts to generate known short/long version listings for each key.
 // For info on some short name conventions see this document:
 // https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-short-name.
@@ -111,80 +97,62 @@ func run() error {
 // The new keys are then also associated with their relative SPDX value. If a key has already been entered
 // we know to ignore it since it came from the first pass which is considered the SPDX source of truth.
 // We also sort the licenses for the second pass so that cases like `GPL-1` associate to `GPL-1.0` and not `GPL-1.1`.
+// The third pass is for overwriting deprecated licenses with replacements, for example GPL-2.0+ is deprecated
+// and now maps to GPL-2.0-or-later.
 func processSPDXLicense(result LicenseList) map[string]string {
-	// first pass build map
-	var licenseIDs = make(map[string]string)
-	for _, l := range result.Licenses {
-		cleanID := strings.ToLower(l.ID)
-		if _, exists := licenseIDs[cleanID]; exists {
-			log.Fatalf("duplicate license ID found: %q", cleanID)
-		}
-		licenseIDs[cleanID] = l.ID
-	}
-
+	// The order of variations/permutations of a license ID matter.
+	// The permutation code can generate the same value for two difference licenses,
+	// for example: The licenses `ABC-1.0` and `ABC-1.1` can both map to `ABC1`,
+	// we need to guarantee the order they are created to avoid mapping them incorrectly.
+	// To do this we use a sorted list.
 	sort.Slice(result.Licenses, func(i, j int) bool {
 		return result.Licenses[i].ID < result.Licenses[j].ID
 	})
 
-	// second pass build exceptions
-	// do not overwrite if already exists
+	// keys are simplified by removing dashes and lowercasing ID
+	// this is so license declarations in the wild like: LGPL3 LGPL-3 lgpl3 and lgpl-3 can all match
+	licenseIDs := make(map[string]string)
 	for _, l := range result.Licenses {
-		var multipleID []string
-		cleanID := strings.ToLower(l.ID)
-		multipleID = append(multipleID, buildLicensePermutations(cleanID)...)
-		for _, id := range multipleID {
-			if _, exists := licenseIDs[id]; !exists {
-				licenseIDs[id] = l.ID
+		// licensePerms includes the cleanID in return slice
+		cleanID := cleanLicenseID(l.ID)
+		licensePerms := buildLicenseIDPermutations(cleanID)
+
+		// if license is deprecated, find its replacement and add to licenseIDs
+		if l.Deprecated {
+			idToMap := l.ID
+			replacement := result.findReplacementLicense(l)
+			if replacement != nil {
+				idToMap = replacement.ID
 			}
+			// it's important to use the original licensePerms here so that the deprecated license
+			// can now point to the new correct license
+			for _, id := range licensePerms {
+				if _, exists := licenseIDs[id]; exists {
+					// can be used to debug duplicate license permutations and confirm that examples like GPL1
+					// do not point to GPL-1.1
+					// log.Println("duplicate license list permutation found when mapping deprecated license to replacement")
+					// log.Printf("already have key: %q for SPDX ID: %q; attempted to map replacement ID: %q for deprecated ID: %q\n", id, value, replacement.ID, l.ID)
+					continue
+				}
+				licenseIDs[id] = idToMap
+			}
+		}
+
+		// if license is not deprecated, add all permutations to licenseIDs
+		for _, id := range licensePerms {
+			if _, exists := licenseIDs[id]; exists {
+				// log.Println("found duplicate license permutation key for non deprecated license")
+				// log.Printf("already have key: %q for SPDX ID: %q; tried to insert as SPDX ID:%q\n", id, value, l.ID)
+				continue
+			}
+			licenseIDs[id] = l.ID
 		}
 	}
 
 	return licenseIDs
 }
 
-func buildLicensePermutations(license string) (perms []string) {
-	lv := findLicenseVersion(license)
-	vp := versionPermutations(lv)
-
-	version := strings.Join(lv, ".")
-	for _, p := range vp {
-		perms = append(perms, strings.Replace(license, version, p, 1))
-	}
-
-	return perms
-}
-
-func findLicenseVersion(license string) (version []string) {
-	versionList := versionMatch.FindAllStringSubmatch(license, -1)
-
-	if len(versionList) == 0 {
-		return version
-	}
-
-	for i, v := range versionList[0] {
-		if v != "" && i != 0 {
-			version = append(version, v)
-		}
-	}
-
-	return version
-}
-
-func versionPermutations(version []string) []string {
-	ver := append([]string(nil), version...)
-	perms := strset.New()
-	for i := 1; i <= 3; i++ {
-		if len(ver) < i+1 {
-			ver = append(ver, "0")
-		}
-
-		perm := strings.Join(ver[:i], ".")
-		badCount := strings.Count(perm, "0") + strings.Count(perm, ".")
-
-		if badCount != len(perm) {
-			perms.Add(perm)
-		}
-	}
-
-	return perms.List()
+func cleanLicenseID(id string) string {
+	cleanID := strings.ToLower(id)
+	return strings.ReplaceAll(cleanID, "-", "")
 }

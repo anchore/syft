@@ -1,18 +1,24 @@
 package php
 
 import (
-	"os"
 	"testing"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/go-test/deep"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseComposerFileLock(t *testing.T) {
-	expected := []*pkg.Package{
+	var expectedRelationships []artifact.Relationship
+	fixture := "test-fixtures/composer.lock"
+	locations := source.NewLocationSet(source.NewLocation(fixture))
+	expectedPkgs := []pkg.Package{
 		{
 			Name:         "adoy/fastcgi-client",
 			Version:      "1.0.2",
+			PURL:         "pkg:composer/adoy/fastcgi-client@1.0.2",
+			Locations:    locations,
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
@@ -51,6 +57,8 @@ func TestParseComposerFileLock(t *testing.T) {
 		{
 			Name:         "alcaeus/mongo-php-adapter",
 			Version:      "1.1.11",
+			Locations:    locations,
+			PURL:         "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
@@ -105,18 +113,5 @@ func TestParseComposerFileLock(t *testing.T) {
 			},
 		},
 	}
-	fixture, err := os.Open("test-fixtures/composer.lock")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
-
-	// TODO: no relationships are under test yet
-	actual, _, err := parseComposerLock(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse requirements: %+v", err)
-	}
-
-	for _, d := range deep.Equal(expected, actual) {
-		t.Errorf("diff: %+v", d)
-	}
+	pkgtest.TestFileParser(t, fixture, parseComposerLock, expectedPkgs, expectedRelationships)
 }

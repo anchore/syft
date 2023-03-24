@@ -8,29 +8,33 @@ package source
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/bmatcuk/doublestar/v4"
+	"github.com/mholt/archiver/v3"
+	digest "github.com/opencontainers/go-digest"
+	"github.com/spf13/afero"
+
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
-	"github.com/bmatcuk/doublestar/v4"
-	"github.com/mholt/archiver/v3"
-	"github.com/spf13/afero"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
 // in cataloging (based on the data source and configuration)
 type Source struct {
-	Image             *image.Image // the image object to be cataloged (image only)
+	id                artifact.ID  `hash:"ignore"`
+	Image             *image.Image `hash:"ignore"` // the image object to be cataloged (image only)
 	Metadata          Metadata
-	directoryResolver *directoryResolver
+	directoryResolver *directoryResolver `hash:"ignore"`
 	path              string
+	base              string
 	mutex             *sync.Mutex
-	Exclusions        []string
+	Exclusions        []string `hash:"ignore"`
 }
 
 // Input is an object that captures the detected user input regarding source location, scheme, and provider type.
@@ -41,12 +45,19 @@ type Input struct {
 	ImageSource                     image.Source
 	Location                        string
 	Platform                        string
+	Name                            string
 	autoDetectAvailableImageSources bool
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry.
 func ParseInput(userInput string, platform string, detectAvailableImageSources bool) (*Input, error) {
+	return ParseInputWithName(userInput, platform, detectAvailableImageSources, "")
+}
+
+// ParseInputWithName generates a source Input that can be used as an argument to generate a new source
+// from specific providers including a registry, with an explicit name.
+func ParseInputWithName(userInput string, platform string, detectAvailableImageSources bool, name string) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -83,6 +94,7 @@ func ParseInput(userInput string, platform string, detectAvailableImageSources b
 		ImageSource:                     source,
 		Location:                        location,
 		Platform:                        platform,
+		Name:                            name,
 		autoDetectAvailableImageSources: detectAvailableImageSources,
 	}, nil
 }
@@ -106,9 +118,9 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 
 	switch in.Scheme {
 	case FileScheme:
-		source, cleanupFn, err = generateFileSource(fs, in.Location)
+		source, cleanupFn, err = generateFileSource(fs, in)
 	case DirectoryScheme:
-		source, cleanupFn, err = generateDirectorySource(fs, in.Location)
+		source, cleanupFn, err = generateDirectorySource(fs, in)
 	case ImageScheme:
 		source, cleanupFn, err = generateImageSource(in, registryOptions)
 	default:
@@ -128,7 +140,7 @@ func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Sou
 		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
 
-	s, err := NewFromImage(img, in.Location)
+	s, err := NewFromImageWithName(img, in.Location, in.Name)
 	if err != nil {
 		return nil, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 	}
@@ -203,63 +215,102 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 	return img, cleanup, err
 }
 
-func generateDirectorySource(fs afero.Fs, location string) (*Source, func(), error) {
-	fileMeta, err := fs.Stat(location)
+func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
+	fileMeta, err := fs.Stat(in.Location)
 	if err != nil {
-		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", in.Location, err)
 	}
 
 	if !fileMeta.IsDir() {
-		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, err := NewFromDirectory(location)
+	s, err := NewFromDirectoryWithName(in.Location, in.Name)
 	if err != nil {
-		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", in.Location, err)
 	}
 
 	return &s, func() {}, nil
 }
 
-func generateFileSource(fs afero.Fs, location string) (*Source, func(), error) {
-	fileMeta, err := fs.Stat(location)
+func generateFileSource(fs afero.Fs, in Input) (*Source, func(), error) {
+	fileMeta, err := fs.Stat(in.Location)
 	if err != nil {
-		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", location, err)
+		return nil, func() {}, fmt.Errorf("unable to stat dir=%q: %w", in.Location, err)
 	}
 
 	if fileMeta.IsDir() {
-		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", location, err)
+		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, cleanupFn := NewFromFile(location)
+	s, cleanupFn := NewFromFileWithName(in.Location, in.Name)
 
 	return &s, cleanupFn, nil
 }
 
 // NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
 func NewFromDirectory(path string) (Source, error) {
-	return Source{
+	return NewFromDirectoryWithName(path, "")
+}
+
+// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
+func NewFromDirectoryRoot(path string) (Source, error) {
+	return NewFromDirectoryRootWithName(path, "")
+}
+
+// NewFromDirectoryWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryWithName(path string, name string) (Source, error) {
+	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
+			Name:   name,
 			Scheme: DirectoryScheme,
 			Path:   path,
 		},
 		path: path,
-	}, nil
+	}
+	s.SetID()
+	return s, nil
+}
+
+// NewFromDirectoryRootWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryRootWithName(path string, name string) (Source, error) {
+	s := Source{
+		mutex: &sync.Mutex{},
+		Metadata: Metadata{
+			Name:   name,
+			Scheme: DirectoryScheme,
+			Path:   path,
+			Base:   path,
+		},
+		path: path,
+		base: path,
+	}
+	s.SetID()
+	return s, nil
 }
 
 // NewFromFile creates a new source object tailored to catalog a file.
 func NewFromFile(path string) (Source, func()) {
+	return NewFromFileWithName(path, "")
+}
+
+// NewFromFileWithName creates a new source object tailored to catalog a file, with an explicitly provided name.
+func NewFromFileWithName(path string, name string) (Source, func()) {
 	analysisPath, cleanupFn := fileAnalysisPath(path)
 
-	return Source{
+	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
+			Name:   name,
 			Scheme: FileScheme,
 			Path:   path,
 		},
 		path: analysisPath,
-	}, cleanupFn
+	}
+
+	s.SetID()
+	return s, cleanupFn
 }
 
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
@@ -273,6 +324,12 @@ func fileAnalysisPath(path string) (string, func()) {
 	// unarchived.
 	envelopedUnarchiver, err := archiver.ByExtension(path)
 	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
+		if tar, ok := unarchiver.(*archiver.Tar); ok {
+			// when tar files are extracted, if there are multiple entries at the same
+			// location, the last entry wins
+			// NOTE: this currently does not display any messages if an overwrite happens
+			tar.OverwriteExisting = true
+		}
 		unarchivedPath, tmpCleanup, err := unarchiveToTmp(path, unarchiver)
 		if err != nil {
 			log.Warnf("file could not be unarchived: %+v", err)
@@ -291,17 +348,98 @@ func fileAnalysisPath(path string) (string, func()) {
 // NewFromImage creates a new source object tailored to catalog a given container image, relative to the
 // option given (e.g. all-layers, squashed, etc)
 func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
+	return NewFromImageWithName(img, userImageStr, "")
+}
+
+// NewFromImageWithName creates a new source object tailored to catalog a given container image, relative to the
+// option given (e.g. all-layers, squashed, etc), with an explicit name.
+func NewFromImageWithName(img *image.Image, userImageStr string, name string) (Source, error) {
 	if img == nil {
 		return Source{}, fmt.Errorf("no image given")
 	}
 
-	return Source{
+	s := Source{
 		Image: img,
 		Metadata: Metadata{
+			Name:          name,
 			Scheme:        ImageScheme,
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
-	}, nil
+	}
+	s.SetID()
+	return s, nil
+}
+
+func (s *Source) ID() artifact.ID {
+	if s.id == "" {
+		s.SetID()
+	}
+	return s.id
+}
+
+func (s *Source) SetID() {
+	var d string
+	switch s.Metadata.Scheme {
+	case DirectoryScheme:
+		d = digest.FromString(s.Metadata.Path).String()
+	case FileScheme:
+		// attempt to use the digest of the contents of the file as the ID
+		file, err := os.Open(s.Metadata.Path)
+		if err != nil {
+			d = digest.FromString(s.Metadata.Path).String()
+			break
+		}
+		defer file.Close()
+		di, err := digest.FromReader(file)
+		if err != nil {
+			d = digest.FromString(s.Metadata.Path).String()
+			break
+		}
+		d = di.String()
+	case ImageScheme:
+		manifestDigest := digest.FromBytes(s.Metadata.ImageMetadata.RawManifest).String()
+		if manifestDigest != "" {
+			d = manifestDigest
+			break
+		}
+
+		// calcuate chain ID for image sources where manifestDigest is not available
+		// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
+		d = calculateChainID(s.Metadata.ImageMetadata.Layers)
+		if d == "" {
+			// TODO what happens here if image has no layers?
+			// Is this case possible
+			d = digest.FromString(s.Metadata.ImageMetadata.UserInput).String()
+		}
+	default: // for UnknownScheme we hash the struct
+		id, _ := artifact.IDByHash(s)
+		d = string(id)
+	}
+
+	s.id = artifact.ID(strings.TrimPrefix(d, "sha256:"))
+	s.Metadata.ID = strings.TrimPrefix(d, "sha256:")
+}
+
+func calculateChainID(lm []LayerMetadata) string {
+	if len(lm) < 1 {
+		return ""
+	}
+
+	// DiffID(L0) = digest of layer 0
+	// https://github.com/anchore/stereoscope/blob/1b1b744a919964f38d14e1416fb3f25221b761ce/pkg/image/layer_metadata.go#L19-L32
+	chainID := lm[0].Digest
+	id := chain(chainID, lm[1:])
+
+	return id
+}
+
+func chain(chainID string, layers []LayerMetadata) string {
+	if len(layers) < 1 {
+		return chainID
+	}
+
+	chainID = digest.FromString(layers[0].Digest + " " + chainID).String()
+	return chain(chainID, layers[1:])
 }
 
 func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
@@ -314,7 +452,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			resolver, err := newDirectoryResolver(s.path, exclusionFunctions...)
+			resolver, err := newDirectoryResolver(s.path, s.base, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}
@@ -345,7 +483,7 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 }
 
 func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func(), error) {
-	tempDir, err := ioutil.TempDir("", "syft-archive-contents-")
+	tempDir, err := os.MkdirTemp("", "syft-archive-contents-")
 	if err != nil {
 		return "", func() {}, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
 	}
@@ -381,7 +519,7 @@ func getImageExclusionFunction(exclusions []string) func(string) bool {
 	}
 }
 
-func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFilterFn, error) {
+func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}
@@ -391,6 +529,9 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 	if err != nil {
 		return nil, err
 	}
+
+	// this handles Windows file paths by converting them to C:/something/else format
+	root = filepath.ToSlash(root)
 
 	if !strings.HasSuffix(root, "/") {
 		root += "/"
@@ -411,18 +552,23 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathFil
 		return nil, fmt.Errorf("invalid exclusion pattern(s): '%s' (must start with one of: './', '*/', or '**/')", strings.Join(errors, "', '"))
 	}
 
-	return []pathFilterFn{
-		func(path string, _ os.FileInfo) bool {
+	return []pathIndexVisitor{
+		func(path string, info os.FileInfo, _ error) error {
 			for _, exclusion := range exclusions {
+				// this is required to handle Windows filepaths
+				path = filepath.ToSlash(path)
 				matches, err := doublestar.Match(exclusion, path)
 				if err != nil {
-					return false
+					return nil
 				}
 				if matches {
-					return true
+					if info != nil && info.IsDir() {
+						return filepath.SkipDir
+					}
+					return errSkipPath
 				}
 			}
-			return false
+			return nil
 		},
 	}, nil
 }

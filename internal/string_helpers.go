@@ -19,3 +19,19 @@ func TruncateMiddleEllipsis(input string, maxLen int) string {
 	}
 	return input[:maxLen/2] + "..." + input[len(input)-(maxLen/2):]
 }
+
+func StringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func SplitAny(s string, seps string) []string {
+	splitter := func(r rune) bool {
+		return strings.ContainsRune(seps, r)
+	}
+	return strings.FieldsFunc(s, splitter)
+}

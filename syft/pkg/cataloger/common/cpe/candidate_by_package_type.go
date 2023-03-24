@@ -11,6 +11,12 @@ type candidateComposite struct {
 	candidateAddition
 }
 
+type candidateRemovalComposite struct {
+	pkg.Type
+	candidateKey
+	candidateRemovals
+}
+
 // defaultCandidateAdditions is all of the known cases for product and vendor field values that should be used when
 // select package information is discovered
 var defaultCandidateAdditions = buildCandidateLookup(
@@ -115,11 +121,255 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "yajl-ruby"},
 			candidateAddition{AdditionalProducts: []string{"yajl-ruby_gem"}},
 		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "cgi"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "date"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "openssl"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "rake"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "rdoc"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "rexml"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "trunk"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "webrick"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
 		// Python packages
 		{
 			pkg.PythonPkg,
 			candidateKey{PkgName: "python-rrdtool"},
 			candidateAddition{AdditionalProducts: []string{"rrdtool"}},
+		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "cryptography"},
+			candidateAddition{AdditionalProducts: []string{"python-cryptography"}, AdditionalVendors: []string{"python-cryptography_project"}},
+		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "pip"},
+			candidateAddition{AdditionalVendors: []string{"pypa"}},
+		},
+		// Alpine packages
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "curl"},
+			candidateAddition{AdditionalVendors: []string{"haxx"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "python3"},
+			candidateAddition{AdditionalProducts: []string{"python"}, AdditionalVendors: []string{"python", "python_software_foundation"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "python"},
+			candidateAddition{AdditionalVendors: []string{"python_software_foundation"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nodejs"},
+			candidateAddition{AdditionalProducts: []string{"node.js"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nodejs-current"},
+			candidateAddition{AdditionalProducts: []string{"node.js"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "go"},
+			candidateAddition{AdditionalVendors: []string{"golang"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ruby"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bazel"},
+			candidateAddition{AdditionalVendors: []string{"google"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "clang"},
+			candidateAddition{AdditionalVendors: []string{"llvm"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjdk"},
+			candidateAddition{AdditionalVendors: []string{"oracle"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "glibc"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "glib"},
+			candidateAddition{AdditionalVendors: []string{"gnome"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bash"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa-lib"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "make"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "git"},
+			candidateAddition{AdditionalVendors: []string{"git-scm"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bind"},
+			candidateAddition{AdditionalVendors: []string{"isc"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "libxpm"},
+			candidateAddition{AdditionalVendors: []string{"libxpm_project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "musl"},
+			candidateAddition{AdditionalVendors: []string{"musl-libc"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox-esr"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "thunderbird"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "chromium"},
+			candidateAddition{AdditionalVendors: []string{"google"}, AdditionalProducts: []string{"chrome"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "apache"},
+			candidateAddition{AdditionalProducts: []string{"http_server"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "tiff"},
+			candidateAddition{AdditionalProducts: []string{"libtiff"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ghostscript"},
+			candidateAddition{AdditionalVendors: []string{"artifex"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjpeg"},
+			candidateAddition{AdditionalVendors: []string{"uclouvain"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "xorg-server"},
+			candidateAddition{AdditionalVendors: []string{"x.org"}, AdditionalProducts: []string{"x_server"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "podofo"},
+			candidateAddition{AdditionalVendors: []string{"podofo_project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "wpa_supplicant"},
+			candidateAddition{AdditionalVendors: []string{"w1.fi"}},
+		},
+		//
+		// Binary packages
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "node"},
+			candidateAddition{AdditionalProducts: []string{"nodejs", "node.js"}},
+		},
+	})
+
+var defaultCandidateRemovals = buildCandidateRemovalLookup(
+	[]candidateRemovalComposite{
+		// Python packages
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{VendorsToRemove: []string{"redis"}},
+		},
+		// NPM packages
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{VendorsToRemove: []string{"redis"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "php"},
+			candidateRemovals{VendorsToRemove: []string{"php"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "delegate"},
+			candidateRemovals{VendorsToRemove: []string{"delegate"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "docker"},
+			candidateRemovals{VendorsToRemove: []string{"docker"}},
 		},
 	})
 
@@ -136,10 +386,28 @@ func buildCandidateLookup(cc []candidateComposite) (ca map[pkg.Type]map[candidat
 	return ca
 }
 
+// buildCandidateRemovalLookup is a convenience function for creating the defaultCandidateRemovals set
+func buildCandidateRemovalLookup(cc []candidateRemovalComposite) (ca map[pkg.Type]map[candidateKey]candidateRemovals) {
+	ca = make(map[pkg.Type]map[candidateKey]candidateRemovals)
+	for _, c := range cc {
+		if _, ok := ca[c.Type]; !ok {
+			ca[c.Type] = make(map[candidateKey]candidateRemovals)
+		}
+		ca[c.Type][c.candidateKey] = c.candidateRemovals
+	}
+	return ca
+}
+
 // candidateKey represents the set of inputs that should be matched on in order to signal more candidate additions to be used.
 type candidateKey struct {
 	Vendor  string
 	PkgName string
+}
+
+// candidateRemovals are the specific removals that should be considered during CPE generation (given a specific candidateKey)
+type candidateRemovals struct {
+	ProductsToRemove []string
+	VendorsToRemove  []string
 }
 
 // candidateAddition are the specific additions that should be considered during CPE generation (given a specific candidateKey)
@@ -188,6 +456,38 @@ func findAdditionalProducts(allAdditions map[pkg.Type]map[candidateKey]candidate
 		PkgName: pkgName,
 	}]; ok {
 		products = append(products, addition.AdditionalProducts...)
+	}
+
+	return products
+}
+
+// findVendorsToRemove searches all possible vendor removals that could be removed during the CPE generation process (given package info + a vendor candidate)
+func findVendorsToRemove(allRemovals map[pkg.Type]map[candidateKey]candidateRemovals, ty pkg.Type, pkgName string) (vendors []string) {
+	removals, ok := allRemovals[ty]
+	if !ok {
+		return nil
+	}
+
+	if removal, ok := removals[candidateKey{
+		PkgName: pkgName,
+	}]; ok {
+		vendors = append(vendors, removal.VendorsToRemove...)
+	}
+
+	return vendors
+}
+
+// findProductsToRemove searches all possible product removals that could be removed during the CPE generation process (given package info)
+func findProductsToRemove(allRemovals map[pkg.Type]map[candidateKey]candidateRemovals, ty pkg.Type, pkgName string) (products []string) {
+	removals, ok := allRemovals[ty]
+	if !ok {
+		return nil
+	}
+
+	if removal, ok := removals[candidateKey{
+		PkgName: pkgName,
+	}]; ok {
+		products = append(products, removal.ProductsToRemove...)
 	}
 
 	return products

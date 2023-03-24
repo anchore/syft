@@ -1,169 +1,184 @@
 package javascript
 
 import (
-	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseYarnBerry(t *testing.T) {
-	expected := map[string]pkg.Package{
-		"@babel/code-frame": {
-			Name:     "@babel/code-frame",
-			Version:  "7.10.4",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+	var expectedRelationships []artifact.Relationship
+	fixture := "test-fixtures/yarn-berry/yarn.lock"
+	locations := source.NewLocationSet(source.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "@babel/code-frame",
+			Version:   "7.10.4",
+			Locations: locations,
+			PURL:      "pkg:npm/%40babel/code-frame@7.10.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"@types/minimatch": {
-			Name:     "@types/minimatch",
-			Version:  "3.0.3",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "@types/minimatch",
+			Version:   "3.0.3",
+			Locations: locations,
+			PURL:      "pkg:npm/%40types/minimatch@3.0.3",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"@types/qs": {
-			Name:     "@types/qs",
-			Version:  "6.9.4",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "@types/qs",
+			Version:   "6.9.4",
+			Locations: locations,
+			PURL:      "pkg:npm/%40types/qs@6.9.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"ajv": {
-			Name:     "ajv",
-			Version:  "6.12.3",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "ajv",
+			Version:   "6.12.3",
+			Locations: locations,
+			PURL:      "pkg:npm/ajv@6.12.3",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"atob": {
-			Name:     "atob",
-			Version:  "2.1.2",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "asn1.js",
+			Version:   "4.10.1",
+			Locations: locations,
+			PURL:      "pkg:npm/asn1.js@4.10.1",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"aws-sdk": {
-			Name:     "aws-sdk",
-			Version:  "2.706.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "atob",
+			Version:   "2.1.2",
+			Locations: locations,
+			PURL:      "pkg:npm/atob@2.1.2",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"jhipster-core": {
-			Name:     "jhipster-core",
-			Version:  "7.3.4",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "aws-sdk",
+			Version:   "2.706.0",
+			PURL:      "pkg:npm/aws-sdk@2.706.0",
+			Locations: locations,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"asn1.js": {
-			Name:     "asn1.js",
-			Version:  "4.10.1",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "c0n-fab_u.laTION",
+			Version:   "7.7.7",
+			Locations: locations,
+			PURL:      "pkg:npm/c0n-fab_u.laTION@7.7.7",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"c0n-fab_u.laTION": {
-			Name:     "c0n-fab_u.laTION",
-			Version:  "7.7.7",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "jhipster-core",
+			Version:   "7.3.4",
+			Locations: locations,
+			PURL:      "pkg:npm/jhipster-core@7.3.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
 	}
-	testFixtures := []string{
-		"test-fixtures/yarn-berry/yarn.lock",
-	}
 
-	for _, file := range testFixtures {
-		file := file
-		t.Run(file, func(t *testing.T) {
-			t.Parallel()
+	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
 
-			fixture, err := os.Open(file)
-			require.NoError(t, err)
-
-			// TODO: no relationships are under test yet
-			actual, _, err := parseYarnLock(fixture.Name(), fixture)
-			require.NoError(t, err)
-
-			assertPkgsEqual(t, actual, expected)
-		})
-	}
 }
 
 func TestParseYarnLock(t *testing.T) {
-	expected := map[string]pkg.Package{
-		"@babel/code-frame": {
-			Name:     "@babel/code-frame",
-			Version:  "7.10.4",
+	var expectedRelationships []artifact.Relationship
+	fixture := "test-fixtures/yarn/yarn.lock"
+	locations := source.NewLocationSet(source.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "@babel/code-frame",
+			Version:   "7.10.4",
+			Locations: locations,
+			PURL:      "pkg:npm/%40babel/code-frame@7.10.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "@types/minimatch",
+			Version:   "3.0.3",
+			Locations: locations,
+			PURL:      "pkg:npm/%40types/minimatch@3.0.3",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "@types/qs",
+			Version:   "6.9.4",
+			Locations: locations,
+			PURL:      "pkg:npm/%40types/qs@6.9.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "ajv",
+			Version:   "6.12.3",
+			Locations: locations,
+			PURL:      "pkg:npm/ajv@6.12.3",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "asn1.js",
+			Version:   "4.10.1",
+			Locations: locations,
+			PURL:      "pkg:npm/asn1.js@4.10.1",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "atob",
+			Version:   "2.1.2",
+			Locations: locations,
+
+			PURL:     "pkg:npm/atob@2.1.2",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 		},
-		"@types/minimatch": {
-			Name:     "@types/minimatch",
-			Version:  "3.0.3",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "aws-sdk",
+			Version:   "2.706.0",
+			Locations: locations,
+			PURL:      "pkg:npm/aws-sdk@2.706.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"@types/qs": {
-			Name:     "@types/qs",
-			Version:  "6.9.4",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+		{
+			Name:      "jhipster-core",
+			Version:   "7.3.4",
+			Locations: locations,
+			PURL:      "pkg:npm/jhipster-core@7.3.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
-		"ajv": {
-			Name:     "ajv",
-			Version:  "6.12.3",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"atob": {
-			Name:     "atob",
-			Version:  "2.1.2",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"aws-sdk": {
-			Name:     "aws-sdk",
-			Version:  "2.706.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"jhipster-core": {
-			Name:     "jhipster-core",
-			Version:  "7.3.4",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"asn1.js": {
-			Name:     "asn1.js",
-			Version:  "4.10.1",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-		},
-		"something-i-made-up": {
-			Name:     "something-i-made-up",
-			Version:  "7.7.7",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+
+		{
+			Name:      "something-i-made-up",
+			Version:   "7.7.7",
+			Locations: locations,
+			PURL:      "pkg:npm/something-i-made-up@7.7.7",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
 		},
 	}
 
-	testFixtures := []string{
-		"test-fixtures/yarn/yarn.lock",
-	}
+	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
 
-	for _, file := range testFixtures {
-		file := file
-		t.Run(file, func(t *testing.T) {
-			t.Parallel()
-
-			fixture, err := os.Open(file)
-			require.NoError(t, err)
-
-			// TODO: no relationships are under test yet
-			actual, _, err := parseYarnLock(fixture.Name(), fixture)
-			require.NoError(t, err)
-
-			assertPkgsEqual(t, actual, expected)
-		})
-	}
 }
 
 func TestParseYarnFindPackageNames(t *testing.T) {
@@ -226,7 +241,6 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.expected, func(t *testing.T) {
 			t.Parallel()
 			actual := findPackageName(test.line)
@@ -315,7 +329,6 @@ func TestParseYarnFindPackageVersions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.expected, func(t *testing.T) {
 			t.Parallel()
 			actual := findPackageVersion(test.line)

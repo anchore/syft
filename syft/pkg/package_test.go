@@ -3,11 +3,13 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/syft/source"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestIDUniqueness(t *testing.T) {
@@ -31,8 +33,8 @@ func TestIDUniqueness(t *testing.T) {
 		},
 		Language: "math",
 		Type:     PythonPkg,
-		CPEs: []CPE{
-			must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+		CPEs: []cpe.CPE{
+			cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 		},
 		PURL:         "pkg:pypi/pi@3.14",
 		MetadataType: PythonPackageMetadataType,
@@ -168,7 +170,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "CPEs is ignored",
 			transform: func(pkg Package) Package {
-				pkg.CPEs = []CPE{}
+				pkg.CPEs = []cpe.CPE{}
 				return pkg
 			},
 			expectedIDComparison: assert.Equal,
@@ -182,20 +184,12 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.Equal,
 		},
 		{
-			name: "language is reflected",
+			name: "language is NOT reflected",
 			transform: func(pkg Package) Package {
 				pkg.Language = Rust
 				return pkg
 			},
-			expectedIDComparison: assert.NotEqual,
-		},
-		{
-			name: "foundBy is reflected",
-			transform: func(pkg Package) Package {
-				pkg.FoundBy = "new!"
-				return pkg
-			},
-			expectedIDComparison: assert.NotEqual,
+			expectedIDComparison: assert.Equal,
 		},
 		{
 			name: "metadata mutation is reflected",
@@ -276,8 +270,8 @@ func TestPackage_Merge(t *testing.T) {
 				},
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []CPE{
-					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+				CPEs: []cpe.CPE{
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
 				PURL:         "pkg:pypi/pi@3.14",
 				MetadataType: PythonPackageMetadataType,
@@ -304,8 +298,8 @@ func TestPackage_Merge(t *testing.T) {
 				},
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []CPE{
-					must(NewCPE(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`)), // NOTE: difference
+				CPEs: []cpe.CPE{
+					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: difference
 				},
 				PURL:         "pkg:pypi/pi@3.14",
 				MetadataType: PythonPackageMetadataType,
@@ -333,9 +327,9 @@ func TestPackage_Merge(t *testing.T) {
 				},
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []CPE{
-					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
-					must(NewCPE(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`)), // NOTE: merge!
+				CPEs: []cpe.CPE{
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
+					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: merge!
 				},
 				PURL:         "pkg:pypi/pi@3.14",
 				MetadataType: PythonPackageMetadataType,
@@ -365,8 +359,8 @@ func TestPackage_Merge(t *testing.T) {
 				},
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []CPE{
-					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+				CPEs: []cpe.CPE{
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
 				PURL:         "pkg:pypi/pi@3.14",
 				MetadataType: PythonPackageMetadataType,
@@ -393,8 +387,8 @@ func TestPackage_Merge(t *testing.T) {
 				},
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []CPE{
-					must(NewCPE(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`)),
+				CPEs: []cpe.CPE{
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
 				PURL:         "pkg:pypi/pi@3.14",
 				MetadataType: PythonPackageMetadataType,

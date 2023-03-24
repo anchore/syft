@@ -1,157 +1,165 @@
 package pkg
 
 import (
-	"strings"
+	"encoding/json"
 	"testing"
 
-	"github.com/anchore/syft/syft/linux"
-
-	"github.com/anchore/packageurl-go"
-	"github.com/go-test/deep"
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestApkMetadata_pURL(t *testing.T) {
+func TestApkMetadata_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
-		name     string
-		metadata ApkMetadata
-		distro   linux.Release
-		expected string
+		name    string
+		input   string
+		want    ApkMetadata
+		wantErr require.ErrorAssertionFunc
 	}{
 		{
-			name: "gocase",
-			metadata: ApkMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:alpine/p@v?arch=a&distro=alpine-3.4.6",
+			name:  "empty",
+			input: "{}",
+			want:  ApkMetadata{},
 		},
 		{
-			name: "missing architecture",
-			metadata: ApkMetadata{
-				Package: "p",
-				Version: "v",
+			name: "string array dependencies",
+			input: `{
+"package": "scanelf",
+"originPackage": "pax-utils",
+"maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+"version": "1.3.4-r0",
+"license": "GPL-2.0-only",
+"architecture": "x86_64",
+"url": "https://wiki.gentoo.org/wiki/Hardened/PaX_Utilities",
+"description": "Scan ELF binaries for stuff",
+"size": 36745,
+"installedSize": 94208,
+"pullChecksum": "Q1Gcqe+ND8DFOlhM3R0o5KyZjR2oE=",
+"gitCommitOfApkPort": "d7ae612a3cc5f827289d915783b4cbf8c7207947",
+"files": [
+ {
+  "path": "/usr"
+ }
+],
+"pullDependencies": ["foo", "bar"]
+}`,
+			want: ApkMetadata{
+				Package:       "scanelf",
+				OriginPackage: "pax-utils",
+				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+				Version:       "1.3.4-r0",
+				License:       "GPL-2.0-only",
+				Architecture:  "x86_64",
+				URL:           "https://wiki.gentoo.org/wiki/Hardened/PaX_Utilities",
+				Description:   "Scan ELF binaries for stuff",
+				Size:          36745,
+				InstalledSize: 94208,
+				Dependencies:  []string{"foo", "bar"},
+				Checksum:      "Q1Gcqe+ND8DFOlhM3R0o5KyZjR2oE=",
+				GitCommit:     "d7ae612a3cc5f827289d915783b4cbf8c7207947",
+				Files:         []ApkFileRecord{{Path: "/usr"}},
 			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:alpine/p@v?distro=alpine-3.4.6",
 		},
-		// verify #351
 		{
-			metadata: ApkMetadata{
-				Package:      "g++",
-				Version:      "v84",
-				Architecture: "am86",
+			name: "single string dependencies",
+			input: `{
+"package": "scanelf",
+"originPackage": "pax-utils",
+"maintainer": "Natanael Copa <ncopa@alpinelinux.org>",
+"version": "1.3.4-r0",
+"license": "GPL-2.0-only",
+"architecture": "x86_64",
+"url": "https://wiki.gentoo.org/wiki/Hardened/PaX_Utilities",
+"description": "Scan ELF binaries for stuff",
+"size": 36745,
+"installedSize": 94208,
+"pullChecksum": "Q1Gcqe+ND8DFOlhM3R0o5KyZjR2oE=",
+"gitCommitOfApkPort": "d7ae612a3cc5f827289d915783b4cbf8c7207947",
+"files": [
+ {
+  "path": "/usr"
+ }
+],
+"pullDependencies": "foo bar"
+}`,
+			want: ApkMetadata{
+				Package:       "scanelf",
+				OriginPackage: "pax-utils",
+				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+				Version:       "1.3.4-r0",
+				License:       "GPL-2.0-only",
+				Architecture:  "x86_64",
+				URL:           "https://wiki.gentoo.org/wiki/Hardened/PaX_Utilities",
+				Description:   "Scan ELF binaries for stuff",
+				Size:          36745,
+				InstalledSize: 94208,
+				Dependencies:  []string{"foo", "bar"},
+				Checksum:      "Q1Gcqe+ND8DFOlhM3R0o5KyZjR2oE=",
+				GitCommit:     "d7ae612a3cc5f827289d915783b4cbf8c7207947",
+				Files:         []ApkFileRecord{{Path: "/usr"}},
 			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
-			metadata: ApkMetadata{
-				Package:      "g plus plus",
-				Version:      "v84",
-				Architecture: "am86",
+			name: "null pullDependencies",
+			input: `{
+"pullDependencies": null
+}`,
+			want: ApkMetadata{
+				Dependencies: nil,
 			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.15.0",
-			},
-			expected: "pkg:alpine/g%20plus%20plus@v84?arch=am86&distro=alpine-3.15.0",
-		},
-		{
-			name: "add source information as qualifier",
-			metadata: ApkMetadata{
-				Package:       "p",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "origin",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
 		},
 	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			actual := test.metadata.PackageURL(&test.distro)
-			if actual != test.expected {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(test.expected, actual, true)
-				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
 			}
-			// verify packageurl can parse
-			purl, err := packageurl.FromString(actual)
+			var got ApkMetadata
+			err := json.Unmarshal([]byte(tt.input), &got)
+			tt.wantErr(t, err)
 			if err != nil {
-				t.Errorf("cannot re-parse purl: %s", actual)
+				return
 			}
-			if purl.Name != test.metadata.Package {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(test.metadata.Package, purl.Name, true)
-				t.Errorf("invalid purl name: %s", dmp.DiffPrettyText(diffs))
-			}
-			if purl.Version != test.metadata.Version {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(test.metadata.Version, purl.Version, true)
-				t.Errorf("invalid purl version: %s", dmp.DiffPrettyText(diffs))
-			}
-			if purl.Qualifiers.Map()["arch"] != test.metadata.Architecture {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(test.metadata.Architecture, purl.Qualifiers.Map()["arch"], true)
-				t.Errorf("invalid purl architecture: %s", dmp.DiffPrettyText(diffs))
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestApkMetadata_FileOwner(t *testing.T) {
+func TestSpaceDelimitedStringSlice_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
-		metadata ApkMetadata
-		expected []string
+		name    string
+		data    string
+		want    []string
+		wantErr require.ErrorAssertionFunc
 	}{
 		{
-			metadata: ApkMetadata{
-				Files: []ApkFileRecord{
-					{Path: "/somewhere"},
-					{Path: "/else"},
-				},
-			},
-			expected: []string{
-				"/else",
-				"/somewhere",
-			},
+			name: "empty string",
+			data: `""`,
+			want: nil,
 		},
 		{
-			metadata: ApkMetadata{
-				Files: []ApkFileRecord{
-					{Path: "/somewhere"},
-					{Path: ""},
-				},
-			},
-			expected: []string{
-				"/somewhere",
-			},
+			name: "single string with one elements",
+			data: `"foo"`,
+			want: []string{"foo"},
+		},
+		{
+			name: "single string with multiple elements",
+			data: `"foo bar"`,
+			want: []string{"foo", "bar"},
+		},
+		{
+			name: "string array",
+			data: `["foo", "bar"]`,
+			want: []string{"foo", "bar"},
 		},
 	}
-
-	for _, test := range tests {
-		t.Run(strings.Join(test.expected, ","), func(t *testing.T) {
-			actual := test.metadata.OwnedFiles()
-			for _, d := range deep.Equal(test.expected, actual) {
-				t.Errorf("diff: %+v", d)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
 			}
+			element := spaceDelimitedStringSlice{}
+			tt.wantErr(t, element.UnmarshalJSON([]byte(tt.data)))
+			assert.Equal(t, tt.want, []string(element))
 		})
 	}
 }

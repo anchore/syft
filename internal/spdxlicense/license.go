@@ -12,9 +12,26 @@ import (
 // EX: gpl-2.0.0-only ---> GPL-2.0-only
 // See the debian link for more details on the spdx license differences
 
-//go:generate go run generate/generate_license_list.go
+const (
+	LicenseRefPrefix = "LicenseRef-" // prefix for non-standard licenses
+)
 
-func ID(id string) (string, bool) {
-	value, exists := licenseIDs[strings.ToLower(id)]
-	return value, exists
+//go:generate go run ./generate
+
+// ID returns the canonical license ID for the given license ID
+// Note: this function is only concerned with returning a best match of an SPDX license ID
+// SPDX Expressions will be handled by a parent package which will call this function
+func ID(id string) (value string, exists bool) {
+	// first look for a canonical license
+	if value, exists := licenseIDs[cleanLicenseID(id)]; exists {
+		return value, exists
+	}
+	// we did not find, so treat it as a separate license
+	return "", false
+}
+
+func cleanLicenseID(id string) string {
+	id = strings.TrimSpace(id)
+	id = strings.ToLower(id)
+	return strings.ReplaceAll(id, "-", "")
 }

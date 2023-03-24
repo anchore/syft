@@ -2,18 +2,19 @@ package dart
 
 import (
 	"fmt"
-	"io"
 	"net/url"
+	"sort"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common"
-	"gopkg.in/yaml.v2"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/source"
 )
 
-// integrity check
-var _ common.ParserFn = parsePubspecLock
+var _ generic.Parser = parsePubspecLock
 
 const defaultPubRegistry string = "https://pub.dartlang.org"
 
@@ -37,8 +38,8 @@ type pubspecLockDescription struct {
 	ResolvedRef string `yaml:"resolved-ref" mapstructure:"resolved-ref"`
 }
 
-func parsePubspecLock(path string, reader io.Reader) ([]*pkg.Package, []artifact.Relationship, error) {
-	var packages []*pkg.Package
+func parsePubspecLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var pkgs []pkg.Package
 
 	dec := yaml.NewDecoder(reader)
 
@@ -47,27 +48,20 @@ func parsePubspecLock(path string, reader io.Reader) ([]*pkg.Package, []artifact
 		return nil, nil, fmt.Errorf("failed to parse pubspec.lock file: %w", err)
 	}
 
-	for name, pubPkg := range p.Packages {
-		packages = append(packages, newPubspecLockPackage(name, pubPkg))
+	var names []string
+	for name := range p.Packages {
+		names = append(names, name)
 	}
 
-	return packages, nil, nil
-}
+	// always ensure there is a stable ordering of packages
+	sort.Strings(names)
 
-func newPubspecLockPackage(name string, p pubspecLockPackage) *pkg.Package {
-	return &pkg.Package{
-		Name:         name,
-		Version:      p.Version,
-		Language:     pkg.Dart,
-		Type:         pkg.DartPubPkg,
-		MetadataType: pkg.DartPubMetadataType,
-		Metadata: &pkg.DartPubMetadata{
-			Name:      name,
-			Version:   p.Version,
-			HostedURL: p.getHostedURL(),
-			VcsURL:    p.getVcsURL(),
-		},
+	for _, name := range names {
+		pubPkg := p.Packages[name]
+		pkgs = append(pkgs, newPubspecLockPackage(name, pubPkg, reader.Location))
 	}
+
+	return pkgs, nil, nil
 }
 
 func (p *pubspecLockPackage) getVcsURL() string {

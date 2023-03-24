@@ -1,12 +1,15 @@
 package file
 
 import (
-	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/source"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_allRegularFiles(t *testing.T) {
@@ -67,8 +70,8 @@ func Test_allRegularFiles(t *testing.T) {
 					virtualLocations.Add(l.VirtualPath)
 				}
 			}
-			assert.ElementsMatch(t, tt.wantRealPaths.List(), realLocations.List(), "mismatched real paths")
-			assert.ElementsMatch(t, tt.wantVirtualPaths.List(), virtualLocations.List(), "mismatched virtual paths")
+			assert.ElementsMatch(t, tt.wantRealPaths.List(), realLocations.List(), "real paths differ: "+cmp.Diff(tt.wantRealPaths.List(), realLocations.List()))
+			assert.ElementsMatch(t, tt.wantVirtualPaths.List(), virtualLocations.List(), "virtual paths differ: "+cmp.Diff(tt.wantVirtualPaths.List(), virtualLocations.List()))
 		})
 	}
 }

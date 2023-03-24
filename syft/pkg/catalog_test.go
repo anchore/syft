@@ -3,16 +3,160 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/source"
 )
 
 type expectedIndexes struct {
 	byType map[Type]*strset.Set
 	byPath map[string]*strset.Set
+}
+
+func TestCatalogDeleteRemovesPackages(t *testing.T) {
+	tests := []struct {
+		name            string
+		pkgs            []Package
+		deleteIDs       []artifact.ID
+		expectedIndexes expectedIndexes
+	}{
+		{
+			name: "delete one package",
+			pkgs: []Package{
+				{
+					id:      "pkg:deb/debian/1",
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+				{
+					id:      "pkg:deb/debian/2",
+					Name:    "debian",
+					Version: "2",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/d/path", "/another/path2"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/1"),
+			},
+			expectedIndexes: expectedIndexes{
+				byType: map[Type]*strset.Set{
+					DebPkg: strset.New("pkg:deb/debian/2"),
+				},
+				byPath: map[string]*strset.Set{
+					"/d/path":        strset.New("pkg:deb/debian/2"),
+					"/another/path2": strset.New("pkg:deb/debian/2"),
+				},
+			},
+		},
+		{
+			name: "delete multiple packages",
+			pkgs: []Package{
+				{
+					id:      "pkg:deb/debian/1",
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+				{
+					id:      "pkg:deb/debian/2",
+					Name:    "debian",
+					Version: "2",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/d/path", "/another/path2"),
+					),
+				},
+				{
+					id:      "pkg:deb/debian/3",
+					Name:    "debian",
+					Version: "3",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/e/path", "/another/path3"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/1"),
+				artifact.ID("pkg:deb/debian/3"),
+			},
+			expectedIndexes: expectedIndexes{
+				byType: map[Type]*strset.Set{
+					DebPkg: strset.New("pkg:deb/debian/2"),
+				},
+				byPath: map[string]*strset.Set{
+					"/d/path":        strset.New("pkg:deb/debian/2"),
+					"/another/path2": strset.New("pkg:deb/debian/2"),
+				},
+			},
+		},
+		{
+			name: "delete non-existent package",
+			pkgs: []Package{
+				{
+					id:      artifact.ID("pkg:deb/debian/1"),
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+				{
+					id:      artifact.ID("pkg:deb/debian/2"),
+					Name:    "debian",
+					Version: "2",
+					Type:    DebPkg,
+					Locations: source.NewLocationSet(
+						source.NewVirtualLocation("/d/path", "/another/path2"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/3"),
+			},
+			expectedIndexes: expectedIndexes{
+				byType: map[Type]*strset.Set{
+					DebPkg: strset.New("pkg:deb/debian/1", "pkg:deb/debian/2"),
+				},
+				byPath: map[string]*strset.Set{
+					"/c/path":        strset.New("pkg:deb/debian/1"),
+					"/another/path1": strset.New("pkg:deb/debian/1"),
+					"/d/path":        strset.New("pkg:deb/debian/2"),
+					"/another/path2": strset.New("pkg:deb/debian/2"),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := NewCatalog()
+			for _, p := range test.pkgs {
+				c.Add(p)
+			}
+
+			for _, id := range test.deleteIDs {
+				c.Delete(id)
+			}
+
+			assertIndexes(t, c, test.expectedIndexes)
+		})
+	}
 }
 
 func TestCatalogAddPopulatesIndex(t *testing.T) {
@@ -69,9 +213,7 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewCatalog(pkgs...)
-
 			assertIndexes(t, c, test.expectedIndexes)
-
 		})
 	}
 }
@@ -177,11 +319,13 @@ func TestCatalog_MergeRecords(t *testing.T) {
 		name              string
 		pkgs              []Package
 		expectedLocations []source.Location
+		expectedCPECount  int
 	}{
 		{
 			name: "multiple Locations with shared path",
 			pkgs: []Package{
 				{
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
 						source.Location{
 							Coordinates: source.Coordinates{
@@ -194,6 +338,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					Type: RpmPkg,
 				},
 				{
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
 						source.Location{
 							Coordinates: source.Coordinates{
@@ -222,6 +367,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					VirtualPath: "/another/path",
 				},
 			},
+			expectedCPECount: 2,
 		},
 	}
 
@@ -230,6 +376,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			actual := NewCatalog(tt.pkgs...).PackagesByPath("/b/path")
 			require.Len(t, actual, 1)
 			assert.Equal(t, tt.expectedLocations, actual[0].Locations.ToSlice())
+			require.Len(t, actual[0].CPEs, tt.expectedCPECount)
 		})
 	}
 }

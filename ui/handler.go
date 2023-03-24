@@ -9,10 +9,11 @@ import (
 	"context"
 	"sync"
 
-	stereoscopeEvent "github.com/anchore/stereoscope/pkg/event"
-	syftEvent "github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/jotframe/pkg/frame"
+
+	stereoscopeEvent "github.com/anchore/stereoscope/pkg/event"
+	syftEvent "github.com/anchore/syft/syft/event"
 )
 
 // Handler is an aggregated event handler for the set of supported events (PullDockerImage, ReadImage, FetchImage, PackageCatalogerStarted)
@@ -30,13 +31,13 @@ func (r *Handler) RespondsTo(event partybus.Event) bool {
 	case stereoscopeEvent.PullDockerImage,
 		stereoscopeEvent.ReadImage,
 		stereoscopeEvent.FetchImage,
-		syftEvent.UploadAttestation,
 		syftEvent.PackageCatalogerStarted,
 		syftEvent.SecretsCatalogerStarted,
 		syftEvent.FileDigestsCatalogerStarted,
 		syftEvent.FileMetadataCatalogerStarted,
 		syftEvent.FileIndexingStarted,
-		syftEvent.ImportStarted:
+		syftEvent.ImportStarted,
+		syftEvent.AttestationStarted:
 		return true
 	default:
 		return false
@@ -55,9 +56,6 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 	case stereoscopeEvent.FetchImage:
 		return FetchImageHandler(ctx, fr, event, wg)
 
-	case syftEvent.UploadAttestation:
-		return UploadAttestationHandler(ctx, fr, event, wg)
-
 	case syftEvent.PackageCatalogerStarted:
 		return PackageCatalogerStartedHandler(ctx, fr, event, wg)
 
@@ -75,6 +73,9 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 
 	case syftEvent.ImportStarted:
 		return ImportStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.AttestationStarted:
+		return AttestationStartedHandler(ctx, fr, event, wg)
 	}
 	return nil
 }

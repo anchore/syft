@@ -6,9 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/xeipuuv/gojsonschema"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/internal"
-	"github.com/xeipuuv/gojsonschema"
 )
 
 // this is the path to the json schema directory relative to the root of the repo
@@ -72,6 +73,7 @@ func TestJSONSchema(t *testing.T) {
 }
 
 func validateJsonAgainstSchema(t testing.TB, json string) {
+	t.Helper()
 	fullSchemaPath := path.Join(repoRoot(t), jsonSchemaPath, fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
 	schemaLoader := gojsonschema.NewReferenceLoader(fmt.Sprintf("file://%s", fullSchemaPath))
 	documentLoader := gojsonschema.NewStringLoader(json)

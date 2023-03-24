@@ -13,7 +13,7 @@ const (
 	// PackageCatalogerStarted is a partybus event that occurs when the package cataloging has begun
 	PackageCatalogerStarted partybus.EventType = "syft-package-cataloger-started-event"
 
-	// nolint:gosec
+	//nolint:gosec
 	// SecretsCatalogerStarted is a partybus event that occurs when the secrets cataloging has begun
 	SecretsCatalogerStarted partybus.EventType = "syft-secrets-cataloger-started-event"
 
@@ -32,6 +32,6 @@ const (
 	// ImportStarted is a partybus event that occurs when an SBOM upload process has begun
 	ImportStarted partybus.EventType = "syft-import-started-event"
 
-	// UploadAttestation is a partybus event that occurs when syft uploads an attestation to an OCI registry (+ any transparency log)
-	UploadAttestation partybus.EventType = "syft-upload-attestation"
+	// AttestationStarted is a partybus event that occurs when starting an SBOM attestation process
+	AttestationStarted partybus.EventType = "syft-attestation-started-event"
 )

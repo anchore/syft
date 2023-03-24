@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-test/deep"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestParseWheelEggRecord(t *testing.T) {
@@ -44,7 +45,41 @@ func TestParseWheelEggRecord(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseWheelOrEggRecord(fixture)
+			actual := parseWheelOrEggRecord(fixture)
+
+			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
+				t.Errorf("diff: %+v", d)
+			}
+		})
+	}
+}
+
+func TestParseInstalledFiles(t *testing.T) {
+	tests := []struct {
+		Fixture          string
+		ExpectedMetadata []pkg.PythonFileRecord
+	}{
+		{
+			Fixture: "test-fixtures/installed-files/installed-files.txt",
+			ExpectedMetadata: []pkg.PythonFileRecord{
+				{Path: "../__pycache__/dicttoxml.cpython-36.pyc"},
+				{Path: "../dicttoxml.py"},
+				{Path: "PKG-INFO"},
+				{Path: "SOURCES.txt"},
+				{Path: "dependency_links.txt"},
+				{Path: "top_level.txt"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Fixture, func(t *testing.T) {
+			fixture, err := os.Open(test.Fixture)
+			if err != nil {
+				t.Fatalf("failed to open fixture: %+v", err)
+			}
+
+			actual, err := parseInstalledFiles(fixture, "", "")
 			if err != nil {
 				t.Fatalf("failed to parse: %+v", err)
 			}
@@ -52,7 +87,7 @@ func TestParseWheelEggRecord(t *testing.T) {
 			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
 				t.Errorf("diff: %+v", d)
 			}
+
 		})
 	}
-
 }

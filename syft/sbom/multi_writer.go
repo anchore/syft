@@ -5,9 +5,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/go-homedir"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 // multiWriter holds a list of child sbom.Writers to apply all Write and Close operations to
@@ -96,6 +97,18 @@ func (m *multiWriter) Write(s SBOM) (errs error) {
 		}
 	}
 	return errs
+}
+
+// Bytes returns the bytes of the SBOM that would be written
+func (m *multiWriter) Bytes(s SBOM) (bytes []byte, err error) {
+	for _, w := range m.writers {
+		b, err := w.Bytes(s)
+		if err != nil {
+			return nil, err
+		}
+		bytes = append(bytes, b...)
+	}
+	return bytes, nil
 }
 
 // Close closes all writers

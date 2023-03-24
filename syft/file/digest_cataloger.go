@@ -8,15 +8,14 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anchore/syft/internal"
-
-	"github.com/anchore/syft/internal/log"
-
-	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/syft/event"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
+	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -52,10 +51,10 @@ func (i *DigestsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 		if err != nil {
 			return nil, err
 		}
-		prog.N++
+		prog.Increment()
 		results[location.Coordinates] = result
 	}
-	log.Debugf("file digests cataloger processed %d files", prog.N)
+	log.Debugf("file digests cataloger processed %d files", prog.Current())
 	prog.SetCompleted()
 	return results, nil
 }
@@ -67,7 +66,7 @@ func (i *DigestsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	}
 
 	// we should only attempt to report digests for files that are regular files (don't attempt to resolve links)
-	if meta.Type != source.RegularFile {
+	if meta.Type != file.TypeRegular {
 		return nil, errUndigestableFile
 	}
 
@@ -94,13 +93,9 @@ func DigestsFromFile(closer io.ReadCloser, hashes []crypto.Hash) ([]Digest, erro
 		writers[idx] = hashers[idx]
 	}
 
-	size, err := io.Copy(io.MultiWriter(writers...), closer)
+	_, err := io.Copy(io.MultiWriter(writers...), closer)
 	if err != nil {
 		return nil, err
-	}
-
-	if size == 0 {
-		return make([]Digest, 0), nil
 	}
 
 	result := make([]Digest, len(hashes))
@@ -128,9 +123,7 @@ func CleanDigestAlgorithmName(name string) string {
 
 func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
 	stage := &progress.Stage{}
-	prog := &progress.Manual{
-		Total: locations,
-	}
+	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{
 		Type: event.FileDigestsCatalogerStarted,

@@ -6,8 +6,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/mitchellh/mapstructure"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 const pomPropertiesGlob = "*pom.properties"
@@ -40,11 +41,6 @@ func parsePomProperties(path string, reader io.Reader) (*pkg.PomProperties, erro
 
 	if err := mapstructure.Decode(propMap, &props); err != nil {
 		return nil, fmt.Errorf("unable to parse pom.properties: %w", err)
-	}
-
-	// don't allow for a nil collection, ensure it is empty
-	if props.Extra == nil {
-		props.Extra = make(map[string]string)
 	}
 
 	props.Path = path
