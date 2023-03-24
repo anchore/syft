@@ -23,6 +23,15 @@ var DefaultClassifiers = []Classifier{
 		},
 	},
 	{
+		Class: "nix-store",
+		FilepathPatterns: []*regexp.Regexp{
+			regexp.MustCompile(`/nix/store/[^-]*-([^-]*)-(?P<version>.*)/$`),
+		},
+		EvidencePatternTemplates: []string{
+			`(?m)(?P<version>{{ .version }}\.[0-9]+[-_a-zA-Z0-9]*)`,
+		},
+	},
+	{
 		Class: "cpython-source",
 		FilepathPatterns: []*regexp.Regexp{
 			regexp.MustCompile(`(.*/|^)patchlevel.h$`),

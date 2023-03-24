@@ -14,6 +14,7 @@ const (
 	ApkMetadataType              MetadataType = "ApkMetadata"
 	AlpmMetadataType             MetadataType = "AlpmMetadata"
 	DpkgMetadataType             MetadataType = "DpkgMetadata"
+	NixStoreMetadataType         MetadataType = "NixStoreMetadata"
 	GemMetadataType              MetadataType = "GemMetadata"
 	JavaMetadataType             MetadataType = "JavaMetadata"
 	NpmPackageJSONMetadataType   MetadataType = "NpmPackageJsonMetadata"
@@ -35,6 +36,7 @@ var AllMetadataTypes = []MetadataType{
 	ApkMetadataType,
 	AlpmMetadataType,
 	DpkgMetadataType,
+	NixStoreMetadataType,
 	GemMetadataType,
 	JavaMetadataType,
 	NpmPackageJSONMetadataType,

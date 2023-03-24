@@ -19,6 +19,7 @@ const (
 	JavaPkg          Type = "java-archive"
 	JenkinsPluginPkg Type = "jenkins-plugin"
 	GoModulePkg      Type = "go-module"
+	NixStorePkg      Type = "nix-store"
 	RustPkg          Type = "rust-crate"
 	KbPkg            Type = "msrc-kb"
 	DartPubPkg       Type = "dart-pub"
@@ -39,6 +40,7 @@ var AllPkgs = []Type{
 	NpmPkg,
 	PythonPkg,
 	PhpComposerPkg,
+	NixStorePkg,
 	JavaPkg,
 	JenkinsPluginPkg,
 	GoModulePkg,
@@ -63,6 +65,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGem
 	case DebPkg:
 		return "deb"
+	case NixStorePkg:
+		return "nix"
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PhpComposerPkg:
