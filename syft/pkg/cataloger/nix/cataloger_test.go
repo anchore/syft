@@ -25,7 +25,7 @@ func TestCataloger_Catalog(t *testing.T) {
 					PURL:         "pkg:nix/glibc@2.34-210?output=bin&hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 					Locations:    source.NewLocationSet(source.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
 					FoundBy:      catalogerName,
-					Type:         pkg.NixStorePkg,
+					Type:         pkg.NixPkg,
 					MetadataType: pkg.NixStoreMetadataType,
 					Metadata: pkg.NixStoreMetadata{
 						Hash:   "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
@@ -47,7 +47,7 @@ func TestCataloger_Catalog(t *testing.T) {
 			c := NewStoreCataloger()
 
 			pkgtest.NewCatalogTester().
-				WithDirectoryResolver(t, tt.fixture).
+				FromDirectory(t, tt.fixture).
 				Expects(tt.wantPkgs, tt.wantRel).
 				TestCataloger(t, c)
 		})

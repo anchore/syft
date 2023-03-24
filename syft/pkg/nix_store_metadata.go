@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	"github.com/scylladb/go-set/strset"
 	"sort"
+
+	"github.com/scylladb/go-set/strset"
 )
 
 type NixStoreMetadata struct {

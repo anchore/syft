@@ -12,7 +12,7 @@ func newNixStorePackage(storePath nixStorePath, locations ...source.Location) pk
 		Version:      storePath.version,
 		FoundBy:      catalogerName,
 		Locations:    source.NewLocationSet(locations...),
-		Type:         pkg.NixStorePkg,
+		Type:         pkg.NixPkg,
 		PURL:         packageURL(storePath),
 		MetadataType: pkg.NixStoreMetadataType,
 		Metadata: pkg.NixStoreMetadata{
