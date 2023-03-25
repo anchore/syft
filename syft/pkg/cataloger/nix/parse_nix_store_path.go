@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+// checkout the package naming conventions here: https://nixos.org/manual/nixpkgs/stable/#sec-package-naming
+
 type nixStorePath struct {
 	hash    string
 	name    string

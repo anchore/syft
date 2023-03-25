@@ -16,8 +16,8 @@ func newNixStorePackage(storePath nixStorePath, locations ...source.Location) pk
 		PURL:         packageURL(storePath),
 		MetadataType: pkg.NixStoreMetadataType,
 		Metadata: pkg.NixStoreMetadata{
-			Hash:   storePath.hash,
-			Output: storePath.output,
+			OutputHash: storePath.hash,
+			Output:     storePath.output,
 		},
 	}
 
@@ -42,7 +42,7 @@ func packageURL(storePath nixStorePath) string {
 		// it's not immediately clear if the hash found in the store path should be encoded in the pURL
 		qualifiers = append(qualifiers,
 			packageurl.Qualifier{
-				Key:   "hash",
+				Key:   "outputhash",
 				Value: storePath.hash,
 			},
 		)

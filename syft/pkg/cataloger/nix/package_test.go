@@ -28,7 +28,7 @@ func Test_packageURL(t *testing.T) {
 				version: "2.34",
 				hash:    "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 			},
-			want: "pkg:nix/glibc@2.34?hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+			want: "pkg:nix/glibc@2.34?outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 		},
 		{
 			name: "output qualifier",
@@ -38,7 +38,7 @@ func Test_packageURL(t *testing.T) {
 				hash:    "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 				output:  "bin",
 			},
-			want: "pkg:nix/glibc@2.34?output=bin&hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+			want: "pkg:nix/glibc@2.34?output=bin&outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 		},
 	}
 	for _, tt := range tests {

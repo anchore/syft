@@ -22,14 +22,14 @@ func TestCataloger_Catalog(t *testing.T) {
 				{
 					Name:         "glibc",
 					Version:      "2.34-210",
-					PURL:         "pkg:nix/glibc@2.34-210?output=bin&hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+					PURL:         "pkg:nix/glibc@2.34-210?output=bin&outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 					Locations:    source.NewLocationSet(source.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
 					FoundBy:      catalogerName,
 					Type:         pkg.NixPkg,
 					MetadataType: pkg.NixStoreMetadataType,
 					Metadata: pkg.NixStoreMetadata{
-						Hash:   "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
-						Output: "bin",
+						OutputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+						Output:     "bin",
 						Files: []string{
 							"nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin/lib",
 							"nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin/lib/glibc.so",

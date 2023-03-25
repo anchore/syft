@@ -22,7 +22,7 @@ var (
 	// attempts to find the right-most example of something that appears to be a version (semver or otherwise)
 	// example input: h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin
 	// example output:
-	//  version: "-2.34-210"
+	//  version: "2.34-210"
 	//  major: "2"
 	//  minor: "34"
 	//  patch: "210"
@@ -104,6 +104,12 @@ func appendFiles(p *pkg.Package, location ...source.Location) {
 	for _, l := range location {
 		metadata.Files = append(metadata.Files, l.RealPath)
 	}
+
+	if metadata.Files == nil {
+		// note: we always have an allocated collection for output
+		metadata.Files = []string{}
+	}
+
 	p.Metadata = metadata
 	p.SetID()
 }

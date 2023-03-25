@@ -8,118 +8,119 @@ import (
 )
 
 func Test_findVersionIsh(t *testing.T) {
+	// note: only the package version fields are tested here, the name is tested for the test for parseNixStorePath below.
 	tests := []struct {
-		name    string
-		input   string
-		wantIdx int
-		wantEx  string
-		wantPr  string
+		name           string
+		input          string
+		wantIdx        int
+		wantVersion    string
+		wantPreRelease string
 	}{
 		{
-			name:    "no version",
-			input:   "5q7vxm9lc4b9hifc3br4sr8dy7f2h0qa-source",
-			wantIdx: -1,
-			wantEx:  "",
-			wantPr:  "",
+			name:           "no version",
+			input:          "5q7vxm9lc4b9hifc3br4sr8dy7f2h0qa-source",
+			wantIdx:        -1,
+			wantVersion:    "",
+			wantPreRelease: "",
 		},
 		{
-			name:    "semver with overbite into output",
-			input:   "/nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin",
-			wantIdx: 50,
-			wantEx:  "2.34-210-bin",
-			wantPr:  "210-bin",
+			name:           "semver with overbite into output",
+			input:          "/nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin",
+			wantIdx:        50,
+			wantVersion:    "2.34-210-bin",
+			wantPreRelease: "210-bin",
 		},
 		{
-			name:    "multiple versions",
-			input:   "5zzrvdmlkc5rh3k5862krd3wfb3pqhyf-perl5.34.1-TimeDate-2.33",
-			wantIdx: 53,
-			wantEx:  "2.33",
-			wantPr:  "",
+			name:           "multiple versions",
+			input:          "5zzrvdmlkc5rh3k5862krd3wfb3pqhyf-perl5.34.1-TimeDate-2.33",
+			wantIdx:        53,
+			wantVersion:    "2.33",
+			wantPreRelease: "",
 		},
 		{
-			name:    "name ends with number",
-			input:   "55nswyz8335lk954y1ccx6as2jbq1z8f-libfido2-1.10.0",
-			wantIdx: 42,
-			wantEx:  "1.10.0",
-			wantPr:  "",
+			name:           "name ends with number",
+			input:          "55nswyz8335lk954y1ccx6as2jbq1z8f-libfido2-1.10.0",
+			wantIdx:        42,
+			wantVersion:    "1.10.0",
+			wantPreRelease: "",
 		},
 		{
-			name:    "major-minor only",
-			input:   "q8gnp7r8475p52k9gmdzsrcddw5hirbn-gdbm-1.23",
-			wantIdx: 38,
-			wantEx:  "1.23",
-			wantPr:  "",
+			name:           "major-minor only",
+			input:          "q8gnp7r8475p52k9gmdzsrcddw5hirbn-gdbm-1.23",
+			wantIdx:        38,
+			wantVersion:    "1.23",
+			wantPreRelease: "",
 		},
 		{
-			name:    "0-prefixed version field",
-			input:   "r705jm2icczpnmfccby3fzfrckfjakx3-perl5.34.1-URI-5.05",
-			wantIdx: 48,
-			wantEx:  "5.05",
-			wantPr:  "",
+			name:           "0-prefixed version field",
+			input:          "r705jm2icczpnmfccby3fzfrckfjakx3-perl5.34.1-URI-5.05",
+			wantIdx:        48,
+			wantVersion:    "5.05",
+			wantPreRelease: "",
 		},
 		{
-			name:    "prerelease with alpha prefix",
-			input:   "v48s6iddb518j9lc1pk3rcn3x8c2ff0j-bash-interactive-5.1-p16",
-			wantIdx: 50,
-			wantEx:  "5.1-p16",
-			wantPr:  "p16",
+			name:           "prerelease with alpha prefix",
+			input:          "v48s6iddb518j9lc1pk3rcn3x8c2ff0j-bash-interactive-5.1-p16",
+			wantIdx:        50,
+			wantVersion:    "5.1-p16",
+			wantPreRelease: "p16",
 		},
 		{
 
-			name:    "0-major version",
-			input:   "x2f9x5q6qrs6cssx09ylxqyg9q2isi1z-aws-c-http-0.6.15",
-			wantIdx: 44,
-			wantEx:  "0.6.15",
-			wantPr:  "",
+			name:           "0-major version",
+			input:          "x2f9x5q6qrs6cssx09ylxqyg9q2isi1z-aws-c-http-0.6.15",
+			wantIdx:        44,
+			wantVersion:    "0.6.15",
+			wantPreRelease: "",
 		},
 		{
 
 			name: "several version fields",
 			// note: this package version is fictitious
-			input:   "z24qs6f5d1mmwdp73n1jfc3swj4v2c5s-krb5-1.19.3.9.10",
-			wantIdx: 38,
-			wantEx:  "1.19.3.9.10",
-			wantPr:  "",
+			input:          "z24qs6f5d1mmwdp73n1jfc3swj4v2c5s-krb5-1.19.3.9.10",
+			wantIdx:        38,
+			wantVersion:    "1.19.3.9.10",
+			wantPreRelease: "",
 		},
 		{
 
-			name:    "skip drv + major only version",
-			input:   "z0fqylhisz47krxv8fd0izm1i2qbswfr-readline63-006.drv",
-			wantIdx: 44,
-			wantEx:  "006",
-			wantPr:  "",
+			name:           "skip drv + major only version",
+			input:          "z0fqylhisz47krxv8fd0izm1i2qbswfr-readline63-006.drv",
+			wantIdx:        44,
+			wantVersion:    "006",
+			wantPreRelease: "",
 		},
 		{
 
-			name:    "prerelease with multiple dashes",
-			input:   "zkgyp2vra0bgqm0dv1qi514l5fd0aksx-bash-interactive-5.1-p16-man",
-			wantIdx: 50,
-			wantEx:  "5.1-p16-man",
-			wantPr:  "p16-man",
+			name:           "prerelease with multiple dashes",
+			input:          "zkgyp2vra0bgqm0dv1qi514l5fd0aksx-bash-interactive-5.1-p16-man",
+			wantIdx:        50,
+			wantVersion:    "5.1-p16-man",
+			wantPreRelease: "p16-man",
 		},
 		{
 
-			name:    "date as major version",
-			input:   "0amf0d1dymv9gqcyhhjb9j0l8sn00c56-libedit-20210910-3.1",
-			wantIdx: 41,
-			wantEx:  "20210910-3.1",
-			wantPr:  "3.1",
+			name:           "date as major version",
+			input:          "0amf0d1dymv9gqcyhhjb9j0l8sn00c56-libedit-20210910-3.1",
+			wantIdx:        41,
+			wantVersion:    "20210910-3.1",
+			wantPreRelease: "3.1",
 		},
 		{
 
-			name:    "long name",
-			input:   "0296qxvn30z9b2ah1g5p97k5wr9k8y78-busybox-static-x86_64-unknown-linux-musl-1.35.0",
-			wantIdx: 74,
-			wantEx:  "1.35.0",
-			wantPr:  "",
+			name:           "long name",
+			input:          "0296qxvn30z9b2ah1g5p97k5wr9k8y78-busybox-static-x86_64-unknown-linux-musl-1.35.0",
+			wantIdx:        74,
+			wantVersion:    "1.35.0",
+			wantPreRelease: "",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotIdx, gotEx, gotPr := findVersionIsh(tt.input)
+			gotIdx, gotVersion, gotPreRelease := findVersionIsh(tt.input)
 			assert.Equal(t, tt.wantIdx, gotIdx)
-			assert.Equal(t, tt.wantEx, gotEx)
-			assert.Equal(t, tt.wantPr, gotPr)
+			assert.Equal(t, tt.wantVersion, gotVersion)
+			assert.Equal(t, tt.wantPreRelease, gotPreRelease)
 		})
 	}
 }
