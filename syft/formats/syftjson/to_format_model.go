@@ -144,6 +144,7 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 		UserID:          metadata.UserID,
 		GroupID:         metadata.GroupID,
 		MIMEType:        metadata.MIMEType,
+		Size:            metadata.Size,
 	}
 }
 
