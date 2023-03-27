@@ -8,7 +8,7 @@ import (
 )
 
 func Test_findVersionIsh(t *testing.T) {
-	// note: only the package version fields are tested here, the name is tested for the test for parseNixStorePath below.
+	// note: only the package version fields are tested here, the name is tested in parseNixStorePath below.
 	tests := []struct {
 		name           string
 		input          string
