@@ -75,7 +75,6 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 			SearchLocalModCacheLicenses: cfg.Golang.SearchLocalModCacheLicenses,
 			SearchRemoteLicenses:        cfg.Golang.SearchRemoteLicenses,
 			LocalModCacheDir:            cfg.Golang.LocalModCacheDir,
-			RemoteProxy:                 cfg.Golang.RemoteProxy,
 		},
 	}
 }

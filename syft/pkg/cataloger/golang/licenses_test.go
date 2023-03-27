@@ -110,7 +110,6 @@ func Test_RemoteLicenseSearch(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(GoCatalogerOpts{
 				SearchRemoteLicenses: true,
-				RemoteProxy:          server.URL,
 			})
 
 			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)

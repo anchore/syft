@@ -3,10 +3,12 @@ package golang
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -35,15 +37,28 @@ func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	}
 }
 
-func remoteProxy(proxy string) string {
-	if proxy != "" {
-		return proxy
+func remoteProxy(module string) (proxy string, err error) {
+	goprivate := os.Getenv("GOPRIVATE")
+	if goprivate != "" {
+		patterns := strings.Split(goprivate, ",")
+		for _, pattern := range patterns {
+			if matched, err := path.Match(pattern, module); err == nil && matched {
+				// matched to be direct for this module
+				return "", nil
+			}
+		}
 	}
-	proxy, ok := os.LookupEnv("GOPROXY")
-	if ok {
-		return proxy
+
+	goproxy := os.Getenv("GOPROXY")
+	switch {
+	case goproxy == "":
+		proxy = defaultRemoteProxy
+	case goproxy == "off":
+		return "", errors.New("remote license search is disabled by GOPROXY=off")
+	case goproxy == "direct":
+		proxy = ""
 	}
-	return defaultRemoteProxy
+	return
 }
 
 func defaultGoPath() string {
@@ -115,7 +130,7 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 	// if we did not find it yet, and remote searching was enabled, then use that
 	if c.opts.SearchRemoteLicenses && err == nil && len(licenses) == 0 {
 		var fsys fs.FS
-		fsys, err = getModule(moduleName, moduleVersion, remoteProxy(c.opts.RemoteProxy))
+		fsys, err = getModule(moduleName, moduleVersion)
 		if err == nil {
 			licenses, err = findLicensesFS(fsys)
 		}
@@ -207,29 +222,46 @@ func processCaps(s string) string {
 	})
 }
 
-func getModule(moduleName, moduleVersion, proxy string) (fs.FS, error) {
-	// get the module zip
-	resp, err := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion))
+func getModule(moduleName, moduleVersion string) (fsys fs.FS, err error) {
+	proxy, err := remoteProxy(moduleName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("golang search-remote-licenses enabled but GOPROXY diabled: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode != http.StatusOK {
-		// try lowercasing it; some packages have mixed casing that really messes up the proxy
-		respLC, errLC := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion))
-		if errLC != nil {
+	if proxy == "" {
+		// no proxy, go direct
+		// https://go.dev/ref/mod#vcs
+		// would require support for Git, Subversion, Mercurial, Bazaar, and Fossil
+		// do we want to do this?
+	}
+	u, _ := url.Parse(proxy)
+	switch u.Scheme {
+	case "https", "http":
+		// get the module zip
+		resp, err := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion))
+		if err != nil {
 			return nil, err
 		}
-		defer func() { _ = respLC.Body.Close() }()
-		if respLC.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
+		defer func() { _ = resp.Body.Close() }()
+		if resp.StatusCode != http.StatusOK {
+			// try lowercasing it; some packages have mixed casing that really messes up the proxy
+			respLC, errLC := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion))
+			if errLC != nil {
+				return nil, err
+			}
+			defer func() { _ = respLC.Body.Close() }()
+			if respLC.StatusCode != http.StatusOK {
+				return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
+			}
+			resp = respLC
 		}
-		resp = respLC
+		// read the zip
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		fsys, err = zip.NewReader(bytes.NewReader(b), resp.ContentLength)
+	case "file":
+		fsys = os.DirFS(filepath.Join(u.Path, moduleName, "@v", moduleVersion))
 	}
-	// read the zip
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return zip.NewReader(bytes.NewReader(b), resp.ContentLength)
+	return
 }

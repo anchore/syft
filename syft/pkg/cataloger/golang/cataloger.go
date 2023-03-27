@@ -12,7 +12,6 @@ type GoCatalogerOpts struct {
 	SearchLocalModCacheLicenses bool
 	LocalModCacheDir            string
 	SearchRemoteLicenses        bool
-	RemoteProxy                 string
 	PrivateModules              string
 }
 
