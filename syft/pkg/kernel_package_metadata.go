@@ -1,5 +1,11 @@
 package pkg
 
+import (
+	"sort"
+
+	"github.com/scylladb/go-set/strset"
+)
+
 // KernelPackageMetadata represents all captured data for a Linux kernel
 type KernelPackageMetadata struct {
 	Name            string                 `mapstructure:"name" json:"name"`
@@ -14,6 +20,18 @@ type KernelPackageMetadata struct {
 	RootDevice      int                    `mapstructure:"rootDevice" json:"rootDevice,omitempty"`
 	VideoMode       string                 `mapstructure:"videoMode" json:"videoMode,omitempty"`
 	Modules         []KernelModuleMetadata `mapstructure:"modules" json:"modules"`
+}
+
+func (m KernelPackageMetadata) OwnedFiles() (result []string) {
+	s := strset.New()
+	for _, m := range m.Modules {
+		if m.Path != "" {
+			s.Add(m.Path)
+		}
+	}
+	result = s.List()
+	sort.Strings(result)
+	return
 }
 
 type KernelModuleMetadata struct {

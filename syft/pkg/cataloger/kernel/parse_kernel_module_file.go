@@ -3,12 +3,17 @@ package kernel
 import (
 	"debug/elf"
 	"fmt"
-	"github.com/anchore/syft/internal/log"
+	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
+)
+
+var (
+	kernelModulePathRE = regexp.MustCompile(`^(.*lib/modules/([^/]+)/)`)
 )
 
 func findKernelModules(resolver source.FileResolver, pkgLocations *source.LocationSet) ([]pkg.KernelModuleMetadata, error) {
@@ -18,6 +23,7 @@ func findKernelModules(resolver source.FileResolver, pkgLocations *source.Locati
 	}
 
 	// note: all collections in the metadata must be allocated
+	foundPaths := make(map[string]bool)
 	ret := make([]pkg.KernelModuleMetadata, 0)
 	for _, location := range locations {
 		contentReader, err := resolver.FileContentsByLocation(location)
@@ -35,9 +41,18 @@ func findKernelModules(resolver source.FileResolver, pkgLocations *source.Locati
 		if metadata == nil {
 			continue
 		}
-		pkgLocations.Add(location)
+		// get the base path
+		parts := kernelModulePathRE.FindStringSubmatch(location.RealPath)
+		if len(parts) > 1 {
+			basePath := parts[1]
+			if _, ok := foundPaths[basePath]; !ok {
+				foundPaths[basePath] = true
+				pkgLocations.Add(source.NewLocation(basePath))
+			}
+		}
 		ret = append(ret, *metadata)
 	}
+	// kernel modules have a common root, usually /lib/modules/<version>/kernel, so find the common base path
 	return ret, nil
 }
 
