@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func parseKernelFile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseKernelFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
@@ -31,6 +31,15 @@ func parseKernelFile(_ source.FileResolver, _ *generic.Environment, reader sourc
 	if metadata.Version == "" {
 		return nil, nil, nil
 	}
+
+	locations := source.NewLocationSet(reader.Location)
+
+	metadata.Modules, err = findKernelModules(resolver, &locations)
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to locate kernel modules")
+		metadata.Modules = []pkg.KernelModuleMetadata{}
+	}
+
 	p := pkg.Package{
 		Name:         packageName,
 		Version:      metadata.Version,
@@ -38,7 +47,7 @@ func parseKernelFile(_ source.FileResolver, _ *generic.Environment, reader sourc
 		Type:         pkg.KernelPkg,
 		MetadataType: pkg.KernelPackageMetadataType,
 		Metadata:     metadata,
-		Locations:    source.NewLocationSet(reader.Location),
+		Locations:    locations,
 	}
 
 	p.SetID()

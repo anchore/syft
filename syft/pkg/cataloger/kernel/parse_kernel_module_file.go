@@ -3,112 +3,63 @@ package kernel
 import (
 	"debug/elf"
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 	"strings"
 
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
 )
 
-type parameter struct {
-	description string
-	ptype       string
-}
-type kernelModuleMetadata struct {
-	kernelVersion string
-	versionMagic  string
-	sourceVersion string
-	version       string
-	author        string
-	license       string
-	name          string
-	description   string
-	parameters    map[string]parameter
-}
-
-func (k *kernelModuleMetadata) addEntry(entry []byte) error {
-	if len(entry) == 0 {
-		return nil
-	}
-	var key, value string
-	parts := strings.SplitN(string(entry), "=", 2)
-	if len(parts) > 0 {
-		key = parts[0]
-	}
-	if len(parts) > 1 {
-		value = parts[1]
+func findKernelModules(resolver source.FileResolver, pkgLocations *source.LocationSet) ([]pkg.KernelModuleMetadata, error) {
+	locations, err := resolver.FilesByGlob("**/*.ko")
+	if err != nil {
+		return nil, err
 	}
 
-	switch key {
-	case "version":
-		k.version = value
-	case "license":
-		k.license = value
-	case "author":
-		k.author = value
-	case "name":
-		k.name = value
-	case "vermagic":
-		k.versionMagic = value
-		fields := strings.Fields(value)
-		if len(fields) > 0 {
-			k.kernelVersion = fields[0]
+	// note: all collections in the metadata must be allocated
+	ret := make([]pkg.KernelModuleMetadata, 0)
+	for _, location := range locations {
+		contentReader, err := resolver.FileContentsByLocation(location)
+		if err != nil {
+			log.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
+			continue
 		}
-	case "srcversion":
-		k.sourceVersion = value
-	case "description":
-		k.description = value
-	case "parm":
-		parts := strings.SplitN(value, ":", 2)
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid parm entry: %s", value)
+
+		metadata, err := parseKernelModuleFile(source.NewLocationReadCloser(location, contentReader))
+		if err != nil {
+			log.WithFields("location", location.RealPath, "error", err).Warn("unable to parse kernel module")
+			continue
 		}
-		if m, ok := k.parameters[parts[0]]; !ok {
-			k.parameters[parts[0]] = parameter{description: parts[1]}
-		} else {
-			m.description = parts[1]
+
+		if metadata == nil {
+			continue
 		}
-	case "parmtype":
-		parts := strings.SplitN(value, ":", 2)
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid parmtype entry: %s", value)
-		}
-		if m, ok := k.parameters[parts[0]]; !ok {
-			k.parameters[parts[0]] = parameter{ptype: parts[1]}
-		} else {
-			m.ptype = parts[1]
-		}
+		pkgLocations.Add(location)
+		ret = append(ret, *metadata)
 	}
-	return nil
+	return ret, nil
 }
 
-func parseKernelModuleFile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseKernelModuleFile(reader source.LocationReadCloser) (*pkg.KernelModuleMetadata, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
+		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
 	metadata, err := parseKernelModuleMetadata(unionReader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse kernel module metadata: %w", err)
+		return nil, fmt.Errorf("unable to parse kernel module metadata: %w", err)
 	}
-	if metadata.kernelVersion == "" {
-		return nil, nil, nil
-	}
-	p := pkg.Package{
-		Name:      packageName,
-		Version:   metadata.kernelVersion,
-		PURL:      packageURL(packageName, metadata.kernelVersion),
-		Type:      pkg.KernelPkg,
-		Locations: source.NewLocationSet(reader.Location),
+	if metadata.KernelVersion == "" {
+		return nil, nil
 	}
 
-	p.SetID()
-	return []pkg.Package{p}, nil, nil
+	metadata.Path = reader.Location.RealPath
+
+	return metadata, nil
 }
 
-func parseKernelModuleMetadata(r unionreader.UnionReader) (p *kernelModuleMetadata, err error) {
+func parseKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.KernelModuleMetadata, err error) {
 	// filename:       /lib/modules/5.15.0-1031-aws/kernel/zfs/zzstd.ko
 	// version:        1.4.5a
 	// license:        Dual BSD/GPL
@@ -135,8 +86,8 @@ func parseKernelModuleMetadata(r unionreader.UnionReader) (p *kernelModuleMetada
 	// retpoline:      Y
 	// name:           8821cu
 	// vermagic:       5.10.121-linuxkit SMP mod_unload
-	p = &kernelModuleMetadata{
-		parameters: make(map[string]parameter),
+	p = &pkg.KernelModuleMetadata{
+		Parameters: make(map[string]pkg.KernelModuleParameter),
 	}
 	f, err := elf.NewFile(r)
 	if err != nil {
@@ -156,7 +107,7 @@ func parseKernelModuleMetadata(r unionreader.UnionReader) (p *kernelModuleMetada
 	)
 	for _, b2 := range b {
 		if b2 == 0 {
-			if err := p.addEntry(entry); err != nil {
+			if err := addEntry(p, entry); err != nil {
 				return nil, fmt.Errorf("error parsing entry %s: %w", string(entry), err)
 			}
 			entry = []byte{}
@@ -164,9 +115,65 @@ func parseKernelModuleMetadata(r unionreader.UnionReader) (p *kernelModuleMetada
 		}
 		entry = append(entry, b2)
 	}
-	if err := p.addEntry(entry); err != nil {
+	if err := addEntry(p, entry); err != nil {
 		return nil, fmt.Errorf("error parsing entry %s: %w", string(entry), err)
 	}
 
 	return p, nil
+}
+
+func addEntry(k *pkg.KernelModuleMetadata, entry []byte) error {
+	if len(entry) == 0 {
+		return nil
+	}
+	var key, value string
+	parts := strings.SplitN(string(entry), "=", 2)
+	if len(parts) > 0 {
+		key = parts[0]
+	}
+	if len(parts) > 1 {
+		value = parts[1]
+	}
+
+	switch key {
+	case "version":
+		k.Version = value
+	case "license":
+		k.License = value
+	case "author":
+		k.Author = value
+	case "name":
+		k.Name = value
+	case "vermagic":
+		k.VersionMagic = value
+		fields := strings.Fields(value)
+		if len(fields) > 0 {
+			k.KernelVersion = fields[0]
+		}
+	case "srcversion":
+		k.SourceVersion = value
+	case "description":
+		k.Description = value
+	case "parm":
+		parts := strings.SplitN(value, ":", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid parm entry: %s", value)
+		}
+		if m, ok := k.Parameters[parts[0]]; !ok {
+			k.Parameters[parts[0]] = pkg.KernelModuleParameter{Description: parts[1]}
+		} else {
+			m.Description = parts[1]
+		}
+	case "parmtype":
+		parts := strings.SplitN(value, ":", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid parmtype entry: %s", value)
+		}
+		if m, ok := k.Parameters[parts[0]]; !ok {
+			k.Parameters[parts[0]] = pkg.KernelModuleParameter{Type: parts[1]}
+		} else {
+			m.Type = parts[1]
+		}
+	}
+	return nil
 }
