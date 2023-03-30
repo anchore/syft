@@ -305,7 +305,8 @@ var validDefaultSourceValues = []string{"registry", "docker", "podman", ""}
 func checkDefaultSourceValues(source string) error {
 	validValues := internal.NewStringSet(validDefaultSourceValues...)
 	if !validValues.Contains(source) {
-		return fmt.Errorf("%s is not a valid default source; please use one of the following: %s", source, validValues.ToSlice())
+		validValuesString := strings.Join(validDefaultSourceValues, ", ")
+		return fmt.Errorf("%s is not a valid default source; please use one of the following: %s''", source, validValuesString)
 	}
 
 	return nil
