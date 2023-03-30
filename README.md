@@ -436,6 +436,10 @@ file: ""
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
 
+# allows users to specify which image source should be used to generate the sbom
+# valid values are: registry, docker, podman
+image-pull-source: ""
+
 # a list of globs to exclude from scanning. same as --exclude ; for example:
 # exclude:
 #   - "/etc/**"
