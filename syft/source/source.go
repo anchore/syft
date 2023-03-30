@@ -71,7 +71,7 @@ func ParseInputWithName(userInput string, platform, name, defaultImageSource str
 			scheme = ImageScheme
 			location = userInput
 			if defaultImageSource != "" {
-				source = defaultImageSourceFromConfig(defaultImageSource)
+				source = parseDefaultImageSource(defaultImageSource)
 			} else {
 				imagePullSource := image.DetermineDefaultImagePullSource(userInput)
 				source = imagePullSource
@@ -98,7 +98,7 @@ func ParseInputWithName(userInput string, platform, name, defaultImageSource str
 	}, nil
 }
 
-func defaultImageSourceFromConfig(defaultImageSource string) image.Source {
+func parseDefaultImageSource(defaultImageSource string) image.Source {
 	switch defaultImageSource {
 	case "registry":
 		return image.OciRegistrySource
