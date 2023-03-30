@@ -300,16 +300,12 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	return nil
 }
 
-func checkDefaultSourceValues(source string) error {
-	valid := map[string]struct{}{
-		"registry": {},
-		"docker":   {},
-		"podman":   {},
-		"":         {},
-	}
+var validDefaultSourceValues = []string{"registry", "docker", "podman", ""}
 
-	if _, ok := valid[source]; !ok {
-		return fmt.Errorf("%s is not a valid default source; please use one of ['registry', 'docker', podman', '']", source)
+func checkDefaultSourceValues(source string) error {
+	validValues := internal.NewStringSet(validDefaultSourceValues...)
+	if !validValues.Contains(source) {
+		return fmt.Errorf("%s is not a valid default source; please use one of the following: %s", source, validValues.ToSlice())
 	}
 
 	return nil

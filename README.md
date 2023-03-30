@@ -139,9 +139,11 @@ file:path/to/yourproject/file            read directly from a path on disk (any 
 registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
 
-You can also update source location via the config file. See [Configuration](#configuration) for more details on setting this up.
+If an image source is not provided and cannot be detected from the given reference it is assumed the image should be pulled from the Docker daemon.
+If docker is not present, then the Podman daemon is attempted next, followed by reaching out directly to the image registry last.
+This default behavior can be overridden with the default-image-pull-source configuration option (See Configuration for more details).
 
- Simply update the syft config with `default-image-pull-source` to specify which source to use by default.
+Simply update the syft config with `default-image-pull-source` to specify which source to use by default.
 
 #### Default Cataloger Configuration by scan type
 
