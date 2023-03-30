@@ -110,8 +110,6 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-
-
 ## Supported sources
 
 Syft can generate a SBOM from a variety of sources:
@@ -140,6 +138,10 @@ dir:path/to/yourproject                  read directly from a path on disk (any 
 file:path/to/yourproject/file            read directly from a path on disk (any single file)
 registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
+
+You can also update source location via the config file. See [Configuration](#configuration) for more details on setting this up.
+
+ Simply update the syft config with `default-image-pull-source` to specify which source to use by default.
 
 #### Default Cataloger Configuration by scan type
 
