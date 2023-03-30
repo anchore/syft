@@ -59,8 +59,8 @@ type Application struct {
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
-	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                  // the number of catalog workers to run in parallel
-	ImagePullSource    string             `yaml:"image-pull-source" json:"image-pull-source" mapstructre:"image-pull-source"` // specify default image pull source
+	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                   // the number of catalog workers to run in parallel
+	ImagePullSource    string             `yaml:"image-pull-source" json:"image-pull-source" mapstructure:"image-pull-source"` // specify default image pull source
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
