@@ -59,7 +59,8 @@ type Application struct {
 	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
 	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
-	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
+	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                  // the number of catalog workers to run in parallel
+	ImagePullSource    string             `yaml:"image-pull-source" json:"image-pull-source" mapstructre:"image-pull-source"` // specify default image pull source
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
@@ -130,6 +131,12 @@ func (cfg *Application) parseConfigValues() error {
 			return err
 		}
 	}
+
+	if err := checkDefaultSourceValues(cfg.ImagePullSource); err != nil {
+		return err
+	}
+
+	// check for valid default source options
 	// parse nested config options
 	// for each field in the configuration struct, see if the field implements the parser interface
 	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
@@ -192,6 +199,7 @@ func loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("check-for-app-update", true)
 	v.SetDefault("catalogers", nil)
 	v.SetDefault("parallelism", 1)
+	v.SetDefault("image-pull-source", "")
 
 	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
 	value := reflect.ValueOf(Application{})
@@ -289,5 +297,20 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 	}
+	return nil
+}
+
+func checkDefaultSourceValues(source string) error {
+	valid := map[string]struct{}{
+		"registry": {},
+		"docker":   {},
+		"podman":   {},
+		"":         {},
+	}
+
+	if _, ok := valid[source]; !ok {
+		return fmt.Errorf("%s is not a valid default source; please use one of ['registry', 'docker', podman', '']", source)
+	}
+
 	return nil
 }
