@@ -10,82 +10,53 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
 func TestSpdxValidationTooling(t *testing.T) {
+	img := imagetest.GetFixtureImage(t, "docker-archive", "image-java-spdx-tools")
+	require.NotEmpty(t, img.Metadata.Tags)
+	imgTag := img.Metadata.Tags[0]
+
+	images := []string{
+		"alpine:3.17.3@sha256:b6ca290b6b4cdcca5b3db3ffa338ee0285c11744b4a6abaa9627746ee3291d8d",
+		"photon:3.0@sha256:888675e193418d924feea262cf639c46532b63c2027a39fd3ac75383b3c1130e",
+		"debian:stable@sha256:729c2433e196207749a86f1d86e0106822041bb280b4200cf7a4db97608f6d3a",
+	}
+
+	env := map[string]string{
+		"SYFT_FILE_METADATA_CATALOGER_ENABLED": "true",
+		"SYFT_FILE_CONTENTS_CATALOGER_ENABLED": "true",
+		"SYFT_FILE_METADATA_DIGESTS":           "sha1",
+	}
+
 	tests := []struct {
-		name       string
-		syftArgs   []string
-		images     []string
-		setup      func(t *testing.T)
-		env        map[string]string
-		assertions []traitAssertion
+		name     string
+		syftArgs []string
+		images   []string
+		setup    func(t *testing.T)
+		env      map[string]string
 	}{
 		{
 			name:     "spdx validation tooling tag value",
 			syftArgs: []string{"packages", "-o", "spdx"},
-			images:   []string{"alpine:latest", "photon:3.0", "debian:latest"},
-			env: map[string]string{
-				"SYFT_FILE_METADATA_CATALOGER_ENABLED": "true",
-				"SYFT_FILE_CONTENTS_CATALOGER_ENABLED": "true",
-				"SYFT_FILE_METADATA_DIGESTS":           "sha1",
-			},
-			setup: func(t *testing.T) {
-				cwd, err := os.Getwd()
-				require.NoError(t, err)
-				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
-				buildCmd := exec.Command("make", "build")
-				buildCmd.Dir = fixturesPath
-				buildCmd.Stdout = os.Stdout
-				buildCmd.Stderr = os.Stderr
-				err = buildCmd.Run()
-				require.NoError(t, err)
-			},
-			assertions: []traitAssertion{
-				assertSuccessfulReturnCode,
-			},
+			images:   images,
+			env:      env,
 		},
 		{
 			name:     "spdx validation tooling json",
 			syftArgs: []string{"packages", "-o", "spdx-json"},
-			images:   []string{"alpine:latest", "photon:3.0", "debian:latest"},
-			env: map[string]string{
-				"SYFT_FILE_METADATA_CATALOGER_ENABLED": "true",
-				"SYFT_FILE_CONTENTS_CATALOGER_ENABLED": "true",
-				"SYFT_FILE_METADATA_DIGESTS":           "sha1",
-			},
-			setup: func(t *testing.T) {
-				cwd, err := os.Getwd()
-				require.NoError(t, err)
-				fixturesPath := filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
-				buildCmd := exec.Command("make", "build")
-				buildCmd.Dir = fixturesPath
-				err = buildCmd.Run()
-				require.NoError(t, err)
-			},
-			assertions: []traitAssertion{
-				assertSuccessfulReturnCode,
-			},
+			images:   images,
+			env:      env,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// build the validation image
-			test.setup(t)
-			dir := t.TempDir()
-			for _, image := range test.images {
+		for _, image := range test.images {
+			t.Run(test.name+"_"+image, func(t *testing.T) {
+
 				args := append(test.syftArgs, image)
-				cmd, stdout, stderr := runSyft(t, test.env, args...)
-				for _, traitFn := range test.assertions {
-					traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
-				}
-
-				cwd, err := os.Getwd()
-				require.NoError(t, err)
-
-				f, err := os.CreateTemp(dir, "temp")
-				require.NoError(t, err)
 
 				var suffix string
 				if strings.Contains(test.name, "json") {
@@ -94,23 +65,28 @@ func TestSpdxValidationTooling(t *testing.T) {
 					suffix = ".spdx"
 				}
 
-				// spdx tooling only takes a file with suffix spdx
-				rename := path.Join(path.Dir(f.Name()), fmt.Sprintf("%s%s", path.Base(f.Name()), suffix))
-				err = os.Rename(f.Name(), rename)
-				require.NoError(t, err)
+				dir := t.TempDir()
+				sbomPath := filepath.Join(dir, fmt.Sprintf("sbom%s", suffix))
 
-				// write file for validation
-				_, err = f.Write([]byte(stdout))
+				args = append(args, "--file", sbomPath)
+
+				cmd, _, stderr := runSyft(t, test.env, args...)
+				if cmd.ProcessState.ExitCode() != 0 {
+					t.Fatalf("failed to run syft: %s", stderr)
+				}
+
+				cwd, err := os.Getwd()
 				require.NoError(t, err)
 
 				// validate against spdx java tooling
-				fileArg := fmt.Sprintf("FILE=%s", rename)
-				mountArg := fmt.Sprintf("BASE=%s", path.Base(rename))
+				fileArg := fmt.Sprintf("DIR=%s", dir)
+				mountArg := fmt.Sprintf("BASE=%s", path.Base(sbomPath))
+				imageArg := fmt.Sprintf("IMAGE=%s", imgTag)
 
-				validateCmd := exec.Command("make", "validate", fileArg, mountArg)
+				validateCmd := exec.Command("make", "validate", fileArg, mountArg, imageArg)
 				validateCmd.Dir = filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
 				runAndShow(t, validateCmd)
-			}
-		})
+			})
+		}
 	}
 }
