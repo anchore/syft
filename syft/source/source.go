@@ -40,24 +40,23 @@ type Source struct {
 // Input is an object that captures the detected user input regarding source location, scheme, and provider type.
 // It acts as a struct input for some source constructors.
 type Input struct {
-	UserInput                       string
-	Scheme                          Scheme
-	ImageSource                     image.Source
-	Location                        string
-	Platform                        string
-	Name                            string
-	autoDetectAvailableImageSources bool
+	UserInput   string
+	Scheme      Scheme
+	ImageSource image.Source
+	Location    string
+	Platform    string
+	Name        string
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry.
-func ParseInput(userInput string, platform string, detectAvailableImageSources bool) (*Input, error) {
-	return ParseInputWithName(userInput, platform, detectAvailableImageSources, "")
+func ParseInput(userInput string, platform string) (*Input, error) {
+	return ParseInputWithName(userInput, platform, "", "")
 }
 
 // ParseInputWithName generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry, with an explicit name.
-func ParseInputWithName(userInput string, platform string, detectAvailableImageSources bool, name string) (*Input, error) {
+func ParseInputWithName(userInput string, platform, name, defaultImageSource string) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -69,12 +68,13 @@ func ParseInputWithName(userInput string, platform string, detectAvailableImageS
 		// only check on packages command, attest we automatically try to pull from userInput
 		switch scheme {
 		case ImageScheme, UnknownScheme:
-			if detectAvailableImageSources {
-				if imagePullSource := image.DetermineDefaultImagePullSource(userInput); imagePullSource != image.UnknownSource {
-					scheme = ImageScheme
-					source = imagePullSource
-					location = userInput
-				}
+			scheme = ImageScheme
+			location = userInput
+			if defaultImageSource != "" {
+				source = parseDefaultImageSource(defaultImageSource)
+			} else {
+				imagePullSource := image.DetermineDefaultImagePullSource(userInput)
+				source = imagePullSource
 			}
 			if location == "" {
 				location = userInput
@@ -89,14 +89,26 @@ func ParseInputWithName(userInput string, platform string, detectAvailableImageS
 
 	// collect user input for downstream consumption
 	return &Input{
-		UserInput:                       userInput,
-		Scheme:                          scheme,
-		ImageSource:                     source,
-		Location:                        location,
-		Platform:                        platform,
-		Name:                            name,
-		autoDetectAvailableImageSources: detectAvailableImageSources,
+		UserInput:   userInput,
+		Scheme:      scheme,
+		ImageSource: source,
+		Location:    location,
+		Platform:    platform,
+		Name:        name,
 	}, nil
+}
+
+func parseDefaultImageSource(defaultImageSource string) image.Source {
+	switch defaultImageSource {
+	case "registry":
+		return image.OciRegistrySource
+	case "docker":
+		return image.DockerDaemonSource
+	case "podman":
+		return image.PodmanDaemonSource
+	default:
+		return image.UnknownSource
+	}
 }
 
 type sourceDetector func(string) (image.Source, string, error)
@@ -203,9 +215,7 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 
 	// We need to determine the image source again, such that this determination
 	// doesn't take scheme parsing into account.
-	if in.autoDetectAvailableImageSources {
-		in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
-	}
+	in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
 	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
 	cleanup = func() {
 		if err := img.Cleanup(); err != nil {
