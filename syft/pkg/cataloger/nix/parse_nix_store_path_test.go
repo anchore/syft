@@ -114,6 +114,17 @@ func Test_findVersionIsh(t *testing.T) {
 			wantVersion:    "1.35.0",
 			wantPreRelease: "",
 		},
+		{
+			// this accounts for https://nixos.org/manual/nixpkgs/stable/#sec-package-naming
+			// > If a package is not a release but a commit from a repository, then the version attribute must
+			// > be the date of that (fetched) commit. The date must be in "unstable-YYYY-MM-DD" format.
+			// example: https://github.com/NixOS/nixpkgs/blob/798e23beab9b5cba4d6f05e8b243e1d4535770f3/pkgs/servers/webdav-server-rs/default.nix#L14
+			name:           "unstable version",
+			input:          "q5dhwzcn82by5ndc7g0q83wsnn13qkqw-webdav-server-rs-unstable-2021-08-16",
+			wantIdx:        50,
+			wantVersion:    "unstable-2021-08-16",
+			wantPreRelease: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -134,85 +145,93 @@ func Test_parseNixStorePath(t *testing.T) {
 		{
 			source: "/nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin",
 			want: &nixStorePath{
-				hash:    "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
-				name:    "glibc",
-				version: "2.34-210",
-				output:  "bin",
+				outputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+				name:       "glibc",
+				version:    "2.34-210",
+				output:     "bin",
 			},
 		},
 		{
 			source: "/nix/store/0296qxvn30z9b2ah1g5p97k5wr9k8y78-busybox-static-x86_64-unknown-linux-musl-1.35.0",
 			want: &nixStorePath{
-				hash:    "0296qxvn30z9b2ah1g5p97k5wr9k8y78",
-				name:    "busybox-static-x86_64-unknown-linux-musl",
-				version: "1.35.0",
+				outputHash: "0296qxvn30z9b2ah1g5p97k5wr9k8y78",
+				name:       "busybox-static-x86_64-unknown-linux-musl",
+				version:    "1.35.0",
 			},
 		},
 		{
 			source: "/nix/store/5zzrvdmlkc5rh3k5862krd3wfb3pqhyf-perl5.34.1-TimeDate-2.33",
 			want: &nixStorePath{
-				hash:    "5zzrvdmlkc5rh3k5862krd3wfb3pqhyf",
-				name:    "perl5.34.1-TimeDate",
-				version: "2.33",
+				outputHash: "5zzrvdmlkc5rh3k5862krd3wfb3pqhyf",
+				name:       "perl5.34.1-TimeDate",
+				version:    "2.33",
 			},
 		},
 		{
 			source: "/nix/store/q38q8ng57zwjg1h15ry5zx0lb0xyax4b-libcap-2.63-lib",
 			want: &nixStorePath{
-				hash:    "q38q8ng57zwjg1h15ry5zx0lb0xyax4b",
-				name:    "libcap",
-				version: "2.63",
-				output:  "lib",
+				outputHash: "q38q8ng57zwjg1h15ry5zx0lb0xyax4b",
+				name:       "libcap",
+				version:    "2.63",
+				output:     "lib",
 			},
 		},
 		{
 			source: "/nix/store/p0y8fbpbqr2jm5zfrdll0rgyg2lvp5g2-util-linux-minimal-2.37.4-bin",
 			want: &nixStorePath{
-				hash:    "p0y8fbpbqr2jm5zfrdll0rgyg2lvp5g2",
-				name:    "util-linux-minimal",
-				version: "2.37.4",
-				output:  "bin",
+				outputHash: "p0y8fbpbqr2jm5zfrdll0rgyg2lvp5g2",
+				name:       "util-linux-minimal",
+				version:    "2.37.4",
+				output:     "bin",
 			},
 		},
 		{
 			source: "/nix/store/z24qs6f5d1mmwdp73n1jfc3swj4v2c5s-krb5-1.19.3.9.10",
 			want: &nixStorePath{
-				hash:    "z24qs6f5d1mmwdp73n1jfc3swj4v2c5s",
-				name:    "krb5",
-				version: "1.19.3.9.10",
+				outputHash: "z24qs6f5d1mmwdp73n1jfc3swj4v2c5s",
+				name:       "krb5",
+				version:    "1.19.3.9.10",
 			},
 		},
 		{
 			source: "/nix/store/zkgyp2vra0bgqm0dv1qi514l5fd0aksx-bash-interactive-5.1-p16-man",
 			want: &nixStorePath{
-				hash:    "zkgyp2vra0bgqm0dv1qi514l5fd0aksx",
-				name:    "bash-interactive",
-				version: "5.1-p16",
-				output:  "man",
+				outputHash: "zkgyp2vra0bgqm0dv1qi514l5fd0aksx",
+				name:       "bash-interactive",
+				version:    "5.1-p16",
+				output:     "man",
 			},
 		},
 		{
 			source: "/nix/store/nwf2y0nc48ybim56308cr5ccvwkabcqc-openssl-1.1.1q",
 			want: &nixStorePath{
-				hash:    "nwf2y0nc48ybim56308cr5ccvwkabcqc",
-				name:    "openssl",
-				version: "1.1.1q",
+				outputHash: "nwf2y0nc48ybim56308cr5ccvwkabcqc",
+				name:       "openssl",
+				version:    "1.1.1q",
 			},
 		},
 		{
 			source: "/nix/store/nwv742f1bxv6g78hy9yc6slxdbxlmqhb-kmod-29",
 			want: &nixStorePath{
-				hash:    "nwv742f1bxv6g78hy9yc6slxdbxlmqhb",
-				name:    "kmod",
-				version: "29",
+				outputHash: "nwv742f1bxv6g78hy9yc6slxdbxlmqhb",
+				name:       "kmod",
+				version:    "29",
 			},
 		},
 		{
 			source: "/nix/store/n83qx7m848kg51lcjchwbkmlgdaxfckf-tzdata-2022a",
 			want: &nixStorePath{
-				hash:    "n83qx7m848kg51lcjchwbkmlgdaxfckf",
-				name:    "tzdata",
-				version: "2022a",
+				outputHash: "n83qx7m848kg51lcjchwbkmlgdaxfckf",
+				name:       "tzdata",
+				version:    "2022a",
+			},
+		},
+		{
+			source: "'/nix/store/q5dhwzcn82by5ndc7g0q83wsnn13qkqw-webdav-server-rs-unstable-2021-08-16",
+			want: &nixStorePath{
+				outputHash: "q5dhwzcn82by5ndc7g0q83wsnn13qkqw",
+				name:       "webdav-server-rs",
+				version:    "unstable-2021-08-16",
 			},
 		},
 		// negative cases...
