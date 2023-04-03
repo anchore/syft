@@ -846,26 +846,6 @@
         "pkgHashExt"
       ]
     },
-    "NixStoreMetadata": {
-      "properties": {
-        "hash": {
-          "type": "string"
-        },
-        "output": {
-          "type": "string"
-        },
-        "files": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object",
-      "required": [
-        "hash"
-      ]
-    },
     "NpmPackageJSONMetadata": {
       "properties": {
         "name": {
@@ -873,12 +853,6 @@
         },
         "version": {
           "type": "string"
-        },
-        "files": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         },
         "author": {
           "type": "string"
@@ -1028,9 +1002,6 @@
             },
             {
               "$ref": "#/$defs/MixLockMetadata"
-            },
-            {
-              "$ref": "#/$defs/NixStoreMetadata"
             },
             {
               "$ref": "#/$defs/NpmPackageJSONMetadata"
