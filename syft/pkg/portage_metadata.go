@@ -1,9 +1,11 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/file"
-	"github.com/scylladb/go-set/strset"
 	"sort"
+
+	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 var _ FileOwner = (*PortageMetadata)(nil)
