@@ -16,17 +16,18 @@ const (
 	nixStoreGlob  = "**/nix/store/*"
 )
 
-type Cataloger struct{}
+// StoreCataloger finds package outputs installed in the Nix store location (/nix/store/*).
+type StoreCataloger struct{}
 
-func NewStoreCataloger() *Cataloger {
-	return &Cataloger{}
+func NewStoreCataloger() *StoreCataloger {
+	return &StoreCataloger{}
 }
 
-func (c *Cataloger) Name() string {
+func (c *StoreCataloger) Name() string {
 	return catalogerName
 }
 
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *StoreCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// we want to search for only directories, which isn't possible via the stereoscope API, so we need to apply the glob manually on all returned paths
 	var pkgs []pkg.Package
 	var filesByPath = make(map[string]*source.LocationSet)

@@ -45,6 +45,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Java (jar, ear, war, par, sar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
+- Nix (outputs in /nix/store)
 - PHP (composer)
 - Python (wheel, egg, poetry, requirements.txt)
 - Red Hat (rpm)
