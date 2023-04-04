@@ -191,8 +191,8 @@ func toPackageModel(p pkg.Package) model.Package {
 	}
 
 	// TODO: update user facing package to use latest license model
-	//var licenses = make([]string, 0)
-	//if p.Licenses != nil {
+	// var licenses = make([]string, 0)
+	// if p.Licenses != nil {
 	//	licenses = p.Licenses
 	//}
 

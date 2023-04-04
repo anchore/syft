@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -174,7 +175,14 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses:     []string{"MIT"},
+		Licenses: []pkg.License{
+			{
+				Value:          "MIT",
+				SPDXExpression: "MIT",
+				Type:           license.Declared,
+				URL:            "",
+			},
+		},
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -249,7 +257,14 @@ func newDirectoryCatalog() *pkg.Catalog {
 		),
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses:     []string{"MIT"},
+		Licenses: []pkg.License{
+			{
+				Value:          "MIT",
+				SPDXExpression: "MIT",
+				Type:           license.Declared,
+				URL:            "",
+			},
+		},
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
