@@ -390,4 +390,11 @@ var commonTestCases = []testCase{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
 		},
 	},
+	{
+		name:    "find nix store packages",
+		pkgType: pkg.NixPkg,
+		pkgInfo: map[string]string{
+			"glibc": "2.34-210",
+		},
+	},
 }

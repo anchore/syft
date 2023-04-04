@@ -26,6 +26,7 @@ const (
 	JavaPkg               Type = "java-archive"
 	JenkinsPluginPkg      Type = "jenkins-plugin"
 	KbPkg                 Type = "msrc-kb"
+	NixPkg                Type = "nix"
 	NpmPkg                Type = "npm"
 	PhpComposerPkg        Type = "php-composer"
 	PortagePkg            Type = "portage"
@@ -51,6 +52,7 @@ var AllPkgs = []Type{
 	JavaPkg,
 	JenkinsPluginPkg,
 	KbPkg,
+	NixPkg,
 	NpmPkg,
 	PhpComposerPkg,
 	PortagePkg,
@@ -92,6 +94,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypePyPi
 	case PortagePkg:
 		return "portage"
+	case NixPkg:
+		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
 	case RpmPkg:
@@ -151,6 +155,8 @@ func TypeByName(name string) Type {
 		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case "nix":
+		return NixPkg
 	default:
 		return UnknownPkg
 	}
