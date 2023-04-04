@@ -34,7 +34,7 @@ func parseKernelFile(resolver source.FileResolver, _ *generic.Environment, reade
 
 	locations := source.NewLocationSet(reader.Location)
 
-	metadata.Modules, err = findKernelModules(resolver, &locations)
+	metadata.Modules, err = findKernelModules(resolver, &locations, metadata.Version)
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to locate kernel modules")
 		metadata.Modules = []pkg.KernelModuleMetadata{}

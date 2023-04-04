@@ -21,10 +21,6 @@ var kernelFiles = []string{
 	"vmlinuz-*",
 }
 
-var kernelModuleFiles = []string{
-	"*.ko",
-}
-
 // NewKernelCataloger returns a new kernel files cataloger object.
 func NewKernelCataloger(opts CatalogerOpts) *generic.Cataloger {
 	var fileList []string

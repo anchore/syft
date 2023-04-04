@@ -207,6 +207,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from kernel file or kernel modules files",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.NixPkg,
+			},
+			expected: []string{
+				"from nix store path",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

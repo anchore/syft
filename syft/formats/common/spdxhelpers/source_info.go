@@ -47,6 +47,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from rebar3 or mix manifest file"
 	case pkg.KernelPkg:
 		answer = "acquired package info from kernel file or kernel modules files"
+	case pkg.NixPkg:
+		answer = "acquired package info from nix store path"
 	default:
 		answer = "acquired package info from the following paths"
 	}

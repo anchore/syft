@@ -16,7 +16,7 @@ var (
 	kernelModulePathRE = regexp.MustCompile(`^(.*lib/modules/([^/]+)/)`)
 )
 
-func findKernelModules(resolver source.FileResolver, pkgLocations *source.LocationSet) ([]pkg.KernelModuleMetadata, error) {
+func findKernelModules(resolver source.FileResolver, pkgLocations *source.LocationSet, kernelVersion string) ([]pkg.KernelModuleMetadata, error) {
 	locations, err := resolver.FilesByGlob("**/*.ko")
 	if err != nil {
 		return nil, err
@@ -41,10 +41,17 @@ func findKernelModules(resolver source.FileResolver, pkgLocations *source.Locati
 		if metadata == nil {
 			continue
 		}
+		if metadata.KernelVersion != kernelVersion {
+			continue
+		}
 		// get the base path
 		parts := kernelModulePathRE.FindStringSubmatch(location.RealPath)
-		if len(parts) > 1 {
+		if len(parts) > 2 {
 			basePath := parts[1]
+			pathVersion := parts[2]
+			if pathVersion != kernelVersion {
+				continue
+			}
 			if _, ok := foundPaths[basePath]; !ok {
 				foundPaths[basePath] = true
 				pkgLocations.Add(source.NewLocation(basePath))
