@@ -74,7 +74,6 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 			continue
 		}
 		appendFiles(p, files.ToSlice()...)
-		continue
 	}
 
 	return pkgs, nil, nil
