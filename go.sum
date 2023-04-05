@@ -258,7 +258,6 @@ github.com/google/go-cmp v0.5.3/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
-github.com/google/go-cmp v0.5.7/go.mod h1:n+brtR0CgQNWTVd5ZUFpTBC8YFBDLK/h/bpaJ8/DtOE=
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-containerregistry v0.14.0 h1:z58vMqHxuwvAsVwvKEkmVBz2TlgBgH5k6koEXBtlYkw=
@@ -519,8 +518,8 @@ github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0
 github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spdx/gordf v0.0.0-20201111095634-7098f93598fb/go.mod h1:uKWaldnbMnjsSAXRurWqqrdyZen1R7kxl8TkmWk2OyM=
-github.com/spdx/tools-golang v0.5.0-rc1 h1:ooCSe48QatlidqEFd+nSI308tyeNTR6NJvauUj3ApX8=
-github.com/spdx/tools-golang v0.5.0-rc1/go.mod h1:LI6onw172PdO57Ob/hgnLDD4Y2PMnroeNT3wO/2WJJI=
+github.com/spdx/tools-golang v0.5.0 h1:/fqihV2Jna7fmow65dHpgKNsilgLK7ICpd2tkCnPEyY=
+github.com/spdx/tools-golang v0.5.0/go.mod h1:kkGlrSXXfHwuSzHQZJRV3aKu9ZXCq/MSf2+xyiJH1lM=
 github.com/spf13/afero v1.3.3/go.mod h1:5KUK8ByomD5Ti5Artl0RtHeI5pTF7MIDuXL3yY520V4=
 github.com/spf13/afero v1.6.0/go.mod h1:Ai8FlHk4v/PARR026UzYexafAt9roJ7LcLMAmO6Z93I=
 github.com/spf13/afero v1.9.5 h1:stMpOSZFs//0Lv29HduCmli3GUfpFoF3Y1Q/aXj/wVM=
