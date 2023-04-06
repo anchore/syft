@@ -325,10 +325,6 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 		} else {
 			epoch = &converted
 		}
-		license := p.PackageLicenseDeclared
-		if license == "" {
-			license = p.PackageLicenseConcluded
-		}
 		return pkg.RpmMetadataType, pkg.RpmMetadata{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
@@ -393,11 +389,4 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 		}
 	}
 	return cpes
-}
-
-func parseLicense(l string) []string {
-	if l == NOASSERTION || l == NONE {
-		return nil
-	}
-	return strings.Split(l, " AND ")
 }

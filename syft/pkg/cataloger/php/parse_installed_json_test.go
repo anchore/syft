@@ -24,6 +24,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
+			Licenses:     []pkg.License{},
 			Metadata: pkg.PhpComposerJSONMetadata{
 				Name:    "asm89/stack-cors",
 				Version: "1.3.0",
@@ -49,9 +50,6 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 				Time:            "2019-12-24T22:41:47+00:00",
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:  "Alexander",
@@ -73,6 +71,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			PURL:         "pkg:composer/behat/mink@v1.8.1",
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
+			Licenses:     []pkg.License{},
 			MetadataType: pkg.PhpComposerJSONMetadataType,
 			Metadata: pkg.PhpComposerJSONMetadata{
 				Name:    "behat/mink",
@@ -106,9 +105,6 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 				Time:            "2020-03-11T15:45:53+00:00",
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:     "Konstantin Kudryashov",

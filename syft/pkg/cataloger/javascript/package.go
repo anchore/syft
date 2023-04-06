@@ -1,9 +1,6 @@
 package javascript
 
 import (
-	"encoding/json"
-	"io"
-	"path"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -120,62 +117,63 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 	)
 }
 
-func finalizeLockPkg(resolver source.FileResolver, location source.Location, p pkg.Package) pkg.Package {
+// TODO: update license extraction to use the new license finder
+func finalizeLockPkg(_ source.FileResolver, _ source.Location, p pkg.Package) pkg.Package {
 	p.SetID()
 	return p
 }
 
-func addLicenses(name string, resolver source.FileResolver, location source.Location) (allLicenses []string) {
-	if resolver == nil {
-		return allLicenses
-	}
-
-	dir := path.Dir(location.RealPath)
-	pkgPath := []string{dir, "node_modules"}
-	pkgPath = append(pkgPath, strings.Split(name, "/")...)
-	pkgPath = append(pkgPath, "package.json")
-	pkgFile := path.Join(pkgPath...)
-	locations, err := resolver.FilesByPath(pkgFile)
-	if err != nil {
-		log.Debugf("an error occurred attempting to read: %s - %+v", pkgFile, err)
-		return allLicenses
-	}
-
-	if len(locations) == 0 {
-		return allLicenses
-	}
-
-	for _, l := range locations {
-		contentReader, err := resolver.FileContentsByLocation(l)
-		if err != nil {
-			log.Debugf("error getting file content reader for %s: %v", pkgFile, err)
-			return allLicenses
-		}
-
-		contents, err := io.ReadAll(contentReader)
-		if err != nil {
-			log.Debugf("error reading file contents for %s: %v", pkgFile, err)
-			return allLicenses
-		}
-
-		var pkgJSON packageJSON
-		err = json.Unmarshal(contents, &pkgJSON)
-		if err != nil {
-			log.Debugf("error parsing %s: %v", pkgFile, err)
-			return allLicenses
-		}
-
-		licenses, err := pkgJSON.licensesFromJSON()
-		if err != nil {
-			log.Debugf("error getting licenses from %s: %v", pkgFile, err)
-			return allLicenses
-		}
-
-		allLicenses = append(allLicenses, licenses...)
-	}
-
-	return allLicenses
-}
+// func addLicenses(name string, resolver source.FileResolver, location source.Location) (allLicenses []string) {
+//	if resolver == nil {
+//		return allLicenses
+//	}
+//
+//	dir := path.Dir(location.RealPath)
+//	pkgPath := []string{dir, "node_modules"}
+//	pkgPath = append(pkgPath, strings.Split(name, "/")...)
+//	pkgPath = append(pkgPath, "package.json")
+//	pkgFile := path.Join(pkgPath...)
+//	locations, err := resolver.FilesByPath(pkgFile)
+//	if err != nil {
+//		log.Debugf("an error occurred attempting to read: %s - %+v", pkgFile, err)
+//		return allLicenses
+//	}
+//
+//	if len(locations) == 0 {
+//		return allLicenses
+//	}
+//
+//	for _, l := range locations {
+//		contentReader, err := resolver.FileContentsByLocation(l)
+//		if err != nil {
+//			log.Debugf("error getting file content reader for %s: %v", pkgFile, err)
+//			return allLicenses
+//		}
+//
+//		contents, err := io.ReadAll(contentReader)
+//		if err != nil {
+//			log.Debugf("error reading file contents for %s: %v", pkgFile, err)
+//			return allLicenses
+//		}
+//
+//		var pkgJSON packageJSON
+//		err = json.Unmarshal(contents, &pkgJSON)
+//		if err != nil {
+//			log.Debugf("error parsing %s: %v", pkgFile, err)
+//			return allLicenses
+//		}
+//
+//		licenses, err := pkgJSON.licensesFromJSON()
+//		if err != nil {
+//			log.Debugf("error getting licenses from %s: %v", pkgFile, err)
+//			return allLicenses
+//		}
+//
+//		allLicenses = append(allLicenses, licenses...)
+//	}
+//
+//	return allLicenses
+//}
 
 // packageURL returns the PURL for the specific NPM package (see https://github.com/package-url/purl-spec)
 func packageURL(name, version string) string {

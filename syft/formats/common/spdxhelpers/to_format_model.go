@@ -499,7 +499,7 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 
 // TODO: other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
 // field. The expression is only filled given a validated Value field.
-func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
+func toOtherLicenses(_ *pkg.Catalog) []*spdx.OtherLicense {
 	return nil
 }
 

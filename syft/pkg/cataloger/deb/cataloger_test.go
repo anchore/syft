@@ -15,7 +15,7 @@ func TestDpkgCataloger(t *testing.T) {
 			Name:     "libpam-runtime",
 			Version:  "1.1.8-3.6",
 			FoundBy:  "dpkgdb-cataloger",
-			Licenses: []string{"GPL-1", "GPL-2", "LGPL-2.1"},
+			Licenses: []pkg.License{},
 			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),
 				source.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.md5sums", "/var/lib/dpkg/info/libpam-runtime.md5sums"),

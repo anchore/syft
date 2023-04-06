@@ -7,7 +7,6 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -21,7 +20,7 @@ func TestAlpmCataloger(t *testing.T) {
 			Version:      "6.2.1-2",
 			Type:         pkg.AlpmPkg,
 			FoundBy:      "alpmdb-cataloger",
-			Licenses:     license.PackageLicense{},
+			Licenses:     []pkg.License{},
 			Locations:    source.NewLocationSet(source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")),
 			CPEs:         nil,
 			PURL:         "",

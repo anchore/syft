@@ -37,7 +37,6 @@ func TestIDUniqueness(t *testing.T) {
 		Metadata: PythonPackageMetadata{
 			Name:                 "pi",
 			Version:              "3.14",
-			License:              "cc0-1.0",
 			Author:               "Archimedes",
 			AuthorEmail:          "Archimedes@circles.io",
 			Platform:             "universe",
@@ -66,7 +65,6 @@ func TestIDUniqueness(t *testing.T) {
 				pkg.Metadata = PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -250,7 +248,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -274,7 +271,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -300,7 +296,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -327,7 +322,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -351,7 +345,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",

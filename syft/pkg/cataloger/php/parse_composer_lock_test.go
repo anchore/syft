@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// TODO: add license parsing onto the package
 func TestParseComposerFileLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/composer.lock"
@@ -37,9 +38,6 @@ func TestParseComposerFileLock(t *testing.T) {
 				},
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:  "Pierrick Charron",
@@ -91,9 +89,6 @@ func TestParseComposerFileLock(t *testing.T) {
 				},
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:  "alcaeus",

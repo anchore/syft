@@ -25,7 +25,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"MIT"},
+					Licenses:     []pkg.License{},
 					Metadata: pkg.RpmMetadata{
 						Name:      "abc",
 						Epoch:     intRef(0),
@@ -34,7 +34,6 @@ func TestParseRpmFiles(t *testing.T) {
 						Version:   "1.01",
 						SourceRpm: "abc-1.01-9.hg20160905.el7.src.rpm",
 						Size:      17396,
-						License:   "MIT",
 						Vendor:    "Fedora Project",
 						Files: []pkg.RpmdbFileRecord{
 							{"/usr/bin/abc", 33261, 7120, file.Digest{"sha256", "8f8495a65c66762b60afa0c3949d81b275ca6fa0601696caba5af762f455d0b9"}, "root", "root", ""},
@@ -53,7 +52,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"Public Domain"},
+					Licenses:     []pkg.License{},
 					Metadata: pkg.RpmMetadata{
 						Name:      "zork",
 						Epoch:     intRef(0),
@@ -62,7 +61,6 @@ func TestParseRpmFiles(t *testing.T) {
 						Version:   "1.0.3",
 						SourceRpm: "zork-1.0.3-1.el7.src.rpm",
 						Size:      262367,
-						License:   "Public Domain",
 						Vendor:    "Fedora Project",
 						Files: []pkg.RpmdbFileRecord{
 							{"/usr/bin/zork", 33261, 115440, file.Digest{"sha256", "31b2ffc20b676a8fff795a45308f584273b9c47e8f7e196b4f36220b2734b472"}, "root", "root", ""},

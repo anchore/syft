@@ -23,9 +23,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: []string{
-					"made-up",
-				},
+				Licenses: []pkg.License{},
 			},
 			expected: &cyclonedx.Licenses{
 				{License: &cyclonedx.License{Name: "made-up"}},
@@ -34,9 +32,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "with SPDX license",
 			input: pkg.Package{
-				Licenses: []string{
-					"MIT",
-				},
+				Licenses: []pkg.License{},
 			},
 			expected: &cyclonedx.Licenses{
 				{License: &cyclonedx.License{ID: "MIT"}},
@@ -45,10 +41,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "with SPDX license expression",
 			input: pkg.Package{
-				Licenses: []string{
-					"MIT",
-					"GPL-3.0",
-				},
+				Licenses: []pkg.License{},
 			},
 			expected: &cyclonedx.Licenses{
 				{License: &cyclonedx.License{ID: "MIT"}},
@@ -58,9 +51,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "cap insensitive",
 			input: pkg.Package{
-				Licenses: []string{
-					"gpl-3.0",
-				},
+				Licenses: []pkg.License{},
 			},
 			expected: &cyclonedx.Licenses{
 				{License: &cyclonedx.License{ID: "GPL-3.0-only"}},
@@ -69,9 +60,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "debian to spdx conversion",
 			input: pkg.Package{
-				Licenses: []string{
-					"GPL-2",
-				},
+				Licenses: []pkg.License{},
 			},
 			expected: &cyclonedx.Licenses{
 				{License: &cyclonedx.License{ID: "GPL-2.0-only"}},
