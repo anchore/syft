@@ -41,9 +41,8 @@ func parserGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader 
 
 		// we have a version directly specified
 		if len(parts) == 3 {
-			version := strings.Split(parts[2], "=")
 			// Create a new Dependency struct and add it to the dependencies slice
-			dep := LockfileDependency{Group: parts[0], Name: parts[1], Version: version[0]}
+			dep := LockfileDependency{Group: parts[0], Name: parts[1], Version: parts[2]}
 			dependencies = append(dependencies, dep)
 		}
 	}
