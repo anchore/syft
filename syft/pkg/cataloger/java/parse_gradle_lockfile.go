@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const gradleLockfileDirGlob = "**/gradle.lockfile*"
+const gradleLockfileGlob = "**/gradle.lockfile*"
 
 // Dependency represents a single dependency in the gradle.lockfile file
 type LockfileDependency struct {
@@ -54,7 +54,7 @@ func parserGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader 
 			Version:      dep.Version,
 			Locations:    source.NewLocationSet(reader.Location),
 			Language:     pkg.Java,
-			Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a Gradle.xml that were not installed yet?
+			Type:         pkg.JavaPkg,
 			MetadataType: pkg.JavaMetadataType,
 		}
 		pkgs = append(pkgs, mappedPkg)

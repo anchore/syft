@@ -37,5 +37,5 @@ func NewJavaPomCataloger() *generic.Cataloger {
 // older versions of lockfiles aren't supported yet
 func NewJavaGradleLockfileCataloger() *generic.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
-		WithParserByGlobs(parserGradleLockfile, gradleLockfileDirGlob)
+		WithParserByGlobs(parserGradleLockfile, gradleLockfileGlob)
 }

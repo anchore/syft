@@ -48,7 +48,6 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		rpm.NewRpmDBCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewNativeImageCataloger(),
-		java.NewJavaGradleLockfileCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Go()),
 		dotnet.NewDotnetDepsCataloger(),
