@@ -21,5 +21,8 @@ func ParseExpression(expression string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if node == nil {
+		return "", nil
+	}
 	return *node.ReconstructedLicenseString(), nil
 }
