@@ -83,6 +83,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:hex/hpax/hpax@0.1.1",
 			expected: HexPkg,
 		},
+		{
+			purl:     "pkg:nix/glibc@2.34?hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+			expected: NixPkg,
+		},
 	}
 
 	var pkgTypes []string

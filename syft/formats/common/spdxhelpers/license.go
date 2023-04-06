@@ -24,6 +24,12 @@ func License(p pkg.Package) string {
 	// take all licenses and assume an AND expression; for information about license expressions see https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
 	parsedLicenses := parseLicenses(p.Licenses)
 
+	for i, v := range parsedLicenses {
+		if strings.HasPrefix(v, spdxlicense.LicenseRefPrefix) {
+			parsedLicenses[i] = SanitizeElementID(v)
+		}
+	}
+
 	if len(parsedLicenses) == 0 {
 		return NOASSERTION
 	}
@@ -33,12 +39,12 @@ func License(p pkg.Package) string {
 
 func parseLicenses(raw []string) (parsedLicenses []string) {
 	for _, l := range raw {
-		if value, other, exists := spdxlicense.ID(l); exists {
-			parsed := value
-			if other != "" {
-				parsed = spdxlicense.LicenseRefPrefix + other
-			}
-			parsedLicenses = append(parsedLicenses, parsed)
+		if value, exists := spdxlicense.ID(l); exists {
+			parsedLicenses = append(parsedLicenses, value)
+		} else {
+			// we did not find a valid SPDX license ID so treat as separate license
+			otherLicense := spdxlicense.LicenseRefPrefix + l
+			parsedLicenses = append(parsedLicenses, otherLicense)
 		}
 	}
 	return

@@ -33,7 +33,7 @@ jobs:
           OUTPUT="${OUTPUT//'%'/'%25'}"   # URL encode all '%' characters
           OUTPUT="${OUTPUT//$'\n'/'%0A'}" # URL encode all '\n' characters
           OUTPUT="${OUTPUT//$'\r'/'%0D'}" # URL encode all '\r' characters
-          echo "::set-output name=result::$OUTPUT"
+          echo "result=$OUTPUT" >> $GITHUB_OUTPUT
 
       - uses: actions/upload-artifact@v3
         with:

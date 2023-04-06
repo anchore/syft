@@ -6,18 +6,25 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-func newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings map[string]string, locations ...source.Location) pkg.Package {
+func (c *goBinaryCataloger) newGoBinaryPackage(resolver source.FileResolver, dep *debug.Module, mainModule, goVersion, architecture string, buildSettings map[string]string, locations ...source.Location) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
+	}
+
+	licenses, err := c.licenses.getLicenses(resolver, dep.Path, dep.Version)
+	if err != nil {
+		log.Tracef("error getting licenses for package: %s %v", dep.Path, err)
 	}
 
 	p := pkg.Package{
 		Name:         dep.Path,
 		Version:      dep.Version,
+		Licenses:     licenses,
 		PURL:         packageURL(dep.Path, dep.Version),
 		Language:     pkg.Go,
 		Type:         pkg.GoModulePkg,

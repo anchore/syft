@@ -199,7 +199,7 @@ func (r MockResolver) FilesByBasename(filenames ...string) ([]Location, error) {
 	return results, nil
 }
 
-func (r MockResolver) FilesByBasenameGlob(globs ...string) ([]Location, error) {
+func (r MockResolver) FilesByBasenameGlob(_ ...string) ([]Location, error) {
 	// TODO implement me
 	panic("implement me")
 }

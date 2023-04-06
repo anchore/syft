@@ -22,6 +22,7 @@ func (o *RootOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	return bindRootConfigOptions(cmd.PersistentFlags(), v)
 }
 
+//nolint:revive
 func bindRootConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	if err := v.BindPFlag("config", flags.Lookup("config")); err != nil {
 		return err

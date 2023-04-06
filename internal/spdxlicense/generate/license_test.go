@@ -67,56 +67,57 @@ func TestLicensePermutations(t *testing.T) {
 		{
 			"GPL-1-only",
 			[]string{
-				"GPL-1-only",
-				"GPL-1.0-only",
-				"GPL-1.0.0-only",
+				"gpl1only",
+				"gpl1.0only",
+				"gpl1.0.0only",
 			},
 		},
 		{
 			"GPL-2",
 			[]string{
-				"GPL-2",
-				"GPL-2.0",
-				"GPL-2.0.0",
+				"gpl2",
+				"gpl2.0",
+				"gpl2.0.0",
 			},
 		},
 		{
 			"GPL-2.0+",
 			[]string{
-				"GPL-2+",
-				"GPL-2.0+",
-				"GPL-2.0.0+",
+				"gpl2+",
+				"gpl2.0+",
+				"gpl2.0.0+",
 			},
 		},
 		{
 			"GPL-3.0.0-or-later",
 			[]string{
-				"GPL-3-or-later",
-				"GPL-3.0-or-later",
-				"GPL-3.0.0-or-later",
+				"gpl3orlater",
+				"gpl3.0orlater",
+				"gpl3.0.0orlater",
 			},
 		},
 		{
 			"abc-1.1",
 			[]string{
-				"abc-1",
-				"abc-1.1",
-				"abc-1.1.0",
+				"abc1",
+				"abc1.1",
+				"abc1.1.0",
 			},
 		},
 		{
 			"oldap-2.0",
 			[]string{
-				"oldap-2",
-				"oldap-2.0",
-				"oldap-2.0.0",
+				"oldap2",
+				"oldap2.0",
+				"oldap2.0.0",
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.shortName, func(t *testing.T) {
-			perms := buildLicensePermutations(test.shortName)
+			cleanID := cleanLicenseID(test.shortName)
+			perms := buildLicenseIDPermutations(cleanID)
 			assert.ElementsMatch(t, test.permutations, perms)
 		})
 	}
@@ -182,10 +183,6 @@ func TestFindLicenseVersion(t *testing.T) {
 		{
 			"GPL-2",
 			[]string{"2"},
-		},
-		{
-			"bzip2-1",
-			[]string{"1"},
 		},
 		{
 			"php-3.01",

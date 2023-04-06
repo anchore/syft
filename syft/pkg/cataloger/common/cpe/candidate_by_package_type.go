@@ -350,6 +350,27 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			candidateKey{PkgName: "redis"},
 			candidateRemovals{VendorsToRemove: []string{"redis"}},
 		},
+		// NPM packages
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{VendorsToRemove: []string{"redis"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "php"},
+			candidateRemovals{VendorsToRemove: []string{"php"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "delegate"},
+			candidateRemovals{VendorsToRemove: []string{"delegate"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "docker"},
+			candidateRemovals{VendorsToRemove: []string{"docker"}},
+		},
 	})
 
 // buildCandidateLookup is a convenience function for creating the defaultCandidateAdditions set

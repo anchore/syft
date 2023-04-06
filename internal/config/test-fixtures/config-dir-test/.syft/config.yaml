@@ -1,0 +1,5 @@
+# same as --file; write output report to a file (default is to write to stdout)
+file: "test-dir-config"
+package:
+  cataloger:
+    scope: "squashed"

@@ -45,6 +45,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Java (jar, ear, war, par, sar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
+- Nix (outputs in /nix/store)
 - PHP (composer)
 - Python (wheel, egg, poetry, requirements.txt)
 - Red Hat (rpm)
@@ -110,9 +111,7 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-
-
-## Supported sources
+### Supported sources
 
 Syft can generate a SBOM from a variety of sources:
 
@@ -141,7 +140,13 @@ file:path/to/yourproject/file            read directly from a path on disk (any 
 registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
 
-#### Default Cataloger Configuration by scan type
+If an image source is not provided and cannot be detected from the given reference it is assumed the image should be pulled from the Docker daemon.
+If docker is not present, then the Podman daemon is attempted next, followed by reaching out directly to the image registry last.
+
+
+This default behavior can be overridden with the `default-image-pull-source` configuration option (See [Configuration](https://github.com/anchore/syft#configuration) for more details).
+
+### Default Cataloger Configuration by scan type
 
 ##### Image Scanning:
 - alpmdb
@@ -179,7 +184,7 @@ registry:yourrepo/yourimage:tag          pull image directly from a registry (no
 - conan
 - hackage
 
-#### Non Default:
+##### Non Default:
 - cargo-auditable-binary
 
 ### Excluding file paths
@@ -213,8 +218,10 @@ Where the `formats` available are:
 - `text`: A row-oriented, human-and-machine-friendly output.
 - `cyclonedx-xml`: A XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
-- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
-- `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
+- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.3 specification](https://spdx.github.io/spdx-spec/v2.3/).
+- `spdx-tag-value@2.2`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/v2.2.2/).
+- `spdx-json`: A JSON report conforming to the [SPDX 2.3 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.3/schemas/spdx-schema.json).
+- `spdx-json@2.2`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `github`: A JSON report conforming to GitHub's dependency snapshot format.
 - `table`: A columnar summary (default).
 - `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
@@ -391,7 +398,7 @@ Certificate subject:  test.email@testdomain.com
 Certificate issuer URL:  https://accounts.google.com
 ```
 
-#### Local private key support
+### Local private key support
 
 To generate an SBOM attestation for a container image using a local private key:
 ```
@@ -433,6 +440,10 @@ file: ""
 # enable/disable checking for application updates on startup
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
+
+# allows users to specify which image source should be used to generate the sbom
+# valid values are: registry, docker, podman
+default-image-pull-source: ""
 
 # a list of globs to exclude from scanning. same as --exclude ; for example:
 # exclude:
@@ -491,6 +502,16 @@ package:
     # the search space to look for packages (options: all-layers, squashed)
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
+
+golang:
+   # search for go package licences in the GOPATH of the system running Syft, note that this is outside the
+   # container filesystem and potentially outside the root of a local directory scan
+   # SYFT_GOLANG_SEARCH_LOCAL_MOD_CACHE_LICENSES env var
+   search-local-mod-cache-licenses: false
+   
+   # specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
+   # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
+   local-mod-cache-dir: ""
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:

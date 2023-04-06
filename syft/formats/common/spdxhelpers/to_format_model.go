@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/spdx/tools-golang/spdx"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -514,19 +516,23 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 
 func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
-	for _, pkg := range catalog.Sorted() {
-		for _, license := range parseLicenses(pkg.Licenses) {
+	for _, p := range catalog.Sorted() {
+		for _, license := range parseLicenses(p.Licenses) {
 			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
 				licenses[license] = true
 			}
 		}
 	}
+
 	var result []*spdx.OtherLicense
-	for license := range licenses {
+
+	sorted := maps.Keys(licenses)
+	slices.Sort(sorted)
+	for _, license := range sorted {
 		// separate the actual ID from the prefix
 		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: license,
+			LicenseIdentifier: SanitizeElementID(license),
 			LicenseName:       name,
 			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
 		})

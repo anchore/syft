@@ -1,0 +1,9 @@
+super from singleton method that is defined to multiple classes is not supported; this will be fixed in 1.9.3 or later
+/usr/local/lib/ruby/site_ruby/1.9.1
+/usr/local/lib/ruby/site_ruby/1.9.1/x86_64-linux
+/usr/local/lib/ruby/vendor_ruby/1.9.1
+/usr/local/lib/ruby/vendor_ruby/1.9.1/x86_64-linux
+/usr/local/lib/ruby/1.9.1
+/usr/local/lib/ruby/1.9.1/x86_64-linux
+ruby 1.9.3p551 (2014-11-13 revision 48407) [x86_64-linux]
+1.9.3

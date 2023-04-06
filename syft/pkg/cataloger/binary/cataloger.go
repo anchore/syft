@@ -74,12 +74,7 @@ func catalog(resolver source.FileResolver, cls classifier) (packages []pkg.Packa
 		return nil, err
 	}
 	for _, location := range locations {
-		reader, err := resolver.FileContentsByLocation(location)
-		if err != nil {
-			return nil, err
-		}
-		locationReader := source.NewLocationReadCloser(location, reader)
-		pkgs, err := cls.EvidenceMatcher(cls, locationReader)
+		pkgs, err := cls.EvidenceMatcher(resolver, cls, location)
 		if err != nil {
 			return nil, err
 		}

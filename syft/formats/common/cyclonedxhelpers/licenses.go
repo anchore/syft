@@ -10,14 +10,21 @@ import (
 func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	lc := cyclonedx.Licenses{}
 	for _, licenseName := range p.Licenses {
-		if value, other, exists := spdxlicense.ID(licenseName); exists {
+		if value, exists := spdxlicense.ID(licenseName); exists {
 			lc = append(lc, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{
-					ID:   value,
-					Name: other,
+					ID: value,
 				},
 			})
+			continue
 		}
+
+		// not found so append the licenseName as is
+		lc = append(lc, cyclonedx.LicenseChoice{
+			License: &cyclonedx.License{
+				Name: licenseName,
+			},
+		})
 	}
 	if len(lc) > 0 {
 		return &lc

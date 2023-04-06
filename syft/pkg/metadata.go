@@ -9,6 +9,7 @@ type MetadataType string
 
 const (
 	// this is the full set of data shapes that can be represented within the pkg.Package.Metadata field
+
 	UnknownMetadataType            MetadataType = "UnknownMetadata"
 	AlpmMetadataType               MetadataType = "AlpmMetadata"
 	ApkMetadataType                MetadataType = "ApkMetadata"
@@ -26,6 +27,7 @@ const (
 	JavaMetadataType               MetadataType = "JavaMetadata"
 	KbPackageMetadataType          MetadataType = "KbPackageMetadata"
 	MixLockMetadataType            MetadataType = "MixLockMetadataType"
+	NixStoreMetadataType           MetadataType = "NixStoreMetadata"
 	NpmPackageJSONMetadataType     MetadataType = "NpmPackageJsonMetadata"
 	NpmPackageLockJSONMetadataType MetadataType = "NpmPackageLockJsonMetadata"
 	PhpComposerJSONMetadataType    MetadataType = "PhpComposerJsonMetadata"
@@ -54,6 +56,7 @@ var AllMetadataTypes = []MetadataType{
 	JavaMetadataType,
 	KbPackageMetadataType,
 	MixLockMetadataType,
+	NixStoreMetadataType,
 	NpmPackageJSONMetadataType,
 	NpmPackageLockJSONMetadataType,
 	PhpComposerJSONMetadataType,
@@ -82,6 +85,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	JavaMetadataType:               reflect.TypeOf(JavaMetadata{}),
 	KbPackageMetadataType:          reflect.TypeOf(KbPackageMetadata{}),
 	MixLockMetadataType:            reflect.TypeOf(MixLockMetadata{}),
+	NixStoreMetadataType:           reflect.TypeOf(NixStoreMetadata{}),
 	NpmPackageJSONMetadataType:     reflect.TypeOf(NpmPackageJSONMetadata{}),
 	NpmPackageLockJSONMetadataType: reflect.TypeOf(NpmPackageLockJSONMetadata{}),
 	PhpComposerJSONMetadataType:    reflect.TypeOf(PhpComposerJSONMetadata{}),

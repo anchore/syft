@@ -151,7 +151,7 @@ jobs:
         with:
           status: ${{ job.status }}
           fields: repo,workflow,action,eventName
-          text: "A new Syft release has been published: https://github.com/anchore/syft/releases/tag/${{ github.ref_name }}"
+          text: "A new Syft release has been published: https://github.com/anchore/syft/releases/tag/${{ github.event.inputs.version }}"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}

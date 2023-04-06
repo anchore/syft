@@ -106,9 +106,8 @@ func stripSlashes(s string) string {
 	for i, c := range s {
 		if c == '\\' && i+1 < len(s) && strings.ContainsRune(allowedCPEPunctuation, rune(s[i+1])) {
 			continue
-		} else {
-			sb.WriteRune(c)
 		}
+		sb.WriteRune(c)
 	}
 	return sb.String()
 }
