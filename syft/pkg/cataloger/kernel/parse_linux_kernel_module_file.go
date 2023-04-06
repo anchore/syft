@@ -3,7 +3,6 @@ package kernel
 import (
 	"debug/elf"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -12,19 +11,14 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var (
-	kernelModulePathRE = regexp.MustCompile(`^(.*lib/modules/([^/]+)/)`)
-)
-
-func findKernelModules(resolver source.FileResolver, pkgLocations *source.LocationSet, kernelVersion string) ([]pkg.KernelModuleMetadata, error) {
-	locations, err := resolver.FilesByGlob("**/*.ko")
+func findLinuxKernelModules(resolver source.FileResolver, pkgLocations *source.LocationSet, kernelVersion string) ([]pkg.LinuxKernelModuleMetadata, error) {
+	locations, err := resolver.FilesByGlob(fmt.Sprintf("**/lib/modules/%s/**/*.ko", kernelVersion))
 	if err != nil {
 		return nil, err
 	}
 
 	// note: all collections in the metadata must be allocated
-	foundPaths := make(map[string]bool)
-	ret := make([]pkg.KernelModuleMetadata, 0)
+	ret := make([]pkg.LinuxKernelModuleMetadata, 0)
 	for _, location := range locations {
 		contentReader, err := resolver.FileContentsByLocation(location)
 		if err != nil {
@@ -32,43 +26,30 @@ func findKernelModules(resolver source.FileResolver, pkgLocations *source.Locati
 			continue
 		}
 
-		metadata, err := parseKernelModuleFile(source.NewLocationReadCloser(location, contentReader))
+		metadata, err := parseLinuxKernelModuleFile(source.NewLocationReadCloser(location, contentReader))
 		if err != nil {
 			log.WithFields("location", location.RealPath, "error", err).Warn("unable to parse kernel module")
 			continue
 		}
 
-		if metadata == nil {
+		if metadata == nil || metadata.KernelVersion != kernelVersion {
 			continue
 		}
-		if metadata.KernelVersion != kernelVersion {
-			continue
-		}
-		// get the base path
-		parts := kernelModulePathRE.FindStringSubmatch(location.RealPath)
-		if len(parts) > 2 {
-			basePath := parts[1]
-			pathVersion := parts[2]
-			if pathVersion != kernelVersion {
-				continue
-			}
-			if _, ok := foundPaths[basePath]; !ok {
-				foundPaths[basePath] = true
-				pkgLocations.Add(source.NewLocation(basePath))
-			}
-		}
+
+		pkgLocations.Add(location)
+
 		ret = append(ret, *metadata)
 	}
 	// kernel modules have a common root, usually /lib/modules/<version>/kernel, so find the common base path
 	return ret, nil
 }
 
-func parseKernelModuleFile(reader source.LocationReadCloser) (*pkg.KernelModuleMetadata, error) {
+func parseLinuxKernelModuleFile(reader source.LocationReadCloser) (*pkg.LinuxKernelModuleMetadata, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
-	metadata, err := parseKernelModuleMetadata(unionReader)
+	metadata, err := parseLinuxKernelModuleMetadata(unionReader)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse kernel module metadata: %w", err)
 	}
@@ -81,7 +62,7 @@ func parseKernelModuleFile(reader source.LocationReadCloser) (*pkg.KernelModuleM
 	return metadata, nil
 }
 
-func parseKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.KernelModuleMetadata, err error) {
+func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModuleMetadata, err error) {
 	// filename:       /lib/modules/5.15.0-1031-aws/kernel/zfs/zzstd.ko
 	// version:        1.4.5a
 	// license:        Dual BSD/GPL
@@ -108,8 +89,8 @@ func parseKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.KernelModuleMe
 	// retpoline:      Y
 	// name:           8821cu
 	// vermagic:       5.10.121-linuxkit SMP mod_unload
-	p = &pkg.KernelModuleMetadata{
-		Parameters: make(map[string]pkg.KernelModuleParameter),
+	p = &pkg.LinuxKernelModuleMetadata{
+		Parameters: make(map[string]pkg.LinuxKernelModuleParameter),
 	}
 	f, err := elf.NewFile(r)
 	if err != nil {
@@ -129,7 +110,7 @@ func parseKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.KernelModuleMe
 	)
 	for _, b2 := range b {
 		if b2 == 0 {
-			if err := addEntry(p, entry); err != nil {
+			if err := addLinuxKernelModuleEntry(p, entry); err != nil {
 				return nil, fmt.Errorf("error parsing entry %s: %w", string(entry), err)
 			}
 			entry = []byte{}
@@ -137,14 +118,14 @@ func parseKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.KernelModuleMe
 		}
 		entry = append(entry, b2)
 	}
-	if err := addEntry(p, entry); err != nil {
+	if err := addLinuxKernelModuleEntry(p, entry); err != nil {
 		return nil, fmt.Errorf("error parsing entry %s: %w", string(entry), err)
 	}
 
 	return p, nil
 }
 
-func addEntry(k *pkg.KernelModuleMetadata, entry []byte) error {
+func addLinuxKernelModuleEntry(k *pkg.LinuxKernelModuleMetadata, entry []byte) error {
 	if len(entry) == 0 {
 		return nil
 	}
@@ -182,7 +163,7 @@ func addEntry(k *pkg.KernelModuleMetadata, entry []byte) error {
 			return fmt.Errorf("invalid parm entry: %s", value)
 		}
 		if m, ok := k.Parameters[parts[0]]; !ok {
-			k.Parameters[parts[0]] = pkg.KernelModuleParameter{Description: parts[1]}
+			k.Parameters[parts[0]] = pkg.LinuxKernelModuleParameter{Description: parts[1]}
 		} else {
 			m.Description = parts[1]
 		}
@@ -192,7 +173,7 @@ func addEntry(k *pkg.KernelModuleMetadata, entry []byte) error {
 			return fmt.Errorf("invalid parmtype entry: %s", value)
 		}
 		if m, ok := k.Parameters[parts[0]]; !ok {
-			k.Parameters[parts[0]] = pkg.KernelModuleParameter{Type: parts[1]}
+			k.Parameters[parts[0]] = pkg.LinuxKernelModuleParameter{Type: parts[1]}
 		} else {
 			m.Type = parts[1]
 		}

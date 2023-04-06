@@ -88,7 +88,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		binary.NewCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
-		kernel.NewKernelCataloger(cfg.Kernel()),
+		kernel.NewLinuxKernelCataloger(cfg.Kernel()),
 		nix.NewStoreCataloger(),
 	}, cfg.Catalogers)
 }
@@ -126,7 +126,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		binary.NewCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
-		kernel.NewKernelCataloger(cfg.Kernel()),
+		kernel.NewLinuxKernelCataloger(cfg.Kernel()),
 		nix.NewStoreCataloger(),
 	}, cfg.Catalogers)
 }

@@ -26,7 +26,7 @@ const (
 	JavaPkg               Type = "java-archive"
 	JenkinsPluginPkg      Type = "jenkins-plugin"
 	KbPkg                 Type = "msrc-kb"
-	KernelPkg             Type = "generic/linux-kernel"
+	LinuxKernelPkg        Type = "linux-kernel"
 	NixPkg                Type = "nix"
 	NpmPkg                Type = "npm"
 	PhpComposerPkg        Type = "php-composer"
@@ -53,7 +53,7 @@ var AllPkgs = []Type{
 	JavaPkg,
 	JenkinsPluginPkg,
 	KbPkg,
-	KernelPkg,
+	LinuxKernelPkg,
 	NixPkg,
 	NpmPkg,
 	PhpComposerPkg,
@@ -90,7 +90,7 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeHackage
 	case JavaPkg, JenkinsPluginPkg:
 		return packageurl.TypeMaven
-	case KernelPkg:
+	case LinuxKernelPkg:
 		return "generic/linux-kernel"
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
@@ -164,7 +164,7 @@ func TypeByName(name string) Type {
 	case packageurl.TypeHex:
 		return HexPkg
 	case "linux-kernel":
-		return KernelPkg
+		return LinuxKernelPkg
 	case "nix":
 		return NixPkg
 	default:

@@ -85,7 +85,7 @@ func TestTypeFromPURL(t *testing.T) {
 		},
 		{
 			purl:     "pkg:generic/linux-kernel@5.10.15",
-			expected: KernelPkg,
+			expected: LinuxKernelPkg,
 		},
 		{
 			purl:     "pkg:nix/glibc@2.34?hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",

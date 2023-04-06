@@ -201,7 +201,7 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
-				Type: pkg.KernelPkg,
+				Type: pkg.LinuxKernelPkg,
 			},
 			expected: []string{
 				"from kernel file or kernel modules files",

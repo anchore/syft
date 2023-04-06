@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func parseKernelFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseLinuxKernelFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
@@ -27,24 +27,24 @@ func parseKernelFile(resolver source.FileResolver, _ *generic.Environment, reade
 	if len(magicType) < 1 || magicType[0] != linuxKernelName {
 		return nil, nil, nil
 	}
-	metadata := parseKernelMetadata(magicType)
+	metadata := parseLinuxKernelMetadata(magicType)
 	if metadata.Version == "" {
 		return nil, nil, nil
 	}
 
 	locations := source.NewLocationSet(reader.Location)
 
-	metadata.Modules, err = findKernelModules(resolver, &locations, metadata.Version)
+	metadata.Modules, err = findLinuxKernelModules(resolver, &locations, metadata.Version)
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to locate kernel modules")
-		metadata.Modules = []pkg.KernelModuleMetadata{}
+		metadata.Modules = []pkg.LinuxKernelModuleMetadata{}
 	}
 
 	p := pkg.Package{
 		Name:         packageName,
 		Version:      metadata.Version,
 		PURL:         packageURL(packageName, metadata.Version),
-		Type:         pkg.KernelPkg,
+		Type:         pkg.LinuxKernelPkg,
 		MetadataType: pkg.KernelPackageMetadataType,
 		Metadata:     metadata,
 		Locations:    locations,
@@ -54,7 +54,7 @@ func parseKernelFile(resolver source.FileResolver, _ *generic.Environment, reade
 	return []pkg.Package{p}, nil, nil
 }
 
-func parseKernelMetadata(magicType []string) (p pkg.KernelPackageMetadata) {
+func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernelPackageMetadata) {
 	// Linux kernel x86 boot executable bzImage,
 	// version 5.10.121-linuxkit (root@buildkitsandbox) #1 SMP Fri Dec 2 10:35:42 UTC 2022,
 	// RO-rootFS,

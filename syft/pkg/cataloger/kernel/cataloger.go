@@ -21,8 +21,8 @@ var kernelFiles = []string{
 	"vmlinuz-*",
 }
 
-// NewKernelCataloger returns a new kernel files cataloger object.
-func NewKernelCataloger(opts CatalogerOpts) *generic.Cataloger {
+// NewLinuxKernelCataloger returns a new kernel files cataloger object.
+func NewLinuxKernelCataloger(opts CatalogerOpts) *generic.Cataloger {
 	var fileList []string
 	for _, file := range kernelFiles {
 		fileList = append(fileList, "**/"+file)
@@ -31,5 +31,5 @@ func NewKernelCataloger(opts CatalogerOpts) *generic.Cataloger {
 		fileList = append(fileList, "**/"+file)
 	}
 	return generic.NewCataloger("linux-kernel-cataloger").
-		WithParserByGlobs(parseKernelFile, fileList...)
+		WithParserByGlobs(parseLinuxKernelFile, fileList...)
 }
