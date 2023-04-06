@@ -36,7 +36,7 @@ func parserGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader 
 		line = strings.TrimSpace(line)
 
 		groupNameVersion := line
-		groupNameVersion = strings.Trim(groupNameVersion, "\"")
+		groupNameVersion = strings.Split(groupNameVersion, "=")[0]
 		parts := strings.Split(groupNameVersion, ":")
 
 		// we have a version directly specified
