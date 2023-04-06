@@ -46,7 +46,7 @@ func Test_parserGradleLockfile(t *testing.T) {
 			for i := range test.expected {
 				test.expected[i].Locations.Add(source.NewLocation(test.input))
 			}
-			pkgtest.TestFileParser(t, test.input, parserGradleLockfile, test.expected, nil)
+			pkgtest.TestFileParser(t, test.input, parseGradleLockfile, test.expected, nil)
 		})
 	}
 }

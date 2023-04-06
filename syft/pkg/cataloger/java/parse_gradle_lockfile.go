@@ -19,7 +19,7 @@ type LockfileDependency struct {
 	Version string
 }
 
-func parserGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file
