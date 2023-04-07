@@ -466,7 +466,9 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		case SquashedScope:
 			resolver, err = newImageSquashResolver(s.Image)
 		case AllLayersScope:
-			resolver, err = newAllLayersResolver(s.Image)
+			resolver, err = newImageAllLayersResolver(s.Image)
+		case SquashedWithAllLayersScope:
+			resolver, err = newImageSquashWithAllLayersResolver(s.Image)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}

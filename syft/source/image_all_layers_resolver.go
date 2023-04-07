@@ -18,8 +18,8 @@ type imageAllLayersResolver struct {
 	layers []int
 }
 
-// newAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
-func newAllLayersResolver(img *image.Image) (*imageAllLayersResolver, error) {
+// newImageAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
+func newImageAllLayersResolver(img *image.Image) (*imageAllLayersResolver, error) {
 	if len(img.Layers) == 0 {
 		return nil, fmt.Errorf("the image does not contain any layers")
 	}
@@ -202,7 +202,7 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 		return nil, fmt.Errorf("cannot read contents of non-file %q", location.ref.RealPath)
 	}
 
-	return r.img.FileContentsByRef(location.ref)
+	return r.img.OpenReference(location.ref)
 }
 
 func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
