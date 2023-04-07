@@ -195,12 +195,6 @@ func toPackageModel(p pkg.Package) model.Package {
 		licenses = p.Licenses
 	}
 
-	locations := p.Locations.ToSlice()
-	var coordinates = make([]source.Coordinates, len(locations))
-	for i, l := range locations {
-		coordinates[i] = l.Coordinates
-	}
-
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
 			ID:        string(p.ID()),
@@ -208,7 +202,7 @@ func toPackageModel(p pkg.Package) model.Package {
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-			Locations: coordinates,
+			Locations: p.Locations.ToSlice(),
 			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
