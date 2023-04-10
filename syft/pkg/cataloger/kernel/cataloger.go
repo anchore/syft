@@ -13,9 +13,7 @@ import (
 var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
 
 type LinuxCatalogerConfig struct {
-	KernelArchiveGlobAppends []string
-	KernelModuleGlobAppends  []string
-	CatalogModules           bool
+	CatalogModules bool
 }
 
 type LinuxKernelCataloger struct {
@@ -24,19 +22,17 @@ type LinuxKernelCataloger struct {
 
 func DefaultLinuxCatalogerConfig() LinuxCatalogerConfig {
 	return LinuxCatalogerConfig{
-		KernelArchiveGlobAppends: []string{},
-		KernelModuleGlobAppends:  []string{},
-		CatalogModules:           true,
+		CatalogModules: true,
 	}
 }
 
 var kernelArchiveGlobs = []string{
-	"kernel",
-	"kernel-*",
-	"vmlinux",
-	"vmlinux-*",
-	"vmlinuz",
-	"vmlinuz-*",
+	"**/kernel",
+	"**/kernel-*",
+	"**/vmlinux",
+	"**/vmlinux-*",
+	"**/vmlinuz",
+	"**/vmlinuz-*",
 }
 
 var kernelModuleGlobs = []string{
@@ -55,42 +51,31 @@ func (l LinuxKernelCataloger) Name() string {
 }
 
 func (l LinuxKernelCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
-	var combinedKernelGlobs []string
-	for _, g := range kernelArchiveGlobs {
-		combinedKernelGlobs = append(combinedKernelGlobs, "**/"+g)
-	}
-	for _, g := range l.cfg.KernelArchiveGlobAppends {
-		combinedKernelGlobs = append(combinedKernelGlobs, "**/"+g)
-	}
-	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, combinedKernelGlobs...).Catalog(resolver)
-	if err != nil {
-		// TODO: don't bail. Try to return what we have instead and log a warning.
-		return nil, nil, err
-	}
-
-	var combinedModuleGlobs []string
-	for _, g := range kernelModuleGlobs {
-		combinedModuleGlobs = append(combinedModuleGlobs, "**/"+g)
-	}
-	for _, g := range l.cfg.KernelArchiveGlobAppends {
-		combinedModuleGlobs = append(combinedModuleGlobs, "**/"+g)
-	}
-	modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, combinedModuleGlobs...).Catalog(resolver)
-	if err != nil {
-		// TODO: don't bail. Try to return what we have instead and log a warning.
-		return nil, nil, err
-	}
-
-	moduleToKernelRelationships := createKernelToModuleRelationships(kernelPackages, modulePackages)
-
 	var allPackages []pkg.Package
-	allPackages = append(allPackages, kernelPackages...)
-	allPackages = append(allPackages, modulePackages...)
-
 	var allRelationships []artifact.Relationship
+
+	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(resolver)
+	if err != nil {
+		// TODO: don't bail. Try to return what we have instead and log a warning.
+		return nil, nil, err
+	}
+
 	allRelationships = append(allRelationships, kernelRelationships...)
-	allRelationships = append(allRelationships, moduleRelationships...)
-	allRelationships = append(allRelationships, moduleToKernelRelationships...)
+	allPackages = append(allPackages, kernelPackages...)
+
+	if l.cfg.CatalogModules {
+		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(resolver)
+		if err != nil {
+			// TODO: don't bail. Try to return what we have instead and log a warning.
+			return nil, nil, err
+		}
+
+		allPackages = append(allPackages, modulePackages...)
+
+		moduleToKernelRelationships := createKernelToModuleRelationships(kernelPackages, modulePackages)
+		allRelationships = append(allRelationships, moduleRelationships...)
+		allRelationships = append(allRelationships, moduleToKernelRelationships...)
+	}
 
 	return allPackages, allRelationships, nil
 }
