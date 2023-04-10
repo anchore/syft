@@ -26,7 +26,8 @@ const (
 	HackageMetadataType            MetadataType = "HackageMetadataType"
 	JavaMetadataType               MetadataType = "JavaMetadata"
 	KbPackageMetadataType          MetadataType = "KbPackageMetadata"
-	KernelPackageMetadataType      MetadataType = "LinuxKernelPackageMetadata"
+	LinuxKernelMetadataType        MetadataType = "LinuxKernelMetadata"
+	LinuxKernelModuleMetadataType  MetadataType = "LinuxKernelModuleMetadata"
 	MixLockMetadataType            MetadataType = "MixLockMetadataType"
 	NixStoreMetadataType           MetadataType = "NixStoreMetadata"
 	NpmPackageJSONMetadataType     MetadataType = "NpmPackageJsonMetadata"
@@ -56,7 +57,8 @@ var AllMetadataTypes = []MetadataType{
 	HackageMetadataType,
 	JavaMetadataType,
 	KbPackageMetadataType,
-	KernelPackageMetadataType,
+	LinuxKernelMetadataType,
+	LinuxKernelModuleMetadataType,
 	MixLockMetadataType,
 	NixStoreMetadataType,
 	NpmPackageJSONMetadataType,
@@ -86,7 +88,8 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	HackageMetadataType:            reflect.TypeOf(HackageMetadata{}),
 	JavaMetadataType:               reflect.TypeOf(JavaMetadata{}),
 	KbPackageMetadataType:          reflect.TypeOf(KbPackageMetadata{}),
-	KernelPackageMetadataType:      reflect.TypeOf(LinuxKernelPackageMetadata{}),
+	LinuxKernelMetadataType:        reflect.TypeOf(LinuxKernelMetadata{}),
+	LinuxKernelModuleMetadataType:  reflect.TypeOf(LinuxKernelModuleMetadata{}),
 	MixLockMetadataType:            reflect.TypeOf(MixLockMetadata{}),
 	NixStoreMetadataType:           reflect.TypeOf(NixStoreMetadata{}),
 	NpmPackageJSONMetadataType:     reflect.TypeOf(NpmPackageJSONMetadata{}),

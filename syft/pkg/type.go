@@ -27,6 +27,7 @@ const (
 	JenkinsPluginPkg      Type = "jenkins-plugin"
 	KbPkg                 Type = "msrc-kb"
 	LinuxKernelPkg        Type = "linux-kernel"
+	LinuxKernelModulePkg  Type = "linux-kernel-module"
 	NixPkg                Type = "nix"
 	NpmPkg                Type = "npm"
 	PhpComposerPkg        Type = "php-composer"
@@ -54,6 +55,7 @@ var AllPkgs = []Type{
 	JenkinsPluginPkg,
 	KbPkg,
 	LinuxKernelPkg,
+	LinuxKernelModulePkg,
 	NixPkg,
 	NpmPkg,
 	PhpComposerPkg,

@@ -3,63 +3,33 @@ package kernel
 import (
 	"debug/elf"
 	"fmt"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 	"github.com/anchore/syft/syft/source"
 )
 
-func findLinuxKernelModules(resolver source.FileResolver, pkgLocations *source.LocationSet, kernelVersion string) ([]pkg.LinuxKernelModuleMetadata, error) {
-	locations, err := resolver.FilesByGlob(fmt.Sprintf("**/lib/modules/%s/**/*.ko", kernelVersion))
-	if err != nil {
-		return nil, err
-	}
+const modinfoName = ".modinfo"
 
-	// note: all collections in the metadata must be allocated
-	ret := make([]pkg.LinuxKernelModuleMetadata, 0)
-	for _, location := range locations {
-		contentReader, err := resolver.FileContentsByLocation(location)
-		if err != nil {
-			log.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
-			continue
-		}
-
-		metadata, err := parseLinuxKernelModuleFile(source.NewLocationReadCloser(location, contentReader))
-		if err != nil {
-			log.WithFields("location", location.RealPath, "error", err).Warn("unable to parse kernel module")
-			continue
-		}
-
-		if metadata == nil || metadata.KernelVersion != kernelVersion {
-			continue
-		}
-
-		pkgLocations.Add(location)
-
-		ret = append(ret, *metadata)
-	}
-	// kernel modules have a common root, usually /lib/modules/<version>/kernel, so find the common base path
-	return ret, nil
-}
-
-func parseLinuxKernelModuleFile(reader source.LocationReadCloser) (*pkg.LinuxKernelModuleMetadata, error) {
+func parseLinuxKernelModuleFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
+		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
 	metadata, err := parseLinuxKernelModuleMetadata(unionReader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse kernel module metadata: %w", err)
+		return nil, nil, fmt.Errorf("unable to parse kernel module metadata: %w", err)
 	}
-	if metadata.KernelVersion == "" {
-		return nil, nil
+	if metadata == nil || metadata.KernelVersion == "" {
+		return nil, nil, nil
 	}
 
 	metadata.Path = reader.Location.RealPath
 
-	return metadata, nil
+	return []pkg.Package{newLinuxKernelModulePackage(*metadata, reader.Location)}, nil, nil
 }
 
 func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModuleMetadata, err error) {

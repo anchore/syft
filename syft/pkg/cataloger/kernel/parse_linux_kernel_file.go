@@ -15,7 +15,9 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func parseLinuxKernelFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+const linuxKernelMagicName = "Linux kernel"
+
+func parseLinuxKernelFile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
@@ -24,7 +26,7 @@ func parseLinuxKernelFile(resolver source.FileResolver, _ *generic.Environment, 
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get magic type for file: %w", err)
 	}
-	if len(magicType) < 1 || magicType[0] != linuxKernelName {
+	if len(magicType) < 1 || magicType[0] != linuxKernelMagicName {
 		return nil, nil, nil
 	}
 	metadata := parseLinuxKernelMetadata(magicType)
@@ -32,29 +34,10 @@ func parseLinuxKernelFile(resolver source.FileResolver, _ *generic.Environment, 
 		return nil, nil, nil
 	}
 
-	locations := source.NewLocationSet(reader.Location)
-
-	metadata.Modules, err = findLinuxKernelModules(resolver, &locations, metadata.Version)
-	if err != nil {
-		log.WithFields("error", err).Trace("unable to locate kernel modules")
-		metadata.Modules = []pkg.LinuxKernelModuleMetadata{}
-	}
-
-	p := pkg.Package{
-		Name:         packageName,
-		Version:      metadata.Version,
-		PURL:         packageURL(packageName, metadata.Version),
-		Type:         pkg.LinuxKernelPkg,
-		MetadataType: pkg.KernelPackageMetadataType,
-		Metadata:     metadata,
-		Locations:    locations,
-	}
-
-	p.SetID()
-	return []pkg.Package{p}, nil, nil
+	return []pkg.Package{newLinuxKernelPackage(metadata, reader.Location)}, nil, nil
 }
 
-func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernelPackageMetadata) {
+func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernelMetadata) {
 	// Linux kernel x86 boot executable bzImage,
 	// version 5.10.121-linuxkit (root@buildkitsandbox) #1 SMP Fri Dec 2 10:35:42 UTC 2022,
 	// RO-rootFS,

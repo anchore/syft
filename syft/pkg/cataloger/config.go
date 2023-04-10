@@ -6,10 +6,12 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 )
 
+// TODO: these field naming vs helper function naming schemes are inconsistent.
+
 type Config struct {
 	Search      SearchConfig
 	Golang      golang.GoCatalogerOpts
-	KernelOpts  kernel.CatalogerOpts
+	LinuxKernel kernel.LinuxCatalogerConfig
 	Catalogers  []string
 	Parallelism int
 }
@@ -18,6 +20,7 @@ func DefaultConfig() Config {
 	return Config{
 		Search:      DefaultSearchConfig(),
 		Parallelism: 1,
+		LinuxKernel: kernel.DefaultLinuxCatalogerConfig(),
 	}
 }
 
@@ -32,6 +35,6 @@ func (c Config) Go() golang.GoCatalogerOpts {
 	return c.Golang
 }
 
-func (c Config) Kernel() kernel.CatalogerOpts {
-	return c.KernelOpts
+func (c Config) Kernel() kernel.LinuxCatalogerConfig {
+	return c.LinuxKernel
 }
