@@ -91,7 +91,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := newImageAllLayersResolver(img)
 			if err != nil {
 				t.Fatalf("could not create resolver: %+v", err)
 			}
@@ -205,7 +205,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := newImageAllLayersResolver(img)
 			if err != nil {
 				t.Fatalf("could not create resolver: %+v", err)
 			}
@@ -257,7 +257,7 @@ func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
 		t.Run(test.fixtureName, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := newImageAllLayersResolver(img)
 			assert.NoError(t, err)
 
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
@@ -274,7 +274,7 @@ func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
 func Test_imageAllLayersResolver_hasFilesystemIDInLocation(t *testing.T) {
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-duplicate-path")
 
-	resolver, err := newAllLayersResolver(img)
+	resolver, err := newImageAllLayersResolver(img)
 	assert.NoError(t, err)
 
 	locations, err := resolver.FilesByMIMEType("text/plain")
@@ -334,7 +334,7 @@ func TestAllLayersImageResolver_FilesContents(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := newImageAllLayersResolver(img)
 			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(test.fixture)
@@ -361,7 +361,7 @@ func TestAllLayersImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-	resolver, err := newAllLayersResolver(img)
+	resolver, err := newImageAllLayersResolver(img)
 	assert.NoError(t, err)
 
 	var dirLoc *Location
@@ -675,7 +675,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := newImageAllLayersResolver(img)
 			assert.NoError(t, err)
 
 			actual := test.runner(resolver)
@@ -689,7 +689,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 func TestAllLayersResolver_AllLocations(t *testing.T) {
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-files-deleted")
 
-	resolver, err := newAllLayersResolver(img)
+	resolver, err := newImageAllLayersResolver(img)
 	assert.NoError(t, err)
 
 	paths := strset.New()

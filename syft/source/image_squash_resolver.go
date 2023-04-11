@@ -168,7 +168,7 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 		return nil, fmt.Errorf("unable to get file contents for directory: %+v", location)
 	}
 
-	return r.img.FileContentsByRef(location.ref)
+	return r.img.OpenReference(location.ref)
 }
 
 func (r *imageSquashResolver) AllLocations() <-chan Location {
