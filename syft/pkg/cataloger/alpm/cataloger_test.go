@@ -13,7 +13,6 @@ import (
 )
 
 func TestAlpmCataloger(t *testing.T) {
-
 	expectedPkgs := []pkg.Package{
 		{
 			Name:         "gmp",
