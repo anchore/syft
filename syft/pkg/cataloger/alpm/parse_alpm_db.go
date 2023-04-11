@@ -32,7 +32,7 @@ var (
 )
 
 type alpmData struct {
-	License string `mapstructure:"license" json:"license"`
+	Licenses []string
 	pkg.AlpmMetadata
 }
 
@@ -131,7 +131,6 @@ func getFileReader(path string, resolver source.FileResolver) (io.Reader, error)
 }
 
 func parseDatabase(b *bufio.Scanner) (*alpmData, error) {
-	var entry pkg.AlpmMetadata
 	var err error
 	pkgFields := make(map[string]interface{})
 	for b.Scan() {
@@ -184,26 +183,45 @@ func parseDatabase(b *bufio.Scanner) (*alpmData, error) {
 		}
 	}
 
+	return parsePkgFiles(pkgFields)
+}
+
+func parsePkgFiles(pkgFields map[string]interface{}) (*alpmData, error) {
+	var (
+		entry    pkg.AlpmMetadata
+		licenses []string
+	)
+
+	if v, ok := pkgFields["license"]; ok {
+		// split the license string into a list of licenses new line
+		ls := strings.Split(v.(string), "\n")
+		for _, l := range ls {
+			// remove any leading/trailing whitespace
+			l = strings.TrimSpace(l)
+			// skip empty strings
+			if l == "" {
+				continue
+			}
+			// add the license to the list
+			licenses = append(licenses, l)
+		}
+	}
+
 	if err := mapstructure.Decode(pkgFields, &entry); err != nil {
 		return nil, fmt.Errorf("unable to parse ALPM metadata: %w", err)
-	}
-	if entry.Package == "" && len(entry.Files) == 0 && len(entry.Backup) == 0 {
-		return nil, nil
 	}
 
 	if entry.Backup == nil {
 		entry.Backup = make([]pkg.AlpmFileRecord, 0)
 	}
 
-	var lic string
-	// TODO: this value can be a list of licenses separated by /n
-	if l, ok := pkgFields["license"]; ok {
-		lic = l.(string)
+	if entry.Package == "" && len(entry.Files) == 0 && len(entry.Backup) == 0 {
+		return nil, nil
 	}
 
 	return &alpmData{
-		lic,
-		entry,
+		AlpmMetadata: entry,
+		Licenses:     licenses,
 	}, nil
 }
 

@@ -15,11 +15,16 @@ func newPackage(m alpmData, release *linux.Release, locations ...source.Location
 		licenseLocation = locations[0]
 	}
 
+	var licenses []pkg.License
+	for _, l := range m.Licenses {
+		licenses = append(licenses, pkg.NewLicense(l, "", licenseLocation))
+	}
+
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(locations...),
-		Licenses:     []pkg.License{pkg.NewLicense(m.License, "", licenseLocation)},
+		Licenses:     licenses,
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,
