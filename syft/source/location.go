@@ -11,11 +11,11 @@ import (
 // Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
 // in content fetching to uniquely identify a file relative to a request (the VirtualPath).
 type Location struct {
-	PositionInfo     `cyclonedx:""`
+	LocationData     `cyclonedx:""`
 	LocationMetadata `cyclonedx:""`
 }
 
-type PositionInfo struct {
+type LocationData struct {
 	Coordinates `cyclonedx:""` // Empty string here means there is no intermediate property name, e.g. syft:locations:0:path without "coordinates"
 	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
 	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
@@ -42,7 +42,7 @@ func (m *LocationMetadata) merge(other LocationMetadata) error {
 	return errs
 }
 
-func (l *Location) WithAnnotation(key, value string) *Location {
+func (l *Location) Annotate(key, value string) *Location {
 	if l.LocationMetadata.Annotations == nil {
 		l.LocationMetadata.Annotations = map[string]string{}
 	}
@@ -53,7 +53,7 @@ func (l *Location) WithAnnotation(key, value string) *Location {
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
 func NewLocation(realPath string) Location {
 	return Location{
-		PositionInfo: PositionInfo{
+		LocationData: LocationData{
 			Coordinates: Coordinates{
 				RealPath: realPath,
 			},
@@ -67,7 +67,7 @@ func NewLocation(realPath string) Location {
 // NewVirtualLocation creates a new location for a path accessed by a virtual path (a path with a symlink or hardlink somewhere in the path)
 func NewVirtualLocation(realPath, virtualPath string) Location {
 	return Location{
-		PositionInfo: PositionInfo{
+		LocationData: LocationData{
 			Coordinates: Coordinates{
 				RealPath: realPath,
 			},
@@ -81,7 +81,7 @@ func NewVirtualLocation(realPath, virtualPath string) Location {
 // NewLocationFromCoordinates creates a new location for the given Coordinates.
 func NewLocationFromCoordinates(coordinates Coordinates) Location {
 	return Location{
-		PositionInfo: PositionInfo{
+		LocationData: LocationData{
 			Coordinates: coordinates,
 		},
 		LocationMetadata: LocationMetadata{
@@ -92,7 +92,7 @@ func NewLocationFromCoordinates(coordinates Coordinates) Location {
 // NewVirtualLocationFromCoordinates creates a new location for the given Coordinates via a virtual path.
 func NewVirtualLocationFromCoordinates(coordinates Coordinates, virtualPath string) Location {
 	return Location{
-		PositionInfo: PositionInfo{
+		LocationData: LocationData{
 			Coordinates: coordinates,
 			VirtualPath: virtualPath,
 		},
@@ -105,7 +105,7 @@ func NewVirtualLocationFromCoordinates(coordinates Coordinates, virtualPath stri
 func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Image) Location {
 	layer := img.FileCatalog.Layer(ref)
 	return Location{
-		PositionInfo: PositionInfo{
+		LocationData: LocationData{
 			Coordinates: Coordinates{
 				RealPath:     string(ref.RealPath),
 				FileSystemID: layer.Metadata.Digest,
@@ -122,7 +122,7 @@ func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Ima
 // NewLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory.
 func NewLocationFromDirectory(responsePath string, ref file.Reference) Location {
 	return Location{
-		PositionInfo: PositionInfo{
+		LocationData: LocationData{
 			Coordinates: Coordinates{
 				RealPath: responsePath,
 			},
@@ -140,7 +140,7 @@ func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, r
 		return NewLocationFromDirectory(responsePath, ref)
 	}
 	return Location{
-		PositionInfo: PositionInfo{
+		LocationData: LocationData{
 			Coordinates: Coordinates{
 				RealPath: responsePath,
 			},
