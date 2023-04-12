@@ -44,7 +44,10 @@ func parseConanlock(_ source.FileResolver, _ *generic.Environment, reader source
 			Context: node.Context,
 		}
 
-		p := newConanlockPackage(metadata, reader.Location)
+		p := newConanlockPackage(
+			metadata,
+			reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
 
 		if p != nil {
 			pkgs = append(pkgs, *p)

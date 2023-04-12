@@ -62,7 +62,15 @@ func (c *goBinaryCataloger) parseGoBinary(resolver source.FileResolver, _ *gener
 
 func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
-	main := c.newGoBinaryPackage(resolver, &mod.Main, mod.Main.Path, mod.GoVersion, arch, gbs, location)
+	main := c.newGoBinaryPackage(
+		resolver,
+		&mod.Main,
+		mod.Main.Path,
+		mod.GoVersion,
+		arch,
+		gbs,
+		location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+	)
 	if main.Version == devel {
 		if version, ok := gbs["vcs.revision"]; ok {
 			if timestamp, ok := gbs["vcs.time"]; ok {
@@ -204,7 +212,15 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver source.FileResolver, locatio
 		if dep == nil {
 			continue
 		}
-		p := c.newGoBinaryPackage(resolver, dep, mod.Main.Path, mod.GoVersion, arch, nil, location)
+		p := c.newGoBinaryPackage(
+			resolver,
+			dep,
+			mod.Main.Path,
+			mod.GoVersion,
+			arch,
+			nil,
+			location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
 		if pkg.IsValid(&p) {
 			pkgs = append(pkgs, p)
 		}

@@ -34,9 +34,17 @@ func parseStackYaml(_ source.FileResolver, _ *generic.Environment, reader source
 	var pkgs []pkg.Package
 	for _, dep := range stackFile.ExtraDeps {
 		pkgName, pkgVersion, pkgHash := parseStackPackageEncoding(dep)
-		pkgs = append(pkgs, newPackage(pkgName, pkgVersion, &pkg.HackageMetadata{
-			PkgHash: pkgHash,
-		}, reader.Location))
+		pkgs = append(
+			pkgs,
+			newPackage(
+				pkgName,
+				pkgVersion,
+				&pkg.HackageMetadata{
+					PkgHash: pkgHash,
+				},
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 
 	return pkgs, nil, nil

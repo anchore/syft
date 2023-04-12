@@ -48,10 +48,13 @@ func parseRebarLock(_ source.FileResolver, _ *generic.Environment, reader source
 			version = versionNode.Get(2).Get(1).String()
 		}
 
-		p := newPackage(pkg.RebarLockMetadata{
-			Name:    name,
-			Version: version,
-		})
+		p := newPackage(
+			pkg.RebarLockMetadata{
+				Name:    name,
+				Version: version,
+			},
+			reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
 
 		pkgMap[name] = &p
 	}

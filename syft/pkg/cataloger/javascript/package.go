@@ -66,7 +66,7 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 		pkg.Package{
 			Name:         name,
 			Version:      version,
-			Locations:    source.NewLocationSet(location),
+			Locations:    source.NewLocationSet(location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(name, version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -89,7 +89,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 		pkg.Package{
 			Name:         name,
 			Version:      u.Version,
-			Locations:    source.NewLocationSet(location),
+			Locations:    source.NewLocationSet(location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -107,7 +107,7 @@ func newPnpmPackage(resolver source.FileResolver, location source.Location, name
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location),
+			Locations: source.NewLocationSet(location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
@@ -122,7 +122,7 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location),
+			Locations: source.NewLocationSet(location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,

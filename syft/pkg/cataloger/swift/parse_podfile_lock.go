@@ -59,7 +59,15 @@ func parsePodfileLock(_ source.FileResolver, _ *generic.Environment, reader sour
 			return nil, nil, fmt.Errorf("malformed podfile.lock: incomplete checksums")
 		}
 
-		pkgs = append(pkgs, newPackage(podName, podVersion, pkgHash, reader.Location))
+		pkgs = append(
+			pkgs,
+			newPackage(
+				podName,
+				podVersion,
+				pkgHash,
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 
 	return pkgs, nil, nil

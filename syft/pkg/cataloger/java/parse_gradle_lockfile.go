@@ -49,9 +49,11 @@ func parseGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader s
 	// map the dependencies
 	for _, dep := range dependencies {
 		mappedPkg := pkg.Package{
-			Name:         dep.Name,
-			Version:      dep.Version,
-			Locations:    source.NewLocationSet(reader.Location),
+			Name:    dep.Name,
+			Version: dep.Version,
+			Locations: source.NewLocationSet(
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
 			Language:     pkg.Java,
 			Type:         pkg.JavaPkg,
 			MetadataType: pkg.JavaMetadataType,

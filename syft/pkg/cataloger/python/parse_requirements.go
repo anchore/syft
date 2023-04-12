@@ -61,7 +61,14 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 			log.WithFields("path", reader.RealPath).Debugf("found empty package in requirements.txt line: %q", line)
 			continue
 		}
-		packages = append(packages, newPackageForIndex(name, version, reader.Location))
+		packages = append(
+			packages,
+			newPackageForIndex(
+				name,
+				version,
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 
 	if err := scanner.Err(); err != nil {

@@ -39,7 +39,14 @@ func parsePoetryLock(_ source.FileResolver, _ *generic.Environment, reader sourc
 
 	var pkgs []pkg.Package
 	for _, p := range metadata.Packages {
-		pkgs = append(pkgs, newPackageForIndex(p.Name, p.Version, reader.Location))
+		pkgs = append(
+			pkgs,
+			newPackageForIndex(
+				p.Name,
+				p.Version,
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 
 	return pkgs, nil, nil

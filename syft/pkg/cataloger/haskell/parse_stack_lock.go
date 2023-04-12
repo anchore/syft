@@ -62,10 +62,18 @@ func parseStackLock(_ source.FileResolver, _ *generic.Environment, reader source
 
 	for _, pack := range lockFile.Packages {
 		pkgName, pkgVersion, pkgHash := parseStackPackageEncoding(pack.Completed.Hackage)
-		pkgs = append(pkgs, newPackage(pkgName, pkgVersion, &pkg.HackageMetadata{
-			PkgHash:     pkgHash,
-			SnapshotURL: snapshotURL,
-		}, reader.Location))
+		pkgs = append(
+			pkgs,
+			newPackage(
+				pkgName,
+				pkgVersion,
+				&pkg.HackageMetadata{
+					PkgHash:     pkgHash,
+					SnapshotURL: snapshotURL,
+				},
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 
 	return pkgs, nil, nil

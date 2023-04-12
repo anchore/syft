@@ -58,7 +58,13 @@ func parsePubspecLock(_ source.FileResolver, _ *generic.Environment, reader sour
 
 	for _, name := range names {
 		pubPkg := p.Packages[name]
-		pkgs = append(pkgs, newPubspecLockPackage(name, pubPkg, reader.Location))
+		pkgs = append(pkgs,
+			newPubspecLockPackage(
+				name,
+				pubPkg,
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 
 	return pkgs, nil, nil

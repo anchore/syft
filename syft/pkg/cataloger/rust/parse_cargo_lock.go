@@ -36,7 +36,13 @@ func parseCargoLock(_ source.FileResolver, _ *generic.Environment, reader source
 		if p.Dependencies == nil {
 			p.Dependencies = make([]string, 0)
 		}
-		pkgs = append(pkgs, newPackageFromCargoMetadata(p, reader.Location))
+		pkgs = append(
+			pkgs,
+			newPackageFromCargoMetadata(
+				p,
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 
 	return pkgs, nil, nil

@@ -48,7 +48,10 @@ func parseConanfile(_ source.FileResolver, _ *generic.Environment, reader source
 			continue
 		}
 
-		p := newConanfilePackage(m, reader.Location)
+		p := newConanfilePackage(
+			m,
+			reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
 		if p == nil {
 			continue
 		}

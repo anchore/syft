@@ -53,7 +53,14 @@ func parseSetup(_ source.FileResolver, _ *generic.Environment, reader source.Loc
 				continue
 			}
 
-			packages = append(packages, newPackageForIndex(name, version, reader.Location))
+			packages = append(
+				packages,
+				newPackageForIndex(
+					name,
+					version,
+					reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+			)
 		}
 	}
 

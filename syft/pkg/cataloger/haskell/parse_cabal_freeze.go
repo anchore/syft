@@ -46,6 +46,14 @@ func parseCabalFreeze(_ source.FileResolver, _ *generic.Environment, reader sour
 		fields := strings.Split(line, " ==")
 
 		pkgName, pkgVersion := fields[0], fields[1]
-		pkgs = append(pkgs, newPackage(pkgName, pkgVersion, nil, reader.Location))
+		pkgs = append(
+			pkgs,
+			newPackage(
+				pkgName,
+				pkgVersion,
+				nil,
+				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 }

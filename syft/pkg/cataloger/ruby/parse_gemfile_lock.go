@@ -44,7 +44,7 @@ func parseGemFileLockEntries(_ source.FileResolver, _ *generic.Environment, read
 				newGemfileLockPackage(
 					candidate[0],
 					strings.Trim(candidate[1], "()"),
-					reader.Location,
+					reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)
 		}

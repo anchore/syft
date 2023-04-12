@@ -31,7 +31,7 @@ func newPackagesFromAudit(location source.Location, versionInfo rustaudit.Versio
 
 	for _, dep := range versionInfo.Packages {
 		dep := dep
-		p := newPackageFromAudit(&dep, location)
+		p := newPackageFromAudit(&dep, location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		if pkg.IsValid(&p) && dep.Kind == rustaudit.Runtime {
 			pkgs = append(pkgs, p)
 		}

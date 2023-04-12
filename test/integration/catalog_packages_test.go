@@ -269,6 +269,7 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
 					if _, exists := l.Annotations[pkg.EvidenceAnnotationKey]; !exists {
 						pkgTypesMissingEvidence.Add(string(a.Type))
@@ -281,7 +282,7 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 	}
 
 	if pkgTypesMissingEvidence.Size() > 0 {
-		t.Log("Package types missing evidence (img resolver): ", pkgTypesMissingEvidence.List())
+		t.Log("Package types missing evidence annotations (img resolver): ", pkgTypesMissingEvidence.List())
 	}
 }
 
@@ -298,6 +299,7 @@ func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
 					if _, exists := l.Annotations[pkg.EvidenceAnnotationKey]; !exists {
 						pkgTypesMissingEvidence.Add(string(a.Type))
@@ -310,6 +312,6 @@ func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
 	}
 
 	if pkgTypesMissingEvidence.Size() > 0 {
-		t.Log("Package types missing evidence (dir resolver): ", pkgTypesMissingEvidence.List())
+		t.Log("Package types missing evidence annotations (dir resolver): ", pkgTypesMissingEvidence.List())
 	}
 }
