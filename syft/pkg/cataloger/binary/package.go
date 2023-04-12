@@ -1,10 +1,11 @@
 package binary
 
 import (
+	"reflect"
+
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"reflect"
 )
 
 func newPackage(classifier classifier, location source.Location, matchMetadata map[string]string) []pkg.Package {

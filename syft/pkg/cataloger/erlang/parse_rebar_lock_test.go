@@ -1,12 +1,12 @@
 package erlang
 
 import (
-	"github.com/anchore/syft/syft/source"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseRebarLock(t *testing.T) {

@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/stereoscope/pkg/file"

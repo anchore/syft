@@ -70,8 +70,7 @@ func parsePackageJSON(_ source.FileResolver, _ *generic.Environment, reader sour
 
 		pkgs = append(
 			pkgs,
-			newPackageJSONPackage(p, reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-			),
+			newPackageJSONPackage(p, reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		)
 	}
 

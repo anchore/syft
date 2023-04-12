@@ -1,11 +1,11 @@
 package integration
 
 import (
-	"github.com/scylladb/go-set/strset"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

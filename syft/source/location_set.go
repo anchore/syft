@@ -1,10 +1,11 @@
 package source
 
 import (
-	"github.com/anchore/syft/internal/log"
 	"sort"
 
 	"github.com/mitchellh/hashstructure/v2"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 type LocationSet struct {

@@ -22,7 +22,6 @@ const (
 )
 
 func newDpkgPackage(d pkg.DpkgMetadata, dbLocation source.Location, resolver source.FileResolver, release *linux.Release) pkg.Package {
-
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
@@ -163,6 +162,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 	return files, locations
 }
 
+//nolint:dupl
 func fetchMd5Contents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
 	var md5Reader io.ReadCloser
 	var err error
@@ -198,6 +198,7 @@ func fetchMd5Contents(resolver source.FileResolver, dbLocation source.Location, 
 	return md5Reader, &l
 }
 
+//nolint:dupl
 func fetchConffileContents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
 	var reader io.ReadCloser
 	var err error
