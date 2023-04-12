@@ -3,6 +3,7 @@ package javascript
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -12,14 +13,21 @@ func Test_JavascriptCataloger(t *testing.T) {
 	locationSet := source.NewLocationSet(source.NewLocation("package-lock.json"))
 	expectedPkgs := []pkg.Package{
 		{
-			Name:         "@actions/core",
-			Version:      "1.6.0",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/%40actions/core@1.6.0",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			Licenses:     []pkg.License{},
+			Name:      "@actions/core",
+			Version:   "1.6.0",
+			FoundBy:   "javascript-lock-cataloger",
+			PURL:      "pkg:npm/%40actions/core@1.6.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Licenses: []pkg.License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					Location:       source.NewLocation("package-lock.json"),
+				},
+			},
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
 		},
@@ -35,14 +43,21 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz", Integrity: "sha1-7QMXwyIGT3lGbAKWa922Bas32Zg="},
 		},
 		{
-			Name:         "cowsay",
-			Version:      "1.4.0",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/cowsay@1.4.0",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			Licenses:     []pkg.License{},
+			Name:      "cowsay",
+			Version:   "1.4.0",
+			FoundBy:   "javascript-lock-cataloger",
+			PURL:      "pkg:npm/cowsay@1.4.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Licenses: []pkg.License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					Location:       source.NewLocation("package-lock.json"),
+				},
+			},
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
 		},
