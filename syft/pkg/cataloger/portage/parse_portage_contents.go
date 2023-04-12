@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -47,7 +48,7 @@ func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, 
 		},
 	}
 	// TODO: update this to use latest license parsing and validation tooling
-	// addLicenses(resolver, reader.Location, &p)
+	addLicenses(resolver, reader.Location, &p)
 	addSize(resolver, reader.Location, &p)
 	addFiles(resolver, reader.Location, &p)
 
@@ -89,34 +90,39 @@ func addFiles(resolver source.FileResolver, dbLocation source.Location, p *pkg.P
 	p.Locations.Add(dbLocation)
 }
 
-// func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
-//	parentPath := filepath.Dir(dbLocation.RealPath)
-//
-//	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
-//
-//	if location == nil {
-//		return
-//	}
-//
-//	licenseReader, err := resolver.FileContentsByLocation(*location)
-//	if err != nil {
-//		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage LICENSE: %+v", err)
-//		return
-//	}
-//
-//	findings := internal.NewStringSet()
-//	scanner := bufio.NewScanner(licenseReader)
-//	scanner.Split(bufio.ScanWords)
-//	for scanner.Scan() {
-//		token := scanner.Text()
-//		if token != "||" && token != "(" && token != ")" {
-//			findings.Add(token)
-//		}
-//	}
-//	_ = findings.ToSlice()
-//	// sort.Strings(licenses)
-//	p.Locations.Add(*location)
-//}
+func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
+	parentPath := filepath.Dir(dbLocation.RealPath)
+
+	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
+
+	if location == nil {
+		return
+	}
+
+	licenseReader, err := resolver.FileContentsByLocation(*location)
+	if err != nil {
+		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage LICENSE: %+v", err)
+		return
+	}
+
+	findings := internal.NewStringSet()
+	scanner := bufio.NewScanner(licenseReader)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		token := scanner.Text()
+		if token != "||" && token != "(" && token != ")" {
+			findings.Add(token)
+		}
+	}
+	licenseCandidates := findings.ToSlice()
+
+	licenses := make([]pkg.License, 0)
+	for _, licenseCandidate := range licenseCandidates {
+		licenses = append(licenses, pkg.NewLicense(licenseCandidate, "", *location))
+	}
+	p.Licenses = licenses
+	p.Locations.Add(*location)
+}
 
 func addSize(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
 	parentPath := filepath.Dir(dbLocation.RealPath)

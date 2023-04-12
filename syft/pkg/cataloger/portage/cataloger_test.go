@@ -5,13 +5,14 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestPortageCataloger(t *testing.T) {
-
+	expectedLicenseLocation := source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE")
 	expectedPkgs := []pkg.Package{
 		{
 			Name:    "app-containers/skopeo",
@@ -20,10 +21,45 @@ func TestPortageCataloger(t *testing.T) {
 			PURL:    "pkg:ebuild/app-containers/skopeo@1.5.1",
 			Locations: source.NewLocationSet(
 				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/CONTENTS"),
-				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE"),
 				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
+				expectedLicenseLocation,
 			),
-			Licenses:     []pkg.License{},
+			Licenses: []pkg.License{
+				{
+					Value:          "Apache-2.0",
+					SPDXExpression: "Apache-2.0",
+					Type:           license.Declared,
+					Location:       expectedLicenseLocation,
+				},
+				{
+					Value:    "BSD",
+					Type:     license.Declared,
+					Location: expectedLicenseLocation,
+				},
+				{
+					Value:    "BSD-2",
+					Type:     license.Declared,
+					Location: expectedLicenseLocation,
+				},
+				{
+					Value:          "CC-BY-SA-4.0",
+					SPDXExpression: "CC-BY-SA-4.0",
+					Type:           license.Declared,
+					Location:       expectedLicenseLocation,
+				},
+				{
+					Value:          "ISC",
+					SPDXExpression: "ISC",
+					Type:           license.Declared,
+					Location:       expectedLicenseLocation,
+				},
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					Location:       expectedLicenseLocation,
+				},
+			},
 			Type:         pkg.PortagePkg,
 			MetadataType: pkg.PortageMetadataType,
 			Metadata: pkg.PortageMetadata{
