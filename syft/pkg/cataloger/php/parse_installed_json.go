@@ -16,19 +16,19 @@ var _ generic.Parser = parseComposerLock
 
 // Note: composer version 2 introduced a new structure for the installed.json file, so we support both
 type installedJSONComposerV2 struct {
-	Packages []pkg.PhpComposerJSONMetadata `json:"packages"`
+	Packages []parsedData `json:"packages"`
 }
 
 func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 	type compv2 struct {
-		Packages []pkg.PhpComposerJSONMetadata `json:"packages"`
+		Packages []parsedData `json:"packages"`
 	}
 	compv2er := new(compv2)
 	err := json.Unmarshal(data, &compv2er)
 	if err != nil {
 		// If we had an err	or, we may be dealing with a composer v.1 installed.json
 		// which should be all arrays
-		var packages []pkg.PhpComposerJSONMetadata
+		var packages []parsedData
 		err := json.Unmarshal(data, &packages)
 		if err != nil {
 			return err

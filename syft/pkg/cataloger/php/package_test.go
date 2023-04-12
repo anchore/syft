@@ -11,30 +11,39 @@ import (
 func Test_packageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata pkg.PhpComposerJSONMetadata
+		metadata parsedData
 		expected string
 	}{
 		{
 			name: "with extractable vendor",
-			metadata: pkg.PhpComposerJSONMetadata{
-				Name:    "ven/name",
-				Version: "1.0.1",
+			metadata: parsedData{
+				[]string{},
+				pkg.PhpComposerJSONMetadata{
+					Version: "1.0.1",
+					Name:    "ven/name",
+				},
 			},
 			expected: "pkg:composer/ven/name@1.0.1",
 		},
 		{
 			name: "name with slashes (invalid)",
-			metadata: pkg.PhpComposerJSONMetadata{
-				Name:    "ven/name/component",
-				Version: "1.0.1",
+			metadata: parsedData{
+				[]string{},
+				pkg.PhpComposerJSONMetadata{
+					Name:    "ven/name/component",
+					Version: "1.0.1",
+				},
 			},
 			expected: "pkg:composer/ven/name-component@1.0.1",
 		},
 		{
 			name: "unknown vendor",
-			metadata: pkg.PhpComposerJSONMetadata{
-				Name:    "name",
-				Version: "1.0.1",
+			metadata: parsedData{
+				[]string{},
+				pkg.PhpComposerJSONMetadata{
+					Name:    "name",
+					Version: "1.0.1",
+				},
 			},
 			expected: "pkg:composer/name@1.0.1",
 		},

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -24,7 +25,13 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
-			Licenses:     []pkg.License{},
+			Licenses: []pkg.License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+				},
+			},
 			Metadata: pkg.PhpComposerJSONMetadata{
 				Name:    "asm89/stack-cors",
 				Version: "1.3.0",
@@ -66,12 +73,18 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			},
 		},
 		{
-			Name:         "behat/mink",
-			Version:      "v1.8.1",
-			PURL:         "pkg:composer/behat/mink@v1.8.1",
-			Language:     pkg.PHP,
-			Type:         pkg.PhpComposerPkg,
-			Licenses:     []pkg.License{},
+			Name:     "behat/mink",
+			Version:  "v1.8.1",
+			PURL:     "pkg:composer/behat/mink@v1.8.1",
+			Language: pkg.PHP,
+			Type:     pkg.PhpComposerPkg,
+			Licenses: []pkg.License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+				},
+			},
 			MetadataType: pkg.PhpComposerJSONMetadataType,
 			Metadata: pkg.PhpComposerJSONMetadata{
 				Name:    "behat/mink",
@@ -129,9 +142,11 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			locations := source.NewLocationSet(source.NewLocation(fixture))
 			for i := range expectedPkgs {
 				expectedPkgs[i].Locations = locations
+				for k := range expectedPkgs[i].Licenses {
+					expectedPkgs[i].Licenses[k].Location = source.NewLocation(fixture)
+				}
 			}
 			pkgtest.TestFileParser(t, fixture, parseInstalledJSON, expectedPkgs, expectedRelationships)
 		})
 	}
-
 }
