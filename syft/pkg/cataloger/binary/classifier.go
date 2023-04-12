@@ -7,7 +7,6 @@ import (
 	"debug/pe"
 	"fmt"
 	"io"
-	"reflect"
 	"regexp"
 	"strings"
 	"text/template"
@@ -107,7 +106,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
-		return singlePackage(classifier, location, matchMetadata), nil
+		return newPackage(classifier, location, matchMetadata), nil
 	}
 }
 
@@ -120,7 +119,7 @@ func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
-		return singlePackage(classifier, location, matchMetadata), nil
+		return newPackage(classifier, location, matchMetadata), nil
 	}
 }
 
@@ -141,8 +140,8 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evide
 			if err != nil {
 				return nil, err
 			}
-			for _, libraryLication := range locations {
-				pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLication)
+			for _, libraryLocation := range locations {
+				pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLocation)
 				if err != nil {
 					return nil, err
 				}
@@ -174,58 +173,6 @@ func mustPURL(purl string) packageurl.PackageURL {
 		panic(fmt.Sprintf("invalid PURL: %s", p))
 	}
 	return p
-}
-
-func singlePackage(classifier classifier, location source.Location, matchMetadata map[string]string) []pkg.Package {
-	version, ok := matchMetadata["version"]
-	if !ok {
-		return nil
-	}
-
-	update := matchMetadata["update"]
-
-	var cpes []cpe.CPE
-	for _, c := range classifier.CPEs {
-		c.Version = version
-		c.Update = update
-		cpes = append(cpes, c)
-	}
-
-	p := pkg.Package{
-		Name:         classifier.Package,
-		Version:      version,
-		Locations:    source.NewLocationSet(location),
-		Type:         pkg.BinaryPkg,
-		CPEs:         cpes,
-		FoundBy:      catalogerName,
-		MetadataType: pkg.BinaryMetadataType,
-		Metadata: pkg.BinaryMetadata{
-			Matches: []pkg.ClassifierMatch{
-				{
-					Classifier: classifier.Class,
-					Location:   location,
-				},
-			},
-		},
-	}
-
-	if classifier.Type != "" {
-		p.Type = classifier.Type
-	}
-
-	if !reflect.DeepEqual(classifier.PURL, emptyPURL) {
-		purl := classifier.PURL
-		purl.Version = version
-		p.PURL = purl.ToString()
-	}
-
-	if classifier.Language != "" {
-		p.Language = classifier.Language
-	}
-
-	p.SetID()
-
-	return []pkg.Package{p}
 }
 
 func getContents(resolver source.FileResolver, location source.Location) ([]byte, error) {
