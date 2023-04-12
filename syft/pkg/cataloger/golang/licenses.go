@@ -3,7 +3,6 @@ package golang
 import (
 	"archive/zip"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,49 +15,74 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
-	"golang.org/x/exp/slices"
+	"gopkg.in/src-d/go-billy.v4/memfs"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/storage/memory"
 
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/source"
 )
 
-const defaultRemoteProxy = "https://proxy.golang.org"
+const (
+	defaultRemoteProxies = "https://proxy.golang.org,direct"
+	directProxyOnly      = "direct"
+)
 
 type goLicenses struct {
 	opts                  GoCatalogerOpts
-	localModCacheResolver source.FileResolver
+	localModCacheResolver source.WritableFileResolver
+	progress              *event.GenericProgress
 }
 
 func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	return goLicenses{
 		opts:                  opts,
 		localModCacheResolver: modCacheResolver(opts.LocalModCacheDir),
+		progress: &event.GenericProgress{
+			SubStatus:          true,
+			RemoveOnCompletion: true,
+			Title:              "Downloading go mod",
+		},
 	}
 }
 
-func remoteProxy(module string) (proxy string, err error) {
-	goprivate := os.Getenv("GOPRIVATE")
-	if goprivate != "" {
-		patterns := strings.Split(goprivate, ",")
+func remoteProxies(proxy string, noProxy string, module string) (proxies []string) {
+	if proxy == "" {
+		proxy = os.Getenv("GOPROXY")
+	}
+	if proxy == "off" {
+		proxy = directProxyOnly
+	}
+	if proxy == "" {
+		proxy = defaultRemoteProxies
+	}
+
+	if noProxy == "" {
+		noProxy = os.Getenv("GOPRIVATE")
+		goNoProxy := os.Getenv("GONOPROXY")
+		if goNoProxy != "" {
+			if noProxy == "" {
+				noProxy = goNoProxy
+			} else {
+				noProxy += "," + goNoProxy
+			}
+		}
+	}
+	if noProxy != "" {
+		patterns := strings.Split(noProxy, ",")
 		for _, pattern := range patterns {
 			if matched, err := path.Match(pattern, module); err == nil && matched {
 				// matched to be direct for this module
-				return "", nil
+				proxy = directProxyOnly
+				break
 			}
 		}
 	}
 
-	goproxy := os.Getenv("GOPROXY")
-	switch {
-	case goproxy == "":
-		proxy = defaultRemoteProxy
-	case goproxy == "off":
-		return "", errors.New("remote license search is disabled by GOPROXY=off")
-	case goproxy == "direct":
-		proxy = ""
-	}
-	return
+	return strings.Split(proxy, ",")
 }
 
 func defaultGoPath() string {
@@ -76,10 +100,7 @@ func defaultGoPath() string {
 	return goPath
 }
 
-// resolver needs to be shared between mod file & binary scanners so it's only scanned once
-var modCacheResolvers = map[string]source.FileResolver{}
-
-func modCacheResolver(modCacheDir string) source.FileResolver {
+func modCacheResolver(modCacheDir string) source.WritableFileResolver {
 	if modCacheDir == "" {
 		goPath := defaultGoPath()
 		if goPath != "" {
@@ -87,11 +108,7 @@ func modCacheResolver(modCacheDir string) source.FileResolver {
 		}
 	}
 
-	if r, ok := modCacheResolvers[modCacheDir]; ok {
-		return r
-	}
-
-	var r source.FileResolver
+	var r source.WritableFileResolver
 
 	if modCacheDir == "" {
 		log.Trace("unable to determine mod cache directory, skipping mod cache resolver")
@@ -103,13 +120,9 @@ func modCacheResolver(modCacheDir string) source.FileResolver {
 			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modCacheDir)
 			r = source.NewMockResolverForPaths()
 		} else {
-			r = source.NewDeferredResolverFromSource(func() (source.Source, error) {
-				return source.NewFromDirectory(modCacheDir)
-			})
+			r = source.NewUnindexedDirectoryResolver(modCacheDir)
 		}
 	}
-
-	modCacheResolvers[modCacheDir] = r
 
 	return r
 }
@@ -119,20 +132,43 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
 
-	if c.opts.SearchLocalModCacheLicenses && err == nil && len(licenses) == 0 {
+	search := c.opts.SearchLocalModCacheLicenses || c.opts.SearchRemoteLicenses
+	dir := fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
+	glob := fmt.Sprintf("%s/*", dir)
+
+	if search && err == nil && len(licenses) == 0 {
 		// if we're running against a directory on the filesystem, it may not include the
 		// user's homedir / GOPATH, so we defer to using the localModCacheResolver
-		licenses, err = findLicenses(c.localModCacheResolver,
-			fmt.Sprintf(`**/%s@%s/*`, processCaps(moduleName), moduleVersion),
-		)
+		licenses, err = findLicenses(c.localModCacheResolver, glob)
 	}
 
 	// if we did not find it yet, and remote searching was enabled, then use that
 	if c.opts.SearchRemoteLicenses && err == nil && len(licenses) == 0 {
+		proxies := remoteProxies(c.opts.Proxy, c.opts.NoProxy, moduleName)
+
 		var fsys fs.FS
-		fsys, err = getModule(moduleName, moduleVersion)
+		fsys, err = getModule(c.progress, proxies, moduleName, moduleVersion)
 		if err == nil {
-			licenses, err = findLicensesFS(fsys)
+			// populate the mod cache with the results
+			err = fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, _ error) error {
+				if d.IsDir() {
+					return nil
+				}
+				f, err := fsys.Open(filePath)
+				if err != nil {
+					return err
+				}
+				return c.localModCacheResolver.Write(path.Join(dir, filePath), f)
+			})
+
+			if err != nil {
+				log.Tracef("remote proxy walk failed for: %s", moduleName)
+			}
+
+			if err == nil {
+				// re-scan the mod cache
+				licenses, err = findLicenses(c.localModCacheResolver, glob)
+			}
 		}
 	}
 
@@ -141,7 +177,7 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 		licenses = []string{}
 	}
 
-	return
+	return licenses, err
 }
 
 func findLicenses(resolver source.FileResolver, globMatch string) (out []string, err error) {
@@ -173,47 +209,6 @@ func findLicenses(resolver source.FileResolver, globMatch string) (out []string,
 	return
 }
 
-func findLicensesFS(fsys fs.FS) (out []string, err error) {
-	if fsys == nil {
-		return
-	}
-	err = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		// ignore git directory
-		if path == ".git" || strings.HasPrefix(path, ".git/") {
-			return nil
-		}
-		if d.IsDir() {
-			return nil
-		}
-		basename := filepath.Base(path)
-		if !licenses.FileNameSet.Contains(basename) {
-			return nil
-		}
-		f, err := fsys.Open(path)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = f.Close() }()
-		parsed, err := licenses.Parse(f)
-		if err != nil {
-			return err
-		}
-
-		for _, license := range parsed {
-			if slices.Contains(out, license) {
-				continue
-			}
-			out = append(out, license)
-		}
-		return nil
-	})
-
-	return out, err
-}
-
 var capReplacer = regexp.MustCompile("[A-Z]")
 
 func processCaps(s string) string {
@@ -222,46 +217,78 @@ func processCaps(s string) string {
 	})
 }
 
-func getModule(moduleName, moduleVersion string) (fsys fs.FS, err error) {
-	proxy, err := remoteProxy(moduleName)
+func getModule(progress *event.GenericProgress, proxies []string, moduleName, moduleVersion string) (fsys fs.FS, err error) {
+	for _, proxy := range proxies {
+		u, _ := url.Parse(proxy)
+		if proxy == "direct" {
+			fsys, err = getModuleRepository(progress, moduleName, moduleVersion)
+			continue
+		}
+		switch u.Scheme {
+		case "https", "http":
+			fsys, err = getModuleProxy(progress, proxy, moduleName, moduleVersion)
+		case "file":
+			p := filepath.Join(u.Path, moduleName, "@v", moduleVersion)
+			progress.SetValue(fmt.Sprintf("file: %s", p))
+			fsys = os.DirFS(p)
+		}
+		if fsys != nil {
+			break
+		}
+	}
+	return
+}
+
+//nolint:gosec
+func getModuleProxy(progress *event.GenericProgress, proxy string, moduleName string, moduleVersion string) (fs.FS, error) {
+	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
+	progress.SetValue(u)
+	// get the module zip
+	resp, err := http.Get(u)
 	if err != nil {
-		return nil, fmt.Errorf("golang search-remote-licenses enabled but GOPROXY diabled: %w", err)
+		return nil, err
 	}
-	if proxy == "" {
-		// no proxy, go direct
-		// https://go.dev/ref/mod#vcs
-		// would require support for Git, Subversion, Mercurial, Bazaar, and Fossil
-		// do we want to do this?
-	}
-	u, _ := url.Parse(proxy)
-	switch u.Scheme {
-	case "https", "http":
-		// get the module zip
-		resp, err := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion))
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		u = fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion)
+		progress.SetValue(u)
+		// try lowercasing it; some packages have mixed casing that really messes up the proxy
+		resp, err = http.Get(u)
 		if err != nil {
 			return nil, err
 		}
 		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
-			// try lowercasing it; some packages have mixed casing that really messes up the proxy
-			respLC, errLC := http.Get(fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion))
-			if errLC != nil {
-				return nil, err
-			}
-			defer func() { _ = respLC.Body.Close() }()
-			if respLC.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
-			}
-			resp = respLC
+			return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
 		}
-		// read the zip
-		b, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		fsys, err = zip.NewReader(bytes.NewReader(b), resp.ContentLength)
-	case "file":
-		fsys = os.DirFS(filepath.Join(u.Path, moduleName, "@v", moduleVersion))
 	}
-	return
+	// read the zip
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return zip.NewReader(bytes.NewReader(b), resp.ContentLength)
+}
+
+func getModuleRepository(progress *event.GenericProgress, moduleName string, moduleVersion string) (fs.FS, error) {
+	repoName := moduleName
+	parts := strings.Split(moduleName, "/")
+	if len(parts) > 2 {
+		repoName = fmt.Sprintf("%s/%s/%s", parts[0], parts[1], parts[2])
+	}
+	progress.SetValue(fmt.Sprintf("git: %s", repoName))
+	f := memfs.New()
+	buf := &bytes.Buffer{}
+	_, err := git.Clone(memory.NewStorage(), f, &git.CloneOptions{
+		URL:           fmt.Sprintf("https://%s", repoName),
+		ReferenceName: plumbing.NewTagReferenceName(moduleVersion), // FIXME version might be a SHA
+		SingleBranch:  true,
+		Depth:         1,
+		Progress:      buf,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%w -- %s", err, buf.String())
+	}
+
+	return bfs{fs: f}, nil
 }

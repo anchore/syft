@@ -41,7 +41,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(GoCatalogerOpts{
 				SearchLocalModCacheLicenses: true,
-				LocalModCacheDir:            path.Join(wd, "test-fixtures", "licenses"),
+				LocalModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 			})
 			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)
 			require.NoError(t, err)
@@ -53,7 +53,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 	}
 }
 
-func Test_RemoteLicenseSearch(t *testing.T) {
+func Test_RemoteProxyLicenseSearch(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		buf := &bytes.Buffer{}
 		uri := strings.TrimPrefix(strings.TrimSuffix(r.RequestURI, ".zip"), "/")
@@ -106,10 +106,14 @@ func Test_RemoteLicenseSearch(t *testing.T) {
 		},
 	}
 
+	modDir := path.Join(t.TempDir())
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(GoCatalogerOpts{
 				SearchRemoteLicenses: true,
+				Proxy:                server.URL,
+				LocalModCacheDir:     modDir,
 			})
 
 			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)
@@ -145,6 +149,41 @@ func Test_processCaps(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			got := processCaps(test.name)
 
+			require.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func Test_proxyForModulue(t *testing.T) {
+	proxyString := "https://somewhere.org,direct"
+
+	allProxies := []string{"https://somewhere.org", "direct"}
+	directProxy := []string{"direct"}
+
+	tests := []struct {
+		module   string
+		noProxy  string
+		expected []string
+	}{
+		{
+			module:   "github.com/anchore/syft",
+			expected: allProxies,
+		},
+		{
+			module:   "github.com/anchore/sbom-action",
+			noProxy:  "*/anchore/*",
+			expected: directProxy,
+		},
+		{
+			module:   "github.com/anchore/sbom-action",
+			noProxy:  "*/user/mod,*/anchore/sbom-action",
+			expected: directProxy,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.module, func(t *testing.T) {
+			got := remoteProxies(proxyString, test.noProxy, test.module)
 			require.Equal(t, test.expected, got)
 		})
 	}
