@@ -96,10 +96,20 @@ func TestParseJar(t *testing.T) {
 			},
 			expected: map[string]pkg.Package{
 				"example-jenkins-plugin": {
-					Name:         "example-jenkins-plugin",
-					Version:      "1.0-SNAPSHOT",
-					PURL:         "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
-					Licenses:     []pkg.License{},
+					Name:    "example-jenkins-plugin",
+					Version: "1.0-SNAPSHOT",
+					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
+					Licenses: []pkg.License{
+						{
+							Value: "MIT License",
+							Type:  "declared",
+							Location: source.Location{
+								Coordinates: source.Coordinates{
+									RealPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
+								},
+							},
+						},
+					},
 					Language:     pkg.Java,
 					Type:         pkg.JenkinsPluginPkg,
 					MetadataType: pkg.JavaMetadataType,

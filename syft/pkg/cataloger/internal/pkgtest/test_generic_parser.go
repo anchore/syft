@@ -299,6 +299,9 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 				return true
 			},
 		),
+		cmp.Comparer(
+			DefaultLocationComparer,
+		),
 	}
 
 	if diff := cmp.Diff(a, b, opts...); diff != "" {

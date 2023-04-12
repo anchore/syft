@@ -185,12 +185,19 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}
 
 	// TODO: update this to use the new license selection/validation logic
-	_ = selectLicense(manifest)
+	licenseCandidates := selectLicense(manifest)
+
+	licenses := make([]pkg.License, 0)
+	for _, l := range licenseCandidates {
+		// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
+		licenses = append(licenses, pkg.NewLicense(l, "", j.location))
+	}
 
 	return &pkg.Package{
 		Name:         selectName(manifest, j.fileInfo),
 		Version:      selectVersion(manifest, j.fileInfo),
 		Language:     pkg.Java,
+		Licenses:     licenses,
 		Locations:    source.NewLocationSet(j.location),
 		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
