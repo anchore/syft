@@ -1,13 +1,15 @@
 package alpm
 
 import (
+	"strings"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(m alpmData, release *linux.Release, locations ...source.Location) pkg.Package {
+func newPackage(m *parsedData, release *linux.Release, locations ...source.Location) pkg.Package {
 	// ALPM only passes a single location
 	// We use this as the "declared" license location
 	var licenseLocation source.Location
@@ -15,9 +17,13 @@ func newPackage(m alpmData, release *linux.Release, locations ...source.Location
 		licenseLocation = locations[0]
 	}
 
-	var licenses []pkg.License
-	for _, l := range m.Licenses {
-		licenses = append(licenses, pkg.NewLicense(l, "", licenseLocation))
+	// default to empty list; not nil field
+	licenses := make([]pkg.License, 0)
+	licenseCandidates := strings.Split(m.Licenses, "\n")
+	for _, l := range licenseCandidates {
+		if l != "" {
+			licenses = append(licenses, pkg.NewLicense(l, "", licenseLocation))
+		}
 	}
 
 	p := pkg.Package{
@@ -28,13 +34,26 @@ func newPackage(m alpmData, release *linux.Release, locations ...source.Location
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,
-		Metadata:     m,
+		Metadata: pkg.AlpmMetadata{
+			BasePackage:  m.BasePackage,
+			Package:      m.Package,
+			Version:      m.Version,
+			Description:  m.Description,
+			Architecture: m.Architecture,
+			Size:         m.Size,
+			Packager:     m.Packager,
+			URL:          m.URL,
+			Validation:   m.Validation,
+			Reason:       m.Reason,
+			Files:        m.Files,
+			Backup:       m.Backup,
+		},
 	}
 	p.SetID()
 	return p
 }
 
-func packageURL(m alpmData, distro *linux.Release) string {
+func packageURL(m *parsedData, distro *linux.Release) string {
 	if distro == nil || distro.ID != "arch" {
 		// note: there is no namespace variation (like with debian ID_LIKE for ubuntu ID, for example)
 		return ""

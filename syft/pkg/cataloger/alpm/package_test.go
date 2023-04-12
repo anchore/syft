@@ -13,14 +13,14 @@ import (
 func Test_PackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata alpmData
+		metadata *parsedData
 		distro   linux.Release
 		expected string
 	}{
 		{
 			name: "bad distro id",
-			metadata: alpmData{
-				[]string{""},
+			metadata: &parsedData{
+				"",
 				pkg.AlpmMetadata{
 					Package:      "p",
 					Version:      "v",
@@ -35,8 +35,8 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "gocase",
-			metadata: alpmData{
-				[]string{""},
+			metadata: &parsedData{
+				"",
 				pkg.AlpmMetadata{
 					Package:      "p",
 					Version:      "v",
@@ -51,8 +51,8 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "missing architecture",
-			metadata: alpmData{
-				[]string{""},
+			metadata: &parsedData{
+				"",
 				pkg.AlpmMetadata{
 					Package: "p",
 					Version: "v",
@@ -64,8 +64,8 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:alpm/arch/p@v?distro=arch",
 		},
 		{
-			metadata: alpmData{
-				[]string{""},
+			metadata: &parsedData{
+				"",
 				pkg.AlpmMetadata{
 					Package:      "python",
 					Version:      "3.10.0",
@@ -79,8 +79,8 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:alpm/arch/python@3.10.0?arch=any&distro=arch-rolling",
 		},
 		{
-			metadata: alpmData{
-				[]string{""},
+			metadata: &parsedData{
+				"",
 				pkg.AlpmMetadata{
 					Package:      "g plus plus",
 					Version:      "v84",
@@ -95,8 +95,8 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: alpmData{
-				[]string{""},
+			metadata: &parsedData{
+				"",
 				pkg.AlpmMetadata{
 					Package:      "p",
 					Version:      "v",
