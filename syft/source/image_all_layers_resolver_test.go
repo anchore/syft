@@ -1,7 +1,9 @@
 package source
 
 import (
+	"fmt"
 	"io"
+	"runtime"
 	"sort"
 	"testing"
 
@@ -689,6 +691,11 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 func TestAllLayersResolver_AllLocations(t *testing.T) {
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-files-deleted")
 
+	arch := "x86_64"
+	if runtime.GOARCH == "arm64" {
+		arch = "aarch64"
+	}
+
 	resolver, err := newAllLayersResolver(img)
 	assert.NoError(t, err)
 
@@ -799,9 +806,9 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 		"/lib/apk/db/triggers",
 		"/lib/apk/exec",
 		"/lib/firmware",
-		"/lib/ld-musl-x86_64.so.1",
+		fmt.Sprintf("/lib/ld-musl-%s.so.1", arch),
 		"/lib/libapk.so.3.12.0",
-		"/lib/libc.musl-x86_64.so.1",
+		fmt.Sprintf("/lib/libc.musl-%s.so.1", arch),
 		"/lib/libcrypto.so.3",
 		"/lib/libssl.so.3",
 		"/lib/libz.so.1",

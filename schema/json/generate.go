@@ -45,6 +45,7 @@ type artifactMetadataContainer struct {
 	Hackage           pkg.HackageMetadata
 	Java              pkg.JavaMetadata
 	KbPackage         pkg.KbPackageMetadata
+	Nix               pkg.NixStoreMetadata
 	NpmPackage        pkg.NpmPackageJSONMetadata
 	NpmPackageLock    pkg.NpmPackageLockJSONMetadata
 	MixLock           pkg.MixLockMetadata
