@@ -40,17 +40,21 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 	return p
 }
 
-func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...source.Location) pkg.Package {
-	// TODO: lift licenses out of metadata as part of construction
+func newPackageForPackage(m parsedData, sources ...source.Location) pkg.Package {
+	licenses := make([]pkg.License, 0)
+	if m.Licenses != "" {
+		licenses = append(licenses, pkg.NewLicense(m.Licenses, "", m.LicenseLocation))
+	}
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		PURL:         packageURL(m.Name, m.Version, &m),
+		PURL:         packageURL(m.Name, m.Version, &m.PythonPackageMetadata),
 		Locations:    source.NewLocationSet(sources...),
 		Language:     pkg.Python,
+		Licenses:     licenses,
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Metadata:     m,
+		Metadata:     m.PythonPackageMetadata,
 	}
 
 	p.SetID()

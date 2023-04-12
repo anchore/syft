@@ -160,7 +160,7 @@ func fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Lo
 }
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
-func assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation source.Location) (*pkg.PythonPackageMetadata, []source.Location, error) {
+func assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation source.Location) (*parsedData, []source.Location, error) {
 	var sources = []source.Location{metadataLocation}
 
 	metadataContents, err := resolver.FileContentsByLocation(metadataLocation)

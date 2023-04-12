@@ -7,35 +7,50 @@ import (
 	"github.com/go-test/deep"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseWheelEggMetadata(t *testing.T) {
 	tests := []struct {
 		Fixture          string
-		ExpectedMetadata pkg.PythonPackageMetadata
+		ExpectedMetadata parsedData
 	}{
 		{
 			Fixture: "test-fixtures/egg-info/PKG-INFO",
-			ExpectedMetadata: pkg.PythonPackageMetadata{
-				Name:                 "requests",
-				Version:              "2.22.0",
-				License:              "Apache 2.0",
-				Platform:             "UNKNOWN",
-				Author:               "Kenneth Reitz",
-				AuthorEmail:          "me@kennethreitz.org",
-				SitePackagesRootPath: "test-fixtures",
+			ExpectedMetadata: parsedData{
+				"Apache 2.0",
+				source.Location{
+					Coordinates: source.Coordinates{
+						RealPath: "test-fixtures/egg-info/PKG-INFO",
+					},
+				},
+				pkg.PythonPackageMetadata{
+					Name:                 "requests",
+					Version:              "2.22.0",
+					Platform:             "UNKNOWN",
+					Author:               "Kenneth Reitz",
+					AuthorEmail:          "me@kennethreitz.org",
+					SitePackagesRootPath: "test-fixtures",
+				},
 			},
 		},
 		{
 			Fixture: "test-fixtures/dist-info/METADATA",
-			ExpectedMetadata: pkg.PythonPackageMetadata{
-				Name:                 "Pygments",
-				Version:              "2.6.1",
-				License:              "BSD License",
-				Platform:             "any",
-				Author:               "Georg Brandl",
-				AuthorEmail:          "georg@python.org",
-				SitePackagesRootPath: "test-fixtures",
+			ExpectedMetadata: parsedData{
+				"BSD License",
+				source.Location{
+					Coordinates: source.Coordinates{
+						RealPath: "test-fixtures/dist-info/METADATA",
+					},
+				},
+				pkg.PythonPackageMetadata{
+					Name:                 "Pygments",
+					Version:              "2.6.1",
+					Platform:             "any",
+					Author:               "Georg Brandl",
+					AuthorEmail:          "georg@python.org",
+					SitePackagesRootPath: "test-fixtures",
+				},
 			},
 		},
 	}
@@ -122,14 +137,18 @@ func TestDetermineSitePackagesRootPath(t *testing.T) {
 func TestParseWheelEggMetadataInvalid(t *testing.T) {
 	tests := []struct {
 		Fixture          string
-		ExpectedMetadata pkg.PythonPackageMetadata
+		ExpectedMetadata parsedData
 	}{
 		{
 			Fixture: "test-fixtures/egg-info/PKG-INFO-INVALID",
-			ExpectedMetadata: pkg.PythonPackageMetadata{
-				Name:                 "mxnet",
-				Version:              "1.8.0",
-				SitePackagesRootPath: "test-fixtures",
+			ExpectedMetadata: parsedData{
+				"",
+				source.Location{},
+				pkg.PythonPackageMetadata{
+					Name:                 "mxnet",
+					Version:              "1.8.0",
+					SitePackagesRootPath: "test-fixtures",
+				},
 			},
 		},
 	}
