@@ -9,13 +9,16 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(d apkData, release *linux.Release, locations ...source.Location) pkg.Package {
-	// apkdb only passes a single location in its constructor
-	var licenseLocation source.Location
-	if len(locations) > 0 {
-		licenseLocation = locations[0]
+func newPackage(d parsedData, release *linux.Release, locations ...source.Location) pkg.Package {
+	licenses := make([]pkg.License, 0)
+	if d.License != "" {
+		// apk packages can have multiple licenses separated by spaces
+		// ex: MIT BSD GPL2+
+		licenseStrings := strings.Split(d.License, " ")
+		for _, l := range licenseStrings {
+			licenses = append(licenses, pkg.NewLicense(l, "", d.LicenseLocation))
+		}
 	}
-	licenses := []pkg.License{pkg.NewLicense(d.License, "", licenseLocation)}
 
 	p := pkg.Package{
 		Name:         d.Package,
@@ -25,7 +28,7 @@ func newPackage(d apkData, release *linux.Release, locations ...source.Location)
 		PURL:         packageURL(d, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,
-		Metadata:     d,
+		Metadata:     d.ApkMetadata,
 	}
 
 	p.SetID()
@@ -34,7 +37,7 @@ func newPackage(d apkData, release *linux.Release, locations ...source.Location)
 }
 
 // packageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
-func packageURL(m apkData, distro *linux.Release) string {
+func packageURL(m parsedData, distro *linux.Release) string {
 	if distro == nil {
 		return ""
 	}

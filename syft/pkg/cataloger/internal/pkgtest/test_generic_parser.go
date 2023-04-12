@@ -233,6 +233,9 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 				return true
 			},
 		),
+		cmp.Comparer(
+			p.locationComparer,
+		),
 	)
 
 	{

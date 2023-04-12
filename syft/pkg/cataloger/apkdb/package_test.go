@@ -10,19 +10,21 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_PackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata apkData
+		metadata parsedData
 		distro   linux.Release
 		expected string
 	}{
 		{
 			name: "non-alpine distro",
-			metadata: apkData{
+			metadata: parsedData{
 				"",
+				source.Location{},
 				pkg.ApkMetadata{
 					Package:      "p",
 					Version:      "v",
@@ -37,8 +39,9 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "gocase",
-			metadata: apkData{
+			metadata: parsedData{
 				"",
+				source.Location{},
 				pkg.ApkMetadata{
 					Package:      "p",
 					Version:      "v",
@@ -53,8 +56,9 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "missing architecture",
-			metadata: apkData{
+			metadata: parsedData{
 				"",
+				source.Location{},
 				pkg.ApkMetadata{
 					Package: "p",
 					Version: "v",
@@ -68,8 +72,9 @@ func Test_PackageURL(t *testing.T) {
 		},
 		// verify #351
 		{
-			metadata: apkData{
+			metadata: parsedData{
 				"",
+				source.Location{},
 				pkg.ApkMetadata{
 					Package:      "g++",
 					Version:      "v84",
@@ -83,8 +88,9 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:apk/alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
-			metadata: apkData{
+			metadata: parsedData{
 				"",
+				source.Location{},
 				pkg.ApkMetadata{
 					Package:      "g plus plus",
 					Version:      "v84",
@@ -99,8 +105,9 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: apkData{
+			metadata: parsedData{
 				"",
+				source.Location{},
 				pkg.ApkMetadata{
 					Package:       "p",
 					Version:       "v",
@@ -116,8 +123,9 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "wolfi distro",
-			metadata: apkData{
+			metadata: parsedData{
 				"",
+				source.Location{},
 				pkg.ApkMetadata{
 					Package:      "p",
 					Version:      "v",

@@ -26,8 +26,9 @@ var (
 	repoRegex = regexp.MustCompile(`(?m)^https://.*\.alpinelinux\.org/alpine/v([^/]+)/([a-zA-Z0-9_]+)$`)
 )
 
-type apkData struct {
-	License string `mapstructure:"L" json:"license"`
+type parsedData struct {
+	License         string `mapstructure:"L" json:"license"`
+	LicenseLocation source.Location
 	pkg.ApkMetadata
 }
 
@@ -38,15 +39,15 @@ type apkData struct {
 func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
-	var apks []apkData
-	var currentEntry apkData
+	var apks []parsedData
+	var currentEntry parsedData
 	entryParsingInProgress := false
 	fileParsingCtx := newApkFileParsingContext()
 
 	// creating a dedicated append-like function here instead of using `append(...)`
 	// below since there is nontrivial logic to be performed for each finalized apk
 	// entry.
-	appendApk := func(p apkData) {
+	appendApk := func(p parsedData) {
 		if files := fileParsingCtx.files; len(files) >= 1 {
 			// attached accumulated files to current package
 			p.Files = files
@@ -73,7 +74,7 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 			entryParsingInProgress = false
 
 			// zero-out currentEntry for use by any future entry
-			currentEntry = apkData{}
+			currentEntry = parsedData{}
 
 			continue
 		}
@@ -128,6 +129,9 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
+		if apk.License != "" {
+			apk.LicenseLocation = reader.Location
+		}
 		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
 	}
 
@@ -206,7 +210,7 @@ type apkField struct {
 }
 
 //nolint:funlen
-func (f apkField) apply(p *apkData, ctx *apkFileParsingContext) {
+func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	switch f.name {
 	// APKINDEX field parsing
 
@@ -352,7 +356,7 @@ func parseListValue(value string) []string {
 	return nil
 }
 
-func nilFieldsToEmptySlice(p *apkData) {
+func nilFieldsToEmptySlice(p *parsedData) {
 	if p.Dependencies == nil {
 		p.Dependencies = []string{}
 	}

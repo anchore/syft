@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -666,12 +667,23 @@ func TestSinglePackageDetails(t *testing.T) {
 
 func TestMultiplePackages(t *testing.T) {
 	fixture := "test-fixtures/multiple"
+	fixtureLocation := source.Location{
+		Coordinates: source.Coordinates{
+			RealPath: fixture,
+		},
+	}
 	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
-			Name:         "libc-utils",
-			Version:      "0.7.2-r0",
-			Licenses:     []pkg.License{},
+			Name:    "libc-utils",
+			Version: "0.7.2-r0",
+			Licenses: []pkg.License{
+				{
+					Value:    "BSD",
+					Type:     license.Declared,
+					Location: fixtureLocation,
+				},
+			},
 			Type:         pkg.ApkPkg,
 			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,
@@ -694,11 +706,29 @@ func TestMultiplePackages(t *testing.T) {
 			},
 		},
 		{
-			Name:         "musl-utils",
-			Version:      "1.1.24-r2",
-			Type:         pkg.ApkPkg,
-			PURL:         "pkg:apk/alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
-			Locations:    fixtureLocationSet,
+			Name:      "musl-utils",
+			Version:   "1.1.24-r2",
+			Type:      pkg.ApkPkg,
+			PURL:      "pkg:apk/alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
+			Locations: fixtureLocationSet,
+			Licenses: []pkg.License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					Location:       fixtureLocation,
+				},
+				{
+					Value:    "BSD",
+					Type:     license.Declared,
+					Location: fixtureLocation,
+				},
+				{
+					Value:    "GPL2+",
+					Type:     license.Declared,
+					Location: fixtureLocation,
+				},
+			},
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
 				Package:       "musl-utils",

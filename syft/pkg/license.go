@@ -21,6 +21,7 @@ func NewLicense(value string, url string, location source.Location) License {
 		// TODO: warn/trace error with package context?
 		log.Trace("unable to parse license expression: %w", err)
 	}
+
 	// TODO: how do we express other places where a license is declared
 	// EX: we got this from the go module cache at path /x/y/z on disk
 	return License{
