@@ -123,7 +123,7 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
-		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
+		pkgs = append(pkgs, newPackage(apk, r, reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)))
 	}
 
 	return pkgs, discoverPackageDependencies(pkgs), nil

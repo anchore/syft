@@ -42,7 +42,7 @@ func (m *LocationMetadata) merge(other LocationMetadata) error {
 	return errs
 }
 
-func (l *Location) Annotate(key, value string) *Location {
+func (l Location) Annotate(key, value string) Location {
 	if l.LocationMetadata.Annotations == nil {
 		l.LocationMetadata.Annotations = map[string]string{}
 	}
