@@ -22,9 +22,12 @@ const (
 )
 
 func newDpkgPackage(d pkg.DpkgMetadata, dbLocation source.Location, resolver source.FileResolver, release *linux.Release) pkg.Package {
+	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
+	licenses := make([]pkg.License, 0)
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
+		Licenses:     licenses,
 		Locations:    source.NewLocationSet(dbLocation),
 		PURL:         packageURL(d, release),
 		Type:         pkg.DebPkg,
