@@ -112,8 +112,8 @@ func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Pack
 		for _, kp := range kps {
 			for _, mp := range modules {
 				moduleToKernelRelationships = append(moduleToKernelRelationships, artifact.Relationship{
-					From: kp,
-					To:   mp,
+					From: *kp, // note: relationships should have Package objects, not pointers
+					To:   *mp, // note: relationships should have Package objects, not pointers
 					Type: artifact.DependencyOfRelationship,
 				})
 			}
