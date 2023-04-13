@@ -1,11 +1,11 @@
 package kernel
 
 import (
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 const linuxKernelPackageName = "linux-kernel"

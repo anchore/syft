@@ -94,6 +94,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeMaven
 	case LinuxKernelPkg:
 		return "generic/linux-kernel"
+	case LinuxKernelModulePkg:
+		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
 	case PythonPkg:
@@ -167,6 +169,8 @@ func TypeByName(name string) Type {
 		return HexPkg
 	case "linux-kernel":
 		return LinuxKernelPkg
+	case "linux-kernel-module":
+		return LinuxKernelModulePkg
 	case "nix":
 		return NixPkg
 	default:

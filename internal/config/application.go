@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"os"
 	"path"
 	"reflect"
@@ -20,6 +19,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 )
 
 var (
