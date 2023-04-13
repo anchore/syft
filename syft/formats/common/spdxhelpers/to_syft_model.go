@@ -220,10 +220,8 @@ func toSyftCoordinates(f *spdx.File) source.Coordinates {
 }
 
 func toSyftLocation(f *spdx.File) *source.Location {
-	return &source.Location{
-		Coordinates: toSyftCoordinates(f),
-		VirtualPath: f.FileName,
-	}
+	l := source.NewVirtualLocationFromCoordinates(toSyftCoordinates(f), f.FileName)
+	return &l
 }
 
 func requireAndTrimPrefix(val interface{}, prefix string) string {
