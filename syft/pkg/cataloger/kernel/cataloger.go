@@ -4,6 +4,7 @@ Package kernel provides a concrete Cataloger implementation for linux kernel and
 package kernel
 
 import (
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -91,7 +92,7 @@ func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Pack
 	for idx, p := range modulePackages {
 		m, ok := p.Metadata.(pkg.LinuxKernelModuleMetadata)
 		if !ok {
-			// TODO: warning?
+			log.Debug("linux-kernel-module package found without metadata: %s@%s", p.Name, p.Version)
 			continue
 		}
 		modulesByKernelVersion[m.KernelVersion] = append(modulesByKernelVersion[m.KernelVersion], &modulePackages[idx])
