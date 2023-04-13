@@ -90,8 +90,6 @@ github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b h1:e1bmaoJfZV
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b/go.mod h1:Bkc+JYWjMCF8OyZ340IMSIi2Ebf3uwByOk6ho4wne1E=
 github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501 h1:AV7qjwMcM4r8wFhJq3jLRztew3ywIyPTRapl2T1s9o8=
 github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501/go.mod h1:Blo6OgJNiYF41ufcgHKkbCKF2MDOMlrqhXv/ij6ocR4=
-github.com/anchore/stereoscope v0.0.0-20230406143206-e95d60a265e3 h1:F662TNGcpBfB1ZmCJJUot4EBHGxCKvTPvub01qaWxX0=
-github.com/anchore/stereoscope v0.0.0-20230406143206-e95d60a265e3/go.mod h1:u44RadbOJB103GwtYzJ2Kdad9J+SmZMW98jCYBJkSzs=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/andybalholm/brotli v1.0.1/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
 github.com/andybalholm/brotli v1.0.4 h1:V7DdXeJtZscaqfNuAdSRuRFzuiKlHSC/Zh3zl9qY3JY=
@@ -381,6 +379,8 @@ github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+github.com/lntouchables/stereoscope v0.0.1 h1:jSU4pSgm/MCrqzZA3ASvkFYhUTbEuqU9ifHalG2Bx4w=
+github.com/lntouchables/stereoscope v0.0.1/go.mod h1:u44RadbOJB103GwtYzJ2Kdad9J+SmZMW98jCYBJkSzs=
 github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381 h1:bqDmpDG49ZRnB5PcgP0RXtQvnMSgIF14M7CBd2shtXs=
 github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/lyft/protoc-gen-star v0.5.3/go.mod h1:V0xaHgaf5oCCqmcxYcWiDfTiKsZsRc87/1qhoTACD8w=
