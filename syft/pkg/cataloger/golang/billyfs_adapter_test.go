@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/src-d/go-git.v4"
 )
 
 func Test_BillyfsAdapter(t *testing.T) {

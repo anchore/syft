@@ -40,8 +40,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(GoCatalogerOpts{
-				SearchLocalModCacheLicenses: true,
-				LocalModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+				searchLocalModCacheLicenses: true,
+				localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 			})
 			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)
 			require.NoError(t, err)
@@ -111,9 +111,9 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(GoCatalogerOpts{
-				SearchRemoteLicenses: true,
-				Proxy:                server.URL,
-				LocalModCacheDir:     modDir,
+				searchRemoteLicenses: true,
+				proxy:                server.URL,
+				localModCacheDir:     modDir,
 			})
 
 			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)
@@ -183,7 +183,8 @@ func Test_proxyForModulue(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.module, func(t *testing.T) {
-			got := remoteProxies(proxyString, test.noProxy, test.module)
+			opts := NewGoCatalogerOpts(WithProxy(proxyString), WithNoProxy(test.noProxy))
+			got := remoteProxies(opts.proxy, opts.noProxy, test.module)
 			require.Equal(t, test.expected, got)
 		})
 	}

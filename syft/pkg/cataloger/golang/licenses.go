@@ -18,7 +18,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"github.com/mitchellh/go-homedir"
 
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
@@ -40,7 +39,7 @@ type goLicenses struct {
 func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	return goLicenses{
 		opts:                  opts,
-		localModCacheResolver: modCacheResolver(opts.LocalModCacheDir),
+		localModCacheResolver: modCacheResolver(opts.localModCacheDir),
 		progress: &event.GenericProgress{
 			SubStatus:          true,
 			RemoveOnCompletion: true,
@@ -49,65 +48,19 @@ func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	}
 }
 
-func remoteProxies(proxy string, noProxy string, module string) (proxies []string) {
-	if proxy == "" {
-		proxy = os.Getenv("GOPROXY")
-	}
-	if proxy == "off" {
-		proxy = directProxyOnly
-	}
-	if proxy == "" {
-		proxy = defaultRemoteProxies
-	}
-
-	if noProxy == "" {
-		noProxy = os.Getenv("GOPRIVATE")
-		goNoProxy := os.Getenv("GONOPROXY")
-		if goNoProxy != "" {
-			if noProxy == "" {
-				noProxy = goNoProxy
-			} else {
-				noProxy += "," + goNoProxy
-			}
-		}
-	}
-	if noProxy != "" {
-		patterns := strings.Split(noProxy, ",")
-		for _, pattern := range patterns {
-			if matched, err := path.Match(pattern, module); err == nil && matched {
-				// matched to be direct for this module
-				proxy = directProxyOnly
-				break
-			}
+func remoteProxies(proxy string, noProxy []string, module string) (proxies []string) {
+	for _, pattern := range noProxy {
+		if matched, err := path.Match(pattern, module); err == nil && matched {
+			// matched to be direct for this module
+			proxy = directProxyOnly
+			break
 		}
 	}
 
 	return strings.Split(proxy, ",")
 }
 
-func defaultGoPath() string {
-	goPath := os.Getenv("GOPATH")
-
-	if goPath == "" {
-		homeDir, err := homedir.Dir()
-		if err != nil {
-			log.Debug("unable to determine user home dir: %v", err)
-		} else {
-			goPath = path.Join(homeDir, "go")
-		}
-	}
-
-	return goPath
-}
-
 func modCacheResolver(modCacheDir string) source.WritableFileResolver {
-	if modCacheDir == "" {
-		goPath := defaultGoPath()
-		if goPath != "" {
-			modCacheDir = path.Join(goPath, "pkg", "mod")
-		}
-	}
-
 	var r source.WritableFileResolver
 
 	if modCacheDir == "" {
@@ -132,7 +85,7 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
 
-	search := c.opts.SearchLocalModCacheLicenses || c.opts.SearchRemoteLicenses
+	search := c.opts.searchLocalModCacheLicenses || c.opts.searchRemoteLicenses
 	dir := fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
 	glob := fmt.Sprintf("%s/*", dir)
 
@@ -143,8 +96,8 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 	}
 
 	// if we did not find it yet, and remote searching was enabled, then use that
-	if c.opts.SearchRemoteLicenses && err == nil && len(licenses) == 0 {
-		proxies := remoteProxies(c.opts.Proxy, c.opts.NoProxy, moduleName)
+	if c.opts.searchRemoteLicenses && err == nil && len(licenses) == 0 {
+		proxies := remoteProxies(c.opts.proxy, c.opts.noProxy, moduleName)
 
 		var fsys fs.FS
 		fsys, err = getModule(c.progress, proxies, moduleName, moduleVersion)
