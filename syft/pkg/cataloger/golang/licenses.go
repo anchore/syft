@@ -25,11 +25,6 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const (
-	defaultRemoteProxies = "https://proxy.golang.org,direct"
-	directProxyOnly      = "direct"
-)
-
 type goLicenses struct {
 	opts                  GoCatalogerOpts
 	localModCacheResolver source.WritableFileResolver
@@ -48,16 +43,15 @@ func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	}
 }
 
-func remoteProxies(proxy string, noProxy []string, module string) (proxies []string) {
+func remotesForModule(proxies []string, noProxy []string, module string) []string {
 	for _, pattern := range noProxy {
 		if matched, err := path.Match(pattern, module); err == nil && matched {
 			// matched to be direct for this module
-			proxy = directProxyOnly
-			break
+			return directProxiesOnly
 		}
 	}
 
-	return strings.Split(proxy, ",")
+	return proxies
 }
 
 func modCacheResolver(modCacheDir string) source.WritableFileResolver {
@@ -97,7 +91,7 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 
 	// if we did not find it yet, and remote searching was enabled, then use that
 	if c.opts.searchRemoteLicenses && err == nil && len(licenses) == 0 {
-		proxies := remoteProxies(c.opts.proxy, c.opts.noProxy, moduleName)
+		proxies := remotesForModule(c.opts.proxies, c.opts.noProxy, moduleName)
 
 		var fsys fs.FS
 		fsys, err = getModule(c.progress, proxies, moduleName, moduleVersion)

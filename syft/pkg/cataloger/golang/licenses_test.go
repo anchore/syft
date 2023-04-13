@@ -112,7 +112,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(GoCatalogerOpts{
 				searchRemoteLicenses: true,
-				proxy:                server.URL,
+				proxies:              []string{server.URL},
 				localModCacheDir:     modDir,
 			})
 
@@ -154,9 +154,7 @@ func Test_processCaps(t *testing.T) {
 	}
 }
 
-func Test_proxyForModulue(t *testing.T) {
-	proxyString := "https://somewhere.org,direct"
-
+func Test_remotesForModule(t *testing.T) {
 	allProxies := []string{"https://somewhere.org", "direct"}
 	directProxy := []string{"direct"}
 
@@ -183,8 +181,7 @@ func Test_proxyForModulue(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.module, func(t *testing.T) {
-			opts := NewGoCatalogerOpts(WithProxy(proxyString), WithNoProxy(test.noProxy))
-			got := remoteProxies(opts.proxy, opts.noProxy, test.module)
+			got := remotesForModule(allProxies, strings.Split(test.noProxy, ","), test.module)
 			require.Equal(t, test.expected, got)
 		})
 	}
