@@ -2,7 +2,7 @@ module github.com/anchore/syft
 
 go 1.19
 
-replace github.com/anchore/stereoscope => github.com/lntouchables/stereoscope v0.0.2
+replace github.com/anchore/stereoscope => github.com/5p2O5pe25ouT/stereoscope v0.0.2
 
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
