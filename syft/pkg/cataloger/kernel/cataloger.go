@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
+	"github.com/hashicorp/go-multierror"
 )
 
 var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
@@ -53,11 +54,11 @@ func (l LinuxKernelCataloger) Name() string {
 func (l LinuxKernelCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var allPackages []pkg.Package
 	var allRelationships []artifact.Relationship
+	var errs error
 
 	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(resolver)
 	if err != nil {
-		// TODO: don't bail. Try to return what we have instead and log a warning.
-		return nil, nil, err
+		errs = multierror.Append(errs, err)
 	}
 
 	allRelationships = append(allRelationships, kernelRelationships...)
@@ -66,8 +67,7 @@ func (l LinuxKernelCataloger) Catalog(resolver source.FileResolver) ([]pkg.Packa
 	if l.cfg.CatalogModules {
 		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(resolver)
 		if err != nil {
-			// TODO: don't bail. Try to return what we have instead and log a warning.
-			return nil, nil, err
+			errs = multierror.Append(errs, err)
 		}
 
 		allPackages = append(allPackages, modulePackages...)
@@ -77,7 +77,7 @@ func (l LinuxKernelCataloger) Catalog(resolver source.FileResolver) ([]pkg.Packa
 		allRelationships = append(allRelationships, moduleToKernelRelationships...)
 	}
 
-	return allPackages, allRelationships, nil
+	return allPackages, allRelationships, errs
 }
 
 func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Package) []artifact.Relationship {
