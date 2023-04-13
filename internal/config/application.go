@@ -72,13 +72,12 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 		},
 		Catalogers:  cfg.Catalogers,
 		Parallelism: cfg.Parallelism,
-		Golang: golangCataloger.NewGoCatalogerOpts(
-			golangCataloger.WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses),
-			golangCataloger.WithLocalModCacheDir(cfg.Golang.LocalModCacheDir),
-			golangCataloger.WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses),
-			golangCataloger.WithProxy(cfg.Golang.Proxy),
-			golangCataloger.WithNoProxy(cfg.Golang.NoProxy),
-		),
+		Golang: golangCataloger.NewGoCatalogerOpts().
+			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
+			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
+			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
+			WithProxy(cfg.Golang.Proxy).
+			WithNoProxy(cfg.Golang.NoProxy),
 	}
 }
 

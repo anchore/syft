@@ -86,13 +86,13 @@ func Test_Options(t *testing.T) {
 			for k, v := range test.env {
 				t.Setenv(k, v)
 			}
-			got := NewGoCatalogerOpts(
-				WithSearchLocalModCacheLicenses(test.opts.local),
-				WithLocalModCacheDir(test.opts.cacheDir),
-				WithSearchRemoteLicenses(test.opts.remote),
-				WithProxy(test.opts.proxy),
-				WithNoProxy(test.opts.noProxy),
-			)
+			got := NewGoCatalogerOpts().
+				WithSearchLocalModCacheLicenses(test.opts.local).
+				WithLocalModCacheDir(test.opts.cacheDir).
+				WithSearchRemoteLicenses(test.opts.remote).
+				WithProxy(test.opts.proxy).
+				WithNoProxy(test.opts.noProxy)
+
 			assert.Equal(t, test.expected, got)
 		})
 	}
