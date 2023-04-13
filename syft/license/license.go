@@ -1,7 +1,11 @@
 // package license provides common methods for working with SPDX license data
 package license
 
-import "github.com/github/go-spdx/v2/spdxexp"
+import (
+	"fmt"
+
+	"github.com/github/go-spdx/v2/spdxexp"
+)
 
 type Type string
 
@@ -17,12 +21,10 @@ type Evidence struct {
 }
 
 func ParseExpression(expression string) (string, error) {
-	node, err := spdxexp.Parse(expression)
-	if err != nil {
-		return "", err
+	valid, _ := spdxexp.ValidateLicenses([]string{expression})
+	if !valid {
+		return "", fmt.Errorf("failed to validate spdx expression: %s", expression)
 	}
-	if node == nil {
-		return "", nil
-	}
-	return *node.ReconstructedLicenseString(), nil
+
+	return expression, nil
 }
