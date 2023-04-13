@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(classifier classifier, location source.Location, matchMetadata map[string]string) []pkg.Package {
+func newPackage(classifier classifier, location source.Location, matchMetadata map[string]string) *pkg.Package {
 	version, ok := matchMetadata["version"]
 	if !ok {
 		return nil
@@ -59,5 +59,5 @@ func newPackage(classifier classifier, location source.Location, matchMetadata m
 
 	p.SetID()
 
-	return []pkg.Package{p}
+	return &p
 }

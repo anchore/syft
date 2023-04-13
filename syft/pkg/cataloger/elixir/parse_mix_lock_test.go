@@ -10,13 +10,14 @@ import (
 )
 
 func TestParseMixLock(t *testing.T) {
+	locations := source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock"))
 	expected := []pkg.Package{
 		{
 			Name:         "castore",
 			Version:      "0.1.17",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/castore@0.1.17",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -31,7 +32,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "1.1.0",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/connection@1.1.0",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -46,7 +47,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "2.9.0",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/cowboy@2.9.0",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -61,7 +62,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "0.4.0",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/cowboy_telemetry@0.4.0",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -76,7 +77,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "2.11.0",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/cowlib@2.11.0",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -91,7 +92,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "2.4.2",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/db_connection@2.4.2",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -106,7 +107,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "2.0.0",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/decimal@2.0.0",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -121,7 +122,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "1.4.25",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/earmark_parser@1.4.25",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -136,7 +137,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "3.8.1",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/ecto@3.8.1",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -151,7 +152,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "3.8.1",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/ecto_sql@3.8.1",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -166,7 +167,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "0.5.0",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/esbuild@0.5.0",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -181,7 +182,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "0.28.4",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/ex_doc@0.28.4",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -196,7 +197,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "0.19.1",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/gettext@0.19.1",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -211,7 +212,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "0.1.1",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/hpax@0.1.1",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{
@@ -226,7 +227,7 @@ func TestParseMixLock(t *testing.T) {
 			Version:      "1.3.0",
 			Language:     pkg.Elixir,
 			Type:         pkg.HexPkg,
-			Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/mix.lock")),
+			Locations:    locations,
 			PURL:         "pkg:hex/jason@1.3.0",
 			MetadataType: pkg.MixLockMetadataType,
 			Metadata: pkg.MixLockMetadata{

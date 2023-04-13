@@ -22,7 +22,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "2.9.0",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar.lock")),
 					PURL:         "pkg:hex/certifi@2.9.0",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -37,7 +36,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "6.1.1",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar.lock")),
 					PURL:         "pkg:hex/idna@6.1.1",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -52,7 +50,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "1.0.1",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar.lock")),
 					PURL:         "pkg:hex/metrics@1.0.1",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -67,7 +64,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "1.2.0",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar.lock")),
 					PURL:         "pkg:hex/mimerl@1.2.0",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -82,7 +78,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "3.3.1",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar.lock")),
 					PURL:         "pkg:hex/parse_trans@3.3.1",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -97,7 +92,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "1.1.6",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar.lock")),
 					PURL:         "pkg:hex/ssl_verify_fun@1.1.6",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -112,7 +106,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "0.7.0",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar.lock")),
 					PURL:         "pkg:hex/unicode_util_compat@0.7.0",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -135,7 +128,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "1.1.5",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/bcrypt@1.1.5",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -154,7 +146,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "14308ab927cfa69324742c3de720578094e0bb19",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/bson@14308ab927cfa69324742c3de720578094e0bb19",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -170,7 +161,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "2.9.0",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/certifi@2.9.0",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -188,7 +178,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "0.2.3",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/stdout_formatter@0.2.3",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -207,7 +196,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "4835239dca5a5f4ac7202dd94d7effcaa617d575",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/swc@4835239dca5a5f4ac7202dd94d7effcaa617d575",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -223,7 +211,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "1.1.0",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/syslog@1.1.0",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -241,7 +228,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "0.7.0",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/unicode_util_compat@0.7.0",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -260,7 +246,6 @@ func TestParseRebarLock(t *testing.T) {
 					Version:      "6d622aa8c901ae7777433aef2bd049e380c474a6",
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/rebar-2.lock")),
 					PURL:         "pkg:hex/vernemq_dev@6d622aa8c901ae7777433aef2bd049e380c474a6",
 					MetadataType: pkg.RebarLockMetadataType,
 					Metadata: pkg.RebarLockMetadata{
@@ -276,6 +261,10 @@ func TestParseRebarLock(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			// TODO: relationships are not under test
 			var expectedRelationships []artifact.Relationship
+
+			for idx := range test.expected {
+				test.expected[idx].Locations = source.NewLocationSet(source.NewLocation(test.fixture))
+			}
 
 			pkgtest.TestFileParser(t, test.fixture, parseRebarLock, test.expected, expectedRelationships)
 		})
