@@ -834,7 +834,7 @@ func Test_WritableUnindexedDirectoryResolver(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, locations, 0)
 
-	err = dr.Write(p, strings.NewReader(c))
+	err = dr.Write(NewLocation(p), strings.NewReader(c))
 	require.NoError(t, err)
 
 	locations, err = dr.FilesByPath(p)

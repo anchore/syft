@@ -18,12 +18,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-type WritableFileResolver interface {
-	FileResolver
-
-	Write(path string, reader io.Reader) error
-}
-
 type UnindexedDirectoryResolver struct {
 	ls   afero.Lstater
 	lr   afero.LinkReader
@@ -187,7 +181,7 @@ func (u UnindexedDirectoryResolver) FilesByGlob(patterns ...string) (out []Locat
 }
 
 func (u UnindexedDirectoryResolver) filesByGlob(resolveLinks bool, includeDirs bool, patterns ...string) (out []Location, _ error) {
-	f := fsFS{
+	f := unindexedDirectoryResolverFS{
 		u: u,
 	}
 	var paths []string
@@ -255,7 +249,8 @@ func (u UnindexedDirectoryResolver) FileMetadataByLocation(_ Location) (FileMeta
 	panic("FileMetadataByLocation unsupported")
 }
 
-func (u UnindexedDirectoryResolver) Write(filePath string, reader io.Reader) error {
+func (u UnindexedDirectoryResolver) Write(location Location, reader io.Reader) error {
+	filePath := location.RealPath
 	if path.IsAbs(filePath) {
 		filePath = filePath[1:]
 	}
@@ -368,12 +363,13 @@ func (u UnindexedDirectoryResolver) isSymlink(fi os.FileInfo) bool {
 
 // ------------------------- fs.FS ------------------------------
 
-type fsFS struct {
+// unindexedDirectoryResolverFS wraps the UnindexedDirectoryResolver as a fs.FS, fs.ReadDirFS, and fs.StatFS
+type unindexedDirectoryResolverFS struct {
 	u UnindexedDirectoryResolver
 }
 
 // resolve takes a virtual path and returns the resolved absolute or relative path and file info
-func (f fsFS) resolve(filePath string) (resolved string, fi fs.FileInfo, err error) {
+func (f unindexedDirectoryResolverFS) resolve(filePath string) (resolved string, fi fs.FileInfo, err error) {
 	parts := strings.Split(filePath, "/")
 	var visited []string
 	for i, part := range parts {
@@ -413,7 +409,7 @@ func (f fsFS) resolve(filePath string) (resolved string, fi fs.FileInfo, err err
 	return resolved, fi, err
 }
 
-func (f fsFS) ReadDir(name string) (out []fs.DirEntry, _ error) {
+func (f unindexedDirectoryResolverFS) ReadDir(name string) (out []fs.DirEntry, _ error) {
 	p, _, err := f.resolve(name)
 	if err != nil {
 		return nil, err
@@ -428,14 +424,14 @@ func (f fsFS) ReadDir(name string) (out []fs.DirEntry, _ error) {
 		if fi != nil && fi.IsDir() {
 			isDir = true
 		}
-		out = append(out, fsDirEntry{
-			fsFileInfo: newFsFileInfo(f.u, e.Name(), isDir, e),
+		out = append(out, unindexedDirectoryResolverDirEntry{
+			unindexedDirectoryResolverFileInfo: newFsFileInfo(f.u, e.Name(), isDir, e),
 		})
 	}
 	return out, nil
 }
 
-func (f fsFS) Stat(name string) (fs.FileInfo, error) {
+func (f unindexedDirectoryResolverFS) Stat(name string) (fs.FileInfo, error) {
 	fi, err := f.u.fs.Stat(f.u.absPath(name))
 	if err != nil {
 		return nil, err
@@ -443,7 +439,7 @@ func (f fsFS) Stat(name string) (fs.FileInfo, error) {
 	return newFsFileInfo(f.u, name, fi.IsDir(), fi), nil
 }
 
-func (f fsFS) Open(name string) (fs.File, error) {
+func (f unindexedDirectoryResolverFS) Open(name string) (fs.File, error) {
 	// parts := strings.Split(name, "/")
 	//
 	// for _, part := range parts {
@@ -461,44 +457,44 @@ func (f fsFS) Open(name string) (fs.File, error) {
 		return nil, err
 	}
 
-	return fsFile{
+	return unindexedDirectoryResolverFile{
 		u:    f.u,
 		path: name,
 	}, nil
 }
 
-var _ fs.FS = (*fsFS)(nil)
-var _ fs.StatFS = (*fsFS)(nil)
-var _ fs.ReadDirFS = (*fsFS)(nil)
+var _ fs.FS = (*unindexedDirectoryResolverFS)(nil)
+var _ fs.StatFS = (*unindexedDirectoryResolverFS)(nil)
+var _ fs.ReadDirFS = (*unindexedDirectoryResolverFS)(nil)
 
-type fsDirEntry struct {
-	fsFileInfo
+type unindexedDirectoryResolverDirEntry struct {
+	unindexedDirectoryResolverFileInfo
 }
 
-func (f fsDirEntry) Name() string {
+func (f unindexedDirectoryResolverDirEntry) Name() string {
 	return f.name
 }
 
-func (f fsDirEntry) IsDir() bool {
+func (f unindexedDirectoryResolverDirEntry) IsDir() bool {
 	return f.isDir
 }
 
-func (f fsDirEntry) Type() fs.FileMode {
+func (f unindexedDirectoryResolverDirEntry) Type() fs.FileMode {
 	return f.mode
 }
 
-func (f fsDirEntry) Info() (fs.FileInfo, error) {
+func (f unindexedDirectoryResolverDirEntry) Info() (fs.FileInfo, error) {
 	return f, nil
 }
 
-var _ fs.DirEntry = (*fsDirEntry)(nil)
+var _ fs.DirEntry = (*unindexedDirectoryResolverDirEntry)(nil)
 
-type fsFile struct {
+type unindexedDirectoryResolverFile struct {
 	u    UnindexedDirectoryResolver
 	path string
 }
 
-func (f fsFile) Stat() (fs.FileInfo, error) {
+func (f unindexedDirectoryResolverFile) Stat() (fs.FileInfo, error) {
 	fi, err := f.u.fs.Stat(f.u.absPath(f.path))
 	if err != nil {
 		return nil, err
@@ -506,17 +502,17 @@ func (f fsFile) Stat() (fs.FileInfo, error) {
 	return newFsFileInfo(f.u, fi.Name(), fi.IsDir(), fi), nil
 }
 
-func (f fsFile) Read(_ []byte) (int, error) {
+func (f unindexedDirectoryResolverFile) Read(_ []byte) (int, error) {
 	panic("Read not implemented")
 }
 
-func (f fsFile) Close() error {
+func (f unindexedDirectoryResolverFile) Close() error {
 	panic("Close not implemented")
 }
 
-var _ fs.File = (*fsFile)(nil)
+var _ fs.File = (*unindexedDirectoryResolverFile)(nil)
 
-type fsFileInfo struct {
+type unindexedDirectoryResolverFileInfo struct {
 	u       UnindexedDirectoryResolver
 	name    string
 	size    int64
@@ -526,8 +522,8 @@ type fsFileInfo struct {
 	sys     any
 }
 
-func newFsFileInfo(u UnindexedDirectoryResolver, name string, isDir bool, fi os.FileInfo) fsFileInfo {
-	return fsFileInfo{
+func newFsFileInfo(u UnindexedDirectoryResolver, name string, isDir bool, fi os.FileInfo) unindexedDirectoryResolverFileInfo {
+	return unindexedDirectoryResolverFileInfo{
 		u:       u,
 		name:    name,
 		size:    fi.Size(),
@@ -538,28 +534,28 @@ func newFsFileInfo(u UnindexedDirectoryResolver, name string, isDir bool, fi os.
 	}
 }
 
-func (f fsFileInfo) Name() string {
+func (f unindexedDirectoryResolverFileInfo) Name() string {
 	return f.name
 }
 
-func (f fsFileInfo) Size() int64 {
+func (f unindexedDirectoryResolverFileInfo) Size() int64 {
 	return f.size
 }
 
-func (f fsFileInfo) Mode() fs.FileMode {
+func (f unindexedDirectoryResolverFileInfo) Mode() fs.FileMode {
 	return f.mode
 }
 
-func (f fsFileInfo) ModTime() time.Time {
+func (f unindexedDirectoryResolverFileInfo) ModTime() time.Time {
 	return f.modTime
 }
 
-func (f fsFileInfo) IsDir() bool {
+func (f unindexedDirectoryResolverFileInfo) IsDir() bool {
 	return f.isDir
 }
 
-func (f fsFileInfo) Sys() any {
+func (f unindexedDirectoryResolverFileInfo) Sys() any {
 	return f.sys
 }
 
-var _ fs.FileInfo = (*fsFileInfo)(nil)
+var _ fs.FileInfo = (*unindexedDirectoryResolverFileInfo)(nil)

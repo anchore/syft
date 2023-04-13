@@ -105,7 +105,7 @@ func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, modul
 				if err != nil {
 					return err
 				}
-				return c.localModCacheResolver.Write(path.Join(dir, filePath), f)
+				return c.localModCacheResolver.Write(source.NewLocation(path.Join(dir, filePath)), f)
 			})
 
 			if err != nil {
@@ -237,5 +237,5 @@ func getModuleRepository(progress *event.GenericProgress, moduleName string, mod
 		return nil, fmt.Errorf("%w -- %s", err, buf.String())
 	}
 
-	return bfs{fs: f}, nil
+	return billyFSAdapter{fs: f}, nil
 }

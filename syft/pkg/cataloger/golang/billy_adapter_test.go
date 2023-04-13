@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_BillyfsAdapter(t *testing.T) {
+func Test_billyFSAdapter(t *testing.T) {
 	r, err := git.PlainInit("test-fixtures/repo", false)
 
 	t.Cleanup(func() {
@@ -18,7 +18,7 @@ func Test_BillyfsAdapter(t *testing.T) {
 
 	wt, err := r.Worktree()
 	require.NoError(t, err)
-	f := bfs{
+	f := billyFSAdapter{
 		fs: wt.Filesystem,
 	}
 
