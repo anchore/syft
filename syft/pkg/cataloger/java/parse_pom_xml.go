@@ -32,7 +32,7 @@ func parserPomXML(_ source.FileResolver, _ *generic.Environment, reader source.L
 		p := newPackageFromPom(
 			pom,
 			dep,
-			reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if p.Name == "" {
 			continue

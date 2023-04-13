@@ -27,7 +27,7 @@ func newPackage(classifier classifier, location source.Location, matchMetadata m
 		Name:    classifier.Package,
 		Version: version,
 		Locations: source.NewLocationSet(
-			location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Type:         pkg.BinaryPkg,
 		CPEs:         cpes,

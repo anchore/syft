@@ -65,7 +65,7 @@ func parsePodfileLock(_ source.FileResolver, _ *generic.Environment, reader sour
 				podName,
 				podVersion,
 				pkgHash,
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

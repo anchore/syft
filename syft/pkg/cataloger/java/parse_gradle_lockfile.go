@@ -52,7 +52,7 @@ func parseGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader s
 			Name:    dep.Name,
 			Version: dep.Version,
 			Locations: source.NewLocationSet(
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 			Language:     pkg.Java,
 			Type:         pkg.JavaPkg,

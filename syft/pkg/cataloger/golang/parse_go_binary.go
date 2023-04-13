@@ -69,7 +69,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod 
 		mod.GoVersion,
 		arch,
 		gbs,
-		location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 	if main.Version == devel {
 		if version, ok := gbs["vcs.revision"]; ok {
@@ -219,7 +219,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver source.FileResolver, locatio
 			mod.GoVersion,
 			arch,
 			nil,
-			location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {
 			pkgs = append(pkgs, p)

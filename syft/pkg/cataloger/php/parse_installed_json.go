@@ -56,7 +56,7 @@ func parseInstalledJSON(_ source.FileResolver, _ *generic.Environment, reader so
 			pkgs = append(
 				pkgs,
 				newComposerLockPackage(pkgMeta,
-					reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)
 		}

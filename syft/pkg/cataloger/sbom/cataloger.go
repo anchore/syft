@@ -48,7 +48,7 @@ func parseSBOM(_ source.FileResolver, _ *generic.Environment, reader source.Loca
 		// where there is evidence of this file, and the catalogers have not run against any file other than,
 		// the SBOM, this is the only location that is relevant for this cataloger.
 		p.Locations = source.NewLocationSet(
-			reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		p.FoundBy = catalogerName
 

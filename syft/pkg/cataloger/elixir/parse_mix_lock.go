@@ -51,7 +51,7 @@ func parseMixLock(_ source.FileResolver, _ *generic.Environment, reader source.L
 					PkgHash:    hash,
 					PkgHashExt: hashExt,
 				},
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

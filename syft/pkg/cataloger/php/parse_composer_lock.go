@@ -36,7 +36,7 @@ func parseComposerLock(_ source.FileResolver, _ *generic.Environment, reader sou
 				pkgs,
 				newComposerLockPackage(
 					m,
-					reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)
 		}

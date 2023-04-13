@@ -62,7 +62,7 @@ func parsePubspecLock(_ source.FileResolver, _ *generic.Environment, reader sour
 			newPubspecLockPackage(
 				name,
 				pubPkg,
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

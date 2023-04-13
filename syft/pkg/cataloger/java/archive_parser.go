@@ -191,7 +191,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Licenses: selectLicense(manifest),
 		Language: pkg.Java,
 		Locations: source.NewLocationSet(
-			j.location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
@@ -385,7 +385,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 		Name:    pomProperties.ArtifactID,
 		Version: pomProperties.Version,
 		Locations: source.NewLocationSet(
-			location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Language:     pkg.Java,
 		Type:         pomProperties.PkgTypeIndicated(),

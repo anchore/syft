@@ -71,7 +71,7 @@ func parseStackLock(_ source.FileResolver, _ *generic.Environment, reader source
 					PkgHash:     pkgHash,
 					SnapshotURL: snapshotURL,
 				},
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

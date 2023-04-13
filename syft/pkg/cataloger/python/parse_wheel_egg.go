@@ -47,7 +47,7 @@ func fetchInstalledFiles(resolver source.FileResolver, metadataLocation source.L
 	installedFilesRef := resolver.RelativeFileByPath(metadataLocation, installedFilesPath)
 
 	if installedFilesRef != nil {
-		sources = append(sources, installedFilesRef.Annotate(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+		sources = append(sources, installedFilesRef.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 
 		installedFilesContents, err := resolver.FileContentsByLocation(*installedFilesRef)
 		if err != nil {
@@ -78,7 +78,7 @@ func fetchRecordFiles(resolver source.FileResolver, metadataLocation source.Loca
 	recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
 
 	if recordRef != nil {
-		sources = append(sources, recordRef.Annotate(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+		sources = append(sources, recordRef.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 
 		recordContents, err := resolver.FileContentsByLocation(*recordRef)
 		if err != nil {
@@ -105,7 +105,7 @@ func fetchTopLevelPackages(resolver source.FileResolver, metadataLocation source
 		return nil, nil, nil
 	}
 
-	sources = append(sources, topLevelLocation.Annotate(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	sources = append(sources, topLevelLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 
 	topLevelContents, err := resolver.FileContentsByLocation(*topLevelLocation)
 	if err != nil {
@@ -134,7 +134,7 @@ func fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Lo
 		return nil, nil, nil
 	}
 
-	sources = append(sources, directURLLocation.Annotate(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	sources = append(sources, directURLLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 
 	directURLContents, err := resolver.FileContentsByLocation(*directURLLocation)
 	if err != nil {
@@ -162,7 +162,7 @@ func fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Lo
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
 func assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation source.Location) (*pkg.PythonPackageMetadata, []source.Location, error) {
 	var sources = []source.Location{
-		metadataLocation.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		metadataLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	}
 
 	metadataContents, err := resolver.FileContentsByLocation(metadataLocation)

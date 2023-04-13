@@ -48,7 +48,7 @@ func parseDotnetDeps(_ source.FileResolver, _ *generic.Environment, reader sourc
 		dotnetPkg := newDotnetDepsPackage(
 			nameVersion,
 			lib,
-			reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
 		if dotnetPkg != nil {

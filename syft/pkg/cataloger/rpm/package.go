@@ -18,7 +18,7 @@ func newPackage(location source.Location, metadata pkg.RpmMetadata, distro *linu
 		Name:         metadata.Name,
 		Version:      toELVersion(metadata),
 		PURL:         packageURL(metadata, distro),
-		Locations:    source.NewLocationSet(location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmMetadataType,
 		Metadata:     metadata,

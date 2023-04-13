@@ -44,7 +44,7 @@ func parsePoetryLock(_ source.FileResolver, _ *generic.Environment, reader sourc
 			newPackageForIndex(
 				p.Name,
 				p.Version,
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

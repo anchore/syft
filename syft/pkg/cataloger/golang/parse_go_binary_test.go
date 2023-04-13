@@ -141,7 +141,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
-			).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		MetadataType: pkg.GolangBinMetadataType,
 		Metadata: pkg.GolangBinMetadata{
@@ -188,7 +188,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata:     pkg.GolangBinMetadata{},
@@ -231,7 +231,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -267,7 +267,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -325,7 +325,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -380,7 +380,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -402,7 +402,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -457,7 +457,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -478,7 +478,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						).Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{

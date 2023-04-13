@@ -66,7 +66,7 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 			newPackageForIndex(
 				name,
 				version,
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

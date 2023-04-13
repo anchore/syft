@@ -9,8 +9,7 @@ import (
 )
 
 type LocationSet struct {
-	set      map[LocationData]struct{}
-	metadata map[LocationData]LocationMetadata
+	set map[LocationData]LocationMetadata
 }
 
 func NewLocationSet(locations ...Location) (s LocationSet) {
@@ -23,19 +22,17 @@ func NewLocationSet(locations ...Location) (s LocationSet) {
 
 func (s *LocationSet) Add(locations ...Location) {
 	if s.set == nil {
-		s.set = make(map[LocationData]struct{})
-		s.metadata = make(map[LocationData]LocationMetadata)
+		s.set = make(map[LocationData]LocationMetadata)
 	}
 	for _, l := range locations {
-		s.set[l.LocationData] = struct{}{}
-		if m, ok := s.metadata[l.LocationData]; ok {
+		if m, ok := s.set[l.LocationData]; ok {
 			err := m.merge(l.LocationMetadata)
 			if err != nil {
-				log.Warnf("partial merge of location metadata: %+v", err)
+				log.Debugf("partial merge of location metadata: %+v", err)
 			}
-			s.metadata[l.LocationData] = m
+			s.set[l.LocationData] = m
 		} else {
-			s.metadata[l.LocationData] = l.LocationMetadata
+			s.set[l.LocationData] = l.LocationMetadata
 		}
 	}
 }
@@ -46,7 +43,6 @@ func (s LocationSet) Remove(locations ...Location) {
 	}
 	for _, l := range locations {
 		delete(s.set, l.LocationData)
-		delete(s.metadata, l.LocationData)
 	}
 }
 
@@ -67,7 +63,7 @@ func (s LocationSet) ToSlice() []Location {
 	for dir := range s.set {
 		locations[idx] = Location{
 			LocationData:     dir,
-			LocationMetadata: s.metadata[dir],
+			LocationMetadata: s.set[dir],
 		}
 		idx++
 	}

@@ -25,7 +25,7 @@ func newDpkgPackage(d pkg.DpkgMetadata, dbLocation source.Location, resolver sou
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    source.NewLocationSet(dbLocation.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:         packageURL(d, release),
 		Type:         pkg.DebPkg,
 		MetadataType: pkg.DpkgMetadataType,
@@ -193,7 +193,7 @@ func fetchMd5Contents(resolver source.FileResolver, dbLocation source.Location, 
 		log.Warnf("failed to fetch deb md5 contents (package=%s): %+v", m.Package, err)
 	}
 
-	l := location.Annotate(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
+	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
 
 	return md5Reader, &l
 }
@@ -229,7 +229,7 @@ func fetchConffileContents(resolver source.FileResolver, dbLocation source.Locat
 		log.Warnf("failed to fetch deb conffiles contents (package=%s): %+v", m.Package, err)
 	}
 
-	l := location.Annotate(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
+	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
 
 	return reader, &l
 }
@@ -253,7 +253,7 @@ func fetchCopyrightContents(resolver source.FileResolver, dbLocation source.Loca
 		log.Warnf("failed to fetch deb copyright contents (package=%s): %w", m.Package, err)
 	}
 
-	l := location.Annotate(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
+	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
 
 	return reader, &l
 }

@@ -52,7 +52,7 @@ func parseCabalFreeze(_ source.FileResolver, _ *generic.Environment, reader sour
 				pkgName,
 				pkgVersion,
 				nil,
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

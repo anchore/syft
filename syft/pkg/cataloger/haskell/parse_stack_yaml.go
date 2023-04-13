@@ -42,7 +42,7 @@ func parseStackYaml(_ source.FileResolver, _ *generic.Environment, reader source
 				&pkg.HackageMetadata{
 					PkgHash: pkgHash,
 				},
-				reader.Location.Annotate(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}
