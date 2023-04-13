@@ -31,9 +31,9 @@ require (
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sergi/go-diff v1.3.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spdx/tools-golang v0.5.0-rc1
+	github.com/spdx/tools-golang v0.5.0
 	github.com/spf13/afero v1.9.5
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
@@ -42,9 +42,9 @@ require (
 	github.com/wagoodman/go-progress v0.0.0-20230301185719-21920a456ad5
 	github.com/wagoodman/jotframe v0.0.0-20211129225309-56b0d0a4aebb
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/mod v0.9.0
-	golang.org/x/net v0.8.0
-	golang.org/x/term v0.6.0
+	golang.org/x/mod v0.10.0
+	golang.org/x/net v0.9.0
+	golang.org/x/term v0.7.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -52,9 +52,9 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1-0.20221222100750-41a1ac565cce
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
-	github.com/anchore/stereoscope v0.0.0-20230323161519-d7551b7f46f5
+	github.com/anchore/stereoscope v0.0.0-20230406143206-e95d60a265e3
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/docker v23.0.2+incompatible
+	github.com/docker/docker v23.0.3+incompatible
 	github.com/google/go-containerregistry v0.14.0
 	github.com/google/licensecheck v0.3.1
 	github.com/invopop/jsonschema v0.7.0
@@ -128,8 +128,8 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef // indirect

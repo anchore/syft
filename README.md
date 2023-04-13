@@ -42,7 +42,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Erlang (rebar3)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, native-image)
+- Java (jar, ear, war, par, sar, nar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
 - Nix (outputs in /nix/store)
