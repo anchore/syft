@@ -20,4 +20,5 @@ type FileMetadataEntry struct {
 	UserID          int    `json:"userID"`
 	GroupID         int    `json:"groupID"`
 	MIMEType        string `json:"mimeType"`
+	Size            int64  `json:"size"`
 }

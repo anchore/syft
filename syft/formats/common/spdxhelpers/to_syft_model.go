@@ -176,9 +176,16 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document) [
 		var to artifact.Identifiable
 		var typ artifact.RelationshipType
 		if toLocationOk {
-			if r.Relationship == string(ContainsRelationship) {
+			switch RelationshipType(r.Relationship) {
+			case ContainsRelationship:
 				typ = artifact.ContainsRelationship
 				to = toLocation
+			case OtherRelationship:
+				// Encoding uses a specifically formatted comment...
+				if strings.Index(r.RelationshipComment, string(artifact.EvidentByRelationship)) == 0 {
+					typ = artifact.EvidentByRelationship
+					to = toLocation
+				}
 			}
 		} else {
 			switch RelationshipType(r.Relationship) {
@@ -188,7 +195,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document) [
 			case OtherRelationship:
 				// Encoding uses a specifically formatted comment...
 				if strings.Index(r.RelationshipComment, string(artifact.OwnershipByFileOverlapRelationship)) == 0 {
-					typ = artifact.DependencyOfRelationship
+					typ = artifact.OwnershipByFileOverlapRelationship
 					to = toPackage
 				}
 			}
