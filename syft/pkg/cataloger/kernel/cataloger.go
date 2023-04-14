@@ -4,12 +4,13 @@ Package kernel provides a concrete Cataloger implementation for linux kernel and
 package kernel
 
 import (
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
-	"github.com/hashicorp/go-multierror"
 )
 
 var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
@@ -113,8 +114,9 @@ func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Pack
 		for _, kp := range kps {
 			for _, mp := range modules {
 				moduleToKernelRelationships = append(moduleToKernelRelationships, artifact.Relationship{
-					From: *kp, // note: relationships should have Package objects, not pointers
-					To:   *mp, // note: relationships should have Package objects, not pointers
+					// note: relationships should have Package objects, not pointers
+					From: *kp,
+					To:   *mp,
 					Type: artifact.DependencyOfRelationship,
 				})
 			}

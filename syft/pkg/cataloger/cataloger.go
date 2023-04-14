@@ -56,6 +56,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		nix.NewStoreCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		kernel.NewLinuxKernelCataloger(cfg.Kernel()),
 	}, cfg.Catalogers)
 }
 
