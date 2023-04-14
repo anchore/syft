@@ -53,11 +53,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: source.NewLocationSet(
-			source.Location{
-				Coordinates: source.Coordinates{
-					RealPath: "/a/place/a",
-				},
-			},
+			source.NewLocationFromCoordinates(source.Coordinates{
+				RealPath: "/a/place/a",
+			}),
 		),
 		Type:         pkg.PythonPkg,
 		FoundBy:      "the-cataloger-1",
@@ -79,11 +77,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: source.NewLocationSet(
-			source.Location{
-				Coordinates: source.Coordinates{
-					RealPath: "/b/place/b",
-				},
-			},
+			source.NewLocationFromCoordinates(source.Coordinates{
+				RealPath: "/b/place/b",
+			}),
 		),
 		Type:         pkg.DebPkg,
 		FoundBy:      "the-cataloger-2",

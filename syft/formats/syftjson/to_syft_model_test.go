@@ -6,8 +6,11 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
+	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -123,4 +126,105 @@ func Test_idsHaveChanged(t *testing.T) {
 	to := s.Artifacts.PackageCatalog.Package(r.To.ID())
 	assert.NotNil(t, to)
 	assert.Equal(t, "pkg-2", to.Name)
+}
+
+func Test_toSyftFiles(t *testing.T) {
+	coord := source.Coordinates{
+		RealPath:     "/somerwhere/place",
+		FileSystemID: "abc",
+	}
+
+	tests := []struct {
+		name  string
+		files []model.File
+		want  sbom.Artifacts
+	}{
+		{
+			name:  "empty",
+			files: []model.File{},
+			want: sbom.Artifacts{
+				FileMetadata: map[source.Coordinates]source.FileMetadata{},
+				FileDigests:  map[source.Coordinates][]file.Digest{},
+			},
+		},
+		{
+			name: "no metadata",
+			files: []model.File{
+				{
+					ID:       string(coord.ID()),
+					Location: coord,
+					Metadata: nil,
+					Digests: []file.Digest{
+						{
+							Algorithm: "sha256",
+							Value:     "123",
+						},
+					},
+				},
+			},
+			want: sbom.Artifacts{
+				FileMetadata: map[source.Coordinates]source.FileMetadata{},
+				FileDigests: map[source.Coordinates][]file.Digest{
+					coord: {
+						{
+							Algorithm: "sha256",
+							Value:     "123",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "single file",
+			files: []model.File{
+				{
+					ID:       string(coord.ID()),
+					Location: coord,
+					Metadata: &model.FileMetadataEntry{
+						Mode:            777,
+						Type:            "RegularFile",
+						LinkDestination: "",
+						UserID:          42,
+						GroupID:         32,
+						MIMEType:        "text/plain",
+						Size:            92,
+					},
+					Digests: []file.Digest{
+						{
+							Algorithm: "sha256",
+							Value:     "123",
+						},
+					},
+				},
+			},
+			want: sbom.Artifacts{
+				FileMetadata: map[source.Coordinates]source.FileMetadata{
+					coord: {
+						Path:            coord.RealPath,
+						LinkDestination: "",
+						Size:            92,
+						UserID:          42,
+						GroupID:         32,
+						Type:            stereoFile.TypeRegular,
+						IsDir:           false,
+						Mode:            511, // 777 octal = 511 decimal
+						MIMEType:        "text/plain",
+					},
+				},
+				FileDigests: map[source.Coordinates][]file.Digest{
+					coord: {
+						{
+							Algorithm: "sha256",
+							Value:     "123",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, toSyftFiles(tt.files))
+		})
+	}
 }

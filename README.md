@@ -42,9 +42,11 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Erlang (rebar3)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, native-image)
+- Java (jar, ear, war, par, sar, nar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
+- Linux kernel archives (vmlinz)
+- Linux kernel modules (ko)
 - Nix (outputs in /nix/store)
 - PHP (composer)
 - Python (wheel, egg, poetry, requirements.txt)
@@ -512,6 +514,25 @@ golang:
    # specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
    # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
    local-mod-cache-dir: ""
+
+   # search for go package licences by retrieving the package from a network proxy
+   # SYFT_GOLANG_SEARCH_REMOTE_LICENSES env var
+   search-remote-licenses: false
+
+   # remote proxy to use when retrieving go packages from the network,
+   # if unset this defaults to $GOPROXY followed by https://proxy.golang.org
+   # SYFT_GOLANG_PROXY env var
+   proxy: ""
+
+   # specifies packages which should not be fetched by proxy
+   # if unset this defaults to $GONOPROXY
+   # SYFT_GOLANG_NOPROXY env var
+   no-proxy: ""
+
+linux-kernel:
+   # whether to catalog linux kernel modules found within lib/modules/** directories
+   # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
+   catalog-modules: true
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:

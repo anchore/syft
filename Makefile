@@ -14,7 +14,7 @@ GOLANGCILINT_VERSION := v1.52.2
 GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.16.2
+GORELEASER_VERSION := v1.17.0
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v1.13.1
 QUILL_VERSION := v0.2.0
@@ -118,13 +118,17 @@ lint:  ## Run gofmt + golangci lint checks
 	$(eval MALFORMED_FILENAMES := $(shell find . | grep -e ':'))
 	@bash -c "[[ '$(MALFORMED_FILENAMES)' == '' ]] || (printf '\nfound unsupported filename characters:\n$(MALFORMED_FILENAMES)\n\n' && false)"
 
-.PHONY: lint-fix
-lint-fix:  ## Auto-format all source code + run golangci lint fixers
-	$(call title,Running lint fixers)
+.PHONY: format
+format:  ## Auto-format all source code
+	$(call title,Running formatters)
 	gofmt -w -s .
 	$(GOIMPORTS_CMD) -w .
-	$(LINT_CMD) --fix
 	go mod tidy
+
+.PHONY: lint-fix
+lint-fix: format  ## Auto-format all source code + run golangci lint fixers
+	$(call title,Running lint fixers)
+	$(LINT_CMD) --fix
 
 .PHONY: check-licenses
 check-licenses:  ## Ensure transitive dependencies are compliant with the current license policy

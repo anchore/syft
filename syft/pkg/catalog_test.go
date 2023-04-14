@@ -327,45 +327,45 @@ func TestCatalog_MergeRecords(t *testing.T) {
 				{
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewVirtualLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/b/path",
 								FileSystemID: "a",
 							},
-							VirtualPath: "/another/path",
-						},
+							"/another/path",
+						),
 					),
 					Type: RpmPkg,
 				},
 				{
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewVirtualLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/b/path",
 								FileSystemID: "b",
 							},
-							VirtualPath: "/another/path",
-						},
+							"/another/path",
+						),
 					),
 					Type: RpmPkg,
 				},
 			},
 			expectedLocations: []source.Location{
-				{
-					Coordinates: source.Coordinates{
+				source.NewVirtualLocationFromCoordinates(
+					source.Coordinates{
 						RealPath:     "/b/path",
 						FileSystemID: "a",
 					},
-					VirtualPath: "/another/path",
-				},
-				{
-					Coordinates: source.Coordinates{
+					"/another/path",
+				),
+				source.NewVirtualLocationFromCoordinates(
+					source.Coordinates{
 						RealPath:     "/b/path",
 						FileSystemID: "b",
 					},
-					VirtualPath: "/another/path",
-				},
+					"/another/path",
+				),
 			},
 			expectedCPECount: 2,
 		},

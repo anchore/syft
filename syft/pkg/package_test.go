@@ -7,19 +7,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestIDUniqueness(t *testing.T) {
-	originalLocation := source.Location{
-		Coordinates: source.Coordinates{
+	originalLocation := source.NewVirtualLocationFromCoordinates(
+		source.Coordinates{
 			RealPath:     "39.0742° N, 21.8243° E",
 			FileSystemID: "Earth",
 		},
-		VirtualPath: "/Ancient-Greece",
-	}
+		"/Ancient-Greece",
+	)
+
 	originalPkg := Package{
 		Name:    "pi",
 		Version: "3.14",
@@ -238,13 +238,13 @@ func TestIDUniqueness(t *testing.T) {
 }
 
 func TestPackage_Merge(t *testing.T) {
-	originalLocation := source.Location{
-		Coordinates: source.Coordinates{
+	originalLocation := source.NewVirtualLocationFromCoordinates(
+		source.Coordinates{
 			RealPath:     "39.0742° N, 21.8243° E",
 			FileSystemID: "Earth",
 		},
-		VirtualPath: "/Ancient-Greece",
-	}
+		"/Ancient-Greece",
+	)
 
 	similarLocation := originalLocation
 	similarLocation.FileSystemID = "Mars"
@@ -423,18 +423,32 @@ func TestPackage_Merge(t *testing.T) {
 				cmp.AllowUnexported(Package{}),
 				cmp.Comparer(
 					func(x, y source.LocationSet) bool {
-						return cmp.Equal(
-							x.ToSlice(), y.ToSlice(),
-							cmp.AllowUnexported(source.Location{}),
-							cmp.AllowUnexported(file.Reference{}),
-						)
+						xs := x.ToSlice()
+						ys := y.ToSlice()
+
+						if len(xs) != len(ys) {
+							return false
+						}
+						for i, xe := range xs {
+							ye := ys[i]
+							if !locationComparer(xe, ye) {
+								return false
+							}
+						}
+
+						return true
 					},
 				),
+				cmp.Comparer(locationComparer),
 			); diff != "" {
 				t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
 			}
 		})
 	}
+}
+
+func locationComparer(x, y source.Location) bool {
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 }
 
 func TestIsValid(t *testing.T) {

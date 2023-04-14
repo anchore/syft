@@ -29,7 +29,11 @@ func parserPomXML(_ source.FileResolver, _ *generic.Environment, reader source.L
 
 	var pkgs []pkg.Package
 	for _, dep := range pom.Dependencies {
-		p := newPackageFromPom(pom, dep, reader.Location)
+		p := newPackageFromPom(
+			pom,
+			dep,
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
 		if p.Name == "" {
 			continue
 		}

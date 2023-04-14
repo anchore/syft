@@ -12,35 +12,43 @@ import (
 func TestLocationSet(t *testing.T) {
 
 	etcHostsLinkVar := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/etc/hosts",
-			FileSystemID: "a",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "a",
+			},
+			VirtualPath: "/var/etc/hosts",
 		},
-		VirtualPath: "/var/etc/hosts",
 	}
 
 	etcHostsLinkHome := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/etc/hosts",
-			FileSystemID: "a",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "a",
+			},
+			VirtualPath: "/home/wagoodman/hosts",
 		},
-		VirtualPath: "/home/wagoodman/hosts",
 	}
 
 	binA := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/bin",
-			FileSystemID: "a",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/bin",
+				FileSystemID: "a",
+			},
+			VirtualPath: "/usr/bin",
 		},
-		VirtualPath: "/usr/bin",
 	}
 
 	binB := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/bin",
-			FileSystemID: "b",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/bin",
+				FileSystemID: "b",
+			},
+			VirtualPath: "/usr/bin",
 		},
-		VirtualPath: "/usr/bin",
 	}
 
 	tests := []struct {
@@ -87,41 +95,51 @@ func TestLocationSet(t *testing.T) {
 
 func TestLocationSet_Hash(t *testing.T) {
 	etcAlink := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/etc/hosts",
-			FileSystemID: "a",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "a",
+			},
+			VirtualPath: "/var/etc/hosts",
 		},
-		VirtualPath: "/var/etc/hosts",
 	}
 
 	etcA := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/etc/hosts",
-			FileSystemID: "a",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "a",
+			},
 		},
 	}
 
 	etcB := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/etc/hosts",
-			FileSystemID: "b",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "b",
+			},
 		},
 	}
 
 	binA := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/bin",
-			FileSystemID: "a",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/bin",
+				FileSystemID: "a",
+			},
+			VirtualPath: "/usr/bin",
 		},
-		VirtualPath: "/usr/bin",
 	}
 
 	binB := Location{
-		Coordinates: Coordinates{
-			RealPath:     "/bin",
-			FileSystemID: "b",
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/bin",
+				FileSystemID: "b",
+			},
+			VirtualPath: "/usr/bin",
 		},
-		VirtualPath: "/usr/bin",
 	}
 
 	tests := []struct {

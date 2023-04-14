@@ -56,7 +56,7 @@ func (c *StoreCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, [
 			continue
 		}
 
-		p := newNixStorePackage(*storePath, location)
+		p := newNixStorePackage(*storePath, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		pkgs = append(pkgs, p)
 	}
 

@@ -2,7 +2,6 @@ package java
 
 import (
 	"bufio"
-	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -11,10 +10,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const gradleLockfileGlob = "*gradle.lockfile*"
-const gradleLockfileDirGlob = "**/gradle.lockfile*"
-
-var propertyMatcherGradleLock = regexp.MustCompile("[$][{][^}]+[}]")
+const gradleLockfileGlob = "**/gradle.lockfile*"
 
 // Dependency represents a single dependency in the gradle.lockfile file
 type LockfileDependency struct {
@@ -23,8 +19,7 @@ type LockfileDependency struct {
 	Version string
 }
 
-func parserGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-
+func parseGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file
@@ -41,26 +36,26 @@ func parserGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader 
 		line = strings.TrimSpace(line)
 
 		groupNameVersion := line
-		groupNameVersion = strings.Trim(groupNameVersion, "\"")
+		groupNameVersion = strings.Split(groupNameVersion, "=")[0]
 		parts := strings.Split(groupNameVersion, ":")
 
 		// we have a version directly specified
 		if len(parts) == 3 {
-			version := strings.Split(parts[2], "=")
 			// Create a new Dependency struct and add it to the dependencies slice
-			dep := LockfileDependency{Group: parts[0], Name: parts[1], Version: version[0]}
+			dep := LockfileDependency{Group: parts[0], Name: parts[1], Version: parts[2]}
 			dependencies = append(dependencies, dep)
 		}
-
 	}
 	// map the dependencies
 	for _, dep := range dependencies {
 		mappedPkg := pkg.Package{
-			Name:         dep.Name,
-			Version:      dep.Version,
-			Locations:    source.NewLocationSet(reader.Location),
+			Name:    dep.Name,
+			Version: dep.Version,
+			Locations: source.NewLocationSet(
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
 			Language:     pkg.Java,
-			Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a Gradle.xml that were not installed yet?
+			Type:         pkg.JavaPkg,
 			MetadataType: pkg.JavaMetadataType,
 		}
 		pkgs = append(pkgs, mappedPkg)

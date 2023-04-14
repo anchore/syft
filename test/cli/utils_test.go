@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"math"
@@ -20,6 +21,16 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
+
+var showOutput = flag.Bool("show-output", false, "show stdout and stderr for failing tests")
+
+func logOutputOnFailure(t testing.TB, cmd *exec.Cmd, stdout, stderr string) {
+	if t.Failed() && showOutput != nil && *showOutput {
+		t.Log("STDOUT:\n", stdout)
+		t.Log("STDERR:\n", stderr)
+		t.Log("COMMAND:", strings.Join(cmd.Args, " "))
+	}
+}
 
 func runAndShow(t *testing.T, cmd *exec.Cmd) {
 	t.Helper()

@@ -37,9 +37,11 @@ func TestLocation_ID(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := Location{
-				Coordinates: test.coordinates,
-				VirtualPath: test.virtualPath,
-				ref:         test.ref,
+				LocationData: LocationData{
+					Coordinates: test.coordinates,
+					VirtualPath: test.virtualPath,
+					ref:         test.ref,
+				},
 			}
 			assert.Equal(t, l.ID(), test.coordinates.ID())
 		})

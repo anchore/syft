@@ -30,7 +30,7 @@ type Plugin struct {
 }
 
 func parserBuildGradle(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	//Gradle, err := decodeBuildGradle(reader)
+	// Gradle, err := decodeBuildGradle(reader)
 	// if err != nil {
 	// 	return nil, nil, err
 	// }
@@ -98,7 +98,6 @@ func parserBuildGradle(_ source.FileResolver, _ *generic.Environment, reader sou
 			// Add the key and value to the map
 			variables[key] = value
 		}
-
 	}
 	// map the dependencies
 	for _, dep := range dependencies {
@@ -164,7 +163,6 @@ func extractDependencies(line string, plugins []Plugin, dependencies []Dependenc
 	// we have a version directly specified
 	// Create a new Dependency struct and add it to the dependencies slice
 	if len(parts) == 2 {
-
 		version := searchInPlugins(parts[0], plugins)
 
 		dep := Dependency{Group: parts[0], Name: parts[1], Version: version}
@@ -172,7 +170,6 @@ func extractDependencies(line string, plugins []Plugin, dependencies []Dependenc
 	}
 
 	if len(parts) == 3 {
-
 		dep := Dependency{Group: parts[0], Name: parts[1], Version: parts[2]}
 		dependencies = append(dependencies, dep)
 	}
