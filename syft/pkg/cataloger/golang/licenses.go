@@ -191,12 +191,11 @@ func getModule(progress *event.CatalogerTask, proxies []string, moduleName, modu
 	return
 }
 
-//nolint:gosec
 func getModuleProxy(progress *event.CatalogerTask, proxy string, moduleName string, moduleVersion string) (out fs.FS, _ error) {
 	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
 	progress.SetValue(u)
 	// get the module zip
-	resp, err := http.Get(u)
+	resp, err := http.Get(u) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +204,7 @@ func getModuleProxy(progress *event.CatalogerTask, proxy string, moduleName stri
 		u = fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion)
 		progress.SetValue(u)
 		// try lowercasing it; some packages have mixed casing that really messes up the proxy
-		resp, err = http.Get(u)
+		resp, err = http.Get(u) //nolint:gosec
 		if err != nil {
 			return nil, err
 		}

@@ -232,8 +232,10 @@ func (u UnindexedDirectoryResolver) AllLocations() <-chan Location {
 			}
 			p = strings.TrimPrefix(p, "/")
 			out <- Location{
-				Coordinates: Coordinates{
-					RealPath: p,
+				LocationData: LocationData{
+					Coordinates: Coordinates{
+						RealPath: p,
+					},
 				},
 			}
 			return nil
@@ -282,10 +284,12 @@ func (u UnindexedDirectoryResolver) newLocation(filePath string, resolveLinks bo
 	}
 
 	return &Location{
-		Coordinates: Coordinates{
-			RealPath: realPath,
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath: realPath,
+			},
+			VirtualPath: virtualPath,
 		},
-		VirtualPath: virtualPath,
 	}
 }
 
