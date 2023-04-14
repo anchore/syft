@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,25 +14,42 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 
 	c := NewCatalog()
 
-	simpleCoord := source.Coordinates{
+	coordA := source.Coordinates{
 		RealPath:     "/somewhere/real",
 		FileSystemID: "abc",
 	}
-	simple := Package{
-		Locations: source.NewLocationSet(source.NewLocationFromCoordinates(simpleCoord)),
-	}
-	simple.SetID()
-	c.Add(simple)
-
-	symlinkCoord := source.Coordinates{
+	coordC := source.Coordinates{
 		RealPath:     "/somewhere/real",
+		FileSystemID: "abc",
+	}
+	coordD := source.Coordinates{
+		RealPath:     "/somewhere/real",
+		FileSystemID: "abc",
+	}
+	pkgA := Package{
+		Locations: source.NewLocationSet(
+			// added!
+			source.NewLocationFromCoordinates(coordA).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
+			// ignored...
+			source.NewLocationFromCoordinates(coordC).WithAnnotation(EvidenceAnnotationKey, SupportingEvidenceAnnotation),
+			source.NewLocationFromCoordinates(coordD),
+		),
+	}
+	pkgA.SetID()
+	c.Add(pkgA)
+
+	coordB := source.Coordinates{
+		RealPath:     "/somewhere-else/real",
 		FileSystemID: "def",
 	}
-	symlink := Package{
-		Locations: source.NewLocationSet(source.NewLocationFromCoordinates(symlinkCoord)),
+	pkgB := Package{
+		Locations: source.NewLocationSet(
+			// added!
+			source.NewLocationFromCoordinates(coordB).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
+		),
 	}
-	symlink.SetID()
-	c.Add(symlink)
+	pkgB.SetID()
+	c.Add(pkgB)
 
 	tests := []struct {
 		name    string
@@ -43,13 +61,13 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 			catalog: c,
 			want: []artifact.Relationship{
 				{
-					From: simple,
-					To:   simpleCoord,
+					From: pkgB,
+					To:   coordB,
 					Type: artifact.EvidentByRelationship,
 				},
 				{
-					From: symlink,
-					To:   symlinkCoord,
+					From: pkgA,
+					To:   coordA,
 					Type: artifact.EvidentByRelationship,
 				},
 			},
@@ -60,9 +78,9 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 			actual := RelationshipsEvidentBy(tt.catalog)
 			require.Len(t, actual, len(tt.want))
 			for i := range actual {
-				require.Equal(t, tt.want[i].From.ID(), actual[i].From.ID())
-				require.Equal(t, tt.want[i].To.ID(), actual[i].To.ID())
-				require.Equal(t, tt.want[i].Type, actual[i].Type)
+				assert.Equal(t, tt.want[i].From.ID(), actual[i].From.ID(), "from mismatch at index %d", i)
+				assert.Equal(t, tt.want[i].To.ID(), actual[i].To.ID(), "to mismatch at index %d", i)
+				assert.Equal(t, tt.want[i].Type, actual[i].Type, "type mismatch at index %d", i)
 			}
 		})
 	}
