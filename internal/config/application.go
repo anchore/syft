@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 )
 
 var (
@@ -50,6 +51,7 @@ type Application struct {
 	Catalogers             []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Package                pkg                `yaml:"package" json:"package" mapstructure:"package"`
 	Golang                 golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
+	LinuxKernel            linuxKernel        `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Attest                 attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	FileMetadata           FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 	FileClassification     fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
@@ -78,6 +80,9 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy),
+		LinuxKernel: kernel.LinuxCatalogerConfig{
+			CatalogModules: cfg.LinuxKernel.CatalogModules,
+		},
 	}
 }
 
