@@ -43,11 +43,16 @@ func parseMixLock(_ source.FileResolver, _ *generic.Environment, reader source.L
 			continue
 		}
 
-		packages = append(packages, newPackage(pkg.MixLockMetadata{
-			Name:       name,
-			Version:    version,
-			PkgHash:    hash,
-			PkgHashExt: hashExt,
-		}))
+		packages = append(packages,
+			newPackage(
+				pkg.MixLockMetadata{
+					Name:       name,
+					Version:    version,
+					PkgHash:    hash,
+					PkgHashExt: hashExt,
+				},
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		)
 	}
 }

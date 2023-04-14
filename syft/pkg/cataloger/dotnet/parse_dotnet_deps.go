@@ -45,7 +45,11 @@ func parseDotnetDeps(_ source.FileResolver, _ *generic.Environment, reader sourc
 
 	for _, nameVersion := range names {
 		lib := p.Libraries[nameVersion]
-		dotnetPkg := newDotnetDepsPackage(nameVersion, lib, reader.Location)
+		dotnetPkg := newDotnetDepsPackage(
+			nameVersion,
+			lib,
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
 
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)

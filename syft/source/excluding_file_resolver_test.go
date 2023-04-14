@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/anchore/stereoscope/pkg/file"
 )
 
 func TestExcludingResolver(t *testing.T) {
@@ -79,25 +77,25 @@ func TestExcludingResolver(t *testing.T) {
 
 			for _, path := range diff {
 				assert.False(t, er.HasPath(path))
-				c, err := er.FileContentsByLocation(makeLocation(path))
+				c, err := er.FileContentsByLocation(NewLocation(path))
 				assert.Nil(t, c)
 				assert.Error(t, err)
-				m, err := er.FileMetadataByLocation(makeLocation(path))
+				m, err := er.FileMetadataByLocation(NewLocation(path))
 				assert.Empty(t, m.LinkDestination)
 				assert.Error(t, err)
-				l := er.RelativeFileByPath(makeLocation(""), path)
+				l := er.RelativeFileByPath(NewLocation(""), path)
 				assert.Nil(t, l)
 			}
 
 			for _, path := range test.expected {
 				assert.True(t, er.HasPath(path))
-				c, err := er.FileContentsByLocation(makeLocation(path))
+				c, err := er.FileContentsByLocation(NewLocation(path))
 				assert.NotNil(t, c)
 				assert.Nil(t, err)
-				m, err := er.FileMetadataByLocation(makeLocation(path))
+				m, err := er.FileMetadataByLocation(NewLocation(path))
 				assert.NotEmpty(t, m.LinkDestination)
 				assert.Nil(t, err)
-				l := er.RelativeFileByPath(makeLocation(""), path)
+				l := er.RelativeFileByPath(NewLocation(""), path)
 				assert.NotNil(t, l)
 			}
 		})
@@ -119,17 +117,6 @@ func difference(a, b []string) []string {
 	return diff
 }
 
-func makeLocation(path string) Location {
-	return Location{
-		Coordinates: Coordinates{
-			RealPath:     path,
-			FileSystemID: "",
-		},
-		VirtualPath: "",
-		ref:         file.Reference{},
-	}
-}
-
 func locationPaths(locations []Location) []string {
 	paths := []string{}
 	for _, l := range locations {
@@ -145,7 +132,7 @@ type mockResolver struct {
 func (r *mockResolver) getLocations() ([]Location, error) {
 	out := []Location{}
 	for _, path := range r.locations {
-		out = append(out, makeLocation(path))
+		out = append(out, NewLocation(path))
 	}
 	return out, nil
 }
@@ -189,11 +176,8 @@ func (r *mockResolver) FilesByBasenameGlob(_ ...string) ([]Location, error) {
 }
 
 func (r *mockResolver) RelativeFileByPath(_ Location, path string) *Location {
-	return &Location{
-		Coordinates: Coordinates{
-			RealPath: path,
-		},
-	}
+	l := NewLocation(path)
+	return &l
 }
 
 func (r *mockResolver) AllLocations() <-chan Location {

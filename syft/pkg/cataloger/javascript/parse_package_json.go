@@ -68,7 +68,10 @@ func parsePackageJSON(_ source.FileResolver, _ *generic.Environment, reader sour
 			return nil, nil, nil
 		}
 
-		pkgs = append(pkgs, newPackageJSONPackage(p, reader.Location))
+		pkgs = append(
+			pkgs,
+			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		)
 	}
 
 	pkg.Sort(pkgs)

@@ -113,7 +113,10 @@ func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, read
 				name = pkgMeta.Name
 			}
 
-			pkgs = append(pkgs, newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta))
+			pkgs = append(
+				pkgs,
+				newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta),
+			)
 		}
 	}
 

@@ -25,7 +25,7 @@ func newDpkgPackage(d pkg.DpkgMetadata, dbLocation source.Location, resolver sou
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    source.NewLocationSet(dbLocation),
+		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:         packageURL(d, release),
 		Type:         pkg.DebPkg,
 		MetadataType: pkg.DpkgMetadataType,
@@ -162,6 +162,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 	return files, locations
 }
 
+//nolint:dupl
 func fetchMd5Contents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
 	var md5Reader io.ReadCloser
 	var err error
@@ -182,17 +183,22 @@ func fetchMd5Contents(resolver source.FileResolver, dbLocation source.Location, 
 		location = resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "info", m.Package+md5sumsExt))
 	}
 
-	// this is unexpected, but not a show-stopper
-	if location != nil {
-		md5Reader, err = resolver.FileContentsByLocation(*location)
-		if err != nil {
-			log.Warnf("failed to fetch deb md5 contents (package=%s): %+v", m.Package, err)
-		}
+	if location == nil {
+		return nil, nil
 	}
 
-	return md5Reader, location
+	// this is unexpected, but not a show-stopper
+	md5Reader, err = resolver.FileContentsByLocation(*location)
+	if err != nil {
+		log.Warnf("failed to fetch deb md5 contents (package=%s): %+v", m.Package, err)
+	}
+
+	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
+
+	return md5Reader, &l
 }
 
+//nolint:dupl
 func fetchConffileContents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
 	var reader io.ReadCloser
 	var err error
@@ -213,15 +219,19 @@ func fetchConffileContents(resolver source.FileResolver, dbLocation source.Locat
 		location = resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "info", m.Package+conffilesExt))
 	}
 
-	// this is unexpected, but not a show-stopper
-	if location != nil {
-		reader, err = resolver.FileContentsByLocation(*location)
-		if err != nil {
-			log.Warnf("failed to fetch deb conffiles contents (package=%s): %+v", m.Package, err)
-		}
+	if location == nil {
+		return nil, nil
 	}
 
-	return reader, location
+	// this is unexpected, but not a show-stopper
+	reader, err = resolver.FileContentsByLocation(*location)
+	if err != nil {
+		log.Warnf("failed to fetch deb conffiles contents (package=%s): %+v", m.Package, err)
+	}
+
+	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
+
+	return reader, &l
 }
 
 func fetchCopyrightContents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
@@ -243,7 +253,9 @@ func fetchCopyrightContents(resolver source.FileResolver, dbLocation source.Loca
 		log.Warnf("failed to fetch deb copyright contents (package=%s): %w", m.Package, err)
 	}
 
-	return reader, location
+	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
+
+	return reader, &l
 }
 
 func md5Key(metadata pkg.DpkgMetadata) string {
