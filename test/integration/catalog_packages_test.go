@@ -220,6 +220,8 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
+	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))
