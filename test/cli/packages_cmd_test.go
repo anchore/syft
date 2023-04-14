@@ -97,7 +97,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(35),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -105,7 +105,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag-hidden-packages",
 			args: []string{"packages", "-o", "json", "-s", "squashed", hiddenPackagesImage},
 			assertions: []traitAssertion{
-				assertPackageCount(163),
+				assertPackageCount(165),
 				assertNotInOutput("vsftpd"), // hidden package
 				assertSuccessfulReturnCode,
 			},
@@ -114,7 +114,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "all-layers-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "all-layers", hiddenPackagesImage},
 			assertions: []traitAssertion{
-				assertPackageCount(164), // packages are now deduplicated for this case
+				assertPackageCount(166), // packages are now deduplicated for this case
 				assertInOutput("all-layers"),
 				assertInOutput("vsftpd"), // hidden package
 				assertSuccessfulReturnCode,
@@ -127,7 +127,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
 			},
 			assertions: []traitAssertion{
-				assertPackageCount(164), // packages are now deduplicated for this case
+				assertPackageCount(166), // packages are now deduplicated for this case
 				assertInOutput("all-layers"),
 				assertInOutput("vsftpd"), // hidden package
 				assertSuccessfulReturnCode,
@@ -214,7 +214,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),
 				assertInOutput("parallelism=2"),
-				assertPackageCount(35),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -225,7 +225,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
 				assertInOutput("parallelism=1"),
-				assertPackageCount(35),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -239,7 +239,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertNotInOutput("secret_password"),
 				assertNotInOutput("secret_key_path"),
-				assertPackageCount(35),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
