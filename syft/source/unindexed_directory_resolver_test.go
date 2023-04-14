@@ -5,7 +5,6 @@ package source
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -442,7 +441,7 @@ func Test_UnindexedDirectoryResolver_FileContentsByLocation(t *testing.T) {
 
 			require.NoError(t, err)
 			if test.expects != "" {
-				b, err := ioutil.ReadAll(actual)
+				b, err := io.ReadAll(actual)
 				require.NoError(t, err)
 				assert.Equal(t, test.expects, string(b))
 			}
@@ -553,31 +552,11 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-1.txt",
-					},
-					VirtualPath: "link-1",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					VirtualPath: "link-2",
-				},
+				NewVirtualLocation("file-1.txt", "link-1"),
+				NewVirtualLocation("file-2.txt", "link-2"),
 				// we already have this real file path via another link, so only one is returned
-				//{
-				//	Coordinates: Coordinates{
-				//		RealPath: "file-2.txt",
-				//	},
-				//	VirtualPath: "link-indirect",
-				//},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-3.txt",
-					},
-					VirtualPath: "link-within",
-				},
+				// NewVirtualLocation("file-2.txt", "link-indirect"),
+				NewVirtualLocation("file-3.txt", "link-within"),
 			},
 		},
 		{
@@ -590,12 +569,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// this has two copies in the base image, which overwrites the same location
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					//VirtualPath: "file-2.txt",
-				},
+				NewLocation("file-2.txt"),
 			},
 		},
 		{
@@ -607,30 +581,10 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-1.txt",
-					},
-					//VirtualPath: "file-1.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					//VirtualPath: "file-2.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-3.txt",
-					},
-					//VirtualPath: "file-3.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "parent/file-4.txt",
-					},
-					//VirtualPath: "parent/file-4.txt",
-				},
+				NewLocation("file-1.txt"),
+				NewLocation("file-2.txt"),
+				NewLocation("file-3.txt"),
+				NewLocation("parent/file-4.txt"),
 			},
 		},
 		{
@@ -641,35 +595,11 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-1.txt",
-					},
-					VirtualPath: "link-1",
-					ref:         file.Reference{RealPath: "file-1.txt"},
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					VirtualPath: "link-2",
-					ref:         file.Reference{RealPath: "file-2.txt"},
-				},
+				NewVirtualLocationFromDirectory("file-1.txt", "link-1", file.Reference{RealPath: "file-1.txt"}),
+				NewVirtualLocationFromDirectory("file-2.txt", "link-2", file.Reference{RealPath: "file-2.txt"}),
 				// we already have this real file path via another link, so only one is returned
-				//{
-				//	Coordinates: Coordinates{
-				//		RealPath: "file-2.txt",
-				//	},
-				//	VirtualPath: "link-indirect",
-				//	ref:         file.Reference{RealPath: "file-2.txt"},
-				//},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-3.txt",
-					},
-					VirtualPath: "link-within",
-					ref:         file.Reference{RealPath: "file-3.txt"},
-				},
+				//NewVirtualLocationFromDirectory("file-2.txt", "link-indirect", file.Reference{RealPath: "file-2.txt"}),
+				NewVirtualLocationFromDirectory("file-3.txt", "link-within", file.Reference{RealPath: "file-3.txt"}),
 			},
 		},
 		{
@@ -681,30 +611,10 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-1.txt",
-					},
-					//VirtualPath: "file-1.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					//VirtualPath: "file-2.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-3.txt",
-					},
-					//VirtualPath: "file-3.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "parent/file-4.txt",
-					},
-					//VirtualPath: "parent/file-4.txt",
-				},
+				NewLocation("file-1.txt"),
+				NewLocation("file-2.txt"),
+				NewLocation("file-3.txt"),
+				NewLocation("parent/file-4.txt"),
 			},
 		},
 		{
@@ -717,12 +627,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// we have multiple copies across layers
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					VirtualPath: "link-2",
-				},
+				NewVirtualLocation("file-2.txt", "link-2"),
 			},
 		},
 		{
@@ -735,12 +640,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// we have multiple copies across layers
-				{
-					Coordinates: Coordinates{
-						RealPath: "file-2.txt",
-					},
-					VirtualPath: "link-indirect",
-				},
+				NewVirtualLocation("file-2.txt", "link-indirect"),
 			},
 		},
 	}
@@ -780,13 +680,9 @@ func Test_UnindexedDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 func Test_UnindexedDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	resolver := NewUnindexedDirectoryResolver("./test-fixtures/system_paths")
 
-	dirLoc := &Location{
-		Coordinates: Coordinates{
-			RealPath: "arg/foo",
-		},
-	}
+	dirLoc := NewLocation("arg/foo")
 
-	reader, err := resolver.FileContentsByLocation(*dirLoc)
+	reader, err := resolver.FileContentsByLocation(dirLoc)
 	require.Error(t, err)
 	require.Nil(t, reader)
 }
