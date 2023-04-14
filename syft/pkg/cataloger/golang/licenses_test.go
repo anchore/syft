@@ -71,7 +71,9 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 		entries, err := os.ReadDir(testDir)
 		require.NoError(t, err)
 		for _, f := range entries {
-			writer, err := archive.Create(f.Name())
+			// the zip files downloaded contain a path to the repo that somewhat matches where it ends up on disk,
+			// so prefix entries with something similar
+			writer, err := archive.Create(path.Join("github.com/something/some@version", f.Name()))
 			require.NoError(t, err)
 			contents, err := os.ReadFile(path.Join(testDir, f.Name()))
 			require.NoError(t, err)
@@ -185,4 +187,10 @@ func Test_remotesForModule(t *testing.T) {
 			require.Equal(t, test.expected, got)
 		})
 	}
+}
+
+func Test_findVersionPath(t *testing.T) {
+	f := os.DirFS("test-fixtures/zip-fs")
+	vp := findVersionPath(f, ".")
+	require.Equal(t, "github.com/someorg/somepkg@version", vp)
 }

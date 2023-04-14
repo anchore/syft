@@ -35,6 +35,6 @@ const (
 	// AttestationStarted is a partybus event that occurs when starting an SBOM attestation process
 	AttestationStarted partybus.EventType = "syft-attestation-started-event"
 
-	// GenericProgressStarted is a partybus event that occurs when a user wants to display arbitrary progress messages
-	GenericProgressStarted partybus.EventType = "syft-generic-event-started"
+	// CatalogerTaskStarted is a partybus event that occurs when starting a task within a cataloger
+	CatalogerTaskStarted partybus.EventType = "syft-cataloger-task-started"
 )

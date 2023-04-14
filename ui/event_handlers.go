@@ -651,9 +651,9 @@ func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event party
 	return nil
 }
 
-// GenericProgressStartedHandler shows the intermittent progress for generic messages
-func GenericProgressStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	prog, err := syftEventParsers.ParseGenericProgress(event)
+// CatalogerTaskStartedHandler shows the intermittent progress for a cataloger subprocess messages
+func CatalogerTaskStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseCatalogerTaskStarted(event)
 	if err != nil {
 		return fmt.Errorf("bad %s event: %w", event.Type, err)
 	}

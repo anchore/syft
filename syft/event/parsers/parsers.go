@@ -111,12 +111,12 @@ func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgress
 	return path, prog, nil
 }
 
-func ParseGenericProgress(e partybus.Event) (*event.GenericProgress, error) {
-	if err := checkEventType(e.Type, event.GenericProgressStarted); err != nil {
+func ParseCatalogerTaskStarted(e partybus.Event) (*event.CatalogerTask, error) {
+	if err := checkEventType(e.Type, event.CatalogerTaskStarted); err != nil {
 		return nil, err
 	}
 
-	source, ok := e.Source.(*event.GenericProgress)
+	source, ok := e.Source.(*event.CatalogerTask)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Source", e.Source)
 	}

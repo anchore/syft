@@ -38,7 +38,7 @@ func (r *Handler) RespondsTo(event partybus.Event) bool {
 		syftEvent.FileIndexingStarted,
 		syftEvent.ImportStarted,
 		syftEvent.AttestationStarted,
-		syftEvent.GenericProgressStarted:
+		syftEvent.CatalogerTaskStarted:
 		return true
 	default:
 		return false
@@ -78,8 +78,8 @@ func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Ev
 	case syftEvent.AttestationStarted:
 		return AttestationStartedHandler(ctx, fr, event, wg)
 
-	case syftEvent.GenericProgressStarted:
-		return GenericProgressStartedHandler(ctx, fr, event, wg)
+	case syftEvent.CatalogerTaskStarted:
+		return CatalogerTaskStartedHandler(ctx, fr, event, wg)
 	}
 	return nil
 }

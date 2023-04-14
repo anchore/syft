@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 )
 
-type GenericProgress struct {
+type CatalogerTask struct {
 	prog *progress.Manual
 	// Title
 	Title string
@@ -21,32 +21,32 @@ type GenericProgress struct {
 	value string
 }
 
-func (e *GenericProgress) init() {
+func (e *CatalogerTask) init() {
 	e.prog = progress.NewManual(-1)
 
 	bus.Publish(partybus.Event{
-		Type:   GenericProgressStarted,
+		Type:   CatalogerTaskStarted,
 		Source: e,
 	})
 }
 
-func (e *GenericProgress) SetCompleted() {
+func (e *CatalogerTask) SetCompleted() {
 	if e.prog != nil {
 		e.prog.SetCompleted()
 	}
 }
 
-func (e *GenericProgress) SetValue(value string) {
+func (e *CatalogerTask) SetValue(value string) {
 	if e.prog == nil {
 		e.init()
 	}
 	e.value = value
 }
 
-func (e *GenericProgress) GetValue() string {
+func (e *CatalogerTask) GetValue() string {
 	return e.value
 }
 
-func (e *GenericProgress) GetMonitor() *progress.Manual {
+func (e *CatalogerTask) GetMonitor() *progress.Manual {
 	return e.prog
 }

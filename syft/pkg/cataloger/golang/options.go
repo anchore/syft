@@ -5,8 +5,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/mitchellh/go-homedir"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 const (
@@ -26,14 +27,15 @@ type GoCatalogerOpts struct {
 	noProxy                     []string
 }
 
-type GoCatalogerOpt func(*GoCatalogerOpts)
-
 func (g GoCatalogerOpts) WithSearchLocalModCacheLicenses(input bool) GoCatalogerOpts {
 	g.searchLocalModCacheLicenses = input
 	return g
 }
 
 func (g GoCatalogerOpts) WithLocalModCacheDir(input string) GoCatalogerOpts {
+	if input == "" {
+		return g
+	}
 	g.localModCacheDir = input
 	return g
 }
@@ -44,31 +46,31 @@ func (g GoCatalogerOpts) WithSearchRemoteLicenses(input bool) GoCatalogerOpts {
 }
 
 func (g GoCatalogerOpts) WithProxy(input string) GoCatalogerOpts {
+	if input == "" {
+		return g
+	}
 	if input == "off" {
 		input = directProxyOnly
 	}
-	if input == "" {
-		g.proxies = nil
-	} else {
-		g.proxies = strings.Split(input, ",")
-	}
-
-	g2 := g.updateProxies()
-	return g2
+	g.proxies = strings.Split(input, ",")
+	return g
 }
 
 func (g GoCatalogerOpts) WithNoProxy(input string) GoCatalogerOpts {
 	if input == "" {
-		g.noProxy = nil
-	} else {
-		g.noProxy = strings.Split(input, ",")
+		return g
 	}
-	g.updateProxies()
-	g2 := g.updateProxies()
-	return g2
+	g.noProxy = strings.Split(input, ",")
+	return g
 }
 
-func (g GoCatalogerOpts) updateProxies() GoCatalogerOpts {
+// NewGoCatalogerOpts create a GoCatalogerOpts with default options, which includes:
+// - setting the default remote proxy if none is provided
+// - setting the default no proxy if none is provided
+// - setting the default local module cache dir if none is provided
+func NewGoCatalogerOpts() GoCatalogerOpts {
+	g := GoCatalogerOpts{}
+
 	// first process the proxy settings
 	if len(g.proxies) == 0 {
 		goProxy := os.Getenv("GOPROXY")
@@ -109,12 +111,4 @@ func (g GoCatalogerOpts) updateProxies() GoCatalogerOpts {
 		}
 	}
 	return g
-}
-
-// NewGoCatalogerOpts create a GoCatalogerOpts with default options, which includes:
-// - setting the default remote proxy if none is provided
-// - setting the default no proxy if none is provided
-// - setting the default local module cache dir if none is provided
-func NewGoCatalogerOpts() GoCatalogerOpts {
-	return GoCatalogerOpts{}
 }
