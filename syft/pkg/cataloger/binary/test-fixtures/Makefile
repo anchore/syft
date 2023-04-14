@@ -15,7 +15,9 @@ all: \
 	classifiers/dynamic/kubectl-1.25.7 \
 	classifiers/dynamic/kubectl-1.26.2 \
 	classifiers/dynamic/kustomize-4.5.7 \
-	classifiers/dynamic/kustomize-5.0.0
+	classifiers/dynamic/kustomize-5.0.0 \
+	classifiers/dynamic/consul-1.15.2
+
 
 
 classifiers/dynamic/python-binary-shared-lib-3.11:
@@ -140,6 +142,12 @@ classifiers/dynamic/kustomize-5.0.0:
 	./get-image-file.sh $($@_image) \
 		/usr/local/bin/kustomize \
 		$@/kustomize
+
+classifiers/dynamic/consul-1.15.2:
+	$(eval $@_image := "hashicorp/consul:1.15.2@sha256:c2169f3bb18dd947ae8eb5f6766896695c71fb439f050a3343e0007d895615b8")
+	./get-image-file.sh $($@_image) \
+		/bin/consul \
+		$@/consul
 
 .PHONY: clean
 clean:
