@@ -18,7 +18,7 @@ var _ FileResolver = (*MockResolver)(nil)
 // paths, which are typically paths to test fixtures.
 type MockResolver struct {
 	locations     []Location
-	metadata      map[Location]FileMetadata
+	metadata      map[Coordinates]FileMetadata
 	mimeTypeIndex map[string][]Location
 	extension     map[string][]Location
 	basename      map[string][]Location
@@ -41,18 +41,19 @@ func NewMockResolverForPaths(paths ...string) *MockResolver {
 
 	return &MockResolver{
 		locations: locations,
-		metadata:  make(map[Location]FileMetadata),
+		metadata:  make(map[Coordinates]FileMetadata),
 		extension: extension,
 		basename:  basename,
 	}
 }
 
-func NewMockResolverForPathsWithMetadata(metadata map[Location]FileMetadata) *MockResolver {
+func NewMockResolverForPathsWithMetadata(metadata map[Coordinates]FileMetadata) *MockResolver {
 	var locations []Location
 	var mimeTypeIndex = make(map[string][]Location)
 	extension := make(map[string][]Location)
 	basename := make(map[string][]Location)
-	for l, m := range metadata {
+	for c, m := range metadata {
+		l := NewLocationFromCoordinates(c)
 		locations = append(locations, l)
 		mimeTypeIndex[m.MIMEType] = append(mimeTypeIndex[m.MIMEType], l)
 		ext := path.Ext(l.RealPath)
@@ -89,7 +90,7 @@ func (r MockResolver) String() string {
 // path does not exist, an error is returned.
 func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	for _, l := range r.locations {
-		if l == location {
+		if l.Coordinates == location.Coordinates {
 			return os.Open(location.RealPath)
 		}
 	}

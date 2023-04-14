@@ -382,48 +382,13 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "/etc/group",
-					},
-					VirtualPath: "/etc/group",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/etc/passwd",
-					},
-					VirtualPath: "/etc/passwd",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/etc/shadow",
-					},
-					VirtualPath: "/etc/shadow",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-1.txt",
-					},
-					VirtualPath: "/file-1.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-3.txt",
-					},
-					VirtualPath: "/file-3.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
-					},
-					VirtualPath: "/file-2.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/parent/file-4.txt",
-					},
-					VirtualPath: "/parent/file-4.txt",
-				},
+				NewVirtualLocation("/etc/group", "/etc/group"),
+				NewVirtualLocation("/etc/passwd", "/etc/passwd"),
+				NewVirtualLocation("/etc/shadow", "/etc/shadow"),
+				NewVirtualLocation("/file-1.txt", "/file-1.txt"),
+				NewVirtualLocation("/file-3.txt", "/file-3.txt"),
+				NewVirtualLocation("/file-2.txt", "/file-2.txt"),
+				NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 			},
 		},
 		{
@@ -435,32 +400,14 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-1.txt",
-					},
-					VirtualPath: "/link-1",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
-					},
-					VirtualPath: "/link-2",
-				},
+				NewVirtualLocation("/file-1.txt", "/link-1"),
+				NewVirtualLocation("/file-2.txt", "/link-2"),
+
 				// though this is a link, and it matches to the file, the resolver de-duplicates files
 				// by the real path, so it is not included in the results
-				//{
-				//	Coordinates: Coordinates{
-				//		RealPath: "/file-2.txt",
-				//	},
-				//	VirtualPath: "/link-indirect",
-				//},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-3.txt",
-					},
-					VirtualPath: "/link-within",
-				},
+				//NewVirtualLocation("/file-2.txt", "/link-indirect"),
+
+				NewVirtualLocation("/file-3.txt", "/link-within"),
 			},
 		},
 		{
@@ -473,12 +420,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// this has two copies in the base image, which overwrites the same location
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
-					},
-					VirtualPath: "/file-2.txt",
-				},
+				NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 			},
 		},
 		{
@@ -490,30 +432,10 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-1.txt",
-					},
-					VirtualPath: "/file-1.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
-					},
-					VirtualPath: "/file-2.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-3.txt",
-					},
-					VirtualPath: "/file-3.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/parent/file-4.txt",
-					},
-					VirtualPath: "/parent/file-4.txt",
-				},
+				NewVirtualLocation("/file-1.txt", "/file-1.txt"),
+				NewVirtualLocation("/file-2.txt", "/file-2.txt"),
+				NewVirtualLocation("/file-3.txt", "/file-3.txt"),
+				NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 			},
 		},
 		{
@@ -524,34 +446,44 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
+
 				{
-					Coordinates: Coordinates{
-						RealPath: "/file-1.txt",
+					LocationData: LocationData{
+						Coordinates: Coordinates{
+							RealPath: "/file-1.txt",
+						},
+						VirtualPath: "/link-1",
+						ref:         file.Reference{RealPath: "/file-1.txt"},
 					},
-					VirtualPath: "/link-1",
-					ref:         file.Reference{RealPath: "/file-1.txt"},
 				},
 				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
+					LocationData: LocationData{
+
+						Coordinates: Coordinates{
+							RealPath: "/file-2.txt",
+						},
+						VirtualPath: "/link-2",
+						ref:         file.Reference{RealPath: "/file-2.txt"},
 					},
-					VirtualPath: "/link-2",
-					ref:         file.Reference{RealPath: "/file-2.txt"},
 				},
 				// we already have this real file path via another link, so only one is returned
 				//{
-				//	Coordinates: Coordinates{
-				//		RealPath: "/file-2.txt",
-				//	},
-				//	VirtualPath: "/link-indirect",
-				//	ref:         file.Reference{RealPath: "/file-2.txt"},
+				//  LocationData: LocationData{
+				//  	Coordinates: Coordinates{
+				//	  	RealPath: "/file-2.txt",
+				//	  },
+				//	  VirtualPath: "/link-indirect",
+				//	  ref:         file.Reference{RealPath: "/file-2.txt"},
+				// },
 				//},
 				{
-					Coordinates: Coordinates{
-						RealPath: "/file-3.txt",
+					LocationData: LocationData{
+						Coordinates: Coordinates{
+							RealPath: "/file-3.txt",
+						},
+						VirtualPath: "/link-within",
+						ref:         file.Reference{RealPath: "/file-3.txt"},
 					},
-					VirtualPath: "/link-within",
-					ref:         file.Reference{RealPath: "/file-3.txt"},
 				},
 			},
 		},
@@ -564,30 +496,10 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-1.txt",
-					},
-					VirtualPath: "/file-1.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
-					},
-					VirtualPath: "/file-2.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-3.txt",
-					},
-					VirtualPath: "/file-3.txt",
-				},
-				{
-					Coordinates: Coordinates{
-						RealPath: "/parent/file-4.txt",
-					},
-					VirtualPath: "/parent/file-4.txt",
-				},
+				NewVirtualLocation("/file-1.txt", "/file-1.txt"),
+				NewVirtualLocation("/file-2.txt", "/file-2.txt"),
+				NewVirtualLocation("/file-3.txt", "/file-3.txt"),
+				NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 			},
 		},
 		{
@@ -600,12 +512,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// we have multiple copies across layers
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
-					},
-					VirtualPath: "/link-2",
-				},
+				NewVirtualLocation("/file-2.txt", "/link-2"),
 			},
 		},
 		{
@@ -618,12 +525,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// we have multiple copies across layers
-				{
-					Coordinates: Coordinates{
-						RealPath: "/file-2.txt",
-					},
-					VirtualPath: "/link-indirect",
-				},
+				NewVirtualLocation("/file-2.txt", "/link-indirect"),
 			},
 		},
 	}
@@ -646,7 +548,8 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 
 func compareLocations(t *testing.T, expected, actual []Location) {
 	t.Helper()
-	ignoreUnexported := cmpopts.IgnoreFields(Location{}, "ref")
+	ignoreUnexported := cmpopts.IgnoreFields(LocationData{}, "ref")
+	ignoreMetadata := cmpopts.IgnoreFields(LocationMetadata{}, "Annotations")
 	ignoreFS := cmpopts.IgnoreFields(Coordinates{}, "FileSystemID")
 
 	sort.Sort(Locations(expected))
@@ -655,6 +558,7 @@ func compareLocations(t *testing.T, expected, actual []Location) {
 	if d := cmp.Diff(expected, actual,
 		ignoreUnexported,
 		ignoreFS,
+		ignoreMetadata,
 	); d != "" {
 
 		t.Errorf("unexpected locations (-want +got):\n%s", d)

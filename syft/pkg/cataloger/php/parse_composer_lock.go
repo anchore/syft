@@ -32,7 +32,13 @@ func parseComposerLock(_ source.FileResolver, _ *generic.Environment, reader sou
 			return nil, nil, fmt.Errorf("failed to parse composer.lock file: %w", err)
 		}
 		for _, m := range lock.Packages {
-			pkgs = append(pkgs, newComposerLockPackage(m, reader.Location))
+			pkgs = append(
+				pkgs,
+				newComposerLockPackage(
+					m,
+					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+			)
 		}
 	}
 
