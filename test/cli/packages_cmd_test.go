@@ -337,11 +337,7 @@ func TestRegistryAuth(t *testing.T) {
 			for _, traitAssertionFn := range test.assertions {
 				traitAssertionFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
-			if t.Failed() {
-				t.Log("STDOUT:\n", stdout)
-				t.Log("STDERR:\n", stderr)
-				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-			}
+			logOutputOnFailure(t, cmd, stdout, stderr)
 		})
 	}
 }
