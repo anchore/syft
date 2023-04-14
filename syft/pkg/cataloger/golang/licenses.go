@@ -74,62 +74,85 @@ func modCacheResolver(modCacheDir string) source.WritableFileResolver {
 	return r
 }
 
-//nolint:gocognit
 func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, moduleVersion string) (licenses []string, err error) {
 	licenses, err = findLicenses(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
-
-	search := c.opts.searchLocalModCacheLicenses || c.opts.searchRemoteLicenses
-	dir := fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
-	glob := fmt.Sprintf("%s/*", dir)
-
-	if search && err == nil && len(licenses) == 0 {
-		// if we're running against a directory on the filesystem, it may not include the
-		// user's homedir / GOPATH, so we defer to using the localModCacheResolver
-		licenses, err = findLicenses(c.localModCacheResolver, glob)
+	if err != nil || len(licenses) > 0 {
+		return requireCollection(licenses), err
 	}
 
-	// if we did not find it yet, and remote searching was enabled, then use that
-	if c.opts.searchRemoteLicenses && err == nil && len(licenses) == 0 {
-		proxies := remotesForModule(c.opts.proxies, c.opts.noProxy, moduleName)
+	// look in the local host mod cache...
+	licenses, err = c.getLicensesFromLocal(moduleName, moduleVersion)
+	if err != nil || len(licenses) > 0 {
+		return requireCollection(licenses), err
+	}
 
-		var fsys fs.FS
-		fsys, err = getModule(c.progress, proxies, moduleName, moduleVersion)
-		if err == nil {
-			// populate the mod cache with the results
-			err = fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, err error) error {
-				if err != nil {
-					log.Debug(err)
-					return nil
-				}
-				if d.IsDir() {
-					return nil
-				}
-				f, err := fsys.Open(filePath)
-				if err != nil {
-					return err
-				}
-				return c.localModCacheResolver.Write(source.NewLocation(path.Join(dir, filePath)), f)
-			})
+	// we did not find it yet and remote searching was enabled
+	licenses, err = c.getLicensesFromRemote(moduleName, moduleVersion)
+	return requireCollection(licenses), err
+}
 
-			if err != nil {
-				log.Tracef("remote proxy walk failed for: %s", moduleName)
-			}
+func (c *goLicenses) getLicensesFromLocal(moduleName, moduleVersion string) ([]string, error) {
+	if !c.opts.searchLocalModCacheLicenses {
+		return nil, nil
+	}
 
-			if err == nil {
-				// re-scan the mod cache
-				licenses, err = findLicenses(c.localModCacheResolver, glob)
-			}
+	// if we're running against a directory on the filesystem, it may not include the
+	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
+	return findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+}
+
+func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]string, error) {
+	if !c.opts.searchRemoteLicenses {
+		return nil, nil
+	}
+
+	proxies := remotesForModule(c.opts.proxies, c.opts.noProxy, moduleName)
+
+	fsys, err := getModule(c.progress, proxies, moduleName, moduleVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	dir := moduleDir(moduleName, moduleVersion)
+
+	// populate the mod cache with the results
+	err = fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log.Debug(err)
+			return nil
 		}
+		if d.IsDir() {
+			return nil
+		}
+		f, err := fsys.Open(filePath)
+		if err != nil {
+			return err
+		}
+		return c.localModCacheResolver.Write(source.NewLocation(path.Join(dir, filePath)), f)
+	})
+
+	if err != nil {
+		log.Tracef("remote proxy walk failed for: %s", moduleName)
 	}
 
-	// always return a non-nil slice
+	return findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+}
+
+func moduleDir(moduleName, moduleVersion string) string {
+	return fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
+}
+
+func moduleSearchGlob(moduleName, moduleVersion string) string {
+	return fmt.Sprintf("%s/*", moduleDir(moduleName, moduleVersion))
+}
+
+func requireCollection(licenses []string) []string {
 	if licenses == nil {
-		licenses = []string{}
+		return []string{}
 	}
-
-	return licenses, err
+	return licenses
 }
 
 func findLicenses(resolver source.FileResolver, globMatch string) (out []string, err error) {
