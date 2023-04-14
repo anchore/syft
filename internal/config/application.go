@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 )
 
 var (
@@ -40,26 +41,28 @@ type Application struct {
 	ConfigPath string `yaml:"configPath,omitempty" json:"configPath" mapstructure:"config"`
 	Verbosity  uint   `yaml:"verbosity,omitempty" json:"verbosity" mapstructure:"verbosity"`
 	// -q, indicates to not show any status output to stderr (ETUI or logging UI)
-	Quiet              bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`
-	Outputs            []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
-	OutputTemplatePath string             `yaml:"output-template-path" json:"output-template-path" mapstructure:"output-template-path"` // -t template file to use for output
-	File               string             `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
-	CheckForAppUpdate  bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
-	Dev                development        `yaml:"dev" json:"dev" mapstructure:"dev"`
-	Log                logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
-	Catalogers         []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
-	Package            pkg                `yaml:"package" json:"package" mapstructure:"package"`
-	Golang             golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
-	Attest             attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
-	FileMetadata       FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
-	FileClassification fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
-	FileContents       fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
-	Secrets            secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
-	Registry           registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
-	Exclusions         []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
-	Platform           string             `yaml:"platform" json:"platform" mapstructure:"platform"`
-	Name               string             `yaml:"name" json:"name" mapstructure:"name"`
-	Parallelism        int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
+	Quiet                  bool               `yaml:"quiet" json:"quiet" mapstructure:"quiet"`
+	Outputs                []string           `yaml:"output" json:"output" mapstructure:"output"`                                           // -o, the format to use for output
+	OutputTemplatePath     string             `yaml:"output-template-path" json:"output-template-path" mapstructure:"output-template-path"` // -t template file to use for output
+	File                   string             `yaml:"file" json:"file" mapstructure:"file"`                                                 // --file, the file to write report output to
+	CheckForAppUpdate      bool               `yaml:"check-for-app-update" json:"check-for-app-update" mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
+	Dev                    development        `yaml:"dev" json:"dev" mapstructure:"dev"`
+	Log                    logging            `yaml:"log" json:"log" mapstructure:"log"` // all logging-related options
+	Catalogers             []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
+	Package                pkg                `yaml:"package" json:"package" mapstructure:"package"`
+	Golang                 golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
+	LinuxKernel            linuxKernel        `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Attest                 attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
+	FileMetadata           FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
+	FileClassification     fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
+	FileContents           fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
+	Secrets                secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
+	Registry               registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
+	Exclusions             []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	Platform               string             `yaml:"platform" json:"platform" mapstructure:"platform"`
+	Name                   string             `yaml:"name" json:"name" mapstructure:"name"`
+	Parallelism            int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                                           // the number of catalog workers to run in parallel
+	DefaultImagePullSource string             `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"` // specify default image pull source
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {
@@ -74,6 +77,9 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 		Golang: golangCataloger.GoCatalogerOpts{
 			SearchLocalModCacheLicenses: cfg.Golang.SearchLocalModCacheLicenses,
 			LocalModCacheDir:            cfg.Golang.LocalModCacheDir,
+		},
+		LinuxKernel: kernel.LinuxCatalogerConfig{
+			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
 	}
 }
@@ -130,6 +136,12 @@ func (cfg *Application) parseConfigValues() error {
 			return err
 		}
 	}
+
+	if err := checkDefaultSourceValues(cfg.DefaultImagePullSource); err != nil {
+		return err
+	}
+
+	// check for valid default source options
 	// parse nested config options
 	// for each field in the configuration struct, see if the field implements the parser interface
 	// note: the app config is a pointer, so we need to grab the elements explicitly (to traverse the address)
@@ -192,6 +204,7 @@ func loadDefaultValues(v *viper.Viper) {
 	v.SetDefault("check-for-app-update", true)
 	v.SetDefault("catalogers", nil)
 	v.SetDefault("parallelism", 1)
+	v.SetDefault("default-image-pull-source", "")
 
 	// for each field in the configuration struct, see if the field implements the defaultValueLoader interface and invoke it if it does
 	value := reflect.ValueOf(Application{})
@@ -289,5 +302,17 @@ func loadConfig(v *viper.Viper, configPath string) error {
 	} else if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return fmt.Errorf("unable to parse config=%q: %w", v.ConfigFileUsed(), err)
 	}
+	return nil
+}
+
+var validDefaultSourceValues = []string{"registry", "docker", "podman", ""}
+
+func checkDefaultSourceValues(source string) error {
+	validValues := internal.NewStringSet(validDefaultSourceValues...)
+	if !validValues.Contains(source) {
+		validValuesString := strings.Join(validDefaultSourceValues, ", ")
+		return fmt.Errorf("%s is not a valid default source; please use one of the following: %s''", source, validValuesString)
+	}
+
 	return nil
 }

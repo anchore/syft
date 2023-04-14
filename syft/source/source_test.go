@@ -52,7 +52,7 @@ func TestParseInput(t *testing.T) {
 			if test.errFn == nil {
 				test.errFn = require.NoError
 			}
-			sourceInput, err := ParseInput(test.input, test.platform, true)
+			sourceInput, err := ParseInput(test.input, test.platform)
 			test.errFn(t, err)
 			if test.expected != "" {
 				require.NotNil(t, sourceInput)
@@ -596,7 +596,7 @@ func TestDirectoryExclusions(t *testing.T) {
 	registryOpts := &image.RegistryOptions{}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			sourceInput, err := ParseInput("dir:"+test.input, "", false)
+			sourceInput, err := ParseInput("dir:"+test.input, "")
 			require.NoError(t, err)
 			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()
@@ -696,7 +696,7 @@ func TestImageExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
-			sourceInput, err := ParseInput(archiveLocation, "", false)
+			sourceInput, err := ParseInput(archiveLocation, "")
 			require.NoError(t, err)
 			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
 			defer fn()

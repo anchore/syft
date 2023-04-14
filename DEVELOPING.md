@@ -15,7 +15,7 @@ After cloning the following step can help you get setup:
 	- this command `go run cmd/syft/main.go alpine:latest` will compile and run syft against `alpine:latest`
 5. view the README or syft help output for more output options
 
-The main make tasks for common static analysis and testing are `lint`, `lint-fix`, `unit`, `integration`, and `cli`.
+The main make tasks for common static analysis and testing are `lint`, `format`, `lint-fix`, `unit`, `integration`, and `cli`.
 
 See `make help` for all the current make tasks.
 
@@ -119,7 +119,15 @@ sequenceDiagram
 Catalogers are the way in which syft is able to identify and construct packages given some amount of source metadata.
 For example, Syft can locate and process `package-lock.json` files when performing filesystem scans. 
 See: [how to specify file globs](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21)
-and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) fora quick review.
+and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) for a quick review.
+
+From a high level catalogers have the following properties:
+
+- They are independent from one another. The java cataloger has no idea of the processes, assumptions, or results of the python cataloger, for example.
+
+- They do not know what source is being analyzed. Are we analyzing a local directory? an image? if so, the squashed representation or all layers? The catalogers do not know the answers to these questions. Only that there is an interface to query for file paths and contents from an underlying "source" being scanned.
+
+- Packages created by the cataloger should not be mutated after they are created. There is one exception made for adding CPEs to a package after the cataloging phase, but that will most likely be moved back into the cataloger in the future.
 
 #### Building a new Cataloger
 

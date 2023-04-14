@@ -28,13 +28,14 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageJSONMetadataType,
 		Metadata: pkg.NpmPackageJSONMetadata{
-			Name:     u.Name,
-			Version:  u.Version,
-			Author:   u.Author.AuthorString(),
-			Homepage: u.Homepage,
-			URL:      u.Repository.URL,
-			Licenses: licenses,
-			Private:  u.Private,
+			Name:        u.Name,
+			Version:     u.Version,
+			Author:      u.Author.AuthorString(),
+			Homepage:    u.Homepage,
+			URL:         u.Repository.URL,
+			Licenses:    licenses,
+			Private:     u.Private,
+			Description: u.Description,
 		},
 	}
 
@@ -65,7 +66,7 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 		pkg.Package{
 			Name:         name,
 			Version:      version,
-			Locations:    source.NewLocationSet(location),
+			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(name, version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -88,7 +89,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 		pkg.Package{
 			Name:         name,
 			Version:      u.Version,
-			Locations:    source.NewLocationSet(location),
+			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -106,7 +107,7 @@ func newPnpmPackage(resolver source.FileResolver, location source.Location, name
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location),
+			Locations: source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
@@ -121,7 +122,7 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location),
+			Locations: source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,

@@ -53,7 +53,12 @@ func parseInstalledJSON(_ source.FileResolver, _ *generic.Environment, reader so
 			return nil, nil, fmt.Errorf("failed to parse installed.json file: %w", err)
 		}
 		for _, pkgMeta := range lock.Packages {
-			pkgs = append(pkgs, newComposerLockPackage(pkgMeta, reader.Location))
+			pkgs = append(
+				pkgs,
+				newComposerLockPackage(pkgMeta,
+					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+			)
 		}
 	}
 

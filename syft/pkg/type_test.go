@@ -83,6 +83,14 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:hex/hpax/hpax@0.1.1",
 			expected: HexPkg,
 		},
+		{
+			purl:     "pkg:generic/linux-kernel@5.10.15",
+			expected: LinuxKernelPkg,
+		},
+		{
+			purl:     "pkg:nix/glibc@2.34?hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+			expected: NixPkg,
+		},
 	}
 
 	var pkgTypes []string
@@ -97,6 +105,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(JenkinsPluginPkg))
 	expectedTypes.Remove(string(PortagePkg))
 	expectedTypes.Remove(string(BinaryPkg))
+	expectedTypes.Remove(string(LinuxKernelModulePkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

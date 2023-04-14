@@ -23,6 +23,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/portage"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
@@ -51,8 +53,10 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		golang.NewGoModuleBinaryCataloger(cfg.Go()),
 		dotnet.NewDotnetDepsCataloger(),
 		portage.NewPortageCataloger(),
+		nix.NewStoreCataloger(),
 		sbom.NewSBOMCataloger(),
 		binary.NewCataloger(),
+		kernel.NewLinuxKernelCataloger(cfg.Kernel()),
 	}, cfg.Catalogers)
 }
 
@@ -71,6 +75,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
 		java.NewNativeImageCataloger(),
+		java.NewJavaGradleLockfileCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Go()),
 		golang.NewGoModFileCataloger(cfg.Go()),
@@ -85,6 +90,8 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		binary.NewCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
+		kernel.NewLinuxKernelCataloger(cfg.Kernel()),
+		nix.NewStoreCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -104,6 +111,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaPomCataloger(),
 		java.NewNativeImageCataloger(),
+		java.NewJavaGradleLockfileCataloger(),
 		apkdb.NewApkdbCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Go()),
 		golang.NewGoModFileCataloger(cfg.Go()),
@@ -121,6 +129,8 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		binary.NewCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
+		kernel.NewLinuxKernelCataloger(cfg.Kernel()),
+		nix.NewStoreCataloger(),
 	}, cfg.Catalogers)
 }
 

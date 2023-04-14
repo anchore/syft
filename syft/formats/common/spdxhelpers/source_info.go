@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+//nolint:funlen
 func SourceInfo(p pkg.Package) string {
 	answer := ""
 	switch p.Type {
@@ -45,6 +46,12 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from cabal or stack manifest files"
 	case pkg.HexPkg:
 		answer = "acquired package info from rebar3 or mix manifest file"
+	case pkg.LinuxKernelPkg:
+		answer = "acquired package info from linux kernel archive"
+	case pkg.LinuxKernelModulePkg:
+		answer = "acquired package info from linux kernel module files"
+	case pkg.NixPkg:
+		answer = "acquired package info from nix store path"
 	default:
 		answer = "acquired package info from the following paths"
 	}

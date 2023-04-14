@@ -42,9 +42,12 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Erlang (rebar3)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, native-image)
+- Java (jar, ear, war, par, sar, nar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
+- Linux kernel archives (vmlinz)
+- Linux kernel modules (ko)
+- Nix (outputs in /nix/store)
 - PHP (composer)
 - Python (wheel, egg, poetry, requirements.txt)
 - Red Hat (rpm)
@@ -110,9 +113,7 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-
-
-## Supported sources
+### Supported sources
 
 Syft can generate a SBOM from a variety of sources:
 
@@ -141,7 +142,13 @@ file:path/to/yourproject/file            read directly from a path on disk (any 
 registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
 
-#### Default Cataloger Configuration by scan type
+If an image source is not provided and cannot be detected from the given reference it is assumed the image should be pulled from the Docker daemon.
+If docker is not present, then the Podman daemon is attempted next, followed by reaching out directly to the image registry last.
+
+
+This default behavior can be overridden with the `default-image-pull-source` configuration option (See [Configuration](https://github.com/anchore/syft#configuration) for more details).
+
+### Default Cataloger Configuration by scan type
 
 ##### Image Scanning:
 - alpmdb
@@ -179,7 +186,7 @@ registry:yourrepo/yourimage:tag          pull image directly from a registry (no
 - conan
 - hackage
 
-#### Non Default:
+##### Non Default:
 - cargo-auditable-binary
 
 ### Excluding file paths
@@ -393,7 +400,7 @@ Certificate subject:  test.email@testdomain.com
 Certificate issuer URL:  https://accounts.google.com
 ```
 
-#### Local private key support
+### Local private key support
 
 To generate an SBOM attestation for a container image using a local private key:
 ```
@@ -435,6 +442,10 @@ file: ""
 # enable/disable checking for application updates on startup
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
+
+# allows users to specify which image source should be used to generate the sbom
+# valid values are: registry, docker, podman
+default-image-pull-source: ""
 
 # a list of globs to exclude from scanning. same as --exclude ; for example:
 # exclude:
@@ -503,6 +514,11 @@ golang:
    # specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
    # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
    local-mod-cache-dir: ""
+
+linux-kernel:
+   # whether to catalog linux kernel modules found within lib/modules/** directories
+   # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
+   catalog-modules: true
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:

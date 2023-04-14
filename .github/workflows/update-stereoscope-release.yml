@@ -29,7 +29,7 @@ jobs:
           go mod tidy
 
           # export the version for use with create-pull-request
-          echo "::set-output name=LATEST_VERSION::$LATEST_VERSION"
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
         id: latest-version
 
       - uses: tibdex/github-app-token@v1
@@ -38,7 +38,7 @@ jobs:
           app_id: ${{ secrets.TOKEN_APP_ID }}
           private_key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
 
-      - uses: peter-evans/create-pull-request@v4
+      - uses: peter-evans/create-pull-request@v5
         with:
           signoff: true
           delete-branch: true

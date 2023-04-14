@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -97,7 +96,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(34),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -214,7 +213,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),
 				assertInOutput("parallelism=2"),
-				assertPackageCount(34),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -225,7 +224,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
 				assertInOutput("parallelism=1"),
-				assertPackageCount(34),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -239,7 +238,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertNotInOutput("secret_password"),
 				assertNotInOutput("secret_key_path"),
-				assertPackageCount(34),
+				assertPackageCount(37),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -251,11 +250,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
-			if t.Failed() {
-				t.Log("STDOUT:\n", stdout)
-				t.Log("STDERR:\n", stderr)
-				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-			}
+			logOutputOnFailure(t, cmd, stdout, stderr)
 		})
 	}
 }
@@ -337,11 +332,7 @@ func TestRegistryAuth(t *testing.T) {
 			for _, traitAssertionFn := range test.assertions {
 				traitAssertionFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
-			if t.Failed() {
-				t.Log("STDOUT:\n", stdout)
-				t.Log("STDERR:\n", stderr)
-				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-			}
+			logOutputOnFailure(t, cmd, stdout, stderr)
 		})
 	}
 }

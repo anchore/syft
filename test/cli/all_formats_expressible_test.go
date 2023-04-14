@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -34,11 +33,7 @@ func TestAllFormatsExpressible(t *testing.T) {
 			for _, traitFn := range commonAssertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
-			if t.Failed() {
-				t.Log("STDOUT:\n", stdout)
-				t.Log("STDERR:\n", stderr)
-				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-			}
+			logOutputOnFailure(t, cmd, stdout, stderr)
 		})
 	}
 }
