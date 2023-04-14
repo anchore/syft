@@ -29,7 +29,12 @@ func parseLinuxKernelModuleFile(_ source.FileResolver, _ *generic.Environment, r
 
 	metadata.Path = reader.Location.RealPath
 
-	return []pkg.Package{newLinuxKernelModulePackage(*metadata, reader.Location)}, nil, nil
+	return []pkg.Package{
+		newLinuxKernelModulePackage(
+			*metadata,
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
+	}, nil, nil
 }
 
 func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModuleMetadata, err error) {
