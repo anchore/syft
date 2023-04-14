@@ -15,8 +15,3 @@ FROM scratch
 
 COPY --from=0 /lib/modules/6.2.9-200.fc37.x86_64/vmlinuz /lib/modules/6.2.9-200.fc37.x86_64/vmlinuz
 COPY --from=0 /lib/modules/6.2.9-200.fc37.x86_64/kernel/drivers/usb/typec/mux/fsa4480.ko /lib/modules/6.2.9-200.fc37.x86_64/kernel/drivers/usb/typec/mux/fsa4480.ko
-
-COPY pkgs/ .
-# we duplicate to show a package count difference between all-layers and squashed scopes
-COPY lib lib
-COPY etc/ .

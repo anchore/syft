@@ -201,6 +201,22 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.LinuxKernelPkg,
+			},
+			expected: []string{
+				"from linux kernel archive",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.LinuxKernelModulePkg,
+			},
+			expected: []string{
+				"from linux kernel module files",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.NixPkg,
 			},
 			expected: []string{

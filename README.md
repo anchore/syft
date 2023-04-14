@@ -45,6 +45,8 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Java (jar, ear, war, par, sar, nar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
+- Linux kernel archives (vmlinz)
+- Linux kernel modules (ko)
 - Nix (outputs in /nix/store)
 - PHP (composer)
 - Python (wheel, egg, poetry, requirements.txt)
@@ -512,6 +514,11 @@ golang:
    # specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
    # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
    local-mod-cache-dir: ""
+
+linux-kernel:
+   # whether to catalog linux kernel modules found within lib/modules/** directories
+   # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
+   catalog-modules: true
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:

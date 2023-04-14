@@ -89,7 +89,7 @@
   }
  },
  "schema": {
-  "version": "7.1.2",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-7.1.2.json"
+  "version": "7.1.3",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-7.1.3.json"
  }
 }
