@@ -59,13 +59,13 @@ func modCacheResolver(modCacheDir string) source.WritableFileResolver {
 
 	if modCacheDir == "" {
 		log.Trace("unable to determine mod cache directory, skipping mod cache resolver")
-		r = source.NewMockResolverForPaths()
+		r = source.EmptyResolver{}
 	} else {
 		stat, err := os.Stat(modCacheDir)
 
 		if os.IsNotExist(err) || stat == nil || !stat.IsDir() {
 			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modCacheDir)
-			r = source.NewMockResolverForPaths()
+			r = source.EmptyResolver{}
 		} else {
 			r = source.NewUnindexedDirectoryResolver(modCacheDir)
 		}

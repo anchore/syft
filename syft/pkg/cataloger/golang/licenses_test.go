@@ -43,7 +43,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				searchLocalModCacheLicenses: true,
 				localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 			})
-			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)
+			licenses, err := l.getLicenses(source.EmptyResolver{}, test.name, test.version)
 			require.NoError(t, err)
 
 			require.Len(t, licenses, 1)
@@ -118,7 +118,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				localModCacheDir:     modDir,
 			})
 
-			licenses, err := l.getLicenses(source.MockResolver{}, test.name, test.version)
+			licenses, err := l.getLicenses(source.EmptyResolver{}, test.name, test.version)
 			require.NoError(t, err)
 
 			require.Len(t, licenses, 1)
