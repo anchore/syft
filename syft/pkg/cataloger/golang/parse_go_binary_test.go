@@ -510,7 +510,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			)
 
 			c := goBinaryCataloger{}
-			pkgs := c.buildGoPkgInfo(source.NewMockResolverForPaths(), location, test.mod, test.arch)
+			pkgs := c.buildGoPkgInfo(source.EmptyResolver{}, location, test.mod, test.arch)
 			assert.Equal(t, test.expected, pkgs)
 		})
 	}

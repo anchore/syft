@@ -204,3 +204,7 @@ func (r MockResolver) FilesByBasenameGlob(_ ...string) ([]Location, error) {
 	// TODO implement me
 	panic("implement me")
 }
+
+func (r MockResolver) Write(_ Location, _ io.Reader) error {
+	return nil
+}
