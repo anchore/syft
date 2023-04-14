@@ -444,18 +444,6 @@ func (f unindexedDirectoryResolverFS) Stat(name string) (fs.FileInfo, error) {
 }
 
 func (f unindexedDirectoryResolverFS) Open(name string) (fs.File, error) {
-	// parts := strings.Split(name, "/")
-	//
-	// for _, part := range parts {
-	//	fi, _, err := f.u.ls.LstatIfPossible(name)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	if fi.IsDir() && f.u.isSymlink(fi) {
-	//
-	//	}
-	//}
-
 	_, err := f.u.fs.Open(f.u.absPath(name))
 	if err != nil {
 		return nil, err
