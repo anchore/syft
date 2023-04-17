@@ -4,10 +4,12 @@ import (
 	"sort"
 
 	"github.com/mitchellh/hashstructure/v2"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 type LocationSet struct {
-	set map[Location]struct{}
+	set map[LocationData]LocationMetadata
 }
 
 func NewLocationSet(locations ...Location) (s LocationSet) {
@@ -20,10 +22,18 @@ func NewLocationSet(locations ...Location) (s LocationSet) {
 
 func (s *LocationSet) Add(locations ...Location) {
 	if s.set == nil {
-		s.set = make(map[Location]struct{})
+		s.set = make(map[LocationData]LocationMetadata)
 	}
 	for _, l := range locations {
-		s.set[l] = struct{}{}
+		if m, ok := s.set[l.LocationData]; ok {
+			err := m.merge(l.LocationMetadata)
+			if err != nil {
+				log.Debugf("partial merge of location metadata: %+v", err)
+			}
+			s.set[l.LocationData] = m
+		} else {
+			s.set[l.LocationData] = l.LocationMetadata
+		}
 	}
 }
 
@@ -32,7 +42,7 @@ func (s LocationSet) Remove(locations ...Location) {
 		return
 	}
 	for _, l := range locations {
-		delete(s.set, l)
+		delete(s.set, l.LocationData)
 	}
 }
 
@@ -40,7 +50,7 @@ func (s LocationSet) Contains(l Location) bool {
 	if s.set == nil {
 		return false
 	}
-	_, ok := s.set[l]
+	_, ok := s.set[l.LocationData]
 	return ok
 }
 
@@ -50,8 +60,11 @@ func (s LocationSet) ToSlice() []Location {
 	}
 	locations := make([]Location, len(s.set))
 	idx := 0
-	for v := range s.set {
-		locations[idx] = v
+	for dir := range s.set {
+		locations[idx] = Location{
+			LocationData:     dir,
+			LocationMetadata: s.set[dir],
+		}
 		idx++
 	}
 	sort.Sort(Locations(locations))

@@ -80,6 +80,13 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			ty:        pkg.JavaPkg,
 		},
 		{
+			filename:  "pkg-extra-field-maven-4.3.2-rc1.nar",
+			version:   "4.3.2-rc1",
+			extension: "nar",
+			name:      "pkg-extra-field-maven",
+			ty:        pkg.JavaPkg,
+		},
+		{
 			filename:  "/some/path/pkg-extra-field-maven-4.3.2-rc1.jpi",
 			version:   "4.3.2-rc1",
 			extension: "jpi",

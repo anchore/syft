@@ -24,6 +24,7 @@ var archiveFormatGlobs = []string{
 	"**/*.ear",
 	"**/*.par",
 	"**/*.sar",
+	"**/*.nar",
 	"**/*.jpi",
 	"**/*.hpi",
 	"**/*.lpkg", // Zip-compressed package used to deploy applications
@@ -198,7 +199,9 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Version:      selectVersion(manifest, j.fileInfo),
 		Language:     pkg.Java,
 		Licenses:     licenses,
-		Locations:    source.NewLocationSet(j.location),
+		Locations: source.NewLocationSet(
+			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
 		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
@@ -388,9 +391,11 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 
 	// discovered props = new package
 	p := pkg.Package{
-		Name:         pomProperties.ArtifactID,
-		Version:      pomProperties.Version,
-		Locations:    source.NewLocationSet(location),
+		Name:    pomProperties.ArtifactID,
+		Version: pomProperties.Version,
+		Locations: source.NewLocationSet(
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
 		Language:     pkg.Java,
 		Type:         pomProperties.PkgTypeIndicated(),
 		MetadataType: pkg.JavaMetadataType,

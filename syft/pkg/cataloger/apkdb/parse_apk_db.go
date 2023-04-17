@@ -132,7 +132,7 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 		if apk.License != "" {
 			apk.LicenseLocation = reader.Location
 		}
-		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
+		pkgs = append(pkgs, newPackage(apk, r, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)))
 	}
 
 	return pkgs, discoverPackageDependencies(pkgs), nil

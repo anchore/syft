@@ -144,6 +144,7 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 		UserID:          metadata.UserID,
 		GroupID:         metadata.GroupID,
 		MIMEType:        metadata.MIMEType,
+		Size:            metadata.Size,
 	}
 }
 
@@ -196,12 +197,6 @@ func toPackageModel(p pkg.Package) model.Package {
 	//	licenses = p.Licenses
 	//}
 
-	locations := p.Locations.ToSlice()
-	var coordinates = make([]source.Coordinates, len(locations))
-	for i, l := range locations {
-		coordinates[i] = l.Coordinates
-	}
-
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
 			ID:        string(p.ID()),
@@ -209,7 +204,12 @@ func toPackageModel(p pkg.Package) model.Package {
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
+<<<<<<< HEAD
 			Locations: coordinates,
+=======
+			Locations: p.Locations.ToSlice(),
+			Licenses:  licenses,
+>>>>>>> main
 			Language:  p.Language,
 			CPEs:      cpes,
 			PURL:      p.PURL,

@@ -29,7 +29,7 @@ jobs:
           go mod tidy
 
           # export the version for use with create-pull-request
-          echo "::set-output name=LATEST_VERSION::$LATEST_VERSION"
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
         id: latest-version
 
       - uses: tibdex/github-app-token@v1
@@ -38,14 +38,14 @@ jobs:
           app_id: ${{ secrets.TOKEN_APP_ID }}
           private_key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
 
-      - uses: peter-evans/create-pull-request@v4
+      - uses: peter-evans/create-pull-request@v5
         with:
           signoff: true
           delete-branch: true
-          branch: auto/latest
+          branch: auto/latest-stereoscope
           labels: dependencies
-          commit-message: "Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
-          title: "Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
+          commit-message: "chore(deps): update stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
+          title: "chore(deps): update stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}"
           body: |
             Update Stereoscope to ${{ steps.latest-version.outputs.LATEST_VERSION }}
           token: ${{ steps.generate-token.outputs.token }}

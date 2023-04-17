@@ -13,12 +13,12 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(dbLocation source.Location, metadata pkg.RpmMetadata, distro *linux.Release) pkg.Package {
+func newPackage(location source.Location, metadata pkg.RpmMetadata, distro *linux.Release) pkg.Package {
 	p := pkg.Package{
 		Name:         metadata.Name,
 		Version:      toELVersion(metadata),
 		PURL:         packageURL(metadata, distro),
-		Locations:    source.NewLocationSet(dbLocation),
+		Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmMetadataType,
 		Metadata:     metadata,

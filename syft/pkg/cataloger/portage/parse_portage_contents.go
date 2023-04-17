@@ -36,10 +36,12 @@ func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, 
 	}
 
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		PURL:         packageURL(name, version),
-		Locations:    source.NewLocationSet(),
+		Name:    name,
+		Version: version,
+		PURL:    packageURL(name, version),
+		Locations: source.NewLocationSet(
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
 		Type:         pkg.PortagePkg,
 		MetadataType: pkg.PortageMetadataType,
 		Metadata: pkg.PortageMetadata{
@@ -121,7 +123,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 		licenses = append(licenses, pkg.NewLicense(licenseCandidate, "", *location))
 	}
 	p.Licenses = licenses
-	p.Locations.Add(*location)
+	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 }
 
 func addSize(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
@@ -154,5 +156,5 @@ func addSize(resolver source.FileResolver, dbLocation source.Location, p *pkg.Pa
 	}
 
 	p.Metadata = entry
-	p.Locations.Add(*location)
+	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 }

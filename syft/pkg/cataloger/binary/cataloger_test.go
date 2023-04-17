@@ -829,12 +829,12 @@ func match(classifier string, paths ...string) pkg.ClassifierMatch {
 	}
 	return pkg.ClassifierMatch{
 		Classifier: classifier,
-		Location: source.Location{
-			Coordinates: source.Coordinates{
+		Location: source.NewVirtualLocationFromCoordinates(
+			source.Coordinates{
 				RealPath: realPath,
 			},
-			VirtualPath: virtualPath,
-		},
+			virtualPath,
+		),
 	}
 }
 

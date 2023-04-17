@@ -34,32 +34,34 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Restore Java test-fixture cache
-        id: unit-java-cache
         uses: actions/cache@v3
         with:
           path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
           key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/packages.fingerprint' ) }}
 
       - name: Restore RPM test-fixture cache
-        id: unit-rpm-cache
         uses: actions/cache@v3
         with:
           path: syft/pkg/cataloger/rpm/test-fixtures/rpms
           key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/rpm/test-fixtures/rpms.fingerprint' ) }}
 
       - name: Restore go binary test-fixture cache
-        id: unit-go-binary-cache
         uses: actions/cache@v3
         with:
           path: syft/pkg/cataloger/golang/test-fixtures/archs/binaries
           key: ${{ runner.os }}-unit-go-binaries-cache-${{ hashFiles( 'syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint' ) }}
 
       - name: Restore binary cataloger test-fixture cache
-        id: unit-binary-cataloger-cache
         uses: actions/cache@v3
         with:
           path: syft/pkg/cataloger/binary/test-fixtures/classifiers/dynamic
           key: ${{ runner.os }}-unit-binary-cataloger-cache-${{ hashFiles( 'syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint' ) }}
+
+      - name: Restore Kernel test-fixture cache
+        uses: actions/cache@v3
+        with:
+          path: syft/pkg/cataloger/kernel/test-fixtures/cache
+          key: ${{ runner.os }}-unit-kernel-cache-${{ hashFiles( 'syft/pkg/cataloger/kernel/test-fixtures/cache.fingerprint' ) }}
 
       - name: Run unit tests
         run: make unit

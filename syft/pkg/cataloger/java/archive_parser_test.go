@@ -169,7 +169,36 @@ func TestParseJar(t *testing.T) {
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
 								"Manifest-Version": "1.0",
+								"Main-Class":       "hello.HelloWorld",
 							},
+						},
+					},
+				},
+				"joda-time": {
+					Name:         "joda-time",
+					Version:      "2.2",
+					PURL:         "pkg:maven/joda-time/joda-time@2.2",
+					Language:     pkg.Java,
+					Type:         pkg.JavaPkg,
+					MetadataType: pkg.JavaMetadataType,
+					Metadata: pkg.JavaMetadata{
+						// ensure that nested packages with different names than that of the parent are appended as
+						// a suffix on the virtual path
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time",
+						PomProperties: &pkg.PomProperties{
+							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
+							GroupID:    "joda-time",
+							ArtifactID: "joda-time",
+							Version:    "2.2",
+						},
+						PomProject: &pkg.PomProject{
+							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",
+							GroupID:     "joda-time",
+							ArtifactID:  "joda-time",
+							Version:     "2.2",
+							Name:        "Joda time",
+							Description: "Date and time library to replace JDK date handling",
+							URL:         "http://joda-time.sourceforge.net",
 						},
 					},
 				},

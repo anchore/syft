@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/spdx/tools-golang/spdx"
+	"github.com/spdx/tools-golang/spdx/v2/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -304,6 +306,116 @@ func TestH1Digest(t *testing.T) {
 			require.Equal(t, pkg.GolangBinMetadataType, p.MetadataType)
 			meta := p.Metadata.(pkg.GolangBinMetadata)
 			require.Equal(t, test.expectedDigest, meta.H1Digest)
+		})
+	}
+}
+
+func Test_toSyftRelationships(t *testing.T) {
+	type args struct {
+		spdxIDMap map[string]interface{}
+		doc       *spdx.Document
+	}
+
+	pkg1 := pkg.Package{
+		Name:    "github.com/googleapis/gnostic",
+		Version: "v0.5.5",
+	}
+	pkg1.SetID()
+
+	pkg2 := pkg.Package{
+		Name:    "rfc3339",
+		Version: "1.2",
+		Type:    pkg.RpmPkg,
+	}
+	pkg2.SetID()
+
+	pkg3 := pkg.Package{
+		Name:    "rfc3339",
+		Version: "1.2",
+		Type:    pkg.PythonPkg,
+	}
+	pkg3.SetID()
+
+	loc1 := source.NewLocationFromCoordinates(source.Coordinates{
+		RealPath:     "/somewhere/real",
+		FileSystemID: "abc",
+	})
+
+	tests := []struct {
+		name string
+		args args
+		want []artifact.Relationship
+	}{
+		{
+			name: "evident-by relationship",
+			args: args{
+				spdxIDMap: map[string]interface{}{
+					string(toSPDXID(pkg1)): &pkg1,
+					string(toSPDXID(loc1)): &loc1,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg1),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(loc1),
+							},
+							Relationship:        spdx.RelationshipOther,
+							RelationshipComment: "evident-by: indicates the package's existence is evident by the given file",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg1,
+					To:   loc1,
+					Type: artifact.EvidentByRelationship,
+				},
+			},
+		},
+		{
+			name: "ownership-by-file-overlap relationship",
+			args: args{
+				spdxIDMap: map[string]interface{}{
+					string(toSPDXID(pkg2)): &pkg2,
+					string(toSPDXID(pkg3)): &pkg3,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg2),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(pkg3),
+							},
+							Relationship:        spdx.RelationshipOther,
+							RelationshipComment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg2,
+					To:   pkg3,
+					Type: artifact.OwnershipByFileOverlapRelationship,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := toSyftRelationships(tt.args.spdxIDMap, tt.args.doc)
+			require.Len(t, actual, len(tt.want))
+			for i := range actual {
+				require.Equal(t, tt.want[i].From.ID(), actual[i].From.ID())
+				require.Equal(t, tt.want[i].To.ID(), actual[i].To.ID())
+				require.Equal(t, tt.want[i].Type, actual[i].Type)
+			}
 		})
 	}
 }

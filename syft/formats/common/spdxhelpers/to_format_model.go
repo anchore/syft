@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/spdx/tools-golang/spdx"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -391,6 +393,8 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, RelationshipType, s
 		return true, DependencyOfRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
+	case artifact.EvidentByRelationship:
+		return true, OtherRelationship, fmt.Sprintf("%s: indicates the package's existence is evident by the given file", ty)
 	}
 	return false, "", ""
 }
@@ -498,9 +502,31 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 }
 
 // TODO: other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
-// field. The expression is only filled given a validated Value field.
-func toOtherLicenses(_ *pkg.Catalog) []*spdx.OtherLicense {
-	return nil
+// field. The spdxexpression field is only filled given a validated Value field.
+func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
+	licenses := map[string]bool{}
+	for _, p := range catalog.Sorted() {
+		for _, license := range parseLicenses(p.Licenses) {
+			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
+				licenses[license] = true
+			}
+		}
+	}
+
+	var result []*spdx.OtherLicense
+
+	sorted := maps.Keys(licenses)
+	slices.Sort(sorted)
+	for _, license := range sorted {
+		// separate the actual ID from the prefix
+		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
+		result = append(result, &spdx.OtherLicense{
+			LicenseIdentifier: SanitizeElementID(license),
+			LicenseName:       name,
+			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
+		})
+	}
+	return result
 }
 
 // TODO: handle SPDX excludes file case

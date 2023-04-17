@@ -136,12 +136,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Version:  "(devel)",
 		PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
 		Locations: source.NewLocationSet(
-			source.Location{
-				Coordinates: source.Coordinates{
+			source.NewLocationFromCoordinates(
+				source.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
-			},
+			).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		MetadataType: pkg.GolangBinMetadataType,
 		Metadata: pkg.GolangBinMetadata{
@@ -183,12 +183,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata:     pkg.GolangBinMetadata{},
@@ -226,12 +226,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -262,12 +262,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -320,12 +320,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Version:  "v0.0.0-20221014195457-41bc6bb41035",
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -375,12 +375,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -397,12 +397,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -452,12 +452,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -473,12 +473,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
-						},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
@@ -497,15 +497,20 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			for i := range test.expected {
 				p := &test.expected[i]
+				if p.Licenses == nil {
+					p.Licenses = []string{}
+				}
 				p.SetID()
 			}
-			location := source.Location{
-				Coordinates: source.Coordinates{
+			location := source.NewLocationFromCoordinates(
+				source.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
-			}
-			pkgs := buildGoPkgInfo(location, test.mod, test.arch)
+			)
+
+			c := goBinaryCataloger{}
+			pkgs := c.buildGoPkgInfo(source.EmptyResolver{}, location, test.mod, test.arch)
 			assert.Equal(t, test.expected, pkgs)
 		})
 	}

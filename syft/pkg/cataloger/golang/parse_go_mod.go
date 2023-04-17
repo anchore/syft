@@ -16,8 +16,14 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+type goModCataloger struct {
+	licenses goLicenses
+}
+
 // parseGoModFile takes a go.mod and lists all packages discovered.
-func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+//
+//nolint:funlen
+func (c *goModCataloger) parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
 	contents, err := io.ReadAll(reader)
@@ -36,10 +42,16 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 	}
 
 	for _, m := range file.Require {
+		licenses, err := c.licenses.getLicenses(resolver, m.Mod.Path, m.Mod.Version)
+		if err != nil {
+			log.Tracef("error getting licenses for package: %s %v", m.Mod.Path, err)
+		}
+
 		packages[m.Mod.Path] = pkg.Package{
 			Name:         m.Mod.Path,
 			Version:      m.Mod.Version,
-			Locations:    source.NewLocationSet(reader.Location),
+			Licenses:     licenses,
+			Locations:    source.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(m.Mod.Path, m.Mod.Version),
 			Language:     pkg.Go,
 			Type:         pkg.GoModulePkg,
@@ -52,10 +64,16 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 
 	// remove any old packages and replace with new ones...
 	for _, m := range file.Replace {
+		licenses, err := c.licenses.getLicenses(resolver, m.New.Path, m.New.Version)
+		if err != nil {
+			log.Tracef("error getting licenses for package: %s %v", m.New.Path, err)
+		}
+
 		packages[m.New.Path] = pkg.Package{
 			Name:         m.New.Path,
 			Version:      m.New.Version,
-			Locations:    source.NewLocationSet(reader.Location),
+			Licenses:     licenses,
+			Locations:    source.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(m.New.Path, m.New.Version),
 			Language:     pkg.Go,
 			Type:         pkg.GoModulePkg,

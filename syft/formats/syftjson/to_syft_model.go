@@ -1,13 +1,17 @@
 package syftjson
 
 import (
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -20,15 +24,85 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 
 	catalog := toSyftCatalog(doc.Artifacts, idAliases)
 
+	fileArtifacts := toSyftFiles(doc.Files)
+
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog:    catalog,
+			FileMetadata:      fileArtifacts.FileMetadata,
+			FileDigests:       fileArtifacts.FileDigests,
 			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
 		},
 		Source:        *toSyftSourceData(doc.Source),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
 		Relationships: toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases),
 	}, nil
+}
+
+func toSyftFiles(files []model.File) sbom.Artifacts {
+	ret := sbom.Artifacts{
+		FileMetadata: make(map[source.Coordinates]source.FileMetadata),
+		FileDigests:  make(map[source.Coordinates][]file.Digest),
+	}
+
+	for _, f := range files {
+		coord := f.Location
+		if f.Metadata != nil {
+			mode, err := strconv.ParseInt(strconv.Itoa(f.Metadata.Mode), 8, 64)
+			if err != nil {
+				log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode, err)
+				mode = 0
+			}
+
+			fm := os.FileMode(mode)
+
+			ret.FileMetadata[coord] = source.FileMetadata{
+				Path:            coord.RealPath,
+				LinkDestination: f.Metadata.LinkDestination,
+				Size:            f.Metadata.Size,
+				UserID:          f.Metadata.UserID,
+				GroupID:         f.Metadata.GroupID,
+				Type:            toSyftFileType(f.Metadata.Type),
+				IsDir:           fm.IsDir(),
+				Mode:            fm,
+				MIMEType:        f.Metadata.MIMEType,
+			}
+		}
+
+		for _, d := range f.Digests {
+			ret.FileDigests[coord] = append(ret.FileDigests[coord], file.Digest{
+				Algorithm: d.Algorithm,
+				Value:     d.Value,
+			})
+		}
+	}
+
+	return ret
+}
+
+func toSyftFileType(ty string) stereoscopeFile.Type {
+	switch ty {
+	case "SymbolicLink":
+		return stereoscopeFile.TypeSymLink
+	case "HardLink":
+		return stereoscopeFile.TypeHardLink
+	case "Directory":
+		return stereoscopeFile.TypeDirectory
+	case "Socket":
+		return stereoscopeFile.TypeSocket
+	case "BlockDevice":
+		return stereoscopeFile.TypeBlockDevice
+	case "CharacterDevice":
+		return stereoscopeFile.TypeCharacterDevice
+	case "FIFONode":
+		return stereoscopeFile.TypeFIFO
+	case "RegularFile":
+		return stereoscopeFile.TypeRegular
+	case "IrregularFile":
+		return stereoscopeFile.TypeIrregular
+	default:
+		return stereoscopeFile.TypeIrregular
+	}
 }
 
 func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
@@ -117,7 +191,7 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 	typ := artifact.RelationshipType(relationship.Type)
 
 	switch typ {
-	case artifact.OwnershipByFileOverlapRelationship, artifact.ContainsRelationship, artifact.DependencyOfRelationship:
+	case artifact.OwnershipByFileOverlapRelationship, artifact.ContainsRelationship, artifact.DependencyOfRelationship, artifact.EvidentByRelationship:
 	default:
 		if !strings.Contains(string(typ), "dependency-of") {
 			log.Warnf("unknown relationship type: %s", typ)
@@ -204,16 +278,15 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 
 	var locations = make([]source.Location, len(p.Locations))
 	for i, c := range p.Locations {
-		locations[i] = source.NewLocationFromCoordinates(c)
+		locations[i] = source.NewLocationFromCoordinates(c.Coordinates)
 	}
 
-	// TODO: sync pkg and user facing license struct
 	out := pkg.Package{
-		Name:      p.Name,
-		Version:   p.Version,
-		FoundBy:   p.FoundBy,
-		Locations: source.NewLocationSet(locations...),
-		// Licenses:     p.Licenses,
+		Name:         p.Name,
+		Version:      p.Version,
+		FoundBy:      p.FoundBy,
+		Locations:    source.NewLocationSet(p.Locations...),
+		Licenses:     p.Licenses,
 		Language:     p.Language,
 		Type:         p.Type,
 		CPEs:         cpes,

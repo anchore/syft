@@ -19,6 +19,7 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 		// we use this when constructing the license object to show our work on where we lifted the declaration from
 		licenseLocation = locations[0]
 	}
+
 	licenseCandidates, err := u.licensesFromJSON()
 	if err != nil {
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
@@ -79,7 +80,7 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 		pkg.Package{
 			Name:         name,
 			Version:      version,
-			Locations:    source.NewLocationSet(location),
+			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(name, version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -96,7 +97,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 		pkg.Package{
 			Name:         name,
 			Version:      u.Version,
-			Locations:    source.NewLocationSet(location),
+			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -113,7 +114,7 @@ func newPnpmPackage(resolver source.FileResolver, location source.Location, name
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location),
+			Locations: source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
@@ -128,7 +129,7 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location),
+			Locations: source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,

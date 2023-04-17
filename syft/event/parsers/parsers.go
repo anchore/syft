@@ -111,6 +111,19 @@ func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgress
 	return path, prog, nil
 }
 
+func ParseCatalogerTaskStarted(e partybus.Event) (*event.CatalogerTask, error) {
+	if err := checkEventType(e.Type, event.CatalogerTaskStarted); err != nil {
+		return nil, err
+	}
+
+	source, ok := e.Source.(*event.CatalogerTask)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Source", e.Source)
+	}
+
+	return source, nil
+}
+
 func ParseExit(e partybus.Event) (func() error, error) {
 	if err := checkEventType(e.Type, event.Exit); err != nil {
 		return nil, err

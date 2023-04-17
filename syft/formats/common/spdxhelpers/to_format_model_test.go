@@ -210,6 +210,12 @@ func Test_lookupRelationship(t *testing.T) {
 			comment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
 		},
 		{
+			input:   artifact.EvidentByRelationship,
+			exists:  true,
+			ty:      OtherRelationship,
+			comment: "evident-by: indicates the package's existence is evident by the given file",
+		},
+		{
 			input:  "made-up",
 			exists: false,
 		},
@@ -465,13 +471,13 @@ func Test_OtherLicenses(t *testing.T) {
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
+					LicenseIdentifier: "LicenseRef-not-known--s",
+					LicenseName:       "not known %s",
 					ExtractedText:     NONE,
 				},
 				{
-					LicenseIdentifier: "LicenseRef-not-known--s",
-					LicenseName:       "not known %s",
+					LicenseIdentifier: "LicenseRef-un-known",
+					LicenseName:       "un known",
 					ExtractedText:     NONE,
 				},
 			},

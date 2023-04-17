@@ -12,6 +12,20 @@ type testCase struct {
 
 var imageOnlyTestCases = []testCase{
 	{
+		name:    "find kernel packages",
+		pkgType: pkg.LinuxKernelPkg,
+		pkgInfo: map[string]string{
+			"linux-kernel": "6.0.7-301.fc37.x86_64",
+		},
+	},
+	{
+		name:    "find kernel module packages",
+		pkgType: pkg.LinuxKernelModulePkg,
+		pkgInfo: map[string]string{
+			"ttynull": "",
+		},
+	},
+	{
 		name:        "find gemspec packages",
 		pkgType:     pkg.GemPkg,
 		pkgLanguage: pkg.Ruby,
@@ -388,6 +402,13 @@ var commonTestCases = []testCase{
 		duplicates:  1, // there is a "example-jenkins-plugin" HPI, and nested within that a JAR of the same name
 		pkgInfo: map[string]string{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
+		},
+	},
+	{
+		name:    "find nix store packages",
+		pkgType: pkg.NixPkg,
+		pkgInfo: map[string]string{
+			"glibc": "2.34-210",
 		},
 	},
 }

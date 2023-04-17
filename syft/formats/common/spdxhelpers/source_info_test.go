@@ -199,6 +199,30 @@ func Test_SourceInfo(t *testing.T) {
 				"from rebar3 or mix manifest file",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.LinuxKernelPkg,
+			},
+			expected: []string{
+				"from linux kernel archive",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.LinuxKernelModulePkg,
+			},
+			expected: []string{
+				"from linux kernel module files",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.NixPkg,
+			},
+			expected: []string{
+				"from nix store path",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

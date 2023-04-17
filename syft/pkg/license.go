@@ -7,11 +7,11 @@ import (
 )
 
 type License struct {
-	Value          string
-	SPDXExpression string
-	Type           license.Type
-	URL            string          // external sources
-	Location       source.Location // on disk declaration
+	Value          string          `json:"value"`
+	SPDXExpression string          `json:"spdx-expression"`
+	Type           license.Type    `json:"type"`
+	URL            string          `json:"url"`      // external sources
+	Location       source.Location `json:"location"` // on disk declaration
 }
 
 func NewLicense(value string, url string, location source.Location) License {

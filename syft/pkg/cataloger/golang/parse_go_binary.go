@@ -38,8 +38,12 @@ var (
 
 const devel = "(devel)"
 
+type goBinaryCataloger struct {
+	licenses goLicenses
+}
+
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
-func parseGoBinary(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goBinaryCataloger) parseGoBinary(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
@@ -51,14 +55,22 @@ func parseGoBinary(_ source.FileResolver, _ *generic.Environment, reader source.
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
 	for i, mod := range mods {
-		pkgs = append(pkgs, buildGoPkgInfo(reader.Location, mod, archs[i])...)
+		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, archs[i])...)
 	}
 	return pkgs, nil, nil
 }
 
-func makeGoMainPackage(mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
-	main := newGoBinaryPackage(&mod.Main, mod.Main.Path, mod.GoVersion, arch, gbs, location)
+	main := c.newGoBinaryPackage(
+		resolver,
+		&mod.Main,
+		mod.Main.Path,
+		mod.GoVersion,
+		arch,
+		gbs,
+		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+	)
 	if main.Version == devel {
 		if version, ok := gbs["vcs.revision"]; ok {
 			if timestamp, ok := gbs["vcs.time"]; ok {
@@ -185,7 +197,7 @@ func createMainModuleFromPath(path string) (mod debug.Module) {
 	return
 }
 
-func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver source.FileResolver, location source.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
 	var pkgs []pkg.Package
 	if mod == nil {
 		return pkgs
@@ -200,7 +212,15 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		if dep == nil {
 			continue
 		}
-		p := newGoBinaryPackage(dep, mod.Main.Path, mod.GoVersion, arch, nil, location)
+		p := c.newGoBinaryPackage(
+			resolver,
+			dep,
+			mod.Main.Path,
+			mod.GoVersion,
+			arch,
+			nil,
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
 		if pkg.IsValid(&p) {
 			pkgs = append(pkgs, p)
 		}
@@ -210,7 +230,7 @@ func buildGoPkgInfo(location source.Location, mod *debug.BuildInfo, arch string)
 		return pkgs
 	}
 
-	main := makeGoMainPackage(mod, arch, location)
+	main := c.makeGoMainPackage(resolver, mod, arch, location)
 	pkgs = append(pkgs, main)
 
 	return pkgs

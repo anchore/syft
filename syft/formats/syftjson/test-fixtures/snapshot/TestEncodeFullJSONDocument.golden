@@ -81,7 +81,8 @@
     "type": "Directory",
     "userID": 0,
     "groupID": 0,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    }
   },
   {
@@ -94,7 +95,8 @@
     "type": "RegularFile",
     "userID": 0,
     "groupID": 0,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    },
    "contents": "the-contents",
    "digests": [
@@ -115,7 +117,8 @@
     "linkDestination": "/c",
     "userID": 0,
     "groupID": 0,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    }
   },
   {
@@ -128,7 +131,8 @@
     "type": "RegularFile",
     "userID": 1,
     "groupID": 2,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    },
    "digests": [
     {
@@ -185,7 +189,7 @@
   }
  },
  "schema": {
-  "version": "6.2.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-6.2.0.json"
+  "version": "7.1.4",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-7.1.4.json"
  }
 }
