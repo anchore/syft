@@ -22,7 +22,7 @@ var imageOnlyTestCases = []testCase{
 		name:    "find kernel module packages",
 		pkgType: pkg.LinuxKernelModulePkg,
 		pkgInfo: map[string]string{
-			"fsa4480": "",
+			"ttynull": "",
 		},
 	},
 	{
