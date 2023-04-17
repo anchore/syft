@@ -274,7 +274,9 @@ var defaultClassifiers = []classifier{
 		Class:    "consul-binary",
 		FileGlob: "**/consul",
 		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)consul(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
+			// NOTE: This is brittle and may not work for past or future versions
+			`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
+		),
 		Package: "consul",
 		PURL:    mustPURL("pkg:golang/github.com/hashicorp/consul@version"),
 		CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*"),
