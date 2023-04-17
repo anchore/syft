@@ -15,7 +15,7 @@ var imageOnlyTestCases = []testCase{
 		name:    "find kernel packages",
 		pkgType: pkg.LinuxKernelPkg,
 		pkgInfo: map[string]string{
-			"linux-kernel": "6.2.9-200.fc37.x86_64",
+			"linux-kernel": "6.0.7-301.fc37.x86_64",
 		},
 	},
 	{
