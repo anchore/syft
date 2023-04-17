@@ -47,7 +47,7 @@ func parseComposerLock(_ source.FileResolver, _ *generic.Environment, reader sou
 		}
 
 		// TODO: did we omit this on purpose?
-		//for _, m := range lock.PackageDev {
+		// for _, m := range lock.PackageDev {
 		//	pkgs = append(pkgs, newComposerLockPackage(m, reader.Location))
 		//}
 	}

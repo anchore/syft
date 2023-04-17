@@ -4,7 +4,10 @@ import (
 	"io"
 
 	"github.com/google/licensecheck"
-	"golang.org/x/exp/slices"
+
+	"github.com/anchore/syft/syft/license"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -13,21 +16,28 @@ const (
 )
 
 // Parse scans the contents of a license file to attempt to determine the type of license it is
-func Parse(reader io.Reader) (licenses []string, err error) {
+func Parse(reader io.Reader, l source.Location) (licenses []pkg.License, err error) {
+	licenses = make([]pkg.License, 0)
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
 	cov := licensecheck.Scan(contents)
+	if cov.Percent < coverageThreshold {
+		// unknown or no licenses here?
+		return licenses, nil
+	}
 
-	if cov.Percent < float64(coverageThreshold) {
-		licenses = append(licenses, unknownLicenseType)
-	}
 	for _, m := range cov.Match {
-		if slices.Contains(licenses, m.ID) {
-			continue
+		// TODO: spdx ID validation here?
+		l := pkg.License{
+			SPDXExpression: m.ID,
+			Type:           license.Concluded,
+			Location:       l,
 		}
-		licenses = append(licenses, m.ID)
+
+		licenses = append(licenses, l)
 	}
-	return
+
+	return licenses, nil
 }

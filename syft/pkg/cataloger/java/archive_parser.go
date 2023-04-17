@@ -195,10 +195,10 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}
 
 	return &pkg.Package{
-		Name:         selectName(manifest, j.fileInfo),
-		Version:      selectVersion(manifest, j.fileInfo),
-		Language:     pkg.Java,
-		Licenses:     licenses,
+		Name:     selectName(manifest, j.fileInfo),
+		Version:  selectVersion(manifest, j.fileInfo),
+		Language: pkg.Java,
+		Licenses: licenses,
 		Locations: source.NewLocationSet(
 			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),

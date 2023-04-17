@@ -204,12 +204,8 @@ func toPackageModel(p pkg.Package) model.Package {
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-<<<<<<< HEAD
-			Locations: coordinates,
-=======
 			Locations: p.Locations.ToSlice(),
-			Licenses:  licenses,
->>>>>>> main
+			Licenses:  p.Licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
 			PURL:      p.PURL,
