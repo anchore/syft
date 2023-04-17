@@ -11,7 +11,6 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const buildGradleGlob = "*build.gradle*"
 const buildGradleDirGlob = "**/build.gradle*"
 
 var propertyMatcherGradle = regexp.MustCompile("[$][{][^}]+[}]")
@@ -29,7 +28,7 @@ type Plugin struct {
 	Version string
 }
 
-func parserBuildGradle(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseBuildGradle(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// Gradle, err := decodeBuildGradle(reader)
 	// if err != nil {
 	// 	return nil, nil, err

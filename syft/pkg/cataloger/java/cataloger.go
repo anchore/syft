@@ -37,7 +37,7 @@ func NewJavaPomCataloger() *generic.Cataloger {
 // Pom files list dependencies that maybe not be locally installed yet.
 func NewJavaGradleCataloger() *generic.Cataloger {
 	return generic.NewCataloger("java-gradle-cataloger").
-		WithParserByGlobs(parserBuildGradle, buildGradleDirGlob)
+		WithParserByGlobs(parseBuildGradle, buildGradleDirGlob)
 }
 
 // NewJavaGradleLockfileCataloger returns a cataloger capable of parsing

@@ -39,7 +39,7 @@ func Test_parserGradle(t *testing.T) {
 			for i := range test.expected {
 				test.expected[i].Locations.Add(source.NewLocation(test.input))
 			}
-			pkgtest.TestFileParser(t, test.input, parserBuildGradle, test.expected, nil)
+			pkgtest.TestFileParser(t, test.input, parseBuildGradle, test.expected, nil)
 		})
 	}
 }
