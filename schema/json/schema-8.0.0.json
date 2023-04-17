@@ -561,6 +561,9 @@
         },
         "mimeType": {
           "type": "string"
+        },
+        "size": {
+          "type": "integer"
         }
       },
       "type": "object",
@@ -569,7 +572,8 @@
         "type",
         "userID",
         "groupID",
-        "mimeType"
+        "mimeType",
+        "size"
       ]
     },
     "GemMetadata": {
@@ -733,6 +737,127 @@
         "kb"
       ]
     },
+    "License": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "spdx-expression": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value",
+        "spdx-expression",
+        "type",
+        "url",
+        "location"
+      ]
+    },
+    "LinuxKernelMetadata": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "extendedVersion": {
+          "type": "string"
+        },
+        "buildTime": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "rwRootFS": {
+          "type": "boolean"
+        },
+        "swapDevice": {
+          "type": "integer"
+        },
+        "rootDevice": {
+          "type": "integer"
+        },
+        "videoMode": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "architecture",
+        "version"
+      ]
+    },
+    "LinuxKernelModuleMetadata": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "kernelVersion": {
+          "type": "string"
+        },
+        "versionMagic": {
+          "type": "string"
+        },
+        "parameters": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/LinuxKernelModuleParameter"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "LinuxKernelModuleParameter": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "LinuxRelease": {
       "properties": {
         "prettyName": {
@@ -800,8 +925,13 @@
         "layerID": {
           "type": "string"
         },
-        "virtualPath": {
-          "type": "string"
+        "annotations": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         }
       },
       "type": "object",
@@ -832,12 +962,12 @@
         "pkgHashExt"
       ]
     },
-    "NpmPackageJSONMetadata": {
+    "NixStoreMetadata": {
       "properties": {
-        "name": {
+        "outputHash": {
           "type": "string"
         },
-        "version": {
+        "output": {
           "type": "string"
         },
         "files": {
@@ -845,6 +975,21 @@
             "type": "string"
           },
           "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "outputHash",
+        "files"
+      ]
+    },
+    "NpmPackageJSONMetadata": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
         },
         "author": {
           "type": "string"
@@ -907,13 +1052,13 @@
         },
         "locations": {
           "items": {
-            "$ref": "#/$defs/Coordinates"
+            "$ref": "#/$defs/Location"
           },
           "type": "array"
         },
         "licenses": {
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/License"
           },
           "type": "array"
         },
@@ -986,7 +1131,16 @@
               "$ref": "#/$defs/KbPackageMetadata"
             },
             {
+              "$ref": "#/$defs/LinuxKernelMetadata"
+            },
+            {
+              "$ref": "#/$defs/LinuxKernelModuleMetadata"
+            },
+            {
               "$ref": "#/$defs/MixLockMetadata"
+            },
+            {
+              "$ref": "#/$defs/NixStoreMetadata"
             },
             {
               "$ref": "#/$defs/NpmPackageJSONMetadata"
@@ -1113,6 +1267,12 @@
             }
           },
           "type": "object"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "type": {
           "type": "string"
