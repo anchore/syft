@@ -714,6 +714,18 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("ruby-binary"),
 			},
 		},
+		{
+			name:       "positive-consul-1.15.2",
+			fixtureDir: "test-fixtures/classifiers/dynamic/consul-1.15.2",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.15.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.15.2",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
