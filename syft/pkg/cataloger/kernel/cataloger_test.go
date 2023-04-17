@@ -9,25 +9,25 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func Test_JavascriptCataloger(t *testing.T) {
+func Test_KernelCataloger(t *testing.T) {
 	kernelPkg := pkg.Package{
 		Name:    "linux-kernel",
-		Version: "6.2.9-200.fc37.x86_64",
+		Version: "6.0.7-301.fc37.x86_64",
 		FoundBy: "linux-kernel-cataloger",
 		Locations: source.NewLocationSet(
 			source.NewVirtualLocation(
-				"/lib/modules/6.2.9-200.fc37.x86_64/vmlinuz",
-				"/lib/modules/6.2.9-200.fc37.x86_64/vmlinuz",
+				"/lib/modules/6.0.7-301.fc37.x86_64/vmlinuz",
+				"/lib/modules/6.0.7-301.fc37.x86_64/vmlinuz",
 			),
 		),
 		Type:         pkg.LinuxKernelPkg,
-		PURL:         "pkg:generic/linux-kernel@6.2.9-200.fc37.x86_64",
+		PURL:         "pkg:generic/linux-kernel@6.0.7-301.fc37.x86_64",
 		MetadataType: pkg.LinuxKernelMetadataType,
 		Metadata: pkg.LinuxKernelMetadata{
 			Name:            "",
 			Architecture:    "x86",
-			Version:         "6.2.9-200.fc37.x86_64",
-			ExtendedVersion: "6.2.9-200.fc37.x86_64 (mockbuild@bkernel02.iad2.fedoraproject.org) #1 SMP PREEMPT_DYNAMIC Thu Mar 30 22:31:57 UTC 2023",
+			Version:         "6.0.7-301.fc37.x86_64",
+			ExtendedVersion: "6.0.7-301.fc37.x86_64 (mockbuild@bkernel01.iad2.fedoraproject.org) #1 SMP PREEMPT_DYNAMIC Fri Nov 4 18:35:48 UTC 2022",
 			BuildTime:       "",
 			Author:          "",
 			Format:          "bzImage",
@@ -39,29 +39,29 @@ func Test_JavascriptCataloger(t *testing.T) {
 	}
 
 	kernelModulePkg := pkg.Package{
-		Name:    "fsa4480",
+		Name:    "ttynull",
 		Version: "",
 		FoundBy: "linux-kernel-cataloger",
 		Locations: source.NewLocationSet(
-			source.NewVirtualLocation("/lib/modules/6.2.9-200.fc37.x86_64/kernel/drivers/usb/typec/mux/fsa4480.ko",
-				"/lib/modules/6.2.9-200.fc37.x86_64/kernel/drivers/usb/typec/mux/fsa4480.ko",
+			source.NewVirtualLocation("/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
+				"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 			),
 		),
 		Licenses: []string{
 			"GPL v2",
 		},
 		Type:         pkg.LinuxKernelModulePkg,
-		PURL:         "pkg:generic/fsa4480",
+		PURL:         "pkg:generic/ttynull",
 		MetadataType: pkg.LinuxKernelModuleMetadataType,
 		Metadata: pkg.LinuxKernelModuleMetadata{
-			Name:          "fsa4480",
+			Name:          "ttynull",
 			Version:       "",
 			SourceVersion: "",
 			License:       "GPL v2",
-			Path:          "/lib/modules/6.2.9-200.fc37.x86_64/kernel/drivers/usb/typec/mux/fsa4480.ko",
-			Description:   "ON Semiconductor FSA4480 driver",
-			KernelVersion: "6.2.9-200.fc37.x86_64",
-			VersionMagic:  "6.2.9-200.fc37.x86_64 SMP preempt mod_unload ",
+			Path:          "/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
+			Description:   "",
+			KernelVersion: "6.0.7-301.fc37.x86_64",
+			VersionMagic:  "6.0.7-301.fc37.x86_64 SMP preempt mod_unload ",
 			Parameters:    map[string]pkg.LinuxKernelModuleParameter{},
 		},
 	}

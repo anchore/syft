@@ -209,6 +209,10 @@ fingerprints:
 	cd syft/pkg/cataloger/rpm/test-fixtures && \
 		make rpms.fingerprint
 
+	# for Kernel test fixtures
+	cd syft/pkg/cataloger/kernel/test-fixtures && \
+		make cache.fingerprint
+
 	# for INSTALL integration test fixtures
 	cd test/install && \
 		make cache.fingerprint
