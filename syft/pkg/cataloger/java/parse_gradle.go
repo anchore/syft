@@ -2,7 +2,6 @@ package java
 
 import (
 	"bufio"
-	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -13,7 +12,7 @@ import (
 
 const buildGradleDirGlob = "**/build.gradle*"
 
-var propertyMatcherGradle = regexp.MustCompile("[$][{][^}]+[}]")
+// var propertyMatcherGradle = regexp.MustCompile("[$][{][^}]+[}]")
 
 // Dependency represents a single dependency in the build.gradle file
 type Dependency struct {
@@ -24,10 +23,11 @@ type Dependency struct {
 
 // Plugin represents a single plugin in the build.gradle file
 type Plugin struct {
-	Id      string
+	ID      string
 	Version string
 }
 
+//nolint:funlen
 func parseBuildGradle(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// Gradle, err := decodeBuildGradle(reader)
 	// if err != nil {
@@ -125,7 +125,7 @@ func extractPlugins(line string, plugins []Plugin) []Plugin {
 		groupName = strings.Trim(groupName, `"`)
 		version := strings.Trim(fields[2], `"`)
 		// Create a new Dependency struct and add it to the dependencies slice
-		plugin := Plugin{Id: groupName, Version: version}
+		plugin := Plugin{ID: groupName, Version: version}
 		plugins = append(plugins, plugin)
 	}
 	return plugins
@@ -177,7 +177,7 @@ func extractDependencies(line string, plugins []Plugin, dependencies []Dependenc
 
 func searchInPlugins(groupName string, plugins []Plugin) string {
 	for _, v := range plugins {
-		if v.Id == groupName {
+		if v.ID == groupName {
 			return v.Version
 		}
 	}
