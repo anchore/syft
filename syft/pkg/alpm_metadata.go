@@ -14,19 +14,19 @@ var _ FileOwner = (*AlpmMetadata)(nil)
 const AlpmDBGlob = "**/var/lib/pacman/local/**/desc"
 
 type AlpmMetadata struct {
-	BasePackage  string           `mapstructure:"base" json:"basepackage"`
-	Package      string           `mapstructure:"name" json:"package"`
-	Version      string           `mapstructure:"version" json:"version"`
-	Description  string           `mapstructure:"desc" json:"description"`
-	Architecture string           `mapstructure:"arch" json:"architecture"`
+	BasePackage  string           `mapstructure:"base" json:"basepackage" cyclonedx:"basepackage"`
+	Package      string           `mapstructure:"name" json:"package" cyclonedx:"package"`
+	Version      string           `mapstructure:"version" json:"version" cyclonedx:"version"`
+	Description  string           `mapstructure:"desc" json:"description" cyclonedx:"description"`
+	Architecture string           `mapstructure:"arch" json:"architecture" cyclonedx:"architecture"`
 	Size         int              `mapstructure:"size" json:"size" cyclonedx:"size"`
-	Packager     string           `mapstructure:"packager" json:"packager"`
-	License      string           `mapstructure:"license" json:"license"`
-	URL          string           `mapstructure:"url" json:"url"`
-	Validation   string           `mapstructure:"validation" json:"validation"`
-	Reason       int              `mapstructure:"reason" json:"reason"`
-	Files        []AlpmFileRecord `mapstructure:"files" json:"files"`
-	Backup       []AlpmFileRecord `mapstructure:"backup" json:"backup"`
+	Packager     string           `mapstructure:"packager" json:"packager" cyclonedx:"packager"`
+	License      string           `mapstructure:"license" json:"license" cyclonedx:"license"`
+	URL          string           `mapstructure:"url" json:"url" cyclonedx:"url"`
+	Validation   string           `mapstructure:"validation" json:"validation" cyclonedx:"validation"`
+	Reason       int              `mapstructure:"reason" json:"reason" cyclonedx:"reason"`
+	Files        []AlpmFileRecord `mapstructure:"files" json:"files" cyclonedx:"files"`
+	Backup       []AlpmFileRecord `mapstructure:"backup" json:"backup" cyclonedx:"backup"`
 }
 
 type AlpmFileRecord struct {
