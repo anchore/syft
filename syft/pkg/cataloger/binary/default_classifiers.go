@@ -270,6 +270,17 @@ var defaultClassifiers = []classifier{
 		PURL:    mustPURL("pkg:generic/ruby@version"),
 		CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
 	},
+	{
+		Class:    "consul-binary",
+		FileGlob: "**/consul",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// NOTE: This is brittle and may not work for past or future versions
+			`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
+		),
+		Package: "consul",
+		PURL:    mustPURL("pkg:golang/github.com/hashicorp/consul@version"),
+		CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*"),
+	},
 }
 
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
