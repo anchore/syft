@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -143,6 +144,12 @@ func TestFileMetadataCataloger(t *testing.T) {
 			require.NoError(t, err)
 
 			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
+
+			if _, ok := actual[l.Coordinates]; ok {
+				redact := actual[l.Coordinates]
+				redact.ModTime = time.Time{}
+				actual[l.Coordinates] = redact
+			}
 
 			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
 
