@@ -14,11 +14,11 @@ var _ FileOwner = (*AlpmMetadata)(nil)
 const AlpmDBGlob = "**/var/lib/pacman/local/**/desc"
 
 type AlpmMetadata struct {
-	BasePackage  string           `mapstructure:"base" json:"basepackage"`
-	Package      string           `mapstructure:"name" json:"package"`
-	Version      string           `mapstructure:"version" json:"version"`
-	Description  string           `mapstructure:"desc" json:"description"`
-	Architecture string           `mapstructure:"arch" json:"architecture"`
+	BasePackage  string           `mapstructure:"base" json:"basepackage" cyclonedx:"basepackage"`
+	Package      string           `mapstructure:"name" json:"package" cyclonedx:"package"`
+	Version      string           `mapstructure:"version" json:"version" cyclonedx:"version"`
+	Description  string           `mapstructure:"desc" json:"description" cyclonedx:"description"`
+	Architecture string           `mapstructure:"arch" json:"architecture" cyclonedx:"architecture"`
 	Size         int              `mapstructure:"size" json:"size" cyclonedx:"size"`
 	Packager     string           `mapstructure:"packager" json:"packager"`
 	URL          string           `mapstructure:"url" json:"url"`

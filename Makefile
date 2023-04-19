@@ -14,7 +14,7 @@ GOLANGCILINT_VERSION := v1.52.2
 GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.17.0
+GORELEASER_VERSION := v1.17.2
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v1.13.1
 QUILL_VERSION := v0.2.0
@@ -199,7 +199,7 @@ fingerprints:
 
 	# for JAVA BUILD test fixtures
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
-		make packages.fingerprint
+		make cache.fingerprint
 
 	# for GO BINARY test fixtures
 	cd syft/pkg/cataloger/golang/test-fixtures/archs && \

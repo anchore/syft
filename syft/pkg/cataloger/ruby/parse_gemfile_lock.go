@@ -13,7 +13,7 @@ import (
 
 var _ generic.Parser = parseGemFileLockEntries
 
-var sectionsOfInterest = internal.NewStringSet("GEM")
+var sectionsOfInterest = internal.NewStringSet("GEM", "GIT", "PATH", "PLUGIN SOURCE")
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
 func parseGemFileLockEntries(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
