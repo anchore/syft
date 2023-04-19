@@ -36,7 +36,7 @@ jobs:
       - name: Restore Java test-fixture cache
         uses: actions/cache@v3
         with:
-          path: syft/pkg/cataloger/java/test-fixtures/java-builds
+          path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
           key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint' ) }}
 
       - name: Restore RPM test-fixture cache
