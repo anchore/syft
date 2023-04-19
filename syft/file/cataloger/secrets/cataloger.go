@@ -1,8 +1,9 @@
-package file
+package secrets
 
 import (
 	"bytes"
 	"fmt"
+	internal2 "github.com/anchore/syft/syft/file/cataloger/internal"
 	"io"
 	"regexp"
 	"sort"
@@ -14,7 +15,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
 var DefaultSecretsPatterns = map[string]string{
@@ -25,23 +26,25 @@ var DefaultSecretsPatterns = map[string]string{
 	"generic-api-key":    `(?i)api(-|_)?key["'=:\s]*?(?P<value>[A-Z0-9]{20,60})["']?(\s|$)`,
 }
 
-type SecretsCataloger struct {
+// Deprecated: will be removed in syft v1.0.0
+type Cataloger struct {
 	patterns           map[string]*regexp.Regexp
 	revealValues       bool
 	skipFilesAboveSize int64
 }
 
-func NewSecretsCataloger(patterns map[string]*regexp.Regexp, revealValues bool, maxFileSize int64) (*SecretsCataloger, error) {
-	return &SecretsCataloger{
+// Deprecated: will be removed in syft v1.0.0
+func NewCataloger(patterns map[string]*regexp.Regexp, revealValues bool, maxFileSize int64) (*Cataloger, error) {
+	return &Cataloger{
 		patterns:           patterns,
 		revealValues:       revealValues,
 		skipFilesAboveSize: maxFileSize,
 	}, nil
 }
 
-func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates][]SearchResult, error) {
-	results := make(map[source.Coordinates][]SearchResult)
-	locations := allRegularFiles(resolver)
+func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates][]file.SearchResult, error) {
+	results := make(map[file.Coordinates][]file.SearchResult)
+	locations := internal2.AllRegularFiles(resolver)
 	stage, prog, secretsDiscovered := secretsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
 		stage.Current = location.RealPath
@@ -65,7 +68,7 @@ func (i *SecretsCataloger) Catalog(resolver source.FileResolver) (map[source.Coo
 	return results, nil
 }
 
-func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, location source.Location) ([]SearchResult, error) {
+func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) ([]file.SearchResult, error) {
 	metadata, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -103,7 +106,7 @@ func (i *SecretsCataloger) catalogLocation(resolver source.FileResolver, locatio
 	return secrets, nil
 }
 
-func extractValue(resolver source.FileResolver, location source.Location, start, length int64) (string, error) {
+func extractValue(resolver file.Resolver, location file.Location, start, length int64) (string, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return "", fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
@@ -130,7 +133,7 @@ func extractValue(resolver source.FileResolver, location source.Location, start,
 	return buf.String(), nil
 }
 
-type SecretsMonitor struct {
+type Monitor struct {
 	progress.Stager
 	SecretsDiscovered progress.Monitorable
 	progress.Progressable
@@ -144,7 +147,7 @@ func secretsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manu
 	bus.Publish(partybus.Event{
 		Type:   event.SecretsCatalogerStarted,
 		Source: secretsDiscovered,
-		Value: SecretsMonitor{
+		Value: Monitor{
 			Stager:            progress.Stager(stage),
 			SecretsDiscovered: secretsDiscovered,
 			Progressable:      prog,

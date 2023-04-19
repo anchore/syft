@@ -165,7 +165,7 @@ func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, er
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
 func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path string) *Location {
-	layer := r.img.FileCatalog.Layer(location.ref)
+	layer := r.img.FileCatalog.Layer(location.Reference())
 
 	exists, relativeRef, err := layer.SquashedTree.File(file.Path(path), filetree.FollowBasenameLinks)
 	if err != nil {
@@ -184,7 +184,7 @@ func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path stri
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
 func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
-	entry, err := r.img.FileCatalog.Get(location.ref)
+	entry, err := r.img.FileCatalog.Get(location.Reference())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
 	}
@@ -199,10 +199,10 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 		}
 		location = *newLocation
 	case file.TypeDirectory:
-		return nil, fmt.Errorf("cannot read contents of non-file %q", location.ref.RealPath)
+		return nil, fmt.Errorf("cannot read contents of non-file %q", location.Reference().RealPath)
 	}
 
-	return r.img.FileContentsByRef(location.ref)
+	return r.img.FileContentsByRef(location.Reference())
 }
 
 func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {

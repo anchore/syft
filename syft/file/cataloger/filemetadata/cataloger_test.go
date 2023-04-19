@@ -1,16 +1,16 @@
-package file
+package filemetadata
 
 import (
 	"flag"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -25,7 +25,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	img := imagetest.GetGoldenFixtureImage(t, testImage)
 
-	c := NewMetadataCataloger()
+	c := NewCataloger()
 
 	src, err := source.NewFromImage(img, "---")
 	if err != nil {
@@ -45,16 +45,16 @@ func TestFileMetadataCataloger(t *testing.T) {
 	tests := []struct {
 		path     string
 		exists   bool
-		expected source.FileMetadata
+		expected file.Metadata
 		err      bool
 	}{
 		{
 			path:   "/file-1.txt",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Path:     "/file-1.txt",
 				Mode:     0644,
-				Type:     file.TypeRegular,
+				Type:     stereoscopeFile.TypeRegular,
 				UserID:   1,
 				GroupID:  2,
 				Size:     7,
@@ -64,10 +64,10 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/hardlink-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Path:            "/hardlink-1",
 				Mode:            0644,
-				Type:            file.TypeHardLink,
+				Type:            stereoscopeFile.TypeHardLink,
 				LinkDestination: "file-1.txt",
 				UserID:          1,
 				GroupID:         2,
@@ -77,10 +77,10 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/symlink-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Path:            "/symlink-1",
 				Mode:            0777 | os.ModeSymlink,
-				Type:            file.TypeSymLink,
+				Type:            stereoscopeFile.TypeSymLink,
 				LinkDestination: "file-1.txt",
 				UserID:          0,
 				GroupID:         0,
@@ -90,10 +90,10 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/char-device-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Path:     "/char-device-1",
 				Mode:     0644 | os.ModeDevice | os.ModeCharDevice,
-				Type:     file.TypeCharacterDevice,
+				Type:     stereoscopeFile.TypeCharacterDevice,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -102,10 +102,10 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/block-device-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Path:     "/block-device-1",
 				Mode:     0644 | os.ModeDevice,
-				Type:     file.TypeBlockDevice,
+				Type:     stereoscopeFile.TypeBlockDevice,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -114,10 +114,10 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/fifo-1",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Path:     "/fifo-1",
 				Mode:     0644 | os.ModeNamedPipe,
-				Type:     file.TypeFIFO,
+				Type:     stereoscopeFile.TypeFIFO,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -126,10 +126,10 @@ func TestFileMetadataCataloger(t *testing.T) {
 		{
 			path:   "/bin",
 			exists: true,
-			expected: source.FileMetadata{
+			expected: file.Metadata{
 				Path:     "/bin",
 				Mode:     0755 | os.ModeDir,
-				Type:     file.TypeDirectory,
+				Type:     stereoscopeFile.TypeDirectory,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
@@ -140,16 +140,10 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			_, ref, err := img.SquashedTree().File(file.Path(test.path))
+			_, ref, err := img.SquashedTree().File(stereoscopeFile.Path(test.path))
 			require.NoError(t, err)
 
-			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
-
-			if _, ok := actual[l.Coordinates]; ok {
-				redact := actual[l.Coordinates]
-				redact.ModTime = time.Time{}
-				actual[l.Coordinates] = redact
-			}
+			l := file.NewLocationFromImage(test.path, *ref.Reference, img)
 
 			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
 

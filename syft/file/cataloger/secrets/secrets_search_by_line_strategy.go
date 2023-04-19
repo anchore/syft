@@ -1,4 +1,4 @@
-package file
+package secrets
 
 import (
 	"bufio"
@@ -8,10 +8,10 @@ import (
 	"regexp"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
-func catalogLocationByLine(resolver source.FileResolver, location source.Location, patterns map[string]*regexp.Regexp) ([]SearchResult, error) {
+func catalogLocationByLine(resolver file.Resolver, location file.Location, patterns map[string]*regexp.Regexp) ([]file.SearchResult, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
@@ -20,7 +20,7 @@ func catalogLocationByLine(resolver source.FileResolver, location source.Locatio
 
 	var scanner = bufio.NewReader(readCloser)
 	var position int64
-	var allSecrets []SearchResult
+	var allSecrets []file.SearchResult
 	var lineNo int64
 	var readErr error
 	for !errors.Is(readErr, io.EOF) {
@@ -43,8 +43,8 @@ func catalogLocationByLine(resolver source.FileResolver, location source.Locatio
 	return allSecrets, nil
 }
 
-func searchForSecretsWithinLine(resolver source.FileResolver, location source.Location, patterns map[string]*regexp.Regexp, line []byte, lineNo int64, position int64) ([]SearchResult, error) {
-	var secrets []SearchResult
+func searchForSecretsWithinLine(resolver file.Resolver, location file.Location, patterns map[string]*regexp.Regexp, line []byte, lineNo int64, position int64) ([]file.SearchResult, error) {
+	var secrets []file.SearchResult
 	for name, pattern := range patterns {
 		matches := pattern.FindAllIndex(line, -1)
 		for i, match := range matches {
@@ -72,7 +72,7 @@ func searchForSecretsWithinLine(resolver source.FileResolver, location source.Lo
 	return secrets, nil
 }
 
-func readerAtPosition(resolver source.FileResolver, location source.Location, seekPosition int64) (io.ReadCloser, error) {
+func readerAtPosition(resolver file.Resolver, location file.Location, seekPosition int64) (io.ReadCloser, error) {
 	readCloser, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
@@ -89,7 +89,7 @@ func readerAtPosition(resolver source.FileResolver, location source.Location, se
 	return readCloser, nil
 }
 
-func extractSecretFromPosition(readCloser io.ReadCloser, name string, pattern *regexp.Regexp, lineNo, lineOffset, seekPosition int64) *SearchResult {
+func extractSecretFromPosition(readCloser io.ReadCloser, name string, pattern *regexp.Regexp, lineNo, lineOffset, seekPosition int64) *file.SearchResult {
 	reader := &newlineCounter{RuneReader: bufio.NewReader(readCloser)}
 	positions := pattern.FindReaderSubmatchIndex(reader)
 	if len(positions) == 0 {
@@ -125,7 +125,7 @@ func extractSecretFromPosition(readCloser io.ReadCloser, name string, pattern *r
 		lineOffsetOfSecret += lineOffset
 	}
 
-	return &SearchResult{
+	return &file.SearchResult{
 		Classification: name,
 		SeekPosition:   start + seekPosition,
 		Length:         stop - start,

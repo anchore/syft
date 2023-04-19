@@ -1,9 +1,10 @@
-package file
+package filedigest
 
 import (
 	"crypto"
 	"fmt"
-	"io/ioutil"
+	"github.com/anchore/syft/syft/file/cataloger"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,28 +12,35 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
 
-func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Hash) map[source.Coordinates][]Digest {
-	digests := make(map[source.Coordinates][]Digest)
+func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Hash) map[file.Coordinates][]file.Digest {
+	digests := make(map[file.Coordinates][]file.Digest)
 
 	for _, f := range files {
 		fh, err := os.Open(filepath.Join(root, f))
 		if err != nil {
 			t.Fatalf("could not open %q : %+v", f, err)
 		}
-		b, err := ioutil.ReadAll(fh)
+		b, err := io.ReadAll(fh)
 		if err != nil {
 			t.Fatalf("could not read %q : %+v", f, err)
+		}
+
+		if len(b) == 0 {
+			// we don't keep digests for empty files
+			digests[file.NewLocation(f).Coordinates] = []file.Digest{}
+			continue
 		}
 
 		for _, hash := range hashes {
 			h := hash.New()
 			h.Write(b)
-			digests[source.NewLocation(f).Coordinates] = append(digests[source.NewLocation(f).Coordinates], Digest{
+			digests[file.NewLocation(f).Coordinates] = append(digests[file.NewLocation(f).Coordinates], file.Digest{
 				Algorithm: CleanDigestAlgorithmName(hash.String()),
 				Value:     fmt.Sprintf("%x", h.Sum(nil)),
 			})
@@ -48,7 +56,7 @@ func TestDigestsCataloger(t *testing.T) {
 		name     string
 		digests  []crypto.Hash
 		files    []string
-		expected map[source.Coordinates][]Digest
+		expected map[file.Coordinates][]file.Digest
 	}{
 		{
 			name:     "md5",
@@ -66,8 +74,7 @@ func TestDigestsCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, err := NewDigestsCataloger(test.digests)
-			require.NoError(t, err)
+			c := NewCataloger(test.digests)
 
 			src, err := source.NewFromDirectory("test-fixtures/last/")
 			require.NoError(t, err)
@@ -86,7 +93,7 @@ func TestDigestsCataloger(t *testing.T) {
 func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 	testImage := "image-file-type-mix"
 
-	if *updateImageGoldenFiles {
+	if *cataloger.updateImageGoldenFiles {
 		imagetest.UpdateGoldenFixtureImage(t, testImage)
 	}
 
@@ -132,21 +139,18 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			c, err := NewDigestsCataloger([]crypto.Hash{crypto.MD5})
-			if err != nil {
-				t.Fatalf("unable to get cataloger: %+v", err)
-			}
+			c := NewCataloger([]crypto.Hash{crypto.MD5})
 
 			actual, err := c.Catalog(resolver)
 			if err != nil {
 				t.Fatalf("could not catalog: %+v", err)
 			}
 
-			_, ref, err := img.SquashedTree().File(file.Path(test.path))
+			_, ref, err := img.SquashedTree().File(stereoscopeFile.Path(test.path))
 			if err != nil {
 				t.Fatalf("unable to get file=%q : %+v", test.path, err)
 			}
-			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
+			l := file.NewLocationFromImage(test.path, *ref.Reference, img)
 
 			if len(actual[l.Coordinates]) == 0 {
 				if test.expected != "" {

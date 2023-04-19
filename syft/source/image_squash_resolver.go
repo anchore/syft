@@ -113,10 +113,10 @@ func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 				return nil, fmt.Errorf("failed to find files by path (result=%+v): %w", result, err)
 			}
 			for _, resolvedLocation := range resolvedLocations {
-				if uniqueFileIDs.Contains(resolvedLocation.ref) {
+				if uniqueFileIDs.Contains(resolvedLocation.Reference()) {
 					continue
 				}
-				uniqueFileIDs.Add(resolvedLocation.ref)
+				uniqueFileIDs.Add(resolvedLocation.Reference())
 				uniqueLocations = append(uniqueLocations, resolvedLocation)
 			}
 		}
@@ -143,7 +143,7 @@ func (r *imageSquashResolver) RelativeFileByPath(_ Location, path string) *Locat
 // FileContentsByLocation fetches file contents for a single file reference, regardless of the source layer.
 // If the path does not exist an error is returned.
 func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
-	entry, err := r.img.FileCatalog.Get(location.ref)
+	entry, err := r.img.FileCatalog.Get(location.Reference())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
 	}
@@ -168,7 +168,7 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 		return nil, fmt.Errorf("unable to get file contents for directory: %+v", location)
 	}
 
-	return r.img.FileContentsByRef(location.ref)
+	return r.img.FileContentsByRef(location.Reference())
 }
 
 func (r *imageSquashResolver) AllLocations() <-chan Location {

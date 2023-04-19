@@ -1,12 +1,12 @@
-package file
+package internal
 
 import (
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
-func allRegularFiles(resolver source.FileResolver) (locations []source.Location) {
+func AllRegularFiles(resolver file.Resolver) (locations []file.Location) {
 	for location := range resolver.AllLocations() {
 		resolvedLocations, err := resolver.FilesByPath(location.RealPath)
 		if err != nil {
@@ -21,7 +21,7 @@ func allRegularFiles(resolver source.FileResolver) (locations []source.Location)
 				continue
 			}
 
-			if metadata.Type != file.TypeRegular {
+			if metadata.Type != stereoscopeFile.TypeRegular {
 				continue
 			}
 			locations = append(locations, resolvedLocation)

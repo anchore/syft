@@ -1,4 +1,4 @@
-package file
+package filecontent
 
 import (
 	"bytes"
@@ -8,24 +8,26 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
-type ContentsCataloger struct {
+// Deprecated: will be removed in syft v1.0.0
+type Cataloger struct {
 	globs                     []string
 	skipFilesAboveSizeInBytes int64
 }
 
-func NewContentsCataloger(globs []string, skipFilesAboveSize int64) (*ContentsCataloger, error) {
-	return &ContentsCataloger{
+// Deprecated: will be removed in syft v1.0.0
+func NewCataloger(globs []string, skipFilesAboveSize int64) (*Cataloger, error) {
+	return &Cataloger{
 		globs:                     globs,
 		skipFilesAboveSizeInBytes: skipFilesAboveSize,
 	}, nil
 }
 
-func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Coordinates]string, error) {
-	results := make(map[source.Coordinates]string)
-	var locations []source.Location
+func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]string, error) {
+	results := make(map[file.Coordinates]string)
+	var locations []file.Location
 
 	locations, err := resolver.FilesByGlob(i.globs...)
 	if err != nil {
@@ -56,7 +58,7 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Co
 	return results, nil
 }
 
-func (i *ContentsCataloger) catalogLocation(resolver source.FileResolver, location source.Location) (string, error) {
+func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) (string, error) {
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return "", err

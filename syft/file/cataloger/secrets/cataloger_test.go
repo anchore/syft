@@ -1,4 +1,4 @@
-package file
+package secrets
 
 import (
 	"regexp"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/internal/file"
+	file2 "github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -17,7 +18,7 @@ func TestSecretsCataloger(t *testing.T) {
 		reveal         bool
 		maxSize        int64
 		patterns       map[string]string
-		expected       []SearchResult
+		expected       []file2.SearchResult
 		constructorErr bool
 		catalogErr     bool
 	}{
@@ -28,7 +29,7 @@ func TestSecretsCataloger(t *testing.T) {
 			patterns: map[string]string{
 				"simple-secret-key": `^secret_key=.*`,
 			},
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "simple-secret-key",
 					LineNumber:     2,
@@ -46,7 +47,7 @@ func TestSecretsCataloger(t *testing.T) {
 			patterns: map[string]string{
 				"simple-secret-key": `^secret_key=.*`,
 			},
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "simple-secret-key",
 					LineNumber:     2,
@@ -64,7 +65,7 @@ func TestSecretsCataloger(t *testing.T) {
 			patterns: map[string]string{
 				"simple-secret-key": `^secret_key=(?P<value>.*)`,
 			},
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "simple-secret-key",
 					LineNumber:     2,
@@ -82,7 +83,7 @@ func TestSecretsCataloger(t *testing.T) {
 			patterns: map[string]string{
 				"simple-secret-key": `secret_key=.*`,
 			},
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "simple-secret-key",
 					LineNumber:     1,
@@ -125,7 +126,7 @@ func TestSecretsCataloger(t *testing.T) {
 			patterns: map[string]string{
 				"simple-secret-key": `secret_key=(?P<value>.*)`,
 			},
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "simple-secret-key",
 					LineNumber:     1,
@@ -176,7 +177,7 @@ func TestSecretsCataloger(t *testing.T) {
 				regexObjs[name] = obj
 			}
 
-			c, err := NewSecretsCataloger(regexObjs, test.reveal, test.maxSize)
+			c, err := NewCataloger(regexObjs, test.reveal, test.maxSize)
 			if err != nil && !test.constructorErr {
 				t.Fatalf("could not create cataloger (but should have been able to): %+v", err)
 			} else if err == nil && test.constructorErr {
@@ -214,11 +215,11 @@ func TestSecretsCataloger_DefaultSecrets(t *testing.T) {
 
 	tests := []struct {
 		fixture  string
-		expected []SearchResult
+		expected []file2.SearchResult
 	}{
 		{
 			fixture: "test-fixtures/secrets/default/aws.env",
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "aws-access-key",
 					LineNumber:     2,
@@ -239,7 +240,7 @@ func TestSecretsCataloger_DefaultSecrets(t *testing.T) {
 		},
 		{
 			fixture: "test-fixtures/secrets/default/aws.ini",
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "aws-access-key",
 					LineNumber:     3,
@@ -260,7 +261,7 @@ func TestSecretsCataloger_DefaultSecrets(t *testing.T) {
 		},
 		{
 			fixture: "test-fixtures/secrets/default/private-key.pem",
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "pem-private-key",
 					LineNumber:     2,
@@ -280,7 +281,7 @@ z3P668YfhUbKdRF6S42Cg6zn
 		},
 		{
 			fixture: "test-fixtures/secrets/default/private-key-openssl.pem",
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "pem-private-key",
 					LineNumber:     2,
@@ -302,7 +303,7 @@ z3P668YfhUbKdRF6S42Cg6zn
 			// note: this test proves that the PEM regex matches the smallest possible match
 			// since the test catches two adjacent secrets
 			fixture: "test-fixtures/secrets/default/private-keys.pem",
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "pem-private-key",
 					LineNumber:     1,
@@ -345,7 +346,7 @@ j4f668YfhUbKdRF6S6734856
 			// 2. a named capture group with the correct line number and line offset case
 			// 3. the named capture group is in a different line than the match start, and both the match start and the capture group have different line offsets
 			fixture: "test-fixtures/secrets/default/docker-config.json",
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "docker-config-auth",
 					LineNumber:     5,
@@ -362,7 +363,7 @@ j4f668YfhUbKdRF6S6734856
 		},
 		{
 			fixture: "test-fixtures/secrets/default/api-key.txt",
-			expected: []SearchResult{
+			expected: []file2.SearchResult{
 				{
 					Classification: "generic-api-key",
 					LineNumber:     2,
@@ -418,7 +419,7 @@ j4f668YfhUbKdRF6S6734856
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
 
-			c, err := NewSecretsCataloger(regexObjs, true, 10*file.MB)
+			c, err := NewCataloger(regexObjs, true, 10*file.MB)
 			if err != nil {
 				t.Fatalf("could not create cataloger: %+v", err)
 			}

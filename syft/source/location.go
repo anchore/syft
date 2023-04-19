@@ -1,186 +1,63 @@
 package source
 
 import (
-	"fmt"
+	"io"
 
-	"github.com/hashicorp/go-multierror"
-
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/syft/file"
 )
 
-// Location represents a path relative to a particular filesystem resolved to a specific file.Reference. This struct is used as a key
-// in content fetching to uniquely identify a file relative to a request (the VirtualPath).
-type Location struct {
-	LocationData     `cyclonedx:""`
-	LocationMetadata `cyclonedx:""`
+type (
+	Location           = file.Location
+	LocationData       = file.LocationData
+	LocationMetadata   = file.LocationMetadata
+	LocationSet        = file.LocationSet
+	Locations          = file.Locations
+	LocationReadCloser = file.LocationReadCloser
+)
+
+// Deprecated: use file.NewLocationSet instead
+func NewLocationSet(locations ...Location) LocationSet {
+	return file.NewLocationSet(locations...)
 }
 
-type LocationData struct {
-	Coordinates `cyclonedx:""` // Empty string here means there is no intermediate property name, e.g. syft:locations:0:path without "coordinates"
-	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
-	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
-	VirtualPath string         `hash:"ignore" json:"-"` // The path to the file which may or may not have hardlinks / symlinks
-	ref         file.Reference `hash:"ignore"`          // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
-}
-
-type LocationMetadata struct {
-	Annotations map[string]string `json:"annotations,omitempty"` // Arbitrary key-value pairs that can be used to annotate a location
-}
-
-func (m *LocationMetadata) merge(other LocationMetadata) error {
-	var errs error
-	for k, v := range other.Annotations {
-		if otherV, ok := m.Annotations[k]; ok {
-			if v != otherV {
-				err := fmt.Errorf("unable to merge location metadata: conflicting values for key=%q: %q != %q", k, v, otherV)
-				errs = multierror.Append(errs, err)
-				continue
-			}
-		}
-		m.Annotations[k] = v
-	}
-	return errs
-}
-
-func (l Location) WithAnnotation(key, value string) Location {
-	if l.LocationMetadata.Annotations == nil {
-		l.LocationMetadata.Annotations = map[string]string{}
-	}
-	l.LocationMetadata.Annotations[key] = value
-	return l
-}
-
-// NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
+// Deprecated: use file.NewLocation instead
 func NewLocation(realPath string) Location {
-	return Location{
-		LocationData: LocationData{
-			Coordinates: Coordinates{
-				RealPath: realPath,
-			},
-		},
-		LocationMetadata: LocationMetadata{
-			Annotations: map[string]string{},
-		},
-	}
+	return file.NewLocation(realPath)
 }
 
-// NewVirtualLocation creates a new location for a path accessed by a virtual path (a path with a symlink or hardlink somewhere in the path)
+// Deprecated: use file.NewVirtualLocation instead
 func NewVirtualLocation(realPath, virtualPath string) Location {
-	return Location{
-		LocationData: LocationData{
-			Coordinates: Coordinates{
-				RealPath: realPath,
-			},
-			VirtualPath: virtualPath,
-		},
-		LocationMetadata: LocationMetadata{
-			Annotations: map[string]string{},
-		}}
+	return file.NewVirtualLocation(realPath, virtualPath)
 }
 
-// NewLocationFromCoordinates creates a new location for the given Coordinates.
+// Deprecated: use file.NewLocationFromCoordinates instead
 func NewLocationFromCoordinates(coordinates Coordinates) Location {
-	return Location{
-		LocationData: LocationData{
-			Coordinates: coordinates,
-		},
-		LocationMetadata: LocationMetadata{
-			Annotations: map[string]string{},
-		}}
+	return file.NewLocationFromCoordinates(coordinates)
 }
 
-// NewVirtualLocationFromCoordinates creates a new location for the given Coordinates via a virtual path.
+// Deprecated: use file.NewVirtualLocationFromCoordinates instead
 func NewVirtualLocationFromCoordinates(coordinates Coordinates, virtualPath string) Location {
-	return Location{
-		LocationData: LocationData{
-			Coordinates: coordinates,
-			VirtualPath: virtualPath,
-		},
-		LocationMetadata: LocationMetadata{
-			Annotations: map[string]string{},
-		}}
+	return file.NewVirtualLocationFromCoordinates(coordinates, virtualPath)
 }
 
-// NewLocationFromImage creates a new Location representing the given path (extracted from the ref) relative to the given image.
-func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Image) Location {
-	layer := img.FileCatalog.Layer(ref)
-	return Location{
-		LocationData: LocationData{
-			Coordinates: Coordinates{
-				RealPath:     string(ref.RealPath),
-				FileSystemID: layer.Metadata.Digest,
-			},
-			VirtualPath: virtualPath,
-			ref:         ref,
-		},
-		LocationMetadata: LocationMetadata{
-			Annotations: map[string]string{},
-		},
-	}
+// Deprecated: use file.NewLocationFromImage instead
+func NewLocationFromImage(virtualPath string, ref stereoscopeFile.Reference, img *image.Image) Location {
+	return file.NewLocationFromImage(virtualPath, ref, img)
 }
 
-// NewLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory.
-func NewLocationFromDirectory(responsePath string, ref file.Reference) Location {
-	return Location{
-		LocationData: LocationData{
-			Coordinates: Coordinates{
-				RealPath: responsePath,
-			},
-			ref: ref,
-		},
-		LocationMetadata: LocationMetadata{
-			Annotations: map[string]string{},
-		},
-	}
+// Deprecated: use file.NewLocationFromDirectory instead
+func NewLocationFromDirectory(responsePath string, ref stereoscopeFile.Reference) Location {
+	return file.NewLocationFromDirectory(responsePath, ref)
 }
 
-// NewVirtualLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory with a separate virtual access path.
-func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, ref file.Reference) Location {
-	if responsePath == virtualResponsePath {
-		return NewLocationFromDirectory(responsePath, ref)
-	}
-	return Location{
-		LocationData: LocationData{
-			Coordinates: Coordinates{
-				RealPath: responsePath,
-			},
-			VirtualPath: virtualResponsePath,
-			ref:         ref,
-		},
-		LocationMetadata: LocationMetadata{
-			Annotations: map[string]string{},
-		},
-	}
+// Deprecated: use file.NewVirtualLocationFromDirectory instead
+func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, ref stereoscopeFile.Reference) Location {
+	return file.NewVirtualLocationFromDirectory(responsePath, virtualResponsePath, ref)
 }
 
-func (l Location) AccessPath() string {
-	if l.VirtualPath != "" {
-		return l.VirtualPath
-	}
-	return l.RealPath
-}
-
-func (l Location) String() string {
-	str := ""
-	if l.ref.ID() != 0 {
-		str += fmt.Sprintf("id=%d ", l.ref.ID())
-	}
-
-	str += fmt.Sprintf("RealPath=%q", l.RealPath)
-
-	if l.VirtualPath != "" {
-		str += fmt.Sprintf(" VirtualPath=%q", l.VirtualPath)
-	}
-
-	if l.FileSystemID != "" {
-		str += fmt.Sprintf(" Layer=%q", l.FileSystemID)
-	}
-	return fmt.Sprintf("Location<%s>", str)
-}
-
-func (l Location) Equals(other Location) bool {
-	return l.RealPath == other.RealPath &&
-		l.VirtualPath == other.VirtualPath &&
-		l.FileSystemID == other.FileSystemID
+// Deprecated: use file.NewLocationReadCloser instead
+func NewLocationReadCloser(location Location, reader io.ReadCloser) LocationReadCloser {
+	return file.NewLocationReadCloser(location, reader)
 }

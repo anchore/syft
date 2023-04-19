@@ -5,6 +5,7 @@ package parsers
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"io"
 
 	"github.com/wagoodman/go-partybus"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
-	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 )
 
@@ -54,12 +54,12 @@ func ParsePackageCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) 
 	return &monitor, nil
 }
 
-func ParseSecretsCatalogingStarted(e partybus.Event) (*file.SecretsMonitor, error) {
+func ParseSecretsCatalogingStarted(e partybus.Event) (*secrets.Monitor, error) {
 	if err := checkEventType(e.Type, event.SecretsCatalogerStarted); err != nil {
 		return nil, err
 	}
 
-	monitor, ok := e.Value.(file.SecretsMonitor)
+	monitor, ok := e.Value.(secrets.Monitor)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Value", e.Value)
 	}

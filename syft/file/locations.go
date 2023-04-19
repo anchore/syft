@@ -1,4 +1,4 @@
-package source
+package file
 
 type Locations []Location
 

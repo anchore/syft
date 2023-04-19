@@ -180,7 +180,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	defer archiveCloser.Close()
 
 	// grab and assign digest for the entire archive
-	digests, err := syftFile.DigestsFromFile(archiveCloser, javaArchiveHashes)
+	digests, err := syftFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
 	if err != nil {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}

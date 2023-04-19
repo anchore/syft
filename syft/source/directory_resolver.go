@@ -273,23 +273,23 @@ func (r *directoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 // FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
 func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
-	if location.ref.RealPath == "" {
+	if location.RealPath == "" {
 		return nil, errors.New("empty path given")
 	}
 
-	entry, err := r.index.Get(location.ref)
+	entry, err := r.index.Get(location.Reference())
 	if err != nil {
 		return nil, err
 	}
 
 	// don't consider directories
 	if entry.Type == file.TypeDirectory {
-		return nil, fmt.Errorf("cannot read contents of non-file %q", location.ref.RealPath)
+		return nil, fmt.Errorf("cannot read contents of non-file %q", location.Reference().RealPath)
 	}
 
 	// RealPath is posix so for windows directory resolver we need to translate
 	// to its true on disk path.
-	filePath := string(location.ref.RealPath)
+	filePath := string(location.Reference().RealPath)
 	if runtime.GOOS == WindowsOS {
 		filePath = posixToWindows(filePath)
 	}
@@ -309,7 +309,7 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 }
 
 func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
-	entry, err := r.index.Get(location.ref)
+	entry, err := r.index.Get(location.Reference())
 	if err != nil {
 		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 	}
