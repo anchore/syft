@@ -44,12 +44,13 @@ func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Pack
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageJSONMetadataType,
 		Metadata: pkg.NpmPackageJSONMetadata{
-			Name:     u.Name,
-			Version:  u.Version,
-			Author:   u.Author.AuthorString(),
-			Homepage: u.Homepage,
-			URL:      u.Repository.URL,
-			Private:  u.Private,
+			Name:        u.Name,
+			Version:     u.Version,
+			Description: u.Description,
+			Author:      u.Author.AuthorString(),
+			Homepage:    u.Homepage,
+			URL:         u.Repository.URL,
+			Private:     u.Private,
 		},
 	}
 

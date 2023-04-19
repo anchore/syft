@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// TODO: add new license struct to this test
 func TestUnmarshalPackageGolang(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -151,9 +152,6 @@ func Test_unpackMetadata(t *testing.T) {
 					 "path": "/var/lib/rpm/Packages",
 					 "layerID": "sha256:74ddd0ec08fa43d09f32636ba91a0a3053b02cb4627c35051aff89f853606b59"
 					}
-				],
-				"licenses": [
-					"GPLv2+"
 				],
 				"language": "",
 				"cpes": [

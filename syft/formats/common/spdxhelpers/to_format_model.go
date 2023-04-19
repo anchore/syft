@@ -501,7 +501,7 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	return ty
 }
 
-// TODO: other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
+// other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
 // field. The spdxexpression field is only filled given a validated Value field.
 func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
@@ -518,12 +518,12 @@ func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
 	sorted := maps.Keys(licenses)
 	slices.Sort(sorted)
 	for _, license := range sorted {
-		// separate the actual ID from the prefix
+		// separate the found value from the prefix
+		// this only contains licenses that are not found on the SPDX License List
 		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
 			LicenseIdentifier: SanitizeElementID(license),
-			LicenseName:       name,
-			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
+			ExtractedText:     name,
 		})
 	}
 	return result
