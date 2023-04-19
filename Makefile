@@ -199,7 +199,7 @@ fingerprints:
 
 	# for JAVA BUILD test fixtures
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
-		make packages.fingerprint
+		make cache.fingerprint
 
 	# for GO BINARY test fixtures
 	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
