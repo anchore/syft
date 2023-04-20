@@ -32,7 +32,7 @@ func must(c cpe.CPE, e error) cpe.CPE {
 }
 
 func Test_parseSBOM(t *testing.T) {
-
+	// TODO: update fixtures to use new license format
 	expectedPkgs := []pkg.Package{
 		{
 			Name:      "alpine-baselayout",

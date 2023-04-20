@@ -3,6 +3,7 @@ package ruby
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -14,12 +15,19 @@ func TestParseGemspec(t *testing.T) {
 	locations := source.NewLocationSet(source.NewLocation(fixture))
 
 	var expectedPkg = pkg.Package{
-		Name:         "bundler",
-		Version:      "2.1.4",
-		PURL:         "pkg:gem/bundler@2.1.4",
-		Locations:    locations,
-		Type:         pkg.GemPkg,
-		Licenses:     []pkg.License{},
+		Name:      "bundler",
+		Version:   "2.1.4",
+		PURL:      "pkg:gem/bundler@2.1.4",
+		Locations: locations,
+		Type:      pkg.GemPkg,
+		Licenses: []pkg.License{
+			{
+				Value:          "MIT",
+				SPDXExpression: "MIT",
+				Location:       source.NewLocation(fixture),
+				Type:           license.Declared,
+			},
+		},
 		Language:     pkg.Ruby,
 		MetadataType: pkg.GemMetadataType,
 		Metadata: pkg.GemMetadata{

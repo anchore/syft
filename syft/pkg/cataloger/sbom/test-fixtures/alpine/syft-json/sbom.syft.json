@@ -12,9 +12,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:alpine-baselayout:alpine-baselayout:3.2.0-r23:*:*:*:*:*:*:*",
@@ -395,9 +393,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:alpine-baselayout-data:alpine-baselayout-data:3.2.0-r23:*:*:*:*:*:*:*",
@@ -558,9 +554,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "MIT"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:alpine-keys:alpine-keys:2.4-r1:*:*:*:*:*:*:*",
@@ -995,9 +989,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:apk-tools:apk-tools:2.12.9-r3:*:*:*:*:*:*:*",
@@ -1103,9 +1095,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:busybox:busybox:1.35.0-r17:*:*:*:*:*:*:*"
@@ -1276,11 +1266,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "MPL-2.0",
-    "AND",
-    "MIT"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:ca-certificates-bundle:ca-certificates-bundle:20220614-r0:*:*:*:*:*:*:*",
@@ -1355,11 +1341,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "BSD-2-Clause",
-    "AND",
-    "BSD-3-Clause"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:libc-utils:libc-utils:0.7.2-r3:*:*:*:*:*:*:*",
@@ -1403,9 +1385,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "OpenSSL"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:libcrypto1.1:libcrypto1.1:1.1.1s-r0:*:*:*:*:*:*:*"
@@ -1582,9 +1562,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "OpenSSL"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:libssl1.1:libssl1.1:1.1.1s-r0:*:*:*:*:*:*:*"
@@ -1656,9 +1634,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "MIT"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:musl:musl:1.2.3-r1:*:*:*:*:*:*:*"
@@ -1721,11 +1697,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "MIT",
-    "BSD",
-    "GPL2+"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:musl-utils:musl-utils:1.2.3-r1:*:*:*:*:*:*:*",
@@ -1836,9 +1808,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:scanelf:scanelf:1.3.4-r0:*:*:*:*:*:*:*"
@@ -1896,9 +1866,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "GPL-2.0-only"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:ssl-client:ssl-client:1.35.0-r17:*:*:*:*:*:*:*",
@@ -1963,9 +1931,7 @@
      "layerID": "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"
     }
    ],
-   "licenses": [
-    "Zlib"
-   ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:a:zlib:zlib:1.2.12-r3:*:*:*:*:*:*:*"

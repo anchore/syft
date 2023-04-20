@@ -17,7 +17,8 @@ func newPackage(location source.Location, pd parsedData, distro *linux.Release) 
 	p := pkg.Package{
 		Name:         pd.Name,
 		Version:      toELVersion(pd.RpmMetadata),
-		PURL:         packageURL(pd.RpmMetadata),
+		Licenses:     pd.Licenses,
+		PURL:         packageURL(pd.RpmMetadata, distro),
 		Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmMetadataType,
@@ -33,9 +34,9 @@ type parsedData struct {
 	pkg.RpmMetadata
 }
 
-func newParsedDatafromEntry(entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
+func newParsedDatafromEntry(licenseLocation source.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
 	// TODO: use entry to populate the pkg.RpmMetadata struct in package constructor
-	license := pkg.NewLicense(entry.License, "", nil)
+	license := pkg.NewLicense(entry.License, "", licenseLocation)
 	return parsedData{
 		Licenses: []pkg.License{license},
 		RpmMetadata: pkg.RpmMetadata{
@@ -53,7 +54,7 @@ func newParsedDatafromEntry(entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord
 	}
 }
 
-func newMetadataFromManifestLine(entry string) (*pkg.RpmMetadata, error) {
+func newMetadataFromManifestLine(entry string) (*parsedData, error) {
 	parts := strings.Split(entry, "\t")
 	if len(parts) < 10 {
 		return nil, fmt.Errorf("unexpected number of fields in line: %s", entry)
@@ -79,16 +80,17 @@ func newMetadataFromManifestLine(entry string) (*pkg.RpmMetadata, error) {
 	if err == nil {
 		size = converted
 	}
-
-	return &pkg.RpmMetadata{
-		Name:      parts[0],
-		Version:   version,
-		Epoch:     epoch,
-		Arch:      parts[7],
-		Release:   release,
-		SourceRpm: parts[9],
-		Vendor:    parts[4],
-		Size:      size,
+	return &parsedData{
+		RpmMetadata: pkg.RpmMetadata{
+			Name:      parts[0],
+			Version:   version,
+			Epoch:     epoch,
+			Arch:      parts[7],
+			Release:   release,
+			SourceRpm: parts[9],
+			Vendor:    parts[4],
+			Size:      size,
+		},
 	}, nil
 }
 

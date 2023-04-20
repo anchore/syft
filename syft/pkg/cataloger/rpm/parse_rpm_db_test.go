@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -80,6 +81,7 @@ func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]source.Locatio
 }
 
 func TestParseRpmDB(t *testing.T) {
+	packagesLocation := source.NewLocation("test-fixtures/Packages")
 	tests := []struct {
 		fixture     string
 		expected    []pkg.Package
@@ -94,10 +96,18 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
+					Locations:    source.NewLocationSet(packagesLocation),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []pkg.License{},
+					Licenses: []pkg.License{
+						{
+							Value:          "MIT",
+							SPDXExpression: "MIT",
+							Type:           license.Declared,
+							URL:            "",
+							Location:       packagesLocation,
+						},
+					},
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
@@ -121,10 +131,18 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
+					Locations:    source.NewLocationSet(packagesLocation),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []pkg.License{},
+					Licenses: []pkg.License{
+						{
+							Value:          "MIT",
+							SPDXExpression: "MIT",
+							Type:           license.Declared,
+							URL:            "",
+							Location:       packagesLocation,
+						},
+					},
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
@@ -161,7 +179,6 @@ func TestParseRpmDB(t *testing.T) {
 				TestParser(t, parseRpmDB)
 		})
 	}
-
 }
 
 func TestToElVersion(t *testing.T) {

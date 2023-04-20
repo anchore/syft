@@ -26,29 +26,34 @@ func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.Locat
 		return nil, nil, err
 	}
 
-	_, _ = rpm.Header.GetStrings(rpmutils.LICENSE)
+	cl, _ := rpm.Header.GetStrings(rpmutils.LICENSE)
 	sourceRpm, _ := rpm.Header.GetString(rpmutils.SOURCERPM)
 	vendor, _ := rpm.Header.GetString(rpmutils.VENDOR)
 	digestAlgorithm := getDigestAlgorithm(rpm.Header)
 	size, _ := rpm.Header.InstalledSize()
 	files, _ := rpm.Header.GetFiles()
 
-	// TODO: UPDATE THIS TO USE LATEST LICENSE PARSING AND VALIDATION TOOLING
-	// License:   strings.Join(licenses, " AND "), // TODO: AND conjunction is not necessarily correct, but we don't have a way to represent multiple licenses yet
-
-	metadata := pkg.RpmMetadata{
-		Name:      nevra.Name,
-		Version:   nevra.Version,
-		Epoch:     parseEpoch(nevra.Epoch),
-		Arch:      nevra.Arch,
-		Release:   nevra.Release,
-		SourceRpm: sourceRpm,
-		Vendor:    vendor,
-		Size:      int(size),
-		Files:     mapFiles(files, digestAlgorithm),
+	licenses := []pkg.License{}
+	for _, l := range cl {
+		licenses = append(licenses, pkg.NewLicense(l, "", reader.Location))
 	}
 
-	return []pkg.Package{newPackage(reader.Location, metadata, nil)}, nil, nil
+	pd := parsedData{
+		licenses,
+		pkg.RpmMetadata{
+			Name:      nevra.Name,
+			Version:   nevra.Version,
+			Epoch:     parseEpoch(nevra.Epoch),
+			Arch:      nevra.Arch,
+			Release:   nevra.Release,
+			SourceRpm: sourceRpm,
+			Vendor:    vendor,
+			Size:      int(size),
+			Files:     mapFiles(files, digestAlgorithm),
+		},
+	}
+
+	return []pkg.Package{newPackage(reader.Location, pd, nil)}, nil, nil
 }
 
 func getDigestAlgorithm(header *rpmutils.RpmHeader) string {

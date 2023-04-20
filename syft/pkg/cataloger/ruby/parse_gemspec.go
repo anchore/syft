@@ -21,8 +21,8 @@ var _ generic.Parser = parseGemFileLockEntries
 type postProcessor func(string) []string
 
 type gemData struct {
-	Licenses []string `mapstructure:"licenses" json:"licenses,omitempty"`
-	pkg.GemMetadata
+	Licenses        []string `mapstructure:"licenses" json:"licenses,omitempty"`
+	pkg.GemMetadata `mapstructure:",squash" json:",inline"`
 }
 
 // match example:      Al\u003Ex   --->   003E
