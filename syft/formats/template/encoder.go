@@ -45,5 +45,11 @@ var funcMap = func() template.FuncMap {
 
 		return 0
 	}
+	// Checks if a field is defined
+	f["hasField"] = func(obj interface{}, field string) bool {
+		t := reflect.TypeOf(obj)
+		_, ok := t.FieldByName(field)
+		return ok
+	}
 	return f
 }()
