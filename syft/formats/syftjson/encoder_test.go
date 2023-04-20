@@ -65,6 +65,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
+			Author:  "package-author",
 			Files:   []pkg.PythonFileRecord{},
 		},
 		PURL: "a-purl-1",

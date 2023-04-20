@@ -178,6 +178,7 @@ func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
+			Author:  "package-author",
 		},
 		PURL: "a-purl-1", // intentionally a bad pURL for test fixtures
 		CPEs: []cpe.CPE{
@@ -253,6 +254,7 @@ func newDirectoryCatalog() *pkg.Catalog {
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
+			Author:  "package-author",
 			Files: []pkg.PythonFileRecord{
 				{
 					Path: "/some/path/pkg1/dependencies/foo",

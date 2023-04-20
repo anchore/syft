@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "66ba429119b8bec6",
+   "id": "3b71b371e0f36e18",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -25,7 +25,7 @@
     "name": "package-1",
     "version": "1.0.1",
     "license": "",
-    "author": "",
+    "author": "package-author",
     "authorEmail": "",
     "platform": "",
     "sitePackagesRootPath": ""
