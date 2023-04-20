@@ -40,6 +40,14 @@ func TestParsePnpmLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 		},
+		{
+			Name:      "@bcoe/v8-coverage",
+			Version:   "0.2.3",
+			PURL:      "pkg:npm/%40bcoe/v8-coverage@0.2.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
 	}
 
 	pkgtest.TestFileParser(t, fixture, parsePnpmLock, expectedPkgs, expectedRelationships)
