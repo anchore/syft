@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 type pipfileLock struct {
@@ -42,7 +41,7 @@ type Dependency struct {
 var _ generic.Parser = parsePipfileLock
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
-func parsePipfileLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePipfileLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pkgs := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 

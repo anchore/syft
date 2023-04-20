@@ -2,12 +2,12 @@ package github
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"

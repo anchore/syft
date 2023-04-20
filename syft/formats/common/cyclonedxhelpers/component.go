@@ -1,12 +1,12 @@
 package cyclonedxhelpers
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"reflect"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common"
 	"github.com/anchore/syft/syft/pkg"
 )

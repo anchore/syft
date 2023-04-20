@@ -2,13 +2,13 @@ package source
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 )
 
 var _ file.Resolver = (*imageAllLayersResolver)(nil)

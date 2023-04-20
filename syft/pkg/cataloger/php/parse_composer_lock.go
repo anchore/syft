@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseComposerLock
@@ -21,7 +20,7 @@ type composerLock struct {
 }
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseComposerLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseComposerLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pkgs := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 

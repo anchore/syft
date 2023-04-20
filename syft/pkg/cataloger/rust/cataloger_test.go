@@ -1,9 +1,9 @@
 package rust
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"testing"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )

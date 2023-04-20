@@ -5,13 +5,13 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"sort"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 )
 
 // Package represents an application or library that has been bundled into a distributable format.

@@ -2,15 +2,14 @@ package haskell
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseStackYaml
@@ -20,7 +19,7 @@ type stackYaml struct {
 }
 
 // parseStackYaml is a parser function for stack.yaml contents, returning all packages discovered.
-func parseStackYaml(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseStackYaml(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load stack.yaml file: %w", err)

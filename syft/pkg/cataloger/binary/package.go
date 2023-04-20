@@ -1,10 +1,10 @@
 package binary
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"reflect"
 
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

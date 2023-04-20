@@ -2,13 +2,13 @@ package javascript
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"path"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

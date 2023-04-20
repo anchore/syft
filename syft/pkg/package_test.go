@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -9,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestIDUniqueness(t *testing.T) {

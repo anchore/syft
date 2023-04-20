@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 )
 
 type expectedIndexes struct {

@@ -137,7 +137,7 @@ func generateCatalogSecretsTask(app *config.Application) (Task, error) {
 		return nil, err
 	}
 
-	secretsCataloger, err := secrets.NewCataloger(patterns, app.Secrets.RevealValues, app.Secrets.SkipFilesAboveSize)
+	secretsCataloger, err := secrets.NewCataloger(patterns, app.Secrets.RevealValues, app.Secrets.SkipFilesAboveSize) //nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func generateCatalogContentsTask(app *config.Application) (Task, error) {
 		return nil, nil
 	}
 
-	contentsCataloger, err := filecontent.NewCataloger(app.FileContents.Globs, app.FileContents.SkipFilesAboveSize)
+	contentsCataloger, err := filecontent.NewCataloger(app.FileContents.Globs, app.FileContents.SkipFilesAboveSize) //nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}

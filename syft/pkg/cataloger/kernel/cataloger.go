@@ -4,11 +4,11 @@ Package kernel provides a concrete Cataloger implementation for linux kernel and
 package kernel
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )

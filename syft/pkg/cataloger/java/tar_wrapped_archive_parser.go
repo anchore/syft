@@ -2,13 +2,12 @@ package java
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var genericTarGlobs = []string{
@@ -46,7 +45,7 @@ var genericTarGlobs = []string{
 // note: for compressed tars this is an extremely expensive operation and can lead to performance degradation. This is
 // due to the fact that there is no central directory header (say as in zip), which means that in order to get
 // a file listing within the archive you must decompress the entire archive and seek through all of the entries.
-func parseTarWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseTarWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.AccessPath(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()

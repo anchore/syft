@@ -2,13 +2,12 @@ package java
 
 import (
 	"bufio"
-	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 const gradleLockfileGlob = "**/gradle.lockfile*"
@@ -20,7 +19,7 @@ type LockfileDependency struct {
 	Version string
 }
 
-func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file

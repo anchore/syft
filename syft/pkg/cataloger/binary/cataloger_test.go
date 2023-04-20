@@ -3,7 +3,6 @@ package binary
 import (
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"strings"
 	"testing"
@@ -14,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )

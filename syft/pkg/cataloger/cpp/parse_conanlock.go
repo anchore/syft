@@ -2,13 +2,12 @@ package cpp
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseConanlock
@@ -31,7 +30,7 @@ type conanLock struct {
 }
 
 // parseConanlock is a parser function for conan.lock contents, returning all packages discovered.
-func parseConanlock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var cl conanLock
 	if err := json.NewDecoder(reader).Decode(&cl); err != nil {

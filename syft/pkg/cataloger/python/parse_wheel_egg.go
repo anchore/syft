@@ -4,20 +4,19 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents.
-func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
 		return nil, nil, err

@@ -3,13 +3,12 @@ package dotnet
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"sort"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseDotnetDeps
@@ -25,7 +24,7 @@ type dotnetDepsLibrary struct {
 	HashPath string `json:"hashPath"`
 }
 
-func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	dec := json.NewDecoder(reader)

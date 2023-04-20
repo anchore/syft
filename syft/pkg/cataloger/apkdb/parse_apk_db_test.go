@@ -18,7 +18,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestExtraFileAttributes(t *testing.T) {
@@ -1031,7 +1030,7 @@ func TestPackageDbDependenciesByParse(t *testing.T) {
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			pkgs, relationships, err := parseApkDB(nil, nil, source.LocationReadCloser{
+			pkgs, relationships, err := parseApkDB(nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),
 				ReadCloser: f,
 			})
@@ -1142,7 +1141,7 @@ func toPackageNames(pkgs []pkg.Package) []string {
 	return names
 }
 
-func newLocationReadCloser(t *testing.T, path string) source.LocationReadCloser {
+func newLocationReadCloser(t *testing.T, path string) file.LocationReadCloser {
 	f, err := os.Open(path)
 	require.NoError(t, err)
 	t.Cleanup(func() { f.Close() })
@@ -1226,7 +1225,7 @@ https://foo.them.org/alpine/v3.14/community`,
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			reposReader := io.NopCloser(strings.NewReader(tt.repos))
-			got := parseReleasesFromAPKRepository(source.LocationReadCloser{
+			got := parseReleasesFromAPKRepository(file.LocationReadCloser{
 				Location:   file.NewLocation("test"),
 				ReadCloser: reposReader,
 			})

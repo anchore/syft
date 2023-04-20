@@ -2,13 +2,13 @@ package rpm
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"strconv"
 	"strings"
 
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 )

@@ -6,7 +6,6 @@ import (
 	"debug/macho"
 	"debug/pe"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"regexp"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )

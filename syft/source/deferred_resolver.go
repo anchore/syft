@@ -1,10 +1,10 @@
 package source
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"io"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 )
 
 var _ file.Resolver = (*DeferredResolver)(nil)

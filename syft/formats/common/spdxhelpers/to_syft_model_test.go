@@ -1,7 +1,6 @@
 package spdxhelpers
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )

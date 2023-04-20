@@ -1,13 +1,13 @@
 package java
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )

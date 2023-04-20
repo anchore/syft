@@ -4,7 +4,6 @@
 package source
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"path"
@@ -20,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 )
 
 func Test_UnindexedDirectoryResolver_Basic(t *testing.T) {

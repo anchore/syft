@@ -4,20 +4,19 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseCabalFreeze
 
 // parseCabalFreeze is a parser function for cabal.project.freeze contents, returning all packages discovered.
-func parseCabalFreeze(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseCabalFreeze(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	var pkgs []pkg.Package
 	for {

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"regexp"
 	"strings"
 
@@ -12,9 +11,9 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseGemFileLockEntries
@@ -60,7 +59,7 @@ func processList(s string) []string {
 	return results
 }
 
-func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)

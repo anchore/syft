@@ -2,12 +2,12 @@ package nix
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 
 	"github.com/bmatcuk/doublestar/v4"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

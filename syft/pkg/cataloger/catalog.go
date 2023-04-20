@@ -2,7 +2,6 @@ package cataloger
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"math"
 	"runtime/debug"
 	"sync"
@@ -15,6 +14,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"

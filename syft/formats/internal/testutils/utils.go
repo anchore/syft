@@ -2,7 +2,6 @@ package testutils
 
 import (
 	"bytes"
-	"github.com/anchore/syft/syft/file"
 	"math/rand"
 	"strings"
 	"testing"
@@ -18,6 +17,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"

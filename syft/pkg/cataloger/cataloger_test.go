@@ -1,12 +1,12 @@
 package cataloger
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

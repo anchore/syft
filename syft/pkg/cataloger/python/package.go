@@ -2,9 +2,9 @@ package python
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

@@ -1,13 +1,13 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestRelationshipsEvidentBy(t *testing.T) {

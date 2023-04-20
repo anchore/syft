@@ -1,8 +1,9 @@
 package source
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"io"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 var _ file.WritableResolver = (*EmptyResolver)(nil)

@@ -2,7 +2,6 @@ package source
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"io/fs"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 )
 
 var _ file.Resolver = (*UnindexedDirectoryResolver)(nil)

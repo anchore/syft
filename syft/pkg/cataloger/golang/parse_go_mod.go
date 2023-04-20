@@ -3,7 +3,6 @@ package golang
 import (
 	"bufio"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"sort"
 	"strings"
@@ -12,9 +11,9 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 type goModCataloger struct {
@@ -24,7 +23,7 @@ type goModCataloger struct {
 // parseGoModFile takes a go.mod and lists all packages discovered.
 //
 //nolint:funlen
-func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
 	contents, err := io.ReadAll(reader)
@@ -105,7 +104,7 @@ func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Envir
 	return pkgsSlice, nil, nil
 }
 
-func parseGoSumFile(resolver file.Resolver, reader source.LocationReadCloser) (map[string]string, error) {
+func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map[string]string, error) {
 	out := map[string]string{}
 
 	if resolver == nil {

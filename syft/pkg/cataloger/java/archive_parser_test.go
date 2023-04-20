@@ -3,7 +3,6 @@ package java
 import (
 	"bufio"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"os/exec"
@@ -17,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {
@@ -277,7 +276,7 @@ func TestParseJar(t *testing.T) {
 				test.expected[k] = p
 			}
 
-			parser, cleanupFn, err := newJavaArchiveParser(source.LocationReadCloser{
+			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			}, false)
@@ -547,7 +546,7 @@ func TestParseNestedJar(t *testing.T) {
 			fixture, err := os.Open(test.fixture)
 			require.NoError(t, err)
 
-			actual, _, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
+			actual, _, err := parseJavaArchive(nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})

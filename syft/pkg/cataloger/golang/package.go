@@ -1,13 +1,13 @@
 package golang
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"regexp"
 	"runtime/debug"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 

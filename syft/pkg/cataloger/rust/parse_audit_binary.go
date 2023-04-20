@@ -2,20 +2,19 @@ package rust
 
 import (
 	"errors"
-	"github.com/anchore/syft/syft/file"
 
 	rustaudit "github.com/microsoft/go-rustaudit"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Catalog identifies executables then attempts to read Rust dependency information from them
-func parseAuditBinary(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseAuditBinary(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)

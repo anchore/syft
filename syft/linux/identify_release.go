@@ -2,7 +2,6 @@ package linux
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"regexp"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 )
 
 // returns a distro or nil

@@ -2,14 +2,13 @@ package python
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 
 	"github.com/pelletier/go-toml"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
@@ -26,7 +25,7 @@ type poetryMetadata struct {
 }
 
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
-func parsePoetryLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePoetryLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to load poetry.lock for parsing: %w", err)

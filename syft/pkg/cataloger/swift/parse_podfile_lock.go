@@ -2,16 +2,15 @@ package swift
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parsePodfileLock
@@ -26,7 +25,7 @@ type podfileLock struct {
 }
 
 // parsePodfileLock is a parser function for Podfile.lock contents, returning all cocoapods pods discovered.
-func parsePodfileLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePodfileLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)

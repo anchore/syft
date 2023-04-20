@@ -13,7 +13,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseJavaArchive
@@ -52,7 +51,7 @@ type archiveParser struct {
 }
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
-func parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(reader, true)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
@@ -72,7 +71,7 @@ func uniquePkgKey(p *pkg.Package) string {
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
-func newJavaArchiveParser(reader source.LocationReadCloser, detectNested bool) (*archiveParser, func(), error) {
+func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.AccessPath(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
@@ -302,7 +301,7 @@ func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, ar
 	nestedPath := fmt.Sprintf("%s:%s", location.AccessPath(), pathWithinArchive)
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
 	nestedLocation.VirtualPath = nestedPath
-	nestedPkgs, nestedRelationships, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
+	nestedPkgs, nestedRelationships, err := parseJavaArchive(nil, nil, file.LocationReadCloser{
 		Location:   nestedLocation,
 		ReadCloser: archiveReadCloser,
 	})

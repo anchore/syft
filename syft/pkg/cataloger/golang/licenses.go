@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"io/fs"
 	"net/http"
@@ -23,6 +22,7 @@ import (
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
 

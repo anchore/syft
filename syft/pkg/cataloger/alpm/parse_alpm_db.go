@@ -17,7 +17,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseAlpmDB
@@ -31,7 +30,7 @@ var (
 	}
 )
 
-func parseAlpmDB(resolver file.Resolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseAlpmDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, err := parseAlpmDBEntry(reader)
 	if err != nil {
 		return nil, nil, err

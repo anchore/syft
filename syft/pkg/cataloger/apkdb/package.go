@@ -1,10 +1,10 @@
 package apkdb
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 )

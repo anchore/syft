@@ -2,7 +2,6 @@ package pkgtest
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"strings"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -32,7 +32,7 @@ type CatalogTester struct {
 	ignoreUnfulfilledPathResponses map[string][]string
 	ignoreAnyUnfulfilledPaths      []string
 	env                            *generic.Environment
-	reader                         source.LocationReadCloser
+	reader                         file.LocationReadCloser
 	resolver                       file.Resolver
 	wantErr                        require.ErrorAssertionFunc
 	compareOptions                 []cmp.Option
@@ -79,7 +79,7 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 	fixture, err := os.Open(path)
 	require.NoError(t, err)
 
-	p.reader = source.LocationReadCloser{
+	p.reader = file.LocationReadCloser{
 		Location:   file.NewLocation(fixture.Name()),
 		ReadCloser: fixture,
 	}
@@ -87,7 +87,7 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 }
 
 func (p *CatalogTester) FromString(location, data string) *CatalogTester {
-	p.reader = source.LocationReadCloser{
+	p.reader = file.LocationReadCloser{
 		Location:   file.NewLocation(location),
 		ReadCloser: io.NopCloser(strings.NewReader(data)),
 	}

@@ -7,7 +7,6 @@ import (
 	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 const catalogerName = "sbom-cataloger"
@@ -30,7 +29,7 @@ func NewSBOMCataloger() *generic.Cataloger {
 		)
 }
 
-func parseSBOM(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseSBOM(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	s, _, err := formats.Decode(reader)
 	if err != nil {
 		return nil, nil, err

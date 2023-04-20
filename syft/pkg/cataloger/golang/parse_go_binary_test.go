@@ -2,7 +2,6 @@ package golang
 
 import (
 	"bufio"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"os/exec"
@@ -15,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )

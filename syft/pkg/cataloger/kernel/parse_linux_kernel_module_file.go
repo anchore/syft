@@ -3,19 +3,18 @@ package kernel
 import (
 	"debug/elf"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"github.com/anchore/syft/syft/source"
 )
 
 const modinfoName = ".modinfo"
 
-func parseLinuxKernelModuleFile(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseLinuxKernelModuleFile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)

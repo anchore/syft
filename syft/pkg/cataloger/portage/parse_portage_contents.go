@@ -16,7 +16,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var (
@@ -24,7 +23,7 @@ var (
 	_     generic.Parser = parsePortageContents
 )
 
-func parsePortageContents(resolver file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePortageContents(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	cpvMatch := cpvRe.FindStringSubmatch(reader.Location.RealPath)
 	if cpvMatch == nil {
 		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.Location.RealPath)

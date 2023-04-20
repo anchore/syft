@@ -2,11 +2,12 @@ package pkgtest
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 var _ file.Resolver = (*ObservingResolver)(nil)

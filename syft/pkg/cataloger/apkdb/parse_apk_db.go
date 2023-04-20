@@ -16,7 +16,6 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
@@ -30,7 +29,7 @@ var (
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen,gocognit
-func parseApkDB(resolver file.Resolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
 	var apks []pkg.ApkMetadata
@@ -152,13 +151,13 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 		return nil
 	}
 
-	return parseReleasesFromAPKRepository(source.LocationReadCloser{
+	return parseReleasesFromAPKRepository(file.LocationReadCloser{
 		Location:   location,
 		ReadCloser: reposReader,
 	})
 }
 
-func parseReleasesFromAPKRepository(reader source.LocationReadCloser) []linux.Release {
+func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Release {
 	var releases []linux.Release
 
 	reposB, err := io.ReadAll(reader)

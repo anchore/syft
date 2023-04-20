@@ -3,7 +3,6 @@ package java
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"reflect"
 	"regexp"
@@ -13,16 +12,16 @@ import (
 	"golang.org/x/net/html/charset"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func parserPomXML(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
