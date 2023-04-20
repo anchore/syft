@@ -3,6 +3,10 @@ package filedigest
 import (
 	"crypto"
 	"errors"
+
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
+
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
@@ -10,8 +14,6 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
 	internal2 "github.com/anchore/syft/syft/file/cataloger/internal"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 )
 
 var ErrUndigestableFile = errors.New("undigestable file")

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"unsafe"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"github.com/anchore/syft/syft/source"
 )
 
 type nativeImageCycloneDX struct {
@@ -571,7 +571,7 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 }
 
 // Catalog attempts to find any native image executables reachable from a resolver.
-func (c *NativeImageCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *NativeImageCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	fileMatches, err := resolver.FilesByMIMEType(internal.ExecutableMIMETypeSet.List()...)
 	if err != nil {

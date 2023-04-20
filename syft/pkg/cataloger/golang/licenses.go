@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"io/fs"
 	"net/http"
@@ -27,7 +28,7 @@ import (
 
 type goLicenses struct {
 	opts                  GoCatalogerOpts
-	localModCacheResolver source.WritableFileResolver
+	localModCacheResolver file.WritableResolver
 	progress              *event.CatalogerTask
 }
 
@@ -54,8 +55,8 @@ func remotesForModule(proxies []string, noProxy []string, module string) []strin
 	return proxies
 }
 
-func modCacheResolver(modCacheDir string) source.WritableFileResolver {
-	var r source.WritableFileResolver
+func modCacheResolver(modCacheDir string) file.WritableResolver {
+	var r file.WritableResolver
 
 	if modCacheDir == "" {
 		log.Trace("unable to determine mod cache directory, skipping mod cache resolver")
@@ -74,7 +75,7 @@ func modCacheResolver(modCacheDir string) source.WritableFileResolver {
 	return r
 }
 
-func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, moduleVersion string) (licenses []string, err error) {
+func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersion string) (licenses []string, err error) {
 	licenses, err = findLicenses(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
@@ -130,7 +131,7 @@ func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]
 		if err != nil {
 			return err
 		}
-		return c.localModCacheResolver.Write(source.NewLocation(path.Join(dir, filePath)), f)
+		return c.localModCacheResolver.Write(file.NewLocation(path.Join(dir, filePath)), f)
 	})
 
 	if err != nil {
@@ -155,7 +156,7 @@ func requireCollection(licenses []string) []string {
 	return licenses
 }
 
-func findLicenses(resolver source.FileResolver, globMatch string) (out []string, err error) {
+func findLicenses(resolver file.Resolver, globMatch string) (out []string, err error) {
 	if resolver == nil {
 		return
 	}

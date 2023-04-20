@@ -669,7 +669,7 @@ func TestSinglePackageDetails(t *testing.T) {
 
 func TestMultiplePackages(t *testing.T) {
 	fixture := "test-fixtures/multiple"
-	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
 			Name:         "libc-utils",
@@ -994,7 +994,7 @@ func Test_discoverPackageDependencies(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgs, wantRelationships := test.genFn()
 			gotRelationships := discoverPackageDependencies(pkgs)
-			d := cmp.Diff(wantRelationships, gotRelationships, cmpopts.IgnoreUnexported(pkg.Package{}, source.LocationSet{}))
+			d := cmp.Diff(wantRelationships, gotRelationships, cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationSet{}))
 			if d != "" {
 				t.Fail()
 				t.Log(d)
@@ -1032,7 +1032,7 @@ func TestPackageDbDependenciesByParse(t *testing.T) {
 			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
 			pkgs, relationships, err := parseApkDB(nil, nil, source.LocationReadCloser{
-				Location:   source.NewLocation(test.fixture),
+				Location:   file.NewLocation(test.fixture),
 				ReadCloser: f,
 			})
 			require.NoError(t, err)
@@ -1147,7 +1147,7 @@ func newLocationReadCloser(t *testing.T, path string) source.LocationReadCloser 
 	require.NoError(t, err)
 	t.Cleanup(func() { f.Close() })
 
-	return source.NewLocationReadCloser(source.NewLocation(path), f)
+	return file.NewLocationReadCloser(file.NewLocation(path), f)
 }
 
 func Test_stripVersionSpecifier(t *testing.T) {
@@ -1227,7 +1227,7 @@ https://foo.them.org/alpine/v3.14/community`,
 		t.Run(tt.desc, func(t *testing.T) {
 			reposReader := io.NopCloser(strings.NewReader(tt.repos))
 			got := parseReleasesFromAPKRepository(source.LocationReadCloser{
-				Location:   source.NewLocation("test"),
+				Location:   file.NewLocation("test"),
 				ReadCloser: reposReader,
 			})
 			assert.Equal(t, tt.want, got)

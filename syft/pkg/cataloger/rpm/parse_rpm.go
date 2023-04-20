@@ -16,7 +16,7 @@ import (
 )
 
 // parseRpm parses a single RPM
-func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpm(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	rpm, err := rpmutils.ReadRpm(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.Location.RealPath, err)

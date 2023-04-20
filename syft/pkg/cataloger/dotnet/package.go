@@ -1,14 +1,14 @@
 package dotnet
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations ...source.Location) *pkg.Package {
+func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations ...file.Location) *pkg.Package {
 	if lib.Type != "package" {
 		return nil
 	}
@@ -28,7 +28,7 @@ func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations .
 	p := &pkg.Package{
 		Name:         name,
 		Version:      version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(m),
 		Language:     pkg.Dotnet,
 		Type:         pkg.DotnetPkg,

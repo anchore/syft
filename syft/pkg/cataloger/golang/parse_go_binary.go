@@ -7,6 +7,7 @@ import (
 	"debug/pe"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"runtime/debug"
 	"strings"
@@ -43,7 +44,7 @@ type goBinaryCataloger struct {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
-func (c *goBinaryCataloger) parseGoBinary(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
@@ -60,7 +61,7 @@ func (c *goBinaryCataloger) parseGoBinary(resolver source.FileResolver, _ *gener
 	return pkgs, nil, nil
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *debug.BuildInfo, arch string, location file.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := c.newGoBinaryPackage(
 		resolver,
@@ -197,7 +198,7 @@ func createMainModuleFromPath(path string) (mod debug.Module) {
 	return
 }
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver source.FileResolver, location source.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
 	var pkgs []pkg.Package
 	if mod == nil {
 		return pkgs

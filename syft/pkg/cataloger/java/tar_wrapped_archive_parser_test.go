@@ -1,6 +1,7 @@
 package java
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"os"
 	"path"
 	"testing"
@@ -41,7 +42,7 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 			}
 
 			actualPkgs, _, err := parseTarWrappedJavaArchive(nil, nil, source.LocationReadCloser{
-				Location:   source.NewLocation(test.fixture),
+				Location:   file.NewLocation(test.fixture),
 				ReadCloser: fixture,
 			})
 			require.NoError(t, err)

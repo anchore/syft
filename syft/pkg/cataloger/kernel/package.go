@@ -1,20 +1,20 @@
 package kernel
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 const linuxKernelPackageName = "linux-kernel"
 
-func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, locations ...source.Location) pkg.Package {
+func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         linuxKernelPackageName,
 		Version:      metadata.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(linuxKernelPackageName, metadata.Version),
 		Type:         pkg.LinuxKernelPkg,
 		MetadataType: pkg.LinuxKernelMetadataType,
@@ -26,7 +26,7 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, locations ...source
 	return p
 }
 
-func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, locations ...source.Location) pkg.Package {
+func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, locations ...file.Location) pkg.Package {
 	var licenses []string
 	if metadata.License != "" {
 		licenses = []string{metadata.License}
@@ -37,7 +37,7 @@ func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, locatio
 	p := pkg.Package{
 		Name:         metadata.Name,
 		Version:      metadata.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		Licenses:     licenses,
 		PURL:         packageURL(metadata.Name, metadata.Version),
 		Type:         pkg.LinuxKernelModulePkg,

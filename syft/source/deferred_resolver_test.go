@@ -1,6 +1,7 @@
 package source
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,9 +10,9 @@ import (
 func Test_NewDeferredResolver(t *testing.T) {
 	creatorCalled := false
 
-	deferredResolver := NewDeferredResolver(func() (FileResolver, error) {
+	deferredResolver := NewDeferredResolver(func() (file.Resolver, error) {
 		creatorCalled = true
-		return NewMockResolverForPaths(), nil
+		return file.NewMockResolverForPaths(), nil
 	})
 
 	require.False(t, creatorCalled)

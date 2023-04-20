@@ -1,11 +1,11 @@
 package java
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_parserGradleLockfile(t *testing.T) {
@@ -44,7 +44,7 @@ func Test_parserGradleLockfile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(source.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
 			pkgtest.TestFileParser(t, test.input, parseGradleLockfile, test.expected, nil)
 		})

@@ -1,18 +1,18 @@
 package php
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newComposerLockPackage(m pkg.PhpComposerJSONMetadata, location ...source.Location) pkg.Package {
+func newComposerLockPackage(m pkg.PhpComposerJSONMetadata, location ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(location...),
+		Locations:    file.NewLocationSet(location...),
 		PURL:         packageURL(m),
 		Language:     pkg.PHP,
 		Type:         pkg.PhpComposerPkg,

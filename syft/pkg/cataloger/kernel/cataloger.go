@@ -4,13 +4,13 @@ Package kernel provides a concrete Cataloger implementation for linux kernel and
 package kernel
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
@@ -53,7 +53,7 @@ func (l LinuxKernelCataloger) Name() string {
 	return "linux-kernel-cataloger"
 }
 
-func (l LinuxKernelCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (l LinuxKernelCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var allPackages []pkg.Package
 	var allRelationships []artifact.Relationship
 	var errs error

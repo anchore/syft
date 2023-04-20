@@ -1,16 +1,16 @@
 package ruby
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseGemfileLockEntries(t *testing.T) {
 	fixture := "test-fixtures/Gemfile.lock"
-	locations := source.NewLocationSet(source.NewLocation(fixture))
+	locations := file.NewLocationSet(file.NewLocation(fixture))
 	var expectedPkgs = []pkg.Package{
 		{Name: "actionmailer", Version: "4.1.1", PURL: "pkg:gem/actionmailer@4.1.1", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
 		{Name: "actionpack", Version: "4.1.1", PURL: "pkg:gem/actionpack@4.1.1", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},

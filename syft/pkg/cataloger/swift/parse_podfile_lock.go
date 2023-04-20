@@ -2,6 +2,7 @@ package swift
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"strings"
 
@@ -25,7 +26,7 @@ type podfileLock struct {
 }
 
 // parsePodfileLock is a parser function for Podfile.lock contents, returning all cocoapods pods discovered.
-func parsePodfileLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePodfileLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)

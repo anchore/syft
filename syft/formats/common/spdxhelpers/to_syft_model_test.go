@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -336,7 +337,7 @@ func Test_toSyftRelationships(t *testing.T) {
 	}
 	pkg3.SetID()
 
-	loc1 := source.NewLocationFromCoordinates(source.Coordinates{
+	loc1 := file.NewLocationFromCoordinates(file.Coordinates{
 		RealPath:     "/somewhere/real",
 		FileSystemID: "abc",
 	})

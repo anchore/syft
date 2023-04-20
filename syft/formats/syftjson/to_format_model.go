@@ -74,7 +74,7 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 	}
 }
 
-func toSecrets(data map[source.Coordinates][]file.SearchResult) []model.Secrets {
+func toSecrets(data map[file.Coordinates][]file.SearchResult) []model.Secrets {
 	results := make([]model.Secrets, 0)
 	for coordinates, secrets := range data {
 		results = append(results, model.Secrets{
@@ -95,7 +95,7 @@ func toFile(s sbom.SBOM) []model.File {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range s.AllCoordinates() {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -126,7 +126,7 @@ func toFile(s sbom.SBOM) []model.File {
 	return results
 }
 
-func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMetadata) *model.FileMetadataEntry {
+func toFileMetadataEntry(coordinates file.Coordinates, metadata *file.Metadata) *model.FileMetadataEntry {
 	if metadata == nil {
 		return nil
 	}

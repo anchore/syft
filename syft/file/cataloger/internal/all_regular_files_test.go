@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"github.com/anchore/syft/syft/file/cataloger"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -20,20 +20,16 @@ func Test_allRegularFiles(t *testing.T) {
 	}
 	tests := []struct {
 		name             string
-		setup            func() source.FileResolver
+		setup            func() file.Resolver
 		wantRealPaths    *strset.Set
 		wantVirtualPaths *strset.Set
 	}{
 		{
 			name: "image",
-			setup: func() source.FileResolver {
+			setup: func() file.Resolver {
 				testImage := "image-file-type-mix"
 
-				if *cataloger.updateImageGoldenFiles {
-					imagetest.UpdateGoldenFixtureImage(t, testImage)
-				}
-
-				img := imagetest.GetGoldenFixtureImage(t, testImage)
+				img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 				s, err := source.NewFromImage(img, "---")
 				require.NoError(t, err)
@@ -48,7 +44,7 @@ func Test_allRegularFiles(t *testing.T) {
 		},
 		{
 			name: "directory",
-			setup: func() source.FileResolver {
+			setup: func() file.Resolver {
 				s, err := source.NewFromDirectory("test-fixtures/symlinked-root/nested/link-root")
 				require.NoError(t, err)
 				r, err := s.FileResolver(source.SquashedScope)

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"path/filepath"
 
@@ -16,7 +17,7 @@ import (
 )
 
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents.
-func parseWheelOrEgg(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
 		return nil, nil, err
@@ -37,7 +38,7 @@ func parseWheelOrEgg(resolver source.FileResolver, _ *generic.Environment, reade
 }
 
 // fetchRecordFiles finds a corresponding installed-files.txt file for the given python package metadata file and returns the set of file records contained.
-func fetchInstalledFiles(resolver source.FileResolver, metadataLocation source.Location, sitePackagesRootPath string) (files []pkg.PythonFileRecord, sources []source.Location, err error) {
+func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location, sitePackagesRootPath string) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the installed-files.txt path to the same layer (or the next adjacent lower layer).
@@ -68,7 +69,7 @@ func fetchInstalledFiles(resolver source.FileResolver, metadataLocation source.L
 }
 
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.
-func fetchRecordFiles(resolver source.FileResolver, metadataLocation source.Location) (files []pkg.PythonFileRecord, sources []source.Location, err error) {
+func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
@@ -95,7 +96,7 @@ func fetchRecordFiles(resolver source.FileResolver, metadataLocation source.Loca
 }
 
 // fetchTopLevelPackages finds a corresponding top_level.txt file for the given python package metadata file and returns the set of package names contained.
-func fetchTopLevelPackages(resolver source.FileResolver, metadataLocation source.Location) (pkgs []string, sources []source.Location, err error) {
+func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Location) (pkgs []string, sources []file.Location, err error) {
 	// a top_level.txt file specifies the python top-level packages (provided by this python package) installed into site-packages
 	parentDir := filepath.Dir(metadataLocation.RealPath)
 	topLevelPath := filepath.Join(parentDir, "top_level.txt")
@@ -125,7 +126,7 @@ func fetchTopLevelPackages(resolver source.FileResolver, metadataLocation source
 	return pkgs, sources, nil
 }
 
-func fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Location) (d *pkg.PythonDirectURLOriginInfo, sources []source.Location, err error) {
+func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) (d *pkg.PythonDirectURLOriginInfo, sources []file.Location, err error) {
 	parentDir := filepath.Dir(metadataLocation.RealPath)
 	directURLPath := filepath.Join(parentDir, "direct_url.json")
 	directURLLocation := resolver.RelativeFileByPath(metadataLocation, directURLPath)
@@ -160,8 +161,8 @@ func fetchDirectURLData(resolver source.FileResolver, metadataLocation source.Lo
 }
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
-func assembleEggOrWheelMetadata(resolver source.FileResolver, metadataLocation source.Location) (*pkg.PythonPackageMetadata, []source.Location, error) {
-	var sources = []source.Location{
+func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Location) (*pkg.PythonPackageMetadata, []file.Location, error) {
+	var sources = []file.Location{
 		metadataLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	}
 

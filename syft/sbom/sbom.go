@@ -21,10 +21,10 @@ type SBOM struct {
 
 type Artifacts struct {
 	PackageCatalog    *pkg.Catalog
-	FileMetadata      map[source.Coordinates]source.FileMetadata
-	FileDigests       map[source.Coordinates][]file.Digest
-	FileContents      map[source.Coordinates]string
-	Secrets           map[source.Coordinates][]file.SearchResult
+	FileMetadata      map[file.Coordinates]file.Metadata
+	FileDigests       map[file.Coordinates][]file.Digest
+	FileContents      map[file.Coordinates]string
+	Secrets           map[file.Coordinates][]file.SearchResult
 	LinuxDistribution *linux.Release
 }
 
@@ -48,8 +48,8 @@ func (s SBOM) RelationshipsSorted() []artifact.Relationship {
 	return relationships
 }
 
-func (s SBOM) AllCoordinates() []source.Coordinates {
-	set := source.NewCoordinateSet()
+func (s SBOM) AllCoordinates() []file.Coordinates {
+	set := file.NewCoordinateSet()
 	for coordinates := range s.Artifacts.FileMetadata {
 		set.Add(coordinates)
 	}
@@ -88,8 +88,8 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.Relationship
 
 // CoordinatesForPackage returns all coordinates for the provided package for provided relationship types
 // If no types are provided, all relationship types are considered.
-func (s SBOM) CoordinatesForPackage(p pkg.Package, rt ...artifact.RelationshipType) []source.Coordinates {
-	var coordinates []source.Coordinates
+func (s SBOM) CoordinatesForPackage(p pkg.Package, rt ...artifact.RelationshipType) []file.Coordinates {
+	var coordinates []file.Coordinates
 	for _, relationship := range s.RelationshipsForPackage(p, rt...) {
 		cords := extractCoordinates(relationship)
 		coordinates = append(coordinates, cords...)
@@ -97,12 +97,12 @@ func (s SBOM) CoordinatesForPackage(p pkg.Package, rt ...artifact.RelationshipTy
 	return coordinates
 }
 
-func extractCoordinates(relationship artifact.Relationship) (results []source.Coordinates) {
-	if coordinates, exists := relationship.From.(source.Coordinates); exists {
+func extractCoordinates(relationship artifact.Relationship) (results []file.Coordinates) {
+	if coordinates, exists := relationship.From.(file.Coordinates); exists {
 		results = append(results, coordinates)
 	}
 
-	if coordinates, exists := relationship.To.(source.Coordinates); exists {
+	if coordinates, exists := relationship.To.(file.Coordinates); exists {
 		results = append(results, coordinates)
 	}
 

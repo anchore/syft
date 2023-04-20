@@ -1,15 +1,15 @@
 package javascript
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_JavascriptCataloger(t *testing.T) {
-	locationSet := source.NewLocationSet(source.NewLocation("package-lock.json"))
+	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
 	expectedPkgs := []pkg.Package{
 		{
 			Name:         "@actions/core",

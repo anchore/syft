@@ -5,7 +5,6 @@ package parsers
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"io"
 
 	"github.com/wagoodman/go-partybus"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 )
 

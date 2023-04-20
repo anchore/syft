@@ -2,7 +2,8 @@ package generic
 
 import (
 	"fmt"
-	"io/ioutil"
+	"github.com/anchore/syft/syft/file"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,9 +16,9 @@ import (
 
 func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
-	parser := func(resolver source.FileResolver, env *Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	parser := func(resolver file.Resolver, env *Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 		allParsedPaths[reader.AccessPath()] = true
-		contents, err := ioutil.ReadAll(reader)
+		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
 
 		if len(contents) == 0 {
@@ -26,7 +27,7 @@ func Test_Cataloger(t *testing.T) {
 
 		p := pkg.Package{
 			Name:      string(contents),
-			Locations: source.NewLocationSet(reader.Location),
+			Locations: file.NewLocationSet(reader.Location),
 		}
 		r := artifact.Relationship{
 			From: p,
@@ -40,7 +41,7 @@ func Test_Cataloger(t *testing.T) {
 	upstream := "some-other-cataloger"
 
 	expectedSelection := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt", "test-fixtures/empty.txt"}
-	resolver := source.NewMockResolverForPaths(expectedSelection...)
+	resolver := file.NewMockResolverForPaths(expectedSelection...)
 	cataloger := NewCataloger(upstream).
 		WithParserByPath(parser, "test-fixtures/another-path.txt", "test-fixtures/last/path.txt").
 		WithParserByGlobs(parser, "**/a-path.txt", "**/empty.txt")

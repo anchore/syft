@@ -3,6 +3,7 @@ package java
 import (
 	"bufio"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"os/exec"
@@ -272,12 +273,12 @@ func TestParseJar(t *testing.T) {
 
 			for k := range test.expected {
 				p := test.expected[k]
-				p.Locations.Add(source.NewLocation(test.fixture))
+				p.Locations.Add(file.NewLocation(test.fixture))
 				test.expected[k] = p
 			}
 
 			parser, cleanupFn, err := newJavaArchiveParser(source.LocationReadCloser{
-				Location:   source.NewLocation(fixture.Name()),
+				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			}, false)
 			defer cleanupFn()
@@ -547,7 +548,7 @@ func TestParseNestedJar(t *testing.T) {
 			require.NoError(t, err)
 
 			actual, _, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
-				Location:   source.NewLocation(fixture.Name()),
+				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})
 			require.NoError(t, err)
@@ -975,7 +976,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			locations := source.NewLocationSet(source.NewLocation(virtualPath))
+			locations := file.NewLocationSet(file.NewLocation(virtualPath))
 			if test.expectedPackage != nil {
 				test.expectedPackage.Locations = locations
 				if test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent != nil {
@@ -987,7 +988,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, source.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

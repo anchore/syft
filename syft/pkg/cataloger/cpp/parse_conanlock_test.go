@@ -1,12 +1,12 @@
 package cpp
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseConanlock(t *testing.T) {
@@ -16,7 +16,7 @@ func TestParseConanlock(t *testing.T) {
 			Name:         "zlib",
 			Version:      "1.2.12",
 			PURL:         "pkg:conan/zlib@1.2.12",
-			Locations:    source.NewLocationSet(source.NewLocation(fixture)),
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanLockMetadataType,

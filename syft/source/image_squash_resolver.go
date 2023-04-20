@@ -2,14 +2,15 @@ package source
 
 import (
 	"fmt"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 	"io"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-var _ FileResolver = (*imageSquashResolver)(nil)
+var _ file.Resolver = (*imageSquashResolver)(nil)
 
 // imageSquashResolver implements path and content access for the Squashed source option for container image data sources.
 type imageSquashResolver struct {
@@ -29,12 +30,12 @@ func newImageSquashResolver(img *image.Image) (*imageSquashResolver, error) {
 
 // HasPath indicates if the given path exists in the underlying source.
 func (r *imageSquashResolver) HasPath(path string) bool {
-	return r.img.SquashedTree().HasPath(file.Path(path))
+	return r.img.SquashedTree().HasPath(stereoscopeFile.Path(path))
 }
 
 // FilesByPath returns all file.References that match the given paths within the squashed representation of the image.
 func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	for _, path := range paths {
@@ -69,7 +70,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 
 		if resolvedRef.HasReference() && !uniqueFileIDs.Contains(*resolvedRef.Reference) {
 			uniqueFileIDs.Add(*resolvedRef.Reference)
-			uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, *resolvedRef.Reference, r.img))
+			uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(path, *resolvedRef.Reference, r.img))
 		}
 	}
 
@@ -79,7 +80,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 // FilesByGlob returns all file.References that match the given path glob pattern within the squashed representation of the image.
 // nolint:gocognit
 func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
@@ -149,7 +150,7 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 	}
 
 	switch entry.Metadata.Type {
-	case file.TypeSymLink, file.TypeHardLink:
+	case stereoscopeFile.TypeSymLink, stereoscopeFile.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
 		locations, err := r.FilesByPath(location.RealPath)
 		if err != nil {
@@ -164,19 +165,19 @@ func (r *imageSquashResolver) FileContentsByLocation(location Location) (io.Read
 		default:
 			return nil, fmt.Errorf("link resolution resulted in multiple results while resolving content location: %+v", location)
 		}
-	case file.TypeDirectory:
+	case stereoscopeFile.TypeDirectory:
 		return nil, fmt.Errorf("unable to get file contents for directory: %+v", location)
 	}
 
-	return r.img.FileContentsByRef(location.Reference())
+	return r.img.OpenReference(location.Reference())
 }
 
 func (r *imageSquashResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		for _, ref := range r.img.SquashedTree().AllFiles(file.AllTypes()...) {
-			results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
+		for _, ref := range r.img.SquashedTree().AllFiles(stereoscopeFile.AllTypes()...) {
+			results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
 		}
 	}()
 	return results
@@ -188,7 +189,7 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 		return nil, err
 	}
 
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	for _, ref := range refs {
@@ -196,7 +197,7 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 			if uniqueFileIDs.Contains(*ref.Reference) {
 				continue
 			}
-			location := NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img)
+			location := file.NewLocationFromImage(string(ref.RequestPath), *ref.Reference, r.img)
 
 			uniqueFileIDs.Add(*ref.Reference)
 			uniqueLocations = append(uniqueLocations, location)
@@ -206,6 +207,6 @@ func (r *imageSquashResolver) FilesByMIMEType(types ...string) ([]Location, erro
 	return uniqueLocations, nil
 }
 
-func (r *imageSquashResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
+func (r *imageSquashResolver) FileMetadataByLocation(location Location) (file.Metadata, error) {
 	return fileMetadataByLocation(r.img, location)
 }

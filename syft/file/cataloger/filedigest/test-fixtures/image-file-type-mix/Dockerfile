@@ -1,4 +1,4 @@
-FROM busybox:latest
+FROM busybox:1.28.1@sha256:c7b0a24019b0e6eda714ec0fa137ad42bc44a754d9cea17d14fba3a80ccc1ee4
 
 ADD file-1.txt .
 RUN chmod 644 file-1.txt

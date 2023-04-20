@@ -2,6 +2,7 @@ package kernel
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"strconv"
 	"strings"
 
@@ -17,7 +18,7 @@ import (
 
 const linuxKernelMagicName = "Linux kernel"
 
-func parseLinuxKernelFile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseLinuxKernelFile(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)

@@ -1,18 +1,18 @@
 package haskell
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseStackLock(t *testing.T) {
 	url := "https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/14.yaml"
 	fixture := "test-fixtures/stack.yaml.lock"
-	locationSet := source.NewLocationSet(source.NewLocation(fixture))
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
 		{

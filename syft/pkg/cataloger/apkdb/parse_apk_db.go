@@ -30,7 +30,7 @@ var (
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen,gocognit
-func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(resolver file.Resolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
 	var apks []pkg.ApkMetadata
@@ -129,7 +129,7 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 	return pkgs, discoverPackageDependencies(pkgs), nil
 }
 
-func findReleases(resolver source.FileResolver, dbPath string) []linux.Release {
+func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 	if resolver == nil {
 		return nil
 	}

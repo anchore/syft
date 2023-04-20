@@ -3,7 +3,6 @@ package filedigest
 import (
 	"crypto"
 	"fmt"
-	"github.com/anchore/syft/syft/file/cataloger"
 	"io"
 	"os"
 	"path/filepath"
@@ -41,7 +40,7 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 			h := hash.New()
 			h.Write(b)
 			digests[file.NewLocation(f).Coordinates] = append(digests[file.NewLocation(f).Coordinates], file.Digest{
-				Algorithm: CleanDigestAlgorithmName(hash.String()),
+				Algorithm: file.CleanDigestAlgorithmName(hash.String()),
 				Value:     fmt.Sprintf("%x", h.Sum(nil)),
 			})
 		}
@@ -93,11 +92,7 @@ func TestDigestsCataloger(t *testing.T) {
 func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 	testImage := "image-file-type-mix"
 
-	if *cataloger.updateImageGoldenFiles {
-		imagetest.UpdateGoldenFixtureImage(t, testImage)
-	}
-
-	img := imagetest.GetGoldenFixtureImage(t, testImage)
+	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	src, err := source.NewFromImage(img, "---")
 	if err != nil {

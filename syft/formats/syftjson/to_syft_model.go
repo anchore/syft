@@ -41,8 +41,8 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 
 func toSyftFiles(files []model.File) sbom.Artifacts {
 	ret := sbom.Artifacts{
-		FileMetadata: make(map[source.Coordinates]source.FileMetadata),
-		FileDigests:  make(map[source.Coordinates][]file.Digest),
+		FileMetadata: make(map[file.Coordinates]file.Metadata),
+		FileDigests:  make(map[file.Coordinates][]file.Digest),
 	}
 
 	for _, f := range files {
@@ -56,7 +56,7 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 
 			fm := os.FileMode(mode)
 
-			ret.FileMetadata[coord] = source.FileMetadata{
+			ret.FileMetadata[coord] = file.Metadata{
 				Path:            coord.RealPath,
 				LinkDestination: f.Metadata.LinkDestination,
 				Size:            f.Metadata.Size,
@@ -280,7 +280,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
-		Locations:    source.NewLocationSet(p.Locations...),
+		Locations:    file.NewLocationSet(p.Locations...),
 		Licenses:     p.Licenses,
 		Language:     p.Language,
 		Type:         p.Type,

@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"io/fs"
 	"os"
@@ -18,6 +19,9 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
+var _ file.Resolver = (*UnindexedDirectoryResolver)(nil)
+var _ file.WritableResolver = (*UnindexedDirectoryResolver)(nil)
+
 type UnindexedDirectoryResolver struct {
 	ls   afero.Lstater
 	lr   afero.LinkReader
@@ -26,15 +30,15 @@ type UnindexedDirectoryResolver struct {
 	fs   afero.Fs
 }
 
-func NewUnindexedDirectoryResolver(dir string) WritableFileResolver {
+func NewUnindexedDirectoryResolver(dir string) file.WritableResolver {
 	return NewUnindexedDirectoryResolverFS(afero.NewOsFs(), dir, "")
 }
 
-func NewUnindexedDirectoryResolverRooted(dir string, base string) WritableFileResolver {
+func NewUnindexedDirectoryResolverRooted(dir string, base string) file.WritableResolver {
 	return NewUnindexedDirectoryResolverFS(afero.NewOsFs(), dir, base)
 }
 
-func NewUnindexedDirectoryResolverFS(fs afero.Fs, dir string, base string) WritableFileResolver {
+func NewUnindexedDirectoryResolverFS(fs afero.Fs, dir string, base string) file.WritableResolver {
 	ls, ok := fs.(afero.Lstater)
 	if !ok {
 		panic(fmt.Sprintf("unable to get afero.Lstater interface from: %+v", fs))
@@ -71,7 +75,7 @@ func NewUnindexedDirectoryResolverFS(fs afero.Fs, dir string, base string) Writa
 	}
 }
 
-func (u UnindexedDirectoryResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (u UnindexedDirectoryResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	p := u.absPath(u.scrubInputPath(location.RealPath))
 	f, err := u.fs.Open(p)
 	if err != nil {
@@ -142,11 +146,11 @@ func (u UnindexedDirectoryResolver) absPath(p string) string {
 
 // - full symlink resolution should be performed on all requests
 // - only returns locations to files (NOT directories)
-func (u UnindexedDirectoryResolver) FilesByPath(paths ...string) (out []Location, _ error) {
+func (u UnindexedDirectoryResolver) FilesByPath(paths ...string) (out []file.Location, _ error) {
 	return u.filesByPath(true, false, paths...)
 }
 
-func (u UnindexedDirectoryResolver) filesByPath(resolveLinks bool, includeDirs bool, paths ...string) (out []Location, _ error) {
+func (u UnindexedDirectoryResolver) filesByPath(resolveLinks bool, includeDirs bool, paths ...string) (out []file.Location, _ error) {
 	// sort here for stable output
 	sort.Strings(paths)
 nextPath:
@@ -176,11 +180,11 @@ nextPath:
 // - full symlink resolution should be performed on all requests
 // - if multiple paths to the same file are found, the best single match should be returned
 // - only returns locations to files (NOT directories)
-func (u UnindexedDirectoryResolver) FilesByGlob(patterns ...string) (out []Location, _ error) {
+func (u UnindexedDirectoryResolver) FilesByGlob(patterns ...string) (out []file.Location, _ error) {
 	return u.filesByGlob(true, false, patterns...)
 }
 
-func (u UnindexedDirectoryResolver) filesByGlob(resolveLinks bool, includeDirs bool, patterns ...string) (out []Location, _ error) {
+func (u UnindexedDirectoryResolver) filesByGlob(resolveLinks bool, includeDirs bool, patterns ...string) (out []file.Location, _ error) {
 	f := unindexedDirectoryResolverFS{
 		u: u,
 	}
@@ -199,13 +203,13 @@ func (u UnindexedDirectoryResolver) filesByGlob(resolveLinks bool, includeDirs b
 	return u.filesByPath(resolveLinks, includeDirs, paths...)
 }
 
-func (u UnindexedDirectoryResolver) FilesByMIMEType(_ ...string) ([]Location, error) {
+func (u UnindexedDirectoryResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	panic("FilesByMIMEType unsupported")
 }
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
-func (u UnindexedDirectoryResolver) RelativeFileByPath(l Location, p string) *Location {
+func (u UnindexedDirectoryResolver) RelativeFileByPath(l file.Location, p string) *file.Location {
 	p = path.Clean(path.Join(l.RealPath, p))
 	locs, err := u.filesByPath(true, false, p)
 	if err != nil || len(locs) == 0 {
@@ -221,8 +225,8 @@ func (u UnindexedDirectoryResolver) RelativeFileByPath(l Location, p string) *Lo
 
 // - NO symlink resolution should be performed on results
 // - returns locations for any file or directory
-func (u UnindexedDirectoryResolver) AllLocations() <-chan Location {
-	out := make(chan Location)
+func (u UnindexedDirectoryResolver) AllLocations() <-chan file.Location {
+	out := make(chan file.Location)
 	go func() {
 		defer close(out)
 		err := afero.Walk(u.fs, u.absPath("."), func(p string, info fs.FileInfo, err error) error {
@@ -231,8 +235,8 @@ func (u UnindexedDirectoryResolver) AllLocations() <-chan Location {
 				return nil
 			}
 			p = strings.TrimPrefix(p, "/")
-			out <- Location{
-				LocationData: LocationData{
+			out <- file.Location{
+				LocationData: file.LocationData{
 					Coordinates: Coordinates{
 						RealPath: p,
 					},
@@ -247,11 +251,11 @@ func (u UnindexedDirectoryResolver) AllLocations() <-chan Location {
 	return out
 }
 
-func (u UnindexedDirectoryResolver) FileMetadataByLocation(_ Location) (FileMetadata, error) {
+func (u UnindexedDirectoryResolver) FileMetadataByLocation(_ file.Location) (file.Metadata, error) {
 	panic("FileMetadataByLocation unsupported")
 }
 
-func (u UnindexedDirectoryResolver) Write(location Location, reader io.Reader) error {
+func (u UnindexedDirectoryResolver) Write(location file.Location, reader io.Reader) error {
 	filePath := location.RealPath
 	if path.IsAbs(filePath) {
 		filePath = filePath[1:]
@@ -260,10 +264,7 @@ func (u UnindexedDirectoryResolver) Write(location Location, reader io.Reader) e
 	return afero.WriteReader(u.fs, absPath, reader)
 }
 
-var _ FileResolver = (*UnindexedDirectoryResolver)(nil)
-var _ WritableFileResolver = (*UnindexedDirectoryResolver)(nil)
-
-func (u UnindexedDirectoryResolver) newLocation(filePath string, resolveLinks bool) *Location {
+func (u UnindexedDirectoryResolver) newLocation(filePath string, resolveLinks bool) *file.Location {
 	filePath = path.Clean(filePath)
 
 	virtualPath := ""
@@ -283,8 +284,8 @@ func (u UnindexedDirectoryResolver) newLocation(filePath string, resolveLinks bo
 		}
 	}
 
-	return &Location{
-		LocationData: LocationData{
+	return &file.Location{
+		LocationData: file.LocationData{
 			Coordinates: Coordinates{
 				RealPath: realPath,
 			},

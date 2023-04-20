@@ -3,6 +3,7 @@ package source
 import (
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"path"
@@ -10,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/log"
 )
@@ -159,7 +160,7 @@ func (r *directoryResolver) HasPath(userPath string) bool {
 	if err != nil {
 		return false
 	}
-	return r.tree.HasPath(file.Path(requestPath))
+	return r.tree.HasPath(stereoscopeFile.Path(requestPath))
 }
 
 // Stringer to represent a directory path data source
@@ -206,7 +207,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 
 		if ref.HasReference() {
 			references = append(references,
-				NewVirtualLocationFromDirectory(
+				file.NewVirtualLocationFromDirectory(
 					r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
 					r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
 					*ref.Reference,
@@ -220,7 +221,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
@@ -242,7 +243,7 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 				continue
 			}
 
-			loc := NewVirtualLocationFromDirectory(
+			loc := file.NewVirtualLocationFromDirectory(
 				r.responsePath(string(refVia.Reference.RealPath)), // the actual path relative to the resolver root
 				r.responsePath(string(refVia.RequestPath)),        // the path used to access this file, relative to the resolver root
 				*refVia.Reference,
@@ -283,7 +284,7 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 	}
 
 	// don't consider directories
-	if entry.Type == file.TypeDirectory {
+	if entry.Type == stereoscopeFile.TypeDirectory {
 		return nil, fmt.Errorf("cannot read contents of non-file %q", location.Reference().RealPath)
 	}
 
@@ -294,31 +295,31 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 		filePath = posixToWindows(filePath)
 	}
 
-	return file.NewLazyReadCloser(filePath), nil
+	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
 func (r *directoryResolver) AllLocations() <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
-		for _, ref := range r.tree.AllFiles(file.AllTypes()...) {
-			results <- NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
+		for _, ref := range r.tree.AllFiles(stereoscopeFile.AllTypes()...) {
+			results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
 		}
 	}()
 	return results
 }
 
-func (r *directoryResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
+func (r *directoryResolver) FileMetadataByLocation(location Location) (file.Metadata, error) {
 	entry, err := r.index.Get(location.Reference())
 	if err != nil {
-		return FileMetadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
+		return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 	}
 
 	return entry.Metadata, nil
 }
 
 func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	refVias, err := r.searchContext.SearchByMIMEType(types...)
@@ -332,7 +333,7 @@ func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error)
 		if uniqueFileIDs.Contains(*refVia.Reference) {
 			continue
 		}
-		location := NewLocationFromDirectory(
+		location := file.NewLocationFromDirectory(
 			r.responsePath(string(refVia.Reference.RealPath)),
 			*refVia.Reference,
 		)

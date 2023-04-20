@@ -6,6 +6,7 @@ import (
 	"debug/macho"
 	"debug/pe"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"regexp"
 	"strings"
@@ -17,7 +18,6 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"github.com/anchore/syft/syft/source"
 )
 
 var emptyPURL = packageurl.PackageURL{}
@@ -53,10 +53,10 @@ type classifier struct {
 }
 
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error)
+type evidenceMatcher func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error)
 
 func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
 		for _, matcher := range matchers {
 			match, err := matcher(resolver, classifier, location)
 			if err != nil {
@@ -72,7 +72,7 @@ func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
 
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
 		if !pat.MatchString(location.RealPath) {
 			return nil, nil
 		}
@@ -118,7 +118,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
 		contents, err := getContents(resolver, location)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
@@ -138,7 +138,7 @@ func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 //nolint:gocognit
 func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) (packages []pkg.Package, _ error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) (packages []pkg.Package, _ error) {
 		libs, err := sharedLibraries(resolver, location)
 		if err != nil {
 			return nil, err
@@ -159,7 +159,7 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evide
 				}
 				for _, p := range pkgs {
 					// set the source binary as the first location
-					locationSet := source.NewLocationSet(location)
+					locationSet := file.NewLocationSet(location)
 					locationSet.Add(p.Locations.ToSlice()...)
 					p.Locations = locationSet
 					meta, _ := p.Metadata.(pkg.BinaryMetadata)
@@ -187,7 +187,7 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func getContents(resolver source.FileResolver, location source.Location) ([]byte, error) {
+func getContents(resolver file.Resolver, location file.Location) ([]byte, error) {
 	reader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func singleCPE(cpeString string) []cpe.CPE {
 
 // sharedLibraries returns a list of all shared libraries found within a binary, currently
 // supporting: elf, macho, and windows pe
-func sharedLibraries(resolver source.FileResolver, location source.Location) ([]string, error) {
+func sharedLibraries(resolver file.Resolver, location file.Location) ([]string, error) {
 	contents, err := getContents(resolver, location)
 	if err != nil {
 		return nil, err

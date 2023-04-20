@@ -3,7 +3,6 @@ package secrets
 import (
 	"bytes"
 	"fmt"
-	internal2 "github.com/anchore/syft/syft/file/cataloger/internal"
 	"io"
 	"regexp"
 	"sort"
@@ -16,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
+	internal2 "github.com/anchore/syft/syft/file/cataloger/internal"
 )
 
 var DefaultSecretsPatterns = map[string]string{

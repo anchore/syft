@@ -2,6 +2,7 @@ package deb
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"path"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -21,11 +21,11 @@ const (
 	docsPath     = "/usr/share/doc"
 )
 
-func newDpkgPackage(d pkg.DpkgMetadata, dbLocation source.Location, resolver source.FileResolver, release *linux.Release) pkg.Package {
+func newDpkgPackage(d pkg.DpkgMetadata, dbLocation file.Location, resolver file.Resolver, release *linux.Release) pkg.Package {
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:         packageURL(d, release),
 		Type:         pkg.DebPkg,
 		MetadataType: pkg.DpkgMetadataType,
@@ -80,7 +80,7 @@ func packageURL(m pkg.DpkgMetadata, distro *linux.Release) string {
 	).ToString()
 }
 
-func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
+func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
 	if !ok {
 		log.WithFields("package", p).Warn("unable to extract DPKG metadata to add licenses")
@@ -100,7 +100,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 	}
 }
 
-func mergeFileListing(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
+func mergeFileListing(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
 	if !ok {
 		log.WithFields("package", p).Warn("unable to extract DPKG metadata to file listing")
@@ -132,10 +132,10 @@ loopNewFiles:
 	p.Locations.Add(infoLocations...)
 }
 
-func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) ([]pkg.DpkgFileRecord, []source.Location) {
+func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) ([]pkg.DpkgFileRecord, []file.Location) {
 	// ensure the default value for a collection is never nil since this may be shown as JSON
 	var files = make([]pkg.DpkgFileRecord, 0)
-	var locations []source.Location
+	var locations []file.Location
 
 	md5Reader, md5Location := fetchMd5Contents(resolver, dbLocation, m)
 
@@ -163,7 +163,7 @@ func getAdditionalFileListing(resolver source.FileResolver, dbLocation source.Lo
 }
 
 //nolint:dupl
-func fetchMd5Contents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
+func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) (io.ReadCloser, *file.Location) {
 	var md5Reader io.ReadCloser
 	var err error
 
@@ -199,7 +199,7 @@ func fetchMd5Contents(resolver source.FileResolver, dbLocation source.Location, 
 }
 
 //nolint:dupl
-func fetchConffileContents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
+func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) (io.ReadCloser, *file.Location) {
 	var reader io.ReadCloser
 	var err error
 
@@ -234,7 +234,7 @@ func fetchConffileContents(resolver source.FileResolver, dbLocation source.Locat
 	return reader, &l
 }
 
-func fetchCopyrightContents(resolver source.FileResolver, dbLocation source.Location, m pkg.DpkgMetadata) (io.ReadCloser, *source.Location) {
+func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) (io.ReadCloser, *file.Location) {
 	if resolver == nil {
 		return nil, nil
 	}

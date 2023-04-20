@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"reflect"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -8,7 +9,6 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/formats/common"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func encodeComponent(p pkg.Package) cyclonedx.Component {
@@ -100,13 +100,13 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	return p
 }
 
-func decodeLocations(vals map[string]string) source.LocationSet {
-	v := common.Decode(reflect.TypeOf([]source.Location{}), vals, "syft:location", CycloneDXFields)
-	out, ok := v.([]source.Location)
+func decodeLocations(vals map[string]string) file.LocationSet {
+	v := common.Decode(reflect.TypeOf([]file.Location{}), vals, "syft:location", CycloneDXFields)
+	out, ok := v.([]file.Location)
 	if !ok {
 		out = nil
 	}
-	return source.NewLocationSet(out...)
+	return file.NewLocationSet(out...)
 }
 
 func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typ pkg.MetadataType) interface{} {

@@ -3,6 +3,7 @@ package erlang
 import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
@@ -11,7 +12,7 @@ import (
 // parseRebarLock parses a rebar.lock and returns the discovered Elixir packages.
 //
 //nolint:funlen
-func parseRebarLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	doc, err := parseErlang(reader)
 	if err != nil {
 		return nil, nil, err

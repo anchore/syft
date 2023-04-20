@@ -3,6 +3,7 @@ package python
 import (
 	"bufio"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"strings"
 	"unicode"
 
@@ -17,7 +18,7 @@ var _ generic.Parser = parseRequirementsTxt
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRequirementsTxt(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)

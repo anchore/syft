@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -41,7 +42,7 @@ func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 }
 
 // parseInstalledJSON is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseInstalledJSON(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseInstalledJSON(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 

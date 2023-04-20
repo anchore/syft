@@ -3,16 +3,16 @@ package alpm
 import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(m pkg.AlpmMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
+func newPackage(m pkg.AlpmMetadata, release *linux.Release, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		Type:         pkg.AlpmPkg,
 		Licenses:     internal.SplitAny(m.License, " \n"),
 		PURL:         packageURL(m, release),

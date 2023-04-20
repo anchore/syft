@@ -1,14 +1,14 @@
 package cpp
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newConanfilePackage(m pkg.ConanMetadata, locations ...source.Location) *pkg.Package {
+func newConanfilePackage(m pkg.ConanMetadata, locations ...file.Location) *pkg.Package {
 	fields := strings.Split(strings.TrimSpace(m.Ref), "/")
 	if len(fields) < 2 {
 		return nil
@@ -23,7 +23,7 @@ func newConanfilePackage(m pkg.ConanMetadata, locations ...source.Location) *pkg
 	p := pkg.Package{
 		Name:         pkgName,
 		Version:      pkgVersion,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(pkgName, pkgVersion),
 		Language:     pkg.CPP,
 		Type:         pkg.ConanPkg,
@@ -36,7 +36,7 @@ func newConanfilePackage(m pkg.ConanMetadata, locations ...source.Location) *pkg
 	return &p
 }
 
-func newConanlockPackage(m pkg.ConanLockMetadata, locations ...source.Location) *pkg.Package {
+func newConanlockPackage(m pkg.ConanLockMetadata, locations ...file.Location) *pkg.Package {
 	fields := strings.Split(strings.Split(m.Ref, "@")[0], "/")
 	if len(fields) < 2 {
 		return nil
@@ -51,7 +51,7 @@ func newConanlockPackage(m pkg.ConanLockMetadata, locations ...source.Location) 
 	p := pkg.Package{
 		Name:         pkgName,
 		Version:      pkgVersion,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(pkgName, pkgVersion),
 		Language:     pkg.CPP,
 		Type:         pkg.ConanPkg,

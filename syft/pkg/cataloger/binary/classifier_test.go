@@ -1,12 +1,12 @@
 package binary
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_ClassifierCPEs(t *testing.T) {
@@ -63,12 +63,12 @@ func Test_ClassifierCPEs(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := source.NewMockResolverForPaths(test.fixture)
-			locations, err := resolver.FilesByPath(test.fixture)
+			resolver := file.NewMockResolverForPaths(test.fixture)
+			ls, err := resolver.FilesByPath(test.fixture)
 			require.NoError(t, err)
-			require.Len(t, locations, 1)
+			require.Len(t, ls, 1)
 
-			pkgs, err := test.classifier.EvidenceMatcher(resolver, test.classifier, locations[0])
+			pkgs, err := test.classifier.EvidenceMatcher(resolver, test.classifier, ls[0])
 			require.NoError(t, err)
 
 			require.Len(t, pkgs, 1)

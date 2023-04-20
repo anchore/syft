@@ -1,17 +1,17 @@
 package haskell
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseStackYaml(t *testing.T) {
 	fixture := "test-fixtures/stack.yaml"
-	locationSet := source.NewLocationSet(source.NewLocation(fixture))
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
 		{

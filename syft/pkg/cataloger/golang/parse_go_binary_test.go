@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bufio"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"os/exec"
@@ -135,9 +136,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Type:     pkg.GoModulePkg,
 		Version:  "(devel)",
 		PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
-		Locations: source.NewLocationSet(
-			source.NewLocationFromCoordinates(
-				source.Coordinates{
+		Locations: file.NewLocationSet(
+			file.NewLocationFromCoordinates(
+				file.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
@@ -182,9 +183,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/adrg/xdg",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -225,9 +226,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -261,9 +262,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/a/b/c@(devel)",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -319,9 +320,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Version:  "v0.0.0-20221014195457-41bc6bb41035",
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -374,9 +375,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -396,9 +397,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/client-go@v0.0.0-20210222170800-9c70f9b80bcf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -451,9 +452,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/golang.org/x/sys@v0.0.0-20211006194710-c8a6f5223071",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -472,9 +473,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/golang.org/x/term@v0.0.0-20210916214954-140adaaadfaf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -502,8 +503,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				}
 				p.SetID()
 			}
-			location := source.NewLocationFromCoordinates(
-				source.Coordinates{
+			location := file.NewLocationFromCoordinates(
+				file.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},

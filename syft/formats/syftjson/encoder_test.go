@@ -52,8 +52,8 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p1 := pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Locations: source.NewLocationSet(
-			source.NewLocationFromCoordinates(source.Coordinates{
+		Locations: file.NewLocationSet(
+			file.NewLocationFromCoordinates(file.Coordinates{
 				RealPath: "/a/place/a",
 			}),
 		),
@@ -76,8 +76,8 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	p2 := pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Locations: source.NewLocationSet(
-			source.NewLocationFromCoordinates(source.Coordinates{
+		Locations: file.NewLocationSet(
+			file.NewLocationFromCoordinates(file.Coordinates{
 				RealPath: "/b/place/b",
 			}),
 		),
@@ -101,49 +101,49 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			PackageCatalog: catalog,
-			FileMetadata: map[source.Coordinates]source.FileMetadata{
-				source.NewLocation("/a/place").Coordinates: {
+			FileMetadata: map[file.Coordinates]file.Metadata{
+				file.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
 					Type:    stereoFile.TypeDirectory,
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/a/place/a").Coordinates: {
+				file.NewLocation("/a/place/a").Coordinates: {
 					Mode:    0775,
 					Type:    stereoFile.TypeRegular,
 					UserID:  0,
 					GroupID: 0,
 				},
-				source.NewLocation("/b").Coordinates: {
+				file.NewLocation("/b").Coordinates: {
 					Mode:            0775,
 					Type:            stereoFile.TypeSymLink,
 					LinkDestination: "/c",
 					UserID:          0,
 					GroupID:         0,
 				},
-				source.NewLocation("/b/place/b").Coordinates: {
+				file.NewLocation("/b/place/b").Coordinates: {
 					Mode:    0644,
 					Type:    stereoFile.TypeRegular,
 					UserID:  1,
 					GroupID: 2,
 				},
 			},
-			FileDigests: map[source.Coordinates][]file.Digest{
-				source.NewLocation("/a/place/a").Coordinates: {
+			FileDigests: map[file.Coordinates][]file.Digest{
+				file.NewLocation("/a/place/a").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
 					},
 				},
-				source.NewLocation("/b/place/b").Coordinates: {
+				file.NewLocation("/b/place/b").Coordinates: {
 					{
 						Algorithm: "sha256",
 						Value:     "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c",
 					},
 				},
 			},
-			FileContents: map[source.Coordinates]string{
-				source.NewLocation("/a/place/a").Coordinates: "the-contents",
+			FileContents: map[file.Coordinates]string{
+				file.NewLocation("/a/place/a").Coordinates: "the-contents",
 			},
 			LinuxDistribution: &linux.Release{
 				ID:        "redhat",

@@ -1,17 +1,17 @@
 package dart
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePubspecLock(t *testing.T) {
 	fixture := "test-fixtures/pubspec.lock"
-	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expected := []pkg.Package{
 		{
 			Name:         "ale",

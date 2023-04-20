@@ -1,13 +1,16 @@
 package source
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"io"
 
 	"github.com/anchore/syft/internal/log"
 )
 
+var _ file.Resolver = (*DeferredResolver)(nil)
+
 func NewDeferredResolverFromSource(creator func() (Source, error)) *DeferredResolver {
-	return NewDeferredResolver(func() (FileResolver, error) {
+	return NewDeferredResolver(func() (file.Resolver, error) {
 		s, err := creator()
 		if err != nil {
 			return nil, err
@@ -17,18 +20,18 @@ func NewDeferredResolverFromSource(creator func() (Source, error)) *DeferredReso
 	})
 }
 
-func NewDeferredResolver(creator func() (FileResolver, error)) *DeferredResolver {
+func NewDeferredResolver(creator func() (file.Resolver, error)) *DeferredResolver {
 	return &DeferredResolver{
 		creator: creator,
 	}
 }
 
 type DeferredResolver struct {
-	creator  func() (FileResolver, error)
-	resolver FileResolver
+	creator  func() (file.Resolver, error)
+	resolver file.Resolver
 }
 
-func (d *DeferredResolver) getResolver() (FileResolver, error) {
+func (d *DeferredResolver) getResolver() (file.Resolver, error) {
 	if d.resolver == nil {
 		resolver, err := d.creator()
 		if err != nil {
@@ -39,7 +42,7 @@ func (d *DeferredResolver) getResolver() (FileResolver, error) {
 	return d.resolver, nil
 }
 
-func (d *DeferredResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (d *DeferredResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	r, err := d.getResolver()
 	if err != nil {
 		return nil, err
@@ -56,7 +59,7 @@ func (d *DeferredResolver) HasPath(s string) bool {
 	return r.HasPath(s)
 }
 
-func (d *DeferredResolver) FilesByPath(paths ...string) ([]Location, error) {
+func (d *DeferredResolver) FilesByPath(paths ...string) ([]file.Location, error) {
 	r, err := d.getResolver()
 	if err != nil {
 		return nil, err
@@ -64,7 +67,7 @@ func (d *DeferredResolver) FilesByPath(paths ...string) ([]Location, error) {
 	return r.FilesByPath(paths...)
 }
 
-func (d *DeferredResolver) FilesByGlob(patterns ...string) ([]Location, error) {
+func (d *DeferredResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	r, err := d.getResolver()
 	if err != nil {
 		return nil, err
@@ -72,7 +75,7 @@ func (d *DeferredResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	return r.FilesByGlob(patterns...)
 }
 
-func (d *DeferredResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+func (d *DeferredResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	r, err := d.getResolver()
 	if err != nil {
 		return nil, err
@@ -80,7 +83,7 @@ func (d *DeferredResolver) FilesByMIMEType(types ...string) ([]Location, error) 
 	return r.FilesByMIMEType(types...)
 }
 
-func (d *DeferredResolver) RelativeFileByPath(location Location, path string) *Location {
+func (d *DeferredResolver) RelativeFileByPath(location file.Location, path string) *Location {
 	r, err := d.getResolver()
 	if err != nil {
 		return nil
@@ -88,7 +91,7 @@ func (d *DeferredResolver) RelativeFileByPath(location Location, path string) *L
 	return r.RelativeFileByPath(location, path)
 }
 
-func (d *DeferredResolver) AllLocations() <-chan Location {
+func (d *DeferredResolver) AllLocations() <-chan file.Location {
 	r, err := d.getResolver()
 	if err != nil {
 		log.Debug("unable to get resolver: %v", err)
@@ -97,12 +100,10 @@ func (d *DeferredResolver) AllLocations() <-chan Location {
 	return r.AllLocations()
 }
 
-func (d *DeferredResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
+func (d *DeferredResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	r, err := d.getResolver()
 	if err != nil {
-		return FileMetadata{}, err
+		return file.Metadata{}, err
 	}
 	return r.FileMetadataByLocation(location)
 }
-
-var _ FileResolver = (*DeferredResolver)(nil)

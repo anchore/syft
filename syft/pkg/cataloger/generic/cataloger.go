@@ -4,15 +4,15 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-type processor func(resolver source.FileResolver, env Environment) []request
+type processor func(resolver file.Resolver, env Environment) []request
 
 type request struct {
-	source.Location
+	file.Location
 	Parser
 }
 
@@ -25,7 +25,7 @@ type Cataloger struct {
 
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
+		func(resolver file.Resolver, env Environment) []request {
 			var requests []request
 			for _, g := range globs {
 				log.WithFields("glob", g).Trace("searching for paths matching glob")
@@ -45,7 +45,7 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 
 func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
+		func(resolver file.Resolver, env Environment) []request {
 			var requests []request
 			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
 			matches, err := resolver.FilesByMIMEType(types...)
@@ -62,7 +62,7 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 
 func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver source.FileResolver, env Environment) []request {
+		func(resolver file.Resolver, env Environment) []request {
 			var requests []request
 			for _, p := range paths {
 				log.WithFields("path", p).Trace("searching for path")
@@ -80,7 +80,7 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 	return c
 }
 
-func makeRequests(parser Parser, locations []source.Location) []request {
+func makeRequests(parser Parser, locations []file.Location) []request {
 	var requests []request
 	for _, l := range locations {
 		requests = append(requests, request{
@@ -104,7 +104,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -126,7 +126,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 			continue
 		}
 
-		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, source.NewLocationReadCloser(location, contentReader))
+		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, file.NewLocationReadCloser(location, contentReader))
 		internal.CloseAndLogError(contentReader, location.VirtualPath)
 		if err != nil {
 			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
@@ -144,7 +144,7 @@ func (c *Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []arti
 }
 
 // selectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *Cataloger) selectFiles(resolver source.FileResolver) []request {
+func (c *Cataloger) selectFiles(resolver file.Resolver) []request {
 	var requests []request
 	for _, proc := range c.processor {
 		requests = append(requests, proc(resolver, Environment{})...)

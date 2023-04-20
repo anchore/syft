@@ -24,7 +24,7 @@ var (
 	_     generic.Parser = parsePortageContents
 )
 
-func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePortageContents(resolver file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	cpvMatch := cpvRe.FindStringSubmatch(reader.Location.RealPath)
 	if cpvMatch == nil {
 		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.Location.RealPath)
@@ -40,7 +40,7 @@ func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, 
 		Name:    name,
 		Version: version,
 		PURL:    packageURL(name, version),
-		Locations: source.NewLocationSet(
+		Locations: file.NewLocationSet(
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Type:         pkg.PortagePkg,
@@ -59,7 +59,7 @@ func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, 
 	return []pkg.Package{p}, nil, nil
 }
 
-func addFiles(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
+func addFiles(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	contentsReader, err := resolver.FileContentsByLocation(dbLocation)
 	if err != nil {
 		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage contents (package=%s): %+v", p.Name, err)
@@ -92,7 +92,7 @@ func addFiles(resolver source.FileResolver, dbLocation source.Location, p *pkg.P
 	p.Locations.Add(dbLocation)
 }
 
-func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
+func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
@@ -122,7 +122,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 }
 
-func addSize(resolver source.FileResolver, dbLocation source.Location, p *pkg.Package) {
+func addSize(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "SIZE"))

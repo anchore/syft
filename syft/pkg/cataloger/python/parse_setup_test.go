@@ -1,6 +1,7 @@
 package python
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,7 +9,6 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseSetup(t *testing.T) {
@@ -65,7 +65,7 @@ func TestParseSetup(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.fixture, func(t *testing.T) {
-			locations := source.NewLocationSet(source.NewLocation(tt.fixture))
+			locations := file.NewLocationSet(file.NewLocation(tt.fixture))
 			for i := range tt.expected {
 				tt.expected[i].Locations = locations
 			}

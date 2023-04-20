@@ -1,17 +1,17 @@
 package cpp
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseConanfile(t *testing.T) {
 	fixture := "test-fixtures/conanfile.txt"
-	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expected := []pkg.Package{
 		{
 			Name:         "catch2",

@@ -1,8 +1,11 @@
 package source
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"io"
 )
+
+var _ file.WritableResolver = (*EmptyResolver)(nil)
 
 type EmptyResolver struct{}
 
@@ -41,5 +44,3 @@ func (e EmptyResolver) FileMetadataByLocation(_ Location) (FileMetadata, error) 
 func (e EmptyResolver) Write(_ Location, _ io.Reader) error {
 	return nil
 }
-
-var _ WritableFileResolver = (*EmptyResolver)(nil)

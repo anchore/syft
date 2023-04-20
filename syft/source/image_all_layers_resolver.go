@@ -2,15 +2,16 @@ package source
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
 )
 
-var _ FileResolver = (*imageAllLayersResolver)(nil)
+var _ file.Resolver = (*imageAllLayersResolver)(nil)
 
 // imageAllLayersResolver implements path and content access for the AllLayers source option for container image data sources.
 type imageAllLayersResolver struct {
@@ -36,7 +37,7 @@ func newAllLayersResolver(img *image.Image) (*imageAllLayersResolver, error) {
 
 // HasPath indicates if the given path exists in the underlying source.
 func (r *imageAllLayersResolver) HasPath(path string) bool {
-	p := file.Path(path)
+	p := stereoscopeFile.Path(path)
 	for _, layerIdx := range r.layers {
 		tree := r.img.Layers[layerIdx].Tree
 		if tree.HasPath(p) {
@@ -46,8 +47,8 @@ func (r *imageAllLayersResolver) HasPath(path string) bool {
 	return false
 }
 
-func (r *imageAllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.ReferenceSet, layerIdx int) ([]file.Reference, error) {
-	uniqueFiles := make([]file.Reference, 0)
+func (r *imageAllLayersResolver) fileByRef(ref stereoscopeFile.Reference, uniqueFileIDs stereoscopeFile.ReferenceSet, layerIdx int) ([]stereoscopeFile.Reference, error) {
+	uniqueFiles := make([]stereoscopeFile.Reference, 0)
 
 	// since there is potentially considerable work for each symlink/hardlink that needs to be resolved, let's check to see if this is a symlink/hardlink first
 	entry, err := r.img.FileCatalog.Get(ref)
@@ -55,7 +56,7 @@ func (r *imageAllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs fil
 		return nil, fmt.Errorf("unable to fetch metadata (ref=%+v): %w", ref, err)
 	}
 
-	if entry.Metadata.Type == file.TypeHardLink || entry.Metadata.Type == file.TypeSymLink {
+	if entry.Metadata.Type == stereoscopeFile.TypeHardLink || entry.Metadata.Type == stereoscopeFile.TypeSymLink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
 		// we should search all possible resolutions within the valid source
 		for _, subLayerIdx := range r.layers[layerIdx:] {
@@ -78,7 +79,7 @@ func (r *imageAllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs fil
 
 // FilesByPath returns all file.References that match the given paths from any layer in the image.
 func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	for _, path := range paths {
@@ -110,7 +111,7 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 				return nil, err
 			}
 			for _, result := range results {
-				uniqueLocations = append(uniqueLocations, NewLocationFromImage(path, result, r.img))
+				uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(path, result, r.img))
 			}
 		}
 	}
@@ -120,7 +121,7 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 // nolint:gocognit
 func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	for _, pattern := range patterns {
@@ -153,7 +154,7 @@ func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, er
 					return nil, err
 				}
 				for _, refResult := range refResults {
-					uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(result.RequestPath), refResult, r.img))
+					uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(string(result.RequestPath), refResult, r.img))
 				}
 			}
 		}
@@ -167,7 +168,7 @@ func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, er
 func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path string) *Location {
 	layer := r.img.FileCatalog.Layer(location.Reference())
 
-	exists, relativeRef, err := layer.SquashedTree.File(file.Path(path), filetree.FollowBasenameLinks)
+	exists, relativeRef, err := layer.SquashedTree.File(stereoscopeFile.Path(path), filetree.FollowBasenameLinks)
 	if err != nil {
 		log.Errorf("failed to find path=%q in squash: %+w", path, err)
 		return nil
@@ -176,7 +177,7 @@ func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path stri
 		return nil
 	}
 
-	relativeLocation := NewLocationFromImage(path, *relativeRef.Reference, r.img)
+	relativeLocation := file.NewLocationFromImage(path, *relativeRef.Reference, r.img)
 
 	return &relativeLocation
 }
@@ -190,7 +191,7 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 	}
 
 	switch entry.Metadata.Type {
-	case file.TypeSymLink, file.TypeHardLink:
+	case stereoscopeFile.TypeSymLink, stereoscopeFile.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
 		newLocation := r.RelativeFileByPath(location, location.VirtualPath)
 		if newLocation == nil {
@@ -198,15 +199,15 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 			return nil, fmt.Errorf("no contents for location=%q", location.VirtualPath)
 		}
 		location = *newLocation
-	case file.TypeDirectory:
+	case stereoscopeFile.TypeDirectory:
 		return nil, fmt.Errorf("cannot read contents of non-file %q", location.Reference().RealPath)
 	}
 
-	return r.img.FileContentsByRef(location.Reference())
+	return r.img.OpenReference(location.Reference())
 }
 
 func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
-	uniqueFileIDs := file.NewFileReferenceSet()
+	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]Location, 0)
 
 	for idx, layerIdx := range r.layers {
@@ -225,7 +226,7 @@ func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, e
 				return nil, err
 			}
 			for _, refResult := range refResults {
-				uniqueLocations = append(uniqueLocations, NewLocationFromImage(string(ref.RequestPath), refResult, r.img))
+				uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(string(ref.RequestPath), refResult, r.img))
 			}
 		}
 	}
@@ -239,8 +240,8 @@ func (r *imageAllLayersResolver) AllLocations() <-chan Location {
 		defer close(results)
 		for _, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
-			for _, ref := range tree.AllFiles(file.AllTypes()...) {
-				results <- NewLocationFromImage(string(ref.RealPath), ref, r.img)
+			for _, ref := range tree.AllFiles(stereoscopeFile.AllTypes()...) {
+				results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
 			}
 		}
 	}()

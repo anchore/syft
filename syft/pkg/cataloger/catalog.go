@@ -2,6 +2,7 @@ package cataloger
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"math"
 	"runtime/debug"
 	"sync"
@@ -17,7 +18,6 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Monitor provides progress-related data for observing the progress of a Catalog() call (published on the event bus).
@@ -50,7 +50,7 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (catalogerResult *catalogResult, err error) {
+func runCataloger(cataloger pkg.Cataloger, resolver file.Resolver) (catalogerResult *catalogResult, err error) {
 	// handle individual cataloger panics
 	defer func() {
 		if e := recover(); e != nil {
@@ -105,7 +105,7 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (catalo
 // request.
 //
 //nolint:funlen
-func Catalog(resolver source.FileResolver, _ *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
+func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
 	catalog := pkg.NewCatalog()
 	var allRelationships []artifact.Relationship
 
@@ -182,13 +182,13 @@ func Catalog(resolver source.FileResolver, _ *linux.Release, parallelism int, ca
 	return catalog, allRelationships, errs
 }
 
-func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathResolver) ([]artifact.Relationship, error) {
+func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver) ([]artifact.Relationship, error) {
 	fileOwner, ok := p.Metadata.(pkg.FileOwner)
 	if !ok {
 		return nil, nil
 	}
 
-	locations := map[artifact.ID]source.Location{}
+	locations := map[artifact.ID]file.Location{}
 
 	for _, path := range fileOwner.OwnedFiles() {
 		pathRefs, err := resolver.FilesByPath(path)

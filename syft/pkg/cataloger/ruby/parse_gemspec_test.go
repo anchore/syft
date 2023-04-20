@@ -1,17 +1,17 @@
 package ruby
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseGemspec(t *testing.T) {
 	fixture := "test-fixtures/bundler.gemspec"
 
-	locations := source.NewLocationSet(source.NewLocation(fixture))
+	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	var expectedPkg = pkg.Package{
 		Name:         "bundler",

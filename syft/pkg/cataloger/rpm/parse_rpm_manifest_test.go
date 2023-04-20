@@ -1,22 +1,22 @@
 package rpm
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseRpmManifest(t *testing.T) {
 	fixture := "test-fixtures/container-manifest-2"
-	location := source.NewLocation(fixture)
+	location := file.NewLocation(fixture)
 	expected := []pkg.Package{
 		{
 			Name:         "mariner-release",
 			Version:      "2.0-12.cm2",
 			PURL:         "pkg:rpm/mariner-release@2.0-12.cm2?arch=noarch&upstream=mariner-release-2.0-12.cm2.src.rpm",
-			Locations:    source.NewLocationSet(location),
+			Locations:    file.NewLocationSet(location),
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{
@@ -34,7 +34,7 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "filesystem",
 			Version:      "1.1-9.cm2",
 			PURL:         "pkg:rpm/filesystem@1.1-9.cm2?arch=x86_64&upstream=filesystem-1.1-9.cm2.src.rpm",
-			Locations:    source.NewLocationSet(location),
+			Locations:    file.NewLocationSet(location),
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{
@@ -52,7 +52,7 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "glibc",
 			Version:      "2.35-2.cm2",
 			PURL:         "pkg:rpm/glibc@2.35-2.cm2?arch=x86_64&upstream=glibc-2.35-2.cm2.src.rpm",
-			Locations:    source.NewLocationSet(location),
+			Locations:    file.NewLocationSet(location),
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{
@@ -70,7 +70,7 @@ func TestParseRpmManifest(t *testing.T) {
 			Name:         "openssl-libs",
 			Version:      "1.1.1k-15.cm2",
 			PURL:         "pkg:rpm/openssl-libs@1.1.1k-15.cm2?arch=x86_64&upstream=openssl-1.1.1k-15.cm2.src.rpm",
-			Locations:    source.NewLocationSet(location),
+			Locations:    file.NewLocationSet(location),
 			Type:         pkg.RpmPkg,
 			MetadataType: pkg.RpmMetadataType,
 			Metadata: pkg.RpmMetadata{

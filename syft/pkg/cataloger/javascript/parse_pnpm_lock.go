@@ -2,6 +2,7 @@ package javascript
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 
 	"gopkg.in/yaml.v3"
@@ -19,7 +20,7 @@ type pnpmLockYaml struct {
 	Dependencies map[string]string `json:"dependencies"`
 }
 
-func parsePnpmLock(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)

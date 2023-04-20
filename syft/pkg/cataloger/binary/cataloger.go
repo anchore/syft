@@ -3,8 +3,8 @@ package binary
 import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 const catalogerName = "binary-cataloger"
@@ -27,7 +27,7 @@ func (c Cataloger) Name() string {
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages
 // after analyzing the catalog source.
-func (c Cataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -68,7 +68,7 @@ func mergePackages(target *pkg.Package, extra *pkg.Package) {
 	target.Metadata = meta
 }
 
-func catalog(resolver source.FileResolver, cls classifier) (packages []pkg.Package, err error) {
+func catalog(resolver file.Resolver, cls classifier) (packages []pkg.Package, err error) {
 	locations, err := resolver.FilesByGlob(cls.FileGlob)
 	if err != nil {
 		return nil, err

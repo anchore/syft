@@ -2,6 +2,7 @@ package github
 
 import (
 	"encoding/json"
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,8 +36,8 @@ func Test_toGithubModel(t *testing.T) {
 		{
 			Name:    "pkg-1",
 			Version: "1.0.1",
-			Locations: source.NewLocationSet(
-				source.NewLocationFromCoordinates(source.Coordinates{
+			Locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
 					RealPath:     "/usr/lib",
 					FileSystemID: "fsid-1",
 				}),
@@ -45,8 +46,8 @@ func Test_toGithubModel(t *testing.T) {
 		{
 			Name:    "pkg-2",
 			Version: "2.0.2",
-			Locations: source.NewLocationSet(
-				source.NewLocationFromCoordinates(source.Coordinates{
+			Locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
 					RealPath:     "/usr/lib",
 					FileSystemID: "fsid-1",
 				}),
@@ -55,8 +56,8 @@ func Test_toGithubModel(t *testing.T) {
 		{
 			Name:    "pkg-3",
 			Version: "3.0.3",
-			Locations: source.NewLocationSet(
-				source.NewLocationFromCoordinates(source.Coordinates{
+			Locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
 					RealPath:     "/etc",
 					FileSystemID: "fsid-1",
 				}),

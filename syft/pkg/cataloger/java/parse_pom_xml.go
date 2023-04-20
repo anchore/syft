@@ -3,6 +3,7 @@ package java
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"reflect"
 	"regexp"
@@ -21,7 +22,7 @@ const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func parserPomXML(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parserPomXML(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
@@ -65,7 +66,7 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 	}
 }
 
-func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...source.Location) pkg.Package {
+func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...file.Location) pkg.Package {
 	m := pkg.JavaMetadata{
 		PomProperties: &pkg.PomProperties{
 			GroupID: resolveProperty(pom, dep.GroupID),
@@ -78,7 +79,7 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...sou
 	p := pkg.Package{
 		Name:         name,
 		Version:      version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(name, version, m),
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?

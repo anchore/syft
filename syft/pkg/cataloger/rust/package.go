@@ -1,19 +1,19 @@
 package rust
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"github.com/microsoft/go-rustaudit"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func newPackageFromCargoMetadata(m pkg.CargoPackageMetadata, locations ...source.Location) pkg.Package {
+func newPackageFromCargoMetadata(m pkg.CargoPackageMetadata, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(m.Name, m.Version),
 		Language:     pkg.Rust,
 		Type:         pkg.RustPkg,
@@ -26,7 +26,7 @@ func newPackageFromCargoMetadata(m pkg.CargoPackageMetadata, locations ...source
 	return p
 }
 
-func newPackagesFromAudit(location source.Location, versionInfo rustaudit.VersionInfo) []pkg.Package {
+func newPackagesFromAudit(location file.Location, versionInfo rustaudit.VersionInfo) []pkg.Package {
 	var pkgs []pkg.Package
 
 	for _, dep := range versionInfo.Packages {
@@ -40,14 +40,14 @@ func newPackagesFromAudit(location source.Location, versionInfo rustaudit.Versio
 	return pkgs
 }
 
-func newPackageFromAudit(dep *rustaudit.Package, locations ...source.Location) pkg.Package {
+func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         dep.Name,
 		Version:      dep.Version,
 		PURL:         packageURL(dep.Name, dep.Version),
 		Language:     pkg.Rust,
 		Type:         pkg.RustPkg,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		MetadataType: pkg.RustCargoPackageMetadataType,
 		Metadata: pkg.CargoPackageMetadata{
 			Name:    dep.Name,

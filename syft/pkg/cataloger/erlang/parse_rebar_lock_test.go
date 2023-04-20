@@ -1,12 +1,12 @@
 package erlang
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseRebarLock(t *testing.T) {
@@ -263,7 +263,7 @@ func TestParseRebarLock(t *testing.T) {
 			var expectedRelationships []artifact.Relationship
 
 			for idx := range test.expected {
-				test.expected[idx].Locations = source.NewLocationSet(source.NewLocation(test.fixture))
+				test.expected[idx].Locations = file.NewLocationSet(file.NewLocation(test.fixture))
 			}
 
 			pkgtest.TestFileParser(t, test.fixture, parseRebarLock, test.expected, expectedRelationships)

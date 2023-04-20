@@ -7,10 +7,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/anchore/syft/internal/file"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	syftFile "github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
@@ -43,8 +43,8 @@ var javaArchiveHashes = []crypto.Hash{
 }
 
 type archiveParser struct {
-	fileManifest file.ZipFileManifest
-	location     source.Location
+	fileManifest intFile.ZipFileManifest
+	location     file.Location
 	archivePath  string
 	contentPath  string
 	fileInfo     archiveFilename
@@ -52,7 +52,7 @@ type archiveParser struct {
 }
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
-func parseJavaArchive(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(reader, true)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
@@ -82,7 +82,7 @@ func newJavaArchiveParser(reader source.LocationReadCloser, detectNested bool) (
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
 	}
 
-	fileManifest, err := file.NewZipFileManifest(archivePath)
+	fileManifest, err := intFile.NewZipFileManifest(archivePath)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to read files from java archive: %w", err)
 	}
@@ -160,7 +160,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}
 
 	// fetch the manifest file
-	contents, err := file.ContentsFromZip(j.archivePath, manifestMatches...)
+	contents, err := intFile.ContentsFromZip(j.archivePath, manifestMatches...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", j.location, err)
 	}
@@ -180,7 +180,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	defer archiveCloser.Close()
 
 	// grab and assign digest for the entire archive
-	digests, err := syftFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
+	digests, err := file.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
 	if err != nil {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
@@ -190,7 +190,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Version:  selectVersion(manifest, j.fileInfo),
 		Licenses: selectLicense(manifest),
 		Language: pkg.Java,
-		Locations: source.NewLocationSet(
+		Locations: file.NewLocationSet(
 			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Type:         j.fileInfo.pkgType(),
@@ -248,9 +248,9 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 
 // discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func discoverPkgsFromZip(location source.Location, archivePath, contentPath string, fileManifest file.ZipFileManifest, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromZip(location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := file.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
+	openers, err := intFile.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
@@ -259,7 +259,7 @@ func discoverPkgsFromZip(location source.Location, archivePath, contentPath stri
 }
 
 // discoverPkgsFromOpeners finds Java archives within the given files and associates them with the given parent package.
-func discoverPkgsFromOpeners(location source.Location, openers map[string]file.Opener, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.Opener, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -288,7 +288,7 @@ func discoverPkgsFromOpeners(location source.Location, openers map[string]file.O
 }
 
 // discoverPkgsFromOpener finds Java archives within the given file.
-func discoverPkgsFromOpener(location source.Location, pathWithinArchive string, archiveOpener file.Opener) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, archiveOpener intFile.Opener) ([]pkg.Package, []artifact.Relationship, error) {
 	archiveReadCloser, err := archiveOpener.Open()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
@@ -300,7 +300,7 @@ func discoverPkgsFromOpener(location source.Location, pathWithinArchive string, 
 	}()
 
 	nestedPath := fmt.Sprintf("%s:%s", location.AccessPath(), pathWithinArchive)
-	nestedLocation := source.NewLocationFromCoordinates(location.Coordinates)
+	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
 	nestedLocation.VirtualPath = nestedPath
 	nestedPkgs, nestedRelationships, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
 		Location:   nestedLocation,
@@ -313,8 +313,8 @@ func discoverPkgsFromOpener(location source.Location, pathWithinArchive string, 
 	return nestedPkgs, nestedRelationships, nil
 }
 
-func pomPropertiesByParentPath(archivePath string, location source.Location, extractPaths []string) (map[string]pkg.PomProperties, error) {
-	contentsOfMavenPropertiesFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
+func pomPropertiesByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.PomProperties, error) {
+	contentsOfMavenPropertiesFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -342,8 +342,8 @@ func pomPropertiesByParentPath(archivePath string, location source.Location, ext
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location source.Location, extractPaths []string) (map[string]pkg.PomProject, error) {
-	contentsOfMavenProjectFiles, err := file.ContentsFromZip(archivePath, extractPaths...)
+func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.PomProject, error) {
+	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -372,7 +372,7 @@ func pomProjectByParentPath(archivePath string, location source.Location, extrac
 
 // packagesFromPomProperties processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location source.Location) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
@@ -384,7 +384,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	p := pkg.Package{
 		Name:    pomProperties.ArtifactID,
 		Version: pomProperties.Version,
-		Locations: source.NewLocationSet(
+		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Language:     pkg.Java,

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"regexp"
 
@@ -20,7 +21,7 @@ var _ generic.Parser = parseMixLock
 var mixLockDelimiter = regexp.MustCompile(`[%{}\n" ,:]+`)
 
 // parseMixLock parses a mix.lock and returns the discovered Elixir packages.
-func parseMixLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseMixLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 
 	var packages []pkg.Package

@@ -2,6 +2,7 @@ package ruby
 
 import (
 	"bufio"
+	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -16,7 +17,7 @@ var _ generic.Parser = parseGemFileLockEntries
 var sectionsOfInterest = internal.NewStringSet("GEM", "GIT", "PATH", "PLUGIN SOURCE")
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
-func parseGemFileLockEntries(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemFileLockEntries(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	scanner := bufio.NewScanner(reader)
 

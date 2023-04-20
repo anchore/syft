@@ -2,16 +2,16 @@ package nix
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newNixStorePackage(storePath nixStorePath, locations ...source.Location) pkg.Package {
+func newNixStorePackage(storePath nixStorePath, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         storePath.name,
 		Version:      storePath.version,
 		FoundBy:      catalogerName,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		Type:         pkg.NixPkg,
 		PURL:         packageURL(storePath),
 		MetadataType: pkg.NixStoreMetadataType,

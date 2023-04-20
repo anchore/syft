@@ -7,7 +7,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestPortageCataloger(t *testing.T) {
@@ -18,10 +17,10 @@ func TestPortageCataloger(t *testing.T) {
 			Version: "1.5.1",
 			FoundBy: "portage-cataloger",
 			PURL:    "pkg:ebuild/app-containers/skopeo@1.5.1",
-			Locations: source.NewLocationSet(
-				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/CONTENTS"),
-				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE"),
-				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
+			Locations: file.NewLocationSet(
+				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/CONTENTS"),
+				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE"),
+				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
 			),
 			Licenses:     []string{"Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT"},
 			Type:         pkg.PortagePkg,

@@ -3,15 +3,15 @@ package eventloop
 import (
 	"crypto"
 	"fmt"
-	"github.com/anchore/syft/syft/file/cataloger/filecontent"
-	"github.com/anchore/syft/syft/file/cataloger/filedigest"
-	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
 
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/filecontent"
+	"github.com/anchore/syft/syft/file/cataloger/filedigest"
+	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
+	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )

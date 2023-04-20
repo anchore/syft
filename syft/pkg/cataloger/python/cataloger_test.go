@@ -1,13 +1,13 @@
 package python
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_PackageCataloger(t *testing.T) {
@@ -191,12 +191,12 @@ func Test_PackageCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := source.NewMockResolverForPaths(test.fixtures...)
+			resolver := file.NewMockResolverForPaths(test.fixtures...)
 
 			locations, err := resolver.FilesByPath(test.fixtures...)
 			require.NoError(t, err)
 
-			test.expectedPackage.Locations = source.NewLocationSet(locations...)
+			test.expectedPackage.Locations = file.NewLocationSet(locations...)
 
 			pkgtest.NewCatalogTester().
 				WithResolver(resolver).
@@ -220,7 +220,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
-			resolver := source.NewMockResolverForPaths(test.MetadataFixture)
+			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
 			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
 			require.NoError(t, err)

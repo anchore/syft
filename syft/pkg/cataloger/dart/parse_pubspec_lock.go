@@ -2,6 +2,7 @@ package dart
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"net/url"
 	"sort"
 
@@ -38,7 +39,7 @@ type pubspecLockDescription struct {
 	ResolvedRef string `yaml:"resolved-ref" mapstructure:"resolved-ref"`
 }
 
-func parsePubspecLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePubspecLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	dec := yaml.NewDecoder(reader)

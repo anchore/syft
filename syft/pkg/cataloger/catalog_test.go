@@ -1,6 +1,7 @@
 package cataloger
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,12 +9,11 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_CatalogPanicHandling(t *testing.T) {
 	catalog, relationships, err := Catalog(
-		source.NewMockResolverForPaths(),
+		file.NewMockResolverForPaths(),
 		&linux.Release{},
 		1,
 		panickingCataloger{},
@@ -32,7 +32,7 @@ func (p panickingCataloger) Name() string {
 	return "panicking-cataloger"
 }
 
-func (p panickingCataloger) Catalog(_ source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (p panickingCataloger) Catalog(_ file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	panic("something bad happened")
 }
 
@@ -44,7 +44,7 @@ func (p returningCataloger) Name() string {
 	return "returning-cataloger"
 }
 
-func (p returningCataloger) Catalog(_ source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (p returningCataloger) Catalog(_ file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	pkg1 := pkg.Package{
 		Name:    "package-1",
 		Version: "1.0",

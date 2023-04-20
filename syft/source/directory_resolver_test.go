@@ -6,7 +6,6 @@ package source
 import (
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,7 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
@@ -565,7 +565,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	r, err := newDirectoryResolver(".", "")
 	require.NoError(t, err)
 
-	exists, existingPath, err := r.tree.File(file.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := r.tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -578,12 +578,12 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	}{
 		{
 			name:     "use file reference for content requests",
-			location: NewLocationFromDirectory("some/place", *existingPath.Reference),
+			location: file.NewLocationFromDirectory("some/place", *existingPath.Reference),
 			expects:  "this file has contents",
 		},
 		{
 			name:     "error on empty file reference",
-			location: NewLocationFromDirectory("doesn't matter", file.Reference{}),
+			location: file.NewLocationFromDirectory("doesn't matter", stereoscopeFile.Reference{}),
 			err:      true,
 		},
 	}
@@ -598,7 +598,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 
 			require.NoError(t, err)
 			if test.expects != "" {
-				b, err := ioutil.ReadAll(actual)
+				b, err := io.ReadAll(actual)
 				require.NoError(t, err)
 				assert.Equal(t, test.expects, string(b))
 			}
@@ -753,27 +753,27 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 func Test_directoryResolver_resolvesLinks(t *testing.T) {
 	tests := []struct {
 		name     string
-		runner   func(FileResolver) []Location
+		runner   func(file.Resolver) []Location
 		expected []Location
 	}{
 		{
 			name: "by mimetype",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				// links should not show up when searching mimetype
 				actualLocations, err := resolver.FilesByMIMEType("text/plain")
 				assert.NoError(t, err)
 				return actualLocations
 			},
 			expected: []Location{
-				NewLocation("file-1.txt"),        // note: missing virtual path "file-1.txt"
-				NewLocation("file-3.txt"),        // note: missing virtual path "file-3.txt"
-				NewLocation("file-2.txt"),        // note: missing virtual path "file-2.txt"
-				NewLocation("parent/file-4.txt"), // note: missing virtual path "file-4.txt"
+				file.NewLocation("file-1.txt"),        // note: missing virtual path "file-1.txt"
+				file.NewLocation("file-3.txt"),        // note: missing virtual path "file-3.txt"
+				file.NewLocation("file-2.txt"),        // note: missing virtual path "file-2.txt"
+				file.NewLocation("parent/file-4.txt"), // note: missing virtual path "file-4.txt"
 			},
 		},
 		{
 			name: "by glob to links",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				// links are searched, but resolve to the real files
 				// for that reason we need to place **/ in front (which is not the same for other resolvers)
 				actualLocations, err := resolver.FilesByGlob("**/*ink-*")
@@ -781,16 +781,16 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 				return actualLocations
 			},
 			expected: []Location{
-				NewVirtualLocation("file-1.txt", "link-1"),
-				NewVirtualLocation("file-2.txt", "link-2"),
+				file.NewVirtualLocation("file-1.txt", "link-1"),
+				file.NewVirtualLocation("file-2.txt", "link-2"),
 				// we already have this real file path via another link, so only one is returned
-				//NewVirtualLocation("file-2.txt", "link-indirect"),
-				NewVirtualLocation("file-3.txt", "link-within"),
+				//file.NewVirtualLocation("file-2.txt", "link-indirect"),
+				file.NewVirtualLocation("file-3.txt", "link-within"),
 			},
 		},
 		{
 			name: "by basename",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/file-2.txt")
 				assert.NoError(t, err)
@@ -798,89 +798,59 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// this has two copies in the base image, which overwrites the same location
-				NewLocation("file-2.txt"), // note: missing virtual path "file-2.txt",
+				file.NewLocation("file-2.txt"), // note: missing virtual path "file-2.txt",
 			},
 		},
 		{
 			name: "by basename glob",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/file-?.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
 			expected: []Location{
-				NewLocation("file-1.txt"),        // note: missing virtual path "file-1.txt"
-				NewLocation("file-2.txt"),        // note: missing virtual path "file-2.txt"
-				NewLocation("file-3.txt"),        // note: missing virtual path "file-3.txt"
-				NewLocation("parent/file-4.txt"), // note: missing virtual path "parent/file-4.txt"
+				file.NewLocation("file-1.txt"),        // note: missing virtual path "file-1.txt"
+				file.NewLocation("file-2.txt"),        // note: missing virtual path "file-2.txt"
+				file.NewLocation("file-3.txt"),        // note: missing virtual path "file-3.txt"
+				file.NewLocation("parent/file-4.txt"), // note: missing virtual path "parent/file-4.txt"
 			},
 		},
 		{
 			name: "by basename glob to links",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				actualLocations, err := resolver.FilesByGlob("**/link-*")
 				assert.NoError(t, err)
 				return actualLocations
 			},
 			expected: []Location{
-				{
-					LocationData: LocationData{
-						Coordinates: Coordinates{
-							RealPath: "file-1.txt",
-						},
-						VirtualPath: "link-1",
-						ref:         file.Reference{RealPath: "file-1.txt"},
-					},
-				},
-				{
-					LocationData: LocationData{
-						Coordinates: Coordinates{
-							RealPath: "file-2.txt",
-						},
-						VirtualPath: "link-2",
-						ref:         file.Reference{RealPath: "file-2.txt"},
-					},
-				},
+				file.NewVirtualLocation("file-1.txt", "link-1"),
+				file.NewVirtualLocation("file-2.txt", "link-2"),
+
 				// we already have this real file path via another link, so only one is returned
-				//{
-				//  LocationData: LocationData{
-				//	  Coordinates: Coordinates{
-				//  		RealPath: "file-2.txt",
-				//  	},
-				//  	VirtualPath: "link-indirect",
-				//  	ref:         file.Reference{RealPath: "file-2.txt"},
-				//  },
-				//},
-				{
-					LocationData: LocationData{
-						Coordinates: Coordinates{
-							RealPath: "file-3.txt",
-						},
-						VirtualPath: "link-within",
-						ref:         file.Reference{RealPath: "file-3.txt"},
-					},
-				},
+				//file.NewVirtualLocation("file-2.txt", "link-indirect"),
+
+				file.NewVirtualLocation("file-3.txt", "link-within"),
 			},
 		},
 		{
 			name: "by extension",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/*.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
 			expected: []Location{
-				NewLocation("file-1.txt"),        // note: missing virtual path "file-1.txt"
-				NewLocation("file-2.txt"),        // note: missing virtual path "file-2.txt"
-				NewLocation("file-3.txt"),        // note: missing virtual path "file-3.txt"
-				NewLocation("parent/file-4.txt"), // note: missing virtual path "parent/file-4.txt"
+				file.NewLocation("file-1.txt"),        // note: missing virtual path "file-1.txt"
+				file.NewLocation("file-2.txt"),        // note: missing virtual path "file-2.txt"
+				file.NewLocation("file-3.txt"),        // note: missing virtual path "file-3.txt"
+				file.NewLocation("parent/file-4.txt"), // note: missing virtual path "parent/file-4.txt"
 			},
 		},
 		{
 			name: "by path to degree 1 link",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				// links resolve to the final file
 				actualLocations, err := resolver.FilesByPath("/link-2")
 				assert.NoError(t, err)
@@ -888,12 +858,12 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// we have multiple copies across layers
-				NewVirtualLocation("file-2.txt", "link-2"),
+				file.NewVirtualLocation("file-2.txt", "link-2"),
 			},
 		},
 		{
 			name: "by path to degree 2 link",
-			runner: func(resolver FileResolver) []Location {
+			runner: func(resolver file.Resolver) []Location {
 				// multiple links resolves to the final file
 				actualLocations, err := resolver.FilesByPath("/link-indirect")
 				assert.NoError(t, err)
@@ -901,7 +871,7 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []Location{
 				// we have multiple copies across layers
-				NewVirtualLocation("file-2.txt", "link-indirect"),
+				file.NewVirtualLocation("file-2.txt", "link-indirect"),
 			},
 		},
 	}
@@ -923,11 +893,11 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 	resolver, err := newDirectoryResolver("./test-fixtures/symlinks-prune-indexing", "")
 	require.NoError(t, err)
 
-	var allRealPaths []file.Path
+	var allRealPaths []stereoscopeFile.Path
 	for l := range resolver.AllLocations() {
-		allRealPaths = append(allRealPaths, file.Path(l.RealPath))
+		allRealPaths = append(allRealPaths, stereoscopeFile.Path(l.RealPath))
 	}
-	pathSet := file.NewPathSet(allRealPaths...)
+	pathSet := stereoscopeFile.NewPathSet(allRealPaths...)
 
 	assert.False(t,
 		pathSet.Contains("before-path/file.txt"),
@@ -947,7 +917,7 @@ func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 
 	var dirLoc *Location
 	for loc := range resolver.AllLocations() {
-		entry, err := resolver.index.Get(loc.ref)
+		entry, err := resolver.index.Get(loc.Reference())
 		require.NoError(t, err)
 		if entry.Metadata.IsDir {
 			dirLoc = &loc
@@ -969,7 +939,7 @@ func TestDirectoryResolver_AllLocations(t *testing.T) {
 	paths := strset.New()
 	for loc := range resolver.AllLocations() {
 		if strings.HasPrefix(loc.RealPath, "/") {
-			// ignore outside of the fixture root for now
+			// ignore outside the fixture root for now
 			continue
 		}
 		paths.Add(loc.RealPath)

@@ -2,17 +2,17 @@ package python
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackageForIndex(name, version string, locations ...source.Location) pkg.Package {
+func newPackageForIndex(name, version string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
-		Locations: source.NewLocationSet(locations...),
+		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURL(name, version, nil),
 		Language:  pkg.Python,
 		Type:      pkg.PythonPkg,
@@ -23,11 +23,11 @@ func newPackageForIndex(name, version string, locations ...source.Location) pkg.
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockMetadata, locations ...source.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockMetadata, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         name,
 		Version:      version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(name, version, nil),
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
@@ -40,7 +40,7 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 	return p
 }
 
-func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...source.Location) pkg.Package {
+func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...file.Location) pkg.Package {
 	var licenses []string
 	if m.License != "" {
 		licenses = []string{m.License}
@@ -50,7 +50,7 @@ func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...source.Locatio
 		Name:         m.Name,
 		Version:      m.Version,
 		PURL:         packageURL(m.Name, m.Version, &m),
-		Locations:    source.NewLocationSet(sources...),
+		Locations:    file.NewLocationSet(sources...),
 		Licenses:     licenses,
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,

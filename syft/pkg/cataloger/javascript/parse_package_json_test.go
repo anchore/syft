@@ -1,13 +1,13 @@
 package javascript
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePackageJSON(t *testing.T) {
@@ -188,7 +188,7 @@ func TestParsePackageJSON(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Fixture, func(t *testing.T) {
-			test.ExpectedPkg.Locations.Add(source.NewLocation(test.Fixture))
+			test.ExpectedPkg.Locations.Add(file.NewLocation(test.Fixture))
 			pkgtest.TestFileParser(t, test.Fixture, parsePackageJSON, []pkg.Package{test.ExpectedPkg}, nil)
 		})
 	}

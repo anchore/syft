@@ -2,6 +2,7 @@ package rust
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/pelletier/go-toml"
 
@@ -18,7 +19,7 @@ type cargoLockFile struct {
 }
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.
-func parseCargoLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseCargoLock(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %w", err)

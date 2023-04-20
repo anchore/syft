@@ -20,7 +20,6 @@ import (
 	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -418,7 +417,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range s.AllCoordinates() {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -481,7 +480,7 @@ func toChecksumAlgorithm(algorithm string) spdx.ChecksumAlgorithm {
 	return spdx.ChecksumAlgorithm(strings.ToUpper(algorithm))
 }
 
-func toFileTypes(metadata *source.FileMetadata) (ty []string) {
+func toFileTypes(metadata *file.Metadata) (ty []string) {
 	if metadata == nil {
 		return nil
 	}

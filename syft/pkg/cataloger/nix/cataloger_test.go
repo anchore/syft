@@ -1,12 +1,12 @@
 package nix
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestCataloger_Catalog(t *testing.T) {
@@ -23,7 +23,7 @@ func TestCataloger_Catalog(t *testing.T) {
 					Name:         "glibc",
 					Version:      "2.34-210",
 					PURL:         "pkg:nix/glibc@2.34-210?output=bin&outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
-					Locations:    source.NewLocationSet(source.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
+					Locations:    file.NewLocationSet(file.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
 					FoundBy:      catalogerName,
 					Type:         pkg.NixPkg,
 					MetadataType: pkg.NixStoreMetadataType,

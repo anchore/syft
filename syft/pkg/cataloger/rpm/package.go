@@ -2,6 +2,7 @@ package rpm
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"strconv"
 	"strings"
 
@@ -10,15 +11,14 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(location source.Location, metadata pkg.RpmMetadata, distro *linux.Release) pkg.Package {
+func newPackage(location file.Location, metadata pkg.RpmMetadata, distro *linux.Release) pkg.Package {
 	p := pkg.Package{
 		Name:         metadata.Name,
 		Version:      toELVersion(metadata),
 		PURL:         packageURL(metadata, distro),
-		Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmMetadataType,
 		Metadata:     metadata,

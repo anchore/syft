@@ -2,13 +2,13 @@ package nix
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 
 	"github.com/bmatcuk/doublestar/v4"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -27,10 +27,10 @@ func (c *StoreCataloger) Name() string {
 	return catalogerName
 }
 
-func (c *StoreCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// we want to search for only directories, which isn't possible via the stereoscope API, so we need to apply the glob manually on all returned paths
 	var pkgs []pkg.Package
-	var filesByPath = make(map[string]*source.LocationSet)
+	var filesByPath = make(map[string]*file.LocationSet)
 	for location := range resolver.AllLocations() {
 		matchesStorePath, err := doublestar.Match(nixStoreGlob, location.RealPath)
 		if err != nil {
@@ -40,7 +40,7 @@ func (c *StoreCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, [
 		parentStorePath := findParentNixStorePath(location.RealPath)
 		if parentStorePath != "" {
 			if _, ok := filesByPath[parentStorePath]; !ok {
-				s := source.NewLocationSet()
+				s := file.NewLocationSet()
 				filesByPath[parentStorePath] = &s
 			}
 			filesByPath[parentStorePath].Add(location)
@@ -80,7 +80,7 @@ func (c *StoreCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, [
 	return pkgs, nil, nil
 }
 
-func appendFiles(p *pkg.Package, location ...source.Location) {
+func appendFiles(p *pkg.Package, location ...file.Location) {
 	metadata, ok := p.Metadata.(pkg.NixStoreMetadata)
 	if !ok {
 		log.WithFields("package", p.Name).Warn("nix package metadata missing")

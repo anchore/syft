@@ -2,16 +2,16 @@ package swift
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(name, version, hash string, locations ...source.Location) pkg.Package {
+func newPackage(name, version, hash string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         name,
 		Version:      version,
 		PURL:         packageURL(name, version),
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		Type:         pkg.CocoapodsPkg,
 		Language:     pkg.Swift,
 		MetadataType: pkg.CocoapodsMetadataType,

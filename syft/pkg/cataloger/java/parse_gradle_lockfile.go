@@ -2,6 +2,7 @@ package java
 
 import (
 	"bufio"
+	"github.com/anchore/syft/syft/file"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -19,7 +20,7 @@ type LockfileDependency struct {
 	Version string
 }
 
-func parseGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file
@@ -51,7 +52,7 @@ func parseGradleLockfile(_ source.FileResolver, _ *generic.Environment, reader s
 		mappedPkg := pkg.Package{
 			Name:    dep.Name,
 			Version: dep.Version,
-			Locations: source.NewLocationSet(
+			Locations: file.NewLocationSet(
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 			Language:     pkg.Java,

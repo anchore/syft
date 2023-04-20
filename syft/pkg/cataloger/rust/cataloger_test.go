@@ -1,11 +1,11 @@
 package rust
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestNewAuditBinaryCataloger(t *testing.T) {
@@ -16,7 +16,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 			Version:      "0.1.0",
 			PURL:         "pkg:cargo/auditable@0.1.0",
 			FoundBy:      "cargo-auditable-binary-cataloger",
-			Locations:    source.NewLocationSet(source.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
+			Locations:    file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
@@ -31,7 +31,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 			Version:      "0.1.0",
 			PURL:         "pkg:cargo/hello-auditable@0.1.0",
 			FoundBy:      "cargo-auditable-binary-cataloger",
-			Locations:    source.NewLocationSet(source.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
+			Locations:    file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,

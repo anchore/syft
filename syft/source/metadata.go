@@ -15,9 +15,6 @@ type Metadata struct {
 	Name          string
 }
 
-// Deprecated: use file.Metadata instead
-type FileMetadata = file.Metadata
-
 func fileMetadataByLocation(img *image.Image, location Location) (file.Metadata, error) {
 	entry, err := img.FileCatalog.Get(location.Reference())
 	if err != nil {

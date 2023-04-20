@@ -1,12 +1,12 @@
 package javascript
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePackageLock(t *testing.T) {
@@ -114,7 +114,7 @@ func TestParsePackageLock(t *testing.T) {
 	}
 	fixture := "test-fixtures/pkg-lock/package-lock.json"
 	for i := range expectedPkgs {
-		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
 
 	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
@@ -175,7 +175,7 @@ func TestParsePackageLockV2(t *testing.T) {
 		},
 	}
 	for i := range expectedPkgs {
-		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
 	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
 }
@@ -231,7 +231,7 @@ func TestParsePackageLockV3(t *testing.T) {
 		},
 	}
 	for i := range expectedPkgs {
-		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
 	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
 }
@@ -292,7 +292,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 		}
 
 		for i := range expected {
-			expected[i].Locations.Add(source.NewLocation(packageLock))
+			expected[i].Locations.Add(file.NewLocation(packageLock))
 		}
 		pkgtest.TestFileParser(t, packageLock, parsePackageLock, expected, expectedRelationships)
 	}
@@ -334,7 +334,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 		},
 	}
 	for i := range expectedPkgs {
-		expectedPkgs[i].Locations.Add(source.NewLocation(fixture))
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
 	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
 }

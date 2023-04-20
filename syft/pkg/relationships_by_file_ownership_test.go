@@ -1,12 +1,12 @@
 package pkg
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestOwnershipByFilesRelationship(t *testing.T) {
@@ -19,9 +19,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			name: "owns-by-real-path",
 			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
 				parent := Package{
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/a/path", "/another/path"),
-						source.NewVirtualLocation("/b/path", "/bee/path"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/a/path", "/another/path"),
+						file.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
 					MetadataType: RpmMetadataType,
@@ -36,9 +36,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				parent.SetID()
 
 				child := Package{
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/c/path", "/another/path"),
-						source.NewVirtualLocation("/d/path", "/another/path"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path"),
+						file.NewVirtualLocation("/d/path", "/another/path"),
 					),
 					Type: NpmPkg,
 				}
@@ -62,9 +62,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			name: "owns-by-virtual-path",
 			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
 				parent := Package{
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/a/path", "/some/other/path"),
-						source.NewVirtualLocation("/b/path", "/bee/path"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/a/path", "/some/other/path"),
+						file.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
 					MetadataType: RpmMetadataType,
@@ -79,9 +79,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				parent.SetID()
 
 				child := Package{
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/c/path", "/another/path"),
-						source.NewLocation("/d/path"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path"),
+						file.NewLocation("/d/path"),
 					),
 					Type: NpmPkg,
 				}
@@ -104,9 +104,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			name: "ignore-empty-path",
 			setup: func(t testing.TB) ([]Package, []artifact.Relationship) {
 				parent := Package{
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/a/path", "/some/other/path"),
-						source.NewVirtualLocation("/b/path", "/bee/path"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/a/path", "/some/other/path"),
+						file.NewVirtualLocation("/b/path", "/bee/path"),
 					),
 					Type:         RpmPkg,
 					MetadataType: RpmMetadataType,
@@ -122,9 +122,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				parent.SetID()
 
 				child := Package{
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/c/path", "/another/path"),
-						source.NewLocation("/d/path"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path"),
+						file.NewLocation("/d/path"),
 					),
 					Type: NpmPkg,
 				}

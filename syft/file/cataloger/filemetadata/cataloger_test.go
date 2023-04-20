@@ -1,9 +1,9 @@
 package filemetadata
 
 import (
-	"flag"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,16 +14,10 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var updateImageGoldenFiles = flag.Bool("update-image", false, "update the golden fixture images used for testing")
-
 func TestFileMetadataCataloger(t *testing.T) {
 	testImage := "image-file-type-mix"
 
-	if *updateImageGoldenFiles {
-		imagetest.UpdateGoldenFixtureImage(t, testImage)
-	}
-
-	img := imagetest.GetGoldenFixtureImage(t, testImage)
+	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	c := NewCataloger()
 
@@ -144,6 +138,16 @@ func TestFileMetadataCataloger(t *testing.T) {
 			require.NoError(t, err)
 
 			l := file.NewLocationFromImage(test.path, *ref.Reference, img)
+
+			defaultDate := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
+			if _, ok := actual[l.Coordinates]; ok {
+				redact := actual[l.Coordinates]
+				assert.NotEqual(t, defaultDate, redact.ModTime, "expected mod time to be set")
+				assert.Equal(t, defaultDate, redact.AccessTime, "expected access time to be unset")
+				assert.Equal(t, defaultDate, redact.ChangeTime, "expected change time to be unset")
+				redact.ModTime = time.Time{}
+				actual[l.Coordinates] = redact
+			}
 
 			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
 

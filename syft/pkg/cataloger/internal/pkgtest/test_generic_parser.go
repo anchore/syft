@@ -2,6 +2,7 @@ package pkgtest
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"os"
 	"strings"
@@ -20,7 +21,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type locationComparer func(x, y source.Location) bool
+type locationComparer func(x, y file.Location) bool
 
 type CatalogTester struct {
 	expectedPkgs                   []pkg.Package
@@ -32,7 +33,7 @@ type CatalogTester struct {
 	ignoreAnyUnfulfilledPaths      []string
 	env                            *generic.Environment
 	reader                         source.LocationReadCloser
-	resolver                       source.FileResolver
+	resolver                       file.Resolver
 	wantErr                        require.ErrorAssertionFunc
 	compareOptions                 []cmp.Option
 	locationComparer               locationComparer
@@ -55,7 +56,7 @@ func NewCatalogTester() *CatalogTester {
 	}
 }
 
-func DefaultLocationComparer(x, y source.Location) bool {
+func DefaultLocationComparer(x, y file.Location) bool {
 	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 }
 
@@ -79,7 +80,7 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 	require.NoError(t, err)
 
 	p.reader = source.LocationReadCloser{
-		Location:   source.NewLocation(fixture.Name()),
+		Location:   file.NewLocation(fixture.Name()),
 		ReadCloser: fixture,
 	}
 	return p
@@ -87,7 +88,7 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 
 func (p *CatalogTester) FromString(location, data string) *CatalogTester {
 	p.reader = source.LocationReadCloser{
-		Location:   source.NewLocation(location),
+		Location:   file.NewLocation(location),
 		ReadCloser: io.NopCloser(strings.NewReader(data)),
 	}
 	return p
@@ -117,7 +118,7 @@ func (p *CatalogTester) WithErrorAssertion(a require.ErrorAssertionFunc) *Catalo
 	return p
 }
 
-func (p *CatalogTester) WithResolver(r source.FileResolver) *CatalogTester {
+func (p *CatalogTester) WithResolver(r file.Resolver) *CatalogTester {
 	p.resolver = r
 	return p
 }
@@ -136,7 +137,7 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 }
 
 func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
-	p.locationComparer = func(x, y source.Location) bool {
+	p.locationComparer = func(x, y file.Location) bool {
 		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 	}
 	return p
@@ -216,7 +217,7 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmpopts.SortSlices(pkg.Less),
 		cmp.Comparer(
-			func(x, y source.LocationSet) bool {
+			func(x, y file.LocationSet) bool {
 				xs := x.ToSlice()
 				ys := y.ToSlice()
 
@@ -279,7 +280,7 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 	opts := []cmp.Option{
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmp.Comparer(
-			func(x, y source.LocationSet) bool {
+			func(x, y file.LocationSet) bool {
 				xs := x.ToSlice()
 				ys := y.ToSlice()
 

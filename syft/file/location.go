@@ -106,7 +106,7 @@ func NewVirtualLocationFromCoordinates(coordinates Coordinates, virtualPath stri
 		}}
 }
 
-// NewLocationFromImage creates a new Location representing the given path (extracted from the ref) relative to the given image.
+// NewLocationFromImage creates a new Location representing the given path (extracted from the Reference) relative to the given image.
 func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Image) Location {
 	layer := img.FileCatalog.Layer(ref)
 	return Location{
@@ -124,7 +124,7 @@ func NewLocationFromImage(virtualPath string, ref file.Reference, img *image.Ima
 	}
 }
 
-// NewLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory.
+// NewLocationFromDirectory creates a new Location representing the given path (extracted from the Reference) relative to the given directory.
 func NewLocationFromDirectory(responsePath string, ref file.Reference) Location {
 	return Location{
 		LocationData: LocationData{
@@ -139,7 +139,7 @@ func NewLocationFromDirectory(responsePath string, ref file.Reference) Location 
 	}
 }
 
-// NewVirtualLocationFromDirectory creates a new Location representing the given path (extracted from the ref) relative to the given directory with a separate virtual access path.
+// NewVirtualLocationFromDirectory creates a new Location representing the given path (extracted from the Reference) relative to the given directory with a separate virtual access path.
 func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, ref file.Reference) Location {
 	if responsePath == virtualResponsePath {
 		return NewLocationFromDirectory(responsePath, ref)

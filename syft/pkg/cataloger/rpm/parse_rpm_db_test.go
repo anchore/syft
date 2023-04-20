@@ -10,36 +10,35 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
-var _ source.FileResolver = (*rpmdbTestFileResolverMock)(nil)
+var _ file.Resolver = (*rpmdbTestFileResolverMock)(nil)
 
 type rpmdbTestFileResolverMock struct {
 	ignorePaths bool
 }
 
-func (r rpmdbTestFileResolverMock) FilesByExtension(extensions ...string) ([]source.Location, error) {
+func (r rpmdbTestFileResolverMock) FilesByExtension(extensions ...string) ([]file.Location, error) {
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) FilesByBasename(filenames ...string) ([]source.Location, error) {
+func (r rpmdbTestFileResolverMock) FilesByBasename(filenames ...string) ([]file.Location, error) {
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) FilesByBasenameGlob(globs ...string) ([]source.Location, error) {
+func (r rpmdbTestFileResolverMock) FilesByBasenameGlob(globs ...string) ([]file.Location, error) {
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) FileContentsByLocation(location source.Location) (io.ReadCloser, error) {
+func (r rpmdbTestFileResolverMock) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) AllLocations() <-chan source.Location {
+func (r rpmdbTestFileResolverMock) AllLocations() <-chan file.Location {
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) FileMetadataByLocation(location source.Location) (source.FileMetadata, error) {
+func (r rpmdbTestFileResolverMock) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	panic("not implemented")
 }
 
@@ -53,29 +52,29 @@ func (r rpmdbTestFileResolverMock) HasPath(path string) bool {
 	return !r.ignorePaths
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...string) ([]source.Location, error) {
+func (r *rpmdbTestFileResolverMock) FilesByPath(paths ...string) ([]file.Location, error) {
 	if r.ignorePaths {
 		// act as if no paths exist
 		return nil, nil
 	}
 	// act as if all files exist
-	var locations = make([]source.Location, len(paths))
+	var locations = make([]file.Location, len(paths))
 	for i, p := range paths {
-		locations[i] = source.NewLocation(p)
+		locations[i] = file.NewLocation(p)
 	}
 	return locations, nil
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByGlob(...string) ([]source.Location, error) {
+func (r *rpmdbTestFileResolverMock) FilesByGlob(...string) ([]file.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *rpmdbTestFileResolverMock) RelativeFileByPath(source.Location, string) *source.Location {
+func (r *rpmdbTestFileResolverMock) RelativeFileByPath(file.Location, string) *file.Location {
 	panic(fmt.Errorf("not implemented"))
 	return nil
 }
 
-func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]source.Location, error) {
+func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]file.Location, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -94,7 +93,7 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"MIT"},
@@ -122,7 +121,7 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses:     []string{"MIT"},

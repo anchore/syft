@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_parseDpkgStatus(t *testing.T) {
@@ -307,7 +306,7 @@ Installed-Size: 10kib
 					Name:         "apt",
 					Type:         "deb",
 					PURL:         "pkg:deb/debian/apt?distro=debian-10",
-					Locations:    source.NewLocationSet(source.NewLocation("place")),
+					Locations:    file.NewLocationSet(file.NewLocation("place")),
 					MetadataType: "DpkgMetadata",
 					Metadata: pkg.DpkgMetadata{
 						Package:       "apt",

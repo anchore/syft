@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestAlpmCataloger(t *testing.T) {
@@ -21,7 +20,7 @@ func TestAlpmCataloger(t *testing.T) {
 			Type:         pkg.AlpmPkg,
 			FoundBy:      "alpmdb-cataloger",
 			Licenses:     []string{"LGPL3", "GPL"},
-			Locations:    source.NewLocationSet(source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")),
+			Locations:    file.NewLocationSet(file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")),
 			CPEs:         nil,
 			PURL:         "",
 			MetadataType: "AlpmMetadata",

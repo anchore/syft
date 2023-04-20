@@ -1,11 +1,11 @@
 package golang
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseGoMod(t *testing.T) {
@@ -20,7 +20,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:         "github.com/bmatcuk/doublestar",
 					Version:      "v1.3.1",
 					PURL:         "pkg:golang/github.com/bmatcuk/doublestar@v1.3.1",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/one-package")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/one-package")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -36,7 +36,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:         "github.com/anchore/go-testutils",
 					Version:      "v0.0.0-20200624184116-66aa578126db",
 					PURL:         "pkg:golang/github.com/anchore/go-testutils@v0.0.0-20200624184116-66aa578126db",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/many-packages")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -46,7 +46,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:         "github.com/anchore/go-version",
 					Version:      "v1.2.2-0.20200701162849-18adb9c92b9b",
 					PURL:         "pkg:golang/github.com/anchore/go-version@v1.2.2-0.20200701162849-18adb9c92b9b",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/many-packages")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -56,7 +56,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:         "github.com/anchore/stereoscope",
 					Version:      "v0.0.0-20200706164556-7cf39d7f4639",
 					PURL:         "pkg:golang/github.com/anchore/stereoscope@v0.0.0-20200706164556-7cf39d7f4639",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/many-packages")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -66,7 +66,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:         "github.com/bmatcuk/doublestar",
 					Version:      "v8.8.8",
 					PURL:         "pkg:golang/github.com/bmatcuk/doublestar@v8.8.8",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/many-packages")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -76,7 +76,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:         "github.com/go-test/deep",
 					Version:      "v1.0.6",
 					PURL:         "pkg:golang/github.com/go-test/deep@v1.0.6",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/many-packages")),
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -115,7 +115,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Name:         "github.com/CycloneDX/cyclonedx-go",
 					Version:      "v0.6.0",
 					PURL:         "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.6.0",
-					Locations:    source.NewLocationSet(source.NewLocation("go.mod")),
+					Locations:    file.NewLocationSet(file.NewLocation("go.mod")),
 					FoundBy:      "go-mod-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
@@ -126,7 +126,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Name:         "github.com/acarl005/stripansi",
 					Version:      "v0.0.0-20180116102854-5a71ef0e047d",
 					PURL:         "pkg:golang/github.com/acarl005/stripansi@v0.0.0-20180116102854-5a71ef0e047d",
-					Locations:    source.NewLocationSet(source.NewLocation("go.mod")),
+					Locations:    file.NewLocationSet(file.NewLocation("go.mod")),
 					FoundBy:      "go-mod-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
@@ -139,7 +139,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Name:         "github.com/mgutz/ansi",
 					Version:      "v0.0.0-20200706080929-d51e80ef957d",
 					PURL:         "pkg:golang/github.com/mgutz/ansi@v0.0.0-20200706080929-d51e80ef957d",
-					Locations:    source.NewLocationSet(source.NewLocation("go.mod")),
+					Locations:    file.NewLocationSet(file.NewLocation("go.mod")),
 					FoundBy:      "go-mod-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,

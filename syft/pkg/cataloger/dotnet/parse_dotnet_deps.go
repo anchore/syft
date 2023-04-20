@@ -3,6 +3,7 @@ package dotnet
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"sort"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -24,7 +25,7 @@ type dotnetDepsLibrary struct {
 	HashPath string `json:"hashPath"`
 }
 
-func parseDotnetDeps(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	dec := json.NewDecoder(reader)

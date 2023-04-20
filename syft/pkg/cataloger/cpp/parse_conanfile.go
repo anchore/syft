@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"strings"
 
@@ -20,7 +21,7 @@ type Conanfile struct {
 }
 
 // parseConanfile is a parser function for conanfile.txt contents, returning all packages discovered.
-func parseConanfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseConanfile(_ file.Resolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	inRequirements := false
 	var pkgs []pkg.Package

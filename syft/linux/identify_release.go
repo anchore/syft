@@ -2,6 +2,7 @@ package linux
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 	"regexp"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/source"
 )
 
 // returns a distro or nil
@@ -54,7 +54,7 @@ var identityFiles = []parseEntry{
 }
 
 // IdentifyRelease parses distro-specific files to discover and raise linux distribution release details.
-func IdentifyRelease(resolver source.FileResolver) *Release {
+func IdentifyRelease(resolver file.Resolver) *Release {
 	logger := log.Nested("operation", "identify-release")
 	for _, entry := range identityFiles {
 		locations, err := resolver.FilesByPath(entry.path)

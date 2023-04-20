@@ -1,13 +1,13 @@
 package cataloger
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ pkg.Cataloger = (*dummy)(nil)
@@ -20,7 +20,7 @@ func (d dummy) Name() string {
 	return d.name
 }
 
-func (d dummy) Catalog(_ source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (d dummy) Catalog(_ file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	panic("not implemented")
 }
 
