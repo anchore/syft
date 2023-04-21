@@ -5,6 +5,8 @@ import (
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+
+	_ "modernc.org/sqlite"
 )
 
 func TestSqliteRpm(t *testing.T) {
