@@ -1,4 +1,4 @@
-"Package","Version Installed", "Found by", "Author"
+"Package","Version Installed", "Found by"
 {{- range .Artifacts}}
-"{{.Name}}","{{.Version}}","{{.FoundBy}}","{{ if hasField .Metadata "Author" }}{{ .Metadata.Author }}{{ else }}NO AUTHOR SUPPLIED{{end}}"
+"{{.Name}}","{{.Version}}","{{.FoundBy}}"
 {{- end}}
