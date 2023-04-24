@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "66ba429119b8bec6",
+   "id": "ed77c5cb0567a1a6",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -9,11 +9,19 @@
    "locations": [
     {
      "path": "/somefile-1.txt",
-     "layerID": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"
+     "layerID": "sha256:ab62016f9bec7286af65604081564cadeeb364a48faca2346c3f5a5a1f5ef777"
     }
    ],
    "licenses": [
-    "MIT"
+    {
+     "value": "MIT",
+     "spdx-expression": "MIT",
+     "type": "declared",
+     "url": "",
+     "location": {
+      "path": ""
+     }
+    }
    ],
    "language": "python",
    "cpes": [
@@ -24,7 +32,6 @@
    "metadata": {
     "name": "package-1",
     "version": "1.0.1",
-    "license": "",
     "author": "",
     "authorEmail": "",
     "platform": "",
@@ -40,10 +47,10 @@
    "locations": [
     {
      "path": "/somefile-2.txt",
-     "layerID": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec"
+     "layerID": "sha256:f1803845b6747d94d6e4ecce2331457e5f1c4fb97de5216f392a76f4582f63b2"
     }
    ],
-   "licenses": [],
+   "licenses": null,
    "language": "",
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
@@ -64,11 +71,11 @@
  ],
  "artifactRelationships": [],
  "source": {
-  "id": "1a678f111c8ddc66fd82687bb024e0dd6af61314404937a80e810c0cf317b796",
+  "id": "c8ac88bbaf3d1c036f6a1d601c3d52bafbf05571c97d68322e7cb3a7ecaa304f",
   "type": "image",
   "target": {
    "userInput": "user-image-input",
-   "imageID": "sha256:3c51b06feb0cda8ee62d0e3755ef2a8496a6b71f8a55b245f07f31c4bb813d31",
+   "imageID": "sha256:a3c61dc134d2f31b415c50324e75842d7f91622f39a89468e51938330b3fd3af",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
    "tags": [
@@ -78,17 +85,17 @@
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59",
+     "digest": "sha256:ab62016f9bec7286af65604081564cadeeb364a48faca2346c3f5a5a1f5ef777",
      "size": 22
     },
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec",
+     "digest": "sha256:f1803845b6747d94d6e4ecce2331457e5f1c4fb97de5216f392a76f4582f63b2",
      "size": 16
     }
    ],
-   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NzMsImRpZ2VzdCI6InNoYTI1NjozYzUxYjA2ZmViMGNkYThlZTYyZDBlMzc1NWVmMmE4NDk2YTZiNzFmOGE1NWIyNDVmMDdmMzFjNGJiODEzZDMxIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjpmYjZiZWVjYjc1YjM5ZjRiYjgxM2RiZjE3N2U1MDFlZGQ1ZGRiM2U2OWJiNDVjZWRlYjc4YzY3NmVlMWI3YTU5In0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OjMxOWI1ODhjZTY0MjUzYTg3YjUzM2M4ZWQwMWNmMDAyNWUwZWFjOThlN2I1MTZlMTI1MzI5NTdlMTI0NGZkZWMifV19",
-   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjItMDgtMDFUMjA6MDk6MjIuNTA5NDIxNzEyWiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIyLTA4LTAxVDIwOjA5OjIyLjQ4Nzg5NTUxOVoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMS50eHQgL3NvbWVmaWxlLTEudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9LHsiY3JlYXRlZCI6IjIwMjItMDgtMDFUMjA6MDk6MjIuNTA5NDIxNzEyWiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6ZmI2YmVlY2I3NWIzOWY0YmI4MTNkYmYxNzdlNTAxZWRkNWRkYjNlNjliYjQ1Y2VkZWI3OGM2NzZlZTFiN2E1OSIsInNoYTI1NjozMTliNTg4Y2U2NDI1M2E4N2I1MzNjOGVkMDFjZjAwMjVlMGVhYzk4ZTdiNTE2ZTEyNTMyOTU3ZTEyNDRmZGVjIl19fQ==",
+   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NzMsImRpZ2VzdCI6InNoYTI1NjphM2M2MWRjMTM0ZDJmMzFiNDE1YzUwMzI0ZTc1ODQyZDdmOTE2MjJmMzlhODk0NjhlNTE5MzgzMzBiM2ZkM2FmIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjphYjYyMDE2ZjliZWM3Mjg2YWY2NTYwNDA4MTU2NGNhZGVlYjM2NGE0OGZhY2EyMzQ2YzNmNWE1YTFmNWVmNzc3In0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OmYxODAzODQ1YjY3NDdkOTRkNmU0ZWNjZTIzMzE0NTdlNWYxYzRmYjk3ZGU1MjE2ZjM5MmE3NmY0NTgyZjYzYjIifV19",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjMtMDQtMjFUMTk6MTA6MzcuNjUxODMxMjM0WiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIzLTA0LTIxVDE5OjEwOjM3LjYwNzYxMzU1NVoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMS50eHQgL3NvbWVmaWxlLTEudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9LHsiY3JlYXRlZCI6IjIwMjMtMDQtMjFUMTk6MTA6MzcuNjUxODMxMjM0WiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6YWI2MjAxNmY5YmVjNzI4NmFmNjU2MDQwODE1NjRjYWRlZWIzNjRhNDhmYWNhMjM0NmMzZjVhNWExZjVlZjc3NyIsInNoYTI1NjpmMTgwMzg0NWI2NzQ3ZDk0ZDZlNGVjY2UyMzMxNDU3ZTVmMWM0ZmI5N2RlNTIxNmYzOTJhNzZmNDU4MmY2M2IyIl19fQ==",
    "repoDigests": [],
    "architecture": "",
    "os": ""
@@ -112,7 +119,7 @@
   }
  },
  "schema": {
-  "version": "7.1.4",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-7.1.4.json"
+  "version": "8.0.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }

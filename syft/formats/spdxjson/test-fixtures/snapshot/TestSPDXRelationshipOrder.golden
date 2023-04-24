@@ -3,24 +3,22 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-ce98f51f-b483-4e93-9a15-5a8a16d35de6",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-a1463ff3-8a7e-4ad9-b326-2cfbde38e82f",
  "creationInfo": {
-  "licenseListVersion": "3.19",
+  "licenseListVersion": "3.20",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2023-01-20T21:41:03Z"
+  "created": "2023-04-24T14:39:59Z"
  },
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "SPDXID": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
    "versionInfo": "1.0.1",
    "downloadLocation": "NOASSERTION",
    "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
-   "licenseConcluded": "MIT",
-   "licenseDeclared": "MIT",
    "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
@@ -41,8 +39,6 @@
    "versionInfo": "2.0.1",
    "downloadLocation": "NOASSERTION",
    "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
-   "licenseConcluded": "NONE",
-   "licenseDeclared": "NONE",
    "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
@@ -152,32 +148,32 @@
  ],
  "relationships": [
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
    "relatedSpdxElement": "SPDXRef-5265a4dde3edbf7c",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
    "relatedSpdxElement": "SPDXRef-839d99ee67d9d174",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
    "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
    "relatedSpdxElement": "SPDXRef-c641caa71518099f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
    "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-66ba429119b8bec6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
    "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd",
    "relationshipType": "CONTAINS"
   },

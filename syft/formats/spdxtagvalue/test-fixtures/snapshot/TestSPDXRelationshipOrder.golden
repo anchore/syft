@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-73433e8c-364f-42b6-b5b7-9a4da8799868
-LicenseListVersion: 3.19
+DocumentNamespace: https://anchore.com/syft/image/user-image-input-d8df09c1-4a0f-4da2-a74b-d9f0c24d5ee6
+LicenseListVersion: 3.20
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2022-12-21T03:39:05Z
+Created: 2023-04-24T14:42:14Z
 
 ##### Unpackaged files
 
@@ -54,8 +54,6 @@ PackageVersion: 2.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from DPKG DB: /somefile-2.txt
-PackageLicenseConcluded: NONE
-PackageLicenseDeclared: NONE
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
 ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
@@ -63,24 +61,22 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-66ba429119b8bec6
+SPDXID: SPDXRef-Package-python-package-1-ed77c5cb0567a1a6
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from installed python package manifest file: /somefile-1.txt
-PackageLicenseConcluded: MIT
-PackageLicenseDeclared: MIT
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:1:*:*:*:*:*:*:*
 ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
 ##### Relationships
 
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-5265a4dde3edbf7c
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-839d99ee67d9d174
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-9c2f7510199b17f6
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-c641caa71518099f
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-c6f5b29dca12661f
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-f9e49132a4b96ccd
+Relationship: SPDXRef-Package-python-package-1-ed77c5cb0567a1a6 CONTAINS SPDXRef-5265a4dde3edbf7c
+Relationship: SPDXRef-Package-python-package-1-ed77c5cb0567a1a6 CONTAINS SPDXRef-839d99ee67d9d174
+Relationship: SPDXRef-Package-python-package-1-ed77c5cb0567a1a6 CONTAINS SPDXRef-9c2f7510199b17f6
+Relationship: SPDXRef-Package-python-package-1-ed77c5cb0567a1a6 CONTAINS SPDXRef-c641caa71518099f
+Relationship: SPDXRef-Package-python-package-1-ed77c5cb0567a1a6 CONTAINS SPDXRef-c6f5b29dca12661f
+Relationship: SPDXRef-Package-python-package-1-ed77c5cb0567a1a6 CONTAINS SPDXRef-f9e49132a4b96ccd
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
 
