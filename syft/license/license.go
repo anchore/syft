@@ -21,6 +21,8 @@ type Evidence struct {
 }
 
 func ParseExpression(expression string) (string, error) {
+	// returns true if all licenses are valid
+	// ignored variable is any invalid expressions
 	valid, _ := spdxexp.ValidateLicenses([]string{expression})
 	if !valid {
 		return "", fmt.Errorf("failed to validate spdx expression: %s", expression)

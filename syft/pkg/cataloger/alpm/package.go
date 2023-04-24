@@ -34,7 +34,7 @@ func newPackage(m *parsedData, release *linux.Release, locations ...source.Locat
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,
-		Metadata: m.AlpmMetadata,
+		Metadata:     m.AlpmMetadata,
 	}
 	p.SetID()
 	return p

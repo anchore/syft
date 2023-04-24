@@ -15,7 +15,6 @@ func decoder(reader io.Reader) (*sbom.SBOM, error) {
 	var doc model.Document
 	err := dec.Decode(&doc)
 	if err != nil {
-		fmt.Println(err)
 		return nil, fmt.Errorf("unable to decode syft-json: %w", err)
 	}
 
