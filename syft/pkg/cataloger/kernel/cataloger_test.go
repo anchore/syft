@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -47,8 +48,11 @@ func Test_KernelCataloger(t *testing.T) {
 				"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 			),
 		),
-		Licenses: []string{
-			"GPL v2",
+		Licenses: []pkg.License{
+			{
+				Value: "GPL v2",
+				Type:  license.Declared,
+			},
 		},
 		Type:         pkg.LinuxKernelModulePkg,
 		PURL:         "pkg:generic/ttynull",

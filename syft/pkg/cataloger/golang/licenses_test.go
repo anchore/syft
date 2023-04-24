@@ -13,24 +13,39 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/license"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
 func Test_LocalLicenseSearch(t *testing.T) {
+	// TODO: should locationsByGlob return non default constructor values?
+	loc1 := source.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
+	loc1.Annotations = nil
+	loc2 := source.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+	loc2.Annotations = nil
 	tests := []struct {
 		name     string
 		version  string
-		expected string
+		expected pkg.License
 	}{
 		{
-			name:     "github.com/someorg/somename",
-			version:  "v0.3.2",
-			expected: "Apache-2.0",
+			name:    "github.com/someorg/somename",
+			version: "v0.3.2",
+			expected: pkg.License{
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				Location:       loc1,
+			},
 		},
 		{
-			name:     "github.com/CapORG/CapProject",
-			version:  "v4.111.5",
-			expected: "MIT",
+			name:    "github.com/CapORG/CapProject",
+			version: "v4.111.5",
+			expected: pkg.License{
+				SPDXExpression: "MIT",
+				Type:           license.Concluded,
+				Location:       loc2,
+			},
 		},
 	}
 
@@ -54,6 +69,11 @@ func Test_LocalLicenseSearch(t *testing.T) {
 }
 
 func Test_RemoteProxyLicenseSearch(t *testing.T) {
+	// TODO: should locationsByGlob return non default constructor values?
+	loc1 := source.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
+	loc1.Annotations = nil
+	loc2 := source.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+	loc2.Annotations = nil
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		buf := &bytes.Buffer{}
 		uri := strings.TrimPrefix(strings.TrimSuffix(r.RequestURI, ".zip"), "/")
@@ -94,17 +114,25 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 	tests := []struct {
 		name     string
 		version  string
-		expected string
+		expected pkg.License
 	}{
 		{
-			name:     "github.com/someorg/somename",
-			version:  "v0.3.2",
-			expected: "Apache-2.0",
+			name:    "github.com/someorg/somename",
+			version: "v0.3.2",
+			expected: pkg.License{
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				Location:       loc1,
+			},
 		},
 		{
-			name:     "github.com/CapORG/CapProject",
-			version:  "v4.111.5",
-			expected: "MIT",
+			name:    "github.com/CapORG/CapProject",
+			version: "v4.111.5",
+			expected: pkg.License{
+				SPDXExpression: "MIT",
+				Type:           license.Concluded,
+				Location:       loc2,
+			},
 		},
 	}
 

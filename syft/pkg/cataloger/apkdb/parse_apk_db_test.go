@@ -667,12 +667,8 @@ func TestSinglePackageDetails(t *testing.T) {
 
 func TestMultiplePackages(t *testing.T) {
 	fixture := "test-fixtures/multiple"
-	fixtureLocation := source.Location{
-		Coordinates: source.Coordinates{
-			RealPath: fixture,
-		},
-	}
-	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	location := source.NewLocation(fixture)
+	fixtureLocationSet := source.NewLocationSet(location)
 	expectedPkgs := []pkg.Package{
 		{
 			Name:    "libc-utils",
@@ -681,7 +677,7 @@ func TestMultiplePackages(t *testing.T) {
 				{
 					Value:    "BSD",
 					Type:     license.Declared,
-					Location: fixtureLocation,
+					Location: location,
 				},
 			},
 			Type:         pkg.ApkPkg,
@@ -716,17 +712,17 @@ func TestMultiplePackages(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					Location:       fixtureLocation,
+					Location:       location,
 				},
 				{
 					Value:    "BSD",
 					Type:     license.Declared,
-					Location: fixtureLocation,
+					Location: location,
 				},
 				{
 					Value:    "GPL2+",
 					Type:     license.Declared,
-					Location: fixtureLocation,
+					Location: location,
 				},
 			},
 			MetadataType: pkg.ApkMetadataType,

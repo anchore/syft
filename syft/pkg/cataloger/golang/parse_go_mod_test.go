@@ -91,7 +91,7 @@ func TestParseGoMod(t *testing.T) {
 			for i := range test.expected {
 				p := &test.expected[i]
 				if p.Licenses == nil {
-					p.Licenses = []string{}
+					p.Licenses = []pkg.License{}
 				}
 			}
 			c := goModCataloger{}
@@ -157,7 +157,7 @@ func Test_GoSumHashes(t *testing.T) {
 			for i := range test.expected {
 				p := &test.expected[i]
 				if p.Licenses == nil {
-					p.Licenses = []string{}
+					p.Licenses = []pkg.License{}
 				}
 			}
 			pkgtest.NewCatalogTester().

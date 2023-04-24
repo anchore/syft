@@ -19,11 +19,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			Fixture: "test-fixtures/egg-info/PKG-INFO",
 			ExpectedMetadata: parsedData{
 				"Apache 2.0",
-				source.Location{
-					Coordinates: source.Coordinates{
-						RealPath: "test-fixtures/egg-info/PKG-INFO",
-					},
-				},
+				source.NewLocation("test-fixtures/egg-info/PKG-INFO"),
 				pkg.PythonPackageMetadata{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -38,11 +34,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			Fixture: "test-fixtures/dist-info/METADATA",
 			ExpectedMetadata: parsedData{
 				"BSD License",
-				source.Location{
-					Coordinates: source.Coordinates{
-						RealPath: "test-fixtures/dist-info/METADATA",
-					},
-				},
+				source.NewLocation("test-fixtures/dist-info/METADATA"),
 				pkg.PythonPackageMetadata{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
