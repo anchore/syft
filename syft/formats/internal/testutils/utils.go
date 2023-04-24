@@ -47,21 +47,14 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, s
 
 	err := format.Encode(&buffer, sbom)
 	assert.NoError(t, err)
-	actual := buffer.Bytes()
+	actual := redact(buffer.Bytes(), redactors...)
 
 	// replace the expected snapshot contents with the current encoder contents
 	if updateSnapshot {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
 
-	var expected = testutils.GetGoldenFileContents(t)
-
-	// remove dynamic values, which should be tested independently
-	redactors = append(redactors, carriageRedactor)
-	for _, r := range redactors {
-		actual = r(actual)
-		expected = r(expected)
-	}
+	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
 
 	if json {
 		require.JSONEq(t, string(expected), string(actual))
@@ -78,21 +71,14 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 
 	err := format.Encode(&buffer, sbom)
 	assert.NoError(t, err)
-	actual := buffer.Bytes()
+	actual := redact(buffer.Bytes(), redactors...)
 
 	// replace the expected snapshot contents with the current encoder contents
 	if updateSnapshot {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
 
-	var expected = testutils.GetGoldenFileContents(t)
-
-	// remove dynamic values, which should be tested independently
-	redactors = append(redactors, carriageRedactor)
-	for _, r := range redactors {
-		actual = r(actual)
-		expected = r(expected)
-	}
+	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
 
 	if json {
 		require.JSONEq(t, string(expected), string(actual))
@@ -306,4 +292,13 @@ func AddSampleFileRelationships(s *sbom.SBOM) {
 			Type: artifact.ContainsRelationship,
 		})
 	}
+}
+
+// remove dynamic values, which should be tested independently
+func redact(b []byte, redactors ...redactor) []byte {
+	redactors = append(redactors, carriageRedactor)
+	for _, r := range redactors {
+		b = r(b)
+	}
+	return b
 }
