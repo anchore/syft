@@ -1,6 +1,7 @@
 package rpm
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"os"
@@ -19,6 +20,11 @@ import (
 
 // parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
 func parseRpmDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// check if a sqlite driver is available
+	if !isSqliteDriverAvailable() {
+		log.Warnf("sqlite driver is not available, newer RPM databases might not be cataloged")
+	}
+
 	f, err := os.CreateTemp("", internal.ApplicationName+"-rpmdb")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
@@ -117,4 +123,9 @@ func extractRpmdbFileRecords(resolver source.FilePathResolver, entry rpmdb.Packa
 		}
 	}
 	return records
+}
+
+func isSqliteDriverAvailable() bool {
+	_, err := sql.Open("sqlite", ":memory:")
+	return err == nil
 }
