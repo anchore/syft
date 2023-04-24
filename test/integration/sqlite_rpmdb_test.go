@@ -3,6 +3,10 @@ package integration
 import (
 	"testing"
 
+	// the main package in syft imports this to get sqlite support without CGO. Since integration tests
+	// do not use the main package this needs to be imported here as well.
+	_ "modernc.org/sqlite"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
