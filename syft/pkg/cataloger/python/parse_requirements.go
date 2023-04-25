@@ -3,6 +3,7 @@ package python
 import (
 	"bufio"
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -15,6 +16,11 @@ import (
 
 var _ generic.Parser = parseRequirementsTxt
 
+var (
+	extrasRegex = regexp.MustCompile(`\[.*\]`)
+	urlRegex    = regexp.MustCompile("@.*git.*")
+)
+
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
 func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -23,6 +29,7 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
+		rawLineNoComments := removeTrailingComment(line)
 		line = trimRequirementsTxtLine(line)
 
 		if line == "" {
@@ -57,15 +64,25 @@ func parseRequirementsTxt(_ source.FileResolver, _ *generic.Environment, reader 
 			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
 		})
 
+		// TODO: Update to support more than only ==
+		versionConstraint := fmt.Sprintf("== %s", version)
+
 		if name == "" || version == "" {
 			log.WithFields("path", reader.RealPath).Debugf("found empty package in requirements.txt line: %q", line)
 			continue
 		}
 		packages = append(
 			packages,
-			newPackageForIndex(
+			newPackageForRequirementsWithMetadata(
 				name,
 				version,
+				pkg.PythonRequirementsMetadata{
+					Name:              name,
+					Extras:            parseExtras(rawLineNoComments),
+					VersionConstraint: versionConstraint,
+					URL:               parseURL(rawLineNoComments),
+					Markers:           parseMarkers(rawLineNoComments),
+				},
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
@@ -93,6 +110,7 @@ func trimRequirementsTxtLine(line string) string {
 	line = strings.TrimSpace(line)
 	line = removeTrailingComment(line)
 	line = removeEnvironmentMarkers(line)
+	line = checkForRegex(line) // remove extras and url from line if found
 
 	return line
 }
@@ -120,4 +138,85 @@ func removeEnvironmentMarkers(line string) string {
 	}
 
 	return parts[0]
+}
+
+func parseExtras(packageName string) []string {
+	if extrasRegex.MatchString(packageName) {
+		// Remove square brackets
+		extras := strings.TrimFunc(extrasRegex.FindString(packageName), func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+		})
+
+		// Remove any additional whitespace
+		extras = strings.ReplaceAll(extras, " ", "")
+
+		return strings.Split(extras, ",")
+	}
+
+	return []string{}
+}
+
+func parseMarkers(line string) map[string]string {
+	markers := map[string]string{}
+	parts := strings.SplitN(line, ";", 2)
+
+	if len(parts) == 2 {
+		splittableMarkers := parts[1]
+
+		for _, combineString := range []string{" or ", " and "} {
+			splittableMarkers = strings.TrimSpace(
+				strings.ReplaceAll(splittableMarkers, combineString, ","),
+			)
+		}
+
+		splittableMarkers = strings.TrimSpace(splittableMarkers)
+
+		for _, mark := range strings.Split(splittableMarkers, ",") {
+			markparts := strings.Split(mark, " ")
+			markers[markparts[0]] = strings.Join(markparts[1:], " ")
+		}
+	}
+
+	return markers
+}
+
+func parseURL(line string) string {
+	parts := strings.Split(line, "@")
+
+	if len(parts) > 1 {
+		desiredIndex := -1
+
+		for index, part := range parts {
+			part := strings.TrimFunc(part, func(r rune) bool {
+				return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+			})
+
+			if strings.HasPrefix(part, "git") {
+				desiredIndex = index
+				break
+			}
+		}
+
+		if desiredIndex != -1 {
+			return strings.TrimSpace(strings.Join(parts[desiredIndex:], "@"))
+		}
+	}
+
+	return ""
+}
+
+// function to check a string for all possilbe regex expressions, replacing it if found
+func checkForRegex(stringToCheck string) string {
+	stringToReturn := stringToCheck
+
+	for _, r := range []*regexp.Regexp{
+		urlRegex,
+		extrasRegex,
+	} {
+		if r.MatchString(stringToCheck) {
+			stringToReturn = r.ReplaceAllString(stringToCheck, "")
+		}
+	}
+
+	return stringToReturn
 }
