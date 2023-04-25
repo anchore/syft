@@ -36,7 +36,7 @@ type parsedData struct {
 
 func newParsedDatafromEntry(licenseLocation source.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
 	// TODO: use entry to populate the pkg.RpmMetadata struct in package constructor
-	license := pkg.NewLicense(entry.License, "", licenseLocation)
+	license := pkg.NewLicenseFromLocation(entry.License, "", licenseLocation)
 	return parsedData{
 		Licenses: []pkg.License{license},
 		RpmMetadata: pkg.RpmMetadata{

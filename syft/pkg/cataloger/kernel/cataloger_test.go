@@ -48,7 +48,7 @@ func Test_KernelCataloger(t *testing.T) {
 			),
 		),
 		Licenses: []pkg.License{
-			pkg.NewLicense("GPL v2",
+			pkg.NewLicenseFromLocation("GPL v2",
 				source.NewVirtualLocation(
 					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",

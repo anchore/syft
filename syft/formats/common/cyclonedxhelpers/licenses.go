@@ -50,7 +50,7 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 				}
 
 				var licenseLocation *source.Location
-				licenses = append(licenses, pkg.NewLicense(licenseValue, l.License.URL, licenseLocation))
+				licenses = append(licenses, pkg.NewLicenseFromLocation(licenseValue, l.License.URL, licenseLocation))
 			}
 		}
 	}

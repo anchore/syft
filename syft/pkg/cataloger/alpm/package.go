@@ -10,20 +10,13 @@ import (
 )
 
 func newPackage(m *parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
-	// default to empty list; not nil field
-	licenses := make([]pkg.License, 0)
 	licenseCandidates := strings.Split(m.Licenses, "\n")
-	for _, l := range licenseCandidates {
-		if l != "" {
-			licenses = append(licenses, pkg.NewLicense(l, dbLocation.WithoutAnnotations()))
-		}
-	}
 
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(dbLocation),
-		Licenses:     licenses,
+		Licenses:     pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...),
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,

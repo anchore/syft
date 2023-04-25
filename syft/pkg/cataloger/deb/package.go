@@ -98,7 +98,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 		// attach the licenses
 		licenseStrs := parseLicensesFromCopyright(copyrightReader)
 		for _, licenseStr := range licenseStrs {
-			p.Licenses = append(p.Licenses, pkg.NewLicense(licenseStr, copyrightLocation.WithoutAnnotations()))
+			p.Licenses = append(p.Licenses, pkg.NewLicenseFromLocation(licenseStr, copyrightLocation.WithoutAnnotations()))
 		}
 		// keep a record of the file where this was discovered
 		p.Locations.Add(*copyrightLocation)

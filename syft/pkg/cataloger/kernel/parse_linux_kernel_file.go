@@ -37,7 +37,7 @@ func parseLinuxKernelFile(_ source.FileResolver, _ *generic.Environment, reader 
 	return []pkg.Package{
 		newLinuxKernelPackage(
 			metadata,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.Location,
 		),
 	}, nil, nil
 }

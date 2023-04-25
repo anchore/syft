@@ -10,11 +10,11 @@ import (
 
 const linuxKernelPackageName = "linux-kernel"
 
-func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, locations ...source.Location) pkg.Package {
+func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, kLocation source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         linuxKernelPackageName,
 		Version:      metadata.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    source.NewLocationSet(kLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:         packageURL(linuxKernelPackageName, metadata.Version),
 		Type:         pkg.LinuxKernelPkg,
 		MetadataType: pkg.LinuxKernelMetadataType,
@@ -27,16 +27,11 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, locations ...source
 }
 
 func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, kmLocation source.Location) pkg.Package {
-	licenses := make([]pkg.License, 0)
-	if metadata.License != "" {
-		licenses = append(licenses, pkg.NewLicense(metadata.License, kmLocation))
-	}
-
 	p := pkg.Package{
 		Name:         metadata.Name,
 		Version:      metadata.Version,
-		Locations:    source.NewLocationSet(kmLocation),
-		Licenses:     licenses,
+		Locations:    source.NewLocationSet(kmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicensesFromLocation(kmLocation, metadata.License),
 		PURL:         packageURL(metadata.Name, metadata.Version),
 		Type:         pkg.LinuxKernelModulePkg,
 		MetadataType: pkg.LinuxKernelModuleMetadataType,

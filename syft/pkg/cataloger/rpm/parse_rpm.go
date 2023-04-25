@@ -35,7 +35,7 @@ func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.Locat
 
 	licenses := []pkg.License{}
 	for _, l := range cl {
-		licenses = append(licenses, pkg.NewLicense(l, "", reader.Location))
+		licenses = append(licenses, pkg.NewLicenseFromLocation(l, "", reader.Location))
 	}
 
 	pd := parsedData{

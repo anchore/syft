@@ -24,7 +24,7 @@ func newGemfileLockPackage(name, version string, locations ...source.Location) p
 func newGemspecPackage(m gemData, locations ...source.Location) pkg.Package {
 	licenses := make([]pkg.License, 0)
 	for _, l := range m.Licenses {
-		licenses = append(licenses, pkg.NewLicense(l, "", locations[0]))
+		licenses = append(licenses, pkg.NewLicenseFromLocation(l, "", locations[0]))
 	}
 	p := pkg.Package{
 		Name:         m.Name,

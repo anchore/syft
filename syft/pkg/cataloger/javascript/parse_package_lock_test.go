@@ -140,7 +140,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []pkg.License{
-				pkg.NewLicense("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
 			},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
@@ -152,7 +152,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []pkg.License{
-				pkg.NewLicense("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
 			},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
@@ -164,7 +164,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []pkg.License{
-				pkg.NewLicense("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
 			},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
@@ -176,7 +176,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []pkg.License{
-				pkg.NewLicense("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
 			},
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
@@ -287,7 +287,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 		Language: pkg.JavaScript,
 		Type:     pkg.NpmPkg,
 		Licenses: []pkg.License{
-			pkg.NewLicense("ISC", source.NewLocation(packageLockV2)),
+			pkg.NewLicenseFromLocation("ISC", source.NewLocation(packageLockV2)),
 		},
 		MetadataType: "NpmPackageLockJsonMetadata",
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
@@ -318,7 +318,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []pkg.License{
-				pkg.NewLicense("ISC", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("ISC", source.NewLocation(fixture)),
 			},
 			PURL:         "pkg:npm/tmp@1.0.0",
 			MetadataType: "NpmPackageLockJsonMetadata",
@@ -331,8 +331,8 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Type:     pkg.NpmPkg,
 
 			Licenses: []pkg.License{
-				pkg.NewLicense("MIT", source.NewLocation(fixture)),
-				pkg.NewLicense("Apache2", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("Apache2", source.NewLocation(fixture)),
 			},
 			PURL:         "pkg:npm/pause-stream@0.0.11",
 			MetadataType: "NpmPackageLockJsonMetadata",
@@ -344,7 +344,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: []pkg.License{
-				pkg.NewLicense("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
 			},
 			PURL:         "pkg:npm/through@2.3.8",
 			MetadataType: "NpmPackageLockJsonMetadata",

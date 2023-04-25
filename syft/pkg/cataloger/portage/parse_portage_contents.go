@@ -120,7 +120,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 
 	licenses := make([]pkg.License, 0)
 	for _, licenseCandidate := range licenseCandidates {
-		licenses = append(licenses, pkg.NewLicense(licenseCandidate, "", *location))
+		licenses = append(licenses, pkg.NewLicenseFromLocation(licenseCandidate, "", *location))
 	}
 	p.Licenses = licenses
 	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
