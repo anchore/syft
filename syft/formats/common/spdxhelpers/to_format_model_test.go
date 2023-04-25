@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -456,7 +457,8 @@ func Test_OtherLicenses(t *testing.T) {
 			pkg: pkg.Package{
 				Licenses: []pkg.License{
 					{
-						Value: "foobar", // Only testing licenses not in spdx list
+						Value: "foobar",
+						Type:  license.Declared, // Only testing licenses not in spdx list
 					},
 				},
 			},
@@ -473,9 +475,11 @@ func Test_OtherLicenses(t *testing.T) {
 				Licenses: []pkg.License{
 					{
 						Value: "internal made up license name",
+						Type:  license.Declared, // Only testing licenses not in spdx list
 					},
 					{
 						Value: "new apple license 2.0",
+						Type:  license.Declared, // Only testing licenses not in spdx list
 					},
 				},
 			},
