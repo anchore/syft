@@ -7,18 +7,16 @@ import (
 )
 
 type License struct {
-	Value          string          `json:"value"`
-	SPDXExpression string          `json:"spdx-expression"`
-	Type           license.Type    `json:"type"`
-	URL            string          `json:"url"`      // external sources
-	Location       source.Location `json:"location"` // on disk declaration
+	Value          string           `json:"value"`
+	SPDXExpression string           `json:"spdx-expression"`
+	Type           license.Type     `json:"type"`
+	URL            string           `json:"url"`      // external sources
+	Location       *source.Location `json:"location"` // on disk declaration
 }
 
-func NewLicense(value string, url string, location source.Location) License {
-	// TODO: check license package for validation enhancements
+func NewLicense(value string, url string, location *source.Location) License {
 	spdxExpression, err := license.ParseExpression(value)
 	if err != nil {
-		// TODO: warn/trace error with package context?
 		log.Trace("unable to parse license expression: %w", err)
 	}
 

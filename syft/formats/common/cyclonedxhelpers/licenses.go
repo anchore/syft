@@ -4,9 +4,9 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
 
-// TODO: update this to only return valid cyclonedx expression types
 // This should be a function that just surfaces licenses already validated in the package struct
 func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	lc := cyclonedx.Licenses{}
@@ -16,6 +16,7 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 				License: &cyclonedx.License{
 					ID: l.SPDXExpression,
 				},
+				Expression: l.SPDXExpression,
 			})
 		} else {
 			// not found so append the licenseName as is
@@ -33,11 +34,22 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	return nil
 }
 
-func decodeLicenses(_ *cyclonedx.Component) []pkg.License {
-	// if c.Licenses != nil {
-	//	for range *c.Licenses {
-	//		// TODO: switch on if it's a license or expression
-	//	}
-	//}
-	return nil
+func decodeLicenses(c *cyclonedx.Component) []pkg.License {
+	licenses := make([]pkg.License, 0)
+	if c.Licenses != nil {
+		for _, l := range *c.Licenses {
+			licenseValue := l.License.ID
+			if l.Expression != "" {
+				licenseValue = l.Expression
+			}
+
+			if licenseValue == "" {
+				licenseValue = l.License.Name
+			}
+
+			var licenseLocation *source.Location
+			licenses = append(licenses, pkg.NewLicense(licenseValue, l.License.URL, licenseLocation))
+		}
+	}
+	return licenses
 }
