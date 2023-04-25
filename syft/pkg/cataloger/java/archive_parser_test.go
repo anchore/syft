@@ -100,11 +100,7 @@ func TestParseJar(t *testing.T) {
 					Version: "1.0-SNAPSHOT",
 					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					Licenses: []pkg.License{
-						{
-							Value:    "MIT License",
-							Type:     "declared",
-							Location: source.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi"),
-						},
+						pkg.NewLicense("MIT License", source.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
 					},
 					Language:     pkg.Java,
 					Type:         pkg.JenkinsPluginPkg,
