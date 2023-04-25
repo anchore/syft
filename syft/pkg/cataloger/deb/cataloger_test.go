@@ -1,6 +1,7 @@
 package deb
 
 import (
+	"github.com/anchore/syft/syft/license"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
@@ -10,12 +11,30 @@ import (
 )
 
 func TestDpkgCataloger(t *testing.T) {
+	licenseLocation := source.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright")
 	expected := []pkg.Package{
 		{
-			Name:     "libpam-runtime",
-			Version:  "1.1.8-3.6",
-			FoundBy:  "dpkgdb-cataloger",
-			Licenses: []pkg.License{},
+			Name:    "libpam-runtime",
+			Version: "1.1.8-3.6",
+			FoundBy: "dpkgdb-cataloger",
+			Licenses: []pkg.License{
+				{
+					Value:    "GPL-1",
+					Location: &licenseLocation,
+					Type:     license.Declared,
+				},
+				{
+					Value:    "GPL-2",
+					Location: &licenseLocation,
+					Type:     license.Declared,
+				},
+				{
+					Value:          "LGPL-2.1",
+					SPDXExpression: "LGPL-2.1",
+					Location:       &licenseLocation,
+					Type:           license.Declared,
+				},
+			},
 			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),
 				source.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.md5sums", "/var/lib/dpkg/info/libpam-runtime.md5sums"),
