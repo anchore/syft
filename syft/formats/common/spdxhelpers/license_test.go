@@ -107,6 +107,32 @@ func Test_License(t *testing.T) {
 				declared:  "LicenseRef-one-thing-first AND LicenseRef-two-things----second AND LicenseRef-MIT",
 			},
 		},
+		{
+			name: "join parentheses correctly",
+			input: pkg.Package{
+				Licenses: []pkg.License{
+					{
+						Value: "one thing first",
+						Type:  license.Declared,
+					},
+					{
+						SPDXExpression: "(MIT AND GPL-3.0-only)",
+						Type:           license.Declared,
+					},
+					{
+						SPDXExpression: "MIT OR APACHE-2.0",
+						Type:           license.Declared,
+					},
+				},
+			},
+			expected: struct {
+				concluded string
+				declared  string
+			}{
+				concluded: "NOASSERTION",
+				declared:  "LicenseRef-one-thing-first AND (MIT AND GPL-3.0-only) AND (MIT OR APACHE-2.0)",
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -39,6 +39,9 @@ func License(p pkg.Package) (concluded, declared string) {
 		}
 	}
 
+	concluded = joinLicenses(pc)
+	declared = joinLicenses(pd)
+
 	if len(pc) != 0 {
 		concluded = strings.Join(pc, " AND ")
 	} else {
@@ -52,6 +55,26 @@ func License(p pkg.Package) (concluded, declared string) {
 	}
 
 	return concluded, declared
+}
+
+func joinLicenses(licenses []string) string {
+	if len(licenses) == 0 {
+		return NOASSERTION
+	}
+
+	for i, v := range licenses {
+		// check if license does not start or end with parens
+		if !strings.HasPrefix(v, "(") && !strings.HasSuffix(v, ")") {
+			// if license contains AND, OR, or WITH, then wrap in parens
+			if strings.Contains(v, " AND ") ||
+				strings.Contains(v, " OR ") ||
+				strings.Contains(v, " WITH ") {
+				licenses[i] = "(" + v + ")"
+			}
+		}
+	}
+
+	return strings.Join(licenses, " AND ")
 }
 
 func parseLicenses(raw []pkg.License) (concluded, declared []string) {
