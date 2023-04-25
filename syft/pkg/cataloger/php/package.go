@@ -8,21 +8,15 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newComposerLockPackage(m parsedData, location ...source.Location) pkg.Package {
-	var licenseLocation source.Location
-	if len(location) > 0 {
-		// we want to use the composer lock location as the source for the license declaration
-		licenseLocation = location[0]
-	}
-
+func newComposerLockPackage(m parsedData, indexLocation source.Location) pkg.Package {
 	licenses := make([]pkg.License, 0)
 	for _, l := range m.License {
-		licenses = append(licenses, pkg.NewLicense(l, "", licenseLocation))
+		licenses = append(licenses, pkg.NewLicense(l, indexLocation))
 	}
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(location...),
+		Locations:    source.NewLocationSet(indexLocation),
 		Licenses:     licenses,
 		PURL:         packageURL(m),
 		Language:     pkg.PHP,

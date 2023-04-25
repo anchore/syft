@@ -143,7 +143,8 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			for i := range expectedPkgs {
 				expectedPkgs[i].Locations = locations
 				for k := range expectedPkgs[i].Licenses {
-					expectedPkgs[i].Licenses[k].Location = source.NewLocation(fixture)
+					loc := source.NewLocation(fixture)
+					expectedPkgs[i].Licenses[k].Location = &loc
 				}
 			}
 			pkgtest.TestFileParser(t, fixture, parseInstalledJSON, expectedPkgs, expectedRelationships)
