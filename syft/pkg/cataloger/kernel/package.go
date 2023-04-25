@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -27,19 +26,16 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, locations ...source
 	return p
 }
 
-func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, locations ...source.Location) pkg.Package {
+func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, kmLocation source.Location) pkg.Package {
 	licenses := make([]pkg.License, 0)
 	if metadata.License != "" {
-		licenses = append(licenses, pkg.License{
-			Value: metadata.License,
-			Type:  license.Declared,
-		})
+		licenses = append(licenses, pkg.NewLicense(metadata.License, kmLocation))
 	}
 
 	p := pkg.Package{
 		Name:         metadata.Name,
 		Version:      metadata.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    source.NewLocationSet(kmLocation),
 		Licenses:     licenses,
 		PURL:         packageURL(metadata.Name, metadata.Version),
 		Type:         pkg.LinuxKernelModulePkg,
