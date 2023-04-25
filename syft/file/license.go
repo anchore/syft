@@ -9,7 +9,13 @@ type License struct {
 	Value           string
 	SPDXExpression  string
 	Type            license.Type
-	LicenseEvidence *license.Evidence // evidence from license classifier
+	LicenseEvidence *LicenseEvidence // evidence from license classifier
+}
+
+type LicenseEvidence struct {
+	Confidence int
+	Offset     int
+	Extent     int
 }
 
 func NewLicense(value string) License {
