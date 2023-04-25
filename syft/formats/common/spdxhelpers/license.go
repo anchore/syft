@@ -39,22 +39,7 @@ func License(p pkg.Package) (concluded, declared string) {
 		}
 	}
 
-	concluded = joinLicenses(pc)
-	declared = joinLicenses(pd)
-
-	if len(pc) != 0 {
-		concluded = strings.Join(pc, " AND ")
-	} else {
-		concluded = NOASSERTION
-	}
-
-	if len(pd) != 0 {
-		declared = strings.Join(pd, " AND ")
-	} else {
-		declared = NOASSERTION
-	}
-
-	return concluded, declared
+	return joinLicenses(pc), joinLicenses(pd)
 }
 
 func joinLicenses(licenses []string) string {
