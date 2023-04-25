@@ -10,7 +10,7 @@ type License struct {
 	Value          string           `json:"value"`
 	SPDXExpression string           `json:"spdx-expression"`
 	Type           license.Type     `json:"type"`
-	URL            string           `json:"url"`      // external sources
+	URL            string           `json:"url"`                // external sources
 	Location       *source.Location `json:"location,omitempty"` // on disk declaration
 }
 
