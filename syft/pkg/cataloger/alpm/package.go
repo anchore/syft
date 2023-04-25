@@ -9,27 +9,20 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(m *parsedData, release *linux.Release, locations ...source.Location) pkg.Package {
-	// ALPM only passes a single location
-	// We use this as the "declared" license location
-	var licenseLocation source.Location
-	if len(locations) > 0 {
-		licenseLocation = locations[0]
-	}
-
+func newPackage(m *parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
 	// default to empty list; not nil field
 	licenses := make([]pkg.License, 0)
 	licenseCandidates := strings.Split(m.Licenses, "\n")
 	for _, l := range licenseCandidates {
 		if l != "" {
-			licenses = append(licenses, pkg.NewLicense(l, "", licenseLocation))
+			licenses = append(licenses, pkg.NewLicense(l, "", &dbLocation))
 		}
 	}
 
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    source.NewLocationSet(dbLocation),
 		Licenses:     licenses,
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),
@@ -37,6 +30,7 @@ func newPackage(m *parsedData, release *linux.Release, locations ...source.Locat
 		Metadata:     m.AlpmMetadata,
 	}
 	p.SetID()
+
 	return p
 }
 
