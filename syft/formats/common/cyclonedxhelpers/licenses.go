@@ -36,20 +36,24 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 
 func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	licenses := make([]pkg.License, 0)
-	if c.Licenses != nil {
-		for _, l := range *c.Licenses {
-			licenseValue := l.License.ID
-			if l.Expression != "" {
-				licenseValue = l.Expression
-			}
+	if c != nil {
+		if c.Licenses != nil {
+			for _, l := range *c.Licenses {
+				// priority: Expression -> ID -> Name
+				licenseValue := l.Expression
+				if l.License != nil && licenseValue == "" {
+					licenseValue = l.License.ID
+				}
 
-			if licenseValue == "" {
-				licenseValue = l.License.Name
-			}
+				if l.License != nil && licenseValue == "" {
+					licenseValue = l.License.Name
+				}
 
-			var licenseLocation *source.Location
-			licenses = append(licenses, pkg.NewLicense(licenseValue, l.License.URL, licenseLocation))
+				var licenseLocation *source.Location
+				licenses = append(licenses, pkg.NewLicense(licenseValue, l.License.URL, licenseLocation))
+			}
 		}
 	}
+
 	return licenses
 }
