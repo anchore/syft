@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_PackageURL(t *testing.T) {
@@ -23,9 +22,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "non-alpine distro",
 			metadata: parsedData{
-				"",
-				source.Location{},
-				pkg.ApkMetadata{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
@@ -40,9 +38,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "gocase",
 			metadata: parsedData{
-				"",
-				source.Location{},
-				pkg.ApkMetadata{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
@@ -57,9 +54,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "missing architecture",
 			metadata: parsedData{
-				"",
-				source.Location{},
-				pkg.ApkMetadata{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
 					Package: "p",
 					Version: "v",
 				},
@@ -73,9 +69,8 @@ func Test_PackageURL(t *testing.T) {
 		// verify #351
 		{
 			metadata: parsedData{
-				"",
-				source.Location{},
-				pkg.ApkMetadata{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
 					Package:      "g++",
 					Version:      "v84",
 					Architecture: "am86",
@@ -89,9 +84,8 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			metadata: parsedData{
-				"",
-				source.Location{},
-				pkg.ApkMetadata{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
 					Package:      "g plus plus",
 					Version:      "v84",
 					Architecture: "am86",
@@ -106,9 +100,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "add source information as qualifier",
 			metadata: parsedData{
-				"",
-				source.Location{},
-				pkg.ApkMetadata{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
 					Package:       "p",
 					Version:       "v",
 					Architecture:  "a",
@@ -124,9 +117,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "wolfi distro",
 			metadata: parsedData{
-				"",
-				source.Location{},
-				pkg.ApkMetadata{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
