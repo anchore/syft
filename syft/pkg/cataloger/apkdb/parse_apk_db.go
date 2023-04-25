@@ -27,8 +27,7 @@ var (
 )
 
 type parsedData struct {
-	License         string `mapstructure:"L" json:"license"`
-	LicenseLocation source.Location
+	License string `mapstructure:"L" json:"license"`
 	pkg.ApkMetadata
 }
 
@@ -129,9 +128,6 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
-		if apk.License != "" {
-			apk.LicenseLocation = reader.Location
-		}
 		pkgs = append(pkgs, newPackage(apk, r, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)))
 	}
 
