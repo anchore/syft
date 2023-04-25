@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -25,12 +24,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: []pkg.License{
-					{
-						Value:          "Artistic-2.0",
-						SPDXExpression: "Artistic-2.0",
-						Type:           license.Declared,
-						Location:       source.NewLocation("test-fixtures/pkg-json/package.json"),
-					},
+					pkg.NewLicense("Artistic-2.0", source.NewLocation("test-fixtures/pkg-json/package.json")),
 				},
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -52,12 +46,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: []pkg.License{
-					{
-						Value:          "ISC",
-						SPDXExpression: "ISC",
-						Type:           license.Declared,
-						Location:       source.NewLocation("test-fixtures/pkg-json/package-license-object.json"),
-					},
+					pkg.NewLicense("ISC", source.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
 				},
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -78,18 +67,8 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: []pkg.License{
-					{
-						Value:          "MIT",
-						SPDXExpression: "MIT",
-						Type:           license.Declared,
-						Location:       source.NewLocation("test-fixtures/pkg-json/package-license-objects.json"),
-					},
-					{
-						Value:          "Apache-2.0",
-						SPDXExpression: "Apache-2.0",
-						Type:           license.Declared,
-						Location:       source.NewLocation("test-fixtures/pkg-json/package-license-objects.json"),
-					},
+					pkg.NewLicense("MIT", source.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
+					pkg.NewLicense("Apache-2.0", source.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
 				},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -110,7 +89,6 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []pkg.License{},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -130,7 +108,6 @@ func TestParsePackageJSON(t *testing.T) {
 				Version:      "6.14.6",
 				PURL:         "pkg:npm/npm@6.14.6",
 				Type:         pkg.NpmPkg,
-				Licenses:     []pkg.License{},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -151,12 +128,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: []pkg.License{
-					{
-						Value:          "Artistic-2.0",
-						SPDXExpression: "Artistic-2.0",
-						Type:           license.Declared,
-						Location:       source.NewLocation("test-fixtures/pkg-json/package-nested-author.json"),
-					},
+					pkg.NewLicense("Artistic-2.0", source.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
 				},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -178,12 +150,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/function-bind@1.1.1",
 				Type:    pkg.NpmPkg,
 				Licenses: []pkg.License{
-					{
-						Value:          "MIT",
-						SPDXExpression: "MIT",
-						Type:           license.Declared,
-						Location:       source.NewLocation("test-fixtures/pkg-json/package-repo-string.json"),
-					},
+					pkg.NewLicense("MIT", source.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
 				},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -205,12 +172,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: []pkg.License{
-					{
-						Value:          "Artistic-2.0",
-						SPDXExpression: "Artistic-2.0",
-						Type:           license.Declared,
-						Location:       source.NewLocation("test-fixtures/pkg-json/package-private.json"),
-					},
+					pkg.NewLicense("Artistic-2.0", source.NewLocation("test-fixtures/pkg-json/package-private.json")),
 				},
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
