@@ -30,13 +30,10 @@ func Parse(reader io.Reader, l source.Location) (licenses []pkg.License, err err
 
 	for _, m := range cov.Match {
 		// TODO: spdx ID validation here?
-		l := pkg.License{
-			SPDXExpression: m.ID,
-			Type:           license.Concluded,
-			Location:       l,
-		}
+		lic := pkg.NewLicense(m.ID, l)
+		lic.Type = license.Concluded
 
-		licenses = append(licenses, l)
+		licenses = append(licenses, lic)
 	}
 
 	return licenses, nil
