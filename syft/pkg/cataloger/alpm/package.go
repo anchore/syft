@@ -15,7 +15,7 @@ func newPackage(m *parsedData, release *linux.Release, dbLocation source.Locatio
 	licenseCandidates := strings.Split(m.Licenses, "\n")
 	for _, l := range licenseCandidates {
 		if l != "" {
-			licenses = append(licenses, pkg.NewLicense(l, "", &dbLocation))
+			licenses = append(licenses, pkg.NewLicense(l, dbLocation.WithoutAnnotations()))
 		}
 	}
 
