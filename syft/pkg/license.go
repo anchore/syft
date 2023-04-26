@@ -31,7 +31,7 @@ func NewLicense(value string) License {
 
 func NewLicensesFromValues(values ...string) (licenses []License) {
 	for _, v := range values {
-		if v == "" {
+		if v == "" || v == "AND" {
 			continue
 		}
 		licenses = append(licenses, NewLicense(v))

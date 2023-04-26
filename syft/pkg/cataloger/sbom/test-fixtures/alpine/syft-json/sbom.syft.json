@@ -1278,7 +1278,6 @@
    ],
    "licenses": [
     "MPL-2.0",
-    "AND",
     "MIT"
    ],
    "language": "",
@@ -1357,7 +1356,6 @@
    ],
    "licenses": [
     "BSD-2-Clause",
-    "AND",
     "BSD-3-Clause"
    ],
    "language": "",
