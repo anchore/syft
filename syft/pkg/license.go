@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"github.com/mitchellh/hashstructure/v2"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
@@ -69,4 +71,24 @@ func NewLicenseFromURL(value string, url string) License {
 	l := NewLicense(value)
 	l.URL = url
 	return l
+}
+
+// this is a bit of a hack to not infinitely recurse when hashing a license
+type noLayerLicense License
+
+func (s License) Hash() (uint64, error) {
+	if s.Location != nil {
+		l := *s.Location
+		// much like the location set hash function, we should not consider the file system ID when hashing
+		// so that licenses found in different layers (at the same path) are not considered different.
+		l.FileSystemID = ""
+		s.Location = &l
+	}
+
+	return hashstructure.Hash(noLayerLicense(s), hashstructure.FormatV2,
+		&hashstructure.HashOptions{
+			ZeroNil:      true,
+			SlicesAsSets: true,
+		},
+	)
 }
