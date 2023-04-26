@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/anchore/syft/cmd/syft/cli"
 )
 

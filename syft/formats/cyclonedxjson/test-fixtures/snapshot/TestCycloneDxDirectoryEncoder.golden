@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:28fd9334-bfc4-403f-9335-9bcaa4b34e8b",
+  "serialNumber": "urn:uuid:redacted",
   "version": 1,
   "metadata": {
-    "timestamp": "2023-04-26T10:30:38-04:00",
+    "timestamp": "timestamp:redacted",
     "tools": [
       {
         "vendor": "anchore",
@@ -14,14 +14,14 @@
       }
     ],
     "component": {
-      "bom-ref": "163686ac6e30c752",
+      "bom-ref": "redacted",
       "type": "file",
       "name": "/some/path"
     }
   },
   "components": [
     {
-      "bom-ref": "ed5945af814b9a95",
+      "bom-ref": "redacted",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -56,7 +56,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=db4abfe497c180d3",
+      "bom-ref": "redacted",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
