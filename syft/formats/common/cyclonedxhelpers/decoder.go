@@ -54,7 +54,7 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
+			PackageCatalog:    pkg.NewCollection(),
 			LinuxDistribution: linuxReleaseFromComponents(*bom.Components),
 		},
 		Source:     extractComponents(bom.Metadata),

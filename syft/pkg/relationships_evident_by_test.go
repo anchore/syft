@@ -12,7 +12,7 @@ import (
 
 func TestRelationshipsEvidentBy(t *testing.T) {
 
-	c := NewCatalog()
+	c := NewCollection()
 
 	coordA := source.Coordinates{
 		RealPath:     "/somewhere/real",
@@ -53,7 +53,7 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		catalog *Catalog
+		catalog *Collection
 		want    []artifact.Relationship
 	}{
 		{

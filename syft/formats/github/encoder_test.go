@@ -28,7 +28,7 @@ func Test_toGithubModel(t *testing.T) {
 				VersionID: "18.04",
 				IDLike:    []string{"debian"},
 			},
-			PackageCatalog: pkg.NewCatalog(),
+			PackageCatalog: pkg.NewCollection(),
 		},
 	}
 	for _, p := range []pkg.Package{
