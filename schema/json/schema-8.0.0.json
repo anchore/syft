@@ -760,8 +760,7 @@
         "value",
         "spdx-expression",
         "type",
-        "url",
-        "location"
+        "url"
       ]
     },
     "LinuxKernelMetadata": {
