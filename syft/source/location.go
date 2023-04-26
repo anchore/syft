@@ -51,6 +51,12 @@ func (l Location) WithAnnotation(key, value string) Location {
 	return l
 }
 
+func (l Location) WithoutAnnotations() Location {
+	l.LocationMetadata.Annotations = map[string]string{}
+
+	return l
+}
+
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
 func NewLocation(realPath string) Location {
 	return Location{

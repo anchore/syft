@@ -9,22 +9,14 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(d parsedData, release *linux.Release, locations ...source.Location) pkg.Package {
-	licenses := make([]pkg.License, 0)
-	if d.License != "" {
-		// apk packages can have multiple licenses separated by spaces
-		// ex: MIT BSD GPL2+
-		licenseStrings := strings.Split(d.License, " ")
-		for _, l := range licenseStrings {
-			licenses = append(licenses, pkg.NewLicense(l, "", d.LicenseLocation))
-		}
-	}
+func newPackage(d parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
+	licenseStrings := strings.Split(d.License, " ")
 
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    source.NewLocationSet(locations...),
-		Licenses:     licenses,
+		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicensesFromLocation(dbLocation, licenseStrings...),
 		PURL:         packageURL(d, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,

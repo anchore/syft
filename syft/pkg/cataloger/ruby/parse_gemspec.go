@@ -102,7 +102,10 @@ func parseGemSpecEntries(_ source.FileResolver, _ *generic.Environment, reader s
 
 		pkgs = append(
 			pkgs,
-			newGemspecPackage(metadata, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			newGemspecPackage(
+				metadata,
+				reader.Location,
+			),
 		)
 	}
 

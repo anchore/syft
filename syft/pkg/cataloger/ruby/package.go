@@ -21,16 +21,12 @@ func newGemfileLockPackage(name, version string, locations ...source.Location) p
 	return p
 }
 
-func newGemspecPackage(m gemData, locations ...source.Location) pkg.Package {
-	licenses := make([]pkg.License, 0)
-	for _, l := range m.Licenses {
-		licenses = append(licenses, pkg.NewLicense(l, "", locations[0]))
-	}
+func newGemspecPackage(m gemData, gemSpecLocation source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(locations...),
-		Licenses:     licenses,
+		Locations:    source.NewLocationSet(gemSpecLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicensesFromLocation(gemSpecLocation, m.Licenses...),
 		PURL:         packageURL(m.Name, m.Version),
 		Language:     pkg.Ruby,
 		Type:         pkg.GemPkg,

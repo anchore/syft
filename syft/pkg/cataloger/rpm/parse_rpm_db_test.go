@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -100,13 +99,7 @@ func TestParseRpmDB(t *testing.T) {
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses: []pkg.License{
-						{
-							Value:          "MIT",
-							SPDXExpression: "MIT",
-							Type:           license.Declared,
-							URL:            "",
-							Location:       packagesLocation,
-						},
+						pkg.NewLicenseFromLocation("MIT", packagesLocation),
 					},
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
@@ -135,13 +128,7 @@ func TestParseRpmDB(t *testing.T) {
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses: []pkg.License{
-						{
-							Value:          "MIT",
-							SPDXExpression: "MIT",
-							Type:           license.Declared,
-							URL:            "",
-							Location:       packagesLocation,
-						},
+						pkg.NewLicenseFromLocation("MIT", packagesLocation),
 					},
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",

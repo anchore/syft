@@ -14,7 +14,7 @@ type License struct {
 	Location       *source.Location `json:"location,omitempty"` // on disk declaration
 }
 
-func NewLicense(value string, url string, location *source.Location) License {
+func NewLicense(value string) License {
 	spdxExpression, err := license.ParseExpression(value)
 	if err != nil {
 		log.Trace("unable to parse license expression: %w", err)
@@ -25,8 +25,38 @@ func NewLicense(value string, url string, location *source.Location) License {
 	return License{
 		Value:          value,
 		SPDXExpression: spdxExpression,
-		URL:            url,
-		Location:       location,
 		Type:           license.Declared,
 	}
+}
+
+func NewLicensesFromLocation(location source.Location, values ...string) (licenses []License) {
+	for _, v := range values {
+		if v == "" {
+			continue
+		}
+		licenses = append(licenses, NewLicenseFromLocation(v, location))
+	}
+	return
+}
+
+func NewLicenseFromLocation(value string, location source.Location) License {
+	l := NewLicense(value)
+	l.Location = &location
+	return l
+}
+
+func NewLicensesFromURL(url string, values ...string) (licenses []License) {
+	for _, v := range values {
+		if v == "" {
+			continue
+		}
+		licenses = append(licenses, NewLicenseFromURL(v, url))
+	}
+	return
+}
+
+func NewLicenseFromURL(value string, url string) License {
+	l := NewLicense(value)
+	l.URL = url
+	return l
 }

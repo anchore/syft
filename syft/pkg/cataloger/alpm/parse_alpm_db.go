@@ -32,12 +32,12 @@ var (
 )
 
 type parsedData struct {
-	Licenses         string `mapstructure:"licenses"`
+	Licenses         string `mapstructure:"license"`
 	pkg.AlpmMetadata `mapstructure:",squash"`
 }
 
 func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	parsedData, err := parseAlpmDBEntry(reader)
+	data, err := parseAlpmDBEntry(reader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -56,7 +56,7 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 	// replace the files found the pacman database with the files from the mtree These contain more metadata and
 	// thus more useful.
 	// TODO: probably want to use MTREE and PKGINFO here
-	parsedData.Files = pkgFiles
+	data.Files = pkgFiles
 
 	// We only really do this to get any backup database entries from the files database
 	files := filepath.Join(base, "files")
@@ -68,16 +68,16 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 	if err != nil {
 		return nil, nil, err
 	} else if filesMetadata != nil {
-		parsedData.Backup = filesMetadata.Backup
+		data.Backup = filesMetadata.Backup
 	}
 
-	if parsedData.Package == "" {
+	if data.Package == "" {
 		return nil, nil, nil
 	}
 
 	return []pkg.Package{
 		newPackage(
-			parsedData,
+			data,
 			env.LinuxRelease,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),

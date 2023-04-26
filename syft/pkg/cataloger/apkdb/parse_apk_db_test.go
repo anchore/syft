@@ -81,82 +81,103 @@ func TestExtraFileAttributes(t *testing.T) {
 func TestSinglePackageDetails(t *testing.T) {
 	tests := []struct {
 		fixture  string
-		expected pkg.ApkMetadata
+		expected pkg.Package
 	}{
 		{
 			fixture: "test-fixtures/single",
-			expected: pkg.ApkMetadata{
-				Package:       "musl-utils",
-				OriginPackage: "musl",
-				Version:       "1.1.24-r2",
-				Description:   "the musl c library (libc) implementation",
-				Maintainer:    "Timo Teräs <timo.teras@iki.fi>",
-				Architecture:  "x86_64",
-				URL:           "https://musl.libc.org/",
-				Size:          37944,
-				InstalledSize: 151552,
-				Dependencies:  []string{"scanelf", "so:libc.musl-x86_64.so.1"},
-				Provides:      []string{"cmd:getconf", "cmd:getent", "cmd:iconv", "cmd:ldconfig", "cmd:ldd"},
-				Checksum:      "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
-				GitCommit:     "4024cc3b29ad4c65544ad068b8f59172b5494306",
-				Files: []pkg.ApkFileRecord{
+			expected: pkg.Package{
+				Name:    "musl-utils",
+				Version: "1.1.24-r2",
+				Licenses: []pkg.License{
 					{
-						Path: "/sbin",
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
 					},
 					{
-						Path:        "/sbin/ldconfig",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "755",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
+						Value: "BSD",
+						Type:  license.Declared,
+					},
+					{
+						Value: "GPL2+",
+						Type:  license.Declared,
+					},
+				},
+				Type:         pkg.ApkPkg,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "musl-utils",
+					OriginPackage: "musl",
+					Version:       "1.1.24-r2",
+					Description:   "the musl c library (libc) implementation",
+					Maintainer:    "Timo Teräs <timo.teras@iki.fi>",
+					Architecture:  "x86_64",
+					URL:           "https://musl.libc.org/",
+					Size:          37944,
+					InstalledSize: 151552,
+					Dependencies:  []string{"scanelf", "so:libc.musl-x86_64.so.1"},
+					Provides:      []string{"cmd:getconf", "cmd:getent", "cmd:iconv", "cmd:ldconfig", "cmd:ldd"},
+					Checksum:      "Q1bTtF5526tETKfL+lnigzIDvm+2o=",
+					GitCommit:     "4024cc3b29ad4c65544ad068b8f59172b5494306",
+					Files: []pkg.ApkFileRecord{
+						{
+							Path: "/sbin",
 						},
-					},
-					{
-						Path: "/usr",
-					},
-					{
-						Path: "/usr/bin",
-					},
-					{
-						Path:        "/usr/bin/iconv",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "755",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
+						{
+							Path:        "/sbin/ldconfig",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "755",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1Kja2+POZKxEkUOZqwSjC6kmaED4=",
+							},
 						},
-					},
-					{
-						Path:        "/usr/bin/ldd",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "755",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
+						{
+							Path: "/usr",
 						},
-					},
-					{
-						Path:        "/usr/bin/getconf",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "755",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
+						{
+							Path: "/usr/bin",
 						},
-					},
-					{
-						Path:        "/usr/bin/getent",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "755",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
+						{
+							Path:        "/usr/bin/iconv",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "755",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1CVmFbdY+Hv6/jAHl1gec2Kbx1EY=",
+							},
+						},
+						{
+							Path:        "/usr/bin/ldd",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "755",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1yFAhGggmL7ERgbIA7KQxyTzf3ks=",
+							},
+						},
+						{
+							Path:        "/usr/bin/getconf",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "755",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1dAdYK8M/INibRQF5B3Rw7cmNDDA=",
+							},
+						},
+						{
+							Path:        "/usr/bin/getent",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "755",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1eR2Dz/WylabgbWMTkd2+hGmEya4=",
+							},
 						},
 					},
 				},
@@ -164,485 +185,512 @@ func TestSinglePackageDetails(t *testing.T) {
 		},
 		{
 			fixture: "test-fixtures/empty-deps-and-provides",
-			expected: pkg.ApkMetadata{
-				Package:       "alpine-baselayout-data",
-				OriginPackage: "alpine-baselayout",
-				Version:       "3.4.0-r0",
-				Description:   "Alpine base dir structure and init scripts",
-				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
-				Architecture:  "x86_64",
-				URL:           "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
-				Size:          11664,
-				InstalledSize: 77824,
-				Dependencies:  []string{},
-				Provides:      []string{},
-				Checksum:      "Q15ffjKT28lB7iSXjzpI/eDdYRCwM=",
-				GitCommit:     "bd965a7ebf7fd8f07d7a0cc0d7375bf3e4eb9b24",
-				Files: []pkg.ApkFileRecord{
-					{Path: "/etc"},
-					{Path: "/etc/fstab"},
-					{Path: "/etc/group"},
-					{Path: "/etc/hostname"},
-					{Path: "/etc/hosts"},
-					{Path: "/etc/inittab"},
-					{Path: "/etc/modules"},
-					{Path: "/etc/mtab", OwnerUID: "0", OwnerGID: "0", Permissions: "0777"},
-					{Path: "/etc/nsswitch.conf"},
-					{Path: "/etc/passwd"},
-					{Path: "/etc/profile"},
-					{Path: "/etc/protocols"},
-					{Path: "/etc/services"},
-					{Path: "/etc/shadow", OwnerUID: "0", OwnerGID: "148", Permissions: "0640"},
-					{Path: "/etc/shells"},
-					{Path: "/etc/sysctl.conf"},
+			expected: pkg.Package{
+				Name:    "alpine-baselayout-data",
+				Version: "3.4.0-r0",
+				Licenses: []pkg.License{
+					{
+						Value:          "GPL-2.0-only",
+						SPDXExpression: "GPL-2.0-only",
+						Type:           license.Declared,
+					},
+				},
+				Type:         pkg.ApkPkg,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "alpine-baselayout-data",
+					OriginPackage: "alpine-baselayout",
+					Version:       "3.4.0-r0",
+					Description:   "Alpine base dir structure and init scripts",
+					Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+					Architecture:  "x86_64",
+					URL:           "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
+					Size:          11664,
+					InstalledSize: 77824,
+					Dependencies:  []string{},
+					Provides:      []string{},
+					Checksum:      "Q15ffjKT28lB7iSXjzpI/eDdYRCwM=",
+					GitCommit:     "bd965a7ebf7fd8f07d7a0cc0d7375bf3e4eb9b24",
+					Files: []pkg.ApkFileRecord{
+						{Path: "/etc"},
+						{Path: "/etc/fstab"},
+						{Path: "/etc/group"},
+						{Path: "/etc/hostname"},
+						{Path: "/etc/hosts"},
+						{Path: "/etc/inittab"},
+						{Path: "/etc/modules"},
+						{Path: "/etc/mtab", OwnerUID: "0", OwnerGID: "0", Permissions: "0777"},
+						{Path: "/etc/nsswitch.conf"},
+						{Path: "/etc/passwd"},
+						{Path: "/etc/profile"},
+						{Path: "/etc/protocols"},
+						{Path: "/etc/services"},
+						{Path: "/etc/shadow", OwnerUID: "0", OwnerGID: "148", Permissions: "0640"},
+						{Path: "/etc/shells"},
+						{Path: "/etc/sysctl.conf"},
+					},
 				},
 			},
 		},
 		{
 			fixture: "test-fixtures/base",
-			expected: pkg.ApkMetadata{
-				Package:       "alpine-baselayout",
-				OriginPackage: "alpine-baselayout",
-				Version:       "3.2.0-r6",
-				Description:   "Alpine base dir structure and init scripts",
-				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
-				Architecture:  "x86_64",
-				URL:           "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
-				Size:          19917,
-				InstalledSize: 409600,
-				Dependencies:  []string{"/bin/sh", "so:libc.musl-x86_64.so.1"},
-				Provides:      []string{"cmd:mkmntdirs"},
-				Checksum:      "Q1myMNfd7u5v5UTgNHeq1e31qTjZU=",
-				GitCommit:     "e1c51734fa96fa4bac92e9f14a474324c67916fc",
-				Files: []pkg.ApkFileRecord{
+			expected: pkg.Package{
+				Name:    "alpine-baselayout",
+				Version: "3.2.0-r6",
+				Licenses: []pkg.License{
 					{
-						Path: "/dev",
+						Value:          "GPL-2.0-only",
+						SPDXExpression: "GPL-2.0-only",
+						Type:           license.Declared,
 					},
-					{
-						Path: "/dev/pts",
-					},
-					{
-						Path: "/dev/shm",
-					},
-					{
-						Path: "/etc",
-					},
-					{
-						Path: "/etc/fstab",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q11Q7hNe8QpDS531guqCdrXBzoA/o=",
+				},
+				Type:         pkg.ApkPkg,
+				PURL:         "",
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "alpine-baselayout",
+					OriginPackage: "alpine-baselayout",
+					Version:       "3.2.0-r6",
+					Description:   "Alpine base dir structure and init scripts",
+					Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
+					Architecture:  "x86_64",
+					URL:           "https://git.alpinelinux.org/cgit/aports/tree/main/alpine-baselayout",
+					Size:          19917,
+					InstalledSize: 409600,
+					Dependencies:  []string{"/bin/sh", "so:libc.musl-x86_64.so.1"},
+					Provides:      []string{"cmd:mkmntdirs"},
+					Checksum:      "Q1myMNfd7u5v5UTgNHeq1e31qTjZU=",
+					GitCommit:     "e1c51734fa96fa4bac92e9f14a474324c67916fc",
+					Files: []pkg.ApkFileRecord{
+						{
+							Path: "/dev",
 						},
-					},
-					{
-						Path: "/etc/group",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1oJ16xWudgKOrXIEquEDzlF2Lsm4=",
+						{
+							Path: "/dev/pts",
 						},
-					},
-					{
-						Path: "/etc/hostname",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q16nVwYVXP/tChvUPdukVD2ifXOmc=",
+						{
+							Path: "/dev/shm",
 						},
-					},
-					{
-						Path: "/etc/hosts",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1BD6zJKZTRWyqGnPi4tSfd3krsMU=",
+						{
+							Path: "/etc",
 						},
-					},
-					{
-						Path: "/etc/inittab",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1TsthbhW7QzWRe1E/NKwTOuD4pHc=",
+						{
+							Path: "/etc/fstab",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q11Q7hNe8QpDS531guqCdrXBzoA/o=",
+							},
 						},
-					},
-					{
-						Path: "/etc/modules",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1toogjUipHGcMgECgPJX64SwUT1M=",
+						{
+							Path: "/etc/group",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1oJ16xWudgKOrXIEquEDzlF2Lsm4=",
+							},
 						},
-					},
-					{
-						Path: "/etc/motd",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1XmduVVNURHQ27TvYp1Lr5TMtFcA=",
+						{
+							Path: "/etc/hostname",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q16nVwYVXP/tChvUPdukVD2ifXOmc=",
+							},
 						},
-					},
-					{
-						Path:        "/etc/mtab",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "777",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1kiljhXXH1LlQroHsEJIkPZg2eiw=",
+						{
+							Path: "/etc/hosts",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1BD6zJKZTRWyqGnPi4tSfd3krsMU=",
+							},
 						},
-					},
-					{
-						Path: "/etc/passwd",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1TchuuLUfur0izvfZQZxgN/LJhB8=",
+						{
+							Path: "/etc/inittab",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1TsthbhW7QzWRe1E/NKwTOuD4pHc=",
+							},
 						},
-					},
-					{
-						Path: "/etc/profile",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1KpFb8kl5LvwXWlY3e58FNsjrI34=",
+						{
+							Path: "/etc/modules",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1toogjUipHGcMgECgPJX64SwUT1M=",
+							},
 						},
-					},
-					{
-						Path: "/etc/protocols",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q13FqXUnvuOpMDrH/6rehxuYAEE34=",
+						{
+							Path: "/etc/motd",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1XmduVVNURHQ27TvYp1Lr5TMtFcA=",
+							},
 						},
-					},
-					{
-						Path: "/etc/services",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1C6HJNgQvLWqt5VY+n7MZJ1rsDuY=",
+						{
+							Path:        "/etc/mtab",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "777",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1kiljhXXH1LlQroHsEJIkPZg2eiw=",
+							},
 						},
-					},
-					{
-						Path:        "/etc/shadow",
-						OwnerUID:    "0",
-						OwnerGID:    "42",
-						Permissions: "640",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1ltrPIAW2zHeDiajsex2Bdmq3uqA=",
+						{
+							Path: "/etc/passwd",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1TchuuLUfur0izvfZQZxgN/LJhB8=",
+							},
 						},
-					},
-					{
-						Path: "/etc/shells",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1ojm2YdpCJ6B/apGDaZ/Sdb2xJkA=",
+						{
+							Path: "/etc/profile",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1KpFb8kl5LvwXWlY3e58FNsjrI34=",
+							},
 						},
-					},
-					{
-						Path: "/etc/sysctl.conf",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q14upz3tfnNxZkIEsUhWn7Xoiw96g=",
+						{
+							Path: "/etc/protocols",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q13FqXUnvuOpMDrH/6rehxuYAEE34=",
+							},
 						},
-					},
-					{
-						Path: "/etc/apk",
-					},
-					{
-						Path: "/etc/conf.d",
-					},
-					{
-						Path: "/etc/crontabs",
-					},
-					{
-						Path:        "/etc/crontabs/root",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "600",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1vfk1apUWI4yLJGhhNRd0kJixfvY=",
+						{
+							Path: "/etc/services",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1C6HJNgQvLWqt5VY+n7MZJ1rsDuY=",
+							},
 						},
-					},
-					{
-						Path: "/etc/init.d",
-					},
-					{
-						Path: "/etc/modprobe.d",
-					},
-					{
-						Path: "/etc/modprobe.d/aliases.conf",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1WUbh6TBYNVK7e4Y+uUvLs/7viqk=",
+						{
+							Path:        "/etc/shadow",
+							OwnerUID:    "0",
+							OwnerGID:    "42",
+							Permissions: "640",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1ltrPIAW2zHeDiajsex2Bdmq3uqA=",
+							},
 						},
-					},
-					{
-						Path: "/etc/modprobe.d/blacklist.conf",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1xxYGU6S6TLQvb7ervPrWWwAWqMg=",
+						{
+							Path: "/etc/shells",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1ojm2YdpCJ6B/apGDaZ/Sdb2xJkA=",
+							},
 						},
-					},
-					{
-						Path: "/etc/modprobe.d/i386.conf",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1pnay/njn6ol9cCssL7KiZZ8etlc=",
+						{
+							Path: "/etc/sysctl.conf",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q14upz3tfnNxZkIEsUhWn7Xoiw96g=",
+							},
 						},
-					},
-					{
-						Path: "/etc/modprobe.d/kms.conf",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1ynbLn3GYDpvajba/ldp1niayeog=",
+						{
+							Path: "/etc/apk",
 						},
-					},
-					{
-						Path: "/etc/modules-load.d",
-					},
-					{
-						Path: "/etc/network",
-					},
-					{
-						Path: "/etc/network/if-down.d",
-					},
-					{
-						Path: "/etc/network/if-post-down.d",
-					},
-					{
-						Path: "/etc/network/if-pre-up.d",
-					},
-					{
-						Path: "/etc/network/if-up.d",
-					},
-					{
-						Path: "/etc/opt",
-					},
-					{
-						Path: "/etc/periodic",
-					},
-					{
-						Path: "/etc/periodic/15min",
-					},
-					{
-						Path: "/etc/periodic/daily",
-					},
-					{
-						Path: "/etc/periodic/hourly",
-					},
-					{
-						Path: "/etc/periodic/monthly",
-					},
-					{
-						Path: "/etc/periodic/weekly",
-					},
-					{
-						Path: "/etc/profile.d",
-					},
-					{
-						Path: "/etc/profile.d/color_prompt",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q10wL23GuSCVfumMRgakabUI6EsSk=",
+						{
+							Path: "/etc/conf.d",
 						},
-					},
-					{
-						Path: "/etc/profile.d/locale",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1R4bIEpnKxxOSrlnZy9AoawqZ5DU=",
+						{
+							Path: "/etc/crontabs",
 						},
-					},
-					{
-						Path: "/etc/sysctl.d",
-					},
-					{
-						Path: "/home",
-					},
-					{
-						Path: "/lib",
-					},
-					{
-						Path: "/lib/firmware",
-					},
-					{
-						Path: "/lib/mdev",
-					},
-					{
-						Path: "/lib/modules-load.d",
-					},
-					{
-						Path: "/lib/sysctl.d",
-					},
-					{
-						Path: "/lib/sysctl.d/00-alpine.conf",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1HpElzW1xEgmKfERtTy7oommnq6c=",
+						{
+							Path:        "/etc/crontabs/root",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "600",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1vfk1apUWI4yLJGhhNRd0kJixfvY=",
+							},
 						},
-					},
-					{
-						Path: "/media",
-					},
-					{
-						Path: "/media/cdrom",
-					},
-					{
-						Path: "/media/floppy",
-					},
-					{
-						Path: "/media/usb",
-					},
-					{
-						Path: "/mnt",
-					},
-					{
-						Path: "/opt",
-					},
-					{
-						Path: "/proc",
-					},
-					{
-						Path:        "/root",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "700",
-					},
-					{
-						Path: "/run",
-					},
-					{
-						Path: "/sbin",
-					},
-					{
-						Path:        "/sbin/mkmntdirs",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "755",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1YeuSmC7iDbEWrusPzA/zUQF6YSg=",
+						{
+							Path: "/etc/init.d",
 						},
-					},
-					{
-						Path: "/srv",
-					},
-					{
-						Path: "/sys",
-					},
-					{
-						Path:        "/tmp",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "1777",
-					},
-					{
-						Path: "/usr",
-					},
-					{
-						Path: "/usr/lib",
-					},
-					{
-						Path: "/usr/lib/modules-load.d",
-					},
-					{
-						Path: "/usr/local",
-					},
-					{
-						Path: "/usr/local/bin",
-					},
-					{
-						Path: "/usr/local/lib",
-					},
-					{
-						Path: "/usr/local/share",
-					},
-					{
-						Path: "/usr/sbin",
-					},
-					{
-						Path: "/usr/share",
-					},
-					{
-						Path: "/usr/share/man",
-					},
-					{
-						Path: "/usr/share/misc",
-					},
-					{
-						Path: "/var",
-					},
-					{
-						Path:        "/var/run",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "777",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q11/SNZz/8cK2dSKK+cJpVrZIuF4Q=",
+						{
+							Path: "/etc/modprobe.d",
 						},
-					},
-					{
-						Path: "/var/cache",
-					},
-					{
-						Path: "/var/cache/misc",
-					},
-					{
-						Path:        "/var/empty",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "555",
-					},
-					{
-						Path: "/var/lib",
-					},
-					{
-						Path: "/var/lib/misc",
-					},
-					{
-						Path: "/var/local",
-					},
-					{
-						Path: "/var/lock",
-					},
-					{
-						Path: "/var/lock/subsys",
-					},
-					{
-						Path: "/var/log",
-					},
-					{
-						Path: "/var/mail",
-					},
-					{
-						Path: "/var/opt",
-					},
-					{
-						Path: "/var/spool",
-					},
-					{
-						Path:        "/var/spool/mail",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "777",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1dzbdazYZA2nTzSIG3YyNw7d4Juc=",
+						{
+							Path: "/etc/modprobe.d/aliases.conf",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1WUbh6TBYNVK7e4Y+uUvLs/7viqk=",
+							},
 						},
-					},
-					{
-						Path: "/var/spool/cron",
-					},
-					{
-						Path:        "/var/spool/cron/crontabs",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "777",
-						Digest: &file.Digest{
-							Algorithm: "'Q1'+base64(sha1)",
-							Value:     "Q1OFZt+ZMp7j0Gny0rqSKuWJyqYmA=",
+						{
+							Path: "/etc/modprobe.d/blacklist.conf",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1xxYGU6S6TLQvb7ervPrWWwAWqMg=",
+							},
 						},
-					},
-					{
-						Path:        "/var/tmp",
-						OwnerUID:    "0",
-						OwnerGID:    "0",
-						Permissions: "1777",
+						{
+							Path: "/etc/modprobe.d/i386.conf",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1pnay/njn6ol9cCssL7KiZZ8etlc=",
+							},
+						},
+						{
+							Path: "/etc/modprobe.d/kms.conf",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1ynbLn3GYDpvajba/ldp1niayeog=",
+							},
+						},
+						{
+							Path: "/etc/modules-load.d",
+						},
+						{
+							Path: "/etc/network",
+						},
+						{
+							Path: "/etc/network/if-down.d",
+						},
+						{
+							Path: "/etc/network/if-post-down.d",
+						},
+						{
+							Path: "/etc/network/if-pre-up.d",
+						},
+						{
+							Path: "/etc/network/if-up.d",
+						},
+						{
+							Path: "/etc/opt",
+						},
+						{
+							Path: "/etc/periodic",
+						},
+						{
+							Path: "/etc/periodic/15min",
+						},
+						{
+							Path: "/etc/periodic/daily",
+						},
+						{
+							Path: "/etc/periodic/hourly",
+						},
+						{
+							Path: "/etc/periodic/monthly",
+						},
+						{
+							Path: "/etc/periodic/weekly",
+						},
+						{
+							Path: "/etc/profile.d",
+						},
+						{
+							Path: "/etc/profile.d/color_prompt",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q10wL23GuSCVfumMRgakabUI6EsSk=",
+							},
+						},
+						{
+							Path: "/etc/profile.d/locale",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1R4bIEpnKxxOSrlnZy9AoawqZ5DU=",
+							},
+						},
+						{
+							Path: "/etc/sysctl.d",
+						},
+						{
+							Path: "/home",
+						},
+						{
+							Path: "/lib",
+						},
+						{
+							Path: "/lib/firmware",
+						},
+						{
+							Path: "/lib/mdev",
+						},
+						{
+							Path: "/lib/modules-load.d",
+						},
+						{
+							Path: "/lib/sysctl.d",
+						},
+						{
+							Path: "/lib/sysctl.d/00-alpine.conf",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1HpElzW1xEgmKfERtTy7oommnq6c=",
+							},
+						},
+						{
+							Path: "/media",
+						},
+						{
+							Path: "/media/cdrom",
+						},
+						{
+							Path: "/media/floppy",
+						},
+						{
+							Path: "/media/usb",
+						},
+						{
+							Path: "/mnt",
+						},
+						{
+							Path: "/opt",
+						},
+						{
+							Path: "/proc",
+						},
+						{
+							Path:        "/root",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "700",
+						},
+						{
+							Path: "/run",
+						},
+						{
+							Path: "/sbin",
+						},
+						{
+							Path:        "/sbin/mkmntdirs",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "755",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1YeuSmC7iDbEWrusPzA/zUQF6YSg=",
+							},
+						},
+						{
+							Path: "/srv",
+						},
+						{
+							Path: "/sys",
+						},
+						{
+							Path:        "/tmp",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "1777",
+						},
+						{
+							Path: "/usr",
+						},
+						{
+							Path: "/usr/lib",
+						},
+						{
+							Path: "/usr/lib/modules-load.d",
+						},
+						{
+							Path: "/usr/local",
+						},
+						{
+							Path: "/usr/local/bin",
+						},
+						{
+							Path: "/usr/local/lib",
+						},
+						{
+							Path: "/usr/local/share",
+						},
+						{
+							Path: "/usr/sbin",
+						},
+						{
+							Path: "/usr/share",
+						},
+						{
+							Path: "/usr/share/man",
+						},
+						{
+							Path: "/usr/share/misc",
+						},
+						{
+							Path: "/var",
+						},
+						{
+							Path:        "/var/run",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "777",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q11/SNZz/8cK2dSKK+cJpVrZIuF4Q=",
+							},
+						},
+						{
+							Path: "/var/cache",
+						},
+						{
+							Path: "/var/cache/misc",
+						},
+						{
+							Path:        "/var/empty",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "555",
+						},
+						{
+							Path: "/var/lib",
+						},
+						{
+							Path: "/var/lib/misc",
+						},
+						{
+							Path: "/var/local",
+						},
+						{
+							Path: "/var/lock",
+						},
+						{
+							Path: "/var/lock/subsys",
+						},
+						{
+							Path: "/var/log",
+						},
+						{
+							Path: "/var/mail",
+						},
+						{
+							Path: "/var/opt",
+						},
+						{
+							Path: "/var/spool",
+						},
+						{
+							Path:        "/var/spool/mail",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "777",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1dzbdazYZA2nTzSIG3YyNw7d4Juc=",
+							},
+						},
+						{
+							Path: "/var/spool/cron",
+						},
+						{
+							Path:        "/var/spool/cron/crontabs",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "777",
+							Digest: &file.Digest{
+								Algorithm: "'Q1'+base64(sha1)",
+								Value:     "Q1OFZt+ZMp7j0Gny0rqSKuWJyqYmA=",
+							},
+						},
+						{
+							Path:        "/var/tmp",
+							OwnerUID:    "0",
+							OwnerGID:    "0",
+							Permissions: "1777",
+						},
 					},
 				},
 			},
@@ -651,16 +699,15 @@ func TestSinglePackageDetails(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			lrc := newLocationReadCloser(t, test.fixture)
 
-			pkgs, _, err := parseApkDB(nil, new(generic.Environment), lrc)
-			require.NoError(t, err)
-			require.Len(t, pkgs, 1)
-			metadata := pkgs[0].Metadata.(pkg.ApkMetadata)
-
-			if diff := cmp.Diff(test.expected, metadata); diff != "" {
-				t.Errorf("Entry mismatch (-want +got):\n%s", diff)
+			fixtureLocation := source.NewLocation(test.fixture)
+			test.expected.Locations = source.NewLocationSet(fixtureLocation)
+			for i := range test.expected.Licenses {
+				test.expected.Licenses[i].Location = &fixtureLocation
 			}
+
+			pkgtest.TestFileParser(t, test.fixture, parseApkDB, []pkg.Package{test.expected}, nil)
+
 		})
 	}
 }
@@ -677,7 +724,7 @@ func TestMultiplePackages(t *testing.T) {
 				{
 					Value:    "BSD",
 					Type:     license.Declared,
-					Location: location,
+					Location: &location,
 				},
 			},
 			Type:         pkg.ApkPkg,
@@ -712,17 +759,17 @@ func TestMultiplePackages(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					Location:       location,
+					Location:       &location,
 				},
 				{
 					Value:    "BSD",
 					Type:     license.Declared,
-					Location: location,
+					Location: &location,
 				},
 				{
 					Value:    "GPL2+",
 					Type:     license.Declared,
-					Location: location,
+					Location: &location,
 				},
 			},
 			MetadataType: pkg.ApkMetadataType,

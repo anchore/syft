@@ -7,20 +7,35 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestAlpmCataloger(t *testing.T) {
+	dbLocation := source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")
 	expectedPkgs := []pkg.Package{
 		{
-			Name:         "gmp",
-			Version:      "6.2.1-2",
-			Type:         pkg.AlpmPkg,
-			FoundBy:      "alpmdb-cataloger",
-			Licenses:     []pkg.License{},
-			Locations:    source.NewLocationSet(source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")),
+			Name:    "gmp",
+			Version: "6.2.1-2",
+			Type:    pkg.AlpmPkg,
+			FoundBy: "alpmdb-cataloger",
+			Licenses: []pkg.License{
+				{
+					Value:          "LGPL3",
+					SPDXExpression: "",
+					Type:           license.Declared,
+					Location:       &dbLocation,
+				},
+				{
+					Value:          "GPL",
+					SPDXExpression: "",
+					Type:           license.Declared,
+					Location:       &dbLocation,
+				},
+			},
+			Locations:    source.NewLocationSet(dbLocation),
 			CPEs:         nil,
 			PURL:         "",
 			MetadataType: "AlpmMetadata",

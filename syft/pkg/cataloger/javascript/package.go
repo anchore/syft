@@ -12,35 +12,19 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackageJSONPackage(u packageJSON, locations ...source.Location) pkg.Package {
-	var licenseLocation source.Location
-	if len(locations) > 0 {
-		// caller always passes the reader.Location of the package json where license information was found
-		// we use this when constructing the license object to show our work on where we lifted the declaration from
-		licenseLocation = locations[0]
-	}
-
+func newPackageJSONPackage(u packageJSON, indexLocation source.Location) pkg.Package {
 	licenseCandidates, err := u.licensesFromJSON()
 	if err != nil {
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
-	}
-
-	licenses := make([]pkg.License, 0)
-	if len(licenseCandidates) != 0 {
-		for _, l := range licenseCandidates {
-			// we could extract the url from the json here, but we only want to include this information if it was used
-			// to determine the declared licnese - instead the package json location was used.
-			licenses = append(licenses, pkg.NewLicense(l, "", licenseLocation))
-		}
 	}
 
 	p := pkg.Package{
 		Name:         u.Name,
 		Version:      u.Version,
 		PURL:         packageURL(u.Name, u.Version),
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    source.NewLocationSet(indexLocation),
 		Language:     pkg.JavaScript,
-		Licenses:     licenses,
+		Licenses:     pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...),
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageJSONMetadataType,
 		Metadata: pkg.NpmPackageJSONMetadata{
@@ -99,6 +83,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 			Name:         name,
 			Version:      u.Version,
 			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Licenses:     pkg.NewLicensesFromLocation(location, u.License...),
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -140,9 +125,7 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 
 func finalizeLockPkg(resolver source.FileResolver, location source.Location, p pkg.Package) pkg.Package {
 	licenseCandidate := addLicenses(p.Name, resolver, location)
-	for _, l := range licenseCandidate {
-		p.Licenses = append(p.Licenses, pkg.NewLicense(l, "", location))
-	}
+	p.Licenses = append(p.Licenses, pkg.NewLicensesFromLocation(location, licenseCandidate...)...)
 	p.SetID()
 	return p
 }

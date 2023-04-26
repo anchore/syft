@@ -100,11 +100,7 @@ func TestParseJar(t *testing.T) {
 					Version: "1.0-SNAPSHOT",
 					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					Licenses: []pkg.License{
-						{
-							Value:    "MIT License",
-							Type:     "declared",
-							Location: source.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi"),
-						},
+						pkg.NewLicenseFromLocation("MIT License", source.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
 					},
 					Language:     pkg.Java,
 					Type:         pkg.JenkinsPluginPkg,
@@ -156,7 +152,6 @@ func TestParseJar(t *testing.T) {
 					Name:         "example-java-app-gradle",
 					Version:      "0.1.0",
 					PURL:         "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
-					Licenses:     []pkg.License{},
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -211,7 +206,6 @@ func TestParseJar(t *testing.T) {
 					Name:         "example-java-app-maven",
 					Version:      "0.1.0",
 					PURL:         "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
-					Licenses:     []pkg.License{},
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,

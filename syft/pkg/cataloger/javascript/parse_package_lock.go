@@ -25,39 +25,6 @@ type packageLock struct {
 	Packages        map[string]lockPackage
 }
 
-// packageLockLicense
-type packageLockLicense []string
-
-func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {
-	// The license field could be either a string or an array.
-
-	// 1. An array
-	var arr []string
-	if err := json.Unmarshal(data, &arr); err == nil {
-		*licenses = arr
-		return nil
-	}
-
-	// 2. A string
-	var str string
-	if err = json.Unmarshal(data, &str); err == nil {
-		*licenses = make([]string, 1)
-		(*licenses)[0] = str
-		return nil
-	}
-
-	// debug the content we did not expect
-	if len(data) > 0 {
-		log.WithFields("license", string(data)).Debug("Unable to parse the following `license` value in package-lock.json")
-	}
-
-	// 3. Unexpected
-	// In case we are unable to parse the license field,
-	// i.e if we have not covered the full specification,
-	// we do not want to throw an error, instead assign nil.
-	return nil
-}
-
 // lockDependency represents a single package dependency listed in the package.lock json file
 type lockDependency struct {
 	Version   string `json:"version"`
@@ -72,6 +39,9 @@ type lockPackage struct {
 	Integrity string             `json:"integrity"`
 	License   packageLockLicense `json:"license"`
 }
+
+// packageLockLicense
+type packageLockLicense []string
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
 func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -123,6 +93,36 @@ func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, read
 	pkg.Sort(pkgs)
 
 	return pkgs, nil, nil
+}
+
+func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {
+	// The license field could be either a string or an array.
+
+	// 1. An array
+	var arr []string
+	if err := json.Unmarshal(data, &arr); err == nil {
+		*licenses = arr
+		return nil
+	}
+
+	// 2. A string
+	var str string
+	if err = json.Unmarshal(data, &str); err == nil {
+		*licenses = make([]string, 1)
+		(*licenses)[0] = str
+		return nil
+	}
+
+	// debug the content we did not expect
+	if len(data) > 0 {
+		log.WithFields("license", string(data)).Debug("Unable to parse the following `license` value in package-lock.json")
+	}
+
+	// 3. Unexpected
+	// In case we are unable to parse the license field,
+	// i.e if we have not covered the full specification,
+	// we do not want to throw an error, instead assign nil.
+	return nil
 }
 
 func getNameFromPath(path string) string {

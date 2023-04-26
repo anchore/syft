@@ -13,13 +13,13 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(location source.Location, pd parsedData, distro *linux.Release) pkg.Package {
+func newPackage(dbOrRpmLocation source.Location, pd parsedData, distro *linux.Release) pkg.Package {
 	p := pkg.Package{
 		Name:         pd.Name,
 		Version:      toELVersion(pd.RpmMetadata),
 		Licenses:     pd.Licenses,
 		PURL:         packageURL(pd.RpmMetadata, distro),
-		Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    source.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmMetadataType,
 		Metadata:     pd.RpmMetadata,
@@ -34,11 +34,9 @@ type parsedData struct {
 	pkg.RpmMetadata
 }
 
-func newParsedDatafromEntry(licenseLocation source.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
-	// TODO: use entry to populate the pkg.RpmMetadata struct in package constructor
-	license := pkg.NewLicense(entry.License, "", licenseLocation)
+func newParsedDataFromEntry(licenseLocation source.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
 	return parsedData{
-		Licenses: []pkg.License{license},
+		Licenses: pkg.NewLicensesFromLocation(licenseLocation, entry.License),
 		RpmMetadata: pkg.RpmMetadata{
 			Name:            entry.Name,
 			Version:         entry.Version,
