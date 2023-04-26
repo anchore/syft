@@ -72,19 +72,19 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) 
 		return parsedData{}, fmt.Errorf("failed to parse python wheel/egg: %w", err)
 	}
 
-	var parsedData parsedData
-	if err := mapstructure.Decode(fields, &parsedData); err != nil {
-		return parsedData, fmt.Errorf("unable to parse APK metadata: %w", err)
+	var pd parsedData
+	if err := mapstructure.Decode(fields, &pd); err != nil {
+		return pd, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
 
 	// add additional metadata not stored in the egg/wheel metadata file
 
-	parsedData.SitePackagesRootPath = determineSitePackagesRootPath(path)
-	if parsedData.Licenses != "" {
-		parsedData.LicenseLocation = source.NewLocation(path)
+	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
+	if pd.Licenses != "" {
+		pd.LicenseLocation = source.NewLocation(path)
 	}
 
-	return parsedData, nil
+	return pd, nil
 }
 
 // isEggRegularFile determines if the specified path is the regular file variant

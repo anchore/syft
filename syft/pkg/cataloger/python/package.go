@@ -41,23 +41,20 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 }
 
 func newPackageForPackage(m parsedData, sources ...source.Location) pkg.Package {
-	licenses := make([]pkg.License, 0)
-	if m.Licenses != "" {
-		licenses = append(licenses, pkg.NewLicenseFromLocation(m.Licenses, "", m.LicenseLocation))
-	}
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
 		PURL:         packageURL(m.Name, m.Version, &m.PythonPackageMetadata),
 		Locations:    source.NewLocationSet(sources...),
+		Licenses:     pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses),
 		Language:     pkg.Python,
-		Licenses:     licenses,
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,
 		Metadata:     m.PythonPackageMetadata,
 	}
 
 	p.SetID()
+
 	return p
 }
 
