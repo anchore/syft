@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/scylladb/go-set/strset"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -110,18 +108,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 	}
 	defer internal.CloseAndLogError(licenseReader, location.RealPath)
 
-	findings := strset.New()
-	scanner := bufio.NewScanner(licenseReader)
-	scanner.Split(bufio.ScanWords)
-	for scanner.Scan() {
-		token := scanner.Text()
-		if token != "||" && token != "(" && token != ")" {
-			findings.Add(token)
-		}
-	}
-
-	licenseCandidates := findings.List()
-	p.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(*location, licenseCandidates...)...)
+	p.Licenses = pkg.NewLicenseSet(pkg.NewLicense(extractLicenses(licenseReader)))
 	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 }
 
