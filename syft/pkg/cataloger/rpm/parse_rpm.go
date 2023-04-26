@@ -26,21 +26,16 @@ func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.Locat
 		return nil, nil, err
 	}
 
-	cl, _ := rpm.Header.GetStrings(rpmutils.LICENSE)
+	licenses, _ := rpm.Header.GetStrings(rpmutils.LICENSE)
 	sourceRpm, _ := rpm.Header.GetString(rpmutils.SOURCERPM)
 	vendor, _ := rpm.Header.GetString(rpmutils.VENDOR)
 	digestAlgorithm := getDigestAlgorithm(rpm.Header)
 	size, _ := rpm.Header.InstalledSize()
 	files, _ := rpm.Header.GetFiles()
 
-	licenses := []pkg.License{}
-	for _, l := range cl {
-		licenses = append(licenses, pkg.NewLicenseFromLocation(l, "", reader.Location))
-	}
-
 	pd := parsedData{
-		licenses,
-		pkg.RpmMetadata{
+		Licenses: pkg.NewLicensesFromLocation(reader.Location, licenses...),
+		RpmMetadata: pkg.RpmMetadata{
 			Name:      nevra.Name,
 			Version:   nevra.Version,
 			Epoch:     parseEpoch(nevra.Epoch),

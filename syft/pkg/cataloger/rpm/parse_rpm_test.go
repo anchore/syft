@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -29,13 +28,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses: []pkg.License{
-						{
-							Value:          "MIT",
-							SPDXExpression: "MIT",
-							Type:           license.Declared,
-							URL:            "",
-							Location:       abcRpmLocation,
-						},
+						pkg.NewLicenseFromLocation("MIT", abcRpmLocation),
 					},
 					Metadata: pkg.RpmMetadata{
 						Name:      "abc",
@@ -64,13 +57,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses: []pkg.License{
-						{
-							Value:          "Public Domain",
-							SPDXExpression: "",
-							Type:           license.Declared,
-							URL:            "",
-							Location:       zorkRpmLocation,
-						},
+						pkg.NewLicenseFromLocation("Public Domain", zorkRpmLocation),
 					},
 					Metadata: pkg.RpmMetadata{
 						Name:      "zork",

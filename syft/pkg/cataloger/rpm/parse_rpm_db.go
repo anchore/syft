@@ -60,7 +60,7 @@ func parseRpmDB(resolver source.FileResolver, env *generic.Environment, reader s
 
 		p := newPackage(
 			reader.Location,
-			newParsedDatafromEntry(reader.Location, *entry, extractRpmdbFileRecords(resolver, *entry)),
+			newParsedDataFromEntry(reader.Location, *entry, extractRpmdbFileRecords(resolver, *entry)),
 			distro,
 		)
 
