@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: /some/path
-DocumentNamespace: https://anchore.com/syft/dir/some/path-16a6df79-9a0f-4d4b-a2ec-fc449b05086e
-LicenseListVersion: 3.20
+redacted
+redacted
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2023-04-26T14:21:21Z
+redacted
 
 ##### Package: package-2
 

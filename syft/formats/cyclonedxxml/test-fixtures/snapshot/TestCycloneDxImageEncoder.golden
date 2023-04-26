@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:2896b5ce-2016-49e8-a422-239d662846c7" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" redacted version="1">
   <metadata>
-    <timestamp>2022-11-07T09:11:06-05:00</timestamp>
+    <timestamp>redacted</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,19 +9,17 @@
         <version>v0.42.0-bogus</version>
       </tool>
     </tools>
-    <component bom-ref="522dc6b135a55bb4" type="container">
+    <component type="container">
       <name>user-image-input</name>
-      <version>sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368</version>
+      <version>redacted</version>
     </component>
   </metadata>
   <components>
-    <component bom-ref="66ba429119b8bec6" type="library">
+    <component type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
-        <license>
-          <id>MIT</id>
-        </license>
+        <expression>MIT</expression>
       </licenses>
       <cpe>cpe:2.3:*:some:package:1:*:*:*:*:*:*:*</cpe>
       <purl>a-purl-1</purl>
@@ -30,7 +28,7 @@
         <property name="syft:package:language">python</property>
         <property name="syft:package:metadataType">PythonPackageMetadata</property>
         <property name="syft:package:type">python</property>
-        <property name="syft:location:0:layerID">sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59</property>
+        <property name="syft:location:0:layerID">redacted</property>
         <property name="syft:location:0:path">/somefile-1.txt</property>
       </properties>
     </component>
@@ -43,7 +41,7 @@
         <property name="syft:package:foundBy">the-cataloger-2</property>
         <property name="syft:package:metadataType">DpkgMetadata</property>
         <property name="syft:package:type">deb</property>
-        <property name="syft:location:0:layerID">sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec</property>
+        <property name="syft:location:0:layerID">redacted</property>
         <property name="syft:location:0:path">/somefile-2.txt</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>

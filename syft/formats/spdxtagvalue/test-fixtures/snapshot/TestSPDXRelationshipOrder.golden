@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-d8df09c1-4a0f-4da2-a74b-d9f0c24d5ee6
-LicenseListVersion: 3.20
+redacted
+redacted
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2023-04-24T14:42:14Z
+redacted
 
 ##### Unpackaged files
 
@@ -54,6 +54,8 @@ PackageVersion: 2.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from DPKG DB: /somefile-2.txt
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
 ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
@@ -66,6 +68,8 @@ PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from installed python package manifest file: /somefile-1.txt
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: MIT
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:1:*:*:*:*:*:*:*
 ExternalRef: PACKAGE-MANAGER purl a-purl-1

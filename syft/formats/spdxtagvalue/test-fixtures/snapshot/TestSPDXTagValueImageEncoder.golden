@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-09477ff1-559a-4e1d-91b9-75d51d4cb73f
-LicenseListVersion: 3.20
+redacted
+redacted
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2023-04-26T14:21:00Z
+redacted
 
 ##### Package: package-2
 
