@@ -66,7 +66,7 @@ require (
 	github.com/vbatts/go-mtree v0.5.3
 	golang.org/x/exp v0.0.0-20230202163644-54bba9f4231b
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.21.2
+	modernc.org/sqlite v1.22.0
 )
 
 require (
