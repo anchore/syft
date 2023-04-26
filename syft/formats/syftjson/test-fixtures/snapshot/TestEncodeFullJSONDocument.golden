@@ -11,14 +11,6 @@
      "path": "/a/place/a"
     }
    ],
-   "licenses": [
-    {
-     "value": "MIT",
-     "spdx-expression": "MIT",
-     "type": "declared",
-     "url": ""
-    }
-   ],
    "language": "python",
    "cpes": [
     "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
@@ -45,7 +37,6 @@
      "path": "/b/place/b"
     }
    ],
-   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
@@ -191,9 +182,5 @@
   "configuration": {
    "config-key": "config-value"
   }
- },
- "schema": {
-  "version": "8.0.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }

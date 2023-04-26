@@ -12,14 +12,6 @@
      "layerID": "sha256:ab62016f9bec7286af65604081564cadeeb364a48faca2346c3f5a5a1f5ef777"
     }
    ],
-   "licenses": [
-    {
-     "value": "MIT",
-     "spdx-expression": "MIT",
-     "type": "declared",
-     "url": ""
-    }
-   ],
    "language": "python",
    "cpes": [
     "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
@@ -47,7 +39,6 @@
      "layerID": "sha256:f1803845b6747d94d6e4ecce2331457e5f1c4fb97de5216f392a76f4582f63b2"
     }
    ],
-   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
@@ -114,9 +105,5 @@
   "configuration": {
    "config-key": "config-value"
   }
- },
- "schema": {
-  "version": "8.0.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }
