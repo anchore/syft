@@ -1,13 +1,13 @@
 package alpm
 
 import (
-	"github.com/anchore/syft/syft/license"
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"

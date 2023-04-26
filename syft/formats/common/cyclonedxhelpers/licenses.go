@@ -4,7 +4,6 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // This should be a function that just surfaces licenses already validated in the package struct
@@ -49,8 +48,7 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 					licenseValue = l.License.Name
 				}
 
-				var licenseLocation *source.Location
-				licenses = append(licenses, pkg.NewLicenseFromLocation(licenseValue, l.License.URL, licenseLocation))
+				licenses = append(licenses, pkg.NewLicenseFromURL(licenseValue, l.License.URL))
 			}
 		}
 	}

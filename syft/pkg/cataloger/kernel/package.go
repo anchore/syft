@@ -10,11 +10,11 @@ import (
 
 const linuxKernelPackageName = "linux-kernel"
 
-func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, kLocation source.Location) pkg.Package {
+func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, archiveLocation source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         linuxKernelPackageName,
 		Version:      metadata.Version,
-		Locations:    source.NewLocationSet(kLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    source.NewLocationSet(archiveLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:         packageURL(linuxKernelPackageName, metadata.Version),
 		Type:         pkg.LinuxKernelPkg,
 		MetadataType: pkg.LinuxKernelMetadataType,
