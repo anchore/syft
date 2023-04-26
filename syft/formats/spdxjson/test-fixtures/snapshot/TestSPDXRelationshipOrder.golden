@@ -3,14 +3,14 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-a1463ff3-8a7e-4ad9-b326-2cfbde38e82f",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-27afc914-f9a1-4d8a-bfa2-3bb67e694d84",
  "creationInfo": {
   "licenseListVersion": "3.20",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2023-04-24T14:39:59Z"
+  "created": "2023-04-26T14:31:55Z"
  },
  "packages": [
   {
@@ -19,6 +19,8 @@
    "versionInfo": "1.0.1",
    "downloadLocation": "NOASSERTION",
    "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "MIT",
    "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
@@ -39,6 +41,8 @@
    "versionInfo": "2.0.1",
    "downloadLocation": "NOASSERTION",
    "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
    "copyrightText": "NOASSERTION",
    "externalRefs": [
     {

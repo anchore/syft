@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: foobar/baz
-DocumentNamespace: https://anchore.com/syft/dir/foobar/baz-33139e6b-26d4-415e-97ee-6b1a733e849f
+DocumentNamespace: https://anchore.com/syft/dir/foobar/baz-8f6e6182-6963-48cd-bd09-4662663722a5
 LicenseListVersion: 3.20
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2023-04-24T14:40:55Z
+Created: 2023-04-26T14:20:31Z
 
 ##### Package: @at-sign
 
@@ -15,6 +15,8 @@ SPDXID: SPDXRef-Package---at-sign-3732f7a5679bdec4
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
 PackageCopyrightText: NOASSERTION
 
 ##### Package: some/slashes
@@ -24,6 +26,8 @@ SPDXID: SPDXRef-Package--some-slashes-1345166d4801153b
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
 PackageCopyrightText: NOASSERTION
 
 ##### Package: under_scores
@@ -33,6 +37,8 @@ SPDXID: SPDXRef-Package--under-scores-290d5c77210978c1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
 PackageCopyrightText: NOASSERTION
 
 ##### Relationships

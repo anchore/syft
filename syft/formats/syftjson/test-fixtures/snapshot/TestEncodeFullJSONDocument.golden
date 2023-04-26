@@ -45,7 +45,7 @@
      "path": "/b/place/b"
     }
    ],
-   "licenses": null,
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"

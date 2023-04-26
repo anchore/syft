@@ -12,9 +12,6 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	for _, l := range p.Licenses {
 		if l.SPDXExpression != "" {
 			lc = append(lc, cyclonedx.LicenseChoice{
-				License: &cyclonedx.License{
-					ID: l.SPDXExpression,
-				},
 				Expression: l.SPDXExpression,
 			})
 		} else {

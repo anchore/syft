@@ -1,10 +1,11 @@
 {
+  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:0b628da1-274e-4c24-821c-f9452f37db54",
+  "serialNumber": "urn:uuid:28fd9334-bfc4-403f-9335-9bcaa4b34e8b",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-12-22T18:33:51-05:00",
+    "timestamp": "2023-04-26T10:30:38-04:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -20,15 +21,13 @@
   },
   "components": [
     {
-      "bom-ref": "1b1d0be59ac59d2c",
+      "bom-ref": "ed5945af814b9a95",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
       "licenses": [
         {
-          "license": {
-            "id": "MIT"
-          }
+          "expression": "MIT"
         }
       ],
       "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",

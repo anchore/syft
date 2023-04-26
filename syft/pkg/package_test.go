@@ -30,7 +30,12 @@ func TestIDUniqueness(t *testing.T) {
 		),
 		Licenses: []License{
 			{
-				SPDXExpression: "MIT AND GPL-2.0-only",
+
+				Value: "cc0-1.0",
+				Type:  license.Declared,
+			},
+			{
+				SPDXExpression: "MIT",
 				Type:           license.Declared,
 			},
 		},

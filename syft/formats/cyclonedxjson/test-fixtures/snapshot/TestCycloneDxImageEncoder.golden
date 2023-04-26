@@ -1,10 +1,11 @@
 {
+  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:542fc1a1-81ac-4b76-b9e2-8e6b9d8c840a",
+  "serialNumber": "urn:uuid:757286ea-45e3-4134-9ab5-8ac54f90688c",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-12-22T18:33:51-05:00",
+    "timestamp": "2023-04-26T10:30:29-04:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -13,7 +14,7 @@
       }
     ],
     "component": {
-      "bom-ref": "ffd645a093c0fe70",
+      "bom-ref": "38160ebc2a6876e8",
       "type": "container",
       "name": "user-image-input",
       "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
@@ -21,15 +22,13 @@
   },
   "components": [
     {
-      "bom-ref": "66ba429119b8bec6",
+      "bom-ref": "ed77c5cb0567a1a6",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
       "licenses": [
         {
-          "license": {
-            "id": "MIT"
-          }
+          "expression": "MIT"
         }
       ],
       "cpe": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
@@ -53,7 +52,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:62058900d4ce269c900160b8dd255fe310c3a459dda236d041102fa070f84406"
+          "value": "sha256:ab62016f9bec7286af65604081564cadeeb364a48faca2346c3f5a5a1f5ef777"
         },
         {
           "name": "syft:location:0:path",
@@ -83,7 +82,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:623ad97366f39ae279f1925673cdacb4851ddf2e3266f04e63010ec080a098c1"
+          "value": "sha256:f1803845b6747d94d6e4ecce2331457e5f1c4fb97de5216f392a76f4582f63b2"
         },
         {
           "name": "syft:location:0:path",
