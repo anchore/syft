@@ -2,6 +2,7 @@ package spdxhelpers
 
 import (
 	"errors"
+	"github.com/anchore/syft/syft/license"
 	"net/url"
 	"strconv"
 	"strings"
@@ -297,12 +298,14 @@ func parseSPDXLicenses(p *spdx.Package) []pkg.License {
 
 	// concluded
 	if p.PackageLicenseConcluded != NOASSERTION && p.PackageLicenseConcluded != NONE {
-		licenses = append(licenses, pkg.NewLicense(p.PackageLicenseConcluded, "", nil))
+		l := pkg.NewLicense(p.PackageLicenseConcluded)
+		l.Type = license.Concluded
+		licenses = append(licenses, l)
 	}
 
 	// declared
 	if p.PackageLicenseDeclared != NOASSERTION && p.PackageLicenseDeclared != NONE {
-		licenses = append(licenses, pkg.NewLicense(p.PackageLicenseDeclared, "", nil))
+		licenses = append(licenses, pkg.NewLicense(p.PackageLicenseDeclared))
 	}
 
 	// TODO: do we need other licenses? These are at the document level
