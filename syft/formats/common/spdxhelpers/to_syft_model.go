@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/anchore/syft/syft/license"
-
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
@@ -16,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/util"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
