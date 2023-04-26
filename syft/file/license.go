@@ -25,7 +25,6 @@ func NewLicense(value string) License {
 		log.Trace("unable to parse license expression: %w", err)
 	}
 
-	// TODO: run location against classifier to form evidence
 	return License{
 		Value:          value,
 		SPDXExpression: spdxExpression,

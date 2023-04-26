@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/github/go-spdx/v2/spdxexp"
+
+	"github.com/anchore/syft/internal/spdxlicense"
 )
 
 type Type string
@@ -15,8 +17,14 @@ const (
 )
 
 func ParseExpression(expression string) (string, error) {
-	// returns true if all licenses are valid
+	licenseID, exists := spdxlicense.ID(expression)
+	if exists {
+		return licenseID, nil
+	}
+
+	// If it doesn't exist initially in the SPDX list it might be a more complex expression
 	// ignored variable is any invalid expressions
+	// TODO: contribute to spdxexp to expose deprecated license IDs
 	valid, _ := spdxexp.ValidateLicenses([]string{expression})
 	if !valid {
 		return "", fmt.Errorf("failed to validate spdx expression: %s", expression)
