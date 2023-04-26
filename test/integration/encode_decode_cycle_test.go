@@ -72,14 +72,14 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				require.NotNil(t, format)
 
 				by1, err := formats.Encode(originalSBOM, format)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				newSBOM, newFormat, err := formats.Decode(bytes.NewReader(by1))
-				assert.NoError(t, err)
-				assert.Equal(t, format.ID(), newFormat.ID())
+				require.NoError(t, err)
+				require.Equal(t, format.ID(), newFormat.ID())
 
 				by2, err := formats.Encode(*newSBOM, format)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				if test.redactor != nil {
 					by1 = test.redactor(by1)
