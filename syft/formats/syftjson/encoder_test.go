@@ -47,7 +47,7 @@ func schemaVersionRedactor(s []byte) []byte {
 }
 
 func TestEncodeFullJSONDocument(t *testing.T) {
-	catalog := pkg.NewCatalog()
+	catalog := pkg.NewCollection()
 
 	p1 := pkg.Package{
 		Name:    "package-1",

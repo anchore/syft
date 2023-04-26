@@ -131,7 +131,7 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 	}
 }
 
-func toSyftRelationships(doc *model.Document, catalog *pkg.Catalog, relationships []model.Relationship, idAliases map[string]string) []artifact.Relationship {
+func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relationships []model.Relationship, idAliases map[string]string) []artifact.Relationship {
 	idMap := make(map[string]interface{})
 
 	for _, p := range catalog.Sorted() {
@@ -256,8 +256,8 @@ func toSyftSourceData(s model.Source) *source.Metadata {
 	return nil
 }
 
-func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Catalog {
-	catalog := pkg.NewCatalog()
+func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Collection {
+	catalog := pkg.NewCollection()
 	for _, p := range pkgs {
 		catalog.Add(toSyftPackage(p, idAliases))
 	}
