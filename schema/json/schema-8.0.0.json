@@ -1816,7 +1816,7 @@
         "target"
       ]
     },
-    "customLicense": {
+    "licenses": {
       "items": {
         "$ref": "#/$defs/License"
       },
