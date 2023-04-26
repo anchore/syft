@@ -149,7 +149,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	modernc.org/libc v1.22.4 // indirect
-	modernc.org/sqlite v1.21.2 // indirect
+	modernc.org/sqlite v1.22.0 // indirect
 )
 
 require (
