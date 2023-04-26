@@ -737,6 +737,32 @@
         "kb"
       ]
     },
+    "License": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "spdxExpression": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type",
+        "url"
+      ]
+    },
     "LinuxKernelMetadata": {
       "properties": {
         "name": {
@@ -1029,6 +1055,63 @@
           },
           "type": "array"
         },
+        "licenses": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$defs": {
+            "License": {
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "spdxExpression": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "location": {
+                  "$ref": "#/$defs/Location"
+                }
+              },
+              "type": "object",
+              "required": [
+                "value",
+                "spdxExpression",
+                "type",
+                "url"
+              ]
+            },
+            "Location": {
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "layerID": {
+                  "type": "string"
+                },
+                "annotations": {
+                  "patternProperties": {
+                    ".*": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object",
+              "required": [
+                "path"
+              ]
+            }
+          },
+          "items": {
+            "$ref": "#/$defs/License"
+          },
+          "type": "array"
+        },
         "language": {
           "type": "string"
         },
@@ -1134,63 +1217,6 @@
               "$ref": "#/$defs/RpmMetadata"
             }
           ]
-        },
-        "licenses": {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
-          "$defs": {
-            "License": {
-              "properties": {
-                "value": {
-                  "type": "string"
-                },
-                "spdxExpression": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string"
-                },
-                "url": {
-                  "type": "string"
-                },
-                "location": {
-                  "$ref": "#/$defs/Location"
-                }
-              },
-              "type": "object",
-              "required": [
-                "value",
-                "spdxExpression",
-                "type",
-                "url"
-              ]
-            },
-            "Location": {
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "layerID": {
-                  "type": "string"
-                },
-                "annotations": {
-                  "patternProperties": {
-                    ".*": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object",
-              "required": [
-                "path"
-              ]
-            }
-          },
-          "items": {
-            "$ref": "#/$defs/License"
-          },
-          "type": "array"
         }
       },
       "type": "object",
@@ -1201,6 +1227,7 @@
         "type",
         "foundBy",
         "locations",
+        "licenses",
         "language",
         "cpes",
         "purl"
@@ -1788,6 +1815,12 @@
         "type",
         "target"
       ]
+    },
+    "customLicense": {
+      "items": {
+        "$ref": "#/$defs/License"
+      },
+      "type": "array"
     }
   }
 }

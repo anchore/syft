@@ -11,6 +11,14 @@
      "path": "/a/place/a"
     }
    ],
+   "licenses": [
+    {
+     "value": "MIT",
+     "spdxExpression": "MIT",
+     "type": "declared",
+     "url": ""
+    }
+   ],
    "language": "python",
    "cpes": [
     "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
@@ -37,6 +45,7 @@
      "path": "/b/place/b"
     }
    ],
+   "licenses": [],
    "language": "",
    "cpes": [
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"

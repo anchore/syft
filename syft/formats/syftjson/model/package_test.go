@@ -92,7 +92,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
 			}`),
 			assert: func(p *Package) {
-				assert.Equal(t, []pkg.License{
+				assert.Equal(t, licenses{
 					{
 						Value:          "MIT",
 						SPDXExpression: "MIT",
@@ -136,7 +136,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
 			}`),
 			assert: func(p *Package) {
-				assert.Equal(t, []pkg.License{
+				assert.Equal(t, licenses{
 					{
 						Value:          "MIT",
 						SPDXExpression: "MIT",
