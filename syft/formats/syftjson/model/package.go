@@ -27,10 +27,14 @@ type PackageBasicData struct {
 	Type      pkg.Type          `json:"type"`
 	FoundBy   string            `json:"foundBy"`
 	Locations []source.Location `json:"locations"`
-	Licenses  []pkg.License     `json:"licenses"`
+	Licenses  []pkg.License     `json:"-"`
 	Language  pkg.Language      `json:"language"`
 	CPEs      []string          `json:"cpes"`
 	PURL      string            `json:"purl"`
+}
+
+type licenseUnpacker struct {
+	LicenseJSON json.RawMessage `json:"licenses"`
 }
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.
@@ -57,6 +61,16 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 	}
 	p.PackageBasicData = basic
 
+	var licenseUnpacker licenseUnpacker
+	if err := json.Unmarshal(b, &licenseUnpacker); err != nil {
+		return err
+	}
+
+	p.Licenses = make([]pkg.License, 0)
+	if len(licenseUnpacker.LicenseJSON) > 0 {
+		p.PackageBasicData.Licenses = parseLicenseJSON(licenseUnpacker.LicenseJSON)
+	}
+
 	var unpacker packageMetadataUnpacker
 	if err := json.Unmarshal(b, &unpacker); err != nil {
 		log.Warnf("failed to unmarshall into packageMetadataUnpacker: %v", err)
@@ -70,6 +84,19 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 	}
 
 	return err
+}
+
+func parseLicenseJSON(licenseJSON []byte) []pkg.License {
+	var complexLicenses []pkg.License
+	if err := json.Unmarshal(licenseJSON, &complexLicenses); err != nil {
+		var simpleLicense []string
+		if err := json.Unmarshal(licenseJSON, &simpleLicense); err != nil {
+			log.Warnf("failed to unmarshal package licenses: %v", err)
+			return nil
+		}
+		return pkg.NewLicensesFromValues(simpleLicense...)
+	}
+	return complexLicenses
 }
 
 func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {

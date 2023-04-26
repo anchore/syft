@@ -8,7 +8,7 @@ import (
 
 type License struct {
 	Value          string           `json:"value"`
-	SPDXExpression string           `json:"spdx-expression"`
+	SPDXExpression string           `json:"spdxExpression"`
 	Type           license.Type     `json:"type"`
 	URL            string           `json:"url"`                // external sources
 	Location       *source.Location `json:"location,omitempty"` // on disk declaration
@@ -27,6 +27,16 @@ func NewLicense(value string) License {
 		SPDXExpression: spdxExpression,
 		Type:           license.Declared,
 	}
+}
+
+func NewLicensesFromValues(values ...string) (licenses []License) {
+	for _, v := range values {
+		if v == "" {
+			continue
+		}
+		licenses = append(licenses, NewLicense(v))
+	}
+	return
 }
 
 func NewLicensesFromLocation(location source.Location, values ...string) (licenses []License) {
