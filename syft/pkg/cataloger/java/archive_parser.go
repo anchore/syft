@@ -192,7 +192,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Licenses: pkg.NewLicensesFromLocation(
 			// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 			j.location,
-			selectLicense(manifest)...,
+			selectLicenses(manifest)...,
 		),
 		Locations: source.NewLocationSet(
 			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),

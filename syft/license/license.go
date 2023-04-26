@@ -14,12 +14,6 @@ const (
 	Concluded Type = "concluded"
 )
 
-type Evidence struct {
-	Confidence int
-	Offset     int
-	Extent     int
-}
-
 func ParseExpression(expression string) (string, error) {
 	// returns true if all licenses are valid
 	// ignored variable is any invalid expressions

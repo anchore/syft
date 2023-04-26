@@ -16,10 +16,7 @@
      "value": "MIT",
      "spdx-expression": "MIT",
      "type": "declared",
-     "url": "",
-     "location": {
-      "path": ""
-     }
+     "url": ""
     }
    ],
    "language": "python",

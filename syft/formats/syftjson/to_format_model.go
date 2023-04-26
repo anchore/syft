@@ -191,11 +191,12 @@ func toPackageModel(p pkg.Package) model.Package {
 		cpes[i] = cpe.String(c)
 	}
 
-	// TODO: update user facing package to use latest license model
-	// var licenses = make([]string, 0)
-	// if p.Licenses != nil {
-	//	licenses = p.Licenses
-	//}
+	// we want to make sure all catalogers are
+	// initializing the array; this is a good choke point for this check
+	var licenses = make([]pkg.License, 0)
+	if p.Licenses != nil {
+		licenses = p.Licenses
+	}
 
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
@@ -205,7 +206,7 @@ func toPackageModel(p pkg.Package) model.Package {
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
 			Locations: p.Locations.ToSlice(),
-			Licenses:  p.Licenses,
+			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
 			PURL:      p.PURL,

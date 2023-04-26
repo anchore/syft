@@ -4,10 +4,11 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/spdxlicense"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func License(p pkg.Package) string {
+func License(p pkg.Package) (concluded, declared string) {
 	// source: https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license
 	// The options to populate this field are limited to:
 	// A valid SPDX License Expression as defined in Appendix IV;
@@ -18,34 +19,67 @@ func License(p pkg.Package) string {
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
 	if len(p.Licenses) == 0 {
-		return NONE
+		return NOASSERTION, NOASSERTION
 	}
 
-	// take all licenses and assume an AND expression; for information about license expressions see https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
-	parsedLicenses := parseLicenses(p.Licenses)
+	// take all licenses and assume an AND expression;
+	// for information about license expressions see:
+	// https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/
+	pc, pd := parseLicenses(p.Licenses)
 
-	for i, v := range parsedLicenses {
+	for i, v := range pc {
 		if strings.HasPrefix(v, spdxlicense.LicenseRefPrefix) {
-			parsedLicenses[i] = SanitizeElementID(v)
+			pc[i] = SanitizeElementID(v)
 		}
 	}
 
-	if len(parsedLicenses) == 0 {
+	for i, v := range pd {
+		if strings.HasPrefix(v, spdxlicense.LicenseRefPrefix) {
+			pd[i] = SanitizeElementID(v)
+		}
+	}
+
+	return joinLicenses(pc), joinLicenses(pd)
+}
+
+func joinLicenses(licenses []string) string {
+	if len(licenses) == 0 {
 		return NOASSERTION
 	}
 
-	return strings.Join(parsedLicenses, " AND ")
-}
-
-func parseLicenses(raw []pkg.License) (parsedLicenses []string) {
-	for _, l := range raw {
-		if l.SPDXExpression != "" {
-			parsedLicenses = append(parsedLicenses, l.SPDXExpression)
-		} else {
-			// we did not find a valid SPDX license ID so treat as separate license
-			otherLicense := spdxlicense.LicenseRefPrefix + l.Value
-			parsedLicenses = append(parsedLicenses, otherLicense)
+	for i, v := range licenses {
+		// check if license does not start or end with parens
+		if !strings.HasPrefix(v, "(") && !strings.HasSuffix(v, ")") {
+			// if license contains AND, OR, or WITH, then wrap in parens
+			if strings.Contains(v, " AND ") ||
+				strings.Contains(v, " OR ") ||
+				strings.Contains(v, " WITH ") {
+				licenses[i] = "(" + v + ")"
+			}
 		}
 	}
-	return
+
+	return strings.Join(licenses, " AND ")
+}
+
+func parseLicenses(raw []pkg.License) (concluded, declared []string) {
+	c := make([]string, 0)
+	d := make([]string, 0)
+	for _, l := range raw {
+		var candidate string
+		if l.SPDXExpression != "" {
+			candidate = l.SPDXExpression
+		} else {
+			// we did not find a valid SPDX license ID so treat as separate license
+			candidate = spdxlicense.LicenseRefPrefix + l.Value
+		}
+
+		switch l.Type {
+		case license.Concluded:
+			c = append(c, candidate)
+		case license.Declared:
+			d = append(d, candidate)
+		}
+	}
+	return c, d
 }

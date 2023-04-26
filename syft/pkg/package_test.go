@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -27,6 +28,12 @@ func TestIDUniqueness(t *testing.T) {
 		Locations: source.NewLocationSet(
 			originalLocation,
 		),
+		Licenses: []License{
+			{
+				SPDXExpression: "MIT AND GPL-2.0-only",
+				Type:           license.Declared,
+			},
+		},
 		Language: "math",
 		Type:     PythonPkg,
 		CPEs: []cpe.CPE{

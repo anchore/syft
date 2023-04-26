@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "eec39d3202dce6f3",
+   "id": "424914a52c6f83b8",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -11,7 +11,14 @@
      "path": "/a/place/a"
     }
    ],
-   "licenses": [],
+   "licenses": [
+    {
+     "value": "MIT",
+     "spdx-expression": "MIT",
+     "type": "declared",
+     "url": ""
+    }
+   ],
    "language": "python",
    "cpes": [
     "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"

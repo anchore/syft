@@ -276,11 +276,10 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 	info := extractPkgInfo(p)
 	metadataType, metadata := extractMetadata(p, info)
 	sP := pkg.Package{
-		Type:    info.typ,
-		Name:    p.PackageName,
-		Version: p.PackageVersion,
-		// TODO: this should be updated to account for concluded and declared
-		// Licenses:     parseLicense(p.PackageLicenseDeclared),
+		Type:         info.typ,
+		Name:         p.PackageName,
+		Version:      p.PackageVersion,
+		Licenses:     parseSPDXLicenses(p),
 		CPEs:         extractCPEs(p),
 		PURL:         info.purl.String(),
 		Language:     info.lang,
@@ -291,6 +290,23 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 	sP.SetID()
 
 	return &sP
+}
+
+func parseSPDXLicenses(p *spdx.Package) []pkg.License {
+	licenses := make([]pkg.License, 0)
+
+	// concluded
+	if p.PackageLicenseConcluded != NOASSERTION && p.PackageLicenseConcluded != NONE {
+		licenses = append(licenses, pkg.NewLicense(p.PackageLicenseConcluded, "", nil))
+	}
+
+	// declared
+	if p.PackageLicenseDeclared != NOASSERTION && p.PackageLicenseDeclared != NONE {
+		licenses = append(licenses, pkg.NewLicense(p.PackageLicenseDeclared, "", nil))
+	}
+
+	// TODO: do we need other licenses? These are at the document level
+	return licenses
 }
 
 //nolint:funlen

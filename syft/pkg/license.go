@@ -10,8 +10,8 @@ type License struct {
 	Value          string           `json:"value"`
 	SPDXExpression string           `json:"spdx-expression"`
 	Type           license.Type     `json:"type"`
-	URL            string           `json:"url"`      // external sources
-	Location       *source.Location `json:"location"` // on disk declaration
+	URL            string           `json:"url"`                // external sources
+	Location       *source.Location `json:"location,omitempty"` // on disk declaration
 }
 
 func NewLicensesFromLocation(location source.Location, values ...string) (licenses []License) {
