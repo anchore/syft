@@ -2,10 +2,11 @@ package spdxhelpers
 
 import (
 	"errors"
-	"github.com/anchore/syft/syft/license"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/anchore/syft/syft/license"
 
 	"github.com/spdx/tools-golang/spdx"
 
