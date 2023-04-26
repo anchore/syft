@@ -94,7 +94,7 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
 	t.Helper()
-	catalog := pkg.NewCatalog()
+	catalog := pkg.NewCollection()
 	var cfg imageCfg
 	var img *image.Image
 	for _, opt := range options {
@@ -146,7 +146,7 @@ func carriageRedactor(s []byte) []byte {
 	return []byte(msg)
 }
 
-func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
+func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
@@ -260,8 +260,8 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 	}
 }
 
-func newDirectoryCatalog() *pkg.Catalog {
-	catalog := pkg.NewCatalog()
+func newDirectoryCatalog() *pkg.Collection {
+	catalog := pkg.NewCollection()
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
@@ -318,8 +318,8 @@ func newDirectoryCatalog() *pkg.Catalog {
 	return catalog
 }
 
-func newDirectoryCatalogWithAuthorField() *pkg.Catalog {
-	catalog := pkg.NewCatalog()
+func newDirectoryCatalogWithAuthorField() *pkg.Collection {
+	catalog := pkg.NewCollection()
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{

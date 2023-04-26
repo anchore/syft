@@ -422,7 +422,7 @@ func Test_H1Digest(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			catalog := pkg.NewCatalog(test.pkg)
+			catalog := pkg.NewCollection(test.pkg)
 			pkgs := toPackages(catalog, s)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
@@ -498,7 +498,7 @@ func Test_OtherLicenses(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			catalog := pkg.NewCatalog(test.pkg)
+			catalog := pkg.NewCollection(test.pkg)
 			otherLicenses := toOtherLicenses(catalog)
 			require.Len(t, otherLicenses, len(test.expected))
 			require.Equal(t, test.expected, otherLicenses)
