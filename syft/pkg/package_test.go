@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -29,15 +28,8 @@ func TestIDUniqueness(t *testing.T) {
 			originalLocation,
 		),
 		Licenses: []License{
-			{
-
-				Value: "cc0-1.0",
-				Type:  license.Declared,
-			},
-			{
-				SPDXExpression: "MIT",
-				Type:           license.Declared,
-			},
+			NewLicense("MIT"),
+			NewLicense("cc0-1.0"),
 		},
 		Language: "math",
 		Type:     PythonPkg,
@@ -87,6 +79,18 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.Equal,
 		},
 		{
+			name: "licenses order is ignored",
+			transform: func(pkg Package) Package {
+				// note: same as the original package, only a different order
+				pkg.Licenses = []License{
+					NewLicense("cc0-1.0"),
+					NewLicense("MIT"),
+				}
+				return pkg
+			},
+			expectedIDComparison: assert.Equal,
+		},
+		{
 			name: "name is reflected",
 			transform: func(pkg Package) Package {
 				pkg.Name = "new!"
@@ -100,6 +104,14 @@ func TestIDUniqueness(t *testing.T) {
 				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
 				locations.Add(source.NewLocation("/somewhere/new"))
 				pkg.Locations = locations
+				return pkg
+			},
+			expectedIDComparison: assert.NotEqual,
+		},
+		{
+			name: "licenses is reflected",
+			transform: func(pkg Package) Package {
+				pkg.Licenses = []License{NewLicense("new!")}
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,
