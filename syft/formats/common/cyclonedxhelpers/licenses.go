@@ -29,7 +29,6 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	}
 
 	if len(ex) > 0 {
-		// TODO: merge all complex expressions and ID into a single SPDX expression
 		return &cyclonedx.Licenses{
 			cyclonedx.LicenseChoice{
 				Expression: mergeSPDX(ex, spdxc),
