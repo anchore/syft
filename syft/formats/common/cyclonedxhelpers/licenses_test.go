@@ -24,21 +24,39 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: []pkg.License{},
-			},
-			expected: nil,
-		},
-		{
-			name: "with SPDX license",
-			input: pkg.Package{
 				Licenses: []pkg.License{
 					{
-						Value:          "mit",
-						SPDXExpression: "MIT",
+						Value: "RandomLicense",
 					},
 				},
 			},
 			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						Name: "RandomLicense",
+					},
+				},
+			},
+		},
+		{
+			name: "single SPDX ID and Non SPDX ID",
+			input: pkg.Package{
+				Licenses: []pkg.License{
+					{
+						SPDXExpression: "MIT",
+						Value:          "mit",
+					},
+					{
+						Value: "FOOBAR",
+					},
+				},
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						Name: "FOOBAR",
+					},
+				},
 				{
 					License: &cyclonedx.License{
 						ID: "MIT",
@@ -47,32 +65,62 @@ func Test_encodeLicense(t *testing.T) {
 			},
 		},
 		{
-			name: "with SPDX license expression",
+			name: "with complex SPDX license expression",
 			input: pkg.Package{
 				Licenses: []pkg.License{
 					{
-						Value:          "mit",
-						SPDXExpression: "MIT",
-					},
-					{
-						Value:          "gpl-3.0-only",
-						SPDXExpression: "GPL-3.0-only",
+						SPDXExpression: "MIT AND GPL-3.0-only",
 					},
 				},
 			},
 			expected: &cyclonedx.Licenses{
 				{
-					License: &cyclonedx.License{
-						ID: "MIT",
-					},
-				},
-				{
-					License: &cyclonedx.License{
-						ID: "GPL-3.0-only",
-					},
+					Expression: "MIT AND GPL-3.0-only",
 				},
 			},
 		},
+		{
+			name: "with multiple complex SPDX license expression",
+			input: pkg.Package{
+				Licenses: []pkg.License{
+					{
+						SPDXExpression: "MIT AND GPL-3.0-only",
+					},
+					{
+						SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
+					},
+				},
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					Expression: "(MIT AND GPL-3.0-only) AND (MIT AND GPL-3.0-only WITH Classpath-exception-2.0)",
+				},
+			},
+		},
+		// TODO: do we drop the non SPDX ID license and do a single expression
+		// OR do we keep the non SPDX ID license and do multiple licenses where the complex
+		// expressions are set as the NAME field?
+		//{
+		//	name: "with multiple complex SPDX license expression and a non spdx id",
+		//	input: pkg.Package{
+		//		Licenses: []pkg.License{
+		//			{
+		//				SPDXExpression: "MIT AND GPL-3.0-only",
+		//			},
+		//			{
+		//				SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
+		//			},
+		//			{
+		//				Value: "FOOBAR",
+		//			},
+		//		},
+		//	},
+		//	expected: &cyclonedx.Licenses{
+		//		{
+		//			Expression: "(MIT AND GPL-3.0-only) AND (MIT AND GPL-3.0-only WITH Classpath-exception-2.0)",
+		//		},
+		//	},
+		//},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
