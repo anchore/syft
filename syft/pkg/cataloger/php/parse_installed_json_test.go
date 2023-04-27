@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -26,11 +25,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
 			Licenses: []pkg.License{
-				{
-					Value:          "MIT",
-					SPDXExpression: "MIT",
-					Type:           license.Declared,
-				},
+				pkg.NewLicense("MIT"),
 			},
 			Metadata: pkg.PhpComposerJSONMetadata{
 				Name:    "asm89/stack-cors",
@@ -79,11 +74,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
 			Licenses: []pkg.License{
-				{
-					Value:          "MIT",
-					SPDXExpression: "MIT",
-					Type:           license.Declared,
-				},
+				pkg.NewLicense("MIT"),
 			},
 			MetadataType: pkg.PhpComposerJSONMetadataType,
 			Metadata: pkg.PhpComposerJSONMetadata{

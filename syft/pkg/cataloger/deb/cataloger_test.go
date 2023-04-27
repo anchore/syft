@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -18,24 +17,9 @@ func TestDpkgCataloger(t *testing.T) {
 			Version: "1.1.8-3.6",
 			FoundBy: "dpkgdb-cataloger",
 			Licenses: []pkg.License{
-				{
-					Value:          "GPL-1",
-					SPDXExpression: "GPL-1.0-only",
-					Location:       &licenseLocation,
-					Type:           license.Declared,
-				},
-				{
-					Value:          "GPL-2",
-					SPDXExpression: "GPL-2.0-only",
-					Location:       &licenseLocation,
-					Type:           license.Declared,
-				},
-				{
-					Value:          "LGPL-2.1",
-					SPDXExpression: "LGPL-2.1-only",
-					Location:       &licenseLocation,
-					Type:           license.Declared,
-				},
+				pkg.NewLicenseFromLocation("GPL-1", licenseLocation),
+				pkg.NewLicenseFromLocation("GPL-2", licenseLocation),
+				pkg.NewLicenseFromLocation("LGPL-2.1", licenseLocation),
 			},
 			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),

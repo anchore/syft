@@ -67,8 +67,6 @@ func joinLicenses(licenses []string) string {
 }
 
 func parseLicenses(raw []pkg.License) (concluded, declared []string) {
-	c := make([]string, 0)
-	d := make([]string, 0)
 	for _, l := range raw {
 		var candidate string
 		if l.SPDXExpression != "" {
@@ -80,10 +78,10 @@ func parseLicenses(raw []pkg.License) (concluded, declared []string) {
 
 		switch l.Type {
 		case license.Concluded:
-			c = append(c, candidate)
+			concluded = append(concluded, candidate)
 		case license.Declared:
-			d = append(d, candidate)
+			declared = append(declared, candidate)
 		}
 	}
-	return c, d
+	return concluded, declared
 }

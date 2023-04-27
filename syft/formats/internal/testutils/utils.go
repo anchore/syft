@@ -17,7 +17,6 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -164,12 +163,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
 		Licenses: []pkg.License{
-			{
-				Value:          "MIT",
-				SPDXExpression: "MIT",
-				Type:           license.Declared,
-				URL:            "",
-			},
+			pkg.NewLicense("MIT"),
 		},
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
@@ -277,12 +271,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
 		Licenses: []pkg.License{
-			{
-				Value:          "MIT",
-				SPDXExpression: "MIT",
-				Type:           license.Declared,
-				URL:            "",
-			},
+			pkg.NewLicense("MIT"),
 		},
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
@@ -335,10 +324,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
 		Licenses: []pkg.License{
-			{
-				Value:          "MIT",
-				SPDXExpression: "MIT",
-			},
+			pkg.NewLicense("MIT"),
 		},
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",

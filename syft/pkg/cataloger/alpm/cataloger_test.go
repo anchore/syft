@@ -7,7 +7,6 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -22,18 +21,8 @@ func TestAlpmCataloger(t *testing.T) {
 			Type:    pkg.AlpmPkg,
 			FoundBy: "alpmdb-cataloger",
 			Licenses: []pkg.License{
-				{
-					Value:          "LGPL3",
-					SPDXExpression: "LGPL-3.0-only",
-					Type:           license.Declared,
-					Location:       &dbLocation,
-				},
-				{
-					Value:          "GPL",
-					SPDXExpression: "",
-					Type:           license.Declared,
-					Location:       &dbLocation,
-				},
+				pkg.NewLicenseFromLocation("LGPL3", dbLocation),
+				pkg.NewLicenseFromLocation("GPL", dbLocation),
 			},
 			Locations:    source.NewLocationSet(dbLocation),
 			CPEs:         nil,

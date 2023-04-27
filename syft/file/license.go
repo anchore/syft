@@ -19,7 +19,6 @@ type LicenseEvidence struct {
 }
 
 func NewLicense(value string) License {
-	// TODO: enhance license package with more helpers for validation
 	spdxExpression, err := license.ParseExpression(value)
 	if err != nil {
 		log.Trace("unable to parse license expression: %w", err)

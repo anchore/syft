@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/internal/testutils"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -62,13 +61,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses: []pkg.License{
-			{
-				SPDXExpression: "MIT",
-				Value:          "MIT",
-				Type:           license.Declared,
-			},
-		},
+		Licenses:     []pkg.License{pkg.NewLicense("MIT")},
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",

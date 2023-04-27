@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -29,12 +28,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: []pkg.License{
-					{
-						Value: "made-up",
-						Type:  license.Declared,
-					},
-				},
+				Licenses: []pkg.License{pkg.NewLicense("made-up")},
 			},
 			expected: struct{ concluded, declared string }{
 				concluded: "NOASSERTION",
@@ -44,12 +38,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license",
 			input: pkg.Package{
-				Licenses: []pkg.License{
-					{
-						SPDXExpression: "MIT",
-						Type:           license.Declared,
-					},
-				},
+				Licenses: []pkg.License{pkg.NewLicense("MIT")},
 			},
 			expected: struct {
 				concluded string
@@ -63,14 +52,8 @@ func Test_License(t *testing.T) {
 			name: "with SPDX license expression",
 			input: pkg.Package{
 				Licenses: []pkg.License{
-					{
-						SPDXExpression: "MIT",
-						Type:           license.Declared,
-					},
-					{
-						SPDXExpression: "GPL-3.0-only",
-						Type:           license.Declared,
-					},
+					pkg.NewLicense("MIT"),
+					pkg.NewLicense("GPL-3.0-only"),
 				},
 			},
 			expected: struct {
@@ -85,18 +68,9 @@ func Test_License(t *testing.T) {
 			name: "includes valid LicenseRef-",
 			input: pkg.Package{
 				Licenses: []pkg.License{
-					{
-						Value: "one thing first",
-						Type:  license.Declared,
-					},
-					{
-						Value: "two things/#$^second",
-						Type:  license.Declared,
-					},
-					{
-						Value: "MIT",
-						Type:  license.Declared,
-					},
+					pkg.NewLicense("one thing first"),
+					pkg.NewLicense("two things/#$^second"),
+					pkg.NewLicense("MIT"),
 				},
 			},
 			expected: struct {
@@ -111,18 +85,9 @@ func Test_License(t *testing.T) {
 			name: "join parentheses correctly",
 			input: pkg.Package{
 				Licenses: []pkg.License{
-					{
-						Value: "one thing first",
-						Type:  license.Declared,
-					},
-					{
-						SPDXExpression: "(MIT AND GPL-3.0-only)",
-						Type:           license.Declared,
-					},
-					{
-						SPDXExpression: "MIT OR APACHE-2.0",
-						Type:           license.Declared,
-					},
+					pkg.NewLicense("one thing first"),
+					pkg.NewLicense("MIT AND GPL-3.0-only"),
+					pkg.NewLicense("MIT OR APACHE-2.0"),
 				},
 			},
 			expected: struct {
