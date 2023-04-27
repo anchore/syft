@@ -522,13 +522,13 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
 	for _, p := range catalog.Sorted() {
-		d, c := parseLicenses(p.Licenses)
-		for _, license := range d {
+		declaredLicenses, concludedLicenses := parseLicenses(p.Licenses)
+		for _, license := range declaredLicenses {
 			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
 				licenses[license] = true
 			}
 		}
-		for _, license := range c {
+		for _, license := range concludedLicenses {
 			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
 				licenses[license] = true
 			}

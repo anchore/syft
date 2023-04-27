@@ -74,16 +74,7 @@ func build() *jsonschema.Schema {
 	}
 	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftjsonModel.Document{}))
 	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&artifactMetadataContainer{}))
-	licenseSchema := reflector.ReflectFromType(reflect.TypeOf(&[]pkg.License{}))
-
 	// TODO: inject source definitions
-
-	// inject the definitions of licenses into the schema definitions
-	// we do this since the license tag is "-" in the syftjson model
-	// - is used for previous versions of syftjson where licenses could be []string
-	// because we migrated to a more complex struct we have to manually set this in the generate code
-	// in order to maintain backwards compatibility
-	documentSchema.Definitions["Package"].Properties.Set("licenses", licenseSchema)
 
 	// inject the definitions of all metadatas into the schema definitions
 

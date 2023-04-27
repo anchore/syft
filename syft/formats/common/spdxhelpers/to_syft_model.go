@@ -297,19 +297,27 @@ func parseSPDXLicenses(p *spdx.Package) []pkg.License {
 	licenses := make([]pkg.License, 0)
 
 	// concluded
-	if p.PackageLicenseConcluded != NOASSERTION && p.PackageLicenseConcluded != NONE {
-		l := pkg.NewLicense(p.PackageLicenseConcluded)
+	if p.PackageLicenseConcluded != NOASSERTION && p.PackageLicenseConcluded != NONE && p.PackageLicenseConcluded != "" {
+		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseConcluded))
 		l.Type = license.Concluded
 		licenses = append(licenses, l)
 	}
 
 	// declared
-	if p.PackageLicenseDeclared != NOASSERTION && p.PackageLicenseDeclared != NONE {
-		licenses = append(licenses, pkg.NewLicense(p.PackageLicenseDeclared))
+	if p.PackageLicenseDeclared != NOASSERTION && p.PackageLicenseDeclared != NONE && p.PackageLicenseDeclared != "" {
+		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseDeclared))
+		l.Type = license.Declared
+		licenses = append(licenses, l)
 	}
 
-	// TODO: do we need other licenses? These are at the document level
 	return licenses
+}
+
+func cleanSPDXID(id string) string {
+	if strings.HasPrefix(id, "LicenseRef-") {
+		return strings.TrimPrefix(id, "LicenseRef-")
+	}
+	return id
 }
 
 //nolint:funlen

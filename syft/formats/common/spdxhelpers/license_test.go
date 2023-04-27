@@ -142,3 +142,27 @@ func Test_License(t *testing.T) {
 		})
 	}
 }
+
+func Test_joinLicenses1(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "multiple licenses",
+			args: []string{"MIT", "GPL-3.0-only"},
+			want: "MIT AND GPL-3.0-only",
+		},
+		{
+			name: "multiple licenses with complex expressions",
+			args: []string{"MIT AND Apache", "GPL-3.0-only"},
+			want: "(MIT AND Apache) AND GPL-3.0-only",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, joinLicenses(tt.args), "joinLicenses(%v)", tt.args)
+		})
+	}
+}
